@@ -8,8 +8,101 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
+    <properties>
+        <jena.version>2.11.1</jena.version>
+        <!--<owl.version>5.0.2</owl.version>-->
+        <!--FaCT++ doesn't seem to support OWLAPI 5.0-->
+        <owl.version>4.2.5</owl.version>
+    </properties>
 
     <artifactId>trixie</artifactId>
-
-
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.jena</groupId>
+            <artifactId>apache-jena-libs</artifactId>
+            <type>pom</type>
+            <version>${jena.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jena</groupId>
+            <artifactId>jena-core</artifactId>
+            <version>${jena.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jena</groupId>
+            <artifactId>jena-arq</artifactId>
+            <version>${jena.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>owlapi-api</artifactId>
+            <version>${owl.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>owlapi-distribution</artifactId>
+            <version>${owl.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>owlapi-apibinding</artifactId>
+            <version>${owl.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>owlapi-parsers</artifactId>
+            <version>${owl.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>owlexplanation</artifactId>
+            <version>2.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.oracle</groupId>
+            <artifactId>ojdbc7</artifactId>
+            <version>12.1.0.2</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>factplusplus</artifactId>
+            <version>1.6.4-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>oracle.spatial.rdf.client</groupId>
+            <artifactId>sdordf</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>oracle.spatial.rdf.client</groupId>
+            <artifactId>sdordfclient</artifactId>
+            <version>1.1</version>
+        </dependency>
+    </dependencies>
+    <!--TODO(nrobison): Fix the local repo -->
+    <repositories>
+        <!-- Repository for oracle ojdbc7 -->
+        <repository>
+            <id>codelds</id>
+            <url>https://code.lds.org/nexus/content/groups/main-repo</url>
+        </repository>
+        <repository>
+            <id>resource</id>
+            <name>Resource Repository</name>
+            <url>file://${project.basedir}/src/main/resources/repo</url>
+        </repository>
+    </repositories>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.19.1</version>
+                <configuration>
+                    <!--We don't need this, since the fully build fact++ package includes the native libs-->
+                    <!--<argLine>-Djava.library.path=${basedir}/src/main/resources/lib64</argLine>-->
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
