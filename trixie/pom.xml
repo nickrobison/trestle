@@ -9,14 +9,21 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
+        <!--I believe Oracle only supports the 2.x branch of Jena-->
         <jena.version>2.11.1</jena.version>
-        <!--<owl.version>5.0.2</owl.version>-->
         <!--FaCT++ doesn't seem to support OWLAPI 5.0-->
+        <!--<owl.version>5.0.2</owl.version>-->
         <owl.version>4.2.5</owl.version>
+        <geotools.version>15.0</geotools.version>
     </properties>
 
     <artifactId>trixie</artifactId>
     <dependencies>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.jena</groupId>
             <artifactId>apache-jena-libs</artifactId>
@@ -78,8 +85,17 @@
             <artifactId>sdordfclient</artifactId>
             <version>1.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-referencing</artifactId>
+            <version>${geotools.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-epsg-hsql</artifactId>
+            <version>${geotools.version}</version>
+        </dependency>
     </dependencies>
-    <!--TODO(nrobison): Fix the local repo -->
     <repositories>
         <!-- Repository for oracle ojdbc7 -->
         <repository>
@@ -91,6 +107,11 @@
             <name>Resource Repository</name>
             <url>file://${project.basedir}/src/main/resources/repo</url>
         </repository>
+        <repository>
+            <id>osgeo</id>
+            <name>Open Source Geospatial Foundation Repository</name>
+            <url>http://download.osgeo.org/webdav/geotools/</url>
+        </repository>
     </repositories>
     <build>
         <plugins>
@@ -99,7 +120,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.19.1</version>
                 <configuration>
-                    <!--We don't need this, since the fully build fact++ package includes the native libs-->
+                    <!--We don't need this, since the fully built fact++ package includes the native libs-->
                     <!--<argLine>-Djava.library.path=${basedir}/src/main/resources/lib64</argLine>-->
                 </configuration>
             </plugin>
