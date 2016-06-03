@@ -95,6 +95,12 @@
             <artifactId>gt-epsg-hsql</artifactId>
             <version>${geotools.version}</version>
         </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <repositories>
         <!-- Repository for oracle ojdbc7 -->
@@ -120,8 +126,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.19.1</version>
                 <configuration>
-                    <!--We don't need this, since the fully built fact++ package includes the native libs-->
-                    <!--<argLine>-Djava.library.path=${basedir}/src/main/resources/lib64</argLine>-->
+                    <argLine>-Djava.library.path=${basedir}/src/main/resources/lib64</argLine>
                 </configuration>
             </plugin>
         </plugins>
