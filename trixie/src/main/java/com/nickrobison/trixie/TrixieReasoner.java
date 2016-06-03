@@ -2,10 +2,11 @@ package com.nickrobison.trixie;
 
 import com.nickrobison.trixie.ontology.IOntology;
 import com.nickrobison.trixie.ontology.Ontology;
-import org.apache.log4j.Logger;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.URL;
@@ -17,7 +18,7 @@ import java.util.Set;
  */
 public class TrixieReasoner {
 
-    private static final Logger logger = Logger.getLogger(TrixieReasoner.class);
+    private static final Logger logger = LoggerFactory.getLogger(TrixieReasoner.class);
 
     public static void main(String[] args) throws OWLOntologyCreationException, OWLOntologyStorageException {
 
@@ -27,6 +28,7 @@ public class TrixieReasoner {
 //        Try to build the ontology
 //        final IRI iri = IRI.create(TrixieReasoner.class.getResourceAsStream("main_geo.owl").toString());
 //        final URL resource = TrixieReasoner.getCla.getResource("main_geo.owl");
+        logger.debug("Running Trixie");
         final URL resource = TrixieReasoner.class.getClassLoader().getResource("main_geo.owl");
         if (resource == null) {
             logger.error("Can't load resource");

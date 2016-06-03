@@ -9,7 +9,8 @@ import com.nickrobison.trixie.db.IOntologyDatabase;
 import oracle.spatial.rdf.client.jena.GraphOracleSem;
 import oracle.spatial.rdf.client.jena.ModelOracleSem;
 import oracle.spatial.rdf.client.jena.Oracle;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.sql.SQLException;
@@ -19,7 +20,7 @@ import java.sql.SQLException;
  */
 public class OracleDatabase implements IOntologyDatabase {
 
-    private static final Logger logger = Logger.getLogger(OracleDatabase.class);
+    private static final Logger logger = LoggerFactory.getLogger(OracleDatabase.class);
 
     private final Oracle oracle;
     private final Model model;

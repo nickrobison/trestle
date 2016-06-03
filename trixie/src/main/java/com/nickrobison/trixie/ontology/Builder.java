@@ -1,6 +1,5 @@
 package com.nickrobison.trixie.ontology;
 
-import org.apache.log4j.Logger;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -8,6 +7,8 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.factplusplus.owlapiv3.FaCTPlusPlusReasoner;
 
 import java.util.Optional;
@@ -17,7 +18,7 @@ import java.util.Optional;
  */
 public class Builder {
 
-    private final static Logger logger = Logger.getLogger(Builder.class);
+    private final static Logger logger = LoggerFactory.getLogger(Builder.class);
 
     private final IRI iri;
 //    private Optional<DefaultPrefixManager> pm = Optional.empty();

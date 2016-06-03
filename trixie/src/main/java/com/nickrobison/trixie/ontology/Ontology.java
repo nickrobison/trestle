@@ -1,7 +1,6 @@
 package com.nickrobison.trixie.ontology;
 
 import com.nickrobison.trixie.db.oracle.OracleDatabase;
-import org.apache.log4j.Logger;
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -9,6 +8,8 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.factplusplus.owlapiv3.FaCTPlusPlusReasoner;
 
 import java.io.File;
@@ -22,7 +23,7 @@ import java.util.Set;
  */
 public class Ontology implements IOntology {
 
-    private final static Logger logger = Logger.getLogger(Ontology.class);
+    private final static Logger logger = LoggerFactory.getLogger(Ontology.class);
     public static final String MAIN_GEO = "main_geo:";
     private final OWLOntology ontology;
     private final FaCTPlusPlusReasoner reasoner;
@@ -120,7 +121,7 @@ public class Ontology implements IOntology {
             try {
                 crs = CRS.decode(code);
             } catch (FactoryException e) {
-                logger.warn("Can't decode: " + code, e);
+                logger.warn("Can't decode: {}", code, e);
 //                FIXME(nrobison): Why is this not working? It should skip to the next element in the set
                 break;
 //                throw new RuntimeException("Can't decode: " + code, e);
