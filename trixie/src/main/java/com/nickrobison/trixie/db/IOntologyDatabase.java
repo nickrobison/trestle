@@ -5,5 +5,13 @@ package com.nickrobison.trixie.db;
  */
 public interface IOntologyDatabase {
 
-    void loadOntology(String filename);
+    void loadBaseOntology(String filename);
+
+    void exportBaseOntology(String filename);
+
+    void enableBulkLoading();
+
+    void rebuildIndexes();
+
+    void writeTuple(String subject, String predicate, String object);
 }
