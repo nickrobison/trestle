@@ -18,7 +18,9 @@ public interface IOntology {
 
     DefaultPrefixManager getUnderlyingPrefixManager();
 
-    Set<OWLNamedIndividual> getInstances(OWLClass gaulObject);
+    Set<OWLNamedIndividual> getInstances(OWLClass owlClass);
+
+    void initializeOntology(boolean oracle);
 
     void initializeOracleOntology(IRI filename);
 }

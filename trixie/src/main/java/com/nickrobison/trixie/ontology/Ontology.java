@@ -8,6 +8,7 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
+import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.factplusplus.owlapiv3.FaCTPlusPlusReasoner;
@@ -15,7 +16,6 @@ import uk.ac.manchester.cs.factplusplus.owlapiv3.FaCTPlusPlusReasoner;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -87,6 +87,76 @@ public class Ontology implements IOntology {
         ontology.getOWLOntologyManager().saveOntology(ontology, new OWLXMLDocumentFormat(), path);
     }
 
+    public void initializeOntology(boolean oracle) {
+
+        loadEPSGCodes();
+        if (isConsistent()) {
+            logger.error("Ontology is inconsistent");
+        }
+    }
+
+    private void loadEPSGCodes() {
+
+//        Create data factory
+        final OWLDataFactory df = OWLManager.getOWLDataFactory();
+
+        final OWLClass CRSClass = df.getOWLClass(IRI.create(MAIN_GEO, "CRS").toString(), pm);
+        final OWLObjectProperty has_property = df.getOWLObjectProperty(IRI.create(MAIN_GEO, "has_property").toString(), pm);
+        final OWLDataProperty EPSGCodeProperty = df.getOWLDataProperty(IRI.create(MAIN_GEO, "EPSG_Code").toString(), pm);
+        final OWLDataProperty is_projected = df.getOWLDataProperty(IRI.create(MAIN_GEO, "is_projected").toString(), pm);
+        final OWLDataProperty WKTStringProperty = df.getOWLDataProperty(IRI.create(MAIN_GEO, "WKT_String").toString(), pm);
+
+//        We need to open the EPSG database and write in the projections
+        final Set<String> supportedEPSGCodes = CRS.getSupportedCodes("EPSG");
+        for (String code : supportedEPSGCodes) {
+            CoordinateReferenceSystem crs;
+//            TODO(nrobison): Figure out how to parse the rest of the EPSG codes
+//            TODO(nrobison): Change the EPSG codes to strings
+            try {
+//                Some of the EPSG codes come back as Strings, so we need to handle them appropriately
+                try {
+                    final int epsgCode = Integer.parseInt(code);
+                    crs = CRS.decode("EPSG:" + epsgCode);
+                } catch(NumberFormatException e) {
+                    crs = CRS.decode(code);
+                }
+
+            } catch (FactoryException e) {
+                logger.warn("Can't decode: {}", code, e);
+                continue;
+            }
+//                    Create the CRS individual
+            final IRI crsIRI = IRI.create(MAIN_GEO, code);
+            final OWLNamedIndividual crsIndividual = df.getOWLNamedIndividual(crsIRI.toString(), pm);
+            final AddAxiom classAssertionAxiom = new AddAxiom(ontology, df.getOWLClassAssertionAxiom(CRSClass, crsIndividual));
+
+//            Add the projection properties
+//            EPSG Code
+            final OWLLiteral epsgLiteral = df.getOWLLiteral(code, OWL2Datatype.XSD_INTEGER);
+            final AddAxiom epsgCodeAxiom = new AddAxiom(ontology, df.getOWLDataPropertyAssertionAxiom(EPSGCodeProperty, crsIndividual, epsgLiteral));
+
+//            WKT String
+            final OWLLiteral wktLiteral = df.getOWLLiteral(crs.toString(), OWL2Datatype.XSD_STRING);
+            final AddAxiom wktStringAxiom = new AddAxiom(ontology, df.getOWLDataPropertyAssertionAxiom(WKTStringProperty, crsIndividual, wktLiteral));
+
+//            is projected?
+//            TODO(nrobison): Figure out projection property
+            final OWLLiteral projectedLiteral = df.getOWLLiteral(false);
+            final AddAxiom projectedAxiom = new AddAxiom(ontology, df.getOWLDataPropertyAssertionAxiom(is_projected, crsIndividual, projectedLiteral));
+//            final OWLNamedIndividual epsgCode = df.getOWLNamedIndividual(IRI.create("main_geo:", code).toString(), pm);
+//            final AddAxiom epsgCodeAxiom = new AddAxiom(ontology, df.getOWLClassAssertionAxiom(EPSGCodeProperty, epsgCode));
+//            df.getOWLDataPropertyAssertionAxiom()
+////            applyChange(epsgCodeAxiom);
+////            final OWLObjectMinCardinality projectionProperty = df.getOWLObjectMinCardinality(1, has_property, epsgCode.asOWLClass());
+////            df.getOWLObjectProperty()
+////            final OWLSubClassOfAxiom owlSubClassOfAxiom = df.getOWLSubClassOfAxiom(crsIndividual.asOWLClass(), projectionProperty);
+//            final AddAxiom projectionAxiom = new AddAxiom(ontology, df.getOWLSubClassOfAxiom(crsIndividual.asOWLClass(), projectionProperty));
+////            applyChange(projectionAxiom);
+            applyChanges(classAssertionAxiom, epsgCodeAxiom, wktStringAxiom, projectedAxiom);
+
+        }
+    }
+
     public void initializeOracleOntology(IRI filename) {
         OracleDatabase oraDB;
         final OWLDataFactory df = OWLManager.getOWLDataFactory();
@@ -101,62 +171,7 @@ public class Ontology implements IOntology {
 
         oraDB.loadBaseOntology(filename.toString());
 
-
-//        Create the OWl objects
-        final OWLClass geographicCRSClass = df.getOWLClass(IRI.create(MAIN_GEO, "GeographicCRS").toString(), pm);
-        final OWLObjectProperty has_property = df.getOWLObjectProperty(IRI.create(MAIN_GEO, "has_property").toString(), pm);
-        final OWLDataProperty EPSGCodeProperty = df.getOWLDataProperty(IRI.create(MAIN_GEO, "EPSG_Code").toString(), pm);
-        final OWLClass WKTStringClass = df.getOWLClass(IRI.create(MAIN_GEO, "WKT_String").toString(), pm);
-
-//        We need to open the EPSG database and write in the projections
-        final Set<String> supportedEPSGCodes = CRS.getSupportedCodes("EPSG");
-        CoordinateReferenceSystem crs;
-        final Iterator<String> setIterator = supportedEPSGCodes.iterator();
-        while (setIterator.hasNext()) {
-            final String code = setIterator.next();
-//        supportedEPSGCodes
-//                .stream()
-//                .forEach(code -> {
-//            final CoordinateReferenceSystem crs;
-            try {
-                crs = CRS.decode(code);
-            } catch (FactoryException e) {
-                logger.warn("Can't decode: {}", code, e);
-//                FIXME(nrobison): Why is this not working? It should skip to the next element in the set
-                break;
-//                throw new RuntimeException("Can't decode: " + code, e);
-            }
-//                    Create the CRS individual
-            final IRI crsIRI = IRI.create(MAIN_GEO, crs.getName().getCode());
-            final OWLNamedIndividual crsIndividual = df.getOWLNamedIndividual(crsIRI.toString(), pm);
-            final AddAxiom classAssertionAxiom = new AddAxiom(ontology, df.getOWLClassAssertionAxiom(geographicCRSClass, crsIndividual));
-//            applyChange(classAssertionAxiom);
-
-//            Add the projection properties
-//            EPSG Code
-            final OWLLiteral epsgLiteral = df.getOWLLiteral(code);
-            final AddAxiom epsgCodeAxiom = new AddAxiom(ontology, df.getOWLDataPropertyAssertionAxiom(EPSGCodeProperty, crsIndividual, epsgLiteral));
-//            final OWLNamedIndividual epsgCode = df.getOWLNamedIndividual(IRI.create("main_geo:", code).toString(), pm);
-//            final AddAxiom epsgCodeAxiom = new AddAxiom(ontology, df.getOWLClassAssertionAxiom(EPSGCodeProperty, epsgCode));
-//            df.getOWLDataPropertyAssertionAxiom()
-////            applyChange(epsgCodeAxiom);
-////            final OWLObjectMinCardinality projectionProperty = df.getOWLObjectMinCardinality(1, has_property, epsgCode.asOWLClass());
-////            df.getOWLObjectProperty()
-////            final OWLSubClassOfAxiom owlSubClassOfAxiom = df.getOWLSubClassOfAxiom(crsIndividual.asOWLClass(), projectionProperty);
-//            final AddAxiom projectionAxiom = new AddAxiom(ontology, df.getOWLSubClassOfAxiom(crsIndividual.asOWLClass(), projectionProperty));
-////            applyChange(projectionAxiom);
-            applyChanges(classAssertionAxiom, epsgCodeAxiom);
-
-
-        }
-
 //        Rebuild indexes
-//        Write out the ontology (for testing only)
-        try {
-            writeOntology(IRI.create(new File("/Users/nrobison/Desktop/test.owl")), false);
-        } catch (OWLOntologyStorageException e) {
-            logger.error("Can't write ontology", e);
-        }
 //        Rebuild the oracle indexes
 //        oraDB.rebuildIndexes();
     }
