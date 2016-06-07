@@ -1,11 +1,13 @@
 package com.nickrobison.trixie.ontology;
 
+import com.hp.hpl.jena.query.ResultSet;
+import com.nickrobison.trixie.db.IOntologyDatabase;
 import com.nickrobison.trixie.db.oracle.OracleDatabase;
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
+import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
@@ -13,7 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.factplusplus.owlapiv3.FaCTPlusPlusReasoner;
 
-import java.io.File;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Set;
@@ -21,26 +24,38 @@ import java.util.Set;
 /**
  * Created by nrobison on 5/23/16.
  */
-public class Ontology implements IOntology {
+// TODO(nrobison): This should support initializing the oracle database on construction
+//    FIXME(nrobison): This database handling is a total disaster, fix it!!!
+public class OracleOntology implements ITrixieOntology {
 
-    private final static Logger logger = LoggerFactory.getLogger(Ontology.class);
+    private final static Logger logger = LoggerFactory.getLogger(OracleOntology.class);
     public static final String MAIN_GEO = "main_geo:";
     private final OWLOntology ontology;
     private final FaCTPlusPlusReasoner reasoner;
     private final DefaultPrefixManager pm;
+    private final IOntologyDatabase database;
 
-    Ontology(OWLOntology ont, DefaultPrefixManager pm, FaCTPlusPlusReasoner reasoner) {
+    OracleOntology(OWLOntology ont, DefaultPrefixManager pm, FaCTPlusPlusReasoner reasoner, String connectionString, String username, String password) {
         this.ontology = ont;
         this.pm = pm;
         this.reasoner = reasoner;
+        try {
+            this.database = new OracleDatabase(connectionString, username, password);
+        } catch (SQLException e) {
+            throw new RuntimeException("Cannot connect to Oracle database", e);
+        }
     }
 
     /**
-     * @param iri - IRI of the Ontology to load
+     * @param iri - IRI of the OracleOntology to load
      * @return - new Builder to instantiate ontology
      */
     public static Builder from(IRI iri) {
         return new Builder(iri);
+    }
+
+    public static Builder withDBConnection(IRI iri, String connectionString, String username, String password) {
+        return new Builder(iri, connectionString, username, password);
     }
 
     /**
@@ -65,15 +80,27 @@ public class Ontology implements IOntology {
         ontology.getOWLOntologyManager().applyChanges(Arrays.asList(axioms));
     }
 
+    /**
+     * @return - Returns whether or not the reasoner state is consistent
+     */
     public boolean isConsistent() {
         return reasoner.isConsistent();
     }
 
+    /**
+     * Returns the set of all instances matching the given class
+     *
+     * @param owlClass - OWLClass to retrieve
+     * @return - Returns the set of OWLNamedIndividuals that are members of the given class
+     */
+//    FIXME(nrobison): I think the reasoner is out of sync, so this is completely wrong right now.
     public Set<OWLNamedIndividual> getInstances(OWLClass owlClass) {
-        return reasoner.getInstances(owlClass, true).getFlattened();
+        return reasoner.getInstances(owlClass, false).getFlattened();
     }
 
     /**
+     * Write the ontology to disk
+     *
      * @param path     - IRI of location to write ontology
      * @param validate - boolean validate ontology before writing
      * @throws OWLOntologyStorageException
@@ -81,7 +108,7 @@ public class Ontology implements IOntology {
     public void writeOntology(IRI path, boolean validate) throws OWLOntologyStorageException {
         if (validate) {
             if (!isConsistent()) {
-                throw new RuntimeException("Ontology is invalid");
+                throw new RuntimeException("OracleOntology is invalid");
             }
         }
         ontology.getOWLOntologyManager().saveOntology(ontology, new OWLXMLDocumentFormat(), path);
@@ -91,14 +118,19 @@ public class Ontology implements IOntology {
 
         loadEPSGCodes();
         if (isConsistent()) {
-            logger.error("Ontology is inconsistent");
+            logger.error("OracleOntology is inconsistent");
+        }
+
+        if (oracle) {
+            initializeOracleOntology();
         }
     }
 
     private void loadEPSGCodes() {
 
 //        Create data factory
-        final OWLDataFactory df = OWLManager.getOWLDataFactory();
+//        final OWLDataFactory df = OWLManager.getOWLDataFactory();
+        final OWLDataFactory df = reasoner.getOWLDataFactory();
 
         final OWLClass CRSClass = df.getOWLClass(IRI.create(MAIN_GEO, "CRS").toString(), pm);
         final OWLObjectProperty has_property = df.getOWLObjectProperty(IRI.create(MAIN_GEO, "has_property").toString(), pm);
@@ -117,7 +149,7 @@ public class Ontology implements IOntology {
                 try {
                     final int epsgCode = Integer.parseInt(code);
                     crs = CRS.decode("EPSG:" + epsgCode);
-                } catch(NumberFormatException e) {
+                } catch (NumberFormatException e) {
                     crs = CRS.decode(code);
                 }
 
@@ -158,21 +190,68 @@ public class Ontology implements IOntology {
     }
 
     public void initializeOracleOntology(IRI filename) {
-        OracleDatabase oraDB;
-        final OWLDataFactory df = OWLManager.getOWLDataFactory();
-        try {
-            oraDB = new OracleDatabase();
-        } catch (SQLException e) {
-            throw new RuntimeException("Problem with Oracle", e);
-        }
+//        OracleDatabase oraDB = connectToDatabase();
 
 //        Setup bulk import mode
-        oraDB.enableBulkLoading();
+        database.enableBulkLoading();
 
-        oraDB.loadBaseOntology(filename.toString());
+        database.loadBaseOntology(filename.toString());
 
 //        Rebuild indexes
-//        Rebuild the oracle indexes
-//        oraDB.rebuildIndexes();
+        database.rebuildIndexes();
+    }
+
+    public void initializeOracleOntology() {
+        //        We need to read out the ontology into a bytestream and then read it back into the oracle format
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+//            Jena doesn't support OWL/XML, so we need base RDF.
+            ontology.saveOntology(new RDFXMLDocumentFormat(), out);
+        } catch (OWLOntologyStorageException e) {
+            throw new RuntimeException("Cannot save ontology to bytearray", e);
+        }
+
+        final ByteArrayInputStream is = new ByteArrayInputStream(out.toByteArray());
+
+//        OracleDatabase oraDB = connectToDatabase();
+//        oraDB.enableBulkLoading();
+        database.loadBaseOntology(is);
+        database.rebuildIndexes();
+    }
+
+    //    TODO(nrobison): Close connection?
+//    private OracleDatabase connectToDatabase() {
+//
+//        OracleDatabase oraDB;
+////        final OWLDataFactory df = OWLManager.getOWLDataFactory();
+//        try {
+//            oraDB = new OracleDatabase();
+//        } catch (SQLException e) {
+//            throw new RuntimeException("Problem with Oracle", e);
+//        }
+//
+//        return oraDB;
+//    }
+
+    /**
+     * Execute a raw SPARQL Query against the ontology
+     *
+     * @param query - Query String
+     * @return - Jena ResultSet
+     */
+    public ResultSet executeSPARQL(String query) {
+//        OracleDatabase oraDB = connectToDatabase();
+        return database.executeRawSPARQL(query);
+
+    }
+
+    /**
+     * Shutdown the reasoner and disconnect from the database
+     */
+    public void close() {
+        logger.debug("Disconnecting");
+        reasoner.dispose();
+//        final OracleDatabase oraDB = connectToDatabase();
+        database.disconnect();
     }
 }

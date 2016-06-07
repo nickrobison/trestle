@@ -1,7 +1,7 @@
 package com.nickrobison.trixie;
 
-import com.nickrobison.trixie.ontology.IOntology;
-import com.nickrobison.trixie.ontology.Ontology;
+import com.nickrobison.trixie.ontology.ITrixieOntology;
+import com.nickrobison.trixie.ontology.OracleOntology;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
@@ -35,12 +35,12 @@ public class TrixieReasoner {
         } else {
 
             final IRI iri = IRI.create(resource);
-            final Optional<IOntology> ontology = Ontology.from(iri)
+            final Optional<ITrixieOntology> ontology = OracleOntology.from(iri)
                     .build();
             if (!ontology.isPresent()) {
-                logger.error("Ontology missing");
+                logger.error("OracleOntology missing");
             }
-            final IOntology rootOntology = ontology.get();
+            final ITrixieOntology rootOntology = ontology.get();
             trixieOntology = rootOntology.getUnderlyingOntology();
             pm = rootOntology.getUnderlyingPrefixManager();
             final OWLDataFactory df = OWLManager.getOWLDataFactory();
@@ -57,7 +57,7 @@ public class TrixieReasoner {
 //            Try to read it back?
             final Set<OWLNamedIndividual> gaulInstances = rootOntology.getInstances(gaulObject);
             if (!rootOntology.isConsistent()) {
-                logger.error("Ontology is inconsistent");
+                logger.error("OracleOntology is inconsistent");
             }
 //            ontology.get().getUnderlyingOntology().getOWLOntologyManager().saveOntology(trixieOntology);
             rootOntology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/test.owl")), false);

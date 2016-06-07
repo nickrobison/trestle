@@ -21,19 +21,32 @@ public class Builder {
     private final static Logger logger = LoggerFactory.getLogger(Builder.class);
 
     private final IRI iri;
+    private Optional<String> connectionString = Optional.empty();
+    private Optional<String> username = Optional.empty();
+    private Optional<String> password = Optional.empty();
 //    private Optional<DefaultPrefixManager> pm = Optional.empty();
 
     public Builder(final IRI iri) {
         this.iri = iri;
     }
 
-    public Optional<IOntology> build() throws OWLOntologyCreationException {
+    public Builder(final IRI iri, final String connectionString, String username, String password) {
+        this.iri = iri;
+        this.connectionString = Optional.of(connectionString);
+        this.username = Optional.of(username);
+        this.password = Optional.of(password);
+    }
+
+    public Optional<ITrixieOntology> build() throws OWLOntologyCreationException {
         final OWLOntologyManager owlOntologyManager = OWLManager.createOWLOntologyManager();
         final OWLOntology owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument(iri);
-        return Optional.of(new Ontology(
+        return Optional.of(new OracleOntology(
                 owlOntology,
                 defaultPrefixManager(),
-                classify(owlOntology, new ConsoleProgressMonitor())
+                classify(owlOntology, new ConsoleProgressMonitor()),
+                connectionString.orElse(""),
+                username.orElse(""),
+                password.orElse("")
         ));
 
     }

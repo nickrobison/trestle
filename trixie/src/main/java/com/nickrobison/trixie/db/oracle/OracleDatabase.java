@@ -1,14 +1,14 @@
 package com.nickrobison.trixie.db.oracle;
 
 import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.query.*;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.util.FileManager;
 import com.nickrobison.trixie.db.IOntologyDatabase;
 import oracle.spatial.rdf.client.jena.GraphOracleSem;
 import oracle.spatial.rdf.client.jena.ModelOracleSem;
 import oracle.spatial.rdf.client.jena.Oracle;
+import oracle.spatial.rdf.client.jena.OracleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,14 +21,16 @@ import java.sql.SQLException;
 public class OracleDatabase implements IOntologyDatabase {
 
     private static final Logger logger = LoggerFactory.getLogger(OracleDatabase.class);
+    public static final String MODEL_NAME = "test1";
 
     private final Oracle oracle;
-    private final Model model;
-    private final Graph graph;
+    private Model model;
+    private Graph graph;
 
-    public OracleDatabase() throws SQLException {
-        oracle = new Oracle("jdbc:oracle:thin:@oracle:1521:spatial", "spatial", "spatialUser");
-        model = ModelOracleSem.createOracleSemModel(oracle, "test2");
+    public OracleDatabase(String connectionString, String username, String password) throws SQLException {
+//        oracle = new Oracle("jdbc:oracle:thin:@oracle:1521:spatial", "spatial", "spatialUser");
+        oracle = new Oracle(connectionString, username, password);
+        model = ModelOracleSem.createOracleSemModel(oracle, MODEL_NAME);
 
         graph = model.getGraph();
     }
@@ -39,7 +41,23 @@ public class OracleDatabase implements IOntologyDatabase {
 //    }
 
     public void loadBaseOntology(String filename) {
-        final InputStream is = FileManager.get().open(filename);
+        loadBaseOntology(FileManager.get().open(filename));
+    }
+
+    public void loadBaseOntology(InputStream is) {
+//        Drop the existing model and reload
+        try {
+            OracleUtils.dropSemanticModel(oracle, MODEL_NAME);
+        } catch (SQLException e) {
+//            throw new RuntimeException("Can't drop model", e);
+            logger.error("Cannot drop model {}", MODEL_NAME, e);
+        }
+        logger.debug("Dropped model: {}", MODEL_NAME);
+        try {
+            model = ModelOracleSem.createOracleSemModel(oracle, MODEL_NAME);
+        } catch (SQLException e) {
+            throw new RuntimeException("Cannot create new model", e);
+        }
         model.read(is, null);
     }
 
@@ -63,14 +81,36 @@ public class OracleDatabase implements IOntologyDatabase {
         try {
             oracleGraph.rebuildApplicationTableIndex();
         } catch (SQLException e) {
-            throw new RuntimeException("Cannot rebuild application indexes", e);
+//            throw new RuntimeException("Cannot rebuild application indexes", e);
+            logger.error("Cannot rebuild the indexes on {}", MODEL_NAME, e);
         }
     }
 
-    @Override
     public void writeTuple(String subject, String predicate, String object) {
 //        model.createResource();
 //        final Statement statement = model.createStatement(subject, predicate, object);
 //        model.
     }
+
+    public ResultSet executeRawSPARQL(String queryString) {
+        final Query query = QueryFactory.create(queryString);
+        final QueryExecution qExec = QueryExecutionFactory.create(query, model);
+        final ResultSet resultSet = qExec.execSelect();
+
+        ResultSetFormatter.out(System.out, resultSet, query);
+        qExec.close();
+        return resultSet;
+    }
+
+    public void disconnect() {
+//        graph.close();
+        model.close();
+        try {
+            oracle.dispose();
+        } catch (SQLException e) {
+            throw new RuntimeException("Cannot dispose of Oracle connection", e);
+        }
+    }
+
+
 }
