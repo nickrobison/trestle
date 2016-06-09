@@ -1,6 +1,9 @@
 package com.nickrobison.trixie.ontology;
 
 import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.nickrobison.trixie.db.IOntologyDatabase;
 import com.nickrobison.trixie.db.oracle.OracleDatabase;
 import org.geotools.referencing.CRS;
@@ -18,8 +21,7 @@ import uk.ac.manchester.cs.factplusplus.owlapiv3.FaCTPlusPlusReasoner;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by nrobison on 5/23/16.
@@ -96,6 +98,51 @@ public class OracleOntology implements ITrixieOntology {
 //    FIXME(nrobison): I think the reasoner is out of sync, so this is completely wrong right now.
     public Set<OWLNamedIndividual> getInstances(OWLClass owlClass) {
         return reasoner.getInstances(owlClass, false).getFlattened();
+    }
+
+    public Optional<OWLNamedIndividual> getIndividual(OWLNamedIndividual individual) {
+        final OWLDataFactory df = reasoner.getOWLDataFactory();
+        List<AddAxiom> ontologyAxioms = new ArrayList<>();
+
+//        Need to pass the full IRI, Jena doesn't understand prefixes
+        final Resource singleResource = database.getIndividual(getFullIRI(individual.getIRI()));
+        //        Build the individual
+        final StmtIterator stmtIterator = singleResource.listProperties();
+        int statementCount = 0;
+        while (stmtIterator.hasNext()) {
+            final Statement statement = stmtIterator.nextStatement();
+            final AddAxiom addAxiom;
+//            FIXME(nrobison): This is pretty gross right now, only supports basic 
+            if (statement.getObject().isLiteral()) {
+                final OWLDataProperty owlDataProperty = df.getOWLDataProperty(IRI.create(statement.getPredicate().toString()));
+                final OWLLiteral owlLiteral = df.getOWLLiteral(statement.getLiteral().getLexicalForm(), OWL2Datatype.getDatatype(IRI.create(statement.getLiteral().getDatatypeURI())));
+                 addAxiom = new AddAxiom(ontology, df.getOWLDataPropertyAssertionAxiom(owlDataProperty, individual, owlLiteral));
+                ontologyAxioms.add(addAxiom);
+                applyChange(addAxiom);
+//                Commit the change, for now.
+            } else if (statement.getObject().isURIResource()) {
+                final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(IRI.create(statement.getPredicate().toString()));
+                final OWLNamedIndividual owlObjectTarget = df.getOWLNamedIndividual(IRI.create(statement.getObject().toString()));
+                addAxiom = new AddAxiom(ontology, df.getOWLObjectPropertyAssertionAxiom(owlObjectProperty, individual, owlObjectTarget));
+                ontologyAxioms.add(addAxiom);
+            } else {
+                throw new RuntimeException("Cannot parse this statement: " + statement);
+            }
+            applyChange(addAxiom);
+            statementCount++;
+        }
+        if (statementCount > 0) {
+            return Optional.of(individual);
+        } else {
+            return Optional.empty();
+        }
+
+//        Get it back from the ontology?
+//        Commit the changes and return
+//        applyChange((OWLAxiomChange[]) ontologyAxioms.toArray());
+//        return individual;
+
+//        singleResource.listProperties();
     }
 
     /**
@@ -232,6 +279,15 @@ public class OracleOntology implements ITrixieOntology {
 //
 //        return oraDB;
 //    }
+
+    /**
+     * Converts a prefixed IRI to the full one for the reasoner
+     * @param iri - Prefixed IRI to convert
+     * @return - IRI with full URI attached
+     */
+    public IRI getFullIRI(IRI iri) {
+        return pm.getIRI(iri.toString());
+    }
 
     /**
      * Execute a raw SPARQL Query against the ontology

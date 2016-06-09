@@ -2,18 +2,21 @@ package com.nickrobison.trixie.db.oracle;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.query.*;
-import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.*;
 import com.hp.hpl.jena.util.FileManager;
 import com.nickrobison.trixie.db.IOntologyDatabase;
 import oracle.spatial.rdf.client.jena.GraphOracleSem;
 import oracle.spatial.rdf.client.jena.ModelOracleSem;
 import oracle.spatial.rdf.client.jena.Oracle;
 import oracle.spatial.rdf.client.jena.OracleUtils;
+import org.semanticweb.owlapi.model.IRI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by nrobison on 6/1/16.
@@ -100,6 +103,45 @@ public class OracleDatabase implements IOntologyDatabase {
         ResultSetFormatter.out(System.out, resultSet, query);
         qExec.close();
         return resultSet;
+    }
+
+    public Resource getIndividual(IRI iri) {
+        final NsIterator nsIterator = model.listNameSpaces();
+        while (nsIterator.hasNext()) {
+            logger.debug("{}", nsIterator.nextNs());
+        }
+        final Resource resource1 = model.getResource(iri.toString());
+        final StmtIterator stmtIterator = resource1.listProperties();
+        while (stmtIterator.hasNext()) {
+            logger.debug("{}", stmtIterator.next());
+        }
+////        Resource r = model.createResource(iri.toString());
+//        List<Resource> resources = new ArrayList<>();
+////        ResultSet materializedResults;
+//        String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
+//                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> " +
+//                "PREFIX owl: <http://www.w3.org/2002/07/owl#> " +
+//                "PREFIX main_geo: <http://nickrobison.com/dissertation/main_geo.owl#> " +
+//                "SELECT distinct ?m WHERE { ?m ?p ?o FILTER ( ?m =" + iri.toString() + " )}";
+////                "SELECT * WHERE { " + iri.toString() +
+////                " ?p ?o . FILTER( ?p not in (rdf:type))}";
+//
+//        final Query query = QueryFactory.create(queryString);
+//        final QueryExecution qExec = QueryExecutionFactory.create(query, model);
+//        final ResultSet resultSet = qExec.execSelect();
+////        materializedResults = ResultSetFactory.copyResults(resultSet);
+////        qExec.close();
+//        while (resultSet.hasNext()) {
+//            final QuerySolution querySolution = resultSet.nextSolution();
+//            final Resource resource = querySolution.getResource("p");
+////            final Literal literal = querySolution.getLiteral("o");
+////            r.addProperty((Property) resource, literal.getLexicalForm());
+//            resources.add(resource);
+//        }
+//        qExec.close();
+
+
+        return resource1;
     }
 
     public void disconnect() {

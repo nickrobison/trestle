@@ -4,6 +4,7 @@ import com.hp.hpl.jena.query.ResultSet;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -21,6 +22,8 @@ public interface ITrixieOntology {
     DefaultPrefixManager getUnderlyingPrefixManager();
 
     Set<OWLNamedIndividual> getInstances(OWLClass owlClass);
+
+    Optional<OWLNamedIndividual> getIndividual(OWLNamedIndividual individual);
 
     void initializeOntology(boolean oracle);
 

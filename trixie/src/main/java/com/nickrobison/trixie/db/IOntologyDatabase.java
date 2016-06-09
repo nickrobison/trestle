@@ -1,6 +1,8 @@
 package com.nickrobison.trixie.db;
 
 import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.semanticweb.owlapi.model.IRI;
 
 import java.io.InputStream;
 
@@ -20,6 +22,8 @@ public interface IOntologyDatabase {
     void enableBulkLoading();
 
     void rebuildIndexes();
+
+    Resource getIndividual(IRI iri);
 
     void writeTuple(String subject, String predicate, String object);
 
