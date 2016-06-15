@@ -25,6 +25,8 @@ public interface ITrixieOntology {
 
     Optional<OWLNamedIndividual> getIndividual(OWLNamedIndividual individual);
 
+    IRI getFullIRI(IRI iri);
+
     void initializeOntology(boolean oracle);
 
     void initializeOracleOntology(IRI filename);

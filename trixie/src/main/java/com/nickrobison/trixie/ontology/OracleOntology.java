@@ -112,7 +112,7 @@ public class OracleOntology implements ITrixieOntology {
         while (stmtIterator.hasNext()) {
             final Statement statement = stmtIterator.nextStatement();
             final AddAxiom addAxiom;
-//            FIXME(nrobison): This is pretty gross right now, only supports basic 
+//            FIXME(nrobison): This is pretty gross right now, only supports basic
             if (statement.getObject().isLiteral()) {
                 final OWLDataProperty owlDataProperty = df.getOWLDataProperty(IRI.create(statement.getPredicate().toString()));
                 final OWLLiteral owlLiteral = df.getOWLLiteral(statement.getLiteral().getLexicalForm(), OWL2Datatype.getDatatype(IRI.create(statement.getLiteral().getDatatypeURI())));
