@@ -15,6 +15,7 @@
         <!--<owl.version>5.0.2</owl.version>-->
         <owl.version>4.2.5</owl.version>
         <geotools.version>15.0</geotools.version>
+        <pellet.version>2.4.0-SNAPSHOT</pellet.version>
     </properties>
 
     <artifactId>trixie</artifactId>
@@ -64,6 +65,26 @@
             <groupId>net.sourceforge.owlapi</groupId>
             <artifactId>owlexplanation</artifactId>
             <version>2.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.clarkparsia.pellet</groupId>
+            <artifactId>pellet-jena</artifactId>
+            <version>${pellet.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.clarkparsia.pellet</groupId>
+            <artifactId>pellet-owlapi</artifactId>
+            <version>${pellet.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.clarkparsia.pellet</groupId>
+            <artifactId>pellet-modularity</artifactId>
+            <version>${pellet.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.clarkparsia.pellet</groupId>
+            <artifactId>pellet-explanation</artifactId>
+            <version>${pellet.version}</version>
         </dependency>
         <dependency>
             <groupId>com.oracle</groupId>
