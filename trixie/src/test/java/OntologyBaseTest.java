@@ -98,91 +98,91 @@ public class OntologyBaseTest {
 //        Query for specific members
 //        final ITrixieOntology ontology = optionOntology.get();
 
-        final OWLNamedIndividual wgs_84 = df.getOWLNamedIndividual(IRI.create("main_geo:", "WGS_84"));
+        final OWLNamedIndividual wgs_84 = df.getOWLNamedIndividual(ontology.getFullIRI("main_geo:", "WGS_84"));
         final Optional<OWLNamedIndividual> individual = ontology.getIndividual(wgs_84);
         assertTrue("Missing individual", individual.isPresent());
 
-        final OWLNamedIndividual wgs_84_2 = df.getOWLNamedIndividual(IRI.create("main_geo:", "WGS_84_2"));
+        final OWLNamedIndividual wgs_84_2 = df.getOWLNamedIndividual(ontology.getFullIRI("main_geo:", "WGS_84_2"));
         final Optional<OWLNamedIndividual> individual2 = ontology.getIndividual(wgs_84_2);
         assertFalse("Shouldn't return missing individual", individual2.isPresent());
     }
 
     //    Load and query
-    @Test
-    public void testBaseEPSGLoading() {
-//    ITrixieOntology ontology = optionOntology.get();
-
-        final OWLClass crsClass = df.getOWLClass(IRI.create("main_geo:", "CRS").toString(), ontology.getUnderlyingPrefixManager());
-
-        ontology.initializeOntology(false);
-
-        final Set<OWLNamedIndividual> instances = ontology.getInstances(crsClass, true);
-        assertTrue("Should more than 2", instances.size() > 2);
-
-//    Test individual loaded get
-    }
+//    @Test
+//    public void testBaseEPSGLoading() {
+////    ITrixieOntology ontology = optionOntology.get();
+//
+//        final OWLClass crsClass = df.getOWLClass(IRI.create("main_geo:", "CRS").toString(), ontology.getUnderlyingPrefixManager());
+//
+//        ontology.initializeOntology(false);
+//
+//        final Set<OWLNamedIndividual> instances = ontology.getInstances(crsClass, true);
+//        assertTrue("Should more than 2", instances.size() > 2);
+//
+////    Test individual loaded get
+//    }
 
     // Oracle tests
-    @Test
-    public void testOracleBaseOntology() {
-//        ITrixieOntology ontology = optionOntology.get();
-
-        ontology.initializeOracleOntology();
-
-        //        Try to read the base individuals back from the database
-        String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
-                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> " +
-                "SELECT * WHERE {?m rdf:type ?type . ?type rdfs:subClassOf ?class}";
-        final ResultSet rs = ontology.executeSPARQL(queryString);
-        assertEquals("Incorrect number of class results", 44, rs.getRowNumber());
-
-
-        //        Try to read out one of the CRS individuals
-
-        final OWLNamedIndividual wgs_84 = df.getOWLNamedIndividual(IRI.create("main_geo:", "WGS_84"));
-        final Optional<OWLNamedIndividual> baseIndividual = ontology.getIndividual(wgs_84);
-        assertTrue("Base CRS should exist", baseIndividual.isPresent());
-    }
-
-    @Test
-    public void testOracleLoading() {
-//        ITrixieOntology ontology = optionOntology.get();
-
-//        TODO(nrobison): Add some test individuals to save.
-
-//        FIXME(nrobison): Seems like the WKT Strings are throwing errors.
+//    @Test
+//    public void testOracleBaseOntology() {
+////        ITrixieOntology ontology = optionOntology.get();
+//
 //        ontology.initializeOracleOntology();
-        ontology.initializeOntology(true);
+//
+//        //        Try to read the base individuals back from the database
+//        String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
+//                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> " +
+//                "SELECT * WHERE {?m rdf:type ?type . ?type rdfs:subClassOf ?class}";
+//        final ResultSet rs = ontology.executeSPARQL(queryString);
+//        assertEquals("Incorrect number of class results", 44, rs.getRowNumber());
+//
+//
+//        //        Try to read out one of the CRS individuals
+//
+//        final OWLNamedIndividual wgs_84 = df.getOWLNamedIndividual(IRI.create("main_geo:", "WGS_84"));
+//        final Optional<OWLNamedIndividual> baseIndividual = ontology.getIndividual(wgs_84);
+//        assertTrue("Base CRS should exist", baseIndividual.isPresent());
+//    }
+//
+//    @Test
+//    public void testOracleLoading() {
+////        ITrixieOntology ontology = optionOntology.get();
+//
+////        TODO(nrobison): Add some test individuals to save.
+//
+////        FIXME(nrobison): Seems like the WKT Strings are throwing errors.
+////        ontology.initializeOracleOntology();
+//        ontology.initializeOntology(true);
+//
+////        Try to read the base individuals back from the database
+//        String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
+//                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> " +
+//                "SELECT * WHERE {?m rdf:type ?type . ?type rdfs:subClassOf ?class}";
+//        final ResultSet rs = ontology.executeSPARQL(queryString);
+//        assertEquals("Incorrect number of class results", 17081, rs.getRowNumber());
+//
+////        Try to query from the ontology
+//        final OWLClass crsClass = df.getOWLClass(ontology.getFullIRI(IRI.create("main_geo:", "CRS")));
+//        final Set<OWLNamedIndividual> instances = ontology.getInstances(crsClass, true);
+//        assertTrue("Should be more than 2 CRS individuals", instances.size() > 2);
+//
+//
+////        Try to read out one of the CRS individuals
+//
+//        final OWLNamedIndividual wgs_84 = df.getOWLNamedIndividual(IRI.create("main_geo:", "WGS_84"));
+//        final Optional<OWLNamedIndividual> baseIndividual = ontology.getIndividual(wgs_84);
+//        assertTrue("Base CRS should exist", baseIndividual.isPresent());
+//
+//        final OWLNamedIndividual newCRS = df.getOWLNamedIndividual(IRI.create("main_geo:", "4326"));
+//        final Optional<OWLNamedIndividual> newIndividual = ontology.getIndividual(newCRS);
+//        assertTrue("New CRS should exist", newIndividual.isPresent());
+//    }
 
-//        Try to read the base individuals back from the database
-        String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
-                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> " +
-                "SELECT * WHERE {?m rdf:type ?type . ?type rdfs:subClassOf ?class}";
-        final ResultSet rs = ontology.executeSPARQL(queryString);
-        assertEquals("Incorrect number of class results", 17081, rs.getRowNumber());
-
-//        Try to query from the ontology
-        final OWLClass crsClass = df.getOWLClass(ontology.getFullIRI(IRI.create("main_geo:", "CRS")));
-        final Set<OWLNamedIndividual> instances = ontology.getInstances(crsClass, true);
-        assertTrue("Should be more than 2 CRS individuals", instances.size() > 2);
-
-
-//        Try to read out one of the CRS individuals
-
-        final OWLNamedIndividual wgs_84 = df.getOWLNamedIndividual(IRI.create("main_geo:", "WGS_84"));
-        final Optional<OWLNamedIndividual> baseIndividual = ontology.getIndividual(wgs_84);
-        assertTrue("Base CRS should exist", baseIndividual.isPresent());
-
-        final OWLNamedIndividual newCRS = df.getOWLNamedIndividual(IRI.create("main_geo:", "4326"));
-        final Optional<OWLNamedIndividual> newIndividual = ontology.getIndividual(newCRS);
-        assertTrue("New CRS should exist", newIndividual.isPresent());
-    }
-
-    @After
-    public void writeOntology() throws OWLOntologyStorageException {
+//    @Af
+/*    public void writeOntology() throws OWLOntologyStorageException {
 //        optionOntology.get().close();
         ontology.close();
 
 //        optionOntology.get().writeOntology(IRI.create(new File("/Users/nrobison/Desktop/test.owl")), true);
-    }
+    }*/
 }
