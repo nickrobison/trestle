@@ -38,18 +38,27 @@ public class Builder {
         this.password = Optional.of(password);
     }
 
+//    TODO(nrobison): This builder pattern is pretty gross, maybe generify it more?
     public Optional<ITrixieOntology> build() throws OWLOntologyCreationException {
         final OWLOntologyManager owlOntologyManager = OWLManager.createOWLOntologyManager();
         final OWLOntology owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument(iri);
-        return Optional.of(new OracleOntology(
-                owlOntology,
-                defaultPrefixManager(),
-                classify(owlOntology, new ConsoleProgressMonitor()),
-                connectionString.orElse(""),
-                username.orElse(""),
-                password.orElse("")
-        ));
-
+//        If there's no connection string, we can assume that we're returning a local ontology
+        if (connectionString.isPresent()) {
+            return Optional.of(new OracleOntology(
+                    owlOntology,
+                    defaultPrefixManager(),
+                    classify(owlOntology, new ConsoleProgressMonitor()),
+                    connectionString.orElse(""),
+                    username.orElse(""),
+                    password.orElse("")
+            ));
+        } else {
+            return Optional.of(new LocalOntology(
+                    owlOntology,
+                    defaultPrefixManager(),
+                    classify(owlOntology, new ConsoleProgressMonitor())
+            ));
+        }
     }
 
     private static DefaultPrefixManager defaultPrefixManager() {
