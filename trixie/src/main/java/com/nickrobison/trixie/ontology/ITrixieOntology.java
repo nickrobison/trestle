@@ -27,6 +27,8 @@ public interface ITrixieOntology {
 
     IRI getFullIRI(IRI iri);
 
+    IRI getFullIRI(String prefix, String suffix);
+
     void initializeOntology(boolean oracle);
 
     void initializeOracleOntology(IRI filename);

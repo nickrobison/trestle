@@ -292,6 +292,10 @@ public class OracleOntology implements ITrixieOntology {
         return pm.getIRI(iri.toString());
     }
 
+    public IRI getFullIRI(String prefix, String suffix) {
+        return getFullIRI(IRI.create(prefix, suffix));
+    }
+
     /**
      * Execute a raw SPARQL Query against the ontology
      *
