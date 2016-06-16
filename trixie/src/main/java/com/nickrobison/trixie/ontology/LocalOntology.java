@@ -64,12 +64,22 @@ public class LocalOntology implements ITrixieOntology {
         return reasoner.getInstances(owlClass, direct).getFlattened();
     }
 
+//    TODO(nrobison): Does this actually work on a local ontology?
     public Optional<OWLNamedIndividual> getIndividual(OWLNamedIndividual individual) {
-        return null;
+        final Set<OWLNamedIndividual> entities = reasoner.getSameIndividuals(individual).getEntities();
+        if (entities.contains(individual)) {
+            return Optional.of(individual);
+        } else {
+            return Optional.empty();
+        }
     }
 
     public IRI getFullIRI(IRI iri) {
         return pm.getIRI(iri.toString());
+    }
+
+    public IRI getFullIRI(String prefix, String suffix) {
+        return getFullIRI(IRI.create(prefix, suffix));
     }
 
     public void initializeOntology(boolean oracle) {
