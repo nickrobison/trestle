@@ -21,7 +21,7 @@ public interface ITrixieOntology {
 
     DefaultPrefixManager getUnderlyingPrefixManager();
 
-    Set<OWLNamedIndividual> getInstances(OWLClass owlClass);
+    Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean direct);
 
     Optional<OWLNamedIndividual> getIndividual(OWLNamedIndividual individual);
 

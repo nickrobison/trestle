@@ -17,7 +17,7 @@ import static junit.framework.TestCase.*;
 /**
  * Created by nrobison on 6/3/16.
  */
-public class OntologySetupTest {
+public class OracleSetupTest {
 
     private static URL ontologyResource;
     private Optional<ITrixieOntology> optionOntology;
@@ -26,12 +26,12 @@ public class OntologySetupTest {
     @BeforeClass
     public static void init() {
         df = OWLManager.getOWLDataFactory();
-        ontologyResource = OntologySetupTest.class.getClassLoader().getResource("main_geo.owl");
+        ontologyResource = OracleSetupTest.class.getClassLoader().getResource("main_geo.owl");
     }
 
     @Before
     public void testOntologyInit() throws OWLOntologyCreationException {
-        assertNotNull("OracleOntology Missing", ontologyResource);
+        assertNotNull("OWL File Missing", ontologyResource);
 
         final IRI iri = IRI.create(ontologyResource);
         optionOntology = OracleOntology.withDBConnection(iri,
@@ -50,11 +50,20 @@ public class OntologySetupTest {
         ITrixieOntology ontology = optionOntology.get();
 
         final OWLClass crsClass = df.getOWLClass(IRI.create("main_geo:", "CRS").toString(), ontology.getUnderlyingPrefixManager());
+        final OWLClass geographicClass = df.getOWLClass(IRI.create("main_geo:", "GeographicCRS").toString(), ontology.getUnderlyingPrefixManager());
+        final OWLClass projectedClass = df.getOWLClass(IRI.create("main_geo:", "ProjectedCRS").toString(), ontology.getUnderlyingPrefixManager());
 
 //        ontology.initializeOntology(false);
 
-        final Set<OWLNamedIndividual> instances = ontology.getInstances(crsClass);
+        final Set<OWLNamedIndividual> instances = ontology.getInstances(crsClass, false);
         assertEquals("Should 2", 2, instances.size());
+
+        final Set<OWLNamedIndividual> instances1 = ontology.getInstances(geographicClass, false);
+        assertEquals("Should be 1", 1, instances1.size());
+
+        ontology.getInstances(projectedClass, false);
+        assertEquals("Should be 1", 1, instances1.size());
+
     }
 
     @Test
@@ -80,7 +89,7 @@ public void testBaseEPSGLoading() {
 
         ontology.initializeOntology(false);
 
-    final Set<OWLNamedIndividual> instances = ontology.getInstances(crsClass);
+    final Set<OWLNamedIndividual> instances = ontology.getInstances(crsClass, true);
     assertTrue("Should more than 2", instances.size() > 2);
 
 //    Test individual loaded get
@@ -127,7 +136,7 @@ public void testBaseEPSGLoading() {
 
 //        Try to query from the ontology
         final OWLClass crsClass = df.getOWLClass(ontology.getFullIRI(IRI.create("main_geo:", "CRS")));
-        final Set<OWLNamedIndividual> instances = ontology.getInstances(crsClass);
+        final Set<OWLNamedIndividual> instances = ontology.getInstances(crsClass, true);
         assertTrue("Should be more than 2 CRS individuals", instances.size() > 2);
 
 

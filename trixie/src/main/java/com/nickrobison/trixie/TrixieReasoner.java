@@ -55,7 +55,7 @@ public class TrixieReasoner {
             rootOntology.applyChange(burambiAxiom);
 
 //            Try to read it back?
-            final Set<OWLNamedIndividual> gaulInstances = rootOntology.getInstances(gaulObject);
+            final Set<OWLNamedIndividual> gaulInstances = rootOntology.getInstances(gaulObject, true);
             if (!rootOntology.isConsistent()) {
                 logger.error("OracleOntology is inconsistent");
             }

@@ -1,5 +1,7 @@
 package com.nickrobison.trixie.ontology;
 
+import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
+import com.clarkparsia.pellet.owlapiv3.PelletReasonerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -9,7 +11,6 @@ import org.semanticweb.owlapi.reasoner.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.ac.manchester.cs.factplusplus.owlapiv3.FaCTPlusPlusReasoner;
 
 import java.util.Optional;
 
@@ -60,11 +61,13 @@ public class Builder {
         return pm;
     }
 
-    private static FaCTPlusPlusReasoner classify(final OWLOntology ontology, final ReasonerProgressMonitor prog) {
-        FaCTPlusPlusReasoner reasoner = new FaCTPlusPlusReasoner(
-                ontology,
-                new SimpleConfiguration(prog),
-                BufferingMode.BUFFERING);
+    private static PelletReasoner classify(final OWLOntology ontology, final ReasonerProgressMonitor prog) {
+//        Pellet distinguishes from Buffering and Non-Buffering Ontologies, so no need to manually express it
+        PelletReasoner reasoner = PelletReasonerFactory.getInstance().createReasoner(ontology, new SimpleConfiguration(prog));
+//        FaCTPlusPlusReasoner reasoner = new FaCTPlusPlusReasoner(
+//                ontology,
+//                new SimpleConfiguration(prog),
+//                BufferingMode.BUFFERING);
 
         reasoner.precomputeInferences(
                 InferenceType.CLASS_ASSERTIONS,

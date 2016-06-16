@@ -1,5 +1,6 @@
 package com.nickrobison.trixie.ontology;
 
+import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
@@ -9,6 +10,7 @@ import com.nickrobison.trixie.db.oracle.OracleDatabase;
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
@@ -16,7 +18,6 @@ import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.ac.manchester.cs.factplusplus.owlapiv3.FaCTPlusPlusReasoner;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,11 +34,11 @@ public class OracleOntology implements ITrixieOntology {
     private final static Logger logger = LoggerFactory.getLogger(OracleOntology.class);
     public static final String MAIN_GEO = "main_geo:";
     private final OWLOntology ontology;
-    private final FaCTPlusPlusReasoner reasoner;
+    private final PelletReasoner reasoner;
     private final DefaultPrefixManager pm;
     private final IOntologyDatabase database;
 
-    OracleOntology(OWLOntology ont, DefaultPrefixManager pm, FaCTPlusPlusReasoner reasoner, String connectionString, String username, String password) {
+    OracleOntology(OWLOntology ont, DefaultPrefixManager pm, PelletReasoner reasoner, String connectionString, String username, String password) {
         this.ontology = ont;
         this.pm = pm;
         this.reasoner = reasoner;
@@ -93,15 +94,17 @@ public class OracleOntology implements ITrixieOntology {
      * Returns the set of all instances matching the given class
      *
      * @param owlClass - OWLClass to retrieve
+     * @param direct
      * @return - Returns the set of OWLNamedIndividuals that are members of the given class
      */
 //    FIXME(nrobison): I think the reasoner is out of sync, so this is completely wrong right now.
-    public Set<OWLNamedIndividual> getInstances(OWLClass owlClass) {
-        return reasoner.getInstances(owlClass, false).getFlattened();
+    public Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean direct) {
+        return reasoner.getInstances(owlClass, direct).getFlattened();
     }
 
     public Optional<OWLNamedIndividual> getIndividual(OWLNamedIndividual individual) {
-        final OWLDataFactory df = reasoner.getOWLDataFactory();
+        final OWLDataFactory df = OWLManager.getOWLDataFactory();
+//        final OWLDataFactory df = reasoner.getOWLDataFactory();
         List<AddAxiom> ontologyAxioms = new ArrayList<>();
 
 //        Need to pass the full IRI, Jena doesn't understand prefixes
@@ -176,8 +179,8 @@ public class OracleOntology implements ITrixieOntology {
     private void loadEPSGCodes() {
 
 //        Create data factory
-//        final OWLDataFactory df = OWLManager.getOWLDataFactory();
-        final OWLDataFactory df = reasoner.getOWLDataFactory();
+        final OWLDataFactory df = OWLManager.getOWLDataFactory();
+//        final OWLDataFactory df = reasoner.getOWLDataFactory();
 
         final OWLClass CRSClass = df.getOWLClass(IRI.create(MAIN_GEO, "CRS").toString(), pm);
         final OWLObjectProperty has_property = df.getOWLObjectProperty(IRI.create(MAIN_GEO, "has_property").toString(), pm);
