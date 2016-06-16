@@ -1,14 +1,19 @@
 import com.hp.hpl.jena.query.ResultSet;
 import com.nickrobison.trixie.ontology.ITrixieOntology;
+import com.nickrobison.trixie.ontology.LocalOntology;
 import com.nickrobison.trixie.ontology.OracleOntology;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
@@ -17,37 +22,59 @@ import static junit.framework.TestCase.*;
 /**
  * Created by nrobison on 6/3/16.
  */
-public class OracleSetupTest {
+@RunWith(Parameterized.class)
+public class OntologyBaseTest {
 
-    private static URL ontologyResource;
-    private Optional<ITrixieOntology> optionOntology;
-    private static OWLDataFactory df;
+    private ITrixieOntology ontology;
+    private OWLDataFactory df;
 
-    @BeforeClass
-    public static void init() {
+
+    public OntologyBaseTest(ITrixieOntology ontology) {
+        this.ontology = ontology;
         df = OWLManager.getOWLDataFactory();
-        ontologyResource = OracleSetupTest.class.getClassLoader().getResource("main_geo.owl");
+
     }
 
-    @Before
-    public void testOntologyInit() throws OWLOntologyCreationException {
-        assertNotNull("OWL File Missing", ontologyResource);
-
+    @Parameterized.Parameters
+    public static Collection<Object[]> getParameters() {
+        URL ontologyResource = OntologyBaseTest.class.getClassLoader().getResource("main_geo.owl");
         final IRI iri = IRI.create(ontologyResource);
-        optionOntology = OracleOntology.withDBConnection(iri,
-                "jdbc:oracle:thin:@oracle:1521:spatial",
-                "spatial",
-                "spatialUser")
-                .build();
-        assertTrue("No optionalOntology returned", optionOntology.isPresent());
+
+//        Build ontologies
+        Optional<ITrixieOntology> localOntology = Optional.empty();
+        try {
+             localOntology = LocalOntology
+                    .from(iri)
+                    .build();
+        } catch (OWLOntologyCreationException e) {
+            e.printStackTrace();
+        }
+
+        return Arrays.asList(new Object[][] {
+            {localOntology.orElseThrow(NullPointerException::new)}
+        });
     }
 
-//    Local Tests
+//    @Before
+//    public void setUp() {
+//        df = OWLManager.getOWLDataFactory();
+////        URL ontologyResource = OntologyBaseTest.class.getClassLoader().getResource("main_geo.owl");
+////        assertNotNull("OWL File Missing", ontologyResource);
+//
+////        final IRI iri = IRI.create();
+////        optionOntology = createInstance();
+//        ontology = createInstance();
+////        optionOntology = OracleOntology.withDBConnection(iri,
+////                "jdbc:oracle:thin:@oracle:1521:spatial",
+////                "spatial",
+////                "spatialUser")
+////                .build();
+//    }
 
 
     @Test
     public void testBaseEPSGCodes() {
-        ITrixieOntology ontology = optionOntology.get();
+//        ITrixieOntology ontology = optionOntology.get();
 
         final OWLClass crsClass = df.getOWLClass(IRI.create("main_geo:", "CRS").toString(), ontology.getUnderlyingPrefixManager());
         final OWLClass geographicClass = df.getOWLClass(IRI.create("main_geo:", "GeographicCRS").toString(), ontology.getUnderlyingPrefixManager());
@@ -61,7 +88,7 @@ public class OracleSetupTest {
         final Set<OWLNamedIndividual> instances1 = ontology.getInstances(geographicClass, false);
         assertEquals("Should be 1", 1, instances1.size());
 
-        ontology.getInstances(projectedClass, false);
+        ontology.getInstances(projectedClass, true);
         assertEquals("Should be 1", 1, instances1.size());
 
     }
@@ -69,7 +96,7 @@ public class OracleSetupTest {
     @Test
     public void testIndividualGet() {
 //        Query for specific members
-        final ITrixieOntology ontology = optionOntology.get();
+//        final ITrixieOntology ontology = optionOntology.get();
 
         final OWLNamedIndividual wgs_84 = df.getOWLNamedIndividual(IRI.create("main_geo:", "WGS_84"));
         final Optional<OWLNamedIndividual> individual = ontology.getIndividual(wgs_84);
@@ -80,25 +107,25 @@ public class OracleSetupTest {
         assertFalse("Shouldn't return missing individual", individual2.isPresent());
     }
 
-//    Load and query
+    //    Load and query
     @Test
-public void testBaseEPSGLoading() {
-    ITrixieOntology ontology = optionOntology.get();
+    public void testBaseEPSGLoading() {
+//    ITrixieOntology ontology = optionOntology.get();
 
-    final OWLClass crsClass = df.getOWLClass(IRI.create("main_geo:", "CRS").toString(), ontology.getUnderlyingPrefixManager());
+        final OWLClass crsClass = df.getOWLClass(IRI.create("main_geo:", "CRS").toString(), ontology.getUnderlyingPrefixManager());
 
         ontology.initializeOntology(false);
 
-    final Set<OWLNamedIndividual> instances = ontology.getInstances(crsClass, true);
-    assertTrue("Should more than 2", instances.size() > 2);
+        final Set<OWLNamedIndividual> instances = ontology.getInstances(crsClass, true);
+        assertTrue("Should more than 2", instances.size() > 2);
 
 //    Test individual loaded get
-}
+    }
 
-// Oracle tests
+    // Oracle tests
     @Test
     public void testOracleBaseOntology() {
-        ITrixieOntology ontology = optionOntology.get();
+//        ITrixieOntology ontology = optionOntology.get();
 
         ontology.initializeOracleOntology();
 
@@ -119,7 +146,7 @@ public void testBaseEPSGLoading() {
 
     @Test
     public void testOracleLoading() {
-        ITrixieOntology ontology = optionOntology.get();
+//        ITrixieOntology ontology = optionOntology.get();
 
 //        TODO(nrobison): Add some test individuals to save.
 
@@ -153,7 +180,8 @@ public void testBaseEPSGLoading() {
 
     @After
     public void writeOntology() throws OWLOntologyStorageException {
-        optionOntology.get().close();
+//        optionOntology.get().close();
+        ontology.close();
 
 //        optionOntology.get().writeOntology(IRI.create(new File("/Users/nrobison/Desktop/test.owl")), true);
     }
