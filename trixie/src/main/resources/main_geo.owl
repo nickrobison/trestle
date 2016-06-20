@@ -1,0 +1,915 @@
+<?xml version="1.0"?>
+<Ontology xmlns="http://www.w3.org/2002/07/owl#"
+     xml:base="http://nickrobison.com/dissertation/main_geo.owl"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     ontologyIRI="http://nickrobison.com/dissertation/main_geo.owl">
+    <Prefix name="" IRI="http://nickrobison.com/dissertation/main_geo.owl#"/>
+    <Prefix name="owl" IRI="http://www.w3.org/2002/07/owl#"/>
+    <Prefix name="rdf" IRI="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+    <Prefix name="xml" IRI="http://www.w3.org/XML/1998/namespace"/>
+    <Prefix name="xsd" IRI="http://www.w3.org/2001/XMLSchema#"/>
+    <Prefix name="rdfs" IRI="http://www.w3.org/2000/01/rdf-schema#"/>
+    <Prefix name="main_geo" IRI="http://nickrobison.com/dissertation/main_geo.owl#"/>
+    <Annotation>
+        <AnnotationProperty abbreviatedIRI="owl:versionInfo"/>
+        <Literal xml:lang="en" datatypeIRI="http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral">0.1 - Initital ontology effort</Literal>
+    </Annotation>
+    <Declaration>
+        <Class IRI="#GeographicCRS"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#DateTime"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#Temporal_Relations"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#has_start"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#WGS_84_Web_Mercator"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#Burambi_2"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#UUID"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#overlaps"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#overlap"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Concept"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Level_0_Administrative_Region"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#SpatialObject"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#meet"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#start_of"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#administrative_children"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#ProjectedCRS"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#SpatialProperty"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Year"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#starts"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#CRS"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#located_in"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#ADM1_Code"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Administrative_Region"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#valid_at"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#projection_of"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#EPSG_Code"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#County"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Date"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#ADM0_Code"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#during"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#US_State"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#end_of"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#administrative_parent"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#has_property"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#administrative_level"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#ObjectProperty"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#temporal_equals"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#has_projection"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#has_end"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#IntervalObject"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#overlapped_by"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#started_by"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#Burundi_0"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#finishes"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#ADM0_Code"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TemporalObject"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#StartPoint"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Day"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#DayOfWeek"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Time"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#Bururi_1"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Month"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#meets"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#GAUL_Property"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#met_by"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#spatial_contains"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#EPSG_Code"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#Gitega_1"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#EndPoint"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Level_1_Administrative_Region"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#TemporalProperty"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#ADM1_Code"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#Buyengero_2"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#spatial_equals"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#Ryansoro_2"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#covers"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#Bururi_2"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#after"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#PointObject"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#inside"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#ProjectionProperty"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#GAULProperty"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#GAULRegion"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Property"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#TemporalRelation"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#WKT_String"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#temporal_contains"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#GeographicObject"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#before"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#ADM2_Code"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#SpatialRelation"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#ADM2_Code"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#WGS_84"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Level_2_Administrative_Region"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Country"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#ProjectionProperty"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#covered_by"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#finished_by"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#Ndava_2"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Province"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#property_of"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#WKT_String"/>
+    </Declaration>
+    <EquivalentClasses>
+        <Class IRI="#Country"/>
+        <Class IRI="#Level_0_Administrative_Region"/>
+    </EquivalentClasses>
+    <EquivalentClasses>
+        <Class IRI="#County"/>
+        <Class IRI="#Level_2_Administrative_Region"/>
+    </EquivalentClasses>
+    <EquivalentClasses>
+        <Class IRI="#Level_0_Administrative_Region"/>
+        <ObjectSomeValuesFrom>
+            <ObjectProperty IRI="#spatial_contains"/>
+            <Class IRI="#Level_1_Administrative_Region"/>
+        </ObjectSomeValuesFrom>
+    </EquivalentClasses>
+    <EquivalentClasses>
+        <Class IRI="#Level_1_Administrative_Region"/>
+        <Class IRI="#Province"/>
+    </EquivalentClasses>
+    <EquivalentClasses>
+        <Class IRI="#Level_1_Administrative_Region"/>
+        <Class IRI="#US_State"/>
+    </EquivalentClasses>
+    <SubClassOf>
+        <Class IRI="#ADM0_Code"/>
+        <Class IRI="#GAULProperty"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#ADM1_Code"/>
+        <Class IRI="#GAULProperty"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#ADM2_Code"/>
+        <Class IRI="#GAULProperty"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Administrative_Region"/>
+        <Class IRI="#Concept"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#CRS"/>
+        <Class IRI="#Concept"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#CRS"/>
+        <ObjectMinCardinality cardinality="1">
+            <ObjectProperty IRI="#has_property"/>
+            <Class IRI="#ProjectionProperty"/>
+        </ObjectMinCardinality>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#CRS"/>
+        <DataMinCardinality cardinality="1">
+            <DataProperty IRI="#ProjectionProperty"/>
+        </DataMinCardinality>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Country"/>
+        <Class IRI="#Administrative_Region"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#County"/>
+        <Class IRI="#Administrative_Region"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Date"/>
+        <Class IRI="#Time"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#DateTime"/>
+        <Class IRI="#Time"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Day"/>
+        <Class IRI="#Time"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#DayOfWeek"/>
+        <Class IRI="#Time"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#EPSG_Code"/>
+        <Class IRI="#ProjectionProperty"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#GAULProperty"/>
+        <Class IRI="#Property"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#GAULRegion"/>
+        <Class IRI="#Administrative_Region"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#GAULRegion"/>
+        <Class IRI="#GeographicObject"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#GAULRegion"/>
+        <ObjectSomeValuesFrom>
+            <ObjectProperty IRI="#administrative_parent"/>
+            <Class IRI="#GAULRegion"/>
+        </ObjectSomeValuesFrom>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#GAULRegion"/>
+        <DataSomeValuesFrom>
+            <DataProperty IRI="#GAUL_Property"/>
+            <Datatype abbreviatedIRI="rdfs:Literal"/>
+        </DataSomeValuesFrom>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#GAULRegion"/>
+        <DataExactCardinality cardinality="1">
+            <DataProperty IRI="#UUID"/>
+        </DataExactCardinality>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#GeographicCRS"/>
+        <Class IRI="#CRS"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#GeographicObject"/>
+        <Class IRI="#SpatialObject"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#GeographicObject"/>
+        <ObjectExactCardinality cardinality="1">
+            <ObjectProperty IRI="#has_projection"/>
+            <Class IRI="#CRS"/>
+        </ObjectExactCardinality>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#IntervalObject"/>
+        <Class IRI="#TemporalObject"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#IntervalObject"/>
+        <ObjectExactCardinality cardinality="1">
+            <ObjectProperty IRI="#has_end"/>
+            <Class IRI="#Time"/>
+        </ObjectExactCardinality>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#IntervalObject"/>
+        <ObjectMaxCardinality cardinality="1">
+            <ObjectProperty IRI="#has_start"/>
+            <Class IRI="#Time"/>
+        </ObjectMaxCardinality>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Level_0_Administrative_Region"/>
+        <Class IRI="#Administrative_Region"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Level_1_Administrative_Region"/>
+        <Class IRI="#Administrative_Region"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Level_1_Administrative_Region"/>
+        <ObjectSomeValuesFrom>
+            <ObjectProperty IRI="#spatial_contains"/>
+            <Class IRI="#Level_2_Administrative_Region"/>
+        </ObjectSomeValuesFrom>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Level_2_Administrative_Region"/>
+        <Class IRI="#Administrative_Region"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Month"/>
+        <Class IRI="#Time"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#PointObject"/>
+        <Class IRI="#TemporalObject"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#PointObject"/>
+        <ObjectMinCardinality cardinality="1">
+            <ObjectProperty IRI="#valid_at"/>
+            <Class IRI="#Time"/>
+        </ObjectMinCardinality>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#ProjectedCRS"/>
+        <Class IRI="#CRS"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#ProjectionProperty"/>
+        <Class IRI="#Property"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Province"/>
+        <Class IRI="#Administrative_Region"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Time"/>
+        <Class IRI="#Property"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#US_State"/>
+        <Class IRI="#Administrative_Region"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#WKT_String"/>
+        <Class IRI="#ProjectionProperty"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Year"/>
+        <Class IRI="#Time"/>
+    </SubClassOf>
+    <ClassAssertion>
+        <Class IRI="#GAULRegion"/>
+        <NamedIndividual IRI="#Burambi_2"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#GAULRegion"/>
+        <NamedIndividual IRI="#Burundi_0"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#GAULRegion"/>
+        <NamedIndividual IRI="#Bururi_1"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#GAULRegion"/>
+        <NamedIndividual IRI="#Bururi_2"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#GAULRegion"/>
+        <NamedIndividual IRI="#Buyengero_2"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#GAULRegion"/>
+        <NamedIndividual IRI="#Gitega_1"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#GAULRegion"/>
+        <NamedIndividual IRI="#Ndava_2"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#GAULRegion"/>
+        <NamedIndividual IRI="#Ryansoro_2"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#GeographicCRS"/>
+        <NamedIndividual IRI="#WGS_84"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#ProjectedCRS"/>
+        <NamedIndividual IRI="#WGS_84_Web_Mercator"/>
+    </ClassAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#administrative_parent"/>
+        <NamedIndividual IRI="#Burambi_2"/>
+        <NamedIndividual IRI="#Bururi_1"/>
+    </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#has_projection"/>
+        <NamedIndividual IRI="#Burambi_2"/>
+        <NamedIndividual IRI="#WGS_84"/>
+    </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#has_projection"/>
+        <NamedIndividual IRI="#Burundi_0"/>
+        <NamedIndividual IRI="#WGS_84"/>
+    </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#administrative_parent"/>
+        <NamedIndividual IRI="#Bururi_1"/>
+        <NamedIndividual IRI="#Burundi_0"/>
+    </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#has_projection"/>
+        <NamedIndividual IRI="#Bururi_1"/>
+        <NamedIndividual IRI="#WGS_84"/>
+    </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#administrative_parent"/>
+        <NamedIndividual IRI="#Bururi_2"/>
+        <NamedIndividual IRI="#Bururi_1"/>
+    </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#has_projection"/>
+        <NamedIndividual IRI="#Bururi_2"/>
+        <NamedIndividual IRI="#WGS_84"/>
+    </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#administrative_parent"/>
+        <NamedIndividual IRI="#Buyengero_2"/>
+        <NamedIndividual IRI="#Bururi_1"/>
+    </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#has_projection"/>
+        <NamedIndividual IRI="#Buyengero_2"/>
+        <NamedIndividual IRI="#WGS_84"/>
+    </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#administrative_parent"/>
+        <NamedIndividual IRI="#Gitega_1"/>
+        <NamedIndividual IRI="#Burundi_0"/>
+    </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#has_projection"/>
+        <NamedIndividual IRI="#Gitega_1"/>
+        <NamedIndividual IRI="#WGS_84"/>
+    </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#has_projection"/>
+        <NamedIndividual IRI="#Ndava_2"/>
+        <NamedIndividual IRI="#WGS_84"/>
+    </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#administrative_parent"/>
+        <NamedIndividual IRI="#Ryansoro_2"/>
+        <NamedIndividual IRI="#Gitega_1"/>
+    </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#has_projection"/>
+        <NamedIndividual IRI="#Ryansoro_2"/>
+        <NamedIndividual IRI="#WGS_84"/>
+    </ObjectPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#ADM0_Code"/>
+        <NamedIndividual IRI="#Burundi_0"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#integer">43</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#ADM0_Code"/>
+        <NamedIndividual IRI="#Ndava_2"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#integer">43</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#ADM1_Code"/>
+        <NamedIndividual IRI="#Ndava_2"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#integer">40555</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#ADM2_Code"/>
+        <NamedIndividual IRI="#Ndava_2"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#integer">40667</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#ADM0_Code"/>
+        <NamedIndividual IRI="#Ryansoro_2"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#integer">43</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#ADM1_Code"/>
+        <NamedIndividual IRI="#Ryansoro_2"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#integer">40548</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#ADM2_Code"/>
+        <NamedIndividual IRI="#Ryansoro_2"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#integer">40621</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#EPSG_Code"/>
+        <NamedIndividual IRI="#WGS_84"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#integer">4326</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#WKT_String"/>
+        <NamedIndividual IRI="#WGS_84"/>
+        <Literal datatypeIRI="http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral">GEOGCS[&quot;WGS 84&quot;,
+    DATUM[&quot;WGS_1984&quot;,
+        SPHEROID[&quot;WGS 84&quot;,6378137,298.257223563,
+            AUTHORITY[&quot;EPSG&quot;,&quot;7030&quot;]],
+        AUTHORITY[&quot;EPSG&quot;,&quot;6326&quot;]],
+    PRIMEM[&quot;Greenwich&quot;,0,
+        AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],
+    UNIT[&quot;degree&quot;,0.01745329251994328,
+        AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],
+    AUTHORITY[&quot;EPSG&quot;,&quot;4326&quot;]]</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#EPSG_Code"/>
+        <NamedIndividual IRI="#WGS_84_Web_Mercator"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#integer">3857</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#WKT_String"/>
+        <NamedIndividual IRI="#WGS_84_Web_Mercator"/>
+        <Literal xml:lang="null +wktext  +no_defs&quot;],     authority[&quot;epsg&quot;,&quot;3857&quot;]]" datatypeIRI="http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral">PROJCS[&quot;WGS 84 / Pseudo-Mercator&quot;,
+    GEOGCS[&quot;WGS 84&quot;,
+        DATUM[&quot;WGS_1984&quot;,
+            SPHEROID[&quot;WGS 84&quot;,6378137,298.257223563,
+                AUTHORITY[&quot;EPSG&quot;,&quot;7030&quot;]],
+            AUTHORITY[&quot;EPSG&quot;,&quot;6326&quot;]],
+        PRIMEM[&quot;Greenwich&quot;,0,
+            AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],
+        UNIT[&quot;degree&quot;,0.0174532925199433,
+            AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],
+        AUTHORITY[&quot;EPSG&quot;,&quot;4326&quot;]],
+    PROJECTION[&quot;Mercator_1SP&quot;],
+    PARAMETER[&quot;central_meridian&quot;,0],
+    PARAMETER[&quot;scale_factor&quot;,1],
+    PARAMETER[&quot;false_easting&quot;,0],
+    PARAMETER[&quot;false_northing&quot;,0],
+    UNIT[&quot;metre&quot;,1,
+        AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],
+    AXIS[&quot;X&quot;,EAST],
+    AXIS[&quot;Y&quot;,NORTH],
+    EXTENSION[&quot;PROJ4&quot;,&quot;+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=</Literal>
+    </DataPropertyAssertion>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#after"/>
+        <ObjectProperty IRI="#TemporalRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#before"/>
+        <ObjectProperty IRI="#TemporalRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#covered_by"/>
+        <ObjectProperty IRI="#SpatialRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#covers"/>
+        <ObjectProperty IRI="#SpatialRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#during"/>
+        <ObjectProperty IRI="#TemporalRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#end_of"/>
+        <ObjectProperty IRI="#Temporal_Relations"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#finished_by"/>
+        <ObjectProperty IRI="#TemporalRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#finishes"/>
+        <ObjectProperty IRI="#TemporalRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#has_end"/>
+        <ObjectProperty IRI="#Temporal_Relations"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#has_start"/>
+        <ObjectProperty IRI="#Temporal_Relations"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#inside"/>
+        <ObjectProperty IRI="#SpatialRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#located_in"/>
+        <ObjectProperty IRI="#SpatialRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#meet"/>
+        <ObjectProperty IRI="#SpatialRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#meets"/>
+        <ObjectProperty IRI="#TemporalRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#met_by"/>
+        <ObjectProperty IRI="#TemporalRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#overlap"/>
+        <ObjectProperty IRI="#SpatialRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#overlapped_by"/>
+        <ObjectProperty IRI="#TemporalRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#overlaps"/>
+        <ObjectProperty IRI="#TemporalRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#projection_of"/>
+        <ObjectProperty abbreviatedIRI="owl:topObjectProperty"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#spatial_contains"/>
+        <ObjectProperty IRI="#SpatialRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#spatial_equals"/>
+        <ObjectProperty IRI="#SpatialRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#start_of"/>
+        <ObjectProperty IRI="#Temporal_Relations"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#started_by"/>
+        <ObjectProperty IRI="#TemporalRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#starts"/>
+        <ObjectProperty IRI="#TemporalRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#temporal_contains"/>
+        <ObjectProperty IRI="#TemporalRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#temporal_equals"/>
+        <ObjectProperty IRI="#TemporalRelation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#valid_at"/>
+        <ObjectProperty IRI="#Temporal_Relations"/>
+    </SubObjectPropertyOf>
+    <InverseObjectProperties>
+        <ObjectProperty IRI="#TemporalRelation"/>
+        <ObjectProperty IRI="#starts"/>
+    </InverseObjectProperties>
+    <InverseObjectProperties>
+        <ObjectProperty IRI="#administrative_children"/>
+        <ObjectProperty IRI="#administrative_parent"/>
+    </InverseObjectProperties>
+    <InverseObjectProperties>
+        <ObjectProperty IRI="#covered_by"/>
+        <ObjectProperty IRI="#covers"/>
+    </InverseObjectProperties>
+    <InverseObjectProperties>
+        <ObjectProperty IRI="#end_of"/>
+        <ObjectProperty IRI="#has_end"/>
+    </InverseObjectProperties>
+    <InverseObjectProperties>
+        <ObjectProperty IRI="#finished_by"/>
+        <ObjectProperty IRI="#finishes"/>
+    </InverseObjectProperties>
+    <InverseObjectProperties>
+        <ObjectProperty IRI="#has_projection"/>
+        <ObjectProperty IRI="#projection_of"/>
+    </InverseObjectProperties>
+    <InverseObjectProperties>
+        <ObjectProperty IRI="#has_property"/>
+        <ObjectProperty IRI="#property_of"/>
+    </InverseObjectProperties>
+    <InverseObjectProperties>
+        <ObjectProperty IRI="#has_start"/>
+        <ObjectProperty IRI="#start_of"/>
+    </InverseObjectProperties>
+    <InverseObjectProperties>
+        <ObjectProperty IRI="#located_in"/>
+        <ObjectProperty IRI="#spatial_contains"/>
+    </InverseObjectProperties>
+    <InverseObjectProperties>
+        <ObjectProperty IRI="#meets"/>
+        <ObjectProperty IRI="#met_by"/>
+    </InverseObjectProperties>
+    <InverseObjectProperties>
+        <ObjectProperty IRI="#overlapped_by"/>
+        <ObjectProperty IRI="#overlaps"/>
+    </InverseObjectProperties>
+    <TransitiveObjectProperty>
+        <ObjectProperty IRI="#administrative_parent"/>
+    </TransitiveObjectProperty>
+    <TransitiveObjectProperty>
+        <ObjectProperty IRI="#located_in"/>
+    </TransitiveObjectProperty>
+    <TransitiveObjectProperty>
+        <ObjectProperty IRI="#spatial_contains"/>
+    </TransitiveObjectProperty>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#ADM0_Code"/>
+        <DataProperty IRI="#GAUL_Property"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#ADM1_Code"/>
+        <DataProperty IRI="#GAUL_Property"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#ADM2_Code"/>
+        <DataProperty IRI="#GAUL_Property"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#EPSG_Code"/>
+        <DataProperty IRI="#ProjectionProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#EndPoint"/>
+        <DataProperty IRI="#TemporalProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#GAUL_Property"/>
+        <DataProperty IRI="#ObjectProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#ProjectionProperty"/>
+        <DataProperty IRI="#SpatialProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#StartPoint"/>
+        <DataProperty IRI="#TemporalProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#WKT_String"/>
+        <DataProperty IRI="#ProjectionProperty"/>
+    </SubDataPropertyOf>
+    <DataPropertyRange>
+        <DataProperty IRI="#EPSG_Code"/>
+        <Datatype abbreviatedIRI="xsd:integer"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#UUID"/>
+        <Datatype abbreviatedIRI="xsd:string"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#WKT_String"/>
+        <Datatype abbreviatedIRI="xsd:string"/>
+    </DataPropertyRange>
+</Ontology>
+
+
+
+<!-- Generated by the OWL API (version 4.2.5.20160517-0735) https://github.com/owlcs/owlapi -->
+
