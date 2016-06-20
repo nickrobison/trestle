@@ -5,6 +5,7 @@ import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
+import com.nickrobison.trixie.common.EPSGParser;
 import com.nickrobison.trixie.db.IOntologyDatabase;
 import com.nickrobison.trixie.db.oracle.OracleDatabase;
 import org.geotools.referencing.CRS;
@@ -177,66 +178,8 @@ public class OracleOntology implements ITrixieOntology {
     }
 
     private void loadEPSGCodes() {
-
-//        Create data factory
-        final OWLDataFactory df = OWLManager.getOWLDataFactory();
-//        final OWLDataFactory df = reasoner.getOWLDataFactory();
-
-        final OWLClass CRSClass = df.getOWLClass(IRI.create(MAIN_GEO, "CRS").toString(), pm);
-        final OWLObjectProperty has_property = df.getOWLObjectProperty(IRI.create(MAIN_GEO, "has_property").toString(), pm);
-        final OWLDataProperty EPSGCodeProperty = df.getOWLDataProperty(IRI.create(MAIN_GEO, "EPSG_Code").toString(), pm);
-        final OWLDataProperty is_projected = df.getOWLDataProperty(IRI.create(MAIN_GEO, "is_projected").toString(), pm);
-        final OWLDataProperty WKTStringProperty = df.getOWLDataProperty(IRI.create(MAIN_GEO, "WKT_String").toString(), pm);
-
-//        We need to open the EPSG database and write in the projections
-        final Set<String> supportedEPSGCodes = CRS.getSupportedCodes("EPSG");
-        for (String code : supportedEPSGCodes) {
-            CoordinateReferenceSystem crs;
-//            TODO(nrobison): Figure out how to parse the rest of the EPSG codes
-//            TODO(nrobison): Change the EPSG codes to strings
-            try {
-//                Some of the EPSG codes come back as Strings, so we need to handle them appropriately
-                try {
-                    final int epsgCode = Integer.parseInt(code);
-                    crs = CRS.decode("EPSG:" + epsgCode);
-                } catch (NumberFormatException e) {
-                    crs = CRS.decode(code);
-                }
-
-            } catch (FactoryException e) {
-                logger.warn("Can't decode: {}", code, e);
-                continue;
-            }
-//                    Create the CRS individual
-            final IRI crsIRI = IRI.create(MAIN_GEO, code);
-            final OWLNamedIndividual crsIndividual = df.getOWLNamedIndividual(crsIRI.toString(), pm);
-            final AddAxiom classAssertionAxiom = new AddAxiom(ontology, df.getOWLClassAssertionAxiom(CRSClass, crsIndividual));
-
-//            Add the projection properties
-//            EPSG Code
-            final OWLLiteral epsgLiteral = df.getOWLLiteral(code, OWL2Datatype.XSD_INTEGER);
-            final AddAxiom epsgCodeAxiom = new AddAxiom(ontology, df.getOWLDataPropertyAssertionAxiom(EPSGCodeProperty, crsIndividual, epsgLiteral));
-
-//            WKT String
-            final OWLLiteral wktLiteral = df.getOWLLiteral(crs.toString(), OWL2Datatype.XSD_STRING);
-            final AddAxiom wktStringAxiom = new AddAxiom(ontology, df.getOWLDataPropertyAssertionAxiom(WKTStringProperty, crsIndividual, wktLiteral));
-
-//            is projected?
-//            TODO(nrobison): Figure out projection property
-            final OWLLiteral projectedLiteral = df.getOWLLiteral(false);
-            final AddAxiom projectedAxiom = new AddAxiom(ontology, df.getOWLDataPropertyAssertionAxiom(is_projected, crsIndividual, projectedLiteral));
-//            final OWLNamedIndividual epsgCode = df.getOWLNamedIndividual(IRI.create("main_geo:", code).toString(), pm);
-//            final AddAxiom epsgCodeAxiom = new AddAxiom(ontology, df.getOWLClassAssertionAxiom(EPSGCodeProperty, epsgCode));
-//            df.getOWLDataPropertyAssertionAxiom()
-////            applyChange(epsgCodeAxiom);
-////            final OWLObjectMinCardinality projectionProperty = df.getOWLObjectMinCardinality(1, has_property, epsgCode.asOWLClass());
-////            df.getOWLObjectProperty()
-////            final OWLSubClassOfAxiom owlSubClassOfAxiom = df.getOWLSubClassOfAxiom(crsIndividual.asOWLClass(), projectionProperty);
-//            final AddAxiom projectionAxiom = new AddAxiom(ontology, df.getOWLSubClassOfAxiom(crsIndividual.asOWLClass(), projectionProperty));
-////            applyChange(projectionAxiom);
-            applyChanges(classAssertionAxiom, epsgCodeAxiom, wktStringAxiom, projectedAxiom);
-
-        }
+        final List<AddAxiom> addAxioms = EPSGParser.parseEPSGCodes(this.ontology, this.pm);
+        applyChanges(addAxioms.toArray(new AddAxiom[addAxioms.size()]));
     }
 
     public void initializeOracleOntology(IRI filename) {
