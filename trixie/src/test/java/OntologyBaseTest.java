@@ -1,6 +1,7 @@
 import com.hp.hpl.jena.query.ResultSet;
 import com.nickrobison.trixie.ontology.ITrixieOntology;
 import com.nickrobison.trixie.ontology.OntologyBuilder;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -39,34 +40,33 @@ public class OntologyBaseTest {
 
 //        Build ontologies
 //        Local Ontology
-        Optional<ITrixieOntology> localOntology = Optional.empty();
-        try {
-//            localOntology = LocalOntology
-//                    .from(iri)
-//                    .build();
-            localOntology = new OntologyBuilder()
-                    .fromIRI(iri)
-//                    .name("Test ontology")
-                    .build();
-        } catch (OWLOntologyCreationException e) {
-            e.printStackTrace();
-        }
-
-//        Oracle Ontology
-//        Optional<ITrixieOntology> oracleOntology = Optional.empty();
+//        Optional<ITrixieOntology> localOntology = Optional.empty();
 //        try {
-//            oracleOntology = OracleOntology.withDBConnection(iri,
-//                    "jdbc:oracle:thin:@oracle:1521:spatial",
-//                    "spatial",
-//                    "spatialUser")
+//            localOntology = new OntologyBuilder()
+//                    .fromIRI(iri)
+//                    .name("Test Local Ontology")
 //                    .build();
 //        } catch (OWLOntologyCreationException e) {
 //            e.printStackTrace();
 //        }
 
+//        Oracle Ontology
+        Optional<ITrixieOntology> oracleOntology = Optional.empty();
+        try {
+            oracleOntology = new OntologyBuilder().withDBConnection(
+                    "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
+                    "spatialUser",
+                    "spatial1")
+                    .fromIRI(iri)
+                    .name("test1")
+                    .build();
+        } catch (OWLOntologyCreationException e) {
+            e.printStackTrace();
+        }
+
         return Arrays.asList(new Object[][]{
-                {localOntology.orElseThrow(NullPointerException::new)}
-//                {oracleOntology.orElseThrow(NullPointerException::new)}
+//                {localOntology.orElseThrow(NullPointerException::new)}
+                {oracleOntology.orElseThrow(NullPointerException::new)}
         });
     }
 
@@ -109,13 +109,16 @@ public class OntologyBaseTest {
     @Test
     public void testBaseSPARQLQuery() {
 
+//        Load the ontology
+        ontology.initializeOracleOntology();
+
         //        Try to read the base individuals back from the database
         String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
                 "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> " +
                 "PREFIX : <http://nickrobison.com/dissertation/main_geo.owl#> " +
                 "SELECT * WHERE {?m rdf:type ?type . ?type rdfs:subClassOf ?class}";
         final ResultSet rs = ontology.executeSPARQL(queryString);
-        assertEquals("Incorrect number of class results", 44, rs.getRowNumber());
+        assertEquals("Incorrect number of class results", 30, rs.getRowNumber());
 
 
         //        Try to read out one of the CRS individuals
@@ -123,6 +126,8 @@ public class OntologyBaseTest {
         final OWLNamedIndividual wgs_84 = df.getOWLNamedIndividual(IRI.create("main_geo:", "WGS_84"));
         final Optional<OWLNamedIndividual> baseIndividual = ontology.getIndividual(wgs_84);
         assertTrue("Base CRS should exist", baseIndividual.isPresent());
+
+//        Test the inferencer
     }
 
     @Test
@@ -161,11 +166,11 @@ public class OntologyBaseTest {
         }
     }
 
-//    @Af
-/*    public void writeOntology() throws OWLOntologyStorageException {
+    @After
+    public void finalize() throws OWLOntologyStorageException {
 //        optionOntology.get().close();
         ontology.close();
 
 //        optionOntology.get().writeOntology(IRI.create(new File("/Users/nrobison/Desktop/test.owl")), true);
-    }*/
+    }
 }

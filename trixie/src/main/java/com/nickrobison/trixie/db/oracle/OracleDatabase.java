@@ -15,8 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by nrobison on 6/1/16.
@@ -24,16 +22,16 @@ import java.util.List;
 public class OracleDatabase implements IOntologyDatabase {
 
     private static final Logger logger = LoggerFactory.getLogger(OracleDatabase.class);
-    public static final String MODEL_NAME = "test1";
-
+    private final String modelName;
     private final Oracle oracle;
     private Model model;
     private Graph graph;
 
-    public OracleDatabase(String connectionString, String username, String password) throws SQLException {
+    public OracleDatabase(String connectionString, String username, String password, String modelName) throws SQLException {
 //        oracle = new Oracle("jdbc:oracle:thin:@oracle:1521:spatial", "spatial", "spatialUser");
+        this.modelName = modelName;
         oracle = new Oracle(connectionString, username, password);
-        model = ModelOracleSem.createOracleSemModel(oracle, MODEL_NAME);
+        model = ModelOracleSem.createOracleSemModel(oracle, modelName);
 
         graph = model.getGraph();
     }
@@ -50,14 +48,14 @@ public class OracleDatabase implements IOntologyDatabase {
     public void loadBaseOntology(InputStream is) {
 //        Drop the existing model and reload
         try {
-            OracleUtils.dropSemanticModel(oracle, MODEL_NAME);
+            OracleUtils.dropSemanticModel(oracle, modelName);
         } catch (SQLException e) {
 //            throw new RuntimeException("Can't drop model", e);
-            logger.error("Cannot drop model {}", MODEL_NAME, e);
+            logger.error("Cannot drop model {}", modelName, e);
         }
-        logger.debug("Dropped model: {}", MODEL_NAME);
+        logger.debug("Dropped model: {}", modelName);
         try {
-            model = ModelOracleSem.createOracleSemModel(oracle, MODEL_NAME);
+            model = ModelOracleSem.createOracleSemModel(oracle, modelName);
         } catch (SQLException e) {
             throw new RuntimeException("Cannot create new model", e);
         }
@@ -85,7 +83,7 @@ public class OracleDatabase implements IOntologyDatabase {
             oracleGraph.rebuildApplicationTableIndex();
         } catch (SQLException e) {
 //            throw new RuntimeException("Cannot rebuild application indexes", e);
-            logger.error("Cannot rebuild the indexes on {}", MODEL_NAME, e);
+            logger.error("Cannot rebuild the indexes on {}", modelName, e);
         }
     }
 
