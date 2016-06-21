@@ -30,28 +30,55 @@ public class OntologyBuilder {
     public OntologyBuilder() {
     }
 
+    /**
+     * Loads an initial base ontology from the given IRI
+     * @param iri - IRI of the ontology to load
+     * @return OntologyBuilder
+     */
     public OntologyBuilder fromIRI(IRI iri) {
         this.iri = Optional.of(iri);
         return this;
     }
 
+    /**
+     * Connects to ontology database, if this isn't set, the Builder returns a LocalOntology, otherwise it returns the correct database ontology
+     * @param connectionString - Connection string of database to load
+     * @param username - Username to connect with
+     * @param password - User password
+     * @return - OntologyBuilder
+     */
     public OntologyBuilder withDBConnection(String connectionString, String username, String password) {
         this.connectionString = Optional.of(connectionString);
         this.username = Optional.of(username);
-        this.username = Optional.of(password);
+        this.password = Optional.of(password);
         return this;
     }
 
+    /**
+     * Sets the name of the ontology model, if null, parses the IRI to get the base name
+     * @param ontologyName - Name of the model
+     * @return - OntologyBuilder
+     */
     public OntologyBuilder name(String ontologyName) {
         this.ontologyName = Optional.of(ontologyName);
         return this;
     }
 
+    /**
+     * Sets a custom prefix manager, otherwise a default one is generated
+     * @param pm - DefaultPrefixManger, custom prefix manager
+     * @return - OntologyBuilder
+     */
     public OntologyBuilder withPrefixManager(DefaultPrefixManager pm) {
         this.pm = Optional.of(pm);
         return this;
     }
 
+    /**
+     * Builds and returns the correct ontology (either local or database backed)
+     * @return - ITrixieOntology for the correct ontology configuration
+     * @throws OWLOntologyCreationException
+     */
     public Optional<ITrixieOntology> build() throws OWLOntologyCreationException {
         final OWLOntologyManager owlOntologyManager = OWLManager.createOWLOntologyManager();
         OWLOntology owlOntology;
@@ -64,6 +91,7 @@ public class OntologyBuilder {
 //            If there's a connection string, then we need to return a database Ontology
         if (connectionString.isPresent()) {
             return Optional.of(new OracleOntology(
+                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
                     pm.orElse(createDefaultPrefixManager()),
                     classify(owlOntology, new ConsoleProgressMonitor()),
