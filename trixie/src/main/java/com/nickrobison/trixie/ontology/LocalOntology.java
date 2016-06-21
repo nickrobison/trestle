@@ -29,6 +29,7 @@ import java.util.Set;
 // TODO(nrobison): Make this actually work
 public class LocalOntology implements ITrixieOntology {
 
+    private final String ontologyName;
     private final static Logger logger = LoggerFactory.getLogger(LocalOntology.class);
     private final OWLOntology ontology;
     private final PelletReasoner reasoner;
@@ -36,7 +37,8 @@ public class LocalOntology implements ITrixieOntology {
     private final OntModel model;
 
 
-    LocalOntology(OWLOntology ont, DefaultPrefixManager pm, PelletReasoner reasoner) {
+    LocalOntology(String ontologyName, OWLOntology ont, DefaultPrefixManager pm, PelletReasoner reasoner) {
+        this.ontologyName = ontologyName;
         ontology = ont;
         this.pm = pm;
         this.reasoner = reasoner;
@@ -44,10 +46,6 @@ public class LocalOntology implements ITrixieOntology {
         this.model = ModelFactory.createOntologyModel(PelletReasonerFactory.THE_SPEC);
         this.model.read(ontologyToIS(), null);
 
-    }
-
-    public static Builder from(IRI iri) {
-        return new Builder(iri);
     }
 
     public boolean isConsistent() {
@@ -102,10 +100,12 @@ public class LocalOntology implements ITrixieOntology {
 
 //    oracle boolean has no effect here, since it's a local ontology
     public void initializeOntology(boolean oracle) {
-        logger.debug("Parsing and loading EPSG codes");
-        //        Parse and apply the EPSG codes to the ontology
-        final List<AddAxiom> owlAxiomChanges = EPSGParser.parseEPSGCodes(this.ontology, this.pm);
-        applyChanges((OWLAxiomChange[]) owlAxiomChanges.toArray());
+
+//        TODO(nrobison): No need for EPSG codes right now.
+//        logger.debug("Parsing and loading EPSG codes");
+//        //        Parse and apply the EPSG codes to the ontology
+//        final List<AddAxiom> owlAxiomChanges = EPSGParser.parseEPSGCodes(this.ontology, this.pm);
+//        applyChanges((OWLAxiomChange[]) owlAxiomChanges.toArray());
 
 //        TODO(nrobison): Need to write this to the Jena model.
     }

@@ -35,7 +35,8 @@ public class TrixieReasoner {
         } else {
 
             final IRI iri = IRI.create(resource);
-            final Optional<ITrixieOntology> ontology = OracleOntology.from(iri)
+            final Optional<ITrixieOntology> ontology = new ITrixieOntology.Builder()
+                    .fromIRI(iri)
                     .build();
             if (!ontology.isPresent()) {
                 logger.error("OracleOntology missing");
