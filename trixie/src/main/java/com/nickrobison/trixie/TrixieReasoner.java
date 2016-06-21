@@ -67,7 +67,7 @@ public class TrixieReasoner {
 //            Try to load the ontology into Oracle
 //            We need an RDF/XML ontology to actually work with Jena(?)
             final URL rdfOntology = TrixieReasoner.class.getClassLoader().getResource("main_geo.rdf");
-            rootOntology.initializeOracleOntology(IRI.create(rdfOntology));
+//            rootOntology.initializeOracleOntology(IRI.create(rdfOntology));
 
         }
 
