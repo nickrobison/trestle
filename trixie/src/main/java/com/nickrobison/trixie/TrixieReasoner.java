@@ -1,7 +1,7 @@
 package com.nickrobison.trixie;
 
 import com.nickrobison.trixie.ontology.ITrixieOntology;
-import com.nickrobison.trixie.ontology.OracleOntology;
+import com.nickrobison.trixie.ontology.OntologyBuilder;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
@@ -35,7 +35,8 @@ public class TrixieReasoner {
         } else {
 
             final IRI iri = IRI.create(resource);
-            final Optional<ITrixieOntology> ontology = OracleOntology.from(iri)
+            final Optional<ITrixieOntology> ontology = new OntologyBuilder()
+                    .fromIRI(iri)
                     .build();
             if (!ontology.isPresent()) {
                 logger.error("OracleOntology missing");

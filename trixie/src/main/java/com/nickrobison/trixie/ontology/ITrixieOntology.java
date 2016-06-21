@@ -1,7 +1,14 @@
 package com.nickrobison.trixie.ontology;
 
+import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
+import com.clarkparsia.pellet.owlapiv3.PelletReasonerFactory;
 import com.hp.hpl.jena.query.ResultSet;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.reasoner.ConsoleProgressMonitor;
+import org.semanticweb.owlapi.reasoner.InferenceType;
+import org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor;
+import org.semanticweb.owlapi.reasoner.SimpleConfiguration;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 import java.util.Optional;
@@ -13,8 +20,11 @@ import java.util.Set;
 public interface ITrixieOntology {
 
     boolean isConsistent();
+
     void writeOntology(IRI path, boolean validate) throws OWLOntologyStorageException;
+
     void applyChange(OWLAxiomChange... axiom);
+
     void close();
 
     OWLOntology getUnderlyingOntology();
@@ -36,4 +46,5 @@ public interface ITrixieOntology {
     void initializeOracleOntology();
 
     ResultSet executeSPARQL(String query);
+
 }

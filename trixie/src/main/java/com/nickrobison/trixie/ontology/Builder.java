@@ -54,6 +54,7 @@ public class Builder {
             ));
         } else {
             return Optional.of(new LocalOntology(
+                    "rubbish ontology",
                     owlOntology,
                     defaultPrefixManager(),
                     classify(owlOntology, new ConsoleProgressMonitor())

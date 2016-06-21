@@ -1,7 +1,6 @@
 import com.hp.hpl.jena.query.ResultSet;
 import com.nickrobison.trixie.ontology.ITrixieOntology;
-import com.nickrobison.trixie.ontology.LocalOntology;
-import com.nickrobison.trixie.ontology.OracleOntology;
+import com.nickrobison.trixie.ontology.OntologyBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -40,30 +39,34 @@ public class OntologyBaseTest {
 
 //        Build ontologies
 //        Local Ontology
-//        Optional<ITrixieOntology> localOntology = Optional.empty();
-//        try {
+        Optional<ITrixieOntology> localOntology = Optional.empty();
+        try {
 //            localOntology = LocalOntology
 //                    .from(iri)
 //                    .build();
-//        } catch (OWLOntologyCreationException e) {
-//            e.printStackTrace();
-//        }
-
-//        Oracle Ontology
-        Optional<ITrixieOntology> oracleOntology = Optional.empty();
-        try {
-            oracleOntology = OracleOntology.withDBConnection(iri,
-                    "jdbc:oracle:thin:@oracle:1521:spatial",
-                    "spatial",
-                    "spatialUser")
+            localOntology = new OntologyBuilder()
+                    .fromIRI(iri)
+//                    .name("Test ontology")
                     .build();
         } catch (OWLOntologyCreationException e) {
             e.printStackTrace();
         }
 
+//        Oracle Ontology
+//        Optional<ITrixieOntology> oracleOntology = Optional.empty();
+//        try {
+//            oracleOntology = OracleOntology.withDBConnection(iri,
+//                    "jdbc:oracle:thin:@oracle:1521:spatial",
+//                    "spatial",
+//                    "spatialUser")
+//                    .build();
+//        } catch (OWLOntologyCreationException e) {
+//            e.printStackTrace();
+//        }
+
         return Arrays.asList(new Object[][]{
-//                {localOntology.orElseThrow(NullPointerException::new)}
-                {oracleOntology.orElseThrow(NullPointerException::new)}
+                {localOntology.orElseThrow(NullPointerException::new)}
+//                {oracleOntology.orElseThrow(NullPointerException::new)}
         });
     }
 
