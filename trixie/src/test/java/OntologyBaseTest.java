@@ -40,30 +40,35 @@ public class OntologyBaseTest {
 
 //        Build ontologies
 //        Local Ontology
-//        Optional<ITrixieOntology> localOntology = Optional.empty();
-//        try {
+        Optional<ITrixieOntology> localOntology = Optional.empty();
+        try {
 //            localOntology = LocalOntology
 //                    .from(iri)
 //                    .build();
-//        } catch (OWLOntologyCreationException e) {
-//            e.printStackTrace();
-//        }
-
-//        Oracle Ontology
-        Optional<ITrixieOntology> oracleOntology = Optional.empty();
-        try {
-            oracleOntology = OracleOntology.withDBConnection(iri,
-                    "jdbc:oracle:thin:@oracle:1521:spatial",
-                    "spatial",
-                    "spatialUser")
+            localOntology = new ITrixieOntology
+                    .Builder()
+                    .fromIRI(iri)
+//                    .name("Test ontology")
                     .build();
         } catch (OWLOntologyCreationException e) {
             e.printStackTrace();
         }
 
+//        Oracle Ontology
+//        Optional<ITrixieOntology> oracleOntology = Optional.empty();
+//        try {
+//            oracleOntology = OracleOntology.withDBConnection(iri,
+//                    "jdbc:oracle:thin:@oracle:1521:spatial",
+//                    "spatial",
+//                    "spatialUser")
+//                    .build();
+//        } catch (OWLOntologyCreationException e) {
+//            e.printStackTrace();
+//        }
+
         return Arrays.asList(new Object[][]{
-//                {localOntology.orElseThrow(NullPointerException::new)}
-                {oracleOntology.orElseThrow(NullPointerException::new)}
+                {localOntology.orElseThrow(NullPointerException::new)}
+//                {oracleOntology.orElseThrow(NullPointerException::new)}
         });
     }
 
