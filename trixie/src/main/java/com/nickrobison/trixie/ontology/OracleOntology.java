@@ -152,18 +152,6 @@ public class OracleOntology implements ITrixieOntology {
         ontology.getOWLOntologyManager().saveOntology(ontology, new OWLXMLDocumentFormat(), path);
     }
 
-    public void initializeOntology(boolean oracle) {
-
-//        loadEPSGCodes();
-//        if (isConsistent()) {
-//            logger.error("OracleOntology is inconsistent");
-//        }
-
-        if (oracle) {
-            initializeOracleOntology();
-        }
-    }
-
     private void loadEPSGCodes() {
         final List<AddAxiom> addAxioms = EPSGParser.parseEPSGCodes(this.ontology, this.pm);
         applyChanges(addAxioms.toArray(new AddAxiom[addAxioms.size()]));
@@ -181,7 +169,8 @@ public class OracleOntology implements ITrixieOntology {
         database.rebuildIndexes();
     }
 
-    public void initializeOracleOntology() {
+    public void initializeOntology() {
+        //        loadEPSGCodes();
         //        We need to read out the ontology into a bytestream and then read it back into the oracle format
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
