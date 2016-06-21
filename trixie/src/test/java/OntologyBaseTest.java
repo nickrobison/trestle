@@ -110,7 +110,7 @@ public class OntologyBaseTest {
     public void testBaseSPARQLQuery() {
 
 //        Load the ontology
-        ontology.initializeOracleOntology();
+        ontology.initializeOntology();
 
         //        Try to read the base individuals back from the database
         String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
@@ -126,14 +126,12 @@ public class OntologyBaseTest {
         final OWLNamedIndividual wgs_84 = df.getOWLNamedIndividual(IRI.create("main_geo:", "WGS_84"));
         final Optional<OWLNamedIndividual> baseIndividual = ontology.getIndividual(wgs_84);
         assertTrue("Base CRS should exist", baseIndividual.isPresent());
-
-//        Test the inferencer
     }
 
     @Test
     public void testOntologyLoading() {
 //        ontology.initializeOracleOntology();
-        ontology.initializeOntology(true);
+        ontology.initializeOntology();
 
 //        Try to read the base individuals back from the database
         String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +

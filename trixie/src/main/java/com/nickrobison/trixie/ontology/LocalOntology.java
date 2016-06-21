@@ -14,7 +14,6 @@ import com.hp.hpl.jena.tdb.TDBFactory;
 import com.hp.hpl.jena.tdb.base.file.Location;
 import com.hp.hpl.jena.tdb.setup.StoreParams;
 import com.hp.hpl.jena.tdb.setup.StoreParamsBuilder;
-import com.nickrobison.trixie.common.EPSGParser;
 import org.apache.jena.atlas.lib.NotImplemented;
 import org.apache.jena.query.spatial.EntityDefinition;
 import org.apache.jena.query.spatial.SpatialDatasetFactory;
@@ -32,7 +31,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -143,7 +141,7 @@ public class LocalOntology implements ITrixieOntology {
     }
 
 //    oracle boolean has no effect here, since it's a local ontology
-    public void initializeOntology(boolean oracle) {
+    public void initializeOntology() {
 
 //        TODO(nrobison): No need for EPSG codes right now.
 //        logger.debug("Parsing and loading EPSG codes");
@@ -152,14 +150,6 @@ public class LocalOntology implements ITrixieOntology {
 //        applyChanges((OWLAxiomChange[]) owlAxiomChanges.toArray());
 
 //        TODO(nrobison): Need to write this to the Jena model.
-    }
-
-    public void initializeOracleOntology(IRI filename) {
-
-    }
-
-    public void initializeOracleOntology() {
-
     }
 
     public ResultSet executeSPARQL(String query) {
