@@ -8,9 +8,6 @@ import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.nickrobison.trixie.common.EPSGParser;
 import com.nickrobison.trixie.db.IOntologyDatabase;
 import com.nickrobison.trixie.db.oracle.OracleDatabase;
-import org.geotools.referencing.CRS;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
@@ -34,33 +31,23 @@ public class OracleOntology implements ITrixieOntology {
 
     private final static Logger logger = LoggerFactory.getLogger(OracleOntology.class);
     public static final String MAIN_GEO = "main_geo:";
+    private final String ontologyName;
     private final OWLOntology ontology;
     private final PelletReasoner reasoner;
     private final DefaultPrefixManager pm;
     private final IOntologyDatabase database;
 
-    OracleOntology(OWLOntology ont, DefaultPrefixManager pm, PelletReasoner reasoner, String connectionString, String username, String password) {
+    OracleOntology(String name, OWLOntology ont, DefaultPrefixManager pm, PelletReasoner reasoner, String connectionString, String username, String password) {
+        this.ontologyName = name;
         this.ontology = ont;
         this.pm = pm;
         this.reasoner = reasoner;
         try {
-            this.database = new OracleDatabase(connectionString, username, password);
+            this.database = new OracleDatabase(connectionString, username, password, ontologyName);
         } catch (SQLException e) {
             throw new RuntimeException("Cannot connect to Oracle database", e);
         }
     }
-
-    /**
-     * @param iri - IRI of the OracleOntology to load
-     * @return - new Builder to instantiate ontology
-     */
-//    public static Builder from(IRI iri) {
-//        return new Builder(iri);
-//    }
-//
-//    public static Builder withDBConnection(IRI iri, String connectionString, String username, String password) {
-//        return new Builder(iri, connectionString, username, password);
-//    }
 
     /**
      * @return - Returns the raw underlying ontology
@@ -167,10 +154,10 @@ public class OracleOntology implements ITrixieOntology {
 
     public void initializeOntology(boolean oracle) {
 
-        loadEPSGCodes();
-        if (isConsistent()) {
-            logger.error("OracleOntology is inconsistent");
-        }
+//        loadEPSGCodes();
+//        if (isConsistent()) {
+//            logger.error("OracleOntology is inconsistent");
+//        }
 
         if (oracle) {
             initializeOracleOntology();
