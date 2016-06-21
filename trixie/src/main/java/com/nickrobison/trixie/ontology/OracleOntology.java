@@ -169,8 +169,6 @@ public class OracleOntology implements ITrixieOntology {
         database.rebuildIndexes();
     }
 
-    public void initializeOntology() {
-        //        loadEPSGCodes();
         //        We need to read out the ontology into a bytestream and then read it back into the oracle format
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
