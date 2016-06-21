@@ -3,12 +3,23 @@ package com.nickrobison.trixie.ontology;
 import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
 import com.clarkparsia.pellet.sparqldl.jena.SparqlDLExecutionFactory;
 import com.hp.hpl.jena.ontology.OntModel;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QueryFactory;
-import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.ontology.OntModelSpec;
+import com.hp.hpl.jena.query.*;
+import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.ModelGetter;
+import com.hp.hpl.jena.rdf.model.ModelReader;
+import com.hp.hpl.jena.tdb.TDB;
+import com.hp.hpl.jena.tdb.TDBFactory;
+import com.hp.hpl.jena.tdb.base.file.Location;
+import com.hp.hpl.jena.tdb.setup.StoreParams;
+import com.hp.hpl.jena.tdb.setup.StoreParamsBuilder;
 import com.nickrobison.trixie.common.EPSGParser;
+import org.apache.jena.atlas.lib.NotImplemented;
+import org.apache.jena.query.spatial.EntityDefinition;
+import org.apache.jena.query.spatial.SpatialDatasetFactory;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
 import org.mindswap.pellet.jena.PelletReasonerFactory;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
@@ -18,6 +29,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +40,7 @@ import java.util.Set;
  * Created by nrobison on 6/15/16.
  */
 // TODO(nrobison): Make this actually work
+//    DO NOT USE!!!!! TOTALLY BROKEN, NOT A SINGLE THING WORKS
 public class LocalOntology implements ITrixieOntology {
 
     private final String ontologyName;
@@ -35,6 +49,7 @@ public class LocalOntology implements ITrixieOntology {
     private final PelletReasoner reasoner;
     private final DefaultPrefixManager pm;
     private final OntModel model;
+    private final Dataset ds;
 
 
     LocalOntology(String ontologyName, OWLOntology ont, DefaultPrefixManager pm, PelletReasoner reasoner) {
@@ -43,9 +58,38 @@ public class LocalOntology implements ITrixieOntology {
         this.pm = pm;
         this.reasoner = reasoner;
 //        Instead of a database object, we use a Jena model to support the RDF querying
+        this.ds = initialiseTDB();
+
+
+//        spatial stuff
+        Directory indexDirectory;
+        Dataset spatialDataset = null;
+        try {
+            indexDirectory = FSDirectory.open(new File("./target/data/lucene/").toPath());
+            EntityDefinition ed = new EntityDefinition("entityField", "geoField");
+//            Create a spatial dataset that combines the TDB dataset + the spatial index
+             spatialDataset = SpatialDatasetFactory.createLucene(this.ds, indexDirectory, ed);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        final OntModelSpec spec = PelletReasonerFactory.THE_SPEC;
+        spec.setImportModelGetter(new LocalTDBModelGetter(spatialDataset));
         this.model = ModelFactory.createOntologyModel(PelletReasonerFactory.THE_SPEC);
         this.model.read(ontologyToIS(), null);
+        TDB.sync(this.model);
 
+    }
+
+    private Dataset initialiseTDB() {
+        final String tdbPath = "target/data/tdb";
+        Location location = Location.create(tdbPath);
+        final StoreParams params = StoreParamsBuilder
+                .create()
+                .build();
+//        new File(tdbPath).mkdirs();
+        Location locMem = Location.mem();
+
+        return TDBFactory.createDataset(locMem);
     }
 
     public boolean isConsistent() {
@@ -136,5 +180,34 @@ public class LocalOntology implements ITrixieOntology {
         }
 
         return new ByteArrayInputStream(out.toByteArray());
+    }
+
+//    This comes from an online gist, not sure if it's really necessary or not
+//    https://gist.github.com/ijdickinson/3830267
+    static class LocalTDBModelGetter implements ModelGetter {
+
+        private final Dataset ds;
+
+        LocalTDBModelGetter(Dataset dataset) {
+            this.ds = dataset;
+        }
+
+        @Override
+        public Model getModel(String URL) {
+            throw new NotImplemented("getModel( String ) is no implemented");
+        }
+
+        @Override
+        public Model getModel(String URL, ModelReader loadIfAbsent) {
+            Model m = ds.getNamedModel(URL);
+
+            if (m == null) {
+                m = ModelFactory.createDefaultModel();
+                loadIfAbsent.readModel(m, URL);
+                ds.addNamedModel(URL, m);
+            }
+
+            return m;
+        }
     }
 }

@@ -1,7 +1,6 @@
 import com.hp.hpl.jena.query.ResultSet;
 import com.nickrobison.trixie.ontology.ITrixieOntology;
-import com.nickrobison.trixie.ontology.LocalOntology;
-import com.nickrobison.trixie.ontology.OracleOntology;
+import com.nickrobison.trixie.ontology.OntologyBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -45,8 +44,7 @@ public class OntologyBaseTest {
 //            localOntology = LocalOntology
 //                    .from(iri)
 //                    .build();
-            localOntology = new ITrixieOntology
-                    .Builder()
+            localOntology = new OntologyBuilder()
                     .fromIRI(iri)
 //                    .name("Test ontology")
                     .build();

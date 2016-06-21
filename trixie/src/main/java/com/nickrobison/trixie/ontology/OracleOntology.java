@@ -54,13 +54,13 @@ public class OracleOntology implements ITrixieOntology {
      * @param iri - IRI of the OracleOntology to load
      * @return - new Builder to instantiate ontology
      */
-    public static Builder from(IRI iri) {
-        return new Builder(iri);
-    }
-
-    public static Builder withDBConnection(IRI iri, String connectionString, String username, String password) {
-        return new Builder(iri, connectionString, username, password);
-    }
+//    public static Builder from(IRI iri) {
+//        return new Builder(iri);
+//    }
+//
+//    public static Builder withDBConnection(IRI iri, String connectionString, String username, String password) {
+//        return new Builder(iri, connectionString, username, password);
+//    }
 
     /**
      * @return - Returns the raw underlying ontology
