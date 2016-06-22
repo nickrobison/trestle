@@ -1,6 +1,7 @@
 import com.hp.hpl.jena.query.ResultSet;
 import com.nickrobison.trixie.ontology.ITrixieOntology;
 import com.nickrobison.trixie.ontology.OntologyBuilder;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -41,12 +42,9 @@ public class OntologyBaseTest {
 //        Local Ontology
         Optional<ITrixieOntology> localOntology = Optional.empty();
         try {
-//            localOntology = LocalOntology
-//                    .from(iri)
-//                    .build();
             localOntology = new OntologyBuilder()
                     .fromIRI(iri)
-//                    .name("Test ontology")
+                    .name("Test Local Ontology")
                     .build();
         } catch (OWLOntologyCreationException e) {
             e.printStackTrace();
@@ -55,10 +53,12 @@ public class OntologyBaseTest {
 //        Oracle Ontology
 //        Optional<ITrixieOntology> oracleOntology = Optional.empty();
 //        try {
-//            oracleOntology = OracleOntology.withDBConnection(iri,
-//                    "jdbc:oracle:thin:@oracle:1521:spatial",
-//                    "spatial",
-//                    "spatialUser")
+//            oracleOntology = new OntologyBuilder().withDBConnection(
+//                    "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
+//                    "spatialUser",
+//                    "spatial1")
+//                    .fromIRI(iri)
+//                    .name("test1")
 //                    .build();
 //        } catch (OWLOntologyCreationException e) {
 //            e.printStackTrace();
@@ -109,13 +109,16 @@ public class OntologyBaseTest {
     @Test
     public void testBaseSPARQLQuery() {
 
+//        Load the ontology
+        ontology.initializeOntology();
+
         //        Try to read the base individuals back from the database
         String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
                 "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> " +
                 "PREFIX : <http://nickrobison.com/dissertation/main_geo.owl#> " +
                 "SELECT * WHERE {?m rdf:type ?type . ?type rdfs:subClassOf ?class}";
         final ResultSet rs = ontology.executeSPARQL(queryString);
-        assertEquals("Incorrect number of class results", 44, rs.getRowNumber());
+        assertEquals("Incorrect number of class results", 30, rs.getRowNumber());
 
 
         //        Try to read out one of the CRS individuals
@@ -128,7 +131,7 @@ public class OntologyBaseTest {
     @Test
     public void testOntologyLoading() {
 //        ontology.initializeOracleOntology();
-        ontology.initializeOntology(true);
+        ontology.initializeOntology();
 
 //        Try to read the base individuals back from the database
         String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
@@ -161,11 +164,11 @@ public class OntologyBaseTest {
         }
     }
 
-//    @Af
-/*    public void writeOntology() throws OWLOntologyStorageException {
+    @After
+    public void finalize() throws OWLOntologyStorageException {
 //        optionOntology.get().close();
         ontology.close();
 
 //        optionOntology.get().writeOntology(IRI.create(new File("/Users/nrobison/Desktop/test.owl")), true);
-    }*/
+    }
 }

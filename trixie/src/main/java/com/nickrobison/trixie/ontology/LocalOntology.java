@@ -65,8 +65,9 @@ public class LocalOntology implements ITrixieOntology {
         Directory indexDirectory;
         Dataset spatialDataset = null;
         try {
-            indexDirectory = FSDirectory.open(new File("./target/data/lucene/").toPath());
-            EntityDefinition ed = new EntityDefinition("entityField", "geoField");
+            indexDirectory = FSDirectory.open(new File("./target/data/lucene/"));
+//            Not sure if these entity and geo fields are correct, but oh well.
+            EntityDefinition ed = new EntityDefinition("uri", "geo");
 //            Create a spatial dataset that combines the TDB dataset + the spatial index
              spatialDataset = SpatialDatasetFactory.createLucene(this.ds, indexDirectory, ed);
         } catch (IOException e) {
@@ -82,14 +83,9 @@ public class LocalOntology implements ITrixieOntology {
 
     private Dataset initialiseTDB() {
         final String tdbPath = "target/data/tdb";
-        Location location = Location.create(tdbPath);
-        final StoreParams params = StoreParamsBuilder
-                .create()
-                .build();
-//        new File(tdbPath).mkdirs();
-        Location locMem = Location.mem();
+        new File(tdbPath).mkdirs();
 
-        return TDBFactory.createDataset(locMem);
+        return TDBFactory.createDataset(tdbPath);
     }
 
     public boolean isConsistent() {
