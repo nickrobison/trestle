@@ -13,6 +13,7 @@
     <Prefix name="xsd" IRI="http://www.w3.org/2001/XMLSchema#"/>
     <Prefix name="rdfs" IRI="http://www.w3.org/2000/01/rdf-schema#"/>
     <Prefix name="main_geo" IRI="http://nickrobison.com/dissertation/main_geo.owl#"/>
+    <Import>http://www.opengis.net/ont/geosparql</Import>
     <Annotation>
         <AnnotationProperty abbreviatedIRI="owl:versionInfo"/>
         <Literal xml:lang="en" datatypeIRI="http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral">0.1 - Initital ontology effort</Literal>
@@ -22,12 +23,6 @@
     </Declaration>
     <Declaration>
         <Class IRI="#DateTime"/>
-    </Declaration>
-    <Declaration>
-        <ObjectProperty IRI="#Temporal_Relations"/>
-    </Declaration>
-    <Declaration>
-        <ObjectProperty IRI="#has_start"/>
     </Declaration>
     <Declaration>
         <NamedIndividual IRI="#WGS_84_Web_Mercator"/>
@@ -42,10 +37,16 @@
         <ObjectProperty IRI="#overlaps"/>
     </Declaration>
     <Declaration>
+        <Class IRI="#GAUL"/>
+    </Declaration>
+    <Declaration>
         <ObjectProperty IRI="#overlap"/>
     </Declaration>
     <Declaration>
         <Class IRI="#Concept"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Dataset"/>
     </Declaration>
     <Declaration>
         <Class IRI="#Level_0_Administrative_Region"/>
@@ -55,9 +56,6 @@
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="#meet"/>
-    </Declaration>
-    <Declaration>
-        <ObjectProperty IRI="#start_of"/>
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="#administrative_children"/>
@@ -78,22 +76,16 @@
         <Class IRI="#CRS"/>
     </Declaration>
     <Declaration>
-        <ObjectProperty IRI="#located_in"/>
+        <Class IRI="#ADM1_Code"/>
     </Declaration>
     <Declaration>
-        <Class IRI="#ADM1_Code"/>
+        <ObjectProperty IRI="#located_in"/>
     </Declaration>
     <Declaration>
         <Class IRI="#Administrative_Region"/>
     </Declaration>
     <Declaration>
-        <ObjectProperty IRI="#valid_at"/>
-    </Declaration>
-    <Declaration>
         <ObjectProperty IRI="#projection_of"/>
-    </Declaration>
-    <Declaration>
-        <Class IRI="#EPSG_Code"/>
     </Declaration>
     <Declaration>
         <Class IRI="#County"/>
@@ -109,9 +101,6 @@
     </Declaration>
     <Declaration>
         <Class IRI="#US_State"/>
-    </Declaration>
-    <Declaration>
-        <ObjectProperty IRI="#end_of"/>
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="#administrative_parent"/>
@@ -132,7 +121,7 @@
         <ObjectProperty IRI="#has_projection"/>
     </Declaration>
     <Declaration>
-        <ObjectProperty IRI="#has_end"/>
+        <DataProperty IRI="#is_projected"/>
     </Declaration>
     <Declaration>
         <Class IRI="#IntervalObject"/>
@@ -141,10 +130,10 @@
         <ObjectProperty IRI="#overlapped_by"/>
     </Declaration>
     <Declaration>
-        <ObjectProperty IRI="#started_by"/>
+        <NamedIndividual IRI="#Burundi_0"/>
     </Declaration>
     <Declaration>
-        <NamedIndividual IRI="#Burundi_0"/>
+        <ObjectProperty IRI="#started_by"/>
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="#finishes"/>
@@ -172,6 +161,9 @@
     </Declaration>
     <Declaration>
         <Class IRI="#Month"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#GeometricObject"/>
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="#meets"/>
@@ -219,7 +211,16 @@
         <NamedIndividual IRI="#Bururi_2"/>
     </Declaration>
     <Declaration>
+        <AnnotationProperty IRI="#dataProvider"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#test_object"/>
+    </Declaration>
+    <Declaration>
         <ObjectProperty IRI="#after"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#test_geom"/>
     </Declaration>
     <Declaration>
         <Class IRI="#PointObject"/>
@@ -232,9 +233,6 @@
     </Declaration>
     <Declaration>
         <Class IRI="#GAULProperty"/>
-    </Declaration>
-    <Declaration>
-        <Class IRI="#GAULRegion"/>
     </Declaration>
     <Declaration>
         <Class IRI="#Property"/>
@@ -273,9 +271,6 @@
         <Class IRI="#Country"/>
     </Declaration>
     <Declaration>
-        <Class IRI="#ProjectionProperty"/>
-    </Declaration>
-    <Declaration>
         <ObjectProperty IRI="#covered_by"/>
     </Declaration>
     <Declaration>
@@ -289,9 +284,6 @@
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="#property_of"/>
-    </Declaration>
-    <Declaration>
-        <Class IRI="#WKT_String"/>
     </Declaration>
     <EquivalentClasses>
         <Class IRI="#Country"/>
@@ -338,16 +330,16 @@
     </SubClassOf>
     <SubClassOf>
         <Class IRI="#CRS"/>
-        <ObjectMinCardinality cardinality="1">
-            <ObjectProperty IRI="#has_property"/>
-            <Class IRI="#ProjectionProperty"/>
-        </ObjectMinCardinality>
+        <DataExactCardinality cardinality="1">
+            <DataProperty IRI="#EPSG_Code"/>
+            <Datatype abbreviatedIRI="xsd:integer"/>
+        </DataExactCardinality>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="#CRS"/>
-        <DataMinCardinality cardinality="1">
-            <DataProperty IRI="#ProjectionProperty"/>
-        </DataMinCardinality>
+        <DataExactCardinality cardinality="1">
+            <DataProperty IRI="#WKT_String"/>
+        </DataExactCardinality>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="#Country"/>
@@ -374,40 +366,26 @@
         <Class IRI="#Time"/>
     </SubClassOf>
     <SubClassOf>
-        <Class IRI="#EPSG_Code"/>
-        <Class IRI="#ProjectionProperty"/>
+        <Class IRI="#GAUL"/>
+        <Class IRI="#Dataset"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#GAUL"/>
+        <ObjectExactCardinality cardinality="1">
+            <ObjectProperty IRI="#has_projection"/>
+            <Class IRI="#CRS"/>
+        </ObjectExactCardinality>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#GAUL"/>
+        <DataExactCardinality cardinality="1">
+            <DataProperty IRI="#UUID"/>
+            <Datatype abbreviatedIRI="xsd:string"/>
+        </DataExactCardinality>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="#GAULProperty"/>
         <Class IRI="#Property"/>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="#GAULRegion"/>
-        <Class IRI="#Administrative_Region"/>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="#GAULRegion"/>
-        <Class IRI="#GeographicObject"/>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="#GAULRegion"/>
-        <ObjectSomeValuesFrom>
-            <ObjectProperty IRI="#administrative_parent"/>
-            <Class IRI="#GAULRegion"/>
-        </ObjectSomeValuesFrom>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="#GAULRegion"/>
-        <DataSomeValuesFrom>
-            <DataProperty IRI="#GAUL_Property"/>
-            <Datatype abbreviatedIRI="rdfs:Literal"/>
-        </DataSomeValuesFrom>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="#GAULRegion"/>
-        <DataExactCardinality cardinality="1">
-            <DataProperty IRI="#UUID"/>
-        </DataExactCardinality>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="#GeographicCRS"/>
@@ -421,26 +399,23 @@
         <Class IRI="#GeographicObject"/>
         <ObjectExactCardinality cardinality="1">
             <ObjectProperty IRI="#has_projection"/>
-            <Class IRI="#CRS"/>
+            <Class IRI="#GeographicCRS"/>
+        </ObjectExactCardinality>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#GeometricObject"/>
+        <Class IRI="#SpatialObject"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#GeometricObject"/>
+        <ObjectExactCardinality cardinality="1">
+            <ObjectProperty IRI="#has_projection"/>
+            <Class IRI="#ProjectedCRS"/>
         </ObjectExactCardinality>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="#IntervalObject"/>
         <Class IRI="#TemporalObject"/>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="#IntervalObject"/>
-        <ObjectExactCardinality cardinality="1">
-            <ObjectProperty IRI="#has_end"/>
-            <Class IRI="#Time"/>
-        </ObjectExactCardinality>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="#IntervalObject"/>
-        <ObjectMaxCardinality cardinality="1">
-            <ObjectProperty IRI="#has_start"/>
-            <Class IRI="#Time"/>
-        </ObjectMaxCardinality>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="#Level_0_Administrative_Region"/>
@@ -470,23 +445,19 @@
         <Class IRI="#TemporalObject"/>
     </SubClassOf>
     <SubClassOf>
-        <Class IRI="#PointObject"/>
-        <ObjectMinCardinality cardinality="1">
-            <ObjectProperty IRI="#valid_at"/>
-            <Class IRI="#Time"/>
-        </ObjectMinCardinality>
-    </SubClassOf>
-    <SubClassOf>
         <Class IRI="#ProjectedCRS"/>
         <Class IRI="#CRS"/>
     </SubClassOf>
     <SubClassOf>
-        <Class IRI="#ProjectionProperty"/>
-        <Class IRI="#Property"/>
-    </SubClassOf>
-    <SubClassOf>
         <Class IRI="#Province"/>
         <Class IRI="#Administrative_Region"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#SpatialObject"/>
+        <ObjectMinCardinality cardinality="1">
+            <ObjectProperty IRI="http://www.opengis.net/ont/geosparql#hasGeometry"/>
+            <Class IRI="http://www.opengis.net/ont/geosparql#Geometry"/>
+        </ObjectMinCardinality>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="#Time"/>
@@ -497,53 +468,75 @@
         <Class IRI="#Administrative_Region"/>
     </SubClassOf>
     <SubClassOf>
-        <Class IRI="#WKT_String"/>
-        <Class IRI="#ProjectionProperty"/>
-    </SubClassOf>
-    <SubClassOf>
         <Class IRI="#Year"/>
         <Class IRI="#Time"/>
     </SubClassOf>
+    <SubClassOf>
+        <DataHasValue>
+            <DataProperty IRI="#is_projected"/>
+            <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#boolean">false</Literal>
+        </DataHasValue>
+        <Class IRI="#GeographicCRS"/>
+    </SubClassOf>
+    <SubClassOf>
+        <DataHasValue>
+            <DataProperty IRI="#is_projected"/>
+            <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#boolean">true</Literal>
+        </DataHasValue>
+        <Class IRI="#ProjectedCRS"/>
+    </SubClassOf>
+    <DisjointClasses>
+        <Class IRI="#GeographicCRS"/>
+        <Class IRI="#ProjectedCRS"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#GeographicObject"/>
+        <Class IRI="#GeometricObject"/>
+    </DisjointClasses>
     <ClassAssertion>
-        <Class IRI="#GAULRegion"/>
+        <Class IRI="#GAUL"/>
         <NamedIndividual IRI="#Burambi_2"/>
     </ClassAssertion>
     <ClassAssertion>
-        <Class IRI="#GAULRegion"/>
+        <Class IRI="#GAUL"/>
         <NamedIndividual IRI="#Burundi_0"/>
     </ClassAssertion>
     <ClassAssertion>
-        <Class IRI="#GAULRegion"/>
+        <Class IRI="#GAUL"/>
         <NamedIndividual IRI="#Bururi_1"/>
     </ClassAssertion>
     <ClassAssertion>
-        <Class IRI="#GAULRegion"/>
+        <Class IRI="#GAUL"/>
         <NamedIndividual IRI="#Bururi_2"/>
     </ClassAssertion>
     <ClassAssertion>
-        <Class IRI="#GAULRegion"/>
+        <Class IRI="#GAUL"/>
         <NamedIndividual IRI="#Buyengero_2"/>
     </ClassAssertion>
     <ClassAssertion>
-        <Class IRI="#GAULRegion"/>
+        <Class IRI="#GAUL"/>
         <NamedIndividual IRI="#Gitega_1"/>
     </ClassAssertion>
     <ClassAssertion>
-        <Class IRI="#GAULRegion"/>
+        <Class IRI="#GAUL"/>
         <NamedIndividual IRI="#Ndava_2"/>
     </ClassAssertion>
     <ClassAssertion>
-        <Class IRI="#GAULRegion"/>
+        <Class IRI="#GAUL"/>
         <NamedIndividual IRI="#Ryansoro_2"/>
     </ClassAssertion>
     <ClassAssertion>
-        <Class IRI="#GeographicCRS"/>
+        <Class IRI="#CRS"/>
         <NamedIndividual IRI="#WGS_84"/>
     </ClassAssertion>
     <ClassAssertion>
-        <Class IRI="#ProjectedCRS"/>
+        <Class IRI="#CRS"/>
         <NamedIndividual IRI="#WGS_84_Web_Mercator"/>
     </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="http://www.opengis.net/ont/geosparql#Geometry"/>
+        <NamedIndividual IRI="#test_geom"/>
+    </ClassAssertion>
     <ObjectPropertyAssertion>
         <ObjectProperty IRI="#administrative_parent"/>
         <NamedIndividual IRI="#Burambi_2"/>
@@ -613,6 +606,16 @@
         <ObjectProperty IRI="#has_projection"/>
         <NamedIndividual IRI="#Ryansoro_2"/>
         <NamedIndividual IRI="#WGS_84"/>
+    </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#has_projection"/>
+        <NamedIndividual IRI="#test_object"/>
+        <NamedIndividual IRI="#WGS_84"/>
+    </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="http://www.opengis.net/ont/geosparql#hasGeometry"/>
+        <NamedIndividual IRI="#test_object"/>
+        <NamedIndividual IRI="#test_geom"/>
     </ObjectPropertyAssertion>
     <DataPropertyAssertion>
         <DataProperty IRI="#ADM0_Code"/>
@@ -655,18 +658,9 @@
         <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#integer">4326</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
-        <DataProperty IRI="#WKT_String"/>
+        <DataProperty IRI="#is_projected"/>
         <NamedIndividual IRI="#WGS_84"/>
-        <Literal datatypeIRI="http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral">GEOGCS[&quot;WGS 84&quot;,
-    DATUM[&quot;WGS_1984&quot;,
-        SPHEROID[&quot;WGS 84&quot;,6378137,298.257223563,
-            AUTHORITY[&quot;EPSG&quot;,&quot;7030&quot;]],
-        AUTHORITY[&quot;EPSG&quot;,&quot;6326&quot;]],
-    PRIMEM[&quot;Greenwich&quot;,0,
-        AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],
-    UNIT[&quot;degree&quot;,0.01745329251994328,
-        AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],
-    AUTHORITY[&quot;EPSG&quot;,&quot;4326&quot;]]</Literal>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#boolean">false</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
         <DataProperty IRI="#EPSG_Code"/>
@@ -674,29 +668,14 @@
         <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#integer">3857</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
-        <DataProperty IRI="#WKT_String"/>
+        <DataProperty IRI="#is_projected"/>
         <NamedIndividual IRI="#WGS_84_Web_Mercator"/>
-        <Literal xml:lang="null +wktext  +no_defs&quot;],     authority[&quot;epsg&quot;,&quot;3857&quot;]]" datatypeIRI="http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral">PROJCS[&quot;WGS 84 / Pseudo-Mercator&quot;,
-    GEOGCS[&quot;WGS 84&quot;,
-        DATUM[&quot;WGS_1984&quot;,
-            SPHEROID[&quot;WGS 84&quot;,6378137,298.257223563,
-                AUTHORITY[&quot;EPSG&quot;,&quot;7030&quot;]],
-            AUTHORITY[&quot;EPSG&quot;,&quot;6326&quot;]],
-        PRIMEM[&quot;Greenwich&quot;,0,
-            AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],
-        UNIT[&quot;degree&quot;,0.0174532925199433,
-            AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],
-        AUTHORITY[&quot;EPSG&quot;,&quot;4326&quot;]],
-    PROJECTION[&quot;Mercator_1SP&quot;],
-    PARAMETER[&quot;central_meridian&quot;,0],
-    PARAMETER[&quot;scale_factor&quot;,1],
-    PARAMETER[&quot;false_easting&quot;,0],
-    PARAMETER[&quot;false_northing&quot;,0],
-    UNIT[&quot;metre&quot;,1,
-        AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],
-    AXIS[&quot;X&quot;,EAST],
-    AXIS[&quot;Y&quot;,NORTH],
-    EXTENSION[&quot;PROJ4&quot;,&quot;+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=</Literal>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#boolean">true</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="http://www.opengis.net/ont/geosparql#asWKT"/>
+        <NamedIndividual IRI="#test_geom"/>
+        <Literal datatypeIRI="http://www.opengis.net/ont/geosparql#wktLiteral">POLYGON((-77.050125 38.892086, -77.039482 38.892036, -77.039482 38.895393, -77.033669 38.895508, -77.033585 38.892052, -77.031906 38.892086, -77.031883 38.887474, - 77.050232 38.887142, -77.050125 38.892086 ))</Literal>
     </DataPropertyAssertion>
     <SubObjectPropertyOf>
         <ObjectProperty IRI="#after"/>
@@ -719,24 +698,12 @@
         <ObjectProperty IRI="#TemporalRelation"/>
     </SubObjectPropertyOf>
     <SubObjectPropertyOf>
-        <ObjectProperty IRI="#end_of"/>
-        <ObjectProperty IRI="#Temporal_Relations"/>
-    </SubObjectPropertyOf>
-    <SubObjectPropertyOf>
         <ObjectProperty IRI="#finished_by"/>
         <ObjectProperty IRI="#TemporalRelation"/>
     </SubObjectPropertyOf>
     <SubObjectPropertyOf>
         <ObjectProperty IRI="#finishes"/>
         <ObjectProperty IRI="#TemporalRelation"/>
-    </SubObjectPropertyOf>
-    <SubObjectPropertyOf>
-        <ObjectProperty IRI="#has_end"/>
-        <ObjectProperty IRI="#Temporal_Relations"/>
-    </SubObjectPropertyOf>
-    <SubObjectPropertyOf>
-        <ObjectProperty IRI="#has_start"/>
-        <ObjectProperty IRI="#Temporal_Relations"/>
     </SubObjectPropertyOf>
     <SubObjectPropertyOf>
         <ObjectProperty IRI="#inside"/>
@@ -783,10 +750,6 @@
         <ObjectProperty IRI="#SpatialRelation"/>
     </SubObjectPropertyOf>
     <SubObjectPropertyOf>
-        <ObjectProperty IRI="#start_of"/>
-        <ObjectProperty IRI="#Temporal_Relations"/>
-    </SubObjectPropertyOf>
-    <SubObjectPropertyOf>
         <ObjectProperty IRI="#started_by"/>
         <ObjectProperty IRI="#TemporalRelation"/>
     </SubObjectPropertyOf>
@@ -802,10 +765,6 @@
         <ObjectProperty IRI="#temporal_equals"/>
         <ObjectProperty IRI="#TemporalRelation"/>
     </SubObjectPropertyOf>
-    <SubObjectPropertyOf>
-        <ObjectProperty IRI="#valid_at"/>
-        <ObjectProperty IRI="#Temporal_Relations"/>
-    </SubObjectPropertyOf>
     <InverseObjectProperties>
         <ObjectProperty IRI="#TemporalRelation"/>
         <ObjectProperty IRI="#starts"/>
@@ -819,10 +778,6 @@
         <ObjectProperty IRI="#covers"/>
     </InverseObjectProperties>
     <InverseObjectProperties>
-        <ObjectProperty IRI="#end_of"/>
-        <ObjectProperty IRI="#has_end"/>
-    </InverseObjectProperties>
-    <InverseObjectProperties>
         <ObjectProperty IRI="#finished_by"/>
         <ObjectProperty IRI="#finishes"/>
     </InverseObjectProperties>
@@ -833,10 +788,6 @@
     <InverseObjectProperties>
         <ObjectProperty IRI="#has_property"/>
         <ObjectProperty IRI="#property_of"/>
-    </InverseObjectProperties>
-    <InverseObjectProperties>
-        <ObjectProperty IRI="#has_start"/>
-        <ObjectProperty IRI="#start_of"/>
     </InverseObjectProperties>
     <InverseObjectProperties>
         <ObjectProperty IRI="#located_in"/>
@@ -895,6 +846,10 @@
         <DataProperty IRI="#WKT_String"/>
         <DataProperty IRI="#ProjectionProperty"/>
     </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#is_projected"/>
+        <DataProperty IRI="#ProjectionProperty"/>
+    </SubDataPropertyOf>
     <DataPropertyRange>
         <DataProperty IRI="#EPSG_Code"/>
         <Datatype abbreviatedIRI="xsd:integer"/>
@@ -907,6 +862,15 @@
         <DataProperty IRI="#WKT_String"/>
         <Datatype abbreviatedIRI="xsd:string"/>
     </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#is_projected"/>
+        <Datatype abbreviatedIRI="xsd:boolean"/>
+    </DataPropertyRange>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#dataProvider</IRI>
+        <Literal xml:lang="en" datatypeIRI="http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral">Defines the provider of the dataset.</Literal>
+    </AnnotationAssertion>
 </Ontology>
 
 

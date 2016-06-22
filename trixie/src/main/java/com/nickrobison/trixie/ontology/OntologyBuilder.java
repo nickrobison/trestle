@@ -92,7 +92,7 @@ public class OntologyBuilder {
         pm.setPrefix("rdfs:", "http://www.w3.org/2000/01/rdf-schema#");
         pm.setPrefix("owl:", "http://www.w3.org/2002/07/owl#");
         pm.setPrefix("spatial:", "http://www.jena.apache.org/spatial#");
-        pm.setPrefix("ogc:", "http://www.opengis.net/ont/geosparql#");
+        pm.setPrefix("geosparql:", "http://www.opengis.net/ont/geosparql#");
         return pm;
     }
 
