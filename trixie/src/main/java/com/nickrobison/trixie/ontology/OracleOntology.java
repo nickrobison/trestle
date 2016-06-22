@@ -107,7 +107,7 @@ public class OracleOntology implements ITrixieOntology {
             if (statement.getObject().isLiteral()) {
                 final OWLDataProperty owlDataProperty = df.getOWLDataProperty(IRI.create(statement.getPredicate().toString()));
                 final OWLLiteral owlLiteral = df.getOWLLiteral(statement.getLiteral().getLexicalForm(), OWL2Datatype.getDatatype(IRI.create(statement.getLiteral().getDatatypeURI())));
-                 addAxiom = new AddAxiom(ontology, df.getOWLDataPropertyAssertionAxiom(owlDataProperty, individual, owlLiteral));
+                addAxiom = new AddAxiom(ontology, df.getOWLDataPropertyAssertionAxiom(owlDataProperty, individual, owlLiteral));
                 ontologyAxioms.add(addAxiom);
                 applyChange(addAxiom);
 //                Commit the change, for now.
@@ -157,17 +157,11 @@ public class OracleOntology implements ITrixieOntology {
         applyChanges(addAxioms.toArray(new AddAxiom[addAxioms.size()]));
     }
 
-    public void initializeOracleOntology(IRI filename) {
+    public void initializeOntology() {
 //        OracleDatabase oraDB = connectToDatabase();
 
 //        Setup bulk import mode
         database.enableBulkLoading();
-
-        database.loadBaseOntology(filename.toString());
-
-//        Rebuild indexes
-        database.rebuildIndexes();
-    }
 
         //        We need to read out the ontology into a bytestream and then read it back into the oracle format
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -202,6 +196,7 @@ public class OracleOntology implements ITrixieOntology {
 
     /**
      * Converts a prefixed IRI to the full one for the reasoner
+     *
      * @param iri - Prefixed IRI to convert
      * @return - IRI with full URI attached
      */

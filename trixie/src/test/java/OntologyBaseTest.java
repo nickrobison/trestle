@@ -51,22 +51,22 @@ public class OntologyBaseTest {
         }
 
 //        Oracle Ontology
-//        Optional<ITrixieOntology> oracleOntology = Optional.empty();
-//        try {
-//            oracleOntology = new OntologyBuilder().withDBConnection(
-//                    "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-//                    "spatialUser",
-//                    "spatial1")
-//                    .fromIRI(iri)
-//                    .name("test1")
-//                    .build();
-//        } catch (OWLOntologyCreationException e) {
-//            e.printStackTrace();
-//        }
+        Optional<ITrixieOntology> oracleOntology = Optional.empty();
+        try {
+            oracleOntology = new OntologyBuilder().withDBConnection(
+                    "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
+                    "spatialUser",
+                    "spatial1")
+                    .fromIRI(iri)
+                    .name("test1")
+                    .build();
+        } catch (OWLOntologyCreationException e) {
+            e.printStackTrace();
+        }
 
         return Arrays.asList(new Object[][]{
                 {localOntology.orElseThrow(NullPointerException::new)}
-//                {oracleOntology.orElseThrow(NullPointerException::new)}
+                ,{oracleOntology.orElseThrow(NullPointerException::new)}
         });
     }
 
@@ -117,6 +117,7 @@ public class OntologyBaseTest {
                 "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> " +
                 "PREFIX : <http://nickrobison.com/dissertation/main_geo.owl#> " +
                 "SELECT * WHERE {?m rdf:type ?type . ?type rdfs:subClassOf ?class}";
+//        FIXME(nrobison): The local ontology seems to parse SPARQL queries differently.
         final ResultSet rs = ontology.executeSPARQL(queryString);
         assertEquals("Incorrect number of class results", 30, rs.getRowNumber());
 
@@ -164,11 +165,11 @@ public class OntologyBaseTest {
         }
     }
 
-    @After
-    public void finalize() throws OWLOntologyStorageException {
-//        optionOntology.get().close();
-        ontology.close();
-
-//        optionOntology.get().writeOntology(IRI.create(new File("/Users/nrobison/Desktop/test.owl")), true);
-    }
+//    @After
+//    public void finalize() throws OWLOntologyStorageException {
+////        optionOntology.get().close();
+//        ontology.close();
+//
+////        optionOntology.get().writeOntology(IRI.create(new File("/Users/nrobison/Desktop/test.owl")), true);
+//    }
 }

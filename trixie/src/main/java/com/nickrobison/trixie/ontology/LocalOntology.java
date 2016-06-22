@@ -148,11 +148,14 @@ public class LocalOntology implements ITrixieOntology {
 //        TODO(nrobison): Need to write this to the Jena model.
     }
 
-    public ResultSet executeSPARQL(String query) {
-        final Query q = QueryFactory.create(query);
-        final QueryExecution qe = SparqlDLExecutionFactory.create(q, this.model);
+    public ResultSet executeSPARQL(String queryString) {
+        final Query query = QueryFactory.create(queryString);
+        final QueryExecution qExec = SparqlDLExecutionFactory.create(query, this.model);
+        final ResultSet resultSet = qExec.execSelect();
+        qExec.close();
+        ResultSetFormatter.out(System.out, resultSet, query);
 
-        return qe.execSelect();
+        return resultSet;
     }
 
     private ByteArrayInputStream ontologyToIS() {
