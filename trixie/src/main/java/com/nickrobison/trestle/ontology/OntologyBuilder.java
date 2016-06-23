@@ -1,4 +1,4 @@
-package com.nickrobison.trixie.ontology;
+package com.nickrobison.trestle.ontology;
 
 import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
 import com.clarkparsia.pellet.owlapiv3.PelletReasonerFactory;
@@ -76,10 +76,10 @@ public class OntologyBuilder {
 
     /**
      * Builds and returns the correct ontology (either local or database backed)
-     * @return - ITrixieOntology for the correct ontology configuration
+     * @return - ITrestleOntology for the correct ontology configuration
      * @throws OWLOntologyCreationException
      */
-    public Optional<ITrixieOntology> build() throws OWLOntologyCreationException {
+    public Optional<ITrestleOntology> build() throws OWLOntologyCreationException {
         final OWLOntologyManager owlOntologyManager = OWLManager.createOWLOntologyManager();
         OWLOntology owlOntology;
         if (this.iri.isPresent()) {

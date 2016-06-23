@@ -1,10 +1,10 @@
-package com.nickrobison.trixie.db.oracle;
+package com.nickrobison.trestle.db.oracle;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.query.*;
 import com.hp.hpl.jena.rdf.model.*;
 import com.hp.hpl.jena.util.FileManager;
-import com.nickrobison.trixie.db.IOntologyDatabase;
+import com.nickrobison.trestle.db.IOntologyDatabase;
 import oracle.spatial.rdf.client.jena.GraphOracleSem;
 import oracle.spatial.rdf.client.jena.ModelOracleSem;
 import oracle.spatial.rdf.client.jena.Oracle;

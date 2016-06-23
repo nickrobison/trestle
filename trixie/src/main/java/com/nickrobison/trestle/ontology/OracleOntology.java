@@ -1,13 +1,13 @@
-package com.nickrobison.trixie.ontology;
+package com.nickrobison.trestle.ontology;
 
 import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.nickrobison.trixie.common.EPSGParser;
-import com.nickrobison.trixie.db.IOntologyDatabase;
-import com.nickrobison.trixie.db.oracle.OracleDatabase;
+import com.nickrobison.trestle.common.EPSGParser;
+import com.nickrobison.trestle.db.IOntologyDatabase;
+import com.nickrobison.trestle.db.oracle.OracleDatabase;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
@@ -27,7 +27,7 @@ import java.util.*;
  */
 // TODO(nrobison): This should support initializing the oracle database on construction
 //    FIXME(nrobison): This database handling is a total disaster, fix it!!!
-public class OracleOntology implements ITrixieOntology {
+public class OracleOntology implements ITrestleOntology {
 
     private final static Logger logger = LoggerFactory.getLogger(OracleOntology.class);
     public static final String MAIN_GEO = "main_geo:";

@@ -1,4 +1,4 @@
-package com.nickrobison.trixie.ontology;
+package com.nickrobison.trestle.ontology;
 
 import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
 import com.clarkparsia.pellet.sparqldl.jena.SparqlDLExecutionFactory;
@@ -11,9 +11,6 @@ import com.hp.hpl.jena.rdf.model.ModelGetter;
 import com.hp.hpl.jena.rdf.model.ModelReader;
 import com.hp.hpl.jena.tdb.TDB;
 import com.hp.hpl.jena.tdb.TDBFactory;
-import com.hp.hpl.jena.tdb.base.file.Location;
-import com.hp.hpl.jena.tdb.setup.StoreParams;
-import com.hp.hpl.jena.tdb.setup.StoreParamsBuilder;
 import org.apache.jena.atlas.lib.NotImplemented;
 import org.apache.jena.query.spatial.EntityDefinition;
 import org.apache.jena.query.spatial.SpatialDatasetFactory;
@@ -39,7 +36,7 @@ import java.util.Set;
  */
 // TODO(nrobison): Make this actually work
 //    DO NOT USE!!!!! TOTALLY BROKEN, NOT A SINGLE THING WORKS
-public class LocalOntology implements ITrixieOntology {
+public class LocalOntology implements ITrestleOntology {
 
     private final String ontologyName;
     private final static Logger logger = LoggerFactory.getLogger(LocalOntology.class);

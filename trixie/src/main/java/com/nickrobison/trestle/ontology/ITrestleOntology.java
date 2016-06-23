@@ -1,4 +1,4 @@
-package com.nickrobison.trixie.ontology;
+package com.nickrobison.trestle.ontology;
 
 import com.hp.hpl.jena.query.ResultSet;
 import org.semanticweb.owlapi.model.*;
@@ -10,7 +10,7 @@ import java.util.Set;
 /**
  * Created by nrobison on 5/23/16.
  */
-public interface ITrixieOntology {
+public interface ITrestleOntology {
 
     /**
      * Checks whether or not the ontology is consistent

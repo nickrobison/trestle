@@ -1,7 +1,7 @@
-package com.nickrobison.trixie;
+package com.nickrobison.trestle;
 
-import com.nickrobison.trixie.ontology.ITrixieOntology;
-import com.nickrobison.trixie.ontology.OntologyBuilder;
+import com.nickrobison.trestle.ontology.ITrestleOntology;
+import com.nickrobison.trestle.ontology.OntologyBuilder;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
@@ -16,9 +16,9 @@ import java.util.Set;
 /**
  * Created by nrobison on 5/17/16.
  */
-public class TrixieReasoner {
+public class TrestleReasoner {
 
-    private static final Logger logger = LoggerFactory.getLogger(TrixieReasoner.class);
+    private static final Logger logger = LoggerFactory.getLogger(TrestleReasoner.class);
 
     public static void main(String[] args) throws OWLOntologyCreationException, OWLOntologyStorageException {
 
@@ -26,22 +26,22 @@ public class TrixieReasoner {
         DefaultPrefixManager pm;
 
 //        Try to build the ontology
-//        final IRI iri = IRI.create(TrixieReasoner.class.getResourceAsStream("main_geo.owl").toString());
-//        final URL resource = TrixieReasoner.getCla.getResource("main_geo.owl");
+//        final IRI iri = IRI.create(TrestleReasoner.class.getResourceAsStream("main_geo.owl").toString());
+//        final URL resource = TrestleReasoner.getCla.getResource("main_geo.owl");
         logger.debug("Running Trixie");
-        final URL resource = TrixieReasoner.class.getClassLoader().getResource("main_geo.owl");
+        final URL resource = TrestleReasoner.class.getClassLoader().getResource("main_geo.owl");
         if (resource == null) {
             logger.error("Can't load resource");
         } else {
 
             final IRI iri = IRI.create(resource);
-            final Optional<ITrixieOntology> ontology = new OntologyBuilder()
+            final Optional<ITrestleOntology> ontology = new OntologyBuilder()
                     .fromIRI(iri)
                     .build();
             if (!ontology.isPresent()) {
                 logger.error("OracleOntology missing");
             }
-            final ITrixieOntology rootOntology = ontology.get();
+            final ITrestleOntology rootOntology = ontology.get();
             trixieOntology = rootOntology.getUnderlyingOntology();
             pm = rootOntology.getUnderlyingPrefixManager();
             final OWLDataFactory df = OWLManager.getOWLDataFactory();
@@ -66,7 +66,7 @@ public class TrixieReasoner {
 
 //            Try to load the ontology into Oracle
 //            We need an RDF/XML ontology to actually work with Jena(?)
-            final URL rdfOntology = TrixieReasoner.class.getClassLoader().getResource("main_geo.rdf");
+            final URL rdfOntology = TrestleReasoner.class.getClassLoader().getResource("main_geo.rdf");
 //            rootOntology.initializeOracleOntology(IRI.create(rdfOntology));
 
         }

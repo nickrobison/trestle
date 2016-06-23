@@ -1,7 +1,6 @@
 import com.hp.hpl.jena.query.ResultSet;
-import com.nickrobison.trixie.ontology.ITrixieOntology;
-import com.nickrobison.trixie.ontology.OntologyBuilder;
-import org.junit.After;
+import com.nickrobison.trestle.ontology.ITrestleOntology;
+import com.nickrobison.trestle.ontology.OntologyBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -23,11 +22,11 @@ import static junit.framework.TestCase.*;
 @RunWith(Parameterized.class)
 public class OntologyBaseTest {
 
-    private ITrixieOntology ontology;
+    private ITrestleOntology ontology;
     private OWLDataFactory df;
 
 
-    public OntologyBaseTest(ITrixieOntology ontology) {
+    public OntologyBaseTest(ITrestleOntology ontology) {
         this.ontology = ontology;
         df = OWLManager.getOWLDataFactory();
 
@@ -40,7 +39,7 @@ public class OntologyBaseTest {
 
 //        Build ontologies
 //        Local Ontology
-        Optional<ITrixieOntology> localOntology = Optional.empty();
+        Optional<ITrestleOntology> localOntology = Optional.empty();
         try {
             localOntology = new OntologyBuilder()
                     .fromIRI(iri)
@@ -51,7 +50,7 @@ public class OntologyBaseTest {
         }
 
 //        Oracle Ontology
-        Optional<ITrixieOntology> oracleOntology = Optional.empty();
+        Optional<ITrestleOntology> oracleOntology = Optional.empty();
         try {
             oracleOntology = new OntologyBuilder().withDBConnection(
                     "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",

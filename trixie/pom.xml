@@ -18,7 +18,7 @@
         <pellet.version>2.4.0-SNAPSHOT</pellet.version>
     </properties>
 
-    <artifactId>trixie</artifactId>
+    <artifactId>trestle</artifactId>
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
