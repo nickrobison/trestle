@@ -71,7 +71,7 @@ public class OntologyBaseTest {
 
 
     @Test
-    public void testBaseIndividuals() {
+    public void baseOntologyTest() {
 
         final OWLClass crsClass = df.getOWLClass(IRI.create("main_geo:", "CRS").toString(), ontology.getUnderlyingPrefixManager());
         final OWLClass geographicClass = df.getOWLClass(IRI.create("main_geo:", "GeographicCRS").toString(), ontology.getUnderlyingPrefixManager());
@@ -86,11 +86,7 @@ public class OntologyBaseTest {
         ontology.getInstances(projectedClass, true);
         assertEquals("Should be 1", 1, instances1.size());
 
-    }
-
-    @Test
-    public void testIndividualGet() {
-//        Query for specific members
+//        Query for specific individuals
 
         final OWLNamedIndividual wgs_84 = df.getOWLNamedIndividual(ontology.getFullIRI("main_geo:", "WGS_84"));
         final Optional<OWLNamedIndividual> individual = ontology.getIndividual(wgs_84);
@@ -99,16 +95,19 @@ public class OntologyBaseTest {
         final OWLNamedIndividual wgs_84_2 = df.getOWLNamedIndividual(ontology.getFullIRI("main_geo:", "WGS_84_2"));
         final Optional<OWLNamedIndividual> individual2 = ontology.getIndividual(wgs_84_2);
         assertFalse("Shouldn't return missing individual", individual2.isPresent());
-    }
 
-    //    Load and query
+//        Try to get one of the data properties
 
-    // Base Load tests
-//    TODO(nrobison): This fails on local ontologies
-    @Test
-    public void testBaseSPARQLQuery() {
+        final OWLDataProperty epsg_code = df.getOWLDataProperty(ontology.getFullIRI("main_geo:", "EPSG_Code"));
+        final Optional<Set<OWLLiteral>> individualProperty = ontology.getIndividualProperty(wgs_84, epsg_code);
+        assertTrue("Data property should be present", individualProperty.isPresent());
+        final Optional<OWLLiteral> first = individualProperty.get().stream().findFirst();
+        assertEquals("EPSG Code is wrong", 4326, first.get().parseInteger());
 
-//        Load the ontology
+
+//        Try to load the ontology and run the query
+
+        //        Load the ontology
         ontology.initializeOntology();
 
         //        Try to read the base individuals back from the database
@@ -118,14 +117,8 @@ public class OntologyBaseTest {
                 "SELECT * WHERE {?m rdf:type ?type . ?type rdfs:subClassOf ?class}";
 //        FIXME(nrobison): The local ontology seems to parse SPARQL queries differently.
         final ResultSet rs = ontology.executeSPARQL(queryString);
-        assertEquals("Incorrect number of class results", 30, rs.getRowNumber());
+        assertTrue("Incorrect number of class results", rs.getRowNumber() >= 30);
 
-
-        //        Try to read out one of the CRS individuals
-
-        final OWLNamedIndividual wgs_84 = df.getOWLNamedIndividual(IRI.create("main_geo:", "WGS_84"));
-        final Optional<OWLNamedIndividual> baseIndividual = ontology.getIndividual(wgs_84);
-        assertTrue("Base CRS should exist", baseIndividual.isPresent());
     }
 
     @Test

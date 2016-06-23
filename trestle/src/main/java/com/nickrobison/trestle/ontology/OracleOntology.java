@@ -136,6 +136,26 @@ public class OracleOntology implements ITrestleOntology {
 //        singleResource.listProperties();
     }
 
+    @Override
+    public Optional<Set<OWLLiteral>> getIndividualProperty(OWLNamedIndividual individual, OWLDataProperty property) {
+//        I think we need to grab the individual from the database, an put it into the model, before trying to get the properties
+        final Optional<OWLNamedIndividual> ontologyIndividual = getIndividual(individual);
+        if (ontologyIndividual.isPresent()) {
+            final Set<OWLLiteral> dataPropertyValues = reasoner.getDataPropertyValues(ontologyIndividual.get(), property);
+            if (dataPropertyValues.isEmpty()) {
+                return Optional.empty();
+            } else {
+                return Optional.of(dataPropertyValues);
+            }
+
+        } else {
+            return Optional.empty();
+        }
+
+
+
+    }
+
     /**
      * Write the ontology to disk
      *
@@ -201,7 +221,13 @@ public class OracleOntology implements ITrestleOntology {
      * @return - IRI with full URI attached
      */
     public IRI getFullIRI(IRI iri) {
-        return pm.getIRI(iri.toString());
+
+//        Check to see if it's already been expanded
+        if (pm.getPrefix(iri.getScheme() + ":") == null) {
+            return iri;
+        } else {
+            return pm.getIRI(iri.toString());
+        }
     }
 
     public IRI getFullIRI(String prefix, String suffix) {

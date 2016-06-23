@@ -17,8 +17,7 @@ import java.util.Optional;
 
 /**
  * Created by nrobison on 6/21/16.
- */ //    FIXME(nrobison): Remove the duplicates check
-@SuppressWarnings("Duplicates")
+ */
 public class OntologyBuilder {
     private Optional<IRI> iri = Optional.empty();
     private Optional<String> connectionString = Optional.empty();
@@ -76,7 +75,7 @@ public class OntologyBuilder {
 
     /**
      * Builds and returns the correct ontology (either local or database backed)
-     * @return - ITrestleOntology for the correct ontology configuration
+     * @return - ITrestleOntology for the correct underlying ontology configuration
      * @throws OWLOntologyCreationException
      */
     public Optional<ITrestleOntology> build() throws OWLOntologyCreationException {

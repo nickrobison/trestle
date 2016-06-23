@@ -125,6 +125,16 @@ public class LocalOntology implements ITrestleOntology {
         }
     }
 
+    @Override
+    public Optional<Set<OWLLiteral>> getIndividualProperty(OWLNamedIndividual individual, OWLDataProperty property) {
+        final Set<OWLLiteral> dataPropertyValues = reasoner.getDataPropertyValues(individual, property);
+        if (dataPropertyValues.isEmpty()) {
+            return Optional.empty();
+        } else {
+            return Optional.of(dataPropertyValues);
+        }
+    }
+
     public IRI getFullIRI(IRI iri) {
         return pm.getIRI(iri.toString());
     }

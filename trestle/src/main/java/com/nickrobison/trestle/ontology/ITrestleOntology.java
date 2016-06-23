@@ -69,6 +69,14 @@ public interface ITrestleOntology {
     Optional<OWLNamedIndividual> getIndividual(OWLNamedIndividual individual);
 
     /**
+     * Return the set of data property values
+     * @param individual - OWLNamedIndividual to get properties from
+     * @param property - OWLDataProperty to access
+     * @return - Optional set of OWLLiteral if a property exists on that member
+     */
+    Optional<Set<OWLLiteral>> getIndividualProperty(OWLNamedIndividual individual, OWLDataProperty property);
+
+    /**
      * Get the full IRI expanded from the DefaultPrefixManager
      *
      * @param iri - Abbreviated IRI
