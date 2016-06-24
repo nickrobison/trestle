@@ -44,7 +44,6 @@ public class LocalOntology implements ITrestleOntology {
     private final PelletReasoner reasoner;
     private final DefaultPrefixManager pm;
     private final OntModel model;
-    private final Dataset ds;
 
 
     LocalOntology(String ontologyName, OWLOntology ont, DefaultPrefixManager pm, PelletReasoner reasoner) {
@@ -53,24 +52,27 @@ public class LocalOntology implements ITrestleOntology {
         this.pm = pm;
         this.reasoner = reasoner;
 //        Instead of a database object, we use a Jena model to support the RDF querying
-        this.ds = initialiseTDB();
+        Dataset ds = initialiseTDB();
 
 
 //        spatial stuff
         Directory indexDirectory;
         Dataset spatialDataset = null;
+        logger.debug("Building TDB and Lucene database");
         try {
             indexDirectory = FSDirectory.open(new File("./target/data/lucene/"));
 //            Not sure if these entity and geo fields are correct, but oh well.
             EntityDefinition ed = new EntityDefinition("uri", "geo");
 //            Create a spatial dataset that combines the TDB dataset + the spatial index
-             spatialDataset = SpatialDatasetFactory.createLucene(this.ds, indexDirectory, ed);
+             spatialDataset = SpatialDatasetFactory.createLucene(ds, indexDirectory, ed);
+            logger.debug("Lucene index is up and running");
         } catch (IOException e) {
             e.printStackTrace();
         }
         final OntModelSpec spec = PelletReasonerFactory.THE_SPEC;
         spec.setImportModelGetter(new LocalTDBModelGetter(spatialDataset));
-        this.model = ModelFactory.createOntologyModel(PelletReasonerFactory.THE_SPEC);
+//        this.model = ModelFactory.createOntologyModel(PelletReasonerFactory.THE_SPEC);
+        this.model = ModelFactory.createOntologyModel(spec);
         this.model.read(ontologyToIS(), null);
         TDB.sync(this.model);
 

@@ -1,13 +1,16 @@
 package com.nickrobison.trestle.ontology;
 
 import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
+import com.clarkparsia.pellet.sparqldl.jena.SparqlDLExecutionFactory;
+import com.hp.hpl.jena.ontology.OntModel;
+import com.hp.hpl.jena.query.*;
+import com.hp.hpl.jena.rdf.model.*;
 import com.nickrobison.trestle.common.EPSGParser;
 import com.nickrobison.trestle.db.IOntologyDatabase;
 import com.nickrobison.trestle.db.oracle.OracleDatabase;
+import oracle.spatial.rdf.client.jena.ModelOracleSem;
+import oracle.spatial.rdf.client.jena.Oracle;
+import org.mindswap.pellet.jena.PelletReasonerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
@@ -35,18 +38,32 @@ public class OracleOntology implements ITrestleOntology {
     private final OWLOntology ontology;
     private final PelletReasoner reasoner;
     private final DefaultPrefixManager pm;
-    private final IOntologyDatabase database;
+//    private final IOntologyDatabase database;
+    private final OntModel model;
+
+//    Directly access the Jena model
 
     OracleOntology(String name, OWLOntology ont, DefaultPrefixManager pm, PelletReasoner reasoner, String connectionString, String username, String password) {
         this.ontologyName = name;
         this.ontology = ont;
         this.pm = pm;
         this.reasoner = reasoner;
+//        try {
+//            this.database = new OracleDatabase(connectionString, username, password, ontologyName);
+//        } catch (SQLException e) {
+//            throw new RuntimeException("Cannot connect to Oracle database", e);
+//        }
+
+//        Other ontology stuff
+        final Oracle oracle = new Oracle(connectionString, username, password);
         try {
-            this.database = new OracleDatabase(connectionString, username, password, ontologyName);
+            Model oracleModel = ModelOracleSem.createOracleSemModel(oracle, ontologyName);
+            this.model = ModelFactory.createOntologyModel(PelletReasonerFactory.THE_SPEC, oracleModel);
         } catch (SQLException e) {
-            throw new RuntimeException("Cannot connect to Oracle database", e);
+            throw new RuntimeException("Can't create oracle model", e);
         }
+
+
     }
 
     /**
@@ -91,42 +108,51 @@ public class OracleOntology implements ITrestleOntology {
     }
 
     public Optional<OWLNamedIndividual> getIndividual(OWLNamedIndividual individual) {
-        final OWLDataFactory df = OWLManager.getOWLDataFactory();
-//        final OWLDataFactory df = reasoner.getOWLDataFactory();
-        List<AddAxiom> ontologyAxioms = new ArrayList<>();
 
-//        Need to pass the full IRI, Jena doesn't understand prefixes
-        final Resource singleResource = database.getIndividual(getFullIRI(individual.getIRI()));
-        //        Build the individual
-        final StmtIterator stmtIterator = singleResource.listProperties();
-        int statementCount = 0;
-        while (stmtIterator.hasNext()) {
-            final Statement statement = stmtIterator.nextStatement();
-            final AddAxiom addAxiom;
-//            FIXME(nrobison): This is pretty gross right now, only supports basic
-            if (statement.getObject().isLiteral()) {
-                final OWLDataProperty owlDataProperty = df.getOWLDataProperty(IRI.create(statement.getPredicate().toString()));
-                final OWLLiteral owlLiteral = df.getOWLLiteral(statement.getLiteral().getLexicalForm(), OWL2Datatype.getDatatype(IRI.create(statement.getLiteral().getDatatypeURI())));
-                addAxiom = new AddAxiom(ontology, df.getOWLDataPropertyAssertionAxiom(owlDataProperty, individual, owlLiteral));
-                ontologyAxioms.add(addAxiom);
-                applyChange(addAxiom);
-//                Commit the change, for now.
-            } else if (statement.getObject().isURIResource()) {
-                final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(IRI.create(statement.getPredicate().toString()));
-                final OWLNamedIndividual owlObjectTarget = df.getOWLNamedIndividual(IRI.create(statement.getObject().toString()));
-                addAxiom = new AddAxiom(ontology, df.getOWLObjectPropertyAssertionAxiom(owlObjectProperty, individual, owlObjectTarget));
-                ontologyAxioms.add(addAxiom);
-            } else {
-                throw new RuntimeException("Cannot parse this statement: " + statement);
-            }
-            applyChange(addAxiom);
-            statementCount++;
-        }
-        if (statementCount > 0) {
+//        Try directly from the reasoner
+        final Set<OWLNamedIndividual> entities = reasoner.getSameIndividuals(individual).getEntities();
+        if (entities.contains(individual)) {
             return Optional.of(individual);
         } else {
             return Optional.empty();
         }
+
+//        final OWLDataFactory df = OWLManager.getOWLDataFactory();
+////        final OWLDataFactory df = reasoner.getOWLDataFactory();
+//        List<AddAxiom> ontologyAxioms = new ArrayList<>();
+//
+////        Need to pass the full IRI, Jena doesn't understand prefixes
+//        final Resource singleResource = database.getIndividual(getFullIRI(individual.getIRI()));
+//        //        Build the individual
+//        final StmtIterator stmtIterator = singleResource.listProperties();
+//        int statementCount = 0;
+//        while (stmtIterator.hasNext()) {
+//            final Statement statement = stmtIterator.nextStatement();
+//            final AddAxiom addAxiom;
+////            FIXME(nrobison): This is pretty gross right now, only supports basic
+//            if (statement.getObject().isLiteral()) {
+//                final OWLDataProperty owlDataProperty = df.getOWLDataProperty(IRI.create(statement.getPredicate().toString()));
+//                final OWLLiteral owlLiteral = df.getOWLLiteral(statement.getLiteral().getLexicalForm(), OWL2Datatype.getDatatype(IRI.create(statement.getLiteral().getDatatypeURI())));
+//                addAxiom = new AddAxiom(ontology, df.getOWLDataPropertyAssertionAxiom(owlDataProperty, individual, owlLiteral));
+//                ontologyAxioms.add(addAxiom);
+//                applyChange(addAxiom);
+////                Commit the change, for now.
+//            } else if (statement.getObject().isURIResource()) {
+//                final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(IRI.create(statement.getPredicate().toString()));
+//                final OWLNamedIndividual owlObjectTarget = df.getOWLNamedIndividual(IRI.create(statement.getObject().toString()));
+//                addAxiom = new AddAxiom(ontology, df.getOWLObjectPropertyAssertionAxiom(owlObjectProperty, individual, owlObjectTarget));
+//                ontologyAxioms.add(addAxiom);
+//            } else {
+//                throw new RuntimeException("Cannot parse this statement: " + statement);
+//            }
+//            applyChange(addAxiom);
+//            statementCount++;
+//        }
+//        if (statementCount > 0) {
+//            return Optional.of(individual);
+//        } else {
+//            return Optional.empty();
+//        }
 
 //        Get it back from the ontology?
 //        Commit the changes and return
@@ -136,7 +162,6 @@ public class OracleOntology implements ITrestleOntology {
 //        singleResource.listProperties();
     }
 
-    @Override
     public Optional<Set<OWLLiteral>> getIndividualProperty(OWLNamedIndividual individual, OWLDataProperty property) {
 //        I think we need to grab the individual from the database, an put it into the model, before trying to get the properties
         final Optional<OWLNamedIndividual> ontologyIndividual = getIndividual(individual);
@@ -151,7 +176,6 @@ public class OracleOntology implements ITrestleOntology {
         } else {
             return Optional.empty();
         }
-
 
 
     }
@@ -181,7 +205,7 @@ public class OracleOntology implements ITrestleOntology {
 //        OracleDatabase oraDB = connectToDatabase();
 
 //        Setup bulk import mode
-        database.enableBulkLoading();
+//        database.enableBulkLoading();
 
         //        We need to read out the ontology into a bytestream and then read it back into the oracle format
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -196,8 +220,8 @@ public class OracleOntology implements ITrestleOntology {
 
 //        OracleDatabase oraDB = connectToDatabase();
 //        oraDB.enableBulkLoading();
-        database.loadBaseOntology(is);
-        database.rebuildIndexes();
+//        database.loadBaseOntology(is);
+//        database.rebuildIndexes();
     }
 
     //    TODO(nrobison): Close connection?
@@ -237,12 +261,20 @@ public class OracleOntology implements ITrestleOntology {
     /**
      * Execute a raw SPARQL Query against the ontology
      *
-     * @param query - Query String
+     * @param queryString - Query String
      * @return - Jena ResultSet
      */
-    public ResultSet executeSPARQL(String query) {
+    @SuppressWarnings("Duplicates")
+    public ResultSet executeSPARQL(String queryString) {
 //        OracleDatabase oraDB = connectToDatabase();
-        return database.executeRawSPARQL(query);
+//        return database.executeRawSPARQL(query);
+        final Query query = QueryFactory.create(queryString);
+        final QueryExecution qExec = SparqlDLExecutionFactory.create(query, this.model);
+        final ResultSet resultSet = qExec.execSelect();
+        qExec.close();
+        ResultSetFormatter.out(System.out, resultSet, query);
+
+        return resultSet;
 
     }
 
@@ -253,6 +285,6 @@ public class OracleOntology implements ITrestleOntology {
         logger.debug("Disconnecting");
         reasoner.dispose();
 //        final OracleDatabase oraDB = connectToDatabase();
-        database.disconnect();
+//        database.disconnect();
     }
 }

@@ -9,6 +9,7 @@ import oracle.spatial.rdf.client.jena.GraphOracleSem;
 import oracle.spatial.rdf.client.jena.ModelOracleSem;
 import oracle.spatial.rdf.client.jena.Oracle;
 import oracle.spatial.rdf.client.jena.OracleUtils;
+import org.mindswap.pellet.jena.PelletReasonerFactory;
 import org.semanticweb.owlapi.model.IRI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,7 @@ import java.sql.SQLException;
 /**
  * Created by nrobison on 6/1/16.
  */
+@Deprecated
 public class OracleDatabase implements IOntologyDatabase {
 
     private static final Logger logger = LoggerFactory.getLogger(OracleDatabase.class);
@@ -50,7 +52,6 @@ public class OracleDatabase implements IOntologyDatabase {
         try {
             OracleUtils.dropSemanticModel(oracle, modelName);
         } catch (SQLException e) {
-//            throw new RuntimeException("Can't drop model", e);
             logger.error("Cannot drop model {}", modelName, e);
         }
         logger.debug("Dropped model: {}", modelName);
@@ -113,6 +114,7 @@ public class OracleDatabase implements IOntologyDatabase {
         while (stmtIterator.hasNext()) {
             logger.debug("{}", stmtIterator.next());
         }
+
 ////        Resource r = model.createResource(iri.toString());
 //        List<Resource> resources = new ArrayList<>();
 ////        ResultSet materializedResults;
@@ -143,7 +145,7 @@ public class OracleDatabase implements IOntologyDatabase {
     }
 
     public void disconnect() {
-//        graph.close();
+        graph.close();
         model.close();
         try {
             oracle.dispose();
