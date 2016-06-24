@@ -178,7 +178,7 @@ public class LocalOntology implements ITrestleOntology {
         return new ByteArrayInputStream(out.toByteArray());
     }
 
-//    This comes from an online gist, not sure if it's really necessary or not
+//    This comes from an online gist, not sure if it's really necessary or not, but it seems to work
 //    https://gist.github.com/ijdickinson/3830267
     static class LocalTDBModelGetter implements ModelGetter {
 

@@ -102,7 +102,7 @@ public class OntologyBaseTest {
         final Optional<Set<OWLLiteral>> individualProperty = ontology.getIndividualProperty(wgs_84, epsg_code);
         assertTrue("Data property should be present", individualProperty.isPresent());
         final Optional<OWLLiteral> first = individualProperty.get().stream().findFirst();
-        assertEquals("EPSG Code is wrong", 4326, first.get().parseInteger());
+        assertEquals("EPSG Code is wrong", 4326, first.orElseThrow(() -> new RuntimeException("Missing integer")).parseInteger());
 
 
 //        Try to load the ontology and run the query

@@ -13,7 +13,7 @@ import org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor;
 import org.semanticweb.owlapi.reasoner.SimpleConfiguration;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by nrobison on 6/21/16.
@@ -112,14 +112,19 @@ public class OntologyBuilder {
         return iri.getShortForm();
     }
 
-    private static DefaultPrefixManager createDefaultPrefixManager() {
+    private DefaultPrefixManager createDefaultPrefixManager() {
         DefaultPrefixManager pm = new DefaultPrefixManager();
+//        TODO(nrobison): This should be broken into its own thing. Maybe a function to add prefixes?
         pm.setPrefix("main_geo:", "http://nickrobison.com/dissertation/main_geo.owl#");
         pm.setPrefix("rdf:", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
         pm.setPrefix("rdfs:", "http://www.w3.org/2000/01/rdf-schema#");
         pm.setPrefix("owl:", "http://www.w3.org/2002/07/owl#");
+//        Jena doesn't use the normal geosparql prefix, so we need to define a separate spatial class
         pm.setPrefix("spatial:", "http://www.jena.apache.org/spatial#");
         pm.setPrefix("geosparql:", "http://www.opengis.net/ont/geosparql#");
+        pm.setPrefix("trestle:", "http://www.nickrobison.com/dissertation/trestle.owl#");
+
+//        Add any defined prefixes
         return pm;
     }
 
