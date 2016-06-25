@@ -35,7 +35,7 @@
     <orderEntry type="library" name="Maven: jakarta-regexp:jakarta-regexp:1.4" level="project" />
     <orderEntry type="library" name="Maven: org.apache.solr:solr-solrj:4.6.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.zookeeper:zookeeper:3.4.5-cdh5.5.2" level="project" />
-    <orderEntry type="library" name="Maven: commons-io:commons-io:2.4" level="project" />
+    <orderEntry type="library" name="Maven: commons-io:commons-io:2.5" level="project" />
     <orderEntry type="library" name="Maven: org.noggit:noggit:0.5" level="project" />
     <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpmime:4.2.6" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Maven: org.codehaus.woodstox:wstx-asl:3.2.7" level="project" />

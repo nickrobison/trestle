@@ -34,8 +34,9 @@ public interface ITrestleOntology {
 
     /**
      * Close all the open resource handles. Disposes of the reasoner and disconnects from any databases.
+     * @param drop - Drop the ontology on close?
      */
-    void close();
+    void close(boolean drop);
 
     /**
      * Get the underlying ontology, if needed. Should really use specific APIs

@@ -1,6 +1,7 @@
 import com.hp.hpl.jena.query.ResultSet;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -119,6 +120,8 @@ public class OntologyBaseTest {
         final ResultSet rs = ontology.executeSPARQL(queryString);
         assertTrue("Incorrect number of class results", rs.getRowNumber() >= 30);
 
+//        ontology.close(true);
+
     }
 
     @Test
@@ -159,9 +162,9 @@ public class OntologyBaseTest {
 
 //    @After
 //    public void finalize() throws OWLOntologyStorageException {
-////        optionOntology.get().close();
-//        ontology.close();
-//
-////        optionOntology.get().writeOntology(IRI.create(new File("/Users/nrobison/Desktop/test.owl")), true);
+//////        optionOntology.get().close();
+//        ontology.close(true);
+////
+//////        optionOntology.get().writeOntology(IRI.create(new File("/Users/nrobison/Desktop/test.owl")), true);
 //    }
 }

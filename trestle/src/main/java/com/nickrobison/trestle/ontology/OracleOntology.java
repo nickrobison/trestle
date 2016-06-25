@@ -6,17 +6,14 @@ import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.query.*;
 import com.hp.hpl.jena.rdf.model.*;
 import com.nickrobison.trestle.common.EPSGParser;
-import com.nickrobison.trestle.db.IOntologyDatabase;
-import com.nickrobison.trestle.db.oracle.OracleDatabase;
 import oracle.spatial.rdf.client.jena.ModelOracleSem;
 import oracle.spatial.rdf.client.jena.Oracle;
+import oracle.spatial.rdf.client.jena.OracleUtils;
 import org.mindswap.pellet.jena.PelletReasonerFactory;
-import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
-import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,16 +25,14 @@ import java.util.*;
 /**
  * Created by nrobison on 5/23/16.
  */
-// TODO(nrobison): This should support initializing the oracle database on construction
-//    FIXME(nrobison): This database handling is a total disaster, fix it!!!
 public class OracleOntology implements ITrestleOntology {
 
     private final static Logger logger = LoggerFactory.getLogger(OracleOntology.class);
-    public static final String MAIN_GEO = "main_geo:";
     private final String ontologyName;
     private final OWLOntology ontology;
     private final PelletReasoner reasoner;
     private final DefaultPrefixManager pm;
+    private final Oracle oracle;
 //    private final IOntologyDatabase database;
     private final OntModel model;
 
@@ -55,7 +50,7 @@ public class OracleOntology implements ITrestleOntology {
 //        }
 
 //        Other ontology stuff
-        final Oracle oracle = new Oracle(connectionString, username, password);
+        this.oracle = new Oracle(connectionString, username, password);
         try {
             Model oracleModel = ModelOracleSem.createOracleSemModel(oracle, ontologyName);
             this.model = ModelFactory.createOntologyModel(PelletReasonerFactory.THE_SPEC, oracleModel);
@@ -269,7 +264,7 @@ public class OracleOntology implements ITrestleOntology {
 //        OracleDatabase oraDB = connectToDatabase();
 //        return database.executeRawSPARQL(query);
         final Query query = QueryFactory.create(queryString);
-        final QueryExecution qExec = SparqlDLExecutionFactory.create(query, this.model);
+        final QueryExecution qExec = QueryExecutionFactory.create(query, this.model);
         final ResultSet resultSet = qExec.execSelect();
         qExec.close();
         ResultSetFormatter.out(System.out, resultSet, query);
@@ -281,9 +276,23 @@ public class OracleOntology implements ITrestleOntology {
     /**
      * Shutdown the reasoner and disconnect from the database
      */
-    public void close() {
+    public void close(boolean drop) {
         logger.debug("Disconnecting");
         reasoner.dispose();
+        model.close();
+        if (drop) {
+            logger.debug("Dropping model: {}", this.ontologyName);
+            try {
+                OracleUtils.dropSemanticModel(oracle, this.ontologyName);
+            } catch (SQLException e) {
+                throw new RuntimeException("Cannot drop oracle model", e);
+            }
+        }
+        try {
+            oracle.dispose();
+        } catch (SQLException e) {
+            throw new RuntimeException("Cannot disconnect from oracle database");
+        }
 //        final OracleDatabase oraDB = connectToDatabase();
 //        database.disconnect();
     }

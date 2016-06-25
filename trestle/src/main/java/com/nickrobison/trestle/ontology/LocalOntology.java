@@ -11,6 +11,7 @@ import com.hp.hpl.jena.rdf.model.ModelGetter;
 import com.hp.hpl.jena.rdf.model.ModelReader;
 import com.hp.hpl.jena.tdb.TDB;
 import com.hp.hpl.jena.tdb.TDBFactory;
+import org.apache.commons.io.FileUtils;
 import org.apache.jena.atlas.lib.NotImplemented;
 import org.apache.jena.query.spatial.EntityDefinition;
 import org.apache.jena.query.spatial.SpatialDatasetFactory;
@@ -34,8 +35,6 @@ import java.util.Set;
 /**
  * Created by nrobison on 6/15/16.
  */
-// TODO(nrobison): Make this actually work
-//    DO NOT USE!!!!! TOTALLY BROKEN, NOT A SINGLE THING WORKS
 public class LocalOntology implements ITrestleOntology {
 
     private final String ontologyName;
@@ -101,10 +100,6 @@ public class LocalOntology implements ITrestleOntology {
         ontology.getOWLOntologyManager().applyChanges(Arrays.asList(axioms));
     }
 
-    public void close() {
-        reasoner.dispose();
-    }
-
     public OWLOntology getUnderlyingOntology() {
         return this.ontology;
     }
@@ -165,6 +160,23 @@ public class LocalOntology implements ITrestleOntology {
         ResultSetFormatter.out(System.out, resultSet, query);
 
         return resultSet;
+    }
+
+    public void close(boolean drop) {
+
+        logger.debug("Shutting down reasoner and model");
+        reasoner.dispose();
+        model.close();
+        TDB.closedown();
+        if (drop) {
+//            Just delete the directory
+            try {
+                logger.debug("Deleting directory {}", "./target/data");
+                FileUtils.deleteDirectory(new File("./target/data"));
+            } catch (IOException e) {
+                logger.error("Couldn't delete data directory");
+            }
+        }
     }
 
     private ByteArrayInputStream ontologyToIS() {
