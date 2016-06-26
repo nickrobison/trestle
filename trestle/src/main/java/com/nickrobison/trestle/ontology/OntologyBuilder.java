@@ -122,7 +122,7 @@ public class OntologyBuilder {
 //        Jena doesn't use the normal geosparql prefix, so we need to define a separate spatial class
         pm.setPrefix("spatial:", "http://www.jena.apache.org/spatial#");
         pm.setPrefix("geosparql:", "http://www.opengis.net/ont/geosparql#");
-        pm.setPrefix("trestle:", "http://www.nickrobison.com/dissertation/trestle.owl#");
+        pm.setPrefix("trestle:", "http://nickrobison.com/dissertation/trestle.owl#");
 
 //        Add any defined prefixes
         return pm;

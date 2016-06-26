@@ -1,15 +1,13 @@
 package com.nickrobison.trestle.ontology;
 
 import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
-import com.clarkparsia.pellet.sparqldl.jena.SparqlDLExecutionFactory;
-import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.query.*;
 import com.hp.hpl.jena.rdf.model.*;
 import com.nickrobison.trestle.common.EPSGParser;
+import oracle.spatial.rdf.client.jena.GraphOracleSem;
 import oracle.spatial.rdf.client.jena.ModelOracleSem;
 import oracle.spatial.rdf.client.jena.Oracle;
 import oracle.spatial.rdf.client.jena.OracleUtils;
-import org.mindswap.pellet.jena.PelletReasonerFactory;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
@@ -34,7 +32,8 @@ public class OracleOntology implements ITrestleOntology {
     private final DefaultPrefixManager pm;
     private final Oracle oracle;
 //    private final IOntologyDatabase database;
-    private final OntModel model;
+    private final Model model;
+    private final GraphOracleSem graph;
 
 //    Directly access the Jena model
 
@@ -52,8 +51,10 @@ public class OracleOntology implements ITrestleOntology {
 //        Other ontology stuff
         this.oracle = new Oracle(connectionString, username, password);
         try {
-            Model oracleModel = ModelOracleSem.createOracleSemModel(oracle, ontologyName);
-            this.model = ModelFactory.createOntologyModel(PelletReasonerFactory.THE_SPEC, oracleModel);
+//            Model oracleModel = ModelOracleSem.createOracleSemModel(oracle, ontologyName);
+//            this.model = ModelFactory.createOntologyModel(PelletReasonerFactory.THE_SPEC, oracleModel);
+            this.model = ModelOracleSem.createOracleSemModel(oracle, ontologyName);
+            this.graph = (GraphOracleSem) this.model.getGraph();
         } catch (SQLException e) {
             throw new RuntimeException("Can't create oracle model", e);
         }
@@ -197,12 +198,21 @@ public class OracleOntology implements ITrestleOntology {
     }
 
     public void initializeOntology() {
+        logger.info("Removing all nodes from Oracle ontology {}", ontologyName);
+        model.removeAll();
+//        try {
+//            OracleUtils.dropSemanticModel(oracle, ontologyName);
+//        } catch (SQLException e) {
+//            logger.error("Cannot drop ontology {}", ontologyName, e);
+//        }
+
 //        OracleDatabase oraDB = connectToDatabase();
 
 //        Setup bulk import mode
 //        database.enableBulkLoading();
 
         //        We need to read out the ontology into a bytestream and then read it back into the oracle format
+        logger.debug("Writing out the ontology to byte array");
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
 //            Jena doesn't support OWL/XML, so we need base RDF.
@@ -212,11 +222,21 @@ public class OracleOntology implements ITrestleOntology {
         }
 
         final ByteArrayInputStream is = new ByteArrayInputStream(out.toByteArray());
+        logger.debug("Reading model from byte stream");
+        model.read(is, null);
 
-//        OracleDatabase oraDB = connectToDatabase();
-//        oraDB.enableBulkLoading();
-//        database.loadBaseOntology(is);
-//        database.rebuildIndexes();
+//        Finish the loading
+        logger.info("Rebuilding graph and indexes for {}", this.ontologyName);
+        try {
+            this.graph.analyze();
+        } catch (SQLException e) {
+            logger.error("Cannot analyze {}", this.ontologyName, e);
+        }
+        try {
+            this.graph.rebuildApplicationTableIndex();
+        } catch (SQLException e) {
+            logger.error("Cannot rebuild indexes for {}", this.ontologyName, e);
+        }
     }
 
     //    TODO(nrobison): Close connection?
@@ -266,8 +286,9 @@ public class OracleOntology implements ITrestleOntology {
         final Query query = QueryFactory.create(queryString);
         final QueryExecution qExec = QueryExecutionFactory.create(query, this.model);
         final ResultSet resultSet = qExec.execSelect();
-        qExec.close();
         ResultSetFormatter.out(System.out, resultSet, query);
+//        Make sure to not close the executor until after reading out the triples!
+        qExec.close();
 
         return resultSet;
 
