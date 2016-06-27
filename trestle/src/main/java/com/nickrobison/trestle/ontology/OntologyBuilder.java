@@ -1,4 +1,4 @@
-package com.nickrobison.trixie.ontology;
+package com.nickrobison.trestle.ontology;
 
 import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
 import com.clarkparsia.pellet.owlapiv3.PelletReasonerFactory;
@@ -13,12 +13,11 @@ import org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor;
 import org.semanticweb.owlapi.reasoner.SimpleConfiguration;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by nrobison on 6/21/16.
- */ //    FIXME(nrobison): Remove the duplicates check
-@SuppressWarnings("Duplicates")
+ */
 public class OntologyBuilder {
     private Optional<IRI> iri = Optional.empty();
     private Optional<String> connectionString = Optional.empty();
@@ -30,29 +29,56 @@ public class OntologyBuilder {
     public OntologyBuilder() {
     }
 
+    /**
+     * Loads an initial base ontology from the given IRI
+     * @param iri - IRI of the ontology to load
+     * @return OntologyBuilder
+     */
     public OntologyBuilder fromIRI(IRI iri) {
         this.iri = Optional.of(iri);
         return this;
     }
 
+    /**
+     * Connects to ontology database, if this isn't set, the Builder returns a LocalOntology, otherwise it returns the correct database ontology
+     * @param connectionString - Connection string of database to load
+     * @param username - Username to connect with
+     * @param password - User password
+     * @return - OntologyBuilder
+     */
     public OntologyBuilder withDBConnection(String connectionString, String username, String password) {
         this.connectionString = Optional.of(connectionString);
         this.username = Optional.of(username);
-        this.username = Optional.of(password);
+        this.password = Optional.of(password);
         return this;
     }
 
+    /**
+     * Sets the name of the ontology model, if null, parses the IRI to get the base name
+     * @param ontologyName - Name of the model
+     * @return - OntologyBuilder
+     */
     public OntologyBuilder name(String ontologyName) {
         this.ontologyName = Optional.of(ontologyName);
         return this;
     }
 
+    /**
+     * Sets a custom prefix manager, otherwise a default one is generated
+     * @param pm - DefaultPrefixManger, custom prefix manager
+     * @return - OntologyBuilder
+     */
     public OntologyBuilder withPrefixManager(DefaultPrefixManager pm) {
         this.pm = Optional.of(pm);
         return this;
     }
 
-    public Optional<ITrixieOntology> build() throws OWLOntologyCreationException {
+    /**
+     * Builds and returns the correct ontology (either local or database backed)
+     * @return - ITrestleOntology for the correct underlying ontology configuration
+     * @throws OWLOntologyCreationException
+     */
+    public Optional<ITrestleOntology> build() throws OWLOntologyCreationException {
         final OWLOntologyManager owlOntologyManager = OWLManager.createOWLOntologyManager();
         OWLOntology owlOntology;
         if (this.iri.isPresent()) {
@@ -64,6 +90,7 @@ public class OntologyBuilder {
 //            If there's a connection string, then we need to return a database Ontology
         if (connectionString.isPresent()) {
             return Optional.of(new OracleOntology(
+                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
                     pm.orElse(createDefaultPrefixManager()),
                     classify(owlOntology, new ConsoleProgressMonitor()),
@@ -85,14 +112,19 @@ public class OntologyBuilder {
         return iri.getShortForm();
     }
 
-    private static DefaultPrefixManager createDefaultPrefixManager() {
+    private DefaultPrefixManager createDefaultPrefixManager() {
         DefaultPrefixManager pm = new DefaultPrefixManager();
+//        TODO(nrobison): This should be broken into its own thing. Maybe a function to add prefixes?
         pm.setPrefix("main_geo:", "http://nickrobison.com/dissertation/main_geo.owl#");
         pm.setPrefix("rdf:", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
         pm.setPrefix("rdfs:", "http://www.w3.org/2000/01/rdf-schema#");
         pm.setPrefix("owl:", "http://www.w3.org/2002/07/owl#");
+//        Jena doesn't use the normal geosparql prefix, so we need to define a separate spatial class
         pm.setPrefix("spatial:", "http://www.jena.apache.org/spatial#");
         pm.setPrefix("geosparql:", "http://www.opengis.net/ont/geosparql#");
+        pm.setPrefix("trestle:", "http://nickrobison.com/dissertation/trestle.owl#");
+
+//        Add any defined prefixes
         return pm;
     }
 

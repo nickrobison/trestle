@@ -1,4 +1,4 @@
-package com.nickrobison.trixie.db;
+package com.nickrobison.trestle.db;
 
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Resource;

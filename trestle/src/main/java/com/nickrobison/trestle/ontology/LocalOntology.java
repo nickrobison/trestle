@@ -1,7 +1,8 @@
-package com.nickrobison.trixie.ontology;
+package com.nickrobison.trestle.ontology;
 
 import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
 import com.clarkparsia.pellet.sparqldl.jena.SparqlDLExecutionFactory;
+import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.ontology.OntModelSpec;
 import com.hp.hpl.jena.query.*;
@@ -11,10 +12,7 @@ import com.hp.hpl.jena.rdf.model.ModelGetter;
 import com.hp.hpl.jena.rdf.model.ModelReader;
 import com.hp.hpl.jena.tdb.TDB;
 import com.hp.hpl.jena.tdb.TDBFactory;
-import com.hp.hpl.jena.tdb.base.file.Location;
-import com.hp.hpl.jena.tdb.setup.StoreParams;
-import com.hp.hpl.jena.tdb.setup.StoreParamsBuilder;
-import com.nickrobison.trixie.common.EPSGParser;
+import org.apache.commons.io.FileUtils;
 import org.apache.jena.atlas.lib.NotImplemented;
 import org.apache.jena.query.spatial.EntityDefinition;
 import org.apache.jena.query.spatial.SpatialDatasetFactory;
@@ -32,16 +30,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 /**
  * Created by nrobison on 6/15/16.
  */
-// TODO(nrobison): Make this actually work
-//    DO NOT USE!!!!! TOTALLY BROKEN, NOT A SINGLE THING WORKS
-public class LocalOntology implements ITrixieOntology {
+public class LocalOntology implements ITrestleOntology {
 
     private final String ontologyName;
     private final static Logger logger = LoggerFactory.getLogger(LocalOntology.class);
@@ -49,7 +44,7 @@ public class LocalOntology implements ITrixieOntology {
     private final PelletReasoner reasoner;
     private final DefaultPrefixManager pm;
     private final OntModel model;
-    private final Dataset ds;
+    private final Graph graph;
 
 
     LocalOntology(String ontologyName, OWLOntology ont, DefaultPrefixManager pm, PelletReasoner reasoner) {
@@ -58,26 +53,30 @@ public class LocalOntology implements ITrixieOntology {
         this.pm = pm;
         this.reasoner = reasoner;
 //        Instead of a database object, we use a Jena model to support the RDF querying
-        this.ds = initialiseTDB();
+        Dataset ds = initialiseTDB();
 
 
 //        spatial stuff
         Directory indexDirectory;
         Dataset spatialDataset = null;
+        logger.debug("Building TDB and Lucene database");
         try {
             indexDirectory = FSDirectory.open(new File("./target/data/lucene/"));
 //            Not sure if these entity and geo fields are correct, but oh well.
             EntityDefinition ed = new EntityDefinition("uri", "geo");
 //            Create a spatial dataset that combines the TDB dataset + the spatial index
-             spatialDataset = SpatialDatasetFactory.createLucene(this.ds, indexDirectory, ed);
+             spatialDataset = SpatialDatasetFactory.createLucene(ds, indexDirectory, ed);
+            logger.debug("Lucene index is up and running");
         } catch (IOException e) {
             e.printStackTrace();
         }
         final OntModelSpec spec = PelletReasonerFactory.THE_SPEC;
         spec.setImportModelGetter(new LocalTDBModelGetter(spatialDataset));
-        this.model = ModelFactory.createOntologyModel(PelletReasonerFactory.THE_SPEC);
+//        this.model = ModelFactory.createOntologyModel(PelletReasonerFactory.THE_SPEC);
+        this.model = ModelFactory.createOntologyModel(spec);
         this.model.read(ontologyToIS(), null);
         TDB.sync(this.model);
+        this.graph = this.model.getGraph();
 
     }
 
@@ -104,10 +103,6 @@ public class LocalOntology implements ITrixieOntology {
         ontology.getOWLOntologyManager().applyChanges(Arrays.asList(axioms));
     }
 
-    public void close() {
-        reasoner.dispose();
-    }
-
     public OWLOntology getUnderlyingOntology() {
         return this.ontology;
     }
@@ -130,6 +125,16 @@ public class LocalOntology implements ITrixieOntology {
         }
     }
 
+    @Override
+    public Optional<Set<OWLLiteral>> getIndividualProperty(OWLNamedIndividual individual, OWLDataProperty property) {
+        final Set<OWLLiteral> dataPropertyValues = reasoner.getDataPropertyValues(individual, property);
+        if (dataPropertyValues.isEmpty()) {
+            return Optional.empty();
+        } else {
+            return Optional.of(dataPropertyValues);
+        }
+    }
+
     public IRI getFullIRI(IRI iri) {
         return pm.getIRI(iri.toString());
     }
@@ -139,7 +144,7 @@ public class LocalOntology implements ITrixieOntology {
     }
 
 //    oracle boolean has no effect here, since it's a local ontology
-    public void initializeOntology(boolean oracle) {
+    public void initializeOntology() {
 
 //        TODO(nrobison): No need for EPSG codes right now.
 //        logger.debug("Parsing and loading EPSG codes");
@@ -150,19 +155,31 @@ public class LocalOntology implements ITrixieOntology {
 //        TODO(nrobison): Need to write this to the Jena model.
     }
 
-    public void initializeOracleOntology(IRI filename) {
+    public ResultSet executeSPARQL(String queryString) {
+        final Query query = QueryFactory.create(queryString);
+        final QueryExecution qExec = SparqlDLExecutionFactory.create(query, this.model);
+        final ResultSet resultSet = qExec.execSelect();
+        qExec.close();
+        ResultSetFormatter.out(System.out, resultSet, query);
 
+        return resultSet;
     }
 
-    public void initializeOracleOntology() {
+    public void close(boolean drop) {
 
-    }
-
-    public ResultSet executeSPARQL(String query) {
-        final Query q = QueryFactory.create(query);
-        final QueryExecution qe = SparqlDLExecutionFactory.create(q, this.model);
-
-        return qe.execSelect();
+        logger.debug("Shutting down reasoner and model");
+        reasoner.dispose();
+        model.close();
+        TDB.closedown();
+        if (drop) {
+//            Just delete the directory
+            try {
+                logger.debug("Deleting directory {}", "./target/data");
+                FileUtils.deleteDirectory(new File("./target/data"));
+            } catch (IOException e) {
+                logger.error("Couldn't delete data directory");
+            }
+        }
     }
 
     private ByteArrayInputStream ontologyToIS() {
@@ -178,7 +195,7 @@ public class LocalOntology implements ITrixieOntology {
         return new ByteArrayInputStream(out.toByteArray());
     }
 
-//    This comes from an online gist, not sure if it's really necessary or not
+//    This comes from an online gist, not sure if it's really necessary or not, but it seems to work
 //    https://gist.github.com/ijdickinson/3830267
     static class LocalTDBModelGetter implements ModelGetter {
 
