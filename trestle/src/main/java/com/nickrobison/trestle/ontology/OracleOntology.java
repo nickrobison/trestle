@@ -22,6 +22,7 @@ import java.util.*;
 /**
  * Created by nrobison on 5/23/16.
  */
+@SuppressWarnings("initialization")
 public class OracleOntology implements ITrestleOntology {
 
     private final static Logger logger = LoggerFactory.getLogger(OracleOntology.class);

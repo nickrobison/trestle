@@ -36,6 +36,7 @@ import java.util.Set;
 /**
  * Created by nrobison on 6/15/16.
  */
+@SuppressWarnings("initialization")
 public class LocalOntology implements ITrestleOntology {
 
     private final String ontologyName;
@@ -68,7 +69,7 @@ public class LocalOntology implements ITrestleOntology {
              spatialDataset = SpatialDatasetFactory.createLucene(ds, indexDirectory, ed);
             logger.debug("Lucene index is up and running");
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Cannot create spatial dataset", e);
         }
         final OntModelSpec spec = PelletReasonerFactory.THE_SPEC;
         spec.setImportModelGetter(new LocalTDBModelGetter(spatialDataset));
