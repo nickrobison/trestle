@@ -2,6 +2,7 @@ package com.nickrobison.trestle.ontology;
 
 import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
 import com.clarkparsia.pellet.sparqldl.jena.SparqlDLExecutionFactory;
+import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.ontology.OntModelSpec;
 import com.hp.hpl.jena.query.*;
@@ -43,6 +44,7 @@ public class LocalOntology implements ITrestleOntology {
     private final PelletReasoner reasoner;
     private final DefaultPrefixManager pm;
     private final OntModel model;
+    private final Graph graph;
 
 
     LocalOntology(String ontologyName, OWLOntology ont, DefaultPrefixManager pm, PelletReasoner reasoner) {
@@ -74,6 +76,7 @@ public class LocalOntology implements ITrestleOntology {
         this.model = ModelFactory.createOntologyModel(spec);
         this.model.read(ontologyToIS(), null);
         TDB.sync(this.model);
+        this.graph = this.model.getGraph();
 
     }
 

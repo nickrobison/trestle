@@ -1,7 +1,6 @@
 import com.hp.hpl.jena.query.ResultSet;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
-import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
