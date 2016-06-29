@@ -1,5 +1,7 @@
 package com.nickrobison.trestle.annotations;
 
+import com.nickrobison.trestle.types.ObjectRestriction;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
