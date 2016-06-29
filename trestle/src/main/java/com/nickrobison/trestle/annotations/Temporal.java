@@ -14,7 +14,7 @@ import java.time.temporal.ChronoUnit;
 // TODO(nrobison): This should support more than just fields
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface TemporalObject {
+public @interface Temporal {
     TemporalType type();
     int duration();
     ChronoUnit unit();
