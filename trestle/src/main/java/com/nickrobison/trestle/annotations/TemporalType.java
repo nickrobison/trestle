@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.types;
+package com.nickrobison.trestle.annotations;
 
 /**
  * Created by nrobison on 6/28/16.
