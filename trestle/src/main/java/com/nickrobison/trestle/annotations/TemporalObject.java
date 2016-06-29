@@ -1,5 +1,7 @@
 package com.nickrobison.trestle.annotations;
 
+import com.nickrobison.trestle.types.TemporalType;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -9,7 +11,8 @@ import java.time.temporal.ChronoUnit;
 /**
  * Created by nrobison on 6/28/16.
  */
-@Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
+// TODO(nrobison): This should support more than just fields
+@Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface TemporalObject {
     TemporalType type();
