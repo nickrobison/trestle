@@ -1,11 +1,17 @@
 package com.nickrobison.trestle.types;
 
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 /**
  * Created by nrobison on 6/29/16.
  */
+@SuppressWarnings("initialization")
 public class TemporalObject {
 
     private final String id;
@@ -13,6 +19,7 @@ public class TemporalObject {
     private final TemporalScope scope;
     private final LocalDateTime startTime;
     private final LocalDateTime endTime;
+    private final Set<OWLNamedIndividual> temporal_of;
 
     private TemporalObject(Builder builder) {
         this.id = builder.id;
@@ -20,6 +27,31 @@ public class TemporalObject {
         this.scope = builder.scope;
         this.startTime = builder.startTime;
         this.endTime = builder.endTime;
+        this.temporal_of = builder.temporal_of;
+    }
+
+    public TemporalType getType() {
+        return type;
+    }
+
+    public TemporalScope getScope() {
+        return scope;
+    }
+
+    public boolean isInterval() {
+        return type == TemporalType.INTERVAL;
+    }
+
+    public boolean isContinuing() {
+        return isInterval() && endTime == null;
+    }
+
+    public void addTemporalRelation(OWLNamedIndividual individual) {
+        this.temporal_of.add(individual);
+    }
+
+    public Set<OWLNamedIndividual> getTemporalRelations() {
+        return this.temporal_of;
     }
 
     public static class Builder {
@@ -29,71 +61,83 @@ public class TemporalObject {
         private TemporalScope scope;
         private LocalDateTime startTime;
         private LocalDateTime endTime;
+        private Set<OWLNamedIndividual> temporal_of;
 
         public Builder() {
+
             this.id = UUID.randomUUID().toString();
+            this.temporal_of = new HashSet<>();
         }
 
         public Builder withID(String id) {
+
             this.id = id;
             return this;
         }
 
-        public Builder withValidAt(LocalDateTime validAt) {
-            this.type = TemporalType.POINT;
-            this.scope = TemporalScope.VALID
-            this.startTime = validAt;
+        public Builder withType(TemporalType type) {
+
+            this.type = type;
             return this;
+        }
+
+        public Builder withScope(TemporalScope scope) {
+
+            this.scope = scope;
+            return this;
+        }
+
+        public Builder withValidAt(LocalDateTime validAt) {
+
+            this.startTime = validAt;
+            return this.withType(TemporalType.POINT).withScope(TemporalScope.VALID);
         }
 
         public Builder withExistsAt(LocalDateTime existsAt) {
-            this.type = TemporalType.POINT;
-            this.scope = TemporalScope.EXISTS;
+
             this.startTime = existsAt;
-            return this;
+            return this.withType(TemporalType.POINT).withScope(TemporalScope.EXISTS);
         }
 
         public Builder withValidFrom(LocalDateTime validFrom) {
-            this.type = TemporalType.INTERVAL;
-            this.scope = TemporalScope.VALID;
+
             this.startTime = validFrom;
-            return this;
+            return this.withType(TemporalType.INTERVAL).withScope(TemporalScope.VALID);
         }
 
         public Builder withValidTo(LocalDateTime validTo) {
-            this.type = TemporalType.INTERVAL;
-            this.scope = TemporalScope.VALID;
+
             this.endTime = validTo;
-            return this;
+            return this.withType(TemporalType.INTERVAL).withScope(TemporalScope.VALID);
         }
 
         public Builder withExistsFrom(LocalDateTime existsFrom) {
-            this.type = TemporalType.INTERVAL;
-            this.scope = TemporalScope.EXISTS;
+
             this.startTime = existsFrom;
-            return this;
+            return this.withType(TemporalType.INTERVAL).withScope(TemporalScope.EXISTS);
         }
 
         public Builder withExistsTo(LocalDateTime existsTo) {
-            this.type = TemporalType.INTERVAL;
-            this.scope = TemporalScope.EXISTS;
+
             this.endTime = existsTo;
-            return this;
+            return this.withType(TemporalType.INTERVAL).withScope(TemporalScope.EXISTS);
         }
 
         public Builder withValidInterval(LocalDateTime validFrom, LocalDateTime validTo) {
-            this.type = TemporalType.INTERVAL;
-            this.scope = TemporalScope.VALID;
-            this.startTime = validFrom;
-            this.endTime = validTo;
-            return this;
+
+            return this
+                    .withValidFrom(validFrom)
+                    .withValidTo(validTo);
         }
 
         public Builder withExistsInterval(LocalDateTime existsFrom, LocalDateTime existsTo) {
-            this.type = TemporalType.INTERVAL;
-            this.scope = TemporalScope.EXISTS;
-            this.startTime = existsFrom;
-            this.endTime = existsTo;
+            return this
+                    .withExistsFrom(existsFrom)
+                    .withExistsTo(existsTo);
+        }
+
+        public Builder withTemporalOf(OWLNamedIndividual... individuals) {
+            this.temporal_of.addAll(Arrays.asList(individuals));
             return this;
         }
 

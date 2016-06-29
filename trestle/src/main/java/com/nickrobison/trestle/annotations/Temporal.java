@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.annotations;
 
+import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 
 import java.lang.annotation.ElementType;
@@ -16,6 +17,7 @@ import java.time.temporal.ChronoUnit;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Temporal {
     TemporalType type();
+    TemporalScope scope() default TemporalScope.VALID;
     int duration();
     ChronoUnit unit();
 }
