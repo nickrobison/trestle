@@ -19,6 +19,7 @@ import static junit.framework.TestCase.*;
 /**
  * Created by nrobison on 6/3/16.
  */
+@SuppressWarnings("dereference.of.nullable")
 @RunWith(Parameterized.class)
 public class OntologyBaseTest {
 
@@ -35,6 +36,9 @@ public class OntologyBaseTest {
     @Parameterized.Parameters
     public static Collection<Object[]> getParameters() {
         URL ontologyResource = OntologyBaseTest.class.getClassLoader().getResource("main_geo.owl");
+        if (ontologyResource == null) {
+            throw new RuntimeException("Cannot load ontology");
+        }
         final IRI iri = IRI.create(ontologyResource);
 
 //        Build ontologies

@@ -2,6 +2,7 @@ package com.nickrobison.trestle;
 
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
@@ -16,6 +17,7 @@ import java.util.Set;
 /**
  * Created by nrobison on 5/17/16.
  */
+@SuppressWarnings("dereference.of.nullable")
 public class TrestleReasoner {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleReasoner.class);
@@ -66,7 +68,7 @@ public class TrestleReasoner {
 
 //            Try to load the ontology into Oracle
 //            We need an RDF/XML ontology to actually work with Jena(?)
-            final URL rdfOntology = TrestleReasoner.class.getClassLoader().getResource("main_geo.rdf");
+//            final URL rdfOntology = TrestleReasoner.class.getClassLoader().getResource("main_geo.rdf");
 //            rootOntology.initializeOracleOntology(IRI.create(rdfOntology));
 
         }

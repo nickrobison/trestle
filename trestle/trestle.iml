@@ -235,5 +235,6 @@
     <orderEntry type="library" scope="TEST" name="Maven: org.openjdk.jmh:jmh-core:1.12" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: net.sf.jopt-simple:jopt-simple:4.6" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.openjdk.jmh:jmh-generator-annprocess:1.12" level="project" />
+    <orderEntry type="library" name="javac" level="project" />
   </component>
 </module>
