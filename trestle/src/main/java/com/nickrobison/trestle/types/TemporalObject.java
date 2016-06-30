@@ -12,6 +12,7 @@ import java.util.UUID;
  * Created by nrobison on 6/29/16.
  */
 @SuppressWarnings("initialization")
+@Deprecated
 public class TemporalObject {
 
     private final String id;

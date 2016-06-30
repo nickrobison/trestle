@@ -1,8 +1,9 @@
 package com.nickrobison.trestle.common;
 
 import com.nickrobison.trestle.annotations.*;
-import com.nickrobison.trestle.annotations.Temporal;
+import com.nickrobison.trestle.annotations.TemporalProperty;
 import com.nickrobison.trestle.types.*;
+import com.nickrobison.trestle.types.temporal.Temporal;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
@@ -11,6 +12,9 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.*;
+
+import static com.nickrobison.trestle.types.temporal.TemporalObjectBuilder.exists;
+import static com.nickrobison.trestle.types.temporal.TemporalObjectBuilder.valid;
 
 /**
  * Created by nrobison on 6/28/16.
@@ -116,7 +120,7 @@ public class ClassParser {
                 continue;
             } else if (classField.isAnnotationPresent(ObjectProperty.class)) {
                 continue;
-            } else if (classField.isAnnotationPresent(Temporal.class)) {
+            } else if (classField.isAnnotationPresent(TemporalProperty.class)) {
                 continue;
             } else if (classField.isAnnotationPresent(DataProperty.class)) {
                 final DataProperty annotation = classField.getAnnotation(DataProperty.class);
@@ -154,14 +158,14 @@ public class ClassParser {
         return Optional.of(axioms);
     }
 
-    public static Optional<List<TemporalObject>> GetTemporalObjects(Object inputObject) {
+    public static Optional<List<Temporal>> GetTemporalObjects(Object inputObject) {
 
         final Class<?> clazz = inputObject.getClass();
-        List<TemporalObject> temporalObjects = new ArrayList<>();
+        List<Temporal> temporalObjects = new ArrayList<>();
         final OWLNamedIndividual owlNamedIndividual = GetIndividual(inputObject);
         for (Field classField : clazz.getDeclaredFields()) {
-            if (classField.isAnnotationPresent(Temporal.class)) {
-                final Temporal annotation = classField.getAnnotation(Temporal.class);
+            if (classField.isAnnotationPresent(TemporalProperty.class)) {
+                final TemporalProperty annotation = classField.getAnnotation(TemporalProperty.class);
 //                Try to get the value
                 Object fieldValue = null;
                 try {
@@ -176,25 +180,28 @@ public class ClassParser {
                     throw new RuntimeException("Not a temporal field");
                 }
 
-                final TemporalObject temporalObject;
+//                final TemporalObject temporalObject;
+                final Temporal temporalObject;
 
                 switch (annotation.type()) {
                     case POINT: {
                       switch (annotation.scope()) {
                           case VALID: {
-                              temporalObject = new TemporalObject
-                                      .Builder()
-                                      .withValidAt(LocalDateTime.from((java.time.temporal.Temporal) fieldValue))
-                                      .withTemporalOf(owlNamedIndividual)
-                                      .build();
+                              temporalObject = valid().at(LocalDateTime.from((java.time.temporal.Temporal) fieldValue)).withRelations(owlNamedIndividual);
+//                              temporalObject = new TemporalObject
+//                                      .Builder()
+//                                      .withValidAt(LocalDateTime.from((java.time.temporal.Temporal) fieldValue))
+//                                      .withTemporalOf(owlNamedIndividual)
+//                                      .build();
                               break;
                           }
                           case EXISTS: {
-                              temporalObject = new TemporalObject
-                                      .Builder()
-                                      .withExistsAt(LocalDateTime.from((java.time.temporal.Temporal) fieldValue))
-                                      .withTemporalOf(owlNamedIndividual)
-                                      .build();
+                              temporalObject = exists().at(LocalDateTime.from((java.time.temporal.Temporal) fieldValue)).withRelations(owlNamedIndividual);
+//                              temporalObject = new TemporalObject
+//                                      .Builder()
+//                                      .withExistsAt(LocalDateTime.from((java.time.temporal.Temporal) fieldValue))
+//                                      .withTemporalOf(owlNamedIndividual)
+//                                      .build();
                               break;
                           }
 
@@ -211,20 +218,22 @@ public class ClassParser {
                         }
                         switch (annotation.scope()) {
                             case VALID: {
-                                temporalObject = new TemporalObject
-                                        .Builder()
-                                        .withValidInterval(from, to)
-                                        .withTemporalOf(owlNamedIndividual)
-                                        .build();
+                                temporalObject = valid().from(from).to(to).withRelations(owlNamedIndividual);
+//                                temporalObject = new TemporalObject
+//                                        .Builder()
+//                                        .withValidInterval(from, to)
+//                                        .withTemporalOf(owlNamedIndividual)
+//                                        .build();
                                 break;
                             }
 
                             case EXISTS: {
-                                temporalObject = new TemporalObject
-                                        .Builder()
-                                        .withExistsInterval(from, to)
-                                        .withTemporalOf(owlNamedIndividual)
-                                        .build();
+                                temporalObject = exists().from(from).to(to).withRelations(owlNamedIndividual);
+//                                temporalObject = new TemporalObject
+//                                        .Builder()
+//                                        .withExistsInterval(from, to)
+//                                        .withTemporalOf(owlNamedIndividual)
+//                                        .build();
                                 break;
                             }
 

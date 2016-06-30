@@ -1,8 +1,9 @@
 import com.nickrobison.trestle.annotations.*;
+import com.nickrobison.trestle.annotations.TemporalProperty;
 import com.nickrobison.trestle.common.ClassParser;
-import com.nickrobison.trestle.types.TemporalObject;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
+import com.nickrobison.trestle.types.temporal.Temporal;
 import org.junit.Before;
 import org.junit.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -14,6 +15,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
+import static com.nickrobison.trestle.types.temporal.TemporalObjectBuilder.exists;
+import static com.nickrobison.trestle.types.temporal.TemporalObjectBuilder.valid;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -26,8 +29,8 @@ public class TrestleParserTest {
     private GAULTestClass test1;
     private MoreGAULTests test2;
     private OWLDataFactory df;
-    private TemporalObject temporal;
-    private TemporalObject temporalPoint;
+    private com.nickrobison.trestle.types.temporal.Temporal temporal;
+    private com.nickrobison.trestle.types.temporal.Temporal temporalPoint;
 
     @Before
     public void Setup() {
@@ -35,8 +38,10 @@ public class TrestleParserTest {
         test2 = new MoreGAULTests();
         df = OWLManager.getOWLDataFactory();
         LocalDateTime dt = LocalDateTime.of(1989, 3, 26, 0, 0);
-        temporal = new TemporalObject.Builder().withValidInterval(dt, dt.plusYears(1)).build();
-        temporalPoint = new TemporalObject.Builder().withExistsAt(dt).build();
+//        temporal = new TemporalObject.Builder().withValidInterval(dt, dt.plusYears(1)).build();
+        temporal = valid().from(dt).to(dt.plusYears(1)).withRelations();
+//        temporalPoint = new TemporalObject.Builder().withExistsAt(dt).build();
+        temporalPoint = exists().at(dt).withRelations();
     }
 
     @Test
@@ -82,7 +87,7 @@ public class TrestleParserTest {
         assertEquals("Wrong number of properties", 3, owlDataPropertyAssertionAxioms.get().size());
 
 //        Test the temporal
-        final Optional<List<TemporalObject>> temporalObjects = ClassParser.GetTemporalObjects(test2);
+        final Optional<List<Temporal>> temporalObjects = ClassParser.GetTemporalObjects(test2);
         assertTrue("Should have objects", temporalObjects.isPresent());
         assertEquals("Wrong number of objects", 2, temporalObjects.get().size());
 //        Check for the same type and scope for interval
@@ -106,11 +111,11 @@ public class TrestleParserTest {
         @IndividualIdentifier
         public String adm0_name;
         public String test_name;
-        @Temporal(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        @TemporalProperty(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
         @Ignore
         public LocalDateTime testtime;
         private String privateField;
-        @Temporal(type = TemporalType.POINT, scope= TemporalScope.EXISTS, duration = 0, unit = ChronoUnit.YEARS)
+        @TemporalProperty(type = TemporalType.POINT, scope= TemporalScope.EXISTS, duration = 0, unit = ChronoUnit.YEARS)
         public LocalDateTime testpoint;
         public MoreGAULTests() {
             this.adm0_code = 4326;

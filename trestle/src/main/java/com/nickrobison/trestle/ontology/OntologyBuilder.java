@@ -18,6 +18,8 @@ import java.util.*;
 /**
  * Created by nrobison on 6/21/16.
  */
+// FIXME(nrobison): Work to remove this, I feel like my optionals should fix the nullness, right?
+@SuppressWarnings("nullness")
 public class OntologyBuilder {
     private Optional<IRI> iri = Optional.empty();
     private Optional<String> connectionString = Optional.empty();
