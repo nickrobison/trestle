@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * Created by nrobison on 6/30/16.
  */
-public class IntervalTemporal extends Temporal {
+public class IntervalTemporal extends TemporalObject {
 
     private static final TemporalType TYPE = TemporalType.INTERVAL;
     private final TemporalScope scope;

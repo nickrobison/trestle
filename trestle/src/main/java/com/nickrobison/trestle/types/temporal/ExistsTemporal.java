@@ -1,7 +1,6 @@
 package com.nickrobison.trestle.types.temporal;
 
 import com.nickrobison.trestle.types.TemporalScope;
-import com.nickrobison.trestle.types.TemporalType;
 
 import java.time.LocalDateTime;
 
@@ -11,30 +10,18 @@ import java.time.LocalDateTime;
 public class ExistsTemporal {
 
     private final static TemporalScope SCOPE = TemporalScope.EXISTS;
-//    @Override
-//    TemporalType getType() {
-//        return null;
-//    }
-//
-//    @Override
-//    TemporalScope getScope() {
-//        return null;
-//    }
 
     public static class Builder {
-//        private TemporalType type;
-//        private LocalDateTime startTime;
-//        private LocalDateTime endTime;
 
-        Builder() {        }
+        Builder() {
+        }
 
-        public PointTemporal.Builder at(LocalDateTime at) { return new PointTemporal.Builder(SCOPE, at);}
+        public PointTemporal.Builder at(LocalDateTime at) {
+            return new PointTemporal.Builder(SCOPE, at);
+        }
 
-        public IntervalTemporal.Builder from(LocalDateTime from) { return new IntervalTemporal.Builder(SCOPE, from);}
-
-//        public Builder withExistsAt(LocalDateTime existsAt) {
-//            this.type = TemporalType.POINT;
-////            this.startTime =
-//        }
+        public IntervalTemporal.Builder from(LocalDateTime from) {
+            return new IntervalTemporal.Builder(SCOPE, from);
+        }
     }
 }

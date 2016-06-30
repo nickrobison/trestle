@@ -13,7 +13,7 @@ import java.util.UUID;
  */
 @SuppressWarnings("initialization")
 @Deprecated
-public class TemporalObject {
+public class MonoTemporalObject {
 
     private final String id;
     private final TemporalType type;
@@ -22,7 +22,7 @@ public class TemporalObject {
     private final LocalDateTime endTime;
     private final Set<OWLNamedIndividual> temporal_of;
 
-    private TemporalObject(Builder builder) {
+    private MonoTemporalObject(Builder builder) {
         this.id = builder.id;
         this.type = builder.type;
         this.scope = builder.scope;
@@ -142,8 +142,8 @@ public class TemporalObject {
             return this;
         }
 
-        public TemporalObject build() {
-            return new TemporalObject(this);
+        public MonoTemporalObject build() {
+            return new MonoTemporalObject(this);
         }
     }
 }

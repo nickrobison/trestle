@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * Created by nrobison on 6/30/16.
  */
-public class PointTemporal extends Temporal {
+public class PointTemporal extends TemporalObject {
 
     private static final TemporalType TYPE = TemporalType.POINT;
     private final TemporalScope scope;

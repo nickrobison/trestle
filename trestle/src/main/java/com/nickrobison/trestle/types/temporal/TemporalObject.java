@@ -11,12 +11,12 @@ import java.util.Set;
 /**
  * Created by nrobison on 6/30/16.
  */
-public abstract class Temporal {
+public abstract class TemporalObject {
 
     private final String id;
     private final Optional<Set<OWLNamedIndividual>> temporal_of;
 
-    Temporal(String id, Optional<Set<OWLNamedIndividual>> relations) {
+    TemporalObject(String id, Optional<Set<OWLNamedIndividual>> relations) {
         this.id = id;
         this.temporal_of = relations;
     }
