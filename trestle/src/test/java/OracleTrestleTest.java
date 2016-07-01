@@ -1,4 +1,5 @@
 import com.hp.hpl.jena.query.ResultSet;
+import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
 import com.nickrobison.trestle.ontology.OracleOntology;
 import org.junit.After;
@@ -41,6 +42,7 @@ public class OracleTrestleTest {
 
         ontology.initializeOntology();
     }
+
     @Test
     public void simpleTest() {
 //        ontology.initializeOntology();
@@ -103,16 +105,27 @@ public class OracleTrestleTest {
     }
 
     @Test
-    public void SimpleCreationTest() throws OWLOntologyStorageException {
+    public void SimpleCreationTest() throws OWLOntologyStorageException, MissingOntologyEntity {
 
         final OWLNamedIndividual test_individual = df.getOWLNamedIndividual(IRI.create("trestle:", "test_individual"));
-        final OWLDataProperty trestle_property = df.getOWLDataProperty(IRI.create("trestle:", "trestle_property"));
+        final OWLClass owlClass = df.getOWLClass(IRI.create("trestle:", "GAUL"));
+        final OWLClassAssertionAxiom owlClassAssertionAxiom = df.getOWLClassAssertionAxiom(owlClass, test_individual);
+        final OWLDataProperty trestle_property = df.getOWLDataProperty(IRI.create("trestle:", "ADM0_Code"));
         final OWLDataPropertyAssertionAxiom owlDataPropertyAssertionAxiom = df.getOWLDataPropertyAssertionAxiom(trestle_property, test_individual, 42);
 
         final OWLDataProperty test_new_property = df.getOWLDataProperty(IRI.create("trestle:", "test_new_property"));
         final OWLLiteral owlLiteral = df.getOWLLiteral("hello world", OWL2Datatype.XSD_STRING);
         final OWLDataPropertyAssertionAxiom owlDataPropertyAssertionAxiom1 = df.getOWLDataPropertyAssertionAxiom(test_new_property, test_individual, owlLiteral);
 
+//        Check if the ontology has what we want
+        assertFalse("Shouldn't have the individual", ontology.containsResource(test_individual));
+        assertTrue("Should have the class", ontology.containsResource(owlClass));
+        assertTrue("Should have the ADM_0 Code", ontology.containsResource(trestle_property));
+        assertFalse("Shouldn't have test property", ontology.containsResource(test_new_property));
+
+
+//        Try to write everything
+        ontology.createIndividual(owlClassAssertionAxiom);
         ontology.writeIndividualDataProperty(owlDataPropertyAssertionAxiom);
         ontology.writeIndividualDataProperty(owlDataPropertyAssertionAxiom1);
 

@@ -6,10 +6,12 @@ import com.hp.hpl.jena.datatypes.TypeMapper;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.*;
 import com.hp.hpl.jena.rdf.model.*;
+import com.hp.hpl.jena.vocabulary.OWL;
+import com.hp.hpl.jena.vocabulary.RDF;
 import com.nickrobison.trestle.common.EPSGParser;
+import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import oracle.spatial.rdf.client.jena.*;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
@@ -193,6 +195,12 @@ public class OracleOntology implements ITrestleOntology {
         return Optional.of(properties);
     }
 
+    /**
+     * Returns and optional set of asserted property values from a given individual
+     * @param individual - OWLNamedIndividual to query
+     * @param property - OWLObjectProperty to retrieve
+     * @return - Optional set of all asserted property values
+     */
     public Optional<Set<OWLObjectProperty>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property) {
         final Resource modelResource = model.getResource(getFullIRI(individual).toString());
         final Property modelProperty = model.getProperty(getFullIRI(property).toString());
@@ -212,10 +220,46 @@ public class OracleOntology implements ITrestleOntology {
         return Optional.of(properties);
     }
 
-    public void writeIndividualDataProperty(OWLDataPropertyAssertionAxiom dataProperty) {
+    /**
+     * Create an OWLNamedIndividual with RDF.type property
+     * @param owlClassAssertionAxiom - Class axiom to store in the model with RDF.type relation
+     */
+    public void createIndividual(OWLClassAssertionAxiom owlClassAssertionAxiom) {
 
+        final Resource modelResource = model.createResource(getFullIRIString(owlClassAssertionAxiom.getIndividual().asOWLNamedIndividual()));
+        final Resource modelClass = model.createResource(getFullIRIString(owlClassAssertionAxiom.getClassExpression().asOWLClass()));
+        modelResource.addProperty(RDF.type, modelClass);
+    }
+
+    /**
+     * Create a data property in the underlying model
+     * @param dataProperty - DataProperty to store in the model
+     */
+    public void createProperty(OWLDataProperty dataProperty) {
+
+        final Resource modelResource = model.createResource(getFullIRIString(dataProperty));
+        modelResource.addProperty(RDF.type, OWL.DatatypeProperty);
+    }
+
+    /**
+     * Write and individual data property axiom to the model.
+     * Creates the data property if it doesn't exist
+     * @param dataProperty - Data property axiom to store in the more
+     * @throws MissingOntologyEntity - Throws an exception if the subject doesn't exist.
+     */
+    public void writeIndividualDataProperty(OWLDataPropertyAssertionAxiom dataProperty) throws MissingOntologyEntity {
+
+//        Does the individual exist?
         final Resource modelResource = model.getResource(getFullIRIString(dataProperty.getSubject().asOWLNamedIndividual()));
+        if (!model.containsResource(modelResource)) {
+            throw new MissingOntologyEntity("missing class: ", dataProperty.getSubject());
+        }
+
         final Property modelProperty = model.getProperty(getFullIRIString(dataProperty.getProperty().asOWLDataProperty()));
+        if (!model.containsResource(modelProperty)) {
+            createProperty(dataProperty.getProperty().asOWLDataProperty());
+        }
+
         final RDFDatatype dataType = TypeMapper.getInstance().getTypeByName(dataProperty.getObject().getDatatype().toStringID());
         modelResource.addProperty(modelProperty,
                 dataProperty.getObject().getLiteral(),
@@ -236,6 +280,16 @@ public class OracleOntology implements ITrestleOntology {
         if (!modelSubject.hasProperty(modelProperty)) {
             logger.error("Cannot set property {} on Individual {}", property.getProperty().asOWLObjectProperty().getIRI(), property.getSubject().asOWLNamedIndividual().getIRI());
         }
+    }
+
+    /**
+     * Check whether the underlying model contains the given OWLEntity
+     * @param individual - OWLNamedObject to verify existance
+     * @return - boolean object exists?
+     */
+    public boolean containsResource(OWLNamedObject individual) {
+        final Resource resource = model.getResource(getFullIRIString(individual));
+        return model.containsResource(resource);
     }
 
     /**
