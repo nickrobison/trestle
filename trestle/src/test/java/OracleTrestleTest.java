@@ -1,29 +1,36 @@
 import com.hp.hpl.jena.query.ResultSet;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
 import com.nickrobison.trestle.ontology.OracleOntology;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
-import java.sql.SQLException;
+import java.io.File;
 import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by nrobison on 6/24/16.
  */
+@SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization"})
 public class OracleTrestleTest {
 
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
-    @Test
-    public void simpleTest() throws OWLOntologyCreationException, SQLException {
+    private OracleOntology ontology;
+    private OWLDataFactory df;
 
+    @Before
+    public void setupNewOntology() throws OWLOntologyCreationException {
         final IRI iri = IRI.create("file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl");
+        df = OWLManager.getOWLDataFactory();
 
-        final OracleOntology ontology = (OracleOntology) new OntologyBuilder()
+        ontology = (OracleOntology) new OntologyBuilder()
                 .withDBConnection(
                         "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
                         "spatialUser",
@@ -31,6 +38,11 @@ public class OracleTrestleTest {
                 .fromIRI(iri)
                 .name("trestle")
                 .build().get();
+
+        ontology.initializeOntology();
+    }
+    @Test
+    public void simpleTest() {
 //        ontology.initializeOntology();
 
         String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
@@ -45,7 +57,6 @@ public class OracleTrestleTest {
         final long tripleCount = ontology.getTripleCount();
         assertEquals("Inference is wrong", 381, tripleCount);
 
-        final OWLDataFactory df = OWLManager.getOWLDataFactory();
         final OWLNamedIndividual burundi_0 = df.getOWLNamedIndividual(IRI.create("trestle:", "Burundi_0"));
         final OWLDataProperty property = df.getOWLDataProperty(IRI.create("trestle:", "ADM0_Code"));
 
@@ -89,8 +100,39 @@ public class OracleTrestleTest {
         individualObjectProperty = ontology.getIndividualObjectProperty(test_muni2, has_temporal);
         assertEquals("Should be test_muni_1_valid", "test_muni1_valid", individualObjectProperty.get().stream().findFirst().get().getIRI().getRemainder().get());
 
+    }
 
-        ontology.close(false);
+    @Test
+    public void SimpleCreationTest() throws OWLOntologyStorageException {
+
+        final OWLNamedIndividual test_individual = df.getOWLNamedIndividual(IRI.create("trestle:", "test_individual"));
+        final OWLDataProperty trestle_property = df.getOWLDataProperty(IRI.create("trestle:", "trestle_property"));
+        final OWLDataPropertyAssertionAxiom owlDataPropertyAssertionAxiom = df.getOWLDataPropertyAssertionAxiom(trestle_property, test_individual, 42);
+
+        final OWLDataProperty test_new_property = df.getOWLDataProperty(IRI.create("trestle:", "test_new_property"));
+        final OWLLiteral owlLiteral = df.getOWLLiteral("hello world", OWL2Datatype.XSD_STRING);
+        final OWLDataPropertyAssertionAxiom owlDataPropertyAssertionAxiom1 = df.getOWLDataPropertyAssertionAxiom(test_new_property, test_individual, owlLiteral);
+
+        ontology.writeIndividualDataProperty(owlDataPropertyAssertionAxiom);
+        ontology.writeIndividualDataProperty(owlDataPropertyAssertionAxiom1);
+
+        Optional<Set<OWLLiteral>> individualProperty = ontology.getIndividualProperty(test_individual, trestle_property);
+        assertTrue("Should have values", individualProperty.isPresent());
+        assertEquals("Wrong number of values", 1, individualProperty.get().size());
+        assertEquals("Wrong property", 42, individualProperty.get().stream().findFirst().get().parseInteger());
+
+        individualProperty = ontology.getIndividualProperty(test_individual, test_new_property);
+        assertTrue("Should have values", individualProperty.isPresent());
+        assertEquals("Wrong number of values", 1, individualProperty.get().size());
+        assertEquals("Wrong property literal", owlLiteral, individualProperty.get().stream().findFirst().get());
+
+        ontology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/test.owl")), false);
+
+    }
+
+    @After
+    public void CloseOntology() {
+        ontology.close(true);
     }
 
 

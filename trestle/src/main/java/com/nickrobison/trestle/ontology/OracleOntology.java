@@ -1,6 +1,8 @@
 package com.nickrobison.trestle.ontology;
 
 import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
+import com.hp.hpl.jena.datatypes.RDFDatatype;
+import com.hp.hpl.jena.datatypes.TypeMapper;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.*;
 import com.hp.hpl.jena.rdf.model.*;
@@ -11,11 +13,11 @@ import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
+import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.*;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -173,8 +175,15 @@ public class OracleOntology implements ITrestleOntology {
 
 //        Build and return the OWLLiteral
         Set<OWLLiteral> properties = new HashSet<>();
+//        If the URI is null, I think that means that it's just a string
+        final OWLDatatype owlDatatype;
+        if (modelProperty.getLiteral().getDatatypeURI() == null) {
+            logger.error("Property {} as an emptyURI", property.getIRI());
+            owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_STRING.getIRI());
+        } else {
+            owlDatatype = df.getOWLDatatype(IRI.create(modelProperty.getLiteral().getDatatypeURI()));
+        }
 
-        final OWLDatatype owlDatatype = df.getOWLDatatype(IRI.create(modelProperty.getLiteral().getDatatypeURI()));
         if (owlDatatype.getIRI().toString().equals("nothing")) {
             logger.error("Datatype {} doesn't exist", modelProperty.getLiteral().getDatatypeURI());
             return Optional.empty();
@@ -203,6 +212,32 @@ public class OracleOntology implements ITrestleOntology {
         return Optional.of(properties);
     }
 
+    public void writeIndividualDataProperty(OWLDataPropertyAssertionAxiom dataProperty) {
+
+        final Resource modelResource = model.getResource(getFullIRIString(dataProperty.getSubject().asOWLNamedIndividual()));
+        final Property modelProperty = model.getProperty(getFullIRIString(dataProperty.getProperty().asOWLDataProperty()));
+        final RDFDatatype dataType = TypeMapper.getInstance().getTypeByName(dataProperty.getObject().getDatatype().toStringID());
+        modelResource.addProperty(modelProperty,
+                dataProperty.getObject().getLiteral(),
+                dataType);
+
+        if (!modelResource.hasProperty(modelProperty)) {
+            logger.error("Cannot set property {} on Individual {}", dataProperty.getProperty().asOWLDataProperty().getIRI(), dataProperty.getSubject().asOWLNamedIndividual().getIRI());
+        }
+    }
+
+    public void writeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property) {
+
+        final Resource modelSubject = model.getResource(getFullIRIString(property.getSubject().asOWLNamedIndividual()));
+        final Resource modelObject = model.getResource(getFullIRIString(property.getObject().asOWLNamedIndividual()));
+        final Property modelProperty = model.getProperty(getFullIRIString(property.getProperty().asOWLObjectProperty()));
+        modelSubject.addProperty(modelProperty, modelObject);
+
+        if (!modelSubject.hasProperty(modelProperty)) {
+            logger.error("Cannot set property {} on Individual {}", property.getProperty().asOWLObjectProperty().getIRI(), property.getSubject().asOWLNamedIndividual().getIRI());
+        }
+    }
+
     /**
      * Write the ontology to disk
      *
@@ -216,7 +251,15 @@ public class OracleOntology implements ITrestleOntology {
                 throw new RuntimeException("OracleOntology is invalid");
             }
         }
-        ontology.getOWLOntologyManager().saveOntology(ontology, new OWLXMLDocumentFormat(), path);
+
+        final FileOutputStream fileOutputStream;
+        try {
+             fileOutputStream = new FileOutputStream(new File("/Users/nrobison/Desktop/test.owl"));
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException("Cannot open file", e);
+        }
+//        ontology.getOWLOntologyManager().saveOntology(ontology, new OWLXMLDocumentFormat(), path);
+        this.model.write(fileOutputStream);
     }
 
     private void loadEPSGCodes() {
@@ -306,6 +349,10 @@ public class OracleOntology implements ITrestleOntology {
 
     public IRI getFullIRI(OWLNamedObject owlNamedObject) {
         return getFullIRI(owlNamedObject.getIRI());
+    }
+
+    public String getFullIRIString(OWLNamedObject owlNamedObject) {
+        return getFullIRI(owlNamedObject).toString();
     }
 
     /**
