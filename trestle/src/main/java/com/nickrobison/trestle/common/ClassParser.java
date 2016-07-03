@@ -117,25 +117,39 @@ public class ClassParser {
 
         for (Field classField : clazz.getDeclaredFields()) {
             if (classField.isAnnotationPresent(Ignore.class)) {
-                continue;
             } else if (classField.isAnnotationPresent(ObjectProperty.class)) {
-                continue;
             } else if (classField.isAnnotationPresent(TemporalProperty.class)) {
-                continue;
-            } else if (classField.isAnnotationPresent(DataProperty.class)) {
-                final DataProperty annotation = classField.getAnnotation(DataProperty.class);
-                final IRI iri = IRI.create("trestle:", annotation.name());
-                final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
-                String fieldValue = null;
+            } else if (classField.isAnnotationPresent(DataProperty.class) | classField.isAnnotationPresent(Spatial.class)) {
+                if (classField.isAnnotationPresent(DataProperty.class)) {
+                    final DataProperty annotation = classField.getAnnotation(DataProperty.class);
+                    final IRI iri = IRI.create("trestle:", annotation.name());
+                    final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
+                    String fieldValue = null;
 
-                try {
-                    fieldValue = classField.get(inputObject).toString();
-                } catch (IllegalAccessException e) {
-                    logger.error("Cannot access field {}", classField.getName(), e);
-                    continue;
+                    try {
+                        fieldValue = classField.get(inputObject).toString();
+                    } catch (IllegalAccessException e) {
+                        logger.error("Cannot access field {}", classField.getName(), e);
+                        continue;
+                    }
+                    final OWLLiteral owlLiteral = df.getOWLLiteral(fieldValue, annotation.datatype());
+                    axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, owlLiteral));
+                } else if (classField.isAnnotationPresent(Spatial.class)) {
+                    final IRI iri = IRI.create("geosparql:", "asWKT");
+                    final OWLDataProperty spatialDataProperty = df.getOWLDataProperty(iri);
+                    String fieldValue = null;
+
+                    try {
+                        fieldValue = classField.get(inputObject).toString();
+                    } catch (IllegalAccessException e) {
+                        logger.error("Cannot access field {}", classField.getName(), e);
+                        continue;
+                    }
+                    final OWLDatatype wktDatatype = df.getOWLDatatype(IRI.create("http://www.opengis.net/geosparql#", "wktLiteral"));
+//                    Since it's a literal, we need to strip out the double quotes.
+                    final OWLLiteral wktLiteral = df.getOWLLiteral(fieldValue.replace("\"", ""), wktDatatype);
+                    axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, wktLiteral));
                 }
-                final OWLLiteral owlLiteral = df.getOWLLiteral(fieldValue, annotation.datatype());
-                axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, owlLiteral));
             } else {
                 final IRI iri = IRI.create("trestle:", classField.getName());
                 final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);

@@ -4,6 +4,7 @@ import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.datatypes.TypeMapper;
 import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.query.*;
 import com.hp.hpl.jena.rdf.model.*;
 import com.hp.hpl.jena.vocabulary.OWL;
@@ -98,6 +99,16 @@ public class OracleOntology implements ITrestleOntology {
         return reasoner.isConsistent();
     }
 
+    public void openTransaction() {
+        logger.info("Opening model transaction");
+        model.begin();
+    }
+
+    public void commitTransaction() {
+        logger.info("Committing model transaction");
+        model.commit();
+    }
+
     /**
      * Returns the set of all instances matching the given class
      *
@@ -105,9 +116,17 @@ public class OracleOntology implements ITrestleOntology {
      * @param direct
      * @return - Returns the set of OWLNamedIndividuals that are members of the given class
      */
-//    FIXME(nrobison): I think the reasoner is out of sync, so this is completely wrong right now.
     public Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean direct) {
-        return reasoner.getInstances(owlClass, direct).getFlattened();
+
+        final Resource modelResource = model.getResource(getFullIRIString(owlClass));
+        final ResIterator resIterator = model.listResourcesWithProperty(RDF.type, modelResource);
+        Set<OWLNamedIndividual> instances = new HashSet<>();
+        while (resIterator.hasNext()) {
+            final Resource resource = resIterator.nextResource();
+            instances.add(df.getOWLNamedIndividual(IRI.create(resource.getURI())));
+        }
+
+        return instances;
     }
 
     public Optional<OWLNamedIndividual> getIndividual(OWLNamedIndividual individual) {
@@ -289,7 +308,7 @@ public class OracleOntology implements ITrestleOntology {
 
 //        Check if the subject exists
         if (!model.containsResource(modelSubject)) {
-            throw new MissingOntologyEntity("Missing individual: ", property.getSubject());
+            throw new MissingOntologyEntity("Missing subject: ", property.getSubject());
         }
 
 //        Check if the object exists, or create
@@ -299,7 +318,7 @@ public class OracleOntology implements ITrestleOntology {
 
 //        Check if the object exists
         if (!model.containsResource(modelObject)) {
-            throw new MissingOntologyEntity("Missing individual: ", property.getObject());
+            throw new MissingOntologyEntity("Missing object: ", property.getObject());
         }
 
         modelSubject.addProperty(modelProperty, modelObject);
@@ -312,7 +331,7 @@ public class OracleOntology implements ITrestleOntology {
     /**
      * Check whether the underlying model contains the given OWLEntity
      *
-     * @param individual - OWLNamedObject to verify existance
+     * @param individual - OWLNamedObject to verify existence
      * @return - boolean object exists?
      */
     public boolean containsResource(OWLNamedObject individual) {
