@@ -112,6 +112,16 @@ public class LocalOntology implements ITrestleOntology {
         return this.pm;
     }
 
+    @Override
+    public void openTransaction() {
+        model.begin();
+    }
+
+    @Override
+    public void commitTransaction() {
+        model.commit();
+    }
+
     public Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean direct) {
         return reasoner.getInstances(owlClass, direct).getFlattened();
     }
