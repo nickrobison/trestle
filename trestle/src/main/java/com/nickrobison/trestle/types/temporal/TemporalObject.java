@@ -26,7 +26,11 @@ public abstract class TemporalObject {
     }
 
     public Set<OWLNamedIndividual> getTemporalRelations() {
-        return this.temporal_of.orElse(new HashSet<>());
+        if (this.temporal_of.isPresent()) {
+            return this.temporal_of.get();
+        } else {
+            return new HashSet<>();
+        }
     }
 
     public IntervalTemporal asInterval() {
