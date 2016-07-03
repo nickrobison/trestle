@@ -145,7 +145,7 @@ public class ClassParser {
                         logger.error("Cannot access field {}", classField.getName(), e);
                         continue;
                     }
-                    final OWLDatatype wktDatatype = df.getOWLDatatype(IRI.create("http://www.opengis.net/geosparql#", "wktLiteral"));
+                    final OWLDatatype wktDatatype = df.getOWLDatatype(IRI.create("http://www.opengis.net/ont/geosparql#", "wktLiteral"));
 //                    Since it's a literal, we need to strip out the double quotes.
                     final OWLLiteral wktLiteral = df.getOWLLiteral(fieldValue.replace("\"", ""), wktDatatype);
                     axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, wktLiteral));
