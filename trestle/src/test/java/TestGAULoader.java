@@ -4,7 +4,6 @@ import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
 import com.nickrobison.trestle.ontology.OracleOntology;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,6 +12,7 @@ import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 import java.io.*;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by nrobison on 7/1/16.
@@ -79,9 +80,9 @@ public class TestGAULoader {
     }
 
     @Test
-    public void testRAWDataLoader() throws MissingOntologyEntity, OWLOntologyStorageException {
+    public void testRAWDataLoader() throws MissingOntologyEntity, OWLOntologyStorageException, SQLException {
 
-        @Nullable OWLClass datasetClass = null;
+        OWLClass datasetClass = df.getOWLClass(IRI.create("trestle:", "GAUL_Test"));
 
         final OWLClass temporalClass = df.getOWLClass(IRI.create("trestle:", "Temporal_Object"));
         final OWLObjectProperty temporal_of = df.getOWLObjectProperty(IRI.create("trestle:", "temporal_of"));
@@ -125,6 +126,7 @@ public class TestGAULoader {
         }
 
         ontology.commitTransaction();
+        ontology.runInference();
 
 //        Check to see if it worked.
         final Set<OWLNamedIndividual> gaulInstances = ontology.getInstances(datasetClass, true);
@@ -135,14 +137,35 @@ public class TestGAULoader {
                 "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#> " +
                 "SELECT * WHERE {?m rdf:type :GAUL_Test}";
 
-        final ResultSet resultSet = ontology.executeSPARQL(queryString);
+        ResultSet resultSet = ontology.executeSPARQL(queryString);
         assertEquals("Wrong number of GAUL records from sparql method", 200, resultSet.getRowNumber());
 
-        ontology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);
+//        SPRAQL Query of spatial intersections.
+        queryString = "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
+                "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
+                "SELECT ?m ?wkt WHERE { ?m rdf:type :GAUL_Test . ?m ogc:asWKT ?wkt\n" +
+                "    FILTER (ogcf:sfIntersects(?wkt, \"Point(39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }";
+
+        resultSet = ontology.executeSPARQL(queryString);
+        assertEquals("Wrong number of intersected results", 3, resultSet.getRowNumber());
+
+//        Try some inference
+        final OWLNamedIndividual balama = df.getOWLNamedIndividual(IRI.create("trestle:", "Balama"));
+
+        final OWLObjectProperty has_temporal = df.getOWLObjectProperty(IRI.create("trestle:", "has_temporal"));
+        final Optional<Set<OWLObjectProperty>> has_temporalProperty = ontology.getIndividualObjectProperty(balama, has_temporal);
+        assertTrue("Should have inferred temporal", has_temporalProperty.isPresent());
+        assertEquals("Should only have 1 temporal", 1, has_temporalProperty.get().size());
+
+
+//        ontology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);
     }
 
     @After
     public void cleanup() {
-        ontology.close(true);
+        ontology.close(false);
     }
 }

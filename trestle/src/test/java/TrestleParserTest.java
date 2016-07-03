@@ -60,7 +60,7 @@ public class TrestleParserTest {
         final OWLLiteral adm0_code_literal = df.getOWLLiteral("1234", OWL2Datatype.XSD_INTEGER);
         Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = ClassParser.GetDataProperties(test1);
         assertTrue("Should have properties", owlDataPropertyAssertionAxioms.isPresent());
-        assertEquals("Wrong number of properties", 2, owlDataPropertyAssertionAxioms.get().size());
+        assertEquals("Wrong number of properties", 3, owlDataPropertyAssertionAxioms.get().size());
         final OWLDataPropertyAssertionAxiom parsed_code = owlDataPropertyAssertionAxioms.get().get(0);
         assertEquals("Wrong named individual", gaul_test, parsed_code.getSubject());
         assertEquals("Data property IRIs don't match", adm0_code, parsed_code.getProperty());
@@ -108,6 +108,7 @@ public class TrestleParserTest {
         public int adm0_code;
         @IndividualIdentifier
         public String adm0_name;
+        @Spatial
         public String test_name;
         @TemporalProperty(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
         @Ignore
