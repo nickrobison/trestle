@@ -1,27 +1,33 @@
 package com.nickrobison.trestle.ontology;
 
 import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
+import com.hp.hpl.jena.datatypes.RDFDatatype;
+import com.hp.hpl.jena.datatypes.TypeMapper;
 import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.query.*;
 import com.hp.hpl.jena.rdf.model.*;
+import com.hp.hpl.jena.vocabulary.OWL;
+import com.hp.hpl.jena.vocabulary.RDF;
 import com.nickrobison.trestle.common.EPSGParser;
+import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import oracle.spatial.rdf.client.jena.*;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
+import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.*;
 import java.sql.SQLException;
 import java.util.*;
 
 /**
  * Created by nrobison on 5/23/16.
  */
+@SuppressWarnings("initialization")
 public class OracleOntology implements ITrestleOntology {
 
     private final static Logger logger = LoggerFactory.getLogger(OracleOntology.class);
@@ -93,6 +99,16 @@ public class OracleOntology implements ITrestleOntology {
         return reasoner.isConsistent();
     }
 
+    public void openTransaction() {
+        logger.info("Opening model transaction");
+        model.begin();
+    }
+
+    public void commitTransaction() {
+        logger.info("Committing model transaction");
+        model.commit();
+    }
+
     /**
      * Returns the set of all instances matching the given class
      *
@@ -100,9 +116,17 @@ public class OracleOntology implements ITrestleOntology {
      * @param direct
      * @return - Returns the set of OWLNamedIndividuals that are members of the given class
      */
-//    FIXME(nrobison): I think the reasoner is out of sync, so this is completely wrong right now.
     public Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean direct) {
-        return reasoner.getInstances(owlClass, direct).getFlattened();
+
+        final Resource modelResource = model.getResource(getFullIRIString(owlClass));
+        final ResIterator resIterator = model.listResourcesWithProperty(RDF.type, modelResource);
+        Set<OWLNamedIndividual> instances = new HashSet<>();
+        while (resIterator.hasNext()) {
+            final Resource resource = resIterator.nextResource();
+            instances.add(df.getOWLNamedIndividual(IRI.create(resource.getURI())));
+        }
+
+        return instances;
     }
 
     public Optional<OWLNamedIndividual> getIndividual(OWLNamedIndividual individual) {
@@ -160,7 +184,7 @@ public class OracleOntology implements ITrestleOntology {
 //        singleResource.listProperties();
     }
 
-//    TODO(nrobison): Make this return an iterator load into the HashSet
+    //    TODO(nrobison): Make this return an iterator load into the HashSet
     public Optional<Set<OWLLiteral>> getIndividualProperty(OWLNamedIndividual individual, OWLDataProperty property) {
 
         final Statement modelProperty = model.getProperty(model.getResource(getFullIRI(individual.getIRI()).toString()),
@@ -172,8 +196,15 @@ public class OracleOntology implements ITrestleOntology {
 
 //        Build and return the OWLLiteral
         Set<OWLLiteral> properties = new HashSet<>();
+//        If the URI is null, I think that means that it's just a string
+        final OWLDatatype owlDatatype;
+        if (modelProperty.getLiteral().getDatatypeURI() == null) {
+            logger.error("Property {} as an emptyURI", property.getIRI());
+            owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_STRING.getIRI());
+        } else {
+            owlDatatype = df.getOWLDatatype(IRI.create(modelProperty.getLiteral().getDatatypeURI()));
+        }
 
-        final OWLDatatype owlDatatype = df.getOWLDatatype(IRI.create(modelProperty.getLiteral().getDatatypeURI()));
         if (owlDatatype.getIRI().toString().equals("nothing")) {
             logger.error("Datatype {} doesn't exist", modelProperty.getLiteral().getDatatypeURI());
             return Optional.empty();
@@ -183,6 +214,13 @@ public class OracleOntology implements ITrestleOntology {
         return Optional.of(properties);
     }
 
+    /**
+     * Returns and optional set of asserted property values from a given individual
+     *
+     * @param individual - OWLNamedIndividual to query
+     * @param property   - OWLObjectProperty to retrieve
+     * @return - Optional set of all asserted property values
+     */
     public Optional<Set<OWLObjectProperty>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property) {
         final Resource modelResource = model.getResource(getFullIRI(individual).toString());
         final Property modelProperty = model.getProperty(getFullIRI(property).toString());
@@ -203,6 +241,105 @@ public class OracleOntology implements ITrestleOntology {
     }
 
     /**
+     * Create an OWLNamedIndividual with RDF.type property
+     *
+     * @param owlClassAssertionAxiom - Class axiom to store in the model with RDF.type relation
+     */
+//    FIXME(nrobison): This should have the ability to be locked to avoid polluting the ontology
+    public void createIndividual(OWLClassAssertionAxiom owlClassAssertionAxiom) {
+
+        final Resource modelResource = model.createResource(getFullIRIString(owlClassAssertionAxiom.getIndividual().asOWLNamedIndividual()));
+        final Resource modelClass = model.createResource(getFullIRIString(owlClassAssertionAxiom.getClassExpression().asOWLClass()));
+        modelResource.addProperty(RDF.type, modelClass);
+    }
+
+    /**
+     * Create a property in the underlying model.
+     * Determines if the property is an Object or Data Property
+     *
+     * @param property - Property to store in the model
+     */
+    //    FIXME(nrobison): This should have the ability to be locked to avoid polluting the ontology
+    public void createProperty(OWLProperty property) {
+
+        final Resource modelResource = model.createResource(getFullIRIString(property));
+        if (property.isOWLDataProperty()) {
+            modelResource.addProperty(RDF.type, OWL.DatatypeProperty);
+        } else if (property.isOWLObjectProperty()) {
+            modelResource.addProperty(RDF.type, OWL.ObjectProperty);
+        }
+    }
+
+    /**
+     * Write and individual data property axiom to the model.
+     * Creates the data property if it doesn't exist
+     *
+     * @param dataProperty - Data property axiom to store in the more
+     * @throws MissingOntologyEntity - Throws an exception if the subject doesn't exist.
+     */
+    public void writeIndividualDataProperty(OWLDataPropertyAssertionAxiom dataProperty) throws MissingOntologyEntity {
+
+//        Does the individual exist?
+        final Resource modelResource = model.getResource(getFullIRIString(dataProperty.getSubject().asOWLNamedIndividual()));
+        if (!model.containsResource(modelResource)) {
+            throw new MissingOntologyEntity("missing class: ", dataProperty.getSubject());
+        }
+
+        final Property modelProperty = model.getProperty(getFullIRIString(dataProperty.getProperty().asOWLDataProperty()));
+        if (!model.containsResource(modelProperty)) {
+            createProperty(dataProperty.getProperty().asOWLDataProperty());
+        }
+
+        final RDFDatatype dataType = TypeMapper.getInstance().getTypeByName(dataProperty.getObject().getDatatype().toStringID());
+        modelResource.addProperty(modelProperty,
+                dataProperty.getObject().getLiteral(),
+                dataType);
+
+        if (!modelResource.hasProperty(modelProperty)) {
+            logger.error("Cannot set property {} on Individual {}", dataProperty.getProperty().asOWLDataProperty().getIRI(), dataProperty.getSubject().asOWLNamedIndividual().getIRI());
+        }
+    }
+
+    public void writeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property) throws MissingOntologyEntity {
+
+        final Resource modelSubject = model.getResource(getFullIRIString(property.getSubject().asOWLNamedIndividual()));
+        final Resource modelObject = model.getResource(getFullIRIString(property.getObject().asOWLNamedIndividual()));
+        final Property modelProperty = model.getProperty(getFullIRIString(property.getProperty().asOWLObjectProperty()));
+
+//        Check if the subject exists
+        if (!model.containsResource(modelSubject)) {
+            throw new MissingOntologyEntity("Missing subject: ", property.getSubject());
+        }
+
+//        Check if the object exists, or create
+        if (!model.containsResource(modelProperty)) {
+            createProperty(property.getProperty().asOWLObjectProperty());
+        }
+
+//        Check if the object exists
+        if (!model.containsResource(modelObject)) {
+            throw new MissingOntologyEntity("Missing object: ", property.getObject());
+        }
+
+        modelSubject.addProperty(modelProperty, modelObject);
+
+        if (!modelSubject.hasProperty(modelProperty)) {
+            logger.error("Cannot set property {} on Individual {}", property.getProperty().asOWLObjectProperty().getIRI(), property.getSubject().asOWLNamedIndividual().getIRI());
+        }
+    }
+
+    /**
+     * Check whether the underlying model contains the given OWLEntity
+     *
+     * @param individual - OWLNamedObject to verify existence
+     * @return - boolean object exists?
+     */
+    public boolean containsResource(OWLNamedObject individual) {
+        final Resource resource = model.getResource(getFullIRIString(individual));
+        return model.containsResource(resource);
+    }
+
+    /**
      * Write the ontology to disk
      *
      * @param path     - IRI of location to write ontology
@@ -215,7 +352,15 @@ public class OracleOntology implements ITrestleOntology {
                 throw new RuntimeException("OracleOntology is invalid");
             }
         }
-        ontology.getOWLOntologyManager().saveOntology(ontology, new OWLXMLDocumentFormat(), path);
+
+        final FileOutputStream fileOutputStream;
+        try {
+            fileOutputStream = new FileOutputStream(new File("/Users/nrobison/Desktop/test.owl"));
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException("Cannot open file", e);
+        }
+//        ontology.getOWLOntologyManager().saveOntology(ontology, new OWLXMLDocumentFormat(), path);
+        this.model.write(fileOutputStream);
     }
 
     private void loadEPSGCodes() {
@@ -305,6 +450,10 @@ public class OracleOntology implements ITrestleOntology {
 
     public IRI getFullIRI(OWLNamedObject owlNamedObject) {
         return getFullIRI(owlNamedObject.getIRI());
+    }
+
+    public String getFullIRIString(OWLNamedObject owlNamedObject) {
+        return getFullIRI(owlNamedObject).toString();
     }
 
     /**

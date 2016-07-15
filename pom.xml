@@ -124,6 +124,11 @@
             <version>${jmh.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.nickrobison</groupId>
+            <artifactId>trestle</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
     <repositories>
         <repository>

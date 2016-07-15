@@ -53,6 +53,16 @@ public interface ITrestleOntology {
     DefaultPrefixManager getUnderlyingPrefixManager();
 
     /**
+     * Open a Jena transaction to facilitate rapid loading of ontology objects
+     */
+    void openTransaction();
+
+    /**
+     * Close open Jena transaction
+     */
+    void commitTransaction();
+
+    /**
      * Get all the instances of an OWL Class
      *
      * @param owlClass - OWLClass to retrieve members of

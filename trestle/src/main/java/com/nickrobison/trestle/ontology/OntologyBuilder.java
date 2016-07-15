@@ -18,6 +18,8 @@ import java.util.*;
 /**
  * Created by nrobison on 6/21/16.
  */
+// FIXME(nrobison): Work to remove this, I feel like my optionals should fix the nullness, right?
+@SuppressWarnings("nullness")
 public class OntologyBuilder {
     private Optional<IRI> iri = Optional.empty();
     private Optional<String> connectionString = Optional.empty();
@@ -78,6 +80,7 @@ public class OntologyBuilder {
      * @return - ITrestleOntology for the correct underlying ontology configuration
      * @throws OWLOntologyCreationException
      */
+//    TODO(nrobison): Catch the ontology builder exception and return an empty optional instead
     public Optional<ITrestleOntology> build() throws OWLOntologyCreationException {
         final OWLOntologyManager owlOntologyManager = OWLManager.createOWLOntologyManager();
         OWLOntology owlOntology;
