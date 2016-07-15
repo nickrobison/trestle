@@ -1,4 +1,4 @@
-package com.nickrobison.UnitTests;
+package com.nickrobison.gaulintegrator.UnitTests;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;

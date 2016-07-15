@@ -1,4 +1,4 @@
-package com.nickrobison.UnitTests;
+package com.nickrobison.gaulintegrator.UnitTests;
 
 import com.nickrobison.gaulintegrator.common.Utils;
 import org.apache.hadoop.fs.Path;

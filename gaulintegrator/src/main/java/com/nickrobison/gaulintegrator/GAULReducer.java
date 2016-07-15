@@ -3,19 +3,13 @@ package com.nickrobison.gaulintegrator;
 import com.esri.core.geometry.*;
 import com.nickrobison.gaulintegrator.common.ObjectID;
 import com.nickrobison.trestle.TrestleReasoner;
-import org.apache.commons.collections.IteratorUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.log4j.Logger;
-import org.apache.log4j.lf5.util.StreamUtils;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
-import java.io.File;
 import java.io.IOException;
 import java.sql.*;
 import java.sql.Date;
@@ -23,10 +17,7 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * Created by nrobison on 5/5/16.
@@ -70,22 +61,21 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
         }
 
 //        Setup the Trestle Reasoner
-        final File ontology = new File("./trestle");
-        try {
-            reasoner = new TrestleReasoner.TrestleBuilder(IRI.create(ontology.toURI()))
-                    .withDBConnection(conf.get("reasoner.db.connection"),
-                            conf.get("reasoner.db.username"),
-                            conf.get("reasoner.db.password"))
-                    .build();
-        } catch (OWLOntologyCreationException e) {
-            logger.error("Cannot build ontology", e);
-            throw new RuntimeException("Cannot build ontology", e);
-        }
+//        final File ontology = new File("./trestle");
+//        try {
+//            reasoner = new TrestleReasoner.TrestleBuilder()
+//                    .withDBConnection(conf.get("reasoner.db.connection"),
+//                            conf.get("reasoner.db.username"),
+//                            conf.get("reasoner.db.password"))
+//                    .withInputClasses(MapperOutput.class)
+//                    .build();
+//        } catch (OWLOntologyCreationException e) {
+//            logger.error("Cannot build ontology", e);
+//            throw new RuntimeException("Cannot build ontology", e);
+//        }
 
     }
 
-    //    FIXME(nrobison): Fix this
-    @SuppressWarnings({"OptionalGetWithoutIsPresent", "UnusedAssignment", "Duplicates"})
     @Override
     public void reduce(LongWritable key, Iterable<MapperOutput> values, Context context) throws IOException, InterruptedException {
 
@@ -99,23 +89,17 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
         }
 
 //        Do my records cover the entirety of the input space?
-        int maxDate = 0;
-        maxDate = inputRecords
+        final int maxDate = inputRecords
                 .stream()
                 .mapToInt(MapperOutput::getDatasetYear)
                 .max()
-//                .isPresent(Optional::isPresent)
-                .getAsInt();
+                .orElse(0);
 
-        int minDate = 9999;
-//        List<Integer> minDate = new ArrayList<>();
-//        minDate.add(9999);
-        minDate = inputRecords
+        final int minDate = inputRecords
                 .stream()
                 .mapToInt(MapperOutput::getDatasetYear)
                 .min()
-//                .ifPresent(n -> minDate.set(0, n));
-                .getAsInt();
+                .orElse(9999);
 
 //        If we have all the available records, than we can assume that the record is contiguous and just smash it into the database
         if (minDate <= startDate.getYear() && maxDate >= endDate.getYear()) {

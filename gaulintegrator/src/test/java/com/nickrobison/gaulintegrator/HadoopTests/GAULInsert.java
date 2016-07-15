@@ -1,4 +1,4 @@
-package com.nickrobison.HadoopTests;
+package com.nickrobison.gaulintegrator.HadoopTests;
 
 import com.esri.core.geometry.Envelope;
 import com.esri.core.geometry.Geometry;
@@ -10,7 +10,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.UnsupportedEncodingException;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.UUID;

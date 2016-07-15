@@ -1,6 +1,9 @@
-package com.nickrobison;
+package com.nickrobison.gaulintegrator;
 
-import com.nickrobison.UnitTests.*;
+import com.nickrobison.gaulintegrator.UnitTests.GAULRecordTests;
+import com.nickrobison.gaulintegrator.UnitTests.IDTests;
+import com.nickrobison.gaulintegrator.UnitTests.TemporalAdjustmentTests;
+import com.nickrobison.gaulintegrator.UnitTests.TestJUnit;
 import org.apache.log4j.Logger;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;

@@ -1,4 +1,4 @@
-package com.nickrobison.UnitTests;
+package com.nickrobison.gaulintegrator.UnitTests;
 
 import com.esri.shp.ShpHeader;
 import com.esri.shp.ShpReader;
