@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Created by nrobison on 7/1/16.
@@ -131,7 +131,7 @@ public class TestGAULoader {
 
 //        Check to see if it worked.
         final Set<OWLNamedIndividual> gaulInstances = ontology.getInstances(datasetClass, true);
-        assertEquals("Wrong number of GAUL records from instances method", 200, gaulInstances.size());
+        assertEquals(200, gaulInstances.size(), "Wrong number of GAUL records from instances method");
 
         String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
                 "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> " +
@@ -139,7 +139,7 @@ public class TestGAULoader {
                 "SELECT * WHERE {?m rdf:type :GAUL_Test}";
 
         ResultSet resultSet = ontology.executeSPARQL(queryString);
-        assertEquals("Wrong number of GAUL records from sparql method", 200, resultSet.getRowNumber());
+        assertEquals(200, resultSet.getRowNumber(), "Wrong number of GAUL records from sparql method");
 
 //        SPRAQL Query of spatial intersections.
         queryString = "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
@@ -151,15 +151,15 @@ public class TestGAULoader {
                 "    FILTER (ogcf:sfIntersects(?wkt, \"Point(39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }";
 
         resultSet = ontology.executeSPARQL(queryString);
-        assertEquals("Wrong number of intersected results", 3, resultSet.getRowNumber());
+        assertEquals(3, resultSet.getRowNumber(), "Wrong number of intersected results");
 
 //        Try some inference
         final OWLNamedIndividual balama = df.getOWLNamedIndividual(IRI.create("trestle:", "Balama"));
 
         final OWLObjectProperty has_temporal = df.getOWLObjectProperty(IRI.create("trestle:", "has_temporal"));
         final Optional<Set<OWLObjectProperty>> has_temporalProperty = ontology.getIndividualObjectProperty(balama, has_temporal);
-        assertTrue("Should have inferred temporal", has_temporalProperty.isPresent());
-        assertEquals("Should only have 1 temporal", 1, has_temporalProperty.get().size());
+        assertTrue(has_temporalProperty.isPresent(), "Should have inferred temporal");
+        assertEquals(1, has_temporalProperty.get().size(), "Should only have 1 temporal");
 
 
 //        ontology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);

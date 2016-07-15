@@ -18,8 +18,8 @@ import java.util.Optional;
 
 import static com.nickrobison.trestle.types.temporal.TemporalObjectBuilder.exists;
 import static com.nickrobison.trestle.types.temporal.TemporalObjectBuilder.valid;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Created by nrobison on 6/28/16.
@@ -49,57 +49,57 @@ public class TrestleParserTest {
 //        Test the class
         final OWLClass owlClass = ClassParser.GetObjectClass(test1);
         final OWLClass gaul_test1 = df.getOWLClass(IRI.create("trestle:", "GAUL_Test"));
-        assertEquals("Wrong OWL Class", gaul_test1, owlClass);
+        assertEquals(gaul_test1, owlClass, "Wrong OWL Class");
 //        Test the named individual
         OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(test1);
         OWLNamedIndividual gaul_test = df.getOWLNamedIndividual(IRI.create("trestle:", "test_me"));
-        assertEquals("Wrong named individual", owlNamedIndividual, gaul_test);
+        assertEquals(owlNamedIndividual, gaul_test, "Wrong named individual");
 
 //        Test the data property parser
 //        Code
         final OWLDataProperty adm0_code = df.getOWLDataProperty(IRI.create("trestle:", "ADM0_Code"));
         final OWLLiteral adm0_code_literal = df.getOWLLiteral("1234", OWL2Datatype.XSD_INTEGER);
         Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = ClassParser.GetDataProperties(test1);
-        assertTrue("Should have properties", owlDataPropertyAssertionAxioms.isPresent());
-        assertEquals("Wrong number of properties", 3, owlDataPropertyAssertionAxioms.get().size());
+        assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have properties");
+        assertEquals(3, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of properties");
         final OWLDataPropertyAssertionAxiom parsed_code = owlDataPropertyAssertionAxioms.get().get(0);
-        assertEquals("Wrong named individual", gaul_test, parsed_code.getSubject());
-        assertEquals("Data property IRIs don't match", adm0_code, parsed_code.getProperty());
-        assertEquals("Data property values are wrong", adm0_code_literal, parsed_code.getObject());
+        assertEquals(gaul_test, parsed_code.getSubject(), "Wrong named individual");
+        assertEquals(adm0_code, parsed_code.getProperty(), "Data property IRIs don't match");
+        assertEquals(adm0_code_literal, parsed_code.getObject(), "Data property values are wrong");
 
 //        Name
         final OWLDataProperty adm0_name = df.getOWLDataProperty(IRI.create("trestle:", "adm0_name"));
         final OWLLiteral adm0_name_literal = df.getOWLLiteral("test1");
         final OWLDataPropertyAssertionAxiom parsed_name = owlDataPropertyAssertionAxioms.get().get(1);
-        assertEquals("Wrong named individual", gaul_test, parsed_name.getSubject());
-        assertEquals("Data property IRIs don't match", adm0_name, parsed_name.getProperty());
-        assertEquals("Data property values are wrong", adm0_name_literal, parsed_name.getObject());
+        assertEquals(gaul_test, parsed_name.getSubject(), "Wrong named individual");
+        assertEquals(adm0_name, parsed_name.getProperty(), "Data property IRIs don't match");
+        assertEquals(adm0_name_literal, parsed_name.getObject(), "Data property values are wrong");
 
 //        Test the new gaul test
         //        Test the named individual
         owlNamedIndividual = ClassParser.GetIndividual(test2);
         gaul_test = df.getOWLNamedIndividual(IRI.create("trestle:", "test region"));
-        assertEquals("Wrong named individual", owlNamedIndividual, gaul_test);
+        assertEquals(owlNamedIndividual, gaul_test, "Wrong named individual");
 
         owlDataPropertyAssertionAxioms = ClassParser.GetDataProperties(test2);
-        assertTrue("Should have properties", owlDataPropertyAssertionAxioms.isPresent());
-        assertEquals("Wrong number of properties", 4, owlDataPropertyAssertionAxioms.get().size());
+        assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have properties");
+        assertEquals(4, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of properties");
 
 //        Test the temporal
         final Optional<List<TemporalObject>> temporalObjects = ClassParser.GetTemporalObjects(test2);
-        assertTrue("Should have objects", temporalObjects.isPresent());
-        assertEquals("Wrong number of objects", 2, temporalObjects.get().size());
+        assertTrue(temporalObjects.isPresent(), "Should have objects");
+        assertEquals(2, temporalObjects.get().size(), "Wrong number of objects");
 //        Check for the same type and scope for interval
-        assertEquals("Wrong temporal type", temporal.getType(), temporalObjects.get().get(0).getType());
-        assertEquals("Wrong temporal scope", temporal.getScope(), temporalObjects.get().get(0).getScope());
-        assertEquals("Wrong # of temporal relations", 1, temporalObjects.get().get(0).getTemporalRelations().size());
-        assertEquals("Wrong temporal relation", gaul_test, temporalObjects.get().get(0).getTemporalRelations().stream().findFirst().get());
+        assertEquals(temporal.getType(), temporalObjects.get().get(0).getType(), "Wrong temporal type");
+        assertEquals(temporal.getScope(), temporalObjects.get().get(0).getScope(), "Wrong temporal scope");
+        assertEquals(1, temporalObjects.get().get(0).getTemporalRelations().size(), "Wrong # of temporal relations");
+        assertEquals(gaul_test, temporalObjects.get().get(0).getTemporalRelations().stream().findFirst().get(), "Wrong temporal relation");
 
 //        Check point
-        assertEquals("Wrong temporal type", temporalPoint.getType(), temporalObjects.get().get(1).getType());
-        assertEquals("Wrong temporal scope", temporalPoint.getScope(), temporalObjects.get().get(1).getScope());
-        assertEquals("Wrong # of temporal relations", 1, temporalObjects.get().get(1).getTemporalRelations().size());
-        assertEquals("Wrong temporal relation", gaul_test, temporalObjects.get().get(1).getTemporalRelations().stream().findFirst().get());
+        assertEquals(temporalPoint.getType(), temporalObjects.get().get(1).getType(), "Wrong temporal type");
+        assertEquals(temporalPoint.getScope(), temporalObjects.get().get(1).getScope(), "Wrong temporal scope");
+        assertEquals(1, temporalObjects.get().get(1).getTemporalRelations().size(), "Wrong # of temporal relations");
+        assertEquals(gaul_test, temporalObjects.get().get(1).getTemporalRelations().stream().findFirst().get(), "Wrong temporal relation");
 
     }
 

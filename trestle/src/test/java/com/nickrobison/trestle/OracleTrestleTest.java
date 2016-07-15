@@ -15,9 +15,9 @@ import java.io.File;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Created by nrobison on 6/24/16.
@@ -56,53 +56,53 @@ public class OracleTrestleTest {
 //        String queryString = " SELECT ?subject ?prop ?object WHERE { ?subject ?prop ?object } ";
 
         final ResultSet resultSet = ontology.executeSPARQL(queryString);
-        assertEquals("Wrong number of classes", 29, resultSet.getRowNumber());
+        assertEquals(29, resultSet.getRowNumber(), "Wrong number of classes");
 
         final long tripleCount = ontology.getTripleCount();
-        assertEquals("Inference is wrong", 381, tripleCount);
+        assertEquals(381, tripleCount, "Inference is wrong");
 
         final OWLNamedIndividual burundi_0 = df.getOWLNamedIndividual(IRI.create("trestle:", "Burundi_0"));
         final OWLDataProperty property = df.getOWLDataProperty(IRI.create("trestle:", "ADM0_Code"));
 
         Optional<Set<OWLLiteral>> individualProperty = ontology.getIndividualProperty(burundi_0, property);
-        assertEquals("ADM0_Code is wrong", 43, individualProperty.get().stream().findFirst().get().parseInteger());
+        assertEquals(43, individualProperty.get().stream().findFirst().get().parseInteger(), "ADM0_Code is wrong");
 
 //        Try for wrong individual
         final OWLNamedIndividual burundi_wrong = df.getOWLNamedIndividual(IRI.create("trestle:", "Bwrong_0"));
         final Optional<Set<OWLLiteral>> wrongIndividual = ontology.getIndividualProperty(burundi_wrong, property);
-        assertFalse("Should be empty optional", wrongIndividual.isPresent());
+        assertFalse(wrongIndividual.isPresent(), "Should be empty optional");
 
 //        Try for wrong property
         final OWLDataProperty property_wrong = df.getOWLDataProperty(IRI.create("trestle:", "ADM1_Code"));
         final Optional<Set<OWLLiteral>> propertyWrong = ontology.getIndividualProperty(burundi_0, property_wrong);
-        assertFalse("Should be empty optional", propertyWrong.isPresent());
+        assertFalse(propertyWrong.isPresent(), "Should be empty optional");
 
 //        Try wkt literal
         final OWLNamedIndividual test_maputo = df.getOWLNamedIndividual(IRI.create("trestle:", "test_maputo"));
         final OWLDataProperty asWKT = df.getOWLDataProperty(IRI.create("geosparql:", "asWKT"));
         individualProperty = ontology.getIndividualProperty(burundi_0, asWKT);
         final OWLLiteral wktLiteral = individualProperty.get().stream().findFirst().get();
-        assertEquals("WKT is wrong", "POINT (30 10)", wktLiteral.getLiteral());
+        assertEquals(wktLiteral.getLiteral(), "WKT is wrong", "POINT (30 10)");
 
 
 //        Test object properties
         final OWLObjectProperty has_temporal = df.getOWLObjectProperty(IRI.create("trestle:", "has_temporal"));
         Optional<Set<OWLObjectProperty>> individualObjectProperty = ontology.getIndividualObjectProperty(burundi_0, has_temporal);
-        assertEquals("Should be burundi_valid", "Burundi_Valid", individualObjectProperty.get().stream().findFirst().get().getIRI().getRemainder().get());
+        assertEquals("Burundi_Valid", individualObjectProperty.get().stream().findFirst().get().getIRI().getRemainder().get(), "Should be burundi_valid");
 
 //        Try for wrong individual
         individualObjectProperty = ontology.getIndividualObjectProperty(burundi_wrong, has_temporal);
-        assertFalse("Should have no properties", individualObjectProperty.isPresent());
+        assertFalse(individualObjectProperty.isPresent(), "Should have no properties");
 
 //        Try for wrong property
         final OWLObjectProperty has_wrong = df.getOWLObjectProperty(IRI.create("trestle:", "has_wrong"));
         individualObjectProperty = ontology.getIndividualObjectProperty(burundi_0, has_wrong);
-        assertFalse("Should have no properties", individualObjectProperty.isPresent());
+        assertFalse(individualObjectProperty.isPresent(), "Should have no properties");
 
 //        Try for inferred property
         final OWLNamedIndividual test_muni2 = df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni2"));
         individualObjectProperty = ontology.getIndividualObjectProperty(test_muni2, has_temporal);
-        assertEquals("Should be test_muni_1_valid", "test_muni1_valid", individualObjectProperty.get().stream().findFirst().get().getIRI().getRemainder().get());
+        assertEquals("test_muni1_valid", individualObjectProperty.get().stream().findFirst().get().getIRI().getRemainder().get(), "Should be test_muni_1_valid");
 
     }
 
@@ -120,10 +120,10 @@ public class OracleTrestleTest {
         final OWLDataPropertyAssertionAxiom owlDataPropertyAssertionAxiom1 = df.getOWLDataPropertyAssertionAxiom(test_new_property, test_individual, owlLiteral);
 
 //        Check if the ontology has what we want
-        assertFalse("Shouldn't have the individual", ontology.containsResource(test_individual));
-        assertTrue("Should have the class", ontology.containsResource(owlClass));
-        assertTrue("Should have the ADM_0 Code", ontology.containsResource(trestle_property));
-        assertFalse("Shouldn't have test property", ontology.containsResource(test_new_property));
+        assertFalse(ontology.containsResource(test_individual), "Shouldn't have the individual");
+        assertTrue(ontology.containsResource(owlClass), "Should have the class");
+        assertTrue( ontology.containsResource(trestle_property), "Should have the ADM_0 Code");
+        assertFalse(ontology.containsResource(test_new_property), "Shouldn't have test property");
 
 
 //        Try to write everything
@@ -132,14 +132,14 @@ public class OracleTrestleTest {
         ontology.writeIndividualDataProperty(owlDataPropertyAssertionAxiom1);
 
         Optional<Set<OWLLiteral>> individualProperty = ontology.getIndividualProperty(test_individual, trestle_property);
-        assertTrue("Should have values", individualProperty.isPresent());
-        assertEquals("Wrong number of values", 1, individualProperty.get().size());
-        assertEquals("Wrong property", 42, individualProperty.get().stream().findFirst().get().parseInteger());
+        assertTrue(individualProperty.isPresent(), "Should have values");
+        assertEquals(1, individualProperty.get().size(), "Wrong number of values");
+        assertEquals(42, individualProperty.get().stream().findFirst().get().parseInteger(), "Wrong property");
 
         individualProperty = ontology.getIndividualProperty(test_individual, test_new_property);
-        assertTrue("Should have values", individualProperty.isPresent());
-        assertEquals("Wrong number of values", 1, individualProperty.get().size());
-        assertEquals("Wrong property literal", owlLiteral, individualProperty.get().stream().findFirst().get());
+        assertTrue(individualProperty.isPresent(), "Should have values");
+        assertEquals(1, individualProperty.get().size(), "Wrong number of values");
+        assertEquals(owlLiteral, individualProperty.get().stream().findFirst().get(), "Wrong property literal");
 
         ontology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/test.owl")), false);
 
