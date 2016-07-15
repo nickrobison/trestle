@@ -80,6 +80,7 @@ public class OntologyBuilder {
      * @return - ITrestleOntology for the correct underlying ontology configuration
      * @throws OWLOntologyCreationException
      */
+//    TODO(nrobison): Catch the ontology builder exception and return an empty optional instead
     public Optional<ITrestleOntology> build() throws OWLOntologyCreationException {
         final OWLOntologyManager owlOntologyManager = OWLManager.createOWLOntologyManager();
         OWLOntology owlOntology;

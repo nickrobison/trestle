@@ -166,6 +166,6 @@ public class TestGAULoader {
 
     @After
     public void cleanup() {
-        ontology.close(false);
+        ontology.close(true);
     }
 }
