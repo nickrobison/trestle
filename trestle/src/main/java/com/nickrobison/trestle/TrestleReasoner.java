@@ -6,7 +6,11 @@ import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URL;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Created by nrobison on 5/17/16.
@@ -17,8 +21,20 @@ public class TrestleReasoner {
 
     private final ITrestleOntology ontology;
 
+    @SuppressWarnings("dereference.of.nullable")
     private TrestleReasoner(TrestleBuilder builder) throws OWLOntologyCreationException {
-        OntologyBuilder ontologyBuilder = new OntologyBuilder().fromIRI(builder.iri);
+
+        final URL ontologyResource = TrestleReasoner.class.getClassLoader().getResource("trestle.owl");
+        if (ontologyResource == null) {
+            logger.error("Cannot load trestle ontology from resources");
+            throw new RuntimeException("Cannot load ontology");
+        }
+
+//        Parse the listed input classes
+        for (Class inputClass : builder.inputClasses) {
+
+        }
+        OntologyBuilder ontologyBuilder = new OntologyBuilder().fromIRI(IRI.create(ontologyResource));
         if (builder.connectionString.isPresent()) {
             ontologyBuilder = ontologyBuilder.withDBConnection(builder.connectionString.get(),
                     builder.username,
@@ -32,21 +48,33 @@ public class TrestleReasoner {
 
     public static class TrestleBuilder {
 
-        private final IRI iri;
         private Optional<String> connectionString = Optional.empty();
         private String username;
         private String password;
+        private final Set<Class> inputClasses;
 
+        @Deprecated
         public TrestleBuilder(IRI iri) {
-            this.iri = iri;
             this.username = "";
             this.password = "";
+            this.inputClasses = new HashSet<>();
+        }
+
+        public TrestleBuilder() {
+            this.username = "";
+            this.password = "";
+            this.inputClasses = new HashSet<>();
         }
 
         public TrestleBuilder withDBConnection(String connectionString, String username, String password) {
             this.connectionString = Optional.of(connectionString);
             this.username = username;
             this.password = password;
+            return this;
+        }
+
+        public TrestleBuilder withInputClasses(Class... inputClass) {
+            this.inputClasses.addAll(Arrays.asList(inputClass));
             return this;
         }
 
