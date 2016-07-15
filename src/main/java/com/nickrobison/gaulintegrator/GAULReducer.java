@@ -2,6 +2,7 @@ package com.nickrobison.gaulintegrator;
 
 import com.esri.core.geometry.*;
 import com.nickrobison.gaulintegrator.common.ObjectID;
+import com.nickrobison.trestle.TrestleReasoner;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
@@ -11,7 +12,10 @@ import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.log4j.Logger;
 import org.apache.log4j.lf5.util.StreamUtils;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.*;
 import java.sql.Date;
@@ -43,6 +47,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
     private LocalDate startDate;
     private LocalDate endDate;
     private Configuration conf;
+    private TrestleReasoner reasoner;
     private static final String objectRelationInsertString = "INSERT INTO Object_Relations (From_Object, To_Object, Edge_Weight, Start_Time, End_time) VALUES(?,?,?,?,?)";
 
     @Override
@@ -63,6 +68,20 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
             logger.error("Cannot connect to database", e);
             throw new RuntimeException("Cannot connect to database", e);
         }
+
+//        Setup the Trestle Reasoner
+        final File ontology = new File("./trestle");
+        try {
+            reasoner = new TrestleReasoner.TrestleBuilder(IRI.create(ontology.toURI()))
+                    .withDBConnection(conf.get("reasoner.db.connection"),
+                            conf.get("reasoner.db.username"),
+                            conf.get("reasoner.db.password"))
+                    .build();
+        } catch (OWLOntologyCreationException e) {
+            logger.error("Cannot build ontology", e);
+            throw new RuntimeException("Cannot build ontology", e);
+        }
+
     }
 
     //    FIXME(nrobison): Fix this

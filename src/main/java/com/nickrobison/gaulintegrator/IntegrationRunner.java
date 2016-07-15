@@ -14,6 +14,8 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Logger;
 
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URL;
 import java.util.Properties;
 
 /**
@@ -60,6 +62,11 @@ public class IntegrationRunner extends Configured implements Tool {
             outputDir.getFileSystem(conf).delete(outputDir, true);
         }
         FileOutputFormat.setOutputPath(job, outputDir);
+
+//        Add the cache files
+        final URL resource = IntegrationRunner.class.getClassLoader().getResource("trestle.owl");
+        logger.debug("Loading: " + URI.create(resource.toString() + "#trestle"));
+        job.addCacheFile(URI.create(resource.toString() + "#trestle"));
 
         return job.waitForCompletion(true) ? 0 : 1;
     }
