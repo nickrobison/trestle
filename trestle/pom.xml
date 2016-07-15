@@ -19,9 +19,13 @@
         <!--Checker properties-->
         <checker.version>2.0.1</checker.version>
         <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
+        <junit.platform.version>1.0.0-M1</junit.platform.version>
+        <junit.jupiter.version>5.0.0-M1</junit.jupiter.version>
+        <trestle.location>file:///Users/nrobison/Developer/git/dissertation/trestle-ontology</trestle.location>
     </properties>
 
     <artifactId>trestle</artifactId>
+    <packaging>jar</packaging>
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -152,10 +156,16 @@
             <artifactId>jdk8</artifactId>
             <version>${checker.version}</version>
         </dependency>
+        <!--<dependency>-->
+            <!--<groupId>junit</groupId>-->
+            <!--<artifactId>junit</artifactId>-->
+            <!--<version>4.12</version>-->
+            <!--<scope>test</scope>-->
+        <!--</dependency>-->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

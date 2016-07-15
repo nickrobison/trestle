@@ -1,12 +1,13 @@
+package com.nickrobison.trestle.common;
+
 import com.hp.hpl.jena.query.ResultSet;
-import com.nickrobison.trestle.common.ClassParser;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
 import com.nickrobison.trestle.ontology.OracleOntology;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
@@ -35,7 +36,7 @@ public class TestGAULoader {
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
 
-    @Before
+    @BeforeEach
     public void setup() throws IOException, OWLOntologyCreationException {
 
         final InputStream is = TestGAULoader.class.getClassLoader().getResourceAsStream("objects.csv");
@@ -164,7 +165,7 @@ public class TestGAULoader {
 //        ontology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);
     }
 
-    @After
+    @AfterEach
     public void cleanup() {
         ontology.close(true);
     }

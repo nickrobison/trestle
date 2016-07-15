@@ -1,11 +1,12 @@
+package com.nickrobison.trestle.common;
+
 import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.annotations.TemporalProperty;
-import com.nickrobison.trestle.common.ClassParser;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
@@ -32,7 +33,7 @@ public class TrestleParserTest {
     private TemporalObject temporal;
     private TemporalObject temporalPoint;
 
-    @Before
+    @BeforeEach
     public void Setup() {
         test1 = new GAULTestClass(1234, "test1");
         test2 = new MoreGAULTests();
@@ -82,7 +83,7 @@ public class TrestleParserTest {
 
         owlDataPropertyAssertionAxioms = ClassParser.GetDataProperties(test2);
         assertTrue("Should have properties", owlDataPropertyAssertionAxioms.isPresent());
-        assertEquals("Wrong number of properties", 3, owlDataPropertyAssertionAxioms.get().size());
+        assertEquals("Wrong number of properties", 4, owlDataPropertyAssertionAxioms.get().size());
 
 //        Test the temporal
         final Optional<List<TemporalObject>> temporalObjects = ClassParser.GetTemporalObjects(test2);

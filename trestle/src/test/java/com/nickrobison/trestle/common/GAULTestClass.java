@@ -1,3 +1,5 @@
+package com.nickrobison.trestle.common;
+
 import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.types.TemporalType;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
@@ -31,7 +33,7 @@ public class GAULTestClass {
         this.wkt = "test_wkt";
     }
 
-    GAULTestClass(int code, String name) {
+    public GAULTestClass(int code, String name) {
         this.adm0_code = code;
         this.adm0_name = name;
         this.test_name = "test_me";

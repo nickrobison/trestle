@@ -1,10 +1,12 @@
+package com.nickrobison.trestle;
+
 import com.hp.hpl.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
 import com.nickrobison.trestle.ontology.OracleOntology;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
@@ -26,7 +28,7 @@ public class OracleTrestleTest {
     private OracleOntology ontology;
     private OWLDataFactory df;
 
-    @Before
+    @BeforeEach
     public void setupNewOntology() throws OWLOntologyCreationException {
         final IRI iri = IRI.create("file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl");
         df = OWLManager.getOWLDataFactory();
@@ -143,7 +145,7 @@ public class OracleTrestleTest {
 
     }
 
-    @After
+    @AfterEach
     public void CloseOntology() {
         ontology.close(true);
     }
