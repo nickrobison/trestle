@@ -1,6 +1,5 @@
 package com.nickrobison.gaulintegrator.UnitTests;
 
-import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

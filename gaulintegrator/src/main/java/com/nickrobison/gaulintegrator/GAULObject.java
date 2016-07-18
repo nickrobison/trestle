@@ -4,8 +4,6 @@ import com.esri.core.geometry.*;
 import com.nickrobison.gaulintegrator.common.ObjectID;
 import com.nickrobison.gaulintegrator.common.Utils;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
 import java.sql.Date;
 import java.time.LocalDate;
 
