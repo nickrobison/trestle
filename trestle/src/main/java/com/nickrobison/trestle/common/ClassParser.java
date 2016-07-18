@@ -1,9 +1,11 @@
 package com.nickrobison.trestle.common;
 
-import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.annotations.TemporalProperty;
-import com.nickrobison.trestle.types.*;
+import com.nickrobison.trestle.types.ObjectRestriction;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
+import com.nickrobison.trestle.annotations.*;
+import com.nickrobison.trestle.types.TemporalType;
+import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
@@ -13,8 +15,7 @@ import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.*;
 
-import static com.nickrobison.trestle.types.temporal.TemporalObjectBuilder.exists;
-import static com.nickrobison.trestle.types.temporal.TemporalObjectBuilder.valid;
+import static com.nickrobison.trestle.types.TemporalType.*;
 
 /**
  * Created by nrobison on 6/28/16.
@@ -200,11 +201,11 @@ public class ClassParser {
                     case POINT: {
                       switch (annotation.scope()) {
                           case VALID: {
-                              temporalObject = valid().at(LocalDateTime.from((java.time.temporal.Temporal) fieldValue)).withRelations(owlNamedIndividual);
+                              temporalObject = TemporalObjectBuilder.valid().at(LocalDateTime.from((java.time.temporal.Temporal) fieldValue)).withRelations(owlNamedIndividual);
                               break;
                           }
                           case EXISTS: {
-                              temporalObject = exists().at(LocalDateTime.from((java.time.temporal.Temporal) fieldValue)).withRelations(owlNamedIndividual);
+                              temporalObject = TemporalObjectBuilder.exists().at(LocalDateTime.from((java.time.temporal.Temporal) fieldValue)).withRelations(owlNamedIndividual);
                               break;
                           }
 
@@ -221,12 +222,12 @@ public class ClassParser {
                         }
                         switch (annotation.scope()) {
                             case VALID: {
-                                temporalObject = valid().from(from).to(to).withRelations(owlNamedIndividual);
+                                temporalObject = TemporalObjectBuilder.valid().from(from).to(to).withRelations(owlNamedIndividual);
                                 break;
                             }
 
                             case EXISTS: {
-                                temporalObject = exists().from(from).to(to).withRelations(owlNamedIndividual);
+                                temporalObject = TemporalObjectBuilder.exists().from(from).to(to).withRelations(owlNamedIndividual);
                                 break;
                             }
 

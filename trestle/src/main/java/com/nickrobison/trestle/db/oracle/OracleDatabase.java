@@ -9,7 +9,6 @@ import oracle.spatial.rdf.client.jena.GraphOracleSem;
 import oracle.spatial.rdf.client.jena.ModelOracleSem;
 import oracle.spatial.rdf.client.jena.Oracle;
 import oracle.spatial.rdf.client.jena.OracleUtils;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -4,7 +4,6 @@ import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.datatypes.TypeMapper;
 import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.query.*;
 import com.hp.hpl.jena.rdf.model.*;
 import com.hp.hpl.jena.vocabulary.OWL;
