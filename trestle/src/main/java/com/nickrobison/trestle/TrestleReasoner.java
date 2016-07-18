@@ -2,6 +2,8 @@ package com.nickrobison.trestle;
 
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
+import com.nickrobison.trestle.ontology.ITrestleOntology;
+import com.nickrobison.trestle.ontology.OntologyBuilder;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -10,6 +10,7 @@
     <modules>
         <module>trestle</module>
         <module>gaulintegrator</module>
+        <module>difference-processor</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -89,13 +90,6 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>org.apache.mrunit</groupId>
-                <artifactId>mrunit</artifactId>
-                <version>1.1.0</version>
-                <classifier>hadoop2</classifier>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-minicluster</artifactId>
                 <version>${hadoop.version}</version>
@@ -128,6 +122,16 @@
         </dependencies>
     </dependencyManagement>
     <repositories>
+        <repository>
+            <id>central</id>
+            <name>maven</name>
+            <url>http://repo1.maven.org/maven2/</url>
+        </repository>
+        <repository>
+            <id>resource</id>
+            <name>Resource Repository</name>
+            <url>file://${project.basedir}/src/main/resources/repo</url>
+        </repository>
         <repository>
             <id>maven2-repository.dev.java.net</id>
             <name>Java.net repository</name>
@@ -189,7 +193,7 @@
                     <descriptor>src/main/assembly/job.xml</descriptor>
                     <archive>
                         <manifest>
-                            <mainClass>com.nickrobison.spatialdifference.JobRunner</mainClass>
+                            <mainClass>com.nickrobison.gaulintegrator.nickrobison.gaulintegrator.nickrobison.spatialdifference.JobRunner</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

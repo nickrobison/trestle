@@ -1,10 +1,13 @@
 package com.nickrobison.trestle.common;
 
-import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.annotations.TemporalProperty;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
+import com.nickrobison.trestle.annotations.*;
+import com.nickrobison.trestle.types.TemporalType;
+import com.nickrobison.trestle.types.temporal.TemporalObject;
+import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -39,8 +42,8 @@ public class TrestleParserTest {
         test2 = new MoreGAULTests();
         df = OWLManager.getOWLDataFactory();
         LocalDateTime dt = LocalDateTime.of(1989, 3, 26, 0, 0);
-        temporal = valid().from(dt).to(dt.plusYears(1)).withRelations();
-        temporalPoint = exists().at(dt).withRelations();
+        temporal = TemporalObjectBuilder.valid().from(dt).to(dt.plusYears(1)).withRelations();
+        temporalPoint = TemporalObjectBuilder.exists().at(dt).withRelations();
     }
 
     @Test
