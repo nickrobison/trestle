@@ -12,6 +12,7 @@ import com.hp.hpl.jena.rdf.model.ModelGetter;
 import com.hp.hpl.jena.rdf.model.ModelReader;
 import com.hp.hpl.jena.tdb.TDB;
 import com.hp.hpl.jena.tdb.TDBFactory;
+import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.atlas.lib.NotImplemented;
 import org.apache.jena.query.spatial.EntityDefinition;
@@ -37,6 +38,7 @@ import java.util.Set;
  * Created by nrobison on 6/15/16.
  */
 @SuppressWarnings("initialization")
+@Deprecated
 public class LocalOntology implements ITrestleOntology {
 
     private final String ontologyName;
@@ -90,6 +92,36 @@ public class LocalOntology implements ITrestleOntology {
 
     public boolean isConsistent() {
         return reasoner.isConsistent();
+    }
+
+    @Override
+    public Optional<Set<OWLObjectProperty>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property) {
+        return null;
+    }
+
+    @Override
+    public void createIndividual(OWLClassAssertionAxiom owlClassAssertionAxiom) {
+
+    }
+
+    @Override
+    public void createProperty(OWLProperty property) {
+
+    }
+
+    @Override
+    public void writeIndividualDataProperty(OWLDataPropertyAssertionAxiom dataProperty) throws MissingOntologyEntity {
+
+    }
+
+    @Override
+    public void writeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property) throws MissingOntologyEntity {
+
+    }
+
+    @Override
+    public boolean containsResource(OWLNamedObject individual) {
+        return false;
     }
 
     public void writeOntology(IRI path, boolean validate) throws OWLOntologyStorageException {
@@ -164,6 +196,16 @@ public class LocalOntology implements ITrestleOntology {
 //        applyChanges((OWLAxiomChange[]) owlAxiomChanges.toArray());
 
 //        TODO(nrobison): Need to write this to the Jena model.
+    }
+
+    @Override
+    public IRI getFullIRI(OWLNamedObject owlNamedObject) {
+        return null;
+    }
+
+    @Override
+    public String getFullIRIString(OWLNamedObject owlNamedObject) {
+        return null;
     }
 
     public ResultSet executeSPARQL(String queryString) {

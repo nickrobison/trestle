@@ -213,13 +213,8 @@ public class OracleOntology implements ITrestleOntology {
         return Optional.of(properties);
     }
 
-    /**
-     * Returns and optional set of asserted property values from a given individual
-     *
-     * @param individual - OWLNamedIndividual to query
-     * @param property   - OWLObjectProperty to retrieve
-     * @return - Optional set of all asserted property values
-     */
+    //    TODO(nrobison): Close iterator
+    @Override
     public Optional<Set<OWLObjectProperty>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property) {
         final Resource modelResource = model.getResource(getFullIRI(individual).toString());
         final Property modelProperty = model.getProperty(getFullIRI(property).toString());
@@ -239,12 +234,8 @@ public class OracleOntology implements ITrestleOntology {
         return Optional.of(properties);
     }
 
-    /**
-     * Create an OWLNamedIndividual with RDF.type property
-     *
-     * @param owlClassAssertionAxiom - Class axiom to store in the model with RDF.type relation
-     */
-//    FIXME(nrobison): This should have the ability to be locked to avoid polluting the ontology
+    //    FIXME(nrobison): This should have the ability to be locked to avoid polluting the ontology
+    @Override
     public void createIndividual(OWLClassAssertionAxiom owlClassAssertionAxiom) {
 
         final Resource modelResource = model.createResource(getFullIRIString(owlClassAssertionAxiom.getIndividual().asOWLNamedIndividual()));
@@ -252,13 +243,8 @@ public class OracleOntology implements ITrestleOntology {
         modelResource.addProperty(RDF.type, modelClass);
     }
 
-    /**
-     * Create a property in the underlying model.
-     * Determines if the property is an Object or Data Property
-     *
-     * @param property - Property to store in the model
-     */
     //    FIXME(nrobison): This should have the ability to be locked to avoid polluting the ontology
+    @Override
     public void createProperty(OWLProperty property) {
 
         final Resource modelResource = model.createResource(getFullIRIString(property));
@@ -269,13 +255,7 @@ public class OracleOntology implements ITrestleOntology {
         }
     }
 
-    /**
-     * Write and individual data property axiom to the model.
-     * Creates the data property if it doesn't exist
-     *
-     * @param dataProperty - Data property axiom to store in the more
-     * @throws MissingOntologyEntity - Throws an exception if the subject doesn't exist.
-     */
+    @Override
     public void writeIndividualDataProperty(OWLDataPropertyAssertionAxiom dataProperty) throws MissingOntologyEntity {
 
 //        Does the individual exist?
@@ -299,6 +279,7 @@ public class OracleOntology implements ITrestleOntology {
         }
     }
 
+    @Override
     public void writeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property) throws MissingOntologyEntity {
 
         final Resource modelSubject = model.getResource(getFullIRIString(property.getSubject().asOWLNamedIndividual()));
@@ -327,12 +308,7 @@ public class OracleOntology implements ITrestleOntology {
         }
     }
 
-    /**
-     * Check whether the underlying model contains the given OWLEntity
-     *
-     * @param individual - OWLNamedObject to verify existence
-     * @return - boolean object exists?
-     */
+    @Override
     public boolean containsResource(OWLNamedObject individual) {
         final Resource resource = model.getResource(getFullIRIString(individual));
         return model.containsResource(resource);
