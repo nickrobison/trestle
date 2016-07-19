@@ -82,7 +82,7 @@ public class OracleTrestleTest {
         final OWLDataProperty asWKT = df.getOWLDataProperty(IRI.create("geosparql:", "asWKT"));
         individualProperty = ontology.getIndividualProperty(burundi_0, asWKT);
         final OWLLiteral wktLiteral = individualProperty.get().stream().findFirst().get();
-        assertEquals(wktLiteral.getLiteral(), "WKT is wrong", "POINT (30 10)");
+        assertEquals("POINT (30 10)", wktLiteral.getLiteral(), "WKT is wrong");
 
 
 //        Test object properties
