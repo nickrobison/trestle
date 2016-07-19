@@ -12,7 +12,8 @@
         <!--I believe Oracle only supports the 2.x branch of Jena-->
         <jena.version>2.11.1</jena.version>
         <marmotta.version>3.3.0</marmotta.version>
-        <sesame.version>4.1.2</sesame.version>
+        <!--<sesame.version>4.1.2</sesame.version>-->
+        <sesame.version>2.9.0</sesame.version>
         <!--FaCT++ doesn't seem to support OWLAPI 5.0-->
         <!--<owl.version>5.0.2</owl.version>-->
         <owl.version>4.2.5</owl.version>

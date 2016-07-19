@@ -55,8 +55,8 @@
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-core:2.5.1" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.5.1" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.5.1" level="project" />
-    <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-model:4.1.2" level="project" />
-    <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-util:4.1.2" level="project" />
+    <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-model:2.9.0" level="project" />
+    <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-util:2.9.0" level="project" />
     <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-rio-api:2.7.16" level="project" />
     <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-rio-languages:2.7.16" level="project" />
     <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-rio-datatypes:2.7.16" level="project" />
@@ -117,9 +117,9 @@
     <orderEntry type="library" name="Maven: net.sf.geographiclib:GeographicLib-Java:1.44" level="project" />
     <orderEntry type="library" name="Maven: org.geotools:gt-epsg-hsql:15.0" level="project" />
     <orderEntry type="library" name="Maven: org.hsqldb:hsqldb:2.3.0" level="project" />
-    <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-sail-api:4.1.2" level="project" />
-    <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-query:4.1.2" level="project" />
-    <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-queryalgebra-model:4.1.2" level="project" />
+    <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-sail-api:2.9.0" level="project" />
+    <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-query:2.9.0" level="project" />
+    <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-queryalgebra-model:2.9.0" level="project" />
     <orderEntry type="library" name="Maven: org.apache.marmotta:kiwi-triplestore:3.3.0" level="project" />
     <orderEntry type="library" name="Maven: org.slf4j:log4j-over-slf4j:1.7.7" level="project" />
     <orderEntry type="library" name="Maven: org.apache.tomcat:tomcat-jdbc:7.0.55" level="project" />
