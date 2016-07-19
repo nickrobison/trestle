@@ -11,6 +11,8 @@
     <properties>
         <!--I believe Oracle only supports the 2.x branch of Jena-->
         <jena.version>2.11.1</jena.version>
+        <marmotta.version>3.3.0</marmotta.version>
+        <sesame.version>4.1.2</sesame.version>
         <!--FaCT++ doesn't seem to support OWLAPI 5.0-->
         <!--<owl.version>5.0.2</owl.version>-->
         <owl.version>4.2.5</owl.version>
@@ -32,6 +34,7 @@
             <artifactId>slf4j-api</artifactId>
             <version>1.7.21</version>
         </dependency>
+        <!--Jena Dependencies-->
         <dependency>
             <groupId>org.apache.jena</groupId>
             <artifactId>apache-jena-libs</artifactId>
@@ -60,6 +63,7 @@
             <artifactId>jena-spatial</artifactId>
             <version>1.1.2</version>
         </dependency>
+        <!--OWL Dependencies-->
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
             <artifactId>owlapi-api</artifactId>
@@ -140,6 +144,41 @@
             <artifactId>commons-io</artifactId>
             <version>2.5</version>
         </dependency>
+        <!--RDF4J Dependencies-->
+        <dependency>
+            <groupId>org.openrdf.sesame</groupId>
+            <artifactId>sesame-sail-api</artifactId>
+            <version>${sesame.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openrdf.sesame</groupId>
+            <artifactId>sesame-model</artifactId>
+            <version>${sesame.version}</version>
+        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.openrdf.sesame</groupId>-->
+            <!--<artifactId>sesame-sail-api</artifactId>-->
+            <!--<version>${sesame.version}</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>org.openrdf.sesame</groupId>-->
+            <!--<artifactId>sesame-sail-inferencer</artifactId>-->
+            <!--<version>${sesame.version}</version>-->
+        <!--</dependency>-->
+        <dependency>
+            <groupId>org.apache.marmotta</groupId>
+            <artifactId>kiwi-triplestore</artifactId>
+            <version>${marmotta.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.marmotta</groupId>
+            <artifactId>kiwi-reasoner</artifactId>
+            <version>${marmotta.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+        </dependency>
         <!--Checker dependencies-->
         <dependency>
             <groupId>org.checkerframework</groupId>
@@ -166,6 +205,13 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
             <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!--Need this for the intellij running and printing-->
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <version>4.12.0-M1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
