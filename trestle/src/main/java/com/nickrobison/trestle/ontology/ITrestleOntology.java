@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.ontology;
 
 import com.hp.hpl.jena.query.ResultSet;
+import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
@@ -17,6 +18,52 @@ public interface ITrestleOntology {
      * @return - Is the ontology consistent?
      */
     boolean isConsistent();
+
+    /**
+     * Returns and optional set of asserted property values from a given individual
+     *
+     * @param individual - OWLNamedIndividual to query
+     * @param property   - OWLObjectProperty to retrieve
+     * @return - Optional set of all asserted property values
+     */
+//    TODO(nrobison): Close iterator
+    Optional<Set<OWLObjectProperty>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property);
+
+    /**
+     * Create an OWLNamedIndividual with RDF.type property
+     *
+     * @param owlClassAssertionAxiom - Class axiom to store in the model with RDF.type relation
+     */
+//    FIXME(nrobison): This should have the ability to be locked to avoid polluting the ontology
+    void createIndividual(OWLClassAssertionAxiom owlClassAssertionAxiom);
+
+    /**
+     * Create a property in the underlying model.
+     * Determines if the property is an Object or Data Property
+     *
+     * @param property - Property to store in the model
+     */
+    //    FIXME(nrobison): This should have the ability to be locked to avoid polluting the ontology
+    void createProperty(OWLProperty property);
+
+    /**
+     * Write and individual data property axiom to the model.
+     * Creates the data property if it doesn't exist
+     *
+     * @param dataProperty - Data property axiom to store in the more
+     * @throws MissingOntologyEntity - Throws an exception if the subject doesn't exist.
+     */
+    void writeIndividualDataProperty(OWLDataPropertyAssertionAxiom dataProperty) throws MissingOntologyEntity;
+
+    void writeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property) throws MissingOntologyEntity;
+
+    /**
+     * Check whether the underlying model contains the given OWLEntity
+     *
+     * @param individual - OWLNamedObject to verify existence
+     * @return - boolean object exists?
+     */
+    boolean containsResource(OWLNamedObject individual);
 
     /**
      * Write underlying ontology to disk
@@ -108,6 +155,20 @@ public interface ITrestleOntology {
      * Initialize the ontology from the base ontology provided by the Builder
      */
     void initializeOntology();
+
+    /**
+     * Get the full IRI of the OWL Object expanded from the DefaultPrefixManager
+     * @param owlNamedObject - OWL Object to extract IRI from
+     * @return - IRI of OWL Object
+     */
+    IRI getFullIRI(OWLNamedObject owlNamedObject);
+
+    /**
+     * Get the full IRI expanded from the DefaultPrefixManager as a String
+     * @param owlNamedObject - OWL Object to extract IRI from
+     * @return - String of OWL Object IRI
+     */
+    String getFullIRIString(OWLNamedObject owlNamedObject);
 
     /**
      * Execute a raw SPARQL query against the ontology

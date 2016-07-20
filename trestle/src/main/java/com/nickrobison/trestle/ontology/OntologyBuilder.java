@@ -91,7 +91,7 @@ public class OntologyBuilder {
         }
 
 //            If there's a connection string, then we need to return a database Ontology
-        if (connectionString.isPresent()) {
+        if (connectionString.isPresent() && connectionString.get().contains("oracle")) {
             return Optional.of(new OracleOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
@@ -101,7 +101,18 @@ public class OntologyBuilder {
                     username.orElse(""),
                     password.orElse("")
             ));
-        } else {
+        } else if (connectionString.isPresent() && connectionString.get().contains("postgresql")) {
+            return Optional.of(new SesameOntology(
+                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
+                    owlOntology,
+                    pm.orElse(createDefaultPrefixManager()),
+                    connectionString.get(),
+                    username.orElse(""),
+                    password.orElse("")
+            ));
+        }
+
+        else {
             return Optional.of(new LocalOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
@@ -117,6 +128,7 @@ public class OntologyBuilder {
 
     private DefaultPrefixManager createDefaultPrefixManager() {
         DefaultPrefixManager pm = new DefaultPrefixManager();
+        pm.setDefaultPrefix("http://nickrobison.com/dissertation/trestle.owl#");
 //        TODO(nrobison): This should be broken into its own thing. Maybe a function to add prefixes?
         pm.setPrefix("main_geo:", "http://nickrobison.com/dissertation/main_geo.owl#");
         pm.setPrefix("rdf:", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
