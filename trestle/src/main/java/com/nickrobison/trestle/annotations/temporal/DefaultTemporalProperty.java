@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.annotations;
+package com.nickrobison.trestle.annotations.temporal;
 
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
@@ -12,10 +12,9 @@ import java.time.temporal.ChronoUnit;
 /**
  * Created by nrobison on 6/28/16.
  */
-// TODO(nrobison): This should support more than just fields
-@Target({ElementType.FIELD})
+    @Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface TemporalProperty {
+public @interface DefaultTemporalProperty {
     TemporalType type();
     TemporalScope scope() default TemporalScope.VALID;
     int duration();
