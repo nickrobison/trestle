@@ -10,7 +10,6 @@
     <modules>
         <module>trestle</module>
         <module>gaulintegrator</module>
-        <module>difference-processor</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -31,25 +30,25 @@
                 <scope>${provided.scope}</scope>
             </dependency>
             <!--Storm dependencies-->
-            <dependency>
-                <groupId>org.apache.storm</groupId>
-                <artifactId>storm-core</artifactId>
-                <version>${storm.version}</version>
-                <scope>${provided.scope}</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.storm</groupId>
-                <artifactId>storm-hdfs</artifactId>
-                <version>${storm.version}</version>
-                <!--TODO(nrobison): Not sure if this will cause an issue later on with the hdfs spout-->
-                <!--We need to exclude the asm dependency, because it conflicts with the newer version of asm shipped with Kryo-->
-                <exclusions>
-                    <exclusion>
-                        <groupId>asm</groupId>
-                        <artifactId>asm</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
+            <!--<dependency>-->
+                <!--<groupId>org.apache.storm</groupId>-->
+                <!--<artifactId>storm-core</artifactId>-->
+                <!--<version>${storm.version}</version>-->
+                <!--<scope>${provided.scope}</scope>-->
+            <!--</dependency>-->
+            <!--<dependency>-->
+                <!--<groupId>org.apache.storm</groupId>-->
+                <!--<artifactId>storm-hdfs</artifactId>-->
+                <!--<version>${storm.version}</version>-->
+                <!--&lt;!&ndash;TODO(nrobison): Not sure if this will cause an issue later on with the hdfs spout&ndash;&gt;-->
+                <!--&lt;!&ndash;We need to exclude the asm dependency, because it conflicts with the newer version of asm shipped with Kryo&ndash;&gt;-->
+                <!--<exclusions>-->
+                    <!--<exclusion>-->
+                        <!--<groupId>asm</groupId>-->
+                        <!--<artifactId>asm</artifactId>-->
+                    <!--</exclusion>-->
+                <!--</exclusions>-->
+            <!--</dependency>-->
             <!--Common dependencies-->
             <dependency>
                 <groupId>com.google.guava</groupId>
