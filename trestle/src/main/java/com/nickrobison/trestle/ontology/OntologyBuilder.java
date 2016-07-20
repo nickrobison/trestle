@@ -128,6 +128,7 @@ public class OntologyBuilder {
 
     private DefaultPrefixManager createDefaultPrefixManager() {
         DefaultPrefixManager pm = new DefaultPrefixManager();
+        pm.setDefaultPrefix("http://nickrobison.com/dissertation/trestle.owl#");
 //        TODO(nrobison): This should be broken into its own thing. Maybe a function to add prefixes?
         pm.setPrefix("main_geo:", "http://nickrobison.com/dissertation/main_geo.owl#");
         pm.setPrefix("rdf:", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
