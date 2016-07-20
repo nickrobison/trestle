@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.common;
 
 import com.nickrobison.trestle.annotations.*;
+import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.types.TemporalType;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
@@ -22,7 +23,7 @@ public class GAULTestClass {
 //    @DataProperty(name="geosparql:asWKT", datatype = OWL2Datatype.RDFS_LITERAL)
     @Spatial
     public String wkt;
-    @TemporalProperty(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+    @DefaultTemporalProperty(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
     public LocalDateTime time;
 
     GAULTestClass() {
