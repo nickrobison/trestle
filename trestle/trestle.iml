@@ -151,6 +151,8 @@
     <orderEntry type="library" name="Maven: org.apache.marmotta:kiwi-reasoner:3.3.0" level="project" />
     <orderEntry type="library" name="Maven: org.apache.marmotta:marmotta-sail-transactions:3.3.0" level="project" />
     <orderEntry type="library" name="Maven: org.postgresql:postgresql:9.4.1208.jre7" level="project" />
+    <orderEntry type="library" name="Maven: com.openlink.virtuoso:jena2:1.0" level="project" />
+    <orderEntry type="library" name="Maven: com.openlink.virtuoso:virtjdbc:4.0" level="project" />
     <orderEntry type="library" name="Maven: org.checkerframework:checker:2.0.1" level="project" />
     <orderEntry type="library" name="Maven: org.checkerframework:checker-qual:2.0.1" level="project" />
     <orderEntry type="library" name="Maven: org.checkerframework:jdk8:2.0.1" level="project" />

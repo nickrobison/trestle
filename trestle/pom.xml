@@ -161,16 +161,6 @@
             <artifactId>sesame-sail-inferencer</artifactId>
             <version>${sesame.version}</version>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>org.openrdf.sesame</groupId>-->
-            <!--<artifactId>sesame-sail-api</artifactId>-->
-            <!--<version>${sesame.version}</version>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>org.openrdf.sesame</groupId>-->
-            <!--<artifactId>sesame-sail-inferencer</artifactId>-->
-            <!--<version>${sesame.version}</version>-->
-        <!--</dependency>-->
         <dependency>
             <groupId>org.apache.marmotta</groupId>
             <artifactId>kiwi-triplestore</artifactId>
@@ -184,6 +174,17 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
+        </dependency>
+        <!--Virtuoso Dependencies-->
+        <dependency>
+            <groupId>com.openlink.virtuoso</groupId>
+            <artifactId>jena2</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.openlink.virtuoso</groupId>
+            <artifactId>virtjdbc</artifactId>
+            <version>4.0</version>
         </dependency>
         <!--Checker dependencies-->
         <dependency>
