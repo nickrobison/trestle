@@ -11,14 +11,16 @@ import org.apache.marmotta.kiwi.reasoner.sail.KiWiReasoningSail;
 import org.apache.marmotta.kiwi.sail.KiWiStore;
 import org.openrdf.model.Literal;
 import org.openrdf.model.Statement;
-import org.openrdf.model.Value;
+import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
+import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.RepositoryResult;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.rio.RDFFormat;
+import org.openrdf.sail.inferencer.fc.ForwardChainingRDFSInferencer;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
@@ -28,7 +30,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Optional;
@@ -47,10 +48,11 @@ public class SesameOntology implements ITrestleOntology {
     private final DefaultPrefixManager pm;
     private final OWLDataFactory df;
     private final Repository repository;
-    private final RepositoryConnection connection;
+    //    private final RepositoryConnection connection;
     private final ValueFactory vf;
     private final KiWiTransactionalSail tsail;
     private final KiWiStore store;
+    private final KiWiReasoningSail rsail;
 
     SesameOntology(String name, OWLOntology ont, DefaultPrefixManager pm, String connectionString, String username, String password) {
         this.ontologyName = name;
@@ -61,67 +63,71 @@ public class SesameOntology implements ITrestleOntology {
         final KiWiConfiguration kiWiConfiguration = new KiWiConfiguration(name, connectionString, username, password, dialect);
         store = new KiWiStore(kiWiConfiguration);
         tsail = new KiWiTransactionalSail(store);
-        KiWiReasoningSail rsail = new KiWiReasoningSail(tsail, new ReasoningConfiguration());
+        rsail = new KiWiReasoningSail(tsail, new ReasoningConfiguration());
 
-//
-//        Sail wsail = new SailWrapper(rsail) {
-//
-//            @Override
-//            public void shutDown() throws SailException {
-//                rsail.getEngine().shutdown(true);
-//
-//                try {
-//                    rsail.getPersistence().dropDatabase();
-//                    rsail.getPersistence().dropDatabase();
-//                } catch (SQLException e) {
-//                    logger.error("Cannot drop database", e);
-//                }
-//
-//                super.shutDown();
-//            }
-//        };
-//
-////        We should probably figure out a better way to do this. Apparently, this is really slow
-////        Also not sure if we can just cast it to and rdf4j sail, I think so, but we'll see.
-////        repository = new SailRepository(new ForwardChainingRDFSInferencer(baseSail));
-//        repository = new RepositoryWrapper(new SailRepository(wsail)) {
-//
-//            @Override
-//            public RepositoryConnection getConnection() throws RepositoryException {
-//                return new RepositoryConnectionWrapper(this, super.getConnection()) {
-//
-//                    @Override
-//                    public void commit() throws RepositoryException {
-//                        super.commit();
-//
-//                        try {
-//                            while(rsail.getEngine().isRunning()) {
-//                                logger.info("sleeping for 500ms to let engine finish processing ... ");
-//                                Thread.sleep(500);
-//                            }
-//                            logger.info("sleeping for 100ms to let engine finish processing ... ");
-//                            Thread.sleep(100);
-//                        } catch (InterruptedException e) {
-//                            throw new RepositoryException("Could not finish reasoning", e);
-//                        }
-//                    }
-//                };
-//            }
-//        };
-        repository = new SailRepository(rsail);
-        repository.initialize();
-        connection = repository.getConnection();
+        repository = new SailRepository(new ForwardChainingRDFSInferencer(store));
+//        I think it throws a NPE, but still seems to work. No idea if the inferencer runs or not
+        try {
+            repository.initialize();
+        } catch (RepositoryException e) {
+            logger.error("Problem initializing {}", ontologyName, e);
+        } catch (NullPointerException e) {
+            logger.error("Problem initializing {}, more NPEs", ontologyName, e);
+        }
+
         vf = repository.getValueFactory();
 
     }
+
     @Override
     public boolean isConsistent() {
         return false;
     }
 
     @Override
+    @SuppressWarnings("argument.type.incompatible")
     public Optional<Set<OWLObjectProperty>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property) {
-        return Optional.empty();
+
+        RepositoryConnection connection;
+        try {
+            connection = repository.getConnection();
+        } catch (RepositoryException e) {
+            e.printStackTrace();
+            return Optional.empty();
+        }
+        final URI modelResource = vf.createURI(getFullIRIString(individual));
+        final URI modelProperty = vf.createURI(getFullIRIString(property));
+
+        Set<OWLObjectProperty> properties = new HashSet<>();
+        final RepositoryResult<Statement> statements;
+        try {
+            statements = connection.getStatements(modelResource, modelProperty, null, true);
+        } catch (RepositoryException e) {
+            logger.error("Cannot get statements for {}", individual, e);
+            return Optional.empty();
+        }
+
+        try {
+            while (statements.hasNext()) {
+                final Statement statement = statements.next();
+                properties.add(df.getOWLObjectProperty(IRI.create(statement.getObject().toString())));
+            }
+        } catch (RepositoryException e) {
+            logger.error("Cannot close statement", e);
+        } finally {
+            try {
+                statements.close();
+                connection.close();
+            } catch (RepositoryException e) {
+                logger.error("Cannot close statement", e);
+            }
+        }
+
+        if (properties.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(properties);
     }
 
     @Override
@@ -162,8 +168,13 @@ public class SesameOntology implements ITrestleOntology {
     @Override
     public void close(boolean drop) {
         logger.info("Shutting down repository {}", ontologyName);
-        connection.close();
-        repository.shutDown();
+        try {
+//            connection.close();
+            repository.shutDown();
+        } catch (RepositoryException e) {
+            logger.error("Cannot close repository {}", ontologyName, e);
+        }
+
         if (drop) {
             try {
                 store.getPersistence().dropDatabase();
@@ -186,27 +197,60 @@ public class SesameOntology implements ITrestleOntology {
     @Override
     public void openTransaction() {
         logger.info("Opening repository transaction");
-        this.connection.begin();
+        try {
+            repository.getConnection().begin();
+        } catch (RepositoryException e) {
+            logger.error("Could not open transaction", e);
+            throw new RuntimeException("Could not open transaction", e);
+        }
     }
 
     @Override
     public void commitTransaction() {
         logger.info("Committing repository transaction");
-        this.connection.commit();
+        try {
+            repository.getConnection().commit();
+        } catch (RepositoryException e) {
+            logger.error("Could not commit transaction", e);
+        }
     }
 
     @Override
     @SuppressWarnings("argument.type.incompatible")
     public Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean direct) {
-        Set<OWLNamedIndividual> instances = new HashSet<>();
-        final org.openrdf.model.IRI resource = vf.createIRI(getFullIRIString(owlClass));
-//        pretty sure this doesn't work.
-        final RepositoryResult<Statement> statements = connection.getStatements(resource, RDF.TYPE, null, direct);
-        while (statements.hasNext()) {
-            final Statement statement = statements.next();
-            instances.add(df.getOWLNamedIndividual(IRI.create(statement.getSubject().toString())));
+        RepositoryConnection connection;
+        try {
+            connection = repository.getConnection();
+        } catch (RepositoryException e) {
+            logger.error("Cannot get connection", e);
+            throw new RuntimeException("Cannot get connection", e);
         }
-        statements.close();
+
+        Set<OWLNamedIndividual> instances = new HashSet<>();
+        final URI resource = vf.createURI(getFullIRIString(owlClass));
+//        pretty sure this doesn't work.
+        final RepositoryResult<Statement> statements;
+        try {
+            statements = connection.getStatements(resource, RDF.TYPE, null, direct);
+        } catch (RepositoryException e) {
+            logger.error("Cannot get statements for {}", owlClass, e);
+            return new HashSet<>();
+        }
+        try {
+            while (statements.hasNext()) {
+                final Statement statement = statements.next();
+                instances.add(df.getOWLNamedIndividual(IRI.create(statement.getSubject().toString())));
+            }
+        } catch (RepositoryException e) {
+            logger.error("Problem with statement", e);
+        } finally {
+            try {
+                statements.close();
+                connection.close();
+            } catch (RepositoryException e) {
+                logger.error("Cannot close statement", e);
+            }
+        }
         return instances;
     }
 
@@ -220,20 +264,44 @@ public class SesameOntology implements ITrestleOntology {
     @SuppressWarnings("argument.type.incompatible")
     public Optional<Set<OWLLiteral>> getIndividualProperty(OWLNamedIndividual individual, OWLDataProperty property) {
 
-        final org.openrdf.model.IRI modelResource = vf.createIRI(getFullIRIString(individual));
-        final org.openrdf.model.IRI modelProperty = vf.createIRI(getFullIRIString(property));
+        RepositoryConnection connection;
+        try {
+            connection = repository.getConnection();
+        } catch (RepositoryException e) {
+            e.printStackTrace();
+            return Optional.empty();
+        }
+        final URI modelResource = vf.createURI(getFullIRIString(individual));
+        final URI modelProperty = vf.createURI(getFullIRIString(property));
         Set<OWLLiteral> properties = new HashSet<>();
-        final RepositoryResult<Statement> statements = connection.getStatements(modelResource, modelProperty, null, true);
-        while (statements.hasNext()) {
-            final Statement statement = statements.next();
-            final Value object = statement.getObject();
-            final Literal literal = vf.createLiteral("test");
+        final RepositoryResult<Statement> statements;
+        try {
+            statements = connection.getStatements(modelResource, modelProperty, null, true);
+        } catch (RepositoryException e) {
+            logger.error("Cannot get statements for {}", individual, e);
+            return Optional.empty();
+        }
+        try {
+            while (statements.hasNext()) {
+                final Statement statement = statements.next();
+                final Literal object = (Literal) statement.getObject();
+                final OWLDatatype owlDatatype = df.getOWLDatatype(IRI.create(object.getDatatype().toString()));
+                properties.add(df.getOWLLiteral(object.stringValue(), owlDatatype));
+            }
+        } catch (RepositoryException e) {
+            logger.error("Problem with statement", e);
+        } finally {
+            try {
+                statements.close();
+                connection.close();
+            } catch (RepositoryException e) {
+                logger.error("Cannot close statement", e);
+            }
         }
 
         if (properties.isEmpty()) {
             return Optional.empty();
         }
-
         return Optional.of(properties);
     }
 
@@ -254,13 +322,20 @@ public class SesameOntology implements ITrestleOntology {
 
     @Override
     public void initializeOntology() {
+
+        RepositoryConnection connection;
+        try {
+            connection = repository.getConnection();
+        } catch (RepositoryException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Cannot open connection", e);
+        }
         logger.info("Dropping Sesame repository {}", ontologyName);
         try {
             store.getPersistence().dropDatabase();
         } catch (SQLException e) {
             logger.error("Cannot drop sesame repository", e);
         }
-//        repository.initialize();
 
         logger.debug("Writing out the ontology to byte array");
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -275,15 +350,24 @@ public class SesameOntology implements ITrestleOntology {
         logger.debug("Reading model from byte stream");
         logger.info("Creating new model {}", ontologyName);
 
-        this.openTransaction();
+        try {
+            connection.begin();
+        } catch (RepositoryException e) {
+            logger.error("Cannot begin transaction", e);
+        }
         try {
             connection.add(is, pm.getDefaultPrefix(), RDFFormat.RDFXML);
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("Cannot load ontology {}", ontologyName, e);
             throw new RuntimeException("Cannot load ontology: " + ontologyName, e);
         }
-        this.commitTransaction();
 
+        try {
+            connection.commit();
+            connection.close();
+        } catch (RepositoryException e) {
+            logger.error("Cannot commit transaction", e);
+        }
     }
 
     @Override

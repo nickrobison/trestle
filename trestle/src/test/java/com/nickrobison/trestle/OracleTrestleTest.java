@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Created by nrobison on 6/24/16.
  */
-@SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization"})
+@SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "Duplicates"})
 public class OracleTrestleTest {
 
     private OracleOntology ontology;

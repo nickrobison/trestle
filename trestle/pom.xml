@@ -156,6 +156,11 @@
             <artifactId>sesame-model</artifactId>
             <version>${sesame.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.openrdf.sesame</groupId>
+            <artifactId>sesame-sail-inferencer</artifactId>
+            <version>${sesame.version}</version>
+        </dependency>
         <!--<dependency>-->
             <!--<groupId>org.openrdf.sesame</groupId>-->
             <!--<artifactId>sesame-sail-api</artifactId>-->
