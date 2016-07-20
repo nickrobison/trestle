@@ -6,6 +6,7 @@ import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
@@ -29,26 +30,6 @@ public class ClassParser {
 
     private ClassParser() {
     }
-//
-//    public static void ParseClass(Object inputObject) {
-//
-////        Construct the OWL classes to add
-//
-//
-////        Get all the fields
-//        final Field[] declaredFields = clazz.getDeclaredFields();
-//
-////        For each field, figure out if it has an annotation
-//        Arrays.stream(declaredFields)
-//                .forEach(field -> {
-////                    Is it an object property?
-//                    if (field.isAnnotationPresent(ObjectProperty.class)) {
-//
-//                    }
-//                });
-//
-//
-//    }
 
     static OWLClass GetObjectClass(Object inputObject) {
 
@@ -89,16 +70,10 @@ public class ClassParser {
 //        Try for methods
         for (Method classMethod : clazz.getMethods()) {
             if (classMethod.isAnnotationPresent(IndividualIdentifier.class)) {
-                try {
-                    final Class<?> returnType = classMethod.getReturnType();
-                    final Object invokedObject = classMethod.invoke(inputObject);
-                    logger.debug("Method {} has return type {}", classMethod.getName(), returnType);
-                    final Object castReturn = returnType.cast(invokedObject);
-                    identifier = castReturn.toString();
-                } catch (IllegalAccessException e) {
-                    logger.debug("Cannot access method {}", classMethod.getName(), e);
-                } catch (InvocationTargetException e) {
-                    logger.error("Invocation failed on method {}", classMethod.getName(), e);
+
+                final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
+                if (methodValue.isPresent()) {
+                    identifier = methodValue.get().toString();
                 }
             }
         }
@@ -198,6 +173,8 @@ public class ClassParser {
         final Class<?> clazz = inputObject.getClass();
         List<TemporalObject> temporalObjects = new ArrayList<>();
         final OWLNamedIndividual owlNamedIndividual = GetIndividual(inputObject);
+
+//        Fields
         for (Field classField : clazz.getDeclaredFields()) {
             if (classField.isAnnotationPresent(TemporalProperty.class)) {
                 final TemporalProperty annotation = classField.getAnnotation(TemporalProperty.class);
@@ -215,53 +192,35 @@ public class ClassParser {
                     throw new RuntimeException("Not a temporal field");
                 }
 
-                final TemporalObject temporalObject;
+                final Optional<TemporalObject> temporalObject = parseTemporalObject(fieldValue, annotation, owlNamedIndividual);
 
-                switch (annotation.type()) {
-                    case POINT: {
-                      switch (annotation.scope()) {
-                          case VALID: {
-                              temporalObject = TemporalObjectBuilder.valid().at(LocalDateTime.from((java.time.temporal.Temporal) fieldValue)).withRelations(owlNamedIndividual);
-                              break;
-                          }
-                          case EXISTS: {
-                              temporalObject = TemporalObjectBuilder.exists().at(LocalDateTime.from((java.time.temporal.Temporal) fieldValue)).withRelations(owlNamedIndividual);
-                              break;
-                          }
 
-                          default: throw new RuntimeException("Cannot initialize temporal object");
-                      }
-                        break;
-                    }
-
-                    case INTERVAL: {
-                        final LocalDateTime from = LocalDateTime.from((java.time.temporal.Temporal) fieldValue);
-                        LocalDateTime to = null;
-                        if (annotation.duration() > 0) {
-                            to = from.plus(annotation.duration(), annotation.unit());
-                        }
-                        switch (annotation.scope()) {
-                            case VALID: {
-                                temporalObject = TemporalObjectBuilder.valid().from(from).to(to).withRelations(owlNamedIndividual);
-                                break;
-                            }
-
-                            case EXISTS: {
-                                temporalObject = TemporalObjectBuilder.exists().from(from).to(to).withRelations(owlNamedIndividual);
-                                break;
-                            }
-
-                            default: throw new RuntimeException("Cannot initialize temporal object");
-                        }
-                        break;
-                    }
-
-                    default: throw new RuntimeException("Cannot initialize temporal object");
-                }
 
 //                TODO(nrobison): All of this is gross
-                if (temporalObject != null) {
-                    temporalObjects.add(temporalObject);
+                if (temporalObject.isPresent()) {
+                    temporalObjects.add(temporalObject.get());
+                }
+            }
+        }
+
+//        Methods
+        for (Method classMethod : clazz.getDeclaredMethods()) {
+            if (classMethod.isAnnotationPresent(TemporalProperty.class)) {
+
+                final TemporalProperty annotation = classMethod.getAnnotation(TemporalProperty.class);
+                final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
+
+                if (methodValue.isPresent()) {
+
+                    if (!(methodValue.get() instanceof java.time.temporal.Temporal)) {
+                        throw new RuntimeException("Not a temporal return value");
+                    }
+
+                    final Optional<TemporalObject> temporalObject = parseTemporalObject(methodValue.get(), annotation, owlNamedIndividual);
+
+                    if (temporalObject.isPresent()) {
+                        temporalObjects.add(temporalObject.get());
+                    }
                 }
             }
         }
@@ -271,5 +230,78 @@ public class ClassParser {
         }
 
         return Optional.of(temporalObjects);
+    }
+
+    private static Optional<TemporalObject> parseTemporalObject(Object fieldValue, TemporalProperty annotation, OWLNamedIndividual owlNamedIndividual) {
+
+        final TemporalObject temporalObject;
+
+        switch (annotation.type()) {
+            case POINT: {
+                switch (annotation.scope()) {
+                    case VALID: {
+                        temporalObject = TemporalObjectBuilder.valid().at(LocalDateTime.from((java.time.temporal.Temporal) fieldValue)).withRelations(owlNamedIndividual);
+                        break;
+                    }
+                    case EXISTS: {
+                        temporalObject = TemporalObjectBuilder.exists().at(LocalDateTime.from((java.time.temporal.Temporal) fieldValue)).withRelations(owlNamedIndividual);
+                        break;
+                    }
+
+                    default: throw new RuntimeException("Cannot initialize temporal object");
+                }
+                break;
+            }
+
+            case INTERVAL: {
+                final LocalDateTime from = LocalDateTime.from((java.time.temporal.Temporal) fieldValue);
+                LocalDateTime to = null;
+                if (annotation.duration() > 0) {
+                    to = from.plus(annotation.duration(), annotation.unit());
+                }
+                switch (annotation.scope()) {
+                    case VALID: {
+                        temporalObject = TemporalObjectBuilder.valid().from(from).to(to).withRelations(owlNamedIndividual);
+                        break;
+                    }
+
+                    case EXISTS: {
+                        temporalObject = TemporalObjectBuilder.exists().from(from).to(to).withRelations(owlNamedIndividual);
+                        break;
+                    }
+
+                    default: throw new RuntimeException("Cannot initialize temporal object");
+                }
+                break;
+            }
+
+            default: throw new RuntimeException("Cannot initialize temporal object");
+        }
+
+        if (temporalObject == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(temporalObject);
+    }
+
+    private static Optional<Object> accessMethodValue(Method classMethod, Object inputObject) {
+        @Nullable Object castReturn = null;
+        try {
+            final Class<?> returnType = classMethod.getReturnType();
+            final Object invokedObject = classMethod.invoke(inputObject);
+            logger.debug("Method {} has return type {}", classMethod.getName(), returnType);
+            castReturn = returnType.cast(invokedObject);
+        } catch (IllegalAccessException e) {
+            logger.debug("Cannot access method {}", classMethod.getName(), e);
+        } catch (InvocationTargetException e) {
+            logger.error("Invocation failed on method {}", classMethod.getName(), e);
+        }
+
+        if (castReturn == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(castReturn);
     }
 }
