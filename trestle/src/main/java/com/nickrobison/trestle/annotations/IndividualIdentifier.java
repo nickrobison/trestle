@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * Created by nrobison on 6/28/16.
  */
-@Target(ElementType.FIELD)
+@Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface IndividualIdentifier {
 }

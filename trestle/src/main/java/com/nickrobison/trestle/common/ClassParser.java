@@ -12,6 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -71,6 +73,7 @@ public class ClassParser {
         String identifier = UUID.randomUUID().toString();
 //            Loop through the fields and figure out which one has the identifier
 
+//        Try for fields
         for (Field classField : clazz.getDeclaredFields()) {
             if (classField.isAnnotationPresent(IndividualIdentifier.class)) {
                 try {
@@ -79,6 +82,23 @@ public class ClassParser {
                     break;
                 } catch (IllegalAccessException e) {
                     logger.error("Cannot access field {}", classField.getName(), e);
+                }
+            }
+        }
+
+//        Try for methods
+        for (Method classMethod : clazz.getMethods()) {
+            if (classMethod.isAnnotationPresent(IndividualIdentifier.class)) {
+                try {
+                    final Class<?> returnType = classMethod.getReturnType();
+                    final Object invokedObject = classMethod.invoke(inputObject);
+                    logger.debug("Method {} has return type {}", classMethod.getName(), returnType);
+                    final Object castReturn = returnType.cast(invokedObject);
+                    identifier = castReturn.toString();
+                } catch (IllegalAccessException e) {
+                    logger.debug("Cannot access method {}", classMethod.getName(), e);
+                } catch (InvocationTargetException e) {
+                    logger.error("Invocation failed on method {}", classMethod.getName(), e);
                 }
             }
         }
@@ -130,7 +150,7 @@ public class ClassParser {
                     try {
                         fieldValue = classField.get(inputObject).toString();
                     } catch (IllegalAccessException e) {
-                        logger.error("Cannot access field {}", classField.getName(), e);
+                        logger.debug("Cannot access field {}", classField.getName(), e);
                         continue;
                     }
                     final OWLLiteral owlLiteral = df.getOWLLiteral(fieldValue, annotation.datatype());
@@ -143,7 +163,7 @@ public class ClassParser {
                     try {
                         fieldValue = classField.get(inputObject).toString();
                     } catch (IllegalAccessException e) {
-                        logger.error("Cannot access field {}", classField.getName(), e);
+                        logger.debug("Cannot access field {}", classField.getName(), e);
                         continue;
                     }
                     final OWLDatatype wktDatatype = df.getOWLDatatype(IRI.create("http://www.opengis.net/ont/geosparql#", "wktLiteral"));
@@ -158,7 +178,7 @@ public class ClassParser {
                 try {
                     fieldValue = classField.get(inputObject).toString();
                 } catch (IllegalAccessException e) {
-                    logger.error("Cannot access field {}", classField.getName(), e);
+                    logger.debug("Cannot access field {}", classField.getName(), e);
                     continue;
                 }
                 axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, fieldValue));
@@ -186,7 +206,7 @@ public class ClassParser {
                 try {
                     fieldValue = classField.get(inputObject);
                 } catch (IllegalAccessException e) {
-                    logger.error("Cannot access field {}", classField.getName(), e);
+                    logger.debug("Cannot access field {}", classField.getName(), e);
 //                    should this be here?
                     continue;
                 }
