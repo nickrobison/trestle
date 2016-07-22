@@ -5,34 +5,33 @@ import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
 import com.nickrobison.trestle.types.ObjectRestriction;
 import com.nickrobison.trestle.types.TemporalScope;
-import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
-import com.sun.tools.javadoc.Start;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.time.temporal.Temporal;
-import java.time.temporal.TemporalAccessor;
 import java.util.*;
-
-import static com.nickrobison.trestle.types.TemporalType.POINT;
 
 /**
  * Created by nrobison on 6/28/16.
  */
 @SuppressWarnings("initialization")
 public class ClassParser {
+
+    private static enum AccessType {
+        FIELD,
+        METHOD
+    }
 
     private static final Logger logger = LoggerFactory.getLogger(ClassParser.class);
 
@@ -210,12 +209,7 @@ public class ClassParser {
                 }
             } else if (classField.isAnnotationPresent(StartTemporalProperty.class)) {
                 final StartTemporalProperty annotation = classField.getAnnotation(StartTemporalProperty.class);
-                TemporalObject temporalObject;
-
-//                Find the ending field
-//                if (annotation.type() == TemporalType.INTERVAL) {
-//
-//                }
+                TemporalObject temporalObject = null;
 
                 Object fieldValue = null;
                 try {
@@ -237,24 +231,28 @@ public class ClassParser {
                     }
                     case INTERVAL: {
 //                        Find its matching end field
-                        Object endingFieldValue = null;
-                        for (Field endingField : clazz.getDeclaredFields()) {
-
-                            if (endingField.isAnnotationPresent(EndTemporalProperty.class)) {
-                                try {
-                                    endingFieldValue = endingField.get(inputObject);
-                                } catch (IllegalAccessException e) {
-                                    logger.debug("Cannot access field {}", classField.getName(), e);
-                                    continue;
-                                }
-                            }
+                        final Optional<TemporalObject> temporalObject1 = parseStartTemporal(annotation, fieldValue, owlNamedIndividual, inputObject, AccessType.FIELD, clazz);
+                        if (temporalObject1.isPresent()) {
+                            temporalObject = temporalObject1.get();
                         }
-
-                        if ((endingFieldValue != null ) && !(endingFieldValue instanceof java.time.temporal.Temporal)) {
-                            throw new RuntimeException("Not a temporal field");
-                        }
-
-                        temporalObject = buildIntervalTemporal((Temporal) fieldValue, (Temporal) endingFieldValue, annotation.scope(), owlNamedIndividual);
+//                        Object endingFieldValue = null;
+//                        for (Field endingField : clazz.getDeclaredFields()) {
+//
+//                            if (endingField.isAnnotationPresent(EndTemporalProperty.class)) {
+//                                try {
+//                                    endingFieldValue = endingField.get(inputObject);
+//                                } catch (IllegalAccessException e) {
+//                                    logger.debug("Cannot access field {}", classField.getName(), e);
+//                                    continue;
+//                                }
+//                            }
+//                        }
+//
+//                        if ((endingFieldValue != null ) && !(endingFieldValue instanceof java.time.temporal.Temporal)) {
+//                            throw new RuntimeException("Not a temporal field");
+//                        }
+//
+//                        temporalObject = buildIntervalTemporal((Temporal) fieldValue, (Temporal) endingFieldValue, annotation.scope(), owlNamedIndividual);
                         break;
                     }
 
@@ -286,6 +284,15 @@ public class ClassParser {
                         temporalObjects.add(temporalObject.get());
                     }
                 }
+            } else if (classMethod.isAnnotationPresent(StartTemporalProperty.class)) {
+                final StartTemporalProperty annotation = classMethod.getAnnotation(StartTemporalProperty.class);
+                final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
+
+                final Optional<TemporalObject> temporalObject = parseStartTemporal(annotation, methodValue.orElseThrow(RuntimeException::new), owlNamedIndividual, inputObject, AccessType.METHOD, clazz);
+
+                if (temporalObject.isPresent()) {
+                    temporalObjects.add(temporalObject.get());
+                }
             }
         }
 
@@ -295,6 +302,7 @@ public class ClassParser {
 
         return Optional.of(temporalObjects);
     }
+
 
     private static Optional<TemporalObject> parseDefaultTemporal(Object fieldValue, DefaultTemporalProperty annotation, OWLNamedIndividual owlNamedIndividual) {
 
@@ -392,6 +400,67 @@ public class ClassParser {
 //        return Optional.of(temporalObject);
 //    }
 
+
+    private static Optional<TemporalObject> parseStartTemporal(StartTemporalProperty annotation, Object fieldValue, OWLNamedIndividual owlNamedIndividual, Object inputObject, AccessType access, Class clazz) {
+        TemporalObject temporalObject;
+        switch (annotation.type()) {
+            case POINT: {
+                temporalObject = buildPointTemporal((Temporal) fieldValue, annotation.scope(), owlNamedIndividual);
+                break;
+            }
+            case INTERVAL: {
+//                        Find its matching end field
+                Object endingFieldValue = null;
+                switch (access) {
+                    case FIELD: {
+
+                        for (Field endingField : clazz.getDeclaredFields()) {
+
+                            if (endingField.isAnnotationPresent(EndTemporalProperty.class)) {
+                                try {
+                                    endingFieldValue = endingField.get(inputObject);
+                                } catch (IllegalAccessException e) {
+                                    logger.debug("Cannot access field {}", endingField.getName(), e);
+                                    continue;
+                                }
+                            }
+                        }
+                        break;
+                    }
+
+                    case METHOD: {
+
+                        for (Method endMethod : clazz.getDeclaredMethods()) {
+                            if (endMethod.isAnnotationPresent(EndTemporalProperty.class)) {
+                                final Optional<Object> methodValue = accessMethodValue(endMethod, inputObject);
+                                endingFieldValue = methodValue.orElse(null);
+                            }
+                        }
+                        break;
+                    }
+
+                    default: throw new RuntimeException("Not sure what to access");
+
+                }
+
+                if ((endingFieldValue != null ) && !(endingFieldValue instanceof java.time.temporal.Temporal)) {
+                    throw new RuntimeException("Not a temporal field");
+                }
+
+                temporalObject = buildIntervalTemporal((Temporal) fieldValue, (Temporal) endingFieldValue, annotation.scope(), owlNamedIndividual);
+                break;
+            }
+
+            default: throw new RuntimeException("Cannot initialize temporal object");
+        }
+
+        if (temporalObject == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(temporalObject);
+
+    }
     private static TemporalObject buildIntervalTemporal(Temporal start, @Nullable Temporal end, TemporalScope scope, OWLNamedIndividual... relations) {
         final LocalDateTime from = LocalDateTime.from(start);
 

@@ -123,8 +123,11 @@ public class TrestleParserTest {
 //        Temporal
         temporalObjects = ClassParser.GetTemporalObjects(testMethod);
         assertTrue(temporalObjects.isPresent(), "Should have objects");
-        assertEquals(1, temporalObjects.get().size(), "Wrong number of objects");
-        assertEquals(LocalDateTime.of(1989, 3, 26, 0, 0), temporalObjects.get().stream().findFirst().get().asInterval().getFromTime(), "Temporal is incorrect");
+        assertEquals(2, temporalObjects.get().size(), "Wrong number of objects");
+        assertEquals(LocalDateTime.of(1989, 3, 26, 0, 0), temporalObjects.get().get(0).asInterval().getFromTime(), "Wrong interval start");
+        assertEquals(LocalDateTime.of(1989, 3, 26, 0, 0).plusYears(5), temporalObjects.get().get(0).asInterval().getToTime().get(), "Wrong interval end");
+        assertEquals(LocalDateTime.of(1998, 3, 26, 0, 0), temporalObjects.get().get(1).asInterval().getFromTime(), "Temporal is incorrect");
+
 
     }
 
@@ -199,7 +202,17 @@ public class TrestleParserTest {
 
         @DefaultTemporalProperty(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
         public LocalDateTime getTime() {
+            return this.testtime;
+        }
+
+        @StartTemporalProperty(type = TemporalType.INTERVAL)
+        public LocalDateTime getStart() {
             return this.testpoint;
+        }
+
+        @EndTemporalProperty()
+        public LocalDateTime getEnd() {
+            return this.testpoint.plusYears(5);
         }
     }
 
