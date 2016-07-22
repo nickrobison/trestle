@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.common;
+package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;

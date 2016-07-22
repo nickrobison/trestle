@@ -1,8 +1,9 @@
-package com.nickrobison.trestle.common;
+package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
+import com.nickrobison.trestle.parser.ClassParser;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
@@ -89,7 +90,7 @@ public class TrestleParserTest {
         assertEquals(4, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of properties");
 
 //        Test the temporal
-        Optional<List<TemporalObject>> temporalObjects = ClassParser.GetTemporalObjects(moreGAULTests);
+        Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(moreGAULTests);
         assertTrue(temporalObjects.isPresent(), "Should have objects");
         assertEquals(4, temporalObjects.get().size(), "Wrong number of temporal objects");
 //        Check for the same type and scope for interval
@@ -121,7 +122,7 @@ public class TrestleParserTest {
 //        Data properties
 
 //        Temporal
-        temporalObjects = ClassParser.GetTemporalObjects(testMethod);
+        temporalObjects = TemporalParser.GetTemporalObjects(testMethod);
         assertTrue(temporalObjects.isPresent(), "Should have objects");
         assertEquals(2, temporalObjects.get().size(), "Wrong number of objects");
         assertEquals(LocalDateTime.of(1989, 3, 26, 0, 0), temporalObjects.get().get(0).asInterval().getFromTime(), "Wrong interval start");

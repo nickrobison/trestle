@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.common;
+package com.nickrobison.trestle.parser;
 
 import com.hp.hpl.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
@@ -97,7 +97,7 @@ public class TestGAULoader {
             final OWLClassAssertionAxiom testClass = df.getOWLClassAssertionAxiom(datasetClass, gaulIndividual);
             ontology.createIndividual(testClass);
 
-            final Optional<List<TemporalObject>> temporalObjects = ClassParser.GetTemporalObjects(gaul);
+            final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(gaul);
             for (TemporalObject temporal : temporalObjects.orElseThrow(() -> new RuntimeException("Missing temporals"))) {
 
 //                Write the temporal
