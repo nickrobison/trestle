@@ -12,7 +12,10 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -25,10 +28,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Created by nrobison on 7/1/16.
+ * Created by nrobison on 7/22/16.
  */
-@SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization"})
-public class TestGAULoader {
+@SuppressWarnings({"Duplicates", "initialized"})
+public class LocalOntologyGAULLoader {
+
 
     private List<GAULTestClass> gaulObjects = new ArrayList<>();
     private OWLDataFactory df;
@@ -39,7 +43,7 @@ public class TestGAULoader {
     @BeforeEach
     public void setup() throws IOException, OWLOntologyCreationException {
 
-        final InputStream is = TestGAULoader.class.getClassLoader().getResourceAsStream("objects.csv");
+        final InputStream is = OracleOntologyGAULoader.class.getClassLoader().getResourceAsStream("objects.csv");
 
         final BufferedReader br = new BufferedReader(new InputStreamReader(is));
 
@@ -69,15 +73,11 @@ public class TestGAULoader {
         df = OWLManager.getOWLDataFactory();
 
         ontology = (LocalOntology) new OntologyBuilder()
-//                .withDBConnection(
-//                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-//                        "spatialUser",
-//                        "spatial1")
                 .fromIRI(iri)
                 .name("trestle")
                 .build().get();
 
-//        ontology.initializeOntology();
+        ontology.initializeOntology();
     }
 
     @Test
@@ -90,47 +90,42 @@ public class TestGAULoader {
         final OWLDataProperty valid_from = df.getOWLDataProperty(IRI.create("trestle:", "valid_from"));
         final OWLDataProperty valid_to = df.getOWLDataProperty(IRI.create("trestle:", "valid_to"));
 
-//        ontology.openTransaction(true);
-//        ontology.lock();
-//        ontology.openAndLock(true);
-//        for (GAULTestClass gaul : gaulObjects) {
-//            datasetClass = ClassParser.GetObjectClass(gaul);
-//            final OWLNamedIndividual gaulIndividual = ClassParser.GetIndividual(gaul);
-//            final OWLClassAssertionAxiom testClass = df.getOWLClassAssertionAxiom(datasetClass, gaulIndividual);
-//            ontology.createIndividual(testClass);
-//
-//            final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(gaul);
-//            for (TemporalObject temporal : temporalObjects.orElseThrow(() -> new RuntimeException("Missing temporals"))) {
-//
-////                Write the temporal
-//                final OWLNamedIndividual temporalIndividual = df.getOWLNamedIndividual(IRI.create("trestle:", temporal.getID()));
-//                final OWLClassAssertionAxiom temporalAssertion = df.getOWLClassAssertionAxiom(temporalClass, temporalIndividual);
-//                ontology.createIndividual(temporalAssertion);
-//
-////                Set the object properties to point back to the individual
-//                final OWLObjectPropertyAssertionAxiom temporalPropertyAssertion = df.getOWLObjectPropertyAssertionAxiom(temporal_of, temporalIndividual, gaulIndividual);
-//                ontology.writeIndividualObjectProperty(temporalPropertyAssertion);
-//
-////                Write the data properties. I know these are closed intervals
-//                final OWLLiteral fromLiteral = df.getOWLLiteral(temporal.asInterval().getFromTime().toString(), OWL2Datatype.XSD_DATE_TIME);
-//                final OWLLiteral toLiteral = df.getOWLLiteral(temporal.asInterval().getToTime().get().toString(), OWL2Datatype.XSD_DATE_TIME);
-//                final OWLDataPropertyAssertionAxiom fromAssertionAxiom = df.getOWLDataPropertyAssertionAxiom(valid_from, temporalIndividual, fromLiteral);
-//                final OWLDataPropertyAssertionAxiom toAssertionAxiom = df.getOWLDataPropertyAssertionAxiom(valid_to, temporalIndividual, toLiteral);
-//                ontology.writeIndividualDataProperty(fromAssertionAxiom);
-//                ontology.writeIndividualDataProperty(toAssertionAxiom);
-//            }
-//
-//            //        Write the data properties
-//            final Optional<List<OWLDataPropertyAssertionAxiom>> gaulDataProperties = ClassParser.GetDataProperties(gaul);
-//            for (OWLDataPropertyAssertionAxiom dataAxiom : gaulDataProperties.orElseThrow(() -> new RuntimeException("Missing data properties"))) {
-//
-//                ontology.writeIndividualDataProperty(dataAxiom);
-//            }
-//        }
-////        ontology.unlock();
-////        ontology.commitTransaction();
-//        ontology.unlockAndClose();
-////        ontology.runInference();
+        ontology.openAndLock(true);
+        for (GAULTestClass gaul : gaulObjects) {
+            datasetClass = ClassParser.GetObjectClass(gaul);
+            final OWLNamedIndividual gaulIndividual = ClassParser.GetIndividual(gaul);
+            final OWLClassAssertionAxiom testClass = df.getOWLClassAssertionAxiom(datasetClass, gaulIndividual);
+            ontology.createIndividual(testClass);
+
+            final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(gaul);
+            for (TemporalObject temporal : temporalObjects.orElseThrow(() -> new RuntimeException("Missing temporals"))) {
+
+//                Write the temporal
+                final OWLNamedIndividual temporalIndividual = df.getOWLNamedIndividual(IRI.create("trestle:", temporal.getID()));
+                final OWLClassAssertionAxiom temporalAssertion = df.getOWLClassAssertionAxiom(temporalClass, temporalIndividual);
+                ontology.createIndividual(temporalAssertion);
+
+//                Set the object properties to point back to the individual
+                final OWLObjectPropertyAssertionAxiom temporalPropertyAssertion = df.getOWLObjectPropertyAssertionAxiom(temporal_of, temporalIndividual, gaulIndividual);
+                ontology.writeIndividualObjectProperty(temporalPropertyAssertion);
+
+//                Write the data properties. I know these are closed intervals
+                final OWLLiteral fromLiteral = df.getOWLLiteral(temporal.asInterval().getFromTime().toString(), OWL2Datatype.XSD_DATE_TIME);
+                final OWLLiteral toLiteral = df.getOWLLiteral(temporal.asInterval().getToTime().get().toString(), OWL2Datatype.XSD_DATE_TIME);
+                final OWLDataPropertyAssertionAxiom fromAssertionAxiom = df.getOWLDataPropertyAssertionAxiom(valid_from, temporalIndividual, fromLiteral);
+                final OWLDataPropertyAssertionAxiom toAssertionAxiom = df.getOWLDataPropertyAssertionAxiom(valid_to, temporalIndividual, toLiteral);
+                ontology.writeIndividualDataProperty(fromAssertionAxiom);
+                ontology.writeIndividualDataProperty(toAssertionAxiom);
+            }
+
+            //        Write the data properties
+            final Optional<List<OWLDataPropertyAssertionAxiom>> gaulDataProperties = ClassParser.GetDataProperties(gaul);
+            for (OWLDataPropertyAssertionAxiom dataAxiom : gaulDataProperties.orElseThrow(() -> new RuntimeException("Missing data properties"))) {
+
+                ontology.writeIndividualDataProperty(dataAxiom);
+            }
+        }
+        ontology.unlockAndClose();
 
 //        Check to see if it worked.
         ontology.openAndLock(false);
@@ -145,14 +140,7 @@ public class TestGAULoader {
         ResultSet resultSet = ontology.executeSPARQL(queryString);
         assertEquals(191, resultSet.getRowNumber(), "Wrong number of GAUL records from sparql method");
 
-//        SPRAQL Query of spatial intersections.
-//        queryString = "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
-//                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
-//                "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
-//                "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
-//                "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-//                "SELECT ?m ?wkt WHERE { ?m rdf:type :GAUL_Test . ?m ogc:asWKT ?wkt\n" +
-//                "    FILTER (ogcf:sfIntersects(?wkt, \"Point(39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }";
+//        SPARQL Query of spatial intersections.
         queryString = "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
                 "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
                 "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
