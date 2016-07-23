@@ -63,7 +63,8 @@ public class ClassParser {
             if (classField.isAnnotationPresent(IndividualIdentifier.class)) {
                 try {
 //                        We only grab the first
-                    identifier = classField.get(inputObject).toString();
+//                    Replace the spaces with underscores
+                    identifier = classField.get(inputObject).toString().replaceAll("\\s+", "_");
                     break;
                 } catch (IllegalAccessException e) {
                     logger.error("Cannot access field {}", classField.getName(), e);
@@ -77,7 +78,7 @@ public class ClassParser {
 
                 final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
                 if (methodValue.isPresent()) {
-                    identifier = methodValue.get().toString();
+                    identifier = methodValue.get().toString().replaceAll("\\s+", "_");
                 }
             }
         }
