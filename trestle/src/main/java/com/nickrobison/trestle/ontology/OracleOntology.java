@@ -95,7 +95,7 @@ public class OracleOntology implements ITrestleOntology {
      * @return - Returns whether or not the reasoner state is consistent
      */
     public boolean isConsistent() {
-        return reasoner.isConsistent();
+        return true;
     }
 
     public void openTransaction(boolean write) {

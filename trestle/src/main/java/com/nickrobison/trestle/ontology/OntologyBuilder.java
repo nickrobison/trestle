@@ -116,8 +116,8 @@ public class OntologyBuilder {
             return Optional.of(new LocalOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
-                    pm.orElse(createDefaultPrefixManager()),
-                    classify(owlOntology, new ConsoleProgressMonitor())
+                    pm.orElse(createDefaultPrefixManager())
+//                    classify(owlOntology, new ConsoleProgressMonitor())
             ));
         }
     }
