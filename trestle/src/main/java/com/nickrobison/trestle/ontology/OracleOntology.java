@@ -98,7 +98,7 @@ public class OracleOntology implements ITrestleOntology {
         return reasoner.isConsistent();
     }
 
-    public void openTransaction() {
+    public void openTransaction(boolean write) {
         logger.info("Opening model transaction");
         model.begin();
     }

@@ -195,7 +195,7 @@ public class SesameOntology implements ITrestleOntology {
     }
 
     @Override
-    public void openTransaction() {
+    public void openTransaction(boolean write) {
         logger.info("Opening repository transaction");
         try {
             repository.getConnection().begin();

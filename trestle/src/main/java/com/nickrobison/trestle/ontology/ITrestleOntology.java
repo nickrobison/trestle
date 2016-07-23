@@ -100,12 +100,13 @@ public interface ITrestleOntology {
     DefaultPrefixManager getUnderlyingPrefixManager();
 
     /**
-     * Open a Jena transaction to facilitate rapid loading of ontology objects
+     * Open a transaction to facilitate rapid loading of ontology objects
+     * @param write - Open a writable transaction
      */
-    void openTransaction();
+    void openTransaction(boolean write);
 
     /**
-     * Close open Jena transaction
+     * Close open transaction
      */
     void commitTransaction();
 
