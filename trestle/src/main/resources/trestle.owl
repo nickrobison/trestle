@@ -161,10 +161,10 @@
         <NamedIndividual IRI="#Burundi_Valid"/>
     </Declaration>
     <Declaration>
-        <DataProperty IRI="#valid_from"/>
+        <DataProperty IRI="#ADM0_Name"/>
     </Declaration>
     <Declaration>
-        <DataProperty IRI="#ADM0_Name"/>
+        <DataProperty IRI="#valid_from"/>
     </Declaration>
     <Declaration>
         <NamedIndividual IRI="#Burundi_Name"/>
@@ -491,7 +491,7 @@
     <DataPropertyAssertion>
         <DataProperty IRI="http://www.opengis.net/ont/geosparql#asWKT"/>
         <NamedIndividual IRI="#test_aeroporto"/>
-        <Literal datatypeIRI="http://www.opengis.net/ont/geosparql#wktLiteral">MULTIPOLYGON(((32.5968208310001 -25.881235123,32.5968208310001 -25.881235123,32.594978333 -25.88051796,32.5949592590001 -25.8805103299999,32.594516754 -25.8815135959999,32.5939331050001 -25.88133812,32.5936660770001 -25.8836479189999,32.593654633 -25.88406 (...)</Literal>
+        <Literal datatypeIRI="http://www.opengis.net/ont/geosparql#wktLiteral">MULTIPOLYGON(((32.5968208310001 -25.881235123,32.56219101 -25.930898666,32.586971283 -25.9212703699999,32.5968208310001 -25.881235123)))</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
         <DataProperty IRI="#exists_at"/>
@@ -506,7 +506,7 @@
     <DataPropertyAssertion>
         <DataProperty IRI="http://www.opengis.net/ont/geosparql#asWKT"/>
         <NamedIndividual IRI="#test_maputo"/>
-        <Literal datatypeIRI="http://www.opengis.net/ont/geosparql#wktLiteral">&quot;MULTIPOLYGON(((32.9915311 -25.9701193999999,32.9915311 -25.9701193999999,32.991072 -25.9700989999999,32.9906564 -25.9705549999999,32.9902575 -25.9708717,32.9898579000001 -25.9710339,32.989654 -25.9714537,32.989245 -25.9716698999999,32.9884745000001 -25.971 (...)&quot;</Literal>
+        <Literal datatypeIRI="http://www.opengis.net/ont/geosparql#wktLiteral">MULTIPOLYGON(((32.5096456000001 -25.967816,32.4560050960001 -26.091545105,32.6053314210001 -26.0416069029999,32.5096456000001 -25.967816)),((32.695365661 -25.878672222,32.5690002440001 -25.810024261,32.501568514 -25.959611663,32.695365661 -25.878672222)))</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
         <DataProperty IRI="#valid_from"/>
@@ -536,7 +536,7 @@
     <DataPropertyAssertion>
         <DataProperty IRI="http://www.opengis.net/ont/geosparql#asWKT"/>
         <NamedIndividual IRI="#test_muni1"/>
-        <Literal datatypeIRI="http://www.opengis.net/ont/geosparql#wktLiteral">&quot;MULTIPOLYGON(((32.9915311 -25.9701193999999,32.9915311 -25.9701193999999,32.991072 -25.9700989999999,32.9906564 -25.9705549999999,32.9902575 -25.9708717,32.9898579000001 -25.9710339,32.989654 -25.9714537,32.989245 -25.9716698999999,32.9884745000001 -25.971 (...)&quot;</Literal>
+        <Literal datatypeIRI="http://www.opengis.net/ont/geosparql#wktLiteral">MULTIPOLYGON(((32.9915311 -25.9701193999999,32.9573777000001 -25.9982697,32.9427438000001 -25.9861478999999,32.9143349 -26.0033473,32.8960634000001 -26.0516855999999,32.9044608040001 -26.0701784999999,32.9257746000001 -26.0450888,32.9136869000001 -26.0241227999999,32.9391123 -26.0327745,32.9553558000001 -26.0791321,32.9915311 -25.9701193999999)),((32.5096456000001 -25.967816,32.4928904000001 -25.9757911,32.4908142090001 -26.035755157,32.4727706910001 -26.0565986629999,32.4411926270001 -26.0584659579999,32.4560050960001 -26.091545105,32.53560257 -26.075172424,32.5701370240001 -26.0840835569999,32.6053314210001 -26.0416069029999,32.5695855000001 -26.0133028,32.5549668 -25.9741010999999,32.5096456000001 -25.967816)),((32.9103849900001 -25.9692587509999,32.9009066 -25.973668,32.9139718000001 -25.982851,32.9221983 -25.9703081,32.9103849900001 -25.9692587509999)),((32.611003876 -25.9445438389999,32.5529831420001 -25.96678773,32.5932554 -25.9838586999999,32.611003876 -25.9445438389999)))</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
         <DataProperty IRI="#valid_from"/>
@@ -556,7 +556,7 @@
     <DataPropertyAssertion>
         <DataProperty IRI="http://www.opengis.net/ont/geosparql#asWKT"/>
         <NamedIndividual IRI="#test_muni2"/>
-        <Literal datatypeIRI="http://www.opengis.net/ont/geosparql#wktLiteral">&quot;MULTIPOLYGON(((32.5612678530001 -25.9292106629999,32.5612678530001 -25.9292106629999,32.561210632 -25.9290828699999,32.5611877440001 -25.9289665219999,32.5611267090001 -25.928804398,32.5610923770001 -25.928688049,32.5610466000001 -25.928512573,32.56098938  (...)&quot;</Literal>
+        <Literal datatypeIRI="http://www.opengis.net/ont/geosparql#wktLiteral">MULTIPOLYGON(((32.5612678530001 -25.9292106629999,32.5377006530001 -25.94171524,32.5529831420001 -25.96678773,32.574394226 -25.9412899019999,32.5612678530001 -25.9292106629999)))</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
         <DataProperty IRI="#ADM2_Code"/>
@@ -566,7 +566,7 @@
     <DataPropertyAssertion>
         <DataProperty IRI="http://www.opengis.net/ont/geosparql#asWKT"/>
         <NamedIndividual IRI="#test_muni3"/>
-        <Literal datatypeIRI="http://www.opengis.net/ont/geosparql#wktLiteral">&quot;MULTIPOLYGON(((32.63111559 -25.932981942,32.63111559 -25.932981942,32.630470276 -25.932149887,32.6304245000001 -25.932041168,32.6295547490001 -25.931119919,32.6293792720001 -25.931091309,32.629104614 -25.93106842,32.6289863590001 -25.9310226439999,32.62883 (...)&quot;</Literal>
+        <Literal datatypeIRI="http://www.opengis.net/ont/geosparql#wktLiteral">MULTIPOLYGON(((32.63111559 -25.932981942,32.5756988530001 -25.926273346,32.565979004 -25.95643425,32.6174357 -25.9488019,32.63111559 -25.932981942)))</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
         <DataProperty IRI="#ADM2_Code"/>
@@ -576,7 +576,7 @@
     <DataPropertyAssertion>
         <DataProperty IRI="http://www.opengis.net/ont/geosparql#asWKT"/>
         <NamedIndividual IRI="#test_muni4"/>
-        <Literal datatypeIRI="http://www.opengis.net/ont/geosparql#wktLiteral">&quot;MULTIPOLYGON(((32.6928535000001 -25.9191817,32.6928535000001 -25.9191817,32.6931536000001 -25.9182683999999,32.6935824 -25.9173544,32.6938025750001 -25.916874642,32.6939869 -25.9164729999999,32.6942395 -25.9155251,32.6944992000001 -25.914549,32.694824 -25. (...)&quot;</Literal>
+        <Literal datatypeIRI="http://www.opengis.net/ont/geosparql#wktLiteral">MULTIPOLYGON(((32.6928535000001 -25.9191817,32.6965045000001 -25.9055647,32.6786865 -25.9365783,32.6928535000001 -25.9191817)),((32.695365661 -25.8786722209999,32.7423507 -25.8693976,32.6245498660001 -25.828437805,32.579162598 -25.932905197,32.63111559 -25.932981942,32.695365661 -25.8786722209999)))</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
         <DataProperty IRI="#ADM2_Code"/>
@@ -586,7 +586,7 @@
     <DataPropertyAssertion>
         <DataProperty IRI="http://www.opengis.net/ont/geosparql#asWKT"/>
         <NamedIndividual IRI="#test_muni5"/>
-        <Literal datatypeIRI="http://www.opengis.net/ont/geosparql#wktLiteral">&quot;MULTIPOLYGON(((32.6245498660001 -25.828437805,32.6245498660001 -25.828437805,32.5846786500001 -25.815191269,32.5729141240001 -25.811281204,32.5690002440001 -25.810024261,32.567531586 -25.81533432,32.5656623840001 -25.835645676,32.562896729 -25.854330063,32 (...)&quot;</Literal>
+        <Literal datatypeIRI="http://www.opengis.net/ont/geosparql#wktLiteral">MULTIPOLYGON(((32.6245498660001 -25.828437805,32.5690002440001 -25.810024261,32.553127289 -25.9049606319999,32.5104751590001 -25.934347153,32.501568514 -25.959611663,32.5160249 -25.9422190999999,32.5378609530001 -25.949169159,32.6047744750001 -25.882600784,32.6245498660001 -25.828437805)))</Literal>
     </DataPropertyAssertion>
     <InverseObjectProperties>
         <ObjectProperty IRI="#fact_of"/>
