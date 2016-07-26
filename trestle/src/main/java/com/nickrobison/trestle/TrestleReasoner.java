@@ -4,6 +4,7 @@ import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
+import com.nickrobison.trestle.parser.ClassRegister;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,6 +78,8 @@ public class TrestleReasoner {
 
         public TrestleBuilder withInputClasses(Class... inputClass) {
             this.inputClasses.addAll(Arrays.asList(inputClass));
+//            validate the classes
+            this.inputClasses.forEach(ClassRegister::RegisterClass);
             return this;
         }
 
