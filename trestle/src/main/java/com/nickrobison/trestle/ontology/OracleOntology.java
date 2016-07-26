@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.ontology;
 
-import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.datatypes.TypeMapper;
 import com.hp.hpl.jena.graph.Triple;
@@ -32,18 +31,18 @@ public class OracleOntology implements ITrestleOntology {
     private final static Logger logger = LoggerFactory.getLogger(OracleOntology.class);
     private final String ontologyName;
     private final OWLOntology ontology;
-    private final PelletReasoner reasoner;
+//    private final PelletReasoner reasoner;
     private final DefaultPrefixManager pm;
     private final Oracle oracle;
     private final OWLDataFactory df;
     private final Model model;
     private final GraphOracleSem graph;
 
-    OracleOntology(String name, OWLOntology ont, DefaultPrefixManager pm, PelletReasoner reasoner, String connectionString, String username, String password) {
+    OracleOntology(String name, OWLOntology ont, DefaultPrefixManager pm, String connectionString, String username, String password) {
         this.ontologyName = name;
         this.ontology = ont;
         this.pm = pm;
-        this.reasoner = reasoner;
+//        this.reasoner = reasoner;
         this.df = OWLManager.getOWLDataFactory();
 //        try {
 //            this.database = new OracleDatabase(connectionString, username, password, ontologyName);
@@ -131,12 +130,13 @@ public class OracleOntology implements ITrestleOntology {
     public Optional<OWLNamedIndividual> getIndividual(OWLNamedIndividual individual) {
 
 //        Try directly from the reasoner
-        final Set<OWLNamedIndividual> entities = reasoner.getSameIndividuals(individual).getEntities();
-        if (entities.contains(individual)) {
-            return Optional.of(individual);
-        } else {
-            return Optional.empty();
-        }
+        return Optional.empty();
+//        final Set<OWLNamedIndividual> entities = reasoner.getSameIndividuals(individual).getEntities();
+//        if (entities.contains(individual)) {
+//            return Optional.of(individual);
+//        } else {
+//            return Optional.empty();
+//        }
 
 //        final OWLDataFactory df = OWLManager.getOWLDataFactory();
 ////        final OWLDataFactory df = reasoner.getOWLDataFactory();
@@ -467,7 +467,7 @@ public class OracleOntology implements ITrestleOntology {
      */
     public void close(boolean drop) {
         logger.debug("Disconnecting");
-        reasoner.dispose();
+//        reasoner.dispose();
         model.close();
         if (drop) {
             logger.info("Dropping model: {}", this.ontologyName);
