@@ -1,7 +1,5 @@
 package com.nickrobison.trestle.ontology;
 
-import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
-import com.clarkparsia.pellet.owlapiv3.PelletReasonerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -96,13 +94,22 @@ public class OntologyBuilder {
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
                     pm.orElse(createDefaultPrefixManager()),
-                    classify(owlOntology, new ConsoleProgressMonitor()),
+//                    classify(owlOntology, new ConsoleProgressMonitor()),
                     connectionString.get(),
                     username.orElse(""),
                     password.orElse("")
             ));
         } else if (connectionString.isPresent() && connectionString.get().contains("postgresql")) {
             return Optional.of(new SesameOntology(
+                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
+                    owlOntology,
+                    pm.orElse(createDefaultPrefixManager()),
+                    connectionString.get(),
+                    username.orElse(""),
+                    password.orElse("")
+            ));
+        } else if (connectionString.isPresent() && connectionString.get().contains("virtuoso")) {
+            return Optional.of(new VirtuosoOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
                     pm.orElse(createDefaultPrefixManager()),
@@ -143,21 +150,21 @@ public class OntologyBuilder {
         return pm;
     }
 
-    private static PelletReasoner classify(final OWLOntology ontology, final ReasonerProgressMonitor progressMonitor) {
-        final PelletReasoner reasoner = PelletReasonerFactory.getInstance().createReasoner(ontology, new SimpleConfiguration(progressMonitor));
-
-        reasoner.precomputeInferences(
-                InferenceType.CLASS_ASSERTIONS,
-                InferenceType.DATA_PROPERTY_ASSERTIONS,
-                InferenceType.DISJOINT_CLASSES,
-                InferenceType.SAME_INDIVIDUAL,
-                InferenceType.CLASS_HIERARCHY,
-                InferenceType.OBJECT_PROPERTY_HIERARCHY,
-                InferenceType.OBJECT_PROPERTY_ASSERTIONS,
-                InferenceType.DIFFERENT_INDIVIDUALS
-        );
-
-        return reasoner;
-    }
+//    private static PelletReasoner classify(final OWLOntology ontology, final ReasonerProgressMonitor progressMonitor) {
+//        final PelletReasoner reasoner = PelletReasonerFactory.getInstance().createReasoner(ontology, new SimpleConfiguration(progressMonitor));
+//
+//        reasoner.precomputeInferences(
+//                InferenceType.CLASS_ASSERTIONS,
+//                InferenceType.DATA_PROPERTY_ASSERTIONS,
+//                InferenceType.DISJOINT_CLASSES,
+//                InferenceType.SAME_INDIVIDUAL,
+//                InferenceType.CLASS_HIERARCHY,
+//                InferenceType.OBJECT_PROPERTY_HIERARCHY,
+//                InferenceType.OBJECT_PROPERTY_ASSERTIONS,
+//                InferenceType.DIFFERENT_INDIVIDUALS
+//        );
+//
+//        return reasoner;
+//    }
 
 }

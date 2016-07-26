@@ -52,7 +52,7 @@
     <orderEntry type="library" name="Maven: com.google.inject.extensions:guice-assistedinject:4.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.inject.extensions:guice-multibindings:4.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.code.findbugs:jsr305:2.0.1" level="project" />
-    <orderEntry type="library" name="Maven: net.sourceforge.owlapi:owlapi-distribution:4.1.4" level="project" />
+    <orderEntry type="library" name="Maven: net.sourceforge.owlapi:owlapi-distribution:4.2.5" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-core:2.5.1" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.5.1" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.5.1" level="project" />
@@ -90,19 +90,6 @@
     <orderEntry type="library" name="Maven: org.apache.servicemix.bundles:org.apache.servicemix.bundles.javax-inject:1_2" level="project" />
     <orderEntry type="library" name="Maven: org.apache.servicemix.bundles:org.apache.servicemix.bundles.aopalliance:1.0_6" level="project" />
     <orderEntry type="library" name="Maven: net.sourceforge.owlapi:telemetry:2.0.0" level="project" />
-    <orderEntry type="library" name="Maven: com.clarkparsia.pellet:pellet-jena:2.4.0-SNAPSHOT" level="project" />
-    <orderEntry type="library" name="Maven: com.clarkparsia.pellet:pellet-core:2.4.0-SNAPSHOT" level="project" />
-    <orderEntry type="library" name="Maven: com.github.ansell.aterms:aterm-java:1.8.2-p1" level="project" />
-    <orderEntry type="library" name="Maven: com.github.ansell.jjtraveler:jjtraveler:0.6" level="project" />
-    <orderEntry type="library" name="Maven: com.github.ansell.aterms:shared-objects:1.4.9-p1" level="project" />
-    <orderEntry type="library" name="Maven: org.jgrapht:jgrapht-jdk1.5:0.7.3" level="project" />
-    <orderEntry type="library" name="Maven: com.clarkparsia.pellet:pellet-owlapi:2.4.0-SNAPSHOT" level="project" />
-    <orderEntry type="library" name="Maven: com.clarkparsia.pellet:pellet-query:2.4.0-SNAPSHOT" level="project" />
-    <orderEntry type="library" name="Maven: org.antlr:antlr-runtime:3.4" level="project" />
-    <orderEntry type="library" name="Maven: org.antlr:stringtemplate:3.2.1" level="project" />
-    <orderEntry type="library" name="Maven: antlr:antlr:2.7.7" level="project" />
-    <orderEntry type="library" name="Maven: com.clarkparsia.pellet:pellet-modularity:2.4.0-SNAPSHOT" level="project" />
-    <orderEntry type="library" name="Maven: com.clarkparsia.pellet:pellet-explanation:2.4.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: com.oracle:ojdbc7:12.1.0.2" level="project" />
     <orderEntry type="library" name="Maven: net.sourceforge.owlapi:factplusplus:1.6.4-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: oracle.spatial.rdf.client:sdordf:1.0" level="project" />
@@ -118,6 +105,9 @@
     <orderEntry type="library" name="Maven: net.sf.geographiclib:GeographicLib-Java:1.44" level="project" />
     <orderEntry type="library" name="Maven: org.geotools:gt-epsg-hsql:15.0" level="project" />
     <orderEntry type="library" name="Maven: org.hsqldb:hsqldb:2.3.0" level="project" />
+    <orderEntry type="library" name="Maven: com.esri.geometry:esri-geometry-api:1.2.1" level="project" />
+    <orderEntry type="library" name="Maven: org.json:json:20090211" level="project" />
+    <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-core-asl:1.9.12" level="project" />
     <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-sail-api:2.9.0" level="project" />
     <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-query:2.9.0" level="project" />
     <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-queryalgebra-model:2.9.0" level="project" />
