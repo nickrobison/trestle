@@ -151,7 +151,7 @@ public class OracleOntologyGAULoader {
                 "    FILTER (ogcf:sfIntersects(?wkt, \"Point(39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }";
 
         resultSet = ontology.executeSPARQL(queryString);
-        assertEquals(3, resultSet.getRowNumber(), "Wrong number of intersected results");
+        assertEquals(2, resultSet.getRowNumber(), "Wrong number of intersected results");
 
 //        Try some inference
         final OWLNamedIndividual balama = df.getOWLNamedIndividual(IRI.create("trestle:", "Balama"));
@@ -167,6 +167,6 @@ public class OracleOntologyGAULoader {
 
     @AfterEach
     public void cleanup() {
-        ontology.close(false);
+        ontology.close(true);
     }
 }

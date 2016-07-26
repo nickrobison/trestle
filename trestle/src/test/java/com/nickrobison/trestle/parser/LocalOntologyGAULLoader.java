@@ -144,18 +144,27 @@ public class LocalOntologyGAULLoader {
         queryString = "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
                 "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
                 "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
                 "PREFIX spatial: <http://jena.apache.org/spatial#>\n" +
-                "SELECT ?m ?wkt WHERE { ?m rdf:type :GAUL_Test . ?m ogc:asWKT ?wkt\n" +
-                "    FILTER (spatial:nearby(39.5398864750001 -12.0671005249999 1000 'km')) }";
+                "SELECT * { ?m rdf:type :GAUL_Test . ?m spatial:withinCircle (39.5398864750001 -12.0671005249999 10 'miles');}";
+//                "    FILTER (spatial:nearby (39.5398864750001 -12.0671005249999 1000.0 'km')) }";
 
-        resultSet = ontology.executeSPARQL(queryString);
-        assertEquals(3, resultSet.getRowNumber(), "Wrong number of intersected results");
+        queryString =
+                "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+                        "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                        "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                        "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
+                        "PREFIX spatial: <http://jena.apache.org/spatial#>\n" +
+                        "SELECT * WHERE {?m rdf:type :GAUL_Test . ?m spatial:nearby (39.5398864750001 -12.0671005249999 10 'km') . }";
+
+//        resultSet = ontology.executeSPARQL(queryString);
+//        assertEquals(2, resultSet.getRowNumber(), "Wrong number of intersected results");
 
 //        Try some inference
-        final OWLNamedIndividual balama = df.getOWLNamedIndividual(IRI.create("trestle:", "Balama"));
+        final OWLNamedIndividual ancuabe = df.getOWLNamedIndividual(IRI.create("trestle:", "Ancuabe"));
 
         final OWLObjectProperty has_temporal = df.getOWLObjectProperty(IRI.create("trestle:", "has_temporal"));
-        final Optional<Set<OWLObjectProperty>> has_temporalProperty = ontology.getIndividualObjectProperty(balama, has_temporal);
+        final Optional<Set<OWLObjectProperty>> has_temporalProperty = ontology.getIndividualObjectProperty(ancuabe, has_temporal);
         assertTrue(has_temporalProperty.isPresent(), "Should have inferred temporal");
         assertEquals(1, has_temporalProperty.get().size(), "Should only have 1 temporal");
         ontology.unlockAndClose();
@@ -166,6 +175,6 @@ public class LocalOntologyGAULLoader {
 
     @AfterEach
     public void cleanup() {
-        ontology.close(false);
+        ontology.close(true);
     }
 }
