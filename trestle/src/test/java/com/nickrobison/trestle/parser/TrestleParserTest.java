@@ -82,8 +82,8 @@ public class TrestleParserTest {
 //        Test the new gaul test
         //        Test the named individual
         owlNamedIndividual = ClassParser.GetIndividual(moreGAULTests);
-        gaul_test = df.getOWLNamedIndividual(IRI.create("trestle:", "test region"));
-        assertEquals(owlNamedIndividual, gaul_test, "Wrong named individual");
+        gaul_test = df.getOWLNamedIndividual(IRI.create("trestle:", "test_region"));
+        assertEquals(gaul_test, owlNamedIndividual, "Wrong named individual");
 
         owlDataPropertyAssertionAxioms = ClassParser.GetDataProperties(moreGAULTests);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have properties");
