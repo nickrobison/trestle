@@ -12,8 +12,8 @@ import java.time.temporal.ChronoUnit;
 /**
  * Created by nrobison on 6/28/16.
  */
-    @Target({ElementType.FIELD, ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
+@TemporalProperty
+@Target({ElementType.FIELD, ElementType.METHOD})
 public @interface DefaultTemporalProperty {
     TemporalType type();
     TemporalScope scope() default TemporalScope.VALID;
