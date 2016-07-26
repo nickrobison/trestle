@@ -8,6 +8,7 @@ import com.hp.hpl.jena.rdf.model.*;
 import com.hp.hpl.jena.vocabulary.OWL;
 import com.hp.hpl.jena.vocabulary.RDF;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import org.apache.jena.atlas.lib.StrUtils;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
@@ -309,6 +310,27 @@ public abstract class JenaOntology implements ITrestleOntology {
     }
 
     abstract public void close(boolean drop);
+
+    /**
+     * Open a transaction and lock it, for lots of bulk action
+     */
+    public abstract void lock();
+
+    /**
+     * Open a transaction and lock it
+     * @param write - Open writable transaction?
+     */
+    public abstract void openAndLock(boolean write);
+
+    /**
+     * Unlock the model to allow for closing the transaction
+     */
+    public abstract void unlock();
+
+    /**
+     * Unlock the transaction and commit it
+     */
+    public abstract void unlockAndClose();
 
     protected static ByteArrayInputStream ontologytoIS(OWLOntology ontology) throws OWLOntologyStorageException {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
