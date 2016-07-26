@@ -116,6 +116,22 @@ public class LocalOntology extends JenaOntology {
     }
 
     @Override
+//    Need to override this in order to get access to the correct dataset
+    public ResultSet executeSPARQL(String queryString) {
+        this.openTransaction(false);
+        final Query query = QueryFactory.create(queryString);
+
+//        final QueryExecution qExec = SparqlDLExecutionFactory.create(query, this.model);
+        final QueryExecution qExec = QueryExecutionFactory.create(query, luceneDataset);
+        final ResultSet resultSet = qExec.execSelect();
+        ResultSetFormatter.out(System.out, resultSet, query);
+        qExec.close();
+        this.commitTransaction();
+
+        return resultSet;
+    }
+
+    @Override
     public void close(boolean drop) {
         this.commitTransaction();
         this.model.close();
