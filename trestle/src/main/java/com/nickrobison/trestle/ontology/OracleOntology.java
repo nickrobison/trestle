@@ -7,6 +7,7 @@ import com.hp.hpl.jena.query.*;
 import com.hp.hpl.jena.rdf.model.*;
 import com.hp.hpl.jena.vocabulary.OWL;
 import com.hp.hpl.jena.vocabulary.RDF;
+import com.hp.hpl.jena.vocabulary.RDFS;
 import com.nickrobison.trestle.common.EPSGParser;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import oracle.spatial.rdf.client.jena.*;
@@ -42,13 +43,7 @@ public class OracleOntology implements ITrestleOntology {
         this.ontologyName = name;
         this.ontology = ont;
         this.pm = pm;
-//        this.reasoner = reasoner;
         this.df = OWLManager.getOWLDataFactory();
-//        try {
-//            this.database = new OracleDatabase(connectionString, username, password, ontologyName);
-//        } catch (SQLException e) {
-//            throw new RuntimeException("Cannot connect to Oracle database", e);
-//        }
 
 //        Other ontology stuff
 
@@ -94,7 +89,7 @@ public class OracleOntology implements ITrestleOntology {
      * @return - Returns whether or not the reasoner state is consistent
      */
     public boolean isConsistent() {
-        return true;
+        ((InfModel) this.model).validate().isValid();
     }
 
     public void openTransaction(boolean write) {
@@ -241,6 +236,30 @@ public class OracleOntology implements ITrestleOntology {
         final Resource modelResource = model.createResource(getFullIRIString(owlClassAssertionAxiom.getIndividual().asOWLNamedIndividual()));
         final Resource modelClass = model.createResource(getFullIRIString(owlClassAssertionAxiom.getClassExpression().asOWLClass()));
         modelResource.addProperty(RDF.type, modelClass);
+    }
+
+//    TODO(nrobison): Move this to the interface
+    public void associateOWLClass(OWLClass subClass, OWLClass superClass) {
+        associateOWLClass(df.getOWLSubClassOfAxiom(subClass, superClass));
+    }
+
+    public void associateOWLClass(OWLSubClassOfAxiom subClassOfAxiom) {
+
+        final Resource modelSubclass;
+        if (containsResource(subClassOfAxiom.getSubClass().asOWLClass())) {
+            modelSubclass = model.getResource(getFullIRIString(subClassOfAxiom.getSubClass().asOWLClass()));
+        } else {
+             modelSubclass = model.createResource(getFullIRIString(subClassOfAxiom.getSubClass().asOWLClass()));
+        }
+
+        final Resource superClassResource;
+        if (containsResource(subClassOfAxiom.getSuperClass().asOWLClass())) {
+            superClassResource = model.getResource(getFullIRIString(subClassOfAxiom.getSuperClass().asOWLClass()));
+        } else {
+            superClassResource = model.createResource(getFullIRIString(subClassOfAxiom.getSuperClass().asOWLClass()));
+        }
+
+        modelSubclass.addProperty(RDFS.subClassOf, superClassResource);
     }
 
     //    FIXME(nrobison): This should have the ability to be locked to avoid polluting the ontology

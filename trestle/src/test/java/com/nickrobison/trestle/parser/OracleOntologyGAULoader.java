@@ -92,11 +92,17 @@ public class OracleOntologyGAULoader {
         final OWLDataProperty valid_to = df.getOWLDataProperty(IRI.create("trestle:", "valid_to"));
 
         ontology.openTransaction(false);
+//        Create the subclass association
+        final OWLClass datasetSuperClass = df.getOWLClass(IRI.create("trestle:", "Dataset"));
+        final OWLSubClassOfAxiom owlSubClassOfAxiom = df.getOWLSubClassOfAxiom(datasetClass, datasetSuperClass);
+        ontology.associateOWLClass(owlSubClassOfAxiom);
+
         for (GAULTestClass gaul : gaulObjects) {
             datasetClass = ClassParser.GetObjectClass(gaul);
             final OWLNamedIndividual gaulIndividual = ClassParser.GetIndividual(gaul);
             final OWLClassAssertionAxiom testClass = df.getOWLClassAssertionAxiom(datasetClass, gaulIndividual);
             ontology.createIndividual(testClass);
+
 
             final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(gaul);
             for (TemporalObject temporal : temporalObjects.orElseThrow(() -> new RuntimeException("Missing temporals"))) {
@@ -154,19 +160,19 @@ public class OracleOntologyGAULoader {
         assertEquals(2, resultSet.getRowNumber(), "Wrong number of intersected results");
 
 //        Try some inference
-        final OWLNamedIndividual balama = df.getOWLNamedIndividual(IRI.create("trestle:", "Balama"));
+        final OWLNamedIndividual ndorwa = df.getOWLNamedIndividual(IRI.create("trestle:", "Ndorwa"));
 
         final OWLObjectProperty has_temporal = df.getOWLObjectProperty(IRI.create("trestle:", "has_temporal"));
-        final Optional<Set<OWLObjectProperty>> has_temporalProperty = ontology.getIndividualObjectProperty(balama, has_temporal);
+        final Optional<Set<OWLObjectProperty>> has_temporalProperty = ontology.getIndividualObjectProperty(ndorwa, has_temporal);
         assertTrue(has_temporalProperty.isPresent(), "Should have inferred temporal");
         assertEquals(1, has_temporalProperty.get().size(), "Should only have 1 temporal");
 
 
-//        ontology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);
+        ontology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);
     }
 
     @AfterEach
     public void cleanup() {
-        ontology.close(true);
+        ontology.close(false);
     }
 }
