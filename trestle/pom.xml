@@ -9,8 +9,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
-        <!--I believe Oracle only supports the 2.x branch of Jena-->
-        <jena.version>2.11.1</jena.version>
+        <!--I believe Oracle only supports the 2.11.x branch of Jena-->
+        <jena.version>2.11.2</jena.version>
         <marmotta.version>3.3.0</marmotta.version>
         <!--<sesame.version>4.1.2</sesame.version>-->
         <sesame.version>2.9.0</sesame.version>
@@ -128,12 +128,12 @@
         <dependency>
             <groupId>oracle.spatial.rdf.client</groupId>
             <artifactId>sdordf</artifactId>
-            <version>1.0</version>
+            <version>1.1</version>
         </dependency>
         <dependency>
             <groupId>oracle.spatial.rdf.client</groupId>
             <artifactId>sdordfclient</artifactId>
-            <version>1.1</version>
+            <version>1.2</version>
         </dependency>
         <dependency>
             <groupId>org.geotools</groupId>
