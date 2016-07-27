@@ -131,31 +131,49 @@ public class SesameOntology implements ITrestleOntology {
     }
 
     @Override
+    //    TODO(nrobison): Finish
     public void createIndividual(OWLClassAssertionAxiom owlClassAssertionAxiom) {
 
     }
 
     @Override
+//    TODO(nrobison): Finish
+    public void associateOWLClass(OWLClass subClass, OWLClass superClass) {
+
+    }
+
+    @Override
+    //    TODO(nrobison): Finish
+    public void associateOWLClass(OWLSubClassOfAxiom subClassOfAxiom) {
+
+    }
+
+    @Override
+    //    TODO(nrobison): Finish
     public void createProperty(OWLProperty property) {
 
     }
 
     @Override
+    //    TODO(nrobison): Finish
     public void writeIndividualDataProperty(OWLDataPropertyAssertionAxiom dataProperty) throws MissingOntologyEntity {
 
     }
 
     @Override
+    //    TODO(nrobison): Finish
     public void writeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property) throws MissingOntologyEntity {
 
     }
 
     @Override
+    //    TODO(nrobison): Finish
     public boolean containsResource(OWLNamedObject individual) {
         return false;
     }
 
     @Override
+    //    TODO(nrobison): Finish
     public void writeOntology(IRI path, boolean validate) throws OWLOntologyStorageException {
 
     }
