@@ -38,6 +38,19 @@ public interface ITrestleOntology {
     void createIndividual(OWLClassAssertionAxiom owlClassAssertionAxiom);
 
     /**
+     * Create a subclass association from express sub/super pair
+     * @param subClass - OWLClass to associated with super-class
+     * @param superClass - OWLClass to assocate sub-class to
+     */
+    void associateOWLClass(OWLClass subClass, OWLClass superClass);
+
+    /**
+     * Create a subclass association directly from OWL Axiom
+     * @param subClassOfAxiom - OWLSubClassOfAxiom to create in ontology
+     */
+    void associateOWLClass(OWLSubClassOfAxiom subClassOfAxiom);
+
+    /**
      * Create a property in the underlying model.
      * Determines if the property is an Object or Data Property
      *

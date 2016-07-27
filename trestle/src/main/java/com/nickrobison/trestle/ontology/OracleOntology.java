@@ -238,11 +238,12 @@ public class OracleOntology implements ITrestleOntology {
         modelResource.addProperty(RDF.type, modelClass);
     }
 
-//    TODO(nrobison): Move this to the interface
+    @Override
     public void associateOWLClass(OWLClass subClass, OWLClass superClass) {
         associateOWLClass(df.getOWLSubClassOfAxiom(subClass, superClass));
     }
 
+    @Override
     public void associateOWLClass(OWLSubClassOfAxiom subClassOfAxiom) {
 
         final Resource modelSubclass;
