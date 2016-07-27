@@ -2,6 +2,7 @@ package com.nickrobison.trestle.types.temporal;
 
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
+import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.time.LocalDateTime;
@@ -31,6 +32,16 @@ public class IntervalTemporal extends TemporalObject {
     @Override
     public TemporalScope getScope() {
         return this.scope;
+    }
+
+    @Override
+    public boolean isValid() {
+        return (this.scope == TemporalScope.VALID);
+    }
+
+    @Override
+    public boolean isExists() {
+        return (this.scope == TemporalScope.EXISTS);
     }
 
     @Override

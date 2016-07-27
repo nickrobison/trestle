@@ -32,6 +32,16 @@ public class PointTemporal extends TemporalObject {
     }
 
     @Override
+    public boolean isValid() {
+        return scope == TemporalScope.VALID;
+    }
+
+    @Override
+    public boolean isExists() {
+        return scope == TemporalScope.EXISTS;
+    }
+
+    @Override
     public boolean isPoint() {
         return true;
     }

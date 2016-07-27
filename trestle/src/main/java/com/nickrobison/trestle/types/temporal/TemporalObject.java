@@ -2,6 +2,7 @@ package com.nickrobison.trestle.types.temporal;
 
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.util.HashSet;
@@ -13,6 +14,7 @@ import java.util.Set;
  */
 public abstract class TemporalObject {
 
+    private static final String PREFIX = "trestle:";
     private final String id;
     private final Optional<Set<OWLNamedIndividual>> temporal_of;
 
@@ -25,6 +27,10 @@ public abstract class TemporalObject {
         return this.id;
     }
 
+    public IRI getIDAsIRI() {
+        return IRI.create(PREFIX, this.id);
+    }
+
     public Set<OWLNamedIndividual> getTemporalRelations() {
         if (this.temporal_of.isPresent()) {
             return this.temporal_of.get();
@@ -33,9 +39,13 @@ public abstract class TemporalObject {
         }
     }
 
+    public abstract boolean isInterval();
+
     public IntervalTemporal asInterval() {
         return (IntervalTemporal) this;
     }
+
+    public abstract boolean isPoint();
 
     public PointTemporal asPoint() {
         return (PointTemporal) this;
@@ -45,7 +55,7 @@ public abstract class TemporalObject {
 
     public abstract TemporalScope getScope();
 
-    public abstract boolean isPoint();
+    public abstract boolean isValid();
 
-    public abstract boolean isInterval();
+    public abstract boolean isExists();
 }
