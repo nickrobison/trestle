@@ -138,6 +138,18 @@ public class SesameOntology implements ITrestleOntology {
 
     @Override
 //    TODO(nrobison): Finish
+    public void createIndividual(OWLNamedIndividual individual, OWLClass owlClass) {
+
+    }
+
+    @Override
+    //    TODO(nrobison): Finish
+    public void createIndividual(IRI individualIRI, IRI classIRI) {
+
+    }
+
+    @Override
+//    TODO(nrobison): Finish
     public void associateOWLClass(OWLClass subClass, OWLClass superClass) {
 
     }
@@ -156,7 +168,25 @@ public class SesameOntology implements ITrestleOntology {
 
     @Override
     //    TODO(nrobison): Finish
+    public void writeIndividualDataProperty(IRI individualIRI, IRI dataPropertyIRI, String owlLiteralString, IRI owlLiteralIRI) throws MissingOntologyEntity {
+
+    }
+
+    @Override
+    //    TODO(nrobison): Finish
+    public void writeIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property, OWLLiteral value) throws MissingOntologyEntity {
+
+    }
+
+    @Override
+    //    TODO(nrobison): Finish
     public void writeIndividualDataProperty(OWLDataPropertyAssertionAxiom dataProperty) throws MissingOntologyEntity {
+
+    }
+
+    @Override
+    //    TODO(nrobison): Finish
+    public void writeIndividualObjectProperty(IRI owlSubject, IRI owlProperty, IRI owlObject) {
 
     }
 
@@ -175,11 +205,6 @@ public class SesameOntology implements ITrestleOntology {
     @Override
     //    TODO(nrobison): Finish
     public void writeOntology(IRI path, boolean validate) throws OWLOntologyStorageException {
-
-    }
-
-    @Override
-    public void applyChange(OWLAxiomChange... axiom) {
 
     }
 
@@ -235,7 +260,7 @@ public class SesameOntology implements ITrestleOntology {
 
     @Override
     @SuppressWarnings("argument.type.incompatible")
-    public Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean direct) {
+    public Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean inferred) {
         RepositoryConnection connection;
         try {
             connection = repository.getConnection();
@@ -249,7 +274,7 @@ public class SesameOntology implements ITrestleOntology {
 //        pretty sure this doesn't work.
         final RepositoryResult<Statement> statements;
         try {
-            statements = connection.getStatements(resource, RDF.TYPE, null, direct);
+            statements = connection.getStatements(resource, RDF.TYPE, null, inferred);
         } catch (RepositoryException e) {
             logger.error("Cannot get statements for {}", owlClass, e);
             return new HashSet<>();
