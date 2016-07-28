@@ -1,24 +1,18 @@
 package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.annotations.*;
-import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
 import com.nickrobison.trestle.types.ObjectRestriction;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.lang.reflect.*;
+import java.time.LocalDateTime;
+import java.util.*;
 
 /**
  * Created by nrobison on 6/28/16.
@@ -32,6 +26,8 @@ public class ClassParser {
     }
 
     private static final Logger logger = LoggerFactory.getLogger(ClassParser.class);
+    private static final Map<Class<?>, OWL2Datatype> owlDatatypeMap = buildClassMap();
+
 
     private ClassParser() {
     }
@@ -114,6 +110,40 @@ public class ClassParser {
         return Optional.empty();
     }
 
+//    public static Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz) {
+//
+//            List<Field> classFields = new ArrayList<>();
+//            Arrays.stream(clazz.getDeclaredFields())
+//                    .forEach(field -> {
+//
+//                    });
+//    }
+
+    private static boolean filterDataPropertyField(Field objectMember) {
+//        Check first to ignore the field
+        return (!objectMember.isAnnotationPresent(Ignore.class)
+//                Only access it if it's public
+                & Modifier.isPublic(objectMember.getModifiers())
+                & (
+                objectMember.isAnnotationPresent(DataProperty.class)
+                        | objectMember.isAnnotationPresent(Spatial.class)
+                        | objectMember.isAnnotationPresent(IndividualIdentifier.class)
+                        | (objectMember.getAnnotations().length == 0)));
+    }
+
+    private static boolean filterDataPropertyMethod(Method objectMember) {
+//        Check first to ignore the field
+        return (!objectMember.isAnnotationPresent(Ignore.class)
+//                Only access it if it's public
+                & Modifier.isPublic(objectMember.getModifiers())
+                & (
+                objectMember.isAnnotationPresent(DataProperty.class)
+                        | objectMember.isAnnotationPresent(Spatial.class)
+                        | objectMember.isAnnotationPresent(IndividualIdentifier.class)
+                        | (objectMember.getAnnotations().length == 0)));
+    }
+
+
     public static Optional<List<OWLDataPropertyAssertionAxiom>> GetDataProperties(Object inputObject) {
         final Class<?> clazz = inputObject.getClass();
         final OWLDataFactory df = OWLManager.getOWLDataFactory();
@@ -121,11 +151,9 @@ public class ClassParser {
 
         final OWLNamedIndividual owlNamedIndividual = GetIndividual(inputObject);
 
+//        Fields:
         for (Field classField : clazz.getDeclaredFields()) {
-            if (classField.isAnnotationPresent(Ignore.class)) {
-            } else if (classField.isAnnotationPresent(ObjectProperty.class)) {
-            } else if (classField.isAnnotationPresent(DefaultTemporalProperty.class) | classField.isAnnotationPresent(StartTemporalProperty.class) | classField.isAnnotationPresent(EndTemporalProperty.class)) {
-            } else if (classField.isAnnotationPresent(DataProperty.class) | classField.isAnnotationPresent(Spatial.class)) {
+            if (filterDataPropertyField(classField)) {
                 if (classField.isAnnotationPresent(DataProperty.class)) {
                     final DataProperty annotation = classField.getAnnotation(DataProperty.class);
                     final IRI iri = IRI.create("trestle:", annotation.name());
@@ -138,7 +166,7 @@ public class ClassParser {
                         logger.debug("Cannot access field {}", classField.getName(), e);
                         continue;
                     }
-                    final OWLLiteral owlLiteral = df.getOWLLiteral(fieldValue, annotation.datatype());
+                    final OWLLiteral owlLiteral = df.getOWLLiteral(fieldValue, getDatatypeFromAnnotation(annotation, classField.getType()));
                     axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, owlLiteral));
                 } else if (classField.isAnnotationPresent(Spatial.class)) {
                     final IRI iri = IRI.create("geosparql:", "asWKT");
@@ -155,19 +183,65 @@ public class ClassParser {
 //                    Since it's a literal, we need to strip out the double quotes.
                     final OWLLiteral wktLiteral = df.getOWLLiteral(fieldValue.replace("\"", ""), wktDatatype);
                     axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, wktLiteral));
+                } else {
+                    final IRI iri = IRI.create("trestle:", classField.getName());
+                    final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
+                    String fieldValue = null;
+                    try {
+                        fieldValue = classField.get(inputObject).toString();
+                    } catch (IllegalAccessException e) {
+                        logger.debug("Cannot access field {}", classField.getName(), e);
+                        continue;
+                    }
+                    axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, fieldValue));
                 }
-            } else {
-                final IRI iri = IRI.create("trestle:", classField.getName());
-                final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
-                String fieldValue = null;
-                try {
-                    fieldValue = classField.get(inputObject).toString();
-                } catch (IllegalAccessException e) {
-                    logger.debug("Cannot access field {}", classField.getName(), e);
-                    continue;
-                }
-                axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, fieldValue));
+            }
+        }
 
+//        Methods
+        for (Method classMethod : clazz.getDeclaredMethods()) {
+            if (filterDataPropertyMethod(classMethod)) {
+                if (classMethod.isAnnotationPresent(DataProperty.class)) {
+                    final DataProperty annotation = classMethod.getAnnotation(DataProperty.class);
+                    final IRI iri = IRI.create("trestle:", annotation.name());
+                    final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
+
+                    final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
+
+                    if (methodValue.isPresent()) {
+                        if (annotation.datatype().toString().equals("")) {
+
+                        }
+                        final OWLLiteral owlLiteral = df.getOWLLiteral(methodValue.get().toString(), getDatatypeFromAnnotation(annotation, classMethod.getReturnType()));
+                        axioms.add(df.getOWLDataPropertyAssertionAxiom(
+                                owlDataProperty,
+                                owlNamedIndividual,
+                                owlLiteral
+                        ));
+                    }
+                } else if (classMethod.isAnnotationPresent(Spatial.class)) {
+                    final IRI iri = IRI.create("geosparql:", "asWKT");
+                    final OWLDataProperty spatialDataProperty = df.getOWLDataProperty(iri);
+                    final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
+
+                    if (methodValue.isPresent()) {
+                        final OWLDatatype wktDatatype = df.getOWLDatatype(IRI.create("http://www.opengis.net/ont/geosparql#", "wktLiteral"));
+//                    Since it's a literal, we need to strip out the double quotes.
+                        final OWLLiteral wktLiteral = df.getOWLLiteral(methodValue.get().toString().replace("\"", ""), wktDatatype);
+                        axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, wktLiteral));
+                    }
+                } else {
+                    final IRI iri = IRI.create("trestle:", classMethod.getName());
+                    final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
+                    final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
+                    if (methodValue.isPresent()) {
+                        final OWLLiteral owlLiteral = df.getOWLLiteral(methodValue.get().toString(), getDatatypeFromJavaClass(classMethod.getReturnType()));
+                        axioms.add(df.getOWLDataPropertyAssertionAxiom(
+                                owlDataProperty,
+                                owlNamedIndividual,
+                                owlLiteral));
+                    }
+                }
             }
         }
 
@@ -178,18 +252,60 @@ public class ClassParser {
         return Optional.of(axioms);
     }
 
+    private static OWL2Datatype getDatatypeFromAnnotation(DataProperty annotation, Class<?> objectClass) {
+        if (annotation.datatype().toString().equals("")) {
+            return getDatatypeFromJavaClass(objectClass);
+//            if (owl2Datatype == null) {
+//                throw new RuntimeException(String.format("Unsupported Java type %s", objectClass));
+//            }
+//            return owl2Datatype;
+        } else {
+            return annotation.datatype();
+        }
+    }
 
+    private static @NotNull OWL2Datatype getDatatypeFromJavaClass(Class<?> javaTypeClass) {
+        final OWL2Datatype owl2Datatype = owlDatatypeMap.get(javaTypeClass);
+        if (owl2Datatype == null) {
+            throw new RuntimeException(String.format("Unsupported Java type %s", javaTypeClass));
+        }
+        return owl2Datatype;
+    }
+
+    private static Map<Class<?>, OWL2Datatype> buildClassMap() {
+        Map<Class<?>, OWL2Datatype> types = new HashMap<>();
+        types.put(Integer.TYPE, OWL2Datatype.XSD_INTEGER);
+        types.put(int.class, OWL2Datatype.XSD_INTEGER);
+        types.put(Double.TYPE, OWL2Datatype.XSD_DOUBLE);
+        types.put(double.class, OWL2Datatype.XSD_DOUBLE);
+        types.put(Float.TYPE, OWL2Datatype.XSD_FLOAT);
+        types.put(float.class, OWL2Datatype.XSD_FLOAT);
+        types.put(Boolean.TYPE, OWL2Datatype.XSD_BOOLEAN);
+        types.put(boolean.class, OWL2Datatype.XSD_BOOLEAN);
+        types.put(Long.TYPE, OWL2Datatype.XSD_LONG);
+        types.put(long.class, OWL2Datatype.XSD_LONG);
+        types.put(String.class, OWL2Datatype.XSD_STRING);
+        types.put(LocalDateTime.class, OWL2Datatype.XSD_DATE_TIME);
+
+        return types;
+    }
+
+
+    @SuppressWarnings("UnnecessaryUnboxing")
     static Optional<Object> accessMethodValue(Method classMethod, Object inputObject) {
         @Nullable Object castReturn = null;
         try {
-            final Class<?> returnType = classMethod.getReturnType();
-            final Object invokedObject = classMethod.invoke(inputObject);
+            final Class<?> returnType = parsePrimitiveClass(classMethod.getReturnType());
+            final Object invokedObject;
+            invokedObject = classMethod.invoke(inputObject);
             logger.debug("Method {} has return type {}", classMethod.getName(), returnType);
             castReturn = returnType.cast(invokedObject);
         } catch (IllegalAccessException e) {
             logger.debug("Cannot access method {}", classMethod.getName(), e);
         } catch (InvocationTargetException e) {
             logger.error("Invocation failed on method {}", classMethod.getName(), e);
+        } catch (ClassCastException e) {
+            logger.error("Cannot cast method", e);
         }
 
         if (castReturn == null) {
@@ -197,5 +313,26 @@ public class ClassParser {
         }
 
         return Optional.of(castReturn);
+    }
+
+    private static Class<?> parsePrimitiveClass(Class<?> returnClass) {
+        if (returnClass.isPrimitive()) {
+            logger.debug("Converting primitive type {} to object", returnClass.getTypeName());
+            switch (returnClass.getTypeName()) {
+                case "int": {
+                    return Integer.class;
+                }
+
+                case "double": {
+                    return Double.class;
+                }
+
+                default: {
+                    throw new RuntimeException(String.format("Unsupported cast of %s to primitive type", returnClass.getTypeName()));
+                }
+            }
+        }
+
+        return returnClass;
     }
 }

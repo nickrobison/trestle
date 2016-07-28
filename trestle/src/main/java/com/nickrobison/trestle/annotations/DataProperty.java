@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  * Created by nrobison on 6/27/16.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
+@Target({ElementType.FIELD, ElementType.METHOD})
 public @interface DataProperty {
 
     String name() default "";

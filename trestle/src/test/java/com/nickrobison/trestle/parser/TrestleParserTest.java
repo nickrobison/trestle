@@ -3,7 +3,6 @@ package com.nickrobison.trestle.parser;
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
-import com.nickrobison.trestle.parser.ClassParser;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
@@ -30,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class TrestleParserTest {
 
     private GAULTestClass gaulTestClass;
-    private MoreGAULTests moreGAULTests;
+    private ExpandedGAULTests expandedGAULClass;
     private OWLDataFactory df;
     private TemporalObject temporal;
     private TemporalObject temporalPoint;
@@ -39,7 +38,7 @@ public class TrestleParserTest {
     @BeforeEach
     public void Setup() {
         gaulTestClass = new GAULTestClass(1234, "gaulTestClass");
-        moreGAULTests = new MoreGAULTests();
+        expandedGAULClass = new ExpandedGAULTests();
         testMethod = new GAULMethodTest();
         df = OWLManager.getOWLDataFactory();
         LocalDateTime dt = LocalDateTime.of(1989, 3, 26, 0, 0);
@@ -81,16 +80,16 @@ public class TrestleParserTest {
 
 //        Test the new gaul test
         //        Test the named individual
-        owlNamedIndividual = ClassParser.GetIndividual(moreGAULTests);
+        owlNamedIndividual = ClassParser.GetIndividual(expandedGAULClass);
         gaul_test = df.getOWLNamedIndividual(IRI.create("trestle:", "test_region"));
         assertEquals(gaul_test, owlNamedIndividual, "Wrong named individual");
 
-        owlDataPropertyAssertionAxioms = ClassParser.GetDataProperties(moreGAULTests);
+        owlDataPropertyAssertionAxioms = ClassParser.GetDataProperties(expandedGAULClass);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have properties");
-        assertEquals(4, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of properties");
+        assertEquals(3, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of properties");
 
 //        Test the temporal
-        Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(moreGAULTests);
+        Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(expandedGAULClass);
         assertTrue(temporalObjects.isPresent(), "Should have objects");
         assertEquals(4, temporalObjects.get().size(), "Wrong number of temporal objects");
 //        Check for the same type and scope for interval
@@ -120,6 +119,12 @@ public class TrestleParserTest {
         assertEquals(gaul_test, owlNamedIndividual, "Wrong named individual");
 
 //        Data properties
+        owlDataPropertyAssertionAxioms = ClassParser.GetDataProperties(testMethod);
+        assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have method properties");
+        assertEquals(6, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of data properties");
+        assertEquals(OWL2Datatype.XSD_INTEGER, owlDataPropertyAssertionAxioms.get().get(5).getObject().getDatatype().getBuiltInDatatype(), "Should have integer datatype");
+        assertEquals(testMethod.getAdm0_code(), owlDataPropertyAssertionAxioms.get().get(5).getObject().parseInteger(), "Invalid ADM0_Code");
+        assertEquals(testMethod.test_name, owlDataPropertyAssertionAxioms.get().get(2).getObject().getLiteral(), "Invalid Spatial");
 
 //        Temporal
         temporalObjects = TemporalParser.GetTemporalObjects(testMethod);
@@ -133,7 +138,7 @@ public class TrestleParserTest {
     }
 
     @OWLClassName(className = "GAUL_Test")
-    protected class MoreGAULTests {
+    protected class ExpandedGAULTests {
 
         public int adm0_code;
         @IndividualIdentifier
@@ -152,7 +157,7 @@ public class TrestleParserTest {
         public LocalDateTime testend;
         @StartTemporalProperty(type = TemporalType.POINT)
         public LocalDateTime testat;
-        public MoreGAULTests() {
+        public ExpandedGAULTests() {
             this.adm0_code = 4326;
             this.test_name = "new_test";
             this.adm0_name = "test region";

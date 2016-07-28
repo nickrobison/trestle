@@ -9,6 +9,6 @@ import java.lang.annotation.Target;
  * Created by nrobison on 7/1/16.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
+@Target({ElementType.FIELD, ElementType.METHOD})
 public @interface Spatial {
 }
