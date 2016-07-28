@@ -9,6 +9,7 @@ import com.hp.hpl.jena.tdb.TDBFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.query.spatial.EntityDefinition;
 import org.apache.jena.query.spatial.SpatialDatasetFactory;
+import org.apache.jena.query.spatial.SpatialQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.semanticweb.owlapi.model.*;
@@ -64,7 +65,8 @@ public class LocalOntology extends JenaOntology {
             indexDirectory = FSDirectory.open(new File(DATA_DIRECTORY + "/lucene"));
 //            Not sure if these entity and geo fields are correct, but oh well.
             EntityDefinition ed = new EntityDefinition("uri", "geo");
-            ed.setSpatialContextFactory("com.spatial4j.core.context.jts.JtsSpatialContextFactory");
+//            ed.setSpatialContextFactory("com.spatial4j.core.context.jts.JtsSpatialContextFactory");
+            ed.setSpatialContextFactory(SpatialQuery.JTS_SPATIAL_CONTEXT_FACTORY_CLASS);
 //            Create a spatial dataset that combines the TDB dataset + the spatial index
             spatialDataset = SpatialDatasetFactory.createLucene(ds, indexDirectory, ed);
             logger.debug("Lucene index is up and running");
@@ -121,7 +123,6 @@ public class LocalOntology extends JenaOntology {
         this.openTransaction(false);
         final Query query = QueryFactory.create(queryString);
 
-//        final QueryExecution qExec = SparqlDLExecutionFactory.create(query, this.model);
         final QueryExecution qExec = QueryExecutionFactory.create(query, luceneDataset);
         final ResultSet resultSet = qExec.execSelect();
         ResultSetFormatter.out(System.out, resultSet, query);

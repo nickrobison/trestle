@@ -98,39 +98,39 @@ public class OracleOntologyGAULoader {
         ontology.associateOWLClass(owlSubClassOfAxiom);
 
         for (GAULTestClass gaul : gaulObjects) {
-            datasetClass = ClassParser.GetObjectClass(gaul);
-            final OWLNamedIndividual gaulIndividual = ClassParser.GetIndividual(gaul);
-            final OWLClassAssertionAxiom testClass = df.getOWLClassAssertionAxiom(datasetClass, gaulIndividual);
-            ontology.createIndividual(testClass);
-
-
-            final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(gaul);
-            for (TemporalObject temporal : temporalObjects.orElseThrow(() -> new RuntimeException("Missing temporals"))) {
-
-//                Write the temporal
-                final OWLNamedIndividual temporalIndividual = df.getOWLNamedIndividual(IRI.create("trestle:", temporal.getID()));
-                final OWLClassAssertionAxiom temporalAssertion = df.getOWLClassAssertionAxiom(temporalClass, temporalIndividual);
-                ontology.createIndividual(temporalAssertion);
-
-//                Set the object properties to point back to the individual
-                final OWLObjectPropertyAssertionAxiom temporalPropertyAssertion = df.getOWLObjectPropertyAssertionAxiom(temporal_of, temporalIndividual, gaulIndividual);
-                ontology.writeIndividualObjectProperty(temporalPropertyAssertion);
-
-//                Write the data properties. I know these are closed intervals
-                final OWLLiteral fromLiteral = df.getOWLLiteral(temporal.asInterval().getFromTime().toString(), OWL2Datatype.XSD_DATE_TIME);
-                final OWLLiteral toLiteral = df.getOWLLiteral(temporal.asInterval().getToTime().get().toString(), OWL2Datatype.XSD_DATE_TIME);
-                final OWLDataPropertyAssertionAxiom fromAssertionAxiom = df.getOWLDataPropertyAssertionAxiom(valid_from, temporalIndividual, fromLiteral);
-                final OWLDataPropertyAssertionAxiom toAssertionAxiom = df.getOWLDataPropertyAssertionAxiom(valid_to, temporalIndividual, toLiteral);
-                ontology.writeIndividualDataProperty(fromAssertionAxiom);
-                ontology.writeIndividualDataProperty(toAssertionAxiom);
-            }
-
-            //        Write the data properties
-            final Optional<List<OWLDataPropertyAssertionAxiom>> gaulDataProperties = ClassParser.GetDataProperties(gaul);
-            for (OWLDataPropertyAssertionAxiom dataAxiom : gaulDataProperties.orElseThrow(() -> new RuntimeException("Missing data properties"))) {
-
-                ontology.writeIndividualDataProperty(dataAxiom);
-            }
+//            datasetClass = ClassParser.GetObjectClass(gaul);
+//            final OWLNamedIndividual gaulIndividual = ClassParser.GetIndividual(gaul);
+//            final OWLClassAssertionAxiom testClass = df.getOWLClassAssertionAxiom(datasetClass, gaulIndividual);
+//            ontology.createIndividual(testClass);
+//
+//
+//            final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(gaul);
+//            for (TemporalObject temporal : temporalObjects.orElseThrow(() -> new RuntimeException("Missing temporals"))) {
+//
+////                Write the temporal
+//                final OWLNamedIndividual temporalIndividual = df.getOWLNamedIndividual(IRI.create("trestle:", temporal.getID()));
+//                final OWLClassAssertionAxiom temporalAssertion = df.getOWLClassAssertionAxiom(temporalClass, temporalIndividual);
+//                ontology.createIndividual(temporalAssertion);
+//
+////                Set the object properties to point back to the individual
+//                final OWLObjectPropertyAssertionAxiom temporalPropertyAssertion = df.getOWLObjectPropertyAssertionAxiom(temporal_of, temporalIndividual, gaulIndividual);
+//                ontology.writeIndividualObjectProperty(temporalPropertyAssertion);
+//
+////                Write the data properties. I know these are closed intervals
+//                final OWLLiteral fromLiteral = df.getOWLLiteral(temporal.asInterval().getFromTime().toString(), OWL2Datatype.XSD_DATE_TIME);
+//                final OWLLiteral toLiteral = df.getOWLLiteral(temporal.asInterval().getToTime().get().toString(), OWL2Datatype.XSD_DATE_TIME);
+//                final OWLDataPropertyAssertionAxiom fromAssertionAxiom = df.getOWLDataPropertyAssertionAxiom(valid_from, temporalIndividual, fromLiteral);
+//                final OWLDataPropertyAssertionAxiom toAssertionAxiom = df.getOWLDataPropertyAssertionAxiom(valid_to, temporalIndividual, toLiteral);
+//                ontology.writeIndividualDataProperty(fromAssertionAxiom);
+//                ontology.writeIndividualDataProperty(toAssertionAxiom);
+//            }
+//
+//            //        Write the data properties
+//            final Optional<List<OWLDataPropertyAssertionAxiom>> gaulDataProperties = ClassParser.GetDataProperties(gaul);
+//            for (OWLDataPropertyAssertionAxiom dataAxiom : gaulDataProperties.orElseThrow(() -> new RuntimeException("Missing data properties"))) {
+//
+//                ontology.writeIndividualDataProperty(dataAxiom);
+//            }
         }
         ontology.commitTransaction();
         ontology.runInference();
