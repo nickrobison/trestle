@@ -75,7 +75,7 @@ public class OracleOntologyGAULoader {
                         "spatialUser",
                         "spatial1")
                 .fromIRI(iri)
-                .name("trestle")
+                .name("trestle_gaul_test")
                 .build().get();
 
         ontology.initializeOntology();

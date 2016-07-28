@@ -39,7 +39,7 @@ public class OracleTrestleTest {
                         "spatialUser",
                         "spatial1")
                 .fromIRI(iri)
-                .name("trestle")
+                .name("trestle_test")
                 .build().get();
 
         ontology.initializeOntology();
