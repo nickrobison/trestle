@@ -1,4 +1,4 @@
-package com.nickrobison.trestle;
+package com.nickrobison.trestle.ontology;
 
 import com.hp.hpl.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Created by nrobison on 7/22/16.
  */
 @SuppressWarnings({"Duplicates", "initialization"})
-public class LocalTrestleTest {
+public class LocalOntologyTest {
 
 
     private LocalOntology ontology;

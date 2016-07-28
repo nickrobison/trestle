@@ -1,4 +1,4 @@
-package com.nickrobison.trestle;
+package com.nickrobison.trestle.ontology;
 
 import com.hp.hpl.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;

@@ -1,9 +1,11 @@
-package com.nickrobison.trestle;
+package com.nickrobison.trestle.ontology;
 
-import com.hp.hpl.jena.query.ResultSet;
+import com.esri.core.geometry.Geometry;
+import com.esri.core.geometry.GeometryEngine;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.ontology.LocalOntology;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
-import com.nickrobison.trestle.ontology.SesameOntology;
+import com.nickrobison.trestle.ontology.VirtuosoOntology;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,13 +22,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Created by nrobison on 7/19/16.
+ * Created by nrobison on 7/25/16.
  */
-@SuppressWarnings({"Duplicates", "OptionalGetWithoutIsPresent", "initialization"})
-public class SesameOntologyTest {
+@SuppressWarnings({"Duplicates", "initialization"})
+public class VirtuosoOntologyTest {
 
 
-    private SesameOntology ontology;
+
+    private VirtuosoOntology ontology;
     private OWLDataFactory df;
 
     @BeforeEach
@@ -34,12 +37,9 @@ public class SesameOntologyTest {
         final IRI iri = IRI.create("file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl");
         df = OWLManager.getOWLDataFactory();
 
-        ontology = (SesameOntology) new OntologyBuilder()
-                .withDBConnection(
-                        "jdbc:postgresql://localhost:5432/trestle",
-                        "nrobison",
-                        "")
+        ontology = (VirtuosoOntology) new OntologyBuilder()
                 .fromIRI(iri)
+                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
                 .name("trestle")
                 .build().get();
 
@@ -83,7 +83,8 @@ public class SesameOntologyTest {
         final OWLDataProperty asWKT = df.getOWLDataProperty(IRI.create("geosparql:", "asWKT"));
         individualProperty = ontology.getIndividualProperty(burundi_0, asWKT);
         final OWLLiteral wktLiteral = individualProperty.get().stream().findFirst().get();
-        assertEquals("POINT (30 10)", wktLiteral.getLiteral(), "WKT is wrong");
+//        Virtuoso returns wkts as doubles and without a comma
+        assertEquals("POINT(30.0 10.0)", wktLiteral.getLiteral(), "WKT is wrong");
 
 
 //        Test object properties
@@ -101,9 +102,10 @@ public class SesameOntologyTest {
         assertFalse(individualObjectProperty.isPresent(), "Should have no properties");
 
 //        Try for inferred property
-//        FIXME(nrobison): Inferencer doesn't work, at all.
+//        FIXME(nrobison): Inference is totally broken.
 //        final OWLNamedIndividual test_muni2 = df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni2"));
 //        individualObjectProperty = ontology.getIndividualObjectProperty(test_muni2, has_temporal);
+//        assertTrue(individualObjectProperty.isPresent(), "Should have inferred property");
 //        assertEquals("test_muni1_valid", individualObjectProperty.get().stream().findFirst().get().getIRI().getRemainder().get(), "Should be test_muni_1_valid");
 
     }
