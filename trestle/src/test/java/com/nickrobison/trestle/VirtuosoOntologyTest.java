@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Created by nrobison on 7/25/16.
  */
 @SuppressWarnings({"Duplicates", "initialization"})
-public class VirtuosoTrestleTest {
+public class VirtuosoOntologyTest {
 
 
 

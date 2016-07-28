@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Created by nrobison on 7/19/16.
  */
 @SuppressWarnings({"Duplicates", "OptionalGetWithoutIsPresent", "initialization"})
-public class SesameTrestleTest {
+public class SesameOntologyTest {
 
 
     private SesameOntology ontology;
