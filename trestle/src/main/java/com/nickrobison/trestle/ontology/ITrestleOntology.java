@@ -30,12 +30,26 @@ public interface ITrestleOntology {
     Optional<Set<OWLObjectProperty>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property);
 
     /**
-     * Create an OWLNamedIndividual with RDF.type property
+     * Store an OWLNamedIndividual in the ontology from a given classAxiom
      *
-     * @param owlClassAssertionAxiom - Class axiom to store in the model with RDF.type relation
+     * @param owlClassAssertionAxiom - Class axiom to store in the ontology with RDF.type relation
      */
 //    FIXME(nrobison): This should have the ability to be locked to avoid polluting the ontology
     void createIndividual(OWLClassAssertionAxiom owlClassAssertionAxiom);
+
+    /**
+     * Store an OWLNamedIndividual in the ontology associated with a given OWLClass.
+     * @param individual - OWLNamedIndividual to store in ontology
+     * @param owlClass - OWLClass to associate individual with
+     */
+    void createIndividual(OWLNamedIndividual individual, OWLClass owlClass);
+
+    /**
+     * Store an OWLNamedIndividual in the ontology from a given pair of IRIs
+     * @param individualIRI - IRI of OWLIndividual
+     * @param classIRI - IRI of OWLClass
+     */
+    void createIndividual(IRI individualIRI, IRI classIRI);
 
     /**
      * Create a subclass association from express sub/super pair
@@ -60,7 +74,27 @@ public interface ITrestleOntology {
     void createProperty(OWLProperty property);
 
     /**
-     * Write and individual data property axiom to the model.
+     * Write an individual data property axiom to the ontology from individual IRIs
+     * @param individualIRI - IRI of OWLNamedIndividual to associate property
+     * @param dataPropertyIRI - IRI of OWLDataProperty to associate with individual
+     * @param owlLiteralString - String of raw data property value
+     * @param owlLiteralIRI - IRI of OWLDatatype of raw property value
+     * @throws MissingOntologyEntity
+     */
+    void writeIndividualDataProperty(IRI individualIRI, IRI dataPropertyIRI, String owlLiteralString, IRI owlLiteralIRI) throws MissingOntologyEntity;
+
+    /**
+     * Write an individual data property axiom to the ontology from OWLExpressions
+     *
+     * @param individual - OWLNameIndividual to associate property
+     * @param property   - OWLDataProperty to associate with individual
+     * @param value      - OWLLiteral value of data property
+     * @throws MissingOntologyEntity
+     */
+    void writeIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property, OWLLiteral value) throws MissingOntologyEntity;
+
+    /**
+     * Write an individual data property axiom to the model.
      * Creates the data property if it doesn't exist
      *
      * @param dataProperty - Data property axiom to store in the more
@@ -68,6 +102,19 @@ public interface ITrestleOntology {
      */
     void writeIndividualDataProperty(OWLDataPropertyAssertionAxiom dataProperty) throws MissingOntologyEntity;
 
+    /**
+     * Create object association between two OWLNamedIndividuals using base IRIs
+     * @param owlSubject - IRI of OWLNamedIndividual subject
+     * @param owlProperty - IRI of OWLObjectProperty
+     * @param owlObject - IRI of OWLNamedIndividual object
+     */
+    void writeIndividualObjectProperty(IRI owlSubject, IRI owlProperty, IRI owlObject);
+
+    /**
+     * Create object association between two OWLNamedIndividuals
+     * @param property - OWLObjectPropertyAssertionAxiom defining relationship between the two objects
+     * @throws MissingOntologyEntity
+     */
     void writeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property) throws MissingOntologyEntity;
 
     /**
@@ -85,12 +132,6 @@ public interface ITrestleOntology {
      * @throws OWLOntologyStorageException
      */
     void writeOntology(IRI path, boolean validate) throws OWLOntologyStorageException;
-
-    /**
-     * Apply change to OWL Ontology
-     * @param axiom - OWLAxiomChange to apply
-     */
-    void applyChange(OWLAxiomChange... axiom);
 
     /**
      * Close all the open resource handles. Disposes of the reasoner and disconnects from any databases.
@@ -127,10 +168,10 @@ public interface ITrestleOntology {
      * Get all the instances of an OWL Class
      *
      * @param owlClass - OWLClass to retrieve members of
-     * @param direct   - Return only the direct class members?
+     * @param inferred   - Return inferred class members?
      * @return - Set of OWLNamedIndividual(s) either directly related or inferred members of given class
      */
-    Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean direct);
+    Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean inferred);
 
     /**
      * Get an OWLNamedIndividual if it exists in the ontology

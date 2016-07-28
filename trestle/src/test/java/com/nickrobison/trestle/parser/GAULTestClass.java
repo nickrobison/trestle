@@ -42,7 +42,7 @@ public class GAULTestClass {
         this.wkt = "test_wkt";
     }
 
-    GAULTestClass(int code, String name, LocalDateTime startdate, String geom) {
+    public GAULTestClass(int code, String name, LocalDateTime startdate, String geom) {
         this.test_name = name;
         this.adm0_code = code;
         this.adm0_name = name;

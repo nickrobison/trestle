@@ -11,6 +11,7 @@ import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -35,10 +36,14 @@ public class ClassParser {
     private ClassParser() {
     }
 
-    static OWLClass GetObjectClass(Object inputObject) {
-
+    public static OWLClass GetObjectClass(Object inputObject) {
         //        Get the class name, from the annotation, if possible;
         final Class<?> clazz = inputObject.getClass();
+        return GetObjectClass(clazz);
+    }
+
+    public static OWLClass GetObjectClass(Class<?> clazz) {
+
         final String className;
 //        final OWLClassName declaredAnnotation = clazz.getDeclaredAnnotation(OWLClassName.class);
         if (clazz.isAnnotationPresent(OWLClassName.class)) {
@@ -52,7 +57,7 @@ public class ClassParser {
         return df.getOWLClass(iri);
     }
 
-    static OWLNamedIndividual GetIndividual(Object inputObject) {
+    public static OWLNamedIndividual GetIndividual(Object inputObject) {
 
         final Class<?> clazz = inputObject.getClass();
         String identifier = UUID.randomUUID().toString();
@@ -109,7 +114,7 @@ public class ClassParser {
         return Optional.empty();
     }
 
-    static Optional<List<OWLDataPropertyAssertionAxiom>> GetDataProperties(Object inputObject) {
+    public static Optional<List<OWLDataPropertyAssertionAxiom>> GetDataProperties(Object inputObject) {
         final Class<?> clazz = inputObject.getClass();
         final OWLDataFactory df = OWLManager.getOWLDataFactory();
         final List<OWLDataPropertyAssertionAxiom> axioms = new ArrayList<>();

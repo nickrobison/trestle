@@ -23,11 +23,11 @@ import java.util.Optional;
 /**
  * Created by nrobison on 7/22/16.
  */
-class TemporalParser {
+public class TemporalParser {
 
     private static final Logger logger = LoggerFactory.getLogger(TemporalParser.class);
 
-    static Optional<List<TemporalObject>> GetTemporalObjects(Object inputObject) {
+    public static Optional<List<TemporalObject>> GetTemporalObjects(Object inputObject) {
 
         final Class<?> clazz = inputObject.getClass();
         List<TemporalObject> temporalObjects = new ArrayList<>();

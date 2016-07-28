@@ -7,8 +7,8 @@ import com.hp.hpl.jena.query.*;
 import com.hp.hpl.jena.rdf.model.*;
 import com.hp.hpl.jena.vocabulary.OWL;
 import com.hp.hpl.jena.vocabulary.RDF;
+import com.hp.hpl.jena.vocabulary.RDFS;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
-import org.apache.jena.atlas.lib.StrUtils;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
@@ -87,6 +87,44 @@ public abstract class JenaOntology implements ITrestleOntology {
     }
 
     @Override
+    public void createIndividual(OWLNamedIndividual individual, OWLClass owlClass) {
+        this.createIndividual(df.getOWLClassAssertionAxiom(owlClass, individual));
+    }
+
+    @Override
+    public void createIndividual(IRI individualIRI, IRI classIRI) {
+        this.createIndividual(
+                df.getOWLClassAssertionAxiom(
+                        df.getOWLClass(classIRI),
+                        df.getOWLNamedIndividual(individualIRI)));
+    }
+
+    @Override
+    public void associateOWLClass(OWLClass subClass, OWLClass superClass) {
+        associateOWLClass(df.getOWLSubClassOfAxiom(subClass, superClass));
+    }
+
+    @Override
+    public void associateOWLClass(OWLSubClassOfAxiom subClassOfAxiom) {
+
+        final Resource modelSubclass;
+        if (containsResource(subClassOfAxiom.getSubClass().asOWLClass())) {
+            modelSubclass = model.getResource(getFullIRIString(subClassOfAxiom.getSubClass().asOWLClass()));
+        } else {
+            modelSubclass = model.createResource(getFullIRIString(subClassOfAxiom.getSubClass().asOWLClass()));
+        }
+
+        final Resource superClassResource;
+        if (containsResource(subClassOfAxiom.getSuperClass().asOWLClass())) {
+            superClassResource = model.getResource(getFullIRIString(subClassOfAxiom.getSuperClass().asOWLClass()));
+        } else {
+            superClassResource = model.createResource(getFullIRIString(subClassOfAxiom.getSuperClass().asOWLClass()));
+        }
+
+        modelSubclass.addProperty(RDFS.subClassOf, superClassResource);
+    }
+
+    @Override
     public void createProperty(OWLProperty property) {
         this.openTransaction(true);
         final Resource modelResource = model.createResource(getFullIRIString(property));
@@ -96,6 +134,23 @@ public abstract class JenaOntology implements ITrestleOntology {
             modelResource.addProperty(RDF.type, OWL.ObjectProperty);
         }
         this.commitTransaction();
+    }
+
+    @Override
+    public void writeIndividualDataProperty(IRI individualIRI, IRI dataPropertyIRI, String owlLiteralString, IRI owlLiteralIRI) throws MissingOntologyEntity {
+
+        writeIndividualDataProperty(
+                df.getOWLDataPropertyAssertionAxiom(
+                        df.getOWLDataProperty(dataPropertyIRI),
+                        df.getOWLNamedIndividual(individualIRI),
+                        df.getOWLLiteral(
+                                owlLiteralString,
+                                df.getOWLDatatype(owlLiteralIRI))));
+    }
+
+    @Override
+    public void writeIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property, OWLLiteral value) throws MissingOntologyEntity {
+        writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(property, individual, value));
     }
 
     @Override
@@ -121,6 +176,15 @@ public abstract class JenaOntology implements ITrestleOntology {
             logger.error("Cannot set property {} on Individual {}", dataProperty.getProperty().asOWLDataProperty().getIRI(), dataProperty.getSubject().asOWLNamedIndividual().getIRI());
         }
         this.commitTransaction();
+    }
+
+    @Override
+    public void writeIndividualObjectProperty(IRI owlSubject, IRI owlProperty, IRI owlObject) {
+
+        df.getOWLObjectPropertyAssertionAxiom(
+                df.getOWLObjectProperty(owlProperty),
+                        df.getOWLNamedIndividual(owlSubject),
+                        df.getOWLNamedIndividual(owlObject));
     }
 
     @Override
@@ -165,14 +229,6 @@ public abstract class JenaOntology implements ITrestleOntology {
 
     }
 
-    public void applyChange(OWLAxiomChange... axiom) {
-        applyChanges(axiom);
-    }
-
-    private void applyChanges(OWLAxiomChange... axioms) {
-        ontology.getOWLOntologyManager().applyChanges(Arrays.asList(axioms));
-    }
-
     public OWLOntology getUnderlyingOntology() {
         return this.ontology;
     }
@@ -194,7 +250,7 @@ public abstract class JenaOntology implements ITrestleOntology {
     }
 
     //    TODO(nrobison): Implement this
-    public Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean direct) {
+    public Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean inferred) {
         this.openTransaction(false);
         final Resource modelResource = model.getResource(getFullIRIString(owlClass));
         final ResIterator resIterator = model.listResourcesWithProperty(RDF.type, modelResource);
@@ -299,7 +355,6 @@ public abstract class JenaOntology implements ITrestleOntology {
         this.openTransaction(false);
         final Query query = QueryFactory.create(queryString);
 
-//        final QueryExecution qExec = SparqlDLExecutionFactory.create(query, this.model);
         final QueryExecution qExec = QueryExecutionFactory.create(query, this.model);
         final ResultSet resultSet = qExec.execSelect();
         ResultSetFormatter.out(System.out, resultSet, query);
@@ -318,6 +373,7 @@ public abstract class JenaOntology implements ITrestleOntology {
 
     /**
      * Open a transaction and lock it
+     *
      * @param write - Open writable transaction?
      */
     public abstract void openAndLock(boolean write);

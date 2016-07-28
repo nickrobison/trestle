@@ -2,12 +2,8 @@ package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.annotations.OWLClassName;
-import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.TemporalProperty;
 import com.nickrobison.trestle.exceptions.InvalidClassException;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
-import com.nickrobison.trestle.types.TemporalType;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -22,20 +18,20 @@ public class ClassRegister {
     private ClassRegister() {
     }
 
-    public static void RegisterClass(Class clazz) {
+    public static void ValidateClass(Class<?> clazz) {
 
-        final Class<? extends Class> aClass = clazz.getClass();
+//        final Class aClass = clazz.getClass();
 
         //        Check for class name
         try {
-            checkForClassName(aClass);
+            checkForClassName(clazz);
         } catch (InvalidClassException e) {
             throw new RuntimeException(e);
         }
 
 //        Check for individual identifier
         try {
-            checkIndividualIdentifier(aClass);
+            checkIndividualIdentifier(clazz);
         } catch (InvalidClassException e) {
             throw new RuntimeException(e);
         }
@@ -59,36 +55,35 @@ public class ClassRegister {
 
     static void checkIndividualIdentifier(Class aClass) throws InvalidClassException {
 
-            List<Field> identifierFields = new ArrayList<>();
-            List<Method> identifierMethods = new ArrayList<>();
+        List<Field> identifierFields = new ArrayList<>();
+        List<Method> identifierMethods = new ArrayList<>();
 //            Check to see if there are more than one
-            for (final Field field : aClass.getDeclaredFields()) {
-                if (field.isAnnotationPresent(IndividualIdentifier.class)) {
-                    identifierFields.add(field);
-                }
+        for (final Field field : aClass.getDeclaredFields()) {
+            if (field.isAnnotationPresent(IndividualIdentifier.class)) {
+                identifierFields.add(field);
             }
+        }
 
-            for (final Method method : aClass.getDeclaredMethods()) {
-                if (method.isAnnotationPresent(IndividualIdentifier.class)) {
-                    identifierMethods.add(method);
-                }
+        for (final Method method : aClass.getDeclaredMethods()) {
+            if (method.isAnnotationPresent(IndividualIdentifier.class)) {
+                identifierMethods.add(method);
             }
+        }
 
-            if ((identifierFields.size() + identifierMethods.size()) > 1) {
-                throw new InvalidClassException(IndividualIdentifier.class.toString(), TrestleClassException.State.EXCESS);
-            } else if ((identifierFields.size() + identifierMethods.size()) == 0) {
-                throw new InvalidClassException(IndividualIdentifier.class.toString(), TrestleClassException.State.MISSING);
+        if ((identifierFields.size() + identifierMethods.size()) > 1) {
+            throw new InvalidClassException(IndividualIdentifier.class.toString(), TrestleClassException.State.EXCESS);
+        } else if ((identifierFields.size() + identifierMethods.size()) == 0) {
+            throw new InvalidClassException(IndividualIdentifier.class.toString(), TrestleClassException.State.MISSING);
         }
     }
 
     static void checkForClassName(Class aClass) throws InvalidClassException {
-        if (aClass.isAnnotationPresent(OWLClassName.class)) {
+        if (!aClass.isAnnotationPresent(OWLClassName.class)) {
 //            I don't think I need this check, because a blank className just means take the name of the java class
 //            final OWLClassName className = aClass.getAnnotation(OWLClassName.class);
 //            if (className.className().equals("")) {
 //                throw new InvalidClassException(OWLClassName.class.toString(), TrestleClassException.State.INCOMPLETE, "className")
 //            }
-        } else {
             throw new InvalidClassException(OWLClassName.class.toString(), TrestleClassException.State.MISSING);
         }
     }
