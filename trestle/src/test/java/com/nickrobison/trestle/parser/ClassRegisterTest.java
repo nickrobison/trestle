@@ -2,7 +2,9 @@ package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.annotations.OWLClassName;
+import com.nickrobison.trestle.annotations.TrestleCreator;
 import com.nickrobison.trestle.exceptions.InvalidClassException;
+import com.nickrobison.trestle.exceptions.TrestleClassException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -66,11 +68,39 @@ public class ClassRegisterTest {
         assertEquals(MISSING, invalidClassException.getProblemState(), "Wrong problem state");
     }
 
+    @Test
+    public void testConstructor() {
 
+        try {
+            ClassRegister.checkForConstructor(fClass);
+        } catch (TrestleClassException e) {
+            fail("Should not throw exception");
+        }
+
+        final InvalidClassException invalidClassException = expectThrows(InvalidClassException.class, () -> ClassRegister.checkForConstructor(eClass));
+        assertEquals(EXCESS, invalidClassException.getProblemState(), "Wrong problem state");
+
+        try {
+            ClassRegister.checkForConstructor(xClass);
+        } catch (TrestleClassException e) {
+            fail("Should not throw exception");
+        }
+    }
+
+
+    @SuppressWarnings("UnusedParameters")
     private static class EmptyTest {
         public String thing = "nope";
 
         EmptyTest() {
+        }
+
+        EmptyTest(String test1) {
+            this.thing = test1;
+        }
+
+        EmptyTest(String test1, String test2) {
+            this.thing = test2;
         }
     }
 
@@ -79,23 +109,34 @@ public class ClassRegisterTest {
         @IndividualIdentifier
         public String thing = "hello";
 
+        @TrestleCreator
         FullTest() {
         }
     }
 
     private static class ExtraMembers {
 
+        private final String id1;
+        private final String id2;
+
         ExtraMembers() {
+            this.id1 = "hello";
+            this.id2 = "hello2";
+        }
+
+        ExtraMembers(String id1, String id2) {
+            this.id1 = id1;
+            this.id2 = id2;
         }
 
         @IndividualIdentifier
         public String getID1() {
-            return "hello";
+            return this.id1;
         }
 
         @IndividualIdentifier
         public String getID2() {
-            return "hello2";
+            return this.id2;
         }
 
     }

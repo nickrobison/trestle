@@ -2,9 +2,12 @@ package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.annotations.OWLClassName;
+import com.nickrobison.trestle.annotations.TrestleCreator;
 import com.nickrobison.trestle.exceptions.InvalidClassException;
+import com.nickrobison.trestle.exceptions.MissingConstructorException;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -33,6 +36,13 @@ public class ClassRegister {
         try {
             checkIndividualIdentifier(clazz);
         } catch (InvalidClassException e) {
+            throw new RuntimeException(e);
+        }
+
+//        Check for constructor
+        try {
+            checkForConstructor(clazz);
+        } catch (TrestleClassException e) {
             throw new RuntimeException(e);
         }
 
@@ -85,6 +95,34 @@ public class ClassRegister {
 //                throw new InvalidClassException(OWLClassName.class.toString(), TrestleClassException.State.INCOMPLETE, "className")
 //            }
             throw new InvalidClassException(OWLClassName.class.toString(), TrestleClassException.State.MISSING);
+        }
+    }
+
+    static void checkForConstructor(Class<?> aClass) throws TrestleClassException {
+        final List<Constructor<?>> validConstructors = new ArrayList<>();
+        final Constructor<?>[] declaredConstructors = aClass.getDeclaredConstructors();
+        for (Constructor<?> constructor : declaredConstructors) {
+            if (constructor.isAnnotationPresent(TrestleCreator.class)) {
+                validConstructors.add(constructor);
+            }
+        }
+        if (validConstructors.size() > 1) {
+            throw new InvalidClassException(aClass.getName(), TrestleClassException.State.EXCESS, "constructor");
+        } else if (validConstructors.size() == 1) {
+        } else {
+//            If no constructors are declared as default, make sure there is only no-arg and arg
+            if (declaredConstructors.length > 2) {
+                throw new InvalidClassException(aClass.getName(), TrestleClassException.State.EXCESS, "default constructors");
+            } else {
+//                Make sure we can read the argument names
+                for (Constructor<?> constructor : declaredConstructors) {
+                    if (constructor.getParameters().length > 0) {
+                        if (!constructor.getParameters()[0].isNamePresent()) {
+                            throw new MissingConstructorException("Cannot read parameters names from constructor");
+                        }
+                    }
+                }
+            }
         }
     }
 }
