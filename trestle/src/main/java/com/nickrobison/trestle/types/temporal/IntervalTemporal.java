@@ -17,13 +17,16 @@ public class IntervalTemporal extends TemporalObject {
     private final TemporalScope scope;
     private final LocalDateTime fromTime;
     private final Optional<LocalDateTime> toTime;
+    private final boolean isDefault;
 
     private IntervalTemporal(Builder builder) {
         super(UUID.randomUUID().toString(), builder.relations);
         this.scope = builder.scope;
         this.fromTime = builder.fromTime;
         this.toTime = builder.toTime;
+        this.isDefault = builder.isDefault;
     }
+
     @Override
     public TemporalType getType() {
         return TYPE;
@@ -58,6 +61,8 @@ public class IntervalTemporal extends TemporalObject {
         return !toTime.isPresent();
     }
 
+    public boolean isDefault() { return this.isDefault; }
+
     public LocalDateTime getFromTime() {
         return this.fromTime;
     }
@@ -72,10 +77,16 @@ public class IntervalTemporal extends TemporalObject {
         private LocalDateTime fromTime;
         private Optional<LocalDateTime> toTime = Optional.empty();
         private Optional<Set<OWLNamedIndividual>> relations = Optional.empty();
+        private boolean isDefault = false;
 
         Builder(TemporalScope scope, LocalDateTime from) {
             this.scope = scope;
             this.fromTime = from;
+        }
+
+        public Builder isDefault() {
+            this.isDefault = true;
+            return this;
         }
 
         public Builder to(LocalDateTime to) {
