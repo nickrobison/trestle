@@ -15,11 +15,13 @@ public class PointTemporal extends TemporalObject {
     private static final TemporalType TYPE = TemporalType.POINT;
     private final TemporalScope scope;
     private final LocalDateTime atTime;
+    private final Optional<String> parameterName;
 
     private PointTemporal(Builder builder) {
         super(UUID.randomUUID().toString(), builder.relations);
         this.scope = builder.scope;
         this.atTime = builder.atTime;
+        this.parameterName = builder.parameterName;
     }
     @Override
     public TemporalType getType() {
@@ -55,20 +57,31 @@ public class PointTemporal extends TemporalObject {
         return this.atTime;
     }
 
+    public String getParameterName() {
+        return this.parameterName.orElse("pointTime");
+    }
+
     public static class Builder {
 
         private TemporalScope scope;
         private LocalDateTime atTime;
         private Optional<Set<OWLNamedIndividual>> relations = Optional.empty();
+        private Optional<String> parameterName = Optional.empty();
 
         Builder(TemporalScope scope, LocalDateTime at) {
             this.scope = scope;
             this.atTime = at;
         }
 
+        public Builder withParameterName(String name) {
+            this.parameterName = Optional.of(name);
+            return this;
+        }
+
         public PointTemporal withRelations(OWLNamedIndividual... relations) {
             this.relations = Optional.of(new HashSet<>(Arrays.asList(relations)));
             return new PointTemporal(this);
         }
+
     }
 }

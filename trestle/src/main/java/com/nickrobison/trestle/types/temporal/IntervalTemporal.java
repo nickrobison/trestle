@@ -2,6 +2,7 @@ package com.nickrobison.trestle.types.temporal;
 
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
@@ -11,6 +12,7 @@ import java.util.*;
 /**
  * Created by nrobison on 6/30/16.
  */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class IntervalTemporal extends TemporalObject {
 
     private static final TemporalType TYPE = TemporalType.INTERVAL;
@@ -18,6 +20,8 @@ public class IntervalTemporal extends TemporalObject {
     private final LocalDateTime fromTime;
     private final Optional<LocalDateTime> toTime;
     private final boolean isDefault;
+    private final Optional<String> startName;
+    private final Optional<String> endName;
 
     private IntervalTemporal(Builder builder) {
         super(UUID.randomUUID().toString(), builder.relations);
@@ -25,6 +29,8 @@ public class IntervalTemporal extends TemporalObject {
         this.fromTime = builder.fromTime;
         this.toTime = builder.toTime;
         this.isDefault = builder.isDefault;
+        this.startName = builder.startName;
+        this.endName = builder.endName;
     }
 
     @Override
@@ -71,12 +77,23 @@ public class IntervalTemporal extends TemporalObject {
         return this.toTime;
     }
 
+    public String getStartName() {
+        return this.startName.orElse("intervalStart");
+    }
+
+    public String getEndName() {
+        return this.endName.orElse("intervalEnd");
+    }
+
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public static class Builder {
 
         private TemporalScope scope;
         private LocalDateTime fromTime;
         private Optional<LocalDateTime> toTime = Optional.empty();
         private Optional<Set<OWLNamedIndividual>> relations = Optional.empty();
+        private Optional<String> startName = Optional.empty();
+        private Optional<String> endName = Optional.empty();
         private boolean isDefault = false;
 
         Builder(TemporalScope scope, LocalDateTime from) {
@@ -91,6 +108,14 @@ public class IntervalTemporal extends TemporalObject {
 
         public Builder to(LocalDateTime to) {
             this.toTime = Optional.of(to);
+            return this;
+        }
+
+        public Builder withParameterNames(String startName, @Nullable String endName) {
+            this.startName = Optional.of(startName);
+            if (endName != null) {
+                this.endName = Optional.of(endName);
+            }
             return this;
         }
 

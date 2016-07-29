@@ -3,6 +3,7 @@ package com.nickrobison.trestle.parser;
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
+import com.nickrobison.trestle.exceptions.MissingConstructorException;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
@@ -49,7 +50,7 @@ public class TrestleParserTest {
     }
 
     @Test
-    public void TestGAULParser() {
+    public void TestObjectParsing() {
 
 //        Test the class
         final OWLClass owlClass = ClassParser.GetObjectClass(gaulTestClass);
@@ -124,9 +125,9 @@ public class TrestleParserTest {
         owlDataPropertyAssertionAxioms = ClassParser.GetDataProperties(testMethod);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have method properties");
         assertEquals(5, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of data properties");
-        assertEquals(OWL2Datatype.XSD_INTEGER, owlDataPropertyAssertionAxioms.get().get(5).getObject().getDatatype().getBuiltInDatatype(), "Should have integer datatype");
-        assertEquals(testMethod.getAdm0_code(), owlDataPropertyAssertionAxioms.get().get(5).getObject().parseInteger(), "Invalid ADM0_Code");
-        assertEquals(testMethod.test_name, owlDataPropertyAssertionAxioms.get().get(2).getObject().getLiteral(), "Invalid Spatial");
+        assertEquals(OWL2Datatype.XSD_INT, owlDataPropertyAssertionAxioms.get().get(3).getObject().getDatatype().getBuiltInDatatype(), "Should have integer datatype");
+        assertEquals(testMethod.getAdm0_code(), owlDataPropertyAssertionAxioms.get().get(3).getObject().parseInteger(), "Invalid ADM0_Code");
+        assertEquals(testMethod.test_name, owlDataPropertyAssertionAxioms.get().get(1).getObject().getLiteral(), "Invalid Spatial");
 
 //        Temporal
         temporalObjects = TemporalParser.GetTemporalObjects(testMethod);
@@ -140,19 +141,19 @@ public class TrestleParserTest {
     }
 
     @Test
-    public void testConstructor() {
+    public void testObjectConstructor() throws MissingConstructorException {
         List<OWLDataPropertyAssertionAxiom> testProperties = new ArrayList<>();
         List<TemporalObject> testTemporals = new ArrayList<>();
         final OWLNamedIndividual owlNamedIndividual = df.getOWLNamedIndividual(IRI.create("trestle:", "string_from_method"));
 //        Build the data objects
         final OWLDataPropertyAssertionAxiom admcode = df.getOWLDataPropertyAssertionAxiom(
-                df.getOWLDataProperty(IRI.create("trestle", "adm0_code")),
+                df.getOWLDataProperty(IRI.create("trestle:", "adm0_code")),
                 owlNamedIndividual,
                 df.getOWLLiteral(4326));
         testProperties.add(admcode);
 
         final OWLDataPropertyAssertionAxiom adm0Name = df.getOWLDataPropertyAssertionAxiom(
-                df.getOWLDataProperty(IRI.create("trestle:", "getAdm0_name")),
+                df.getOWLDataProperty(IRI.create("trestle:", "adm0_name")),
                 owlNamedIndividual,
                 df.getOWLLiteral("test region"));
         testProperties.add(adm0Name);
@@ -168,6 +169,7 @@ public class TrestleParserTest {
                 .from(LocalDateTime.of(1998, 3, 26, 0, 0))
                 .to(LocalDateTime.of(1998, 3, 26, 0, 0).plusYears(1))
                 .isDefault()
+                .withParameterNames("defaultTime", null)
                 .withRelations(owlNamedIndividual);
         testTemporals.add(defaultTemporal);
 
@@ -176,6 +178,7 @@ public class TrestleParserTest {
                 .valid()
                 .from(LocalDateTime.of(1989, 3, 26, 0, 0))
                 .to(LocalDateTime.of(1989, 3, 26, 0, 0).plusYears(5))
+                .withParameterNames("intervalStart", "intervalEnd")
                 .withRelations(owlNamedIndividual);
         testTemporals.add(intervalTemporal);
 
@@ -189,6 +192,8 @@ public class TrestleParserTest {
 //            });
 //        }
 
+        final ConstructorArguments constructorArguments = new ConstructorArguments();
+
 //        Properties
         testProperties.forEach(property -> {
             final Class<?> javaClass = ClassBuilder.lookupJavaClassFromOWLDatatype(property.getObject().getDatatype().getBuiltInDatatype());
@@ -196,20 +201,32 @@ public class TrestleParserTest {
             final Object literalValue = ClassBuilder.extractOWLLiteral(javaClass, property.getObject());
 //            final Object literalValue = javaClass.cast(property.getObject().getLiteral());
             inputObjects.add(literalValue);
+            constructorArguments.addArgument(property.getProperty().asOWLDataProperty().getIRI().getShortForm(),
+                    javaClass,
+                    literalValue);
         });
 
-//        Temporals
+        //        Temporals
         testTemporals.forEach(temporal -> {
             if (temporal.isPoint()) {
+                constructorArguments.addArgument(temporal.asPoint().getParameterName(),
+                        LocalDateTime.class,
+                        temporal.asPoint().getPointTime());
                 inputClasses.add(LocalDateTime.class);
                 inputObjects.add(temporal.asPoint().getPointTime());
             } else {
 //                Add the from time
+                constructorArguments.addArgument(temporal.asInterval().getStartName(),
+                        LocalDateTime.class,
+                        temporal.asInterval().getFromTime());
                 inputClasses.add(LocalDateTime.class);
                 inputObjects.add(temporal.asInterval().getFromTime());
                 if (!temporal.asInterval().isDefault()) {
                     final Optional<LocalDateTime> toTime = temporal.asInterval().getToTime();
                     if (toTime.isPresent()) {
+                        constructorArguments.addArgument(temporal.asInterval().getEndName(),
+                                LocalDateTime.class,
+                                toTime.get());
                         inputClasses.add(LocalDateTime.class);
                         inputObjects.add(toTime.get());
                     }
@@ -217,8 +234,13 @@ public class TrestleParserTest {
             }
         });
 
+//        Check that they match
+        assertEquals(inputClasses.size(), constructorArguments.getTypes().size(), "Wrong number of property classes");
+        assertEquals(inputObjects.size(), constructorArguments.getValues().size(), "Wrong number of Property Values");
+
         final GAULMethodTest expectedClass = new GAULMethodTest();
-        final GAULMethodTest gaulMethodTest = ClassBuilder.ConstructObject(GAULMethodTest.class, inputClasses, inputObjects);
+//        final GAULMethodTest gaulMethodTest = ClassBuilder.ConstructObject(GAULMethodTest.class, inputClasses, inputObjects);
+        final GAULMethodTest gaulMethodTest = ClassBuilder.ConstructObject(GAULMethodTest.class, constructorArguments);
         assertEquals(expectedClass, gaulMethodTest, "Should match");
 
 

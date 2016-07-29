@@ -2,9 +2,11 @@ package com.nickrobison.trestle.types.temporal;
 
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
+import java.security.cert.PKIXRevocationChecker;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -12,6 +14,7 @@ import java.util.Set;
 /**
  * Created by nrobison on 6/30/16.
  */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public abstract class TemporalObject {
 
     private static final String PREFIX = "trestle:";

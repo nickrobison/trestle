@@ -14,6 +14,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.METHOD})
 public @interface DataProperty {
 
-    String name() default "";
+    String name();
     OWL2Datatype datatype() default OWL2Datatype.XSD_STRING;
 }
