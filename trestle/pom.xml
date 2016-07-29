@@ -288,7 +288,7 @@
                         <annotationProcessor>org.checkerframework.checker.interning.InterningChecker</annotationProcessor>
                     </annotationProcessors>
                     <compilerArgs>
-                        <arg>-Xbootclasspath/p:${annotatedJdk}</arg>
+                        <arg>-Xbootclasspath/p:${annotatedJdk} -parameters</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
