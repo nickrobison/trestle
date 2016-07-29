@@ -20,6 +20,8 @@ import java.util.*;
 @SuppressWarnings("initialization")
 public class ClassParser {
 
+    public static final String PREFIX = "trestle:";
+
     enum AccessType {
         FIELD,
         METHOD
@@ -27,6 +29,7 @@ public class ClassParser {
 
     private static final Logger logger = LoggerFactory.getLogger(ClassParser.class);
     private static final Map<Class<?>, OWL2Datatype> owlDatatypeMap = buildClassMap();
+    static final OWLDataFactory df = OWLManager.getOWLDataFactory();
 
 
     private ClassParser() {
@@ -47,8 +50,6 @@ public class ClassParser {
         } else {
             className = clazz.getName();
         }
-
-        final OWLDataFactory df = OWLManager.getOWLDataFactory();
         final IRI iri = IRI.create("trestle:", className);
         return df.getOWLClass(iri);
     }
@@ -91,7 +92,6 @@ public class ClassParser {
     //    TODO(nrobison): Implement this
     static Optional<List<OWLObjectProperty>> GetObjectProperties(Object inputObject) {
         final Class<?> clazz = inputObject.getClass();
-        final OWLDataFactory df = OWLManager.getOWLDataFactory();
 
         if (clazz.isAnnotationPresent(ObjectProperty.class)) {
             for (Field classField : clazz.getDeclaredFields()) {
@@ -110,16 +110,7 @@ public class ClassParser {
         return Optional.empty();
     }
 
-//    public static Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz) {
-//
-//            List<Field> classFields = new ArrayList<>();
-//            Arrays.stream(clazz.getDeclaredFields())
-//                    .forEach(field -> {
-//
-//                    });
-//    }
-
-    private static boolean filterDataPropertyField(Field objectMember) {
+    static boolean filterDataPropertyField(Field objectMember) {
 //        Check first to ignore the field
         return (!objectMember.isAnnotationPresent(Ignore.class)
 //                Only access it if it's public
@@ -131,7 +122,7 @@ public class ClassParser {
                         | (objectMember.getAnnotations().length == 0)));
     }
 
-    private static boolean filterDataPropertyMethod(Method objectMember) {
+    static boolean filterDataPropertyMethod(Method objectMember) {
 //        Check first to ignore the field
         return (!objectMember.isAnnotationPresent(Ignore.class)
 //                Only access it if it's public
@@ -146,7 +137,6 @@ public class ClassParser {
 
     public static Optional<List<OWLDataPropertyAssertionAxiom>> GetDataProperties(Object inputObject) {
         final Class<?> clazz = inputObject.getClass();
-        final OWLDataFactory df = OWLManager.getOWLDataFactory();
         final List<OWLDataPropertyAssertionAxiom> axioms = new ArrayList<>();
 
         final OWLNamedIndividual owlNamedIndividual = GetIndividual(inputObject);
@@ -156,7 +146,7 @@ public class ClassParser {
             if (filterDataPropertyField(classField)) {
                 if (classField.isAnnotationPresent(DataProperty.class)) {
                     final DataProperty annotation = classField.getAnnotation(DataProperty.class);
-                    final IRI iri = IRI.create("trestle:", annotation.name());
+                    final IRI iri = IRI.create(PREFIX, annotation.name());
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
                     String fieldValue = null;
 
@@ -184,7 +174,7 @@ public class ClassParser {
                     final OWLLiteral wktLiteral = df.getOWLLiteral(fieldValue.replace("\"", ""), wktDatatype);
                     axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, wktLiteral));
                 } else {
-                    final IRI iri = IRI.create("trestle:", classField.getName());
+                    final IRI iri = IRI.create(PREFIX, classField.getName());
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
                     String fieldValue = null;
                     try {
@@ -203,7 +193,7 @@ public class ClassParser {
             if (filterDataPropertyMethod(classMethod)) {
                 if (classMethod.isAnnotationPresent(DataProperty.class)) {
                     final DataProperty annotation = classMethod.getAnnotation(DataProperty.class);
-                    final IRI iri = IRI.create("trestle:", annotation.name());
+                    final IRI iri = IRI.create(PREFIX, annotation.name());
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
 
                     final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
@@ -231,7 +221,7 @@ public class ClassParser {
                         axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, wktLiteral));
                     }
                 } else {
-                    final IRI iri = IRI.create("trestle:", classMethod.getName());
+                    final IRI iri = IRI.create(PREFIX, classMethod.getName());
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
                     final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
                     if (methodValue.isPresent()) {
@@ -255,16 +245,14 @@ public class ClassParser {
     private static OWL2Datatype getDatatypeFromAnnotation(DataProperty annotation, Class<?> objectClass) {
         if (annotation.datatype().toString().equals("")) {
             return getDatatypeFromJavaClass(objectClass);
-//            if (owl2Datatype == null) {
-//                throw new RuntimeException(String.format("Unsupported Java type %s", objectClass));
-//            }
-//            return owl2Datatype;
         } else {
             return annotation.datatype();
         }
     }
 
-    private static @NotNull OWL2Datatype getDatatypeFromJavaClass(Class<?> javaTypeClass) {
+    private static
+    @NotNull
+    OWL2Datatype getDatatypeFromJavaClass(Class<?> javaTypeClass) {
         final OWL2Datatype owl2Datatype = owlDatatypeMap.get(javaTypeClass);
         if (owl2Datatype == null) {
             throw new RuntimeException(String.format("Unsupported Java type %s", javaTypeClass));
@@ -275,10 +263,10 @@ public class ClassParser {
     private static Map<Class<?>, OWL2Datatype> buildClassMap() {
         Map<Class<?>, OWL2Datatype> types = new HashMap<>();
         types.put(Integer.TYPE, OWL2Datatype.XSD_INTEGER);
-        types.put(int.class, OWL2Datatype.XSD_INTEGER);
+        types.put(int.class, OWL2Datatype.XSD_INT);
         types.put(Double.TYPE, OWL2Datatype.XSD_DOUBLE);
-        types.put(double.class, OWL2Datatype.XSD_DOUBLE);
-        types.put(Float.TYPE, OWL2Datatype.XSD_FLOAT);
+        types.put(double.class, OWL2Datatype.XSD_FLOAT);
+        types.put(Float.TYPE, OWL2Datatype.XSD_DOUBLE);
         types.put(float.class, OWL2Datatype.XSD_FLOAT);
         types.put(Boolean.TYPE, OWL2Datatype.XSD_BOOLEAN);
         types.put(boolean.class, OWL2Datatype.XSD_BOOLEAN);
@@ -290,8 +278,6 @@ public class ClassParser {
         return types;
     }
 
-
-    @SuppressWarnings("UnnecessaryUnboxing")
     static Optional<Object> accessMethodValue(Method classMethod, Object inputObject) {
         @Nullable Object castReturn = null;
         try {

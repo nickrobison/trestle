@@ -5,6 +5,7 @@ import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
+import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
@@ -16,6 +17,7 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -121,7 +123,7 @@ public class TrestleParserTest {
 //        Data properties
         owlDataPropertyAssertionAxioms = ClassParser.GetDataProperties(testMethod);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have method properties");
-        assertEquals(6, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of data properties");
+        assertEquals(5, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of data properties");
         assertEquals(OWL2Datatype.XSD_INTEGER, owlDataPropertyAssertionAxioms.get().get(5).getObject().getDatatype().getBuiltInDatatype(), "Should have integer datatype");
         assertEquals(testMethod.getAdm0_code(), owlDataPropertyAssertionAxioms.get().get(5).getObject().parseInteger(), "Invalid ADM0_Code");
         assertEquals(testMethod.test_name, owlDataPropertyAssertionAxioms.get().get(2).getObject().getLiteral(), "Invalid Spatial");
@@ -133,6 +135,91 @@ public class TrestleParserTest {
         assertEquals(LocalDateTime.of(1989, 3, 26, 0, 0), temporalObjects.get().get(0).asInterval().getFromTime(), "Wrong interval start");
         assertEquals(LocalDateTime.of(1989, 3, 26, 0, 0).plusYears(5), temporalObjects.get().get(0).asInterval().getToTime().get(), "Wrong interval end");
         assertEquals(LocalDateTime.of(1998, 3, 26, 0, 0), temporalObjects.get().get(1).asInterval().getFromTime(), "Temporal is incorrect");
+
+
+    }
+
+    @Test
+    public void testConstructor() {
+        List<OWLDataPropertyAssertionAxiom> testProperties = new ArrayList<>();
+        List<TemporalObject> testTemporals = new ArrayList<>();
+        final OWLNamedIndividual owlNamedIndividual = df.getOWLNamedIndividual(IRI.create("trestle:", "string_from_method"));
+//        Build the data objects
+        final OWLDataPropertyAssertionAxiom admcode = df.getOWLDataPropertyAssertionAxiom(
+                df.getOWLDataProperty(IRI.create("trestle", "adm0_code")),
+                owlNamedIndividual,
+                df.getOWLLiteral(4326));
+        testProperties.add(admcode);
+
+        final OWLDataPropertyAssertionAxiom adm0Name = df.getOWLDataPropertyAssertionAxiom(
+                df.getOWLDataProperty(IRI.create("trestle:", "getAdm0_name")),
+                owlNamedIndividual,
+                df.getOWLLiteral("test region"));
+        testProperties.add(adm0Name);
+
+        final OWLDataPropertyAssertionAxiom testName = df.getOWLDataPropertyAssertionAxiom(
+                df.getOWLDataProperty(IRI.create("trestle:", "test_name")),
+                owlNamedIndividual,
+                df.getOWLLiteral("new_test"));
+        testProperties.add(testName);
+
+        final IntervalTemporal defaultTemporal = TemporalObjectBuilder
+                .valid()
+                .from(LocalDateTime.of(1998, 3, 26, 0, 0))
+                .to(LocalDateTime.of(1998, 3, 26, 0, 0).plusYears(1))
+                .isDefault()
+                .withRelations(owlNamedIndividual);
+        testTemporals.add(defaultTemporal);
+
+
+        final IntervalTemporal intervalTemporal = TemporalObjectBuilder
+                .valid()
+                .from(LocalDateTime.of(1989, 3, 26, 0, 0))
+                .to(LocalDateTime.of(1989, 3, 26, 0, 0).plusYears(5))
+                .withRelations(owlNamedIndividual);
+        testTemporals.add(intervalTemporal);
+
+//        Build the inputs and test the constructor
+        List<Class<?>> inputClasses = new ArrayList<>();
+        List<Object> inputObjects = new ArrayList<>();
+        final Optional<List<OWLDataProperty>> propertyMembers = ClassBuilder.getPropertyMembers(GAULMethodTest.class);
+//        if (propertyMembers.isPresent()) {
+//            propertyMembers.get().forEach(property -> {
+////                inputClasses.add(property.get)
+//            });
+//        }
+
+//        Properties
+        testProperties.forEach(property -> {
+            final Class<?> javaClass = ClassBuilder.lookupJavaClassFromOWLDatatype(property.getObject().getDatatype().getBuiltInDatatype());
+            inputClasses.add(javaClass);
+            final Object literalValue = ClassBuilder.extractOWLLiteral(javaClass, property.getObject());
+//            final Object literalValue = javaClass.cast(property.getObject().getLiteral());
+            inputObjects.add(literalValue);
+        });
+
+//        Temporals
+        testTemporals.forEach(temporal -> {
+            if (temporal.isPoint()) {
+                inputClasses.add(LocalDateTime.class);
+                inputObjects.add(temporal.asPoint().getPointTime());
+            } else {
+//                Add the from time
+                inputClasses.add(LocalDateTime.class);
+                inputObjects.add(temporal.asInterval().getFromTime());
+                if (!temporal.asInterval().isDefault()) {
+                    final Optional<LocalDateTime> toTime = temporal.asInterval().getToTime();
+                    if (toTime.isPresent()) {
+                        inputClasses.add(LocalDateTime.class);
+                        inputObjects.add(toTime.get());
+                    }
+                }
+            }
+        });
+
+        final GAULMethodTest expectedClass = new GAULMethodTest();
+        final GAULMethodTest gaulMethodTest = ClassBuilder.ConstructObject(GAULMethodTest.class, inputClasses, inputObjects);
+        assertEquals(expectedClass, gaulMethodTest, "Should match");
 
 
     }
@@ -149,7 +236,7 @@ public class TrestleParserTest {
         @Ignore
         public LocalDateTime testtime;
         private String privateField;
-        @DefaultTemporalProperty(type = TemporalType.POINT, scope= TemporalScope.EXISTS, duration = 0, unit = ChronoUnit.YEARS)
+        @DefaultTemporalProperty(type = TemporalType.POINT, scope = TemporalScope.EXISTS, duration = 0, unit = ChronoUnit.YEARS)
         public LocalDateTime testpoint;
         @StartTemporalProperty(type = TemporalType.INTERVAL)
         public LocalDateTime teststart;
@@ -157,6 +244,7 @@ public class TrestleParserTest {
         public LocalDateTime testend;
         @StartTemporalProperty(type = TemporalType.POINT)
         public LocalDateTime testat;
+
         public ExpandedGAULTests() {
             this.adm0_code = 4326;
             this.test_name = "new_test";
@@ -169,60 +257,6 @@ public class TrestleParserTest {
             this.testat = LocalDateTime.of(1989, 3, 26, 0, 0);
         }
     }
-
-    @OWLClassName(className = "GAUL_Test")
-    protected class GAULMethodTest {
-
-        public int adm0_code;
-        public String adm0_name;
-        @Spatial
-        public String test_name;
-
-        @Ignore
-        public LocalDateTime testtime;
-        private String privateField;
-//        @DefaultTemporalProperty(type = TemporalType.POINT, scope= TemporalScope.EXISTS, duration = 0, unit = ChronoUnit.YEARS)
-        private LocalDateTime testpoint;
-
-        public GAULMethodTest() {
-            this.adm0_code = 4326;
-            this.test_name = "new_test";
-            this.adm0_name = "test region";
-            this.testtime = LocalDateTime.of(1998, 3, 26, 0, 0);
-            this.privateField = "don't read me";
-            this.testpoint = LocalDateTime.of(1989, 3, 26, 0, 0);
-        }
-
-        @IndividualIdentifier
-        public String getName() {
-            return "string_from_method";
-        }
-
-        public int getAdm0_code() {
-            return this.adm0_code;
-        }
-
-        public String getadm0_name() {
-            return this.adm0_name;
-        }
-
-        @DefaultTemporalProperty(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
-        public LocalDateTime getTime() {
-            return this.testtime;
-        }
-
-        @StartTemporalProperty(type = TemporalType.INTERVAL)
-        public LocalDateTime getStart() {
-            return this.testpoint;
-        }
-
-        @EndTemporalProperty()
-        public LocalDateTime getEnd() {
-            return this.testpoint.plusYears(5);
-        }
-    }
-
-
 
 
 }
