@@ -131,7 +131,9 @@ public class ClassParser {
                 objectMember.isAnnotationPresent(DataProperty.class)
                         | objectMember.isAnnotationPresent(Spatial.class)
                         | objectMember.isAnnotationPresent(IndividualIdentifier.class)
-                        | (objectMember.getAnnotations().length == 0)));
+                        | (objectMember.getAnnotations().length == 0)))
+//                We need this to filter out setters and equals/hashcode stuff
+                & ( objectMember.getParameters().length == 0 | objectMember.getName().equals("hashCode"));
     }
 
 
@@ -199,9 +201,6 @@ public class ClassParser {
                     final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
 
                     if (methodValue.isPresent()) {
-                        if (annotation.datatype().toString().equals("")) {
-
-                        }
                         final OWLLiteral owlLiteral = df.getOWLLiteral(methodValue.get().toString(), getDatatypeFromAnnotation(annotation, classMethod.getReturnType()));
                         axioms.add(df.getOWLDataPropertyAssertionAxiom(
                                 owlDataProperty,
@@ -221,7 +220,7 @@ public class ClassParser {
                         axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, wktLiteral));
                     }
                 } else {
-                    final IRI iri = IRI.create(PREFIX, classMethod.getName());
+                    final IRI iri = IRI.create(PREFIX, filterMethodName(classMethod));
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
                     final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
                     if (methodValue.isPresent()) {
@@ -242,7 +241,20 @@ public class ClassParser {
         return Optional.of(axioms);
     }
 
+    private static String filterMethodName(Method classmethod) {
+        String name = classmethod.getName();
+//        remove get and
+        if (name.startsWith("get")) {
+            final String firstLetter = name.substring(3,4).toLowerCase();
+            final String restOfLetters = name.substring(4);
+            return firstLetter + restOfLetters;
+        }
+
+        return name;
+    }
+
     private static OWL2Datatype getDatatypeFromAnnotation(DataProperty annotation, Class<?> objectClass) {
+//        I don't think this will ever be true
         if (annotation.datatype().toString().equals("")) {
             return getDatatypeFromJavaClass(objectClass);
         } else {
@@ -308,11 +320,12 @@ public class ClassParser {
                 case "int": {
                     return Integer.class;
                 }
-
                 case "double": {
                     return Double.class;
                 }
-
+                case "boolean": {
+                    return boolean.class;
+                }
                 default: {
                     throw new RuntimeException(String.format("Unsupported cast of %s to primitive type", returnClass.getTypeName()));
                 }
