@@ -173,6 +173,6 @@ public class OracleOntologyGAULoader {
 
     @AfterEach
     public void cleanup() {
-        ontology.close(false);
+        ontology.close(true);
     }
 }

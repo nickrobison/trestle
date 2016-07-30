@@ -1,5 +1,6 @@
 package com.nickrobison.trestle;
 
+import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.parser.GAULTestClass;
 import com.nickrobison.trestle.parser.OracleOntologyGAULoader;
@@ -31,10 +32,11 @@ public class OracleTrestleTest {
     @BeforeEach
     public void setup() {
         reasoner = new TrestleReasoner.TrestleBuilder()
-                .withDBConnection(
-                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-                        "spatialUser",
-                        "spatial1")
+                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+//                .withDBConnection(
+//                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
+//                        "spatialUser",
+//                        "spatial1")
                 .withName("trestle_gual_test")
                 .withInputClasses(GAULTestClass.class)
                 .initialize()
@@ -44,7 +46,7 @@ public class OracleTrestleTest {
     }
 
     @Test
-    public void gaulLoader() throws IOException {
+    public void gaulLoader() throws IOException, TrestleClassException, MissingOntologyEntity, OWLOntologyStorageException {
 //        Parse the CSV
         List<GAULTestClass> gaulObjects = new ArrayList<>();
 
@@ -84,9 +86,14 @@ public class OracleTrestleTest {
         });
 
 //        Validate Results
-//        final OWLClass datasetClass = df.getOWLClass(IRI.create("trestle:", "GAUL_Test"));
         final Set<OWLNamedIndividual> gaulInstances = reasoner.getInstances(GAULTestClass.class);
         assertEquals(191, gaulInstances.size(), "Wrong number of GAUL records from instances method");
+
+//        reasoner.getUnderlyingOntology().writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);
+
+//        Try to read one out.
+        reasoner.readAsObject(GAULTestClass.class, IRI.create("trestle:", "Ancuabe"));
+
 
 //        Validate correctness
     }
@@ -94,7 +101,7 @@ public class OracleTrestleTest {
 
     @AfterEach
     public void close() throws OWLOntologyStorageException {
-        reasoner.getUnderlyingOntology().writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), true);
+//        reasoner.getUnderlyingOntology().writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), true);
         reasoner.shutdown(true);
     }
 }

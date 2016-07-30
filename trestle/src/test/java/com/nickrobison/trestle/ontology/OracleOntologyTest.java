@@ -147,7 +147,7 @@ public class OracleOntologyTest {
 
     @AfterEach
     public void CloseOntology() {
-        ontology.close(true);
+        ontology.close(false);
     }
 
 
