@@ -198,11 +198,6 @@ public class TrestleReasoner {
                         LocalDateTime.class,
                         temporal.asPoint().getPointTime());
             }
-
-//            Now I have the temporal and the data properties, time to match them up with the constructor
-//            I think I need to go back to the field names and make sure I reconcile what the fields/methods are called
-//            and what the variables are named in the ontology.
-//            Oh joy.
         }
         return ClassBuilder.ConstructObject(clazz, constructorArguments);
     }
