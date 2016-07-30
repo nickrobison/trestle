@@ -42,12 +42,13 @@ public class GAULTestClass {
         this.wkt = "test_wkt";
     }
 
-    public GAULTestClass(int code, String name, LocalDateTime startdate, String geom) {
-        this.test_name = name;
-        this.adm0_code = code;
-        this.adm0_name = name;
-        this.wkt = geom;
-        this.time = startdate;
+    @TrestleCreator
+    public GAULTestClass(int adm0_code, String adm0_name, LocalDateTime time, String wkt) {
+        this.test_name = adm0_name;
+        this.adm0_code = adm0_code;
+        this.adm0_name = adm0_name;
+        this.wkt = wkt;
+        this.time = time;
 
     }
 }

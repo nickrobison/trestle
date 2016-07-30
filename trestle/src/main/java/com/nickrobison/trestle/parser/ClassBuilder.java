@@ -1,27 +1,29 @@
 package com.nickrobison.trestle.parser;
 
+import com.nickrobison.trestle.annotations.DataProperty;
+import com.nickrobison.trestle.annotations.Spatial;
 import com.nickrobison.trestle.annotations.TrestleCreator;
 import com.nickrobison.trestle.exceptions.MissingConstructorException;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataProperty;
+import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Parameter;
+import java.lang.reflect.*;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.nickrobison.trestle.parser.ClassParser.PREFIX;
 import static com.nickrobison.trestle.parser.ClassParser.df;
 
 /**
  * Created by nrobison on 7/28/16.
  */
+@SuppressWarnings("Duplicates")
 public class ClassBuilder {
 
     private static final Logger logger = LoggerFactory.getLogger(ClassBuilder.class);
@@ -38,17 +40,37 @@ public class ClassBuilder {
         List<OWLDataProperty> classFields = new ArrayList<>();
         Arrays.stream(clazz.getDeclaredFields())
                 .filter(ClassParser::filterDataPropertyField)
-                .forEach(field -> classFields.add(df.getOWLDataProperty(IRI.create(ClassParser.PREFIX, field.getName()))));
+                .forEach(field -> classFields.add(df.getOWLDataProperty(filterName(field))));
 
         Arrays.stream(clazz.getDeclaredMethods())
                 .filter(ClassParser::filterDataPropertyMethod)
-                .forEach(method -> classFields.add(df.getOWLDataProperty(IRI.create(ClassParser.PREFIX, method.getName()))));
+                .forEach(method -> classFields.add(df.getOWLDataProperty(filterName(method))));
 
         if (classFields.isEmpty()) {
             return Optional.empty();
         }
 
         return Optional.of(classFields);
+    }
+
+    private static IRI filterName(Field classField) {
+        if (classField.isAnnotationPresent(DataProperty.class)) {
+            return IRI.create(PREFIX, classField.getAnnotation(DataProperty.class).name());
+        } else if (classField.isAnnotationPresent(Spatial.class)) {
+            return IRI.create("geosparql:", "asWKT");
+        } else {
+            return IRI.create(PREFIX, classField.getName());
+        }
+    }
+
+    private static IRI filterName(Method classMethod) {
+        if (classMethod.isAnnotationPresent(DataProperty.class)) {
+            return IRI.create(PREFIX, classMethod.getAnnotation(DataProperty.class).name());
+        } else if (classMethod.isAnnotationPresent(Spatial.class)) {
+            return IRI.create("geosparql:", "asWKT");
+        } else {
+            return IRI.create(PREFIX, classMethod.getName());
+        }
     }
 
     //    FIXME(nrobison): I think these warnings are important.
@@ -112,18 +134,18 @@ public class ClassBuilder {
 
     @SuppressWarnings({"unchecked", "type.argument.type.incompatible", "assignment.type.incompatible"})
 //    FIXME(nrobison): Fix the object casts
-    static <T> T extractOWLLiteral(Class<T> javaClass, OWLLiteral literal) {
+    public static <T> T extractOWLLiteral(Class<T> javaClass, OWLLiteral literal) {
 
         switch (javaClass.getTypeName()) {
 
             case "int": {
                 return (T) (Object) literal.parseInteger();
             }
-            case "Integer": {
+            case "java.lang.Integer": {
                 return (T) (Object) literal.parseInteger();
             }
 
-            case "LocalDateTime": {
+            case "java.lang.LocalDateTime": {
                 return (T) (Object) LocalDateTime.parse(literal.getLiteral());
             }
 
@@ -131,11 +153,11 @@ public class ClassBuilder {
                 return (T) (Object) literal.getLiteral();
             }
 
-            case "Double": {
+            case "java.lang.Double": {
                 return (T) (Object) literal.parseDouble();
             }
 
-            case "Boolean": {
+            case "java.lang.Boolean": {
                 return (T) (Object) literal.parseBoolean();
             }
 
@@ -145,10 +167,20 @@ public class ClassBuilder {
         }
     }
 
-    static Class<?> lookupJavaClassFromOWLDatatype(OWL2Datatype datatype) {
-        final Class<?> javaClass = datatypeMap.get(datatype);
-        if (javaClass == null) {
-            throw new RuntimeException(String.format("Unsupported OWL2Datatype %s", datatype));
+    @SuppressWarnings("dereference.of.nullable")
+    public static Class<?> lookupJavaClassFromOWLDatatype(OWLDatatype datatype) {
+        final Class<?> javaClass;
+        if (datatype.isBuiltIn()) {
+             javaClass = datatypeMap.get(datatype.getBuiltInDatatype());
+            if (javaClass == null) {
+                throw new RuntimeException(String.format("Unsupported OWL2Datatype %s", datatype));
+            }
+        } else if (datatype.getIRI().getScheme().equals("geosparql")) {
+//            If it's from the geosparql group, we can just treat it as a string
+            javaClass = String.class;
+        } else {
+//            String as a last resort.
+            javaClass = String.class;
         }
 
         return javaClass;
@@ -160,8 +192,10 @@ public class ClassBuilder {
 
         datatypeMap.put(OWL2Datatype.XSD_INTEGER, Integer.TYPE);
         datatypeMap.put(OWL2Datatype.XSD_INT, int.class);
+        datatypeMap.put(OWL2Datatype.XSD_LONG, long.class);
         datatypeMap.put(OWL2Datatype.XSD_DOUBLE, Double.TYPE);
         datatypeMap.put(OWL2Datatype.XSD_FLOAT, double.class);
+        datatypeMap.put(OWL2Datatype.XSD_DECIMAL, Double.class);
         datatypeMap.put(OWL2Datatype.XSD_DATE_TIME, LocalDateTime.class);
         datatypeMap.put(OWL2Datatype.XSD_BOOLEAN, Boolean.TYPE);
         datatypeMap.put(OWL2Datatype.XSD_STRING, String.class);

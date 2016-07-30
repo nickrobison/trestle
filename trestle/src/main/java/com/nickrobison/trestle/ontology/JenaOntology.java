@@ -311,6 +311,36 @@ public abstract class JenaOntology implements ITrestleOntology {
         return propertyAxioms;
     }
 
+    @Override
+    public Set<OWLDataPropertyAssertionAxiom> getAllPropertiesForIndividual(IRI individualIRI) {
+        return this.getAllPropertiesForIndividual(df.getOWLNamedIndividual(individualIRI));
+    }
+
+    @Override
+    public Set<OWLDataPropertyAssertionAxiom> getAllPropertiesForIndividual(OWLNamedIndividual individual) {
+        Set<OWLDataPropertyAssertionAxiom> properties = new HashSet<>();
+        final Resource modelResource = model.getResource(getFullIRIString(individual));
+        final StmtIterator stmtIterator = modelResource.listProperties();
+        while (stmtIterator.hasNext()) {
+            final Statement statement = stmtIterator.nextStatement();
+//            Filter out RDF stuff
+            if (!statement.getPredicate().getNameSpace().contains("rdf-syntax")) {
+                final OWLDataProperty owlDataProperty = df.getOWLDataProperty(IRI.create(statement.getPredicate().getURI()));
+                final Optional<OWLLiteral> owlLiteral = parseLiteral(statement.getLiteral());
+                if (owlLiteral.isPresent()) {
+                    properties.add(
+                            df.getOWLDataPropertyAssertionAxiom(
+                                    owlDataProperty,
+                                    individual,
+                                    owlLiteral.get()));
+                }
+            }
+        }
+
+        stmtIterator.close();
+        return properties;
+    }
+
     //    TODO(nrobison): Does this actually work on a local ontology?
     public Optional<OWLNamedIndividual> getIndividual(OWLNamedIndividual individual) {
         this.openTransaction(false);
@@ -375,6 +405,22 @@ public abstract class JenaOntology implements ITrestleOntology {
         this.commitTransaction();
 
         return Optional.of(properties);
+    }
+
+    private Optional<OWLLiteral> parseLiteral(Literal literal) {
+        final OWLDatatype owlDatatype;
+        if (literal.getDatatypeURI() == null) {
+            logger.error("literal has an emptyURI");
+            owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_STRING.getIRI());
+        } else {
+            owlDatatype = df.getOWLDatatype(IRI.create(literal.getDatatypeURI()));
+        }
+
+        if (owlDatatype.getIRI().toString().equals("nothing")) {
+            logger.error("Datatype {} doesn't exist", literal.getDatatypeURI());
+            return Optional.empty();
+        }
+        return Optional.of(df.getOWLLiteral(literal.getLexicalForm(), owlDatatype));
     }
 
     public IRI getFullIRI(IRI iri) {

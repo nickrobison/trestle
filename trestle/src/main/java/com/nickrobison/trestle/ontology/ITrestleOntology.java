@@ -206,6 +206,20 @@ public interface ITrestleOntology {
     Set<OWLDataPropertyAssertionAxiom> getPropertiesForIndividual(OWLNamedIndividual individual, List<OWLDataProperty> properties);
 
     /**
+     * Get all asserted properties for a given individual
+     * @param individualIRI - IRI of individual to get properties for
+     * @return Set of OWLDataPropertyAssertionAxioms
+     */
+    Set<OWLDataPropertyAssertionAxiom> getAllPropertiesForIndividual(IRI individualIRI);
+
+    /**
+     * Get all asserted properties for a given individual
+     * @param individual - OWLNamedIndividual to get properties for
+     * @return - Set of OWLDataPropertyAssertionAxioms
+     */
+    Set<OWLDataPropertyAssertionAxiom> getAllPropertiesForIndividual(OWLNamedIndividual individual);
+
+    /**
      * Get an OWLNamedIndividual if it exists in the ontology
      *
      * @param individual - OWLNamedIndividual to retrieve

@@ -5,10 +5,10 @@ import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
-import com.nickrobison.trestle.parser.ClassParser;
-import com.nickrobison.trestle.parser.ClassRegister;
-import com.nickrobison.trestle.parser.TemporalParser;
+import com.nickrobison.trestle.parser.*;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
+import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
@@ -29,7 +29,7 @@ public class TrestleReasoner {
     private final Set<Class> registeredClasses;
     private final OWLDataFactory df;
     //    Seems gross?
-    private static final OWLClass datasetClass = OWLManager.getOWLDataFactory().getOWLClass(IRI.create("trestle:", "dataset"));
+    private static final OWLClass datasetClass = OWLManager.getOWLDataFactory().getOWLClass(IRI.create("trestle:", "Dataset"));
     public static final String PREFIX = "trestle:";
     private static final IRI temporalClassIRI = IRI.create(PREFIX, "Temporal_Object");
     private static final IRI temporalValidFromIRI = IRI.create(PREFIX, "valid_from");
@@ -133,6 +133,59 @@ public class TrestleReasoner {
             });
         }
 //        Write the object properties
+    }
+
+//    FIXME(nrobison): Get rid of this warning, not sure why it exists
+    @SuppressWarnings("argument.type.incompatible")
+    public @Nullable <T> T readAsObject(Class<@Nullable T> clazz, IRI individualIRI) throws TrestleClassException, MissingOntologyEntity {
+//        Contains class?
+        if (!this.registeredClasses.contains(clazz)) {
+            throw new UnregisteredClassException(clazz);
+        }
+
+//        Figure out its name
+        if (!ontology.containsResource(individualIRI)) {
+            throw new MissingOntologyEntity("Can't find individual ", individualIRI);
+        }
+
+
+        final ConstructorArguments constructorArguments = new ConstructorArguments();
+        final Optional<List<OWLDataProperty>> dataProperties = ClassBuilder.getPropertyMembers(clazz);
+        if (dataProperties.isPresent()) {
+            final Set<OWLDataPropertyAssertionAxiom> propertiesForIndividual = ontology.getPropertiesForIndividual(individualIRI, dataProperties.get());
+            propertiesForIndividual.forEach(property -> {
+                final Class<?> javaClass = ClassBuilder.lookupJavaClassFromOWLDatatype(property.getObject().getDatatype());
+                final Object literalValue = ClassBuilder.extractOWLLiteral(javaClass, property.getObject());
+                constructorArguments.addArgument(
+                        property.getProperty().asOWLDataProperty().getIRI().getShortForm(),
+                        javaClass,
+                        literalValue);
+            });
+//            Get the temporals
+            final Optional<Set<OWLObjectProperty>> individualObjectProperty = ontology.getIndividualObjectProperty(individualIRI, hasTemporalIRI);
+            Optional<TemporalObject> temporalObject = Optional.empty();
+            if (individualObjectProperty.isPresent()) {
+//                There can only be 1 temporal, so just grab the first one.
+                final Optional<OWLObjectProperty> first = individualObjectProperty.get().stream().findFirst();
+                if (!first.isPresent()) {
+                    throw new RuntimeException(String.format("Missing temporal for individual %s", individualIRI));
+                }
+                final Set<OWLDataPropertyAssertionAxiom> TemporalProperties = ontology.getAllPropertiesForIndividual(first.get().asOWLObjectProperty().getIRI());
+                temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(TemporalProperties);
+            }
+
+            if (!temporalObject.isPresent()) {
+                throw new RuntimeException("Cannot restore temporal from ontology");
+            }
+
+//            Now I have the temporal and the data properties, time to match them up with the constructor
+//            I think I need to go back to the field names and make sure I reconcile what the fields/methods are called
+//            and what the variables are named in the ontology.
+//            Oh joy.
+
+        }
+
+        return null;
     }
 
     public void registerClass(Class inputClass) {
@@ -263,56 +316,4 @@ public class TrestleReasoner {
             }
         }
     }
-
-
-//    public static void main(String[] args) throws OWLOntologyCreationException, OWLOntologyStorageException {
-//
-//        OWLOntology trixieOntology;
-//        DefaultPrefixManager pm;
-//
-////        Try to build the ontology
-////        final IRI iri = IRI.create(TrestleReasoner.class.getResourceAsStream("main_geo.owl").toString());
-////        final URL resource = TrestleReasoner.getCla.getResource("main_geo.owl");
-//        logger.debug("Running Trixie");
-//        final URL resource = TrestleReasoner.class.getClassLoader().getResource("main_geo.owl");
-//        if (resource == null) {
-//            logger.error("Can't load resource");
-//        } else {
-//
-//            final IRI iri = IRI.create(resource);
-//            final Optional<ITrestleOntology> ontology = new OntologyBuilder()
-//                    .fromIRI(iri)
-//                    .build();
-//            if (!ontology.isPresent()) {
-//                logger.error("OracleOntology missing");
-//            }
-//            final ITrestleOntology rootOntology = ontology.get();
-//            trixieOntology = rootOntology.getUnderlyingOntology();
-//            pm = rootOntology.getUnderlyingPrefixManager();
-//            final OWLDataFactory df = OWLManager.getOWLDataFactory();
-//            final IRI geoIRI = IRI.create("main_geo:", "GAULRegion");
-//            final OWLClass gaulObject = df.getOWLClass(geoIRI.toString(), pm);
-//            final Set<OWLSubClassOfAxiom> geoObjAxioms = trixieOntology.getSubClassAxiomsForSubClass(gaulObject);
-//
-////            Try to add some individuals.
-//            final IRI burambi_iri = IRI.create("main_geo:", "burambi_1");
-//            final OWLNamedIndividual burambi_1 = df.getOWLNamedIndividual(burambi_iri.toString(), pm);
-//            final AddAxiom burambiAxiom = new AddAxiom(trixieOntology, df.getOWLClassAssertionAxiom(gaulObject, burambi_1));
-//            rootOntology.applyChange(burambiAxiom);
-//
-////            Try to read it back?
-//            final Set<OWLNamedIndividual> gaulInstances = rootOntology.getInstances(gaulObject, true);
-//            if (!rootOntology.isConsistent()) {
-//                logger.error("OracleOntology is inconsistent");
-//            }
-////            ontology.get().getUnderlyingOntology().getOWLOntologyManager().saveOntology(trixieOntology);
-//            rootOntology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/test.owl")), false);
-////            trixieOntology.saveOntology();
-//
-////            Try to load the ontology into Oracle
-////            We need an RDF/XML ontology to actually work with Jena(?)
-////            final URL rdfOntology = TrestleReasoner.class.getClassLoader().getResource("main_geo.rdf");
-////            rootOntology.initializeOracleOntology(IRI.create(rdfOntology));
-//
-//        }
 }

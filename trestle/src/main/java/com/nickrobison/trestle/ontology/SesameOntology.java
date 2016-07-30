@@ -32,6 +32,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.sql.SQLException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -82,6 +83,11 @@ public class SesameOntology implements ITrestleOntology {
     @Override
     public boolean isConsistent() {
         return false;
+    }
+
+    @Override
+    public Optional<Set<OWLObjectProperty>> getIndividualObjectProperty(IRI individualIRI, IRI objectPropertyIRI) {
+        return Optional.empty();
     }
 
     @Override
@@ -198,6 +204,12 @@ public class SesameOntology implements ITrestleOntology {
 
     @Override
     //    TODO(nrobison): Finish
+    public boolean containsResource(IRI individualIRI) {
+        return false;
+    }
+
+    @Override
+    //    TODO(nrobison): Finish
     public boolean containsResource(OWLNamedObject individual) {
         return false;
     }
@@ -298,7 +310,32 @@ public class SesameOntology implements ITrestleOntology {
     }
 
     @Override
+    public Set<OWLDataPropertyAssertionAxiom> getPropertiesForIndividual(IRI individualIRI, List<OWLDataProperty> properties) {
+        return new HashSet<>();
+    }
+
+    @Override
+    public Set<OWLDataPropertyAssertionAxiom> getPropertiesForIndividual(OWLNamedIndividual individual, List<OWLDataProperty> properties) {
+        return new HashSet<>();
+    }
+
+    @Override
+    public Set<OWLDataPropertyAssertionAxiom> getAllPropertiesForIndividual(IRI individualIRI) {
+        return new HashSet<>();
+    }
+
+    @Override
+    public Set<OWLDataPropertyAssertionAxiom> getAllPropertiesForIndividual(OWLNamedIndividual individual) {
+        return new HashSet<>();
+    }
+
+    @Override
     public Optional<OWLNamedIndividual> getIndividual(OWLNamedIndividual individual) {
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Set<OWLLiteral>> getIndividualProperty(IRI individualIRI, OWLDataProperty property) {
         return Optional.empty();
     }
 

@@ -1,13 +1,12 @@
 package com.nickrobison.trestle.parser;
 
 import java.util.*;
-import java.util.jar.Pack200;
 import java.util.stream.Collectors;
 
 /**
  * Created by nrobison on 7/29/16.
  */
-class ConstructorArguments {
+public class ConstructorArguments {
 
 //    private final String argumentName;
 //    private final Class<?> argumentType;

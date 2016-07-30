@@ -243,8 +243,8 @@ public class ClassParser {
         return Optional.of(axioms);
     }
 
-    private static String filterMethodName(Method classmethod) {
-        String name = classmethod.getName();
+    private static String filterMethodName(Method classMethod) {
+        String name = classMethod.getName();
 //        remove get and
         if (name.startsWith("get")) {
             final String firstLetter = name.substring(3,4).toLowerCase();
