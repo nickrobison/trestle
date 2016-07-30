@@ -381,10 +381,22 @@ public abstract class JenaOntology implements ITrestleOntology {
         while (stmtIterator.hasNext()) {
             //        If the URI is null, I think that means that it's just a string
             final Statement statement = stmtIterator.nextStatement();
-            final OWLDatatype owlDatatype;
+            OWLDatatype owlDatatype;
             if (statement.getLiteral().getDatatypeURI() == null) {
                 logger.error("Property {} as an emptyURI", property.getIRI());
                 owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_STRING.getIRI());
+            } else if (statement.getLiteral().getDatatypeURI().equals(OWL2Datatype.XSD_DECIMAL.getIRI().toString())) {
+//                Work around Oracle bug by trying to parse an Int and see if it works
+                owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_INTEGER.getIRI());
+                Integer test = null;
+                try {
+                    test = Integer.parseInt(statement.getLiteral().getLexicalForm());
+                } catch (NumberFormatException e) {
+                    logger.debug("Couldn't parse to int, must actually be a decimal");
+                }
+                if (test == null) {
+                    owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_INTEGER.getIRI());
+                }
             } else {
                 owlDatatype = df.getOWLDatatype(IRI.create(statement.getLiteral().getDatatypeURI()));
             }

@@ -144,6 +144,7 @@ public class OracleOntology extends JenaOntology {
     public void close(boolean drop) {
         logger.debug("Disconnecting");
         model.close();
+        graph.close();
         if (drop) {
             logger.info("Dropping model: {}", this.ontologyName);
             try {
