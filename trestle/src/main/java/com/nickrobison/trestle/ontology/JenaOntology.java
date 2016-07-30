@@ -17,12 +17,8 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 
 /**
  * Created by nrobison on 7/22/16.
@@ -48,6 +44,12 @@ public abstract class JenaOntology implements ITrestleOntology {
     }
 
     abstract public boolean isConsistent();
+
+    @Override
+    public Optional<Set<OWLObjectProperty>> getIndividualObjectProperty(IRI individualIRI, IRI objectPropertyIRI) {
+        return this.getIndividualObjectProperty(df.getOWLNamedIndividual(individualIRI),
+                df.getOWLObjectProperty(objectPropertyIRI));
+    }
 
     @Override
     public Optional<Set<OWLObjectProperty>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property) {
@@ -179,12 +181,12 @@ public abstract class JenaOntology implements ITrestleOntology {
     }
 
     @Override
-    public void writeIndividualObjectProperty(IRI owlSubject, IRI owlProperty, IRI owlObject) {
+    public void writeIndividualObjectProperty(IRI owlSubject, IRI owlProperty, IRI owlObject) throws MissingOntologyEntity {
 
-        df.getOWLObjectPropertyAssertionAxiom(
+        writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
                 df.getOWLObjectProperty(owlProperty),
-                        df.getOWLNamedIndividual(owlSubject),
-                        df.getOWLNamedIndividual(owlObject));
+                df.getOWLNamedIndividual(owlSubject),
+                df.getOWLNamedIndividual(owlObject)));
     }
 
     @Override
@@ -218,6 +220,11 @@ public abstract class JenaOntology implements ITrestleOntology {
     }
 
     @Override
+    public boolean containsResource(IRI individualIRI) {
+        return containsResource(df.getOWLNamedIndividual(individualIRI));
+    }
+
+    @Override
     public boolean containsResource(OWLNamedObject individual) {
         this.openTransaction(false);
         final Resource resource = model.getResource(getFullIRIString(individual));
@@ -226,7 +233,24 @@ public abstract class JenaOntology implements ITrestleOntology {
     }
 
     public void writeOntology(IRI path, boolean validate) throws OWLOntologyStorageException {
+        if (validate) {
+            logger.info("Validating ontology before writing out");
+            if (!this.isConsistent()) {
+                logger.error("Ontology is inconsistent");
+                throw new RuntimeException("Inconsistent ontology");
+            }
+        }
 
+        final FileOutputStream fileOutputStream;
+        try {
+            fileOutputStream = new FileOutputStream(new File(path.toURI()));
+        } catch (FileNotFoundException e) {
+            logger.error("Cannot open to file path", e);
+            return;
+        }
+        logger.info("Writing ontology to {}", path);
+        model.write(fileOutputStream);
+        logger.debug("Finished writing ontology to {}", path);
     }
 
     public OWLOntology getUnderlyingOntology() {
@@ -265,6 +289,28 @@ public abstract class JenaOntology implements ITrestleOntology {
         return instances;
     }
 
+    @Override
+    public Set<OWLDataPropertyAssertionAxiom> getPropertiesForIndividual(IRI individualIRI, List<OWLDataProperty> properties) {
+        return this.getPropertiesForIndividual(df.getOWLNamedIndividual(individualIRI), properties);
+    }
+
+    @Override
+    public Set<OWLDataPropertyAssertionAxiom> getPropertiesForIndividual(OWLNamedIndividual individual, List<OWLDataProperty> properties) {
+        Set<OWLDataPropertyAssertionAxiom> propertyAxioms = new HashSet<>();
+
+        properties.forEach(property -> {
+            final Optional<Set<OWLLiteral>> individualProperty = this.getIndividualProperty(individual, property);
+            if (individualProperty.isPresent()) {
+                individualProperty.get().forEach(value -> propertyAxioms.add(
+                        df.getOWLDataPropertyAssertionAxiom(
+                                property,
+                                individual,
+                                value)));
+            }
+        });
+        return propertyAxioms;
+    }
+
     //    TODO(nrobison): Does this actually work on a local ontology?
     public Optional<OWLNamedIndividual> getIndividual(OWLNamedIndividual individual) {
         this.openTransaction(false);
@@ -280,6 +326,11 @@ public abstract class JenaOntology implements ITrestleOntology {
 //        } else {
 //            return Optional.empty();
 //        }
+    }
+
+    @Override
+    public Optional<Set<OWLLiteral>> getIndividualProperty(IRI individualIRI, OWLDataProperty property) {
+        return getIndividualProperty(df.getOWLNamedIndividual(individualIRI), property);
     }
 
     @Override

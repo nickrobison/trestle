@@ -5,6 +5,7 @@ import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -20,7 +21,15 @@ public interface ITrestleOntology {
     boolean isConsistent();
 
     /**
-     * Returns and optional set of asserted property values from a given individual
+     * Returns an optional set of asserted property values from a given individual
+     * @param individualIRI - IRI of individual to query
+     * @param objectPropertyIRI - IRI of property to retrieve
+     * @return - Optional set of all asserted property values
+     */
+    Optional<Set<OWLObjectProperty>> getIndividualObjectProperty(IRI individualIRI, IRI objectPropertyIRI);
+
+    /**
+     * Returns an optional set of asserted property values from a given individual
      *
      * @param individual - OWLNamedIndividual to query
      * @param property   - OWLObjectProperty to retrieve
@@ -108,7 +117,7 @@ public interface ITrestleOntology {
      * @param owlProperty - IRI of OWLObjectProperty
      * @param owlObject - IRI of OWLNamedIndividual object
      */
-    void writeIndividualObjectProperty(IRI owlSubject, IRI owlProperty, IRI owlObject);
+    void writeIndividualObjectProperty(IRI owlSubject, IRI owlProperty, IRI owlObject) throws MissingOntologyEntity;
 
     /**
      * Create object association between two OWLNamedIndividuals
@@ -116,6 +125,13 @@ public interface ITrestleOntology {
      * @throws MissingOntologyEntity
      */
     void writeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property) throws MissingOntologyEntity;
+
+    /**
+     * Check whether the ontology contains an individual with the given IRI
+     * @param individualIRI - IRI of individual to check
+     * @return - boolean, individual exists?
+     */
+    boolean containsResource(IRI individualIRI);
 
     /**
      * Check whether the underlying model contains the given OWLEntity
@@ -174,12 +190,36 @@ public interface ITrestleOntology {
     Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean inferred);
 
     /**
+     * Return data properties for a given individual
+     * @param individualIRI - IRI of individual to retrieve properties of
+     * @param properties - List of OWLDataProperties to retrieve
+     * @return - Set of OWLDataPropertyAssertionAxioms from given individual
+     */
+    Set<OWLDataPropertyAssertionAxiom> getPropertiesForIndividual(IRI individualIRI, List<OWLDataProperty> properties);
+
+    /**
+     * Return all the data properties and values for a given individual
+     * @param individual - OWLNamedIndividual to get properties for
+     * @param properties - List of OWLDataProperties to retrieve for individual
+     * @return - Set of OWLDataPropertyAssertionAxioms from individual
+     */
+    Set<OWLDataPropertyAssertionAxiom> getPropertiesForIndividual(OWLNamedIndividual individual, List<OWLDataProperty> properties);
+
+    /**
      * Get an OWLNamedIndividual if it exists in the ontology
      *
      * @param individual - OWLNamedIndividual to retrieve
      * @return - Optional of OWLNamedIndividual, if it exists in the ontology
      */
     Optional<OWLNamedIndividual> getIndividual(OWLNamedIndividual individual);
+
+    /**
+     * Return a set of values for a given data property
+     * @param individualIRI - IRI of individual to retrieve properties for
+     * @param property - OWLDataProperty to retrieve values from
+     * @return - Optional Set of OWLLiteral values for given property of specific individual
+     */
+    Optional<Set<OWLLiteral>> getIndividualProperty(IRI individualIRI, OWLDataProperty property);
 
     /**
      * Return the set of data property values
