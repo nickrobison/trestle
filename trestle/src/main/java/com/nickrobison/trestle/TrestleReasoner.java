@@ -6,9 +6,9 @@ import com.nickrobison.trestle.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
 import com.nickrobison.trestle.parser.*;
+import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
@@ -137,7 +137,7 @@ public class TrestleReasoner {
 
 //    FIXME(nrobison): Get rid of this warning, not sure why it exists
     @SuppressWarnings("argument.type.incompatible")
-    public @Nullable <T> T readAsObject(Class<@Nullable T> clazz, IRI individualIRI) throws TrestleClassException, MissingOntologyEntity {
+    public <T> T readAsObject(Class<T> clazz, IRI individualIRI) throws TrestleClassException, MissingOntologyEntity {
 //        Contains class?
         if (!this.registeredClasses.contains(clazz)) {
             throw new UnregisteredClassException(clazz);
@@ -157,7 +157,7 @@ public class TrestleReasoner {
                 final Class<?> javaClass = ClassBuilder.lookupJavaClassFromOWLDatatype(property.getObject().getDatatype());
                 final Object literalValue = ClassBuilder.extractOWLLiteral(javaClass, property.getObject());
                 constructorArguments.addArgument(
-                        property.getProperty().asOWLDataProperty().getIRI().getShortForm(),
+                        ClassParser.matchWithClassMember(clazz, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
                         javaClass,
                         literalValue);
             });
@@ -171,21 +171,40 @@ public class TrestleReasoner {
                     throw new RuntimeException(String.format("Missing temporal for individual %s", individualIRI));
                 }
                 final Set<OWLDataPropertyAssertionAxiom> TemporalProperties = ontology.getAllPropertiesForIndividual(first.get().asOWLObjectProperty().getIRI());
-                temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(TemporalProperties);
+                temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(TemporalProperties, true);
             }
 
             if (!temporalObject.isPresent()) {
                 throw new RuntimeException("Cannot restore temporal from ontology");
             }
 
+//            Add the temporal to the constructor args
+            final TemporalObject temporal = temporalObject.get();
+            if (temporal.isInterval()) {
+                final IntervalTemporal intervalTemporal = temporal.asInterval();
+                constructorArguments.addArgument(
+                        ClassParser.matchWithClassMember(clazz, intervalTemporal.getStartName()),
+                        LocalDateTime.class,
+                        intervalTemporal.getFromTime());
+                if (!intervalTemporal.isDefault() & intervalTemporal.getToTime().isPresent()) {
+                    constructorArguments.addArgument(
+                            ClassParser.matchWithClassMember(clazz, intervalTemporal.getEndName()),
+                            LocalDateTime.class,
+                            intervalTemporal.getToTime().get());
+                }
+            } else {
+                constructorArguments.addArgument(
+                        ClassParser.matchWithClassMember(clazz, temporal.asPoint().getParameterName()),
+                        LocalDateTime.class,
+                        temporal.asPoint().getPointTime());
+            }
+
 //            Now I have the temporal and the data properties, time to match them up with the constructor
 //            I think I need to go back to the field names and make sure I reconcile what the fields/methods are called
 //            and what the variables are named in the ontology.
 //            Oh joy.
-
         }
-
-        return null;
+        return ClassBuilder.ConstructObject(clazz, constructorArguments);
     }
 
     public void registerClass(Class inputClass) {

@@ -97,17 +97,26 @@ public class ClassBuilder {
     }
 
     //    FIXME(nrobison): I think these warnings are important.
-    @SuppressWarnings({"type.argument.type.incompatible", "assignment.type.incompatible"})
+    @SuppressWarnings({"type.argument.type.incompatible", "assignment.type.incompatible", "method.invocation.invalid"})
     public static <T> T ConstructObject(Class<T> clazz, ConstructorArguments arguments) throws MissingConstructorException {
         Constructor<?> declaredConstructor = null;
-        for (Constructor<?> constructor : clazz.getDeclaredConstructors()) {
-            if (constructor.isAnnotationPresent(TrestleCreator.class)) {
-                declaredConstructor = constructor;
-                break;
-            } else {
-                if (constructor.getParameters().length > 0) {
+        final Optional<? extends Constructor<?>> specifiedConstructor = Arrays.stream(clazz.getDeclaredConstructors())
+                .filter(c -> c.isAnnotationPresent(TrestleCreator.class))
+                .findFirst();
+
+        if (specifiedConstructor.isPresent()) {
+            declaredConstructor = specifiedConstructor.get();
+        } else {
+//            If there's no constructor, look for one that has more than 0 arguments
+            for (Constructor<?> constructor : clazz.getDeclaredConstructors()) {
+                if (constructor.isAnnotationPresent(TrestleCreator.class)) {
                     declaredConstructor = constructor;
                     break;
+                } else {
+                    if (constructor.getParameters().length > 0) {
+                        declaredConstructor = constructor;
+                        break;
+                    }
                 }
             }
         }

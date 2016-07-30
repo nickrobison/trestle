@@ -14,7 +14,7 @@ import java.time.temporal.ChronoUnit;
 @OWLClassName(className="GAUL_Test")
 public class GAULTestClass {
 
-//    @DataProperty(name="ADM0_Code", datatype=OWL2Datatype.XSD_INTEGER)
+    @DataProperty(name="ADM0_Code", datatype=OWL2Datatype.XSD_INTEGER)
     public int adm0_code;
     public String adm0_name;
     @IndividualIdentifier

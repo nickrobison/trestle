@@ -168,7 +168,7 @@ public class TrestleParserTest {
                 .valid()
                 .from(LocalDateTime.of(1998, 3, 26, 0, 0))
                 .to(LocalDateTime.of(1998, 3, 26, 0, 0).plusYears(1))
-                .isDefault()
+                .isDefault(true)
                 .withParameterNames("defaultTime", null)
                 .withRelations(owlNamedIndividual);
         testTemporals.add(defaultTemporal);

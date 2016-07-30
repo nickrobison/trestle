@@ -167,18 +167,18 @@ public class TemporalParser {
                 switch (annotation.scope()) {
                     case VALID: {
                         if (to != null) {
-                            temporalObject = TemporalObjectBuilder.valid().from(from).to(to).isDefault().withRelations(owlNamedIndividual);
+                            temporalObject = TemporalObjectBuilder.valid().from(from).to(to).isDefault(true).withRelations(owlNamedIndividual);
                         } else {
-                            temporalObject = TemporalObjectBuilder.valid().from(from).isDefault().withRelations(owlNamedIndividual);
+                            temporalObject = TemporalObjectBuilder.valid().from(from).isDefault(true).withRelations(owlNamedIndividual);
                         }
                         break;
                     }
 
                     case EXISTS: {
                         if (to != null) {
-                            temporalObject = TemporalObjectBuilder.exists().from(from).to(to).isDefault().withRelations(owlNamedIndividual);
+                            temporalObject = TemporalObjectBuilder.exists().from(from).to(to).isDefault(true).withRelations(owlNamedIndividual);
                         } else {
-                            temporalObject = TemporalObjectBuilder.exists().from(from).isDefault().withRelations(owlNamedIndividual);
+                            temporalObject = TemporalObjectBuilder.exists().from(from).isDefault(true).withRelations(owlNamedIndividual);
                         }
                         break;
                     }

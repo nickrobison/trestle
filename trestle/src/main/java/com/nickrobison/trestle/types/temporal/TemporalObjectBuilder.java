@@ -25,7 +25,7 @@ public class TemporalObjectBuilder {
         return new ExistsTemporal.Builder();
     }
 
-    public static Optional<TemporalObject> buildTemporalFromProperties(Set<OWLDataPropertyAssertionAxiom> properties) {
+    public static Optional<TemporalObject> buildTemporalFromProperties(Set<OWLDataPropertyAssertionAxiom> properties, boolean isDefault) {
 
         final Optional<OWLDataPropertyAssertionAxiom> valid_from = properties.stream()
                 .filter(dp -> dp.getProperty().asOWLDataProperty().getIRI().equals(IRI.create(PREFIX, "valid_from")))
@@ -41,6 +41,7 @@ public class TemporalObjectBuilder {
                 return Optional.of(TemporalObjectBuilder.valid()
                         .from(validFromTemporal)
                         .to(LocalDateTime.parse(valid_to.get().getObject().getLiteral(), DateTimeFormatter.ISO_DATE_TIME))
+                        .isDefault(isDefault)
                         .withRelations(valid_from.get().getSubject().asOWLNamedIndividual()));
             } else {
                 return Optional.of(TemporalObjectBuilder.valid()
@@ -74,6 +75,7 @@ public class TemporalObjectBuilder {
                 return Optional.of(TemporalObjectBuilder.exists()
                         .from(existsFromTemporal)
                         .to(LocalDateTime.parse(exists_to.get().getObject().getLiteral(), DateTimeFormatter.ISO_DATE_TIME))
+                        .isDefault(isDefault)
                         .withRelations(valid_from.get().getSubject().asOWLNamedIndividual()));
             } else {
                 return Optional.of(TemporalObjectBuilder.exists()

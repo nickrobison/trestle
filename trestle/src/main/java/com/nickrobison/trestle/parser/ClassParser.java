@@ -1,6 +1,9 @@
 package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.annotations.*;
+import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
+import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
+import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
 import com.nickrobison.trestle.types.ObjectRestriction;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -253,6 +256,85 @@ public class ClassParser {
         }
 
         return name;
+    }
+
+    public static String matchWithClassMember(Class<?> clazz, String classMember) {
+//        Check for a matching field
+        Field classField = null;
+        try {
+            classField = clazz.getDeclaredField(classMember);
+        } catch (NoSuchFieldException e) {
+
+        }
+
+        if (classField == null) {
+            final Optional<Field> dataField = Arrays.stream(clazz.getDeclaredFields())
+                    .filter(f -> f.isAnnotationPresent(DataProperty.class))
+                    .filter(f -> f.getAnnotation(DataProperty.class).name().equals(classMember))
+                    .findFirst();
+
+            if (dataField.isPresent()) {
+                return dataField.get().getName();
+            }
+
+        } else {
+            return classField.getName();
+        }
+
+//        Check for a matching method
+        final Optional<String> matchingMethod = Arrays.stream(clazz.getDeclaredMethods())
+                .map(ClassParser::filterMethodName)
+                .filter(name -> name.equals(classMember))
+                .findFirst();
+
+        if (matchingMethod.isPresent()) {
+            return matchingMethod.get();
+        }
+
+        final Optional<Method> annotatedMethod = Arrays.stream(clazz.getDeclaredMethods())
+                .filter(m -> m.isAnnotationPresent(DataProperty.class))
+                .filter(m -> m.getAnnotation(DataProperty.class).name().equals(classMember))
+                .findFirst();
+        if (annotatedMethod.isPresent()) {
+            return filterMethodName(annotatedMethod.get());
+        }
+
+//        Spatial
+        if (classMember.equals("asWKT")) {
+            final Optional<Field> spatialField = Arrays.stream(clazz.getDeclaredFields())
+                    .filter(f -> f.isAnnotationPresent(Spatial.class))
+                    .findFirst();
+
+            if (spatialField.isPresent()) {
+                return spatialField.get().getName();
+            }
+
+            final Optional<Method> spatialMethod = Arrays.stream(clazz.getDeclaredMethods())
+                    .filter(m -> m.isAnnotationPresent(Spatial.class))
+                    .findFirst();
+
+            if (spatialMethod.isPresent()) {
+                return filterMethodName(spatialMethod.get());
+            }
+        }
+
+//        Temporal
+//        Default
+        final Optional<Field> temporalField = Arrays.stream(clazz.getDeclaredFields())
+                .filter(f -> (f.isAnnotationPresent(DefaultTemporalProperty.class) | f.isAnnotationPresent(StartTemporalProperty.class) | f.isAnnotationPresent(EndTemporalProperty.class)))
+                .findFirst();
+        if (temporalField.isPresent()) {
+            return temporalField.get().getName();
+        }
+
+        final Optional<Method> temporalMethod = Arrays.stream(clazz.getDeclaredMethods())
+                .filter(f -> (f.isAnnotationPresent(DefaultTemporalProperty.class) | f.isAnnotationPresent(StartTemporalProperty.class) | f.isAnnotationPresent(EndTemporalProperty.class)))
+                .findFirst();
+        if (temporalMethod.isPresent()) {
+            return filterMethodName(temporalMethod.get());
+        }
+
+        throw new RuntimeException("Cannot match field or method");
     }
 
     private static OWL2Datatype getDatatypeFromAnnotation(DataProperty annotation, Class<?> objectClass) {

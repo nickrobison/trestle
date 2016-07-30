@@ -32,12 +32,12 @@ public class OracleTrestleTest {
     @BeforeEach
     public void setup() {
         reasoner = new TrestleReasoner.TrestleBuilder()
-                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-//                .withDBConnection(
-//                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-//                        "spatialUser",
-//                        "spatial1")
-                .withName("trestle_gual_test")
+//                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+                .withDBConnection(
+                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
+                        "spatialUser",
+                        "spatial1")
+                .withName("trestle_gual")
                 .withInputClasses(GAULTestClass.class)
                 .initialize()
                 .build();
@@ -92,7 +92,8 @@ public class OracleTrestleTest {
 //        reasoner.getUnderlyingOntology().writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);
 
 //        Try to read one out.
-        reasoner.readAsObject(GAULTestClass.class, IRI.create("trestle:", "Ancuabe"));
+        final GAULTestClass ancuabe = reasoner.readAsObject(GAULTestClass.class, IRI.create("trestle:", "Ancuabe"));
+        assertEquals(ancuabe.adm0_name, "Ancuabe", "Wrong name");
 
 
 //        Validate correctness

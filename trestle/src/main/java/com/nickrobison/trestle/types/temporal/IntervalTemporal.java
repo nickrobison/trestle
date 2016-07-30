@@ -3,7 +3,6 @@ package com.nickrobison.trestle.types.temporal;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.time.LocalDateTime;
@@ -101,8 +100,8 @@ public class IntervalTemporal extends TemporalObject {
             this.fromTime = from;
         }
 
-        public Builder isDefault() {
-            this.isDefault = true;
+        public Builder isDefault(boolean isDefault) {
+            this.isDefault = isDefault;
             return this;
         }
 
