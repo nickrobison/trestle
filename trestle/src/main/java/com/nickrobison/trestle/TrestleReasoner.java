@@ -1,5 +1,6 @@
 package com.nickrobison.trestle;
 
+import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.exceptions.UnregisteredClassException;
@@ -30,19 +31,6 @@ public class TrestleReasoner {
     private final OWLDataFactory df;
     //    Seems gross?
     private static final OWLClass datasetClass = OWLManager.getOWLDataFactory().getOWLClass(IRI.create("trestle:", "Dataset"));
-    public static final String PREFIX = "trestle:";
-    private static final IRI temporalClassIRI = IRI.create(PREFIX, "Temporal_Object");
-    private static final IRI temporalValidFromIRI = IRI.create(PREFIX, "valid_from");
-    private static final IRI temporalValidToIRI = IRI.create(PREFIX, "valid_to");
-    private static final IRI temporalExistsFromIRI = IRI.create(PREFIX, "exists_from");
-    private static final IRI temporalExistsToIRI = IRI.create(PREFIX, "exists_to");
-    private static final IRI temporalValidAtIRI = IRI.create(PREFIX, "valid_at");
-    private static final IRI temporalExistsAtIRI = IRI.create(PREFIX, "exists_at");
-    private static final IRI hasTemporalIRI = IRI.create(PREFIX, "has_temporal");
-    private static final IRI temporalOfIRI = IRI.create(PREFIX, "temporal_of");
-    private static final IRI hasFactIRI = IRI.create(PREFIX, "has_fact");
-    private static final IRI factOfIRI = IRI.create(PREFIX, "fact_of");
-    private static final IRI temporalDatatypeIRI = IRI.create("http://www.w3.org/2001/XMLSchema#dateTime");
 
     @SuppressWarnings("dereference.of.nullable")
     private TrestleReasoner(TrestleBuilder builder) throws OWLOntologyCreationException {
@@ -162,7 +150,7 @@ public class TrestleReasoner {
                         literalValue);
             });
 //            Get the temporals
-            final Optional<Set<OWLObjectProperty>> individualObjectProperty = ontology.getIndividualObjectProperty(individualIRI, hasTemporalIRI);
+            final Optional<Set<OWLObjectProperty>> individualObjectProperty = ontology.getIndividualObjectProperty(individualIRI, StaticIRI.hasTemporalIRI);
             Optional<TemporalObject> temporalObject = Optional.empty();
             if (individualObjectProperty.isPresent()) {
 //                There can only be 1 temporal, so just grab the first one.
@@ -210,7 +198,7 @@ public class TrestleReasoner {
     private void writeTemporalWithAssociation(TemporalObject temporal, OWLNamedIndividual individual) throws MissingOntologyEntity {
 //        Write the object
         final IRI temporalIRI = temporal.getIDAsIRI();
-        ontology.createIndividual(temporalIRI, temporalClassIRI);
+        ontology.createIndividual(temporalIRI, StaticIRI.temporalClassIRI);
 
 //        Write the properties
         if (temporal.isInterval()) {
@@ -218,35 +206,35 @@ public class TrestleReasoner {
 //                Write from
                 ontology.writeIndividualDataProperty(
                         temporalIRI,
-                        temporalValidFromIRI,
+                        StaticIRI.temporalValidFromIRI,
                         temporal.asInterval().getFromTime().toString(),
-                        temporalDatatypeIRI);
+                        StaticIRI.temporalDatatypeIRI);
 
 //                Write to, if exists
                 final Optional<LocalDateTime> toTime = temporal.asInterval().getToTime();
                 if (toTime.isPresent()) {
                     ontology.writeIndividualDataProperty(
                             temporalIRI,
-                            temporalValidToIRI,
+                            StaticIRI.temporalValidToIRI,
                             toTime.get().toString(),
-                            temporalDatatypeIRI);
+                            StaticIRI.temporalDatatypeIRI);
                 }
             } else {
                 //                Write from
                 ontology.writeIndividualDataProperty(
                         temporalIRI,
-                        temporalExistsFromIRI,
+                        StaticIRI.temporalExistsFromIRI,
                         temporal.asInterval().getFromTime().toString(),
-                        temporalDatatypeIRI);
+                        StaticIRI.temporalDatatypeIRI);
 
 //                Write to, if exists
                 final Optional<LocalDateTime> toTime = temporal.asInterval().getToTime();
                 if (toTime.isPresent()) {
                     ontology.writeIndividualDataProperty(
                             temporalIRI,
-                            temporalExistsToIRI,
+                            StaticIRI.temporalExistsToIRI,
                             toTime.get().toString(),
-                            temporalDatatypeIRI);
+                            StaticIRI.temporalDatatypeIRI);
                 }
             }
         } else {
@@ -254,22 +242,22 @@ public class TrestleReasoner {
             if (temporal.isValid()) {
                 ontology.writeIndividualDataProperty(
                         temporalIRI,
-                        temporalValidAtIRI,
+                        StaticIRI.temporalValidAtIRI,
                         temporal.asPoint().getPointTime().toString(),
-                        temporalDatatypeIRI);
+                        StaticIRI.temporalDatatypeIRI);
             } else {
                 ontology.writeIndividualDataProperty(
                         temporalIRI,
-                        temporalExistsAtIRI,
+                        StaticIRI.temporalExistsAtIRI,
                         temporal.asPoint().getPointTime().toString(),
-                        temporalDatatypeIRI);
+                        StaticIRI.temporalDatatypeIRI);
             }
         }
 
 //        Associate with individual
         ontology.writeIndividualObjectProperty(
                 individual.getIRI(),
-                hasTemporalIRI,
+                StaticIRI.hasTemporalIRI,
                 temporalIRI);
     }
 

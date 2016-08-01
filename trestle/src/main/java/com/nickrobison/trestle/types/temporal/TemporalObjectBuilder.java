@@ -8,12 +8,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.Set;
 
+import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
+
 /**
  * Created by nrobison on 6/30/16.
  */
 public class TemporalObjectBuilder {
 
-    public static final String PREFIX = "http://nickrobison.com/dissertation/trestle.owl#";
+
 
     private TemporalObjectBuilder() {}
 

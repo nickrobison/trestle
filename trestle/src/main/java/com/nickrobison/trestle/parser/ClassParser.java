@@ -17,13 +17,13 @@ import java.lang.reflect.*;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
+
 /**
  * Created by nrobison on 6/28/16.
  */
 @SuppressWarnings("initialization")
 public class ClassParser {
-
-    public static final String PREFIX = "trestle:";
 
     enum AccessType {
         FIELD,
@@ -136,8 +136,8 @@ public class ClassParser {
                         | objectMember.isAnnotationPresent(IndividualIdentifier.class)
                         | (objectMember.getAnnotations().length == 0)))
 //                We need this to filter out setters and equals/hashcode stuff
-                & ( objectMember.getParameters().length == 0
-                | !(objectMember.getName().equals("hashCode"))
+                & ((objectMember.getParameters().length == 0)
+                | !(objectMember.getName() == "hashCode")
                 | !(objectMember.getReturnType() == void.class));
     }
 

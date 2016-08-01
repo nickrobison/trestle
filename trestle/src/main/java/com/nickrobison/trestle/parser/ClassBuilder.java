@@ -17,8 +17,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.nickrobison.trestle.parser.ClassParser.PREFIX;
 import static com.nickrobison.trestle.parser.ClassParser.df;
+import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
 
 /**
  * Created by nrobison on 7/28/16.
