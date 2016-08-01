@@ -18,7 +18,7 @@
         <geotools.version>14.2</geotools.version>
         <storm.version>1.0.0</storm.version>
         <provided.scope>provided</provided.scope>
-        <jmh.version>1.12</jmh.version>
+        <jmh.version>1.13</jmh.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -116,7 +116,7 @@
                 <groupId>org.openjdk.jmh</groupId>
                 <artifactId>jmh-generator-annprocess</artifactId>
                 <version>${jmh.version}</version>
-                <scope>test</scope>
+                <scope>provided</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
