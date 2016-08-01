@@ -5,19 +5,20 @@ import com.nickrobison.trestle.types.TemporalType;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.time.LocalDateTime;
+import java.time.temporal.Temporal;
 import java.util.*;
 
 /**
  * Created by nrobison on 6/30/16.
  */
-public class PointTemporal extends TemporalObject {
+public class PointTemporal<T extends Temporal> extends TemporalObject {
 
     private static final TemporalType TYPE = TemporalType.POINT;
     private final TemporalScope scope;
-    private final LocalDateTime atTime;
+    private final T atTime;
     private final Optional<String> parameterName;
 
-    private PointTemporal(Builder builder) {
+    private PointTemporal(Builder<T> builder) {
         super(UUID.randomUUID().toString(), builder.relations);
         this.scope = builder.scope;
         this.atTime = builder.atTime;
@@ -53,7 +54,7 @@ public class PointTemporal extends TemporalObject {
         return false;
     }
 
-    public LocalDateTime getPointTime() {
+    public T getPointTime() {
         return this.atTime;
     }
 
@@ -61,14 +62,14 @@ public class PointTemporal extends TemporalObject {
         return this.parameterName.orElse("pointTime");
     }
 
-    public static class Builder {
+    public static class Builder<T extends Temporal> {
 
         private TemporalScope scope;
-        private LocalDateTime atTime;
+        private T atTime;
         private Optional<Set<OWLNamedIndividual>> relations = Optional.empty();
         private Optional<String> parameterName = Optional.empty();
 
-        Builder(TemporalScope scope, LocalDateTime at) {
+        Builder(TemporalScope scope, T at) {
             this.scope = scope;
             this.atTime = at;
         }
@@ -80,7 +81,7 @@ public class PointTemporal extends TemporalObject {
 
         public PointTemporal withRelations(OWLNamedIndividual... relations) {
             this.relations = Optional.of(new HashSet<>(Arrays.asList(relations)));
-            return new PointTemporal(this);
+            return new PointTemporal<>(this);
         }
 
     }
