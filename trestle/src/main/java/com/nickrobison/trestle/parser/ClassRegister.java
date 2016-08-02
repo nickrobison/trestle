@@ -27,37 +27,21 @@ public class ClassRegister {
     private ClassRegister() {
     }
 
-    public static void ValidateClass(Class<?> clazz) {
+    public static void ValidateClass(Class<?> clazz) throws TrestleClassException {
 
 //        final Class aClass = clazz.getClass();
 
         //        Check for class name
-        try {
-            checkForClassName(clazz);
-        } catch (InvalidClassException e) {
-            throw new RuntimeException(e);
-        }
+        checkForClassName(clazz);
 
 //        Check for individual identifier
-        try {
-            checkIndividualIdentifier(clazz);
-        } catch (InvalidClassException e) {
-            throw new RuntimeException(e);
-        }
+        checkIndividualIdentifier(clazz);
 
 //        Check for constructor
-        try {
-            checkForConstructor(clazz);
-        } catch (TrestleClassException e) {
-            throw new RuntimeException(e);
-        }
+        checkForConstructor(clazz);
 
 //        Check for valid spatial
-        try {
-            checkForSpatial(clazz);
-        } catch (TrestleClassException e) {
-            throw new RuntimeException(e);
-        }
+        checkForSpatial(clazz);
 
 //        Check for valid temporals
 //        if (aClass.isAnnotationPresent(TemporalProperty.class)) {
@@ -164,8 +148,8 @@ public class ClassRegister {
 
 //            Check to ensure it matches a constructor argument
             final Spatial annotation = spatialField.getAnnotation(Spatial.class);
-            if (!annotation.argName().equals("")) {
-                matchConstructorArgument(aClass, annotation.argName());
+            if (!annotation.name().equals("")) {
+                matchConstructorArgument(aClass, annotation.name());
             }
         }
 
@@ -189,8 +173,8 @@ public class ClassRegister {
                         throw new UnsupportedTypeException(Spatial.class, spatialMethod.getGenericReturnType());
                 }
                 final Spatial annotation = spatialMethod.getAnnotation(Spatial.class);
-                if (!annotation.argName().equals("")) {
-                    matchConstructorArgument(aClass, annotation.argName());
+                if (!annotation.name().equals("")) {
+                    matchConstructorArgument(aClass, annotation.name());
                 }
             }
         }
