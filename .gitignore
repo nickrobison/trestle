@@ -3,6 +3,7 @@ analysis/
 build/
 src/test/resources/shapefiles/
 src/test/resources/out/
+gaulintegrator/src/test/resources/
 
 logs
 project/project
