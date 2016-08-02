@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.Temporal;
 import java.util.ArrayList;
@@ -262,12 +263,13 @@ public class TemporalParser {
     }
 
     private static TemporalObject buildIntervalTemporal(Temporal start, @Nullable Temporal end, TemporalScope scope, OWLNamedIndividual... relations) {
-        final LocalDateTime from = LocalDateTime.from(start);
+//        We store all temporals as datetimes, so we need to convert them.
+        final LocalDateTime from = parseTemporalToLocalDateTime(start);
 
         if (scope == TemporalScope.VALID) {
             final IntervalTemporal.Builder validBuilder = TemporalObjectBuilder.valid().from(from);
             if (end != null) {
-                final LocalDateTime to = LocalDateTime.from(end);
+                final LocalDateTime to = parseTemporalToLocalDateTime(end);
                 return validBuilder.to(to).withRelations(relations);
             }
 
@@ -275,7 +277,7 @@ public class TemporalParser {
         } else {
             final IntervalTemporal.Builder existsBuilder = TemporalObjectBuilder.exists().from(from);
             if (end != null) {
-                final LocalDateTime to = LocalDateTime.from(end);
+                final LocalDateTime to = parseTemporalToLocalDateTime(end);
                 return existsBuilder.to(to).withRelations(relations);
             }
 
@@ -283,8 +285,18 @@ public class TemporalParser {
         }
     }
 
+    private static LocalDateTime parseTemporalToLocalDateTime(Temporal temporal) {
+        if (temporal instanceof LocalDateTime) {
+            return (LocalDateTime) temporal;
+        } else if (temporal instanceof LocalDate) {
+            return ((LocalDate) temporal).atStartOfDay();
+        } else {
+            return LocalDateTime.from(temporal);
+        }
+    }
+
     private static TemporalObject buildPointTemporal(Temporal pointTemporal, TemporalScope scope, OWLNamedIndividual... relations) {
-        final LocalDateTime at = LocalDateTime.from(pointTemporal);
+        final LocalDateTime at = parseTemporalToLocalDateTime(pointTemporal);
 
         if (scope == TemporalScope.VALID) {
             return TemporalObjectBuilder.valid().at(at).withRelations(relations);
