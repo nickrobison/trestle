@@ -20,8 +20,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class ReadShapes {
     private static final Logger logger = Logger.getLogger(ReadShapes.class);
-    private final InputStream is = this.getClass().getResourceAsStream("/shapefiles/combined.shp");
-    ;
+    private final InputStream is = this.getClass().getResourceAsStream("/shapefiles/combined_2000.shp");
 
     @Before
     public void setup() {
@@ -38,7 +37,7 @@ public class ReadShapes {
             shpReader.readPolygon();
             records++;
         }
-        assertEquals(3000, records);
+        assertEquals(1000, records);
     }
 
     @After
