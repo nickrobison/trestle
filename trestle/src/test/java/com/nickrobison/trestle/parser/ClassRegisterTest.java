@@ -129,7 +129,7 @@ public class ClassRegisterTest {
     private static class FullTest {
         @IndividualIdentifier
         public String thing;
-        @Spatial(argName = "wktString")
+        @Spatial(name = "wktString")
         public String wkt;
 
         FullTest() {
@@ -185,7 +185,7 @@ public class ClassRegisterTest {
             this.wkt = wkt;
         }
 
-        @Spatial(argName = "wrongWKT")
+        @Spatial(name = "wrongWKT")
         public String getWKT() {
             return this.wkt;
         }
