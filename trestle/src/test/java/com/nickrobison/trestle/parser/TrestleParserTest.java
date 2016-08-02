@@ -24,11 +24,12 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
 
 /**
  * Created by nrobison on 6/28/16.
  */
-@SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization"})
+@SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "unchecked"})
 public class TrestleParserTest {
 
     private GAULTestClass gaulTestClass;
@@ -54,16 +55,16 @@ public class TrestleParserTest {
 
 //        Test the class
         final OWLClass owlClass = ClassParser.GetObjectClass(gaulTestClass);
-        final OWLClass gaul_test1 = df.getOWLClass(IRI.create("trestle:", "GAUL_Test"));
+        final OWLClass gaul_test1 = df.getOWLClass(IRI.create(PREFIX, "GAUL_Test"));
         assertEquals(gaul_test1, owlClass, "Wrong OWL Class");
 //        Test the named individual
         OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(gaulTestClass);
-        OWLNamedIndividual gaul_test = df.getOWLNamedIndividual(IRI.create("trestle:", "test_me"));
+        OWLNamedIndividual gaul_test = df.getOWLNamedIndividual(IRI.create(PREFIX, "test_me"));
         assertEquals(gaul_test, owlNamedIndividual, "Wrong named individual");
 
 //        Test the data property parser
 //        Code
-        final OWLDataProperty adm0_code = df.getOWLDataProperty(IRI.create("trestle:", "ADM0_Code"));
+        final OWLDataProperty adm0_code = df.getOWLDataProperty(IRI.create(PREFIX, "ADM0_Code"));
         final OWLLiteral adm0_code_literal = df.getOWLLiteral("1234", OWL2Datatype.XSD_INTEGER);
         Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = ClassParser.GetDataProperties(gaulTestClass);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have properties");
@@ -74,7 +75,7 @@ public class TrestleParserTest {
         assertEquals(adm0_code_literal, parsed_code.getObject(), "Data property values are wrong");
 
 //        Name
-        final OWLDataProperty adm0_name = df.getOWLDataProperty(IRI.create("trestle:", "adm0_name"));
+        final OWLDataProperty adm0_name = df.getOWLDataProperty(IRI.create(PREFIX, "adm0_name"));
         final OWLLiteral adm0_name_literal = df.getOWLLiteral("gaulTestClass");
         final OWLDataPropertyAssertionAxiom parsed_name = owlDataPropertyAssertionAxioms.get().get(1);
         assertEquals(gaul_test, parsed_name.getSubject(), "Wrong named individual");
@@ -84,7 +85,7 @@ public class TrestleParserTest {
 //        Test the new gaul test
         //        Test the named individual
         owlNamedIndividual = ClassParser.GetIndividual(expandedGAULClass);
-        gaul_test = df.getOWLNamedIndividual(IRI.create("trestle:", "test_region"));
+        gaul_test = df.getOWLNamedIndividual(IRI.create(PREFIX, "test_region"));
         assertEquals(gaul_test, owlNamedIndividual, "Wrong named individual");
 
         owlDataPropertyAssertionAxioms = ClassParser.GetDataProperties(expandedGAULClass);
@@ -118,7 +119,7 @@ public class TrestleParserTest {
 //        Check methods
 //        Individual
         owlNamedIndividual = ClassParser.GetIndividual(testMethod);
-        gaul_test = df.getOWLNamedIndividual(IRI.create("trestle:", "string_from_method"));
+        gaul_test = df.getOWLNamedIndividual(IRI.create(PREFIX, "string_from_method"));
         assertEquals(gaul_test, owlNamedIndividual, "Wrong named individual");
 
 //        Data properties
@@ -147,19 +148,19 @@ public class TrestleParserTest {
         final OWLNamedIndividual owlNamedIndividual = df.getOWLNamedIndividual(IRI.create("trestle:", "string_from_method"));
 //        Build the data objects
         final OWLDataPropertyAssertionAxiom admcode = df.getOWLDataPropertyAssertionAxiom(
-                df.getOWLDataProperty(IRI.create("trestle:", "adm0_code")),
+                df.getOWLDataProperty(IRI.create(PREFIX, "adm0_code")),
                 owlNamedIndividual,
                 df.getOWLLiteral(4326));
         testProperties.add(admcode);
 
         final OWLDataPropertyAssertionAxiom adm0Name = df.getOWLDataPropertyAssertionAxiom(
-                df.getOWLDataProperty(IRI.create("trestle:", "adm0_name")),
+                df.getOWLDataProperty(IRI.create(PREFIX, "adm0_name")),
                 owlNamedIndividual,
                 df.getOWLLiteral("test region"));
         testProperties.add(adm0Name);
 
         final OWLDataPropertyAssertionAxiom testName = df.getOWLDataPropertyAssertionAxiom(
-                df.getOWLDataProperty(IRI.create("trestle:", "test_name")),
+                df.getOWLDataProperty(IRI.create(PREFIX, "test_name")),
                 owlNamedIndividual,
                 df.getOWLLiteral("new_test"));
         testProperties.add(testName);

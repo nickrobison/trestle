@@ -53,7 +53,7 @@ public class ClassParser {
         } else {
             className = clazz.getName();
         }
-        final IRI iri = IRI.create("trestle:", className);
+        final IRI iri = IRI.create(PREFIX, className);
         return df.getOWLClass(iri);
     }
 
@@ -89,7 +89,7 @@ public class ClassParser {
         }
 
         final OWLDataFactory df = OWLManager.getOWLDataFactory();
-        return df.getOWLNamedIndividual(IRI.create("trestle:", identifier));
+        return df.getOWLNamedIndividual(IRI.create(PREFIX, identifier));
     }
 
     //    TODO(nrobison): Implement this
@@ -137,8 +137,10 @@ public class ClassParser {
                         | (objectMember.getAnnotations().length == 0)))
 //                We need this to filter out setters and equals/hashcode stuff
                 & ((objectMember.getParameters().length == 0)
-                | !(objectMember.getName() == "hashCode")
-                | !(objectMember.getReturnType() == void.class));
+                & !(objectMember.getName() == "hashCode")
+                & !(objectMember.getName() == "equals")
+                & !(objectMember.getName() == "toString")
+                & !(objectMember.getReturnType() == void.class));
     }
 
 
@@ -166,6 +168,7 @@ public class ClassParser {
                     final OWLLiteral owlLiteral = df.getOWLLiteral(fieldValue, getDatatypeFromAnnotation(annotation, classField.getType()));
                     axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, owlLiteral));
                 } else if (classField.isAnnotationPresent(Spatial.class)) {
+//                    FIXME(nrobison): Make this prefix a constant
                     final IRI iri = IRI.create("geosparql:", "asWKT");
                     final OWLDataProperty spatialDataProperty = df.getOWLDataProperty(iri);
                     String fieldValue = null;
