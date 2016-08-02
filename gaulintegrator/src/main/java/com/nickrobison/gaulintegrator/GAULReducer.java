@@ -3,13 +3,16 @@ package com.nickrobison.gaulintegrator;
 import com.esri.core.geometry.*;
 import com.nickrobison.gaulintegrator.common.ObjectID;
 import com.nickrobison.trestle.TrestleReasoner;
+import com.nickrobison.trestle.exceptions.TrestleClassException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.*;
 import java.sql.Date;
@@ -24,7 +27,7 @@ import java.util.stream.Collectors;
  */
 public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritable, Text> {
 
-    private static final Logger logger = Logger.getLogger(GAULReducer.class);
+    private static final Logger logger = LoggerFactory.getLogger(GAULReducer.class);
     private static final String STARTDATE = "temporal.startdate";
     private static final String ENDDATE = "temporal.enddate";
     private static final String CONNECTION = "hadoop.database.uri";
@@ -47,8 +50,8 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 //        TODO(nrobison): Add exception handling
         conf = context.getConfiguration();
 //        TODO(nrobison): Move these to byte[]
-        startDate = LocalDate.ofYearDay(Integer.parseInt(conf.get(STARTDATE)), 01);
-        endDate = LocalDate.ofYearDay(Integer.parseInt(conf.get(ENDDATE)), 01).with(TemporalAdjusters.lastDayOfYear());
+        startDate = LocalDate.ofYearDay(Integer.parseInt(conf.get(STARTDATE)), 1);
+        endDate = LocalDate.ofYearDay(Integer.parseInt(conf.get(ENDDATE)), 1).with(TemporalAdjusters.lastDayOfYear());
         try {
             if (logger.isDebugEnabled()) {
                 dbConnection = DriverManager.getConnection("jdbc:postgresql://localhost/gaul", "nrobison", "");
@@ -61,18 +64,12 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
         }
 
 //        Setup the Trestle Reasoner
-//        final File ontology = new File("./trestle");
-//        try {
-//            reasoner = new TrestleReasoner.TrestleBuilder()
-//                    .withDBConnection(conf.get("reasoner.db.connection"),
-//                            conf.get("reasoner.db.username"),
-//                            conf.get("reasoner.db.password"))
-//                    .withInputClasses(MapperOutput.class)
-//                    .build();
-//        } catch (OWLOntologyCreationException e) {
-//            logger.error("Cannot build ontology", e);
-//            throw new RuntimeException("Cannot build ontology", e);
-//        }
+        reasoner = new TrestleReasoner.TrestleBuilder()
+                .withDBConnection(conf.get("reasoner.db.connection"),
+                        conf.get("reasoner.db.username"),
+                        conf.get("reasoner.db.password"))
+                .withInputClasses(MapperOutput.class)
+                .build();
 
     }
 
@@ -84,7 +81,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 //        This is a bit of a disaster, but since the set is relatively bounded, it should be ok.
         List<MapperOutput> inputRecords = new ArrayList<>();
         for (MapperOutput record : values) {
-            logger.debug("Added record: " + record.toString());
+            logger.debug("Added record: {}", record);
             inputRecords.add(WritableUtils.clone(record, configuration));
         }
 
@@ -103,7 +100,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //        If we have all the available records, than we can assume that the record is contiguous and just smash it into the database
         if (minDate <= startDate.getYear() && maxDate >= endDate.getYear()) {
-            logger.info("Object ID: " + key + " has all records");
+            logger.info("Object ID: {} has all the records", key);
             ObjectID objectID = new ObjectID();
 
 //            Are all the names the same?
@@ -114,7 +111,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                     .map(MapperOutput::getRegionName)
                     .collect(Collectors.toSet());
 
-            logger.debug("There are: " + polygonNames.size() + " unique names for this object");
+            logger.debug("There are: {} unique names for this object", polygonNames.size());
 
 //            Create the new GAUL Object
             String objectName = polygonNames.iterator().next().toString();
@@ -130,6 +127,11 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //            Store into database
 //            Store the object
+            try {
+                reasoner.writeObjectAsConcept(newObject);
+            } catch (TrestleClassException e) {
+                logger.error("Cannot write object to trestle", e);
+            }
             try {
                 final PreparedStatement preparedStatement = dbConnection.prepareStatement(newObject.generateSQLInsertStatement());
                 preparedStatement.execute();
@@ -317,6 +319,9 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
     @Override
     public void cleanup(Context context) {
+        File outputFile = new File("/Users/nrobison/Desktop/hadoop.owl");
+        reasoner.writeOntology(outputFile.toURI(), true);
+        reasoner.shutdown(false);
         try {
             dbConnection.close();
         } catch (SQLException e) {

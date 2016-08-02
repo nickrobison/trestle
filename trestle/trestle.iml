@@ -12,10 +12,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.21" level="project" />
     <orderEntry type="library" name="Maven: org.apache.jena:jena-tdb:1.1.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.jena:jena-arq:2.11.2" level="project" />
     <orderEntry type="library" name="Maven: org.apache.jena:jena-core:2.11.2" level="project" />
+    <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.21" level="project" />
     <orderEntry type="library" name="Maven: org.apache.jena:jena-iri:1.0.2" level="project" />
     <orderEntry type="library" name="Maven: org.slf4j:slf4j-log4j12:1.7.6" level="project" />
     <orderEntry type="library" name="Maven: log4j:log4j:1.2.17" level="project" />
@@ -140,7 +140,7 @@
     <orderEntry type="library" name="Maven: org.apache.marmotta:marmotta-model-vocabs:3.3.0" level="project" />
     <orderEntry type="library" name="Maven: org.apache.marmotta:kiwi-reasoner:3.3.0" level="project" />
     <orderEntry type="library" name="Maven: org.apache.marmotta:marmotta-sail-transactions:3.3.0" level="project" />
-    <orderEntry type="library" name="Maven: org.postgresql:postgresql:9.4.1208.jre7" level="project" />
+    <orderEntry type="library" name="Maven: org.postgresql:postgresql:9.4.1209.jre7" level="project" />
     <orderEntry type="library" name="Maven: com.openlink.virtuoso:jena2:1.0" level="project" />
     <orderEntry type="library" name="Maven: com.openlink.virtuoso:virtjdbc:4.0" level="project" />
     <orderEntry type="library" name="Maven: org.checkerframework:checker:2.0.1" level="project" />

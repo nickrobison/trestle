@@ -4,7 +4,8 @@ import com.esri.io.PolygonFeatureWritable;
 import com.nickrobison.gaulintegrator.common.Utils;
 import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -18,7 +19,7 @@ import static java.lang.StrictMath.toIntExact;
  */
 public class GAULMapper extends Mapper<LongWritable, PolygonFeatureWritable, LongWritable, MapperOutput> {
 
-    private static final Logger logger = Logger.getLogger(GAULMapper.class);
+    private static final Logger logger = LoggerFactory.getLogger(GAULMapper.class);
     private static final Text CODE = new Text("ADM2_CODE");
     private static final Text NAME = new Text("ADM2_NAME");
     private static final Text YEAR = new Text("TBL_YEAR");

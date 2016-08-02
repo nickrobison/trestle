@@ -3,7 +3,8 @@ package com.nickrobison.gaulintegrator.common;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.time.LocalDate;
@@ -15,7 +16,7 @@ import java.util.regex.Pattern;
  */
 public class Utils {
 
-    private static final Logger logger = Logger.getLogger(Utils.class);
+    private static final Logger logger = LoggerFactory.getLogger(Utils.class);
     private static final String regexString = "(?<=\\_).*?(?=\\_)";
     private static final Pattern regexPattern = Pattern.compile(regexString);
     public static final int TIMEDATASIZE = 2 * Long.BYTES;
@@ -34,7 +35,7 @@ public class Utils {
             StringBuilder stringYear = new StringBuilder(matcher.group(0));
             year = Integer.parseInt(stringYear.toString());
         } else {
-            logger.error("Cannot parse split input: " + ((FileSplit) inputSplit).getPath());
+            logger.error("Cannot parse split input: {}", ((FileSplit) inputSplit).getPath());
         }
 
         return new IntWritable(year);
