@@ -2,16 +2,22 @@ package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.annotations.OWLClassName;
+import com.nickrobison.trestle.annotations.Spatial;
 import com.nickrobison.trestle.annotations.TrestleCreator;
 import com.nickrobison.trestle.exceptions.InvalidClassException;
 import com.nickrobison.trestle.exceptions.MissingConstructorException;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
+import com.nickrobison.trestle.exceptions.UnsupportedTypeException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Created by nrobison on 7/26/16.
@@ -42,6 +48,13 @@ public class ClassRegister {
 //        Check for constructor
         try {
             checkForConstructor(clazz);
+        } catch (TrestleClassException e) {
+            throw new RuntimeException(e);
+        }
+
+//        Check for valid spatial
+        try {
+            checkForSpatial(clazz);
         } catch (TrestleClassException e) {
             throw new RuntimeException(e);
         }
@@ -81,9 +94,9 @@ public class ClassRegister {
         }
 
         if ((identifierFields.size() + identifierMethods.size()) > 1) {
-            throw new InvalidClassException(IndividualIdentifier.class.toString(), TrestleClassException.State.EXCESS);
+            throw new InvalidClassException(IndividualIdentifier.class.toString(), InvalidClassException.State.EXCESS);
         } else if ((identifierFields.size() + identifierMethods.size()) == 0) {
-            throw new InvalidClassException(IndividualIdentifier.class.toString(), TrestleClassException.State.MISSING);
+            throw new InvalidClassException(IndividualIdentifier.class.toString(), InvalidClassException.State.MISSING);
         }
     }
 
@@ -94,7 +107,7 @@ public class ClassRegister {
 //            if (className.className().equals("")) {
 //                throw new InvalidClassException(OWLClassName.class.toString(), TrestleClassException.State.INCOMPLETE, "className")
 //            }
-            throw new InvalidClassException(OWLClassName.class.toString(), TrestleClassException.State.MISSING);
+            throw new InvalidClassException(OWLClassName.class.toString(), InvalidClassException.State.MISSING);
         }
     }
 
@@ -107,12 +120,12 @@ public class ClassRegister {
             }
         }
         if (validConstructors.size() > 1) {
-            throw new InvalidClassException(aClass.getName(), TrestleClassException.State.EXCESS, "constructor");
+            throw new InvalidClassException(aClass.getName(), InvalidClassException.State.EXCESS, "constructor");
         } else if (validConstructors.size() == 1) {
         } else {
 //            If no constructors are declared as default, make sure there is only no-arg and arg
             if (declaredConstructors.length > 2) {
-                throw new InvalidClassException(aClass.getName(), TrestleClassException.State.EXCESS, "default constructors");
+                throw new InvalidClassException(aClass.getName(), InvalidClassException.State.EXCESS, "default constructors");
             } else {
 //                Make sure we can read the argument names
                 for (Constructor<?> constructor : declaredConstructors) {
@@ -124,5 +137,71 @@ public class ClassRegister {
                 }
             }
         }
+    }
+
+    static void checkForSpatial(Class<?> aClass) throws TrestleClassException {
+
+//        Check fields
+        final List<Field> spatialFields = Arrays.stream(aClass.getDeclaredFields())
+                .filter(f -> f.isAnnotationPresent(Spatial.class))
+                .collect(Collectors.toList());
+
+//        Can have a maximum of 1 spatial field
+        if (spatialFields.size() > 1) {
+            throw new InvalidClassException(aClass, InvalidClassException.State.EXCESS, "Spatial");
+        } else if (spatialFields.size() == 1) {
+//            Check to make sure the field is a type we can handle
+            final Field spatialField = spatialFields.get(0);
+            switch (spatialField.getType().getTypeName()) {
+                case "java.lang.String": {
+                    break;
+                }
+//                ESRI
+//                Geotools
+                default:
+                    throw new UnsupportedTypeException(Spatial.class, spatialField.getGenericType());
+            }
+
+//            Check to ensure it matches a constructor argument
+            final Spatial annotation = spatialField.getAnnotation(Spatial.class);
+            if (!annotation.argName().equals("")) {
+                matchConstructorArgument(aClass, annotation.argName());
+            }
+        }
+
+//        Check methods, if we haven't found any fields
+        if (spatialFields.size() == 0) {
+            final List<Method> spatialMethods = Arrays.stream(aClass.getDeclaredMethods())
+                    .filter(m -> m.isAnnotationPresent(Spatial.class))
+                    .collect(Collectors.toList());
+
+            if (spatialMethods.size() > 1) {
+                throw new InvalidClassException(aClass, InvalidClassException.State.EXCESS, "Spatial");
+            } else if (spatialMethods.size() == 1) {
+                final Method spatialMethod = spatialMethods.get(0);
+                switch (spatialMethod.getReturnType().getTypeName()) {
+                    case "java.lang.String": {
+                        break;
+                    }
+//                ESRI
+//                Geotools
+                    default:
+                        throw new UnsupportedTypeException(Spatial.class, spatialMethod.getGenericReturnType());
+                }
+                final Spatial annotation = spatialMethod.getAnnotation(Spatial.class);
+                if (!annotation.argName().equals("")) {
+                    matchConstructorArgument(aClass, annotation.argName());
+                }
+            }
+        }
+    }
+
+    private static void matchConstructorArgument(Class<?> clazz, String argName) throws TrestleClassException {
+        final Constructor<?> constructor = ClassBuilder.findTrestleConstructor(clazz).orElseThrow(MissingConstructorException::new);
+        final Optional<String> matchingArgument = Arrays.stream(constructor.getParameters())
+                .map(Parameter::getName)
+                .filter(n -> n.equals(argName))
+                .findFirst();
+        matchingArgument.orElseThrow(() -> new InvalidClassException(clazz, InvalidClassException.State.MISSING));
     }
 }

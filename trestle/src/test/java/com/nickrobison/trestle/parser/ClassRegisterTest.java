@@ -2,6 +2,7 @@ package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.annotations.OWLClassName;
+import com.nickrobison.trestle.annotations.Spatial;
 import com.nickrobison.trestle.annotations.TrestleCreator;
 import com.nickrobison.trestle.exceptions.InvalidClassException;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
@@ -10,8 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.nickrobison.trestle.exceptions.TrestleClassException.State.EXCESS;
-import static com.nickrobison.trestle.exceptions.TrestleClassException.State.MISSING;
+import static com.nickrobison.trestle.exceptions.InvalidClassException.State.EXCESS;
+import static com.nickrobison.trestle.exceptions.InvalidClassException.State.MISSING;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -23,9 +24,11 @@ public class ClassRegisterTest {
     private static EmptyTest eTest;
     private static FullTest fTest;
     private static ExtraMembers xTest;
+    private static SpatialMembers sTest;
     private static Class<? extends FullTest> fClass;
     private static Class<? extends EmptyTest> eClass;
     private static Class<? extends ExtraMembers> xClass;
+    private static Class<? extends SpatialMembers> sClass;
     private static final Logger logger = LoggerFactory.getLogger(ClassRegisterTest.class);
 
     @BeforeAll
@@ -33,10 +36,12 @@ public class ClassRegisterTest {
         fTest = new FullTest();
         eTest = new EmptyTest();
         xTest = new ExtraMembers();
+        sTest = new SpatialMembers();
 
         fClass = fTest.getClass();
         eClass = eTest.getClass();
         xClass = xTest.getClass();
+        sClass = sTest.getClass();
     }
 
     @Test
@@ -85,6 +90,22 @@ public class ClassRegisterTest {
         } catch (TrestleClassException e) {
             fail("Should not throw exception");
         }
+
+    }
+
+    @Test
+    public void testSpatial() {
+        try {
+            ClassRegister.checkForSpatial(fClass);
+        } catch (TrestleClassException e) {
+            fail("Should not throw exception");
+        }
+
+        InvalidClassException invalidClassException = expectThrows(InvalidClassException.class, () -> ClassRegister.checkForSpatial(xClass));
+        assertEquals(EXCESS, invalidClassException.getProblemState(), "Should have EXCESS problem state");
+
+        invalidClassException = expectThrows(InvalidClassException.class, () -> ClassRegister.checkForSpatial(sClass));
+        assertEquals(MISSING, invalidClassException.getProblemState(), "Should be missing the spatial argument in the constructor");
     }
 
 
@@ -107,10 +128,19 @@ public class ClassRegisterTest {
     @OWLClassName(className = "ready")
     private static class FullTest {
         @IndividualIdentifier
-        public String thing = "hello";
+        public String thing;
+        @Spatial(argName = "wktString")
+        public String wkt;
+
+        FullTest() {
+            this.thing = "testString";
+            this.wkt = "hellowkt";
+        }
 
         @TrestleCreator
-        FullTest() {
+        FullTest(String thing, String wktString) {
+            this.thing = thing;
+            this.wkt = wktString;
         }
     }
 
@@ -130,14 +160,34 @@ public class ClassRegisterTest {
         }
 
         @IndividualIdentifier
+        @Spatial
         public String getID1() {
             return this.id1;
         }
 
         @IndividualIdentifier
+        @Spatial
         public String getID2() {
             return this.id2;
         }
 
+
+    }
+
+    private static class SpatialMembers {
+        private final String wkt;
+
+        SpatialMembers() {
+            this.wkt = "testWKT";
+        }
+
+        SpatialMembers(String wkt) {
+            this.wkt = wkt;
+        }
+
+        @Spatial(argName = "wrongWKT")
+        public String getWKT() {
+            return this.wkt;
+        }
     }
 }

@@ -7,6 +7,14 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 public class InvalidClassException extends TrestleClassException {
 
+    public enum State {
+        INVALID,
+        MISSING,
+        INCOMPLETE,
+        //        I don't know what else to call this, it's when you have too many of something
+        EXCESS
+    }
+
     private final State problemState;
 
     public InvalidClassException(String className, State problemState) {
@@ -16,6 +24,16 @@ public class InvalidClassException extends TrestleClassException {
 
     public InvalidClassException(String className, State problemState, String member) {
         super(parseException(className, problemState, member));
+        this.problemState = problemState;
+    }
+
+    public InvalidClassException(Class<?> clazz, State problemState) {
+        super(parseException(clazz.getSimpleName(), problemState, null));
+        this.problemState = problemState;
+    }
+
+    public InvalidClassException(Class<?> clazz, State problemState, String member) {
+        super(parseException(clazz.getSimpleName(), problemState, member));
         this.problemState = problemState;
     }
 

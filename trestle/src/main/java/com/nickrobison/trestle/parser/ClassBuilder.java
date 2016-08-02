@@ -4,6 +4,12 @@ import com.nickrobison.trestle.annotations.DataProperty;
 import com.nickrobison.trestle.annotations.Spatial;
 import com.nickrobison.trestle.annotations.TrestleCreator;
 import com.nickrobison.trestle.exceptions.MissingConstructorException;
+import com.nickrobison.trestle.exceptions.TrestleClassException;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
+import org.checkerframework.checker.initialization.qual.UnknownInitialization;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDatatype;
@@ -97,9 +103,31 @@ public class ClassBuilder {
     }
 
     //    FIXME(nrobison): I think these warnings are important.
-    @SuppressWarnings({"type.argument.type.incompatible", "assignment.type.incompatible", "method.invocation.invalid"})
+    @SuppressWarnings({"type.argument.type.incompatible", "assignment.type.incompatible", "method.invocation.invalid", "argument.type.incompatible"})
     public static <T> T ConstructObject(Class<T> clazz, ConstructorArguments arguments) throws MissingConstructorException {
-        Constructor<?> declaredConstructor = null;
+        Constructor<?> declaredConstructor = findTrestleConstructor(clazz).orElseThrow(MissingConstructorException::new);
+
+//        Get the list of parameters
+        final Parameter[] parameters = declaredConstructor.getParameters();
+        List<String> parameterNames = Arrays.stream(parameters)
+                .map(Parameter::getName)
+                .collect(Collectors.toList());
+
+//        Get sorted types and values
+        final Class<?>[] sortedTypes = arguments.getSortedTypes(parameterNames);
+        final Object[] sortedValues = arguments.getSortedValues(parameterNames);
+        if ((sortedTypes.length != parameterNames.size()) | (sortedValues.length != parameterNames.size())) {
+            throw new RuntimeException("Missing parameters required for constructor generation");
+        }
+
+        return ConstructObject(clazz, sortedTypes, sortedValues);
+
+    }
+
+//    I don't like suppressing the @UnknownInitialization warning, but I can't figure out when it would case an error
+    @SuppressWarnings("initialization")
+    static Optional<Constructor<?>> findTrestleConstructor(Class<?> clazz) {
+        @MonotonicNonNull Constructor<?> declaredConstructor = null;
         final Optional<? extends Constructor<?>> specifiedConstructor = Arrays.stream(clazz.getDeclaredConstructors())
                 .filter(c -> c.isAnnotationPresent(TrestleCreator.class))
                 .findFirst();
@@ -120,25 +148,11 @@ public class ClassBuilder {
                 }
             }
         }
-        if (declaredConstructor == null) {
-            throw new MissingConstructorException("Can't find constructor");
+
+        if (declaredConstructor != null) {
+            return Optional.of(declaredConstructor);
         }
-
-//        Get the list of parameters
-        final Parameter[] parameters = declaredConstructor.getParameters();
-        List<String> parameterNames = Arrays.stream(parameters)
-                .map(Parameter::getName)
-                .collect(Collectors.toList());
-
-//        Get sorted types and values
-        final Class<?>[] sortedTypes = arguments.getSortedTypes(parameterNames);
-        final Object[] sortedValues = arguments.getSortedValues(parameterNames);
-        if ((sortedTypes.length != parameterNames.size()) | (sortedValues.length != parameterNames.size())) {
-            throw new RuntimeException("Missing parameters required for constructor generation");
-        }
-
-        return ConstructObject(clazz, sortedTypes, sortedValues);
-
+        return Optional.empty();
     }
 
     @SuppressWarnings({"unchecked", "type.argument.type.incompatible", "assignment.type.incompatible"})

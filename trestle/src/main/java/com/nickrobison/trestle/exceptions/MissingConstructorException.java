@@ -8,4 +8,8 @@ public class MissingConstructorException extends TrestleClassException {
     public MissingConstructorException(String message) {
         super(message);
     }
+
+    public MissingConstructorException() {
+        super("Can't find constructor");
+    }
 }
