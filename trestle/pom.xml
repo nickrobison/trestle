@@ -22,8 +22,6 @@
         <!--Checker properties-->
         <checker.version>2.0.1</checker.version>
         <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
-        <junit.platform.version>1.0.0-M1</junit.platform.version>
-        <junit.jupiter.version>5.0.0-M1</junit.jupiter.version>
         <trestle.location>file:///Users/nrobison/Developer/git/dissertation/trestle-ontology</trestle.location>
     </properties>
 
@@ -213,20 +211,16 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
-        <!--Need this for the intellij running and printing-->
         <dependency>
             <groupId>org.junit.vintage</groupId>
             <artifactId>junit-vintage-engine</artifactId>
-            <version>4.12.0-M1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
