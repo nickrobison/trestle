@@ -11,6 +11,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Created by nrobison on 8/1/16.
@@ -48,6 +50,8 @@ public class TemporalBuilderTest {
                 .withRelations(test_individual);
         assertEquals(valid_from_dt, intervalTemporal.getFromTime(), "Wrong from time");
         assertEquals(valid_to_dt, intervalTemporal.getToTime().get(), "Wrong to time");
+        assertTrue(intervalTemporal.getFromTime() instanceof LocalDateTime, "Should be LDT");
+        assertFalse(intervalTemporal.getFromTime() instanceof LocalDate, "Should not be LD");
 
         final PointTemporal pointTemporal = TemporalObjectBuilder
                 .exists()
@@ -65,6 +69,8 @@ public class TemporalBuilderTest {
                 .withRelations(test_individual);
         assertEquals(valid_from_d, intervalTemporal.getFromTime(), "Wrong from time");
         assertEquals(valid_to_d, intervalTemporal.getToTime().get(), "Wrong to time");
+        assertTrue(intervalTemporal.getFromTime() instanceof LocalDate, "Should be LDT");
+        assertFalse(intervalTemporal.getFromTime() instanceof LocalDateTime, "Should not be LDT");
 
         final PointTemporal pointTemporal = TemporalObjectBuilder
                 .exists()
