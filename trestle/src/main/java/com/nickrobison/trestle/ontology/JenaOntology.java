@@ -111,6 +111,8 @@ public abstract class JenaOntology implements ITrestleOntology {
 
     @Override
     public void associateOWLClass(OWLSubClassOfAxiom subClassOfAxiom) {
+        this.openAndLock(true);
+//        this.openTransaction(true);
 
         final Resource modelSubclass;
         if (containsResource(subClassOfAxiom.getSubClass().asOWLClass())) {
@@ -127,6 +129,7 @@ public abstract class JenaOntology implements ITrestleOntology {
         }
 
         modelSubclass.addProperty(RDFS.subClassOf, superClassResource);
+        this.unlockAndClose();
     }
 
     @Override
@@ -160,7 +163,7 @@ public abstract class JenaOntology implements ITrestleOntology {
 
     @Override
     public void writeIndividualDataProperty(OWLDataPropertyAssertionAxiom dataProperty) throws MissingOntologyEntity {
-        this.openTransaction(true);
+        this.openAndLock(true);
         //        Does the individual exist?
         final Resource modelResource = model.getResource(getFullIRIString(dataProperty.getSubject().asOWLNamedIndividual()));
         if (!model.containsResource(modelResource)) {
@@ -180,7 +183,7 @@ public abstract class JenaOntology implements ITrestleOntology {
         if (!modelResource.hasProperty(modelProperty)) {
             logger.error("Cannot set property {} on Individual {}", dataProperty.getProperty().asOWLDataProperty().getIRI(), dataProperty.getSubject().asOWLNamedIndividual().getIRI());
         }
-        this.commitTransaction();
+        this.unlockAndClose();
     }
 
     @Override
@@ -194,7 +197,7 @@ public abstract class JenaOntology implements ITrestleOntology {
 
     @Override
     public void writeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property) throws MissingOntologyEntity {
-        this.openTransaction(true);
+        this.openAndLock(true);
         final Resource modelSubject = model.getResource(getFullIRIString(property.getSubject().asOWLNamedIndividual()));
         final Resource modelObject = model.getResource(getFullIRIString(property.getObject().asOWLNamedIndividual()));
         final Property modelProperty = model.getProperty(getFullIRIString(property.getProperty().asOWLObjectProperty()));
@@ -219,7 +222,7 @@ public abstract class JenaOntology implements ITrestleOntology {
         if (!modelSubject.hasProperty(modelProperty)) {
             logger.error("Cannot set property {} on Individual {}", property.getProperty().asOWLObjectProperty().getIRI(), property.getSubject().asOWLNamedIndividual().getIRI());
         }
-        this.commitTransaction();
+        this.unlockAndClose();
     }
 
     @Override
@@ -231,8 +234,9 @@ public abstract class JenaOntology implements ITrestleOntology {
     public boolean containsResource(OWLNamedObject individual) {
         this.openTransaction(false);
         final Resource resource = model.getResource(getFullIRIString(individual));
+        final boolean hasResource = model.containsResource(resource);
         this.commitTransaction();
-        return model.containsResource(resource);
+        return hasResource;
     }
 
     public void writeOntology(IRI path, boolean validate) throws OWLOntologyStorageException {
