@@ -8,7 +8,9 @@ import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,10 +18,15 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static com.nickrobison.trestle.common.StaticIRI.*;
 
 /**
  * Created by nrobison on 7/22/16.
@@ -27,6 +34,50 @@ import java.util.Optional;
 public class TemporalParser {
 
     private static final Logger logger = LoggerFactory.getLogger(TemporalParser.class);
+
+
+    public static boolean IsDefault(Class<?> clazz) {
+
+        final Optional<Method> method = Arrays.stream(clazz.getDeclaredMethods())
+                .filter(m -> m.isAnnotationPresent(DefaultTemporalProperty.class))
+                .findFirst();
+        if (method.isPresent()) {
+            return true;
+        }
+
+        final Optional<Field> field = Arrays.stream(clazz.getDeclaredFields())
+                .filter(f -> f.isAnnotationPresent(DefaultTemporalProperty.class))
+                .findFirst();
+
+        if (field.isPresent()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static @Nullable Class<? extends Temporal> GetTemporalType(Class<?> clazz) {
+
+        final Optional<Field> first = Arrays.stream(clazz.getDeclaredFields())
+                .filter(f -> (f.isAnnotationPresent(DefaultTemporalProperty.class) | f.isAnnotationPresent(StartTemporalProperty.class) | f.isAnnotationPresent(EndTemporalProperty.class)))
+                .filter(f -> Temporal.class.isAssignableFrom(f.getType()))
+                .findFirst();
+
+        if (first.isPresent()) {
+            return (Class<? extends Temporal>) first.get().getType();
+        }
+
+        final Optional<Method> method = Arrays.stream(clazz.getDeclaredMethods())
+                .filter(m -> (m.isAnnotationPresent(DefaultTemporalProperty.class) | m.isAnnotationPresent(StartTemporalProperty.class) | m.isAnnotationPresent(EndTemporalProperty.class)))
+                .filter(m -> Temporal.class.isAssignableFrom(m.getReturnType()))
+                .findFirst();
+        if (method.isPresent()) {
+            return (Class<? extends Temporal>) method.get().getReturnType();
+        }
+
+        return null;
+
+    }
 
     public static Optional<List<TemporalObject>> GetTemporalObjects(Object inputObject) {
 
@@ -53,7 +104,6 @@ public class TemporalParser {
                 }
 
                 final Optional<TemporalObject> temporalObject = parseDefaultTemporal(fieldValue, annotation, owlNamedIndividual);
-
 
 
 //                TODO(nrobison): All of this is gross
@@ -91,7 +141,8 @@ public class TemporalParser {
                         break;
                     }
 
-                    default: throw new RuntimeException("Cannot initialize temporal object");
+                    default:
+                        throw new RuntimeException("Cannot initialize temporal object");
                 }
 
                 if (temporalObject != null) {
@@ -154,7 +205,8 @@ public class TemporalParser {
                         break;
                     }
 
-                    default: throw new RuntimeException("Cannot initialize temporal object");
+                    default:
+                        throw new RuntimeException("Cannot initialize temporal object");
                 }
                 break;
             }
@@ -184,12 +236,14 @@ public class TemporalParser {
                         break;
                     }
 
-                    default: throw new RuntimeException("Cannot initialize temporal object");
+                    default:
+                        throw new RuntimeException("Cannot initialize temporal object");
                 }
                 break;
             }
 
-            default: throw new RuntimeException("Cannot initialize temporal object");
+            default:
+                throw new RuntimeException("Cannot initialize temporal object");
         }
 
         if (temporalObject == null) {
@@ -239,11 +293,12 @@ public class TemporalParser {
                         break;
                     }
 
-                    default: throw new RuntimeException("Not sure what to access");
+                    default:
+                        throw new RuntimeException("Not sure what to access");
 
                 }
 
-                if ((endingFieldValue != null ) && !(endingFieldValue instanceof Temporal)) {
+                if ((endingFieldValue != null) && !(endingFieldValue instanceof Temporal)) {
                     throw new RuntimeException("Not a temporal field");
                 }
 
@@ -251,7 +306,8 @@ public class TemporalParser {
                 break;
             }
 
-            default: throw new RuntimeException("Cannot initialize temporal object");
+            default:
+                throw new RuntimeException("Cannot initialize temporal object");
         }
 
         if (temporalObject == null) {
@@ -293,6 +349,36 @@ public class TemporalParser {
         } else {
             return LocalDateTime.from(temporal);
         }
+    }
+
+    public static Temporal parseToTemporal(OWLLiteral literal, Class<? extends Temporal> destinationType) {
+        final Temporal parsedTemporal;
+        switch (literal.getDatatype().getBuiltInDatatype()) {
+            case XSD_DATE_TIME: {
+                switch (destinationType.getTypeName()) {
+                    case "java.time.LocalDateTime": {
+                        parsedTemporal = LocalDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME);
+                        break;
+                    }
+                    case "java.time.LocalDate": {
+                        parsedTemporal = LocalDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME).toLocalDate();
+                        break;
+                    }
+
+                    default: {
+                        logger.error("Unsupported parsing of temporal {} to {}", literal.getDatatype().getBuiltInDatatype(), destinationType.getTypeName());
+                        throw new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype().getBuiltInDatatype(), destinationType.getTypeName()));
+                    }
+                }
+                break;
+            }
+            default: {
+                logger.error("Unsupported parsing of XSD type {}", literal.getDatatype().getBuiltInDatatype());
+                throw new RuntimeException(String.format("Unsupported parsing of XSD type %s", literal.getDatatype().getBuiltInDatatype()));
+            }
+        }
+
+        return parsedTemporal;
     }
 
     private static TemporalObject buildPointTemporal(Temporal pointTemporal, TemporalScope scope, OWLNamedIndividual... relations) {

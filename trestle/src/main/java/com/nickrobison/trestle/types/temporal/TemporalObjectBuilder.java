@@ -1,13 +1,16 @@
 package com.nickrobison.trestle.types.temporal;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.Temporal;
 import java.util.Optional;
 import java.util.Set;
 
 import static com.nickrobison.trestle.common.StaticIRI.*;
+import static com.nickrobison.trestle.parser.TemporalParser.parseToTemporal;
 
 /**
  * Created by nrobison on 6/30/16.
@@ -26,7 +29,10 @@ public class TemporalObjectBuilder {
         return new ExistsTemporal.Builder();
     }
 
-    public static Optional<TemporalObject> buildTemporalFromProperties(Set<OWLDataPropertyAssertionAxiom> properties, boolean isDefault) {
+    public static Optional<TemporalObject> buildTemporalFromProperties(Set<OWLDataPropertyAssertionAxiom> properties, boolean isDefault, @Nullable  Class<? extends Temporal> temporalType) {
+        if (temporalType == null) {
+            temporalType = LocalDateTime.class;
+        }
 
 //        Try for valid first
         final Optional<OWLDataPropertyAssertionAxiom> valid_from = properties.stream()
@@ -34,7 +40,8 @@ public class TemporalObjectBuilder {
                 .findFirst();
 
         if (valid_from.isPresent()) {
-            final LocalDateTime validFromTemporal = LocalDateTime.parse(valid_from.get().getObject().getLiteral(), DateTimeFormatter.ISO_DATE_TIME);
+//            final Temporal validFromTemporal = LocalDateTime.parse(valid_from.get().getObject().getLiteral(), DateTimeFormatter.ISO_DATE_TIME);
+            final Temporal validFromTemporal = parseToTemporal(valid_from.get().getObject(), temporalType);
 //            Try for valid_to
             final Optional<OWLDataPropertyAssertionAxiom> valid_to = properties.stream()
                     .filter(dp -> dp.getProperty().asOWLDataProperty().getIRI().equals(temporalValidToIRI))
@@ -42,7 +49,7 @@ public class TemporalObjectBuilder {
             if (valid_to.isPresent()) {
                 return Optional.of(TemporalObjectBuilder.valid()
                         .from(validFromTemporal)
-                        .to(LocalDateTime.parse(valid_to.get().getObject().getLiteral(), DateTimeFormatter.ISO_DATE_TIME))
+                        .to(parseToTemporal(valid_from.get().getObject(), temporalType))
                         .isDefault(isDefault)
                         .withRelations(valid_from.get().getSubject().asOWLNamedIndividual()));
             } else {
@@ -56,7 +63,7 @@ public class TemporalObjectBuilder {
                     .findFirst();
             if (valid_at.isPresent()) {
                 return Optional.of(TemporalObjectBuilder.valid()
-                        .at(LocalDateTime.parse(valid_at.get().getObject().getLiteral(), DateTimeFormatter.ISO_DATE_TIME))
+                        .at(parseToTemporal(valid_from.get().getObject(), temporalType))
                         .withRelations(valid_at.get().getSubject().asOWLNamedIndividual()));
             }
         }
@@ -68,7 +75,7 @@ public class TemporalObjectBuilder {
                 .findFirst();
 
         if (exists_from.isPresent()) {
-            final LocalDateTime existsFromTemporal = LocalDateTime.parse(exists_from.get().getObject().getLiteral(), DateTimeFormatter.ISO_DATE_TIME);
+            final Temporal existsFromTemporal = parseToTemporal(valid_from.get().getObject(), temporalType);
 //            Try for exists_to
             final Optional<OWLDataPropertyAssertionAxiom> exists_to = properties.stream()
                     .filter(dp -> dp.getProperty().asOWLDataProperty().getIRI().equals(temporalExistsToIRI))
@@ -76,7 +83,7 @@ public class TemporalObjectBuilder {
             if (exists_to.isPresent()) {
                 return Optional.of(TemporalObjectBuilder.exists()
                         .from(existsFromTemporal)
-                        .to(LocalDateTime.parse(exists_to.get().getObject().getLiteral(), DateTimeFormatter.ISO_DATE_TIME))
+                        .to(parseToTemporal(valid_from.get().getObject(), temporalType))
                         .isDefault(isDefault)
                         .withRelations(exists_from.get().getSubject().asOWLNamedIndividual()));
             } else {
@@ -90,7 +97,7 @@ public class TemporalObjectBuilder {
                     .findFirst();
             if (exists_at.isPresent()) {
                 return Optional.of(TemporalObjectBuilder.valid()
-                        .at(LocalDateTime.parse(exists_at.get().getObject().getLiteral(), DateTimeFormatter.ISO_DATE_TIME))
+                        .at(parseToTemporal(valid_from.get().getObject(), temporalType))
                         .withRelations(exists_at.get().getSubject().asOWLNamedIndividual()));
             }
         }

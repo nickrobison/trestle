@@ -22,6 +22,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     private final boolean isDefault;
     private final Optional<String> startName;
     private final Optional<String> endName;
+    private final Class<T> temporalType;
 
     private IntervalTemporal(Builder<T> builder) {
         super(UUID.randomUUID().toString(), builder.relations);
@@ -31,6 +32,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         this.isDefault = builder.isDefault;
         this.startName = builder.startName;
         this.endName = builder.endName;
+        this.temporalType = (Class<T>) builder.fromTime.getClass();
     }
 
     @Override
@@ -51,6 +53,11 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     @Override
     public boolean isExists() {
         return (this.scope == TemporalScope.EXISTS);
+    }
+
+    @Override
+    public Class<? extends Temporal> getBaseTemporalType() {
+        return this.temporalType;
     }
 
     @Override

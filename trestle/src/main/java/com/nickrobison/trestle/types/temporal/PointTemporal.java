@@ -17,12 +17,14 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
     private final TemporalScope scope;
     private final T atTime;
     private final Optional<String> parameterName;
+    private final Class<T> temporalType;
 
     private PointTemporal(Builder<T> builder) {
         super(UUID.randomUUID().toString(), builder.relations);
         this.scope = builder.scope;
         this.atTime = builder.atTime;
         this.parameterName = builder.parameterName;
+        this.temporalType = (Class<T>) builder.atTime.getClass();
     }
     @Override
     public TemporalType getType() {
@@ -42,6 +44,11 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
     @Override
     public boolean isExists() {
         return scope == TemporalScope.EXISTS;
+    }
+
+    @Override
+    public Class<? extends Temporal> getBaseTemporalType() {
+        return this.temporalType;
     }
 
     @Override

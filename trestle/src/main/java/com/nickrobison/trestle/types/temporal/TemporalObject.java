@@ -5,6 +5,7 @@ import com.nickrobison.trestle.types.TemporalType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
+import java.time.temporal.Temporal;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -60,4 +61,6 @@ public abstract class TemporalObject {
     public abstract boolean isValid();
 
     public abstract boolean isExists();
+
+    public abstract Class<? extends Temporal> getBaseTemporalType();
 }
