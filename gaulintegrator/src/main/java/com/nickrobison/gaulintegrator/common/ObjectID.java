@@ -1,5 +1,7 @@
 package com.nickrobison.gaulintegrator.common;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.UUID;
@@ -33,6 +35,19 @@ public class ObjectID {
      */
     public ObjectID(UUID id, IDVersion version) {
         this.data = storeData(id, version);
+    }
+
+    /**
+     *
+     * @param id - Previously generated id (in string form)
+     * @param version - Type of ID, {@link IDVersion}
+     */
+    public ObjectID(String id, int version) {
+        @Nullable IDVersion idVersion = idFromInt(version);
+        if (idVersion == null) {
+            idVersion = IDVersion.SIMPLE;
+        }
+        this.data = storeData(UUID.fromString(id), idVersion);
     }
 
     /**
@@ -109,5 +124,13 @@ public class ObjectID {
 //        Now write the Version number
         bb.put(value);
         return bb.array();
+    }
+
+    private static @Nullable IDVersion idFromInt(int id) {
+        switch (id) {
+            case 1: return IDVersion.SIMPLE;
+            case 2: return IDVersion.HIERARCHICAL;
+            default: return null;
+        }
     }
 }

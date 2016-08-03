@@ -43,6 +43,9 @@ public class ClassRegister {
 //        Check for valid spatial
         checkForSpatial(clazz);
 
+//        Check for temporals
+        checkForTemporals(clazz);
+
 //        Check for valid temporals
 //        if (aClass.isAnnotationPresent(TemporalProperty.class)) {
 //            for (final Field field : aClass.getDeclaredFields()) {
@@ -178,6 +181,11 @@ public class ClassRegister {
                 }
             }
         }
+    }
+
+    //    TODO(nrobison): Make sure the spatial annotations have matching constructor arguments
+    private static void checkForTemporals(Class<?> aClass) {
+
     }
 
     private static void matchConstructorArgument(Class<?> clazz, String argName) throws TrestleClassException {

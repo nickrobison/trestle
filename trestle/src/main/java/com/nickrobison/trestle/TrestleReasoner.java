@@ -7,17 +7,24 @@ import com.nickrobison.trestle.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
 import com.nickrobison.trestle.parser.*;
+import com.nickrobison.trestle.types.TemporalScope;
+import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
 import java.net.URL;
 import java.time.LocalDateTime;
+import java.time.temporal.Temporal;
 import java.util.*;
+
+import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
 
 /**
  * Created by nrobison on 5/17/16.
@@ -66,6 +73,7 @@ public class TrestleReasoner {
 
     /**
      * Shutdown the ontology and potentially delete
+     *
      * @param delete - delete the ontology on shutdown?
      */
     public void shutdown(boolean delete) {
@@ -82,9 +90,38 @@ public class TrestleReasoner {
         return this.ontology.getInstances(owlClass, true);
     }
 
+    public void writeOntology(URI filePath, boolean validate) {
+        try {
+            ontology.writeOntology(IRI.create(filePath), validate);
+        } catch (OWLOntologyStorageException e) {
+            logger.error("Could not write ontology to {}", filePath, e);
+        }
+    }
+
+    /**
+     * Write a java object as a TS_Concept
+     *
+     * @param inputObject
+     * @throws TrestleClassException
+     */
     public void writeObjectAsConcept(Object inputObject) throws TrestleClassException {
 
-//        Is class in registry?
+        writeObject(inputObject, TemporalScope.EXISTS);
+    }
+
+    /**
+     * Write a java object as an TS_Fact
+     *
+     * @param inputObject
+     * @throws TrestleClassException
+     */
+    public void writeObjectAsFact(Object inputObject) throws TrestleClassException {
+        writeObject(inputObject, TemporalScope.VALID);
+    }
+
+    void writeObject(Object inputObject, TemporalScope scope) throws TrestleClassException {
+
+        //        Is class in registry?
         final Class aClass = inputObject.getClass();
         if (!this.registeredClasses.contains(aClass)) {
             throw new UnregisteredClassException(aClass);
@@ -102,7 +139,7 @@ public class TrestleReasoner {
         if (temporalObjects.isPresent()) {
             temporalObjects.get().forEach(temporal -> {
                 try {
-                    writeTemporalWithAssociation(temporal, owlNamedIndividual);
+                    writeTemporalWithAssociation(temporal, owlNamedIndividual, scope);
                 } catch (MissingOntologyEntity e) {
                     logger.error("Individual {} missing in ontology", owlNamedIndividual, e);
                 }
@@ -123,7 +160,12 @@ public class TrestleReasoner {
 //        Write the object properties
     }
 
-//    FIXME(nrobison): Get rid of this warning, not sure why it exists
+    @SuppressWarnings("argument.type.incompatible")
+    public <T> T readAsObject(Class<T> clazz, String objectID) throws TrestleClassException, MissingOntologyEntity {
+        return readAsObject(clazz, IRI.create(PREFIX, objectID.replaceAll("\\s+", "_")));
+    }
+
+    //    FIXME(nrobison): Get rid of this warning, not sure why it exists
     @SuppressWarnings("argument.type.incompatible")
     public <T> T readAsObject(Class<T> clazz, IRI individualIRI) throws TrestleClassException, MissingOntologyEntity {
 //        Contains class?
@@ -142,7 +184,7 @@ public class TrestleReasoner {
         if (dataProperties.isPresent()) {
             final Set<OWLDataPropertyAssertionAxiom> propertiesForIndividual = ontology.getPropertiesForIndividual(individualIRI, dataProperties.get());
             propertiesForIndividual.forEach(property -> {
-                final Class<?> javaClass = ClassBuilder.lookupJavaClassFromOWLDatatype(property.getObject().getDatatype());
+                final Class<?> javaClass = ClassBuilder.lookupJavaClassFromOWLDatatype(property, clazz);
                 final Object literalValue = ClassBuilder.extractOWLLiteral(javaClass, property.getObject());
                 constructorArguments.addArgument(
                         ClassParser.matchWithClassMember(clazz, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
@@ -150,6 +192,11 @@ public class TrestleReasoner {
                         literalValue);
             });
 //            Get the temporals
+//            Get the temporal objects to figure out the correct return type
+            final Optional<List<TemporalObject>> temporalObjectTypes = TemporalParser.GetTemporalObjects(clazz);
+
+            final Class<? extends Temporal> baseTemporalType = TemporalParser.GetTemporalType(clazz);
+
             final Optional<Set<OWLObjectProperty>> individualObjectProperty = ontology.getIndividualObjectProperty(individualIRI, StaticIRI.hasTemporalIRI);
             Optional<TemporalObject> temporalObject = Optional.empty();
             if (individualObjectProperty.isPresent()) {
@@ -159,7 +206,7 @@ public class TrestleReasoner {
                     throw new RuntimeException(String.format("Missing temporal for individual %s", individualIRI));
                 }
                 final Set<OWLDataPropertyAssertionAxiom> TemporalProperties = ontology.getAllPropertiesForIndividual(first.get().asOWLObjectProperty().getIRI());
-                temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(TemporalProperties, true);
+                temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(TemporalProperties, TemporalParser.IsDefault(clazz), baseTemporalType);
             }
 
             if (!temporalObject.isPresent()) {
@@ -172,37 +219,43 @@ public class TrestleReasoner {
                 final IntervalTemporal intervalTemporal = temporal.asInterval();
                 constructorArguments.addArgument(
                         ClassParser.matchWithClassMember(clazz, intervalTemporal.getStartName()),
-                        LocalDateTime.class,
+                        intervalTemporal.getBaseTemporalType(),
                         intervalTemporal.getFromTime());
                 if (!intervalTemporal.isDefault() & intervalTemporal.getToTime().isPresent()) {
                     constructorArguments.addArgument(
                             ClassParser.matchWithClassMember(clazz, intervalTemporal.getEndName()),
-                            LocalDateTime.class,
+                            intervalTemporal.getBaseTemporalType(),
                             intervalTemporal.getToTime().get());
                 }
             } else {
                 constructorArguments.addArgument(
                         ClassParser.matchWithClassMember(clazz, temporal.asPoint().getParameterName()),
-                        LocalDateTime.class,
+                        temporal.asPoint().getBaseTemporalType(),
                         temporal.asPoint().getPointTime());
             }
         }
         return ClassBuilder.ConstructObject(clazz, constructorArguments);
     }
 
-    public void registerClass(Class inputClass) {
+    public void registerClass(Class inputClass) throws TrestleClassException {
         ClassRegister.ValidateClass(inputClass);
         this.registeredClasses.add(inputClass);
     }
 
-    private void writeTemporalWithAssociation(TemporalObject temporal, OWLNamedIndividual individual) throws MissingOntologyEntity {
+    private void writeTemporalWithAssociation(TemporalObject temporal, OWLNamedIndividual individual, @Nullable TemporalScope overrideTemporalScope) throws MissingOntologyEntity {
 //        Write the object
         final IRI temporalIRI = temporal.getIDAsIRI();
         ontology.createIndividual(temporalIRI, StaticIRI.temporalClassIRI);
+        TemporalScope scope = temporal.getScope();
+        TemporalType type = temporal.getType();
 
-//        Write the properties
-        if (temporal.isInterval()) {
-            if (temporal.isValid()) {
+        if (overrideTemporalScope != null) {
+            scope = overrideTemporalScope;
+        }
+
+//        Write the properties using the scope and type variables set above
+        if (type == TemporalType.INTERVAL) {
+            if (scope == TemporalScope.VALID) {
 //                Write from
                 ontology.writeIndividualDataProperty(
                         temporalIRI,
@@ -239,7 +292,7 @@ public class TrestleReasoner {
             }
         } else {
 //            Is point
-            if (temporal.isValid()) {
+            if (scope == TemporalScope.VALID) {
                 ontology.writeIndividualDataProperty(
                         temporalIRI,
                         StaticIRI.temporalValidAtIRI,
@@ -260,7 +313,6 @@ public class TrestleReasoner {
                 StaticIRI.hasTemporalIRI,
                 temporalIRI);
     }
-
 
 
     public static class TrestleBuilder {
@@ -293,9 +345,17 @@ public class TrestleReasoner {
         }
 
         public TrestleBuilder withInputClasses(Class... inputClass) {
-            this.inputClasses.addAll(Arrays.asList(inputClass));
-//            validate the classes
-            this.inputClasses.forEach(ClassRegister::ValidateClass);
+//            this.inputClasses.addAll(Arrays.asList(inputClass));
+////            validate the classes
+            Arrays.stream(inputClass)
+                    .forEach(clazz -> {
+                        try {
+                            ClassRegister.ValidateClass(clazz);
+                            this.inputClasses.add(clazz);
+                        } catch (TrestleClassException e) {
+                            logger.error("Cannot validate class {}", clazz, e);
+                        }
+                    });
             return this;
         }
 

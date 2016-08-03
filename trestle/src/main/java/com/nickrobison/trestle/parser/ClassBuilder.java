@@ -4,16 +4,9 @@ import com.nickrobison.trestle.annotations.DataProperty;
 import com.nickrobison.trestle.annotations.Spatial;
 import com.nickrobison.trestle.annotations.TrestleCreator;
 import com.nickrobison.trestle.exceptions.MissingConstructorException;
-import com.nickrobison.trestle.exceptions.TrestleClassException;
-import org.checkerframework.checker.initialization.qual.UnderInitialization;
-import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLDataProperty;
-import org.semanticweb.owlapi.model.OWLDatatype;
-import org.semanticweb.owlapi.model.OWLLiteral;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,8 +16,9 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.nickrobison.trestle.parser.ClassParser.df;
 import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
+import static com.nickrobison.trestle.parser.ClassParser.df;
+import static com.nickrobison.trestle.parser.ClassParser.filterMethodName;
 
 /**
  * Created by nrobison on 7/28/16.
@@ -75,7 +69,7 @@ public class ClassBuilder {
         } else if (classMethod.isAnnotationPresent(Spatial.class)) {
             return IRI.create("geosparql:", "asWKT");
         } else {
-            return IRI.create(PREFIX, classMethod.getName());
+            return IRI.create(PREFIX, filterMethodName(classMethod));
         }
     }
 
@@ -124,7 +118,7 @@ public class ClassBuilder {
 
     }
 
-//    I don't like suppressing the @UnknownInitialization warning, but I can't figure out when it would case an error
+    //    I don't like suppressing the @UnknownInitialization warning, but I can't figure out when it would case an error
     @SuppressWarnings("initialization")
     static Optional<Constructor<?>> findTrestleConstructor(Class<?> clazz) {
         @MonotonicNonNull Constructor<?> declaredConstructor = null;
@@ -155,6 +149,27 @@ public class ClassBuilder {
         return Optional.empty();
     }
 
+    static boolean isConstructorArgument(Class<?> clazz, String argumentName, @Nullable Class<?> argumentType) throws MissingConstructorException {
+        final Optional<Constructor<?>> trestleConstructor = findTrestleConstructor(clazz);
+
+        final Optional<Parameter> matchingParam = Arrays.stream(trestleConstructor.orElseThrow(MissingConstructorException::new).getParameters())
+                .filter(p -> p.getName().equals(argumentName))
+                .findFirst();
+
+        if (matchingParam.isPresent()) {
+            if (argumentType != null) {
+
+                if (matchingParam.get().getAnnotatedType().equals(argumentType)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
     @SuppressWarnings({"unchecked", "type.argument.type.incompatible", "assignment.type.incompatible"})
 //    FIXME(nrobison): Fix the object casts
     public static <T> T extractOWLLiteral(Class<T> javaClass, OWLLiteral literal) {
@@ -164,8 +179,17 @@ public class ClassBuilder {
             case "int": {
                 return (T) (Object) literal.parseInteger();
             }
+
             case "java.lang.Integer": {
                 return (T) (Object) literal.parseInteger();
+            }
+
+            case "long": {
+                return (T) (Object) Long.parseLong(literal.getLiteral());
+            }
+
+            case "java.lang.Long": {
+                return (T) (Object) Long.parseLong(literal.getLiteral());
             }
 
             case "java.lang.LocalDateTime": {
@@ -191,10 +215,20 @@ public class ClassBuilder {
     }
 
     @SuppressWarnings("dereference.of.nullable")
-    public static Class<?> lookupJavaClassFromOWLDatatype(OWLDatatype datatype) {
+    public static Class<?> lookupJavaClassFromOWLDatatype(OWLDataPropertyAssertionAxiom dataproperty, @Nullable Class<?> classToVerify) {
         final Class<?> javaClass;
+        final OWLDatatype datatype = dataproperty.getObject().getDatatype();
         if (datatype.isBuiltIn()) {
-             javaClass = datatypeMap.get(datatype.getBuiltInDatatype());
+
+//            Check with the class to make sure the types are correct
+            OWL2Datatype dataTypeToLookup = null;
+            if (classToVerify != null) {
+                dataTypeToLookup = verifyOWLType(classToVerify, dataproperty.getProperty().asOWLDataProperty());
+            }
+            if (dataTypeToLookup == null) {
+                dataTypeToLookup = datatype.getBuiltInDatatype();
+            }
+            javaClass = datatypeMap.get(dataTypeToLookup);
             if (javaClass == null) {
                 throw new RuntimeException(String.format("Unsupported OWL2Datatype %s", datatype));
             }
@@ -207,6 +241,49 @@ public class ClassBuilder {
         }
 
         return javaClass;
+    }
+
+    private static @Nullable OWL2Datatype verifyOWLType(Class<?> classToVerify, OWLDataProperty property) {
+//        Check to see if it matches any annotated data methods
+        final Optional<Method> annotatedMethod = Arrays.stream(classToVerify.getDeclaredMethods())
+                .filter(m -> m.isAnnotationPresent(DataProperty.class))
+                .filter(m -> m.getAnnotation(DataProperty.class).name().equals(property.getIRI().getShortForm()))
+                .findFirst();
+
+        if (annotatedMethod.isPresent()) {
+            return ClassParser.getDatatypeFromJavaClass(annotatedMethod.get().getReturnType());
+        }
+
+        final Optional<Method> standardMethod = Arrays.stream(classToVerify.getDeclaredMethods())
+//                .filter(m -> m.isAnnotationPresent(DataProperty.class))
+                .filter(m -> filterMethodName(m).equals(property.getIRI().getShortForm()))
+                .findFirst();
+
+        if (standardMethod.isPresent()) {
+            return ClassParser.getDatatypeFromJavaClass(standardMethod.get().getReturnType());
+        }
+
+//        Fields
+        final Optional<Field> annotatedField = Arrays.stream(classToVerify.getDeclaredFields())
+                .filter(f -> f.isAnnotationPresent(DataProperty.class))
+                .filter(f -> f.getAnnotation(DataProperty.class).equals(property.getIRI().getShortForm()))
+                .findFirst();
+
+        if (annotatedField.isPresent()) {
+            return ClassParser.getDatatypeFromJavaClass(annotatedField.get().getType());
+        }
+
+        final Optional<Field> standardField = Arrays.stream(classToVerify.getDeclaredFields())
+//                .filter(f -> f.isAnnotationPresent(DataProperty.class))
+                .filter(f -> f.getName().equals(property.getIRI().getShortForm()))
+                .findFirst();
+
+        if (standardField.isPresent()) {
+            return ClassParser.getDatatypeFromJavaClass(standardField.get().getType());
+        }
+
+        return null;
+
     }
 
 

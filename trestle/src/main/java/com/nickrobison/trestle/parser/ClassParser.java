@@ -4,6 +4,7 @@ import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
+import com.nickrobison.trestle.exceptions.MissingConstructorException;
 import com.nickrobison.trestle.types.ObjectRestriction;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -69,6 +70,7 @@ public class ClassParser {
                 try {
 //                        We only grab the first
 //                    Replace the spaces with underscores
+//                    FIXME(nrobison): This should be broken into its own function
                     identifier = classField.get(inputObject).toString().replaceAll("\\s+", "_");
                     break;
                 } catch (IllegalAccessException e) {
@@ -249,7 +251,7 @@ public class ClassParser {
         return Optional.of(axioms);
     }
 
-    private static String filterMethodName(Method classMethod) {
+    static String filterMethodName(Method classMethod) {
         String name = classMethod.getName();
 //        remove get and
         if (name.startsWith("get")) {
@@ -268,6 +270,15 @@ public class ClassParser {
             classField = clazz.getDeclaredField(classMember);
         } catch (NoSuchFieldException e) {
 
+        }
+
+//        See if the member directly matches an existing constructor argument
+        try {
+            if (ClassBuilder.isConstructorArgument(clazz, classMember, null)) {
+                return classMember;
+            }
+        } catch (MissingConstructorException e) {
+            throw new RuntimeException("Cannot get constructor", e);
         }
 
         if (classField == null) {
@@ -304,6 +315,27 @@ public class ClassParser {
 
 //        Spatial
         if (classMember.equals("asWKT")) {
+
+//            Check for specified argument name
+            final Optional<String> methodArgName = Arrays.stream(clazz.getDeclaredMethods())
+                    .filter(m -> m.isAnnotationPresent(Spatial.class))
+                    .map(m -> m.getAnnotation(Spatial.class).name())
+                    .findFirst();
+
+            if (!methodArgName.orElse("nothing").equals("")) {
+                return methodArgName.orElse("");
+            }
+
+            final Optional<String> fieldArgName = Arrays.stream(clazz.getDeclaredFields())
+                    .filter(f -> f.isAnnotationPresent(Spatial.class))
+                    .map(f -> f.getAnnotation(Spatial.class).name())
+                    .findFirst();
+
+            if (!fieldArgName.orElse("").equals("")) {
+                return  methodArgName.orElse("");
+            }
+
+//            TODO(nrobison): I think these things can go away.
             final Optional<Field> spatialField = Arrays.stream(clazz.getDeclaredFields())
                     .filter(f -> f.isAnnotationPresent(Spatial.class))
                     .findFirst();
@@ -323,18 +355,54 @@ public class ClassParser {
 
 //        Temporal
 //        Default
-        final Optional<Field> temporalField = Arrays.stream(clazz.getDeclaredFields())
-                .filter(f -> (f.isAnnotationPresent(DefaultTemporalProperty.class) | f.isAnnotationPresent(StartTemporalProperty.class) | f.isAnnotationPresent(EndTemporalProperty.class)))
-                .findFirst();
-        if (temporalField.isPresent()) {
-            return temporalField.get().getName();
-        }
+        if (TemporalParser.IsDefault(clazz)) {
+            final Optional<Field> temporalField = Arrays.stream(clazz.getDeclaredFields())
+                    .filter(f -> (f.isAnnotationPresent(DefaultTemporalProperty.class)))
+                    .findFirst();
 
-        final Optional<Method> temporalMethod = Arrays.stream(clazz.getDeclaredMethods())
-                .filter(f -> (f.isAnnotationPresent(DefaultTemporalProperty.class) | f.isAnnotationPresent(StartTemporalProperty.class) | f.isAnnotationPresent(EndTemporalProperty.class)))
-                .findFirst();
-        if (temporalMethod.isPresent()) {
-            return filterMethodName(temporalMethod.get());
+            if (temporalField.isPresent()) {
+                return temporalField.get().getName();
+            }
+
+            final Optional<Method> temporalMethod = Arrays.stream(clazz.getDeclaredMethods())
+                    .filter(f -> (f.isAnnotationPresent(DefaultTemporalProperty.class)))
+                    .findFirst();
+            if (temporalMethod.isPresent()) {
+                return filterMethodName(temporalMethod.get());
+            }
+//        TODO(nrobison): This should be better. String matching is nasty.
+        } else if (classMember.toLowerCase().contains("start")) {
+//            Check for start/end temporal names
+            final Optional<Field> temporalField = Arrays.stream(clazz.getDeclaredFields())
+                    .filter(f -> (f.isAnnotationPresent(StartTemporalProperty.class)))
+                    .findFirst();
+
+            if (temporalField.isPresent()) {
+                return temporalField.get().getName();
+            }
+
+            final Optional<Method> temporalMethod = Arrays.stream(clazz.getDeclaredMethods())
+                    .filter(f -> (f.isAnnotationPresent(StartTemporalProperty.class)))
+                    .findFirst();
+            if (temporalMethod.isPresent()) {
+                return filterMethodName(temporalMethod.get());
+            }
+
+        } else {
+            final Optional<Field> temporalField = Arrays.stream(clazz.getDeclaredFields())
+                    .filter(f -> (f.isAnnotationPresent(EndTemporalProperty.class)))
+                    .findFirst();
+
+            if (temporalField.isPresent()) {
+                return temporalField.get().getName();
+            }
+
+            final Optional<Method> temporalMethod = Arrays.stream(clazz.getDeclaredMethods())
+                    .filter(f -> (f.isAnnotationPresent(EndTemporalProperty.class)))
+                    .findFirst();
+            if (temporalMethod.isPresent()) {
+                return filterMethodName(temporalMethod.get());
+            }
         }
 
         throw new RuntimeException("Cannot match field or method");
@@ -349,7 +417,7 @@ public class ClassParser {
         }
     }
 
-    private static
+    static
     @NotNull
     OWL2Datatype getDatatypeFromJavaClass(Class<?> javaTypeClass) {
         final OWL2Datatype owl2Datatype = owlDatatypeMap.get(javaTypeClass);
@@ -412,6 +480,9 @@ public class ClassParser {
                 }
                 case "boolean": {
                     return boolean.class;
+                }
+                case "long": {
+                    return Long.class;
                 }
                 default: {
                     throw new RuntimeException(String.format("Unsupported cast of %s to primitive type", returnClass.getTypeName()));

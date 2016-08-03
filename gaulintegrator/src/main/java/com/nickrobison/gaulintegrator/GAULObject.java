@@ -3,6 +3,10 @@ package com.nickrobison.gaulintegrator;
 import com.esri.core.geometry.*;
 import com.nickrobison.gaulintegrator.common.ObjectID;
 import com.nickrobison.gaulintegrator.common.Utils;
+import com.nickrobison.trestle.annotations.*;
+import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
+import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
+import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 import java.sql.Date;
 import java.time.LocalDate;
@@ -10,6 +14,7 @@ import java.time.LocalDate;
 /**
  * Created by nrobison on 5/6/16.
  */
+@OWLClassName(className = "gaul-test")
 public class GAULObject {
 
     private static final int DATESIZE = 16;
@@ -47,30 +52,55 @@ public class GAULObject {
         this.gaulCode = gaulCode;
     }
 
+    @TrestleCreator
+    public GAULObject(String id, long gaulCode, String objectName, LocalDate startDate, LocalDate endDate, String wkt) {
+        this.objectID = new ObjectID(id, 1);
+        this.gaulCode = gaulCode;
+        this.objectName = objectName;
+        this.validRange = Utils.WriteDateField(startDate, endDate);
+        this.shapePolygon = (Polygon) GeometryEngine.geometryFromWkt(wkt, 0, Geometry.Type.Polygon);
+    }
+
+    @Ignore
     public ObjectID getObjectID() {
         return objectID;
     }
 
+    @DataProperty(name = "id", datatype = OWL2Datatype.XSD_STRING)
+    public String getObjectIDAsString() {
+        return this.objectID.toString();
+    }
+
+    @IndividualIdentifier
     public String getObjectName() {
         return objectName;
     }
 
+    @Ignore
     public Polygon getShapePolygon() {
         return shapePolygon;
+    }
+
+    @DataProperty(name = "gaulCode", datatype = OWL2Datatype.XSD_LONG)
+    public long getGaulCode() {
+        return gaulCode;
     }
 
     /**
      * Get the object polygon in WKT format
      * @return String - WKT formatted polygon
      */
+    @Spatial(name = "wkt")
     public String getPolygonAsWKT() {
         return GeometryEngine.geometryToWkt(shapePolygon, 0);
     }
 
+    @StartTemporalProperty
     public LocalDate getStartDate() {
         return Utils.ReadStartDate(this.validRange);
     }
 
+    @EndTemporalProperty
     public LocalDate getEndDate() {
         return Utils.ReadExpirationDate(this.validRange);
     }
@@ -79,6 +109,7 @@ public class GAULObject {
      * Generate the required SQL Statement to insert the object into the datastore
      * @return String - SQL Insert statement
      */
+    @Ignore
     public String generateSQLInsertStatement() {
         final StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("INSERT INTO Objects (ObjectID, GAULCode, ObjectName, StartDate, EndDate, Geom) ");
@@ -130,9 +161,5 @@ public class GAULObject {
         int result = getObjectID().hashCode();
         result = 31 * result + getObjectName().hashCode();
         return result;
-    }
-
-    public long getGaulCode() {
-        return gaulCode;
     }
 }
