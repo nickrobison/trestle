@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.common;
 
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 /**
  * Created by nrobison on 8/1/16.
@@ -18,5 +19,5 @@ public class StaticIRI {
     public static final IRI temporalValidToIRI = IRI.create(PREFIX, "valid_to");
     public static final IRI temporalValidFromIRI = IRI.create(PREFIX, "valid_from");
     public static final IRI temporalClassIRI = IRI.create(PREFIX, "Temporal_Object");
-    public static final IRI temporalDatatypeIRI = IRI.create("http://www.w3.org/2001/XMLSchema#dateTime");
+    public static final IRI temporalDatatypeIRI = OWL2Datatype.XSD_DATE_TIME.getIRI();
 }
