@@ -199,7 +199,7 @@ public class TrestleParserTest {
 
 //        Properties
         testProperties.forEach(property -> {
-            final Class<?> javaClass = ClassBuilder.lookupJavaClassFromOWLDatatype(property.getObject().getDatatype());
+            final Class<?> javaClass = ClassBuilder.lookupJavaClassFromOWLDatatype(property, null);
             inputClasses.add(javaClass);
             final Object literalValue = ClassBuilder.extractOWLLiteral(javaClass, property.getObject());
 //            final Object literalValue = javaClass.cast(property.getObject().getLiteral());

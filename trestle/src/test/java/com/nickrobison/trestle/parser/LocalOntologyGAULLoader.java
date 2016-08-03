@@ -12,10 +12,7 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -126,6 +123,7 @@ public class LocalOntologyGAULLoader {
             }
         }
         ontology.unlockAndClose();
+        ontology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);
 
 //        Check to see if it worked.
         ontology.openAndLock(false);
@@ -155,16 +153,13 @@ public class LocalOntologyGAULLoader {
 //        assertEquals(2, resultSet.getRowNumber(), "Wrong number of intersected results");
 
 //        Try some inference
-        final OWLNamedIndividual ancuabe = df.getOWLNamedIndividual(IRI.create("trestle:", "Ancuabe"));
+        final OWLNamedIndividual ndorwa = df.getOWLNamedIndividual(IRI.create("trestle:", "Ndorwa"));
 
         final OWLObjectProperty has_temporal = df.getOWLObjectProperty(IRI.create("trestle:", "has_temporal"));
-        final Optional<Set<OWLObjectProperty>> has_temporalProperty = ontology.getIndividualObjectProperty(ancuabe, has_temporal);
+        final Optional<Set<OWLObjectProperty>> has_temporalProperty = ontology.getIndividualObjectProperty(ndorwa, has_temporal);
         assertTrue(has_temporalProperty.isPresent(), "Should have inferred temporal");
         assertEquals(1, has_temporalProperty.get().size(), "Should only have 1 temporal");
         ontology.unlockAndClose();
-
-
-//        ontology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);
     }
 
     @AfterEach
