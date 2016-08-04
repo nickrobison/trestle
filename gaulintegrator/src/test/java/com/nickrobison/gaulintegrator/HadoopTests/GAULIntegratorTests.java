@@ -1,65 +1,100 @@
 package com.nickrobison.gaulintegrator.HadoopTests;
 
-import com.esri.core.geometry.Envelope;
-import com.esri.core.geometry.Polygon;
-import com.esri.io.PolygonFeatureWritable;
+import com.esri.mapreduce.PolygonFeatureInputFormat;
 import com.nickrobison.gaulintegrator.GAULMapper;
+import com.nickrobison.gaulintegrator.GAULReducer;
+import com.nickrobison.gaulintegrator.IntegrationRunner;
 import com.nickrobison.gaulintegrator.MapperOutput;
-import com.nickrobison.gaulintegrator.GAULMapper;
-import com.nickrobison.gaulintegrator.MapperOutput;
-import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.HdfsConfiguration;
+import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
-import org.junit.Before;
-import org.junit.Test;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.hadoop.yarn.server.MiniYARNCluster;
+import org.apache.hadoop.yarn.server.resourcemanager.scheduler.ResourceScheduler;
+import org.apache.hadoop.yarn.server.resourcemanager.scheduler.fifo.FifoScheduler;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
-import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Properties;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Created by nrobison on 5/5/16.
  */
-//public class GAULIntegratorTests {
-//
-//    private static final Text CODE = new Text("ADM2_CODE");
-//    private static final Text NAME = new Text("ADM2_NAME");
-//    private static final Text YEAR = new Text("TBL_YEAR");
-//    private static final Text STRYEAR = new Text("STR2_YEAR");
-//    private static final Text EXPYEAR = new Text ("EXP2_YEAR");
-//
-//    MapDriver<LongWritable, PolygonFeatureWritable, LongWritable, MapperOutput> mapDriver;
-//
-//
-//    @Before
-//    public void setup() {
-//        GAULMapper mapper = new GAULMapper();
-//        mapDriver = MapDriver.newMapDriver(mapper);
-//    }
-//
-//    @Test
-//    public void testMapper() throws IOException {
-//        PolygonFeatureWritable testPolygon = new PolygonFeatureWritable();
-//        LocalDate testStartDate = LocalDate.of(1990, 01, 01);
-//        LocalDate testExpirationYear = LocalDate.of(1990, 12, 31);
-//        LocalDate testExpirationDate = testExpirationYear.plusYears(1).with(TemporalAdjusters.firstDayOfYear());
-//        Polygon polygon = testPolygon.polygon;
-//        Envelope env = new Envelope(1000, 2000, 1010, 2010);
-//        polygon.addEnvelope(env, false);
-//        testPolygon.attributes.put(CODE, new LongWritable(1234));
-//        testPolygon.attributes.put(NAME, new Text("Test Region"));
-//        testPolygon.attributes.put(YEAR, new IntWritable(1990));
-//        testPolygon.attributes.put(STRYEAR, new LongWritable(1000));
-//        testPolygon.attributes.put(EXPYEAR, new LongWritable(3000));
-//
-//        MapperOutput testOutput = new MapperOutput(new LongWritable(1234), new Text("Test Region"), new IntWritable(1990), testPolygon, testStartDate, testExpirationDate);
-//
-//
-//
-//        mapDriver.withInput(new LongWritable(), testPolygon);
-//        mapDriver.withOutput(new LongWritable(1234), testOutput);
-//        mapDriver.runTest();
-//    }
-//}
+public class GAULIntegratorTests {
+
+    private static FileSystem fileSystem;
+    private static HdfsConfiguration conf;
+    private static MiniDFSCluster cluster;
+
+    private static final Logger logger = LoggerFactory.getLogger(GAULIntegratorTests.class);
+
+    @BeforeAll
+    public static void setup() throws IOException {
+
+
+        final File baseDir = new File("./target/hdfs/gaul-test").getAbsoluteFile();
+        FileUtil.fullyDelete(baseDir);
+        conf = new HdfsConfiguration();
+        conf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, baseDir.getAbsolutePath());
+
+        final Properties userProperties = new Properties();
+        final InputStream is = IntegrationRunner.class.getClassLoader().getResourceAsStream("sd.properties");
+        userProperties.load(is);
+
+        for (String name : userProperties.stringPropertyNames()) {
+            conf.set(name, userProperties.getProperty(name));
+        }
+
+         fileSystem = FileSystem.get(conf);
+        final YarnConfiguration clusterConf = new YarnConfiguration();
+        cluster = new MiniDFSCluster.Builder(conf).build();
+    }
+
+    @Test
+    public void testReducer() throws IOException, ClassNotFoundException, InterruptedException {
+
+        URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/gates-test/");
+        URL OUT_DIR = GAULIntegratorTests.class.getClassLoader().getResource("out/");
+
+        Path inDir = new Path(IN_DIR.toString());
+        Path outDir = new Path("./target/out/");
+
+        fileSystem.delete(outDir, true);
+
+        Job job = Job.getInstance(conf, "GAUL Integrator");
+        job.setJarByClass(IntegrationRunner.class);
+        job.setMapperClass(GAULMapper.class);
+        job.setMapOutputKeyClass(LongWritable.class);
+        job.setMapOutputValueClass(MapperOutput.class);
+        job.setReducerClass(GAULReducer.class);
+
+        job.setInputFormatClass(PolygonFeatureInputFormat.class);
+        job.setOutputFormatClass(TextOutputFormat.class);
+        FileInputFormat.setInputDirRecursive(job, false);
+        FileInputFormat.setInputPaths(job, inDir);
+        FileOutputFormat.setOutputPath(job, outDir);
+        job.waitForCompletion(true);
+        assertTrue(job.isSuccessful());
+    }
+
+    @AfterAll
+    public static void close() throws IOException {
+        cluster.shutdown();
+    }
+}

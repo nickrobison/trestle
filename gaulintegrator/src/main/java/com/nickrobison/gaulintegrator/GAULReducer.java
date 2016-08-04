@@ -65,10 +65,14 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //        Setup the Trestle Reasoner
         reasoner = new TrestleReasoner.TrestleBuilder()
-                .withDBConnection(conf.get("reasoner.db.connection"),
-                        conf.get("reasoner.db.username"),
-                        conf.get("reasoner.db.password"))
-                .withInputClasses(MapperOutput.class)
+                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+//                .withDBConnection("jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial", "spatialUser", "spatial1")
+//                .withDBConnection(conf.get("reasoner.db.connection"),
+//                        conf.get("reasoner.db.username"),
+//                        conf.get("reasoner.db.password"))
+                .withInputClasses(GAULObject.class)
+                .initialize()
+                .withName("hadoop-test")
                 .build();
 
     }

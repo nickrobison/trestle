@@ -11,7 +11,8 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -23,7 +24,7 @@ import java.util.Properties;
  */
 public class IntegrationRunner extends Configured implements Tool {
 
-    private static final Logger logger = Logger.getLogger(IntegrationRunner.class);
+    private static final Logger logger = LoggerFactory.getLogger(IntegrationRunner.class);
 
     public static void main(String[] args) throws Exception {
 
@@ -58,15 +59,15 @@ public class IntegrationRunner extends Configured implements Tool {
         //        If we're in debug mode, truncate the table and delete the output dir
 //        TODO(nrobison): Truncate database table
         if (logger.isDebugEnabled()) {
-            logger.debug("Deleting output dir: " + outputDir.getName());
+            logger.debug("Deleting output dir: {}", outputDir.getName());
             outputDir.getFileSystem(conf).delete(outputDir, true);
         }
         FileOutputFormat.setOutputPath(job, outputDir);
 
 //        Add the cache files
-        final URL resource = IntegrationRunner.class.getClassLoader().getResource("trestle.owl");
-        logger.debug("Loading: " + URI.create(resource.toString() + "#trestle"));
-        job.addCacheFile(URI.create(resource.toString() + "#trestle"));
+//        final URL resource = IntegrationRunner.class.getClassLoader().getResource("trestle.owl");
+//        logger.debug("Loading: {}", URI.create(resource.toString() + "#trestle"));
+//        job.addCacheFile(URI.create(resource.toString() + "#trestle"));
 
         return job.waitForCompletion(true) ? 0 : 1;
     }
