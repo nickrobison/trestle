@@ -325,6 +325,7 @@ public abstract class JenaOntology implements ITrestleOntology {
 
     @Override
     public Set<OWLDataPropertyAssertionAxiom> getAllPropertiesForIndividual(OWLNamedIndividual individual) {
+        this.openTransaction(false);
         Set<OWLDataPropertyAssertionAxiom> properties = new HashSet<>();
         final Resource modelResource = model.getResource(getFullIRIString(individual));
         final StmtIterator stmtIterator = modelResource.listProperties();
@@ -332,19 +333,26 @@ public abstract class JenaOntology implements ITrestleOntology {
             final Statement statement = stmtIterator.nextStatement();
 //            Filter out RDF stuff
             if (!statement.getPredicate().getNameSpace().contains("rdf-syntax")) {
-                final OWLDataProperty owlDataProperty = df.getOWLDataProperty(IRI.create(statement.getPredicate().getURI()));
-                final Optional<OWLLiteral> owlLiteral = parseLiteral(statement.getLiteral());
-                if (owlLiteral.isPresent()) {
-                    properties.add(
-                            df.getOWLDataPropertyAssertionAxiom(
-                                    owlDataProperty,
-                                    individual,
-                                    owlLiteral.get()));
+                try {
+                    statement.getLiteral();
+                    final OWLDataProperty owlDataProperty = df.getOWLDataProperty(IRI.create(statement.getPredicate().getURI()));
+                    final Optional<OWLLiteral> owlLiteral = parseLiteral(statement.getLiteral());
+                    if (owlLiteral.isPresent()) {
+                        properties.add(
+                                df.getOWLDataPropertyAssertionAxiom(
+                                        owlDataProperty,
+                                        individual,
+                                        owlLiteral.get()));
+                    }
+                } catch (Exception e) {
+                    logger.debug("Can't get literal for {}", statement.getSubject(), e);
                 }
+
             }
         }
 
         stmtIterator.close();
+        this.commitTransaction();
         return properties;
     }
 
@@ -394,15 +402,26 @@ public abstract class JenaOntology implements ITrestleOntology {
                 owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_STRING.getIRI());
             } else if (statement.getLiteral().getDatatypeURI().equals(OWL2Datatype.XSD_DECIMAL.getIRI().toString())) {
 //                Work around Oracle bug by trying to parse an Int and see if it works
+//                TODO(nrobison): Add long parsing, in case dropping to int doesn't work.
                 owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_INTEGER.getIRI());
-                Integer test = null;
+                Integer testInt = null;
+                Long testLong = null;
                 try {
-                    test = Integer.parseInt(statement.getLiteral().getLexicalForm());
+                    testInt = Integer.parseInt(statement.getLiteral().getLexicalForm());
                 } catch (NumberFormatException e) {
-                    logger.debug("Couldn't parse to int, must actually be a decimal");
+                    logger.debug("Couldn't parse to int, might be a long or a decimal");
                 }
-                if (test == null) {
-                    owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_INTEGER.getIRI());
+
+                if (testInt == null) {
+                    owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_LONG.getIRI());
+                    try {
+                        testLong = Long.parseLong(statement.getLiteral().getLexicalForm());
+                    } catch (NumberFormatException e) {
+                        logger.debug("Couldn't parse long, must be a decimal");
+                    }
+                }
+                if (testInt == null & testLong == null) {
+                    owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_DECIMAL.getIRI());
                 }
             } else {
                 owlDatatype = df.getOWLDatatype(IRI.create(statement.getLiteral().getDatatypeURI()));
