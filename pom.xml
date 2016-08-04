@@ -29,6 +29,11 @@
                 <version>${hadoop.version}</version>
                 <scope>${provided.scope}</scope>
             </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-common</artifactId>
+                <version>${hadoop.version}</version>
+            </dependency>
             <!--Storm dependencies-->
             <!--<dependency>-->
                 <!--<groupId>org.apache.storm</groupId>-->
@@ -80,6 +85,11 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>1.7.21</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+                <version>1.7.12</version>
             </dependency>
             <!--Testing dependencies-->
             <dependency>
@@ -172,7 +182,7 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <hadoop.version>2.6.0-cdh5.5.2</hadoop.version>
+                <hadoop.version>2.6.0-cdh5.5.4</hadoop.version>
             </properties>
         </profile>
         <profile>
