@@ -195,7 +195,7 @@ public interface ITrestleOntology {
      * @param properties - List of OWLDataProperties to retrieve
      * @return - Set of OWLDataPropertyAssertionAxioms from given individual
      */
-    Set<OWLDataPropertyAssertionAxiom> getPropertiesForIndividual(IRI individualIRI, List<OWLDataProperty> properties);
+    Set<OWLDataPropertyAssertionAxiom> getDataPropertiesForIndividual(IRI individualIRI, List<OWLDataProperty> properties);
 
     /**
      * Return all the data properties and values for a given individual
@@ -203,21 +203,35 @@ public interface ITrestleOntology {
      * @param properties - List of OWLDataProperties to retrieve for individual
      * @return - Set of OWLDataPropertyAssertionAxioms from individual
      */
-    Set<OWLDataPropertyAssertionAxiom> getPropertiesForIndividual(OWLNamedIndividual individual, List<OWLDataProperty> properties);
+    Set<OWLDataPropertyAssertionAxiom> getDataPropertiesForIndividual(OWLNamedIndividual individual, List<OWLDataProperty> properties);
 
     /**
      * Get all asserted properties for a given individual
      * @param individualIRI - IRI of individual to get properties for
      * @return Set of OWLDataPropertyAssertionAxioms
      */
-    Set<OWLDataPropertyAssertionAxiom> getAllPropertiesForIndividual(IRI individualIRI);
+    Set<OWLDataPropertyAssertionAxiom> getAllDataPropertiesForIndividual(IRI individualIRI);
 
     /**
      * Get all asserted properties for a given individual
      * @param individual - OWLNamedIndividual to get properties for
      * @return - Set of OWLDataPropertyAssertionAxioms
      */
-    Set<OWLDataPropertyAssertionAxiom> getAllPropertiesForIndividual(OWLNamedIndividual individual);
+    Set<OWLDataPropertyAssertionAxiom> getAllDataPropertiesForIndividual(OWLNamedIndividual individual);
+
+    /**
+     * Get all object properties for a given individual IRI
+     * @param individual - IRI of individual to retrieve properties for
+     * @return - Set of OWLObjectPropertyAssertionAxioms for a given individual IRI
+     */
+    Set<OWLObjectPropertyAssertionAxiom> getAllObjectPropertiesForIndividual(IRI individual);
+
+    /**
+     * Get all object properties for a given individual
+     * @param individual - OWLNamedIndividual to retrieve properties for
+     * @return - Set of OWLObjectPropertyAssertionAxioms for a given individual
+     */
+    Set<OWLObjectPropertyAssertionAxiom> getAllObjectPropertiesForIndividual(OWLNamedIndividual individual);
 
     /**
      * Get an OWLNamedIndividual if it exists in the ontology
@@ -233,7 +247,7 @@ public interface ITrestleOntology {
      * @param property - OWLDataProperty to retrieve values from
      * @return - Optional Set of OWLLiteral values for given property of specific individual
      */
-    Optional<Set<OWLLiteral>> getIndividualProperty(IRI individualIRI, OWLDataProperty property);
+    Optional<Set<OWLLiteral>> getIndividualDataProperty(IRI individualIRI, OWLDataProperty property);
 
     /**
      * Return the set of data property values
@@ -241,7 +255,7 @@ public interface ITrestleOntology {
      * @param property - OWLDataProperty to access
      * @return - Optional set of OWLLiteral if a property exists on that member
      */
-    Optional<Set<OWLLiteral>> getIndividualProperty(OWLNamedIndividual individual, OWLDataProperty property);
+    Optional<Set<OWLLiteral>> getIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property);
 
     /**
      * Get the full IRI expanded from the DefaultPrefixManager
@@ -286,4 +300,25 @@ public interface ITrestleOntology {
      */
     ResultSet executeSPARQL(String query);
 
+    /**
+     * Open a transaction and lock it, for lots of bulk action
+     */
+    void lock();
+
+    /**
+     * Open a transaction and lock it
+     *
+     * @param write - Open writable transaction?
+     */
+    void openAndLock(boolean write);
+
+    /**
+     * Unlock the model to allow for closing the transaction
+     */
+    void unlock();
+
+    /**
+     * Unlock the transaction and commit it
+     */
+    void unlockAndCommit();
 }

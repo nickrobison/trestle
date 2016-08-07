@@ -310,22 +310,32 @@ public class SesameOntology implements ITrestleOntology {
     }
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> getPropertiesForIndividual(IRI individualIRI, List<OWLDataProperty> properties) {
+    public Set<OWLDataPropertyAssertionAxiom> getDataPropertiesForIndividual(IRI individualIRI, List<OWLDataProperty> properties) {
         return new HashSet<>();
     }
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> getPropertiesForIndividual(OWLNamedIndividual individual, List<OWLDataProperty> properties) {
+    public Set<OWLDataPropertyAssertionAxiom> getDataPropertiesForIndividual(OWLNamedIndividual individual, List<OWLDataProperty> properties) {
         return new HashSet<>();
     }
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> getAllPropertiesForIndividual(IRI individualIRI) {
+    public Set<OWLDataPropertyAssertionAxiom> getAllDataPropertiesForIndividual(IRI individualIRI) {
         return new HashSet<>();
     }
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> getAllPropertiesForIndividual(OWLNamedIndividual individual) {
+    public Set<OWLDataPropertyAssertionAxiom> getAllDataPropertiesForIndividual(OWLNamedIndividual individual) {
+        return new HashSet<>();
+    }
+
+    @Override
+    public Set<OWLObjectPropertyAssertionAxiom> getAllObjectPropertiesForIndividual(IRI individual) {
+        return new HashSet<>();
+    }
+
+    @Override
+    public Set<OWLObjectPropertyAssertionAxiom> getAllObjectPropertiesForIndividual(OWLNamedIndividual individual) {
         return new HashSet<>();
     }
 
@@ -335,14 +345,14 @@ public class SesameOntology implements ITrestleOntology {
     }
 
     @Override
-    public Optional<Set<OWLLiteral>> getIndividualProperty(IRI individualIRI, OWLDataProperty property) {
+    public Optional<Set<OWLLiteral>> getIndividualDataProperty(IRI individualIRI, OWLDataProperty property) {
         return Optional.empty();
     }
 
     @Override
 //    TODO(nrobison): Make this work
     @SuppressWarnings("argument.type.incompatible")
-    public Optional<Set<OWLLiteral>> getIndividualProperty(OWLNamedIndividual individual, OWLDataProperty property) {
+    public Optional<Set<OWLLiteral>> getIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property) {
 
         RepositoryConnection connection;
         try {
@@ -465,5 +475,25 @@ public class SesameOntology implements ITrestleOntology {
     @SuppressWarnings("return.type.incompatible")
     public ResultSet executeSPARQL(String query) {
         return null;
+    }
+
+    @Override
+    public void lock() {
+
+    }
+
+    @Override
+    public void openAndLock(boolean write) {
+
+    }
+
+    @Override
+    public void unlock() {
+
+    }
+
+    @Override
+    public void unlockAndCommit() {
+
     }
 }
