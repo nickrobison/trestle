@@ -202,7 +202,7 @@ public class LocalOntology extends JenaOntology {
     /**
      * Unlock the transaction and commit it
      */
-    public void unlockAndClose() {
+    public void unlockAndCommit() {
         logger.debug("Unlocking and closing");
         unlock();
         commitTransaction();

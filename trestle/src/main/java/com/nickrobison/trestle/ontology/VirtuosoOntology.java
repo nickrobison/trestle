@@ -131,7 +131,7 @@ public class VirtuosoOntology extends JenaOntology {
     }
 
     @Override
-    public void unlockAndClose() {
+    public void unlockAndCommit() {
         logger.debug("Unlocking and closing");
         unlock();
         commitTransaction();

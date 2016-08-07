@@ -36,27 +36,6 @@ public class OracleOntology extends JenaOntology {
 
     OracleOntology(String name, OWLOntology ont, DefaultPrefixManager pm, String connectionString, String username, String password) {
         super(name, createOracleModel(name, connectionString, username, password), ont, pm);
-//        this.ontologyName = name;
-//        this.ontology = ont;
-//        this.pm = pm;
-//        this.df = OWLManager.getOWLDataFactory();
-//
-////        Other ontology stuff
-//
-//        final Attachment owlprime = Attachment.createInstance(
-//                new String[]{}, "OWLPRIME",
-//                InferenceMaintenanceMode.NO_UPDATE, QueryOptions.DEFAULT);
-//        this.oracle = new Oracle(connectionString, username, password);
-//        try {
-////            We need this so that it actually creates the model if it doesn't exist
-//            ModelOracleSem.createOracleSemModel(oracle, ontologyName);
-//            this.graph = new GraphOracleSem(oracle, ontologyName, owlprime);
-//            this.model = new ModelOracleSem(graph);
-//        } catch (SQLException e) {
-//            throw new RuntimeException("Can't create oracle model", e);
-//        }
-
-
     }
 
     private static Model createOracleModel(String ontologyName, String connectionString, String username, String password) {
@@ -178,7 +157,7 @@ public class OracleOntology extends JenaOntology {
     }
 
     @Override
-    public void unlockAndClose() {
+    public void unlockAndCommit() {
         logger.debug("Unlocking and committing");
         commitTransaction();
         lock();
@@ -310,7 +289,7 @@ public class OracleOntology extends JenaOntology {
 //    }
 //
 //    //    TODO(nrobison): Make this return an iterator load into the HashSet
-//    public Optional<Set<OWLLiteral>> getIndividualProperty(OWLNamedIndividual individual, OWLDataProperty property) {
+//    public Optional<Set<OWLLiteral>> getIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property) {
 //
 //        final Statement modelProperty = model.getProperty(model.getResource(getFullIRI(individual.getIRI()).toString()),
 //                model.getProperty(getFullIRI(property.getIRI()).toString()));

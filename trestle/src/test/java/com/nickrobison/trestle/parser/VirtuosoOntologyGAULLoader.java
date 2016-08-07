@@ -2,7 +2,6 @@ package com.nickrobison.trestle.parser;
 
 import com.hp.hpl.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
-import com.nickrobison.trestle.ontology.LocalOntology;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
 import com.nickrobison.trestle.ontology.VirtuosoOntology;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
@@ -126,7 +125,7 @@ public class VirtuosoOntologyGAULLoader {
                 ontology.writeIndividualDataProperty(dataAxiom);
             }
         }
-        ontology.unlockAndClose();
+        ontology.unlockAndCommit();
 
 //        Check to see if it worked.
         ontology.openAndLock(false);
@@ -161,7 +160,7 @@ public class VirtuosoOntologyGAULLoader {
 //        final Optional<Set<OWLObjectProperty>> has_temporalProperty = ontology.getIndividualObjectProperty(ancuabe, has_temporal);
 //        assertTrue(has_temporalProperty.isPresent(), "Should have inferred temporal");
 //        assertEquals(1, has_temporalProperty.get().size(), "Should only have 1 temporal");
-        ontology.unlockAndClose();
+        ontology.unlockAndCommit();
 
 
 //        ontology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);

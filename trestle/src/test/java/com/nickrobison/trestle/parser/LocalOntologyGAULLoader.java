@@ -122,7 +122,7 @@ public class LocalOntologyGAULLoader {
                 ontology.writeIndividualDataProperty(dataAxiom);
             }
         }
-        ontology.unlockAndClose();
+        ontology.unlockAndCommit();
         ontology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);
 
 //        Check to see if it worked.
@@ -159,7 +159,7 @@ public class LocalOntologyGAULLoader {
         final Optional<Set<OWLObjectProperty>> has_temporalProperty = ontology.getIndividualObjectProperty(ndorwa, has_temporal);
         assertTrue(has_temporalProperty.isPresent(), "Should have inferred temporal");
         assertEquals(1, has_temporalProperty.get().size(), "Should only have 1 temporal");
-        ontology.unlockAndClose();
+        ontology.unlockAndCommit();
     }
 
     @AfterEach

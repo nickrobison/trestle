@@ -87,7 +87,7 @@ public class OntologyBenchmark {
 
     @TearDown(Level.Trial)
     public void close() {
-        ontology.unlockAndClose();
+        ontology.unlockAndCommit();
         ontology.close(true);
     }
 }
