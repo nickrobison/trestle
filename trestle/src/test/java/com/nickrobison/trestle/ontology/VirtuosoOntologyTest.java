@@ -1,11 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
-import com.esri.core.geometry.Geometry;
-import com.esri.core.geometry.GeometryEngine;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
-import com.nickrobison.trestle.ontology.LocalOntology;
-import com.nickrobison.trestle.ontology.OntologyBuilder;
-import com.nickrobison.trestle.ontology.VirtuosoOntology;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,23 +60,23 @@ public class VirtuosoOntologyTest {
         final OWLNamedIndividual burundi_0 = df.getOWLNamedIndividual(IRI.create("trestle:", "Burundi_0"));
         final OWLDataProperty property = df.getOWLDataProperty(IRI.create("trestle:", "ADM0_Code"));
 
-        Optional<Set<OWLLiteral>> individualProperty = ontology.getIndividualProperty(burundi_0, property);
+        Optional<Set<OWLLiteral>> individualProperty = ontology.getIndividualDataProperty(burundi_0, property);
         assertEquals(43, individualProperty.get().stream().findFirst().get().parseInteger(), "ADM0_Code is wrong");
 
 //        Try for wrong individual
         final OWLNamedIndividual burundi_wrong = df.getOWLNamedIndividual(IRI.create("trestle:", "Bwrong_0"));
-        final Optional<Set<OWLLiteral>> wrongIndividual = ontology.getIndividualProperty(burundi_wrong, property);
+        final Optional<Set<OWLLiteral>> wrongIndividual = ontology.getIndividualDataProperty(burundi_wrong, property);
         assertFalse(wrongIndividual.isPresent(), "Should be empty optional");
 
 //        Try for wrong property
         final OWLDataProperty property_wrong = df.getOWLDataProperty(IRI.create("trestle:", "ADM1_Code"));
-        final Optional<Set<OWLLiteral>> propertyWrong = ontology.getIndividualProperty(burundi_0, property_wrong);
+        final Optional<Set<OWLLiteral>> propertyWrong = ontology.getIndividualDataProperty(burundi_0, property_wrong);
         assertFalse(propertyWrong.isPresent(), "Should be empty optional");
 
 //        Try wkt literal
         final OWLNamedIndividual test_maputo = df.getOWLNamedIndividual(IRI.create("trestle:", "test_maputo"));
         final OWLDataProperty asWKT = df.getOWLDataProperty(IRI.create("geosparql:", "asWKT"));
-        individualProperty = ontology.getIndividualProperty(burundi_0, asWKT);
+        individualProperty = ontology.getIndividualDataProperty(burundi_0, asWKT);
         final OWLLiteral wktLiteral = individualProperty.get().stream().findFirst().get();
 //        Virtuoso returns wkts as doubles and without a comma
         assertEquals("POINT(30.0 10.0)", wktLiteral.getLiteral(), "WKT is wrong");
@@ -135,18 +130,51 @@ public class VirtuosoOntologyTest {
         ontology.writeIndividualDataProperty(owlDataPropertyAssertionAxiom);
         ontology.writeIndividualDataProperty(owlDataPropertyAssertionAxiom1);
 
-        Optional<Set<OWLLiteral>> individualProperty = ontology.getIndividualProperty(test_individual, trestle_property);
+        Optional<Set<OWLLiteral>> individualProperty = ontology.getIndividualDataProperty(test_individual, trestle_property);
         assertTrue(individualProperty.isPresent(), "Should have values");
         assertEquals(1, individualProperty.get().size(), "Wrong number of values");
         assertEquals(42, individualProperty.get().stream().findFirst().get().parseInteger(), "Wrong property");
 
-        individualProperty = ontology.getIndividualProperty(test_individual, test_new_property);
+        individualProperty = ontology.getIndividualDataProperty(test_individual, test_new_property);
         assertTrue(individualProperty.isPresent(), "Should have values");
         assertEquals(1, individualProperty.get().size(), "Wrong number of values");
         assertEquals(owlLiteral, individualProperty.get().stream().findFirst().get(), "Wrong property literal");
 
         ontology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/test.owl")), false);
 
+    }
+
+
+    @Test
+    public void testRelationAssociation() {
+
+//        Ensure ontology has correct relational classes
+        final OWLNamedIndividual muni1_muni2 = df.getOWLNamedIndividual(IRI.create("trestle:", "muni1_muni2"));
+        final Set<OWLDataPropertyAssertionAxiom> muniProperties = ontology.getAllDataPropertiesForIndividual(muni1_muni2);
+        assertEquals(1, muniProperties.size(), "Wrong number of properties");
+
+        final Set<OWLObjectPropertyAssertionAxiom> allObjectPropertiesForIndividual = ontology.getAllObjectPropertiesForIndividual(muni1_muni2);
+        assertEquals(2, allObjectPropertiesForIndividual.size(), "Wrong number of object properties");
+
+
+    }
+
+    @Test
+    public void testByteParsing() throws MissingOntologyEntity {
+
+        long smallLong = 4321;
+        long bigLong = Long.MAX_VALUE;
+
+        final OWLNamedIndividual long_test = df.getOWLNamedIndividual(IRI.create("trestle:", "long_test"));
+        final OWLDataProperty aLong = df.getOWLDataProperty(IRI.create("trestle:", "long"));
+        OWLLiteral owlLiteral = df.getOWLLiteral(Long.toString(smallLong), OWL2Datatype.XSD_LONG);
+        final OWLClass owlCl = df.getOWLClass(IRI.create("trestle:", "test"));
+        final OWLClassAssertionAxiom owlClassAssertionAxiom = df.getOWLClassAssertionAxiom(owlCl, long_test);
+        ontology.createIndividual(owlClassAssertionAxiom);
+        ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
+        final Optional<Set<OWLLiteral>> individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
+        assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
+//        Big long
     }
 
     @AfterEach
