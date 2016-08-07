@@ -182,7 +182,7 @@ public class TrestleReasoner {
         final ConstructorArguments constructorArguments = new ConstructorArguments();
         final Optional<List<OWLDataProperty>> dataProperties = ClassBuilder.getPropertyMembers(clazz);
         if (dataProperties.isPresent()) {
-            final Set<OWLDataPropertyAssertionAxiom> propertiesForIndividual = ontology.getPropertiesForIndividual(individualIRI, dataProperties.get());
+            final Set<OWLDataPropertyAssertionAxiom> propertiesForIndividual = ontology.getDataPropertiesForIndividual(individualIRI, dataProperties.get());
             propertiesForIndividual.forEach(property -> {
                 final Class<?> javaClass = ClassBuilder.lookupJavaClassFromOWLDatatype(property, clazz);
                 final Object literalValue = ClassBuilder.extractOWLLiteral(javaClass, property.getObject());
@@ -205,7 +205,7 @@ public class TrestleReasoner {
                 if (!first.isPresent()) {
                     throw new RuntimeException(String.format("Missing temporal for individual %s", individualIRI));
                 }
-                final Set<OWLDataPropertyAssertionAxiom> TemporalProperties = ontology.getAllPropertiesForIndividual(first.get().asOWLObjectProperty().getIRI());
+                final Set<OWLDataPropertyAssertionAxiom> TemporalProperties = ontology.getAllDataPropertiesForIndividual(first.get().asOWLObjectProperty().getIRI());
                 temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(TemporalProperties, TemporalParser.IsDefault(clazz), baseTemporalType);
             }
 
@@ -360,6 +360,7 @@ public class TrestleReasoner {
         }
 
         public TrestleBuilder withName(String name) {
+//            FIXME(nrobison): Oracle seems to throw errors when using '-' in the name, so maybe parse that out?p
             this.ontologyName = Optional.of(name);
             return this;
         }

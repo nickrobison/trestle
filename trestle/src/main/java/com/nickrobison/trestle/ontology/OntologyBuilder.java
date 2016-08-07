@@ -10,6 +10,8 @@ import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor;
 import org.semanticweb.owlapi.reasoner.SimpleConfiguration;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -19,6 +21,8 @@ import java.util.*;
 // FIXME(nrobison): Work to remove this, I feel like my optionals should fix the nullness, right?
 @SuppressWarnings("nullness")
 public class OntologyBuilder {
+    private static final Logger logger = LoggerFactory.getLogger(OntologyBuilder.class);
+
     private Optional<IRI> iri = Optional.empty();
     private Optional<String> connectionString = Optional.empty();
     private Optional<String> username = Optional.empty();
@@ -83,13 +87,18 @@ public class OntologyBuilder {
         final OWLOntologyManager owlOntologyManager = OWLManager.createOWLOntologyManager();
         OWLOntology owlOntology;
         if (this.iri.isPresent()) {
+            logger.debug("Loading ontology from: {}", this.iri.get());
             owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument(this.iri.get());
+            logger.info("Loaded version {} of ontology {}",
+                    owlOntology.getOntologyID().getVersionIRI().or(IRI.create("0.0")).getShortForm(),
+                    owlOntology.getOntologyID().getOntologyIRI().or(IRI.create("trestle")).getShortForm().replace(".owl", ""));
         } else {
             owlOntology = owlOntologyManager.createOntology();
         }
 
 //            If there's a connection string, then we need to return a database Ontology
         if (connectionString.isPresent() && connectionString.get().contains("oracle")) {
+            logger.info("Connecting to Oracle database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
             return Optional.of(new OracleOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
@@ -100,6 +109,7 @@ public class OntologyBuilder {
                     password.orElse("")
             ));
         } else if (connectionString.isPresent() && connectionString.get().contains("postgresql")) {
+            logger.info("Connecting to Postgres database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
             return Optional.of(new SesameOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
@@ -109,6 +119,7 @@ public class OntologyBuilder {
                     password.orElse("")
             ));
         } else if (connectionString.isPresent() && connectionString.get().contains("virtuoso")) {
+            logger.info("Connecting to Virtuoso database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
             return Optional.of(new VirtuosoOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
@@ -120,6 +131,7 @@ public class OntologyBuilder {
         }
 
         else {
+            logger.info("Connecting to Local TDB {}", this.ontologyName.orElse(""));
             return Optional.of(new LocalOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
