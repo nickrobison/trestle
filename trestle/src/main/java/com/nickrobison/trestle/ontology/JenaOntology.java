@@ -250,6 +250,7 @@ public abstract class JenaOntology implements ITrestleOntology {
     }
 
     public void writeOntology(IRI path, boolean validate) throws OWLOntologyStorageException {
+        this.openAndLock(true);
         if (validate) {
             logger.info("Validating ontology before writing out");
             if (!this.isConsistent()) {
@@ -268,6 +269,7 @@ public abstract class JenaOntology implements ITrestleOntology {
         logger.info("Writing ontology to {}", path);
         model.write(fileOutputStream);
         logger.debug("Finished writing ontology to {}", path);
+        this.unlockAndCommit();
     }
 
     public OWLOntology getUnderlyingOntology() {
@@ -437,44 +439,10 @@ public abstract class JenaOntology implements ITrestleOntology {
         while (stmtIterator.hasNext()) {
             //        If the URI is null, I think that means that it's just a string
             final Statement statement = stmtIterator.nextStatement();
-            OWLDatatype owlDatatype;
-            if (statement.getLiteral().getDatatypeURI() == null) {
-                logger.error("Property {} as an emptyURI", property.getIRI());
-                owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_STRING.getIRI());
-            } else if (statement.getLiteral().getDatatypeURI().equals(OWL2Datatype.XSD_DECIMAL.getIRI().toString())) {
-//                Work around Oracle bug by trying to parse an Int and see if it works
-//                TODO(nrobison): Add long parsing, in case dropping to int doesn't work.
-                owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_INTEGER.getIRI());
-                Integer testInt = null;
-                Long testLong = null;
-                try {
-                    testInt = Integer.parseInt(statement.getLiteral().getLexicalForm());
-                } catch (NumberFormatException e) {
-                    logger.debug("Couldn't parse to int, might be a long or a decimal");
-                }
-
-                if (testInt == null) {
-                    owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_LONG.getIRI());
-                    try {
-                        testLong = Long.parseLong(statement.getLiteral().getLexicalForm());
-                    } catch (NumberFormatException e) {
-                        logger.debug("Couldn't parse long, must be a decimal");
-                    }
-                }
-                if (testInt == null & testLong == null) {
-                    owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_DECIMAL.getIRI());
-                }
-            } else {
-                owlDatatype = df.getOWLDatatype(IRI.create(statement.getLiteral().getDatatypeURI()));
+            final Optional<OWLLiteral> parsedLiteral = parseLiteral(statement.getLiteral());
+            if (parsedLiteral.isPresent()) {
+                properties.add(parsedLiteral.get());
             }
-
-            if (owlDatatype.getIRI().toString().equals("nothing")) {
-                logger.error("Datatype {} doesn't exist", statement.getLiteral().getDatatypeURI());
-//                return Optional.empty();
-                continue;
-            }
-            final OWLLiteral parsedLiteral = df.getOWLLiteral(statement.getLiteral().getLexicalForm(), owlDatatype);
-            properties.add(parsedLiteral);
         }
         if (properties.isEmpty()) {
             logger.error("Individual {} has no properties {}", individual.getIRI(), property.getIRI());
@@ -487,16 +455,35 @@ public abstract class JenaOntology implements ITrestleOntology {
     }
 
     private Optional<OWLLiteral> parseLiteral(Literal literal) {
-        final OWLDatatype owlDatatype;
+        OWLDatatype owlDatatype;
         if (literal.getDatatypeURI() == null) {
-            logger.error("literal has an emptyURI");
+            logger.error("Literal has an emptyURI");
             owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_STRING.getIRI());
+        } else if (literal.getDatatypeURI().equals(OWL2Datatype.XSD_DECIMAL.getIRI().toString())) {
+//                Work around Oracle bug by trying to parse an Int and see if it works
+
+            final String numericString = literal.getLexicalForm();
+//            If it has a period in the string, it's a decimal
+            if (numericString.contains(".")) {
+                owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_DECIMAL.getIRI());
+            } else {
+                long l = Long.parseLong(numericString);
+                l = l >> (Integer.SIZE);
+                if (l == 0 | l == -1) {
+                    logger.debug("Decimal seems to be an Int");
+                    owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_INTEGER.getIRI());
+                } else {
+                    logger.debug("Decimal seems to be a Long");
+                    owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_LONG.getIRI());
+                }
+            }
         } else {
             owlDatatype = df.getOWLDatatype(IRI.create(literal.getDatatypeURI()));
         }
 
         if (owlDatatype.getIRI().toString().equals("nothing")) {
             logger.error("Datatype {} doesn't exist", literal.getDatatypeURI());
+//                return Optional.empty();
             return Optional.empty();
         }
         return Optional.of(df.getOWLLiteral(literal.getLexicalForm(), owlDatatype));
