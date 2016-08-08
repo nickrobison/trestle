@@ -17,7 +17,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <storm.version>1.0.0</storm.version>
         <provided.scope>provided</provided.scope>
-        <jmh.version>1.13</jmh.version>
+        <jmh.version>1.12</jmh.version>
         <junit.jupiter.version>5.0.0-M2</junit.jupiter.version>
     </properties>
     <dependencyManagement>
@@ -119,7 +119,7 @@
                 <groupId>org.openjdk.jmh</groupId>
                 <artifactId>jmh-core</artifactId>
                 <version>${jmh.version}</version>
-                <scope>test</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>org.openjdk.jmh</groupId>
@@ -217,7 +217,7 @@
                     <descriptor>src/main/assembly/job.xml</descriptor>
                     <archive>
                         <manifest>
-                            <mainClass>com.nickrobison.gaulintegrator.nickrobison.gaulintegrator.nickrobison.spatialdifference.JobRunner</mainClass>
+                            <mainClass>com.nickrobison.gaulintegrator.IntegrationRunner</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -240,6 +240,17 @@
                     <target>1.8</target>
                     <compilerArgs>-parameters</compilerArgs>
                 </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.19.1</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.junit.platform</groupId>
+                        <artifactId>junit-platform-surefire-provider</artifactId>
+                        <version>1.0.0-M2</version>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
     </build>

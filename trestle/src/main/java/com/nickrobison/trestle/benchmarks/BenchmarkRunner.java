@@ -1,6 +1,5 @@
-package com.nickrobison.trestle;
+package com.nickrobison.trestle.benchmarks;
 
-import com.nickrobison.trestle.ontology.OntologyBenchmark;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
@@ -14,7 +13,8 @@ public class BenchmarkRunner {
     public static void main(String[] args) throws RunnerException {
 
         Options opt = new OptionsBuilder()
-                .include(OntologyBenchmark.class.getSimpleName())
+                .include(OntologyFloatParsing.class.getSimpleName())
+//                .include(OntologyBenchmark.class.getSimpleName())
                 .forks(1)
                 .build();
 

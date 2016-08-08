@@ -1,6 +1,8 @@
-package com.nickrobison.trestle.ontology;
+package com.nickrobison.trestle.benchmarks;
 
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.ontology.JenaOntology;
+import com.nickrobison.trestle.ontology.OntologyBuilder;
 import org.openjdk.jmh.annotations.*;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
@@ -79,9 +81,12 @@ public class OntologyBenchmark {
     }
 
     @Benchmark
-    public void measureNameWrite() throws MissingOntologyEntity {
-
-        ontology.writeIndividualDataProperty(assertion);
+    public void measureName() {
+        try {
+            ontology.writeIndividualDataProperty(assertion);
+        } catch (MissingOntologyEntity missingOntologyEntity) {
+            missingOntologyEntity.printStackTrace();
+        }
     }
 
 
