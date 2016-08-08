@@ -120,7 +120,7 @@ public class OracleOntologyTest {
 //        Check if the ontology has what we want
         assertFalse(ontology.containsResource(test_individual), "Shouldn't have the individual");
         assertTrue(ontology.containsResource(owlClass), "Should have the class");
-        assertTrue( ontology.containsResource(trestle_property), "Should have the ADM_0 Code");
+        assertTrue(ontology.containsResource(trestle_property), "Should have the ADM_0 Code");
         assertFalse(ontology.containsResource(test_new_property), "Shouldn't have test property");
 
 
@@ -147,8 +147,11 @@ public class OracleOntologyTest {
     public void testByteParsing() throws MissingOntologyEntity {
 
         int smallInt = 4321;
+        int bigInt = Integer.MAX_VALUE;
+        int negativeInt = Integer.MIN_VALUE;
         long smallLong = 4321;
         long negativeLong = -4321;
+        long negativeBigLong = Long.MIN_VALUE;
         long bigLong = Long.MAX_VALUE;
         Double bigFloat = 4321.43;
 
@@ -182,7 +185,27 @@ public class OracleOntologyTest {
         assertEquals(Integer.toString(smallInt), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
         assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
 
-        //        Float
+        //        Big Int
+        aLong = df.getOWLDataProperty(IRI.create("trestle:", "int_big"));
+        owlLiteral = df.getOWLLiteral(Integer.toString(bigInt), OWL2Datatype.XSD_INTEGER);
+        owlClassAssertionAxiom = df.getOWLClassAssertionAxiom(owlCl, long_test);
+        ontology.createIndividual(owlClassAssertionAxiom);
+        ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
+        individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
+        assertEquals(Integer.toString(bigInt), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
+        assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
+
+        //        Negative Int
+        aLong = df.getOWLDataProperty(IRI.create("trestle:", "neg_int"));
+        owlLiteral = df.getOWLLiteral(Integer.toString(negativeInt), OWL2Datatype.XSD_INTEGER);
+        owlClassAssertionAxiom = df.getOWLClassAssertionAxiom(owlCl, long_test);
+        ontology.createIndividual(owlClassAssertionAxiom);
+        ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
+        individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
+        assertEquals(Integer.toString(negativeInt), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
+        assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
+
+        //        Double
         aLong = df.getOWLDataProperty(IRI.create("trestle:", "float"));
         owlLiteral = df.getOWLLiteral(Double.toString(bigFloat), OWL2Datatype.XSD_DECIMAL);
         owlClassAssertionAxiom = df.getOWLClassAssertionAxiom(owlCl, long_test);
@@ -200,13 +223,23 @@ public class OracleOntologyTest {
         ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
         individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
         assertEquals(Long.toString(negativeLong), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
+//        Oracle can't tell the difference between an int and a small long, so it treats them as longs.
+        assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
+
+        aLong = df.getOWLDataProperty(IRI.create("trestle:", "neg_big_long"));
+        owlLiteral = df.getOWLLiteral(Long.toString(negativeBigLong), OWL2Datatype.XSD_LONG);
+        owlClassAssertionAxiom = df.getOWLClassAssertionAxiom(owlCl, long_test);
+        ontology.createIndividual(owlClassAssertionAxiom);
+        ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
+        individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
+        assertEquals(Long.toString(negativeBigLong), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
         assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
 
     }
 
     @AfterEach
     public void CloseOntology() {
-        ontology.close(false);
+        ontology.close(true);
     }
 
 
