@@ -322,7 +322,7 @@ public class ClassParser {
                     .map(m -> m.getAnnotation(Spatial.class).name())
                     .findFirst();
 
-            if (!methodArgName.orElse("nothing").equals("")) {
+            if (!methodArgName.orElse("").equals("")) {
                 return methodArgName.orElse("");
             }
 

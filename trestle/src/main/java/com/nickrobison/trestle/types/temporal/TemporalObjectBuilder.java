@@ -49,7 +49,7 @@ public class TemporalObjectBuilder {
             if (valid_to.isPresent()) {
                 return Optional.of(TemporalObjectBuilder.valid()
                         .from(validFromTemporal)
-                        .to(parseToTemporal(valid_from.get().getObject(), temporalType))
+                        .to(parseToTemporal(valid_to.get().getObject(), temporalType))
                         .isDefault(isDefault)
                         .withRelations(valid_from.get().getSubject().asOWLNamedIndividual()));
             } else {
@@ -63,7 +63,7 @@ public class TemporalObjectBuilder {
                     .findFirst();
             if (valid_at.isPresent()) {
                 return Optional.of(TemporalObjectBuilder.valid()
-                        .at(parseToTemporal(valid_from.get().getObject(), temporalType))
+                        .at(parseToTemporal(valid_at.get().getObject(), temporalType))
                         .withRelations(valid_at.get().getSubject().asOWLNamedIndividual()));
             }
         }
@@ -75,7 +75,7 @@ public class TemporalObjectBuilder {
                 .findFirst();
 
         if (exists_from.isPresent()) {
-            final Temporal existsFromTemporal = parseToTemporal(valid_from.get().getObject(), temporalType);
+            final Temporal existsFromTemporal = parseToTemporal(exists_from.get().getObject(), temporalType);
 //            Try for exists_to
             final Optional<OWLDataPropertyAssertionAxiom> exists_to = properties.stream()
                     .filter(dp -> dp.getProperty().asOWLDataProperty().getIRI().equals(temporalExistsToIRI))
@@ -83,7 +83,7 @@ public class TemporalObjectBuilder {
             if (exists_to.isPresent()) {
                 return Optional.of(TemporalObjectBuilder.exists()
                         .from(existsFromTemporal)
-                        .to(parseToTemporal(valid_from.get().getObject(), temporalType))
+                        .to(parseToTemporal(exists_to.get().getObject(), temporalType))
                         .isDefault(isDefault)
                         .withRelations(exists_from.get().getSubject().asOWLNamedIndividual()));
             } else {
