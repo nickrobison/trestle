@@ -24,7 +24,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.Temporal;
 import java.util.*;
 
-import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
+import static com.nickrobison.trestle.common.StaticIRI.*;
 
 /**
  * Created by nrobison on 5/17/16.
@@ -160,6 +160,33 @@ public class TrestleReasoner {
 //        Write the object properties
     }
 
+    public void writeFactWithRelation(Object inputFact, double relation, Object relatedFact) {
+
+//        Check to see if both objects exist
+        final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(inputFact);
+        final OWLNamedIndividual relatedFactIndividual = ClassParser.GetIndividual(relatedFact);
+        if (!ontology.containsResource(owlNamedIndividual)) {
+            logger.debug("Fact {] doesn't exist, adding", owlNamedIndividual);
+            try {
+                writeObjectAsFact(inputFact);
+            } catch (TrestleClassException e) {
+                logger.error("Could not write object {}", owlNamedIndividual, e);
+            }
+        }
+
+        if (!ontology.containsResource(relatedFactIndividual)) {
+            logger.debug("Related Fact {} doesn't exist, adding", relatedFactIndividual);
+            try {
+                writeObjectAsFact(relatedFact);
+            } catch (TrestleClassException e) {
+                logger.error("Could not write object {}", relatedFactIndividual, e);
+            }
+        }
+
+//        See if they're already related
+
+    }
+
     @SuppressWarnings("argument.type.incompatible")
     public <T> T readAsObject(Class<T> clazz, String objectID) throws TrestleClassException, MissingOntologyEntity {
         return readAsObject(clazz, IRI.create(PREFIX, objectID.replaceAll("\\s+", "_")));
@@ -197,15 +224,15 @@ public class TrestleReasoner {
 
             final Class<? extends Temporal> baseTemporalType = TemporalParser.GetTemporalType(clazz);
 
-            final Optional<Set<OWLObjectProperty>> individualObjectProperty = ontology.getIndividualObjectProperty(individualIRI, StaticIRI.hasTemporalIRI);
+            final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(individualIRI, hasTemporalIRI);
             Optional<TemporalObject> temporalObject = Optional.empty();
             if (individualObjectProperty.isPresent()) {
 //                There can only be 1 temporal, so just grab the first one.
-                final Optional<OWLObjectProperty> first = individualObjectProperty.get().stream().findFirst();
+                final Optional<OWLObjectPropertyAssertionAxiom> first = individualObjectProperty.get().stream().findFirst();
                 if (!first.isPresent()) {
                     throw new RuntimeException(String.format("Missing temporal for individual %s", individualIRI));
                 }
-                final Set<OWLDataPropertyAssertionAxiom> TemporalProperties = ontology.getAllDataPropertiesForIndividual(first.get().asOWLObjectProperty().getIRI());
+                final Set<OWLDataPropertyAssertionAxiom> TemporalProperties = ontology.getAllDataPropertiesForIndividual(first.get().getObject().asOWLNamedIndividual());
                 temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(TemporalProperties, TemporalParser.IsDefault(clazz), baseTemporalType);
             }
 
@@ -312,6 +339,25 @@ public class TrestleReasoner {
                 individual.getIRI(),
                 StaticIRI.hasTemporalIRI,
                 temporalIRI);
+    }
+
+    private boolean checkObjectRelation(OWLNamedIndividual firstIndividual, OWLNamedIndividual secondIndividual) {
+
+        final Optional<Set<OWLObjectPropertyAssertionAxiom>> relatedToProperties = ontology.getIndividualObjectProperty(firstIndividual, relatedToIRI);
+//        We should do this through a SPARQL query. I think.
+        if (relatedToProperties.isPresent()) {
+            final Optional<OWLIndividual> isRelated = relatedToProperties.get()
+                    .stream()
+                    .map(p -> p.getObject())
+                    .filter(p -> p.equals(secondIndividual))
+                    .findFirst();
+
+            if (isRelated.isPresent()) {
+
+            }
+        }
+
+        return false;
     }
 
 

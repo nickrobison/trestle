@@ -65,14 +65,13 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //        Setup the Trestle Reasoner
         reasoner = new TrestleReasoner.TrestleBuilder()
-                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-//                .withDBConnection("jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial", "spatialUser", "spatial1")
+//                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+                .withDBConnection("jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial", "spatialUser", "spatial1")
 //                .withDBConnection(conf.get("reasoner.db.connection"),
 //                        conf.get("reasoner.db.username"),
 //                        conf.get("reasoner.db.password"))
                 .withInputClasses(GAULObject.class)
-                .initialize()
-                .withName("hadoop-test")
+                .withName("hadoop_test")
                 .build();
 
     }
@@ -284,6 +283,9 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                             logger.error("Cannot insert new object (inverse) relation into table", e);
                             throw new RuntimeException("Cannot insert new object (inverse) relation into table", e);
                         }
+
+//                        Now, Trestle
+
                     }
                 }
 
@@ -323,8 +325,6 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
     @Override
     public void cleanup(Context context) {
-        File outputFile = new File("/Users/nrobison/Desktop/hadoop.owl");
-        reasoner.writeOntology(outputFile.toURI(), true);
         reasoner.shutdown(false);
         try {
             dbConnection.close();

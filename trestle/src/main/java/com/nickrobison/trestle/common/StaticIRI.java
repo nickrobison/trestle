@@ -19,5 +19,8 @@ public class StaticIRI {
     public static final IRI temporalValidToIRI = IRI.create(PREFIX, "valid_to");
     public static final IRI temporalValidFromIRI = IRI.create(PREFIX, "valid_from");
     public static final IRI temporalClassIRI = IRI.create(PREFIX, "Temporal_Object");
+    public static final IRI relatedToIRI = IRI.create(PREFIX, "related_to");
+    public static final IRI relationOfIRI = IRI.create(PREFIX, "relation_of");
     public static final IRI temporalDatatypeIRI = OWL2Datatype.XSD_DATE_TIME.getIRI();
+
 }

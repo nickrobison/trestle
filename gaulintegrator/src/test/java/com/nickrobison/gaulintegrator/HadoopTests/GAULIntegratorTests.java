@@ -1,10 +1,8 @@
 package com.nickrobison.gaulintegrator.HadoopTests;
 
 import com.esri.mapreduce.PolygonFeatureInputFormat;
-import com.nickrobison.gaulintegrator.GAULMapper;
-import com.nickrobison.gaulintegrator.GAULReducer;
-import com.nickrobison.gaulintegrator.IntegrationRunner;
-import com.nickrobison.gaulintegrator.MapperOutput;
+import com.nickrobison.gaulintegrator.*;
+import com.nickrobison.trestle.TrestleReasoner;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
@@ -43,6 +41,7 @@ public class GAULIntegratorTests {
     private static MiniDFSCluster cluster;
 
     private static final Logger logger = LoggerFactory.getLogger(GAULIntegratorTests.class);
+    private static TrestleReasoner reasoner;
 
     @BeforeAll
     public static void setup() throws IOException {
@@ -64,6 +63,23 @@ public class GAULIntegratorTests {
          fileSystem = FileSystem.get(conf);
         final YarnConfiguration clusterConf = new YarnConfiguration();
         cluster = new MiniDFSCluster.Builder(conf).build();
+
+//        Setup reasoner
+        //                .withDBConnection("jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial", "spatialUser", "spatial1")
+//                .withDBConnection(conf.get("reasoner.db.connection"),
+//                        conf.get("reasoner.db.username"),
+//                        conf.get("reasoner.db.password"))
+        reasoner = new TrestleReasoner.TrestleBuilder()
+//                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+                .withDBConnection("jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial", "spatialUser", "spatial1")
+//                .withDBConnection(conf.get("reasoner.db.connection"),
+//                        conf.get("reasoner.db.username"),
+//                        conf.get("reasoner.db.password"))
+                .withInputClasses(GAULObject.class)
+                .initialize()
+                .withName("hadoop_test")
+                .build();
+//        reasoner.shutdown(false);
     }
 
     @Test
@@ -96,5 +112,9 @@ public class GAULIntegratorTests {
     @AfterAll
     public static void close() throws IOException {
         cluster.shutdown();
+
+        File outputFile = new File("/Users/nrobison/Desktop/hadoop.owl");
+        reasoner.writeOntology(outputFile.toURI(), true);
+        reasoner.shutdown(false);
     }
 }
