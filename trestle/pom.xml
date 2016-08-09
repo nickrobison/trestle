@@ -10,7 +10,8 @@
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <!--I believe Oracle only supports the 2.11.x branch of Jena-->
-        <jena.version>2.11.2</jena.version>
+        <jena.version>3.1.0</jena.version>
+        <!--<jena.version>2.11.2</jena.version>-->
         <marmotta.version>3.3.0</marmotta.version>
         <!--<sesame.version>4.1.2</sesame.version>-->
         <sesame.version>2.9.0</sesame.version>
@@ -50,7 +51,8 @@
             <artifactId>jena-tdb</artifactId>
             <!--TDB using a different versioning-->
             <!--TDB 1.1.2 doesn't seem to work, but 1.1.1 does-->
-            <version>1.1.1</version>
+            <version>${jena.version}</version>
+            <!--<version>1.1.1</version>-->
         </dependency>
         <dependency>
             <groupId>org.apache.jena</groupId>
@@ -126,7 +128,7 @@
         <dependency>
             <groupId>oracle.spatial.rdf.client</groupId>
             <artifactId>sdordfclient</artifactId>
-            <version>1.2</version>
+            <version>3.10</version>
         </dependency>
         <dependency>
             <groupId>org.geotools</groupId>
@@ -180,13 +182,13 @@
         <!--Virtuoso Dependencies-->
         <dependency>
             <groupId>com.openlink.virtuoso</groupId>
-            <artifactId>jena2</artifactId>
+            <artifactId>jena3</artifactId>
             <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>com.openlink.virtuoso</groupId>
             <artifactId>virtjdbc</artifactId>
-            <version>4.0</version>
+            <version>4.1</version>
         </dependency>
         <!--Checker dependencies-->
         <dependency>
