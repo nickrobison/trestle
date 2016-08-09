@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.parser;
 
-import com.hp.hpl.jena.query.ResultSet;
+import org.apache.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.LocalOntology;
 import com.nickrobison.trestle.ontology.OntologyBuilder;

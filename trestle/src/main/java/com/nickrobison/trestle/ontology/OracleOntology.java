@@ -1,8 +1,8 @@
 package com.nickrobison.trestle.ontology;
 
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.InfModel;
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.InfModel;
+import org.apache.jena.rdf.model.Model;
 import oracle.spatial.rdf.client.jena.*;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;

@@ -1,9 +1,9 @@
 package com.nickrobison.trestle.db.oracle;
 
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.query.*;
-import com.hp.hpl.jena.rdf.model.*;
-import com.hp.hpl.jena.util.FileManager;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.query.*;
+import org.apache.jena.rdf.model.*;
+import org.apache.jena.util.FileManager;
 import com.nickrobison.trestle.db.IOntologyDatabase;
 import oracle.spatial.rdf.client.jena.GraphOracleSem;
 import oracle.spatial.rdf.client.jena.ModelOracleSem;

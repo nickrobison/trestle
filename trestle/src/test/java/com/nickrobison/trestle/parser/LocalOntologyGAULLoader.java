@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.parser;
 
-import com.hp.hpl.jena.query.ResultSet;
+import org.apache.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.LocalOntology;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
@@ -123,7 +123,7 @@ public class LocalOntologyGAULLoader {
             }
         }
         ontology.unlockAndCommit();
-        ontology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);
+//        ontology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);
 
 //        Check to see if it worked.
         ontology.openAndLock(false);
@@ -138,17 +138,17 @@ public class LocalOntologyGAULLoader {
         ResultSet resultSet = ontology.executeSPARQL(queryString);
         assertEquals(191, resultSet.getRowNumber(), "Wrong number of GAUL records from sparql method");
 
-//        SPARQL Query of spatial intersections.
-        queryString = "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
-                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
-                "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
-                "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
-                "PREFIX spatial: <http://jena.apache.org/spatial#>\n" +
-                "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-                "SELECT * { ?s spatial:nearby (-12.0671005249999 39.5398864750001 1000.0 'km');}";
-//                "SELECT ?m ?wkt WHERE { ?m rdf:type :GAUL_Test . ?m ogc:asWKT ?wkt\n" +
-//                "    FILTER ( ?wkt spatial:nearby (-12.0671005249999 39.5398864750001 1000.0 'km')) }";
-
+////        SPARQL Query of spatial intersections.
+//        queryString = "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+//                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+//                "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+//                "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
+//                "PREFIX spatial: <http://jena.apache.org/spatial#>\n" +
+//                "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
+//                "SELECT * { ?s spatial:north (-12.0671005249999 39.5398864750001).}";
+////                "SELECT ?m ?wkt WHERE { ?m rdf:type :GAUL_Test . ?m ogc:asWKT ?wkt\n" +
+////                "    FILTER ( ?wkt spatial:nearby (-12.0671005249999 39.5398864750001 1000.0 'km')) }";
+//
 //        resultSet = ontology.executeSPARQL(queryString);
 //        assertEquals(2, resultSet.getRowNumber(), "Wrong number of intersected results");
 

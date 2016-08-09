@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
-import com.hp.hpl.jena.query.ResultSet;
+import org.apache.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import org.apache.marmotta.commons.sesame.transactions.sail.KiWiTransactionalSail;
 import org.apache.marmotta.kiwi.config.KiWiConfiguration;

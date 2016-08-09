@@ -1,10 +1,12 @@
 package com.nickrobison.trestle.ontology;
 
-import com.hp.hpl.jena.query.*;
-import com.hp.hpl.jena.rdf.model.InfModel;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.reasoner.ReasonerRegistry;
+import org.apache.jena.ontology.OntModel;
+import org.apache.jena.ontology.OntModelSpec;
+import org.apache.jena.query.*;
+import org.apache.jena.rdf.model.InfModel;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.reasoner.ReasonerRegistry;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
@@ -36,8 +38,8 @@ public class VirtuosoOntology extends JenaOntology {
     private static Model initializeVirtModel(String name, String connectionString, String username, String password) {
         virtModel = VirtModel.openDatabaseModel(name, connectionString, username, password);
 //        return ModelFactory.createInfModel(ReasonerRegistry.getOWLReasoner(), virtModel);
-        return ModelFactory.createInfModel(ReasonerRegistry.getRDFSReasoner(), virtModel);
-//        return ModelFactory.createOntologyModel(OntModelSpec.RDFS_MEM_RDFS_INF, model);
+        return ModelFactory.createInfModel(ReasonerRegistry.getOWLReasoner(), virtModel);
+//        return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM_RDFS_INF, virtModel);
     }
     @Override
     public boolean isConsistent() {
@@ -57,13 +59,15 @@ public class VirtuosoOntology extends JenaOntology {
         logger.info("Writing new ontology");
 
         try {
-            virtModel.read(ontologytoIS(this.ontology), null);
+            this.model.read(ontologytoIS(this.ontology), null);
+//            virtModel.read(ontologytoIS(this.ontology), null);
         } catch (OWLOntologyStorageException e) {
             logger.error("Cannot read ontology", e);
             throw new RuntimeException("Cannot read ontology", e);
         }
         logger.debug("Finished writing ontology");
-        ((InfModel) this.model).getReasoner().bindSchema(virtModel);
+//        ((OntModel) this.model).getReasoner().bindSchema(virtModel);
+//        ((InfModel) this.model).getReasoner().bindSchema(virtModel);
 //        ((InfModel) this.model).rebind();
 //        ((InfModel) this.model).prepare();
     }

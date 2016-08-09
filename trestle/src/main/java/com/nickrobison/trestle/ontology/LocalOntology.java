@@ -1,18 +1,19 @@
 package com.nickrobison.trestle.ontology;
 
-import com.hp.hpl.jena.query.*;
-import com.hp.hpl.jena.rdf.model.*;
-import com.hp.hpl.jena.reasoner.Reasoner;
-import com.hp.hpl.jena.reasoner.ReasonerRegistry;
-import com.hp.hpl.jena.tdb.TDB;
-import com.hp.hpl.jena.tdb.TDBFactory;
 import org.apache.commons.io.FileUtils;
-import org.apache.jena.query.spatial.EntityDefinition;
-import org.apache.jena.query.spatial.SpatialDatasetFactory;
-import org.apache.jena.query.spatial.SpatialQuery;
+import org.apache.jena.query.*;
+import org.apache.jena.query.spatial.*;
+import org.apache.jena.rdf.model.InfModel;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.reasoner.Reasoner;
+import org.apache.jena.reasoner.ReasonerRegistry;
+import org.apache.jena.tdb.TDB;
+import org.apache.jena.tdb.TDBFactory;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,33 +31,22 @@ public class LocalOntology extends JenaOntology {
     private static final Logger logger = LoggerFactory.getLogger(LocalOntology.class);
     private static Dataset tdbDataset;
     private static Dataset luceneDataset;
+    private final SpatialIndex index;
     private boolean locked = false;
-
-//    private final String ontologyName;
-//    private final OWLOntology ontology;
-//    private final PelletReasoner reasoner;
-//    private final DefaultPrefixManager pm;
-//    private final InfModel model;
-//    private final Graph graph;
-//    private final OWLDataFactory df;
+    private boolean writeTransaction = false;
+    private final DatasetGraphSpatial datasetGraphSpatial;
+    private final SpatialIndexContext spatialIndexContext;
 
 
     LocalOntology(String ontologyName, OWLOntology ont, DefaultPrefixManager pm) {
         super(ontologyName, constructJenaModel(), ont, pm);
-//        this.ontologyName = ontologyName;
-//        ontology = ont;
-//        this.pm = pm;
-//        this.reasoner = reasoner;
-//        this.df = OWLManager.getOWLDataFactory();
-//        Instead of a database object, we use a Jena model to support the RDF querying
-
-
-
+        datasetGraphSpatial = (DatasetGraphSpatial) luceneDataset.asDatasetGraph();
+        this.index = datasetGraphSpatial.getSpatialIndex();
+        spatialIndexContext = new SpatialIndexContext(this.index);
     }
 
     private static Model constructJenaModel() {
-        Dataset ds = initialiseTDB();
-        tdbDataset = ds;
+        tdbDataset = initialiseTDB();
         //        spatial stuff
         Directory indexDirectory;
         Dataset spatialDataset = null;
@@ -64,11 +54,12 @@ public class LocalOntology extends JenaOntology {
         try {
             indexDirectory = FSDirectory.open(new File(DATA_DIRECTORY + "/lucene"));
 //            Not sure if these entity and geo fields are correct, but oh well.
-            EntityDefinition ed = new EntityDefinition("uri", "geo");
+            EntityDefinition ed = new EntityDefinition("entityField", "geoField");
 //            ed.setSpatialContextFactory("com.spatial4j.core.context.jts.JtsSpatialContextFactory");
             ed.setSpatialContextFactory(SpatialQuery.JTS_SPATIAL_CONTEXT_FACTORY_CLASS);
 //            Create a spatial dataset that combines the TDB dataset + the spatial index
-            spatialDataset = SpatialDatasetFactory.createLucene(ds, indexDirectory, ed);
+//            SpatialDatasetFactory.createLucene(ds, indexDirectory, ed);
+            spatialDataset = SpatialDatasetFactory.createLucene(tdbDataset, indexDirectory, ed);
             logger.debug("Lucene index is up and running");
         } catch (IOException e) {
             throw new RuntimeException("Cannot create spatial dataset", e);
@@ -97,7 +88,7 @@ public class LocalOntology extends JenaOntology {
 
     @Override
     public void initializeOntology() {
-        this.openTransaction(true);
+//        this.openTransaction(true);
         logger.info("Dropping local ontology {}", ontologyName);
         if (!model.isEmpty()) {
             model.removeAll();
@@ -113,9 +104,26 @@ public class LocalOntology extends JenaOntology {
             logger.error("Cannot read ontology into model", e);
             throw new RuntimeException("Cannot read ontology in model", e);
         }
-        TDB.sync(this.model);
-        this.commitTransaction();
+//        TDB.sync(this.model);
+//        this.commitTransaction();
+//        updateSpatialIndex();
     }
+
+//    http://stackoverflow.com/questions/35801520/geospatial-queries-with-apache-jena
+//    private void updateSpatialIndex() {
+//        logger.info("Updating spatial index");
+////        this.openTransaction(true);
+//        this.index.startIndexing();
+////        this.openTransaction(true);
+//        final Iterator<Quad> quadIterator = datasetGraphSpatial.find(Node.ANY, Node.ANY, Node.ANY, Node.ANY);
+//        while (quadIterator.hasNext()) {
+//            final Quad next = quadIterator.next();
+//            this.spatialIndexContext.index(next.getGraph(), next.getSubject(), next.getPredicate(), next.getObject());
+//        }
+////        this.commitTransaction();
+//        this.index.finishIndexing();
+////        this.commitTransaction();
+//    }
 
     @Override
 //    Need to override this in order to get access to the correct dataset
@@ -124,7 +132,8 @@ public class LocalOntology extends JenaOntology {
         final Query query = QueryFactory.create(queryString);
 
         final QueryExecution qExec = QueryExecutionFactory.create(query, luceneDataset);
-        final ResultSet resultSet = qExec.execSelect();
+        ResultSet resultSet = qExec.execSelect();
+        resultSet = ResultSetFactory.copyResults(resultSet);
         ResultSetFormatter.out(System.out, resultSet, query);
         qExec.close();
         this.commitTransaction();
@@ -154,6 +163,7 @@ public class LocalOntology extends JenaOntology {
                 if (write) {
                     logger.debug("Opening writable transaction");
                     luceneDataset.begin(ReadWrite.WRITE);
+                    this.writeTransaction = true;
                 } else {
                     logger.debug("Opening read-only transaction");
                     luceneDataset.begin(ReadWrite.READ);
@@ -169,6 +179,7 @@ public class LocalOntology extends JenaOntology {
         if (!locked) {
             if (luceneDataset.isInTransaction()) {
                 luceneDataset.commit();
+                this.writeTransaction = false;
             }
         } else {
             logger.debug("Model is locked, not committing");
@@ -206,5 +217,6 @@ public class LocalOntology extends JenaOntology {
         logger.debug("Unlocking and closing");
         unlock();
         commitTransaction();
+//        updateSpatialIndex();
     }
 }

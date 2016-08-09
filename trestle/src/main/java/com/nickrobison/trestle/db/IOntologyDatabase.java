@@ -1,7 +1,7 @@
 package com.nickrobison.trestle.db;
 
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Resource;
 import org.semanticweb.owlapi.model.IRI;
 
 import java.io.InputStream;

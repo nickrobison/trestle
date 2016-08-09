@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
-import com.hp.hpl.jena.query.ResultSet;
+import org.apache.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,10 +54,10 @@ public class OracleOntologyTest {
 //        String queryString = " SELECT ?subject ?prop ?object WHERE { ?subject ?prop ?object } ";
 
         final ResultSet resultSet = ontology.executeSPARQL(queryString);
-        assertEquals(29, resultSet.getRowNumber(), "Wrong number of classes");
+        assertEquals(31, resultSet.getRowNumber(), "Wrong number of classes");
 
         final long tripleCount = ontology.getTripleCount();
-        assertEquals(381, tripleCount, "Inference is wrong");
+        assertEquals(454, tripleCount, "Inference is wrong");
 
         final OWLNamedIndividual burundi_0 = df.getOWLNamedIndividual(IRI.create("trestle:", "Burundi_0"));
         final OWLDataProperty property = df.getOWLDataProperty(IRI.create("trestle:", "ADM0_Code"));
@@ -100,7 +100,7 @@ public class OracleOntologyTest {
 //        Try for inferred property
         final OWLNamedIndividual test_muni2 = df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni2"));
         individualObjectProperty = ontology.getIndividualObjectProperty(test_muni2, has_temporal);
-        assertEquals("test_muni1_valid", individualObjectProperty.get().stream().findFirst().get().getSubject().asOWLNamedIndividual().getIRI().getRemainder().get(), "Should be test_muni_1_valid");
+        assertEquals("test_muni1_valid", individualObjectProperty.get().stream().findFirst().get().getObject().asOWLNamedIndividual().getIRI().getRemainder().get(), "Should be test_muni_1_valid");
 
     }
 

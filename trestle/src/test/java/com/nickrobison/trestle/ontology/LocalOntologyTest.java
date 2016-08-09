@@ -96,7 +96,7 @@ public class LocalOntologyTest {
 //        Try for inferred property
         final OWLNamedIndividual test_muni2 = df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni2"));
         individualObjectProperty = ontology.getIndividualObjectProperty(test_muni2, has_temporal);
-        assertEquals("test_muni1_valid", individualObjectProperty.get().stream().findFirst().get().getSubject().asOWLNamedIndividual().getIRI().getRemainder().get(), "Should be test_muni_1_valid");
+        assertEquals("test_muni1_valid", individualObjectProperty.get().stream().findFirst().get().getObject().asOWLNamedIndividual().getIRI().getRemainder().get(), "Should be test_muni_1_valid");
 
     }
 
@@ -135,7 +135,7 @@ public class LocalOntologyTest {
         assertEquals(1, individualProperty.get().size(), "Wrong number of values");
         assertEquals(owlLiteral, individualProperty.get().stream().findFirst().get(), "Wrong property literal");
 
-        ontology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/test.owl")), false);
+//        ontology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/test.owl")), false);
 
     }
 

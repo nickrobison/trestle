@@ -1,14 +1,14 @@
 package com.nickrobison.trestle.ontology;
 
-import com.hp.hpl.jena.datatypes.RDFDatatype;
-import com.hp.hpl.jena.datatypes.TypeMapper;
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.query.*;
-import com.hp.hpl.jena.rdf.model.*;
-import com.hp.hpl.jena.shared.AddDeniedException;
-import com.hp.hpl.jena.vocabulary.OWL;
-import com.hp.hpl.jena.vocabulary.RDF;
-import com.hp.hpl.jena.vocabulary.RDFS;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.query.*;
+import org.apache.jena.rdf.model.*;
+import org.apache.jena.shared.AddDeniedException;
+import org.apache.jena.vocabulary.OWL;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
@@ -527,7 +527,8 @@ public abstract class JenaOntology implements ITrestleOntology {
         final Query query = QueryFactory.create(queryString);
 
         final QueryExecution qExec = QueryExecutionFactory.create(query, this.model);
-        final ResultSet resultSet = qExec.execSelect();
+        ResultSet resultSet = qExec.execSelect();
+        resultSet = ResultSetFactory.copyResults(resultSet);
         ResultSetFormatter.out(System.out, resultSet, query);
         qExec.close();
         this.commitTransaction();
