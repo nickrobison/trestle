@@ -22,11 +22,19 @@ public interface ITrestleOntology {
 
     /**
      * Returns an optional set of asserted property values from a given individual
+     * @param individual - OWLNamedIndividual to query
+     * @param propertyIRI - IRI of property to retrieve
+     * @return - Optional set of all asserted property values
+     */
+    Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, IRI propertyIRI);
+
+    /**
+     * Returns an optional set of asserted property values from a given individual
      * @param individualIRI - IRI of individual to query
      * @param objectPropertyIRI - IRI of property to retrieve
      * @return - Optional set of all asserted property values
      */
-    Optional<Set<OWLObjectProperty>> getIndividualObjectProperty(IRI individualIRI, IRI objectPropertyIRI);
+    Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(IRI individualIRI, IRI objectPropertyIRI);
 
     /**
      * Returns an optional set of asserted property values from a given individual
@@ -36,7 +44,7 @@ public interface ITrestleOntology {
      * @return - Optional set of all asserted property values
      */
 //    TODO(nrobison): Close iterator
-    Optional<Set<OWLObjectProperty>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property);
+    Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property);
 
     /**
      * Store an OWLNamedIndividual in the ontology from a given classAxiom

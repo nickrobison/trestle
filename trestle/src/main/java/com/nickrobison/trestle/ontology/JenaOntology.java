@@ -50,24 +50,32 @@ public abstract class JenaOntology implements ITrestleOntology {
     abstract public boolean isConsistent();
 
     @Override
-    public Optional<Set<OWLObjectProperty>> getIndividualObjectProperty(IRI individualIRI, IRI objectPropertyIRI) {
+    public Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, IRI propertyIRI) {
+        return this.getIndividualObjectProperty(individual, df.getOWLObjectProperty(propertyIRI));
+    }
+
+
+    @Override
+    public Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(IRI individualIRI, IRI objectPropertyIRI) {
         return this.getIndividualObjectProperty(df.getOWLNamedIndividual(individualIRI),
                 df.getOWLObjectProperty(objectPropertyIRI));
     }
 
     @Override
-    public Optional<Set<OWLObjectProperty>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property) {
+    public Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property) {
         this.openTransaction(false);
         final Resource modelResource = model.getResource(getFullIRI(individual).toString());
         final Property modelProperty = model.getProperty(getFullIRI(property).toString());
         final StmtIterator stmtIterator = modelResource.listProperties(modelProperty);
 
-        Set<OWLObjectProperty> properties = new HashSet<>();
+        Set<OWLObjectPropertyAssertionAxiom> properties = new HashSet<>();
         while (stmtIterator.hasNext()) {
             final Statement statement = stmtIterator.nextStatement();
 //            We need to check to make sure the returned statement points to a valid URI, otherwise it's just Jena junk.
             if (statement.getObject().isURIResource()) {
-                final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(IRI.create(statement.getObject().toString()));
+                final OWLNamedIndividual propertyObject = df.getOWLNamedIndividual(IRI.create(statement.getObject().asResource().getURI()));
+                final OWLObjectPropertyAssertionAxiom owlObjectProperty = df.getOWLObjectPropertyAssertionAxiom(property, individual, propertyObject);
+//                final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(IRI.create(statement.getObject().toString()));
                 properties.add(owlObjectProperty);
             } else {
                 logger.error("Model doesn't contain resource {}", statement.getObject());

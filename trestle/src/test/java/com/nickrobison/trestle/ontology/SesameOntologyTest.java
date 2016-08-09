@@ -85,8 +85,8 @@ public class SesameOntologyTest {
 
 //        Test object properties
         final OWLObjectProperty has_temporal = df.getOWLObjectProperty(IRI.create("trestle:", "has_temporal"));
-        Optional<Set<OWLObjectProperty>> individualObjectProperty = ontology.getIndividualObjectProperty(burundi_0, has_temporal);
-        assertEquals("Burundi_Valid", individualObjectProperty.get().stream().findFirst().get().getIRI().getRemainder().get(), "Should be burundi_valid");
+        Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(burundi_0, has_temporal);
+        assertEquals("Burundi_Valid", individualObjectProperty.get().stream().findFirst().get().getObject().asOWLNamedIndividual().getIRI().getRemainder().get(), "Should be burundi_valid");
 
 //        Try for wrong individual
         individualObjectProperty = ontology.getIndividualObjectProperty(burundi_wrong, has_temporal);

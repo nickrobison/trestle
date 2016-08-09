@@ -85,8 +85,8 @@ public class OracleOntologyTest {
 
 //        Test object properties
         final OWLObjectProperty has_temporal = df.getOWLObjectProperty(IRI.create("trestle:", "has_temporal"));
-        Optional<Set<OWLObjectProperty>> individualObjectProperty = ontology.getIndividualObjectProperty(burundi_0, has_temporal);
-        assertEquals("Burundi_Valid", individualObjectProperty.get().stream().findFirst().get().getIRI().getRemainder().get(), "Should be burundi_valid");
+        Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(burundi_0, has_temporal);
+        assertEquals("Burundi_Valid", individualObjectProperty.get().stream().findFirst().get().getObject().asOWLNamedIndividual().getIRI().getRemainder().get(), "Should be burundi_valid");
 
 //        Try for wrong individual
         individualObjectProperty = ontology.getIndividualObjectProperty(burundi_wrong, has_temporal);
@@ -100,7 +100,7 @@ public class OracleOntologyTest {
 //        Try for inferred property
         final OWLNamedIndividual test_muni2 = df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni2"));
         individualObjectProperty = ontology.getIndividualObjectProperty(test_muni2, has_temporal);
-        assertEquals("test_muni1_valid", individualObjectProperty.get().stream().findFirst().get().getIRI().getRemainder().get(), "Should be test_muni_1_valid");
+        assertEquals("test_muni1_valid", individualObjectProperty.get().stream().findFirst().get().getSubject().asOWLNamedIndividual().getIRI().getRemainder().get(), "Should be test_muni_1_valid");
 
     }
 

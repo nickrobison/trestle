@@ -86,13 +86,18 @@ public class SesameOntology implements ITrestleOntology {
     }
 
     @Override
-    public Optional<Set<OWLObjectProperty>> getIndividualObjectProperty(IRI individualIRI, IRI objectPropertyIRI) {
+    public Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, IRI propertyIRI) {
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(IRI individualIRI, IRI objectPropertyIRI) {
         return Optional.empty();
     }
 
     @Override
     @SuppressWarnings("argument.type.incompatible")
-    public Optional<Set<OWLObjectProperty>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property) {
+    public Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property) {
 
         RepositoryConnection connection;
         try {
@@ -133,7 +138,8 @@ public class SesameOntology implements ITrestleOntology {
             return Optional.empty();
         }
 
-        return Optional.of(properties);
+//        return Optional.of(properties);
+        return Optional.empty();
     }
 
     @Override
