@@ -12,6 +12,8 @@ import java.io.File;
 import java.util.Optional;
 import java.util.Set;
 
+import static com.nickrobison.trestle.common.StaticIRI.relatedToIRI;
+import static com.nickrobison.trestle.common.StaticIRI.relationOfIRI;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -153,9 +155,16 @@ public class VirtuosoOntologyTest {
         assertEquals(1, muniProperties.size(), "Wrong number of properties");
 
         final Set<OWLObjectPropertyAssertionAxiom> allObjectPropertiesForIndividual = ontology.getAllObjectPropertiesForIndividual(muni1_muni2);
-        assertEquals(2, allObjectPropertiesForIndividual.size(), "Wrong number of object properties");
+        assertEquals(15, allObjectPropertiesForIndividual.size(), "Wrong number of object properties");
 
+//        Check to ensure the relation is transitive and inferred
+        final OWLNamedIndividual test_muni4 = df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni4"));
+        final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(relationOfIRI);
+        final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(test_muni4, owlObjectProperty);
+        assertTrue(individualObjectProperty.isPresent(), "Should have related_to properties");
+        assertEquals(7, individualObjectProperty.get().size(), "Wrong number of related to properties");
 
+//        Now that we have all the object properties, let's filter them out, and get the relation object
     }
 
     @Test

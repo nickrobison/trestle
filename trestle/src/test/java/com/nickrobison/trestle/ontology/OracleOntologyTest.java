@@ -13,6 +13,8 @@ import java.io.File;
 import java.util.Optional;
 import java.util.Set;
 
+import static com.nickrobison.trestle.common.StaticIRI.relatedToIRI;
+import static com.nickrobison.trestle.common.StaticIRI.relationOfIRI;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -235,6 +237,25 @@ public class OracleOntologyTest {
         assertEquals(Long.toString(negativeBigLong), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
         assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
 
+    }
+
+    @Test
+    public void testRelationAssociation() {
+
+//        Ensure ontology has correct relational classes
+        final OWLNamedIndividual muni1_muni2 = df.getOWLNamedIndividual(IRI.create("trestle:", "muni1_muni2"));
+        final Set<OWLDataPropertyAssertionAxiom> muniProperties = ontology.getAllDataPropertiesForIndividual(muni1_muni2);
+        assertEquals(1, muniProperties.size(), "Wrong number of properties");
+
+        final Set<OWLObjectPropertyAssertionAxiom> allObjectPropertiesForIndividual = ontology.getAllObjectPropertiesForIndividual(muni1_muni2);
+        assertEquals(14, allObjectPropertiesForIndividual.size(), "Wrong number of object properties");
+
+//        Check to ensure the relation is transitive and inferred
+        final OWLNamedIndividual test_muni4 = df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni4"));
+        final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(relatedToIRI);
+        final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(test_muni4, owlObjectProperty);
+        assertTrue(individualObjectProperty.isPresent(), "Should have related_to properties");
+        assertEquals(7, individualObjectProperty.get().size(), "Wrong number of related to properties");
     }
 
     @AfterEach
