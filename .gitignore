@@ -5,6 +5,7 @@ src/test/resources/shapefiles/
 src/test/resources/out/
 gaulintegrator/src/test/resources/
 system/
+*.bin
 
 logs
 project/project
