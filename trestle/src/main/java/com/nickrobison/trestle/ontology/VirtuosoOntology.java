@@ -37,9 +37,7 @@ public class VirtuosoOntology extends JenaOntology {
 
     private static Model initializeVirtModel(String name, String connectionString, String username, String password) {
         virtModel = VirtModel.openDatabaseModel(name, connectionString, username, password);
-//        return ModelFactory.createInfModel(ReasonerRegistry.getOWLReasoner(), virtModel);
         return ModelFactory.createInfModel(ReasonerRegistry.getOWLReasoner(), virtModel);
-//        return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM_RDFS_INF, virtModel);
     }
     @Override
     public boolean isConsistent() {
@@ -52,9 +50,6 @@ public class VirtuosoOntology extends JenaOntology {
         if (!virtModel.isEmpty()) {
             virtModel.removeAll();
         }
-//        if (!model.isEmpty()) {
-//            model.removeAll();
-//        }
 
         logger.info("Writing new ontology");
 
@@ -66,10 +61,6 @@ public class VirtuosoOntology extends JenaOntology {
             throw new RuntimeException("Cannot read ontology", e);
         }
         logger.debug("Finished writing ontology");
-//        ((OntModel) this.model).getReasoner().bindSchema(virtModel);
-//        ((InfModel) this.model).getReasoner().bindSchema(virtModel);
-//        ((InfModel) this.model).rebind();
-//        ((InfModel) this.model).prepare();
     }
 
     @Override
