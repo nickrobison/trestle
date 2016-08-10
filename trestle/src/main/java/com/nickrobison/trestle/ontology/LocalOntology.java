@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * Created by nrobison on 6/15/16.
@@ -52,7 +53,7 @@ public class LocalOntology extends JenaOntology {
         Dataset spatialDataset = null;
         logger.debug("Building TDB and Lucene database");
         try {
-            indexDirectory = FSDirectory.open(new File(DATA_DIRECTORY + "/lucene"));
+            indexDirectory = FSDirectory.open(new File(DATA_DIRECTORY + "/lucene").toPath());
 //            Not sure if these entity and geo fields are correct, but oh well.
             EntityDefinition ed = new EntityDefinition("entityField", "geoField");
 //            ed.setSpatialContextFactory("com.spatial4j.core.context.jts.JtsSpatialContextFactory");
