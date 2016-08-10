@@ -5,10 +5,6 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.reasoner.ConsoleProgressMonitor;
-import org.semanticweb.owlapi.reasoner.InferenceType;
-import org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor;
-import org.semanticweb.owlapi.reasoner.SimpleConfiguration;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,8 +86,8 @@ public class OntologyBuilder {
             logger.debug("Loading ontology from: {}", this.iri.get());
             owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument(this.iri.get());
             logger.info("Loaded version {} of ontology {}",
-                    owlOntology.getOntologyID().getVersionIRI().or(IRI.create("0.0")).getShortForm(),
-                    owlOntology.getOntologyID().getOntologyIRI().or(IRI.create("trestle")).getShortForm().replace(".owl", ""));
+                    owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
+                    owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
         } else {
             owlOntology = owlOntologyManager.createOntology();
         }
@@ -108,9 +104,19 @@ public class OntologyBuilder {
                     username.orElse(""),
                     password.orElse("")
             ));
-        } else if (connectionString.isPresent() && connectionString.get().contains("postgresql")) {
-            logger.info("Connecting to Postgres database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
-            return Optional.of(new SesameOntology(
+//        } else if (connectionString.isPresent() && connectionString.get().contains("postgresql")) {
+//            logger.info("Connecting to Postgres database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
+//            return Optional.of(new SesameOntology(
+//                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
+//                    owlOntology,
+//                    pm.orElse(createDefaultPrefixManager()),
+//                    connectionString.get(),
+//                    username.orElse(""),
+//                    password.orElse("")
+//            ));
+        } else if (connectionString.isPresent() && connectionString.get().contains("virtuoso")) {
+            logger.info("Connecting to Virtuoso database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
+            return Optional.of(new VirtuosoOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
                     pm.orElse(createDefaultPrefixManager()),
@@ -118,9 +124,9 @@ public class OntologyBuilder {
                     username.orElse(""),
                     password.orElse("")
             ));
-        } else if (connectionString.isPresent() && connectionString.get().contains("virtuoso")) {
-            logger.info("Connecting to Virtuoso database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
-            return Optional.of(new VirtuosoOntology(
+        } else if (connectionString.isPresent() && connectionString.get().contains("snarl")) {
+            logger.info("Connecting to Stardog database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
+            return Optional.of(new StardogOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
                     pm.orElse(createDefaultPrefixManager()),

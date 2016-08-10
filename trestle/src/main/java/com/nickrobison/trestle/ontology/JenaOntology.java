@@ -437,6 +437,7 @@ public abstract class JenaOntology implements ITrestleOntology {
 
         if (modelProperty == null) {
             logger.error("Property {} doesn't exist on individual {}", property.getIRI(), individual.getIRI());
+            this.commitTransaction();
             return Optional.empty();
         }
 
@@ -454,6 +455,7 @@ public abstract class JenaOntology implements ITrestleOntology {
         }
         if (properties.isEmpty()) {
             logger.error("Individual {} has no properties {}", individual.getIRI(), property.getIRI());
+            this.commitTransaction();
             return Optional.empty();
         }
         stmtIterator.close();
