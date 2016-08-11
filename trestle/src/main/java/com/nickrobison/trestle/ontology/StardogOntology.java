@@ -11,15 +11,11 @@ import com.complexible.stardog.jena.SDJenaFactory;
 import com.complexible.stardog.protocols.snarl.SNARLProtocolConstants;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.rdf.model.Model;
-import org.semanticweb.owlapi.formats.N3DocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 
 /**
  * Created by nrobison on 8/9/16.
@@ -71,7 +67,8 @@ public class StardogOntology extends JenaOntology {
 //        If the database doesn't exist, create it.
         if (!adminConnection.list().contains(name)) {
             logger.info("Ontology {} doesn't exist in the Stardog database", name);
-            adminConnection.createMemory(name);
+            adminConnection.memory(name)
+                    .create();
         }
 
 //            Now a normal connection to do other stardoggy things.

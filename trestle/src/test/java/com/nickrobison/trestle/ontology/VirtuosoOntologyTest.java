@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import org.apache.jena.query.ResultSet;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,11 +9,9 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
-import java.io.File;
 import java.util.Optional;
 import java.util.Set;
 
-import static com.nickrobison.trestle.common.StaticIRI.relatedToIRI;
 import static com.nickrobison.trestle.common.StaticIRI.relationOfIRI;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -163,6 +162,23 @@ public class VirtuosoOntologyTest {
         final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(test_muni4, owlObjectProperty);
         assertTrue(individualObjectProperty.isPresent(), "Should have related_to properties");
         assertEquals(7, individualObjectProperty.get().size(), "Wrong number of related to properties");
+
+        //        Now for the sparql query
+//        TODO(nrobison): Haven't figured out how to do both sparql querying and inferencing at the same time.
+//        String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+//                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+//                "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+//                "SELECT DISTINCT ?f WHERE { ?m rdf:type :GAUL . " +
+//                "?m :ADM2_Code ?c ." +
+//                "?m :has_relation ?r ." +
+//                "?r rdf:type :Concept_Relation ." +
+//                "?r :Relation_Strength ?s ." +
+//                "?r :has_relation ?f ." +
+//                "?f rdf:type :GAUL\n" +
+//                "FILTER(?c = 65257 && ?s >= .3) }";
+//
+//        final ResultSet resultSet = ontology.executeSPARQL(queryString);
+//        assertEquals(4, resultSet.getRowNumber(), "Wrong number of relations");
 
 //        Now that we have all the object properties, let's filter them out, and get the relation object
     }

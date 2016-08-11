@@ -343,7 +343,7 @@ public class TrestleReasoner {
 
     private boolean checkObjectRelation(OWLNamedIndividual firstIndividual, OWLNamedIndividual secondIndividual) {
 
-        final Optional<Set<OWLObjectPropertyAssertionAxiom>> relatedToProperties = ontology.getIndividualObjectProperty(firstIndividual, relatedToIRI);
+        final Optional<Set<OWLObjectPropertyAssertionAxiom>> relatedToProperties = ontology.getIndividualObjectProperty(firstIndividual, hasRelationIRI);
 //        We should do this through a SPARQL query. I think.
         if (relatedToProperties.isPresent()) {
             final Optional<OWLIndividual> isRelated = relatedToProperties.get()

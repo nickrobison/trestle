@@ -13,8 +13,7 @@ import java.io.File;
 import java.util.Optional;
 import java.util.Set;
 
-import static com.nickrobison.trestle.common.StaticIRI.relatedToIRI;
-import static com.nickrobison.trestle.common.StaticIRI.relationOfIRI;
+import static com.nickrobison.trestle.common.StaticIRI.hasRelationIRI;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -39,7 +38,7 @@ public class OracleOntologyTest {
                         "spatialUser",
                         "spatial1")
                 .fromIRI(iri)
-                .name("trestle_test")
+                .name("trestle_test2")
                 .build().get();
 
         ontology.initializeOntology();
@@ -59,7 +58,7 @@ public class OracleOntologyTest {
         assertEquals(31, resultSet.getRowNumber(), "Wrong number of classes");
 
         final long tripleCount = ontology.getTripleCount();
-        assertEquals(454, tripleCount, "Inference is wrong");
+        assertEquals(513, tripleCount, "Inference is wrong");
 
         final OWLNamedIndividual burundi_0 = df.getOWLNamedIndividual(IRI.create("trestle:", "Burundi_0"));
         final OWLDataProperty property = df.getOWLDataProperty(IRI.create("trestle:", "ADM0_Code"));
@@ -252,15 +251,32 @@ public class OracleOntologyTest {
 
 //        Check to ensure the relation is transitive and inferred
         final OWLNamedIndividual test_muni4 = df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni4"));
-        final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(relatedToIRI);
+        final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(hasRelationIRI);
         final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(test_muni4, owlObjectProperty);
         assertTrue(individualObjectProperty.isPresent(), "Should have related_to properties");
         assertEquals(7, individualObjectProperty.get().size(), "Wrong number of related to properties");
+
+
+        //        Now for the sparql query
+        String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+                "SELECT DISTINCT ?f WHERE { ?m rdf:type :GAUL . " +
+                "?m :ADM2_Code ?c ." +
+                "?m :has_relation ?r ." +
+                "?r rdf:type :Concept_Relation ." +
+                "?r :Relation_Strength ?s ." +
+                "?r :has_relation ?f ." +
+                "?f rdf:type :GAUL\n" +
+                "FILTER(?c = 65257 && ?s >= .3) }";
+
+        final ResultSet resultSet = ontology.executeSPARQL(queryString);
+        assertEquals(4, resultSet.getRowNumber(), "Wrong number of relations");
     }
 
     @AfterEach
     public void CloseOntology() {
-        ontology.close(true);
+        ontology.close(false);
     }
 
 

@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Created by nrobison on 8/9/16.
  */
-@SuppressWarnings({"Duplicates", "OptionalGetWithoutIsPresent", "initialization.fields.uninitialized"})
+@SuppressWarnings({"Duplicates", "OptionalGetWithoutIsPresent", "initialization.fields.uninitialized" })
 public class StardogOntologyTest {
 
     private StardogOntology ontology;
@@ -155,11 +155,24 @@ public class StardogOntologyTest {
         final Set<OWLObjectPropertyAssertionAxiom> allObjectPropertiesForIndividual = ontology.getAllObjectPropertiesForIndividual(muni1_muni2);
         assertEquals(14, allObjectPropertiesForIndividual.size(), "Wrong number of object properties");
 
+        //        Now for the sparql query
+        String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+                "SELECT DISTINCT ?f WHERE { ?m rdf:type :GAUL . " +
+                "?m :ADM2_Code ?c ." +
+                "?m :has_relation ?r ." +
+                "?r rdf:type :Concept_Relation ." +
+                "?r :Relation_Strength ?s ." +
+                "?r :has_relation ?f ." +
+                "?f rdf:type :GAUL\n" +
+                "FILTER(?c = 65257 && ?s >= .3) }";
 
+        final ResultSet resultSet = ontology.executeSPARQL(queryString);
+        assertEquals(4, resultSet.getRowNumber(), "Wrong number of relations");
     }
 
     @Test
-    @Disabled
     public void testByteParsing() throws MissingOntologyEntity {
 
         int smallInt = 4321;
@@ -167,7 +180,7 @@ public class StardogOntologyTest {
         int negativeInt = Integer.MIN_VALUE;
         long smallLong = 4321;
         long negativeLong = -4321;
-        long negativeBigLong = Long.MIN_VALUE;
+        long negativeBigLong = Long.MIN_VALUE + 1;
         long bigLong = Long.MAX_VALUE;
         Double bigFloat = 4321.43;
 
