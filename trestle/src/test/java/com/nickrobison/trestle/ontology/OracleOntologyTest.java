@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
+import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import org.apache.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import org.junit.jupiter.api.AfterEach;
@@ -41,7 +42,7 @@ public class OracleOntologyTest {
                 .name("trestle_test2")
                 .build().get();
 
-        ontology.initializeOntology();
+//        ontology.initializeOntology();
     }
 
     @Test
@@ -256,21 +257,14 @@ public class OracleOntologyTest {
         assertTrue(individualObjectProperty.isPresent(), "Should have related_to properties");
         assertEquals(7, individualObjectProperty.get().size(), "Wrong number of related to properties");
 
+        final OWLClass gaulClass = df.getOWLClass(IRI.create("trestle:", "GAUL"));
+        final QueryBuilder queryBuilder = new QueryBuilder(ontology.getUnderlyingPrefixManager());
+        final String builtString = queryBuilder.buildRelationQuery(test_muni4, gaulClass, 0.6);
+
 
         //        Now for the sparql query
-        String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
-                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
-                "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
-                "SELECT DISTINCT ?f WHERE { ?m rdf:type :GAUL . " +
-                "?m :ADM2_Code ?c ." +
-                "?m :has_relation ?r ." +
-                "?r rdf:type :Concept_Relation ." +
-                "?r :Relation_Strength ?s ." +
-                "?r :has_relation ?f ." +
-                "?f rdf:type :GAUL\n" +
-                "FILTER(?c = 65257 && ?s >= .3) }";
 
-        final ResultSet resultSet = ontology.executeSPARQL(queryString);
+        ResultSet resultSet = ontology.executeSPARQL(builtString);
         assertEquals(4, resultSet.getRowNumber(), "Wrong number of relations");
     }
 
