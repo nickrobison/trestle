@@ -54,9 +54,7 @@ public class QueryBuilder {
     }
 
     public String buildRelationQuery(OWLNamedIndividual individual, @Nullable OWLClass datasetClass, double relationshipStrength) {
-        final ParameterizedSparqlString ps = new ParameterizedSparqlString();
-        ps.setBaseUri(baseURI);
-        ps.setNsPrefixes(this.trimmedPrefixMap);
+        final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT ?f" +
                 " WHERE" +
                 " { ?m rdf:type ?t ." +
@@ -77,6 +75,26 @@ public class QueryBuilder {
 
 //        return ps.toString().replace("<", "").replace(">", "");
         return ps.toString();
+    }
+
+    public String buildOracleIntersection(OWLClass datasetClass, String wktValue) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText("SELECT ?m ?wkt" +
+                " WHERE" +
+                " { ?m rdf:type ?type ." +
+                "?m ogc:asWKT ?wkt " +
+                "FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
+        ps.setIri("type", getFullIRIString(datasetClass));
+        ps.setLiteral("wktString", wktValue);
+
+        return ps.toString();
+    }
+
+    private ParameterizedSparqlString buildBaseString() {
+        final ParameterizedSparqlString ps = new ParameterizedSparqlString();
+        ps.setBaseUri(baseURI);
+        ps.setNsPrefixes(this.trimmedPrefixMap);
+        return ps;
     }
 
     private IRI getFullIRI(IRI iri) {

@@ -163,6 +163,9 @@ public class OntologyBuilder {
         pm.setPrefix("spatial:", "http://www.jena.apache.org/spatial#");
         pm.setPrefix("geosparql:", "http://www.opengis.net/ont/geosparql#");
         pm.setPrefix("trestle:", "http://nickrobison.com/dissertation/trestle.owl#");
+//        Need the ogc and ogcf prefixes for the oracle spatial
+        pm.setPrefix("ogcf:", "http://www.opengis.net/def/function/geosparql/");
+        pm.setPrefix("ogc:", "http://www.opengis.net/ont/geosparql#");
 
 //        Add any defined prefixes
         return pm;
