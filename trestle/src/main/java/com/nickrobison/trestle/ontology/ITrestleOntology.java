@@ -251,6 +251,14 @@ public interface ITrestleOntology {
 
     /**
      * Return a set of values for a given data property
+     * @param individual - OWLNamedIndividual to retrieve properties for
+     * @param propertyIRI - IRI of dataproperty to retrieve
+     * @return - Optional Set of OWLLiteral values for given property
+     */
+    Optional<Set<OWLLiteral>> getIndividualDataProperty(OWLNamedIndividual individual, IRI propertyIRI);
+
+    /**
+     * Return a set of values for a given data property
      * @param individualIRI - IRI of individual to retrieve properties for
      * @param property - OWLDataProperty to retrieve values from
      * @return - Optional Set of OWLLiteral values for given property of specific individual

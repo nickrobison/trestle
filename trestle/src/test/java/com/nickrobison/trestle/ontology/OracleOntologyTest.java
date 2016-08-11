@@ -1,8 +1,14 @@
 package com.nickrobison.trestle.ontology;
 
-import com.nickrobison.trestle.querybuilder.QueryBuilder;
-import org.apache.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.querybuilder.QueryBuilder;
+import com.nickrobison.trestle.types.temporal.IntervalTemporal;
+import com.nickrobison.trestle.types.temporal.TemporalObject;
+import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,18 +17,16 @@ import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 import java.io.File;
-import java.util.Optional;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.*;
 
-import static com.nickrobison.trestle.common.StaticIRI.hasRelationIRI;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static com.nickrobison.trestle.common.StaticIRI.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by nrobison on 6/24/16.
  */
-@SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "Duplicates"})
+@SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "Duplicates", "unchecked" })
 public class OracleOntologyTest {
 
     private OracleOntology ontology;
@@ -39,10 +43,10 @@ public class OracleOntologyTest {
                         "spatialUser",
                         "spatial1")
                 .fromIRI(iri)
-                .name("trestle_test2")
+                .name("trestle_test3")
                 .build().get();
 
-//        ontology.initializeOntology();
+        ontology.initializeOntology();
     }
 
     @Test
@@ -261,16 +265,42 @@ public class OracleOntologyTest {
         final QueryBuilder queryBuilder = new QueryBuilder(ontology.getUnderlyingPrefixManager());
         final String builtString = queryBuilder.buildRelationQuery(test_muni4, gaulClass, 0.6);
 
-
         //        Now for the sparql query
 
         ResultSet resultSet = ontology.executeSPARQL(builtString);
         assertEquals(4, resultSet.getRowNumber(), "Wrong number of relations");
+
+//        If we have the right number of relations, let's build a set of individuals and get their validity intervals
+        Set<OWLNamedIndividual> individuals = new HashSet<>();
+        ((ResultSetMem) resultSet).rewind();
+        while (resultSet.hasNext()) {
+            final QuerySolution querySolution = resultSet.nextSolution();
+            final Resource resource = querySolution.getResource("f");
+            individuals.add(df.getOWLNamedIndividual(resource.getURI()));
+        }
+        assertEquals(4, individuals.size(), "Should have the same number of individuals");
+
+        Map<OWLNamedIndividual, TemporalObject> intervals = new HashMap<>();
+        individuals.forEach(individual -> {
+            final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty1 = ontology.getIndividualObjectProperty(individual, hasTemporalIRI);
+            if (individualObjectProperty1.isPresent()) {
+                final Optional<Set<OWLLiteral>> validFrom = ontology.getIndividualDataProperty(individualObjectProperty1.get().stream().findFirst().get().getObject().asOWLNamedIndividual(), temporalValidFromIRI);
+                final Optional<Set<OWLLiteral>> validTo = ontology.getIndividualDataProperty(individualObjectProperty1.get().stream().findFirst().get().getObject().asOWLNamedIndividual(), temporalValidToIRI);
+                final IntervalTemporal intervalTemporal = TemporalObjectBuilder.valid().from(LocalDateTime.parse(validFrom.get().stream().findFirst().get().getLiteral()))
+                        .to(LocalDateTime.parse(validTo.get().stream().findFirst().get().getLiteral()))
+                        .withRelations(individual);
+                intervals.put(individual, intervalTemporal);
+            }
+        });
+
+        assertEquals(4, intervals.size(), "Should have 4 intervals");
+
+
     }
 
     @AfterEach
     public void CloseOntology() {
-        ontology.close(false);
+        ontology.close(true);
     }
 
 

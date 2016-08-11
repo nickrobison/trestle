@@ -1,11 +1,13 @@
 package com.nickrobison.trestle.ontology;
 
+import com.nickrobison.trestle.types.temporal.TemporalObject;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.shared.AddDeniedException;
+import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -422,6 +424,11 @@ public abstract class JenaOntology implements ITrestleOntology {
         }
         this.commitTransaction();
         return Optional.of(individual);
+    }
+
+    @Override
+    public Optional<Set<OWLLiteral>> getIndividualDataProperty(OWLNamedIndividual individual, IRI propertyIRI) {
+        return getIndividualDataProperty(individual, df.getOWLDataProperty(propertyIRI));
     }
 
     @Override
