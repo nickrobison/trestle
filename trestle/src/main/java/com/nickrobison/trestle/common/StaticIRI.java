@@ -8,6 +8,7 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
  */
 public class StaticIRI {
     public static final String PREFIX = "http://nickrobison.com/dissertation/trestle.owl#";
+//    Relations
     public static final IRI factOfIRI = IRI.create(PREFIX, "fact_of");
     public static final IRI hasFactIRI = IRI.create(PREFIX, "has_fact");
     public static final IRI temporalOfIRI = IRI.create(PREFIX, "temporal_of");
@@ -21,6 +22,10 @@ public class StaticIRI {
     public static final IRI temporalClassIRI = IRI.create(PREFIX, "Temporal_Object");
     public static final IRI hasRelationIRI = IRI.create(PREFIX, "has_relation");
     public static final IRI relationOfIRI = IRI.create(PREFIX, "relation_of");
+//    Classes
+    public static final IRI conceptRelationIRI = IRI.create(PREFIX, "Concept_Relation");
+//    Properties
+    public static final IRI relationStrengthIRI = IRI.create(PREFIX, "Relation_Strength");
     public static final IRI temporalDatatypeIRI = OWL2Datatype.XSD_DATE_TIME.getIRI();
 
 }

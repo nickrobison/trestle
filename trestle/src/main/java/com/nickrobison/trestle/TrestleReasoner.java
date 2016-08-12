@@ -15,6 +15,7 @@ import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -172,6 +173,8 @@ public class TrestleReasoner {
             } catch (TrestleClassException e) {
                 logger.error("Could not write object {}", owlNamedIndividual, e);
             }
+        } else {
+            logger.debug("Fact {} already exists.", owlNamedIndividual);
         }
 
         if (!ontology.containsResource(relatedFactIndividual)) {
@@ -181,9 +184,46 @@ public class TrestleReasoner {
             } catch (TrestleClassException e) {
                 logger.error("Could not write object {}", relatedFactIndividual, e);
             }
+        } else {
+            logger.debug("Fact {} exists", relatedFactIndividual);
         }
 
 //        See if they're already related
+        if (checkObjectRelation(owlNamedIndividual, relatedFactIndividual)) {
+//            If they are, move on. We don't support updates, yet.
+            logger.info("{} and {} are already related, skipping.", owlNamedIndividual, relatedFactIndividual);
+            return;
+        }
+
+//        If not, store them.
+//        Write the concept relation
+        final IRI conceptIRI = IRI.create(PREFIX,
+                String.format("related-%s-%s",
+                        owlNamedIndividual.getIRI().getShortForm(),
+                        relatedFactIndividual.getIRI().getShortForm()));
+        ontology.createIndividual(conceptIRI, conceptRelationIRI);
+
+//        Write the relation strength
+        try {
+            ontology.writeIndividualDataProperty(conceptIRI, relationStrengthIRI, Double.toString(relation), OWL2Datatype.XSD_DOUBLE.getIRI());
+        } catch (MissingOntologyEntity e) {
+            logger.error("Cannot write property {} in individual {}", relationStrengthIRI, conceptIRI, e);
+        }
+
+//        Write the relationOf property
+        try {
+            ontology.writeIndividualObjectProperty(conceptIRI, relationOfIRI, owlNamedIndividual.getIRI());
+        } catch (MissingOntologyEntity e) {
+            logger.error("Missing individual {}", conceptIRI, e);
+        }
+
+//        Write the hasRelation property
+        try {
+            ontology.writeIndividualObjectProperty(conceptIRI, hasRelationIRI, relatedFactIndividual.getIRI());
+        } catch (MissingOntologyEntity e) {
+            logger.error("Missing individual {}", conceptIRI, e);
+        }
+
 
     }
 
@@ -343,17 +383,17 @@ public class TrestleReasoner {
 
     private boolean checkObjectRelation(OWLNamedIndividual firstIndividual, OWLNamedIndividual secondIndividual) {
 
+//        This should get all the Concept Relations and the individuals related to the first individual, and it's symmetric
         final Optional<Set<OWLObjectPropertyAssertionAxiom>> relatedToProperties = ontology.getIndividualObjectProperty(firstIndividual, hasRelationIRI);
-//        We should do this through a SPARQL query. I think.
         if (relatedToProperties.isPresent()) {
             final Optional<OWLIndividual> isRelated = relatedToProperties.get()
                     .stream()
-                    .map(p -> p.getObject())
+                    .map(OWLPropertyAssertionAxiom::getObject)
                     .filter(p -> p.equals(secondIndividual))
                     .findFirst();
 
             if (isRelated.isPresent()) {
-
+                return true;
             }
         }
 
