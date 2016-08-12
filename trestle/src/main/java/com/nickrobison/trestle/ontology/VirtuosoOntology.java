@@ -7,6 +7,9 @@ import org.apache.jena.rdf.model.InfModel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.reasoner.ReasonerRegistry;
+import org.apache.log4j.helpers.LogLog;
+import org.apache.log4j.lf5.LogLevel;
+import org.apache.logging.log4j.io.LoggerOutputStream;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
@@ -65,12 +68,13 @@ public class VirtuosoOntology extends JenaOntology {
 
     @Override
 //    Need to override the SPARQL command because the geospatial extensions will cause Jena to fail the query parsing.
+//    TODO(nrobison): This should return a list, not this weird ResultSet thing.
     public ResultSet executeSPARQL(String queryString) {
         this.openTransaction(false);
         final VirtuosoQueryExecution queryExecution = VirtuosoQueryExecutionFactory.create(queryString, (VirtGraph) this.virtModel.getGraph());
         ResultSet resultSet = queryExecution.execSelect();
         resultSet = ResultSetFactory.copyResults(resultSet);
-        ResultSetFormatter.out(System.out, resultSet, queryExecution.getQuery());
+//        ResultSetFormatter.out(System.out, resultSet, queryExecution.getQuery());
         queryExecution.close();
         this.commitTransaction();
 
@@ -116,9 +120,13 @@ public class VirtuosoOntology extends JenaOntology {
 
     @Override
     public void openAndLock(boolean write) {
-        logger.debug("Locking open");
-        openTransaction(write);
-        lock();
+        if (!locked) {
+            logger.debug("Locking open");
+            openTransaction(write);
+            lock();
+        } else {
+            logger.debug("Already locked, moving on");
+        }
     }
 
     @Override

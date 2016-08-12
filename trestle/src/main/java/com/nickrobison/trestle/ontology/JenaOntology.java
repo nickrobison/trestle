@@ -540,6 +540,7 @@ public abstract class JenaOntology implements ITrestleOntology {
         return getFullIRI(owlNamedObject).toString();
     }
 
+    //    TODO(nrobison): This should return a list, not this weird ResultSet thing.
     public ResultSet executeSPARQL(String queryString) {
         this.openTransaction(false);
         final Query query = QueryFactory.create(queryString);

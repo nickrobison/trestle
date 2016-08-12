@@ -146,9 +146,13 @@ public class OracleOntology extends JenaOntology {
 
     @Override
     public void openAndLock(boolean write) {
-        logger.debug("Locking open");
-        openTransaction(write);
-        lock();
+        if (!locked) {
+            logger.debug("Locking open transaction");
+            openTransaction(write);
+            lock();
+        } else {
+            logger.debug("Already locked, moving on");
+        }
     }
 
     @Override
@@ -159,8 +163,28 @@ public class OracleOntology extends JenaOntology {
     @Override
     public void unlockAndCommit() {
         logger.debug("Unlocking and committing");
+        unlock();
         commitTransaction();
-        lock();
+    }
+
+    @Override
+    public void commitTransaction() {
+        if (!locked) {
+            logger.info("Committing model transaction");
+            model.commit();
+        } else {
+            logger.debug("Transaction locked, continuing");
+        }
+    }
+
+    @Override
+    public void openTransaction(boolean write) {
+        if (!locked) {
+            logger.debug("Opening transaction");
+            model.begin();
+        } else {
+            logger.debug("Model is locked, keeping transaction alive");
+        }
     }
 
         /**
