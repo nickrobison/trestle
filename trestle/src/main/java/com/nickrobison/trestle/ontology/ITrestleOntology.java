@@ -120,6 +120,15 @@ public interface ITrestleOntology {
     void writeIndividualDataProperty(OWLDataPropertyAssertionAxiom dataProperty) throws MissingOntologyEntity;
 
     /**
+     *
+     * Create object association between two OWLNamedIndividuals using base IRIs
+     * @param owlSubject - OWLNamedIndividual subject
+     * @param propertyIRI - IRI of OWLObjectProperty
+     * @param owlObject - OWLNamedIndividual object
+     */
+    void writeIndividualObjectProperty(OWLNamedIndividual owlSubject, IRI propertyIRI, OWLNamedIndividual owlObject) throws MissingOntologyEntity;
+
+    /**
      * Create object association between two OWLNamedIndividuals using base IRIs
      * @param owlSubject - IRI of OWLNamedIndividual subject
      * @param owlProperty - IRI of OWLObjectProperty

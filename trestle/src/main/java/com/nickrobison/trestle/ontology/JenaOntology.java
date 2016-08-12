@@ -206,6 +206,15 @@ public abstract class JenaOntology implements ITrestleOntology {
         this.unlockAndCommit();
     }
 
+
+    @Override
+    public void writeIndividualObjectProperty(OWLNamedIndividual owlSubject, IRI propertyIRI, OWLNamedIndividual owlObject) throws MissingOntologyEntity {
+        writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
+                df.getOWLObjectProperty(propertyIRI),
+                owlSubject,
+                owlObject));
+    }
+
     @Override
     public void writeIndividualObjectProperty(IRI owlSubject, IRI owlProperty, IRI owlObject) throws MissingOntologyEntity {
 
@@ -277,7 +286,7 @@ public abstract class JenaOntology implements ITrestleOntology {
             return;
         }
         logger.info("Writing ontology to {}", path);
-        model.write(fileOutputStream);
+        model.write(fileOutputStream, "N3");
         logger.debug("Finished writing ontology to {}", path);
         this.unlockAndCommit();
     }
