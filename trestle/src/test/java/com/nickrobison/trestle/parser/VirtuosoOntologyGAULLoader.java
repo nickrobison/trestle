@@ -1,5 +1,7 @@
 package com.nickrobison.trestle.parser;
 
+import com.nickrobison.trestle.exceptions.UnsupportedFeatureException;
+import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import org.apache.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
@@ -81,7 +83,7 @@ public class VirtuosoOntologyGAULLoader {
     }
 
     @Test
-    public void testRAWDataLoader() throws MissingOntologyEntity, OWLOntologyStorageException, SQLException {
+    public void testRAWDataLoader() throws MissingOntologyEntity, OWLOntologyStorageException, SQLException, UnsupportedFeatureException {
 
         OWLClass datasetClass = df.getOWLClass(IRI.create("trestle:", "GAUL_Test"));
 
@@ -141,13 +143,9 @@ public class VirtuosoOntologyGAULLoader {
         assertEquals(191, resultSet.getRowNumber(), "Wrong number of GAUL records from sparql method");
 
 //        SPARQL Query of spatial intersections.
-        queryString = "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
-                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
-                "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
-                "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
-                "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-                "SELECT ?m ?wkt WHERE { ?m rdf:type :GAUL_Test . ?m ogc:asWKT ?wkt\n" +
-                "    FILTER (bif:st_intersects(?wkt, \"Point(39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }";
+        QueryBuilder qb = new QueryBuilder(ontology.getUnderlyingPrefixManager());
+        final OWLClass gaul_test = df.getOWLClass(IRI.create("trestle:", "GAUL_Test"));
+        queryString = qb.buildSpatialIntersection(QueryBuilder.DIALECT.VIRTUOSO, gaul_test, "Point(39.5398864750001 -12.0671005249999)", 0.0, QueryBuilder.UNITS.MILE);
 
         resultSet = ontology.executeSPARQL(queryString);
         assertEquals(3, resultSet.getRowNumber(), "Wrong number of intersected results");

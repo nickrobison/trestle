@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.parser;
 
+import com.nickrobison.trestle.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import org.apache.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
@@ -76,14 +77,14 @@ public class OracleOntologyGAULoader {
                         "spatialUser",
                         "spatial1")
                 .fromIRI(iri)
-                .name("trestle_gaul_loader")
+                .name("trestle_gaul_loader1")
                 .build().get();
 
         ontology.initializeOntology();
     }
 
     @Test
-    public void testRAWDataLoader() throws MissingOntologyEntity, OWLOntologyStorageException, SQLException {
+    public void testRAWDataLoader() throws MissingOntologyEntity, OWLOntologyStorageException, SQLException, UnsupportedFeatureException {
 
         OWLClass datasetClass = df.getOWLClass(IRI.create("trestle:", "GAUL_Test"));
 
@@ -151,7 +152,8 @@ public class OracleOntologyGAULoader {
 //        SPARQL Query of spatial intersections.
         final OWLClass gaul_test = df.getOWLClass(IRI.create("trestle:", "GAUL_Test"));
         QueryBuilder qb = new QueryBuilder(ontology.getUnderlyingPrefixManager());
-        queryString = qb.buildOracleIntersection(gaul_test, "Point(39.5398864750001 -12.0671005249999)");
+//        queryString = qb.buildOracleIntersection(gaul_test, "Point(39.5398864750001 -12.0671005249999)");
+        queryString = qb.buildSpatialIntersection(QueryBuilder.DIALECT.ORACLE, gaul_test, "Point(39.5398864750001 -12.0671005249999)", 0.0, QueryBuilder.UNITS.METER);
 
         resultSet = ontology.executeSPARQL(queryString);
         assertEquals(2, resultSet.getRowNumber(), "Wrong number of intersected results");

@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.querybuilder;
 
+import com.nickrobison.trestle.exceptions.UnsupportedFeatureException;
 import org.apache.jena.query.ParameterizedSparqlString;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -8,6 +9,8 @@ import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLNamedObject;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +22,23 @@ import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
  * Created by nrobison on 8/11/16.
  */
 public class QueryBuilder {
+
+    public enum DIALECT {
+        ORACLE,
+        VIRTUOSO,
+        STARDOG,
+        JENA,
+        SESAME
+    }
+
+    public enum UNITS {
+        KM,
+        MILE,
+        METER,
+        CM,
+    }
+
+    private static final Logger logger = LoggerFactory.getLogger(QueryBuilder.class);
     private final String prefixes;
     private final DefaultPrefixManager pm;
     private final String baseURI;
@@ -74,19 +94,40 @@ public class QueryBuilder {
         ps.setLiteral("st", relationshipStrength);
 
 //        return ps.toString().replace("<", "").replace(">", "");
+        logger.debug(ps.toString());
         return ps.toString();
     }
 
-    public String buildOracleIntersection(OWLClass datasetClass, String wktValue) {
+    public String buildSpatialIntersection(DIALECT dialect, OWLClass datasetClass, String wktValue, double buffer, UNITS unit) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT ?m ?wkt" +
                 " WHERE" +
                 " { ?m rdf:type ?type ." +
-                "?m ogc:asWKT ?wkt " +
-                "FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
+                "?m ogc:asWKT ?wkt ");
+        switch (dialect) {
+            case ORACLE: {
+                if (buffer > 0) {
+                    ps.append("FILTER(ogcf:sfIntersects(ogcf:buffer(?wkt, ?distance, ?unitIRI), ?wktString^^ogc:wktLiteral)) }");
+                    ps.setLiteral("distance", buffer);
+                    ps.setIri("unitIRI", String.format("http://xmlns.oracle.com/rdf/geo/uom/%s", unit.toString()));
+                } else {
+                    ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
+                }
+                break;
+            }
+            case VIRTUOSO: {
+                logger.warn("Unit conversion not implemented yet, assuming meters as base distance");
+                ps.append("FILTER(bif:st_intersects(?wkt, ?wktString^^ogc:wktLiteral, ?distance)) }");
+                ps.setLiteral("distance", buffer);
+                break;
+            }
+
+            default: throw new UnsupportedFeatureException(String.format("Trestle doesn't yet support spatial queries on %s", dialect));
+        }
         ps.setIri("type", getFullIRIString(datasetClass));
         ps.setLiteral("wktString", wktValue);
 
+        logger.debug(ps.toString());
         return ps.toString();
     }
 
