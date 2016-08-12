@@ -68,7 +68,8 @@ public class VirtuosoOntology extends JenaOntology {
     public ResultSet executeSPARQL(String queryString) {
         this.openTransaction(false);
         final VirtuosoQueryExecution queryExecution = VirtuosoQueryExecutionFactory.create(queryString, (VirtGraph) this.virtModel.getGraph());
-        final ResultSet resultSet = queryExecution.execSelect();
+        ResultSet resultSet = queryExecution.execSelect();
+        resultSet = ResultSetFactory.copyResults(resultSet);
         ResultSetFormatter.out(System.out, resultSet, queryExecution.getQuery());
         queryExecution.close();
         this.commitTransaction();
