@@ -1,15 +1,10 @@
 package com.nickrobison.trestle.ontology;
 
-import org.apache.jena.ontology.OntModel;
-import org.apache.jena.ontology.OntModelSpec;
-import org.apache.jena.query.*;
-import org.apache.jena.rdf.model.InfModel;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.reasoner.ReasonerRegistry;
-import org.apache.log4j.helpers.LogLog;
-import org.apache.log4j.lf5.LogLevel;
-import org.apache.logging.log4j.io.LoggerOutputStream;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
@@ -42,6 +37,7 @@ public class VirtuosoOntology extends JenaOntology {
         virtModel = VirtModel.openDatabaseModel(name, connectionString, username, password);
         return ModelFactory.createInfModel(ReasonerRegistry.getOWLReasoner(), virtModel);
     }
+
     @Override
     public boolean isConsistent() {
         return true;
@@ -114,7 +110,7 @@ public class VirtuosoOntology extends JenaOntology {
 
 
     @Override
-    public void lock () {
+    public void lock() {
         this.locked = true;
     }
 
