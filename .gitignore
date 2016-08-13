@@ -62,3 +62,5 @@ server.pid
 *.eml
 /dist/
 .cache
+src/test/resources/intersection.csv
+src/test/resources/SELECT___adm2_name____adm2_code____recor.csv
