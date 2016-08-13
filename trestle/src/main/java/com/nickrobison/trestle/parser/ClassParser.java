@@ -251,6 +251,43 @@ public class ClassParser {
         return Optional.of(axioms);
     }
 
+    public static Optional<String> GetSpatialValue(Object inputObject) {
+        final Class<?> clazz = inputObject.getClass();
+
+//        Methods first
+        final Optional<Method> matchedMethod = Arrays.stream(clazz.getDeclaredMethods())
+                .filter(m -> m.isAnnotationPresent(Spatial.class))
+                .findFirst();
+
+        if (matchedMethod.isPresent()) {
+            final Optional<Object> methodValue = accessMethodValue(matchedMethod.get(), inputObject);
+
+            if (methodValue.isPresent()) {
+                return Optional.of(methodValue.get().toString());
+            }
+        }
+
+//        Now fields
+        final Optional<Field> matchedField = Arrays.stream(clazz.getDeclaredFields())
+                .filter(f -> f.isAnnotationPresent(Spatial.class))
+                .findFirst();
+
+        if (matchedField.isPresent()) {
+            String fieldValue = null;
+            try {
+                fieldValue = matchedField.get().get(inputObject).toString();
+            } catch (IllegalAccessException e) {
+                logger.debug("Cannot access field {}", matchedField.get().getName(), e);
+            }
+
+            if (fieldValue != null) {
+                return Optional.of(fieldValue);
+            }
+        }
+
+        return Optional.empty();
+    }
+
     static String filterMethodName(Method classMethod) {
         String name = classMethod.getName();
 //        remove get and

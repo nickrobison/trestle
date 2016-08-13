@@ -1,6 +1,8 @@
 package com.nickrobison.gaulintegrator;
 
 import com.esri.mapreduce.PolygonFeatureInputFormat;
+import com.nickrobison.trestle.TrestleReasoner;
+import com.nickrobison.trestle.ontology.OracleOntology;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -15,8 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URL;
 import java.util.Properties;
 
 /**
@@ -43,6 +43,14 @@ public class IntegrationRunner extends Configured implements Tool {
             conf.set(name, userProperties.getProperty(name));
         }
 
+//        Setup the reasoner
+        TrestleReasoner reasoner = new TrestleReasoner.TrestleBuilder()
+                .withDBConnection(conf.get("reasoner.db.connection"), conf.get("reasoner.db.username"), conf.get("reasoner.db.password"))
+                .withInputClasses(GAULObject.class)
+                .initialize()
+                .withName("gaul_hadoop")
+                .build();
+
         Job job = Job.getInstance(conf, "GAUL Integrator");
         job.setJarByClass(IntegrationRunner.class);
         job.setMapperClass(GAULMapper.class);
@@ -68,7 +76,14 @@ public class IntegrationRunner extends Configured implements Tool {
 //        final URL resource = IntegrationRunner.class.getClassLoader().getResource("trestle.owl");
 //        logger.debug("Loading: {}", URI.create(resource.toString() + "#trestle"));
 //        job.addCacheFile(URI.create(resource.toString() + "#trestle"));
+        job.waitForCompletion(true);
 
-        return job.waitForCompletion(true) ? 0 : 1;
+        ((OracleOntology) reasoner.getUnderlyingOntology()).runInference();
+        reasoner.shutdown(false);
+
+        if (job.isSuccessful()) {
+            return 0;
+        }
+        return 1;
     }
 }

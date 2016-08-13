@@ -94,9 +94,6 @@ public class OracleTrestleTest {
 //        Try to read one out.
         final GAULTestClass ancuabe = reasoner.readAsObject(GAULTestClass.class, IRI.create("trestle:", "Ancuabe"));
         assertEquals(ancuabe.adm0_name, "Ancuabe", "Wrong name");
-
-
-//        Validate correctness
     }
 
 

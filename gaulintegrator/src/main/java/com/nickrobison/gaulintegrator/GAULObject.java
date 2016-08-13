@@ -66,12 +66,12 @@ public class GAULObject {
         return objectID;
     }
 
+    @IndividualIdentifier
     @DataProperty(name = "id", datatype = OWL2Datatype.XSD_STRING)
     public String getObjectIDAsString() {
         return this.objectID.toString();
     }
 
-    @IndividualIdentifier
     public String getObjectName() {
         return objectName;
     }

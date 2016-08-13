@@ -4,14 +4,21 @@ import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.exceptions.UnregisteredClassException;
-import com.nickrobison.trestle.ontology.ITrestleOntology;
-import com.nickrobison.trestle.ontology.OntologyBuilder;
+import com.nickrobison.trestle.exceptions.UnsupportedFeatureException;
+import com.nickrobison.trestle.ontology.*;
 import com.nickrobison.trestle.parser.*;
+import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.sparql.resultset.ResultSetMem;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
@@ -24,6 +31,7 @@ import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.temporal.Temporal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.StaticIRI.*;
 
@@ -39,6 +47,8 @@ public class TrestleReasoner {
     private final OWLDataFactory df;
     //    Seems gross?
     private static final OWLClass datasetClass = OWLManager.getOWLDataFactory().getOWLClass(IRI.create("trestle:", "Dataset"));
+    private final QueryBuilder qb;
+    private final QueryBuilder.DIALECT spatialDalect;
 
     @SuppressWarnings("dereference.of.nullable")
     private TrestleReasoner(TrestleBuilder builder) throws OWLOntologyCreationException {
@@ -70,6 +80,22 @@ public class TrestleReasoner {
             this.ontology.initializeOntology();
         }
         df = OWLManager.getOWLDataFactory();
+
+//        Setup the query builder
+        if (ontology instanceof OracleOntology) {
+            spatialDalect = QueryBuilder.DIALECT.ORACLE;
+        } else if (ontology instanceof VirtuosoOntology) {
+            spatialDalect = QueryBuilder.DIALECT.VIRTUOSO;
+        } else if (ontology instanceof LocalOntology) {
+            spatialDalect = QueryBuilder.DIALECT.JENA;
+        } else if (ontology instanceof StardogOntology) {
+            spatialDalect = QueryBuilder.DIALECT.STARDOG;
+        } else {
+//            TODO(nrobison): This needs to be better
+            spatialDalect = QueryBuilder.DIALECT.SESAME;
+        }
+        logger.debug("Using spatial dialect {}", spatialDalect);
+        qb = new QueryBuilder(ontology.getUnderlyingPrefixManager());
     }
 
     /**
@@ -121,7 +147,7 @@ public class TrestleReasoner {
     }
 
     void writeObject(Object inputObject, TemporalScope scope) throws TrestleClassException {
-
+        ontology.openAndLock(true);
         //        Is class in registry?
         final Class aClass = inputObject.getClass();
         if (!this.registeredClasses.contains(aClass)) {
@@ -159,11 +185,13 @@ public class TrestleReasoner {
             });
         }
 //        Write the object properties
+        ontology.unlockAndCommit();
     }
 
     public void writeFactWithRelation(Object inputFact, double relation, Object relatedFact) {
 
 //        Check to see if both objects exist
+        ontology.openAndLock(true);
         final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(inputFact);
         final OWLNamedIndividual relatedFactIndividual = ClassParser.GetIndividual(relatedFact);
         if (!ontology.containsResource(owlNamedIndividual)) {
@@ -192,6 +220,7 @@ public class TrestleReasoner {
         if (checkObjectRelation(owlNamedIndividual, relatedFactIndividual)) {
 //            If they are, move on. We don't support updates, yet.
             logger.info("{} and {} are already related, skipping.", owlNamedIndividual, relatedFactIndividual);
+            ontology.unlockAndCommit();
             return;
         }
 
@@ -223,18 +252,14 @@ public class TrestleReasoner {
         } catch (MissingOntologyEntity e) {
             logger.error("Missing individual {}", conceptIRI, e);
         }
-
-
+        this.ontology.unlockAndCommit();
     }
 
-    @SuppressWarnings("argument.type.incompatible")
-    public <T> T readAsObject(Class<T> clazz, String objectID) throws TrestleClassException, MissingOntologyEntity {
+    public <T> @NonNull T readAsObject(Class<@NonNull T> clazz, String objectID) throws TrestleClassException, MissingOntologyEntity {
         return readAsObject(clazz, IRI.create(PREFIX, objectID.replaceAll("\\s+", "_")));
     }
 
-    //    FIXME(nrobison): Get rid of this warning, not sure why it exists
-    @SuppressWarnings("argument.type.incompatible")
-    public <T> T readAsObject(Class<T> clazz, IRI individualIRI) throws TrestleClassException, MissingOntologyEntity {
+    public <T> @NonNull T readAsObject(Class<@NonNull T> clazz, IRI individualIRI) throws TrestleClassException, MissingOntologyEntity {
 //        Contains class?
         if (!this.registeredClasses.contains(clazz)) {
             throw new UnregisteredClassException(clazz);
@@ -302,6 +327,93 @@ public class TrestleReasoner {
             }
         }
         return ClassBuilder.ConstructObject(clazz, constructorArguments);
+    }
+
+    public <T> Optional<List<@NonNull T>> spatialIntersectObject(@NonNull T inputObject, double buffer) {
+        this.ontology.openAndLock(false);
+        final OWLClass owlClass = ClassParser.GetObjectClass(inputObject);
+        final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(inputObject);
+        final Optional<String> wktString = ClassParser.GetSpatialValue(inputObject);
+        if (wktString.isPresent()) {
+//            final String spatialIntersection = qb.buildOracleIntersection(owlClass, wktString.get());
+            String spatialIntersection = null;
+            try {
+                spatialIntersection = qb.buildSpatialIntersection(spatialDalect, owlClass, wktString.get(), buffer, QueryBuilder.UNITS.METER);
+            } catch (UnsupportedFeatureException e) {
+                logger.error("Database {] doesn't support spatial intersections.", spatialDalect, e);
+                this.ontology.unlockAndCommit();
+                return Optional.empty();
+            }
+
+            final ResultSet resultSet = ontology.executeSPARQL(spatialIntersection);
+//            I think I need to rewind the result set
+            ((ResultSetMem) resultSet).rewind();
+            Set<IRI> intersectedIRIs = new HashSet<>();
+            while (resultSet.hasNext()) {
+                final QuerySolution querySolution = resultSet.next();
+                final Resource resource = querySolution.get("m").asResource();
+                intersectedIRIs.add(IRI.create(resource.getURI()));
+            }
+            logger.debug("{} intersected with {} objects", owlNamedIndividual, intersectedIRIs.size());
+
+
+//            I think I need to suppress this warning to deal with generics in streams
+            @SuppressWarnings("argument.type.incompatible") final List<@NonNull T> intersectedObjects = intersectedIRIs
+                    .stream()
+                    .map(iri -> {
+                        try {
+                            return (T) readAsObject(inputObject.getClass(), iri);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .collect(Collectors.toList());
+
+            if (intersectedObjects.size() > 0) {
+                this.ontology.unlockAndCommit();
+                return Optional.of(intersectedObjects);
+            }
+
+            logger.info("{} intersected with {} objects", owlNamedIndividual, intersectedObjects.size());
+            return Optional.empty();
+        }
+        logger.info("{} didn't intersect with any objects", owlNamedIndividual);
+        this.ontology.unlockAndCommit();
+        return Optional.empty();
+    }
+
+    public <T> Optional<List<@NonNull T>> getRelatedObjects(Class<@NonNull T> clazz, String objectID, double cutoff) {
+
+        final OWLClass owlClass = ClassParser.GetObjectClass(clazz);
+
+        final String relationQuery = qb.buildRelationQuery(df.getOWLNamedIndividual(IRI.create(PREFIX, objectID)), owlClass, cutoff);
+        final ResultSet resultSet = ontology.executeSPARQL(relationQuery);
+
+        Set<IRI> relatedIRIs = new HashSet<>();
+        while (resultSet.hasNext()) {
+            final QuerySolution next = resultSet.next();
+            final IRI relatedIRI = IRI.create(next.getResource("f").getURI());
+            logger.debug("Has related {}", relatedIRI);
+            relatedIRIs.add(relatedIRI);
+        }
+
+        if (relatedIRIs.size() == 0) {
+            return Optional.empty();
+        }
+
+//            I think I need to suppress this warning to deal with generics in streams
+        @SuppressWarnings("argument.type.incompatible") final List<T> relatedObject = relatedIRIs
+                .stream()
+                .map(iri -> {
+                    try {
+                        return readAsObject(clazz, iri);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList());
+
+        return Optional.of(relatedObject);
     }
 
     public void registerClass(Class inputClass) throws TrestleClassException {

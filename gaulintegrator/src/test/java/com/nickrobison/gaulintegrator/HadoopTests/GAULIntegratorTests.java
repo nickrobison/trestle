@@ -3,6 +3,7 @@ package com.nickrobison.gaulintegrator.HadoopTests;
 import com.esri.mapreduce.PolygonFeatureInputFormat;
 import com.nickrobison.gaulintegrator.*;
 import com.nickrobison.trestle.TrestleReasoner;
+import com.nickrobison.trestle.ontology.ITrestleOntology;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
@@ -14,9 +15,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
-import org.apache.hadoop.yarn.server.MiniYARNCluster;
-import org.apache.hadoop.yarn.server.resourcemanager.scheduler.ResourceScheduler;
-import org.apache.hadoop.yarn.server.resourcemanager.scheduler.fifo.FifoScheduler;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.Properties;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -64,17 +65,16 @@ public class GAULIntegratorTests {
         final YarnConfiguration clusterConf = new YarnConfiguration();
         cluster = new MiniDFSCluster.Builder(conf).build();
 
+        String connectionString = "jdbc:virtuoso://localhost:1111";
+        String userName = "dba";
+        String password = "dba";
+        conf.set("reasoner.db.connection", connectionString);
+        conf.set("reasoner.db.username", userName);
+        conf.set("reasoner.db.password", password);
+
 //        Setup reasoner
-        //                .withDBConnection("jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial", "spatialUser", "spatial1")
-//                .withDBConnection(conf.get("reasoner.db.connection"),
-//                        conf.get("reasoner.db.username"),
-//                        conf.get("reasoner.db.password"))
         reasoner = new TrestleReasoner.TrestleBuilder()
-//                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-                .withDBConnection("jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial", "spatialUser", "spatial1")
-//                .withDBConnection(conf.get("reasoner.db.connection"),
-//                        conf.get("reasoner.db.username"),
-//                        conf.get("reasoner.db.password"))
+                .withDBConnection(connectionString, userName, password)
                 .withInputClasses(GAULObject.class)
                 .initialize()
                 .withName("hadoop_test")
@@ -107,6 +107,49 @@ public class GAULIntegratorTests {
         FileOutputFormat.setOutputPath(job, outDir);
         job.waitForCompletion(true);
         assertTrue(job.isSuccessful());
+
+//        Try to find some individuals
+        final ITrestleOntology ontology = reasoner.getUnderlyingOntology();
+
+        final String maputo = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+                "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+                "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+                "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
+                "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                "PREFIX xml: <http://www.w3.org/XML/1998/namespace>\n" +
+                "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
+                "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
+                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
+                "SELECT *" +
+                " WHERE { ?m rdf:type :gaul-test . ?m :objectName ?n FILTER(?n = \"Cidade de Maputo\"^^<http://www.w3.org/2001/XMLSchema#string>)}";
+
+        final ResultSet resultSet1 = ontology.executeSPARQL(maputo);
+
+        String id = "http://nickrobison.com/dissertation/trestle.owl#7ceb69d2-3a88-4e57-a706-bdacc4a9402b";
+        String retrievedValue = "";
+        while (resultSet1.hasNext()) {
+            final QuerySolution querySolution = resultSet1.nextSolution();
+            retrievedValue = querySolution.getResource("m").getURI();
+        }
+
+        assertEquals(id, retrievedValue, "Should have the correct id from the database");
+
+
+        final String relatedObjects = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+                "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+                "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+                "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
+                "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                "PREFIX xml: <http://www.w3.org/XML/1998/namespace>\n" +
+                "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
+                "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
+                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
+                "SELECT ?f WHERE { ?m rdf:type :gaul-test .?m :has_relation ?r .?r rdf:type :Concept_Relation .?r :Relation_Strength ?s .?r :has_relation ?f .?f rdf:type :gaul-test FILTER(?m = :7ceb69d2-3a88-4e57-a706-bdacc4a9402b && ?s >= \"0.6\"^^xsd:double)}";
+
+        final ResultSet resultSet = ontology.executeSPARQL(relatedObjects);
+
     }
 
     @AfterAll

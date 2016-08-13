@@ -9,6 +9,7 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,17 +60,17 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 dbConnection = DriverManager.getConnection(conf.get(CONNECTION));
             }
         } catch (SQLException e) {
-            logger.error("Cannot connect to database", e);
-            throw new RuntimeException("Cannot connect to database", e);
+            logger.error("Cannot connect to postgres database", e);
+            throw new RuntimeException("Cannot connect to postgres database", e);
         }
 
 //        Setup the Trestle Reasoner
         reasoner = new TrestleReasoner.TrestleBuilder()
 //                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-                .withDBConnection("jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial", "spatialUser", "spatial1")
-//                .withDBConnection(conf.get("reasoner.db.connection"),
-//                        conf.get("reasoner.db.username"),
-//                        conf.get("reasoner.db.password"))
+//                .withDBConnection("jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial", "spatialUser", "spatial1")
+                .withDBConnection(conf.get("reasoner.db.connection"),
+                        conf.get("reasoner.db.username"),
+                        conf.get("reasoner.db.password"))
                 .withInputClasses(GAULObject.class)
                 .withName("hadoop_test")
                 .build();
@@ -200,11 +201,11 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 throw new RuntimeException("Cannot retrieve records from database", e);
             }
 
-            List<GAULObject> matchedObjects = new ArrayList<>();
+            List<GAULObject> matchedObjects_postgres = new ArrayList<>();
             try {
                 while (rsName.next()) {
 //                    Generate new objects
-                    matchedObjects.add(new GAULObject(
+                    matchedObjects_postgres.add(new GAULObject(
                             new ObjectID((UUID) rsName.getObject("objectid"), ObjectID.IDVersion.SIMPLE),
                             rsName.getLong("GaulCode"),
                             rsName.getString("objectname"),
@@ -217,6 +218,15 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 logger.error("Cannot iterate through Name resultSet", e);
                 throw new RuntimeException("Cannot iterate through Name resultSet", e);
             }
+
+//            Try from Trestle
+            final Optional<List<@NonNull GAULObject>> gaulObjects = reasoner.spatialIntersectObject(newGAULObject, 500);
+
+            List<GAULObject> matchedObjects = gaulObjects.orElse(new ArrayList<>());
+            if (matchedObjects_postgres.size() != matchedObjects.size()) {
+                logger.warn("Postgres found {} objects, but Trestle only got {}", matchedObjects_postgres.size(), matchedObjects.size());
+            }
+
 
 //            If there are no matching objects in the database, just insert the new record and move on.
             if (matchedObjects.size() > 0) {
@@ -284,7 +294,8 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                             throw new RuntimeException("Cannot insert new object (inverse) relation into table", e);
                         }
 
-//                        Now, Trestle
+//                        Now, Trestle, but we only have to write in a single direction.
+                        reasoner.writeFactWithRelation(newGAULObject, relatedEntrySet.getValue(), relatedEntrySet.getKey());
 
                     }
                 }
@@ -333,6 +344,4 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
             throw new RuntimeException("Cannot close database connection", e);
         }
     }
-
-
 }
