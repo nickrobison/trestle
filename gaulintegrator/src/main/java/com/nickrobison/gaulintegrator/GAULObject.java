@@ -67,7 +67,7 @@ public class GAULObject {
     }
 
     @IndividualIdentifier
-    @DataProperty(name = "id", datatype = OWL2Datatype.XSD_STRING)
+    @DataProperty(name = "id")
     public String getObjectIDAsString() {
         return this.objectID.toString();
     }
