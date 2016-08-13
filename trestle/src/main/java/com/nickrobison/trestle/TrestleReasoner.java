@@ -381,9 +381,16 @@ public class TrestleReasoner {
         return Optional.empty();
     }
 
-//    TODO(nrobison): Get rid of this, no idea why this method throws an erro when the one above does not.
+    /**
+     * Get a map of related objects and their relative strengths
+     * @param clazz - Java class of object to serialize to
+     * @param objectID - Object ID to retrieve related objects
+     * @param cutoff - Double of relation strength cutoff
+     * @return - Optional Map of related java objects and their corresponding relational strength
+     */
+    //    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
     @SuppressWarnings("return.type.incompatible")
-    public <T> Optional<List<@NonNull T>> getRelatedObjects(Class<@NonNull T> clazz, String objectID, double cutoff) {
+    public <T> Optional<Map<@NonNull T, Double>> getRelatedObjects(Class<@NonNull T> clazz, String objectID, double cutoff) {
 
         final OWLClass owlClass = ClassParser.GetObjectClass(clazz);
 
@@ -391,30 +398,26 @@ public class TrestleReasoner {
         final ResultSet resultSet = ontology.executeSPARQL(relationQuery);
 
         Set<IRI> relatedIRIs = new HashSet<>();
+        Map<@NonNull T, Double> relatedObjects = new HashMap<>();
         while (resultSet.hasNext()) {
             final QuerySolution next = resultSet.next();
             final IRI relatedIRI = IRI.create(next.getResource("f").getURI());
+            final double strength = next.getLiteral("s").getDouble();
             logger.debug("Has related {}", relatedIRI);
-            relatedIRIs.add(relatedIRI);
+            try {
+                final @NonNull T object = readAsObject(clazz, relatedIRI);
+                relatedObjects.put(object, strength);
+            } catch (Exception e) {
+                logger.error("Problem with {}", relatedIRI, e);
+            }
+
         }
 
-        if (relatedIRIs.size() == 0) {
+        if (relatedObjects.size() == 0) {
             return Optional.empty();
         }
 
-//            I think I need to suppress this warning to deal with generics in streams
-        @SuppressWarnings({"argument.type.incompatible", "assignment.type.incompatible"}) final List<T> relatedObject = relatedIRIs
-                .stream()
-                .map(iri -> {
-                    try {
-                        return readAsObject(clazz, iri);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .collect(Collectors.toList());
-
-        return Optional.of(relatedObject);
+        return Optional.of(relatedObjects);
     }
 
     public void registerClass(Class inputClass) throws TrestleClassException {

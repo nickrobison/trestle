@@ -75,7 +75,7 @@ public class QueryBuilder {
 
     public String buildRelationQuery(OWLNamedIndividual individual, @Nullable OWLClass datasetClass, double relationshipStrength) {
         final ParameterizedSparqlString ps = buildBaseString();
-        ps.setCommandText("SELECT ?f" +
+        ps.setCommandText("SELECT ?f, ?s" +
                 " WHERE" +
                 " { ?m rdf:type ?t ." +
                 "?m :has_relation ?r ." +
