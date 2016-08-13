@@ -15,7 +15,6 @@ import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -88,8 +87,8 @@ public class TrestleReasoner {
             spatialDalect = QueryBuilder.DIALECT.VIRTUOSO;
         } else if (ontology instanceof LocalOntology) {
             spatialDalect = QueryBuilder.DIALECT.JENA;
-        } else if (ontology instanceof StardogOntology) {
-            spatialDalect = QueryBuilder.DIALECT.STARDOG;
+//        } else if (ontology instanceof StardogOntology) {
+//            spatialDalect = QueryBuilder.DIALECT.STARDOG;
         } else {
 //            TODO(nrobison): This needs to be better
             spatialDalect = QueryBuilder.DIALECT.SESAME;
@@ -382,6 +381,8 @@ public class TrestleReasoner {
         return Optional.empty();
     }
 
+//    TODO(nrobison): Get rid of this, no idea why this method throws an erro when the one above does not.
+    @SuppressWarnings("return.type.incompatible")
     public <T> Optional<List<@NonNull T>> getRelatedObjects(Class<@NonNull T> clazz, String objectID, double cutoff) {
 
         final OWLClass owlClass = ClassParser.GetObjectClass(clazz);
@@ -402,7 +403,7 @@ public class TrestleReasoner {
         }
 
 //            I think I need to suppress this warning to deal with generics in streams
-        @SuppressWarnings("argument.type.incompatible") final List<T> relatedObject = relatedIRIs
+        @SuppressWarnings({"argument.type.incompatible", "assignment.type.incompatible"}) final List<T> relatedObject = relatedIRIs
                 .stream()
                 .map(iri -> {
                     try {

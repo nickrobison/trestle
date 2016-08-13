@@ -124,16 +124,16 @@ public class OntologyBuilder {
                     username.orElse(""),
                     password.orElse("")
             ));
-        } else if (connectionString.isPresent() && connectionString.get().contains("snarl")) {
-            logger.info("Connecting to Stardog database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
-            return Optional.of(new StardogOntology(
-                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
-                    owlOntology,
-                    pm.orElse(createDefaultPrefixManager()),
-                    connectionString.get(),
-                    username.orElse(""),
-                    password.orElse("")
-            ));
+//        } else if (connectionString.isPresent() && connectionString.get().contains("snarl")) {
+//            logger.info("Connecting to Stardog database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
+//            return Optional.of(new StardogOntology(
+//                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
+//                    owlOntology,
+//                    pm.orElse(createDefaultPrefixManager()),
+//                    connectionString.get(),
+//                    username.orElse(""),
+//                    password.orElse("")
+//            ));
         }
 
         else {
