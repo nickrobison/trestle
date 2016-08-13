@@ -5,24 +5,18 @@
     <parent>
         <artifactId>spatial-difference</artifactId>
         <groupId>com.nickrobison</groupId>
-        <version>0.2</version>
+        <version>0.3-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <jena.version>3.1.0</jena.version>
         <marmotta.version>3.3.0</marmotta.version>
         <sesame.version>4.1.2</sesame.version>
-        <!--<sesame.version>2.9.0</sesame.version>-->
-        <!--FaCT++ doesn't seem to support OWLAPI 5.0-->
         <owl.version>5.0.2</owl.version>
-        <!--<owl.version>4.2.5</owl.version>-->
         <stardog.version>4.1.3</stardog.version>
         <geotools.version>15.0</geotools.version>
         <pellet.version>2.4.0-SNAPSHOT</pellet.version>
         <lucene.version>5.3.1</lucene.version>
-        <!--Checker properties-->
-        <checker.version>2.0.1</checker.version>
-        <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
         <trestle.location>file:///Users/nrobison/Developer/git/dissertation/trestle-ontology</trestle.location>
     </properties>
 
@@ -210,17 +204,14 @@
         <dependency>
             <groupId>org.checkerframework</groupId>
             <artifactId>checker</artifactId>
-            <version>${checker.version}</version>
         </dependency>
         <dependency>
             <groupId>org.checkerframework</groupId>
             <artifactId>checker-qual</artifactId>
-            <version>${checker.version}</version>
         </dependency>
         <dependency>
             <groupId>org.checkerframework</groupId>
             <artifactId>jdk8</artifactId>
-            <version>${checker.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

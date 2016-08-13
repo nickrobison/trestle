@@ -6,7 +6,7 @@
 
     <groupId>com.nickrobison</groupId>
     <artifactId>spatial-difference</artifactId>
-    <version>0.2</version>
+    <version>0.3-SNAPSHOT</version>
     <modules>
         <module>trestle</module>
         <module>gaulintegrator</module>
@@ -19,6 +19,9 @@
         <provided.scope>provided</provided.scope>
         <jmh.version>1.12</jmh.version>
         <junit.jupiter.version>5.0.0-M2</junit.jupiter.version>
+        <!--Checker properties-->
+        <checker.version>2.1.1</checker.version>
+        <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -143,6 +146,22 @@
                 <artifactId>junit-vintage-engine</artifactId>
                 <version>4.12.0-M2</version>
             </dependency>
+            <!--Checker dependencies-->
+            <dependency>
+                <groupId>org.checkerframework</groupId>
+                <artifactId>checker</artifactId>
+                <version>${checker.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.checkerframework</groupId>
+                <artifactId>checker-qual</artifactId>
+                <version>${checker.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.checkerframework</groupId>
+                <artifactId>jdk8</artifactId>
+                <version>${checker.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <repositories>
@@ -232,13 +251,21 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.5.1</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
-                    <compilerArgs>-parameters</compilerArgs>
+                    <fork>true</fork>
+                    <annotationProcessors>
+                        <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>
+                        <annotationProcessor>org.checkerframework.checker.formatter.FormatterChecker</annotationProcessor>
+                        <annotationProcessor>org.checkerframework.checker.signature.SignatureChecker</annotationProcessor>
+                        <annotationProcessor>org.checkerframework.checker.interning.InterningChecker</annotationProcessor>
+                    </annotationProcessors>
+                    <compilerArgs>
+                        <arg>-Xbootclasspath/p:${annotatedJdk} -parameters</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>
