@@ -257,14 +257,14 @@
                     <source>1.8</source>
                     <target>1.8</target>
                     <fork>true</fork>
-                    <annotationProcessors>
-                        <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>
-                        <annotationProcessor>org.checkerframework.checker.formatter.FormatterChecker</annotationProcessor>
-                        <annotationProcessor>org.checkerframework.checker.signature.SignatureChecker</annotationProcessor>
-                        <annotationProcessor>org.checkerframework.checker.interning.InterningChecker</annotationProcessor>
-                    </annotationProcessors>
+                    <!--<annotationProcessors>-->
+                        <!--<annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>-->
+                        <!--<annotationProcessor>org.checkerframework.checker.formatter.FormatterChecker</annotationProcessor>-->
+                        <!--<annotationProcessor>org.checkerframework.checker.signature.SignatureChecker</annotationProcessor>-->
+                        <!--<annotationProcessor>org.checkerframework.checker.interning.InterningChecker</annotationProcessor>-->
+                    <!--</annotationProcessors>-->
                     <compilerArgs>
-                        <arg>-Xbootclasspath/p:${annotatedJdk} -parameters</arg>
+                        <arg>-parameters</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
