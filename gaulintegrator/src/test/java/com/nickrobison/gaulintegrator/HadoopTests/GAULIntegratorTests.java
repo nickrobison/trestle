@@ -3,7 +3,6 @@ package com.nickrobison.gaulintegrator.HadoopTests;
 import com.esri.mapreduce.PolygonFeatureInputFormat;
 import com.nickrobison.gaulintegrator.*;
 import com.nickrobison.trestle.TrestleReasoner;
-import com.nickrobison.trestle.ontology.ITrestleOntology;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
@@ -15,8 +14,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
-import org.apache.jena.query.QuerySolution;
-import org.apache.jena.query.ResultSet;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -27,14 +25,17 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.sql.SQLException;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Created by nrobison on 5/5/16.
  */
+@SuppressWarnings("OptionalGetWithoutIsPresent")
 public class GAULIntegratorTests {
 
     private static FileSystem fileSystem;
@@ -43,6 +44,10 @@ public class GAULIntegratorTests {
 
     private static final Logger logger = LoggerFactory.getLogger(GAULIntegratorTests.class);
     private static TrestleReasoner reasoner;
+    private static String connectionString;
+    private static String userName;
+    private static String password;
+    private static String ontologyName;
 
     @BeforeAll
     public static void setup() throws IOException {
@@ -65,25 +70,33 @@ public class GAULIntegratorTests {
         final YarnConfiguration clusterConf = new YarnConfiguration();
         cluster = new MiniDFSCluster.Builder(conf).build();
 
-        String connectionString = "jdbc:virtuoso://localhost:1111";
-        String userName = "dba";
-        String password = "dba";
+//        String connectionString = "jdbc:virtuoso://localhost:1111";
+//        String userName = "dba";
+//        String password = "dba";
+        connectionString = "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial";
+        userName = "spatialUser";
+        password = "spatial1";
+        ontologyName = "hadoop_gaul5";
         conf.set("reasoner.db.connection", connectionString);
         conf.set("reasoner.db.username", userName);
         conf.set("reasoner.db.password", password);
+        conf.set("reasoner.ontology.name", ontologyName);
 
 //        Setup reasoner
         reasoner = new TrestleReasoner.TrestleBuilder()
                 .withDBConnection(connectionString, userName, password)
                 .withInputClasses(GAULObject.class)
                 .initialize()
-                .withName("hadoop_test")
+                .withName(ontologyName)
                 .build();
-//        reasoner.shutdown(false);
+
+//        File outputFile = new File("/Users/nrobison/Desktop/hadoop.owl");
+//        reasoner.writeOntology(outputFile.toURI(), true);
+        reasoner.shutdown(false);
     }
 
     @Test
-    public void testReducer() throws IOException, ClassNotFoundException, InterruptedException {
+    public void testReducer() throws IOException, ClassNotFoundException, InterruptedException, SQLException {
 
         URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/gates-test/");
         URL OUT_DIR = GAULIntegratorTests.class.getClassLoader().getResource("out/");
@@ -109,46 +122,16 @@ public class GAULIntegratorTests {
         assertTrue(job.isSuccessful());
 
 //        Try to find some individuals
-        final ITrestleOntology ontology = reasoner.getUnderlyingOntology();
+        reasoner = new TrestleReasoner.TrestleBuilder()
+                .withDBConnection(connectionString, userName, password)
+                .withInputClasses(GAULObject.class)
+                .withName(ontologyName)
+                .build();
 
-        final String maputo = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
-                "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
-                "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
-                "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
-                "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
-                "PREFIX xml: <http://www.w3.org/XML/1998/namespace>\n" +
-                "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
-                "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
-                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
-                "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-                "SELECT *" +
-                " WHERE { ?m rdf:type :gaul-test . ?m :objectName ?n FILTER(?n = \"Cidade de Maputo\"^^<http://www.w3.org/2001/XMLSchema#string>)}";
-
-        final ResultSet resultSet1 = ontology.executeSPARQL(maputo);
-
-        String id = "http://nickrobison.com/dissertation/trestle.owl#7ceb69d2-3a88-4e57-a706-bdacc4a9402b";
-        String retrievedValue = "";
-        while (resultSet1.hasNext()) {
-            final QuerySolution querySolution = resultSet1.nextSolution();
-            retrievedValue = querySolution.getResource("m").getURI();
-        }
-
-        assertEquals(id, retrievedValue, "Should have the correct id from the database");
-
-
-        final String relatedObjects = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
-                "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
-                "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
-                "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
-                "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
-                "PREFIX xml: <http://www.w3.org/XML/1998/namespace>\n" +
-                "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
-                "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
-                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
-                "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-                "SELECT ?f WHERE { ?m rdf:type :gaul-test .?m :has_relation ?r .?r rdf:type :Concept_Relation .?r :Relation_Strength ?s .?r :has_relation ?f .?f rdf:type :gaul-test FILTER(?m = :7ceb69d2-3a88-4e57-a706-bdacc4a9402b && ?s >= \"0.6\"^^xsd:double)}";
-
-        final ResultSet resultSet = ontology.executeSPARQL(relatedObjects);
+        final Optional<Map<@NonNull GAULObject, Double>> relatedObjects1 = reasoner.getRelatedObjects(GAULObject.class, "0fea0c09-621e-4def-9a8b-bd36b45a09bc", 0.0);
+        assertTrue(relatedObjects1.isPresent(), "Should have related objects");
+        assertTrue(relatedObjects1.get().size() > 0, "Should have more than 0 related objects");
+        logger.info("Has {} objects}", relatedObjects1.get().size());
 
     }
 
@@ -156,8 +139,8 @@ public class GAULIntegratorTests {
     public static void close() throws IOException {
         cluster.shutdown();
 
-        File outputFile = new File("/Users/nrobison/Desktop/hadoop.owl");
-        reasoner.writeOntology(outputFile.toURI(), true);
+//        File outputFile = new File("/Users/nrobison/Desktop/hadoop.owl");
+//        reasoner.writeOntology(outputFile.toURI(), true);
         reasoner.shutdown(false);
     }
 }

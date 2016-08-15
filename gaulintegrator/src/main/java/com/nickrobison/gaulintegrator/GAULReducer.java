@@ -72,7 +72,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                         conf.get("reasoner.db.username"),
                         conf.get("reasoner.db.password"))
                 .withInputClasses(GAULObject.class)
-                .withName("hadoop_test")
+                .withName(conf.get("reasoner.ontology.name"))
                 .build();
 
     }
@@ -303,6 +303,11 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
             }
 
 //            Now, we insert the new itself record into the database
+            try {
+                reasoner.writeObjectAsFact(newGAULObject);
+            } catch (TrestleClassException e) {
+                logger.error("Cannot write {}", newGAULObject.getObjectName(), e);
+            }
             final PreparedStatement singleObjectInsert;
             try {
                 singleObjectInsert = dbConnection.prepareStatement(newGAULObject.generateSQLInsertStatement());

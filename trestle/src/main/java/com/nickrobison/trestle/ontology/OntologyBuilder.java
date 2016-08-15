@@ -155,7 +155,7 @@ public class OntologyBuilder {
         DefaultPrefixManager pm = new DefaultPrefixManager();
         pm.setDefaultPrefix("http://nickrobison.com/dissertation/trestle.owl#");
 //        TODO(nrobison): This should be broken into its own thing. Maybe a function to add prefixes?
-        pm.setPrefix("main_geo:", "http://nickrobison.com/dissertation/main_geo.owl#");
+//        pm.setPrefix("main_geo:", "http://nickrobison.com/dissertation/main_geo.owl#");
         pm.setPrefix("rdf:", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
         pm.setPrefix("rdfs:", "http://www.w3.org/2000/01/rdf-schema#");
         pm.setPrefix("owl:", "http://www.w3.org/2002/07/owl#");
@@ -166,6 +166,7 @@ public class OntologyBuilder {
 //        Need the ogc and ogcf prefixes for the oracle spatial
         pm.setPrefix("ogcf:", "http://www.opengis.net/def/function/geosparql/");
         pm.setPrefix("ogc:", "http://www.opengis.net/ont/geosparql#");
+        pm.setPrefix("orageo:", "http://xmlns.oracle.com/rdf/geo/");
 
 //        Add any defined prefixes
         return pm;

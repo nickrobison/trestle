@@ -27,6 +27,8 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URL;
+import java.sql.SQLException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.Temporal;
 import java.util.*;
@@ -77,6 +79,16 @@ public class TrestleReasoner {
         if (builder.initialize) {
             logger.info("Initializing ontology");
             this.ontology.initializeOntology();
+        } else {
+//            If we're not starting fresh, then we might need to update the indexes and inferencer
+            if (ontology instanceof OracleOntology) {
+                try {
+                    logger.info("Updating Oracle inference model");
+                    ((OracleOntology) ontology).runInference();
+                } catch (SQLException e) {
+                    logger.error("Could not update inference model", e);
+                }
+            }
         }
         df = OWLManager.getOWLDataFactory();
 
@@ -107,6 +119,7 @@ public class TrestleReasoner {
         this.ontology.close(delete);
     }
 
+//    When you get the ontology, the ownership passes away, so then the reasoner can't perform any more queries.
     public ITrestleOntology getUnderlyingOntology() {
         return this.ontology;
     }
@@ -152,13 +165,18 @@ public class TrestleReasoner {
         if (!this.registeredClasses.contains(aClass)) {
             throw new UnregisteredClassException(aClass);
         }
+        final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(inputObject);
+
+//        TODO(nrobison): See if it already exists, if so, return.
+        if (ontology.containsResource(owlNamedIndividual)) {
+            logger.info("{} already exists in the ontology", owlNamedIndividual);
+            return;
+        }
 
 //        Write the class
         final OWLClass owlClass = ClassParser.GetObjectClass(inputObject);
-
         ontology.associateOWLClass(owlClass, datasetClass);
 //        Write the individual
-        final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(inputObject);
         ontology.createIndividual(owlNamedIndividual, owlClass);
 //        Write the temporal
         final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(inputObject);
@@ -336,6 +354,7 @@ public class TrestleReasoner {
         if (wktString.isPresent()) {
 //            final String spatialIntersection = qb.buildOracleIntersection(owlClass, wktString.get());
             String spatialIntersection = null;
+
             try {
                 spatialIntersection = qb.buildSpatialIntersection(spatialDalect, owlClass, wktString.get(), buffer, QueryBuilder.UNITS.METER);
             } catch (UnsupportedFeatureException e) {
@@ -344,7 +363,11 @@ public class TrestleReasoner {
                 return Optional.empty();
             }
 
+            logger.debug("Executing spatial query");
+            final long start = System.currentTimeMillis();
             final ResultSet resultSet = ontology.executeSPARQL(spatialIntersection);
+            final long end = System.currentTimeMillis();
+            logger.debug("Spatial query returned in {} ms", end-start);
 //            I think I need to rewind the result set
             ((ResultSetMem) resultSet).rewind();
             Set<IRI> intersectedIRIs = new HashSet<>();
