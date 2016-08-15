@@ -347,7 +347,8 @@ public class TemporalParser {
         } else if (temporal instanceof LocalDate) {
             return ((LocalDate) temporal).atStartOfDay();
         } else {
-            return LocalDateTime.from(temporal);
+//            Need to add and subtract some time in order to get a correct LocalDateTime from LocalDate
+            return LocalDateTime.from(temporal).plusSeconds(1).minusSeconds(1);
         }
     }
 
