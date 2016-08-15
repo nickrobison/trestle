@@ -35,7 +35,7 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT ?f WHERE { ?m rdf:type :GAUL .?m :has_relation ?r .?r rdf:type :Concept_Relation .?r :Relation_Strength ?s .?r :has_relation ?f .?f rdf:type :GAUL FILTER(?m = :test_muni4 && ?s >= \"0.6\"^^xsd:double)}";
+            "SELECT ?f ?s WHERE { ?m rdf:type :GAUL . ?m :has_relation ?r . ?r rdf:type :Concept_Relation . ?r :Relation_Strength ?s . ?r :has_relation ?f . ?f rdf:type :GAUL FILTER(?m = <http://nickrobison.com/dissertation/trestle.owl#test_muni4> && ?s >= \"0.6\"^^xsd:double)}";
 
     private static final String oracleSpatialString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
@@ -43,11 +43,12 @@ public class QueryBuilderTest {
             "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
             "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
             "PREFIX xml: <http://www.w3.org/XML/1998/namespace>\n" +
+            "PREFIX ORACLE_SEM_HT_NS: <http://oracle.com/semtech#leading(?wkt)>\n" +
             "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT ?m ?wkt WHERE { ?m rdf:type :GAUL .?m ogc:asWKT ?wkt FILTER(ogcf:sfIntersects(ogcf:buffer(?wkt, \"0.0\"^^xsd:double, <http://xmlns.oracle.com/rdf/geo/uom/KM>), \"Point(39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }";
+            "SELECT ?m WHERE { ?m rdf:type :GAUL .?m ogc:asWKT ?wkt FILTER(orageo:relate(?wkt, \"POINT (39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral, \"mask=anyinteract\")) }";
 
     private static final String virtuosoSpatialString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
@@ -59,7 +60,7 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT ?m ?wkt WHERE { ?m rdf:type :GAUL .?m ogc:asWKT ?wkt FILTER(bif:st_intersects(?wkt, \"Point(39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral, \"0.0\"^^xsd:double)) }";
+            "SELECT ?m WHERE { ?m rdf:type :GAUL .?m ogc:asWKT ?wkt FILTER(bif:st_intersects(?wkt, \"POINT (39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral, \"0.0\"^^xsd:double)) }";
 
     @BeforeAll
     public static void createPrefixes() {

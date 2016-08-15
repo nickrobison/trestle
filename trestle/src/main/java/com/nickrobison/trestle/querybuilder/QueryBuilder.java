@@ -1,8 +1,14 @@
 package com.nickrobison.trestle.querybuilder;
 
 import com.nickrobison.trestle.exceptions.UnsupportedFeatureException;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.PrecisionModel;
+import com.vividsolutions.jts.io.ParseException;
+import com.vividsolutions.jts.io.WKTReader;
+import com.vividsolutions.jts.io.WKTWriter;
+import com.vividsolutions.jts.precision.GeometryPrecisionReducer;
+import com.vividsolutions.jts.simplify.TopologyPreservingSimplifier;
 import org.apache.jena.query.ParameterizedSparqlString;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -22,6 +28,9 @@ import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
  * Created by nrobison on 8/11/16.
  */
 public class QueryBuilder {
+
+    public static final double OFFSET = 0.01;
+    public static final int SCALE = 100000;
 
     public enum DIALECT {
         ORACLE,
@@ -43,6 +52,8 @@ public class QueryBuilder {
     private final DefaultPrefixManager pm;
     private final String baseURI;
     private final Map<String, String> trimmedPrefixMap;
+    private static final WKTReader reader = new WKTReader();
+    private static final WKTWriter writer = new WKTWriter();
 
     public QueryBuilder(DefaultPrefixManager pm) {
         trimmedPrefixMap = new HashMap<>();
@@ -75,18 +86,21 @@ public class QueryBuilder {
 
     public String buildRelationQuery(OWLNamedIndividual individual, @Nullable OWLClass datasetClass, double relationshipStrength) {
         final ParameterizedSparqlString ps = buildBaseString();
-        ps.setCommandText("SELECT ?f, ?s" +
+//        Jena won't expand URIs in the FILTER operator, so we need to give it the fully expanded value.
+//        But we can't do it through the normal routes, because then it'll insert superfluous '"' values. Because, of course.
+        ps.setCommandText(String.format("SELECT ?f ?s" +
                 " WHERE" +
-                " { ?m rdf:type ?t ." +
-                "?m :has_relation ?r ." +
-                "?r rdf:type :Concept_Relation ." +
-                "?r :Relation_Strength ?s ." +
-                "?r :has_relation ?f ." +
+                " { ?m rdf:type ?t . " +
+                "?m :has_relation ?r . " +
+                "?r rdf:type :Concept_Relation . " +
+                "?r :Relation_Strength ?s . " +
+                "?r :has_relation ?f . " +
                 "?f rdf:type ?t " +
-                "FILTER(?m = ?i && ?s >= ?st)}");
+                "FILTER(?m = %s && ?s >= ?st)}", String.format("<%s>", getFullIRIString(individual))));
 //        Replace the variables
-        ps.setIri("i", getFullIRIString(individual));
-        if (datasetClass != null ) {
+//        ps.setIri("i", getFullIRIString(individual));
+//        ps.setLiteral("i", String.format("<%s>", getFullIRIString(individual)));
+        if (datasetClass != null) {
             ps.setIri("t", getFullIRIString(datasetClass));
         } else {
             ps.setIri("t", getFullIRI(IRI.create("trestle:", ":Dataset")).toString());
@@ -100,18 +114,22 @@ public class QueryBuilder {
 
     public String buildSpatialIntersection(DIALECT dialect, OWLClass datasetClass, String wktValue, double buffer, UNITS unit) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
-        ps.setCommandText("SELECT ?m ?wkt" +
-                " WHERE" +
-                " { ?m rdf:type ?type ." +
+//        ps.setCommandText("SELECT ?m ?wkt" +
+        ps.setCommandText("SELECT ?m" +
+                " WHERE { " +
+                "?m rdf:type ?type ." +
                 "?m ogc:asWKT ?wkt ");
         switch (dialect) {
             case ORACLE: {
+//                We need to remove this, otherwise Oracle substitutes geosparql for ogc
+                ps.removeNsPrefix("geosparql");
+//                Add this hint to the query planner
+                ps.setNsPrefix("ORACLE_SEM_HT_NS", "http://oracle.com/semtech#leading(?wkt)");
+//                TODO(nrobison): Fix this, gross
                 if (buffer > 0) {
-                    ps.append("FILTER(ogcf:sfIntersects(ogcf:buffer(?wkt, ?distance, ?unitIRI), ?wktString^^ogc:wktLiteral)) }");
-                    ps.setLiteral("distance", buffer);
-                    ps.setIri("unitIRI", String.format("http://xmlns.oracle.com/rdf/geo/uom/%s", unit.toString()));
-                } else {
                     ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
+                } else {
+                    ps.append("FILTER(orageo:relate(?wkt, ?wktString^^ogc:wktLiteral, \"mask=anyinteract\")) }");
                 }
                 break;
             }
@@ -122,10 +140,12 @@ public class QueryBuilder {
                 break;
             }
 
-            default: throw new UnsupportedFeatureException(String.format("Trestle doesn't yet support spatial queries on %s", dialect));
+            default:
+                throw new UnsupportedFeatureException(String.format("Trestle doesn't yet support spatial queries on %s", dialect));
         }
         ps.setIri("type", getFullIRIString(datasetClass));
-        ps.setLiteral("wktString", wktValue);
+//        We need to simplify the WKT to get under the 4000 character SQL limit.
+        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
 
         logger.debug(ps.toString());
         return ps.toString();
@@ -147,7 +167,42 @@ public class QueryBuilder {
         }
     }
 
-    private String getFullIRIString (OWLNamedObject object) {
+    private String getFullIRIString(OWLNamedObject object) {
         return getFullIRI(object.getIRI()).toString();
+    }
+
+    private static String simplifyWkt(String wkt, double factor, double buffer) {
+
+        final Geometry geom;
+        try {
+            geom = reader.read(wkt);
+        } catch (ParseException e) {
+            logger.error("Cannot simplify wkt", e);
+            return null;
+        }
+
+//        If needed, add a buffer
+        if (buffer > 0.0) {
+            geom.buffer(buffer);
+        }
+
+
+        if (wkt.length() < 3000) {
+            return writer.write(geom);
+        }
+
+        if (factor == 0.0) {
+//            Reduce precision to 5 decimal points.
+            logger.warn("String too long, reducing precision to {}", SCALE);
+            return simplifyWkt(writer.write(GeometryPrecisionReducer.reduce(geom,
+                    new PrecisionModel(SCALE))),
+                    factor + OFFSET,
+                    0);
+        }
+
+        logger.warn("String too long, simplifying with {}", factor);
+
+        final Geometry simplified = TopologyPreservingSimplifier.simplify(geom, factor);
+        return simplifyWkt(writer.write(simplified), factor + OFFSET, 0);
     }
 }
