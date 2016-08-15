@@ -10,6 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <jena.version>3.1.0</jena.version>
+        <!--<jena.version>2.11.2</jena.version>-->
         <marmotta.version>3.3.0</marmotta.version>
         <sesame.version>4.1.2</sesame.version>
         <owl.version>5.0.2</owl.version>
@@ -52,6 +53,7 @@
             <groupId>org.apache.jena</groupId>
             <artifactId>jena-spatial</artifactId>
             <version>${jena.version}</version>
+            <!--<version>1.1.2</version>-->
         </dependency>
         <dependency>
             <groupId>com.vividsolutions</groupId>
@@ -181,6 +183,7 @@
             <!--<artifactId>server</artifactId>-->
             <!--<version>${stardog.version}</version>-->
             <!--<type>pom</type>-->
+
             <!--<exclusions>-->
                 <!--<exclusion>-->
                     <!--<groupId>org.openrdf.sesame</groupId>-->
