@@ -9,6 +9,7 @@ import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
 import java.util.*;
 
 /**
@@ -20,6 +21,7 @@ public class OntologyBuilder {
     private static final Logger logger = LoggerFactory.getLogger(OntologyBuilder.class);
 
     private Optional<IRI> iri = Optional.empty();
+    private Optional<InputStream> is = Optional.empty();
     private Optional<String> connectionString = Optional.empty();
     private Optional<String> username = Optional.empty();
     private Optional<String> password = Optional.empty();
@@ -36,6 +38,16 @@ public class OntologyBuilder {
      */
     public OntologyBuilder fromIRI(IRI iri) {
         this.iri = Optional.of(iri);
+        return this;
+    }
+
+    /**
+     * Loads an initial base ontology from a given InputStream
+     * @param is - InputStream of the ontology to load
+     * @return OntologyBuilder
+     */
+    public OntologyBuilder fromInputStream(InputStream is) {
+        this.is = Optional.of(is);
         return this;
     }
 
@@ -88,7 +100,14 @@ public class OntologyBuilder {
             logger.info("Loaded version {} of ontology {}",
                     owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
                     owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
-        } else {
+        } else if (this.is.isPresent()){
+            logger.debug("Loading ontology from input stream");
+            owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument(this.is.get());
+            logger.info("Loaded version {} of ontology {}",
+                    owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
+                    owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
+        }
+        else {
             owlOntology = owlOntologyManager.createOntology();
         }
 

@@ -25,10 +25,10 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.sql.SQLException;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.Temporal;
 import java.util.*;
@@ -55,18 +55,21 @@ public class TrestleReasoner {
     private TrestleReasoner(TrestleBuilder builder) throws OWLOntologyCreationException {
 
         final URL ontologyResource = TrestleReasoner.class.getClassLoader().getResource("trestle.owl");
-        logger.info("Loading ontology from {}", ontologyResource);
-        if (ontologyResource == null) {
+        final InputStream ontologyIS = TrestleReasoner.class.getClassLoader().getResourceAsStream("trestle.owl");
+
+        if (ontologyIS == null) {
             logger.error("Cannot load trestle ontology from resources");
             throw new RuntimeException("Cannot load ontology");
         }
+        logger.info("Loading ontology from {}", ontologyResource);
 
 //        Parse the listed input classes
         this.registeredClasses = builder.inputClasses;
 
         logger.info("Connecting to ontology {} at {}", builder.ontologyName.orElse("trestle"), builder.connectionString.orElse("localhost"));
         OntologyBuilder ontologyBuilder = new OntologyBuilder()
-                .fromIRI(IRI.create(ontologyResource))
+//                .fromIRI(IRI.create(ontologyResource))
+                .fromInputStream(ontologyIS)
                 .name(builder.ontologyName.orElse("trestle"));
         if (builder.connectionString.isPresent()) {
             ontologyBuilder = ontologyBuilder.withDBConnection(builder.connectionString.get(),

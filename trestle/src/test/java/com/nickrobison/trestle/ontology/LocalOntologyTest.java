@@ -8,7 +8,8 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
-import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Optional;
 import java.util.Set;
 
@@ -27,12 +28,14 @@ public class LocalOntologyTest {
     private OWLDataFactory df;
 
     @BeforeEach
-    public void setupNewOntology() throws OWLOntologyCreationException {
+    public void setupNewOntology() throws OWLOntologyCreationException, IOException {
         final IRI iri = IRI.create("file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl");
+        final InputStream inputStream = iri.toURI().toURL().openConnection().getInputStream();
         df = OWLManager.getOWLDataFactory();
 
         ontology = (LocalOntology) new OntologyBuilder()
-                .fromIRI(iri)
+//                .fromIRI(iri)
+                .fromInputStream(inputStream)
                 .name("trestle")
                 .build().get();
 
