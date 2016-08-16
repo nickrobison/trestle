@@ -23,6 +23,7 @@
 
     <artifactId>trestle</artifactId>
     <packaging>jar</packaging>
+    <version>0.3-SNAPSHOT</version>
     <dependencies>
         <!--Jena Dependencies-->
         <dependency>
@@ -328,6 +329,8 @@
                             <artifactSet>
                                 <includes>
                                     <include>com.google.inject:guice</include>
+                                    <include>oracle.spatial.rdf.client:*</include>
+                                    <include>com.openlink.virtuoso:*</include>
                                 </includes>
                             </artifactSet>
                             <relocations>
