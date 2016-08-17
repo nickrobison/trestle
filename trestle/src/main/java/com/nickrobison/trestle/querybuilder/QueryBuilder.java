@@ -126,11 +126,7 @@ public class QueryBuilder {
 //                Add this hint to the query planner
                 ps.setNsPrefix("ORACLE_SEM_HT_NS", "http://oracle.com/semtech#leading(?wkt)");
 //                TODO(nrobison): Fix this, gross
-                if (buffer > 0) {
-                    ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
-                } else {
-                    ps.append("FILTER(orageo:relate(?wkt, ?wktString^^ogc:wktLiteral, \"mask=anyinteract\")) }");
-                }
+                ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
                 break;
             }
             case VIRTUOSO: {

@@ -464,6 +464,7 @@ public class TrestleReasoner {
                 })
                 .collect(Collectors.toList());
 
+        ontology.unlockAndCommit();
         return Optional.of(intersectedObjects);
     }
 
