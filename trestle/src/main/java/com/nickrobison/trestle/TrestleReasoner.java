@@ -111,7 +111,7 @@ public class TrestleReasoner {
         }
         logger.debug("Using spatial dialect {}", spatialDalect);
         qb = new QueryBuilder(ontology.getUnderlyingPrefixManager());
-        logger.info("Ontology {] ready", builder.ontologyName.orElse(DEFAULTNAME));
+        logger.info("Ontology {} ready", builder.ontologyName.orElse(DEFAULTNAME));
     }
 
     /**
