@@ -293,7 +293,7 @@ public class ClassParser {
 
     static String filterMethodName(Method classMethod) {
         String name = classMethod.getName();
-//        remove get and
+//        remove get and lowercase the first letter
         if (name.startsWith("get")) {
             final String firstLetter = name.substring(3,4).toLowerCase();
             final String restOfLetters = name.substring(4);
@@ -564,5 +564,100 @@ public class ClassParser {
         }
 
         return returnClass;
+    }
+
+    /**
+     * Parse the name of a given field and return either the name, or the one declared in the annotation
+     * @param field - Field to parse name from
+     * @return - String of parsed field name
+     */
+    static String getFieldName(Field field) {
+
+//        Iterate through the various annotations and figure out if we need to get an annotated values
+        if (field.isAnnotationPresent(DataProperty.class)) {
+            final String fieldName = field.getAnnotation(DataProperty.class).name();
+            if (fieldName.equals("")) {
+                return field.getName();
+            } else {
+                return fieldName;
+            }
+        } else if (field.isAnnotationPresent(Spatial.class)) {
+            final String fieldName = field.getAnnotation(Spatial.class).name();
+            if (fieldName.equals("")) {
+                return field.getName();
+            } else {
+                return fieldName;
+            }
+        } else if (field.isAnnotationPresent(DefaultTemporalProperty.class)) {
+            final String fieldName = field.getAnnotation(DefaultTemporalProperty.class).name();
+            if (fieldName.equals("")) {
+                return field.getName();
+            } else {
+                return fieldName;
+            }
+        } else if (field.isAnnotationPresent(StartTemporalProperty.class)) {
+            final String fieldName = field.getAnnotation(StartTemporalProperty.class).name();
+            if (fieldName.equals("")) {
+                return field.getName();
+            } else {
+                return fieldName;
+            }
+        } else if (field.isAnnotationPresent(EndTemporalProperty.class)) {
+            final String fieldName = field.getAnnotation(EndTemporalProperty.class).name();
+            if (fieldName.equals("")) {
+                return field.getName();
+            } else {
+                return fieldName;
+            }
+        } else {
+            return field.getName();
+        }
+    }
+
+    /**
+     * Parse the name of a given method and return either the filtered name, or the one declared in the annotation
+     * @param method - Method to parse name from
+     * @return - String of filtered method name
+     */
+    static String getMethodName(Method method) {
+        //        Iterate through the various annotations and figure out if we need to get an annotated values
+        if (method.isAnnotationPresent(DataProperty.class)) {
+            final String methodName = method.getAnnotation(DataProperty.class).name();
+            if (methodName.equals("")) {
+                return filterMethodName(method);
+            } else {
+                return methodName;
+            }
+        } else if (method.isAnnotationPresent(Spatial.class)) {
+            final String methodName = method.getAnnotation(Spatial.class).name();
+            if (methodName.equals("")) {
+                return filterMethodName(method);
+            } else {
+                return methodName;
+            }
+        } else if (method.isAnnotationPresent(DefaultTemporalProperty.class)) {
+            final String methodName = method.getAnnotation(DefaultTemporalProperty.class).name();
+            if (methodName.equals("")) {
+                return filterMethodName(method);
+            } else {
+                return methodName;
+            }
+        } else if (method.isAnnotationPresent(StartTemporalProperty.class)) {
+            final String methodName = method.getAnnotation(StartTemporalProperty.class).name();
+            if (methodName.equals("")) {
+                return filterMethodName(method);
+            } else {
+                return methodName;
+            }
+        } else if (method.isAnnotationPresent(EndTemporalProperty.class)) {
+            final String methodName = method.getAnnotation(EndTemporalProperty.class).name();
+            if (methodName.equals("")) {
+                return filterMethodName(method);
+            } else {
+                return methodName;
+            }
+        } else {
+            return filterMethodName(method);
+        }
     }
 }

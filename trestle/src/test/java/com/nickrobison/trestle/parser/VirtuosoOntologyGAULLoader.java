@@ -2,11 +2,13 @@ package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
+import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
 import com.nickrobison.trestle.ontology.VirtuosoOntology;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
+import org.apache.jena.query.ResultSetFormatter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -139,16 +141,16 @@ public class VirtuosoOntologyGAULLoader {
                 "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#> " +
                 "SELECT * WHERE {?m rdf:type :GAUL_Test}";
 
-        ResultSet resultSet = ontology.executeSPARQL(queryString);
-        assertEquals(191, resultSet.getRowNumber(), "Wrong number of GAUL records from sparql method");
+        List<QuerySolution> resultSet = ResultSetFormatter.toList(ontology.executeSPARQL(queryString));
+        assertEquals(191, resultSet.size(), "Wrong number of GAUL records from sparql method");
 
 //        SPARQL Query of spatial intersections.
         QueryBuilder qb = new QueryBuilder(ontology.getUnderlyingPrefixManager());
         final OWLClass gaul_test = df.getOWLClass(IRI.create("trestle:", "GAUL_Test"));
         queryString = qb.buildSpatialIntersection(QueryBuilder.DIALECT.VIRTUOSO, gaul_test, "Point(39.5398864750001 -12.0671005249999)", 0.0, QueryBuilder.UNITS.MILE);
 
-        resultSet = ontology.executeSPARQL(queryString);
-        assertEquals(3, resultSet.getRowNumber(), "Wrong number of intersected results");
+        resultSet = ResultSetFormatter.toList(ontology.executeSPARQL(queryString));
+        assertEquals(3, resultSet.size(), "Wrong number of intersected results");
 
 //        Try some inference
 //        FIXME(nrobison): Inference is broken

@@ -17,8 +17,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
-import static com.nickrobison.trestle.parser.ClassParser.df;
-import static com.nickrobison.trestle.parser.ClassParser.filterMethodName;
+import static com.nickrobison.trestle.parser.ClassParser.*;
 
 /**
  * Created by nrobison on 7/28/16.
@@ -40,11 +39,11 @@ public class ClassBuilder {
         List<OWLDataProperty> classFields = new ArrayList<>();
         Arrays.stream(clazz.getDeclaredFields())
                 .filter(ClassParser::filterDataPropertyField)
-                .forEach(field -> classFields.add(df.getOWLDataProperty(filterName(field))));
+                .forEach(field -> classFields.add(df.getOWLDataProperty(filterDataSpatialName(field))));
 
         Arrays.stream(clazz.getDeclaredMethods())
                 .filter(ClassParser::filterDataPropertyMethod)
-                .forEach(method -> classFields.add(df.getOWLDataProperty(filterName(method))));
+                .forEach(method -> classFields.add(df.getOWLDataProperty(filterDataSpatialName(method))));
 
         if (classFields.isEmpty()) {
             return Optional.empty();
@@ -53,7 +52,7 @@ public class ClassBuilder {
         return Optional.of(classFields);
     }
 
-    private static IRI filterName(Field classField) {
+    private static IRI filterDataSpatialName(Field classField) {
         if (classField.isAnnotationPresent(DataProperty.class)) {
             return IRI.create(PREFIX, classField.getAnnotation(DataProperty.class).name());
         } else if (classField.isAnnotationPresent(Spatial.class)) {
@@ -63,7 +62,7 @@ public class ClassBuilder {
         }
     }
 
-    private static IRI filterName(Method classMethod) {
+    private static IRI filterDataSpatialName(Method classMethod) {
         if (classMethod.isAnnotationPresent(DataProperty.class)) {
             return IRI.create(PREFIX, classMethod.getAnnotation(DataProperty.class).name());
         } else if (classMethod.isAnnotationPresent(Spatial.class)) {
@@ -250,46 +249,28 @@ public class ClassBuilder {
     }
 
     private static @Nullable OWL2Datatype verifyOWLType(Class<?> classToVerify, OWLDataProperty property) {
-//        Check to see if it matches any annotated data methods
-        final Optional<Method> annotatedMethod = Arrays.stream(classToVerify.getDeclaredMethods())
-                .filter(m -> m.isAnnotationPresent(DataProperty.class))
-                .filter(m -> m.getAnnotation(DataProperty.class).name().equals(property.getIRI().getShortForm()))
-                .findFirst();
 
-        if (annotatedMethod.isPresent()) {
-            return ClassParser.getDatatypeFromJavaClass(annotatedMethod.get().getReturnType());
-        }
-
-        final Optional<Method> standardMethod = Arrays.stream(classToVerify.getDeclaredMethods())
+        //        Check to see if it matches any annotated data methods
+        final Optional<Method> matchedMethod = Arrays.stream(classToVerify.getDeclaredMethods())
 //                .filter(m -> m.isAnnotationPresent(DataProperty.class))
-                .filter(m -> filterMethodName(m).equals(property.getIRI().getShortForm()))
+                .filter(m -> getMethodName(m).equals(property.getIRI().getShortForm()))
                 .findFirst();
 
-        if (standardMethod.isPresent()) {
-            return ClassParser.getDatatypeFromJavaClass(standardMethod.get().getReturnType());
+        if (matchedMethod.isPresent()) {
+            return ClassParser.getDatatypeFromJavaClass(matchedMethod.get().getReturnType());
         }
 
 //        Fields
-        final Optional<Field> annotatedField = Arrays.stream(classToVerify.getDeclaredFields())
-                .filter(f -> f.isAnnotationPresent(DataProperty.class))
-                .filter(f -> f.getAnnotation(DataProperty.class).equals(property.getIRI().getShortForm()))
-                .findFirst();
-
-        if (annotatedField.isPresent()) {
-            return ClassParser.getDatatypeFromJavaClass(annotatedField.get().getType());
-        }
-
-        final Optional<Field> standardField = Arrays.stream(classToVerify.getDeclaredFields())
+        final Optional<Field> matchedField = Arrays.stream(classToVerify.getDeclaredFields())
 //                .filter(f -> f.isAnnotationPresent(DataProperty.class))
-                .filter(f -> f.getName().equals(property.getIRI().getShortForm()))
+                .filter(f -> getFieldName(f).equals(property.getIRI().getShortForm()))
                 .findFirst();
 
-        if (standardField.isPresent()) {
-            return ClassParser.getDatatypeFromJavaClass(standardField.get().getType());
+        if (matchedField.isPresent()) {
+            return ClassParser.getDatatypeFromJavaClass(matchedField.get().getType());
         }
 
         return null;
-
     }
 
 
