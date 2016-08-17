@@ -16,6 +16,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @TemporalProperty
 public @interface EndTemporalProperty {
+    String name() default "";
     TemporalType type() default TemporalType.INTERVAL;
     TemporalScope scope() default TemporalScope.VALID;
 }

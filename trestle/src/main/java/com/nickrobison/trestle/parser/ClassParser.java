@@ -14,6 +14,7 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -142,6 +143,8 @@ public class ClassParser {
                 & !(objectMember.getName() == "hashCode")
                 & !(objectMember.getName() == "equals")
                 & !(objectMember.getName() == "toString")
+//                Need to filter out random ebean methods
+                & !(objectMember.getName().contains("_ebean"))
                 & !(objectMember.getReturnType() == void.class));
     }
 
@@ -369,7 +372,7 @@ public class ClassParser {
                     .findFirst();
 
             if (!fieldArgName.orElse("").equals("")) {
-                return  methodArgName.orElse("");
+                return  fieldArgName.orElse("");
             }
 
 //            TODO(nrobison): I think these things can go away.
@@ -398,14 +401,27 @@ public class ClassParser {
                     .findFirst();
 
             if (temporalField.isPresent()) {
-                return temporalField.get().getName();
+//                Check to see if we have a given temporal property
+                final String annotationName = temporalField.get().getAnnotation(DefaultTemporalProperty.class).name();
+                if (annotationName.equals("")) {
+                    return temporalField.get().getName();
+                } else {
+                    return annotationName;
+                }
             }
 
             final Optional<Method> temporalMethod = Arrays.stream(clazz.getDeclaredMethods())
                     .filter(f -> (f.isAnnotationPresent(DefaultTemporalProperty.class)))
                     .findFirst();
+
+
             if (temporalMethod.isPresent()) {
-                return filterMethodName(temporalMethod.get());
+                final String annotationName = temporalMethod.get().getAnnotation(DefaultTemporalProperty.class).name();
+                if (annotationName.equals("")) {
+                    return filterMethodName(temporalMethod.get());
+                } else {
+                    return annotationName;
+                }
             }
 //        TODO(nrobison): This should be better. String matching is nasty.
         } else if (classMember.toLowerCase().contains("start")) {
@@ -415,14 +431,24 @@ public class ClassParser {
                     .findFirst();
 
             if (temporalField.isPresent()) {
-                return temporalField.get().getName();
+                final String annotationName = temporalField.get().getAnnotation(StartTemporalProperty.class).name();
+                if (annotationName.equals("")) {
+                    return temporalField.get().getName();
+                } else {
+                    return annotationName;
+                }
             }
 
             final Optional<Method> temporalMethod = Arrays.stream(clazz.getDeclaredMethods())
                     .filter(f -> (f.isAnnotationPresent(StartTemporalProperty.class)))
                     .findFirst();
             if (temporalMethod.isPresent()) {
-                return filterMethodName(temporalMethod.get());
+                final String annotationName = temporalMethod.get().getAnnotation(StartTemporalProperty.class).name();
+                if (annotationName.equals("")) {
+                    return filterMethodName(temporalMethod.get());
+                } else {
+                    return annotationName;
+                }
             }
 
         } else {
@@ -431,14 +457,24 @@ public class ClassParser {
                     .findFirst();
 
             if (temporalField.isPresent()) {
-                return temporalField.get().getName();
+                final String annotationName = temporalField.get().getAnnotation(EndTemporalProperty.class).name();
+                if (annotationName.equals("")) {
+                    return temporalField.get().getName();
+                } else {
+                    return annotationName;
+                }
             }
 
             final Optional<Method> temporalMethod = Arrays.stream(clazz.getDeclaredMethods())
                     .filter(f -> (f.isAnnotationPresent(EndTemporalProperty.class)))
                     .findFirst();
             if (temporalMethod.isPresent()) {
-                return filterMethodName(temporalMethod.get());
+                final String annotationName = temporalMethod.get().getAnnotation(EndTemporalProperty.class).name();
+                if (annotationName.equals("")) {
+                    return filterMethodName(temporalMethod.get());
+                } else {
+                    return annotationName;
+                }
             }
         }
 

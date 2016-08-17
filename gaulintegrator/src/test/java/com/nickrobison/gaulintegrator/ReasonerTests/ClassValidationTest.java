@@ -30,8 +30,8 @@ public class ClassValidationTest {
     @BeforeAll
     public static void setup() {
         reasoner = new TrestleReasoner.TrestleBuilder()
-                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-//                .withDBConnection("jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial", "spatialUser", "spatial1")
+//                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+                .withDBConnection("jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial", "spatialUser", "spatial1")
                 .withName("gaul_class_test")
                 .initialize()
                 .build();
@@ -68,13 +68,10 @@ public class ClassValidationTest {
             fail("Should not throw exception");
         }
 
-//        Write out the ontology
-//        reasoner.writeOntology(new File("/Users/nrobison/Desktop/gaul.owl").toURI(), false);
-
 //        Try to read it back out
         GAULObject gaulObject = null;
         try {
-            gaulObject = reasoner.readAsObject(GAULObject.class, testObject.getObjectName());
+            gaulObject = reasoner.readAsObject(GAULObject.class, testObject.getObjectIDAsString());
         } catch (TrestleClassException e) {
             e.printStackTrace();
             fail("should not throw");

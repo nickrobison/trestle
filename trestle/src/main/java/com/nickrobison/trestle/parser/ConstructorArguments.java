@@ -22,6 +22,10 @@ public class ConstructorArguments {
         this.arguments.put(name, new Argument(type, value));
     }
 
+    public Set<String> getNames() {
+        return this.arguments.keySet();
+    }
+
     public List<Class<?>> getTypes() {
         List<Class<?>> argumentTypes = new ArrayList<>();
         this.arguments.values()

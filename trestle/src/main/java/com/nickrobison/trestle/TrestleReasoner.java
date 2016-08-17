@@ -42,6 +42,7 @@ import static com.nickrobison.trestle.common.StaticIRI.*;
 public class TrestleReasoner {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleReasoner.class);
+    public static final String DEFAULTNAME = "trestle";
 
     private final ITrestleOntology ontology;
     private final Set<Class> registeredClasses;
@@ -66,11 +67,11 @@ public class TrestleReasoner {
 //        Parse the listed input classes
         this.registeredClasses = builder.inputClasses;
 
-        logger.info("Connecting to ontology {} at {}", builder.ontologyName.orElse("trestle"), builder.connectionString.orElse("localhost"));
+        logger.info("Connecting to ontology {} at {}", builder.ontologyName.orElse(DEFAULTNAME), builder.connectionString.orElse("localhost"));
         OntologyBuilder ontologyBuilder = new OntologyBuilder()
 //                .fromIRI(IRI.create(ontologyResource))
                 .fromInputStream(ontologyIS)
-                .name(builder.ontologyName.orElse("trestle"));
+                .name(builder.ontologyName.orElse(DEFAULTNAME));
         if (builder.connectionString.isPresent()) {
             ontologyBuilder = ontologyBuilder.withDBConnection(builder.connectionString.get(),
                     builder.username,
@@ -110,6 +111,7 @@ public class TrestleReasoner {
         }
         logger.debug("Using spatial dialect {}", spatialDalect);
         qb = new QueryBuilder(ontology.getUnderlyingPrefixManager());
+        logger.info("Ontology {] ready", builder.ontologyName.orElse(DEFAULTNAME));
     }
 
     /**
@@ -405,6 +407,64 @@ public class TrestleReasoner {
         logger.info("{} didn't intersect with any objects", owlNamedIndividual);
         this.ontology.unlockAndCommit();
         return Optional.empty();
+    }
+
+    /**
+     * Find objects of a given class that intersect with a specific WKT boundary.
+     * An empty Optional means an error, an Optional of an empty List means no intersected objects
+     * @param clazz - Class of object to return
+     * @param wkt - WKT of spatial boundary to intersect with
+     * @param buffer - Double buffer to build around wkt
+     * @param <T> - Class to specialize method with.
+     * @return - An Optional List of Object T.
+     */
+    public <T> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer) {
+        this.ontology.openAndLock(false);
+        final OWLClass owlClass = ClassParser.GetObjectClass(clazz);
+
+        String spatialIntersection = null;
+        try {
+             spatialIntersection = qb.buildSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER);
+        } catch (UnsupportedFeatureException e) {
+            logger.error("Ontology doesn't support spatial intersection", e);
+            ontology.unlockAndCommit();
+            return Optional.empty();
+        }
+
+        logger.debug("Executing spatial query");
+        final long start = System.currentTimeMillis();
+        final ResultSet resultSet = ontology.executeSPARQL(spatialIntersection);
+        final long end = System.currentTimeMillis();
+        logger.debug("Spatial query returned in {} ms", end-start);
+//            I think I need to rewind the result set
+        ((ResultSetMem) resultSet).rewind();
+        Set<IRI> intersectedIRIs = new HashSet<>();
+        while (resultSet.hasNext()) {
+            final QuerySolution querySolution = resultSet.next();
+            final Resource resource = querySolution.get("m").asResource();
+            intersectedIRIs.add(IRI.create(resource.getURI()));
+        }
+        logger.debug("Intersected with {} objects", intersectedIRIs.size());
+        if (intersectedIRIs.size() == 0) {
+            logger.info("No intersected results");
+            ontology.unlockAndCommit();
+            return Optional.of(new ArrayList<T>());
+        }
+
+//            I think I need to suppress this warning to deal with generics in streams
+        @SuppressWarnings("argument.type.incompatible") final List<T> intersectedObjects =
+                intersectedIRIs
+                .stream()
+                .map(iri -> {
+                    try {
+                        return (T) readAsObject(clazz, iri);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList());
+
+        return Optional.of(intersectedObjects);
     }
 
     /**
