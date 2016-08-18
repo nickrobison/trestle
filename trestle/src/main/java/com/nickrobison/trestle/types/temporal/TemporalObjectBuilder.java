@@ -15,6 +15,8 @@ import static com.nickrobison.trestle.parser.TemporalParser.parseToTemporal;
 /**
  * Created by nrobison on 6/30/16.
  */
+// I can ignore this because I implement my own type check class with the isPresent() methods
+@SuppressWarnings("unchecked")
 public class TemporalObjectBuilder {
 
 
@@ -97,7 +99,7 @@ public class TemporalObjectBuilder {
                     .findFirst();
             if (exists_at.isPresent()) {
                 return Optional.of(TemporalObjectBuilder.valid()
-                        .at(parseToTemporal(valid_from.get().getObject(), temporalType))
+                        .at(parseToTemporal(exists_at.get().getObject(), temporalType))
                         .withRelations(exists_at.get().getSubject().asOWLNamedIndividual()));
             }
         }

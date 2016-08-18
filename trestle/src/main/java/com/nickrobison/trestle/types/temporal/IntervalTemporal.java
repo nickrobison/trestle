@@ -12,7 +12,8 @@ import java.util.*;
 /**
  * Created by nrobison on 6/30/16.
  */
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+// I can suppress both of these warnings because I know for sure they are correct
+@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unchecked"})
 public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
     private static final TemporalType TYPE = TemporalType.INTERVAL;
