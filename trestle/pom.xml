@@ -12,11 +12,10 @@
         <jena.version>3.1.0</jena.version>
         <!--<jena.version>2.11.2</jena.version>-->
         <marmotta.version>3.3.0</marmotta.version>
+        <geotools.version>15.1</geotools.version>
         <sesame.version>4.1.2</sesame.version>
         <owl.version>5.0.2</owl.version>
         <stardog.version>4.1.3</stardog.version>
-        <geotools.version>15.0</geotools.version>
-        <pellet.version>2.4.0-SNAPSHOT</pellet.version>
         <lucene.version>4.9.1</lucene.version>
         <trestle.location>file:///Users/nrobison/Developer/git/dissertation/trestle-ontology</trestle.location>
     </properties>
@@ -48,18 +47,15 @@
             <!--TDB using a different versioning-->
             <!--TDB 1.1.2 doesn't seem to work, but 1.1.1 does-->
             <version>${jena.version}</version>
+            <optional>true</optional>
             <!--<version>1.1.1</version>-->
         </dependency>
         <dependency>
             <groupId>org.apache.jena</groupId>
             <artifactId>jena-spatial</artifactId>
             <version>${jena.version}</version>
+            <optional>true</optional>
             <!--<version>1.1.2</version>-->
-        </dependency>
-        <dependency>
-            <groupId>com.vividsolutions</groupId>
-            <artifactId>jts</artifactId>
-            <version>1.13</version>
         </dependency>
         <!--Lucene manual specification-->
         <dependency>
@@ -120,16 +116,6 @@
         </dependency>
         <!--Application Dependencies-->
         <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-referencing</artifactId>
-            <version>${geotools.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-epsg-hsql</artifactId>
-            <version>${geotools.version}</version>
-        </dependency>
-        <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.5</version>
@@ -139,76 +125,90 @@
             <artifactId>esri-geometry-api</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.vividsolutions</groupId>
+            <artifactId>jts</artifactId>
+            <version>1.13</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-referencing</artifactId>
+            <version>${geotools.version}</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
             <version>2.3.2</version>
         </dependency>
         <!--RDF4J Dependencies-->
         <!--<dependency>-->
-            <!--<groupId>org.openrdf.sesame</groupId>-->
-            <!--<artifactId>sesame-sail-api</artifactId>-->
-            <!--<version>${sesame.version}</version>-->
+        <!--<groupId>org.openrdf.sesame</groupId>-->
+        <!--<artifactId>sesame-sail-api</artifactId>-->
+        <!--<version>${sesame.version}</version>-->
         <!--</dependency>-->
         <!--<dependency>-->
-            <!--<groupId>org.openrdf.sesame</groupId>-->
-            <!--<artifactId>sesame-model</artifactId>-->
-            <!--<version>${sesame.version}</version>-->
+        <!--<groupId>org.openrdf.sesame</groupId>-->
+        <!--<artifactId>sesame-model</artifactId>-->
+        <!--<version>${sesame.version}</version>-->
         <!--</dependency>-->
         <!--<dependency>-->
-            <!--<groupId>org.openrdf.sesame</groupId>-->
-            <!--<artifactId>sesame-sail-inferencer</artifactId>-->
-            <!--<version>${sesame.version}</version>-->
+        <!--<groupId>org.openrdf.sesame</groupId>-->
+        <!--<artifactId>sesame-sail-inferencer</artifactId>-->
+        <!--<version>${sesame.version}</version>-->
         <!--</dependency>-->
         <!--<dependency>-->
-            <!--<groupId>org.apache.marmotta</groupId>-->
-            <!--<artifactId>kiwi-triplestore</artifactId>-->
-            <!--<version>${marmotta.version}</version>-->
+        <!--<groupId>org.apache.marmotta</groupId>-->
+        <!--<artifactId>kiwi-triplestore</artifactId>-->
+        <!--<version>${marmotta.version}</version>-->
         <!--</dependency>-->
         <!--<dependency>-->
-            <!--<groupId>org.apache.marmotta</groupId>-->
-            <!--<artifactId>kiwi-reasoner</artifactId>-->
-            <!--<version>${marmotta.version}</version>-->
+        <!--<groupId>org.apache.marmotta</groupId>-->
+        <!--<artifactId>kiwi-reasoner</artifactId>-->
+        <!--<version>${marmotta.version}</version>-->
         <!--</dependency>-->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
+            <optional>true</optional>
         </dependency>
         <!--Virtuoso Dependencies-->
         <dependency>
             <groupId>com.openlink.virtuoso</groupId>
             <artifactId>jena3</artifactId>
             <version>1.0</version>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.openlink.virtuoso</groupId>
             <artifactId>virtjdbc</artifactId>
             <version>4.1</version>
+            <optional>true</optional>
         </dependency>
         <!--Stardog dependencies-->
         <!--<dependency>-->
-            <!--<groupId>com.complexible.stardog</groupId>-->
-            <!--<artifactId>server</artifactId>-->
-            <!--<version>${stardog.version}</version>-->
-            <!--<type>pom</type>-->
+        <!--<groupId>com.complexible.stardog</groupId>-->
+        <!--<artifactId>server</artifactId>-->
+        <!--<version>${stardog.version}</version>-->
+        <!--<type>pom</type>-->
 
-            <!--<exclusions>-->
-                <!--<exclusion>-->
-                    <!--<groupId>org.openrdf.sesame</groupId>-->
-                    <!--<artifactId>sesame-rio</artifactId>-->
-                <!--</exclusion>-->
-            <!--</exclusions>-->
+        <!--<exclusions>-->
+        <!--<exclusion>-->
+        <!--<groupId>org.openrdf.sesame</groupId>-->
+        <!--<artifactId>sesame-rio</artifactId>-->
+        <!--</exclusion>-->
+        <!--</exclusions>-->
         <!--</dependency>-->
         <!--<dependency>-->
-            <!--<groupId>com.complexible.stardog</groupId>-->
-            <!--<artifactId>client-snarl</artifactId>-->
-            <!--<version>${stardog.version}</version>-->
-            <!--<type>pom</type>-->
+        <!--<groupId>com.complexible.stardog</groupId>-->
+        <!--<artifactId>client-snarl</artifactId>-->
+        <!--<version>${stardog.version}</version>-->
+        <!--<type>pom</type>-->
         <!--</dependency>-->
         <!--<dependency>-->
-            <!--<groupId>com.complexible.stardog.jena</groupId>-->
-            <!--<artifactId>stardog-jena</artifactId>-->
-            <!--<version>${stardog.version}</version>-->
-            <!--<type>jar</type>-->
+        <!--<groupId>com.complexible.stardog.jena</groupId>-->
+        <!--<artifactId>stardog-jena</artifactId>-->
+        <!--<version>${stardog.version}</version>-->
+        <!--<type>jar</type>-->
         <!--</dependency>-->
         <!--Checker dependencies-->
         <dependency>

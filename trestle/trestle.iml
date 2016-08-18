@@ -52,7 +52,6 @@
     <orderEntry type="library" name="Maven: org.apache.zookeeper:zookeeper:3.4.6" level="project" />
     <orderEntry type="library" name="Maven: org.codehaus.woodstox:wstx-asl:3.2.7" level="project" />
     <orderEntry type="library" name="Maven: org.noggit:noggit:0.5" level="project" />
-    <orderEntry type="library" name="Maven: com.vividsolutions:jts:1.13" level="project" />
     <orderEntry type="library" name="Maven: net.sourceforge.owlapi:owlapi-api:5.0.2" level="project" />
     <orderEntry type="library" name="Maven: org.tukaani:xz:1.5" level="project" />
     <orderEntry type="library" name="Maven: org.apache.commons:commons-rdf-api:0.1.0-incubating" level="project" />
@@ -89,26 +88,25 @@
     <orderEntry type="library" name="Maven: com.oracle:ojdbc7:12.1.0.2" level="project" />
     <orderEntry type="library" name="Maven: oracle.spatial.rdf.client:sdordf:1.1" level="project" />
     <orderEntry type="library" name="Maven: oracle.spatial.rdf.client:sdordfclient:3.10" level="project" />
-    <orderEntry type="library" name="Maven: org.geotools:gt-referencing:15.0" level="project" />
+    <orderEntry type="library" name="Maven: com.esri.geometry:esri-geometry-api:1.2.1" level="project" />
+    <orderEntry type="library" name="Maven: org.json:json:20090211" level="project" />
+    <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-core-asl:1.9.12" level="project" />
+    <orderEntry type="library" name="Maven: com.vividsolutions:jts:1.13" level="project" />
+    <orderEntry type="library" name="Maven: org.geotools:gt-referencing:15.1" level="project" />
     <orderEntry type="library" name="Maven: com.googlecode.efficient-java-matrix-library:core:0.26" level="project" />
     <orderEntry type="library" name="Maven: commons-pool:commons-pool:1.5.4" level="project" />
-    <orderEntry type="library" name="Maven: org.geotools:gt-metadata:15.0" level="project" />
-    <orderEntry type="library" name="Maven: org.geotools:gt-opengis:15.0" level="project" />
+    <orderEntry type="library" name="Maven: org.geotools:gt-metadata:15.1" level="project" />
+    <orderEntry type="library" name="Maven: org.geotools:gt-opengis:15.1" level="project" />
     <orderEntry type="library" name="Maven: net.java.dev.jsr-275:jsr-275:1.0-beta-2" level="project" />
     <orderEntry type="library" name="Maven: javax.media:jai_core:1.1.3" level="project" />
     <orderEntry type="library" name="Maven: jgridshift:jgridshift:1.0" level="project" />
     <orderEntry type="library" name="Maven: net.sf.geographiclib:GeographicLib-Java:1.44" level="project" />
-    <orderEntry type="library" name="Maven: org.geotools:gt-epsg-hsql:15.0" level="project" />
-    <orderEntry type="library" name="Maven: org.hsqldb:hsqldb:2.3.0" level="project" />
-    <orderEntry type="library" name="Maven: com.esri.geometry:esri-geometry-api:1.2.1" level="project" />
-    <orderEntry type="library" name="Maven: org.json:json:20090211" level="project" />
-    <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-core-asl:1.9.12" level="project" />
     <orderEntry type="library" name="Maven: org.postgresql:postgresql:9.4.1209.jre7" level="project" />
     <orderEntry type="library" name="Maven: com.openlink.virtuoso:jena3:1.0" level="project" />
     <orderEntry type="library" name="Maven: com.openlink.virtuoso:virtjdbc:4.1" level="project" />
-    <orderEntry type="library" name="Maven: org.checkerframework:checker:2.1.0" level="project" />
-    <orderEntry type="library" name="Maven: org.checkerframework:checker-qual:2.1.0" level="project" />
-    <orderEntry type="library" name="Maven: org.checkerframework:jdk8:2.1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.checkerframework:checker:2.0.1" level="project" />
+    <orderEntry type="library" name="Maven: org.checkerframework:checker-qual:2.0.1" level="project" />
+    <orderEntry type="library" name="Maven: org.checkerframework:jdk8:2.0.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.junit.jupiter:junit-jupiter-api:5.0.0-M2" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.opentest4j:opentest4j:1.0.0-M1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.junit.platform:junit-platform-commons:1.0.0-M2" level="project" />
