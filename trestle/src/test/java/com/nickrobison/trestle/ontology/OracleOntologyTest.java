@@ -6,9 +6,7 @@ import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import org.apache.jena.query.QuerySolution;
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.sparql.resultset.ResultSetMem;
+import org.apache.jena.query.ResultSetFormatter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +17,7 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.StaticIRI.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Created by nrobison on 6/24/16.
  */
-@SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "Duplicates", "unchecked" })
+@SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "Duplicates", "unchecked"})
 public class OracleOntologyTest {
 
     private OracleOntology ontology;
@@ -59,8 +58,8 @@ public class OracleOntologyTest {
                 "SELECT * WHERE {?m rdf:type ?type . ?type rdfs:subClassOf ?class}";
 //        String queryString = " SELECT ?subject ?prop ?object WHERE { ?subject ?prop ?object } ";
 
-        final ResultSet resultSet = ontology.executeSPARQL(queryString);
-        assertEquals(31, resultSet.getRowNumber(), "Wrong number of classes");
+        final List<QuerySolution> resultSet = ResultSetFormatter.toList(ontology.executeSPARQL(queryString));
+        assertEquals(31, resultSet.size(), "Wrong number of classes");
 
         final long tripleCount = ontology.getTripleCount();
         assertEquals(513, tripleCount, "Inference is wrong");
@@ -267,17 +266,13 @@ public class OracleOntologyTest {
 
         //        Now for the sparql query
 
-        ResultSet resultSet = ontology.executeSPARQL(builtString);
-        assertEquals(4, resultSet.getRowNumber(), "Wrong number of relations");
+        List<QuerySolution> resultSet = ResultSetFormatter.toList(ontology.executeSPARQL(builtString));
+        assertEquals(4, resultSet.size(), "Wrong number of relations");
 
-//        If we have the right number of relations, let's build a set of individuals and get their validity intervals
-        Set<OWLNamedIndividual> individuals = new HashSet<>();
-        ((ResultSetMem) resultSet).rewind();
-        while (resultSet.hasNext()) {
-            final QuerySolution querySolution = resultSet.nextSolution();
-            final Resource resource = querySolution.getResource("f");
-            individuals.add(df.getOWLNamedIndividual(resource.getURI()));
-        }
+//        If we have the right number of relations, let's build a set of individuals and get their validity intervals;
+        final Set<OWLNamedIndividual> individuals = resultSet.stream()
+                .map(result -> df.getOWLNamedIndividual(result.getResource("f").getURI()))
+                .collect(Collectors.toSet());
         assertEquals(4, individuals.size(), "Should have the same number of individuals");
 
         Map<OWLNamedIndividual, TemporalObject> intervals = new HashMap<>();

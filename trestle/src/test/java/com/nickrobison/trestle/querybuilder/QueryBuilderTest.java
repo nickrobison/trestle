@@ -48,7 +48,7 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT ?m WHERE { ?m rdf:type :GAUL .?m ogc:asWKT ?wkt FILTER(orageo:relate(?wkt, \"POINT (39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral, \"mask=anyinteract\")) }";
+            "SELECT ?m WHERE { ?m rdf:type :GAUL .?m ogc:asWKT ?wkt FILTER(ogcf:sfIntersects(?wkt, \"POINT (39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }";
 
     private static final String virtuosoSpatialString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
