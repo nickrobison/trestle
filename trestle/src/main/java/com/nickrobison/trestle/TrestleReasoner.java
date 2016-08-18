@@ -1,5 +1,7 @@
 package com.nickrobison.trestle;
 
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.nickrobison.trestle.caching.TrestleCache;
 import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
@@ -17,6 +19,7 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.resultset.ResultSetMem;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -34,6 +37,7 @@ import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.nickrobison.trestle.common.LambdaExceptionUtil.rethrowFunction;
 import static com.nickrobison.trestle.common.StaticIRI.*;
 
 /**
@@ -52,6 +56,8 @@ public class TrestleReasoner {
     private static final OWLClass datasetClass = OWLManager.getOWLDataFactory().getOWLClass(IRI.create("trestle:", "Dataset"));
     private final QueryBuilder qb;
     private final QueryBuilder.DIALECT spatialDalect;
+    private final boolean cachingEnabled;
+    @MonotonicNonNull private TrestleCache trestleCache = null;
 
     @SuppressWarnings("dereference.of.nullable")
     private TrestleReasoner(TrestleBuilder builder) throws OWLOntologyCreationException {
@@ -97,6 +103,15 @@ public class TrestleReasoner {
         }
         df = OWLManager.getOWLDataFactory();
 
+//        Are we a caching reasoner?
+        this.cachingEnabled = builder.caching;
+        if (cachingEnabled) {
+//            Build caches
+            logger.info("Building trestle caches");
+            trestleCache = new TrestleCache.TrestleCacheBuilder().build();
+        }
+
+
 //        Setup the query builder
         if (ontology instanceof OracleOntology) {
             spatialDalect = QueryBuilder.DIALECT.ORACLE;
@@ -110,7 +125,7 @@ public class TrestleReasoner {
 //            TODO(nrobison): This needs to be better
             spatialDalect = QueryBuilder.DIALECT.SESAME;
         }
-        logger.debug("Using spatial dialect {}", spatialDalect);
+        logger.debug("Using SPARQL dialect {}", spatialDalect);
         qb = new QueryBuilder(ontology.getUnderlyingPrefixManager());
         logger.info("Ontology {} ready", builder.ontologyName.orElse(DEFAULTNAME));
     }
@@ -125,7 +140,7 @@ public class TrestleReasoner {
         this.ontology.close(delete);
     }
 
-//    When you get the ontology, the ownership passes away, so then the reasoner can't perform any more queries.
+    //    When you get the ontology, the ownership passes away, so then the reasoner can't perform any more queries.
     public ITrestleOntology getUnderlyingOntology() {
         return this.ontology;
     }
@@ -278,11 +293,20 @@ public class TrestleReasoner {
         this.ontology.unlockAndCommit();
     }
 
-    public <T> @NonNull T readAsObject(Class<@NonNull T> clazz, String objectID) throws TrestleClassException, MissingOntologyEntity {
-        return readAsObject(clazz, IRI.create(PREFIX, objectID.replaceAll("\\s+", "_")));
+    @SuppressWarnings({"argument.type.incompatible", "dereference.of.nullable"})
+    public <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull String objectID) throws TrestleClassException, MissingOntologyEntity {
+        final @NonNull IRI individualIRI = IRI.create(PREFIX, objectID.replaceAll("\\s+", "_"));
+//        Check cache first
+        if (cachingEnabled) {
+            logger.debug("Retrieving {} from cache", individualIRI);
+            return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readAsObject(clazz, individualIRI))));
+        } else {
+            return readAsObject(clazz, individualIRI);
+        }
     }
 
-    public <T> @NonNull T readAsObject(Class<@NonNull T> clazz, IRI individualIRI) throws TrestleClassException, MissingOntologyEntity {
+    <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI) throws TrestleClassException, MissingOntologyEntity {
+
 //        Contains class?
         if (!this.registeredClasses.contains(clazz)) {
             throw new UnregisteredClassException(clazz);
@@ -373,7 +397,7 @@ public class TrestleReasoner {
             final long start = System.currentTimeMillis();
             final ResultSet resultSet = ontology.executeSPARQL(spatialIntersection);
             final long end = System.currentTimeMillis();
-            logger.debug("Spatial query returned in {} ms", end-start);
+            logger.debug("Spatial query returned in {} ms", end - start);
 //            I think I need to rewind the result set
             ((ResultSetMem) resultSet).rewind();
             Set<IRI> intersectedIRIs = new HashSet<>();
@@ -413,10 +437,11 @@ public class TrestleReasoner {
     /**
      * Find objects of a given class that intersect with a specific WKT boundary.
      * An empty Optional means an error, an Optional of an empty List means no intersected objects
-     * @param clazz - Class of object to return
-     * @param wkt - WKT of spatial boundary to intersect with
+     *
+     * @param clazz  - Class of object to return
+     * @param wkt    - WKT of spatial boundary to intersect with
      * @param buffer - Double buffer to build around wkt
-     * @param <T> - Class to specialize method with.
+     * @param <T>    - Class to specialize method with.
      * @return - An Optional List of Object T.
      */
     @SuppressWarnings("return.type.incompatible")
@@ -426,7 +451,7 @@ public class TrestleReasoner {
 
         String spatialIntersection = null;
         try {
-             spatialIntersection = qb.buildSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER);
+            spatialIntersection = qb.buildSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER);
         } catch (UnsupportedFeatureException e) {
             logger.error("Ontology doesn't support spatial intersection", e);
             ontology.unlockAndCommit();
@@ -437,7 +462,7 @@ public class TrestleReasoner {
         final long start = System.currentTimeMillis();
         final ResultSet resultSet = ontology.executeSPARQL(spatialIntersection);
         final long end = System.currentTimeMillis();
-        logger.debug("Spatial query returned in {} ms", end-start);
+        logger.debug("Spatial query returned in {} ms", end - start);
 //            I think I need to rewind the result set
         ((ResultSetMem) resultSet).rewind();
         Set<IRI> intersectedIRIs = new HashSet<>();
@@ -471,9 +496,10 @@ public class TrestleReasoner {
 
     /**
      * Get a map of related objects and their relative strengths
-     * @param clazz - Java class of object to serialize to
+     *
+     * @param clazz    - Java class of object to serialize to
      * @param objectID - Object ID to retrieve related objects
-     * @param cutoff - Double of relation strength cutoff
+     * @param cutoff   - Double of relation strength cutoff
      * @return - Optional Map of related java objects and their corresponding relational strength
      */
     //    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
@@ -613,6 +639,7 @@ public class TrestleReasoner {
         private final Set<Class> inputClasses;
         private Optional<String> ontologyName = Optional.empty();
         private boolean initialize = false;
+        private boolean caching = true;
 
         @Deprecated
         public TrestleBuilder(IRI iri) {
@@ -646,6 +673,11 @@ public class TrestleReasoner {
                             logger.error("Cannot validate class {}", clazz, e);
                         }
                     });
+            return this;
+        }
+
+        public TrestleBuilder withoutCaching() {
+            caching = false;
             return this;
         }
 
