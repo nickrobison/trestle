@@ -1,7 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.reasoner.ReasonerRegistry;
@@ -70,7 +69,6 @@ public class VirtuosoOntology extends JenaOntology {
         final VirtuosoQueryExecution queryExecution = VirtuosoQueryExecutionFactory.create(queryString, (VirtGraph) this.virtModel.getGraph());
         ResultSet resultSet = queryExecution.execSelect();
         resultSet = ResultSetFactory.copyResults(resultSet);
-//        ResultSetFormatter.out(System.out, resultSet, queryExecution.getQuery());
         queryExecution.close();
         this.commitTransaction();
 

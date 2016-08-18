@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Created by nrobison on 7/22/16.
  */
-@SuppressWarnings({"Duplicates", "initialization"})
+@SuppressWarnings({"Duplicates", "initialization", "OptionalGetWithoutIsPresent"})
 public class LocalOntologyTest {
 
 
