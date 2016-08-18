@@ -281,7 +281,7 @@
                     </annotationProcessors>
                     <compilerArgs>
                         <arg>${compiler.default.args}</arg>
-                        <arg>-Xbootclasspath:/p:${annotatedJdk}</arg>
+                        <arg>-Xbootclasspath/p:${annotatedJdk}</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
