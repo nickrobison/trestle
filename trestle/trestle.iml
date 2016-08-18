@@ -106,9 +106,9 @@
     <orderEntry type="library" name="Maven: org.postgresql:postgresql:9.4.1209.jre7" level="project" />
     <orderEntry type="library" name="Maven: com.openlink.virtuoso:jena3:1.0" level="project" />
     <orderEntry type="library" name="Maven: com.openlink.virtuoso:virtjdbc:4.1" level="project" />
-    <orderEntry type="library" name="Maven: org.checkerframework:checker:2.1.1" level="project" />
-    <orderEntry type="library" name="Maven: org.checkerframework:checker-qual:2.1.1" level="project" />
-    <orderEntry type="library" name="Maven: org.checkerframework:jdk8:2.1.1" level="project" />
+    <orderEntry type="library" name="Maven: org.checkerframework:checker:2.1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.checkerframework:checker-qual:2.1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.checkerframework:jdk8:2.1.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.junit.jupiter:junit-jupiter-api:5.0.0-M2" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.opentest4j:opentest4j:1.0.0-M1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.junit.platform:junit-platform-commons:1.0.0-M2" level="project" />

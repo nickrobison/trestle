@@ -170,9 +170,9 @@
     <orderEntry type="library" name="Maven: org.hsqldb:hsqldb:2.3.0" level="project" />
     <orderEntry type="library" name="Maven: com.openlink.virtuoso:jena3:1.0" level="project" />
     <orderEntry type="library" name="Maven: com.openlink.virtuoso:virtjdbc:4.1" level="project" />
-    <orderEntry type="library" name="Maven: org.checkerframework:checker:2.1.1" level="project" />
-    <orderEntry type="library" name="Maven: org.checkerframework:checker-qual:2.1.1" level="project" />
-    <orderEntry type="library" name="Maven: org.checkerframework:jdk8:2.1.1" level="project" />
+    <orderEntry type="library" name="Maven: org.checkerframework:checker:2.1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.checkerframework:checker-qual:2.1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.checkerframework:jdk8:2.1.0" level="project" />
     <orderEntry type="library" name="Maven: org.openjdk.jmh:jmh-core:1.12" level="project" />
     <orderEntry type="library" name="Maven: net.sf.jopt-simple:jopt-simple:4.6" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.apache.hadoop:hadoop-minicluster:2.6.0-cdh5.5.4" level="project" />

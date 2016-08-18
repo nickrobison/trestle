@@ -20,8 +20,10 @@
         <jmh.version>1.12</jmh.version>
         <junit.jupiter.version>5.0.0-M2</junit.jupiter.version>
         <!--Checker properties-->
-        <checker.version>2.1.1</checker.version>
+        <checker.version>2.0.1</checker.version>
         <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
+        <compiler.version>3.5.1</compiler.version>
+        <compiler.default.args>-parameters</compiler.default.args>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -37,26 +39,6 @@
                 <artifactId>hadoop-common</artifactId>
                 <version>${hadoop.version}</version>
             </dependency>
-            <!--Storm dependencies-->
-            <!--<dependency>-->
-                <!--<groupId>org.apache.storm</groupId>-->
-                <!--<artifactId>storm-core</artifactId>-->
-                <!--<version>${storm.version}</version>-->
-                <!--<scope>${provided.scope}</scope>-->
-            <!--</dependency>-->
-            <!--<dependency>-->
-                <!--<groupId>org.apache.storm</groupId>-->
-                <!--<artifactId>storm-hdfs</artifactId>-->
-                <!--<version>${storm.version}</version>-->
-                <!--&lt;!&ndash;TODO(nrobison): Not sure if this will cause an issue later on with the hdfs spout&ndash;&gt;-->
-                <!--&lt;!&ndash;We need to exclude the asm dependency, because it conflicts with the newer version of asm shipped with Kryo&ndash;&gt;-->
-                <!--<exclusions>-->
-                    <!--<exclusion>-->
-                        <!--<groupId>asm</groupId>-->
-                        <!--<artifactId>asm</artifactId>-->
-                    <!--</exclusion>-->
-                <!--</exclusions>-->
-            <!--</dependency>-->
             <!--Common dependencies-->
             <dependency>
                 <groupId>com.google.guava</groupId>
@@ -216,6 +198,25 @@
                 <provided.scope>compile</provided.scope>
             </properties>
         </profile>
+        <profile>
+            <id>no-checker</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>${compiler.version}</version>
+                        <configuration combine.self="override">
+                            <source>1.8</source>
+                            <target>1.8</target>
+                            <fork>true</fork>
+                            <compilerArgs>
+                                <arg>${compiler.default.args}</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
     <build>
         <resources>
@@ -251,20 +252,36 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.10</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>properties</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>${compiler.version}</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
                     <fork>true</fork>
-                    <!--<annotationProcessors>-->
-                        <!--<annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>-->
-                        <!--<annotationProcessor>org.checkerframework.checker.formatter.FormatterChecker</annotationProcessor>-->
-                        <!--<annotationProcessor>org.checkerframework.checker.signature.SignatureChecker</annotationProcessor>-->
-                        <!--<annotationProcessor>org.checkerframework.checker.interning.InterningChecker</annotationProcessor>-->
-                    <!--</annotationProcessors>-->
+                    <annotationProcessors>
+                        <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>
+                        <annotationProcessor>org.checkerframework.checker.formatter.FormatterChecker
+                        </annotationProcessor>
+                        <annotationProcessor>org.checkerframework.checker.signature.SignatureChecker
+                        </annotationProcessor>
+                        <annotationProcessor>org.checkerframework.checker.interning.InterningChecker
+                        </annotationProcessor>
+                    </annotationProcessors>
                     <compilerArgs>
-                        <arg>-parameters</arg>
+                        <arg>${compiler.default.args}</arg>
+                        <arg>-Xbootclasspath:/p:${annotatedJdk}</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
