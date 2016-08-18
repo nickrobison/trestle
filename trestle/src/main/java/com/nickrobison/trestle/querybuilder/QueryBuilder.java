@@ -173,8 +173,8 @@ public class QueryBuilder {
         try {
             geom = reader.read(wkt);
         } catch (ParseException e) {
-            logger.error("Cannot simplify wkt", e);
-            return null;
+            logger.error("Cannot read wkt into geom", e);
+            return wkt;
         }
 
 //        If needed, add a buffer

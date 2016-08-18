@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Created by nrobison on 5/5/16.
  */
-@SuppressWarnings("OptionalGetWithoutIsPresent")
+@SuppressWarnings({"argument.type.incompatible", "initialization.fields.uninitialized", "OptionalGetWithoutIsPresent"})
 public class GAULIntegratorTests {
 
     private static FileSystem fileSystem;

@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class ReadShapes {
     private static final Logger logger = Logger.getLogger(ReadShapes.class);
-    private final InputStream is = this.getClass().getResourceAsStream("/shapefiles/combined_2000.shp");
+    private final InputStream is = ReadShapes.class.getClassLoader().getResourceAsStream("shapefiles/combined_2000.shp");
 
     @BeforeEach
     public void setup() {

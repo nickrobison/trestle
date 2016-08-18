@@ -18,6 +18,7 @@ import static org.junit.Assert.*;
 /**
  * Created by nrobison on 5/6/16.
  */
+@SuppressWarnings({"argument.type.incompatible", "initialization.fields.uninitialized"})
 public class GAULRecordTests {
 
     private MapperOutput mapperOutput;

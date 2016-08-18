@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 /**
  * Created by nrobison on 8/2/16.
  */
+@SuppressWarnings({"argument.type.incompatible", "initialization.fields.uninitialized"})
 public class ClassValidationTest {
 
     static TrestleReasoner reasoner;

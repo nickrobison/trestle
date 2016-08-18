@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * Created by nrobison on 5/9/16.
  */
+@SuppressWarnings("initialization.fields.uninitialized")
 public class GAULInsert {
 
     private Connection dbConnection;

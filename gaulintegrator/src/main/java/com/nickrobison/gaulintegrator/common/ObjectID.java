@@ -65,6 +65,8 @@ public class ObjectID {
                 break;
             case 2: version= IDVersion.HIERARCHICAL;
                 break;
+            default: version = IDVersion.SIMPLE;
+                break;
         }
         return version;
     }

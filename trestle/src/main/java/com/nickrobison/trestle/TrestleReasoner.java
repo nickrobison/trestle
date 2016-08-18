@@ -39,6 +39,7 @@ import static com.nickrobison.trestle.common.StaticIRI.*;
 /**
  * Created by nrobison on 5/17/16.
  */
+@SuppressWarnings({"methodref.inference.unimplemented"})
 public class TrestleReasoner {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleReasoner.class);
@@ -351,13 +352,13 @@ public class TrestleReasoner {
         return ClassBuilder.ConstructObject(clazz, constructorArguments);
     }
 
-    public <T> Optional<List<@NonNull T>> spatialIntersectObject(@NonNull T inputObject, double buffer) {
+    @SuppressWarnings("return.type.incompatible")
+    public <T> Optional<List<T>> spatialIntersectObject(@NonNull T inputObject, double buffer) {
         this.ontology.openAndLock(false);
         final OWLClass owlClass = ClassParser.GetObjectClass(inputObject);
         final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(inputObject);
         final Optional<String> wktString = ClassParser.GetSpatialValue(inputObject);
         if (wktString.isPresent()) {
-//            final String spatialIntersection = qb.buildOracleIntersection(owlClass, wktString.get());
             String spatialIntersection = null;
 
             try {
@@ -389,7 +390,7 @@ public class TrestleReasoner {
                     .stream()
                     .map(iri -> {
                         try {
-                            return (T) readAsObject(inputObject.getClass(), iri);
+                            return (@NonNull T) readAsObject(inputObject.getClass(), iri);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
@@ -404,7 +405,7 @@ public class TrestleReasoner {
             logger.info("{} intersected with {} objects", owlNamedIndividual, intersectedObjects.size());
             return Optional.empty();
         }
-        logger.info("{} didn't intersect with any objects", owlNamedIndividual);
+        logger.info("{} doesn't have a spatial component", owlNamedIndividual);
         this.ontology.unlockAndCommit();
         return Optional.empty();
     }
@@ -418,7 +419,8 @@ public class TrestleReasoner {
      * @param <T> - Class to specialize method with.
      * @return - An Optional List of Object T.
      */
-    public <T> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer) {
+    @SuppressWarnings("return.type.incompatible")
+    public <T> Optional<List<T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer) {
         this.ontology.openAndLock(false);
         final OWLClass owlClass = ClassParser.GetObjectClass(clazz);
 
@@ -448,16 +450,15 @@ public class TrestleReasoner {
         if (intersectedIRIs.size() == 0) {
             logger.info("No intersected results");
             ontology.unlockAndCommit();
-            return Optional.of(new ArrayList<T>());
+            return Optional.of(new ArrayList<@NonNull T>());
         }
 
 //            I think I need to suppress this warning to deal with generics in streams
-        @SuppressWarnings("argument.type.incompatible") final List<T> intersectedObjects =
-                intersectedIRIs
+        @SuppressWarnings("argument.type.incompatible") final List<@NonNull T> intersectedObjects = intersectedIRIs
                 .stream()
                 .map(iri -> {
                     try {
-                        return (T) readAsObject(clazz, iri);
+                        return (@NonNull T) readAsObject(clazz, iri);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }

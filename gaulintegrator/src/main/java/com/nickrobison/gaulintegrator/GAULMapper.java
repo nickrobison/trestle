@@ -17,6 +17,7 @@ import static java.lang.StrictMath.toIntExact;
 /**
  * Created by nrobison on 5/5/16.
  */
+@SuppressWarnings("argument.type.incompatible")
 public class GAULMapper extends Mapper<LongWritable, PolygonFeatureWritable, LongWritable, MapperOutput> {
 
     private static final Logger logger = LoggerFactory.getLogger(GAULMapper.class);
