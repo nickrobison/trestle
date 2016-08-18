@@ -132,7 +132,6 @@ public class LocalOntology extends JenaOntology {
     public ResultSet executeSPARQL(String queryString) {
         this.openTransaction(false);
         final Query query = QueryFactory.create(queryString);
-
         final QueryExecution qExec = QueryExecutionFactory.create(query, luceneDataset);
         ResultSet resultSet = qExec.execSelect();
         resultSet = ResultSetFactory.copyResults(resultSet);

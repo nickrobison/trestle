@@ -7,6 +7,7 @@ import com.nickrobison.trestle.ontology.OntologyBuilder;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
@@ -28,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Created by nrobison on 7/22/16.
  */
 @SuppressWarnings({"Duplicates", "initialized"})
+@Disabled
 public class LocalOntologyGAULLoader {
 
 
