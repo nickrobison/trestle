@@ -1,6 +1,5 @@
 package com.nickrobison.trestle;
 
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.nickrobison.trestle.caching.TrestleCache;
 import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
@@ -108,7 +107,7 @@ public class TrestleReasoner {
         if (cachingEnabled) {
 //            Build caches
             logger.info("Building trestle caches");
-            trestleCache = new TrestleCache.TrestleCacheBuilder().build();
+            trestleCache = builder.sharedCache.orElse(new TrestleCache.TrestleCacheBuilder().build());
         }
 
 
@@ -299,13 +298,22 @@ public class TrestleReasoner {
 //        Check cache first
         if (cachingEnabled) {
             logger.debug("Retrieving {} from cache", individualIRI);
-            return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readAsObject(clazz, individualIRI))));
+            return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readAsObject(clazz, individualIRI, true))));
         } else {
-            return readAsObject(clazz, individualIRI);
+            logger.debug("Bypassing cache and directly retrieving object");
+            return readAsObject(clazz, individualIRI, false);
         }
     }
 
-    <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI) throws TrestleClassException, MissingOntologyEntity {
+    <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache) throws TrestleClassException, MissingOntologyEntity {
+
+//        Check for cache hit first, provided caching is enabled and we're not set to bypass the cache
+        if (cachingEnabled & !bypassCache) {
+            logger.debug("Retrieving {} from cache", individualIRI);
+            return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readAsObject(clazz, individualIRI, true))));
+        } else {
+            logger.debug("Bypassing cache and directly retrieving object");
+        }
 
 //        Contains class?
         if (!this.registeredClasses.contains(clazz)) {
@@ -414,7 +422,7 @@ public class TrestleReasoner {
                     .stream()
                     .map(iri -> {
                         try {
-                            return (@NonNull T) readAsObject(inputObject.getClass(), iri);
+                            return (@NonNull T) readAsObject(inputObject.getClass(), iri, false);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
@@ -483,7 +491,7 @@ public class TrestleReasoner {
                 .stream()
                 .map(iri -> {
                     try {
-                        return (@NonNull T) readAsObject(clazz, iri);
+                        return (@NonNull T) readAsObject(clazz, iri, false);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -519,7 +527,7 @@ public class TrestleReasoner {
             final double strength = next.getLiteral("s").getDouble();
             logger.debug("Has related {}", relatedIRI);
             try {
-                final @NonNull T object = readAsObject(clazz, relatedIRI);
+                final @NonNull T object = readAsObject(clazz, relatedIRI, false);
                 relatedObjects.put(object, strength);
             } catch (Exception e) {
                 logger.error("Problem with {}", relatedIRI, e);
@@ -631,6 +639,7 @@ public class TrestleReasoner {
     }
 
 
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public static class TrestleBuilder {
 
         private Optional<String> connectionString = Optional.empty();
@@ -638,6 +647,7 @@ public class TrestleReasoner {
         private String password;
         private final Set<Class> inputClasses;
         private Optional<String> ontologyName = Optional.empty();
+        private Optional<TrestleCache> sharedCache = Optional.empty();
         private boolean initialize = false;
         private boolean caching = true;
 
@@ -648,12 +658,24 @@ public class TrestleReasoner {
             this.inputClasses = new HashSet<>();
         }
 
+        /**
+         * Builder pattern for Trestle Reasoner
+         */
         public TrestleBuilder() {
             this.username = "";
             this.password = "";
             this.inputClasses = new HashSet<>();
         }
 
+        /**
+         * Connection parameters for underlying triple store to connect to.
+         * Based on the connection string, Trestle will build the correct underlying ontology
+         * Without specifying a connection string, Trestle will utilize a local Jena TDB store
+         * @param connectionString - jdbc connection string for triple store
+         * @param username - Username of connection
+         * @param password - Password of connection
+         * @return - TrestleBuilder
+         */
         public TrestleBuilder withDBConnection(String connectionString, String username, String password) {
             this.connectionString = Optional.of(connectionString);
             this.username = username;
@@ -661,6 +683,11 @@ public class TrestleReasoner {
             return this;
         }
 
+        /**
+         * A list of initial classes to verify and load into trestle.
+         * @param inputClass - Vararg list of classes to load and verify
+         * @return - TrestleBuilder
+         */
         public TrestleBuilder withInputClasses(Class... inputClass) {
 //            this.inputClasses.addAll(Arrays.asList(inputClass));
 ////            validate the classes
@@ -676,22 +703,49 @@ public class TrestleReasoner {
             return this;
         }
 
+        /**
+         * Disable caching
+         * @return - TrestleBuilder
+         */
         public TrestleBuilder withoutCaching() {
             caching = false;
             return this;
         }
 
+        /**
+         * Setup trestle with a preexisting shared cache
+         * @param cache - TrestleCache to use
+         * @return - TrestleBuilder
+         */
+        public TrestleBuilder withSharedCache(TrestleCache cache) {
+            this.sharedCache = Optional.of(cache);
+            return this;
+        }
+
+        /**
+         * Set the ontology name
+         * @param name - String of ontology name
+         * @return - TrestleBuilder
+         */
         public TrestleBuilder withName(String name) {
 //            FIXME(nrobison): Oracle seems to throw errors when using '-' in the name, so maybe parse that out?p
             this.ontologyName = Optional.of(name);
             return this;
         }
 
+        /**
+         * Initialize a new ontology on creation. Will override any existing model
+         * @return - TrestleBuilder
+         */
         public TrestleBuilder initialize() {
             this.initialize = true;
             return this;
         }
 
+        /**
+         * Build the Trestle Reasoner
+         * @return - new TrestleReasoner
+         */
         public TrestleReasoner build() {
             try {
                 return new TrestleReasoner(this);

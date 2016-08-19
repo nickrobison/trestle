@@ -46,10 +46,12 @@ public class TrestleCache {
         return objectCache;
     }
 
+//    TODO(nrobison): To implement
     public Cache<String, OWLDataPropertyAssertionAxiom> DataPropertyCache() {
         return dataPropertyCache;
     }
 
+//    TODO(nrobison): To implement
     public Cache<String, OWLObjectPropertyAssertionAxiom> ObjectPropertyCache() {
         return objectPropertyCache;
     }
