@@ -5,6 +5,7 @@ import com.nickrobison.trestle.annotations.Spatial;
 import com.nickrobison.trestle.annotations.TrestleCreator;
 import com.nickrobison.trestle.exceptions.MissingConstructorException;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.nickrobison.trestle.common.StaticIRI.GEOSPARQLPREFIX;
 import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
 import static com.nickrobison.trestle.parser.ClassParser.*;
 
@@ -56,7 +58,7 @@ public class ClassBuilder {
         if (classField.isAnnotationPresent(DataProperty.class)) {
             return IRI.create(PREFIX, classField.getAnnotation(DataProperty.class).name());
         } else if (classField.isAnnotationPresent(Spatial.class)) {
-            return IRI.create("geosparql:", "asWKT");
+            return IRI.create(GEOSPARQLPREFIX, "asWKT");
         } else {
             return IRI.create(PREFIX, classField.getName());
         }
@@ -66,7 +68,7 @@ public class ClassBuilder {
         if (classMethod.isAnnotationPresent(DataProperty.class)) {
             return IRI.create(PREFIX, classMethod.getAnnotation(DataProperty.class).name());
         } else if (classMethod.isAnnotationPresent(Spatial.class)) {
-            return IRI.create("geosparql:", "asWKT");
+            return IRI.create(GEOSPARQLPREFIX, "asWKT");
         } else {
             return IRI.create(PREFIX, filterMethodName(classMethod));
         }
@@ -175,42 +177,50 @@ public class ClassBuilder {
         return false;
     }
 
-    @SuppressWarnings({"unchecked", "type.argument.type.incompatible", "assignment.type.incompatible"})
-//    FIXME(nrobison): Fix the object casts
-    public static <T> T extractOWLLiteral(Class<T> javaClass, OWLLiteral literal) {
+//    I need the unchecked casts in order to get the correct primitives for the constructor generation
+    @SuppressWarnings({"unchecked"})
+    public static <T> @NonNull T extractOWLLiteral(Class<@NonNull T> javaClass, OWLLiteral literal) {
 
         switch (javaClass.getTypeName()) {
 
             case "int": {
-                return (T) (Object) literal.parseInteger();
+//                return javaClass.cast(literal.parseInteger());
+                return (@NonNull T) (Object) literal.parseInteger();
             }
 
             case "java.lang.Integer": {
-                return (T) (Object) literal.parseInteger();
+                return javaClass.cast(literal.parseInteger());
+//                return (T) (Object) literal.parseInteger();
             }
 
             case "long": {
-                return (T) (Object) Long.parseLong(literal.getLiteral());
+//                return javaClass.cast(Long.parseLong(literal.getLiteral()));
+                return (@NonNull T) (Object) Long.parseLong(literal.getLiteral());
             }
 
             case "java.lang.Long": {
-                return (T) (Object) Long.parseLong(literal.getLiteral());
+                return javaClass.cast(Long.parseLong(literal.getLiteral()));
+//                return (T) (Object) Long.parseLong(literal.getLiteral());
             }
 
             case "java.lang.LocalDateTime": {
-                return (T) (Object) LocalDateTime.parse(literal.getLiteral());
+                return javaClass.cast(LocalDateTime.parse(literal.getLiteral()));
+//                return (T) (Object) LocalDateTime.parse(literal.getLiteral());
             }
 
             case "java.lang.String": {
-                return (T) (Object) literal.getLiteral();
+                return javaClass.cast(literal.getLiteral());
+//                return (T) (Object) literal.getLiteral();
             }
 
             case "java.lang.Double": {
-                return (T) (Object) literal.parseDouble();
+                return javaClass.cast(literal.parseDouble());
+//                return (T) (Object) literal.parseDouble();
             }
 
             case "java.lang.Boolean": {
-                return (T) (Object) literal.parseBoolean();
+                return javaClass.cast(literal.parseBoolean());
+//                return (T) (Object) literal.parseBoolean();
             }
 
             default: {
@@ -252,7 +262,6 @@ public class ClassBuilder {
 
         //        Check to see if it matches any annotated data methods
         final Optional<Method> matchedMethod = Arrays.stream(classToVerify.getDeclaredMethods())
-//                .filter(m -> m.isAnnotationPresent(DataProperty.class))
                 .filter(m -> getMethodName(m).equals(property.getIRI().getShortForm()))
                 .findFirst();
 
@@ -262,7 +271,6 @@ public class ClassBuilder {
 
 //        Fields
         final Optional<Field> matchedField = Arrays.stream(classToVerify.getDeclaredFields())
-//                .filter(f -> f.isAnnotationPresent(DataProperty.class))
                 .filter(f -> getFieldName(f).equals(property.getIRI().getShortForm()))
                 .findFirst();
 

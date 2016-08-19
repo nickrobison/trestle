@@ -4,6 +4,7 @@ import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.parser.GAULTestClass;
 import com.nickrobison.trestle.parser.OracleOntologyGAULoader;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -92,7 +93,8 @@ public class OracleTrestleTest {
 //        reasoner.getUnderlyingOntology().writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);
 
 //        Try to read one out.
-        final GAULTestClass ancuabe = reasoner.readAsObject(GAULTestClass.class, IRI.create("trestle:", "Ancuabe"));
+//        final GAULTestClass ancuabe = reasoner.readAsObject(GAULTestClass.class, IRI.create("trestle:", "Ancuabe"));
+        @NonNull final GAULTestClass ancuabe = reasoner.readAsObject(GAULTestClass.class, "Ancuabe");
         assertEquals(ancuabe.adm0_name, "Ancuabe", "Wrong name");
     }
 

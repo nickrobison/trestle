@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Created by nrobison on 7/22/16.
@@ -334,18 +335,31 @@ public abstract class JenaOntology implements ITrestleOntology {
 
     @Override
     public Set<OWLDataPropertyAssertionAxiom> getDataPropertiesForIndividual(OWLNamedIndividual individual, List<OWLDataProperty> properties) {
-        Set<OWLDataPropertyAssertionAxiom> propertyAxioms = new HashSet<>();
+        final Set<OWLDataPropertyAssertionAxiom> propertyAxioms;
 
-        properties.forEach(property -> {
-            final Optional<Set<OWLLiteral>> individualProperty = this.getIndividualDataProperty(individual, property);
-            if (individualProperty.isPresent()) {
-                individualProperty.get().forEach(value -> propertyAxioms.add(
-                        df.getOWLDataPropertyAssertionAxiom(
-                                property,
-                                individual,
-                                value)));
-            }
-        });
+        logger.debug("Collapsing reads into a single transaction");
+        final Set<OWLDataPropertyAssertionAxiom> allDataPropertiesForIndividual = getAllDataPropertiesForIndividual(individual);
+        logger.debug("Requested {} properties, returned {}", properties.size(), allDataPropertiesForIndividual.size());
+//        If the sizes don't match, filter them down
+        if (allDataPropertiesForIndividual.size() != properties.size()) {
+            propertyAxioms = allDataPropertiesForIndividual
+                    .stream()
+                    .filter(property -> properties.contains(property.getProperty().asOWLDataProperty()))
+                    .collect(Collectors.toSet());
+        } else {
+            propertyAxioms = allDataPropertiesForIndividual;
+        }
+
+//        properties.forEach(property -> {
+//            final Optional<Set<OWLLiteral>> individualProperty = this.getIndividualDataProperty(individual, property);
+//            if (individualProperty.isPresent()) {
+//                individualProperty.get().forEach(value -> propertyAxioms.add(
+//                        df.getOWLDataPropertyAssertionAxiom(
+//                                property,
+//                                individual,
+//                                value)));
+//            }
+//        });
         return propertyAxioms;
     }
 

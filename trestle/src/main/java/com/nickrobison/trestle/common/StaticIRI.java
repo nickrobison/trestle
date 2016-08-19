@@ -8,6 +8,7 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
  */
 public class StaticIRI {
     public static final String PREFIX = "http://nickrobison.com/dissertation/trestle.owl#";
+    public static final String GEOSPARQLPREFIX = "http://www.opengis.net/ont/geosparql#";
 //    Relations
     public static final IRI factOfIRI = IRI.create(PREFIX, "fact_of");
     public static final IRI hasFactIRI = IRI.create(PREFIX, "has_fact");

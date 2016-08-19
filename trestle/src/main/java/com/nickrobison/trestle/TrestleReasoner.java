@@ -1,5 +1,6 @@
 package com.nickrobison.trestle;
 
+import com.nickrobison.trestle.caching.TrestleCache;
 import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
@@ -17,6 +18,7 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.resultset.ResultSetMem;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -34,6 +36,7 @@ import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.nickrobison.trestle.common.LambdaExceptionUtil.rethrowFunction;
 import static com.nickrobison.trestle.common.StaticIRI.*;
 
 /**
@@ -52,6 +55,8 @@ public class TrestleReasoner {
     private static final OWLClass datasetClass = OWLManager.getOWLDataFactory().getOWLClass(IRI.create("trestle:", "Dataset"));
     private final QueryBuilder qb;
     private final QueryBuilder.DIALECT spatialDalect;
+    private final boolean cachingEnabled;
+    @MonotonicNonNull private TrestleCache trestleCache = null;
 
     @SuppressWarnings("dereference.of.nullable")
     private TrestleReasoner(TrestleBuilder builder) throws OWLOntologyCreationException {
@@ -97,6 +102,15 @@ public class TrestleReasoner {
         }
         df = OWLManager.getOWLDataFactory();
 
+//        Are we a caching reasoner?
+        this.cachingEnabled = builder.caching;
+        if (cachingEnabled) {
+//            Build caches
+            logger.info("Building trestle caches");
+            trestleCache = builder.sharedCache.orElse(new TrestleCache.TrestleCacheBuilder().build());
+        }
+
+
 //        Setup the query builder
         if (ontology instanceof OracleOntology) {
             spatialDalect = QueryBuilder.DIALECT.ORACLE;
@@ -110,7 +124,7 @@ public class TrestleReasoner {
 //            TODO(nrobison): This needs to be better
             spatialDalect = QueryBuilder.DIALECT.SESAME;
         }
-        logger.debug("Using spatial dialect {}", spatialDalect);
+        logger.debug("Using SPARQL dialect {}", spatialDalect);
         qb = new QueryBuilder(ontology.getUnderlyingPrefixManager());
         logger.info("Ontology {} ready", builder.ontologyName.orElse(DEFAULTNAME));
     }
@@ -125,7 +139,7 @@ public class TrestleReasoner {
         this.ontology.close(delete);
     }
 
-//    When you get the ontology, the ownership passes away, so then the reasoner can't perform any more queries.
+    //    When you get the ontology, the ownership passes away, so then the reasoner can't perform any more queries.
     public ITrestleOntology getUnderlyingOntology() {
         return this.ontology;
     }
@@ -278,11 +292,29 @@ public class TrestleReasoner {
         this.ontology.unlockAndCommit();
     }
 
-    public <T> @NonNull T readAsObject(Class<@NonNull T> clazz, String objectID) throws TrestleClassException, MissingOntologyEntity {
-        return readAsObject(clazz, IRI.create(PREFIX, objectID.replaceAll("\\s+", "_")));
+    @SuppressWarnings({"argument.type.incompatible", "dereference.of.nullable"})
+    public <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull String objectID) throws TrestleClassException, MissingOntologyEntity {
+        final @NonNull IRI individualIRI = IRI.create(PREFIX, objectID.replaceAll("\\s+", "_"));
+//        Check cache first
+        if (cachingEnabled) {
+            logger.debug("Retrieving {} from cache", individualIRI);
+            return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readAsObject(clazz, individualIRI, true))));
+        } else {
+            logger.debug("Bypassing cache and directly retrieving object");
+            return readAsObject(clazz, individualIRI, false);
+        }
     }
 
-    public <T> @NonNull T readAsObject(Class<@NonNull T> clazz, IRI individualIRI) throws TrestleClassException, MissingOntologyEntity {
+    <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache) throws TrestleClassException, MissingOntologyEntity {
+
+//        Check for cache hit first, provided caching is enabled and we're not set to bypass the cache
+        if (cachingEnabled & !bypassCache) {
+            logger.debug("Retrieving {} from cache", individualIRI);
+            return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readAsObject(clazz, individualIRI, true))));
+        } else {
+            logger.debug("Bypassing cache and directly retrieving object");
+        }
+
 //        Contains class?
         if (!this.registeredClasses.contains(clazz)) {
             throw new UnregisteredClassException(clazz);
@@ -373,7 +405,7 @@ public class TrestleReasoner {
             final long start = System.currentTimeMillis();
             final ResultSet resultSet = ontology.executeSPARQL(spatialIntersection);
             final long end = System.currentTimeMillis();
-            logger.debug("Spatial query returned in {} ms", end-start);
+            logger.debug("Spatial query returned in {} ms", end - start);
 //            I think I need to rewind the result set
             ((ResultSetMem) resultSet).rewind();
             Set<IRI> intersectedIRIs = new HashSet<>();
@@ -390,7 +422,7 @@ public class TrestleReasoner {
                     .stream()
                     .map(iri -> {
                         try {
-                            return (@NonNull T) readAsObject(inputObject.getClass(), iri);
+                            return (@NonNull T) readAsObject(inputObject.getClass(), iri, false);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
@@ -413,10 +445,11 @@ public class TrestleReasoner {
     /**
      * Find objects of a given class that intersect with a specific WKT boundary.
      * An empty Optional means an error, an Optional of an empty List means no intersected objects
-     * @param clazz - Class of object to return
-     * @param wkt - WKT of spatial boundary to intersect with
+     *
+     * @param clazz  - Class of object to return
+     * @param wkt    - WKT of spatial boundary to intersect with
      * @param buffer - Double buffer to build around wkt
-     * @param <T> - Class to specialize method with.
+     * @param <T>    - Class to specialize method with.
      * @return - An Optional List of Object T.
      */
     @SuppressWarnings("return.type.incompatible")
@@ -426,7 +459,7 @@ public class TrestleReasoner {
 
         String spatialIntersection = null;
         try {
-             spatialIntersection = qb.buildSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER);
+            spatialIntersection = qb.buildSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER);
         } catch (UnsupportedFeatureException e) {
             logger.error("Ontology doesn't support spatial intersection", e);
             ontology.unlockAndCommit();
@@ -437,7 +470,7 @@ public class TrestleReasoner {
         final long start = System.currentTimeMillis();
         final ResultSet resultSet = ontology.executeSPARQL(spatialIntersection);
         final long end = System.currentTimeMillis();
-        logger.debug("Spatial query returned in {} ms", end-start);
+        logger.debug("Spatial query returned in {} ms", end - start);
 //            I think I need to rewind the result set
         ((ResultSetMem) resultSet).rewind();
         Set<IRI> intersectedIRIs = new HashSet<>();
@@ -458,7 +491,7 @@ public class TrestleReasoner {
                 .stream()
                 .map(iri -> {
                     try {
-                        return (@NonNull T) readAsObject(clazz, iri);
+                        return (@NonNull T) readAsObject(clazz, iri, false);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -471,9 +504,10 @@ public class TrestleReasoner {
 
     /**
      * Get a map of related objects and their relative strengths
-     * @param clazz - Java class of object to serialize to
+     *
+     * @param clazz    - Java class of object to serialize to
      * @param objectID - Object ID to retrieve related objects
-     * @param cutoff - Double of relation strength cutoff
+     * @param cutoff   - Double of relation strength cutoff
      * @return - Optional Map of related java objects and their corresponding relational strength
      */
     //    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
@@ -493,7 +527,7 @@ public class TrestleReasoner {
             final double strength = next.getLiteral("s").getDouble();
             logger.debug("Has related {}", relatedIRI);
             try {
-                final @NonNull T object = readAsObject(clazz, relatedIRI);
+                final @NonNull T object = readAsObject(clazz, relatedIRI, false);
                 relatedObjects.put(object, strength);
             } catch (Exception e) {
                 logger.error("Problem with {}", relatedIRI, e);
@@ -605,6 +639,7 @@ public class TrestleReasoner {
     }
 
 
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public static class TrestleBuilder {
 
         private Optional<String> connectionString = Optional.empty();
@@ -612,7 +647,9 @@ public class TrestleReasoner {
         private String password;
         private final Set<Class> inputClasses;
         private Optional<String> ontologyName = Optional.empty();
+        private Optional<TrestleCache> sharedCache = Optional.empty();
         private boolean initialize = false;
+        private boolean caching = true;
 
         @Deprecated
         public TrestleBuilder(IRI iri) {
@@ -621,12 +658,24 @@ public class TrestleReasoner {
             this.inputClasses = new HashSet<>();
         }
 
+        /**
+         * Builder pattern for Trestle Reasoner
+         */
         public TrestleBuilder() {
             this.username = "";
             this.password = "";
             this.inputClasses = new HashSet<>();
         }
 
+        /**
+         * Connection parameters for underlying triple store to connect to.
+         * Based on the connection string, Trestle will build the correct underlying ontology
+         * Without specifying a connection string, Trestle will utilize a local Jena TDB store
+         * @param connectionString - jdbc connection string for triple store
+         * @param username - Username of connection
+         * @param password - Password of connection
+         * @return - TrestleBuilder
+         */
         public TrestleBuilder withDBConnection(String connectionString, String username, String password) {
             this.connectionString = Optional.of(connectionString);
             this.username = username;
@@ -634,6 +683,11 @@ public class TrestleReasoner {
             return this;
         }
 
+        /**
+         * A list of initial classes to verify and load into trestle.
+         * @param inputClass - Vararg list of classes to load and verify
+         * @return - TrestleBuilder
+         */
         public TrestleBuilder withInputClasses(Class... inputClass) {
 //            this.inputClasses.addAll(Arrays.asList(inputClass));
 ////            validate the classes
@@ -649,17 +703,49 @@ public class TrestleReasoner {
             return this;
         }
 
+        /**
+         * Disable caching
+         * @return - TrestleBuilder
+         */
+        public TrestleBuilder withoutCaching() {
+            caching = false;
+            return this;
+        }
+
+        /**
+         * Setup trestle with a preexisting shared cache
+         * @param cache - TrestleCache to use
+         * @return - TrestleBuilder
+         */
+        public TrestleBuilder withSharedCache(TrestleCache cache) {
+            this.sharedCache = Optional.of(cache);
+            return this;
+        }
+
+        /**
+         * Set the ontology name
+         * @param name - String of ontology name
+         * @return - TrestleBuilder
+         */
         public TrestleBuilder withName(String name) {
 //            FIXME(nrobison): Oracle seems to throw errors when using '-' in the name, so maybe parse that out?p
             this.ontologyName = Optional.of(name);
             return this;
         }
 
+        /**
+         * Initialize a new ontology on creation. Will override any existing model
+         * @return - TrestleBuilder
+         */
         public TrestleBuilder initialize() {
             this.initialize = true;
             return this;
         }
 
+        /**
+         * Build the Trestle Reasoner
+         * @return - new TrestleReasoner
+         */
         public TrestleReasoner build() {
             try {
                 return new TrestleReasoner(this);
