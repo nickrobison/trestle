@@ -50,8 +50,8 @@ public class TrestleCache {
         return dataPropertyCache;
     }
 
-    public Cache<IRI, Object> ObjectPropertyCache() {
-        return objectCache;
+    public Cache<String, OWLObjectPropertyAssertionAxiom> ObjectPropertyCache() {
+        return objectPropertyCache;
     }
 
 
