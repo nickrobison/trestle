@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.nickrobison.trestle.common.StaticIRI.GEOSPARQLPREFIX;
 import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
 import static com.nickrobison.trestle.parser.ClassParser.*;
 
@@ -57,7 +58,7 @@ public class ClassBuilder {
         if (classField.isAnnotationPresent(DataProperty.class)) {
             return IRI.create(PREFIX, classField.getAnnotation(DataProperty.class).name());
         } else if (classField.isAnnotationPresent(Spatial.class)) {
-            return IRI.create("geosparql:", "asWKT");
+            return IRI.create(GEOSPARQLPREFIX, "asWKT");
         } else {
             return IRI.create(PREFIX, classField.getName());
         }
@@ -67,7 +68,7 @@ public class ClassBuilder {
         if (classMethod.isAnnotationPresent(DataProperty.class)) {
             return IRI.create(PREFIX, classMethod.getAnnotation(DataProperty.class).name());
         } else if (classMethod.isAnnotationPresent(Spatial.class)) {
-            return IRI.create("geosparql:", "asWKT");
+            return IRI.create(GEOSPARQLPREFIX, "asWKT");
         } else {
             return IRI.create(PREFIX, filterMethodName(classMethod));
         }
