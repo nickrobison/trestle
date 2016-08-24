@@ -13,6 +13,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by nrobison on 8/18/16.
  */
+// Checker hates Optionals, since we use them, we have to ignore the incompatible arguments from the builder optionals
+@SuppressWarnings({"argument.type.incompatible", "OptionalUsedAsFieldOrParameterType"})
 public class TrestleCache {
 
     private final Cache<IRI, Object> objectCache;

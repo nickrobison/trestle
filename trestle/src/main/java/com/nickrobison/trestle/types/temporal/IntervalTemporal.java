@@ -2,6 +2,7 @@ package com.nickrobison.trestle.types.temporal;
 
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
@@ -13,7 +14,7 @@ import java.util.*;
  * Created by nrobison on 6/30/16.
  */
 // I can suppress both of these warnings because I know for sure they are correct
-@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unchecked"})
+@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unchecked", "return.type.incompatible"})
 public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
     private static final TemporalType TYPE = TemporalType.INTERVAL;

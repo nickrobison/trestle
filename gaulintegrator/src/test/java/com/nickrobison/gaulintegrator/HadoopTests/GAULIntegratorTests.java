@@ -76,7 +76,7 @@ public class GAULIntegratorTests {
         connectionString = "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial";
         userName = "spatialUser";
         password = "spatial1";
-        ontologyName = "hadoop_gaul";
+        ontologyName = "hadoop_gaul7";
         conf.set("reasoner.db.connection", connectionString);
         conf.set("reasoner.db.username", userName);
         conf.set("reasoner.db.password", password);

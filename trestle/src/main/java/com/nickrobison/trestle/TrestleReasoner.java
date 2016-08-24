@@ -305,6 +305,7 @@ public class TrestleReasoner {
         }
     }
 
+    @SuppressWarnings({"return.type.incompatible", "argument.type.incompatible"})
     <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache) throws TrestleClassException, MissingOntologyEntity {
 
 //        Check for cache hit first, provided caching is enabled and we're not set to bypass the cache

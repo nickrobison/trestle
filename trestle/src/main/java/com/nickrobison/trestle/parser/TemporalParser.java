@@ -7,6 +7,8 @@ import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
@@ -88,7 +90,7 @@ public class TemporalParser {
 //        Fields
         for (Field classField : clazz.getDeclaredFields()) {
             if (classField.isAnnotationPresent(DefaultTemporalProperty.class)) {
-                final DefaultTemporalProperty annotation = classField.getAnnotation(DefaultTemporalProperty.class);
+                final @NonNull DefaultTemporalProperty annotation = classField.getAnnotation(DefaultTemporalProperty.class);
 //                Try to get the value
                 Object fieldValue = null;
                 try {
@@ -155,7 +157,7 @@ public class TemporalParser {
         for (Method classMethod : clazz.getDeclaredMethods()) {
             if (classMethod.isAnnotationPresent(DefaultTemporalProperty.class)) {
 
-                final DefaultTemporalProperty annotation = classMethod.getAnnotation(DefaultTemporalProperty.class);
+                final @NonNull DefaultTemporalProperty annotation = classMethod.getAnnotation(DefaultTemporalProperty.class);
                 final Optional<Object> methodValue = ClassParser.accessMethodValue(classMethod, inputObject);
 
                 if (methodValue.isPresent()) {
@@ -171,7 +173,7 @@ public class TemporalParser {
                     }
                 }
             } else if (classMethod.isAnnotationPresent(StartTemporalProperty.class)) {
-                final StartTemporalProperty annotation = classMethod.getAnnotation(StartTemporalProperty.class);
+                final @NonNull StartTemporalProperty annotation = classMethod.getAnnotation(StartTemporalProperty.class);
                 final Optional<Object> methodValue = ClassParser.accessMethodValue(classMethod, inputObject);
 
                 final Optional<TemporalObject> temporalObject = parseStartTemporal(annotation, methodValue.orElseThrow(RuntimeException::new), owlNamedIndividual, inputObject, ClassParser.AccessType.METHOD, clazz);
@@ -191,7 +193,7 @@ public class TemporalParser {
 
     private static Optional<TemporalObject> parseDefaultTemporal(Object fieldValue, DefaultTemporalProperty annotation, OWLNamedIndividual owlNamedIndividual) {
 
-        @Nullable final TemporalObject temporalObject;
+        final TemporalObject temporalObject;
 
         switch (annotation.type()) {
             case POINT: {

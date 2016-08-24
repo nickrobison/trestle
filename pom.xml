@@ -295,6 +295,9 @@
                         <version>1.0.0-M2</version>
                     </dependency>
                 </dependencies>
+                <configuration>
+                    <argLine>-XX:+UnlockCommercialFeatures -XX:+FlightRecorder</argLine>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
