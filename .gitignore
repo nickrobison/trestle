@@ -6,6 +6,7 @@ src/test/resources/out/
 gaulintegrator/src/test/resources/
 system/
 *.bin
+**/*.jfr
 
 logs
 project/project
