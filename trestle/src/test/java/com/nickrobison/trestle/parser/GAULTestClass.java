@@ -20,7 +20,6 @@ public class GAULTestClass {
     @IndividualIdentifier
     @Ignore
     public String test_name;
-//    @DataProperty(name="geosparql:asWKT", datatype = OWL2Datatype.RDFS_LITERAL)
     @Spatial
     public String wkt;
     @DefaultTemporalProperty(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
