@@ -2,6 +2,8 @@ package com.nickrobison.trestle;
 
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
+import com.nickrobison.trestle.parser.ClassParser;
+import com.nickrobison.trestle.parser.GAULComplexClassTest;
 import com.nickrobison.trestle.parser.GAULTestClass;
 import com.nickrobison.trestle.parser.OracleOntologyGAULoader;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -24,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * Created by nrobison on 7/27/16.
  */
 @SuppressWarnings({"Duplicates", "initialization"})
-public class OracleTrestleTest {
+public class TrestleAPITest {
 
     private TrestleReasoner reasoner;
     private OWLDataFactory df;
@@ -33,13 +35,14 @@ public class OracleTrestleTest {
     @BeforeEach
     public void setup() {
         reasoner = new TrestleReasoner.TrestleBuilder()
-                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+//                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
 //                .withDBConnection(
 //                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
 //                        "spatialUser",
 //                        "spatial1")
-                .withName("trestle_gaul")
-                .withInputClasses(GAULTestClass.class)
+                .withName("api-test")
+                .withInputClasses(GAULTestClass.class, GAULComplexClassTest.class)
+                .withoutCaching()
                 .initialize()
                 .build();
 
@@ -96,6 +99,16 @@ public class OracleTrestleTest {
 //        final GAULTestClass ancuabe = reasoner.readAsObject(GAULTestClass.class, IRI.create("trestle:", "Ancuabe"));
         @NonNull final GAULTestClass ancuabe = reasoner.readAsObject(GAULTestClass.class, "Ancuabe");
         assertEquals(ancuabe.adm0_name, "Ancuabe", "Wrong name");
+    }
+
+    @Test
+    public void testClasses() throws TrestleClassException, MissingOntologyEntity {
+        final GAULComplexClassTest gaulComplexClassTest = new GAULComplexClassTest();
+        final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(gaulComplexClassTest);
+        reasoner.writeObjectAsFact(gaulComplexClassTest);
+        reasoner.writeOntology(new File("/Users/nrobison/Desktop/api-test.owl").toURI(), false);
+        final GAULComplexClassTest gaulComplexClassTest1 = reasoner.readAsObject(gaulComplexClassTest.getClass(), owlNamedIndividual.getIRI(), false);
+        assertEquals(gaulComplexClassTest, gaulComplexClassTest1, "Should have the same object");
     }
 
 
