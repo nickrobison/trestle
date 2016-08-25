@@ -32,7 +32,7 @@ public class GAULMethodTest {
 
     public GAULMethodTest() {
         this.adm0_code = 4326;
-        this.test_name = "POINT (4.0 6.0)";
+        this.test_name = "new_test";
         this.adm0_name = "test region";
         this.defaultTime = LocalDateTime.of(1998, 3, 26, 0, 0);
         this.privateField = "don't read me";
