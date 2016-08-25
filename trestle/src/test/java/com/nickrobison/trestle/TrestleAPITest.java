@@ -31,7 +31,7 @@ public class TrestleAPITest {
 
     @BeforeEach
     public void setup() {
-        reasoner = new TrestleReasoner.TrestleBuilder()
+        reasoner = new TrestleBuilder()
 //                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
 //                .withDBConnection(
 //                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",

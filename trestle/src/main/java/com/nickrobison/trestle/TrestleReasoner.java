@@ -49,7 +49,7 @@ public class TrestleReasoner {
     public static final String DEFAULTNAME = "trestle";
 
     private final ITrestleOntology ontology;
-    private final Set<Class> registeredClasses;
+    private final Set<Class> registeredClasses = new HashSet<>();
     private final OWLDataFactory df;
     //    Seems gross?
     private static final OWLClass datasetClass = OWLManager.getOWLDataFactory().getOWLClass(IRI.create("trestle:", "Dataset"));
@@ -59,7 +59,9 @@ public class TrestleReasoner {
     @MonotonicNonNull private TrestleCache trestleCache = null;
 
     @SuppressWarnings("dereference.of.nullable")
-    private TrestleReasoner(TrestleBuilder builder) throws OWLOntologyCreationException {
+    TrestleReasoner(TrestleBuilder builder) throws OWLOntologyCreationException {
+
+        df = OWLManager.getOWLDataFactory();
 
         final URL ontologyResource = TrestleReasoner.class.getClassLoader().getResource("trestle.owl");
         final InputStream ontologyIS = TrestleReasoner.class.getClassLoader().getResourceAsStream("trestle.owl");
@@ -70,8 +72,20 @@ public class TrestleReasoner {
         }
         logger.info("Loading ontology from {}", ontologyResource);
 
-//        Parse the listed input classes
-        this.registeredClasses = builder.inputClasses;
+//            validate the classes
+        builder.inputClasses
+                .stream()
+                .forEach(clazz -> {
+                    try {
+                        ClassRegister.ValidateClass(clazz);
+                        this.registeredClasses.add(clazz);
+                    } catch (TrestleClassException e) {
+                        logger.error("Cannot validate class {}", clazz, e);
+                    }
+                });
+
+//        Register some constructor functions
+        TypeConverter.registerTypeConstructor(UUID.class, df.getOWLDatatype(UUIDDatatypeIRI), (uuidString) -> UUID.fromString(uuidString.toString()));
 
         logger.info("Connecting to ontology {} at {}", builder.ontologyName.orElse(DEFAULTNAME), builder.connectionString.orElse("localhost"));
         OntologyBuilder ontologyBuilder = new OntologyBuilder()
@@ -100,7 +114,6 @@ public class TrestleReasoner {
                 }
             }
         }
-        df = OWLManager.getOWLDataFactory();
 
 //        Are we a caching reasoner?
         this.cachingEnabled = builder.caching;
@@ -640,120 +653,4 @@ public class TrestleReasoner {
     }
 
 
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public static class TrestleBuilder {
-
-        private Optional<String> connectionString = Optional.empty();
-        private String username;
-        private String password;
-        private final Set<Class> inputClasses;
-        private Optional<String> ontologyName = Optional.empty();
-        private Optional<TrestleCache> sharedCache = Optional.empty();
-        private boolean initialize = false;
-        private boolean caching = true;
-
-        @Deprecated
-        public TrestleBuilder(IRI iri) {
-            this.username = "";
-            this.password = "";
-            this.inputClasses = new HashSet<>();
-        }
-
-        /**
-         * Builder pattern for Trestle Reasoner
-         */
-        public TrestleBuilder() {
-            this.username = "";
-            this.password = "";
-            this.inputClasses = new HashSet<>();
-        }
-
-        /**
-         * Connection parameters for underlying triple store to connect to.
-         * Based on the connection string, Trestle will build the correct underlying ontology
-         * Without specifying a connection string, Trestle will utilize a local Jena TDB store
-         * @param connectionString - jdbc connection string for triple store
-         * @param username - Username of connection
-         * @param password - Password of connection
-         * @return - TrestleBuilder
-         */
-        public TrestleBuilder withDBConnection(String connectionString, String username, String password) {
-            this.connectionString = Optional.of(connectionString);
-            this.username = username;
-            this.password = password;
-            return this;
-        }
-
-        /**
-         * A list of initial classes to verify and load into trestle.
-         * @param inputClass - Vararg list of classes to load and verify
-         * @return - TrestleBuilder
-         */
-        public TrestleBuilder withInputClasses(Class... inputClass) {
-//            this.inputClasses.addAll(Arrays.asList(inputClass));
-////            validate the classes
-            Arrays.stream(inputClass)
-                    .forEach(clazz -> {
-                        try {
-                            ClassRegister.ValidateClass(clazz);
-                            this.inputClasses.add(clazz);
-                        } catch (TrestleClassException e) {
-                            logger.error("Cannot validate class {}", clazz, e);
-                        }
-                    });
-            return this;
-        }
-
-        /**
-         * Disable caching
-         * @return - TrestleBuilder
-         */
-        public TrestleBuilder withoutCaching() {
-            caching = false;
-            return this;
-        }
-
-        /**
-         * Setup trestle with a preexisting shared cache
-         * @param cache - TrestleCache to use
-         * @return - TrestleBuilder
-         */
-        public TrestleBuilder withSharedCache(TrestleCache cache) {
-            this.sharedCache = Optional.of(cache);
-            return this;
-        }
-
-        /**
-         * Set the ontology name
-         * @param name - String of ontology name
-         * @return - TrestleBuilder
-         */
-        public TrestleBuilder withName(String name) {
-//            FIXME(nrobison): Oracle seems to throw errors when using '-' in the name, so maybe parse that out?p
-            this.ontologyName = Optional.of(name);
-            return this;
-        }
-
-        /**
-         * Initialize a new ontology on creation. Will override any existing model
-         * @return - TrestleBuilder
-         */
-        public TrestleBuilder initialize() {
-            this.initialize = true;
-            return this;
-        }
-
-        /**
-         * Build the Trestle Reasoner
-         * @return - new TrestleReasoner
-         */
-        public TrestleReasoner build() {
-            try {
-                return new TrestleReasoner(this);
-            } catch (OWLOntologyCreationException e) {
-                logger.error("Cannot build trestle", e);
-                throw new RuntimeException("Cannot build trestle", e);
-            }
-        }
-    }
 }

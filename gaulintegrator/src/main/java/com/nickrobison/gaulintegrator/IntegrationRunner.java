@@ -1,6 +1,7 @@
 package com.nickrobison.gaulintegrator;
 
 import com.esri.mapreduce.PolygonFeatureInputFormat;
+import com.nickrobison.trestle.TrestleBuilder;
 import com.nickrobison.trestle.TrestleReasoner;
 import com.nickrobison.trestle.ontology.OracleOntology;
 import org.apache.hadoop.conf.Configuration;
@@ -44,7 +45,7 @@ public class IntegrationRunner extends Configured implements Tool {
         }
 
 //        Setup the reasoner
-        TrestleReasoner reasoner = new TrestleReasoner.TrestleBuilder()
+        TrestleReasoner reasoner = new TrestleBuilder()
                 .withDBConnection(conf.get("reasoner.db.connection"), conf.get("reasoner.db.username"), conf.get("reasoner.db.password"))
                 .withInputClasses(GAULObject.class)
                 .initialize()

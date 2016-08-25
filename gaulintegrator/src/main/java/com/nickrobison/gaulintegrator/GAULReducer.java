@@ -2,6 +2,7 @@ package com.nickrobison.gaulintegrator;
 
 import com.esri.core.geometry.*;
 import com.nickrobison.gaulintegrator.common.ObjectID;
+import com.nickrobison.trestle.TrestleBuilder;
 import com.nickrobison.trestle.TrestleReasoner;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import org.apache.hadoop.conf.Configuration;
@@ -13,7 +14,6 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.sql.*;
 import java.sql.Date;
@@ -66,7 +66,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
         }
 
 //        Setup the Trestle Reasoner
-        reasoner = new TrestleReasoner.TrestleBuilder()
+        reasoner = new TrestleBuilder()
 //                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
 //                .withDBConnection("jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial", "spatialUser", "spatial1")
                 .withDBConnection(conf.get("reasoner.db.connection"),
