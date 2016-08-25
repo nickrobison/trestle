@@ -567,7 +567,7 @@ public class TrestleReasoner {
                         temporalIRI,
                         StaticIRI.temporalValidFromIRI,
                         temporal.asInterval().getFromTime().toString(),
-                        StaticIRI.temporalDatatypeIRI);
+                        temporal.getBaseTemporalTypeIRI());
 
 //                Write to, if exists
                 final Optional<LocalDateTime> toTime = temporal.asInterval().getToTime();
@@ -576,7 +576,7 @@ public class TrestleReasoner {
                             temporalIRI,
                             StaticIRI.temporalValidToIRI,
                             toTime.get().toString(),
-                            StaticIRI.temporalDatatypeIRI);
+                            temporal.getBaseTemporalTypeIRI());
                 }
             } else {
                 //                Write from
@@ -584,7 +584,7 @@ public class TrestleReasoner {
                         temporalIRI,
                         StaticIRI.temporalExistsFromIRI,
                         temporal.asInterval().getFromTime().toString(),
-                        StaticIRI.temporalDatatypeIRI);
+                        temporal.getBaseTemporalTypeIRI());
 
 //                Write to, if exists
                 final Optional<LocalDateTime> toTime = temporal.asInterval().getToTime();
@@ -593,7 +593,7 @@ public class TrestleReasoner {
                             temporalIRI,
                             StaticIRI.temporalExistsToIRI,
                             toTime.get().toString(),
-                            StaticIRI.temporalDatatypeIRI);
+                            temporal.getBaseTemporalTypeIRI());
                 }
             }
         } else {
@@ -603,13 +603,13 @@ public class TrestleReasoner {
                         temporalIRI,
                         StaticIRI.temporalValidAtIRI,
                         temporal.asPoint().getPointTime().toString(),
-                        StaticIRI.temporalDatatypeIRI);
+                        temporal.getBaseTemporalTypeIRI());
             } else {
                 ontology.writeIndividualDataProperty(
                         temporalIRI,
                         StaticIRI.temporalExistsAtIRI,
                         temporal.asPoint().getPointTime().toString(),
-                        StaticIRI.temporalDatatypeIRI);
+                        temporal.getBaseTemporalTypeIRI());
             }
         }
 

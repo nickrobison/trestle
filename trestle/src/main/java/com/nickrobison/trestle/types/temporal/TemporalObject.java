@@ -5,12 +5,15 @@ import com.nickrobison.trestle.types.TemporalType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.Temporal;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
 import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
+import static com.nickrobison.trestle.common.StaticIRI.XSDPREFIX;
 
 /**
  * Created by nrobison on 6/30/16.
@@ -62,5 +65,26 @@ public abstract class TemporalObject {
 
     public abstract boolean isExists();
 
+    /**
+     * Get the Base temporal type of the object
+     * @return - Temporal subclass of object
+     */
     public abstract Class<? extends Temporal> getBaseTemporalType();
+
+    /**
+     * Get the OWL IRI of the base temporal type
+     * @return - IRI of OWLDatatype for base temporal type
+     */
+    public abstract IRI getBaseTemporalTypeIRI();
+
+    protected static IRI parseTemporalClassToIRI(Class<? extends Temporal> clazz) {
+        if (clazz == LocalDateTime.class) {
+            return IRI.create(XSDPREFIX, "dateTime");
+        } else if (clazz == LocalDate.class) {
+            return IRI.create(XSDPREFIX, "date");
+        } else  {
+//            As a fall back, just use datetime.
+            return IRI.create(XSDPREFIX, "date");
+        }
+    }
 }

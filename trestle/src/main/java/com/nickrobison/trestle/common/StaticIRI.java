@@ -9,6 +9,7 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 public class StaticIRI {
     public static final String PREFIX = "http://nickrobison.com/dissertation/trestle.owl#";
     public static final String GEOSPARQLPREFIX = "http://www.opengis.net/ont/geosparql#";
+    public static final String XSDPREFIX = "http://www.w3.org/2001/XMLSchema#";
 //    Relations
     public static final IRI factOfIRI = IRI.create(PREFIX, "fact_of");
     public static final IRI hasFactIRI = IRI.create(PREFIX, "has_fact");
@@ -27,6 +28,8 @@ public class StaticIRI {
     public static final IRI conceptRelationIRI = IRI.create(PREFIX, "Concept_Relation");
 //    Properties
     public static final IRI relationStrengthIRI = IRI.create(PREFIX, "Relation_Strength");
-    public static final IRI temporalDatatypeIRI = OWL2Datatype.XSD_DATE_TIME.getIRI();
+    public static final IRI dateTimeDatatypeIRI = IRI.create(XSDPREFIX, "dateTime");
+    public static final IRI dateDatatypeIRI = IRI.create(XSDPREFIX, "date");
+    public static final IRI UUIDDatatypeIRI = IRI.create(PREFIX, "UUID");
 
 }
