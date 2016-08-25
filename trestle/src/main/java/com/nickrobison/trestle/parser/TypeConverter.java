@@ -17,8 +17,8 @@ import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 
-import static com.nickrobison.trestle.common.StaticIRI.UUIDDatatypeIRI;
 import static com.nickrobison.trestle.common.StaticIRI.dateDatatypeIRI;
 import static com.nickrobison.trestle.parser.ClassParser.df;
 import static com.nickrobison.trestle.parser.ClassParser.getFieldName;
@@ -30,62 +30,63 @@ import static com.nickrobison.trestle.parser.ClassParser.getMethodName;
 public class TypeConverter {
 
     private static final Logger logger = LoggerFactory.getLogger(TypeConverter.class);
-    static final Map<OWLDatatype, Class<?>> datatypeMap = buildDatatype2ClassMap();
+    private static final Map<OWLDatatype, Class<?>> datatypeMap = buildDatatype2ClassMap();
     private static final Map<Class<?>, OWLDatatype> owlDatatypeMap = buildClassMap();
+    private static final Map<String, Function> javaClassConstructors = new HashMap<>();
+
+    public static void registerTypeConstructor(Class<?> clazz, OWLDatatype datatype, Function constructorFunc) {
+        logger.debug("Registering java class {} with OWLDatatype {}", clazz.getName(), datatype.getIRI());
+        datatypeMap.put(datatype, clazz);
+        owlDatatypeMap.put(clazz, datatype);
+        javaClassConstructors.put(clazz.getTypeName(), constructorFunc);
+    }
 
     //    I need the unchecked casts in order to get the correct primitives for the constructor generation
         @SuppressWarnings({"unchecked"})
-    //    TODO(nrobison): Need to provide support for registering your own object generation
         public static <T> @NonNull T extractOWLLiteral(Class<@NonNull T> javaClass, OWLLiteral literal) {
 
             switch (javaClass.getTypeName()) {
 
                 case "int": {
-    //                return javaClass.cast(literal.parseInteger());
                     return (@NonNull T) (Object) Integer.parseInt(literal.getLiteral());
                 }
 
                 case "java.lang.Integer": {
                     return javaClass.cast(Integer.parseInt(literal.getLiteral()));
-    //                return (T) (Object) literal.parseInteger();
                 }
 
                 case "long": {
-    //                return javaClass.cast(Long.parseLong(literal.getLiteral()));
                     return (@NonNull T) (Object) Long.parseLong(literal.getLiteral());
                 }
 
                 case "java.lang.Long": {
                     return javaClass.cast(Long.parseLong(literal.getLiteral()));
-    //                return (T) (Object) Long.parseLong(literal.getLiteral());
                 }
 
                 case "java.lang.LocalDateTime": {
                     return javaClass.cast(LocalDateTime.parse(literal.getLiteral()));
-    //                return (T) (Object) LocalDateTime.parse(literal.getLiteral());
                 }
 
                 case "java.lang.String": {
                     return javaClass.cast(literal.getLiteral());
-    //                return (T) (Object) literal.getLiteral();
                 }
 
                 case "java.lang.Double": {
                     return javaClass.cast(literal.parseDouble());
-    //                return (T) (Object) literal.parseDouble();
                 }
 
                 case "java.lang.Boolean": {
                     return javaClass.cast(literal.parseBoolean());
-    //                return (T) (Object) literal.parseBoolean();
-                }
-
-                case "java.util.UUID": {
-                    return javaClass.cast(UUID.fromString(literal.getLiteral()));
                 }
 
                 default: {
-                    throw new RuntimeException(String.format("Unsupported cast %s", javaClass));
+//                    Try to get a match from the custom constructor registry
+                    final Function constructorFunction = javaClassConstructors.get(javaClass.getTypeName());
+                    if (constructorFunction == null) {
+                        throw new RuntimeException(String.format("Unsupported cast %s", javaClass));
+                    }
+
+                    return javaClass.cast(constructorFunction.apply(literal.getLiteral()));
                 }
             }
         }
@@ -142,7 +143,6 @@ public class TypeConverter {
             return null;
         }
 
-    //    TODO(nrobison): Need to add support for registering your own type mappings.
     static Map<OWLDatatype, Class<?>> buildDatatype2ClassMap() {
         Map<OWLDatatype, Class<?>> datatypeMap = new HashMap<>();
 
@@ -156,9 +156,27 @@ public class TypeConverter {
         datatypeMap.put(df.getOWLDatatype(dateDatatypeIRI), LocalDate.class);
         datatypeMap.put(OWL2Datatype.XSD_BOOLEAN.getDatatype(df), Boolean.TYPE);
         datatypeMap.put(OWL2Datatype.XSD_STRING.getDatatype(df), String.class);
-        datatypeMap.put(df.getOWLDatatype(UUIDDatatypeIRI), UUID.class);
 
         return datatypeMap;
+    }
+
+    private static Map<Class<?>, OWLDatatype> buildClassMap() {
+        Map<Class<?>, OWLDatatype> types = new HashMap<>();
+        types.put(Integer.TYPE, OWL2Datatype.XSD_INTEGER.getDatatype(df));
+        types.put(int.class, OWL2Datatype.XSD_INT.getDatatype(df));
+        types.put(Double.TYPE, OWL2Datatype.XSD_DOUBLE.getDatatype(df));
+        types.put(double.class, OWL2Datatype.XSD_FLOAT.getDatatype(df));
+        types.put(Float.TYPE, OWL2Datatype.XSD_DOUBLE.getDatatype(df));
+        types.put(float.class, OWL2Datatype.XSD_FLOAT.getDatatype(df));
+        types.put(Boolean.TYPE, OWL2Datatype.XSD_BOOLEAN.getDatatype(df));
+        types.put(boolean.class, OWL2Datatype.XSD_BOOLEAN.getDatatype(df));
+        types.put(Long.TYPE, OWL2Datatype.XSD_LONG.getDatatype(df));
+        types.put(long.class, OWL2Datatype.XSD_LONG.getDatatype(df));
+        types.put(String.class, OWL2Datatype.XSD_STRING.getDatatype(df));
+        types.put(LocalDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
+        types.put(LocalDate.class, df.getOWLDatatype(dateDatatypeIRI));
+
+        return types;
     }
 
     static OWLDatatype getDatatypeFromAnnotation(DataProperty annotation, Class<?> objectClass) {
@@ -180,27 +198,6 @@ public class TypeConverter {
             owlDatatype = OWL2Datatype.XSD_STRING.getDatatype(df);
         }
         return owlDatatype;
-    }
-
-    //    TODO(nrobison): Need to add support for registering your own type mappings.
-    private static Map<Class<?>, OWLDatatype> buildClassMap() {
-        Map<Class<?>, OWLDatatype> types = new HashMap<>();
-        types.put(Integer.TYPE, OWL2Datatype.XSD_INTEGER.getDatatype(df));
-        types.put(int.class, OWL2Datatype.XSD_INT.getDatatype(df));
-        types.put(Double.TYPE, OWL2Datatype.XSD_DOUBLE.getDatatype(df));
-        types.put(double.class, OWL2Datatype.XSD_FLOAT.getDatatype(df));
-        types.put(Float.TYPE, OWL2Datatype.XSD_DOUBLE.getDatatype(df));
-        types.put(float.class, OWL2Datatype.XSD_FLOAT.getDatatype(df));
-        types.put(Boolean.TYPE, OWL2Datatype.XSD_BOOLEAN.getDatatype(df));
-        types.put(boolean.class, OWL2Datatype.XSD_BOOLEAN.getDatatype(df));
-        types.put(Long.TYPE, OWL2Datatype.XSD_LONG.getDatatype(df));
-        types.put(long.class, OWL2Datatype.XSD_LONG.getDatatype(df));
-        types.put(String.class, OWL2Datatype.XSD_STRING.getDatatype(df));
-        types.put(LocalDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
-        types.put(LocalDate.class, df.getOWLDatatype(dateDatatypeIRI));
-        types.put(UUID.class, df.getOWLDatatype(UUIDDatatypeIRI));
-
-        return types;
     }
 
     static Class<?> parsePrimitiveClass(Class<?> returnClass) {

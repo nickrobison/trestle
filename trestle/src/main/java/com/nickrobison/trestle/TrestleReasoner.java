@@ -34,6 +34,7 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.temporal.Temporal;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.LambdaExceptionUtil.rethrowFunction;
@@ -73,16 +74,14 @@ public class TrestleReasoner {
         logger.info("Loading ontology from {}", ontologyResource);
 
 //            validate the classes
-        builder.inputClasses
-                .stream()
-                .forEach(clazz -> {
-                    try {
-                        ClassRegister.ValidateClass(clazz);
-                        this.registeredClasses.add(clazz);
-                    } catch (TrestleClassException e) {
-                        logger.error("Cannot validate class {}", clazz, e);
-                    }
-                });
+        builder.inputClasses.forEach(clazz -> {
+            try {
+                ClassRegister.ValidateClass(clazz);
+                this.registeredClasses.add(clazz);
+            } catch (TrestleClassException e) {
+                logger.error("Cannot validate class {}", clazz, e);
+            }
+        });
 
 //        Register some constructor functions
         TypeConverter.registerTypeConstructor(UUID.class, df.getOWLDatatype(UUIDDatatypeIRI), (uuidString) -> UUID.fromString(uuidString.toString()));
@@ -150,6 +149,16 @@ public class TrestleReasoner {
     public void shutdown(boolean delete) {
         logger.info("Shutting down ontology");
         this.ontology.close(delete);
+    }
+
+    /**
+     * Register custom constuctor function for a given java class/OWLDataType intersection
+     * @param clazz - Java class to construct
+     * @param datatype - OWLDatatype to match with Java class
+     * @param constructorFunc - Function<T,R> lambda function to take OWLLiteral and generate given java class
+     */
+    public void registerTypeConstructor(Class<?> clazz, OWLDatatype datatype, Function constructorFunc) {
+        TypeConverter.registerTypeConstructor(clazz, datatype, constructorFunc);
     }
 
     //    When you get the ontology, the ownership passes away, so then the reasoner can't perform any more queries.
