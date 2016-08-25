@@ -332,8 +332,8 @@ public class TrestleReasoner {
         if (dataProperties.isPresent()) {
             final Set<OWLDataPropertyAssertionAxiom> propertiesForIndividual = ontology.getDataPropertiesForIndividual(individualIRI, dataProperties.get());
             propertiesForIndividual.forEach(property -> {
-                final Class<?> javaClass = ClassBuilder.lookupJavaClassFromOWLDatatype(property, clazz);
-                final Object literalValue = ClassBuilder.extractOWLLiteral(javaClass, property.getObject());
+                final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, clazz);
+                final Object literalValue = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
                 constructorArguments.addArgument(
                         ClassParser.matchWithClassMember(clazz, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
                         javaClass,

@@ -16,7 +16,7 @@ import java.time.temporal.ChronoUnit;
  * Created by nrobison on 7/29/16.
  */
 @OWLClassName(className = "GAUL_Test")
-class GAULMethodTest {
+public class GAULMethodTest {
 
     public int adm0_code;
     private String adm0_name;
@@ -32,7 +32,7 @@ class GAULMethodTest {
 
     public GAULMethodTest() {
         this.adm0_code = 4326;
-        this.test_name = "new_test";
+        this.test_name = "POINT (4.0 6.0)";
         this.adm0_name = "test region";
         this.defaultTime = LocalDateTime.of(1998, 3, 26, 0, 0);
         this.privateField = "don't read me";
@@ -55,7 +55,7 @@ class GAULMethodTest {
         return "string_from_method";
     }
 
-    public int getAdm0_code() {
+    public int getAdm0_code1() {
         return this.adm0_code;
     }
 
@@ -85,7 +85,7 @@ class GAULMethodTest {
 
         GAULMethodTest that = (GAULMethodTest) o;
 
-        if (getAdm0_code() != that.getAdm0_code()) return false;
+        if (getAdm0_code1() != that.getAdm0_code1()) return false;
         if (!adm0_name.equals(that.adm0_name)) return false;
         if (!test_name.equals(that.test_name)) return false;
         if (!defaultTime.equals(that.defaultTime)) return false;
@@ -97,7 +97,7 @@ class GAULMethodTest {
 
     @Override
     public int hashCode() {
-        int result = getAdm0_code();
+        int result = getAdm0_code1();
         result = 31 * result + adm0_name.hashCode();
         result = 31 * result + test_name.hashCode();
         result = 31 * result + defaultTime.hashCode();

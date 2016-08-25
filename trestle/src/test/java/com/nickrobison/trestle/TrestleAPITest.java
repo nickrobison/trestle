@@ -2,10 +2,7 @@ package com.nickrobison.trestle;
 
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
-import com.nickrobison.trestle.parser.ClassParser;
-import com.nickrobison.trestle.parser.GAULComplexClassTest;
-import com.nickrobison.trestle.parser.GAULTestClass;
-import com.nickrobison.trestle.parser.OracleOntologyGAULoader;
+import com.nickrobison.trestle.parser.*;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -103,12 +100,13 @@ public class TrestleAPITest {
 
     @Test
     public void testClasses() throws TrestleClassException, MissingOntologyEntity {
+
+//        Complex objects
         final GAULComplexClassTest gaulComplexClassTest = new GAULComplexClassTest();
-        final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(gaulComplexClassTest);
+        OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(gaulComplexClassTest);
         reasoner.writeObjectAsFact(gaulComplexClassTest);
-        reasoner.writeOntology(new File("/Users/nrobison/Desktop/api-test.owl").toURI(), false);
-        final GAULComplexClassTest gaulComplexClassTest1 = reasoner.readAsObject(gaulComplexClassTest.getClass(), owlNamedIndividual.getIRI(), false);
-        assertEquals(gaulComplexClassTest, gaulComplexClassTest1, "Should have the same object");
+        final GAULComplexClassTest ReturnedGaulComplexClassTest = reasoner.readAsObject(gaulComplexClassTest.getClass(), owlNamedIndividual.getIRI(), false);
+        assertEquals(gaulComplexClassTest, ReturnedGaulComplexClassTest, "Should have the same object");
     }
 
 

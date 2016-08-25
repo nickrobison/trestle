@@ -11,7 +11,6 @@ import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
@@ -171,7 +170,7 @@ public class TrestleParserTest {
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have method properties");
         assertEquals(5, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of data properties");
         assertEquals(OWL2Datatype.XSD_INT, owlDataPropertyAssertionAxioms.get().get(3).getObject().getDatatype().getBuiltInDatatype(), "Should have integer datatype");
-        assertEquals(testMethod.getAdm0_code(), owlDataPropertyAssertionAxioms.get().get(3).getObject().parseInteger(), "Invalid ADM0_Code");
+        assertEquals(testMethod.getAdm0_code1(), owlDataPropertyAssertionAxioms.get().get(3).getObject().parseInteger(), "Invalid ADM0_Code");
         assertEquals(testMethod.test_name, owlDataPropertyAssertionAxioms.get().get(1).getObject().getLiteral(), "Invalid Spatial");
 
 //        Temporal
@@ -239,9 +238,9 @@ public class TrestleParserTest {
 
 //        Properties
         testProperties.forEach(property -> {
-            final Class<?> javaClass = ClassBuilder.lookupJavaClassFromOWLDatatype(property, null);
+            final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, null);
             inputClasses.add(javaClass);
-            final Object literalValue = ClassBuilder.extractOWLLiteral(javaClass, property.getObject());
+            final Object literalValue = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
 //            final Object literalValue = javaClass.cast(property.getObject().getLiteral());
             inputObjects.add(literalValue);
             constructorArguments.addArgument(property.getProperty().asOWLDataProperty().getIRI().getShortForm(),

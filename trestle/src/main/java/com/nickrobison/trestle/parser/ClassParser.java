@@ -7,17 +7,12 @@ import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
 import com.nickrobison.trestle.exceptions.MissingConstructorException;
 import com.nickrobison.trestle.types.ObjectRestriction;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.jetbrains.annotations.NotNull;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 
 import static com.nickrobison.trestle.common.StaticIRI.*;
@@ -35,7 +30,6 @@ public class ClassParser {
 
     private static final Logger logger = LoggerFactory.getLogger(ClassParser.class);
     static final OWLDataFactory df = OWLManager.getOWLDataFactory();
-    private static final Map<Class<?>, OWLDatatype> owlDatatypeMap = buildClassMap();
 
 
     private ClassParser() {
@@ -171,7 +165,7 @@ public class ClassParser {
                         logger.debug("Cannot access field {}", classField.getName(), e);
                         continue;
                     }
-                    final OWLLiteral owlLiteral = df.getOWLLiteral(fieldValue, getDatatypeFromAnnotation(annotation, classField.getType()));
+                    final OWLLiteral owlLiteral = df.getOWLLiteral(fieldValue, TypeConverter.getDatatypeFromAnnotation(annotation, classField.getType()));
                     axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, owlLiteral));
                 } else if (classField.isAnnotationPresent(Spatial.class)) {
 //                    FIXME(nrobison): Make this prefix a constant
@@ -215,7 +209,7 @@ public class ClassParser {
                     final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
 
                     if (methodValue.isPresent()) {
-                        final OWLLiteral owlLiteral = df.getOWLLiteral(methodValue.get().toString(), getDatatypeFromAnnotation(annotation, classMethod.getReturnType()));
+                        final OWLLiteral owlLiteral = df.getOWLLiteral(methodValue.get().toString(), TypeConverter.getDatatypeFromAnnotation(annotation, classMethod.getReturnType()));
                         axioms.add(df.getOWLDataPropertyAssertionAxiom(
                                 owlDataProperty,
                                 owlNamedIndividual,
@@ -238,7 +232,7 @@ public class ClassParser {
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
                     final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
                     if (methodValue.isPresent()) {
-                        final OWLLiteral owlLiteral = df.getOWLLiteral(methodValue.get().toString(), getDatatypeFromJavaClass(classMethod.getReturnType()));
+                        final OWLLiteral owlLiteral = df.getOWLLiteral(methodValue.get().toString(), TypeConverter.getDatatypeFromJavaClass(classMethod.getReturnType()));
                         axioms.add(df.getOWLDataPropertyAssertionAxiom(
                                 owlDataProperty,
                                 owlNamedIndividual,
@@ -482,52 +476,10 @@ public class ClassParser {
         throw new RuntimeException("Cannot match field or method");
     }
 
-    private static OWLDatatype getDatatypeFromAnnotation(DataProperty annotation, Class<?> objectClass) {
-//        I don't think this will ever be true
-        if (annotation.datatype().toString().equals("")) {
-            return getDatatypeFromJavaClass(objectClass);
-        } else {
-            return annotation.datatype().getDatatype(df);
-        }
-    }
-
-    static
-    @NotNull
-    OWLDatatype getDatatypeFromJavaClass(Class<?> javaTypeClass) {
-        OWLDatatype owlDatatype = owlDatatypeMap.get(javaTypeClass);
-        if (owlDatatype == null) {
-            logger.error("Unsupported Java type {}", javaTypeClass);
-//            throw new RuntimeException(String.format("Unsupported Java type %s", javaTypeClass));
-            owlDatatype = OWL2Datatype.XSD_STRING.getDatatype(df);
-        }
-        return owlDatatype;
-    }
-
-//    TODO(nrobison): Need to add support for registering your own type mappings.
-    private static Map<Class<?>, OWLDatatype> buildClassMap() {
-        Map<Class<?>, OWLDatatype> types = new HashMap<>();
-        types.put(Integer.TYPE, OWL2Datatype.XSD_INTEGER.getDatatype(df));
-        types.put(int.class, OWL2Datatype.XSD_INT.getDatatype(df));
-        types.put(Double.TYPE, OWL2Datatype.XSD_DOUBLE.getDatatype(df));
-        types.put(double.class, OWL2Datatype.XSD_FLOAT.getDatatype(df));
-        types.put(Float.TYPE, OWL2Datatype.XSD_DOUBLE.getDatatype(df));
-        types.put(float.class, OWL2Datatype.XSD_FLOAT.getDatatype(df));
-        types.put(Boolean.TYPE, OWL2Datatype.XSD_BOOLEAN.getDatatype(df));
-        types.put(boolean.class, OWL2Datatype.XSD_BOOLEAN.getDatatype(df));
-        types.put(Long.TYPE, OWL2Datatype.XSD_LONG.getDatatype(df));
-        types.put(long.class, OWL2Datatype.XSD_LONG.getDatatype(df));
-        types.put(String.class, OWL2Datatype.XSD_STRING.getDatatype(df));
-        types.put(LocalDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
-        types.put(LocalDate.class, df.getOWLDatatype(dateDatatypeIRI));
-        types.put(UUID.class, df.getOWLDatatype(UUIDDatatypeIRI));
-
-        return types;
-    }
-
     static Optional<Object> accessMethodValue(Method classMethod, Object inputObject) {
         @Nullable Object castReturn = null;
         try {
-            final Class<?> returnType = parsePrimitiveClass(classMethod.getReturnType());
+            final Class<?> returnType = TypeConverter.parsePrimitiveClass(classMethod.getReturnType());
             final Object invokedObject;
             invokedObject = classMethod.invoke(inputObject);
             logger.debug("Method {} has return type {}", classMethod.getName(), returnType);
@@ -545,31 +497,6 @@ public class ClassParser {
         }
 
         return Optional.of(castReturn);
-    }
-
-    private static Class<?> parsePrimitiveClass(Class<?> returnClass) {
-        if (returnClass.isPrimitive()) {
-            logger.debug("Converting primitive type {} to object", returnClass.getTypeName());
-            switch (returnClass.getTypeName()) {
-                case "int": {
-                    return Integer.class;
-                }
-                case "double": {
-                    return Double.class;
-                }
-                case "boolean": {
-                    return boolean.class;
-                }
-                case "long": {
-                    return Long.class;
-                }
-                default: {
-                    throw new RuntimeException(String.format("Unsupported cast of %s to primitive type", returnClass.getTypeName()));
-                }
-            }
-        }
-
-        return returnClass;
     }
 
     /**
