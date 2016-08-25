@@ -16,10 +16,11 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
-import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
+import static com.nickrobison.trestle.common.StaticIRI.*;
 
 /**
  * Created by nrobison on 6/28/16.
@@ -33,8 +34,8 @@ public class ClassParser {
     }
 
     private static final Logger logger = LoggerFactory.getLogger(ClassParser.class);
-    private static final Map<Class<?>, OWL2Datatype> owlDatatypeMap = buildClassMap();
     static final OWLDataFactory df = OWLManager.getOWLDataFactory();
+    private static final Map<Class<?>, OWLDatatype> owlDatatypeMap = buildClassMap();
 
 
     private ClassParser() {
@@ -184,7 +185,7 @@ public class ClassParser {
                         logger.debug("Cannot access field {}", classField.getName(), e);
                         continue;
                     }
-                    final OWLDatatype wktDatatype = df.getOWLDatatype(IRI.create("http://www.opengis.net/ont/geosparql#", "wktLiteral"));
+                    final OWLDatatype wktDatatype = df.getOWLDatatype(IRI.create(GEOSPARQLPREFIX, "wktLiteral"));
 //                    Since it's a literal, we need to strip out the double quotes.
                     final OWLLiteral wktLiteral = df.getOWLLiteral(fieldValue.replace("\"", ""), wktDatatype);
                     axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, wktLiteral));
@@ -481,39 +482,44 @@ public class ClassParser {
         throw new RuntimeException("Cannot match field or method");
     }
 
-    private static OWL2Datatype getDatatypeFromAnnotation(DataProperty annotation, Class<?> objectClass) {
+    private static OWLDatatype getDatatypeFromAnnotation(DataProperty annotation, Class<?> objectClass) {
 //        I don't think this will ever be true
         if (annotation.datatype().toString().equals("")) {
             return getDatatypeFromJavaClass(objectClass);
         } else {
-            return annotation.datatype();
+            return annotation.datatype().getDatatype(df);
         }
     }
 
     static
     @NotNull
-    OWL2Datatype getDatatypeFromJavaClass(Class<?> javaTypeClass) {
-        final OWL2Datatype owl2Datatype = owlDatatypeMap.get(javaTypeClass);
-        if (owl2Datatype == null) {
-            throw new RuntimeException(String.format("Unsupported Java type %s", javaTypeClass));
+    OWLDatatype getDatatypeFromJavaClass(Class<?> javaTypeClass) {
+        OWLDatatype owlDatatype = owlDatatypeMap.get(javaTypeClass);
+        if (owlDatatype == null) {
+            logger.error("Unsupported Java type {}", javaTypeClass);
+//            throw new RuntimeException(String.format("Unsupported Java type %s", javaTypeClass));
+            owlDatatype = OWL2Datatype.XSD_STRING.getDatatype(df);
         }
-        return owl2Datatype;
+        return owlDatatype;
     }
 
-    private static Map<Class<?>, OWL2Datatype> buildClassMap() {
-        Map<Class<?>, OWL2Datatype> types = new HashMap<>();
-        types.put(Integer.TYPE, OWL2Datatype.XSD_INTEGER);
-        types.put(int.class, OWL2Datatype.XSD_INT);
-        types.put(Double.TYPE, OWL2Datatype.XSD_DOUBLE);
-        types.put(double.class, OWL2Datatype.XSD_FLOAT);
-        types.put(Float.TYPE, OWL2Datatype.XSD_DOUBLE);
-        types.put(float.class, OWL2Datatype.XSD_FLOAT);
-        types.put(Boolean.TYPE, OWL2Datatype.XSD_BOOLEAN);
-        types.put(boolean.class, OWL2Datatype.XSD_BOOLEAN);
-        types.put(Long.TYPE, OWL2Datatype.XSD_LONG);
-        types.put(long.class, OWL2Datatype.XSD_LONG);
-        types.put(String.class, OWL2Datatype.XSD_STRING);
-        types.put(LocalDateTime.class, OWL2Datatype.XSD_DATE_TIME);
+//    TODO(nrobison): Need to add support for registering your own type mappings.
+    private static Map<Class<?>, OWLDatatype> buildClassMap() {
+        Map<Class<?>, OWLDatatype> types = new HashMap<>();
+        types.put(Integer.TYPE, OWL2Datatype.XSD_INTEGER.getDatatype(df));
+        types.put(int.class, OWL2Datatype.XSD_INT.getDatatype(df));
+        types.put(Double.TYPE, OWL2Datatype.XSD_DOUBLE.getDatatype(df));
+        types.put(double.class, OWL2Datatype.XSD_FLOAT.getDatatype(df));
+        types.put(Float.TYPE, OWL2Datatype.XSD_DOUBLE.getDatatype(df));
+        types.put(float.class, OWL2Datatype.XSD_FLOAT.getDatatype(df));
+        types.put(Boolean.TYPE, OWL2Datatype.XSD_BOOLEAN.getDatatype(df));
+        types.put(boolean.class, OWL2Datatype.XSD_BOOLEAN.getDatatype(df));
+        types.put(Long.TYPE, OWL2Datatype.XSD_LONG.getDatatype(df));
+        types.put(long.class, OWL2Datatype.XSD_LONG.getDatatype(df));
+        types.put(String.class, OWL2Datatype.XSD_STRING.getDatatype(df));
+        types.put(LocalDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
+        types.put(LocalDate.class, df.getOWLDatatype(dateDatatypeIRI));
+        types.put(UUID.class, df.getOWLDatatype(UUIDDatatypeIRI));
 
         return types;
     }

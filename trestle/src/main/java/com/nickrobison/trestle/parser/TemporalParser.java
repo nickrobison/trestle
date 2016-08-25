@@ -10,6 +10,7 @@ import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
@@ -322,21 +323,22 @@ public class TemporalParser {
 
     private static TemporalObject buildIntervalTemporal(Temporal start, @Nullable Temporal end, TemporalScope scope, OWLNamedIndividual... relations) {
 //        We store all temporals as datetimes, so we need to convert them.
-        final LocalDateTime from = parseTemporalToLocalDateTime(start);
+//        final Temporal from = start;
+//        final LocalDateTime from = parseTemporalToLocalDateTime(start);
 
         if (scope == TemporalScope.VALID) {
-            final IntervalTemporal.Builder validBuilder = TemporalObjectBuilder.valid().from(from);
+            final IntervalTemporal.Builder validBuilder = TemporalObjectBuilder.valid().from(start);
             if (end != null) {
-                final LocalDateTime to = parseTemporalToLocalDateTime(end);
-                return validBuilder.to(to).withRelations(relations);
+//                final LocalDateTime to = parseTemporalToLocalDateTime(end);
+                return validBuilder.to(end).withRelations(relations);
             }
 
             return validBuilder.withRelations(relations);
         } else {
-            final IntervalTemporal.Builder existsBuilder = TemporalObjectBuilder.exists().from(from);
+            final IntervalTemporal.Builder existsBuilder = TemporalObjectBuilder.exists().from(start);
             if (end != null) {
-                final LocalDateTime to = parseTemporalToLocalDateTime(end);
-                return existsBuilder.to(to).withRelations(relations);
+//                final LocalDateTime to = parseTemporalToLocalDateTime(end);
+                return existsBuilder.to(end).withRelations(relations);
             }
 
             return existsBuilder.withRelations(relations);
@@ -356,41 +358,59 @@ public class TemporalParser {
 
     public static Temporal parseToTemporal(OWLLiteral literal, Class<? extends Temporal> destinationType) {
         final Temporal parsedTemporal;
-        switch (literal.getDatatype().getBuiltInDatatype()) {
-            case XSD_DATE_TIME: {
-                switch (destinationType.getTypeName()) {
-                    case "java.time.LocalDateTime": {
-                        parsedTemporal = LocalDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME);
-                        break;
-                    }
-                    case "java.time.LocalDate": {
-                        parsedTemporal = LocalDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME).toLocalDate();
-                        break;
-                    }
-
-                    default: {
-                        logger.error("Unsupported parsing of temporal {} to {}", literal.getDatatype().getBuiltInDatatype(), destinationType.getTypeName());
-                        throw new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype().getBuiltInDatatype(), destinationType.getTypeName()));
-                    }
+//        switch (literal.getDatatype().getBuiltInDatatype()) {
+        final OWLDatatype datatype = literal.getDatatype();
+        if (datatype.getIRI().equals(dateTimeDatatypeIRI)) {
+//            case XSD_DATE_TIME: {
+            switch (destinationType.getTypeName()) {
+                case "java.time.LocalDateTime": {
+                    parsedTemporal = LocalDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME);
+                    break;
                 }
-                break;
+                case "java.time.LocalDate": {
+                    parsedTemporal = LocalDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME).toLocalDate();
+                    break;
+                }
+                default: {
+                    logger.error("Unsupported parsing of temporal {} to {}", literal.getDatatype().getBuiltInDatatype(), destinationType.getTypeName());
+                    throw new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype().getBuiltInDatatype(), destinationType.getTypeName()));
+                }
             }
-            default: {
-                logger.error("Unsupported parsing of XSD type {}", literal.getDatatype().getBuiltInDatatype());
-                throw new RuntimeException(String.format("Unsupported parsing of XSD type %s", literal.getDatatype().getBuiltInDatatype()));
+        } else if (datatype.getIRI().equals(dateDatatypeIRI)) {
+            switch (destinationType.getTypeName()) {
+                case "java.time.LocalDateTime": {
+                    parsedTemporal = LocalDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE);
+                    break;
+                }
+                case "java.time.LocalDate": {
+                    parsedTemporal = LocalDate.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE);
+                    break;
+                }
+                default: {
+                    logger.error("Unsupported parsing of temporal {} to {}", literal.getDatatype().getBuiltInDatatype(), destinationType.getTypeName());
+                    throw new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype().getBuiltInDatatype(), destinationType.getTypeName()));
+                }
             }
+        } else {
+            logger.error("Unsupported parsing of XSD type {}", datatype);
+            throw new RuntimeException(String.format("Unsupported parsing of XSD type %s", datatype));
         }
+//                break;
+//            }
+//            default: {
+//            }
+//        }
 
         return parsedTemporal;
     }
 
     private static TemporalObject buildPointTemporal(Temporal pointTemporal, TemporalScope scope, OWLNamedIndividual... relations) {
-        final LocalDateTime at = parseTemporalToLocalDateTime(pointTemporal);
+//        final LocalDateTime at = parseTemporalToLocalDateTime(pointTemporal);
 
         if (scope == TemporalScope.VALID) {
-            return TemporalObjectBuilder.valid().at(at).withRelations(relations);
+            return TemporalObjectBuilder.valid().at(pointTemporal).withRelations(relations);
         } else {
-            return TemporalObjectBuilder.exists().at(at).withRelations(relations);
+            return TemporalObjectBuilder.exists().at(pointTemporal).withRelations(relations);
         }
     }
 }

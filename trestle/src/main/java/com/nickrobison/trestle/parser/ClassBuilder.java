@@ -13,12 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.nickrobison.trestle.common.StaticIRI.GEOSPARQLPREFIX;
-import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
+import static com.nickrobison.trestle.common.StaticIRI.*;
 import static com.nickrobison.trestle.parser.ClassParser.*;
 
 /**
@@ -28,7 +28,7 @@ import static com.nickrobison.trestle.parser.ClassParser.*;
 public class ClassBuilder {
 
     private static final Logger logger = LoggerFactory.getLogger(ClassBuilder.class);
-    private static final Map<OWL2Datatype, Class<?>> datatypeMap = buildDatatype2ClassMap();
+    private static final Map<OWLDatatype, Class<?>> datatypeMap = buildDatatype2ClassMap();
 
     /**
      * Get a list of data properties from a given class
@@ -179,6 +179,7 @@ public class ClassBuilder {
 
 //    I need the unchecked casts in order to get the correct primitives for the constructor generation
     @SuppressWarnings({"unchecked"})
+//    TODO(nrobison): Need to provide support for registering your own object generation
     public static <T> @NonNull T extractOWLLiteral(Class<@NonNull T> javaClass, OWLLiteral literal) {
 
         switch (javaClass.getTypeName()) {
@@ -223,6 +224,10 @@ public class ClassBuilder {
 //                return (T) (Object) literal.parseBoolean();
             }
 
+            case "java.util.UUID": {
+                return javaClass.cast(UUID.fromString(literal.getLiteral()));
+            }
+
             default: {
                 throw new RuntimeException(String.format("Unsupported cast %s", javaClass));
             }
@@ -236,16 +241,16 @@ public class ClassBuilder {
         if (datatype.isBuiltIn()) {
 
 //            Check with the class to make sure the types are correct
-            OWL2Datatype dataTypeToLookup = null;
+            OWLDatatype dataTypeToLookup = null;
             if (classToVerify != null) {
                 dataTypeToLookup = verifyOWLType(classToVerify, dataproperty.getProperty().asOWLDataProperty());
             }
             if (dataTypeToLookup == null) {
-                dataTypeToLookup = datatype.getBuiltInDatatype();
+                dataTypeToLookup = datatype.getBuiltInDatatype().getDatatype(df);
             }
             javaClass = datatypeMap.get(dataTypeToLookup);
             if (javaClass == null) {
-                throw new RuntimeException(String.format("Unsupported OWL2Datatype %s", datatype));
+                throw new RuntimeException(String.format("Unsupported OWLDatatype %s", datatype));
             }
         } else if (datatype.getIRI().getScheme().equals("geosparql")) {
 //            If it's from the geosparql group, we can just treat it as a string
@@ -258,7 +263,7 @@ public class ClassBuilder {
         return javaClass;
     }
 
-    private static @Nullable OWL2Datatype verifyOWLType(Class<?> classToVerify, OWLDataProperty property) {
+    private static OWLDatatype verifyOWLType(Class<?> classToVerify, OWLDataProperty property) {
 
         //        Check to see if it matches any annotated data methods
         final Optional<Method> matchedMethod = Arrays.stream(classToVerify.getDeclaredMethods())
@@ -282,18 +287,21 @@ public class ClassBuilder {
     }
 
 
-    private static Map<OWL2Datatype, Class<?>> buildDatatype2ClassMap() {
-        Map<OWL2Datatype, Class<?>> datatypeMap = new HashMap<>();
+    //    TODO(nrobison): Need to add support for registering your own type mappings.
+    private static Map<OWLDatatype, Class<?>> buildDatatype2ClassMap() {
+        Map<OWLDatatype, Class<?>> datatypeMap = new HashMap<>();
 
-        datatypeMap.put(OWL2Datatype.XSD_INTEGER, Integer.TYPE);
-        datatypeMap.put(OWL2Datatype.XSD_INT, int.class);
-        datatypeMap.put(OWL2Datatype.XSD_LONG, long.class);
-        datatypeMap.put(OWL2Datatype.XSD_DOUBLE, Double.TYPE);
-        datatypeMap.put(OWL2Datatype.XSD_FLOAT, double.class);
-        datatypeMap.put(OWL2Datatype.XSD_DECIMAL, Double.class);
-        datatypeMap.put(OWL2Datatype.XSD_DATE_TIME, LocalDateTime.class);
-        datatypeMap.put(OWL2Datatype.XSD_BOOLEAN, Boolean.TYPE);
-        datatypeMap.put(OWL2Datatype.XSD_STRING, String.class);
+        datatypeMap.put(OWL2Datatype.XSD_INTEGER.getDatatype(df), Integer.TYPE);
+        datatypeMap.put(OWL2Datatype.XSD_INT.getDatatype(df), int.class);
+        datatypeMap.put(OWL2Datatype.XSD_LONG.getDatatype(df), long.class);
+        datatypeMap.put(OWL2Datatype.XSD_DOUBLE.getDatatype(df), Double.TYPE);
+        datatypeMap.put(OWL2Datatype.XSD_FLOAT.getDatatype(df), double.class);
+        datatypeMap.put(OWL2Datatype.XSD_DECIMAL.getDatatype(df), Double.class);
+        datatypeMap.put(OWL2Datatype.XSD_DATE_TIME.getDatatype(df), LocalDateTime.class);
+        datatypeMap.put(df.getOWLDatatype(dateDatatypeIRI), LocalDate.class);
+        datatypeMap.put(OWL2Datatype.XSD_BOOLEAN.getDatatype(df), Boolean.TYPE);
+        datatypeMap.put(OWL2Datatype.XSD_STRING.getDatatype(df), String.class);
+        datatypeMap.put(df.getOWLDatatype(UUIDDatatypeIRI), UUID.class);
 
         return datatypeMap;
     }

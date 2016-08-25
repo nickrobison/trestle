@@ -2,11 +2,10 @@ package com.nickrobison.trestle.types.temporal;
 
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
-import java.time.LocalDateTime;
 import java.time.temporal.Temporal;
 import java.util.*;
 
@@ -60,6 +59,11 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     @Override
     public Class<? extends Temporal> getBaseTemporalType() {
         return this.temporalType;
+    }
+
+    @Override
+    public IRI getBaseTemporalTypeIRI() {
+        return parseTemporalClassToIRI(getBaseTemporalType());
     }
 
     @Override
