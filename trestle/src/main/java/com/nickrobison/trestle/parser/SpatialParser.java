@@ -4,8 +4,10 @@ import com.esri.core.geometry.Geometry;
 import com.nickrobison.trestle.annotations.DataProperty;
 import com.nickrobison.trestle.annotations.Spatial;
 import com.nickrobison.trestle.parser.spatial.ESRIParser;
+import com.nickrobison.trestle.parser.spatial.GeotoolsParser;
 import com.nickrobison.trestle.parser.spatial.JTSParser;
 import com.vividsolutions.jts.io.ParseException;
+import org.opengis.referencing.operation.TransformException;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLLiteral;
@@ -43,6 +45,9 @@ public class SpatialParser {
         } else if (typeName.contains("com.esri.core.geometry")) {
             final String esriWKT = ESRIParser.parseESRIToWKT((Geometry) spatialObject);
             wktLiteral = df.getOWLLiteral(esriWKT, wktDatatype);
+        } else if (typeName.contains("org.opengis.geometry")) {
+            final String geoToolsWKT = GeotoolsParser.parseGeotoolsToWKT((org.opengis.geometry.Geometry) spatialObject);
+            wktLiteral = df.getOWLLiteral(geoToolsWKT, wktDatatype);
         } else {
             return Optional.empty();
         }
@@ -60,11 +65,18 @@ public class SpatialParser {
                 Object jtsGeom = JTSParser.wktToJTSObject(wkt, geomClass);
                 return Optional.of(geomClass.cast(jtsGeom));
             } catch (ParseException e) {
-                logger.error("Cannot case wkt to geom", e);
+                logger.error("Cannot parse wkt to ESRI geom", e);
             }
         } else if (typeName.contains("com.esri.core.geometry")) {
             final Object esriGeom = ESRIParser.wktToESRIObject(wkt, geomClass);
             return Optional.of(geomClass.cast(esriGeom));
+        } else if (typeName.contains("org.opengis.geometry")) {
+            try {
+                final Object geotoolsObject = GeotoolsParser.wktToGeotoolsObject(wkt, geomClass);
+                return Optional.of(geomClass.cast(geotoolsObject));
+            } catch (Exception e) {
+                logger.error("Cannot parse wkt to geotools geoms", e);
+            }
         }
         return Optional.empty();
     }

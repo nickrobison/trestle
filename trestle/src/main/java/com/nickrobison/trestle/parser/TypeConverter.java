@@ -119,8 +119,11 @@ public class TypeConverter {
 //            If it's from the geosparql group, we need to figure out the correct return class
 //                Virtuoso smashes everything into its own Geometry class, so geosparql isn't sufficient.
             } else if (datatype.getIRI().getShortForm().equals("wktLiteral") || datatype.getIRI().getShortForm().equals("Geometry")) {
-                javaClass = SpatialParser.GetSpatialClass(classToVerify);
-//                javaClass = String.class;
+                if (classToVerify == null) {
+                    javaClass = String.class;
+                } else {
+                    javaClass = SpatialParser.GetSpatialClass(classToVerify);
+                }
             } else {
     //            String as a last resort.
                 javaClass = String.class;
@@ -129,7 +132,7 @@ public class TypeConverter {
             return javaClass;
         }
 
-    private static OWLDatatype verifyOWLType(Class<?> classToVerify, OWLDataProperty property) {
+    private static @Nullable OWLDatatype verifyOWLType(Class<?> classToVerify, OWLDataProperty property) {
 
             //        Check to see if it matches any annotated data methods
             final Optional<Method> matchedMethod = Arrays.stream(classToVerify.getDeclaredMethods())

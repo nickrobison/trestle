@@ -116,6 +116,43 @@ public class TestClasses {
         }
     }
 
+    @OWLClassName(className = "GAUL_Test")
+    public static class GeotoolsPolygonTest {
+        @IndividualIdentifier
+        public final UUID id;
+        @Spatial
+        public final org.opengis.geometry.coordinate.Polygon geom;
+        @DefaultTemporalProperty(name = "date", type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        public final LocalDate date;
+
+        public GeotoolsPolygonTest(UUID id, org.opengis.geometry.coordinate.Polygon geom, LocalDate date) {
+            this.id = id;
+            this.geom = geom;
+            this.date = date;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            GeotoolsPolygonTest that = (GeotoolsPolygonTest) o;
+
+            if (!id.equals(that.id)) return false;
+            if (!geom.equals(that.geom)) return false;
+            return date != null ? date.equals(that.date) : that.date == null;
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = id.hashCode();
+            result = 31 * result + geom.hashCode();
+            result = 31 * result + (date != null ? date.hashCode() : 0);
+            return result;
+        }
+    }
+
     /**
      * Created by nrobison on 6/27/16.
      */

@@ -8,9 +8,12 @@ import com.nickrobison.trestle.parser.*;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
+import org.geotools.geometry.jts.JTS;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.opengis.referencing.operation.TransformException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 
@@ -20,6 +23,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -36,16 +40,17 @@ public class TrestleAPITest {
     @BeforeEach
     public void setup() {
         reasoner = new TrestleBuilder()
-                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-//                .withDBConnection(
-//                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-//                        "spatialUser",
-//                        "spatial1")
+//                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+                .withDBConnection(
+                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
+                        "spatialUser",
+                        "spatial1")
                 .withName("api-test")
                 .withInputClasses(TestClasses.GAULTestClass.class,
                         TestClasses.GAULComplexClassTest.class,
                         TestClasses.JTSGeometryTest.class,
-                        TestClasses.ESRIPolygonTest.class)
+                        TestClasses.ESRIPolygonTest.class,
+                        TestClasses.GeotoolsPolygonTest.class)
                 .withoutCaching()
                 .initialize()
                 .build();
@@ -106,7 +111,7 @@ public class TrestleAPITest {
     }
 
     @Test
-    public void testClasses() throws TrestleClassException, MissingOntologyEntity, ParseException {
+    public void testClasses() throws TrestleClassException, MissingOntologyEntity, ParseException, TransformException {
 
 //        Complex objects
         final TestClasses.GAULComplexClassTest gaulComplexClassTest = new TestClasses.GAULComplexClassTest();
@@ -131,6 +136,18 @@ public class TrestleAPITest {
         reasoner.writeObjectAsFact(esriPolygonTest);
         final TestClasses.ESRIPolygonTest esriPolygonTest1 = reasoner.readAsObject(esriPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
         assertEquals(esriPolygonTest, esriPolygonTest1, "Should be equal");
+
+//        Geotools
+//
+//        JTS.toGeometry()
+//        final Geometry geotoolsGeom = JTS.toGeographic(new WKTReader().read("POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))"), DefaultGeographicCRS.WGS84);
+//        JTS.toGeometry()
+//        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest = new TestClasses.GeotoolsPolygonTest(UUID.randomUUID(), (org.opengis.geometry.coordinate.Polygon) geotoolsGeom, LocalDate.now());
+//        final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(geotoolsPolygonTest);
+//        reasoner.writeObjectAsFact(geotoolsPolygonTest);
+//        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest1 = reasoner.readAsObject(geotoolsPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
+//        assertEquals(geotoolsPolygonTest, geotoolsPolygonTest1, "Should be equal");
+
 
     }
 

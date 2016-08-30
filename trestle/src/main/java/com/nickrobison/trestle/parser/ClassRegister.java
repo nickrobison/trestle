@@ -143,7 +143,8 @@ public class ClassRegister {
 //            Ensure that the spatial field points to a supported type class
             if (!typeName.contains("java.lang.String")
                     && !typeName.contains("com.vividsolutions.jts")
-                    && !typeName.contains("com.esri.core.geometry")) {
+                    && !typeName.contains("com.esri.core.geometry")
+                    && !typeName.contains("org.opengis.geometry")) {
                 throw new UnsupportedTypeException(Spatial.class, spatialField.getGenericType());
             }
 
@@ -168,7 +169,8 @@ public class ClassRegister {
                 //            Ensure that the spatial field points to a supported type class
                 if (!typeName.contains("java.lang.String")
                         && !typeName.contains("com.vividsolutions.jts")
-                        && !typeName.contains("com.esri.core.geometry")) {
+                        && !typeName.contains("com.esri.core.geometry")
+                        && !typeName.contains("org.opengis.geometry")) {
                     throw new UnsupportedTypeException(Spatial.class, spatialMethod.getGenericReturnType());
                 }
                 final Spatial annotation = spatialMethod.getAnnotation(Spatial.class);
