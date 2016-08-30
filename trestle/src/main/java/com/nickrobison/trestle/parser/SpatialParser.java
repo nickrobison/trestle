@@ -1,16 +1,12 @@
 package com.nickrobison.trestle.parser;
 
-import com.esri.core.geometry.Point;
-import com.esri.core.geometry.Polygon;
+import com.esri.core.geometry.Geometry;
 import com.nickrobison.trestle.annotations.DataProperty;
 import com.nickrobison.trestle.annotations.Spatial;
-import com.nickrobison.trestle.exceptions.UnsupportedTypeException;
-import com.vividsolutions.jts.geom.Geometry;
+import com.nickrobison.trestle.parser.spatial.ESRIParser;
+import com.nickrobison.trestle.parser.spatial.JTSParser;
 import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
-import com.vividsolutions.jts.io.WKTWriter;
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.slf4j.Logger;
@@ -42,8 +38,11 @@ public class SpatialParser {
         if (typeName.contains("java.lang.String")) {
             wktLiteral = df.getOWLLiteral(spatialObject.toString().replace("\"", ""), wktDatatype);
         } else if (typeName.contains("com.vividsolutions")) {
-            String jtsWKT = parseJTSToWKT(spatialObject);
+            String jtsWKT = JTSParser.parseJTSToWKT(spatialObject);
             wktLiteral = df.getOWLLiteral(jtsWKT, wktDatatype);
+        } else if (typeName.contains("com.esri.core.geometry")) {
+            final String esriWKT = ESRIParser.parseESRIToWKT((Geometry) spatialObject);
+            wktLiteral = df.getOWLLiteral(esriWKT, wktDatatype);
         } else {
             return Optional.empty();
         }
@@ -52,30 +51,22 @@ public class SpatialParser {
         return Optional.of(wktLiteral);
     }
 
-    //    TODO(nrobison): Implement better JTS handling
-    private static String parseJTSToWKT(Object jtsObject) {
-        final Geometry jtsGeom = Geometry.class.cast(jtsObject);
-        return new WKTWriter().write(jtsGeom);
-    }
-
     static Optional<Object> parseWKTtoGeom(String wkt, Class<?> geomClass) {
         final String typeName = geomClass.getTypeName();
         if (typeName.contains("java.lang.String")) {
-                return Optional.of(wkt);
-            } else if (typeName.contains("com.vividsolutions")) {
-                try {
-                    Object jtsGeom = wktToJTSObject(wkt, geomClass);
-                    return Optional.of(geomClass.cast(jtsGeom));
-                } catch (ParseException e) {
-                    logger.error("Cannot case wkt to geom", e);
-                }
+            return Optional.of(wkt);
+        } else if (typeName.contains("com.vividsolutions")) {
+            try {
+                Object jtsGeom = JTSParser.wktToJTSObject(wkt, geomClass);
+                return Optional.of(geomClass.cast(jtsGeom));
+            } catch (ParseException e) {
+                logger.error("Cannot case wkt to geom", e);
             }
+        } else if (typeName.contains("com.esri.core.geometry")) {
+            final Object esriGeom = ESRIParser.wktToESRIObject(wkt, geomClass);
+            return Optional.of(geomClass.cast(esriGeom));
+        }
         return Optional.empty();
-    }
-
-//    TODO(nrobison): Implement better JTS handling
-    private static Object wktToJTSObject(String wkt, Class<?> jtsClass) throws ParseException {
-        return new WKTReader().read(wkt);
     }
 
     static Class<?> GetSpatialClass(Class<?> clazz) {
