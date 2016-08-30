@@ -4,12 +4,16 @@ import com.nickrobison.trestle.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.annotations.OWLClassName;
 import com.nickrobison.trestle.annotations.Spatial;
 import com.nickrobison.trestle.annotations.TrestleCreator;
+import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
 import com.nickrobison.trestle.exceptions.InvalidClassException;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.LocalDate;
+import java.util.UUID;
 
 import static com.nickrobison.trestle.exceptions.InvalidClassException.State.EXCESS;
 import static com.nickrobison.trestle.exceptions.InvalidClassException.State.MISSING;
@@ -25,10 +29,10 @@ public class ClassRegisterTest {
     private static FullTest fTest;
     private static ExtraMembers xTest;
     private static SpatialMembers sTest;
+    private static Class<? extends SpatialMembers> sClass;
     private static Class<? extends FullTest> fClass;
     private static Class<? extends EmptyTest> eClass;
     private static Class<? extends ExtraMembers> xClass;
-    private static Class<? extends SpatialMembers> sClass;
     private static final Logger logger = LoggerFactory.getLogger(ClassRegisterTest.class);
 
     @BeforeAll
@@ -37,6 +41,7 @@ public class ClassRegisterTest {
         eTest = new EmptyTest();
         xTest = new ExtraMembers();
         sTest = new SpatialMembers();
+
 
         fClass = fTest.getClass();
         eClass = eTest.getClass();

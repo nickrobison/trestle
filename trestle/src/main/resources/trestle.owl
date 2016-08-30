@@ -145,6 +145,9 @@
         <Class IRI="#Point_Object"/>
     </Declaration>
     <Declaration>
+        <Datatype abbreviatedIRI="xsd:date"/>
+    </Declaration>
+    <Declaration>
         <NamedIndividual IRI="#muni1_muni2"/>
     </Declaration>
     <Declaration>
@@ -252,39 +255,6 @@
     <SubClassOf>
         <Class IRI="#Valid_Object"/>
         <Class IRI="#Temporal_Object"/>
-    </SubClassOf>
-    <SubClassOf>
-        <ObjectUnionOf>
-            <DataSomeValuesFrom>
-                <DataProperty IRI="#exists_at"/>
-                <Datatype abbreviatedIRI="xsd:dateTime"/>
-            </DataSomeValuesFrom>
-            <DataSomeValuesFrom>
-                <DataProperty IRI="#valid_at"/>
-                <Datatype abbreviatedIRI="xsd:dateTime"/>
-            </DataSomeValuesFrom>
-        </ObjectUnionOf>
-        <Class IRI="#Point_Object"/>
-    </SubClassOf>
-    <SubClassOf>
-        <ObjectUnionOf>
-            <DataSomeValuesFrom>
-                <DataProperty IRI="#exists_from"/>
-                <Datatype abbreviatedIRI="xsd:dateTime"/>
-            </DataSomeValuesFrom>
-            <DataSomeValuesFrom>
-                <DataProperty IRI="#valid_from"/>
-                <Datatype abbreviatedIRI="xsd:dateTime"/>
-            </DataSomeValuesFrom>
-        </ObjectUnionOf>
-        <Class IRI="#Interval_Object"/>
-    </SubClassOf>
-    <SubClassOf>
-        <DataSomeValuesFrom>
-            <DataProperty IRI="http://www.opengis.net/ont/geosparql#asWKT"/>
-            <Datatype IRI="http://www.opengis.net/ont/geosparql#wktLiteral"/>
-        </DataSomeValuesFrom>
-        <Class IRI="#SpatialFact"/>
     </SubClassOf>
     <DisjointClasses>
         <Class IRI="#AttributeFact"/>
@@ -680,6 +650,11 @@
         <NamedIndividual IRI="#test_muni5"/>
         <Literal datatypeIRI="http://www.opengis.net/ont/geosparql#wktLiteral">MULTIPOLYGON(((32.6245498660001 -25.828437805,32.5690002440001 -25.810024261,32.553127289 -25.9049606319999,32.5104751590001 -25.934347153,32.501568514 -25.959611663,32.5160249 -25.9422190999999,32.5378609530001 -25.949169159,32.6047744750001 -25.882600784,32.6245498660001 -25.828437805)))</Literal>
     </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_at"/>
+        <NamedIndividual IRI="#test_valid_at"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#date">1990-01-02</Literal>
+    </DataPropertyAssertion>
     <InverseObjectProperties>
         <ObjectProperty IRI="#fact_of"/>
         <ObjectProperty IRI="#has_fact"/>
@@ -786,12 +761,28 @@
         <Class IRI="#Exists_Object"/>
     </DataPropertyDomain>
     <DataPropertyDomain>
+        <DataProperty IRI="#exists_at"/>
+        <Class IRI="#Point_Object"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
         <DataProperty IRI="#exists_from"/>
         <Class IRI="#Exists_Object"/>
     </DataPropertyDomain>
     <DataPropertyDomain>
+        <DataProperty IRI="#exists_from"/>
+        <Class IRI="#Interval_Object"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
         <DataProperty IRI="#exists_to"/>
         <Class IRI="#Exists_Object"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#exists_to"/>
+        <Class IRI="#Interval_Object"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#valid_at"/>
+        <Class IRI="#Point_Object"/>
     </DataPropertyDomain>
     <DataPropertyDomain>
         <DataProperty IRI="#valid_at"/>
@@ -799,11 +790,23 @@
     </DataPropertyDomain>
     <DataPropertyDomain>
         <DataProperty IRI="#valid_from"/>
+        <Class IRI="#Interval_Object"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#valid_from"/>
         <Class IRI="#Valid_Object"/>
     </DataPropertyDomain>
     <DataPropertyDomain>
         <DataProperty IRI="#valid_to"/>
+        <Class IRI="#Interval_Object"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#valid_to"/>
         <Class IRI="#Valid_Object"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="http://www.opengis.net/ont/geosparql#hasSerialization"/>
+        <Class IRI="#SpatialFact"/>
     </DataPropertyDomain>
     <DataPropertyRange>
         <DataProperty IRI="#ADM0_Code"/>
@@ -851,8 +854,16 @@
     </DataPropertyRange>
     <DataPropertyRange>
         <DataProperty IRI="#Temporal"/>
-        <Datatype abbreviatedIRI="xsd:dateTime"/>
+        <DataUnionOf>
+            <Datatype abbreviatedIRI="xsd:date"/>
+            <Datatype abbreviatedIRI="xsd:dateTime"/>
+            <Datatype abbreviatedIRI="xsd:dateTimeStamp"/>
+        </DataUnionOf>
     </DataPropertyRange>
+    <DisjointDataProperties>
+        <DataProperty IRI="#exists_at"/>
+        <DataProperty IRI="#valid_at"/>
+    </DisjointDataProperties>
     <DisjointDataProperties>
         <DataProperty IRI="#exists_from"/>
         <DataProperty IRI="#valid_from"/>

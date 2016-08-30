@@ -18,6 +18,7 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.resultset.ResultSetMem;
+import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -34,6 +35,7 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.temporal.Temporal;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.LambdaExceptionUtil.rethrowFunction;
@@ -49,17 +51,19 @@ public class TrestleReasoner {
     public static final String DEFAULTNAME = "trestle";
 
     private final ITrestleOntology ontology;
-    private final Set<Class> registeredClasses;
+    private final Set<Class> registeredClasses = new HashSet<>();
     private final OWLDataFactory df;
     //    Seems gross?
     private static final OWLClass datasetClass = OWLManager.getOWLDataFactory().getOWLClass(IRI.create("trestle:", "Dataset"));
     private final QueryBuilder qb;
     private final QueryBuilder.DIALECT spatialDalect;
-    private final boolean cachingEnabled;
-    @MonotonicNonNull private TrestleCache trestleCache = null;
+    private boolean cachingEnabled = true;
+    private @Nullable TrestleCache trestleCache = null;
 
     @SuppressWarnings("dereference.of.nullable")
-    private TrestleReasoner(TrestleBuilder builder) throws OWLOntologyCreationException {
+    TrestleReasoner(TrestleBuilder builder) throws OWLOntologyCreationException {
+
+        df = OWLManager.getOWLDataFactory();
 
         final URL ontologyResource = TrestleReasoner.class.getClassLoader().getResource("trestle.owl");
         final InputStream ontologyIS = TrestleReasoner.class.getClassLoader().getResourceAsStream("trestle.owl");
@@ -70,8 +74,18 @@ public class TrestleReasoner {
         }
         logger.info("Loading ontology from {}", ontologyResource);
 
-//        Parse the listed input classes
-        this.registeredClasses = builder.inputClasses;
+//            validate the classes
+        builder.inputClasses.forEach(clazz -> {
+            try {
+                ClassRegister.ValidateClass(clazz);
+                this.registeredClasses.add(clazz);
+            } catch (TrestleClassException e) {
+                logger.error("Cannot validate class {}", clazz, e);
+            }
+        });
+
+//        Register some constructor functions
+        TypeConverter.registerTypeConstructor(UUID.class, df.getOWLDatatype(UUIDDatatypeIRI), (uuidString) -> UUID.fromString(uuidString.toString()));
 
         logger.info("Connecting to ontology {} at {}", builder.ontologyName.orElse(DEFAULTNAME), builder.connectionString.orElse("localhost"));
         OntologyBuilder ontologyBuilder = new OntologyBuilder()
@@ -100,12 +114,11 @@ public class TrestleReasoner {
                 }
             }
         }
-        df = OWLManager.getOWLDataFactory();
 
 //        Are we a caching reasoner?
-        this.cachingEnabled = builder.caching;
-        if (cachingEnabled) {
-//            Build caches
+        if (!builder.caching) {
+            this.cachingEnabled = false;
+        } else {
             logger.info("Building trestle caches");
             trestleCache = builder.sharedCache.orElse(new TrestleCache.TrestleCacheBuilder().build());
         }
@@ -137,6 +150,16 @@ public class TrestleReasoner {
     public void shutdown(boolean delete) {
         logger.info("Shutting down ontology");
         this.ontology.close(delete);
+    }
+
+    /**
+     * Register custom constructor function for a given java class/OWLDataType intersection
+     * @param clazz - Java class to construct
+     * @param datatype - OWLDatatype to match with Java class
+     * @param constructorFunc - Function lambda function to take OWLLiteral and generate given java class
+     */
+    public void registerTypeConstructor(Class<?> clazz, OWLDatatype datatype, Function constructorFunc) {
+        TypeConverter.registerTypeConstructor(clazz, datatype, constructorFunc);
     }
 
     //    When you get the ontology, the ownership passes away, so then the reasoner can't perform any more queries.
@@ -309,7 +332,7 @@ public class TrestleReasoner {
     <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache) throws TrestleClassException, MissingOntologyEntity {
 
 //        Check for cache hit first, provided caching is enabled and we're not set to bypass the cache
-        if (cachingEnabled & !bypassCache) {
+        if (isCachingEnabled() & !bypassCache) {
             logger.debug("Retrieving {} from cache", individualIRI);
             return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readAsObject(clazz, individualIRI, true))));
         } else {
@@ -332,8 +355,8 @@ public class TrestleReasoner {
         if (dataProperties.isPresent()) {
             final Set<OWLDataPropertyAssertionAxiom> propertiesForIndividual = ontology.getDataPropertiesForIndividual(individualIRI, dataProperties.get());
             propertiesForIndividual.forEach(property -> {
-                final Class<?> javaClass = ClassBuilder.lookupJavaClassFromOWLDatatype(property, clazz);
-                final Object literalValue = ClassBuilder.extractOWLLiteral(javaClass, property.getObject());
+                final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, clazz);
+                final Object literalValue = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
                 constructorArguments.addArgument(
                         ClassParser.matchWithClassMember(clazz, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
                         javaClass,
@@ -390,7 +413,7 @@ public class TrestleReasoner {
         this.ontology.openAndLock(false);
         final OWLClass owlClass = ClassParser.GetObjectClass(inputObject);
         final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(inputObject);
-        final Optional<String> wktString = ClassParser.GetSpatialValue(inputObject);
+        final Optional<String> wktString = SpatialParser.GetSpatialValue(inputObject);
         if (wktString.isPresent()) {
             String spatialIntersection = null;
 
@@ -567,16 +590,16 @@ public class TrestleReasoner {
                         temporalIRI,
                         StaticIRI.temporalValidFromIRI,
                         temporal.asInterval().getFromTime().toString(),
-                        StaticIRI.temporalDatatypeIRI);
+                        temporal.getBaseTemporalTypeIRI());
 
 //                Write to, if exists
-                final Optional<LocalDateTime> toTime = temporal.asInterval().getToTime();
+                final Optional<Temporal> toTime = temporal.asInterval().getToTime();
                 if (toTime.isPresent()) {
                     ontology.writeIndividualDataProperty(
                             temporalIRI,
                             StaticIRI.temporalValidToIRI,
                             toTime.get().toString(),
-                            StaticIRI.temporalDatatypeIRI);
+                            temporal.getBaseTemporalTypeIRI());
                 }
             } else {
                 //                Write from
@@ -584,16 +607,16 @@ public class TrestleReasoner {
                         temporalIRI,
                         StaticIRI.temporalExistsFromIRI,
                         temporal.asInterval().getFromTime().toString(),
-                        StaticIRI.temporalDatatypeIRI);
+                        temporal.getBaseTemporalTypeIRI());
 
 //                Write to, if exists
-                final Optional<LocalDateTime> toTime = temporal.asInterval().getToTime();
+                final Optional<Temporal> toTime = temporal.asInterval().getToTime();
                 if (toTime.isPresent()) {
                     ontology.writeIndividualDataProperty(
                             temporalIRI,
                             StaticIRI.temporalExistsToIRI,
                             toTime.get().toString(),
-                            StaticIRI.temporalDatatypeIRI);
+                            temporal.getBaseTemporalTypeIRI());
                 }
             }
         } else {
@@ -603,13 +626,13 @@ public class TrestleReasoner {
                         temporalIRI,
                         StaticIRI.temporalValidAtIRI,
                         temporal.asPoint().getPointTime().toString(),
-                        StaticIRI.temporalDatatypeIRI);
+                        temporal.getBaseTemporalTypeIRI());
             } else {
                 ontology.writeIndividualDataProperty(
                         temporalIRI,
                         StaticIRI.temporalExistsAtIRI,
                         temporal.asPoint().getPointTime().toString(),
-                        StaticIRI.temporalDatatypeIRI);
+                        temporal.getBaseTemporalTypeIRI());
             }
         }
 
@@ -639,121 +662,10 @@ public class TrestleReasoner {
         return false;
     }
 
-
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public static class TrestleBuilder {
-
-        private Optional<String> connectionString = Optional.empty();
-        private String username;
-        private String password;
-        private final Set<Class> inputClasses;
-        private Optional<String> ontologyName = Optional.empty();
-        private Optional<TrestleCache> sharedCache = Optional.empty();
-        private boolean initialize = false;
-        private boolean caching = true;
-
-        @Deprecated
-        public TrestleBuilder(IRI iri) {
-            this.username = "";
-            this.password = "";
-            this.inputClasses = new HashSet<>();
-        }
-
-        /**
-         * Builder pattern for Trestle Reasoner
-         */
-        public TrestleBuilder() {
-            this.username = "";
-            this.password = "";
-            this.inputClasses = new HashSet<>();
-        }
-
-        /**
-         * Connection parameters for underlying triple store to connect to.
-         * Based on the connection string, Trestle will build the correct underlying ontology
-         * Without specifying a connection string, Trestle will utilize a local Jena TDB store
-         * @param connectionString - jdbc connection string for triple store
-         * @param username - Username of connection
-         * @param password - Password of connection
-         * @return - TrestleBuilder
-         */
-        public TrestleBuilder withDBConnection(String connectionString, String username, String password) {
-            this.connectionString = Optional.of(connectionString);
-            this.username = username;
-            this.password = password;
-            return this;
-        }
-
-        /**
-         * A list of initial classes to verify and load into trestle.
-         * @param inputClass - Vararg list of classes to load and verify
-         * @return - TrestleBuilder
-         */
-        public TrestleBuilder withInputClasses(Class... inputClass) {
-//            this.inputClasses.addAll(Arrays.asList(inputClass));
-////            validate the classes
-            Arrays.stream(inputClass)
-                    .forEach(clazz -> {
-                        try {
-                            ClassRegister.ValidateClass(clazz);
-                            this.inputClasses.add(clazz);
-                        } catch (TrestleClassException e) {
-                            logger.error("Cannot validate class {}", clazz, e);
-                        }
-                    });
-            return this;
-        }
-
-        /**
-         * Disable caching
-         * @return - TrestleBuilder
-         */
-        public TrestleBuilder withoutCaching() {
-            caching = false;
-            return this;
-        }
-
-        /**
-         * Setup trestle with a preexisting shared cache
-         * @param cache - TrestleCache to use
-         * @return - TrestleBuilder
-         */
-        public TrestleBuilder withSharedCache(TrestleCache cache) {
-            this.sharedCache = Optional.of(cache);
-            return this;
-        }
-
-        /**
-         * Set the ontology name
-         * @param name - String of ontology name
-         * @return - TrestleBuilder
-         */
-        public TrestleBuilder withName(String name) {
-//            FIXME(nrobison): Oracle seems to throw errors when using '-' in the name, so maybe parse that out?p
-            this.ontologyName = Optional.of(name);
-            return this;
-        }
-
-        /**
-         * Initialize a new ontology on creation. Will override any existing model
-         * @return - TrestleBuilder
-         */
-        public TrestleBuilder initialize() {
-            this.initialize = true;
-            return this;
-        }
-
-        /**
-         * Build the Trestle Reasoner
-         * @return - new TrestleReasoner
-         */
-        public TrestleReasoner build() {
-            try {
-                return new TrestleReasoner(this);
-            } catch (OWLOntologyCreationException e) {
-                logger.error("Cannot build trestle", e);
-                throw new RuntimeException("Cannot build trestle", e);
-            }
-        }
+    @EnsuresNonNullIf(expression = "this.trestleCache", result = true)
+    private boolean isCachingEnabled() {
+        return this.trestleCache != null;
     }
+
+
 }

@@ -1,24 +1,17 @@
 package com.nickrobison.trestle.parser;
 
-import com.nickrobison.trestle.annotations.DataProperty;
-import com.nickrobison.trestle.annotations.Spatial;
 import com.nickrobison.trestle.annotations.TrestleCreator;
 import com.nickrobison.trestle.exceptions.MissingConstructorException;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.*;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.nickrobison.trestle.common.StaticIRI.GEOSPARQLPREFIX;
-import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
 import static com.nickrobison.trestle.parser.ClassParser.*;
 
 /**
@@ -28,7 +21,6 @@ import static com.nickrobison.trestle.parser.ClassParser.*;
 public class ClassBuilder {
 
     private static final Logger logger = LoggerFactory.getLogger(ClassBuilder.class);
-    private static final Map<OWL2Datatype, Class<?>> datatypeMap = buildDatatype2ClassMap();
 
     /**
      * Get a list of data properties from a given class
@@ -41,37 +33,17 @@ public class ClassBuilder {
         List<OWLDataProperty> classFields = new ArrayList<>();
         Arrays.stream(clazz.getDeclaredFields())
                 .filter(ClassParser::filterDataPropertyField)
-                .forEach(field -> classFields.add(df.getOWLDataProperty(filterDataSpatialName(field))));
+                .forEach(field -> classFields.add(df.getOWLDataProperty(SpatialParser.filterDataSpatialName(field))));
 
         Arrays.stream(clazz.getDeclaredMethods())
                 .filter(ClassParser::filterDataPropertyMethod)
-                .forEach(method -> classFields.add(df.getOWLDataProperty(filterDataSpatialName(method))));
+                .forEach(method -> classFields.add(df.getOWLDataProperty(SpatialParser.filterDataSpatialName(method))));
 
         if (classFields.isEmpty()) {
             return Optional.empty();
         }
 
         return Optional.of(classFields);
-    }
-
-    private static IRI filterDataSpatialName(Field classField) {
-        if (classField.isAnnotationPresent(DataProperty.class)) {
-            return IRI.create(PREFIX, classField.getAnnotation(DataProperty.class).name());
-        } else if (classField.isAnnotationPresent(Spatial.class)) {
-            return IRI.create(GEOSPARQLPREFIX, "asWKT");
-        } else {
-            return IRI.create(PREFIX, classField.getName());
-        }
-    }
-
-    private static IRI filterDataSpatialName(Method classMethod) {
-        if (classMethod.isAnnotationPresent(DataProperty.class)) {
-            return IRI.create(PREFIX, classMethod.getAnnotation(DataProperty.class).name());
-        } else if (classMethod.isAnnotationPresent(Spatial.class)) {
-            return IRI.create(GEOSPARQLPREFIX, "asWKT");
-        } else {
-            return IRI.create(PREFIX, filterMethodName(classMethod));
-        }
     }
 
     //    FIXME(nrobison): I think these warnings are important.
@@ -177,124 +149,5 @@ public class ClassBuilder {
         return false;
     }
 
-//    I need the unchecked casts in order to get the correct primitives for the constructor generation
-    @SuppressWarnings({"unchecked"})
-    public static <T> @NonNull T extractOWLLiteral(Class<@NonNull T> javaClass, OWLLiteral literal) {
 
-        switch (javaClass.getTypeName()) {
-
-            case "int": {
-//                return javaClass.cast(literal.parseInteger());
-                return (@NonNull T) (Object) literal.parseInteger();
-            }
-
-            case "java.lang.Integer": {
-                return javaClass.cast(literal.parseInteger());
-//                return (T) (Object) literal.parseInteger();
-            }
-
-            case "long": {
-//                return javaClass.cast(Long.parseLong(literal.getLiteral()));
-                return (@NonNull T) (Object) Long.parseLong(literal.getLiteral());
-            }
-
-            case "java.lang.Long": {
-                return javaClass.cast(Long.parseLong(literal.getLiteral()));
-//                return (T) (Object) Long.parseLong(literal.getLiteral());
-            }
-
-            case "java.lang.LocalDateTime": {
-                return javaClass.cast(LocalDateTime.parse(literal.getLiteral()));
-//                return (T) (Object) LocalDateTime.parse(literal.getLiteral());
-            }
-
-            case "java.lang.String": {
-                return javaClass.cast(literal.getLiteral());
-//                return (T) (Object) literal.getLiteral();
-            }
-
-            case "java.lang.Double": {
-                return javaClass.cast(literal.parseDouble());
-//                return (T) (Object) literal.parseDouble();
-            }
-
-            case "java.lang.Boolean": {
-                return javaClass.cast(literal.parseBoolean());
-//                return (T) (Object) literal.parseBoolean();
-            }
-
-            default: {
-                throw new RuntimeException(String.format("Unsupported cast %s", javaClass));
-            }
-        }
-    }
-
-    @SuppressWarnings("dereference.of.nullable")
-    public static Class<?> lookupJavaClassFromOWLDatatype(OWLDataPropertyAssertionAxiom dataproperty, @Nullable Class<?> classToVerify) {
-        final Class<?> javaClass;
-        final OWLDatatype datatype = dataproperty.getObject().getDatatype();
-        if (datatype.isBuiltIn()) {
-
-//            Check with the class to make sure the types are correct
-            OWL2Datatype dataTypeToLookup = null;
-            if (classToVerify != null) {
-                dataTypeToLookup = verifyOWLType(classToVerify, dataproperty.getProperty().asOWLDataProperty());
-            }
-            if (dataTypeToLookup == null) {
-                dataTypeToLookup = datatype.getBuiltInDatatype();
-            }
-            javaClass = datatypeMap.get(dataTypeToLookup);
-            if (javaClass == null) {
-                throw new RuntimeException(String.format("Unsupported OWL2Datatype %s", datatype));
-            }
-        } else if (datatype.getIRI().getScheme().equals("geosparql")) {
-//            If it's from the geosparql group, we can just treat it as a string
-            javaClass = String.class;
-        } else {
-//            String as a last resort.
-            javaClass = String.class;
-        }
-
-        return javaClass;
-    }
-
-    private static @Nullable OWL2Datatype verifyOWLType(Class<?> classToVerify, OWLDataProperty property) {
-
-        //        Check to see if it matches any annotated data methods
-        final Optional<Method> matchedMethod = Arrays.stream(classToVerify.getDeclaredMethods())
-                .filter(m -> getMethodName(m).equals(property.getIRI().getShortForm()))
-                .findFirst();
-
-        if (matchedMethod.isPresent()) {
-            return ClassParser.getDatatypeFromJavaClass(matchedMethod.get().getReturnType());
-        }
-
-//        Fields
-        final Optional<Field> matchedField = Arrays.stream(classToVerify.getDeclaredFields())
-                .filter(f -> getFieldName(f).equals(property.getIRI().getShortForm()))
-                .findFirst();
-
-        if (matchedField.isPresent()) {
-            return ClassParser.getDatatypeFromJavaClass(matchedField.get().getType());
-        }
-
-        return null;
-    }
-
-
-    private static Map<OWL2Datatype, Class<?>> buildDatatype2ClassMap() {
-        Map<OWL2Datatype, Class<?>> datatypeMap = new HashMap<>();
-
-        datatypeMap.put(OWL2Datatype.XSD_INTEGER, Integer.TYPE);
-        datatypeMap.put(OWL2Datatype.XSD_INT, int.class);
-        datatypeMap.put(OWL2Datatype.XSD_LONG, long.class);
-        datatypeMap.put(OWL2Datatype.XSD_DOUBLE, Double.TYPE);
-        datatypeMap.put(OWL2Datatype.XSD_FLOAT, double.class);
-        datatypeMap.put(OWL2Datatype.XSD_DECIMAL, Double.class);
-        datatypeMap.put(OWL2Datatype.XSD_DATE_TIME, LocalDateTime.class);
-        datatypeMap.put(OWL2Datatype.XSD_BOOLEAN, Boolean.TYPE);
-        datatypeMap.put(OWL2Datatype.XSD_STRING, String.class);
-
-        return datatypeMap;
-    }
 }

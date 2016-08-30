@@ -5,6 +5,7 @@ import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
 import com.nickrobison.gaulintegrator.GAULObject;
 import com.nickrobison.gaulintegrator.common.ObjectID;
+import com.nickrobison.trestle.TrestleBuilder;
 import com.nickrobison.trestle.TrestleReasoner;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
@@ -12,7 +13,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,7 +30,7 @@ public class ClassValidationTest {
 
     @BeforeAll
     public static void setup() {
-        reasoner = new TrestleReasoner.TrestleBuilder()
+        reasoner = new TrestleBuilder()
 //                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
                 .withDBConnection("jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial", "spatialUser", "spatial1")
                 .withName("gaul_class_test")

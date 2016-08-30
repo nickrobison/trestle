@@ -2,6 +2,7 @@ package com.nickrobison.gaulintegrator.HadoopTests;
 
 import com.esri.mapreduce.PolygonFeatureInputFormat;
 import com.nickrobison.gaulintegrator.*;
+import com.nickrobison.trestle.TrestleBuilder;
 import com.nickrobison.trestle.TrestleReasoner;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
@@ -83,7 +84,7 @@ public class GAULIntegratorTests {
         conf.set("reasoner.ontology.name", ontologyName);
 
 //        Setup reasoner
-        reasoner = new TrestleReasoner.TrestleBuilder()
+        reasoner = new TrestleBuilder()
                 .withDBConnection(connectionString, userName, password)
                 .withInputClasses(GAULObject.class)
                 .initialize()
@@ -122,7 +123,7 @@ public class GAULIntegratorTests {
         assertTrue(job.isSuccessful());
 
 //        Try to find some individuals
-        reasoner = new TrestleReasoner.TrestleBuilder()
+        reasoner = new TrestleBuilder()
                 .withDBConnection(connectionString, userName, password)
                 .withInputClasses(GAULObject.class)
                 .withName(ontologyName)

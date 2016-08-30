@@ -139,14 +139,13 @@ public class ClassRegister {
         } else if (spatialFields.size() == 1) {
 //            Check to make sure the field is a type we can handle
             final Field spatialField = spatialFields.get(0);
-            switch (spatialField.getType().getTypeName()) {
-                case "java.lang.String": {
-                    break;
-                }
-//                ESRI
-//                Geotools
-                default:
-                    throw new UnsupportedTypeException(Spatial.class, spatialField.getGenericType());
+            final String typeName = spatialField.getType().getTypeName();
+//            Ensure that the spatial field points to a supported type class
+            if (!typeName.contains("java.lang.String")
+                    && !typeName.contains("com.vividsolutions.jts")
+                    && !typeName.contains("com.esri.core.geometry")
+                    && !typeName.contains("org.opengis.geometry")) {
+                throw new UnsupportedTypeException(Spatial.class, spatialField.getGenericType());
             }
 
 //            Check to ensure it matches a constructor argument
@@ -166,14 +165,13 @@ public class ClassRegister {
                 throw new InvalidClassException(aClass, InvalidClassException.State.EXCESS, "Spatial");
             } else if (spatialMethods.size() == 1) {
                 final Method spatialMethod = spatialMethods.get(0);
-                switch (spatialMethod.getReturnType().getTypeName()) {
-                    case "java.lang.String": {
-                        break;
-                    }
-//                ESRI
-//                Geotools
-                    default:
-                        throw new UnsupportedTypeException(Spatial.class, spatialMethod.getGenericReturnType());
+                final String typeName = spatialMethod.getReturnType().getTypeName();
+                //            Ensure that the spatial field points to a supported type class
+                if (!typeName.contains("java.lang.String")
+                        && !typeName.contains("com.vividsolutions.jts")
+                        && !typeName.contains("com.esri.core.geometry")
+                        && !typeName.contains("org.opengis.geometry")) {
+                    throw new UnsupportedTypeException(Spatial.class, spatialMethod.getGenericReturnType());
                 }
                 final Spatial annotation = spatialMethod.getAnnotation(Spatial.class);
                 if (!annotation.name().equals("")) {
