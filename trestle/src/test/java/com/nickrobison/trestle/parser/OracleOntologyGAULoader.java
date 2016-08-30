@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.parser;
 
+import com.nickrobison.trestle.TestClasses;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
@@ -33,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "Duplicates"})
 public class OracleOntologyGAULoader {
 
-    private List<GAULTestClass> gaulObjects = new ArrayList<>();
+    private List<TestClasses.GAULTestClass> gaulObjects = new ArrayList<>();
     private OWLDataFactory df;
     private OracleOntology ontology;
 
@@ -65,7 +66,7 @@ public class OracleOntologyGAULoader {
 //            final LocalDateTime startTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
 
 //            Need to add a second to get it to format correctly.
-            gaulObjects.add(new GAULTestClass(code, splitLine[1].replace("\"", ""), date.atStartOfDay().plusSeconds(1), splitLine[4].replace("\"", "")));
+            gaulObjects.add(new TestClasses.GAULTestClass(code, splitLine[1].replace("\"", ""), date.atStartOfDay().plusSeconds(1), splitLine[4].replace("\"", "")));
         }
 
         final IRI iri = IRI.create("file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl");
@@ -99,7 +100,7 @@ public class OracleOntologyGAULoader {
         final OWLSubClassOfAxiom owlSubClassOfAxiom = df.getOWLSubClassOfAxiom(datasetClass, datasetSuperClass);
         ontology.associateOWLClass(owlSubClassOfAxiom);
 
-        for (GAULTestClass gaul : gaulObjects) {
+        for (TestClasses.GAULTestClass gaul : gaulObjects) {
             datasetClass = ClassParser.GetObjectClass(gaul);
             final OWLNamedIndividual gaulIndividual = ClassParser.GetIndividual(gaul);
             final OWLClassAssertionAxiom testClass = df.getOWLClassAssertionAxiom(datasetClass, gaulIndividual);

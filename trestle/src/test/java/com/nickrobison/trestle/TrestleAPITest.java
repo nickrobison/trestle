@@ -4,8 +4,6 @@ import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.parser.*;
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -43,7 +41,7 @@ public class TrestleAPITest {
 //                        "spatialUser",
 //                        "spatial1")
                 .withName("api-test")
-                .withInputClasses(GAULTestClass.class, GAULComplexClassTest.class, TestClasses.JTSGeometryTest.class)
+                .withInputClasses(TestClasses.GAULTestClass.class, GAULComplexClassTest.class, TestClasses.JTSGeometryTest.class)
                 .withoutCaching()
                 .initialize()
                 .build();
@@ -54,7 +52,7 @@ public class TrestleAPITest {
     @Test
     public void gaulLoader() throws IOException, TrestleClassException, MissingOntologyEntity, OWLOntologyStorageException {
 //        Parse the CSV
-        List<GAULTestClass> gaulObjects = new ArrayList<>();
+        List<TestClasses.GAULTestClass> gaulObjects = new ArrayList<>();
 
         final InputStream is = OracleOntologyGAULoader.class.getClassLoader().getResourceAsStream("objects.csv");
 
@@ -79,7 +77,7 @@ public class TrestleAPITest {
 //            final LocalDateTime startTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
 
 //            Need to add a second to get it to format correctly.
-            gaulObjects.add(new GAULTestClass(code, splitLine[1].replace("\"", ""), date.atStartOfDay().plusSeconds(1), splitLine[4].replace("\"", "")));
+            gaulObjects.add(new TestClasses.GAULTestClass(code, splitLine[1].replace("\"", ""), date.atStartOfDay().plusSeconds(1), splitLine[4].replace("\"", "")));
         }
 
 //        Write the objects
@@ -92,14 +90,14 @@ public class TrestleAPITest {
         });
 
 //        Validate Results
-        final Set<OWLNamedIndividual> gaulInstances = reasoner.getInstances(GAULTestClass.class);
+        final Set<OWLNamedIndividual> gaulInstances = reasoner.getInstances(TestClasses.GAULTestClass.class);
         assertEquals(191, gaulInstances.size(), "Wrong number of GAUL records from instances method");
 
 //        reasoner.getUnderlyingOntology().writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);
 
 //        Try to read one out.
 //        final GAULTestClass ancuabe = reasoner.readAsObject(GAULTestClass.class, IRI.create("trestle:", "Ancuabe"));
-        @NonNull final GAULTestClass ancuabe = reasoner.readAsObject(GAULTestClass.class, "Ancuabe");
+        final TestClasses.GAULTestClass ancuabe = reasoner.readAsObject(TestClasses.GAULTestClass.class, "Ancuabe");
         assertEquals(ancuabe.adm0_name, "Ancuabe", "Wrong name");
     }
 

@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.parser;
 
+import com.nickrobison.trestle.TestClasses;
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
@@ -10,9 +11,6 @@ import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -37,7 +35,7 @@ import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
 @SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "unchecked"})
 public class TrestleParserTest {
 
-    private GAULTestClass gaulTestClass;
+    private TestClasses.GAULTestClass gaulTestClass;
     private ExpandedGAULTests expandedGAULClass;
     private OWLDataFactory df;
     private TemporalObject temporal;
@@ -47,7 +45,7 @@ public class TrestleParserTest {
 
     @BeforeEach
     public void Setup() {
-        gaulTestClass = new GAULTestClass(1234, "gaulTestClass");
+        gaulTestClass = new TestClasses.GAULTestClass(1234, "gaulTestClass");
         expandedGAULClass = new ExpandedGAULTests();
         testMethod = new GAULMethodTest();
         complexObjectClass = new GAULComplexClassTest();
