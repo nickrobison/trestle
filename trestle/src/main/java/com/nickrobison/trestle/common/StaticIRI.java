@@ -31,5 +31,6 @@ public class StaticIRI {
     public static final IRI dateTimeDatatypeIRI = IRI.create(XSDPREFIX, "dateTime");
     public static final IRI dateDatatypeIRI = IRI.create(XSDPREFIX, "date");
     public static final IRI UUIDDatatypeIRI = IRI.create(PREFIX, "UUID");
+    public static final IRI WKTDatatypeIRI = IRI.create(GEOSPARQLPREFIX, "wktLiteral");
 
 }

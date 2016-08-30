@@ -143,6 +143,9 @@ public class ClassRegister {
                 case "java.lang.String": {
                     break;
                 }
+                case "com.vividsolutions.jts.geom.Geometry": {
+                    break;
+                }
 //                ESRI
 //                Geotools
                 default:
@@ -168,6 +171,9 @@ public class ClassRegister {
                 final Method spatialMethod = spatialMethods.get(0);
                 switch (spatialMethod.getReturnType().getTypeName()) {
                     case "java.lang.String": {
+                        break;
+                    }
+                    case "com.vividsolutions.jts.geom.Geometry": {
                         break;
                     }
 //                ESRI

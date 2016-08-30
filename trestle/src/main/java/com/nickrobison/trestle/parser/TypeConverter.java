@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.annotations.DataProperty;
+import com.vividsolutions.jts.geom.Geometry;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 
+import static com.nickrobison.trestle.common.StaticIRI.WKTDatatypeIRI;
 import static com.nickrobison.trestle.common.StaticIRI.dateDatatypeIRI;
 import static com.nickrobison.trestle.parser.ClassParser.df;
 import static com.nickrobison.trestle.parser.ClassParser.getFieldName;
@@ -34,7 +36,7 @@ public class TypeConverter {
     private static final Map<Class<?>, OWLDatatype> owlDatatypeMap = buildClassMap();
     private static final Map<String, Function> javaClassConstructors = new HashMap<>();
 
-    public static void registerTypeConstructor(Class<?> clazz, OWLDatatype datatype, Function constructorFunc) {
+    public static void registerTypeConstructor(Class<?> clazz, @Nullable OWLDatatype datatype, Function constructorFunc) {
         logger.debug("Registering java class {} with OWLDatatype {}", clazz.getName(), datatype.getIRI());
         datatypeMap.put(datatype, clazz);
         owlDatatypeMap.put(clazz, datatype);
@@ -80,6 +82,11 @@ public class TypeConverter {
                 }
 
                 default: {
+//                    Is it a geom type?
+                    final Optional<Object> geomObject = SpatialParser.parseWKTtoGeom(literal.getLiteral(), javaClass);
+                    if (geomObject.isPresent()) {
+                        return javaClass.cast(geomObject.get());
+                    }
 //                    Try to get a match from the custom constructor registry
                     final Function constructorFunction = javaClassConstructors.get(javaClass.getTypeName());
                     if (constructorFunction == null) {
@@ -109,9 +116,11 @@ public class TypeConverter {
                 if (javaClass == null) {
                     throw new RuntimeException(String.format("Unsupported OWLDatatype %s", datatype));
                 }
-            } else if (datatype.getIRI().getScheme().equals("geosparql")) {
-    //            If it's from the geosparql group, we can just treat it as a string
-                javaClass = String.class;
+//            If it's from the geosparql group, we need to figure out the correct return class
+//                Virtuoso smashes everything into its own Geometry class, so geosparql isn't sufficient.
+            } else if (datatype.getIRI().getShortForm().equals("wktLiteral") || datatype.getIRI().getShortForm().equals("Geometry")) {
+                javaClass = SpatialParser.GetSpatialClass(classToVerify);
+//                javaClass = String.class;
             } else {
     //            String as a last resort.
                 javaClass = String.class;
@@ -146,15 +155,15 @@ public class TypeConverter {
     static Map<OWLDatatype, Class<?>> buildDatatype2ClassMap() {
         Map<OWLDatatype, Class<?>> datatypeMap = new HashMap<>();
 
-        datatypeMap.put(OWL2Datatype.XSD_INTEGER.getDatatype(df), Integer.TYPE);
+        datatypeMap.put(OWL2Datatype.XSD_INTEGER.getDatatype(df), Integer.class);
         datatypeMap.put(OWL2Datatype.XSD_INT.getDatatype(df), int.class);
         datatypeMap.put(OWL2Datatype.XSD_LONG.getDatatype(df), long.class);
-        datatypeMap.put(OWL2Datatype.XSD_DOUBLE.getDatatype(df), Double.TYPE);
+        datatypeMap.put(OWL2Datatype.XSD_DOUBLE.getDatatype(df), Double.class);
         datatypeMap.put(OWL2Datatype.XSD_FLOAT.getDatatype(df), double.class);
         datatypeMap.put(OWL2Datatype.XSD_DECIMAL.getDatatype(df), Double.class);
         datatypeMap.put(OWL2Datatype.XSD_DATE_TIME.getDatatype(df), LocalDateTime.class);
         datatypeMap.put(df.getOWLDatatype(dateDatatypeIRI), LocalDate.class);
-        datatypeMap.put(OWL2Datatype.XSD_BOOLEAN.getDatatype(df), Boolean.TYPE);
+        datatypeMap.put(OWL2Datatype.XSD_BOOLEAN.getDatatype(df), Boolean.class);
         datatypeMap.put(OWL2Datatype.XSD_STRING.getDatatype(df), String.class);
 
         return datatypeMap;
@@ -162,19 +171,20 @@ public class TypeConverter {
 
     private static Map<Class<?>, OWLDatatype> buildClassMap() {
         Map<Class<?>, OWLDatatype> types = new HashMap<>();
-        types.put(Integer.TYPE, OWL2Datatype.XSD_INTEGER.getDatatype(df));
+        types.put(Integer.class, OWL2Datatype.XSD_INTEGER.getDatatype(df));
         types.put(int.class, OWL2Datatype.XSD_INT.getDatatype(df));
-        types.put(Double.TYPE, OWL2Datatype.XSD_DOUBLE.getDatatype(df));
+        types.put(Double.class, OWL2Datatype.XSD_DOUBLE.getDatatype(df));
         types.put(double.class, OWL2Datatype.XSD_FLOAT.getDatatype(df));
-        types.put(Float.TYPE, OWL2Datatype.XSD_DOUBLE.getDatatype(df));
+        types.put(Float.class, OWL2Datatype.XSD_DOUBLE.getDatatype(df));
         types.put(float.class, OWL2Datatype.XSD_FLOAT.getDatatype(df));
-        types.put(Boolean.TYPE, OWL2Datatype.XSD_BOOLEAN.getDatatype(df));
+        types.put(Boolean.class, OWL2Datatype.XSD_BOOLEAN.getDatatype(df));
         types.put(boolean.class, OWL2Datatype.XSD_BOOLEAN.getDatatype(df));
-        types.put(Long.TYPE, OWL2Datatype.XSD_LONG.getDatatype(df));
+        types.put(Long.class, OWL2Datatype.XSD_LONG.getDatatype(df));
         types.put(long.class, OWL2Datatype.XSD_LONG.getDatatype(df));
         types.put(String.class, OWL2Datatype.XSD_STRING.getDatatype(df));
         types.put(LocalDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
         types.put(LocalDate.class, df.getOWLDatatype(dateDatatypeIRI));
+        types.put(Geometry.class, df.getOWLDatatype(WKTDatatypeIRI));
 
         return types;
     }

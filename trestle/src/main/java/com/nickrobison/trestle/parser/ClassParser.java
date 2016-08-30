@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.parser;
 
+import com.github.jsonldjava.utils.Obj;
 import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
@@ -16,6 +17,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import static com.nickrobison.trestle.common.StaticIRI.*;
+import static com.nickrobison.trestle.parser.SpatialParser.parseWKTFromGeom;
 
 /**
  * Created by nrobison on 6/28/16.
@@ -168,21 +170,19 @@ public class ClassParser {
                     final OWLLiteral owlLiteral = df.getOWLLiteral(fieldValue, TypeConverter.getDatatypeFromAnnotation(annotation, classField.getType()));
                     axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, owlLiteral));
                 } else if (classField.isAnnotationPresent(Spatial.class)) {
-//                    FIXME(nrobison): Make this prefix a constant
-                    final IRI iri = IRI.create("geosparql:", "asWKT");
+                    final IRI iri = IRI.create(GEOSPARQLPREFIX, "asWKT");
                     final OWLDataProperty spatialDataProperty = df.getOWLDataProperty(iri);
-                    String fieldValue = null;
-
+                    Object fieldValue = null;
                     try {
-                        fieldValue = classField.get(inputObject).toString();
+                        fieldValue = classField.get(inputObject);
                     } catch (IllegalAccessException e) {
                         logger.debug("Cannot access field {}", classField.getName(), e);
                         continue;
                     }
-                    final OWLDatatype wktDatatype = df.getOWLDatatype(IRI.create(GEOSPARQLPREFIX, "wktLiteral"));
-//                    Since it's a literal, we need to strip out the double quotes.
-                    final OWLLiteral wktLiteral = df.getOWLLiteral(fieldValue.replace("\"", ""), wktDatatype);
-                    axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, wktLiteral));
+                    final Optional<OWLLiteral> owlLiteral = parseWKTFromGeom(fieldValue);
+                    if (owlLiteral.isPresent()) {
+                        axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, owlLiteral.get()));
+                    }
                 } else {
                     final IRI iri = IRI.create(PREFIX, classField.getName());
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
@@ -222,10 +222,13 @@ public class ClassParser {
                     final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
 
                     if (methodValue.isPresent()) {
-                        final OWLDatatype wktDatatype = df.getOWLDatatype(IRI.create("http://www.opengis.net/ont/geosparql#", "wktLiteral"));
-//                    Since it's a literal, we need to strip out the double quotes.
-                        final OWLLiteral wktLiteral = df.getOWLLiteral(methodValue.get().toString().replace("\"", ""), wktDatatype);
-                        axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, wktLiteral));
+                        final Optional<OWLLiteral> owlLiteral = parseWKTFromGeom(methodValue.get());
+                        if (owlLiteral.isPresent()) {
+//                        final OWLDatatype wktDatatype = df.getOWLDatatype(IRI.create("http://www.opengis.net/ont/geosparql#", "wktLiteral"));
+////                    Since it's a literal, we need to strip out the double quotes.
+//                        final OWLLiteral wktLiteral = df.getOWLLiteral(methodValue.get().toString().replace("\"", ""), wktDatatype);
+                            axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, owlLiteral.get()));
+                        }
                     }
                 } else {
                     final IRI iri = IRI.create(PREFIX, filterMethodName(classMethod));
@@ -247,43 +250,6 @@ public class ClassParser {
         }
 
         return Optional.of(axioms);
-    }
-
-    public static Optional<String> GetSpatialValue(Object inputObject) {
-        final Class<?> clazz = inputObject.getClass();
-
-//        Methods first
-        final Optional<Method> matchedMethod = Arrays.stream(clazz.getDeclaredMethods())
-                .filter(m -> m.isAnnotationPresent(Spatial.class))
-                .findFirst();
-
-        if (matchedMethod.isPresent()) {
-            final Optional<Object> methodValue = accessMethodValue(matchedMethod.get(), inputObject);
-
-            if (methodValue.isPresent()) {
-                return Optional.of(methodValue.get().toString());
-            }
-        }
-
-//        Now fields
-        final Optional<Field> matchedField = Arrays.stream(clazz.getDeclaredFields())
-                .filter(f -> f.isAnnotationPresent(Spatial.class))
-                .findFirst();
-
-        if (matchedField.isPresent()) {
-            String fieldValue = null;
-            try {
-                fieldValue = matchedField.get().get(inputObject).toString();
-            } catch (IllegalAccessException e) {
-                logger.debug("Cannot access field {}", matchedField.get().getName(), e);
-            }
-
-            if (fieldValue != null) {
-                return Optional.of(fieldValue);
-            }
-        }
-
-        return Optional.empty();
     }
 
     static String filterMethodName(Method classMethod) {

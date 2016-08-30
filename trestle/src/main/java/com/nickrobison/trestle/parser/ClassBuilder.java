@@ -1,7 +1,5 @@
 package com.nickrobison.trestle.parser;
 
-import com.nickrobison.trestle.annotations.DataProperty;
-import com.nickrobison.trestle.annotations.Spatial;
 import com.nickrobison.trestle.annotations.TrestleCreator;
 import com.nickrobison.trestle.exceptions.MissingConstructorException;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
@@ -14,7 +12,6 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.nickrobison.trestle.common.StaticIRI.*;
 import static com.nickrobison.trestle.parser.ClassParser.*;
 
 /**
@@ -36,37 +33,17 @@ public class ClassBuilder {
         List<OWLDataProperty> classFields = new ArrayList<>();
         Arrays.stream(clazz.getDeclaredFields())
                 .filter(ClassParser::filterDataPropertyField)
-                .forEach(field -> classFields.add(df.getOWLDataProperty(filterDataSpatialName(field))));
+                .forEach(field -> classFields.add(df.getOWLDataProperty(SpatialParser.filterDataSpatialName(field))));
 
         Arrays.stream(clazz.getDeclaredMethods())
                 .filter(ClassParser::filterDataPropertyMethod)
-                .forEach(method -> classFields.add(df.getOWLDataProperty(filterDataSpatialName(method))));
+                .forEach(method -> classFields.add(df.getOWLDataProperty(SpatialParser.filterDataSpatialName(method))));
 
         if (classFields.isEmpty()) {
             return Optional.empty();
         }
 
         return Optional.of(classFields);
-    }
-
-    private static IRI filterDataSpatialName(Field classField) {
-        if (classField.isAnnotationPresent(DataProperty.class)) {
-            return IRI.create(PREFIX, classField.getAnnotation(DataProperty.class).name());
-        } else if (classField.isAnnotationPresent(Spatial.class)) {
-            return IRI.create(GEOSPARQLPREFIX, "asWKT");
-        } else {
-            return IRI.create(PREFIX, classField.getName());
-        }
-    }
-
-    private static IRI filterDataSpatialName(Method classMethod) {
-        if (classMethod.isAnnotationPresent(DataProperty.class)) {
-            return IRI.create(PREFIX, classMethod.getAnnotation(DataProperty.class).name());
-        } else if (classMethod.isAnnotationPresent(Spatial.class)) {
-            return IRI.create(GEOSPARQLPREFIX, "asWKT");
-        } else {
-            return IRI.create(PREFIX, filterMethodName(classMethod));
-        }
     }
 
     //    FIXME(nrobison): I think these warnings are important.
