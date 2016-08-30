@@ -412,7 +412,7 @@ public class TrestleReasoner {
         this.ontology.openAndLock(false);
         final OWLClass owlClass = ClassParser.GetObjectClass(inputObject);
         final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(inputObject);
-        final Optional<String> wktString = ClassParser.GetSpatialValue(inputObject);
+        final Optional<String> wktString = SpatialParser.GetSpatialValue(inputObject);
         if (wktString.isPresent()) {
             String spatialIntersection = null;
 
@@ -592,7 +592,7 @@ public class TrestleReasoner {
                         temporal.getBaseTemporalTypeIRI());
 
 //                Write to, if exists
-                final Optional<LocalDateTime> toTime = temporal.asInterval().getToTime();
+                final Optional<Temporal> toTime = temporal.asInterval().getToTime();
                 if (toTime.isPresent()) {
                     ontology.writeIndividualDataProperty(
                             temporalIRI,
@@ -609,7 +609,7 @@ public class TrestleReasoner {
                         temporal.getBaseTemporalTypeIRI());
 
 //                Write to, if exists
-                final Optional<LocalDateTime> toTime = temporal.asInterval().getToTime();
+                final Optional<Temporal> toTime = temporal.asInterval().getToTime();
                 if (toTime.isPresent()) {
                     ontology.writeIndividualDataProperty(
                             temporalIRI,

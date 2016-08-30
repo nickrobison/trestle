@@ -59,6 +59,7 @@ public class TemporalParser {
         return false;
     }
 
+//    TODO(nrobison): This looks gross, fix it.
     public static @Nullable Class<? extends Temporal> GetTemporalType(Class<?> clazz) {
 
         final Optional<Field> first = Arrays.stream(clazz.getDeclaredFields())
@@ -68,6 +69,7 @@ public class TemporalParser {
 
         if (first.isPresent()) {
             return (Class<? extends Temporal>) first.get().getType();
+//            return (Class<? extends Temporal>) first.get().getType();
         }
 
         final Optional<Method> method = Arrays.stream(clazz.getDeclaredMethods())
@@ -200,11 +202,11 @@ public class TemporalParser {
             case POINT: {
                 switch (annotation.scope()) {
                     case VALID: {
-                        temporalObject = TemporalObjectBuilder.valid().at(LocalDateTime.from((Temporal) fieldValue)).withRelations(owlNamedIndividual);
+                        temporalObject = TemporalObjectBuilder.valid().at((Temporal) fieldValue).withRelations(owlNamedIndividual);
                         break;
                     }
                     case EXISTS: {
-                        temporalObject = TemporalObjectBuilder.exists().at(LocalDateTime.from((Temporal) fieldValue)).withRelations(owlNamedIndividual);
+                        temporalObject = TemporalObjectBuilder.exists().at((Temporal) fieldValue).withRelations(owlNamedIndividual);
                         break;
                     }
 
@@ -215,8 +217,9 @@ public class TemporalParser {
             }
 
             case INTERVAL: {
-                final LocalDateTime from = LocalDateTime.from((Temporal) fieldValue);
-                @Nullable LocalDateTime to = null;
+//                final LocalDateTime from = LocalDateTime.from((Temporal) fieldValue);
+                final Temporal from = (Temporal) fieldValue;
+                @Nullable Temporal to = null;
                 if (annotation.duration() > 0) {
                     to = from.plus(annotation.duration(), annotation.unit());
                 }
