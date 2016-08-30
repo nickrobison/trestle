@@ -152,10 +152,10 @@ public class TrestleReasoner {
     }
 
     /**
-     * Register custom constuctor function for a given java class/OWLDataType intersection
+     * Register custom constructor function for a given java class/OWLDataType intersection
      * @param clazz - Java class to construct
      * @param datatype - OWLDatatype to match with Java class
-     * @param constructorFunc - Function<T,R> lambda function to take OWLLiteral and generate given java class
+     * @param constructorFunc - Function lambda function to take OWLLiteral and generate given java class
      */
     public void registerTypeConstructor(Class<?> clazz, OWLDatatype datatype, Function constructorFunc) {
         TypeConverter.registerTypeConstructor(clazz, datatype, constructorFunc);

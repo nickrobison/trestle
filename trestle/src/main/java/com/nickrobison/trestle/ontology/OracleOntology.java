@@ -190,17 +190,20 @@ public class OracleOntology extends JenaOntology {
     public ResultSet executeSPARQL(String queryString) {
         this.openTransaction(false);
         final Query query = QueryFactory.create(queryString);
-
+        long queryStart = System.currentTimeMillis();
         final QueryExecution qExec = QueryExecutionFactory.create(query, this.model);
         ResultSet resultSet = qExec.execSelect();
+        long queryEnd = System.currentTimeMillis();
         try {
             resultSet = ResultSetFactory.copyResults(resultSet);
         } catch (Exception e) {
             logger.error("Problem with copying data", e);
         }
-//        ResultSetFormatter.out(System.out, resultSet, query);
         qExec.close();
+        long copyEnd = System.currentTimeMillis();
         this.commitTransaction();
+        logger.debug("Query took {} milliseconds to complete", queryEnd - queryStart);
+        logger.debug("Copying the ResultSet took {} milliseconds", copyEnd - queryEnd);
 
         return resultSet;
     }
