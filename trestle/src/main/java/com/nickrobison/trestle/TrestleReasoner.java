@@ -18,6 +18,7 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.resultset.ResultSetMem;
+import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -56,8 +57,8 @@ public class TrestleReasoner {
     private static final OWLClass datasetClass = OWLManager.getOWLDataFactory().getOWLClass(IRI.create("trestle:", "Dataset"));
     private final QueryBuilder qb;
     private final QueryBuilder.DIALECT spatialDalect;
-    private final boolean cachingEnabled;
-    @MonotonicNonNull private TrestleCache trestleCache = null;
+    private boolean cachingEnabled = true;
+    private @Nullable TrestleCache trestleCache = null;
 
     @SuppressWarnings("dereference.of.nullable")
     TrestleReasoner(TrestleBuilder builder) throws OWLOntologyCreationException {
@@ -115,9 +116,9 @@ public class TrestleReasoner {
         }
 
 //        Are we a caching reasoner?
-        this.cachingEnabled = builder.caching;
-        if (cachingEnabled) {
-//            Build caches
+        if (!builder.caching) {
+            this.cachingEnabled = false;
+        } else {
             logger.info("Building trestle caches");
             trestleCache = builder.sharedCache.orElse(new TrestleCache.TrestleCacheBuilder().build());
         }
@@ -331,7 +332,7 @@ public class TrestleReasoner {
     <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache) throws TrestleClassException, MissingOntologyEntity {
 
 //        Check for cache hit first, provided caching is enabled and we're not set to bypass the cache
-        if (cachingEnabled & !bypassCache) {
+        if (isCachingEnabled() & !bypassCache) {
             logger.debug("Retrieving {} from cache", individualIRI);
             return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readAsObject(clazz, individualIRI, true))));
         } else {
@@ -659,6 +660,11 @@ public class TrestleReasoner {
         }
 
         return false;
+    }
+
+    @EnsuresNonNullIf(expression = "this.trestleCache", result = true)
+    private boolean isCachingEnabled() {
+        return this.trestleCache != null;
     }
 
 
