@@ -1,12 +1,13 @@
 package com.nickrobison.trestle;
 
+import com.esri.core.geometry.GeometryEngine;
+import com.esri.core.geometry.Polygon;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.parser.*;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,7 +42,10 @@ public class TrestleAPITest {
 //                        "spatialUser",
 //                        "spatial1")
                 .withName("api-test")
-                .withInputClasses(TestClasses.GAULTestClass.class, GAULComplexClassTest.class, TestClasses.JTSGeometryTest.class)
+                .withInputClasses(TestClasses.GAULTestClass.class,
+                        TestClasses.GAULComplexClassTest.class,
+                        TestClasses.JTSGeometryTest.class,
+                        TestClasses.ESRIPolygonTest.class)
                 .withoutCaching()
                 .initialize()
                 .build();
@@ -105,22 +109,28 @@ public class TrestleAPITest {
     public void testClasses() throws TrestleClassException, MissingOntologyEntity, ParseException {
 
 //        Complex objects
-//        final GAULComplexClassTest gaulComplexClassTest = new GAULComplexClassTest();
-//        OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(gaulComplexClassTest);
-//        reasoner.writeObjectAsFact(gaulComplexClassTest);
-//        final GAULComplexClassTest ReturnedGaulComplexClassTest = reasoner.readAsObject(gaulComplexClassTest.getClass(), owlNamedIndividual.getIRI(), false);
-//        assertEquals(gaulComplexClassTest, ReturnedGaulComplexClassTest, "Should have the same object");
+        final TestClasses.GAULComplexClassTest gaulComplexClassTest = new TestClasses.GAULComplexClassTest();
+        OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(gaulComplexClassTest);
+        reasoner.writeObjectAsFact(gaulComplexClassTest);
+        final TestClasses.GAULComplexClassTest ReturnedGaulComplexClassTest = reasoner.readAsObject(gaulComplexClassTest.getClass(), owlNamedIndividual.getIRI(), false);
+        assertEquals(gaulComplexClassTest, ReturnedGaulComplexClassTest, "Should have the same object");
 
 //        Spatial
 //        JTS
         final Geometry jtsGeom = new WKTReader().read("POINT(4.0 6.0)");
         final TestClasses.JTSGeometryTest jtsGeometryTest = new TestClasses.JTSGeometryTest(4326, jtsGeom, LocalDate.now());
-        OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(jtsGeometryTest);
+        owlNamedIndividual = ClassParser.GetIndividual(jtsGeometryTest);
         reasoner.writeObjectAsFact(jtsGeometryTest);
         final TestClasses.JTSGeometryTest returnedJTS = reasoner.readAsObject(jtsGeometryTest.getClass(), owlNamedIndividual.getIRI(), false);
         assertEquals(jtsGeometryTest, returnedJTS, "Should have the same object");
 
 //        ESRI
+        final Polygon geometry = (Polygon) GeometryEngine.geometryFromWkt("POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", 0, com.esri.core.geometry.Geometry.Type.Polygon);
+        final TestClasses.ESRIPolygonTest esriPolygonTest = new TestClasses.ESRIPolygonTest(4792, geometry, LocalDate.now());
+        owlNamedIndividual = ClassParser.GetIndividual(esriPolygonTest);
+        reasoner.writeObjectAsFact(esriPolygonTest);
+        final TestClasses.ESRIPolygonTest esriPolygonTest1 = reasoner.readAsObject(esriPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
+        assertEquals(esriPolygonTest, esriPolygonTest1, "Should be equal");
 
     }
 

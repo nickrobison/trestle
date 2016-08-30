@@ -40,15 +40,15 @@ public class TrestleParserTest {
     private OWLDataFactory df;
     private TemporalObject temporal;
     private TemporalObject temporalPoint;
-    private GAULMethodTest testMethod;
-    private GAULComplexClassTest complexObjectClass;
+    private TestClasses.GAULMethodTest testMethod;
+    private TestClasses.GAULComplexClassTest complexObjectClass;
 
     @BeforeEach
     public void Setup() {
         gaulTestClass = new TestClasses.GAULTestClass(1234, "gaulTestClass");
         expandedGAULClass = new ExpandedGAULTests();
-        testMethod = new GAULMethodTest();
-        complexObjectClass = new GAULComplexClassTest();
+        testMethod = new TestClasses.GAULMethodTest();
+        complexObjectClass = new TestClasses.GAULComplexClassTest();
         df = OWLManager.getOWLDataFactory();
         LocalDateTime dt = LocalDateTime.of(1989, 3, 26, 0, 0);
         LocalDate ld = LocalDate.of(1989, 3, 26);
@@ -228,7 +228,7 @@ public class TrestleParserTest {
 //        Build the inputs and test the constructor
         List<Class<?>> inputClasses = new ArrayList<>();
         List<Object> inputObjects = new ArrayList<>();
-        final Optional<List<OWLDataProperty>> propertyMembers = ClassBuilder.getPropertyMembers(GAULMethodTest.class);
+        final Optional<List<OWLDataProperty>> propertyMembers = ClassBuilder.getPropertyMembers(TestClasses.GAULMethodTest.class);
 //        if (propertyMembers.isPresent()) {
 //            propertyMembers.get().forEach(property -> {
 ////                inputClasses.add(property.get)
@@ -281,9 +281,9 @@ public class TrestleParserTest {
         assertEquals(inputClasses.size(), constructorArguments.getTypes().size(), "Wrong number of property classes");
         assertEquals(inputObjects.size(), constructorArguments.getValues().size(), "Wrong number of Property Values");
 
-        final GAULMethodTest expectedClass = new GAULMethodTest();
+        final TestClasses.GAULMethodTest expectedClass = new TestClasses.GAULMethodTest();
 //        final GAULMethodTest gaulMethodTest = ClassBuilder.ConstructObject(GAULMethodTest.class, inputClasses, inputObjects);
-        final GAULMethodTest gaulMethodTest = ClassBuilder.ConstructObject(GAULMethodTest.class, constructorArguments);
+        final TestClasses.GAULMethodTest gaulMethodTest = ClassBuilder.ConstructObject(TestClasses.GAULMethodTest.class, constructorArguments);
         assertEquals(expectedClass, gaulMethodTest, "Should match");
     }
 
