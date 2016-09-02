@@ -554,6 +554,14 @@ public abstract class JenaOntology implements ITrestleOntology {
         return getFullIRI(owlNamedObject).toString();
     }
 
+    /**
+     * Get the underlying model. Should only be use if really necessary, this skips all the transactions and concurency models that we've built.
+     * @return - Base Jena Model.
+     */
+    public Model getUnderlyingModel() {
+        return this.model;
+    }
+
 //    //    TODO(nrobison): This should return a list, not this weird ResultSet thing.
 //    public ResultSet executeSPARQL(String queryString) {
 //        this.openTransaction(false);
