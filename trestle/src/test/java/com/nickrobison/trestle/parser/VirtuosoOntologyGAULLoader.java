@@ -15,12 +15,16 @@ import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -37,6 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SuppressWarnings({"Duplicates", "initialized"})
 public class VirtuosoOntologyGAULLoader {
 
+    private static final Logger logger = LoggerFactory.getLogger(VirtuosoOntology.class);
     private List<TestClasses.GAULTestClass> gaulObjects = new ArrayList<>();
     private OWLDataFactory df;
     private VirtuosoOntology ontology;
@@ -94,6 +99,7 @@ public class VirtuosoOntologyGAULLoader {
         final OWLDataProperty valid_from = df.getOWLDataProperty(IRI.create("trestle:", "valid_from"));
         final OWLDataProperty valid_to = df.getOWLDataProperty(IRI.create("trestle:", "valid_to"));
 
+        Instant start = Instant.now();
         ontology.openAndLock(true);
         for (TestClasses.GAULTestClass gaul : gaulObjects) {
             datasetClass = ClassParser.GetObjectClass(gaul);
@@ -130,6 +136,8 @@ public class VirtuosoOntologyGAULLoader {
             }
         }
         ontology.unlockAndCommit();
+        final Instant end = Instant.now();
+        logger.info("Serial execution took {} ms", Duration.between(start, end).toMillis());
 
 //        Check to see if it worked.
         ontology.openAndLock(false);

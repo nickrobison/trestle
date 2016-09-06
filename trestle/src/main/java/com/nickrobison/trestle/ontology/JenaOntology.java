@@ -9,6 +9,7 @@ import org.apache.jena.rdf.model.*;
 import org.apache.jena.shared.AddDeniedException;
 import org.apache.jena.shared.Lock;
 import org.apache.jena.sparql.resultset.ResultSetMem;
+import org.apache.jena.tdb.transaction.TDBTransactionException;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -106,12 +107,14 @@ public abstract class JenaOntology implements ITrestleOntology {
     @Override
     public void createIndividual(OWLClassAssertionAxiom owlClassAssertionAxiom) {
 
-        this.openTransaction(true);
         this.model.enterCriticalSection(Lock.WRITE);
+        this.openTransaction(true);
         try {
             final Resource modelResource = model.createResource(getFullIRIString(owlClassAssertionAxiom.getIndividual().asOWLNamedIndividual()));
             final Resource modelClass = model.createResource(getFullIRIString(owlClassAssertionAxiom.getClassExpression().asOWLClass()));
             modelResource.addProperty(RDF.type, modelClass);
+        } catch (TDBTransactionException e) {
+            logger.error("Not in transaction", e);
         } finally {
             this.model.leaveCriticalSection();
             this.commitTransaction();
@@ -499,7 +502,7 @@ public abstract class JenaOntology implements ITrestleOntology {
         this.openTransaction(false);
         this.model.enterCriticalSection(Lock.READ);
         try {
-         modelResource = model.getResource(getFullIRIString(individual));
+            modelResource = model.getResource(getFullIRIString(individual));
         } finally {
             this.model.leaveCriticalSection();
             this.commitTransaction();
@@ -623,6 +626,7 @@ public abstract class JenaOntology implements ITrestleOntology {
 
     /**
      * Get the underlying model. Should only be use if really necessary, this skips all the transactions and concurency models that we've built.
+     *
      * @return - Base Jena Model.
      */
     public Model getUnderlyingModel() {
