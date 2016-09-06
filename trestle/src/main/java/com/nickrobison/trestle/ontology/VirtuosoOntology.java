@@ -4,6 +4,7 @@ import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.reasoner.ReasonerRegistry;
+import org.apache.jena.shared.Lock;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
@@ -65,12 +66,18 @@ public class VirtuosoOntology extends JenaOntology {
 //    Need to override the SPARQL command because the geospatial extensions will cause Jena to fail the query parsing.
 //    TODO(nrobison): This should return a list, not this weird ResultSet thing.
     public ResultSet executeSPARQL(String queryString) {
-        this.openTransaction(false);
+        ResultSet resultSet;
         final VirtuosoQueryExecution queryExecution = VirtuosoQueryExecutionFactory.create(queryString, (VirtGraph) this.virtModel.getGraph());
-        ResultSet resultSet = queryExecution.execSelect();
-        resultSet = ResultSetFactory.copyResults(resultSet);
-        queryExecution.close();
-        this.commitTransaction();
+        this.openTransaction(false);
+        this.model.enterCriticalSection(Lock.READ);
+        try {
+            resultSet = queryExecution.execSelect();
+            resultSet = ResultSetFactory.copyResults(resultSet);
+        } finally {
+            queryExecution.close();
+            this.model.leaveCriticalSection();
+            this.commitTransaction();
+        }
 
         return resultSet;
     }

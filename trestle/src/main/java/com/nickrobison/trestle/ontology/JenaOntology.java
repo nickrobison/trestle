@@ -7,6 +7,7 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.shared.AddDeniedException;
+import org.apache.jena.shared.Lock;
 import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
@@ -66,41 +67,55 @@ public abstract class JenaOntology implements ITrestleOntology {
 
     @Override
     public Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property) {
-        this.openTransaction(false);
-        final Resource modelResource = model.getResource(getFullIRI(individual).toString());
-        final Property modelProperty = model.getProperty(getFullIRI(property).toString());
-        final StmtIterator stmtIterator = modelResource.listProperties(modelProperty);
-
         Set<OWLObjectPropertyAssertionAxiom> properties = new HashSet<>();
-        while (stmtIterator.hasNext()) {
-            final Statement statement = stmtIterator.nextStatement();
+        this.openTransaction(false);
+        model.enterCriticalSection(Lock.READ);
+        try {
+            final Resource modelResource = model.getResource(getFullIRI(individual).toString());
+            final Property modelProperty = model.getProperty(getFullIRI(property).toString());
+            final StmtIterator stmtIterator = modelResource.listProperties(modelProperty);
+
+            try {
+                while (stmtIterator.hasNext()) {
+                    final Statement statement = stmtIterator.nextStatement();
 //            We need to check to make sure the returned statement points to a valid URI, otherwise it's just Jena junk.
-            if (statement.getObject().isURIResource()) {
-                final OWLNamedIndividual propertyObject = df.getOWLNamedIndividual(IRI.create(statement.getObject().asResource().getURI()));
-                final OWLObjectPropertyAssertionAxiom owlObjectProperty = df.getOWLObjectPropertyAssertionAxiom(property, individual, propertyObject);
+                    if (statement.getObject().isURIResource()) {
+                        final OWLNamedIndividual propertyObject = df.getOWLNamedIndividual(IRI.create(statement.getObject().asResource().getURI()));
+                        final OWLObjectPropertyAssertionAxiom owlObjectProperty = df.getOWLObjectPropertyAssertionAxiom(property, individual, propertyObject);
 //                final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(IRI.create(statement.getObject().toString()));
-                properties.add(owlObjectProperty);
-            } else {
-                logger.error("Model doesn't contain resource {}", statement.getObject());
+                        properties.add(owlObjectProperty);
+                    } else {
+                        logger.error("Model doesn't contain resource {}", statement.getObject());
+                    }
+                }
+            } finally {
+                stmtIterator.close();
             }
+        } finally {
+            model.leaveCriticalSection();
+            this.commitTransaction();
         }
         if (properties.isEmpty()) {
             logger.error("Individual {} has no properties {}", individual.getIRI(), property.getIRI());
             return Optional.empty();
         }
-        stmtIterator.close();
-        this.commitTransaction();
 
         return Optional.of(properties);
     }
 
     @Override
     public void createIndividual(OWLClassAssertionAxiom owlClassAssertionAxiom) {
+
         this.openTransaction(true);
-        final Resource modelResource = model.createResource(getFullIRIString(owlClassAssertionAxiom.getIndividual().asOWLNamedIndividual()));
-        final Resource modelClass = model.createResource(getFullIRIString(owlClassAssertionAxiom.getClassExpression().asOWLClass()));
-        modelResource.addProperty(RDF.type, modelClass);
-        this.commitTransaction();
+        this.model.enterCriticalSection(Lock.WRITE);
+        try {
+            final Resource modelResource = model.createResource(getFullIRIString(owlClassAssertionAxiom.getIndividual().asOWLNamedIndividual()));
+            final Resource modelClass = model.createResource(getFullIRIString(owlClassAssertionAxiom.getClassExpression().asOWLClass()));
+            modelResource.addProperty(RDF.type, modelClass);
+        } finally {
+            this.model.leaveCriticalSection();
+            this.commitTransaction();
+        }
     }
 
     @Override
@@ -123,37 +138,47 @@ public abstract class JenaOntology implements ITrestleOntology {
 
     @Override
     public void associateOWLClass(OWLSubClassOfAxiom subClassOfAxiom) {
-        this.openAndLock(true);
-//        this.openTransaction(true);
 
         final Resource modelSubclass;
-        if (containsResource(subClassOfAxiom.getSubClass().asOWLClass())) {
-            modelSubclass = model.getResource(getFullIRIString(subClassOfAxiom.getSubClass().asOWLClass()));
-        } else {
-            modelSubclass = model.createResource(getFullIRIString(subClassOfAxiom.getSubClass().asOWLClass()));
-        }
+        this.openAndLock(true);
+        this.model.enterCriticalSection(Lock.WRITE);
+        try {
+            if (containsResource(subClassOfAxiom.getSubClass().asOWLClass())) {
+                modelSubclass = model.getResource(getFullIRIString(subClassOfAxiom.getSubClass().asOWLClass()));
+            } else {
+                modelSubclass = model.createResource(getFullIRIString(subClassOfAxiom.getSubClass().asOWLClass()));
+            }
 
-        final Resource superClassResource;
-        if (containsResource(subClassOfAxiom.getSuperClass().asOWLClass())) {
-            superClassResource = model.getResource(getFullIRIString(subClassOfAxiom.getSuperClass().asOWLClass()));
-        } else {
-            superClassResource = model.createResource(getFullIRIString(subClassOfAxiom.getSuperClass().asOWLClass()));
-        }
+            final Resource superClassResource;
+            if (containsResource(subClassOfAxiom.getSuperClass().asOWLClass())) {
+                superClassResource = model.getResource(getFullIRIString(subClassOfAxiom.getSuperClass().asOWLClass()));
+            } else {
+                superClassResource = model.createResource(getFullIRIString(subClassOfAxiom.getSuperClass().asOWLClass()));
+            }
 
-        modelSubclass.addProperty(RDFS.subClassOf, superClassResource);
-        this.unlockAndCommit();
+            modelSubclass.addProperty(RDFS.subClassOf, superClassResource);
+        } finally {
+            this.model.leaveCriticalSection();
+            this.unlockAndCommit();
+        }
     }
 
     @Override
     public void createProperty(OWLProperty property) {
+
         this.openTransaction(true);
-        final Resource modelResource = model.createResource(getFullIRIString(property));
-        if (property.isOWLDataProperty()) {
-            modelResource.addProperty(RDF.type, OWL.DatatypeProperty);
-        } else if (property.isOWLObjectProperty()) {
-            modelResource.addProperty(RDF.type, OWL.ObjectProperty);
+        this.model.enterCriticalSection(Lock.WRITE);
+        try {
+            final Resource modelResource = model.createResource(getFullIRIString(property));
+            if (property.isOWLDataProperty()) {
+                modelResource.addProperty(RDF.type, OWL.DatatypeProperty);
+            } else if (property.isOWLObjectProperty()) {
+                modelResource.addProperty(RDF.type, OWL.ObjectProperty);
+            }
+        } finally {
+            this.model.leaveCriticalSection();
+            this.commitTransaction();
         }
-        this.commitTransaction();
     }
 
     @Override
@@ -175,36 +200,43 @@ public abstract class JenaOntology implements ITrestleOntology {
 
     @Override
     public void writeIndividualDataProperty(OWLDataPropertyAssertionAxiom dataProperty) throws MissingOntologyEntity {
-        this.openAndLock(true);
-        //        Does the individual exist?
-        final Resource modelResource = model.getResource(getFullIRIString(dataProperty.getSubject().asOWLNamedIndividual()));
-        if (!model.containsResource(modelResource)) {
-            throw new MissingOntologyEntity("missing class: ", dataProperty.getSubject());
-        }
-
-        final Property modelProperty = model.getProperty(getFullIRIString(dataProperty.getProperty().asOWLDataProperty()));
-        if (!model.containsResource(modelProperty)) {
-            createProperty(dataProperty.getProperty().asOWLDataProperty());
-        }
 
         final RDFDatatype dataType = TypeMapper.getInstance().getTypeByName(dataProperty.getObject().getDatatype().toStringID());
-        try {
-            modelResource.addProperty(modelProperty,
-                    dataProperty.getObject().getLiteral(),
-                    dataType);
-        } catch (AddDeniedException e) {
-            logger.error("Problem adding property {} to individual {}",
-                    dataProperty.getProperty().asOWLDataProperty().getIRI(),
-                    dataProperty.getSubject().asOWLNamedIndividual().getIRI(),
-                    e);
-        }
 
-        if (!modelResource.hasProperty(modelProperty)) {
-            logger.error("Cannot set property {} on Individual {}",
-                    dataProperty.getProperty().asOWLDataProperty().getIRI(),
-                    dataProperty.getSubject().asOWLNamedIndividual().getIRI());
+        this.openAndLock(true);
+        this.model.enterCriticalSection(Lock.WRITE);
+        try {
+            //        Does the individual exist?
+            final Resource modelResource = model.getResource(getFullIRIString(dataProperty.getSubject().asOWLNamedIndividual()));
+            if (!model.containsResource(modelResource)) {
+                throw new MissingOntologyEntity("missing class: ", dataProperty.getSubject());
+            }
+
+            final Property modelProperty = model.getProperty(getFullIRIString(dataProperty.getProperty().asOWLDataProperty()));
+            if (!model.containsResource(modelProperty)) {
+                createProperty(dataProperty.getProperty().asOWLDataProperty());
+            }
+
+            try {
+                modelResource.addProperty(modelProperty,
+                        dataProperty.getObject().getLiteral(),
+                        dataType);
+            } catch (AddDeniedException e) {
+                logger.error("Problem adding property {} to individual {}",
+                        dataProperty.getProperty().asOWLDataProperty().getIRI(),
+                        dataProperty.getSubject().asOWLNamedIndividual().getIRI(),
+                        e);
+            }
+
+            if (!modelResource.hasProperty(modelProperty)) {
+                logger.error("Cannot set property {} on Individual {}",
+                        dataProperty.getProperty().asOWLDataProperty().getIRI(),
+                        dataProperty.getSubject().asOWLNamedIndividual().getIRI());
+            }
+        } finally {
+            this.model.leaveCriticalSection();
+            this.unlockAndCommit();
         }
-        this.unlockAndCommit();
     }
 
 
@@ -228,31 +260,36 @@ public abstract class JenaOntology implements ITrestleOntology {
     @Override
     public void writeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property) throws MissingOntologyEntity {
         this.openAndLock(true);
-        final Resource modelSubject = model.getResource(getFullIRIString(property.getSubject().asOWLNamedIndividual()));
-        final Resource modelObject = model.getResource(getFullIRIString(property.getObject().asOWLNamedIndividual()));
-        final Property modelProperty = model.getProperty(getFullIRIString(property.getProperty().asOWLObjectProperty()));
+        this.model.enterCriticalSection(Lock.WRITE);
+        try {
+            final Resource modelSubject = model.getResource(getFullIRIString(property.getSubject().asOWLNamedIndividual()));
+            final Resource modelObject = model.getResource(getFullIRIString(property.getObject().asOWLNamedIndividual()));
+            final Property modelProperty = model.getProperty(getFullIRIString(property.getProperty().asOWLObjectProperty()));
 
 //        Check if the subject exists
-        if (!model.containsResource(modelSubject)) {
-            throw new MissingOntologyEntity("Missing subject: ", property.getSubject());
-        }
+            if (!model.containsResource(modelSubject)) {
+                throw new MissingOntologyEntity("Missing subject: ", property.getSubject());
+            }
 
 //        Check if the object exists, or create
-        if (!model.containsResource(modelProperty)) {
-            createProperty(property.getProperty().asOWLObjectProperty());
-        }
+            if (!model.containsResource(modelProperty)) {
+                createProperty(property.getProperty().asOWLObjectProperty());
+            }
 
 //        Check if the object exists
-        if (!model.containsResource(modelObject)) {
-            throw new MissingOntologyEntity("Missing object: ", property.getObject());
-        }
+            if (!model.containsResource(modelObject)) {
+                throw new MissingOntologyEntity("Missing object: ", property.getObject());
+            }
 
-        modelSubject.addProperty(modelProperty, modelObject);
+            modelSubject.addProperty(modelProperty, modelObject);
 
-        if (!modelSubject.hasProperty(modelProperty)) {
-            logger.error("Cannot set property {} on Individual {}", property.getProperty().asOWLObjectProperty().getIRI(), property.getSubject().asOWLNamedIndividual().getIRI());
+            if (!modelSubject.hasProperty(modelProperty)) {
+                logger.error("Cannot set property {} on Individual {}", property.getProperty().asOWLObjectProperty().getIRI(), property.getSubject().asOWLNamedIndividual().getIRI());
+            }
+        } finally {
+            this.model.leaveCriticalSection();
+            this.unlockAndCommit();
         }
-        this.unlockAndCommit();
     }
 
     @Override
@@ -263,9 +300,15 @@ public abstract class JenaOntology implements ITrestleOntology {
     @Override
     public boolean containsResource(OWLNamedObject individual) {
         this.openTransaction(false);
-        final Resource resource = model.getResource(getFullIRIString(individual));
-        final boolean hasResource = model.containsResource(resource);
-        this.commitTransaction();
+        this.model.enterCriticalSection(Lock.READ);
+        final boolean hasResource;
+        try {
+            final Resource resource = model.getResource(getFullIRIString(individual));
+            hasResource = model.containsResource(resource);
+        } finally {
+            this.model.leaveCriticalSection();
+            this.commitTransaction();
+        }
         return hasResource;
     }
 
@@ -314,16 +357,24 @@ public abstract class JenaOntology implements ITrestleOntology {
 
     //    TODO(nrobison): Implement this
     public Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean inferred) {
-        this.openTransaction(false);
-        final Resource modelResource = model.getResource(getFullIRIString(owlClass));
-        final ResIterator resIterator = model.listResourcesWithProperty(RDF.type, modelResource);
         Set<OWLNamedIndividual> instances = new HashSet<>();
-        while (resIterator.hasNext()) {
-            final Resource resource = resIterator.nextResource();
-            instances.add(df.getOWLNamedIndividual(IRI.create(resource.getURI())));
+        this.openTransaction(false);
+        this.model.enterCriticalSection(Lock.READ);
+        try {
+            final Resource modelResource = model.getResource(getFullIRIString(owlClass));
+            final ResIterator resIterator = model.listResourcesWithProperty(RDF.type, modelResource);
+            try {
+                while (resIterator.hasNext()) {
+                    final Resource resource = resIterator.nextResource();
+                    instances.add(df.getOWLNamedIndividual(IRI.create(resource.getURI())));
+                }
+            } finally {
+                resIterator.close();
+            }
+        } finally {
+            this.model.leaveCriticalSection();
+            this.commitTransaction();
         }
-        resIterator.close();
-        this.commitTransaction();
 
         return instances;
     }
@@ -349,17 +400,6 @@ public abstract class JenaOntology implements ITrestleOntology {
         } else {
             propertyAxioms = allDataPropertiesForIndividual;
         }
-
-//        properties.forEach(property -> {
-//            final Optional<Set<OWLLiteral>> individualProperty = this.getIndividualDataProperty(individual, property);
-//            if (individualProperty.isPresent()) {
-//                individualProperty.get().forEach(value -> propertyAxioms.add(
-//                        df.getOWLDataPropertyAssertionAxiom(
-//                                property,
-//                                individual,
-//                                value)));
-//            }
-//        });
         return propertyAxioms;
     }
 
@@ -370,37 +410,44 @@ public abstract class JenaOntology implements ITrestleOntology {
 
     @Override
     public Set<OWLDataPropertyAssertionAxiom> getAllDataPropertiesForIndividual(OWLNamedIndividual individual) {
-        this.openTransaction(false);
         Set<OWLDataPropertyAssertionAxiom> properties = new HashSet<>();
-        final Resource modelResource = model.getResource(getFullIRIString(individual));
-        final StmtIterator stmtIterator = modelResource.listProperties();
-        while (stmtIterator.hasNext()) {
-            final Statement statement = stmtIterator.nextStatement();
+        this.openTransaction(false);
+        this.model.enterCriticalSection(Lock.READ);
+        try {
+            final Resource modelResource = model.getResource(getFullIRIString(individual));
+            final StmtIterator stmtIterator = modelResource.listProperties();
+            try {
+                while (stmtIterator.hasNext()) {
+                    final Statement statement = stmtIterator.nextStatement();
 //            Filter out RDF stuff
-            if (!statement.getPredicate().getNameSpace().contains("rdf-syntax")) {
+                    if (!statement.getPredicate().getNameSpace().contains("rdf-syntax")) {
 //                Check to see if it's an object or data property
-                if (statement.getObject().isLiteral()) {
+                        if (statement.getObject().isLiteral()) {
 //                Check to see if property is object or data project
-                    try {
-                        statement.getLiteral();
-                        final OWLDataProperty owlDataProperty = df.getOWLDataProperty(IRI.create(statement.getPredicate().getURI()));
-                        final Optional<OWLLiteral> owlLiteral = parseLiteral(statement.getLiteral());
-                        if (owlLiteral.isPresent()) {
-                            properties.add(
-                                    df.getOWLDataPropertyAssertionAxiom(
-                                            owlDataProperty,
-                                            individual,
-                                            owlLiteral.get()));
+                            try {
+                                statement.getLiteral();
+                                final OWLDataProperty owlDataProperty = df.getOWLDataProperty(IRI.create(statement.getPredicate().getURI()));
+                                final Optional<OWLLiteral> owlLiteral = parseLiteral(statement.getLiteral());
+                                if (owlLiteral.isPresent()) {
+                                    properties.add(
+                                            df.getOWLDataPropertyAssertionAxiom(
+                                                    owlDataProperty,
+                                                    individual,
+                                                    owlLiteral.get()));
+                                }
+                            } catch (Exception e) {
+                                logger.debug("Can't get literal for {}", statement.getSubject(), e);
+                            }
                         }
-                    } catch (Exception e) {
-                        logger.debug("Can't get literal for {}", statement.getSubject(), e);
                     }
                 }
+            } finally {
+                stmtIterator.close();
             }
+        } finally {
+            this.model.leaveCriticalSection();
+            this.commitTransaction();
         }
-
-        stmtIterator.close();
-        this.commitTransaction();
         return properties;
     }
 
@@ -411,41 +458,55 @@ public abstract class JenaOntology implements ITrestleOntology {
 
     @Override
     public Set<OWLObjectPropertyAssertionAxiom> getAllObjectPropertiesForIndividual(OWLNamedIndividual individual) {
-        this.openTransaction(false);
-        final Resource modelResource = model.getResource(getFullIRIString(individual));
         Set<OWLObjectPropertyAssertionAxiom> properties = new HashSet<>();
+        this.openTransaction(false);
+        this.model.enterCriticalSection(Lock.WRITE);
+        try {
+            final Resource modelResource = model.getResource(getFullIRIString(individual));
 
-        final StmtIterator stmtIterator = modelResource.listProperties();
+            final StmtIterator stmtIterator = modelResource.listProperties();
 
-        while (stmtIterator.hasNext()) {
-            final Statement statement = stmtIterator.nextStatement();
+            try {
+                while (stmtIterator.hasNext()) {
+                    final Statement statement = stmtIterator.nextStatement();
 
-            if (!statement.getPredicate().getNameSpace().contains("rdf-syntax")) {
+                    if (!statement.getPredicate().getNameSpace().contains("rdf-syntax")) {
 //                Ensure that it's an object property
-                if (statement.getObject().isURIResource()) {
-                    final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(IRI.create(statement.getPredicate().getURI()));
-                    final OWLNamedIndividual objectIndividual = df.getOWLNamedIndividual(IRI.create(statement.getObject().asResource().getURI()));
-                    final OWLObjectPropertyAssertionAxiom owlClassAssertionAxiom = df.getOWLObjectPropertyAssertionAxiom(owlObjectProperty,
-                            individual,
-                            objectIndividual);
-                    properties.add(owlClassAssertionAxiom);
+                        if (statement.getObject().isURIResource()) {
+                            final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(IRI.create(statement.getPredicate().getURI()));
+                            final OWLNamedIndividual objectIndividual = df.getOWLNamedIndividual(IRI.create(statement.getObject().asResource().getURI()));
+                            final OWLObjectPropertyAssertionAxiom owlClassAssertionAxiom = df.getOWLObjectPropertyAssertionAxiom(owlObjectProperty,
+                                    individual,
+                                    objectIndividual);
+                            properties.add(owlClassAssertionAxiom);
+                        }
+                    }
+
                 }
+            } finally {
+                stmtIterator.close();
             }
-
+        } finally {
+            this.model.leaveCriticalSection();
+            this.commitTransaction();
         }
-
-        stmtIterator.close();
-        this.commitTransaction();
         return properties;
     }
 
     public Optional<OWLNamedIndividual> getIndividual(OWLNamedIndividual individual) {
+
+        final Resource modelResource;
         this.openTransaction(false);
-        final Resource modelResource = model.getResource(getFullIRIString(individual));
+        this.model.enterCriticalSection(Lock.READ);
+        try {
+         modelResource = model.getResource(getFullIRIString(individual));
+        } finally {
+            this.model.leaveCriticalSection();
+            this.commitTransaction();
+        }
         if (modelResource == null) {
             return Optional.empty();
         }
-        this.commitTransaction();
         return Optional.of(individual);
     }
 
@@ -461,35 +522,41 @@ public abstract class JenaOntology implements ITrestleOntology {
 
     @Override
     public Optional<Set<OWLLiteral>> getIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property) {
-        this.openTransaction(false);
-        final Resource modelResource = model.getResource(getFullIRIString(individual));
-        final Property modelProperty = model.getProperty(getFullIRIString(property));
-
-        if (modelProperty == null) {
-            logger.error("Property {} doesn't exist on individual {}", property.getIRI(), individual.getIRI());
-            this.commitTransaction();
-            return Optional.empty();
-        }
-
-        final StmtIterator stmtIterator = modelResource.listProperties(modelProperty);
-        //        Build and return the OWLLiteral
         Set<OWLLiteral> properties = new HashSet<>();
+        this.openTransaction(false);
+        this.model.enterCriticalSection(Lock.READ);
+        try {
+            final Resource modelResource = model.getResource(getFullIRIString(individual));
+            final Property modelProperty = model.getProperty(getFullIRIString(property));
 
-        while (stmtIterator.hasNext()) {
-            //        If the URI is null, I think that means that it's just a string
-            final Statement statement = stmtIterator.nextStatement();
-            final Optional<OWLLiteral> parsedLiteral = parseLiteral(statement.getLiteral());
-            if (parsedLiteral.isPresent()) {
-                properties.add(parsedLiteral.get());
+            if (modelProperty == null) {
+                logger.error("Property {} doesn't exist on individual {}", property.getIRI(), individual.getIRI());
+                return Optional.empty();
             }
-        }
-        if (properties.isEmpty()) {
-            logger.error("Individual {} has no properties {}", individual.getIRI(), property.getIRI());
+
+            final StmtIterator stmtIterator = modelResource.listProperties(modelProperty);
+            //        Build and return the OWLLiteral
+            try {
+                while (stmtIterator.hasNext()) {
+                    //        If the URI is null, I think that means that it's just a string
+                    final Statement statement = stmtIterator.nextStatement();
+                    final Optional<OWLLiteral> parsedLiteral = parseLiteral(statement.getLiteral());
+                    if (parsedLiteral.isPresent()) {
+                        properties.add(parsedLiteral.get());
+                    }
+                }
+                if (properties.isEmpty()) {
+                    logger.error("Individual {} has no properties {}", individual.getIRI(), property.getIRI());
+                    this.commitTransaction();
+                    return Optional.empty();
+                }
+            } finally {
+                stmtIterator.close();
+            }
+        } finally {
+            this.model.leaveCriticalSection();
             this.commitTransaction();
-            return Optional.empty();
         }
-        stmtIterator.close();
-        this.commitTransaction();
 
         return Optional.of(properties);
     }

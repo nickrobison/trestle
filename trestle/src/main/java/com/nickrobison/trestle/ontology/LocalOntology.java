@@ -8,6 +8,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.reasoner.Reasoner;
 import org.apache.jena.reasoner.ReasonerRegistry;
+import org.apache.jena.shared.Lock;
 import org.apache.jena.tdb.TDB;
 import org.apache.jena.tdb.TDBFactory;
 import org.apache.lucene.store.Directory;
@@ -130,14 +131,20 @@ public class LocalOntology extends JenaOntology {
     @Override
 //    Need to override this in order to get access to the correct dataset
     public ResultSet executeSPARQL(String queryString) {
-        this.openTransaction(false);
+        ResultSet resultSet;
         final Query query = QueryFactory.create(queryString);
         final QueryExecution qExec = QueryExecutionFactory.create(query, luceneDataset);
-        ResultSet resultSet = qExec.execSelect();
-        resultSet = ResultSetFactory.copyResults(resultSet);
-        ResultSetFormatter.out(System.out, resultSet, query);
-        qExec.close();
-        this.commitTransaction();
+        this.openTransaction(false);
+        this.model.enterCriticalSection(Lock.READ);
+        try {
+            resultSet = qExec.execSelect();
+            resultSet = ResultSetFactory.copyResults(resultSet);
+            ResultSetFormatter.out(System.out, resultSet, query);
+        } finally {
+            qExec.close();
+            this.model.leaveCriticalSection();
+            this.commitTransaction();
+        }
 
         return resultSet;
     }
