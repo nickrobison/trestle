@@ -494,7 +494,7 @@ public abstract class JenaOntology implements ITrestleOntology {
         return Optional.of(properties);
     }
 
-    private Optional<OWLLiteral> parseLiteral(Literal literal) {
+    protected Optional<OWLLiteral> parseLiteral(Literal literal) {
         OWLDatatype owlDatatype;
         if (literal.getDatatypeURI() == null) {
             logger.error("Literal has an emptyURI");

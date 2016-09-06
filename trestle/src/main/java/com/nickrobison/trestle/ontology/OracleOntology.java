@@ -5,9 +5,10 @@ import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.InfModel;
 import org.apache.jena.rdf.model.Model;
 import oracle.spatial.rdf.client.jena.*;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.sql.SQLException;
+import java.util.*;
 
 /**
  * Created by nrobison on 5/23/16.
@@ -206,6 +208,51 @@ public class OracleOntology extends JenaOntology {
         logger.debug("Copying the ResultSet took {} milliseconds", copyEnd - queryEnd);
 
         return resultSet;
+    }
+
+    public Optional<List<Map<String, OWLObject>>> sparqlResults(String queryString) {
+        List<Map<String, OWLObject>> results = new ArrayList<>();
+        this.openTransaction(false);
+        final Query query = QueryFactory.create(queryString);
+//        Get the query result vars
+        final List<String> resultVars = query.getResultVars();
+        long queryStart = System.currentTimeMillis();
+        final QueryExecution qExec = QueryExecutionFactory.create(query, this.model);
+        ResultSet resultSet = qExec.execSelect();
+        long queryEnd = System.currentTimeMillis();
+
+        try {
+            while (resultSet.hasNext()) {
+                Map<String, OWLObject> rowValues = new HashMap<>();
+//                For each result, get the params and do what's needed
+                final QuerySolution next = resultSet.next();
+                resultVars.forEach(var -> {
+                    final RDFNode rdfNode = next.get(var);
+                    if (rdfNode.isResource()) {
+                        rowValues.put(var, df.getOWLNamedIndividual(rdfNode.asResource().getURI()));
+                    } else if (rdfNode.isLiteral()) {
+                        final Optional<OWLLiteral> owlLiteral = this.parseLiteral(rdfNode.asLiteral());
+                        if (owlLiteral.isPresent()) {
+                            rowValues.put(var, owlLiteral.get());
+                        } else {
+                            logger.warn("Unable to parse OWL Literal {} for {}", rdfNode.toString(), var);
+                        }
+                    } else {
+                        logger.warn("Unable to parse {} for {}", rdfNode.toString(), var);
+                    }
+                });
+                results.add(rowValues);
+            }
+        } catch (Exception e) {
+            logger.error("Problem iterating through resultset", e);
+        } finally {
+            qExec.close();
+        }
+
+        if (results.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(results);
     }
 
         /**

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
 import java.io.File;
@@ -18,6 +19,8 @@ import java.net.MalformedURLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created by nrobison on 9/2/16.
@@ -75,7 +78,7 @@ public class SPARQLBenchmark {
         List<QuerySolution> querySolutions = ResultSetFormatter.toList(resultSet);
         qExec.close();
         Instant end = Instant.now();
-        System.out.print(String.format("\n\n\n======================\nQuery took %s ms\n======================\n\n\n", Duration.between(start, end).toMillis()));
+        System.out.print(String.format("\n\n\n======================\nQuery List took %s ms\n======================\n\n\n", Duration.between(start, end).toMillis()));
 
 //        Try the full copy
         start = Instant.now();
@@ -84,7 +87,22 @@ public class SPARQLBenchmark {
         resultSet = ResultSetFactory.copyResults(resultSet);
         qExec.close();
         end = Instant.now();
-        System.out.print(String.format("\n\n\n======================\nQuery took %s ms\n======================\n\n\n", Duration.between(start, end).toMillis()));
+        System.out.print(String.format("\n\n\n======================\nCopy Query took %s ms\n======================\n\n\n", Duration.between(start, end).toMillis()));
+
+//        Something else
+        start = Instant.now();
+        qExec = QueryExecutionFactory.create(query, model);
+        resultSet = qExec.execSelect();
+        ResultSetFormatter.out(System.out, resultSet);
+        qExec.close();
+        end = Instant.now();
+        System.out.print(String.format("\n\n\n======================\nPrinting Query took %s ms\n======================\n\n\n", Duration.between(start, end).toMillis()));
+
+        start = Instant.now();
+        final Optional<List<Map<String, OWLObject>>> results = ontology.sparqlResults(oracleSpatialString);
+        end = Instant.now();
+        System.out.print(String.format("\n\n\n======================\nCustom Query took %s ms\n======================\n\n\n", Duration.between(start, end).toMillis()));
+
 //
 ////        How about a natural iterator
 //        start = Instant.now();
