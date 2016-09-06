@@ -35,6 +35,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.nickrobison.trestle.common.IRIUtils.isFullIRI;
 import static com.nickrobison.trestle.common.LambdaExceptionUtil.rethrowFunction;
 import static com.nickrobison.trestle.common.StaticIRI.*;
 
@@ -159,8 +160,9 @@ public class TrestleReasoner {
 
     /**
      * Register custom constructor function for a given java class/OWLDataType intersection
-     * @param clazz - Java class to construct
-     * @param datatype - OWLDatatype to match with Java class
+     *
+     * @param clazz           - Java class to construct
+     * @param datatype        - OWLDatatype to match with Java class
      * @param constructorFunc - Function lambda function to take OWLLiteral and generate given java class
      */
     public void registerTypeConstructor(Class<?> clazz, OWLDatatype datatype, Function constructorFunc) {
@@ -322,7 +324,14 @@ public class TrestleReasoner {
 
     @SuppressWarnings({"argument.type.incompatible", "dereference.of.nullable"})
     public <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull String objectID) throws TrestleClassException, MissingOntologyEntity {
-        final @NonNull IRI individualIRI = IRI.create(PREFIX, objectID.replaceAll("\\s+", "_"));
+
+        final @NonNull IRI individualIRI;
+//        Check to see if the objectID is an expanded IRI
+        if (isFullIRI(objectID)) {
+            individualIRI = IRI.create(objectID);
+        } else {
+            individualIRI = IRI.create(PREFIX, objectID.replaceAll("\\s+", "_"));
+        }
 //        Check cache first
         if (cachingEnabled) {
             logger.debug("Retrieving {} from cache", individualIRI);
@@ -669,6 +678,7 @@ public class TrestleReasoner {
 
     /**
      * Validates the ontology name to make sure it doesn't include unsupported characters
+     *
      * @param ontologyName - String to validate
      * @throws InvalidOntologyName - Exception thrown if the name is invalid
      */
