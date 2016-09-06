@@ -2,10 +2,7 @@ package com.nickrobison.trestle;
 
 import com.nickrobison.trestle.caching.TrestleCache;
 import com.nickrobison.trestle.common.StaticIRI;
-import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
-import com.nickrobison.trestle.exceptions.TrestleClassException;
-import com.nickrobison.trestle.exceptions.UnregisteredClassException;
-import com.nickrobison.trestle.exceptions.UnsupportedFeatureException;
+import com.nickrobison.trestle.exceptions.*;
 import com.nickrobison.trestle.ontology.*;
 import com.nickrobison.trestle.parser.*;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
@@ -73,6 +70,14 @@ public class TrestleReasoner {
             throw new RuntimeException("Cannot load ontology");
         }
         logger.info("Loading ontology from {}", ontologyResource);
+
+        //        Validate ontology name
+        try {
+            validateOntologyName(builder.ontologyName.orElse(DEFAULTNAME));
+        } catch (InvalidOntologyName e) {
+            logger.error("{} is an invalid ontology name", builder.ontologyName.orElse(DEFAULTNAME), e);
+            throw new RuntimeException("invalid ontology name", e);
+        }
 
 //            validate the classes
         builder.inputClasses.forEach(clazz -> {
@@ -662,10 +667,21 @@ public class TrestleReasoner {
         return false;
     }
 
+    /**
+     * Validates the ontology name to make sure it doesn't include unsupported characters
+     * @param ontologyName - String to validate
+     * @throws InvalidOntologyName - Exception thrown if the name is invalid
+     */
+    private static void validateOntologyName(String ontologyName) throws InvalidOntologyName {
+        if (ontologyName.contains("-")) {
+            throw new InvalidOntologyName('-');
+        } else if (ontologyName.length() > 40) {
+            throw new InvalidOntologyName(ontologyName.length());
+        }
+    }
+
     @EnsuresNonNullIf(expression = "this.trestleCache", result = true)
     private boolean isCachingEnabled() {
         return this.trestleCache != null;
     }
-
-
 }
