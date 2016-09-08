@@ -4,7 +4,6 @@ import com.nickrobison.trestle.TestClasses;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
-import com.nickrobison.trestle.ontology.OracleOntology;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSetFormatter;
@@ -82,12 +81,12 @@ public class ConcurrentOntologyGAULLoader {
 
         ontology = new OntologyBuilder()
                 .fromIRI(iri)
-                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+//                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
 //                .withDBConnection(
 //                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
 //                        "spatialUser",
 //                        "spatial1")
-                .name("trestle_concurrenct_1")
+                .name("trestle_concurrent_1")
                 .build().get();
 
         ontology.initializeOntology();
@@ -104,7 +103,9 @@ public class ConcurrentOntologyGAULLoader {
         final OWLDataProperty valid_to = df.getOWLDataProperty(IRI.create("trestle:", "valid_to"));
 
 //        final ExecutorCompletionService<> completionService = new ExecutorCompletionService<>(Executors.newFixedThreadPool(5));
-        final ExecutorService executorService = Executors.newCachedThreadPool();
+//        final ExecutorService executorService = Executors.newFixedThreadPool(2);
+//        final ExecutorService executorService = Executors.newCachedThreadPool();
+        final ExecutorService executorService = Executors.newWorkStealingPool();
 //        for (TestClasses.GAULTestClass gaul : gaulObjects) {
 //            completionService.submit(CompletableFuture.runAsync(() -> {
 
@@ -116,21 +117,30 @@ public class ConcurrentOntologyGAULLoader {
                 .map(gaul -> CompletableFuture.runAsync(() -> {
                     final OWLNamedIndividual gaulIndividual = ClassParser.GetIndividual(gaul);
                     final OWLClassAssertionAxiom testClass = df.getOWLClassAssertionAxiom(datasetClass, gaulIndividual);
+                    logger.debug("Writing main individual");
                     ontology.createIndividual(testClass);
 
                     //        Write the data properties
                     final Optional<List<OWLDataPropertyAssertionAxiom>> gaulDataProperties = ClassParser.GetDataProperties(gaul);
-                    final List<CompletableFuture<Void>> propertiesFuture = gaulDataProperties.orElseThrow(() -> new RuntimeException("mising data properties"))
-                            .stream()
-                            .map(dataAxiom -> CompletableFuture.runAsync(() -> {
-                                try {
-                                    ontology.writeIndividualDataProperty(dataAxiom);
-                                } catch (MissingOntologyEntity missingOntologyEntity) {
-                                    logger.error("Missing entity {}", gaul.adm0_name, missingOntologyEntity);
-                                }
-                            }))
-                            .collect(Collectors.toList());
-                    final CompletableFuture<Void> voidCompletableFuture = CompletableFuture.allOf(propertiesFuture.toArray(new CompletableFuture[propertiesFuture.size()]));
+                    gaulDataProperties.orElseThrow(() -> new RuntimeException("missing data properties")).forEach(dataAxiom -> {
+                        try {
+                            ontology.writeIndividualDataProperty(dataAxiom);
+                        } catch (MissingOntologyEntity missingOntologyEntity) {
+                            logger.error("Missing entity {}", gaul.adm0_name, missingOntologyEntity);
+                        }
+                    });
+//                    final List<CompletableFuture<Void>> propertiesFuture = gaulDataProperties.orElseThrow(() -> new RuntimeException("missing data properties"))
+//                            .stream()
+//                            .map(dataAxiom -> CompletableFuture.runAsync(() -> {
+//                                try {
+//                                    logger.debug("Writing property {} for individual {}", dataAxiom.getProperty(), dataAxiom.getSubject());
+//                                    ontology.writeIndividualDataProperty(dataAxiom);
+//                                } catch (MissingOntologyEntity missingOntologyEntity) {
+//                                    logger.error("Missing entity {}", gaul.adm0_name, missingOntologyEntity);
+//                                }
+//                            }, executorService))
+//                            .collect(Collectors.toList());
+//                    final CompletableFuture<Void> voidCompletableFuture = CompletableFuture.allOf(propertiesFuture.toArray(new CompletableFuture[propertiesFuture.size()]));
 
                     final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(gaul);
                     for (TemporalObject temporal : temporalObjects.orElseThrow(() -> new RuntimeException("Missing temporals"))) {
@@ -139,10 +149,12 @@ public class ConcurrentOntologyGAULLoader {
 //                Write the temporal
                             final OWLNamedIndividual temporalIndividual = df.getOWLNamedIndividual(IRI.create("trestle:", temporal.getID()));
                             final OWLClassAssertionAxiom temporalAssertion = df.getOWLClassAssertionAxiom(temporalClass, temporalIndividual);
+                            logger.debug("Writing temporal for {}", gaul.adm0_name);
                             ontology.createIndividual(temporalAssertion);
 
 //                Set the object properties to point back to the individual
                             final OWLObjectPropertyAssertionAxiom temporalPropertyAssertion = df.getOWLObjectPropertyAssertionAxiom(temporal_of, temporalIndividual, gaulIndividual);
+                            logger.debug("Writing temporal assertion for {}", gaul.adm0_name);
                             ontology.writeIndividualObjectProperty(temporalPropertyAssertion);
 
 //                Write the data properties. I know these are closed intervals
@@ -150,30 +162,22 @@ public class ConcurrentOntologyGAULLoader {
                             final OWLLiteral toLiteral = df.getOWLLiteral(temporal.asInterval().getToTime().get().toString(), OWL2Datatype.XSD_DATE_TIME);
                             final OWLDataPropertyAssertionAxiom fromAssertionAxiom = df.getOWLDataPropertyAssertionAxiom(valid_from, temporalIndividual, fromLiteral);
                             final OWLDataPropertyAssertionAxiom toAssertionAxiom = df.getOWLDataPropertyAssertionAxiom(valid_to, temporalIndividual, toLiteral);
+                            logger.debug("Writing from assertion for {}", gaul.adm0_name);
                             ontology.writeIndividualDataProperty(fromAssertionAxiom);
+                            logger.debug("Writing to assertion for {}", gaul.adm0_name);
                             ontology.writeIndividualDataProperty(toAssertionAxiom);
                         } catch (Exception e) {
                             logger.error("Catching an exception from {}", gaul.adm0_name, e);
                         }
                     }
-                    voidCompletableFuture.join();
-
-//                    for (OWLDataPropertyAssertionAxiom dataAxiom : gaulDataProperties.orElseThrow(() -> new RuntimeException("Missing data properties"))) {
-//
-//                        try {
-//                            ontology.writeIndividualDataProperty(dataAxiom);
-//                        } catch (MissingOntologyEntity missingOntologyEntity) {
-//                            logger.error("Missing entity {}", gaul.adm0_name, missingOntologyEntity);
-//                        }
-//                    }
+                    logger.debug("Waiting for properties completion");
+//                    voidCompletableFuture.thenAccept(v -> logger.debug("properties written"));
                 }, executorService))
                 .collect(Collectors.toList());
         logger.info("Waiting to complete");
         Instant start = Instant.now();
-        ontology.openAndLock(true);
         final CompletableFuture<Void> voidCompletableFuture = CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[completableFutures.size()]));
         voidCompletableFuture.join();
-        ontology.unlockAndCommit();
         Instant end = Instant.now();
         logger.info("Async took {} ms", Duration.between(start, end).toMillis());
 

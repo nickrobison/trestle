@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
+import org.apache.jena.graph.Graph;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -16,6 +17,7 @@ import virtuoso.jena.driver.VirtModel;
 import virtuoso.jena.driver.VirtuosoQueryExecution;
 import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
@@ -23,11 +25,11 @@ import java.io.ByteArrayOutputStream;
  * Created by nrobison on 7/22/16.
  */
 @SuppressWarnings({"initialization"})
+@ThreadSafe
 public class VirtuosoOntology extends JenaOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(VirtuosoOntology.class);
     private static VirtModel virtModel;
-    private boolean locked = false;
 
     VirtuosoOntology(String name, OWLOntology ont, DefaultPrefixManager pm, String connectionString, String username, String password) {
         super(name, initializeVirtModel(name, connectionString, username, password), ont, pm);
@@ -54,7 +56,6 @@ public class VirtuosoOntology extends JenaOntology {
 
         try {
             this.model.read(ontologytoIS(this.ontology), null);
-//            virtModel.read(ontologytoIS(this.ontology), null);
         } catch (OWLOntologyStorageException e) {
             logger.error("Cannot read ontology", e);
             throw new RuntimeException("Cannot read ontology", e);
@@ -94,52 +95,13 @@ public class VirtuosoOntology extends JenaOntology {
     }
 
     @Override
-    public void openTransaction(boolean write) {
-        if (!locked) {
-            logger.debug("Opening transaction");
-            virtModel.begin();
-        } else {
-            logger.debug("Model is locked, keeping transaction alive");
-        }
+    public void openDatasetTransaction(boolean write) {
+        virtModel.begin();
     }
 
     @Override
-    public void commitTransaction() {
-        if (!locked) {
-            logger.debug("Closing transaction");
-            virtModel.commit();
-        } else {
-            logger.debug("Model is locked, not committing");
-        }
-    }
-
-
-    @Override
-    public void lock() {
-        this.locked = true;
-    }
-
-    @Override
-    public void openAndLock(boolean write) {
-        if (!locked) {
-            logger.debug("Locking open");
-            openTransaction(write);
-            lock();
-        } else {
-            logger.debug("Already locked, moving on");
-        }
-    }
-
-    @Override
-    public void unlock() {
-        this.locked = false;
-    }
-
-    @Override
-    public void unlockAndCommit() {
-        logger.debug("Unlocking and closing");
-        unlock();
-        commitTransaction();
+    public void commitDatasetTransaction() {
+        virtModel.commit();
     }
 
     protected static ByteArrayInputStream ontologytoIS(OWLOntology ontology) throws OWLOntologyStorageException {

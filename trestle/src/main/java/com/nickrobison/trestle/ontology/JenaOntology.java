@@ -1,19 +1,16 @@
 package com.nickrobison.trestle.ontology;
 
-import com.nickrobison.trestle.types.temporal.TemporalObject;
+import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Graph;
-import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.shared.AddDeniedException;
 import org.apache.jena.shared.Lock;
-import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.tdb.transaction.TDBTransactionException;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
-import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
@@ -22,6 +19,7 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.io.*;
 import java.util.HashSet;
 import java.util.List;
@@ -32,7 +30,8 @@ import java.util.stream.Collectors;
 /**
  * Created by nrobison on 7/22/16.
  */
-public abstract class JenaOntology implements ITrestleOntology {
+@ThreadSafe
+public abstract class JenaOntology extends TransactingOntology implements ITrestleOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(JenaOntology.class);
 
@@ -70,7 +69,7 @@ public abstract class JenaOntology implements ITrestleOntology {
     public Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property) {
         Set<OWLObjectPropertyAssertionAxiom> properties = new HashSet<>();
         this.openTransaction(false);
-        model.enterCriticalSection(Lock.READ);
+        this.model.enterCriticalSection(Lock.READ);
         try {
             final Resource modelResource = model.getResource(getFullIRI(individual).toString());
             final Property modelProperty = model.getProperty(getFullIRI(property).toString());
@@ -93,7 +92,7 @@ public abstract class JenaOntology implements ITrestleOntology {
                 stmtIterator.close();
             }
         } finally {
-            model.leaveCriticalSection();
+            this.model.leaveCriticalSection();
             this.commitTransaction();
         }
         if (properties.isEmpty()) {
@@ -107,8 +106,8 @@ public abstract class JenaOntology implements ITrestleOntology {
     @Override
     public void createIndividual(OWLClassAssertionAxiom owlClassAssertionAxiom) {
 
-        this.model.enterCriticalSection(Lock.WRITE);
         this.openTransaction(true);
+        this.model.enterCriticalSection(Lock.WRITE);
         try {
             final Resource modelResource = model.createResource(getFullIRIString(owlClassAssertionAxiom.getIndividual().asOWLNamedIndividual()));
             final Resource modelClass = model.createResource(getFullIRIString(owlClassAssertionAxiom.getClassExpression().asOWLClass()));
@@ -239,6 +238,7 @@ public abstract class JenaOntology implements ITrestleOntology {
         } finally {
             this.model.leaveCriticalSection();
             this.unlockAndCommit();
+            logger.debug("Model transaction closed");
         }
     }
 
@@ -346,17 +346,17 @@ public abstract class JenaOntology implements ITrestleOntology {
         return this.pm;
     }
 
-    @Override
-    public void openTransaction(boolean write) {
-        logger.info("Opening model transaction");
-        model.begin();
-    }
-
-    @Override
-    public void commitTransaction() {
-        logger.info("Committing model transaction");
-        model.commit();
-    }
+//    @Override
+//    public void openTransaction(boolean write) {
+//        logger.info("Opening model transaction");
+//        model.begin();
+//    }
+//
+//    @Override
+//    public void commitTransaction() {
+//        logger.info("Committing model transaction");
+//        model.commit();
+//    }
 
     //    TODO(nrobison): Implement this
     public Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean inferred) {
@@ -463,7 +463,7 @@ public abstract class JenaOntology implements ITrestleOntology {
     public Set<OWLObjectPropertyAssertionAxiom> getAllObjectPropertiesForIndividual(OWLNamedIndividual individual) {
         Set<OWLObjectPropertyAssertionAxiom> properties = new HashSet<>();
         this.openTransaction(false);
-        this.model.enterCriticalSection(Lock.WRITE);
+        this.model.enterCriticalSection(Lock.READ);
         try {
             final Resource modelResource = model.getResource(getFullIRIString(individual));
 

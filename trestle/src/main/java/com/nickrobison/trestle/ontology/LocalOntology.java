@@ -35,8 +35,10 @@ public class LocalOntology extends JenaOntology {
     private static Dataset tdbDataset;
     private static Dataset luceneDataset;
     private final SpatialIndex index;
-    private boolean locked = false;
-    private boolean writeTransaction = false;
+//    private ThreadLocal<Boolean> locked;
+//    private ThreadLocal<Boolean> writeTransaction;
+//    private boolean locked = false;
+//    private boolean writeTransaction = false;
     private final DatasetGraphSpatial datasetGraphSpatial;
     private final SpatialIndexContext spatialIndexContext;
 
@@ -46,6 +48,20 @@ public class LocalOntology extends JenaOntology {
         datasetGraphSpatial = (DatasetGraphSpatial) luceneDataset.asDatasetGraph();
         this.index = datasetGraphSpatial.getSpatialIndex();
         spatialIndexContext = new SpatialIndexContext(this.index);
+
+//        //        Set threadlocals
+//        this.writeTransaction = new ThreadLocal<Boolean>() {
+//            @Override
+//            protected Boolean initialValue() {
+//                return false;
+//            }
+//        };
+//        this.locked = new ThreadLocal<Boolean>() {
+//            @Override
+//            protected Boolean initialValue() {
+//                return false;
+//            }
+//        };
     }
 
     private static Model constructJenaModel() {
@@ -135,14 +151,13 @@ public class LocalOntology extends JenaOntology {
         final Query query = QueryFactory.create(queryString);
         final QueryExecution qExec = QueryExecutionFactory.create(query, luceneDataset);
         this.openTransaction(false);
-        this.model.enterCriticalSection(Lock.READ);
+        model.enterCriticalSection(Lock.READ);
         try {
             resultSet = qExec.execSelect();
             resultSet = ResultSetFactory.copyResults(resultSet);
-            ResultSetFormatter.out(System.out, resultSet, query);
         } finally {
             qExec.close();
-            this.model.leaveCriticalSection();
+            model.leaveCriticalSection();
             this.commitTransaction();
         }
 
@@ -152,7 +167,7 @@ public class LocalOntology extends JenaOntology {
     @Override
     public void close(boolean drop) {
         this.commitTransaction();
-        this.model.close();
+        model.close();
         TDB.closedown();
         if (drop) {
             try {
@@ -165,66 +180,19 @@ public class LocalOntology extends JenaOntology {
     }
 
     @Override
-    public void openTransaction(boolean write) {
-        if (!locked) {
-            if (!luceneDataset.isInTransaction()) {
-                if (write) {
-                    logger.debug("Opening writable transaction");
-                    luceneDataset.begin(ReadWrite.WRITE);
-                    this.writeTransaction = true;
-                } else {
-                    logger.debug("Opening read-only transaction");
-                    luceneDataset.begin(ReadWrite.READ);
-                }
-            }
+    public void openDatasetTransaction(boolean write) {
+        if (write) {
+            luceneDataset.begin(ReadWrite.WRITE);
+            logger.debug("Opened writable transaction");
         } else {
-            logger.debug("Model is locked, keeping transaction alive");
+            luceneDataset.begin(ReadWrite.READ);
+            logger.debug("Opened read-only transaction");
         }
     }
 
     @Override
-    public void commitTransaction() {
-        if (!locked) {
-            if (luceneDataset.isInTransaction()) {
-                luceneDataset.commit();
-                this.writeTransaction = false;
-            }
-        } else {
-            logger.debug("Model is locked, not committing");
-        }
+    public void commitDatasetTransaction() {
+        luceneDataset.commit();
     }
 
-    /**
-     * Open a transaction and lock it, for lots of bulk action
-     */
-    public void lock () {
-        this.locked = true;
-    }
-
-    /**
-     * Open a transaction and lock it
-     * @param write - Open writable transaction?
-     */
-    public void openAndLock(boolean write) {
-        logger.debug("Locking open");
-        openTransaction(write);
-        lock();
-    }
-
-    /**
-     * Unlock the model to allow for closing the transaction
-     */
-    public void unlock() {
-        this.locked = false;
-    }
-
-    /**
-     * Unlock the transaction and commit it
-     */
-    public void unlockAndCommit() {
-        logger.debug("Unlocking and closing");
-        unlock();
-        commitTransaction();
-//        updateSpatialIndex();
-    }
 }

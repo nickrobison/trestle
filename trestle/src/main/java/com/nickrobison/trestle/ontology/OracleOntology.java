@@ -143,52 +143,62 @@ public class OracleOntology extends JenaOntology {
     }
 
     @Override
-    public void lock() {
-        this.locked = true;
+    public void commitDatasetTransaction() {
+        this.model.commit();
     }
 
     @Override
-    public void openAndLock(boolean write) {
-        if (!locked) {
-            logger.debug("Locking open transaction");
-            openTransaction(write);
-            lock();
-        } else {
-            logger.debug("Already locked, moving on");
-        }
+    public void openDatasetTransaction(boolean write) {
+        this.model.begin();
     }
-
-    @Override
-    public void unlock() {
-        this.locked = false;
-    }
-
-    @Override
-    public void unlockAndCommit() {
-        logger.debug("Unlocking and committing");
-        unlock();
-        commitTransaction();
-    }
-
-    @Override
-    public void commitTransaction() {
-        if (!locked) {
-            logger.info("Committing model transaction");
-            model.commit();
-        } else {
-            logger.debug("Transaction locked, continuing");
-        }
-    }
-
-    @Override
-    public void openTransaction(boolean write) {
-        if (!locked) {
-            logger.debug("Opening transaction");
-            model.begin();
-        } else {
-            logger.debug("Model is locked, keeping transaction alive");
-        }
-    }
+//
+//    @Override
+//    public void lock() {
+//        this.locked = true;
+//    }
+//
+//    @Override
+//    public void openAndLock(boolean write) {
+//        if (!locked) {
+//            logger.debug("Locking open transaction");
+//            openTransaction(write);
+//            lock();
+//        } else {
+//            logger.debug("Already locked, moving on");
+//        }
+//    }
+//
+//    @Override
+//    public void unlock() {
+//        this.locked = false;
+//    }
+//
+//    @Override
+//    public void unlockAndCommit() {
+//        logger.debug("Unlocking and committing");
+//        unlock();
+//        commitTransaction();
+//    }
+//
+//    @Override
+//    public void commitTransaction() {
+//        if (!locked) {
+//            logger.info("Committing model transaction");
+//            model.commit();
+//        } else {
+//            logger.debug("Transaction locked, continuing");
+//        }
+//    }
+//
+//    @Override
+//    public void openTransaction(boolean write) {
+//        if (!locked) {
+//            logger.debug("Opening transaction");
+//            model.begin();
+//        } else {
+//            logger.debug("Model is locked, keeping transaction alive");
+//        }
+//    }
 
     public ResultSet executeSPARQL(String queryString) {
         ResultSet resultSet;
