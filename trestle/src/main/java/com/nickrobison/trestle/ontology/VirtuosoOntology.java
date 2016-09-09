@@ -97,14 +97,14 @@ public class VirtuosoOntology extends JenaOntology {
     @Override
     public void openDatasetTransaction(boolean write) {
         virtModel.begin();
-//        this.model.enterCriticalSection(getJenaLock(write));
+        this.model.enterCriticalSection(getJenaLock(write));
         logger.debug("Transaction opened and critical section entered");
     }
 
     @Override
     public void commitDatasetTransaction() {
         virtModel.commit();
-//        this.model.leaveCriticalSection();
+        this.model.leaveCriticalSection();
         logger.debug("Transaction closed and critical section left");
     }
 

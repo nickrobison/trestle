@@ -33,6 +33,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -210,51 +211,79 @@ public class TrestleReasoner {
         writeObject(inputObject, TemporalScope.VALID);
     }
 
-    void writeObject(Object inputObject, TemporalScope scope) throws TrestleClassException {
-        ontology.openAndLock(true);
-        //        Is class in registry?
-        final Class aClass = inputObject.getClass();
-        if (!this.registeredClasses.contains(aClass)) {
-            throw new UnregisteredClassException(aClass);
-        }
-        final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(inputObject);
+    public CompletableFuture<Void> writeObjectAsync(Object inputObject, TemporalScope scope) {
 
-//        TODO(nrobison): See if it already exists, if so, return.
-        if (ontology.containsResource(owlNamedIndividual)) {
-            logger.info("{} already exists in the ontology", owlNamedIndividual);
-            return;
-        }
+        return CompletableFuture.runAsync(() -> {
+//            ontology.openAndLock(true);
+            //        Is class in registry?
+            final Class aClass = inputObject.getClass();
+            try {
+                checkRegisteredClass(aClass);
+            } catch (UnregisteredClassException e) {
+                throw new CompletionException(e);
+            }
+
+            final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(inputObject);
 
 //        Write the class
-        final OWLClass owlClass = ClassParser.GetObjectClass(inputObject);
-        ontology.associateOWLClass(owlClass, datasetClass);
+            final OWLClass owlClass = ClassParser.GetObjectClass(inputObject);
+            ontology.associateOWLClass(owlClass, datasetClass);
 //        Write the individual
-        ontology.createIndividual(owlNamedIndividual, owlClass);
+            ontology.createIndividual(owlNamedIndividual, owlClass);
+//            this.ontology.commitTransaction();
 //        Write the temporal
-        final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(inputObject);
-        if (temporalObjects.isPresent()) {
-            temporalObjects.get().forEach(temporal -> {
-                try {
-                    writeTemporalWithAssociation(temporal, owlNamedIndividual, scope);
-                } catch (MissingOntologyEntity e) {
-                    logger.error("Individual {} missing in ontology", owlNamedIndividual, e);
+//            final CompletableFuture<Void> temporalFutures = CompletableFuture.runAsync(() -> {
+                final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(inputObject);
+                if (temporalObjects.isPresent()) {
+                    temporalObjects.get().forEach(temporal -> {
+                        try {
+                            writeTemporalWithAssociation(temporal, owlNamedIndividual, scope);
+                        } catch (MissingOntologyEntity e) {
+                            logger.error("Individual {} missing in ontology", owlNamedIndividual, e);
+                            throw new CompletionException(e);
+                        }
+                    });
                 }
-            });
-        }
+//            });
 
 //        Write the data properties
-        final Optional<List<OWLDataPropertyAssertionAxiom>> dataProperties = ClassParser.GetDataProperties(inputObject);
-        if (dataProperties.isPresent()) {
-            dataProperties.get().forEach(property -> {
-                try {
-                    ontology.writeIndividualDataProperty(property);
-                } catch (MissingOntologyEntity e) {
-                    logger.error("Individual {} missing in ontology", property.getSubject(), e);
+            final Optional<List<OWLDataPropertyAssertionAxiom>> dataProperties = ClassParser.GetDataProperties(inputObject);
+//            final CompletableFuture<Void> propertiesFutures = CompletableFuture.runAsync(() -> {
+                if (dataProperties.isPresent()) {
+                    dataProperties.get().forEach(property -> {
+                        try {
+                            ontology.writeIndividualDataProperty(property);
+                        } catch (MissingOntologyEntity e) {
+                            logger.error("Individual {} missing in ontology", property.getSubject(), e);
+                            throw new CompletionException(e);
+                        }
+                    });
                 }
-            });
-        }
+//            });
+//            final CompletableFuture<Void> objectFutures = CompletableFuture.allOf(propertiesFutures, temporalFutures);
+//            try {
+//                objectFutures.get();
+//            } catch (InterruptedException e) {
+//                logger.error("Object futures interrupted", e);
+//            } catch (ExecutionException e) {
+//                logger.error("Object futures exception", e);
+//            }
+
 //        Write the object properties
-        ontology.unlockAndCommit();
+//            ontology.unlockAndCommit();
+        });
+    }
+
+    void writeObject(Object inputObject, TemporalScope scope) throws TrestleClassException {
+        final CompletableFuture<Void> voidCompletableFuture = writeObjectAsync(inputObject, scope);
+        try {
+            voidCompletableFuture.get();
+        } catch (InterruptedException e) {
+            logger.error("Object write interrupted", e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+//            logger.error("Object write excepted", e);
+        }
     }
 
     public void writeFactWithRelation(Object inputFact, double relation, Object relatedFact) {
@@ -367,6 +396,7 @@ public class TrestleReasoner {
                 checkRegisteredClass(clazz);
             } catch (UnregisteredClassException e) {
                 logger.error("Unregistered class", e);
+                throw new CompletionException(e);
             }
 
 //        Figure out its name

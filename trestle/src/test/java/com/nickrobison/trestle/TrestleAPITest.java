@@ -90,7 +90,7 @@ public class TrestleAPITest {
         }
 
 //        Write the objects
-        gaulObjects.forEach(gaul -> {
+        gaulObjects.parallelStream().forEach(gaul -> {
             try {
                 reasoner.writeObjectAsConcept(gaul);
             } catch (TrestleClassException e) {
@@ -135,7 +135,6 @@ public class TrestleAPITest {
         owlNamedIndividual = ClassParser.GetIndividual(esriPolygonTest);
         reasoner.writeObjectAsFact(esriPolygonTest);
         final TestClasses.ESRIPolygonTest esriPolygonTest1 = reasoner.readAsObject(esriPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
-        final TestClasses.ESRIPolygonTest esriPolygonTest2 = reasoner.readAsObject(esriPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
         assertEquals(esriPolygonTest, esriPolygonTest1, "Should be equal");
 
 //        Geotools

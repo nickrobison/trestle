@@ -92,23 +92,30 @@ public class VirtuosoOntologyGAULLoader {
     @Test
     public void testRAWDataLoader() throws MissingOntologyEntity, OWLOntologyStorageException, SQLException, UnsupportedFeatureException {
 
-        OWLClass datasetClass = df.getOWLClass(IRI.create("trestle:", "GAUL_Test"));
+        final OWLClass datasetClass = df.getOWLClass(IRI.create("trestle:", "GAUL_Test"));
 
         final OWLClass temporalClass = df.getOWLClass(IRI.create("trestle:", "Temporal_Object"));
         final OWLObjectProperty temporal_of = df.getOWLObjectProperty(IRI.create("trestle:", "temporal_of"));
         final OWLDataProperty valid_from = df.getOWLDataProperty(IRI.create("trestle:", "valid_from"));
         final OWLDataProperty valid_to = df.getOWLDataProperty(IRI.create("trestle:", "valid_to"));
+//        datasetClass = ClassParser.GetObjectClass(gaulObjects.get(0));
 
         Instant start = Instant.now();
-        ontology.openAndLock(true);
-        for (TestClasses.GAULTestClass gaul : gaulObjects) {
-            datasetClass = ClassParser.GetObjectClass(gaul);
+//        ontology.openAndLock(true);
+        gaulObjects.parallelStream().forEach(gaul -> {
+
             final OWLNamedIndividual gaulIndividual = ClassParser.GetIndividual(gaul);
+
+//            if (ontology.containsResource(gaulIndividual)) {
+//                logger.info("{} already exists in the ontology", gaulIndividual);
+//                return;
+//            }
             final OWLClassAssertionAxiom testClass = df.getOWLClassAssertionAxiom(datasetClass, gaulIndividual);
             ontology.createIndividual(testClass);
 
             final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(gaul);
-            for (TemporalObject temporal : temporalObjects.orElseThrow(() -> new RuntimeException("Missing temporals"))) {
+//            for (TemporalObject temporal : temporalObjects.orElseThrow(() -> new RuntimeException("Missing temporals"))) {
+            temporalObjects.orElseThrow(() -> new RuntimeException("Missing temporals")).parallelStream().forEach(temporal -> {
 
 //                Write the temporal
                 final OWLNamedIndividual temporalIndividual = df.getOWLNamedIndividual(IRI.create("trestle:", temporal.getID()));
@@ -117,25 +124,38 @@ public class VirtuosoOntologyGAULLoader {
 
 //                Set the object properties to point back to the individual
                 final OWLObjectPropertyAssertionAxiom temporalPropertyAssertion = df.getOWLObjectPropertyAssertionAxiom(temporal_of, temporalIndividual, gaulIndividual);
-                ontology.writeIndividualObjectProperty(temporalPropertyAssertion);
+                try {
+                    ontology.writeIndividualObjectProperty(temporalPropertyAssertion);
+                } catch (MissingOntologyEntity missingOntologyEntity) {
+                    missingOntologyEntity.printStackTrace();
+                }
 
 //                Write the data properties. I know these are closed intervals
                 final OWLLiteral fromLiteral = df.getOWLLiteral(temporal.asInterval().getFromTime().toString(), OWL2Datatype.XSD_DATE_TIME);
                 final OWLLiteral toLiteral = df.getOWLLiteral(temporal.asInterval().getToTime().get().toString(), OWL2Datatype.XSD_DATE_TIME);
                 final OWLDataPropertyAssertionAxiom fromAssertionAxiom = df.getOWLDataPropertyAssertionAxiom(valid_from, temporalIndividual, fromLiteral);
                 final OWLDataPropertyAssertionAxiom toAssertionAxiom = df.getOWLDataPropertyAssertionAxiom(valid_to, temporalIndividual, toLiteral);
-                ontology.writeIndividualDataProperty(fromAssertionAxiom);
-                ontology.writeIndividualDataProperty(toAssertionAxiom);
-            }
+                try {
+                    ontology.writeIndividualDataProperty(fromAssertionAxiom);
+                    ontology.writeIndividualDataProperty(toAssertionAxiom);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
 
             //        Write the data properties
             final Optional<List<OWLDataPropertyAssertionAxiom>> gaulDataProperties = ClassParser.GetDataProperties(gaul);
-            for (OWLDataPropertyAssertionAxiom dataAxiom : gaulDataProperties.orElseThrow(() -> new RuntimeException("Missing data properties"))) {
+//            for (OWLDataPropertyAssertionAxiom dataAxiom : gaulDataProperties.orElseThrow(() -> new RuntimeException("Missing data properties"))) {
+            gaulDataProperties.orElseThrow(() -> new RuntimeException("Missing data properties")).parallelStream().forEach(dataAxiom -> {
 
-                ontology.writeIndividualDataProperty(dataAxiom);
-            }
-        }
-        ontology.unlockAndCommit();
+                try {
+                    ontology.writeIndividualDataProperty(dataAxiom);
+                } catch (MissingOntologyEntity missingOntologyEntity) {
+                    missingOntologyEntity.printStackTrace();
+                }
+            });
+        });
+//        ontology.unlockAndCommit();
         final Instant end = Instant.now();
         logger.info("Serial execution took {} ms", Duration.between(start, end).toMillis());
 
