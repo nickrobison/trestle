@@ -1,5 +1,6 @@
 package com.nickrobison.trestle;
 
+import afu.edu.emory.mathcs.backport.java.util.Arrays;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
@@ -40,11 +41,11 @@ public class TrestleAPITest {
     @BeforeEach
     public void setup() {
         reasoner = new TrestleBuilder()
-                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-//                .withDBConnection(
-//                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-//                        "spatialUser",
-//                        "spatial1")
+//                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+                .withDBConnection(
+                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
+                        "spatialUser",
+                        "spatial1")
                 .withName("api_test")
                 .withInputClasses(TestClasses.GAULTestClass.class,
                         TestClasses.GAULComplexClassTest.class,
@@ -115,27 +116,32 @@ public class TrestleAPITest {
 
 //        Complex objects
         final TestClasses.GAULComplexClassTest gaulComplexClassTest = new TestClasses.GAULComplexClassTest();
-        OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(gaulComplexClassTest);
-        reasoner.writeObjectAsFact(gaulComplexClassTest);
-        final TestClasses.GAULComplexClassTest ReturnedGaulComplexClassTest = reasoner.readAsObject(gaulComplexClassTest.getClass(), owlNamedIndividual.getIRI(), false);
-        assertEquals(gaulComplexClassTest, ReturnedGaulComplexClassTest, "Should have the same object");
-
-//        Spatial
-//        JTS
         final Geometry jtsGeom = new WKTReader().read("POINT(4.0 6.0)");
         final TestClasses.JTSGeometryTest jtsGeometryTest = new TestClasses.JTSGeometryTest(4326, jtsGeom, LocalDate.now());
-        owlNamedIndividual = ClassParser.GetIndividual(jtsGeometryTest);
-        reasoner.writeObjectAsFact(jtsGeometryTest);
-        final TestClasses.JTSGeometryTest returnedJTS = reasoner.readAsObject(jtsGeometryTest.getClass(), owlNamedIndividual.getIRI(), false);
-        assertEquals(jtsGeometryTest, returnedJTS, "Should have the same object");
-
-//        ESRI
         final Polygon geometry = (Polygon) GeometryEngine.geometryFromWkt("POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", 0, com.esri.core.geometry.Geometry.Type.Polygon);
         final TestClasses.ESRIPolygonTest esriPolygonTest = new TestClasses.ESRIPolygonTest(4792, geometry, LocalDate.now());
-        owlNamedIndividual = ClassParser.GetIndividual(esriPolygonTest);
-        reasoner.writeObjectAsFact(esriPolygonTest);
-        final TestClasses.ESRIPolygonTest esriPolygonTest1 = reasoner.readAsObject(esriPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
-        assertEquals(esriPolygonTest, esriPolygonTest1, "Should be equal");
+
+        List<Object> classObjects = new ArrayList<>();
+        classObjects.add(gaulComplexClassTest);
+        classObjects.add(jtsGeometryTest);
+        classObjects.add(esriPolygonTest);
+
+        classObjects.parallelStream().forEach(object -> {
+            final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(object);
+            try {
+                reasoner.writeObjectAsFact(object);
+            } catch (TrestleClassException e) {
+                e.printStackTrace();
+            }
+            final Object returnedObject = reasoner.readAsObject(object.getClass(), owlNamedIndividual.getIRI(), false);
+            if (returnedObject instanceof TestClasses.GAULComplexClassTest) {
+                assertEquals(gaulComplexClassTest, returnedObject, "Should have the same object");
+            } else if (returnedObject instanceof TestClasses.JTSGeometryTest) {
+                assertEquals(jtsGeometryTest, returnedObject, "Should have the same object");
+            } else {
+                assertEquals(esriPolygonTest, returnedObject, "Should be equal");
+            }
+        });
 
 //        Geotools
 //

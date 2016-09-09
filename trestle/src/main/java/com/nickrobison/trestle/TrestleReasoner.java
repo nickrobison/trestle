@@ -232,7 +232,7 @@ public class TrestleReasoner {
             ontology.createIndividual(owlNamedIndividual, owlClass);
 //            this.ontology.commitTransaction();
 //        Write the temporal
-//            final CompletableFuture<Void> temporalFutures = CompletableFuture.runAsync(() -> {
+            final CompletableFuture<Void> temporalFutures = CompletableFuture.runAsync(() -> {
                 final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(inputObject);
                 if (temporalObjects.isPresent()) {
                     temporalObjects.get().forEach(temporal -> {
@@ -244,11 +244,11 @@ public class TrestleReasoner {
                         }
                     });
                 }
-//            });
+            });
 
 //        Write the data properties
             final Optional<List<OWLDataPropertyAssertionAxiom>> dataProperties = ClassParser.GetDataProperties(inputObject);
-//            final CompletableFuture<Void> propertiesFutures = CompletableFuture.runAsync(() -> {
+            final CompletableFuture<Void> propertiesFutures = CompletableFuture.runAsync(() -> {
                 if (dataProperties.isPresent()) {
                     dataProperties.get().forEach(property -> {
                         try {
@@ -259,15 +259,15 @@ public class TrestleReasoner {
                         }
                     });
                 }
-//            });
-//            final CompletableFuture<Void> objectFutures = CompletableFuture.allOf(propertiesFutures, temporalFutures);
-//            try {
-//                objectFutures.get();
-//            } catch (InterruptedException e) {
-//                logger.error("Object futures interrupted", e);
-//            } catch (ExecutionException e) {
-//                logger.error("Object futures exception", e);
-//            }
+            });
+            final CompletableFuture<Void> objectFutures = CompletableFuture.allOf(propertiesFutures, temporalFutures);
+            try {
+                objectFutures.get();
+            } catch (InterruptedException e) {
+                logger.error("Object futures interrupted", e);
+            } catch (ExecutionException e) {
+                logger.error("Object futures exception", e);
+            }
 
 //        Write the object properties
 //            ontology.unlockAndCommit();
