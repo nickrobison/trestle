@@ -32,6 +32,8 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.temporal.Temporal;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -342,9 +344,108 @@ public class TrestleReasoner {
         }
     }
 
-    @SuppressWarnings({"return.type.incompatible", "argument.type.incompatible"})
-    <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache) throws TrestleClassException, MissingOntologyEntity {
+    private void checkRegisteredClass(Class<?> clazz) throws UnregisteredClassException {
+        if (!this.registeredClasses.contains(clazz)) {
+            throw new UnregisteredClassException(clazz);
+        }
+    }
 
+    private void checkExists(IRI individualIRI) throws MissingOntologyEntity {
+        if (!ontology.containsResource(individualIRI)) {
+            throw new MissingOntologyEntity("Can't find individual ", individualIRI);
+        }
+    }
+
+
+    @SuppressWarnings("Duplicates")
+    private <T> CompletableFuture<Optional<T>> readAsObjectAsync(Class<@NonNull T> clazz , @NonNull IRI individualIRI) {
+
+        return CompletableFuture.supplyAsync(() -> {
+            logger.debug("Executing async");
+//        Contains class?
+            try {
+                checkRegisteredClass(clazz);
+            } catch (UnregisteredClassException e) {
+                logger.error("Unregistered class", e);
+            }
+
+//        Figure out its name
+            try {
+                checkExists(individualIRI);
+            } catch (MissingOntologyEntity missingOntologyEntity) {
+                logger.error("Missing individual {}", individualIRI);
+                return Optional.empty();
+            }
+
+
+            final ConstructorArguments constructorArguments = new ConstructorArguments();
+            final Optional<List<OWLDataProperty>> dataProperties = ClassBuilder.getPropertyMembers(clazz);
+            if (dataProperties.isPresent()) {
+                final Set<OWLDataPropertyAssertionAxiom> propertiesForIndividual = ontology.getDataPropertiesForIndividual(individualIRI, dataProperties.get());
+                propertiesForIndividual.forEach(property -> {
+                    final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, clazz);
+                    final Object literalValue = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
+                    constructorArguments.addArgument(
+                            ClassParser.matchWithClassMember(clazz, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
+                            javaClass,
+                            literalValue);
+                });
+//            Get the temporals
+//            Get the temporal objects to figure out the correct return type
+                final Optional<List<TemporalObject>> temporalObjectTypes = TemporalParser.GetTemporalObjects(clazz);
+
+                final Class<? extends Temporal> baseTemporalType = TemporalParser.GetTemporalType(clazz);
+
+                final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(individualIRI, hasTemporalIRI);
+                Optional<TemporalObject> temporalObject = Optional.empty();
+                if (individualObjectProperty.isPresent()) {
+//                There can only be 1 temporal, so just grab the first one.
+                    final Optional<OWLObjectPropertyAssertionAxiom> first = individualObjectProperty.get().stream().findFirst();
+                    if (!first.isPresent()) {
+                        throw new RuntimeException(String.format("Missing temporal for individual %s", individualIRI));
+                    }
+                    final Set<OWLDataPropertyAssertionAxiom> TemporalProperties = ontology.getAllDataPropertiesForIndividual(first.get().getObject().asOWLNamedIndividual());
+                    temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(TemporalProperties, TemporalParser.IsDefault(clazz), baseTemporalType);
+                }
+
+                if (!temporalObject.isPresent()) {
+                    throw new RuntimeException("Cannot restore temporal from ontology");
+                }
+
+//            Add the temporal to the constructor args
+                final TemporalObject temporal = temporalObject.get();
+                if (temporal.isInterval()) {
+                    final IntervalTemporal intervalTemporal = temporal.asInterval();
+                    constructorArguments.addArgument(
+                            ClassParser.matchWithClassMember(clazz, intervalTemporal.getStartName()),
+                            intervalTemporal.getBaseTemporalType(),
+                            intervalTemporal.getFromTime());
+                    if (!intervalTemporal.isDefault() & intervalTemporal.getToTime().isPresent()) {
+                        constructorArguments.addArgument(
+                                ClassParser.matchWithClassMember(clazz, intervalTemporal.getEndName()),
+                                intervalTemporal.getBaseTemporalType(),
+                                intervalTemporal.getToTime().get());
+                    }
+                } else {
+                    constructorArguments.addArgument(
+                            ClassParser.matchWithClassMember(clazz, temporal.asPoint().getParameterName()),
+                            temporal.asPoint().getBaseTemporalType(),
+                            temporal.asPoint().getPointTime());
+                }
+            }
+            try {
+                final @NonNull T constructedObject = ClassBuilder.ConstructObject(clazz, constructorArguments);
+                return Optional.of(constructedObject);
+            } catch (MissingConstructorException e) {
+                logger.error("Problem with constructor", e);
+                return Optional.empty();
+            }
+        });
+    }
+
+    @SuppressWarnings({"return.type.incompatible", "argument.type.incompatible"})
+    <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache) {
+        logger.debug("Reading {}", individualIRI);
 //        Check for cache hit first, provided caching is enabled and we're not set to bypass the cache
         if (isCachingEnabled() & !bypassCache) {
             logger.debug("Retrieving {} from cache", individualIRI);
@@ -353,73 +454,92 @@ public class TrestleReasoner {
             logger.debug("Bypassing cache and directly retrieving object");
         }
 
-//        Contains class?
-        if (!this.registeredClasses.contains(clazz)) {
-            throw new UnregisteredClassException(clazz);
-        }
-
-//        Figure out its name
-        if (!ontology.containsResource(individualIRI)) {
-            throw new MissingOntologyEntity("Can't find individual ", individualIRI);
-        }
-
-
-        final ConstructorArguments constructorArguments = new ConstructorArguments();
-        final Optional<List<OWLDataProperty>> dataProperties = ClassBuilder.getPropertyMembers(clazz);
-        if (dataProperties.isPresent()) {
-            final Set<OWLDataPropertyAssertionAxiom> propertiesForIndividual = ontology.getDataPropertiesForIndividual(individualIRI, dataProperties.get());
-            propertiesForIndividual.forEach(property -> {
-                final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, clazz);
-                final Object literalValue = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
-                constructorArguments.addArgument(
-                        ClassParser.matchWithClassMember(clazz, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
-                        javaClass,
-                        literalValue);
-            });
-//            Get the temporals
-//            Get the temporal objects to figure out the correct return type
-            final Optional<List<TemporalObject>> temporalObjectTypes = TemporalParser.GetTemporalObjects(clazz);
-
-            final Class<? extends Temporal> baseTemporalType = TemporalParser.GetTemporalType(clazz);
-
-            final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(individualIRI, hasTemporalIRI);
-            Optional<TemporalObject> temporalObject = Optional.empty();
-            if (individualObjectProperty.isPresent()) {
-//                There can only be 1 temporal, so just grab the first one.
-                final Optional<OWLObjectPropertyAssertionAxiom> first = individualObjectProperty.get().stream().findFirst();
-                if (!first.isPresent()) {
-                    throw new RuntimeException(String.format("Missing temporal for individual %s", individualIRI));
-                }
-                final Set<OWLDataPropertyAssertionAxiom> TemporalProperties = ontology.getAllDataPropertiesForIndividual(first.get().getObject().asOWLNamedIndividual());
-                temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(TemporalProperties, TemporalParser.IsDefault(clazz), baseTemporalType);
-            }
-
-            if (!temporalObject.isPresent()) {
-                throw new RuntimeException("Cannot restore temporal from ontology");
-            }
-
-//            Add the temporal to the constructor args
-            final TemporalObject temporal = temporalObject.get();
-            if (temporal.isInterval()) {
-                final IntervalTemporal intervalTemporal = temporal.asInterval();
-                constructorArguments.addArgument(
-                        ClassParser.matchWithClassMember(clazz, intervalTemporal.getStartName()),
-                        intervalTemporal.getBaseTemporalType(),
-                        intervalTemporal.getFromTime());
-                if (!intervalTemporal.isDefault() & intervalTemporal.getToTime().isPresent()) {
-                    constructorArguments.addArgument(
-                            ClassParser.matchWithClassMember(clazz, intervalTemporal.getEndName()),
-                            intervalTemporal.getBaseTemporalType(),
-                            intervalTemporal.getToTime().get());
-                }
+        logger.debug("Running async");
+        final CompletableFuture<Optional<@NonNull T>> objectFuture = readAsObjectAsync(clazz, individualIRI);
+        try {
+            final Optional<@NonNull T> constructedObject = objectFuture.get();
+            if (constructedObject.isPresent()) {
+                logger.debug("Done with {}", individualIRI);
+                return constructedObject.get();
             } else {
-                constructorArguments.addArgument(
-                        ClassParser.matchWithClassMember(clazz, temporal.asPoint().getParameterName()),
-                        temporal.asPoint().getBaseTemporalType(),
-                        temporal.asPoint().getPointTime());
+                throw new RuntimeException("Problem constructing object");
             }
+
+        } catch (InterruptedException e) {
+            logger.error("Interrupted", e);
+        } catch (ExecutionException e) {
+            logger.error("Execution exception", e);
         }
-        return ClassBuilder.ConstructObject(clazz, constructorArguments);
+
+        throw new RuntimeException("Problem constructing object");
+
+////        Contains class?
+//        if (!this.registeredClasses.contains(clazz)) {
+//            throw new UnregisteredClassException(clazz);
+//        }
+//
+////        Figure out its name
+//        if (!ontology.containsResource(individualIRI)) {
+//            throw new MissingOntologyEntity("Can't find individual ", individualIRI);
+//        }
+//
+//
+//        final ConstructorArguments constructorArguments = new ConstructorArguments();
+//        final Optional<List<OWLDataProperty>> dataProperties = ClassBuilder.getPropertyMembers(clazz);
+//        if (dataProperties.isPresent()) {
+//            final Set<OWLDataPropertyAssertionAxiom> propertiesForIndividual = ontology.getDataPropertiesForIndividual(individualIRI, dataProperties.get());
+//            propertiesForIndividual.forEach(property -> {
+//                final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, clazz);
+//                final Object literalValue = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
+//                constructorArguments.addArgument(
+//                        ClassParser.matchWithClassMember(clazz, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
+//                        javaClass,
+//                        literalValue);
+//            });
+////            Get the temporals
+////            Get the temporal objects to figure out the correct return type
+//            final Optional<List<TemporalObject>> temporalObjectTypes = TemporalParser.GetTemporalObjects(clazz);
+//
+//            final Class<? extends Temporal> baseTemporalType = TemporalParser.GetTemporalType(clazz);
+//
+//            final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(individualIRI, hasTemporalIRI);
+//            Optional<TemporalObject> temporalObject = Optional.empty();
+//            if (individualObjectProperty.isPresent()) {
+////                There can only be 1 temporal, so just grab the first one.
+//                final Optional<OWLObjectPropertyAssertionAxiom> first = individualObjectProperty.get().stream().findFirst();
+//                if (!first.isPresent()) {
+//                    throw new RuntimeException(String.format("Missing temporal for individual %s", individualIRI));
+//                }
+//                final Set<OWLDataPropertyAssertionAxiom> TemporalProperties = ontology.getAllDataPropertiesForIndividual(first.get().getObject().asOWLNamedIndividual());
+//                temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(TemporalProperties, TemporalParser.IsDefault(clazz), baseTemporalType);
+//            }
+//
+//            if (!temporalObject.isPresent()) {
+//                throw new RuntimeException("Cannot restore temporal from ontology");
+//            }
+//
+////            Add the temporal to the constructor args
+//            final TemporalObject temporal = temporalObject.get();
+//            if (temporal.isInterval()) {
+//                final IntervalTemporal intervalTemporal = temporal.asInterval();
+//                constructorArguments.addArgument(
+//                        ClassParser.matchWithClassMember(clazz, intervalTemporal.getStartName()),
+//                        intervalTemporal.getBaseTemporalType(),
+//                        intervalTemporal.getFromTime());
+//                if (!intervalTemporal.isDefault() & intervalTemporal.getToTime().isPresent()) {
+//                    constructorArguments.addArgument(
+//                            ClassParser.matchWithClassMember(clazz, intervalTemporal.getEndName()),
+//                            intervalTemporal.getBaseTemporalType(),
+//                            intervalTemporal.getToTime().get());
+//                }
+//            } else {
+//                constructorArguments.addArgument(
+//                        ClassParser.matchWithClassMember(clazz, temporal.asPoint().getParameterName()),
+//                        temporal.asPoint().getBaseTemporalType(),
+//                        temporal.asPoint().getPointTime());
+//            }
+//        }
+//        return ClassBuilder.ConstructObject(clazz, constructorArguments);
     }
 
     @SuppressWarnings("return.type.incompatible")
@@ -684,8 +804,8 @@ public class TrestleReasoner {
      */
     private static void validateOntologyName(String ontologyName) throws InvalidOntologyName {
         if (ontologyName.contains("-")) {
-            throw new InvalidOntologyName('-');
-        } else if (ontologyName.length() > 40) {
+            throw new InvalidOntologyName("-");
+        } else if (ontologyName.length() > 90) {
             throw new InvalidOntologyName(ontologyName.length());
         }
     }

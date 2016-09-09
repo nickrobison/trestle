@@ -13,7 +13,7 @@ public class InvalidOntologyName extends Exception {
      * Throws invalid ontology exception with the invalid character
      * @param invalidCharacter - Unsupported character
      */
-    public InvalidOntologyName(Character invalidCharacter) {
+    public InvalidOntologyName(String invalidCharacter) {
         super(String.format("Ontology name cannot contain %s", invalidCharacter));
     }
 

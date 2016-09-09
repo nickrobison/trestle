@@ -40,12 +40,12 @@ public class TrestleAPITest {
     @BeforeEach
     public void setup() {
         reasoner = new TrestleBuilder()
-//                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-                .withDBConnection(
-                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-                        "spatialUser",
-                        "spatial1")
-                .withName("api-test")
+                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+//                .withDBConnection(
+//                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
+//                        "spatialUser",
+//                        "spatial1")
+                .withName("api_test")
                 .withInputClasses(TestClasses.GAULTestClass.class,
                         TestClasses.GAULComplexClassTest.class,
                         TestClasses.JTSGeometryTest.class,
@@ -135,6 +135,7 @@ public class TrestleAPITest {
         owlNamedIndividual = ClassParser.GetIndividual(esriPolygonTest);
         reasoner.writeObjectAsFact(esriPolygonTest);
         final TestClasses.ESRIPolygonTest esriPolygonTest1 = reasoner.readAsObject(esriPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
+        final TestClasses.ESRIPolygonTest esriPolygonTest2 = reasoner.readAsObject(esriPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
         assertEquals(esriPolygonTest, esriPolygonTest1, "Should be equal");
 
 //        Geotools
