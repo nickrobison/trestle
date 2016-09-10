@@ -290,7 +290,6 @@ public class TrestleReasoner {
     public void writeFactWithRelation(Object inputFact, double relation, Object relatedFact) {
 
 //        Check to see if both objects exist
-        ontology.openAndLock(true);
         final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(inputFact);
         final OWLNamedIndividual relatedFactIndividual = ClassParser.GetIndividual(relatedFact);
         if (!ontology.containsResource(owlNamedIndividual)) {
@@ -319,7 +318,6 @@ public class TrestleReasoner {
         if (checkObjectRelation(owlNamedIndividual, relatedFactIndividual)) {
 //            If they are, move on. We don't support updates, yet.
             logger.info("{} and {} are already related, skipping.", owlNamedIndividual, relatedFactIndividual);
-            ontology.unlockAndCommit();
             return;
         }
 
@@ -351,7 +349,6 @@ public class TrestleReasoner {
         } catch (MissingOntologyEntity e) {
             logger.error("Missing individual {}", conceptIRI, e);
         }
-        this.ontology.unlockAndCommit();
     }
 
     @SuppressWarnings({"argument.type.incompatible", "dereference.of.nullable"})
@@ -531,7 +528,6 @@ public class TrestleReasoner {
      */
     @SuppressWarnings("unchecked")
     public <T> Optional<List<T>> spatialIntersectObject(@NonNull T inputObject, double buffer, @Nullable Temporal temporalAt) {
-        this.ontology.openAndLock(false);
         final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(inputObject);
         final Optional<String> wktString = SpatialParser.GetSpatialValue(inputObject);
 
@@ -605,7 +601,7 @@ public class TrestleReasoner {
             final Instant start = Instant.now();
             final ResultSet resultSet = ontology.executeSPARQL(spatialIntersection);
             final Instant end = Instant.now();
-            logger.debug("Spatial query returned in {} ms", Duration.between(start, end));
+            logger.debug("Spatial query returned in {} ms", Duration.between(start, end).toMillis());
 //            I think I need to rewind the result set
             ((ResultSetMem) resultSet).rewind();
             Set<IRI> intersectedIRIs = new HashSet<>();
