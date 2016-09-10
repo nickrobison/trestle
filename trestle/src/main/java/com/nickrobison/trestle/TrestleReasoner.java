@@ -388,7 +388,7 @@ public class TrestleReasoner {
 
 
     @SuppressWarnings("Duplicates")
-    private <T> CompletableFuture<Optional<T>> readAsObjectAsync(Class<@NonNull T> clazz , @NonNull IRI individualIRI) {
+    private <T> CompletableFuture<Optional<T>> readAsObjectAsync(Class<@NonNull T> clazz, @NonNull IRI individualIRI) {
 
         return CompletableFuture.supplyAsync(() -> {
             logger.debug("Executing async");
@@ -507,81 +507,53 @@ public class TrestleReasoner {
 
     /**
      * Spatial Intersect Object with most recent records in the database
-     * @param inputObject
-     * @param buffer
-     * @param <T>
-     * @return
+     * An empty Optional means an error, an Optional of an empty List means no intersected objects
+     *
+     * @param inputObject - Object to intersect
+     * @param buffer - Additional buffer (in meters)
+     * @param <T> - Type to specialize method
+     * @return - An Optional List of Object T
      */
     @SuppressWarnings("return.type.incompatible")
     public <T> Optional<List<T>> spatialIntersectObject(@NonNull T inputObject, double buffer) {
         return spatialIntersectObject(inputObject, buffer, null);
     }
 
+    /**
+     * Spatial Intersect Object with records in the database valid at that given time
+     * An empty Optional means an error, an Optional of an empty List means no intersected objects
+     *
+     * @param inputObject - Object to intersect
+     * @param buffer - Additional buffer to build around object (in meters)
+     * @param temporalAt - Temporal of intersecting time point
+     * @param <T> - Type to specialize method
+     * @return - An Optional List of Object T
+     */
+    @SuppressWarnings("unchecked")
     public <T> Optional<List<T>> spatialIntersectObject(@NonNull T inputObject, double buffer, @Nullable Temporal temporalAt) {
         this.ontology.openAndLock(false);
-        final OWLClass owlClass = ClassParser.GetObjectClass(inputObject);
         final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(inputObject);
         final Optional<String> wktString = SpatialParser.GetSpatialValue(inputObject);
+
         if (wktString.isPresent()) {
-            String spatialIntersection = null;
-
-                try {
-                    if (temporalAt == null) {
-                        spatialIntersection = qb.buildSpatialIntersection(spatialDalect, owlClass, wktString.get(), buffer, QueryBuilder.UNITS.METER);
-                    } else {
-                        final LocalDateTime atLDTime = TemporalParser.parseTemporalToLocalDateTime(temporalAt);
-                        spatialIntersection = qb.buildTemporalSpatialIntersection(spatialDalect, owlClass, wktString.get(), buffer, QueryBuilder.UNITS.METER, atLDTime);
-                    }
-                } catch (UnsupportedFeatureException e) {
-                    logger.error("Database {] doesn't support spatial intersections.", spatialDalect, e);
-                    this.ontology.unlockAndCommit();
-                    return Optional.empty();
-                }
-
-            logger.debug("Executing spatial query");
-            final Instant start = Instant.now();
-//            final long start = System.currentTimeMillis();
-            final ResultSet resultSet = ontology.executeSPARQL(spatialIntersection);
-            final Instant end = Instant.now();
-//            final long end = System.currentTimeMillis();
-            logger.debug("Spatial query returned in {} ms", Duration.between(start, end).toMillis());
-//            I think I need to rewind the result set
-            ((ResultSetMem) resultSet).rewind();
-            Set<IRI> intersectedIRIs = new HashSet<>();
-            while (resultSet.hasNext()) {
-                final QuerySolution querySolution = resultSet.next();
-                final Resource resource = querySolution.get("m").asResource();
-                intersectedIRIs.add(IRI.create(resource.getURI()));
-            }
-            logger.debug("{} intersected with {} objects", owlNamedIndividual, intersectedIRIs.size());
-
-
-//            I think I need to suppress this warning to deal with generics in streams
-            @SuppressWarnings("argument.type.incompatible") final List<@NonNull T> intersectedObjects = intersectedIRIs
-                    .stream()
-                    .map(iri -> {
-                        try {
-                            return (@NonNull T) readAsObject(inputObject.getClass(), iri, false);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
-                    .collect(Collectors.toList());
-
-            if (intersectedObjects.size() > 0) {
-                this.ontology.unlockAndCommit();
-                return Optional.of(intersectedObjects);
-            }
-
-            logger.info("{} intersected with {} objects", owlNamedIndividual, intersectedObjects.size());
-            return Optional.empty();
+            return spatialIntersect((Class<T>) inputObject.getClass(), wktString.get(), buffer, temporalAt);
         }
+
         logger.info("{} doesn't have a spatial component", owlNamedIndividual);
-        this.ontology.unlockAndCommit();
         return Optional.empty();
     }
 
-    public <T> Optional<List<T>> spatialIntersect(Class <@NonNull T> clazz, String wkt, double buffer) {
+    /**
+     Find objects of a given class that intersect with a specific WKT boundary.
+     * An empty Optional means an error, an Optional of an empty List means no intersected objects
+     *
+     * @param clazz - Class of object to return
+     * @param wkt - WKT of spatial boundary to intersect with
+     * @param buffer - Double buffer to build around wkt (in meters)
+     * @param <T> - Type to specialize method
+     * @return - An Optional List of Object T
+     */
+    public <T> Optional<List<T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer) {
         return spatialIntersect(clazz, wkt, buffer, null);
     }
 
@@ -597,59 +569,71 @@ public class TrestleReasoner {
      */
     @SuppressWarnings("return.type.incompatible")
     public <T> Optional<List<T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal atTemporal) {
-        this.ontology.openAndLock(false);
-        final OWLClass owlClass = ClassParser.GetObjectClass(clazz);
 
-        String spatialIntersection = null;
+        final CompletableFuture<Optional<List<@NonNull T>>> intersectFuture = spatialIntersectAsync(clazz, wkt, buffer, atTemporal);
         try {
-            if (atTemporal == null) {
-                logger.debug("Running generic spatial intersection");
-                spatialIntersection = qb.buildSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER);
-            } else {
-                final LocalDateTime atLDTime = TemporalParser.parseTemporalToLocalDateTime(atTemporal);
-                logger.debug("Running spatial intersection at time {}", atLDTime);
-                spatialIntersection = qb.buildTemporalSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER, atLDTime);
-            }
-        } catch (UnsupportedFeatureException e) {
-            logger.error("Database {] doesn't support spatial intersections.", spatialDalect, e);
-            this.ontology.unlockAndCommit();
-            return Optional.empty();
+            return intersectFuture.get();
+        } catch (InterruptedException e) {
+            logger.error("Interrupted", e);
+        } catch (ExecutionException e) {
+            logger.error("Execution exception", e);
         }
 
-        logger.debug("Executing spatial query");
-        final long start = System.currentTimeMillis();
-        final ResultSet resultSet = ontology.executeSPARQL(spatialIntersection);
-        final long end = System.currentTimeMillis();
-        logger.debug("Spatial query returned in {} ms", end - start);
+        throw new RuntimeException("Problem intersecting object");
+    }
+
+    private <T> CompletableFuture<Optional<List<T>>> spatialIntersectAsync(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal atTemporal) {
+        return CompletableFuture.supplyAsync(() -> {
+            final OWLClass owlClass = ClassParser.GetObjectClass(clazz);
+
+            String spatialIntersection = null;
+            try {
+                if (atTemporal == null) {
+                    logger.debug("Running generic spatial intersection");
+                    spatialIntersection = qb.buildSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER);
+                } else {
+                    final LocalDateTime atLDTime = TemporalParser.parseTemporalToLocalDateTime(atTemporal);
+                    logger.debug("Running spatial intersection at time {}", atLDTime);
+                    spatialIntersection = qb.buildTemporalSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER, atLDTime);
+                }
+            } catch (UnsupportedFeatureException e) {
+                logger.error("Database {] doesn't support spatial intersections.", spatialDalect, e);
+                return Optional.empty();
+            }
+
+            logger.debug("Executing spatial query");
+            final Instant start = Instant.now();
+            final ResultSet resultSet = ontology.executeSPARQL(spatialIntersection);
+            final Instant end = Instant.now();
+            logger.debug("Spatial query returned in {} ms", Duration.between(start, end));
 //            I think I need to rewind the result set
-        ((ResultSetMem) resultSet).rewind();
-        Set<IRI> intersectedIRIs = new HashSet<>();
-        while (resultSet.hasNext()) {
-            final QuerySolution querySolution = resultSet.next();
-            final Resource resource = querySolution.get("m").asResource();
-            intersectedIRIs.add(IRI.create(resource.getURI()));
-        }
-        logger.debug("Intersected with {} objects", intersectedIRIs.size());
-        if (intersectedIRIs.size() == 0) {
-            logger.info("No intersected results");
-            ontology.unlockAndCommit();
-            return Optional.of(new ArrayList<@NonNull T>());
-        }
+            ((ResultSetMem) resultSet).rewind();
+            Set<IRI> intersectedIRIs = new HashSet<>();
+            while (resultSet.hasNext()) {
+                final QuerySolution querySolution = resultSet.next();
+                final Resource resource = querySolution.get("m").asResource();
+                intersectedIRIs.add(IRI.create(resource.getURI()));
+            }
+            logger.debug("Intersected with {} objects", intersectedIRIs.size());
+            if (intersectedIRIs.size() == 0) {
+                logger.info("No intersected results");
+                return Optional.of(new ArrayList<@NonNull T>());
+            }
 
 //            I think I need to suppress this warning to deal with generics in streams
-        @SuppressWarnings("argument.type.incompatible") final List<@NonNull T> intersectedObjects = intersectedIRIs
-                .stream()
-                .map(iri -> {
-                    try {
-                        return (@NonNull T) readAsObject(clazz, iri, false);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .collect(Collectors.toList());
+            @SuppressWarnings("argument.type.incompatible") final List<@NonNull T> intersectedObjects = intersectedIRIs
+                    .stream()
+                    .map(iri -> {
+                        try {
+                            return (@NonNull T) readAsObject(clazz, iri, false);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .collect(Collectors.toList());
 
-        ontology.unlockAndCommit();
-        return Optional.of(intersectedObjects);
+            return Optional.of(intersectedObjects);
+        });
     }
 
     /**
