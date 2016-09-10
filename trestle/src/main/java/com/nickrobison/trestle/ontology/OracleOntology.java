@@ -145,11 +145,15 @@ public class OracleOntology extends JenaOntology {
     @Override
     public void commitDatasetTransaction() {
         this.model.commit();
+        this.model.leaveCriticalSection();
+        logger.debug("Transaction closed and critical section left");
     }
 
     @Override
     public void openDatasetTransaction(boolean write) {
         this.model.begin();
+        this.model.enterCriticalSection(getJenaLock(write));
+        logger.debug("Transaction opened and critical section entered");
     }
 
     public ResultSet executeSPARQL(String queryString) {
@@ -189,7 +193,6 @@ public class OracleOntology extends JenaOntology {
         long queryStart = System.currentTimeMillis();
         final QueryExecution qExec = QueryExecutionFactory.create(query, this.model);
         this.openTransaction(false);
-        this.model.enterCriticalSection(Lock.READ);
         try {
             ResultSet resultSet = qExec.execSelect();
             long queryEnd = System.currentTimeMillis();
@@ -222,7 +225,6 @@ public class OracleOntology extends JenaOntology {
                 qExec.close();
             }
         } finally {
-            this.model.leaveCriticalSection();
             this.commitTransaction();
         }
 
