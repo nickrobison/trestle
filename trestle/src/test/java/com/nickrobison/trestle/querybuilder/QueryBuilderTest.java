@@ -11,6 +11,10 @@ import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.expectThrows;
@@ -62,6 +66,19 @@ public class QueryBuilderTest {
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
             "SELECT ?m WHERE { ?m rdf:type :GAUL .?m ogc:asWKT ?wkt FILTER(bif:st_intersects(?wkt, \"POINT (39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral, \"0.0\"^^xsd:double)) }";
 
+    private static final String oracleTSString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+            "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+            "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+            "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
+            "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+            "PREFIX xml: <http://www.w3.org/XML/1998/namespace>\n" +
+            "PREFIX ORACLE_SEM_HT_NS: <http://oracle.com/semtech#leading(?wkt)>\n" +
+            "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
+            "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+            "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
+            "SELECT ?m ?tStart ?tEnd WHERE { ?m rdf:type :GAUL .?m ogc:asWKT ?wkt .?m :has_temporal ?t .{ ?t :valid_from ?tStart} UNION {?t :exists_from ?tStart} .OPTIONAL{{ ?t :valid_to ?tEnd} UNION {?t :exists_to ?tEnd}} .FILTER((?tStart < \"2014-01-01T00:00:00\"^^xsd:dateTime && ?tEnd >= \"2014-01-01T00:00:00\"^^xsd:dateTime) && ogcf:sfIntersects(?wkt, \"POINT (39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }";
+
     @BeforeAll
     public static void createPrefixes() {
         df = OWLManager.getOWLDataFactory();
@@ -101,6 +118,10 @@ public class QueryBuilderTest {
 //        Test virtuoso
         final String generatedVirtuoso = qb.buildSpatialIntersection(QueryBuilder.DIALECT.VIRTUOSO, gaulClass, wktString, 0.0, QueryBuilder.UNITS.KM);
         assertEquals(virtuosoSpatialString, generatedVirtuoso, "Should be equal");
+
+//        Test Oracle temporal
+        final String generatedOracleTS = qb.buildTemporalSpatialIntersection(QueryBuilder.DIALECT.ORACLE, gaulClass, wktString, 0.0, QueryBuilder.UNITS.KM, LocalDate.of(2014, 1, 1).atStartOfDay());
+        assertEquals(oracleTSString, generatedOracleTS, "Should be equal");
 
 //        Check unsupported
         assertThrows(UnsupportedFeatureException.class, () -> qb.buildSpatialIntersection(QueryBuilder.DIALECT.STARDOG, gaulClass, wktString, 0.0, QueryBuilder.UNITS.MILE));

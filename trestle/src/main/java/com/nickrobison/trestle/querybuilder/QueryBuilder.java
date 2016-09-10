@@ -18,6 +18,8 @@ import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -142,6 +144,44 @@ public class QueryBuilder {
         ps.setIri("type", getFullIRIString(datasetClass));
 //        We need to simplify the WKT to get under the 4000 character SQL limit.
         ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
+
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
+    public String buildTemporalSpatialIntersection(DIALECT dialect, OWLClass datasetClass, String wktValue, double buffer, UNITS unit, LocalDateTime atTime) throws UnsupportedFeatureException {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText("SELECT ?m ?tStart ?tEnd" +
+                " WHERE { " +
+                "?m rdf:type ?type ." +
+                "?m ogc:asWKT ?wkt ." +
+                "?m :has_temporal ?t ." +
+                "{ ?t :valid_from ?tStart} UNION {?t :exists_from ?tStart} ." +
+                "OPTIONAL{{ ?t :valid_to ?tEnd} UNION {?t :exists_to ?tEnd}} .");
+        switch (dialect) {
+            case ORACLE: {
+//                We need to remove this, otherwise Oracle substitutes geosparql for ogc
+                ps.removeNsPrefix("geosparql");
+//                Add this hint to the query planner
+                ps.setNsPrefix("ORACLE_SEM_HT_NS", "http://oracle.com/semtech#leading(?wkt)");
+                ps.append("FILTER((?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
+                break;
+            }
+            case VIRTUOSO: {
+                logger.warn("Unit conversion not implemented yet, assuming meters as base distance");
+                ps.append("FILTER((?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime) && bif:st_intersects(?wkt, ?wktString^^ogc:wktLiteral, ?distance)) }");
+                ps.setLiteral("distance", buffer);
+                break;
+            }
+
+            default:
+                throw new UnsupportedFeatureException(String.format("Trestle doesn't yet support spatial queries on %s", dialect));
+        }
+        ps.setIri("type", getFullIRIString(datasetClass));
+//        We need to simplify the WKT to get under the 4000 character SQL limit.
+        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
+        ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
         logger.debug(ps.toString());
         return ps.toString();
