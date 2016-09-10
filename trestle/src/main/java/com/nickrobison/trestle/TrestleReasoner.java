@@ -28,6 +28,9 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.sql.SQLException;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -502,8 +505,19 @@ public class TrestleReasoner {
         throw new RuntimeException("Problem constructing object");
     }
 
+    /**
+     * Spatial Intersect Object with most recent records in the database
+     * @param inputObject
+     * @param buffer
+     * @param <T>
+     * @return
+     */
     @SuppressWarnings("return.type.incompatible")
     public <T> Optional<List<T>> spatialIntersectObject(@NonNull T inputObject, double buffer) {
+        return spatialIntersectObject(inputObject, buffer, null);
+    }
+
+    public <T> Optional<List<T>> spatialIntersectObject(@NonNull T inputObject, double buffer, @Nullable Temporal temporalAt) {
         this.ontology.openAndLock(false);
         final OWLClass owlClass = ClassParser.GetObjectClass(inputObject);
         final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(inputObject);
@@ -511,19 +525,26 @@ public class TrestleReasoner {
         if (wktString.isPresent()) {
             String spatialIntersection = null;
 
-            try {
-                spatialIntersection = qb.buildSpatialIntersection(spatialDalect, owlClass, wktString.get(), buffer, QueryBuilder.UNITS.METER);
-            } catch (UnsupportedFeatureException e) {
-                logger.error("Database {] doesn't support spatial intersections.", spatialDalect, e);
-                this.ontology.unlockAndCommit();
-                return Optional.empty();
-            }
+                try {
+                    if (temporalAt == null) {
+                        spatialIntersection = qb.buildSpatialIntersection(spatialDalect, owlClass, wktString.get(), buffer, QueryBuilder.UNITS.METER);
+                    } else {
+                        final LocalDateTime atLDTime = TemporalParser.parseTemporalToLocalDateTime(temporalAt);
+                        spatialIntersection = qb.buildTemporalSpatialIntersection(spatialDalect, owlClass, wktString.get(), buffer, QueryBuilder.UNITS.METER, atLDTime);
+                    }
+                } catch (UnsupportedFeatureException e) {
+                    logger.error("Database {] doesn't support spatial intersections.", spatialDalect, e);
+                    this.ontology.unlockAndCommit();
+                    return Optional.empty();
+                }
 
             logger.debug("Executing spatial query");
-            final long start = System.currentTimeMillis();
+            final Instant start = Instant.now();
+//            final long start = System.currentTimeMillis();
             final ResultSet resultSet = ontology.executeSPARQL(spatialIntersection);
-            final long end = System.currentTimeMillis();
-            logger.debug("Spatial query returned in {} ms", end - start);
+            final Instant end = Instant.now();
+//            final long end = System.currentTimeMillis();
+            logger.debug("Spatial query returned in {} ms", Duration.between(start, end).toMillis());
 //            I think I need to rewind the result set
             ((ResultSetMem) resultSet).rewind();
             Set<IRI> intersectedIRIs = new HashSet<>();
@@ -560,6 +581,10 @@ public class TrestleReasoner {
         return Optional.empty();
     }
 
+    public <T> Optional<List<T>> spatialIntersect(Class <@NonNull T> clazz, String wkt, double buffer) {
+        return spatialIntersect(clazz, wkt, buffer, null);
+    }
+
     /**
      * Find objects of a given class that intersect with a specific WKT boundary.
      * An empty Optional means an error, an Optional of an empty List means no intersected objects
@@ -571,16 +596,23 @@ public class TrestleReasoner {
      * @return - An Optional List of Object T.
      */
     @SuppressWarnings("return.type.incompatible")
-    public <T> Optional<List<T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer) {
+    public <T> Optional<List<T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal atTemporal) {
         this.ontology.openAndLock(false);
         final OWLClass owlClass = ClassParser.GetObjectClass(clazz);
 
         String spatialIntersection = null;
         try {
-            spatialIntersection = qb.buildSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER);
+            if (atTemporal == null) {
+                logger.debug("Running generic spatial intersection");
+                spatialIntersection = qb.buildSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER);
+            } else {
+                final LocalDateTime atLDTime = TemporalParser.parseTemporalToLocalDateTime(atTemporal);
+                logger.debug("Running spatial intersection at time {}", atLDTime);
+                spatialIntersection = qb.buildTemporalSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER, atLDTime);
+            }
         } catch (UnsupportedFeatureException e) {
-            logger.error("Ontology doesn't support spatial intersection", e);
-            ontology.unlockAndCommit();
+            logger.error("Database {] doesn't support spatial intersections.", spatialDalect, e);
+            this.ontology.unlockAndCommit();
             return Optional.empty();
         }
 

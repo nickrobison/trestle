@@ -348,7 +348,12 @@ public class TemporalParser {
         }
     }
 
-    private static LocalDateTime parseTemporalToLocalDateTime(Temporal temporal) {
+    /**
+     * Parse generic temporal to LocalDateTime
+     * @param temporal
+     * @return
+     */
+    public static LocalDateTime parseTemporalToLocalDateTime(Temporal temporal) {
         if (temporal instanceof LocalDateTime) {
             return (LocalDateTime) temporal;
         } else if (temporal instanceof LocalDate) {
