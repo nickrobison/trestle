@@ -1,11 +1,13 @@
 package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.TestClasses;
+import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.LocalOntology;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
+import org.apache.jena.query.ResultSetFormatter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -137,8 +139,8 @@ public class LocalOntologyGAULLoader {
                 "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#> " +
                 "SELECT * WHERE {?m rdf:type :GAUL_Test}";
 
-        ResultSet resultSet = ontology.executeSPARQL(queryString);
-        assertEquals(191, resultSet.getRowNumber(), "Wrong number of GAUL records from sparql method");
+        final List<QuerySolution> resultSet = ResultSetFormatter.toList(ontology.executeSPARQL(queryString));
+        assertEquals(191, resultSet.size(), "Wrong number of GAUL records from sparql method");
 
 ////        SPARQL Query of spatial intersections.
 //        queryString = "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
