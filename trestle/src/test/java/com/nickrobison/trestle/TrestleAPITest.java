@@ -4,26 +4,29 @@ import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
-import com.nickrobison.trestle.parser.*;
+import com.nickrobison.trestle.parser.ClassParser;
+import com.nickrobison.trestle.parser.OracleOntologyGAULoader;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
-import org.geotools.geometry.jts.JTS;
-import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.opengis.referencing.operation.TransformException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -45,7 +48,7 @@ public class TrestleAPITest {
                         "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
                         "spatialUser",
                         "spatial1")
-                .withName("api-test")
+                .withName("api_test")
                 .withInputClasses(TestClasses.GAULTestClass.class,
                         TestClasses.GAULComplexClassTest.class,
                         TestClasses.JTSGeometryTest.class,
@@ -90,7 +93,7 @@ public class TrestleAPITest {
         }
 
 //        Write the objects
-        gaulObjects.forEach(gaul -> {
+        gaulObjects.parallelStream().forEach(gaul -> {
             try {
                 reasoner.writeObjectAsConcept(gaul);
             } catch (TrestleClassException e) {
@@ -115,27 +118,32 @@ public class TrestleAPITest {
 
 //        Complex objects
         final TestClasses.GAULComplexClassTest gaulComplexClassTest = new TestClasses.GAULComplexClassTest();
-        OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(gaulComplexClassTest);
-        reasoner.writeObjectAsFact(gaulComplexClassTest);
-        final TestClasses.GAULComplexClassTest ReturnedGaulComplexClassTest = reasoner.readAsObject(gaulComplexClassTest.getClass(), owlNamedIndividual.getIRI(), false);
-        assertEquals(gaulComplexClassTest, ReturnedGaulComplexClassTest, "Should have the same object");
-
-//        Spatial
-//        JTS
         final Geometry jtsGeom = new WKTReader().read("POINT(4.0 6.0)");
         final TestClasses.JTSGeometryTest jtsGeometryTest = new TestClasses.JTSGeometryTest(4326, jtsGeom, LocalDate.now());
-        owlNamedIndividual = ClassParser.GetIndividual(jtsGeometryTest);
-        reasoner.writeObjectAsFact(jtsGeometryTest);
-        final TestClasses.JTSGeometryTest returnedJTS = reasoner.readAsObject(jtsGeometryTest.getClass(), owlNamedIndividual.getIRI(), false);
-        assertEquals(jtsGeometryTest, returnedJTS, "Should have the same object");
-
-//        ESRI
         final Polygon geometry = (Polygon) GeometryEngine.geometryFromWkt("POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", 0, com.esri.core.geometry.Geometry.Type.Polygon);
         final TestClasses.ESRIPolygonTest esriPolygonTest = new TestClasses.ESRIPolygonTest(4792, geometry, LocalDate.now());
-        owlNamedIndividual = ClassParser.GetIndividual(esriPolygonTest);
-        reasoner.writeObjectAsFact(esriPolygonTest);
-        final TestClasses.ESRIPolygonTest esriPolygonTest1 = reasoner.readAsObject(esriPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
-        assertEquals(esriPolygonTest, esriPolygonTest1, "Should be equal");
+
+        List<Object> classObjects = new ArrayList<>();
+        classObjects.add(gaulComplexClassTest);
+        classObjects.add(jtsGeometryTest);
+        classObjects.add(esriPolygonTest);
+
+        classObjects.parallelStream().forEach(object -> {
+            final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(object);
+            try {
+                reasoner.writeObjectAsFact(object);
+            } catch (TrestleClassException e) {
+                e.printStackTrace();
+            }
+            final Object returnedObject = reasoner.readAsObject(object.getClass(), owlNamedIndividual.getIRI(), false);
+            if (returnedObject instanceof TestClasses.GAULComplexClassTest) {
+                assertEquals(gaulComplexClassTest, returnedObject, "Should have the same object");
+            } else if (returnedObject instanceof TestClasses.JTSGeometryTest) {
+                assertEquals(jtsGeometryTest, returnedObject, "Should have the same object");
+            } else {
+                assertEquals(esriPolygonTest, returnedObject, "Should be equal");
+            }
+        });
 
 //        Geotools
 //

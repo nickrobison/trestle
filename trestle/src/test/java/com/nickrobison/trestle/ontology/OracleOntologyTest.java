@@ -59,7 +59,7 @@ public class OracleOntologyTest {
 //        String queryString = " SELECT ?subject ?prop ?object WHERE { ?subject ?prop ?object } ";
 
         final List<QuerySolution> resultSet = ResultSetFormatter.toList(ontology.executeSPARQL(queryString));
-        assertEquals(31, resultSet.size(), "Wrong number of classes");
+        assertEquals(39, resultSet.size(), "Wrong number of classes");
 
         final long tripleCount = ontology.getTripleCount();
         assertEquals(513, tripleCount, "Inference is wrong");

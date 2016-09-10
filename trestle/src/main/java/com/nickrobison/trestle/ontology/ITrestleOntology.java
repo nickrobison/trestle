@@ -325,10 +325,10 @@ public interface ITrestleOntology {
      */
     ResultSet executeSPARQL(String query);
 
-    /**
-     * Open a transaction and lock it, for lots of bulk action
-     */
-    void lock();
+//    /**
+//     * Open a transaction and lock it, for lots of bulk action
+//     */
+//    void lock();
 
     /**
      * Open a transaction and lock it
@@ -336,11 +336,11 @@ public interface ITrestleOntology {
      * @param write - Open writable transaction?
      */
     void openAndLock(boolean write);
-
-    /**
-     * Unlock the model to allow for closing the transaction
-     */
-    void unlock();
+//
+//    /**
+//     * Unlock the model to allow for closing the transaction
+//     */
+//    void unlock();
 
     /**
      * Unlock the transaction and commit it

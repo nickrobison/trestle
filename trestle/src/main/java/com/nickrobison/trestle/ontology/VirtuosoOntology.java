@@ -1,9 +1,11 @@
 package com.nickrobison.trestle.ontology;
 
+import org.apache.jena.graph.Graph;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.reasoner.ReasonerRegistry;
+import org.apache.jena.shared.Lock;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
@@ -15,6 +17,7 @@ import virtuoso.jena.driver.VirtModel;
 import virtuoso.jena.driver.VirtuosoQueryExecution;
 import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
@@ -22,11 +25,11 @@ import java.io.ByteArrayOutputStream;
  * Created by nrobison on 7/22/16.
  */
 @SuppressWarnings({"initialization"})
+@ThreadSafe
 public class VirtuosoOntology extends JenaOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(VirtuosoOntology.class);
     private static VirtModel virtModel;
-    private boolean locked = false;
 
     VirtuosoOntology(String name, OWLOntology ont, DefaultPrefixManager pm, String connectionString, String username, String password) {
         super(name, initializeVirtModel(name, connectionString, username, password), ont, pm);
@@ -53,7 +56,6 @@ public class VirtuosoOntology extends JenaOntology {
 
         try {
             this.model.read(ontologytoIS(this.ontology), null);
-//            virtModel.read(ontologytoIS(this.ontology), null);
         } catch (OWLOntologyStorageException e) {
             logger.error("Cannot read ontology", e);
             throw new RuntimeException("Cannot read ontology", e);
@@ -65,12 +67,18 @@ public class VirtuosoOntology extends JenaOntology {
 //    Need to override the SPARQL command because the geospatial extensions will cause Jena to fail the query parsing.
 //    TODO(nrobison): This should return a list, not this weird ResultSet thing.
     public ResultSet executeSPARQL(String queryString) {
-        this.openTransaction(false);
+        ResultSet resultSet;
         final VirtuosoQueryExecution queryExecution = VirtuosoQueryExecutionFactory.create(queryString, (VirtGraph) this.virtModel.getGraph());
-        ResultSet resultSet = queryExecution.execSelect();
-        resultSet = ResultSetFactory.copyResults(resultSet);
-        queryExecution.close();
-        this.commitTransaction();
+        this.openTransaction(false);
+        this.model.enterCriticalSection(Lock.READ);
+        try {
+            resultSet = queryExecution.execSelect();
+            resultSet = ResultSetFactory.copyResults(resultSet);
+        } finally {
+            queryExecution.close();
+            this.model.leaveCriticalSection();
+            this.commitTransaction();
+        }
 
         return resultSet;
     }
@@ -87,52 +95,17 @@ public class VirtuosoOntology extends JenaOntology {
     }
 
     @Override
-    public void openTransaction(boolean write) {
-        if (!locked) {
-            logger.debug("Opening transaction");
-            virtModel.begin();
-        } else {
-            logger.debug("Model is locked, keeping transaction alive");
-        }
+    public void openDatasetTransaction(boolean write) {
+        virtModel.begin();
+        this.model.enterCriticalSection(getJenaLock(write));
+        logger.debug("Transaction opened and critical section entered");
     }
 
     @Override
-    public void commitTransaction() {
-        if (!locked) {
-            logger.debug("Closing transaction");
-            virtModel.commit();
-        } else {
-            logger.debug("Model is locked, not committing");
-        }
-    }
-
-
-    @Override
-    public void lock() {
-        this.locked = true;
-    }
-
-    @Override
-    public void openAndLock(boolean write) {
-        if (!locked) {
-            logger.debug("Locking open");
-            openTransaction(write);
-            lock();
-        } else {
-            logger.debug("Already locked, moving on");
-        }
-    }
-
-    @Override
-    public void unlock() {
-        this.locked = false;
-    }
-
-    @Override
-    public void unlockAndCommit() {
-        logger.debug("Unlocking and closing");
-        unlock();
-        commitTransaction();
+    public void commitDatasetTransaction() {
+        virtModel.commit();
+        this.model.leaveCriticalSection();
+        logger.debug("Transaction closed and critical section left");
     }
 
     protected static ByteArrayInputStream ontologytoIS(OWLOntology ontology) throws OWLOntologyStorageException {
