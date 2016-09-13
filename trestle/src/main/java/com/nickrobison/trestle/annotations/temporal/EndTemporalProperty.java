@@ -19,4 +19,5 @@ public @interface EndTemporalProperty {
     String name() default "";
     TemporalType type() default TemporalType.INTERVAL;
     TemporalScope scope() default TemporalScope.VALID;
+    String timeZone() default "";
 }

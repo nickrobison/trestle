@@ -4,15 +4,22 @@ import com.nickrobison.trestle.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.annotations.OWLClassName;
 import com.nickrobison.trestle.annotations.Spatial;
 import com.nickrobison.trestle.annotations.TrestleCreator;
+import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
 import com.nickrobison.trestle.exceptions.InvalidClassException;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
+import com.nickrobison.trestle.types.TemporalType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.omg.CORBA.DynAnyPackage.Invalid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import static com.nickrobison.trestle.exceptions.InvalidClassException.State.EXCESS;
@@ -29,10 +36,14 @@ public class ClassRegisterTest {
     private static FullTest fTest;
     private static ExtraMembers xTest;
     private static SpatialMembers sTest;
+    private static PassingTemporalTest pTest;
+    private static FailingTemporalTest ftTest;
     private static Class<? extends SpatialMembers> sClass;
     private static Class<? extends FullTest> fClass;
     private static Class<? extends EmptyTest> eClass;
     private static Class<? extends ExtraMembers> xClass;
+    private static Class<? extends PassingTemporalTest> pClass;
+    private static Class<? extends FailingTemporalTest> ftClass;
     private static final Logger logger = LoggerFactory.getLogger(ClassRegisterTest.class);
 
     @BeforeAll
@@ -41,12 +52,16 @@ public class ClassRegisterTest {
         eTest = new EmptyTest();
         xTest = new ExtraMembers();
         sTest = new SpatialMembers();
+        pTest = new PassingTemporalTest(LocalDate.now(), LocalDate.now());
+        ftTest = new FailingTemporalTest(LocalDateTime.now(), LocalDateTime.now());
 
 
         fClass = fTest.getClass();
         eClass = eTest.getClass();
         xClass = xTest.getClass();
         sClass = sTest.getClass();
+        pClass = pTest.getClass();
+        ftClass = ftTest.getClass();
     }
 
     @Test
@@ -103,6 +118,7 @@ public class ClassRegisterTest {
         try {
             ClassRegister.checkForSpatial(fClass);
         } catch (TrestleClassException e) {
+            e.printStackTrace();
             fail("Should not throw exception");
         }
 
@@ -111,6 +127,68 @@ public class ClassRegisterTest {
 
         invalidClassException = expectThrows(InvalidClassException.class, () -> ClassRegister.checkForSpatial(sClass));
         assertEquals(MISSING, invalidClassException.getProblemState(), "Should be missing the spatial argument in the constructor");
+    }
+
+    @Test
+    public void testTemporal() {
+        try {
+            ClassRegister.checkForTemporals(pClass);
+        } catch (TrestleClassException e) {
+            e.printStackTrace();
+            fail("Should not throw exception");
+        }
+
+        final InvalidClassException invalidClassException = expectThrows(InvalidClassException.class, () -> ClassRegister.checkForTemporals(ftClass));
+        assertEquals(EXCESS, invalidClassException.getProblemState(), "Should have excess problem state");
+
+        try {
+            ClassRegister.checkForTemporals(TimeZoneParsingTest.class);
+        } catch (TrestleClassException e) {
+            e.printStackTrace();
+            fail("Should not throw exception");
+        }
+    }
+
+    private static class PassingTemporalTest {
+
+        private LocalDate startDate;
+        private LocalDate endDate;
+
+        PassingTemporalTest(LocalDate startDate, LocalDate endDate) {
+            this.startDate = startDate;
+            this.endDate = endDate;
+        }
+
+        @StartTemporalProperty
+        public LocalDate getStartDate() {
+            return this.startDate;
+        }
+
+        public LocalDate getEndDate() {
+            return this.endDate;
+        }
+    }
+
+    private static class FailingTemporalTest {
+
+        @DefaultTemporalProperty(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        public LocalDateTime startDate;
+        @StartTemporalProperty
+        public LocalDateTime endDate;
+
+        FailingTemporalTest(LocalDateTime startDate, LocalDateTime endDate) {
+            this.startDate = startDate;
+            this.endDate = endDate;
+        }
+    }
+
+    private static class TimeZoneParsingTest {
+        @DefaultTemporalProperty(timeZone = "America/Los_Angeles", type = TemporalType.POINT, duration = 0, unit = ChronoUnit.YEARS)
+        public LocalDate defaultDate;
+
+        TimeZoneParsingTest(LocalDate defaultDate) {
+            this.defaultDate = defaultDate;
+        }
     }
 
 

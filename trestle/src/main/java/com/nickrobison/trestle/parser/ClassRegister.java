@@ -4,20 +4,30 @@ import com.nickrobison.trestle.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.annotations.OWLClassName;
 import com.nickrobison.trestle.annotations.Spatial;
 import com.nickrobison.trestle.annotations.TrestleCreator;
+import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
+import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
+import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
 import com.nickrobison.trestle.exceptions.InvalidClassException;
 import com.nickrobison.trestle.exceptions.MissingConstructorException;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.exceptions.UnsupportedTypeException;
+import com.sun.tools.javadoc.Start;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.time.DateTimeException;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.nickrobison.trestle.common.LambdaExceptionUtil.*;
+import static com.nickrobison.trestle.parser.ClassParser.filterMethodName;
 
 /**
  * Created by nrobison on 7/26/16.
@@ -182,8 +192,132 @@ public class ClassRegister {
     }
 
     //    TODO(nrobison): Make sure the spatial annotations have matching constructor arguments
-    private static void checkForTemporals(Class<?> aClass) {
+    static void checkForTemporals(Class<?> aClass) throws TrestleClassException {
+        int temporalCount = 0;
+        final List<Method> methods = Arrays.asList(aClass.getDeclaredMethods());
+        final List<Field> fields = Arrays.asList(aClass.getDeclaredFields());
 
+//        Default Temporal
+//        Methods
+        final List<Method> defaultMethods = methods
+                .stream()
+                .filter(m -> m.isAnnotationPresent(DefaultTemporalProperty.class))
+                .collect(Collectors.toList());
+        if (defaultMethods.size() > 1) {
+            throw new InvalidClassException(aClass, InvalidClassException.State.EXCESS, "DefaultTemporal");
+        }
+
+        if (defaultMethods.size() == 1) {
+            temporalCount = temporalCount + defaultMethods.size();
+//        See if it matches a constructor argument
+            matchConstructorArgument(aClass, filterMethodName(defaultMethods.get(0)));
+            //        Check for time zone
+            verifyTimeZone(aClass, defaultMethods.get(0).getAnnotation(DefaultTemporalProperty.class).timeZone(), DefaultTemporalProperty.class);
+        }
+
+//        Fields
+        final List<Field> defaultFields = fields
+                .stream()
+                .filter(f -> f.isAnnotationPresent(DefaultTemporalProperty.class))
+                .collect(Collectors.toList());
+        if (defaultFields.size() > 1) {
+            throw new InvalidClassException(aClass, InvalidClassException.State.EXCESS, "DefaultTemporal");
+        }
+        temporalCount = temporalCount + defaultFields.size();
+        if (temporalCount > 1) {
+            throw new InvalidClassException(aClass, InvalidClassException.State.EXCESS, "DefaultTemporal");
+        }
+//        See if it matches a constructor argument
+        if (defaultFields.size() == 1) {
+            matchConstructorArgument(aClass, defaultFields.get(0).getName());
+//            Check for time zone
+            verifyTimeZone(aClass, defaultFields.get(0).getAnnotation(DefaultTemporalProperty.class).timeZone(), DefaultTemporalProperty.class);
+        }
+
+//        Start Temporal
+        //        Methods
+        final List<Method> startMethods = methods
+                .stream()
+                .filter(m -> m.isAnnotationPresent(StartTemporalProperty.class))
+                .collect(Collectors.toList());
+        if (startMethods.size() > 1) {
+            throw new InvalidClassException(aClass, InvalidClassException.State.EXCESS, "StartTemporal");
+        }
+
+        if (startMethods.size() == 1) {
+            temporalCount = temporalCount + startMethods.size();
+//        See if it matches a constructor argument
+            matchConstructorArgument(aClass, filterMethodName(startMethods.get(0)));
+            //        Check for time zone
+            verifyTimeZone(aClass, startMethods.get(0).getAnnotation(StartTemporalProperty.class).timeZone(), StartTemporalProperty.class);
+        }
+
+//        Fields
+        final List<Field> startFields = fields
+                .stream()
+                .filter(f -> f.isAnnotationPresent(StartTemporalProperty.class))
+                .collect(Collectors.toList());
+        if (startFields.size() > 1) {
+            throw new InvalidClassException(aClass, InvalidClassException.State.EXCESS, "StartTemporal");
+        }
+        temporalCount = temporalCount + startFields.size();
+        if (temporalCount > 1) {
+            throw new InvalidClassException(aClass, InvalidClassException.State.EXCESS, "StartTemporal");
+        }
+//        See if it matches a constructor argument
+        if (startFields.size() == 1) {
+            matchConstructorArgument(aClass, startFields.get(0).getName());
+//            Check for time zone
+            verifyTimeZone(aClass, startFields.get(0).getAnnotation(StartTemporalProperty.class).timeZone(), StartTemporalProperty.class);
+        }
+
+//        End Temporal
+        //        Methods
+        final List<Method> endMethods = methods
+                .stream()
+                .filter(m -> m.isAnnotationPresent(EndTemporalProperty.class))
+                .collect(Collectors.toList());
+        if (endMethods.size() > 1) {
+            throw new InvalidClassException(aClass, InvalidClassException.State.EXCESS, "EndTemporal");
+        }
+
+        if (endMethods.size() == 1) {
+            temporalCount = temporalCount + endMethods.size();
+//        See if it matches a constructor argument
+            matchConstructorArgument(aClass, filterMethodName(endMethods.get(0)));
+            //        Check for time zone
+            verifyTimeZone(aClass, endMethods.get(0).getAnnotation(EndTemporalProperty.class).timeZone(), EndTemporalProperty.class);
+        }
+
+//        Fields
+        final List<Field> endFields = fields
+                .stream()
+                .filter(f -> f.isAnnotationPresent(EndTemporalProperty.class))
+                .collect(Collectors.toList());
+        if (endFields.size() > 1) {
+            throw new InvalidClassException(aClass, InvalidClassException.State.EXCESS, "EndTemporal");
+        }
+        temporalCount = temporalCount + endFields.size();
+        if (temporalCount > 2) {
+            throw new InvalidClassException(aClass, InvalidClassException.State.EXCESS, "EndTemporal");
+        }
+//        See if it matches a constructor argument
+        if (endFields.size() == 1) {
+            matchConstructorArgument(aClass, endFields.get(0).getName());
+//            Check for time zone
+            verifyTimeZone(aClass, endFields.get(0).getAnnotation(EndTemporalProperty.class).timeZone(), EndTemporalProperty.class);
+        }
+
+    }
+
+    private static void verifyTimeZone(Class<?> clazz, String zoneID, Class<? extends Annotation> annotation) throws InvalidClassException {
+        if (!zoneID.equals("")) {
+            try {
+                ZoneId.of(zoneID);
+            } catch (DateTimeException e) {
+                throw new InvalidClassException(clazz, InvalidClassException.State.INVALID, annotation.toString());
+            }
+        }
     }
 
     private static void matchConstructorArgument(Class<?> clazz, String argName) throws TrestleClassException {
