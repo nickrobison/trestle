@@ -5,6 +5,7 @@ import com.vividsolutions.jts.geom.Geometry;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.joda.time.DateTime;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLDatatype;
@@ -187,10 +188,15 @@ public class TypeConverter {
         types.put(Long.class, OWL2Datatype.XSD_LONG.getDatatype(df));
         types.put(long.class, OWL2Datatype.XSD_LONG.getDatatype(df));
         types.put(String.class, OWL2Datatype.XSD_STRING.getDatatype(df));
+//        Java temporals
         types.put(LocalDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
         types.put(LocalDate.class, df.getOWLDatatype(dateDatatypeIRI));
         types.put(OffsetDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
         types.put(ZonedDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
+//        Joda temporals
+        types.put(DateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
+        types.put(org.joda.time.LocalDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
+        types.put(org.joda.time.LocalDate.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
         types.put(Geometry.class, df.getOWLDatatype(WKTDatatypeIRI));
 
         return types;
