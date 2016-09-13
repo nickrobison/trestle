@@ -7,27 +7,20 @@ import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static com.nickrobison.trestle.common.StaticIRI.*;
 
@@ -37,6 +30,15 @@ import static com.nickrobison.trestle.common.StaticIRI.*;
 public class TemporalParser {
 
     private static final Logger logger = LoggerFactory.getLogger(TemporalParser.class);
+
+    /**
+     * Enum to determine if the temporal represents the start or the end of a period.
+     * We use this to set dates to start/end of day for storing as xsd:dateTime in the ontology.
+     */
+    public enum IntervalType {
+        START,
+        END
+    };
 
 
     public static boolean IsDefault(Class<?> clazz) {
@@ -327,12 +329,12 @@ public class TemporalParser {
     private static TemporalObject buildIntervalTemporal(Temporal start, @Nullable Temporal end, TemporalScope scope, OWLNamedIndividual... relations) {
 //        We store all temporals as datetimes, so we need to convert them.
 //        final Temporal from = start;
-//        final LocalDateTime from = parseTemporalToLocalDateTime(start);
+//        final LocalDateTime from = parseTemporalToOntologyDateTime(start);
 
         if (scope == TemporalScope.VALID) {
             final IntervalTemporal.Builder validBuilder = TemporalObjectBuilder.valid().from(start);
             if (end != null) {
-//                final LocalDateTime to = parseTemporalToLocalDateTime(end);
+//                final LocalDateTime to = parseTemporalToOntologyDateTime(end);
                 return validBuilder.to(end).withRelations(relations);
             }
 
@@ -340,7 +342,7 @@ public class TemporalParser {
         } else {
             final IntervalTemporal.Builder existsBuilder = TemporalObjectBuilder.exists().from(start);
             if (end != null) {
-//                final LocalDateTime to = parseTemporalToLocalDateTime(end);
+//                final LocalDateTime to = parseTemporalToOntologyDateTime(end);
                 return existsBuilder.to(end).withRelations(relations);
             }
 
@@ -349,27 +351,45 @@ public class TemporalParser {
     }
 
     /**
-     * Parse generic temporal to LocalDateTime
-     * @param temporal
+     * Parse generic temporal to time unit utilized by ontology.
+     * Currently OffsetDateTime, but that could change.
+     * If no timezone is specified, we take the timezone of the local machine and extract the offset from the given temporal instant.
+     * If we're given a date, we take the offset from either
+     * @param temporal - Temporal to parse to ontology storage format
+     * @param intervalType - Whether to extract the time from the date object at the start or end of the day.
      * @return
      */
-    public static LocalDateTime parseTemporalToLocalDateTime(Temporal temporal) {
+//    TODO(nrobison): Is this the best way to handle temporal parsing? Should the zones be different?
+//    TODO(nrobison): Add Joda time support
+    public static OffsetDateTime parseTemporalToOntologyDateTime(Temporal temporal, IntervalType intervalType) {
+
         if (temporal instanceof LocalDateTime) {
-            return (LocalDateTime) temporal;
+            final LocalDateTime ldt = (LocalDateTime) temporal;
+            final ZoneOffset zoneOffset = ZoneId.systemDefault().getRules().getOffset(ldt);
+            return OffsetDateTime.of(ldt, zoneOffset);
         } else if (temporal instanceof LocalDate) {
-            return ((LocalDate) temporal).atStartOfDay();
+            if (intervalType == IntervalType.START) {
+                final LocalDateTime startOfDay = ((LocalDate) temporal).atStartOfDay();
+                final ZoneOffset zoneOffset = ZoneId.systemDefault().getRules().getOffset(startOfDay);
+                return OffsetDateTime.of(startOfDay, zoneOffset);
+            } else {
+                final LocalDateTime endOfDay = ((LocalDate) temporal).atTime(23, 59, 59, 999999999);
+                final ZoneOffset zoneOffset = ZoneId.systemDefault().getRules().getOffset(endOfDay);
+                return OffsetDateTime.of(endOfDay, zoneOffset);
+            }
+        } else if (temporal instanceof ZonedDateTime) {
+            return ((ZonedDateTime) temporal).toOffsetDateTime();
+        } else if (temporal instanceof OffsetDateTime) {
+            return (OffsetDateTime) temporal;
         } else {
-//            Need to add and subtract some time in order to get a correct LocalDateTime from LocalDate
-            return LocalDateTime.from(temporal).plusSeconds(1).minusSeconds(1);
+            throw new RuntimeException(String.format("Unsupported date class %s", temporal.getClass().getName()));
         }
     }
 
     public static Temporal parseToTemporal(OWLLiteral literal, Class<? extends Temporal> destinationType) {
         final Temporal parsedTemporal;
-//        switch (literal.getDatatype().getBuiltInDatatype()) {
         final OWLDatatype datatype = literal.getDatatype();
         if (datatype.getIRI().equals(dateTimeDatatypeIRI)) {
-//            case XSD_DATE_TIME: {
             switch (destinationType.getTypeName()) {
                 case "java.time.LocalDateTime": {
                     parsedTemporal = LocalDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME);
@@ -379,12 +399,17 @@ public class TemporalParser {
                     parsedTemporal = LocalDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME).toLocalDate();
                     break;
                 }
+                case "java.time.OffsetDateTime": {
+                    parsedTemporal = OffsetDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME);
+                    break;
+                }
                 default: {
-                    logger.error("Unsupported parsing of temporal {} to {}", literal.getDatatype().getBuiltInDatatype(), destinationType.getTypeName());
-                    throw new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype().getBuiltInDatatype(), destinationType.getTypeName()));
+                    logger.error("Unsupported parsing of temporal {} to {}", literal.getDatatype(), destinationType.getTypeName());
+                    throw new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype(), destinationType.getTypeName()));
                 }
             }
         } else if (datatype.getIRI().equals(dateDatatypeIRI)) {
+            logger.warn("Received xsd:date, should only have xsd:dateTime");
             switch (destinationType.getTypeName()) {
                 case "java.time.LocalDateTime": {
                     parsedTemporal = LocalDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE);
@@ -394,9 +419,13 @@ public class TemporalParser {
                     parsedTemporal = LocalDate.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE);
                     break;
                 }
+                case "java.time.OffsetDateTime": {
+                    parsedTemporal = OffsetDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE);
+                    break;
+                }
                 default: {
-                    logger.error("Unsupported parsing of temporal {} to {}", literal.getDatatype().getBuiltInDatatype(), destinationType.getTypeName());
-                    throw new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype().getBuiltInDatatype(), destinationType.getTypeName()));
+                    logger.error("Unsupported parsing of temporal {} to {}", literal.getDatatype(), destinationType.getTypeName());
+                    throw new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype(), destinationType.getTypeName()));
                 }
             }
         } else {
@@ -413,7 +442,7 @@ public class TemporalParser {
     }
 
     private static TemporalObject buildPointTemporal(Temporal pointTemporal, TemporalScope scope, OWLNamedIndividual... relations) {
-//        final LocalDateTime at = parseTemporalToLocalDateTime(pointTemporal);
+//        final LocalDateTime at = parseTemporalToOntologyDateTime(pointTemporal);
 
         if (scope == TemporalScope.VALID) {
             return TemporalObjectBuilder.valid().at(pointTemporal).withRelations(relations);

@@ -17,6 +17,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
 
@@ -187,6 +189,8 @@ public class TypeConverter {
         types.put(String.class, OWL2Datatype.XSD_STRING.getDatatype(df));
         types.put(LocalDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
         types.put(LocalDate.class, df.getOWLDatatype(dateDatatypeIRI));
+        types.put(OffsetDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
+        types.put(ZonedDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
         types.put(Geometry.class, df.getOWLDatatype(WKTDatatypeIRI));
 
         return types;

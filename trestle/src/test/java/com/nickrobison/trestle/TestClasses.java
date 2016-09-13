@@ -11,6 +11,7 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
@@ -18,6 +19,44 @@ import java.util.UUID;
  * Created by nrobison on 8/29/16.
  */
 public class TestClasses {
+
+    @OWLClassName(className = "odt-test")
+    protected static class OffsetDateTimeTest {
+
+        @IndividualIdentifier
+        public final Integer adm0_code;
+        @StartTemporalProperty
+        public final OffsetDateTime startTemporal;
+        @EndTemporalProperty
+        public final OffsetDateTime endTemporal;
+
+        public OffsetDateTimeTest(Integer adm0_code, OffsetDateTime startTemporal, OffsetDateTime endTemporal) {
+            this.adm0_code = adm0_code;
+            this.startTemporal = startTemporal;
+            this.endTemporal = endTemporal;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            OffsetDateTimeTest that = (OffsetDateTimeTest) o;
+
+            if (!adm0_code.equals(that.adm0_code)) return false;
+            if (!startTemporal.equals(that.startTemporal)) return false;
+            return endTemporal.equals(that.endTemporal);
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = adm0_code.hashCode();
+            result = 31 * result + startTemporal.hashCode();
+            result = 31 * result + endTemporal.hashCode();
+            return result;
+        }
+    }
 
     @OWLClassName(className = "GAUL_Test")
     protected static class JTSGeometryTest {
@@ -197,9 +236,7 @@ public class TestClasses {
         }
     }
 
-    /**
-     * Created by nrobison on 8/24/16.
-     */
+
     @OWLClassName(className = "gaul-complex")
     public static class GAULComplexClassTest {
 
