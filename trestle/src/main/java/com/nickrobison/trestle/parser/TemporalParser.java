@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.*;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.*;
 
@@ -41,7 +40,9 @@ public class TemporalParser {
     public enum IntervalType {
         START,
         END
-    };
+    }
+
+    ;
 
 
     public static boolean IsDefault(Class<?> clazz) {
@@ -64,7 +65,7 @@ public class TemporalParser {
         return false;
     }
 
-//    TODO(nrobison): This looks gross, fix it.
+    //    TODO(nrobison): This looks gross, fix it.
     public static @Nullable Class<? extends Temporal> GetTemporalType(Class<?> clazz) {
 
         final Optional<Field> first = Arrays.stream(clazz.getDeclaredFields())
@@ -139,7 +140,7 @@ public class TemporalParser {
 
                 switch (annotation.type()) {
                     case POINT: {
-                        temporalObject = buildPointTemporal((Temporal) fieldValue, annotation.scope(), owlNamedIndividual);
+                        temporalObject = buildPointTemporal((Temporal) fieldValue, annotation.scope(), annotation.timeZone(), owlNamedIndividual);
                         break;
                     }
                     case INTERVAL: {
@@ -207,11 +208,17 @@ public class TemporalParser {
             case POINT: {
                 switch (annotation.scope()) {
                     case VALID: {
-                        temporalObject = TemporalObjectBuilder.valid().at((Temporal) fieldValue).withRelations(owlNamedIndividual);
+                        temporalObject = TemporalObjectBuilder.valid()
+                                .at((Temporal) fieldValue)
+                                .withTimeZone(annotation.timeZone())
+                                .withRelations(owlNamedIndividual);
                         break;
                     }
                     case EXISTS: {
-                        temporalObject = TemporalObjectBuilder.exists().at((Temporal) fieldValue).withRelations(owlNamedIndividual);
+                        temporalObject = TemporalObjectBuilder.exists()
+                                .at((Temporal) fieldValue)
+                                .withTimeZone(annotation.timeZone())
+                                .withRelations(owlNamedIndividual);
                         break;
                     }
 
@@ -231,18 +238,36 @@ public class TemporalParser {
                 switch (annotation.scope()) {
                     case VALID: {
                         if (to != null) {
-                            temporalObject = TemporalObjectBuilder.valid().from(from).to(to).isDefault(true).withRelations(owlNamedIndividual);
+                            temporalObject = TemporalObjectBuilder.valid()
+                                    .from(from)
+                                    .to(to)
+                                    .withStartTimeZone(annotation.timeZone())
+                                    .isDefault(true)
+                                    .withRelations(owlNamedIndividual);
                         } else {
-                            temporalObject = TemporalObjectBuilder.valid().from(from).isDefault(true).withRelations(owlNamedIndividual);
+                            temporalObject = TemporalObjectBuilder.valid()
+                                    .from(from)
+                                    .withStartTimeZone(annotation.timeZone())
+                                    .isDefault(true)
+                                    .withRelations(owlNamedIndividual);
                         }
                         break;
                     }
 
                     case EXISTS: {
                         if (to != null) {
-                            temporalObject = TemporalObjectBuilder.exists().from(from).to(to).isDefault(true).withRelations(owlNamedIndividual);
+                            temporalObject = TemporalObjectBuilder.exists()
+                                    .from(from)
+                                    .to(to)
+                                    .isDefault(true)
+                                    .withStartTimeZone(annotation.timeZone())
+                                    .withRelations(owlNamedIndividual);
                         } else {
-                            temporalObject = TemporalObjectBuilder.exists().from(from).isDefault(true).withRelations(owlNamedIndividual);
+                            temporalObject = TemporalObjectBuilder.exists()
+                                    .from(from)
+                                    .isDefault(true)
+                                    .withStartTimeZone(annotation.timeZone())
+                                    .withRelations(owlNamedIndividual);
                         }
                         break;
                     }
@@ -265,88 +290,119 @@ public class TemporalParser {
     }
 
     private static Optional<TemporalObject> parseStartTemporal(StartTemporalProperty annotation, Object fieldValue, OWLNamedIndividual owlNamedIndividual, Object inputObject, ClassParser.AccessType access, Class clazz) {
-        @Nullable final TemporalObject temporalObject;
+//        @Nullable final TemporalObject temporalObject;
         switch (annotation.type()) {
             case POINT: {
-                temporalObject = buildPointTemporal((Temporal) fieldValue, annotation.scope(), owlNamedIndividual);
-                break;
+                return Optional.of(buildPointTemporal((Temporal) fieldValue, annotation.scope(), annotation.timeZone(), owlNamedIndividual));
             }
             case INTERVAL: {
-//                        Find its matching end field
-                Object endingFieldValue = null;
-                switch (access) {
-                    case FIELD: {
 
-                        for (Field endingField : clazz.getDeclaredFields()) {
+//                Find matching end value
+//                Start with methods
+                final Optional<Method> endMethod = Arrays.stream(clazz.getDeclaredMethods())
+                        .filter(m -> m.isAnnotationPresent(EndTemporalProperty.class))
+                        .findFirst();
 
-                            if (endingField.isAnnotationPresent(EndTemporalProperty.class)) {
-                                try {
-                                    endingFieldValue = endingField.get(inputObject);
-                                } catch (IllegalAccessException e) {
-                                    logger.debug("Cannot access field {}", endingField.getName(), e);
-                                    continue;
-                                }
-                            }
-                        }
-                        break;
+                if (endMethod.isPresent()) {
+                    final Optional<Object> accessMethodValue = ClassParser.accessMethodValue(endMethod.get(), inputObject);
+                    if (accessMethodValue.isPresent()) {
+                        final String timeZone = endMethod.get().getAnnotation(EndTemporalProperty.class).timeZone();
+                        return Optional.of(buildIntervalTemporal((Temporal) fieldValue, annotation.timeZone(), (Temporal) accessMethodValue.get(), timeZone, annotation.scope(), owlNamedIndividual));
                     }
-
-                    case METHOD: {
-
-                        for (Method endMethod : clazz.getDeclaredMethods()) {
-                            if (endMethod.isAnnotationPresent(EndTemporalProperty.class)) {
-                                final Optional<Object> methodValue = ClassParser.accessMethodValue(endMethod, inputObject);
-                                if (methodValue.isPresent()) {
-                                    endingFieldValue = methodValue.get();
-                                }
-                            }
-                        }
-                        break;
-                    }
-
-                    default:
-                        throw new RuntimeException("Not sure what to access");
-
                 }
 
-                if ((endingFieldValue != null) && !(endingFieldValue instanceof Temporal)) {
-                    throw new RuntimeException("Not a temporal field");
+//                Now the fields
+                final Optional<Field> endField = Arrays.stream(clazz.getDeclaredFields())
+                        .filter(f -> f.isAnnotationPresent(EndTemporalProperty.class))
+                        .findFirst();
+
+                if (endField.isPresent()) {
+                    try {
+                        final Object endFieldValue = endField.get().get(inputObject);
+                        String endZoneID = endField.get().getAnnotation(EndTemporalProperty.class).timeZone();
+                        return Optional.of(buildIntervalTemporal((Temporal) fieldValue, annotation.timeZone(), (Temporal) endFieldValue, endZoneID, annotation.scope(), owlNamedIndividual));
+                    } catch (IllegalAccessException e) {
+                        logger.debug("Cannot access field {}", endField.get().getName(), e);
+                    }
                 }
 
-                temporalObject = buildIntervalTemporal((Temporal) fieldValue, (Temporal) endingFieldValue, annotation.scope(), owlNamedIndividual);
                 break;
-            }
 
+//
+////                        Find its matching end field
+//                Object endingFieldValue = null;
+//                String endingZoneId = null;
+//                switch (access) {
+//                    case FIELD: {
+//
+//                        for (Field endingField : clazz.getDeclaredFields()) {
+//
+//                            if (endingField.isAnnotationPresent(EndTemporalProperty.class)) {
+//                                try {
+//                                    endingFieldValue = endingField.get(inputObject);
+//                                    endingZoneId = endingField.getAnnotation(EndTemporalProperty.class).timeZone();
+//                                } catch (IllegalAccessException e) {
+//                                    logger.debug("Cannot access field {}", endingField.getName(), e);
+//                                    continue;
+//                                }
+//                            }
+//                        }
+//                        break;
+//                    }
+//
+//                    case METHOD: {
+//
+//                        for (Method endMethod : clazz.getDeclaredMethods()) {
+//                            if (endMethod.isAnnotationPresent(EndTemporalProperty.class)) {
+//                                final Optional<Object> methodValue = ClassParser.accessMethodValue(endMethod, inputObject);
+//                                if (methodValue.isPresent()) {
+//                                    endingFieldValue = methodValue.get();
+//                                    endingZoneId = endMethod.getAnnotation(EndTemporalProperty.class).timeZone();
+//                                }
+//                            }
+//                        }
+//                        break;
+//                    }
+//
+//                    default:
+//                        throw new RuntimeException("Not sure what to access");
+//
+//                }
+//
+//                if ((endingFieldValue != null) && !(endingFieldValue instanceof Temporal)) {
+//                    throw new RuntimeException("Not a temporal field");
+//                }
+//
+//                temporalObject = buildIntervalTemporal((Temporal) fieldValue, annotation.timeZone(), (Temporal) endingFieldValue, endingZoneId, annotation.scope(), owlNamedIndividual);
+//                break;
+//            }
+//
+            }
             default:
                 throw new RuntimeException("Cannot initialize temporal object");
         }
-
-        if (temporalObject == null) {
-            return Optional.empty();
-        }
-
-        return Optional.of(temporalObject);
+        return Optional.empty();
 
     }
 
-    private static TemporalObject buildIntervalTemporal(Temporal start, @Nullable Temporal end, TemporalScope scope, OWLNamedIndividual... relations) {
+    private static TemporalObject buildIntervalTemporal(Temporal start, String startZoneID, @Nullable Temporal end, @Nullable String endZoneID, TemporalScope scope, OWLNamedIndividual... relations) {
 //        We store all temporals as datetimes, so we need to convert them.
 //        final Temporal from = start;
 //        final LocalDateTime from = parseTemporalToOntologyDateTime(start);
 
         if (scope == TemporalScope.VALID) {
-            final IntervalTemporal.Builder validBuilder = TemporalObjectBuilder.valid().from(start);
-            if (end != null) {
+            final IntervalTemporal.Builder validBuilder = TemporalObjectBuilder.valid().from(start).withStartTimeZone(startZoneID);
+            if (end != null && endZoneID != null) {
 //                final LocalDateTime to = parseTemporalToOntologyDateTime(end);
-                return validBuilder.to(end).withRelations(relations);
+                return validBuilder.to(end).withEndTimeZone(endZoneID).withRelations(relations);
             }
 
             return validBuilder.withRelations(relations);
         } else {
-            final IntervalTemporal.Builder existsBuilder = TemporalObjectBuilder.exists().from(start);
-            if (end != null) {
+            final IntervalTemporal.Builder existsBuilder = TemporalObjectBuilder.exists().from(start).withStartTimeZone(startZoneID);
+            if (end != null && endZoneID != null) {
 //                final LocalDateTime to = parseTemporalToOntologyDateTime(end);
-                return existsBuilder.to(end).withRelations(relations);
+                return existsBuilder.to(end).withEndTimeZone(endZoneID).withRelations(relations);
             }
 
             return existsBuilder.withRelations(relations);
@@ -356,28 +412,29 @@ public class TemporalParser {
     /**
      * Parse generic temporal to time unit utilized by ontology.
      * Currently OffsetDateTime, but that could change.
-     * If no timezone is specified, we take the timezone of the local machine and extract the offset from the given temporal instant.
-     * If we're given a date, we take the offset from either
-     * @param temporal - Temporal to parse to ontology storage format
+     * If we're given a date, we take the offset from either the start or end of the day, depending on the IntervalType parameter
+     *
+     * @param temporal     - Temporal to parse to ontology storage format
      * @param intervalType - Whether to extract the time from the date object at the start or end of the day.
-     * @return
+     * @param zoneId       - ZoneId of given temporal
+     * @return - OffsetDateTime to store in ontology
      */
 //    TODO(nrobison): Is this the best way to handle temporal parsing? Should the zones be different?
 //    TODO(nrobison): Add Joda time support
-    public static OffsetDateTime parseTemporalToOntologyDateTime(Temporal temporal, IntervalType intervalType) {
+    public static OffsetDateTime parseTemporalToOntologyDateTime(Temporal temporal, IntervalType intervalType, ZoneId zoneId) {
 
         if (temporal instanceof LocalDateTime) {
             final LocalDateTime ldt = (LocalDateTime) temporal;
-            final ZoneOffset zoneOffset = ZoneId.systemDefault().getRules().getOffset(ldt);
+            final ZoneOffset zoneOffset = zoneId.getRules().getOffset(ldt);
             return OffsetDateTime.of(ldt, zoneOffset);
         } else if (temporal instanceof LocalDate) {
             if (intervalType == IntervalType.START) {
                 final LocalDateTime startOfDay = ((LocalDate) temporal).atStartOfDay();
-                final ZoneOffset zoneOffset = ZoneId.systemDefault().getRules().getOffset(startOfDay);
+                final ZoneOffset zoneOffset = zoneId.getRules().getOffset(startOfDay);
                 return OffsetDateTime.of(startOfDay, zoneOffset);
             } else {
                 final LocalDateTime endOfDay = ((LocalDate) temporal).atTime(23, 59, 59, 999999999);
-                final ZoneOffset zoneOffset = ZoneId.systemDefault().getRules().getOffset(endOfDay);
+                final ZoneOffset zoneOffset = zoneId.getRules().getOffset(endOfDay);
                 return OffsetDateTime.of(endOfDay, zoneOffset);
             }
         } else if (temporal instanceof ZonedDateTime) {
@@ -420,13 +477,13 @@ public class TemporalParser {
         return parsedTemporal;
     }
 
-    private static TemporalObject buildPointTemporal(Temporal pointTemporal, TemporalScope scope, OWLNamedIndividual... relations) {
+    private static TemporalObject buildPointTemporal(Temporal pointTemporal, TemporalScope scope, String zoneID, OWLNamedIndividual... relations) {
 //        final LocalDateTime at = parseTemporalToOntologyDateTime(pointTemporal);
 
         if (scope == TemporalScope.VALID) {
-            return TemporalObjectBuilder.valid().at(pointTemporal).withRelations(relations);
+            return TemporalObjectBuilder.valid().at(pointTemporal).withTimeZone(zoneID).withRelations(relations);
         } else {
-            return TemporalObjectBuilder.exists().at(pointTemporal).withRelations(relations);
+            return TemporalObjectBuilder.exists().at(pointTemporal).withTimeZone(zoneID).withRelations(relations);
         }
     }
 }

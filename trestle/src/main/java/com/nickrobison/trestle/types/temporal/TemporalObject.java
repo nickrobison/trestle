@@ -5,6 +5,8 @@ import com.nickrobison.trestle.types.TemporalType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
 import java.util.HashSet;
 import java.util.Optional;

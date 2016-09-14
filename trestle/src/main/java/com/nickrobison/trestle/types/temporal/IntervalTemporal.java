@@ -5,6 +5,8 @@ import com.nickrobison.trestle.types.TemporalType;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
 import java.util.*;
 
@@ -23,6 +25,8 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     private final Optional<String> startName;
     private final Optional<String> endName;
     private final Class<T> temporalType;
+    private final ZoneId startTimeZone;
+    private final ZoneId endTimeZone;
 
     private IntervalTemporal(Builder<T> builder) {
         super(UUID.randomUUID().toString(), builder.relations);
@@ -33,6 +37,8 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         this.startName = builder.startName;
         this.endName = builder.endName;
         this.temporalType = (Class<T>) builder.fromTime.getClass();
+        this.startTimeZone = builder.startTimeZone.orElse(ZoneOffset.UTC);
+        this.endTimeZone = builder.endTimeZone.orElse(builder.startTimeZone.orElse(ZoneOffset.UTC));
     }
 
     @Override
@@ -92,6 +98,14 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         return this.endName.orElse("intervalEnd");
     }
 
+    public ZoneId getStartTimeZone() {
+        return this.startTimeZone;
+    }
+
+    public ZoneId getEndTimeZone() {
+        return this.endTimeZone;
+    }
+
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public static class Builder<T extends Temporal> {
 
@@ -101,6 +115,8 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         private Optional<Set<OWLNamedIndividual>> relations = Optional.empty();
         private Optional<String> startName = Optional.empty();
         private Optional<String> endName = Optional.empty();
+        private Optional<ZoneId> startTimeZone = Optional.empty();
+        private Optional<ZoneId> endTimeZone = Optional.empty();
         private boolean isDefault = false;
 
         Builder(TemporalScope scope, T from) {
@@ -122,6 +138,20 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
             this.startName = Optional.of(startName);
             if (endName != null) {
                 this.endName = Optional.of(endName);
+            }
+            return this;
+        }
+
+        public Builder withStartTimeZone(String zoneId) {
+            if (!zoneId.equals("")) {
+                this.startTimeZone = Optional.of(ZoneId.of(zoneId));
+            }
+            return this;
+        }
+
+        public Builder withEndTimeZone(String zoneId) {
+            if (!zoneId.equals("")) {
+                this.endTimeZone = Optional.of(ZoneId.of(zoneId));
             }
             return this;
         }

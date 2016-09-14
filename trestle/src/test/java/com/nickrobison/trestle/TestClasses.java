@@ -161,7 +161,7 @@ public class TestClasses {
         public final UUID id;
         @Spatial
         public final org.opengis.geometry.coordinate.Polygon geom;
-        @DefaultTemporalProperty(name = "date", type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        @DefaultTemporalProperty(name = "date", type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS, timeZone = "America/Los_Angeles")
         public final LocalDate date;
 
         public GeotoolsPolygonTest(UUID id, org.opengis.geometry.coordinate.Polygon geom, LocalDate date) {

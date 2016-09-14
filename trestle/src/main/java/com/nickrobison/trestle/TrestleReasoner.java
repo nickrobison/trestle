@@ -31,6 +31,7 @@ import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.*;
@@ -186,11 +187,15 @@ public class TrestleReasoner {
     }
 
     public void writeOntology(URI filePath, boolean validate) {
+        Instant start = Instant.now();
         try {
+            logger.info("Writing Ontology to {}", filePath);
             ontology.writeOntology(IRI.create(filePath), validate);
         } catch (OWLOntologyStorageException e) {
             logger.error("Could not write ontology to {}", filePath, e);
         }
+        Instant end = Instant.now();
+        logger.info("Writing Ontology took {} ms", Duration.between(start, end).toMillis());
     }
 
     /**
@@ -590,7 +595,7 @@ public class TrestleReasoner {
                     logger.debug("Running generic spatial intersection");
                     spatialIntersection = qb.buildSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER);
                 } else {
-                    final OffsetDateTime atLDTime = parseTemporalToOntologyDateTime(atTemporal, TemporalParser.IntervalType.START);
+                    final OffsetDateTime atLDTime = parseTemporalToOntologyDateTime(atTemporal, TemporalParser.IntervalType.START, ZoneOffset.UTC);
                     logger.debug("Running spatial intersection at time {}", atLDTime);
                     spatialIntersection = qb.buildTemporalSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER, atLDTime);
                 }
@@ -697,7 +702,7 @@ public class TrestleReasoner {
                 ontology.writeIndividualDataProperty(
                         temporalIRI,
                         temporalValidFromIRI,
-                        parseTemporalToOntologyDateTime(temporal.asInterval().getFromTime(), TemporalParser.IntervalType.START).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                        parseTemporalToOntologyDateTime(temporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, temporal.asInterval().getStartTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
                         dateTimeDatatypeIRI);
 
 //                Write to, if exists
@@ -706,7 +711,7 @@ public class TrestleReasoner {
                     ontology.writeIndividualDataProperty(
                             temporalIRI,
                             temporalValidToIRI,
-                            parseTemporalToOntologyDateTime(toTime.get(), TemporalParser.IntervalType.END).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                            parseTemporalToOntologyDateTime(toTime.get(), TemporalParser.IntervalType.END, temporal.asInterval().getEndTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
                             dateTimeDatatypeIRI);
                 }
             } else {
@@ -714,7 +719,7 @@ public class TrestleReasoner {
                 ontology.writeIndividualDataProperty(
                         temporalIRI,
                         StaticIRI.temporalExistsFromIRI,
-                        parseTemporalToOntologyDateTime(temporal.asInterval().getFromTime(), TemporalParser.IntervalType.START).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                        parseTemporalToOntologyDateTime(temporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, temporal.asInterval().getStartTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
                         dateTimeDatatypeIRI);
 
 //                Write to, if exists
@@ -723,7 +728,7 @@ public class TrestleReasoner {
                     ontology.writeIndividualDataProperty(
                             temporalIRI,
                             StaticIRI.temporalExistsToIRI,
-                            parseTemporalToOntologyDateTime(toTime.get(), TemporalParser.IntervalType.END).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                            parseTemporalToOntologyDateTime(toTime.get(), TemporalParser.IntervalType.END, temporal.asInterval().getEndTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
                             dateTimeDatatypeIRI);
                 }
             }
@@ -733,13 +738,13 @@ public class TrestleReasoner {
                 ontology.writeIndividualDataProperty(
                         temporalIRI,
                         StaticIRI.temporalValidAtIRI,
-                        parseTemporalToOntologyDateTime(temporal.asPoint().getPointTime(), TemporalParser.IntervalType.END).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                        parseTemporalToOntologyDateTime(temporal.asPoint().getPointTime(), TemporalParser.IntervalType.END, temporal.asPoint().getTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
                         dateTimeDatatypeIRI);
             } else {
                 ontology.writeIndividualDataProperty(
                         temporalIRI,
                         StaticIRI.temporalExistsAtIRI,
-                        parseTemporalToOntologyDateTime(temporal.asPoint().getPointTime(), TemporalParser.IntervalType.END).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                        parseTemporalToOntologyDateTime(temporal.asPoint().getPointTime(), TemporalParser.IntervalType.END, temporal.asPoint().getTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
                         dateTimeDatatypeIRI);
             }
         }

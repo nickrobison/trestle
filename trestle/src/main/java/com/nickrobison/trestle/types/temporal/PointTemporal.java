@@ -4,6 +4,8 @@ import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
 import java.util.*;
 
@@ -19,6 +21,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
     private final T atTime;
     private final Optional<String> parameterName;
     private final Class<T> temporalType;
+    private ZoneId timeZone;
 
     private PointTemporal(Builder<T> builder) {
         super(UUID.randomUUID().toString(), builder.relations);
@@ -26,6 +29,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
         this.atTime = builder.atTime;
         this.parameterName = builder.parameterName;
         this.temporalType = (Class<T>) builder.atTime.getClass();
+        this.timeZone = builder.explicitTimeZone.orElse(ZoneOffset.UTC);
     }
     @Override
     public TemporalType getType() {
@@ -70,12 +74,21 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
         return this.parameterName.orElse("pointTime");
     }
 
+    /**
+     * Returns the explicit timezone of the temporal object
+     * @return - ZoneID
+     */
+    public ZoneId getTimeZone() {
+        return this.timeZone;
+    }
+
     public static class Builder<T extends Temporal> {
 
         private TemporalScope scope;
         private T atTime;
         private Optional<Set<OWLNamedIndividual>> relations = Optional.empty();
         private Optional<String> parameterName = Optional.empty();
+        private Optional<ZoneId> explicitTimeZone = Optional.empty();
 
         Builder(TemporalScope scope, T at) {
             this.scope = scope;
@@ -84,6 +97,13 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
 
         public Builder withParameterName(String name) {
             this.parameterName = Optional.of(name);
+            return this;
+        }
+
+        public Builder withTimeZone(String zoneID) {
+            if (!zoneID.equals("")) {
+                this.explicitTimeZone = Optional.of(ZoneId.of(zoneID));
+            }
             return this;
         }
 
