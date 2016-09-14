@@ -47,116 +47,124 @@ public class TypeConverter {
     }
 
     //    I need the unchecked casts in order to get the correct primitives for the constructor generation
-        @SuppressWarnings({"unchecked"})
-        public static <T> @NonNull T extractOWLLiteral(Class<@NonNull T> javaClass, OWLLiteral literal) {
+    @SuppressWarnings({"unchecked"})
+    public static <T> @NonNull T extractOWLLiteral(Class<@NonNull T> javaClass, OWLLiteral literal) {
 
-            switch (javaClass.getTypeName()) {
+        switch (javaClass.getTypeName()) {
 
-                case "int": {
-                    return (@NonNull T) (Object) Integer.parseInt(literal.getLiteral());
-                }
+            case "int": {
+                return (@NonNull T) (Object) Integer.parseInt(literal.getLiteral());
+            }
 
-                case "java.lang.Integer": {
-                    return javaClass.cast(Integer.parseInt(literal.getLiteral()));
-                }
+            case "java.lang.Integer": {
+                return javaClass.cast(Integer.parseInt(literal.getLiteral()));
+            }
 
-                case "long": {
-                    return (@NonNull T) (Object) Long.parseLong(literal.getLiteral());
-                }
+            case "long": {
+                return (@NonNull T) (Object) Long.parseLong(literal.getLiteral());
+            }
 
-                case "java.lang.Long": {
-                    return javaClass.cast(Long.parseLong(literal.getLiteral()));
-                }
+            case "java.lang.Long": {
+                return javaClass.cast(Long.parseLong(literal.getLiteral()));
+            }
 
-                case "java.lang.LocalDateTime": {
-                    return javaClass.cast(LocalDateTime.parse(literal.getLiteral()));
-                }
+            case "java.lang.LocalDateTime": {
+                return javaClass.cast(LocalDateTime.parse(literal.getLiteral()));
+            }
 
-                case "java.lang.String": {
-                    return javaClass.cast(literal.getLiteral());
-                }
+            case "java.lang.String": {
+                return javaClass.cast(literal.getLiteral());
+            }
 
-                case "java.lang.Double": {
-                    return javaClass.cast(literal.parseDouble());
-                }
+            case "java.lang.Double": {
+                return javaClass.cast(literal.parseDouble());
+            }
 
-                case "java.lang.Boolean": {
-                    return javaClass.cast(literal.parseBoolean());
-                }
+            case "java.lang.Boolean": {
+                return javaClass.cast(literal.parseBoolean());
+            }
 
-                default: {
+            default: {
 //                    Is it a geom type?
-                    final Optional<Object> geomObject = SpatialParser.parseWKTtoGeom(literal.getLiteral(), javaClass);
-                    if (geomObject.isPresent()) {
-                        return javaClass.cast(geomObject.get());
-                    }
-//                    Try to get a match from the custom constructor registry
-                    final Function constructorFunction = javaClassConstructors.get(javaClass.getTypeName());
-                    if (constructorFunction == null) {
-                        throw new RuntimeException(String.format("Unsupported cast %s", javaClass));
-                    }
-
-                    return javaClass.cast(constructorFunction.apply(literal.getLiteral()));
+                final Optional<Object> geomObject = SpatialParser.parseWKTtoGeom(literal.getLiteral(), javaClass);
+                if (geomObject.isPresent()) {
+                    return javaClass.cast(geomObject.get());
                 }
+//                    Try to get a match from the custom constructor registry
+                final Function constructorFunction = javaClassConstructors.get(javaClass.getTypeName());
+                if (constructorFunction == null) {
+                    throw new RuntimeException(String.format("Unsupported cast %s", javaClass));
+                }
+
+                return javaClass.cast(constructorFunction.apply(literal.getLiteral()));
             }
         }
+    }
 
+    /**
+     * Lookup java type from OWL Datatype
+     * If classToVerify is not null, check against the class in case the constructor requires a primitive
+     *
+     * @param dataproperty  - OWLDataPropertyAssertionAxiom to get java type from
+     * @param classToVerify - @Nullable Class to cross-check with to ensure we're parsing the correct boxed/unboxed type.
+     * @return - Java Class corresponding to OWL Datatype and required Class constructor argument
+     */
     @SuppressWarnings("dereference.of.nullable")
-        public static Class<?> lookupJavaClassFromOWLDatatype(OWLDataPropertyAssertionAxiom dataproperty, @Nullable Class<?> classToVerify) {
-            final Class<?> javaClass;
-            final OWLDatatype datatype = dataproperty.getObject().getDatatype();
-            if (datatype.isBuiltIn()) {
+    public static Class<?> lookupJavaClassFromOWLDatatype(OWLDataPropertyAssertionAxiom dataproperty, @Nullable Class<?> classToVerify) {
+        final Class<?> javaClass;
+        final OWLDatatype datatype = dataproperty.getObject().getDatatype();
+        if (datatype.isBuiltIn()) {
 
-    //            Check with the class to make sure the types are correct
-                OWLDatatype dataTypeToLookup = null;
-                if (classToVerify != null) {
-                    dataTypeToLookup = verifyOWLType(classToVerify, dataproperty.getProperty().asOWLDataProperty());
-                }
-                if (dataTypeToLookup == null) {
-                    dataTypeToLookup = datatype.getBuiltInDatatype().getDatatype(df);
-                }
-                javaClass = datatypeMap.get(dataTypeToLookup);
-                if (javaClass == null) {
-                    throw new RuntimeException(String.format("Unsupported OWLDatatype %s", datatype));
-                }
+            //            Check with the class to make sure the types are correct
+            OWLDatatype dataTypeToLookup = null;
+            if (classToVerify != null) {
+                dataTypeToLookup = verifyOWLType(classToVerify, dataproperty.getProperty().asOWLDataProperty());
+            }
+            if (dataTypeToLookup == null) {
+                dataTypeToLookup = datatype.getBuiltInDatatype().getDatatype(df);
+            }
+            javaClass = datatypeMap.get(dataTypeToLookup);
+            if (javaClass == null) {
+                throw new RuntimeException(String.format("Unsupported OWLDatatype %s", datatype));
+            }
 //            If it's from the geosparql group, we need to figure out the correct return class
 //                Virtuoso smashes everything into its own Geometry class, so geosparql isn't sufficient.
-            } else if (datatype.getIRI().getShortForm().equals("wktLiteral") || datatype.getIRI().getShortForm().equals("Geometry")) {
-                if (classToVerify == null) {
-                    javaClass = String.class;
-                } else {
-                    javaClass = SpatialParser.GetSpatialClass(classToVerify);
-                }
-            } else {
-    //            String as a last resort.
+        } else if (datatype.getIRI().getShortForm().equals("wktLiteral") || datatype.getIRI().getShortForm().equals("Geometry")) {
+            if (classToVerify == null) {
                 javaClass = String.class;
+            } else {
+                javaClass = SpatialParser.GetSpatialClass(classToVerify);
             }
-
-            return javaClass;
+        } else {
+            //            String as a last resort.
+            javaClass = String.class;
         }
+
+        return javaClass;
+    }
 
     private static @Nullable OWLDatatype verifyOWLType(Class<?> classToVerify, OWLDataProperty property) {
 
-            //        Check to see if it matches any annotated data methods
-            final Optional<Method> matchedMethod = Arrays.stream(classToVerify.getDeclaredMethods())
-                    .filter(m -> getMethodName(m).equals(property.getIRI().getShortForm()))
-                    .findFirst();
+        //        Check to see if it matches any annotated data methods
+        final Optional<Method> matchedMethod = Arrays.stream(classToVerify.getDeclaredMethods())
+                .filter(m -> getMethodName(m).equals(property.getIRI().getShortForm()))
+                .findFirst();
 
-            if (matchedMethod.isPresent()) {
-                return getDatatypeFromJavaClass(matchedMethod.get().getReturnType());
-            }
-
-    //        Fields
-            final Optional<Field> matchedField = Arrays.stream(classToVerify.getDeclaredFields())
-                    .filter(f -> getFieldName(f).equals(property.getIRI().getShortForm()))
-                    .findFirst();
-
-            if (matchedField.isPresent()) {
-                return getDatatypeFromJavaClass(matchedField.get().getType());
-            }
-
-            return null;
+        if (matchedMethod.isPresent()) {
+            return getDatatypeFromJavaClass(matchedMethod.get().getReturnType());
         }
+
+        //        Fields
+        final Optional<Field> matchedField = Arrays.stream(classToVerify.getDeclaredFields())
+                .filter(f -> getFieldName(f).equals(property.getIRI().getShortForm()))
+                .findFirst();
+
+        if (matchedField.isPresent()) {
+            return getDatatypeFromJavaClass(matchedField.get().getType());
+        }
+
+        return null;
+    }
 
     static Map<OWLDatatype, Class<?>> buildDatatype2ClassMap() {
         Map<OWLDatatype, Class<?>> datatypeMap = new HashMap<>();
@@ -211,9 +219,7 @@ public class TypeConverter {
         }
     }
 
-    static
-    @NotNull
-    OWLDatatype getDatatypeFromJavaClass(Class<?> javaTypeClass) {
+    static @NotNull OWLDatatype getDatatypeFromJavaClass(Class<?> javaTypeClass) {
         OWLDatatype owlDatatype = owlDatatypeMap.get(javaTypeClass);
         if (owlDatatype == null) {
             logger.error("Unsupported Java type {}", javaTypeClass);

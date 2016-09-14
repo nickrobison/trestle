@@ -239,12 +239,13 @@ public class TrestleParserTest {
 
 //        Properties
         testProperties.forEach(property -> {
-            final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, null);
+            final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, TestClasses.GAULMethodTest.class);
             inputClasses.add(javaClass);
             final Object literalValue = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
 //            final Object literalValue = javaClass.cast(property.getObject().getLiteral());
             inputObjects.add(literalValue);
-            constructorArguments.addArgument(property.getProperty().asOWLDataProperty().getIRI().getShortForm(),
+            constructorArguments.addArgument(
+                    ClassParser.matchWithClassMember(TestClasses.GAULMethodTest.class, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
                     javaClass,
                     literalValue);
         });
