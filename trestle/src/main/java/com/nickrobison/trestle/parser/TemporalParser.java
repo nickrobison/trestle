@@ -200,6 +200,7 @@ public class TemporalParser {
         return Optional.of(temporalObjects);
     }
 
+//    TODO(nrobison): Get the timezone from the temporal, if it supports it.
     private static Optional<TemporalObject> parseDefaultTemporal(Object fieldValue, DefaultTemporalProperty annotation, OWLNamedIndividual owlNamedIndividual) {
 
         final TemporalObject temporalObject;
@@ -289,6 +290,7 @@ public class TemporalParser {
         return Optional.of(temporalObject);
     }
 
+//    TODO(nrobison): Extract the time zone from the temporal, if it supports it.
     private static Optional<TemporalObject> parseStartTemporal(StartTemporalProperty annotation, Object fieldValue, OWLNamedIndividual owlNamedIndividual, Object inputObject, ClassParser.AccessType access, Class clazz) {
 //        @Nullable final TemporalObject temporalObject;
         switch (annotation.type()) {
@@ -324,59 +326,10 @@ public class TemporalParser {
                     } catch (IllegalAccessException e) {
                         logger.debug("Cannot access field {}", endField.get().getName(), e);
                     }
+                } else {
+                    return Optional.of(buildIntervalTemporal((Temporal) fieldValue, annotation.timeZone(), null, null, annotation.scope(), owlNamedIndividual));
                 }
-
                 break;
-
-//
-////                        Find its matching end field
-//                Object endingFieldValue = null;
-//                String endingZoneId = null;
-//                switch (access) {
-//                    case FIELD: {
-//
-//                        for (Field endingField : clazz.getDeclaredFields()) {
-//
-//                            if (endingField.isAnnotationPresent(EndTemporalProperty.class)) {
-//                                try {
-//                                    endingFieldValue = endingField.get(inputObject);
-//                                    endingZoneId = endingField.getAnnotation(EndTemporalProperty.class).timeZone();
-//                                } catch (IllegalAccessException e) {
-//                                    logger.debug("Cannot access field {}", endingField.getName(), e);
-//                                    continue;
-//                                }
-//                            }
-//                        }
-//                        break;
-//                    }
-//
-//                    case METHOD: {
-//
-//                        for (Method endMethod : clazz.getDeclaredMethods()) {
-//                            if (endMethod.isAnnotationPresent(EndTemporalProperty.class)) {
-//                                final Optional<Object> methodValue = ClassParser.accessMethodValue(endMethod, inputObject);
-//                                if (methodValue.isPresent()) {
-//                                    endingFieldValue = methodValue.get();
-//                                    endingZoneId = endMethod.getAnnotation(EndTemporalProperty.class).timeZone();
-//                                }
-//                            }
-//                        }
-//                        break;
-//                    }
-//
-//                    default:
-//                        throw new RuntimeException("Not sure what to access");
-//
-//                }
-//
-//                if ((endingFieldValue != null) && !(endingFieldValue instanceof Temporal)) {
-//                    throw new RuntimeException("Not a temporal field");
-//                }
-//
-//                temporalObject = buildIntervalTemporal((Temporal) fieldValue, annotation.timeZone(), (Temporal) endingFieldValue, endingZoneId, annotation.scope(), owlNamedIndividual);
-//                break;
-//            }
-//
             }
             default:
                 throw new RuntimeException("Cannot initialize temporal object");
