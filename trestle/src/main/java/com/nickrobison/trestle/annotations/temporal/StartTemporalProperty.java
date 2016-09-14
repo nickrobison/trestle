@@ -7,6 +7,8 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 
 /**
  * Created by nrobison on 7/20/16.
@@ -18,4 +20,5 @@ public @interface StartTemporalProperty {
     String name() default "";
     TemporalType type() default TemporalType.INTERVAL;
     TemporalScope scope() default TemporalScope.VALID;
+    String timeZone() default "";
 }

@@ -18,11 +18,9 @@ import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,17 +41,18 @@ public class TrestleAPITest {
     @BeforeEach
     public void setup() {
         reasoner = new TrestleBuilder()
-//                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-                .withDBConnection(
-                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-                        "spatialUser",
-                        "spatial1")
+                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+//                .withDBConnection(
+//                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
+//                        "spatialUser",
+//                        "spatial1")
                 .withName("api_test")
                 .withInputClasses(TestClasses.GAULTestClass.class,
                         TestClasses.GAULComplexClassTest.class,
                         TestClasses.JTSGeometryTest.class,
                         TestClasses.ESRIPolygonTest.class,
-                        TestClasses.GeotoolsPolygonTest.class)
+                        TestClasses.GeotoolsPolygonTest.class,
+                        TestClasses.OffsetDateTimeTest.class)
                 .withoutCaching()
                 .initialize()
                 .build();
@@ -89,7 +88,7 @@ public class TrestleAPITest {
 //            final LocalDateTime startTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
 
 //            Need to add a second to get it to format correctly.
-            gaulObjects.add(new TestClasses.GAULTestClass(code, splitLine[1].replace("\"", ""), date.atStartOfDay().plusSeconds(1), splitLine[4].replace("\"", "")));
+            gaulObjects.add(new TestClasses.GAULTestClass(code, splitLine[1].replace("\"", ""), date.atStartOfDay(), splitLine[4].replace("\"", "")));
         }
 
 //        Write the objects
@@ -111,22 +110,26 @@ public class TrestleAPITest {
 //        final GAULTestClass ancuabe = reasoner.readAsObject(GAULTestClass.class, IRI.create("trestle:", "Ancuabe"));
         final TestClasses.GAULTestClass ancuabe = reasoner.readAsObject(TestClasses.GAULTestClass.class, "Ancuabe");
         assertEquals(ancuabe.adm0_name, "Ancuabe", "Wrong name");
+//        Check the temporal to make sure they got parsed correctly
+        assertEquals(LocalDate.of(1990,1,1).atStartOfDay(), ancuabe.time, "Times should match");
     }
 
     @Test
     public void testClasses() throws TrestleClassException, MissingOntologyEntity, ParseException, TransformException {
 
-//        Complex objects
+//        Spatial/Complex objects
         final TestClasses.GAULComplexClassTest gaulComplexClassTest = new TestClasses.GAULComplexClassTest();
         final Geometry jtsGeom = new WKTReader().read("POINT(4.0 6.0)");
         final TestClasses.JTSGeometryTest jtsGeometryTest = new TestClasses.JTSGeometryTest(4326, jtsGeom, LocalDate.now());
         final Polygon geometry = (Polygon) GeometryEngine.geometryFromWkt("POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", 0, com.esri.core.geometry.Geometry.Type.Polygon);
         final TestClasses.ESRIPolygonTest esriPolygonTest = new TestClasses.ESRIPolygonTest(4792, geometry, LocalDate.now());
+        final TestClasses.OffsetDateTimeTest offsetDateTimeTest = new TestClasses.OffsetDateTimeTest(5515, OffsetDateTime.now(), OffsetDateTime.now().plusYears(5));
 
         List<Object> classObjects = new ArrayList<>();
         classObjects.add(gaulComplexClassTest);
         classObjects.add(jtsGeometryTest);
         classObjects.add(esriPolygonTest);
+        classObjects.add(offsetDateTimeTest);
 
         classObjects.parallelStream().forEach(object -> {
             final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(object);
@@ -140,10 +143,13 @@ public class TrestleAPITest {
                 assertEquals(gaulComplexClassTest, returnedObject, "Should have the same object");
             } else if (returnedObject instanceof TestClasses.JTSGeometryTest) {
                 assertEquals(jtsGeometryTest, returnedObject, "Should have the same object");
+            } else if (returnedObject instanceof TestClasses.OffsetDateTimeTest) {
+                assertEquals(offsetDateTimeTest, returnedObject, "Should have the same object");
             } else {
                 assertEquals(esriPolygonTest, returnedObject, "Should be equal");
             }
         });
+//        reasoner.writeOntology(new File("/Users/nrobison/Desktop/trestle_test.owl").toURI(), false);
 
 //        Geotools
 //

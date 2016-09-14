@@ -62,7 +62,7 @@ public class OracleOntologyTest {
         assertEquals(39, resultSet.size(), "Wrong number of classes");
 
         final long tripleCount = ontology.getTripleCount();
-        assertEquals(513, tripleCount, "Inference is wrong");
+        assertEquals(522, tripleCount, "Inference is wrong");
 
         final OWLNamedIndividual burundi_0 = df.getOWLNamedIndividual(IRI.create("trestle:", "Burundi_0"));
         final OWLDataProperty property = df.getOWLDataProperty(IRI.create("trestle:", "ADM0_Code"));

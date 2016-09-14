@@ -21,4 +21,5 @@ public @interface DefaultTemporalProperty {
     TemporalScope scope() default TemporalScope.VALID;
     int duration();
     ChronoUnit unit();
+    String timeZone() default "";
 }

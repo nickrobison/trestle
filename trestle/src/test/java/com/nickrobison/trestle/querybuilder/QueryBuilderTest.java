@@ -13,6 +13,8 @@ import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -120,7 +122,7 @@ public class QueryBuilderTest {
         assertEquals(virtuosoSpatialString, generatedVirtuoso, "Should be equal");
 
 //        Test Oracle temporal
-        final String generatedOracleTS = qb.buildTemporalSpatialIntersection(QueryBuilder.DIALECT.ORACLE, gaulClass, wktString, 0.0, QueryBuilder.UNITS.KM, LocalDate.of(2014, 1, 1).atStartOfDay());
+        final String generatedOracleTS = qb.buildTemporalSpatialIntersection(QueryBuilder.DIALECT.ORACLE, gaulClass, wktString, 0.0, QueryBuilder.UNITS.KM, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
         assertEquals(oracleTSString, generatedOracleTS, "Should be equal");
 
 //        Check unsupported

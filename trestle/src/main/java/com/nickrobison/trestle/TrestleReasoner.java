@@ -30,7 +30,9 @@ import java.net.URL;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -42,6 +44,7 @@ import java.util.stream.Collectors;
 import static com.nickrobison.trestle.common.IRIUtils.isFullIRI;
 import static com.nickrobison.trestle.common.LambdaExceptionUtil.rethrowFunction;
 import static com.nickrobison.trestle.common.StaticIRI.*;
+import static com.nickrobison.trestle.parser.TemporalParser.parseTemporalToOntologyDateTime;
 
 /**
  * Created by nrobison on 5/17/16.
@@ -184,11 +187,15 @@ public class TrestleReasoner {
     }
 
     public void writeOntology(URI filePath, boolean validate) {
+        Instant start = Instant.now();
         try {
+            logger.info("Writing Ontology to {}", filePath);
             ontology.writeOntology(IRI.create(filePath), validate);
         } catch (OWLOntologyStorageException e) {
             logger.error("Could not write ontology to {}", filePath, e);
         }
+        Instant end = Instant.now();
+        logger.info("Writing Ontology took {} ms", Duration.between(start, end).toMillis());
     }
 
     /**
@@ -437,7 +444,7 @@ public class TrestleReasoner {
                 }
 
                 if (!temporalObject.isPresent()) {
-                    throw new RuntimeException("Cannot restore temporal from ontology");
+                    throw new RuntimeException(String.format("Cannot restore temporal from ontology for %s", individualIRI));
                 }
 
 //            Add the temporal to the constructor args
@@ -507,8 +514,8 @@ public class TrestleReasoner {
      * An empty Optional means an error, an Optional of an empty List means no intersected objects
      *
      * @param inputObject - Object to intersect
-     * @param buffer - Additional buffer (in meters)
-     * @param <T> - Type to specialize method
+     * @param buffer      - Additional buffer (in meters)
+     * @param <T>         - Type to specialize method
      * @return - An Optional List of Object T
      */
     @SuppressWarnings("return.type.incompatible")
@@ -521,9 +528,9 @@ public class TrestleReasoner {
      * An empty Optional means an error, an Optional of an empty List means no intersected objects
      *
      * @param inputObject - Object to intersect
-     * @param buffer - Additional buffer to build around object (in meters)
-     * @param temporalAt - Temporal of intersecting time point
-     * @param <T> - Type to specialize method
+     * @param buffer      - Additional buffer to build around object (in meters)
+     * @param temporalAt  - Temporal of intersecting time point
+     * @param <T>         - Type to specialize method
      * @return - An Optional List of Object T
      */
     @SuppressWarnings("unchecked")
@@ -540,13 +547,13 @@ public class TrestleReasoner {
     }
 
     /**
-     Find objects of a given class that intersect with a specific WKT boundary.
+     * Find objects of a given class that intersect with a specific WKT boundary.
      * An empty Optional means an error, an Optional of an empty List means no intersected objects
      *
-     * @param clazz - Class of object to return
-     * @param wkt - WKT of spatial boundary to intersect with
+     * @param clazz  - Class of object to return
+     * @param wkt    - WKT of spatial boundary to intersect with
      * @param buffer - Double buffer to build around wkt (in meters)
-     * @param <T> - Type to specialize method
+     * @param <T>    - Type to specialize method
      * @return - An Optional List of Object T
      */
     public <T> Optional<List<T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer) {
@@ -588,7 +595,7 @@ public class TrestleReasoner {
                     logger.debug("Running generic spatial intersection");
                     spatialIntersection = qb.buildSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER);
                 } else {
-                    final LocalDateTime atLDTime = TemporalParser.parseTemporalToLocalDateTime(atTemporal);
+                    final OffsetDateTime atLDTime = parseTemporalToOntologyDateTime(atTemporal, TemporalParser.IntervalType.START, ZoneOffset.UTC);
                     logger.debug("Running spatial intersection at time {}", atLDTime);
                     spatialIntersection = qb.buildTemporalSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER, atLDTime);
                 }
@@ -694,26 +701,26 @@ public class TrestleReasoner {
 //                Write from
                 ontology.writeIndividualDataProperty(
                         temporalIRI,
-                        StaticIRI.temporalValidFromIRI,
-                        temporal.asInterval().getFromTime().toString(),
-                        temporal.getBaseTemporalTypeIRI());
+                        temporalValidFromIRI,
+                        parseTemporalToOntologyDateTime(temporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, temporal.asInterval().getStartTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                        dateTimeDatatypeIRI);
 
 //                Write to, if exists
                 final Optional<Temporal> toTime = temporal.asInterval().getToTime();
                 if (toTime.isPresent()) {
                     ontology.writeIndividualDataProperty(
                             temporalIRI,
-                            StaticIRI.temporalValidToIRI,
-                            toTime.get().toString(),
-                            temporal.getBaseTemporalTypeIRI());
+                            temporalValidToIRI,
+                            parseTemporalToOntologyDateTime(toTime.get(), TemporalParser.IntervalType.END, temporal.asInterval().getEndTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                            dateTimeDatatypeIRI);
                 }
             } else {
-                //                Write from
+//                Write from
                 ontology.writeIndividualDataProperty(
                         temporalIRI,
                         StaticIRI.temporalExistsFromIRI,
-                        temporal.asInterval().getFromTime().toString(),
-                        temporal.getBaseTemporalTypeIRI());
+                        parseTemporalToOntologyDateTime(temporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, temporal.asInterval().getStartTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                        dateTimeDatatypeIRI);
 
 //                Write to, if exists
                 final Optional<Temporal> toTime = temporal.asInterval().getToTime();
@@ -721,8 +728,8 @@ public class TrestleReasoner {
                     ontology.writeIndividualDataProperty(
                             temporalIRI,
                             StaticIRI.temporalExistsToIRI,
-                            toTime.get().toString(),
-                            temporal.getBaseTemporalTypeIRI());
+                            parseTemporalToOntologyDateTime(toTime.get(), TemporalParser.IntervalType.END, temporal.asInterval().getEndTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                            dateTimeDatatypeIRI);
                 }
             }
         } else {
@@ -731,14 +738,14 @@ public class TrestleReasoner {
                 ontology.writeIndividualDataProperty(
                         temporalIRI,
                         StaticIRI.temporalValidAtIRI,
-                        temporal.asPoint().getPointTime().toString(),
-                        temporal.getBaseTemporalTypeIRI());
+                        parseTemporalToOntologyDateTime(temporal.asPoint().getPointTime(), TemporalParser.IntervalType.END, temporal.asPoint().getTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                        dateTimeDatatypeIRI);
             } else {
                 ontology.writeIndividualDataProperty(
                         temporalIRI,
                         StaticIRI.temporalExistsAtIRI,
-                        temporal.asPoint().getPointTime().toString(),
-                        temporal.getBaseTemporalTypeIRI());
+                        parseTemporalToOntologyDateTime(temporal.asPoint().getPointTime(), TemporalParser.IntervalType.END, temporal.asPoint().getTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                        dateTimeDatatypeIRI);
             }
         }
 

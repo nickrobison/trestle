@@ -81,7 +81,7 @@ public class ConcurrentOntologyGAULLoader {
 
         ontology = new OntologyBuilder()
                 .fromIRI(iri)
-//                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
 //                .withDBConnection(
 //                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
 //                        "spatialUser",
