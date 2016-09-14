@@ -199,18 +199,32 @@
             </properties>
         </profile>
         <profile>
-            <id>no-checker</id>
+            <id>enable-checker</id>
             <build>
                 <plugins>
                     <plugin>
                         <artifactId>maven-compiler-plugin</artifactId>
                         <version>${compiler.version}</version>
                         <configuration combine.self="override">
+                        <source>1.8</source>
+                        <target>1.8</target>
+                        <fork>true</fork>
                             <source>1.8</source>
                             <target>1.8</target>
                             <fork>true</fork>
+                            <annotationProcessors>
+                                <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker
+                                </annotationProcessor>
+                                <annotationProcessor>org.checkerframework.checker.formatter.FormatterChecker
+                                </annotationProcessor>
+                                <annotationProcessor>org.checkerframework.checker.signature.SignatureChecker
+                                </annotationProcessor>
+                                <annotationProcessor>org.checkerframework.checker.interning.InterningChecker
+                                </annotationProcessor>
+                            </annotationProcessors>
                             <compilerArgs>
                                 <arg>${compiler.default.args}</arg>
+                                <arg>-Xbootclasspath/p:${annotatedJdk}</arg>
                             </compilerArgs>
                         </configuration>
                     </plugin>
@@ -270,18 +284,8 @@
                     <source>1.8</source>
                     <target>1.8</target>
                     <fork>true</fork>
-                    <annotationProcessors>
-                        <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>
-                        <annotationProcessor>org.checkerframework.checker.formatter.FormatterChecker
-                        </annotationProcessor>
-                        <annotationProcessor>org.checkerframework.checker.signature.SignatureChecker
-                        </annotationProcessor>
-                        <annotationProcessor>org.checkerframework.checker.interning.InterningChecker
-                        </annotationProcessor>
-                    </annotationProcessors>
                     <compilerArgs>
                         <arg>${compiler.default.args}</arg>
-                        <arg>-Xbootclasspath/p:${annotatedJdk}</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
