@@ -10,6 +10,7 @@
     <modules>
         <module>trestle</module>
         <module>gaulintegrator</module>
+        <module>trestle-exporter</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -19,6 +20,7 @@
         <provided.scope>provided</provided.scope>
         <jmh.version>1.12</jmh.version>
         <junit.jupiter.version>5.0.0-M2</junit.jupiter.version>
+        <geotools.version>16-M0</geotools.version>
         <!--Checker properties-->
         <checker.version>2.0.1</checker.version>
         <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
@@ -60,6 +62,11 @@
                 <groupId>com.esri.geometry</groupId>
                 <artifactId>esri-geometry-api</artifactId>
                 <version>1.2.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.geotools</groupId>
+                <artifactId>gt-main</artifactId>
+                <version>${geotools.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.postgresql</groupId>
