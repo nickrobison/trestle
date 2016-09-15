@@ -1,28 +1,51 @@
 package com.nickrobison.trestle.exporter;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created by nrobison on 9/14/16.
  */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class TSIndividual {
 
-    private final String wkt = "";
-    private final Map<String, Class<?>> properties = new HashMap<>();
+    private final String geom;
+    private final Map<String, String> properties = new LinkedHashMap<>();
+    private Optional<ShapefileSchema> schema = Optional.empty();
 
-    public TSIndividual(){}
-
-    public void addProperty(String property, Class<?> type) {
-        properties.put(property, type);
+    public TSIndividual(String geom){
+        this.geom = geom;
     }
 
-//    TODO(nrobison): Validate types
-    public Map<String, Class<?>> getProperties() {
+    public TSIndividual(String geom, ShapefileSchema schema) {
+        this.geom = geom;
+        this.schema = Optional.of(schema);
+        schema.getSchema().keySet().forEach(key -> properties.put(key, ""));
+    }
+
+    public void addProperty(String property, String value) {
+        this.properties.put(property, value);
+    }
+
+    /**
+     * Returns the properties for the individual
+     * If a schema is present it returns a sorted map
+     * @return
+     */
+    //    TODO(nrobison): Validate types
+    public Map<String, String> getProperties() {
         return this.properties;
     }
 
-    public String getWkt() {
-        return this.wkt;
+    public String getGeom() {
+        return this.geom;
+    }
+
+    public String getGeomName() {
+        if (this.schema.isPresent()) {
+            return this.schema.get().getGeomName();
+        }
+        return "geom";
     }
 }

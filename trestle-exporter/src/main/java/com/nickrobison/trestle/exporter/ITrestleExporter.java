@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.exporter;
 
-import java.nio.ByteBuffer;
+import java.io.File;
 import java.util.List;
 
 /**
@@ -27,5 +27,5 @@ public interface ITrestleExporter {
      * @param individuals - List of Property,Value maps to write
      * @return - ByteBuffer of data format
      */
-    ByteBuffer writePropertiesToByteBuffer(List<TSIndividual> individuals);
+    File writePropertiesToByteBuffer(List<TSIndividual> individuals);
 }

@@ -2,8 +2,13 @@ package com.nickrobison.trestle.exporter;
 
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.io.ParseException;
+import org.geotools.data.DefaultTransaction;
+import org.geotools.data.Transaction;
+import org.geotools.data.shapefile.ShapefileDataStore;
+import org.geotools.data.shapefile.ShapefileDataStoreFactory;
+import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
@@ -15,11 +20,11 @@ import org.opengis.feature.simple.SimpleFeatureType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.BiConsumer;
+import java.io.*;
+import java.net.MalformedURLException;
+import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Created by nrobison on 9/14/16.
@@ -32,6 +37,7 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
     private final DefaultFeatureCollection featureCollection;
     private final WKTReader2 wktReader;
     private final Class<T> type;
+    private final SimpleFeatureType simpleFeatureType;
 
     private ShapefileExporter(Builder builder) {
         this.type = builder.type;
@@ -43,10 +49,9 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
         typeBuilder.add(builder.typeName, builder.type);
 
 //        Now the rest of the properties
-        BiConsumer<String, Class<?>> addToBuilder = (key, value) -> builder.addProperty(key, value);
-        builder.properties.forEach(addToBuilder);
+        builder.schema.getSchema().forEach(typeBuilder::add);
 
-        final SimpleFeatureType simpleFeatureType = typeBuilder.buildFeatureType();
+        simpleFeatureType = typeBuilder.buildFeatureType();
         simpleFeatureBuilder = new SimpleFeatureBuilder(simpleFeatureType);
         featureCollection = new DefaultFeatureCollection();
         geometryFactory = JTSFactoryFinder.getGeometryFactory();
@@ -59,12 +64,12 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
     }
 
     @Override
-    public ByteBuffer writePropertiesToByteBuffer(List<TSIndividual> individuals) {
+    public File writePropertiesToByteBuffer(List<TSIndividual> individuals) {
         individuals.forEach(individual -> {
 
 //            Build the geometry
             try {
-                final T geometry = type.cast(wktReader.read(individual.getWkt()));
+                final T geometry = type.cast(wktReader.read(individual.getGeom()));
                 simpleFeatureBuilder.add(geometry);
             } catch (ParseException e) {
                 logger.error("Cannot parse wkt {}", e);
@@ -80,22 +85,123 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
         });
 
 //        Now, write it out
-        return null;
+        final File shpFile = new File("./target/test.shp");
+        final File dbf = new File("./target/test.dbf");
+
+        try {
+            shpFile.createNewFile();
+            dbf.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        final ShapefileDataStoreFactory shapefileDataStoreFactory = new ShapefileDataStoreFactory();
+        Map<String, Serializable> params = new HashMap<>();
+        try {
+            params.put("url", shpFile.toURI().toURL());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        params.put("create spatial index", Boolean.TRUE);
+        ShapefileDataStore dataStore = null;
+        try {
+            dataStore = (ShapefileDataStore) shapefileDataStoreFactory.createDataStore(params);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if (dataStore != null) {
+            try {
+                dataStore.createSchema(simpleFeatureType);
+//            Write it out
+                Transaction transaction = new DefaultTransaction("create");
+                final String typeName = dataStore.getTypeNames()[0];
+                final SimpleFeatureSource featureSource = dataStore.getFeatureSource(typeName);
+                if (featureSource instanceof SimpleFeatureStore) {
+                    SimpleFeatureStore featureStore = (SimpleFeatureStore) featureSource;
+
+                    featureStore.setTransaction(transaction);
+                    try {
+                        featureStore.addFeatures(featureCollection);
+                        transaction.commit();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        transaction.rollback();
+                    } finally {
+                        transaction.close();
+                    }
+
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+        }
+
+//        Now, zip it
+        final File zipFile = new File("./target/shp.zip");
+        try {
+            FileOutputStream fos = new FileOutputStream(zipFile);
+            final ZipOutputStream zos = new ZipOutputStream(fos);
+            addToZipArchive(zos, "./target/test.shp", "./target/test.dbf", "./target/test.fix", "./target/test.prj", "./target/test.shp");
+            zos.close();
+            fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        return zipFile;
+    }
+
+    private static void addToZipArchive(ZipOutputStream zos, String... fileName) {
+        Arrays.stream(fileName).forEach(fn -> {
+            File file = new File(fn);
+            final FileInputStream fileInputStream;
+            try {
+                fileInputStream = new FileInputStream(file);
+                final ZipEntry zipEntry = new ZipEntry(fn);
+                try {
+                    zos.putNextEntry(zipEntry);
+                    byte[] bytes = new byte[1024];
+                    int length;
+                    while ((length = fileInputStream.read(bytes)) >= 0) {
+                        zos.write(bytes, 0, length);
+                    }
+                    zos.closeEntry();
+                    fileInputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     public static class Builder<T extends Geometry> {
 
         private final String typeName;
         private final Class<T> type;
-        private final Map<String, Class<?>> properties = new HashMap<>();
+        private final ShapefileSchema schema;
+        private final Map<String, String> properties = new LinkedHashMap<>();
 
-        public Builder(String typeName, Class<T> type) {
+        public Builder(String typeName, Class<T> type, ShapefileSchema schema) {
             this.typeName = typeName;
             this.type = type;
+            this.schema = schema;
+            schema.getSchema().keySet().forEach(key -> properties.put(key, ""));
         }
 
-        public Builder addProperty(String key, Class<?> value) {
+        public Builder addProperty(String key, String value) {
             properties.put(key, value);
+            return this;
+        }
+
+        public Builder addAllProperties(Map<String, String> properties) {
+            this.properties.putAll(properties);
+            return this;
         }
 
         public ShapefileExporter build() {
