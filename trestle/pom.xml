@@ -115,6 +115,11 @@
         </dependency>
         <!--Application Dependencies-->
         <dependency>
+            <groupId>com.nickrobison</groupId>
+            <artifactId>trestle-exporter</artifactId>
+            <version>0.3-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.5</version>

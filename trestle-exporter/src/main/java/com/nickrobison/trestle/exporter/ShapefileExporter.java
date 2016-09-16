@@ -77,7 +77,7 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
 
 //            Now the properties
             individual.getProperties().entrySet().forEach(entry -> {
-                simpleFeatureBuilder.add(entry.getKey());
+                simpleFeatureBuilder.add(entry.getValue());
             });
 
             final SimpleFeature simpleFeature = simpleFeatureBuilder.buildFeature(null);
@@ -142,7 +142,7 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
         try {
             FileOutputStream fos = new FileOutputStream(zipFile);
             final ZipOutputStream zos = new ZipOutputStream(fos);
-            addToZipArchive(zos, "./target/test.shp", "./target/test.dbf", "./target/test.fix", "./target/test.prj", "./target/test.shp");
+            addToZipArchive(zos, "./target/test.shp", "./target/test.dbf", "./target/test.fix", "./target/test.prj", "./target/test.shx");
             zos.close();
             fos.close();
         } catch (FileNotFoundException e) {
@@ -185,7 +185,7 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
         private final String typeName;
         private final Class<T> type;
         private final ShapefileSchema schema;
-        private final Map<String, String> properties = new LinkedHashMap<>();
+        private final Map<String, Object> properties = new LinkedHashMap<>();
 
         public Builder(String typeName, Class<T> type, ShapefileSchema schema) {
             this.typeName = typeName;
@@ -194,12 +194,12 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
             schema.getSchema().keySet().forEach(key -> properties.put(key, ""));
         }
 
-        public Builder addProperty(String key, String value) {
+        public Builder addProperty(String key, Object value) {
             properties.put(key, value);
             return this;
         }
 
-        public Builder addAllProperties(Map<String, String> properties) {
+        public Builder addAllProperties(Map<String, Object> properties) {
             this.properties.putAll(properties);
             return this;
         }

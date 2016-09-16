@@ -29,14 +29,24 @@ public class ClassBuilder {
      * @return - Optional list of OWLDataProperty from given class
      */
     public static Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz) {
+        return getPropertyMembers(clazz, false);
+    }
+
+    /**
+     *
+     * @param clazz
+     * @param filterSpatial
+     * @return
+     */
+    public static Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz, boolean filterSpatial) {
 
         List<OWLDataProperty> classFields = new ArrayList<>();
         Arrays.stream(clazz.getDeclaredFields())
-                .filter(ClassParser::filterDataPropertyField)
+                .filter(f -> filterDataPropertyField(f, filterSpatial))
                 .forEach(field -> classFields.add(df.getOWLDataProperty(SpatialParser.filterDataSpatialName(field))));
 
         Arrays.stream(clazz.getDeclaredMethods())
-                .filter(ClassParser::filterDataPropertyMethod)
+                .filter(m -> filterDataPropertyMethod(m, filterSpatial))
                 .forEach(method -> classFields.add(df.getOWLDataProperty(SpatialParser.filterDataSpatialName(method))));
 
         if (classFields.isEmpty()) {
