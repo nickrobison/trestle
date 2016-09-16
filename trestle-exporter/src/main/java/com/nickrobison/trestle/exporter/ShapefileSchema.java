@@ -5,7 +5,7 @@ import com.vividsolutions.jts.geom.Geometry;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static com.nickrobison.trestle.exporter.Utils.parsePrimitiveClass;
+import static com.nickrobison.trestle.exporter.Utils.parseShapefileClass;
 
 /**
  * Created by nrobison on 9/15/16.
@@ -28,7 +28,7 @@ public class ShapefileSchema {
      * @param type - Property type (primitives converted to proper classes)
      */
     public void addProperty(String name, Class<?> type) {
-        schema.put(name, parsePrimitiveClass(type));
+        schema.put(name, parseShapefileClass(type));
     }
 
     public Map<String, Class<?>> getSchema() {

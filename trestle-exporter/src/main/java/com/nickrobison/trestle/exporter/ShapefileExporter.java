@@ -7,6 +7,7 @@ import org.geotools.data.DefaultTransaction;
 import org.geotools.data.Transaction;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
+import org.geotools.data.shapefile.dbf.DbaseFileException;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.DefaultFeatureCollection;
@@ -64,7 +65,7 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
     }
 
     @Override
-    public File writePropertiesToByteBuffer(List<TSIndividual> individuals) {
+    public File writePropertiesToByteBuffer(List<TSIndividual> individuals) throws IOException {
         individuals.forEach(individual -> {
 
 //            Build the geometry
@@ -76,9 +77,7 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
             }
 
 //            Now the properties
-            individual.getProperties().entrySet().forEach(entry -> {
-                simpleFeatureBuilder.add(entry.getValue());
-            });
+            individual.getProperties().entrySet().forEach(entry -> simpleFeatureBuilder.add(entry.getValue()));
 
             final SimpleFeature simpleFeature = simpleFeatureBuilder.buildFeature(null);
             featureCollection.add(simpleFeature);
@@ -88,12 +87,8 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
         final File shpFile = new File("./target/test.shp");
         final File dbf = new File("./target/test.dbf");
 
-        try {
-            shpFile.createNewFile();
-            dbf.createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        shpFile.createNewFile();
+        dbf.createNewFile();
         final ShapefileDataStoreFactory shapefileDataStoreFactory = new ShapefileDataStoreFactory();
         Map<String, Serializable> params = new HashMap<>();
         try {
@@ -109,29 +104,25 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
             e.printStackTrace();
         }
         if (dataStore != null) {
-            try {
-                dataStore.createSchema(simpleFeatureType);
+            dataStore.createSchema(simpleFeatureType);
 //            Write it out
-                Transaction transaction = new DefaultTransaction("create");
-                final String typeName = dataStore.getTypeNames()[0];
-                final SimpleFeatureSource featureSource = dataStore.getFeatureSource(typeName);
-                if (featureSource instanceof SimpleFeatureStore) {
-                    SimpleFeatureStore featureStore = (SimpleFeatureStore) featureSource;
+            Transaction transaction = new DefaultTransaction("create");
+            final String typeName = dataStore.getTypeNames()[0];
+            final SimpleFeatureSource featureSource = dataStore.getFeatureSource(typeName);
+            if (featureSource instanceof SimpleFeatureStore) {
+                SimpleFeatureStore featureStore = (SimpleFeatureStore) featureSource;
 
-                    featureStore.setTransaction(transaction);
-                    try {
-                        featureStore.addFeatures(featureCollection);
-                        transaction.commit();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        transaction.rollback();
-                    } finally {
-                        transaction.close();
-                    }
-
+                featureStore.setTransaction(transaction);
+                try {
+                    featureStore.addFeatures(featureCollection);
+                    transaction.commit();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    transaction.rollback();
+                } finally {
+                    transaction.close();
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
+
             }
 
 

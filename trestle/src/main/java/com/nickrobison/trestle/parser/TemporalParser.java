@@ -1,5 +1,7 @@
 package com.nickrobison.trestle.parser;
 
+import com.nickrobison.trestle.annotations.DataProperty;
+import com.nickrobison.trestle.annotations.Spatial;
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
@@ -9,9 +11,7 @@ import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.semanticweb.owlapi.model.OWLDatatype;
-import org.semanticweb.owlapi.model.OWLLiteral;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +22,8 @@ import java.time.temporal.Temporal;
 import java.util.*;
 
 import static com.nickrobison.trestle.common.StaticIRI.*;
+import static com.nickrobison.trestle.parser.ClassParser.df;
+import static com.nickrobison.trestle.parser.ClassParser.filterMethodName;
 import static com.nickrobison.trestle.parser.temporal.JavaTimeParser.parseDateTimeToJavaTemporal;
 import static com.nickrobison.trestle.parser.temporal.JavaTimeParser.parseDateToJavaTemporal;
 import static com.nickrobison.trestle.parser.temporal.JodaTimeParser.parseDateTimeToJodaTemporal;
@@ -88,6 +90,111 @@ public class TemporalParser {
 
         return null;
 
+    }
+
+    /**
+     * Extract temporal properties as OWLDataProperties from a given Java class
+     * Does not return any values, just the property definitions
+     * @param clazz - Input class to parse properties from
+     * @return - Optional List of OWLDataProperties
+     */
+    public static Optional<List<OWLDataProperty>> GetTemporalsAsDataProperties(Class<?> clazz) {
+
+        final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(clazz);
+        List<OWLDataProperty> temporalProperties = new ArrayList<>();
+
+        if (IsDefault(clazz)) {
+//            Try to find the default method or field
+            final Optional<Method> defaultMethod = Arrays.stream(clazz.getDeclaredMethods())
+                    .filter(m -> m.isAnnotationPresent(DefaultTemporalProperty.class))
+                    .findFirst();
+
+            if (defaultMethod.isPresent()) {
+                Method method = defaultMethod.get();
+                if (method.getAnnotation(DefaultTemporalProperty.class).name().equals("")) {
+                    temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, filterMethodName(method))));
+                } else {
+                    temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, method.getAnnotation(DefaultTemporalProperty.class).name())));
+                }
+            } else {
+                final Optional<Field> defaultField = Arrays.stream(clazz.getDeclaredFields())
+                        .filter(f -> f.isAnnotationPresent(DefaultTemporalProperty.class))
+                        .findFirst();
+
+                if (defaultField.isPresent()) {
+                    Field field = defaultField.get();
+                    if (field.getAnnotation(DefaultTemporalProperty.class).name().equals("")) {
+                        temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, field.getName())));
+                    } else {
+                        temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, field.getAnnotation(DefaultTemporalProperty.class).name())));
+                    }
+                }
+            }
+        } else {
+//            Try for start temporal
+
+//            Methods
+            final Optional<Method> startMethod = Arrays.stream(clazz.getDeclaredMethods())
+                    .filter(m -> m.isAnnotationPresent(StartTemporalProperty.class))
+                    .findFirst();
+
+            if (startMethod.isPresent()) {
+                Method method = startMethod.get();
+                if (method.getAnnotation(StartTemporalProperty.class).name().equals("")) {
+                    temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, filterMethodName(method))));
+                } else {
+                    temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, method.getAnnotation(StartTemporalProperty.class).name())));
+                }
+            } else {
+//                Fields
+                final Optional<Field> startField = Arrays.stream(clazz.getDeclaredFields())
+                        .filter(f -> f.isAnnotationPresent(StartTemporalProperty.class))
+                        .findFirst();
+
+                if (startField.isPresent()) {
+                    Field field = startField.get();
+                    if (field.getAnnotation(StartTemporalProperty.class).name().equals("")) {
+                        temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, field.getName())));
+                    } else {
+                        temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, field.getAnnotation(StartTemporalProperty.class).name())));
+                    }
+                }
+            }
+
+//            End temporal
+
+            final Optional<Method> endMethod = Arrays.stream(clazz.getDeclaredMethods())
+                    .filter(m -> m.isAnnotationPresent(EndTemporalProperty.class))
+                    .findFirst();
+
+            if (endMethod.isPresent()) {
+                Method method = endMethod.get();
+                if (method.getAnnotation(EndTemporalProperty.class).name().equals("")) {
+                    temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, filterMethodName(method))));
+                } else {
+                    temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, method.getAnnotation(EndTemporalProperty.class).name())));
+                }
+            } else {
+                final Optional<Field> endField = Arrays.stream(clazz.getDeclaredFields())
+                        .filter(f -> f.isAnnotationPresent(EndTemporalProperty.class))
+                        .findFirst();
+
+                if (endField.isPresent()) {
+                    Field field = endField.get();
+                    if (field.getAnnotation(EndTemporalProperty.class).name().equals("")) {
+                        temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, field.getName())));
+                    } else {
+                        temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, field.getAnnotation(EndTemporalProperty.class).name())));
+                    }
+                }
+            }
+        }
+
+        if (temporalProperties.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(temporalProperties);
     }
 
     public static Optional<List<TemporalObject>> GetTemporalObjects(Object inputObject) {

@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
@@ -762,7 +763,7 @@ public class TrestleReasoner {
                 temporalIRI);
     }
 
-    public <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, ITrestleExporter.DataType exportType) {
+    public <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, ITrestleExporter.DataType exportType) throws IOException {
 
         //        Build shapefile schema
 //        TODO(nrobison): Extract type from wkt
@@ -771,6 +772,13 @@ public class TrestleReasoner {
         if (propertyMembers.isPresent()) {
             propertyMembers.get().forEach(property -> shapefileSchema.addProperty(property.asOWLDataProperty().getIRI().getShortForm(), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property)));
         }
+
+//        Now the temporals
+        final Optional<List<OWLDataProperty>> temporalProperties = TemporalParser.GetTemporalsAsDataProperties(inputClass);
+        if (temporalProperties.isPresent()) {
+            temporalProperties.get().forEach(temporal -> shapefileSchema.addProperty(temporal.asOWLDataProperty().getIRI().getShortForm(), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, temporal)));
+        }
+
 
         final List<CompletableFuture<Optional<TSIndividual>>> completableFutures = objectID
                 .stream()
@@ -825,25 +833,23 @@ public class TrestleReasoner {
                 });
             }
 //                    Temporals
-//            final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(object);
-//            if (temporalObjects.isPresent()) {
-//                final TemporalObject temporalObject = temporalObjects.get().get(0);
-//                if (temporalObject.isInterval()) {
-//                    final IntervalTemporal intervalTemporal = temporalObject.asInterval();
-//                    individual.addProperty(intervalTemporal.getStartName(), intervalTemporal.getFromTime().toString());
-//                    final Optional toTime = intervalTemporal.getToTime();
-//                    if (toTime.isPresent()) {
-//                        final Temporal to = (Temporal) toTime.get();
-//                        individual.addProperty(intervalTemporal.getEndName(), to.toString());
-//                    }
-//                } else {
-//                    final PointTemporal pointTemporal = temporalObject.asPoint();
-//                    individual.addProperty(pointTemporal.getParameterName(), pointTemporal.getPointTime().toString());
-//                }
-//            }
+            final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(object);
+            if (temporalObjects.isPresent()) {
+                final TemporalObject temporalObject = temporalObjects.get().get(0);
+                if (temporalObject.isInterval()) {
+                    final IntervalTemporal intervalTemporal = temporalObject.asInterval();
+                    individual.addProperty(intervalTemporal.getStartName(), intervalTemporal.getFromTime().toString());
+                    final Optional toTime = intervalTemporal.getToTime();
+                    if (toTime.isPresent()) {
+                        final Temporal to = (Temporal) toTime.get();
+                        individual.addProperty(intervalTemporal.getEndName(), to.toString());
+                    }
+                } else {
+                    final PointTemporal pointTemporal = temporalObject.asPoint();
+                    individual.addProperty(pointTemporal.getParameterName(), pointTemporal.getPointTime().toString());
+                }
+            }
             return Optional.of(individual);
-//        }
-//        return Optional.empty();
     }
 
     private boolean checkObjectRelation(OWLNamedIndividual firstIndividual, OWLNamedIndividual secondIndividual) {

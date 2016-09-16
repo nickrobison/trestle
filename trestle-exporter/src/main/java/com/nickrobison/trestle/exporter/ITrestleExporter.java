@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.exporter;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -27,5 +28,5 @@ public interface ITrestleExporter {
      * @param individuals - List of Property,Value maps to write
      * @return - ByteBuffer of data format
      */
-    File writePropertiesToByteBuffer(List<TSIndividual> individuals);
+    File writePropertiesToByteBuffer(List<TSIndividual> individuals) throws IOException;
 }

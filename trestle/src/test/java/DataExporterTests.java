@@ -14,6 +14,7 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -44,7 +45,7 @@ public class DataExporterTests {
     }
 
     @Test
-    public void testExport() {
+    public void testExport() throws IOException {
         final File file = reasoner.exportDataSetObjects(SimpleGAULObject.class, Arrays.asList(ids), ITrestleExporter.DataType.SHAPEFILE);
     }
 
