@@ -38,7 +38,7 @@ public class TestGAULExport {
     public void ShapeFileExport() throws IOException {
 
         final ShapefileExporter exporter = new ShapefileExporter.Builder(shapefileSchema.getGeomName(), shapefileSchema.getGeomType(), shapefileSchema).build();
-        exporter.writePropertiesToByteBuffer(tsIndividuals);
+        exporter.writePropertiesToByteBuffer(tsIndividuals, null);
     }
 
     private static List<TSIndividual> readCSV() {

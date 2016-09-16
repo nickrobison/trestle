@@ -796,7 +796,7 @@ public class TrestleReasoner {
                     .map(Optional::get)
                     .collect(Collectors.toList());
 
-            return shapeFileExporter.writePropertiesToByteBuffer(individuals);
+            return shapeFileExporter.writePropertiesToByteBuffer(individuals, null);
 
         } catch (InterruptedException e) {
             e.printStackTrace();

@@ -26,7 +26,8 @@ public interface ITrestleExporter {
     /**
      * Write a given list of properties to the output format
      * @param individuals - List of Property,Value maps to write
+     * @param fileName
      * @return - ByteBuffer of data format
      */
-    File writePropertiesToByteBuffer(List<TSIndividual> individuals) throws IOException;
+    File writePropertiesToByteBuffer(List<TSIndividual> individuals, String fileName) throws IOException;
 }
