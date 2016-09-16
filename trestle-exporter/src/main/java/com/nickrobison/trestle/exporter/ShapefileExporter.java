@@ -5,9 +5,11 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.io.ParseException;
 import org.geotools.data.DefaultTransaction;
 import org.geotools.data.Transaction;
+import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.data.shapefile.dbf.DbaseFileException;
+import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.DefaultFeatureCollection;
@@ -94,37 +96,29 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
         try {
             params.put("url", shpFile.toURI().toURL());
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            logger.error("{} is not a valid URL", shpFile.toURI());
         }
         params.put("create spatial index", Boolean.TRUE);
-        ShapefileDataStore dataStore = null;
-        try {
-            dataStore = (ShapefileDataStore) shapefileDataStoreFactory.createDataStore(params);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        if (dataStore != null) {
-            dataStore.createSchema(simpleFeatureType);
+        ShapefileDataStore dataStore = (ShapefileDataStore) shapefileDataStoreFactory.createDataStore(params);
+
+        dataStore.createSchema(simpleFeatureType);
 //            Write it out
-            Transaction transaction = new DefaultTransaction("create");
-            final String typeName = dataStore.getTypeNames()[0];
-            final SimpleFeatureSource featureSource = dataStore.getFeatureSource(typeName);
-            if (featureSource instanceof SimpleFeatureStore) {
-                SimpleFeatureStore featureStore = (SimpleFeatureStore) featureSource;
+        Transaction transaction = new DefaultTransaction("create");
+        final String typeName = dataStore.getTypeNames()[0];
+        final SimpleFeatureSource featureSource = dataStore.getFeatureSource(typeName);
+        if (featureSource instanceof SimpleFeatureStore) {
+            SimpleFeatureStore featureStore = (SimpleFeatureStore) featureSource;
 
-                featureStore.setTransaction(transaction);
-                try {
-                    featureStore.addFeatures(featureCollection);
-                    transaction.commit();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    transaction.rollback();
-                } finally {
-                    transaction.close();
-                }
-
+            featureStore.setTransaction(transaction);
+            try {
+                featureStore.addFeatures(featureCollection);
+                transaction.commit();
+            } catch (Exception e) {
+                e.printStackTrace();
+                transaction.rollback();
+            } finally {
+                transaction.close();
             }
-
 
         }
 

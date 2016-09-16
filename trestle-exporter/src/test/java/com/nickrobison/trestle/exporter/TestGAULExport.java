@@ -11,7 +11,6 @@ import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -26,7 +25,7 @@ public class TestGAULExport {
 
     @BeforeAll
     private static void setup() {
-        shapefileSchema = new ShapefileSchema("geom", MultiPolygon.class);
+        shapefileSchema = new ShapefileSchema(MultiPolygon.class);
         shapefileSchema.addProperty("gaulcode", String.class);
         shapefileSchema.addProperty("objectname", String.class);
         shapefileSchema.addProperty("startdate", String.class);

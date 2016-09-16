@@ -16,8 +16,8 @@ public class ShapefileSchema {
     private final Class<? extends Geometry> geomType;
     private final Map<String, Class<?>> schema = new LinkedHashMap<>();
 
-    public ShapefileSchema(String geomName, Class<? extends Geometry> geomType) {
-        this.geomName = geomName;
+    public ShapefileSchema(Class<? extends Geometry> geomType) {
+        this.geomName = "the_geom";
         this.geomType = geomType;
     }
 

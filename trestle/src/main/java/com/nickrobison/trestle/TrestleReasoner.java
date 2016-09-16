@@ -2,7 +2,6 @@ package com.nickrobison.trestle;
 
 import com.nickrobison.trestle.caching.TrestleCache;
 import com.nickrobison.trestle.common.IRIUtils;
-import com.nickrobison.trestle.common.LambdaUtils;
 import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.exceptions.*;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
@@ -50,9 +49,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static com.nickrobison.trestle.common.IRIUtils.isFullIRI;
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
 import static com.nickrobison.trestle.common.LambdaExceptionUtil.rethrowFunction;
 import static com.nickrobison.trestle.common.LambdaUtils.sequenceCompletableFutures;
@@ -767,7 +764,7 @@ public class TrestleReasoner {
 
         //        Build shapefile schema
 //        TODO(nrobison): Extract type from wkt
-        final ShapefileSchema shapefileSchema = new ShapefileSchema("geom", MultiPolygon.class);
+        final ShapefileSchema shapefileSchema = new ShapefileSchema(MultiPolygon.class);
         final Optional<List<OWLDataProperty>> propertyMembers = ClassBuilder.getPropertyMembers(inputClass, true);
         if (propertyMembers.isPresent()) {
             propertyMembers.get().forEach(property -> shapefileSchema.addProperty(property.asOWLDataProperty().getIRI().getShortForm(), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property)));
