@@ -767,13 +767,13 @@ public class TrestleReasoner {
         final ShapefileSchema shapefileSchema = new ShapefileSchema(MultiPolygon.class);
         final Optional<List<OWLDataProperty>> propertyMembers = ClassBuilder.getPropertyMembers(inputClass, true);
         if (propertyMembers.isPresent()) {
-            propertyMembers.get().forEach(property -> shapefileSchema.addProperty(property.asOWLDataProperty().getIRI().getShortForm(), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property)));
+            propertyMembers.get().forEach(property -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, property.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property)));
         }
 
 //        Now the temporals
         final Optional<List<OWLDataProperty>> temporalProperties = TemporalParser.GetTemporalsAsDataProperties(inputClass);
         if (temporalProperties.isPresent()) {
-            temporalProperties.get().forEach(temporal -> shapefileSchema.addProperty(temporal.asOWLDataProperty().getIRI().getShortForm(), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, temporal)));
+            temporalProperties.get().forEach(temporal -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, temporal.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, temporal)));
         }
 
 
@@ -835,11 +835,12 @@ public class TrestleReasoner {
                 final TemporalObject temporalObject = temporalObjects.get().get(0);
                 if (temporalObject.isInterval()) {
                     final IntervalTemporal intervalTemporal = temporalObject.asInterval();
-                    individual.addProperty(intervalTemporal.getStartName(), intervalTemporal.getFromTime().toString());
+                    final String startName = intervalTemporal.getStartName();
+                    individual.addProperty(ClassParser.matchWithClassMember(inputClass, intervalTemporal.getStartName()), intervalTemporal.getFromTime().toString());
                     final Optional toTime = intervalTemporal.getToTime();
                     if (toTime.isPresent()) {
                         final Temporal to = (Temporal) toTime.get();
-                        individual.addProperty(intervalTemporal.getEndName(), to.toString());
+                        individual.addProperty(ClassParser.matchWithClassMember(inputClass, intervalTemporal.getEndName()), to.toString());
                     }
                 } else {
                     final PointTemporal pointTemporal = temporalObject.asPoint();
