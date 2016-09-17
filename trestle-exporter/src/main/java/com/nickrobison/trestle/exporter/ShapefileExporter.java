@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.MalformedURLException;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -145,11 +146,11 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
             FileOutputStream fos = new FileOutputStream(zipFile);
             final ZipOutputStream zos = new ZipOutputStream(fos);
             addToZipArchive(zos,
-                    String.format("%s.shp", exportName),
-                    String.format("%s.dbf", exportName),
-                    String.format("%s.fix", exportName),
-                    String.format("%s.prj", exportName),
-                    String.format("%s.shx", exportName));
+                    String.format("%s.shp", new File(this.directory, exportName).toString()),
+                    String.format("%s.dbf", new File(this.directory, exportName).toString()),
+                    String.format("%s.fix", new File(this.directory, exportName).toString()),
+                    String.format("%s.prj", new File(this.directory, exportName).toString()),
+                    String.format("%s.shx", new File(this.directory, exportName).toString()));
             zos.close();
             fos.close();
         } catch (FileNotFoundException e) {

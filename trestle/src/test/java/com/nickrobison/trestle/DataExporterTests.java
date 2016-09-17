@@ -1,3 +1,5 @@
+package com.nickrobison.trestle;
+
 import afu.edu.emory.mathcs.backport.java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.nickrobison.trestle.TestClasses;
