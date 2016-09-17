@@ -9,6 +9,7 @@ import com.nickrobison.trestle.parser.OracleOntologyGAULoader;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,9 +25,11 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Created by nrobison on 7/27/16.
@@ -37,6 +40,7 @@ public class TrestleAPITest {
     private TrestleReasoner reasoner;
     private OWLDataFactory df;
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
+    private String datasetClassID;
 
     @BeforeEach
     public void setup() {
@@ -112,6 +116,16 @@ public class TrestleAPITest {
         assertEquals(ancuabe.adm0_name, "Ancuabe", "Wrong name");
 //        Check the temporal to make sure they got parsed correctly
         assertEquals(LocalDate.of(1990,1,1).atStartOfDay(), ancuabe.time, "Times should match");
+
+//        Try to read out the datasets
+        final Optional<Set<String>> availableDatasets = reasoner.getAvailableDatasets();
+        assertTrue(availableDatasets.isPresent(), "Should have dataset");
+
+        datasetClassID = availableDatasets.get().stream().findFirst().get();
+        @NonNull final Object ancuabe1 = reasoner.readAsObject(datasetClassID, "Ancuabe");
+        assertEquals(ancuabe, ancuabe1, "Objects should be equal");
+        final Object ancuabe2 = reasoner.readAsObject(reasoner.getDatasetClass(datasetClassID), "Ancuabe");
+        assertEquals(ancuabe, ancuabe2, "Should be equal");
     }
 
     @Test

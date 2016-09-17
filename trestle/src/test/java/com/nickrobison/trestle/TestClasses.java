@@ -58,7 +58,7 @@ public class TestClasses {
         }
     }
 
-    @OWLClassName(className = "GAUL_Test")
+    @OWLClassName(className = "GAUL_JTS_Test")
     protected static class JTSGeometryTest {
 
         private final Integer adm0_code;
@@ -108,7 +108,7 @@ public class TestClasses {
         }
     }
 
-    @OWLClassName(className = "GAUL_Test")
+    @OWLClassName(className = "GAUL_ESRI_Test")
     protected static class ESRIPolygonTest {
 
         private final Integer adm0_code;
@@ -155,7 +155,7 @@ public class TestClasses {
         }
     }
 
-    @OWLClassName(className = "GAUL_Test")
+    @OWLClassName(className = "GAUL_GeoTools_Test")
     public static class GeotoolsPolygonTest {
         @IndividualIdentifier
         public final UUID id;
@@ -234,6 +234,31 @@ public class TestClasses {
             this.time = time;
 
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            GAULTestClass that = (GAULTestClass) o;
+
+            if (adm0_code != that.adm0_code) return false;
+            if (!adm0_name.equals(that.adm0_name)) return false;
+            if (!test_name.equals(that.test_name)) return false;
+            if (!wkt.equals(that.wkt)) return false;
+            return time.equals(that.time);
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = adm0_code;
+            result = 31 * result + adm0_name.hashCode();
+            result = 31 * result + test_name.hashCode();
+            result = 31 * result + wkt.hashCode();
+            result = 31 * result + time.hashCode();
+            return result;
+        }
     }
 
 
@@ -292,7 +317,7 @@ public class TestClasses {
     /**
      * Created by nrobison on 7/29/16.
      */
-    @OWLClassName(className = "GAUL_Test")
+    @OWLClassName(className = "GAUL_Test1")
     public static class GAULMethodTest {
 
         public int adm0_code;

@@ -66,10 +66,10 @@ public class TrestleReasoner {
     public static final String DEFAULTNAME = "trestle";
 
     private final ITrestleOntology ontology;
-    private final Set<Class> registeredClasses = new HashSet<>();
+    private final Map<OWLClass, Class<?>> registeredClasses = new HashMap<>();
     private final OWLDataFactory df;
     //    Seems gross?
-    private static final OWLClass datasetClass = OWLManager.getOWLDataFactory().getOWLClass(IRI.create("trestle:", "Dataset"));
+    private static final OWLClass datasetClass = OWLManager.getOWLDataFactory().getOWLClass(datasetClassIRI);
     private final QueryBuilder qb;
     private final QueryBuilder.DIALECT spatialDalect;
     private boolean cachingEnabled = true;
@@ -101,7 +101,7 @@ public class TrestleReasoner {
         builder.inputClasses.forEach(clazz -> {
             try {
                 ClassRegister.ValidateClass(clazz);
-                this.registeredClasses.add(clazz);
+                this.registeredClasses.put(ClassParser.GetObjectClass(clazz), clazz);
             } catch (TrestleClassException e) {
                 logger.error("Cannot validate class {}", clazz, e);
             }
@@ -292,7 +292,7 @@ public class TrestleReasoner {
         });
     }
 
-    void writeObject(Object inputObject, TemporalScope scope) throws TrestleClassException {
+    void writeObject(Object inputObject, TemporalScope scope)  {
         final CompletableFuture<Void> voidCompletableFuture = writeObjectAsync(inputObject, scope);
         try {
             voidCompletableFuture.get();
@@ -369,15 +369,32 @@ public class TrestleReasoner {
     }
 
     private void checkRegisteredClass(Class<?> clazz) throws UnregisteredClassException {
-        if (!this.registeredClasses.contains(clazz)) {
+        if (!this.registeredClasses.containsValue(clazz)) {
             throw new UnregisteredClassException(clazz);
         }
     }
 
-    private void checkExists(IRI individualIRI) throws MissingOntologyEntity {
-        if (!ontology.containsResource(individualIRI)) {
-            throw new MissingOntologyEntity("Can't find individual ", individualIRI);
+    private boolean checkExists(IRI individualIRI) {
+        return ontology.containsResource(individualIRI);
+    }
+
+    public <T> @NonNull T readAsObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException {
+//        Lookup class
+        final OWLClass datasetClass = df.getOWLClass(parseStringToIRI(datasetClassID));
+        final Optional<OWLClass> matchingClass = this.registeredClasses
+                .keySet()
+                .stream()
+                .filter(owlclass -> owlclass.equals(datasetClass))
+                .findFirst();
+
+        if (!matchingClass.isPresent()) {
+            throw new MissingOntologyEntity("Cannot find matching class for: ", datasetClass);
         }
+
+        final Class<T> aClass = (Class<T>) this.registeredClasses.get(matchingClass.get());
+        return readAsObject(aClass, objectID);
+
+
     }
 
 
@@ -440,13 +457,10 @@ public class TrestleReasoner {
             }
 
 //        Figure out its name
-            try {
-                checkExists(individualIRI);
-            } catch (MissingOntologyEntity missingOntologyEntity) {
+            if (!checkExists(individualIRI)) {
                 logger.error("Missing individual {}", individualIRI);
                 return Optional.empty();
             }
-
 
             final ConstructorArguments constructorArguments = new ConstructorArguments();
             final Optional<List<OWLDataProperty>> dataProperties = ClassBuilder.getPropertyMembers(clazz);
@@ -685,7 +699,7 @@ public class TrestleReasoner {
 
     public void registerClass(Class inputClass) throws TrestleClassException {
         ClassRegister.ValidateClass(inputClass);
-        this.registeredClasses.add(inputClass);
+        this.registeredClasses.put(ClassParser.GetObjectClass(inputClass), inputClass);
     }
 
     private void writeTemporalWithAssociation(TemporalObject temporal, OWLNamedIndividual individual, @Nullable TemporalScope overrideTemporalScope) throws MissingOntologyEntity {
@@ -758,6 +772,38 @@ public class TrestleReasoner {
                 individual.getIRI(),
                 StaticIRI.hasTemporalIRI,
                 temporalIRI);
+    }
+
+    /**
+     * Get a list of currently registered datasets
+     * Only returns datasets currently registered with the
+     * @return
+     */
+    public Optional<Set<String>> getAvailableDatasets() {
+        try {
+            return Optional.of(CompletableFuture.supplyAsync(() -> this.registeredClasses
+                    .keySet()
+                    .stream()
+                    .filter(individual -> checkExists(individual.getIRI()))
+                    .map(individual ->  individual.getIRI().getShortForm())
+                    .collect(Collectors.toSet()))
+                    .get());
+        } catch (InterruptedException e) {
+            logger.error("Interrupted", e);
+        } catch (ExecutionException e) {
+            logger.error("Excepted", e);
+        }
+
+        return Optional.empty();
+    }
+
+    public Class<?> getDatasetClass(String owlClassString) throws UnregisteredClassException {
+        final OWLClass owlClass = df.getOWLClass(parseStringToIRI(owlClassString));
+        final Class<?> aClass = this.registeredClasses.get(owlClass);
+        if (aClass == null) {
+            throw new UnregisteredClassException(owlClass);
+        }
+        return aClass;
     }
 
     public <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, ITrestleExporter.DataType exportType) throws IOException {

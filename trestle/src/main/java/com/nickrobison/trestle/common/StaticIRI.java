@@ -26,6 +26,7 @@ public class StaticIRI {
     public static final IRI relationOfIRI = IRI.create(PREFIX, "relation_of");
 //    Classes
     public static final IRI conceptRelationIRI = IRI.create(PREFIX, "Concept_Relation");
+    public static final IRI datasetClassIRI = IRI.create("trestle:", "Dataset");
 //    Properties
     public static final IRI relationStrengthIRI = IRI.create(PREFIX, "Relation_Strength");
     public static final IRI dateTimeDatatypeIRI = IRI.create(XSDPREFIX, "dateTime");
