@@ -1,16 +1,23 @@
 package com.nickrobison.trestle;
 
 import com.nickrobison.trestle.caching.TrestleCache;
+import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.exceptions.*;
+import com.nickrobison.trestle.exporter.ITrestleExporter;
+import com.nickrobison.trestle.exporter.ShapefileExporter;
+import com.nickrobison.trestle.exporter.ShapefileSchema;
+import com.nickrobison.trestle.exporter.TSIndividual;
 import com.nickrobison.trestle.ontology.*;
 import com.nickrobison.trestle.parser.*;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
+import com.nickrobison.trestle.types.temporal.PointTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
+import com.vividsolutions.jts.geom.MultiPolygon;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Resource;
@@ -24,6 +31,8 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
@@ -41,8 +50,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.nickrobison.trestle.common.IRIUtils.isFullIRI;
+import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
 import static com.nickrobison.trestle.common.LambdaExceptionUtil.rethrowFunction;
+import static com.nickrobison.trestle.common.LambdaUtils.sequenceCompletableFutures;
 import static com.nickrobison.trestle.common.StaticIRI.*;
 import static com.nickrobison.trestle.parser.TemporalParser.parseTemporalToOntologyDateTime;
 
@@ -358,26 +368,6 @@ public class TrestleReasoner {
         }
     }
 
-    @SuppressWarnings({"argument.type.incompatible", "dereference.of.nullable"})
-    public <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull String objectID) throws TrestleClassException, MissingOntologyEntity {
-
-        final @NonNull IRI individualIRI;
-//        Check to see if the objectID is an expanded IRI
-        if (isFullIRI(objectID)) {
-            individualIRI = IRI.create(objectID);
-        } else {
-            individualIRI = IRI.create(PREFIX, objectID.replaceAll("\\s+", "_"));
-        }
-//        Check cache first
-        if (cachingEnabled) {
-            logger.debug("Retrieving {} from cache", individualIRI);
-            return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readAsObject(clazz, individualIRI, true))));
-        } else {
-            logger.debug("Bypassing cache and directly retrieving object");
-            return readAsObject(clazz, individualIRI, false);
-        }
-    }
-
     private void checkRegisteredClass(Class<?> clazz) throws UnregisteredClassException {
         if (!this.registeredClasses.contains(clazz)) {
             throw new UnregisteredClassException(clazz);
@@ -390,6 +380,51 @@ public class TrestleReasoner {
         }
     }
 
+
+    @SuppressWarnings({"argument.type.incompatible", "dereference.of.nullable"})
+    public <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull String objectID) throws TrestleClassException, MissingOntologyEntity {
+
+        final IRI individualIRI = parseStringToIRI(objectID);
+//        Check cache first
+        if (cachingEnabled) {
+            logger.debug("Retrieving {} from cache", individualIRI);
+            return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readAsObject(clazz, individualIRI, true))));
+        } else {
+            logger.debug("Bypassing cache and directly retrieving object");
+            return readAsObject(clazz, individualIRI, false);
+        }
+    }
+
+    @SuppressWarnings({"return.type.incompatible", "argument.type.incompatible"})
+    <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache) {
+        logger.debug("Reading {}", individualIRI);
+//        Check for cache hit first, provided caching is enabled and we're not set to bypass the cache
+        if (isCachingEnabled() & !bypassCache) {
+            logger.debug("Retrieving {} from cache", individualIRI);
+            return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readAsObject(clazz, individualIRI, true))));
+        } else {
+            logger.debug("Bypassing cache and directly retrieving object");
+        }
+
+        logger.debug("Running async");
+        final CompletableFuture<Optional<@NonNull T>> objectFuture = readAsObjectAsync(clazz, individualIRI);
+        try {
+            final Optional<@NonNull T> constructedObject = objectFuture.get();
+            if (constructedObject.isPresent()) {
+                logger.debug("Done with {}", individualIRI);
+                return constructedObject.get();
+            } else {
+                throw new RuntimeException("Problem constructing object");
+            }
+
+        } catch (InterruptedException e) {
+            logger.error("Interrupted", e);
+        } catch (ExecutionException e) {
+            logger.error("Execution exception", e);
+        }
+
+        throw new RuntimeException("Problem constructing object");
+    }
 
     @SuppressWarnings("Duplicates")
     private <T> CompletableFuture<Optional<T>> readAsObjectAsync(Class<@NonNull T> clazz, @NonNull IRI individualIRI) {
@@ -476,37 +511,6 @@ public class TrestleReasoner {
                 return Optional.empty();
             }
         });
-    }
-
-    @SuppressWarnings({"return.type.incompatible", "argument.type.incompatible"})
-    <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache) {
-        logger.debug("Reading {}", individualIRI);
-//        Check for cache hit first, provided caching is enabled and we're not set to bypass the cache
-        if (isCachingEnabled() & !bypassCache) {
-            logger.debug("Retrieving {} from cache", individualIRI);
-            return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readAsObject(clazz, individualIRI, true))));
-        } else {
-            logger.debug("Bypassing cache and directly retrieving object");
-        }
-
-        logger.debug("Running async");
-        final CompletableFuture<Optional<@NonNull T>> objectFuture = readAsObjectAsync(clazz, individualIRI);
-        try {
-            final Optional<@NonNull T> constructedObject = objectFuture.get();
-            if (constructedObject.isPresent()) {
-                logger.debug("Done with {}", individualIRI);
-                return constructedObject.get();
-            } else {
-                throw new RuntimeException("Problem constructing object");
-            }
-
-        } catch (InterruptedException e) {
-            logger.error("Interrupted", e);
-        } catch (ExecutionException e) {
-            logger.error("Execution exception", e);
-        }
-
-        throw new RuntimeException("Problem constructing object");
     }
 
     /**
@@ -756,6 +760,96 @@ public class TrestleReasoner {
                 temporalIRI);
     }
 
+    public <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, ITrestleExporter.DataType exportType) throws IOException {
+
+        //        Build shapefile schema
+//        TODO(nrobison): Extract type from wkt
+        final ShapefileSchema shapefileSchema = new ShapefileSchema(MultiPolygon.class);
+        final Optional<List<OWLDataProperty>> propertyMembers = ClassBuilder.getPropertyMembers(inputClass, true);
+        if (propertyMembers.isPresent()) {
+            propertyMembers.get().forEach(property -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, property.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property)));
+        }
+
+//        Now the temporals
+        final Optional<List<OWLDataProperty>> temporalProperties = TemporalParser.GetTemporalsAsDataProperties(inputClass);
+        if (temporalProperties.isPresent()) {
+            temporalProperties.get().forEach(temporal -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, temporal.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, temporal)));
+        }
+
+
+        final List<CompletableFuture<Optional<TSIndividual>>> completableFutures = objectID
+                .stream()
+                .map(IRIUtils::parseStringToIRI)
+//                .map(id -> readAsObjectAsync(inputClass, id))
+                .map(id -> CompletableFuture.supplyAsync(() -> readAsObject(inputClass, id, false)))
+                .map(objectFuture -> objectFuture.thenApply(object -> parseIndividualToShapefile(object, shapefileSchema)))
+                .collect(Collectors.toList());
+
+        final CompletableFuture<List<Optional<TSIndividual>>> sequencedFutures = sequenceCompletableFutures(completableFutures);
+
+        final ShapefileExporter shapeFileExporter = new ShapefileExporter.Builder<>(shapefileSchema.getGeomName(), shapefileSchema.getGeomType(), shapefileSchema).build();
+        try {
+            final List<TSIndividual> individuals = sequencedFutures
+                    .get()
+                    .stream()
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toList());
+
+            return shapeFileExporter.writePropertiesToByteBuffer(individuals, null);
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+//        Build the shapefile exporter
+        throw new RuntimeException("Problem constructing object");
+    }
+
+    private static <T> Optional<TSIndividual> parseIndividualToShapefile(T object, ShapefileSchema shapefileSchema) {
+//        if (objectOptional.isPresent()) {
+//            final T object = objectOptional.get();
+            final Class<?> inputClass = object.getClass();
+            final Optional<OWLDataPropertyAssertionAxiom> spatialProperty = ClassParser.GetSpatialProperty(object);
+            if (!spatialProperty.isPresent()) {
+                logger.error("Individual is not a spatial object");
+                return Optional.empty();
+            }
+            final TSIndividual individual = new TSIndividual(spatialProperty.get().getObject().getLiteral(), shapefileSchema);
+//                    Data properties, filtering out the spatial members
+            final Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = ClassParser.GetDataProperties(object, true);
+            if (owlDataPropertyAssertionAxioms.isPresent()) {
+
+                owlDataPropertyAssertionAxioms.get().forEach(property -> {
+                    final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, object.getClass());
+                    final Object literal = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
+                    individual.addProperty(ClassParser.matchWithClassMember(inputClass, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
+                            literal);
+                });
+            }
+//                    Temporals
+            final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(object);
+            if (temporalObjects.isPresent()) {
+                final TemporalObject temporalObject = temporalObjects.get().get(0);
+                if (temporalObject.isInterval()) {
+                    final IntervalTemporal intervalTemporal = temporalObject.asInterval();
+                    final String startName = intervalTemporal.getStartName();
+                    individual.addProperty(ClassParser.matchWithClassMember(inputClass, intervalTemporal.getStartName()), intervalTemporal.getFromTime().toString());
+                    final Optional toTime = intervalTemporal.getToTime();
+                    if (toTime.isPresent()) {
+                        final Temporal to = (Temporal) toTime.get();
+                        individual.addProperty(ClassParser.matchWithClassMember(inputClass, intervalTemporal.getEndName()), to.toString());
+                    }
+                } else {
+                    final PointTemporal pointTemporal = temporalObject.asPoint();
+                    individual.addProperty(pointTemporal.getParameterName(), pointTemporal.getPointTime().toString());
+                }
+            }
+            return Optional.of(individual);
+    }
+
     private boolean checkObjectRelation(OWLNamedIndividual firstIndividual, OWLNamedIndividual secondIndividual) {
 
 //        This should get all the Concept Relations and the individuals related to the first individual, and it's symmetric
@@ -767,9 +861,7 @@ public class TrestleReasoner {
                     .filter(p -> p.equals(secondIndividual))
                     .findFirst();
 
-            if (isRelated.isPresent()) {
-                return true;
-            }
+            return isRelated.isPresent();
         }
 
         return false;

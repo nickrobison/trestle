@@ -11,7 +11,6 @@ import com.nickrobison.trestle.exceptions.InvalidClassException;
 import com.nickrobison.trestle.exceptions.MissingConstructorException;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.exceptions.UnsupportedTypeException;
-import com.sun.tools.javadoc.Start;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -26,7 +25,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.nickrobison.trestle.common.LambdaExceptionUtil.*;
 import static com.nickrobison.trestle.parser.ClassParser.filterMethodName;
 
 /**
@@ -210,9 +208,15 @@ public class ClassRegister {
         if (defaultMethods.size() == 1) {
             temporalCount = temporalCount + defaultMethods.size();
 //        See if it matches a constructor argument
-            matchConstructorArgument(aClass, filterMethodName(defaultMethods.get(0)));
+//            Take the property name, if it exists
+            final Method defaultMethod = defaultMethods.get(0);
+            if (!defaultMethod.getAnnotation(DefaultTemporalProperty.class).name().equals("")) {
+                matchConstructorArgument(aClass, filterMethodName(defaultMethod));
+            } else {
+                matchConstructorArgument(aClass, defaultMethod.getAnnotation(DefaultTemporalProperty.class).name());
+            }
             //        Check for time zone
-            verifyTimeZone(aClass, defaultMethods.get(0).getAnnotation(DefaultTemporalProperty.class).timeZone(), DefaultTemporalProperty.class);
+            verifyTimeZone(aClass, defaultMethod.getAnnotation(DefaultTemporalProperty.class).timeZone(), DefaultTemporalProperty.class);
         }
 
 //        Fields
@@ -229,9 +233,14 @@ public class ClassRegister {
         }
 //        See if it matches a constructor argument
         if (defaultFields.size() == 1) {
-            matchConstructorArgument(aClass, defaultFields.get(0).getName());
+            final Field defaultField = defaultFields.get(0);
+            if (defaultField.getAnnotation(DefaultTemporalProperty.class).name().equals("")) {
+                matchConstructorArgument(aClass, defaultField.getName());
+            } else {
+                matchConstructorArgument(aClass, defaultField.getAnnotation(DefaultTemporalProperty.class).name());
+            }
 //            Check for time zone
-            verifyTimeZone(aClass, defaultFields.get(0).getAnnotation(DefaultTemporalProperty.class).timeZone(), DefaultTemporalProperty.class);
+            verifyTimeZone(aClass, defaultField.getAnnotation(DefaultTemporalProperty.class).timeZone(), DefaultTemporalProperty.class);
         }
 
 //        Start Temporal
@@ -247,9 +256,14 @@ public class ClassRegister {
         if (startMethods.size() == 1) {
             temporalCount = temporalCount + startMethods.size();
 //        See if it matches a constructor argument
-            matchConstructorArgument(aClass, filterMethodName(startMethods.get(0)));
+            final Method startMethod = startMethods.get(0);
+            if (startMethod.getAnnotation(StartTemporalProperty.class).name().equals("")) {
+                matchConstructorArgument(aClass, filterMethodName(startMethod));
+            } else {
+                matchConstructorArgument(aClass, startMethod.getAnnotation(StartTemporalProperty.class).name());
+            }
             //        Check for time zone
-            verifyTimeZone(aClass, startMethods.get(0).getAnnotation(StartTemporalProperty.class).timeZone(), StartTemporalProperty.class);
+            verifyTimeZone(aClass, startMethod.getAnnotation(StartTemporalProperty.class).timeZone(), StartTemporalProperty.class);
         }
 
 //        Fields
@@ -266,9 +280,14 @@ public class ClassRegister {
         }
 //        See if it matches a constructor argument
         if (startFields.size() == 1) {
-            matchConstructorArgument(aClass, startFields.get(0).getName());
+            final Field startField = startFields.get(0);
+            if (startField.getAnnotation(StartTemporalProperty.class).name().equals("")) {
+                matchConstructorArgument(aClass, startField.getName());
+            } else {
+                matchConstructorArgument(aClass, startField.getAnnotation(StartTemporalProperty.class).name());
+            }
 //            Check for time zone
-            verifyTimeZone(aClass, startFields.get(0).getAnnotation(StartTemporalProperty.class).timeZone(), StartTemporalProperty.class);
+            verifyTimeZone(aClass, startField.getAnnotation(StartTemporalProperty.class).timeZone(), StartTemporalProperty.class);
         }
 
 //        End Temporal
@@ -284,9 +303,14 @@ public class ClassRegister {
         if (endMethods.size() == 1) {
             temporalCount = temporalCount + endMethods.size();
 //        See if it matches a constructor argument
-            matchConstructorArgument(aClass, filterMethodName(endMethods.get(0)));
+            final Method endMethod = endMethods.get(0);
+            if (endMethod.getAnnotation(EndTemporalProperty.class).name().equals("")) {
+                matchConstructorArgument(aClass, filterMethodName(endMethod));
+            } else {
+                matchConstructorArgument(aClass, endMethod.getAnnotation(EndTemporalProperty.class).name());
+            }
             //        Check for time zone
-            verifyTimeZone(aClass, endMethods.get(0).getAnnotation(EndTemporalProperty.class).timeZone(), EndTemporalProperty.class);
+            verifyTimeZone(aClass, endMethod.getAnnotation(EndTemporalProperty.class).timeZone(), EndTemporalProperty.class);
         }
 
 //        Fields
@@ -303,9 +327,14 @@ public class ClassRegister {
         }
 //        See if it matches a constructor argument
         if (endFields.size() == 1) {
-            matchConstructorArgument(aClass, endFields.get(0).getName());
+            final Field endField = endFields.get(0);
+            if (endField.getAnnotation(EndTemporalProperty.class).name().equals("")) {
+                matchConstructorArgument(aClass, endField.getName());
+            } else {
+                matchConstructorArgument(aClass, endField.getAnnotation(EndTemporalProperty.class).name());
+            }
 //            Check for time zone
-            verifyTimeZone(aClass, endFields.get(0).getAnnotation(EndTemporalProperty.class).timeZone(), EndTemporalProperty.class);
+            verifyTimeZone(aClass, endField.getAnnotation(EndTemporalProperty.class).timeZone(), EndTemporalProperty.class);
         }
 
     }

@@ -113,26 +113,28 @@ public class ClassParser {
         return Optional.empty();
     }
 
-    static boolean filterDataPropertyField(Field objectMember) {
+    static boolean filterDataPropertyField(Field objectMember, boolean filterSpatial) {
 //        Check first to ignore the field
         return (!objectMember.isAnnotationPresent(Ignore.class)
 //                Only access it if it's public
                 & Modifier.isPublic(objectMember.getModifiers())
                 & (
                 objectMember.isAnnotationPresent(DataProperty.class)
-                        | objectMember.isAnnotationPresent(Spatial.class)
+                        | (objectMember.isAnnotationPresent(Spatial.class) && !filterSpatial)
                         | objectMember.isAnnotationPresent(IndividualIdentifier.class)
-                        | (objectMember.getAnnotations().length == 0)));
+                        | (objectMember.getAnnotations().length == 0)))
+//                Need to filter out the ebean stuff
+                & !(objectMember.getName().contains("_ebean"));
     }
 
-    static boolean filterDataPropertyMethod(Method objectMember) {
+    static boolean filterDataPropertyMethod(Method objectMember, boolean filterSpatial) {
 //        Check first to ignore the field
         return (!objectMember.isAnnotationPresent(Ignore.class)
 //                Only access it if it's public
                 & Modifier.isPublic(objectMember.getModifiers())
                 & (
                 objectMember.isAnnotationPresent(DataProperty.class)
-                        | objectMember.isAnnotationPresent(Spatial.class)
+                        | (objectMember.isAnnotationPresent(Spatial.class) && !filterSpatial)
                         | objectMember.isAnnotationPresent(IndividualIdentifier.class)
                         | (objectMember.getAnnotations().length == 0)))
 //                We need this to filter out setters and equals/hashcode stuff
@@ -145,8 +147,22 @@ public class ClassParser {
                 & !(objectMember.getReturnType() == void.class));
     }
 
-
+    /**
+     * Extract the OWLDataPropertyAssertionAxiom from a given object
+     * @param inputObject - Object to parse
+     * @return - Optional List of OWLDataPropertyAssertionAxioms
+     */
     public static Optional<List<OWLDataPropertyAssertionAxiom>> GetDataProperties(Object inputObject) {
+        return GetDataProperties(inputObject, false);
+    }
+
+    /**
+     * Extract the OWLDataPropertyAssertionAxiom from a given object
+     * @param inputObject - Object to parse
+     * @param filterSpatial - Boolean to determine whether or not to filter out the spatial annotations
+     * @return - Optional List of OWLDataPropertyAssertionAxioms
+     */
+    public static Optional<List<OWLDataPropertyAssertionAxiom>> GetDataProperties(Object inputObject, boolean filterSpatial) {
         final Class<?> clazz = inputObject.getClass();
         final List<OWLDataPropertyAssertionAxiom> axioms = new ArrayList<>();
 
@@ -154,7 +170,7 @@ public class ClassParser {
 
 //        Fields:
         for (Field classField : clazz.getDeclaredFields()) {
-            if (filterDataPropertyField(classField)) {
+            if (filterDataPropertyField(classField, filterSpatial)) {
                 if (classField.isAnnotationPresent(DataProperty.class)) {
                     final DataProperty annotation = classField.getAnnotation(DataProperty.class);
                     final IRI iri = IRI.create(PREFIX, annotation.name());
@@ -169,7 +185,7 @@ public class ClassParser {
                     }
                     final OWLLiteral owlLiteral = df.getOWLLiteral(fieldValue, TypeConverter.getDatatypeFromAnnotation(annotation, classField.getType()));
                     axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, owlLiteral));
-                } else if (classField.isAnnotationPresent(Spatial.class)) {
+                } else if (classField.isAnnotationPresent(Spatial.class) && !filterSpatial) {
                     final IRI iri = IRI.create(GEOSPARQLPREFIX, "asWKT");
                     final OWLDataProperty spatialDataProperty = df.getOWLDataProperty(iri);
                     Object fieldValue = null;
@@ -200,7 +216,7 @@ public class ClassParser {
 
 //        Methods
         for (Method classMethod : clazz.getDeclaredMethods()) {
-            if (filterDataPropertyMethod(classMethod)) {
+            if (filterDataPropertyMethod(classMethod, filterSpatial)) {
                 if (classMethod.isAnnotationPresent(DataProperty.class)) {
                     final DataProperty annotation = classMethod.getAnnotation(DataProperty.class);
                     final IRI iri = IRI.create(PREFIX, annotation.name());
@@ -216,7 +232,7 @@ public class ClassParser {
                                 owlLiteral
                         ));
                     }
-                } else if (classMethod.isAnnotationPresent(Spatial.class)) {
+                } else if (classMethod.isAnnotationPresent(Spatial.class) && !filterSpatial) {
                     final IRI iri = IRI.create("geosparql:", "asWKT");
                     final OWLDataProperty spatialDataProperty = df.getOWLDataProperty(iri);
                     final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
@@ -224,7 +240,6 @@ public class ClassParser {
                     if (methodValue.isPresent()) {
                         final Optional<OWLLiteral> owlLiteral = parseWKTFromGeom(methodValue.get());
                         if (owlLiteral.isPresent()) {
-//                        final OWLDatatype wktDatatype = df.getOWLDatatype(IRI.create("http://www.opengis.net/ont/geosparql#", "wktLiteral"));
 ////                    Since it's a literal, we need to strip out the double quotes.
 //                        final OWLLiteral wktLiteral = df.getOWLLiteral(methodValue.get().toString().replace("\"", ""), wktDatatype);
                             axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, owlLiteral.get()));
@@ -250,6 +265,55 @@ public class ClassParser {
         }
 
         return Optional.of(axioms);
+    }
+
+    /**
+     * Extract the spatial property a given object
+     * @param inputObject - Object to parse for spatial property
+     * @return - Optional of OWLDataPropertyAssertionAxiom representing spatial property
+     */
+    public static Optional<OWLDataPropertyAssertionAxiom> GetSpatialProperty(Object inputObject) {
+        final OWLNamedIndividual owlNamedIndividual = GetIndividual(inputObject);
+        final IRI iri = IRI.create(GEOSPARQLPREFIX, "asWKT");
+        final OWLDataProperty spatialDataProperty = df.getOWLDataProperty(iri);
+//        Methods first
+        final Optional<Method> method = Arrays.stream(inputObject.getClass().getDeclaredMethods())
+                .filter(m -> m.isAnnotationPresent(Spatial.class))
+                .findFirst();
+
+        if (method.isPresent()) {
+            final Optional<Object> methodValue = accessMethodValue(method.get(), inputObject);
+
+            if (methodValue.isPresent()) {
+                final Optional<OWLLiteral> owlLiteral = parseWKTFromGeom(methodValue.get());
+                if (owlLiteral.isPresent()) {
+////                    Since it's a literal, we need to strip out the double quotes.
+//                        final OWLLiteral wktLiteral = df.getOWLLiteral(methodValue.get().toString().replace("\"", ""), wktDatatype);
+                    return Optional.of(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, owlLiteral.get()));
+                }
+            }
+        }
+
+//        Fields
+        final Optional<Field> field = Arrays.stream(inputObject.getClass().getDeclaredFields())
+                .filter(f -> f.isAnnotationPresent(Spatial.class))
+                .findFirst();
+
+        if (field.isPresent()) {
+
+            Object fieldValue = null;
+            try {
+                fieldValue = field.get().get(inputObject);
+            } catch (IllegalAccessException e) {
+                logger.debug("Cannot access field {}", field.get().getName(), e);
+                return Optional.empty();
+            }
+            final Optional<OWLLiteral> owlLiteral = parseWKTFromGeom(fieldValue);
+            if (owlLiteral.isPresent()) {
+                return Optional.of(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, owlLiteral.get()));
+            }
+        }
+        return Optional.empty();
     }
 
     static String filterMethodName(Method classMethod) {

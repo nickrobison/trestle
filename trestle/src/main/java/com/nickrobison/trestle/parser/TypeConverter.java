@@ -143,6 +143,31 @@ public class TypeConverter {
         return javaClass;
     }
 
+    /**
+     * Inspect Java class to determine correct datatype for a given OWLDataProperty
+     * @param classToVerify - Class to verify type against
+     * @param property - OWLDataProperty to lookup
+     * @return - Java class of corresponding data property
+     */
+    public static Class<?> lookupJavaClassFromOWLDataProperty(Class<?> classToVerify, OWLDataProperty property) {
+        final @Nullable OWLDatatype owlDatatype = verifyOWLType(classToVerify, property);
+        @Nullable Class<?> javaClass = null;
+        if (owlDatatype != null) {
+            javaClass = datatypeMap.get(owlDatatype);
+        }
+
+        if (javaClass == null) {
+//            If we have a WKT, we need to handle it like a string
+            if (property.asOWLDataProperty().getIRI().getShortForm().equals("asWKT")) {
+                return String.class;
+            }
+            throw new RuntimeException(String.format("Unsupported dataproperty %s", property.asOWLDataProperty().getIRI()));
+        }
+
+        return javaClass;
+
+    }
+
     private static @Nullable OWLDatatype verifyOWLType(Class<?> classToVerify, OWLDataProperty property) {
 
         //        Check to see if it matches any annotated data methods
@@ -229,6 +254,7 @@ public class TypeConverter {
         return owlDatatype;
     }
 
+    @SuppressWarnings("Duplicates")
     static Class<?> parsePrimitiveClass(Class<?> returnClass) {
         if (returnClass.isPrimitive()) {
             logger.debug("Converting primitive type {} to object", returnClass.getTypeName());

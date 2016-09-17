@@ -1,5 +1,9 @@
 package com.nickrobison.trestle.common;
 
+import org.semanticweb.owlapi.model.IRI;
+
+import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
+
 /**
  * Created by nrobison on 9/6/16.
  */
@@ -16,5 +20,14 @@ public class IRIUtils {
         }
 
         return false;
+    }
+
+    public static IRI parseStringToIRI(String inputString) {
+//        Check to see if the inputString is an expanded IRI
+        if (isFullIRI(inputString)) {
+            return IRI.create(inputString);
+        } else {
+            return IRI.create(PREFIX, inputString.replaceAll("\\s+", "_"));
+        }
     }
 }
