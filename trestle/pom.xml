@@ -5,7 +5,7 @@
     <parent>
         <artifactId>spatial-difference</artifactId>
         <groupId>com.nickrobison</groupId>
-        <version>0.3-SNAPSHOT</version>
+        <version>0.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
@@ -21,7 +21,7 @@
 
     <artifactId>trestle</artifactId>
     <packaging>jar</packaging>
-    <version>0.3-SNAPSHOT</version>
+    <version>0.3</version>
     <dependencies>
         <!--Jena Dependencies-->
         <dependency>
@@ -135,7 +135,7 @@
         <dependency>
             <groupId>com.nickrobison</groupId>
             <artifactId>trestle-exporter</artifactId>
-            <version>0.3-SNAPSHOT</version>
+            <version>0.3</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
