@@ -6,7 +6,7 @@
 
     <groupId>com.nickrobison</groupId>
     <artifactId>spatial-difference</artifactId>
-    <version>0.3-SNAPSHOT</version>
+    <version>0.4-SNAPSHOT</version>
     <modules>
         <module>trestle</module>
         <module>gaulintegrator</module>
