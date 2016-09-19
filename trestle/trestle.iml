@@ -88,9 +88,6 @@
     <orderEntry type="library" name="Maven: com.oracle:ojdbc7:12.1.0.2" level="project" />
     <orderEntry type="library" name="Maven: oracle.spatial.rdf.client:sdordf:1.1" level="project" />
     <orderEntry type="library" name="Maven: oracle.spatial.rdf.client:sdordfclient:3.10" level="project" />
-    <orderEntry type="library" name="Maven: oracle.spatial.geometry:api:1.0" level="project" />
-    <orderEntry type="library" name="Maven: oracle.spatial.geometry:type:1.0" level="project" />
-    <orderEntry type="library" name="Maven: oracle.spatial.geometry:util:1.0" level="project" />
     <orderEntry type="module" module-name="trestle-exporter" />
     <orderEntry type="library" name="Maven: org.geotools:gt-shapefile:16-M0" level="project" />
     <orderEntry type="library" name="Maven: org.geotools:gt-data:16-M0" level="project" />
