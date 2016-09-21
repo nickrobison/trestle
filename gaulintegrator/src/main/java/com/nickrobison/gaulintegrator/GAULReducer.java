@@ -55,11 +55,11 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
         startDate = LocalDate.ofYearDay(Integer.parseInt(conf.get(STARTDATE)), 1);
         endDate = LocalDate.ofYearDay(Integer.parseInt(conf.get(ENDDATE)), 1).with(TemporalAdjusters.lastDayOfYear());
         try {
-            if (logger.isDebugEnabled()) {
+//            if (logger.isDebugEnabled()) {
                 dbConnection = DriverManager.getConnection("jdbc:postgresql://localhost/gaul", "nrobison", "");
-            } else {
+//            } else {
                 dbConnection = DriverManager.getConnection(conf.get(CONNECTION));
-            }
+//            }
         } catch (SQLException e) {
             logger.error("Cannot connect to postgres database", e);
             throw new RuntimeException("Cannot connect to postgres database", e);

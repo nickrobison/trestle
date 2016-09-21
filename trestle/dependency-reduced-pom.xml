@@ -3,11 +3,11 @@
   <parent>
     <artifactId>spatial-difference</artifactId>
     <groupId>com.nickrobison</groupId>
-    <version>0.3-SNAPSHOT</version>
+    <version>0.3</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>trestle</artifactId>
-  <version>0.3-SNAPSHOT</version>
+  <version>0.3</version>
   <build>
     <plugins>
       <plugin>
@@ -44,7 +44,7 @@
               <artifactSet>
                 <includes>
                   <include>com.google.inject:guice</include>
-                  <include>oracle.spatial.rdf.client:*</include>
+                  <include>oracle.spatial.*:*</include>
                   <include>com.openlink.virtuoso:*</include>
                 </includes>
               </artifactSet>
@@ -176,7 +176,7 @@
     <dependency>
       <groupId>com.nickrobison</groupId>
       <artifactId>trestle-exporter</artifactId>
-      <version>0.3-SNAPSHOT</version>
+      <version>0.3</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -201,6 +201,20 @@
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-main</artifactId>
+      <version>16-M0</version>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-geotiff</artifactId>
+      <version>16-M0</version>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-epsg-hsql</artifactId>
       <version>16-M0</version>
       <scope>compile</scope>
       <optional>true</optional>
