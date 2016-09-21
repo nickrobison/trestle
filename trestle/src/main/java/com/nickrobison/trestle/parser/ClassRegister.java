@@ -211,9 +211,9 @@ public class ClassRegister {
 //            Take the property name, if it exists
             final Method defaultMethod = defaultMethods.get(0);
             if (!defaultMethod.getAnnotation(DefaultTemporalProperty.class).name().equals("")) {
-                matchConstructorArgument(aClass, filterMethodName(defaultMethod));
-            } else {
                 matchConstructorArgument(aClass, defaultMethod.getAnnotation(DefaultTemporalProperty.class).name());
+            } else {
+                matchConstructorArgument(aClass, filterMethodName(defaultMethod));
             }
             //        Check for time zone
             verifyTimeZone(aClass, defaultMethod.getAnnotation(DefaultTemporalProperty.class).timeZone(), DefaultTemporalProperty.class);
