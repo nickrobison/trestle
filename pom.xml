@@ -12,6 +12,7 @@
         <module>gaulintegrator</module>
         <module>trestle-exporter</module>
         <module>trestle-raster</module>
+        <module>trestle-common</module>
     </modules>
     <packaging>pom</packaging>
 

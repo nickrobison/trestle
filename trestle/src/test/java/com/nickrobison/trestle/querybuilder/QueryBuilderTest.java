@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.querybuilder;
 
-import com.nickrobison.trestle.exceptions.UnsupportedFeatureException;
+import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,14 +12,11 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.expectThrows;
 
 /**
  * Created by nrobison on 8/11/16.

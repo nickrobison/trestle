@@ -2,7 +2,7 @@ package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.TestClasses;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
-import com.nickrobison.trestle.exceptions.UnsupportedFeatureException;
+import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
 import com.nickrobison.trestle.ontology.OracleOntology;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;

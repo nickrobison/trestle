@@ -66,6 +66,12 @@
     <orderEntry type="library" name="Maven: it.geosolutions.jaiext.rlookup:jt-rlookup:1.0.11" level="project" />
     <orderEntry type="library" name="Maven: it.geosolutions.jaiext.vectorbin:jt-vectorbin:1.0.11" level="project" />
     <orderEntry type="library" name="Maven: commons-io:commons-io:2.1" level="project" />
+    <orderEntry type="library" name="Maven: org.geotools.jdbc:gt-jdbc-oracle:16-M0" level="project" />
+    <orderEntry type="library" name="Maven: org.geotools:gt-cql:16-M0" level="project" />
+    <orderEntry type="library" name="Maven: org.geotools:gt-jdbc:16-M0" level="project" />
+    <orderEntry type="library" name="Maven: org.geotools:gt-data:16-M0" level="project" />
+    <orderEntry type="library" name="Maven: commons-dbcp:commons-dbcp:1.4" level="project" />
+    <orderEntry type="library" name="Maven: commons-collections:commons-collections:3.2.2" level="project" />
     <orderEntry type="library" name="Maven: org.geotools:gt-epsg-hsql:16-M0" level="project" />
     <orderEntry type="library" name="Maven: org.hsqldb:hsqldb:2.3.0" level="project" />
     <orderEntry type="library" name="Maven: com.oracle:ojdbc7:12.1.0.2" level="project" />
@@ -77,6 +83,7 @@
     <orderEntry type="library" name="Maven: com.oracle:xdb:1.0" level="project" />
     <orderEntry type="library" name="Maven: com.oracle:xmlparserv2:1.0" level="project" />
     <orderEntry type="library" name="Maven: org.postgresql:postgresql:9.4.1209.jre7" level="project" />
+    <orderEntry type="module" module-name="trestle-common" />
     <orderEntry type="library" name="Maven: org.checkerframework:checker:2.0.1" level="project" />
     <orderEntry type="library" name="Maven: org.checkerframework:checker-qual:2.0.1" level="project" />
     <orderEntry type="library" name="Maven: org.checkerframework:jdk8:2.0.1" level="project" />

@@ -109,6 +109,7 @@
     <orderEntry type="library" name="Maven: org.checkerframework:checker:2.0.1" level="project" />
     <orderEntry type="library" name="Maven: org.checkerframework:checker-qual:2.0.1" level="project" />
     <orderEntry type="library" name="Maven: org.checkerframework:jdk8:2.0.1" level="project" />
+    <orderEntry type="module" module-name="trestle-common" />
     <orderEntry type="library" name="Maven: com.esri.geometry:esri-geometry-api:1.2.1" level="project" />
     <orderEntry type="library" name="Maven: org.json:json:20090211" level="project" />
     <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-core-asl:1.9.12" level="project" />

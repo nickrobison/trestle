@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.exceptions;
+package com.nickrobison.trestle.common.exceptions;
 
 /**
  * Created by nrobison on 8/12/16.
