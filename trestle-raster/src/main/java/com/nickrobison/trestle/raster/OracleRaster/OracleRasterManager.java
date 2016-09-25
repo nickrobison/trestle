@@ -1,9 +1,16 @@
 package com.nickrobison.trestle.raster.OracleRaster;
 
+import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.raster.ITrestleRasterManager;
+import com.nickrobison.trestle.raster.common.RasterDatabase;
+import com.nickrobison.trestle.raster.common.RasterID;
 import com.nickrobison.trestle.raster.exceptions.RasterDataSourceException;
 import com.nickrobison.trestle.raster.exceptions.TrestleDatabaseException;
+import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.raster.exceptions.TrestleRasterException;
+import com.vividsolutions.jts.geom.Envelope;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.Point;
 import oracle.jdbc.OracleTypes;
 import oracle.spatial.geometry.JGeometry;
 import oracle.spatial.georaster.*;
@@ -15,7 +22,6 @@ import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.GroundControlPoints;
 import org.geotools.coverage.grid.io.OverviewPolicy;
-import org.geotools.coverage.grid.io.imageio.geotiff.TiePoint;
 import org.geotools.gce.geotiff.GeoTiffReader;
 import org.opengis.coverage.grid.GridCoordinates;
 import org.opengis.coverage.grid.GridCoverage;
@@ -34,7 +40,6 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.sql.*;
 import java.util.Optional;
-import java.util.Set;
 import java.util.Vector;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
@@ -48,6 +53,8 @@ import static com.nickrobison.trestle.raster.exceptions.RasterDataSourceExceptio
 public class OracleRasterManager implements ITrestleRasterManager {
 
     private static final Logger logger = LoggerFactory.getLogger(OracleRasterManager.class);
+    public static final String RASTER_DATA_TABLE = "TRESTLE_RDT_1";
+    public static final int PYRAMIDLEVEL = 0;
     private final Connection connection;
     private final ParameterValue<Boolean> useJaiRead;
     private final ParameterValue<String> gridsize;
@@ -72,7 +79,7 @@ public class OracleRasterManager implements ITrestleRasterManager {
     }
 
 
-    public long writeRaster(URI fileURI, @Nullable Consumer<Double> progressCallback) throws TrestleRasterException {
+    public RasterID writeRaster(URI fileURI, @Nullable Consumer<Double> progressCallback) throws TrestleRasterException {
 
 //       Setup the GeotiffReader
         final GeoTiffReader geoTiffReader;
@@ -85,11 +92,11 @@ public class OracleRasterManager implements ITrestleRasterManager {
         try {
             geoTiffReader = new GeoTiffReader(new File((fileURI)));
             gridDimensions = geoTiffReader.getOriginalGridRange();
-             maxDimensions = gridDimensions.getHigh();
-             coverage = geoTiffReader.read(new GeneralParameterValue[]{gridsize, policy, useJaiRead});
-             gridString = coverage.getGridGeometry().getGridToCRS().toWKT();
+            maxDimensions = gridDimensions.getHigh();
+            coverage = geoTiffReader.read(new GeneralParameterValue[]{gridsize, policy, useJaiRead});
+            gridString = coverage.getGridGeometry().getGridToCRS().toWKT();
             renderedImage = coverage.getRenderedImage();
-             numBands = coverage.getNumSampleDimensions();
+            numBands = coverage.getNumSampleDimensions();
         } catch (IOException e) {
             throw new RasterDataSourceException(LOCATION, fileURI, e);
         }
@@ -108,7 +115,7 @@ public class OracleRasterManager implements ITrestleRasterManager {
             final CallableStatement createRasterStatement = connection.prepareCall("DECLARE gr SDO_GEORASTER;\n" +
                     "BEGIN\n" +
                     "gr := sdo_geor.init('trestle_rdt_1');\n" +
-                    "insert into TRESTLE_GEORASTER (GEORID, TYPE, GEORASTER) values(gr.rasterid, 'TIFF', gr) RETURNING GEORASTER into ?;\n" +
+                    "INSERT INTO TRESTLE_GEORASTER (GEORID, TYPE, GEORASTER) VALUES(gr.rasterid, 'TIFF', gr) RETURNING GEORASTER INTO ?;\n" +
                     "END;");
             createRasterStatement.registerOutParameter(1, OracleTypes.STRUCT, "MDSYS.SDO_GEORASTER");
             final ResultSet resultSet = createRasterStatement.executeQuery();
@@ -127,7 +134,7 @@ public class OracleRasterManager implements ITrestleRasterManager {
                     IntStream.range(0, numYTiles)
                             .forEach(yTile -> writeRasterTile(renderedImage, xTile, yTile, jGeor));
                     if (progressCallback != null) {
-                        progressCallback.accept(((double) xTile/(double) numXTiles) * 100.0);
+                        progressCallback.accept(((double) xTile / (double) numXTiles) * 100.0);
                     }
                 });
 
@@ -145,19 +152,47 @@ public class OracleRasterManager implements ITrestleRasterManager {
             throw new TrestleDatabaseException(e);
         }
 
-        return rasterID;
+        return new RasterID(RasterDatabase.ORACLE, RASTER_DATA_TABLE, rasterID);
     }
 
-    public RenderedImage getIntersectedRaster() {
-        return null;
-    }
+    public RenderedImage getIntersectedRaster(Geometry geom, RasterID rasterID) throws UnsupportedFeatureException, TrestleMissingIndividualException, TrestleRasterException {
 
-    public RenderedImage readRaster(long rasterID) throws TrestleDatabaseException {
+        final JGeometry jGeometry;
+        if (geom instanceof Point) {
+            Point point = (Point) geom;
+            jGeometry = new JGeometry(point.getX(), point.getY(), 4326);
+        } else if (geom.isRectangle()) {
+            final Envelope envelopeInternal = geom.getEnvelopeInternal();
+            jGeometry = new JGeometry(envelopeInternal.getMinX(), envelopeInternal.getMinY(), envelopeInternal.getMaxX(), envelopeInternal.getMaxY(), 4326);
+            final JGeoRaster raster;
+        } else {
+            throw new UnsupportedFeatureException("Only works with rectangle geometries");
+        }
+
         final JGeoRaster raster;
         try {
-            raster = new JGeoRaster(connection, "TRESTLE_RDT_1", new NUMBER(rasterID));
+            raster = new JGeoRaster(connection, rasterID.getTable(), new NUMBER(rasterID.getId()));
         } catch (GeoRasterException e) {
+            throw new TrestleMissingIndividualException(rasterID.toString());
+        }
+
+        long[] outWindow = new long[4];
+        double[] dbValues = {255.0, 255.0};
+
+        try {
+            return raster.getGeoRasterImageObject().getRasterImage(PYRAMIDLEVEL, jGeometry, outWindow);
+        } catch (Exception e) {
             throw new TrestleDatabaseException(e);
+        }
+    }
+
+    public RenderedImage readRaster(RasterID rasterID) throws TrestleDatabaseException, TrestleMissingIndividualException {
+        final JGeoRaster raster;
+        try {
+            raster = new JGeoRaster(connection, rasterID.getTable(), new NUMBER(rasterID.getId()));
+        } catch (GeoRasterException e) {
+            logger.error("Problem reading individual {} from database", rasterID, e);
+            throw new TrestleMissingIndividualException(rasterID.toString());
         }
 
         try {
@@ -177,14 +212,13 @@ public class OracleRasterManager implements ITrestleRasterManager {
             final JGeometry jGeometry = new JGeometry(minX, minY, minX + tileWidth - 1, minY + tileHeight - 1, 0);
 //            Try to store it
             try {
-                final Blob blob = jGeor.getRasterObject().initRasterBlockJS(0, 0, yTile, xTile, jGeometry);
+                final Blob blob = jGeor.getRasterObject().initRasterBlockJS(PYRAMIDLEVEL, 0, yTile, xTile, jGeometry);
                 jGeor.getRasterObject().storeRasterBlock(extractRasterData(tile), blob);
             } catch (Exception e) {
                 logger.error("Cannot store object", e);
             }
         }
     }
-
 
 
     public void shutdown() {

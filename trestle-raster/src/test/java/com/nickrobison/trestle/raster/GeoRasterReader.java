@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.raster;
 
 import com.nickrobison.trestle.raster.OracleRaster.OracleRasterManager;
+import com.nickrobison.trestle.raster.common.RasterID;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +30,7 @@ public class GeoRasterReader {
 //        final File tiffFile = new File("/Users/nrobison/Movies/gt30e020s10.tif");
         final File tiffFile = new File("/Users/nrobison/Movies/LE71670732016249SG100/LE71670732016249SG100_B1.TIF");
         Consumer<Double> progressCallback = (progress -> logger.info("{}% complete", progress));
-        final long rasterID = oracleRasterManager.writeRaster(tiffFile.toURI(), progressCallback);
+        final RasterID rasterID = oracleRasterManager.writeRaster(tiffFile.toURI(), progressCallback);
 
 //        Read it back out
         final RenderedImage renderedImage = oracleRasterManager.readRaster(rasterID);
