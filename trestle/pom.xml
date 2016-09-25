@@ -101,40 +101,14 @@
         <dependency>
             <groupId>com.oracle</groupId>
             <artifactId>ojdbc7</artifactId>
-            <version>12.1.0.2</version>
         </dependency>
         <dependency>
             <groupId>oracle.spatial.rdf.client</groupId>
             <artifactId>sdordf</artifactId>
-            <version>1.1</version>
         </dependency>
         <dependency>
             <groupId>oracle.spatial.rdf.client</groupId>
             <artifactId>sdordfclient</artifactId>
-            <version>3.10</version>
-        </dependency>
-        <dependency>
-            <groupId>oracle.spatial.geometry</groupId>
-            <artifactId>api</artifactId>
-            <version>1.0</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>oracle.spatial.geometry</groupId>
-            <artifactId>type</artifactId>
-            <version>1.0</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>oracle.spatial.geometry</groupId>
-            <artifactId>util</artifactId>
-            <version>1.0</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>oracle.spatial.geometry</groupId>
-            <artifactId>topo</artifactId>
-            <version>1.0</version>
         </dependency>
         <!--Application Dependencies-->
         <dependency>
@@ -259,39 +233,6 @@
         <!--<version>${stardog.version}</version>-->
         <!--<type>jar</type>-->
         <!--</dependency>-->
-        <!--Checker dependencies-->
-        <dependency>
-            <groupId>org.checkerframework</groupId>
-            <artifactId>checker</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.checkerframework</groupId>
-            <artifactId>checker-qual</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.checkerframework</groupId>
-            <artifactId>jdk8</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <scope>${provided.scope}</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-core</artifactId>
@@ -322,11 +263,6 @@
             <id>stardog-public</id>
             <name>Stardog public repository</name>
             <url>http://maven.stardog.com</url>
-        </repository>
-        <!-- Repository for oracle ojdbc7 -->
-        <repository>
-            <id>codelds</id>
-            <url>https://code.lds.org/nexus/content/groups/main-repo</url>
         </repository>
     </repositories>
     <build>
@@ -367,7 +303,7 @@
                             <artifactSet>
                                 <includes>
                                     <include>com.google.inject:guice</include>
-                                    <include>oracle.spatial.*:*</include>
+                                    <include>oracle.repo.oracle.spatial.*:*</include>
                                     <include>com.openlink.virtuoso:*</include>
                                 </includes>
                             </artifactSet>
