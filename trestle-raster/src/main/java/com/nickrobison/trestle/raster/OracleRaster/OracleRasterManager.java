@@ -4,6 +4,7 @@ import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.raster.ITrestleRasterManager;
 import com.nickrobison.trestle.raster.common.RasterDatabase;
 import com.nickrobison.trestle.raster.common.RasterID;
+import com.nickrobison.trestle.raster.common.RasterUtils;
 import com.nickrobison.trestle.raster.exceptions.RasterDataSourceException;
 import com.nickrobison.trestle.raster.exceptions.TrestleDatabaseException;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
@@ -20,7 +21,6 @@ import oracle.sql.STRUCT;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
-import org.geotools.coverage.grid.io.GroundControlPoints;
 import org.geotools.coverage.grid.io.OverviewPolicy;
 import org.geotools.gce.geotiff.GeoTiffReader;
 import org.opengis.coverage.grid.GridCoordinates;
@@ -31,16 +31,15 @@ import org.opengis.parameter.ParameterValue;
 import org.opengis.referencing.ReferenceIdentifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.awt.image.ByteInterleavedRaster;
 
+import javax.imageio.ImageIO;
 import java.awt.image.*;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.sql.*;
 import java.util.Optional;
-import java.util.Vector;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
@@ -53,8 +52,9 @@ import static com.nickrobison.trestle.raster.exceptions.RasterDataSourceExceptio
 public class OracleRasterManager implements ITrestleRasterManager {
 
     private static final Logger logger = LoggerFactory.getLogger(OracleRasterManager.class);
-    public static final String RASTER_DATA_TABLE = "TRESTLE_RDT_1";
-    public static final int PYRAMIDLEVEL = 0;
+    private static final RasterDatabase RASTER_DATABASE = RasterDatabase.ORACLE;
+    private static final String RASTER_DATA_TABLE = "TRESTLE_RDT_1";
+    private static final int PYRAMIDLEVEL = 0;
     private final Connection connection;
     private final ParameterValue<Boolean> useJaiRead;
     private final ParameterValue<String> gridsize;
@@ -141,7 +141,7 @@ public class OracleRasterManager implements ITrestleRasterManager {
         //        Update the raster metadata and store to db
         try {
             initMetadata(renderedImage, jGeor, numBands);
-            setSpatialData(jGeor, coverage, geoTiffReader.getGroundControlPoints());
+            setSpatialData(jGeor, coverage);
             jGeor.storeToDB();
         } catch (Exception e) {
             throw new TrestleDatabaseException(e);
@@ -155,7 +155,22 @@ public class OracleRasterManager implements ITrestleRasterManager {
         return new RasterID(RasterDatabase.ORACLE, RASTER_DATA_TABLE, rasterID);
     }
 
+    /**
+     * Retrieve the subset of a raster that intersects with the given geometry
+     * Complex geometries are simplified to a bounding box
+     * @param geom - Geometry to intersect with raster
+     * @param rasterID - RasterID to retrieve
+     * @return - RenderedImage of Raster subsection
+     * @throws UnsupportedFeatureException
+     * @throws TrestleMissingIndividualException
+     * @throws TrestleRasterException
+     */
     public RenderedImage getIntersectedRaster(Geometry geom, RasterID rasterID) throws UnsupportedFeatureException, TrestleMissingIndividualException, TrestleRasterException {
+
+        if (rasterID.getDatabase() != RASTER_DATABASE) {
+            logger.error("Cannot access raster from {} database on {} database", rasterID.getDatabase(), RASTER_DATABASE);
+            throw new TrestleMissingIndividualException(rasterID.toString());
+        }
 
         final JGeometry jGeometry;
         if (geom instanceof Point) {
@@ -164,9 +179,10 @@ public class OracleRasterManager implements ITrestleRasterManager {
         } else if (geom.isRectangle()) {
             final Envelope envelopeInternal = geom.getEnvelopeInternal();
             jGeometry = new JGeometry(envelopeInternal.getMinX(), envelopeInternal.getMinY(), envelopeInternal.getMaxX(), envelopeInternal.getMaxY(), 4326);
-            final JGeoRaster raster;
         } else {
-            throw new UnsupportedFeatureException("Only works with rectangle geometries");
+            logger.warn("Simplifying given geometry to bounding box");
+            final Envelope envelopeInternal = geom.getEnvelopeInternal();
+            jGeometry = new JGeometry(envelopeInternal.getMinX(), envelopeInternal.getMinY(), envelopeInternal.getMaxX(), envelopeInternal.getMaxY(), 4326);
         }
 
         final JGeoRaster raster;
@@ -177,7 +193,6 @@ public class OracleRasterManager implements ITrestleRasterManager {
         }
 
         long[] outWindow = new long[4];
-        double[] dbValues = {255.0, 255.0};
 
         try {
             return raster.getGeoRasterImageObject().getRasterImage(PYRAMIDLEVEL, jGeometry, outWindow);
@@ -186,8 +201,36 @@ public class OracleRasterManager implements ITrestleRasterManager {
         }
     }
 
+    /**
+     * Return the entire raster as an AWT RenderedImage
+     * @param rasterID - RasterID to retrieve
+     * @return - RenderedImage of entire raster
+     * @throws TrestleDatabaseException
+     * @throws TrestleMissingIndividualException
+     */
     public RenderedImage readRaster(RasterID rasterID) throws TrestleDatabaseException, TrestleMissingIndividualException {
         final JGeoRaster raster;
+        if (rasterID.getDatabase() != RASTER_DATABASE) {
+            logger.error("Cannot access raster from {} database on {} database", rasterID.getDatabase(), RASTER_DATABASE);
+            throw new TrestleMissingIndividualException(rasterID.toString());
+        }
+//
+//
+//        try {
+//            final CallableStatement callableStatement = connection.prepareCall("DECLARE gr SDO_GEORASTER; blob1 BLOB;" +
+//                    "BEGIN SELECT GEORASTER INTO gr FROM TRESTLE_GEORASTER WHERE GEORID=?; " +
+//                    "SDO_GEOR.exportTo(gr, '', 'GeoTIFF', ?); END;");
+//
+//            callableStatement.setLong(1, rasterID.getId());
+//            callableStatement.registerOutParameter(2, OracleTypes.BLOB);
+//            final ResultSet resultSet = callableStatement.executeQuery();
+//            final Blob blob = resultSet.getBlob(1);
+//            return ImageIO.read(blob.getBinaryStream());
+//
+//        } catch (Exception e) {
+//            throw new TrestleDatabaseException(e);
+//        }
+
         try {
             raster = new JGeoRaster(connection, rasterID.getTable(), new NUMBER(rasterID.getId()));
         } catch (GeoRasterException e) {
@@ -196,9 +239,20 @@ public class OracleRasterManager implements ITrestleRasterManager {
         }
 
         try {
-            return raster.getGeoRasterImageObject().getRasterImage(0);
+            return raster.getGeoRasterImageObject().getRasterImage(0, RasterInfo.COMPRESSION_DEFLATE, 80);
         } catch (Exception e) {
             throw new TrestleDatabaseException(e);
+        }
+    }
+
+    /**
+     * Shutdown the raster manager and dispose of the connection
+     */
+    public void shutdown() {
+        try {
+            connection.close();
+        } catch (SQLException e) {
+            logger.error("Could not close down connection", e);
         }
     }
 
@@ -213,72 +267,14 @@ public class OracleRasterManager implements ITrestleRasterManager {
 //            Try to store it
             try {
                 final Blob blob = jGeor.getRasterObject().initRasterBlockJS(PYRAMIDLEVEL, 0, yTile, xTile, jGeometry);
-                jGeor.getRasterObject().storeRasterBlock(extractRasterData(tile), blob);
+                jGeor.getRasterObject().storeRasterBlock(RasterUtils.extractRasterData(tile), blob);
             } catch (Exception e) {
                 logger.error("Cannot store object", e);
             }
         }
     }
 
-
-    public void shutdown() {
-        try {
-            connection.close();
-        } catch (SQLException e) {
-            logger.error("Could not close down connection", e);
-        }
-    }
-
-    private static final byte[] extractRasterData(Raster tile) {
-        final int numBands = tile.getNumBands();
-        final int dataType = tile.getDataBuffer().getDataType();
-        final int bankSize = tile.getDataBuffer().getSize();
-        byte[] bank = new byte[bankSize];
-        ByteBuffer outputBuffer;
-        if (tile instanceof ByteInterleavedRaster) {
-//            If the bytes are interleaved, we can just read one bank and move on
-            outputBuffer = ByteBuffer.allocate(bankSize);
-            final DataBufferByte dataBuffer = (DataBufferByte) tile.getDataBuffer();
-            outputBuffer.put(dataBuffer.getData());
-            return outputBuffer.array();
-        } else {
-            outputBuffer = ByteBuffer.allocate(dataType * bankSize);
-        }
-
-        for (int i = 0; i < numBands; i++) {
-            if (dataType == Float.BYTES) {
-                final float[] data = ((DataBufferFloat) tile.getDataBuffer()).getData(i);
-                ByteBuffer buffer = ByteBuffer.allocate(Float.BYTES * data.length);
-
-                for (float value : data) {
-                    buffer.putFloat(value);
-                }
-
-                bank = buffer.array();
-            } else if (dataType == Short.BYTES) {
-                final short[] data = ((DataBufferShort) tile.getDataBuffer()).getData(i);
-                ByteBuffer buffer = ByteBuffer.allocate(Short.BYTES * data.length);
-
-                for (short value : data) {
-                    buffer.putShort(value);
-                }
-                bank = buffer.array();
-            } else {
-//                If we can just pull out the bytes themselves, we just need to make sure we aren't reading the non-existent band info
-                final DataBufferByte dataBuffer = (DataBufferByte) tile.getDataBuffer();
-                if (i < dataBuffer.getNumBanks()) {
-                    bank = dataBuffer.getData(i);
-                } else {
-                    continue;
-                }
-            }
-            outputBuffer.put(bank);
-        }
-
-        return outputBuffer.array();
-    }
-
-    private static void setSpatialData(JGeoRaster jGeor, GridCoverage coverage, @Nullable GroundControlPoints gcps) throws GeoRasterException {
+    private static void setSpatialData(JGeoRaster jGeor, GridCoverage coverage) throws GeoRasterException {
         jGeor.getMetadataObject().initSpatialReferenceInfo();
         final SpatialReferenceInfo spatialReferenceInfo = jGeor.getMetadataObject().getSpatialReferenceInfo();
         final Optional<ReferenceIdentifier> first = coverage.getCoordinateReferenceSystem().getIdentifiers().stream().findFirst();
@@ -286,14 +282,8 @@ public class OracleRasterManager implements ITrestleRasterManager {
             spatialReferenceInfo.setModelSRID(Integer.parseInt(first.get().getCode()));
         }
 
-//        GCPs?
-        if (gcps != null) {
-            spatialReferenceInfo.setGcpPoints(new Vector<>(gcps.getTiePoints()));
-            spatialReferenceInfo.setModelType(SpatialReferenceInfo.MDGRX_SRM_STOREDFUNC);
-        } else {
             spatialReferenceInfo.setModelType(SpatialReferenceInfo.MDGRX_SRM_FUNCFITTING);
             spatialReferenceInfo.setReferenced(true);
-        }
         spatialReferenceInfo.setWorldFile(30.0, 0.0, 0.0, -30.0, 572100.0, -1971900.0);
     }
 
@@ -301,7 +291,7 @@ public class OracleRasterManager implements ITrestleRasterManager {
 
         final JGeoRasterMeta meta = geor.getMetadataObject();
 
-        final SampleModel sampleModel = image.getSampleModel();
+        final @Nullable SampleModel sampleModel = image.getSampleModel();
         final ColorModel colorModel = image.getColorModel();
 
         final int column = image.getWidth();
