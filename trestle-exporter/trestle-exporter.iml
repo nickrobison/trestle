@@ -12,6 +12,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.nickrobison:trestle-common:test-jar:tests:unknown" level="project" />
     <orderEntry type="library" name="Maven: org.geotools:gt-shapefile:16-M0" level="project" />
     <orderEntry type="library" name="Maven: org.geotools:gt-data:16-M0" level="project" />
     <orderEntry type="library" name="Maven: org.geotools:gt-main:16-M0" level="project" />
