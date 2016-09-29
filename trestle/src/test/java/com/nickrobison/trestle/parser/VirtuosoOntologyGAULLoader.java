@@ -1,7 +1,7 @@
 package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.TestClasses;
-import com.nickrobison.trestle.exceptions.UnsupportedFeatureException;
+import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import org.apache.jena.query.QuerySolution;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;

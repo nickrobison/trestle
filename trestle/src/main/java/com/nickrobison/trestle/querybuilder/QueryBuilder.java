@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.querybuilder;
 
-import com.nickrobison.trestle.exceptions.UnsupportedFeatureException;
+import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.PrecisionModel;
 import com.vividsolutions.jts.io.ParseException;
@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.Temporal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
