@@ -21,12 +21,15 @@ public class StaticIRI {
     public static final IRI temporalExistsFromIRI = IRI.create(PREFIX, "exists_from");
     public static final IRI temporalValidToIRI = IRI.create(PREFIX, "valid_to");
     public static final IRI temporalValidFromIRI = IRI.create(PREFIX, "valid_from");
-    public static final IRI temporalClassIRI = IRI.create(PREFIX, "Temporal_Object");
+    public static final IRI validTimeIRI = IRI.create(PREFIX, "valid_time");
+    public static final IRI validTimeOfIRI = IRI.create(PREFIX, "valid_time_of");
     public static final IRI hasRelationIRI = IRI.create(PREFIX, "has_relation");
     public static final IRI relationOfIRI = IRI.create(PREFIX, "relation_of");
 //    Classes
     public static final IRI conceptRelationIRI = IRI.create(PREFIX, "Concept_Relation");
-    public static final IRI datasetClassIRI = IRI.create("trestle:", "Dataset");
+    public static final IRI datasetClassIRI = IRI.create(PREFIX, "Dataset");
+    public static final IRI factClassIRI = IRI.create(PREFIX, "Fact");
+    public static final IRI temporalClassIRI = IRI.create(PREFIX, "Temporal_Object");
 //    Properties
     public static final IRI relationStrengthIRI = IRI.create(PREFIX, "Relation_Strength");
     public static final IRI dateTimeDatatypeIRI = IRI.create(XSDPREFIX, "dateTime");

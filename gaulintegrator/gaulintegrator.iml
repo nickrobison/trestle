@@ -171,6 +171,7 @@
     <orderEntry type="library" name="Maven: org.checkerframework:checker:2.0.1" level="project" />
     <orderEntry type="library" name="Maven: org.checkerframework:checker-qual:2.0.1" level="project" />
     <orderEntry type="library" name="Maven: org.checkerframework:jdk8:2.0.1" level="project" />
+    <orderEntry type="module" module-name="trestle-common" />
     <orderEntry type="library" name="Maven: joda-time:joda-time:2.9.4" level="project" />
     <orderEntry type="library" name="Maven: co.paralleluniverse:quasar-core:jdk8:0.7.6" level="project" />
     <orderEntry type="library" name="Maven: org.hdrhistogram:HdrHistogram:2.1.9" level="project" />

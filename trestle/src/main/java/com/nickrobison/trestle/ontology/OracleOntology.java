@@ -45,7 +45,8 @@ public class OracleOntology extends JenaOntology {
     private static Model createOracleModel(String ontologyName, String connectionString, String username, String password) {
         final Attachment owlprime = Attachment.createInstance(
                 new String[]{}, "OWLPRIME",
-                InferenceMaintenanceMode.UPDATE_WHEN_COMMIT, QueryOptions.DEFAULT);
+                InferenceMaintenanceMode.NO_UPDATE, QueryOptions.DEFAULT);
+        owlprime.setInferenceOption("INC=T,RAW8=T");
         oracle = new Oracle(connectionString, username, password);
         try {
 //            We need this so that it actually creates the model if it doesn't exist
@@ -116,10 +117,10 @@ public class OracleOntology extends JenaOntology {
      */
     public void runInference() throws SQLException {
 
-        logger.info("Rebuilding graph and performing inference");
+        logger.info("Analyzing graph and performing inference");
         graph.analyze();
         graph.performInference();
-        graph.rebuildApplicationTableIndex();
+//        graph.rebuildApplicationTableIndex();
     }
 
     @Override
@@ -146,6 +147,11 @@ public class OracleOntology extends JenaOntology {
     public void commitDatasetTransaction() {
         this.model.commit();
         this.model.leaveCriticalSection();
+        try {
+            graph.commitTransaction();
+        } catch (SQLException e) {
+            logger.error("Cannot commit graph transaction", e);
+        }
         logger.debug("Transaction closed and critical section left");
     }
 

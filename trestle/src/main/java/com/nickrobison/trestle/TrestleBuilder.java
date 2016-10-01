@@ -26,15 +26,9 @@ public class TrestleBuilder {
     final Set<Class> inputClasses;
     Optional<String> ontologyName = Optional.empty();
     Optional<TrestleCache> sharedCache = Optional.empty();
+    Optional<IRI> ontologyIRI = Optional.empty();
     boolean initialize = false;
     boolean caching = true;
-
-    @Deprecated
-    public TrestleBuilder(IRI iri) {
-        this.username = "";
-        this.password = "";
-        this.inputClasses = new HashSet<>();
-    }
 
     /**
      * Builder pattern for Trestle Reasoner
@@ -59,6 +53,16 @@ public class TrestleBuilder {
         this.connectionString = Optional.of(connectionString);
         this.username = username;
         this.password = password;
+        return this;
+    }
+
+    /**
+     * Build Trestle with specific ontology
+     * @param iri - IRI of ontology to load
+     * @return - TrestleBuilder
+     */
+    public TrestleBuilder withIRI(IRI iri) {
+        this.ontologyIRI = Optional.of(iri);
         return this;
     }
 

@@ -32,9 +32,8 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.sql.SQLException;
@@ -81,8 +80,25 @@ public class TrestleReasoner {
 
         df = OWLManager.getOWLDataFactory();
 
-        final URL ontologyResource = TrestleReasoner.class.getClassLoader().getResource("trestle.owl");
-        final InputStream ontologyIS = TrestleReasoner.class.getClassLoader().getResourceAsStream("trestle.owl");
+//        If we have a manually specified ontology, use that.
+        final URL ontologyResource;
+        final InputStream ontologyIS;
+        if (builder.ontologyIRI.isPresent()) {
+            try {
+                ontologyResource = builder.ontologyIRI.get().toURI().toURL();
+                ontologyIS = new FileInputStream(new File(builder.ontologyIRI.get().toURI()));
+            } catch (MalformedURLException e) {
+                logger.error("Unable to parse IRI to URI", e);
+                throw new RuntimeException("Unable to parse IRI to URI", e);
+            } catch (FileNotFoundException e) {
+                logger.error("Cannot find ontology file");
+                throw new RuntimeException("File not found", e);
+            }
+        } else {
+//            Load with the class loader
+            ontologyResource = TrestleReasoner.class.getClassLoader().getResource("trestle.owl");
+            ontologyIS = TrestleReasoner.class.getClassLoader().getResourceAsStream("trestle.owl");
+        }
 
         if (ontologyIS == null) {
             logger.error("Cannot load trestle ontology from resources");
@@ -230,10 +246,10 @@ public class TrestleReasoner {
         writeObject(inputObject, TemporalScope.VALID);
     }
 
-    public CompletableFuture<Void> writeObjectAsync(Object inputObject, TemporalScope scope) {
+    private CompletableFuture<Void> writeObjectAsync(Object inputObject, TemporalScope scope) {
 
         return CompletableFuture.runAsync(() -> {
-//            ontology.openAndLock(true);
+
             //        Is class in registry?
             final Class aClass = inputObject.getClass();
             try {
@@ -251,35 +267,37 @@ public class TrestleReasoner {
             ontology.createIndividual(owlNamedIndividual, owlClass);
 //            this.ontology.commitTransaction();
 //        Write the temporal
-            final CompletableFuture<Void> temporalFutures = CompletableFuture.runAsync(() -> {
+//            final CompletableFuture<Void> temporalFutures = CompletableFuture.runAsync(() -> {
                 final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(inputObject);
                 if (temporalObjects.isPresent()) {
                     temporalObjects.get().forEach(temporal -> {
                         try {
                             writeTemporalWithAssociation(temporal, owlNamedIndividual, scope);
                         } catch (MissingOntologyEntity e) {
-                            logger.error("Individual {} missing in ontology", owlNamedIndividual, e);
+                            logger.error("Individual {} missing in ontology", e.getIndividual(), e);
                             throw new CompletionException(e);
                         }
                     });
                 }
-            });
+//            });
 
 //        Write the data properties
             final Optional<List<OWLDataPropertyAssertionAxiom>> dataProperties = ClassParser.GetDataProperties(inputObject);
             final CompletableFuture<Void> propertiesFutures = CompletableFuture.runAsync(() -> {
                 if (dataProperties.isPresent()) {
-                    dataProperties.get().forEach(property -> {
-                        try {
-                            ontology.writeIndividualDataProperty(property);
-                        } catch (MissingOntologyEntity e) {
-                            logger.error("Individual {} missing in ontology", property.getSubject(), e);
-                            throw new CompletionException(e);
-                        }
-                    });
+                    writeDataPropertyAsObject(owlNamedIndividual, dataProperties.get(), temporalObjects.get().get(0));
+//                    dataProperties.get().stream().map(property -> writeDataPropertyAsObject(owlNamedIndividual, property, temporalObjects.get().get(0)));
+//                    dataProperties.get().forEach(property -> {
+//                        try {
+//                            ontology.writeIndividualDataProperty(property);
+//                        } catch (MissingOntologyEntity e) {
+//                            logger.error("Individual {} missing in ontology", e.getIndividual(), e);
+//                            throw new CompletionException(e);
+//                        }
+//                    });
                 }
             });
-            final CompletableFuture<Void> objectFutures = CompletableFuture.allOf(propertiesFutures, temporalFutures);
+            final CompletableFuture<Void> objectFutures = CompletableFuture.allOf(propertiesFutures);
             try {
                 objectFutures.get();
             } catch (InterruptedException e) {
@@ -289,7 +307,34 @@ public class TrestleReasoner {
             }
 
 //        Write the object properties
-//            ontology.unlockAndCommit();
+        });
+    }
+
+    /**
+     * Writes a data property as an individual object, with relations back to the root dataset individual
+     * @param rootIndividual - OWLNamedIndividual of the dataset individual
+     * @param properties - List of OWLDataPropertyAssertionAxioms to write as objects
+     * @param temporal - Temporal to associate with data property individual
+     */
+    private void writeDataPropertyAsObject(OWLNamedIndividual rootIndividual, List<OWLDataPropertyAssertionAxiom> properties, TemporalObject temporal) {
+        final long now = Instant.now().getEpochSecond();
+        final OWLClass factClass = df.getOWLClass(factClassIRI);
+        properties.forEach(property -> {
+
+//            TODO(nrobison): We should change this to lookup any existing records to correctly increment the record number
+            final OWLNamedIndividual propertyIndividual = df.getOWLNamedIndividual(IRI.create(PREFIX, String.format("%s:%s:%d", rootIndividual.getIRI().getShortForm(), property.getProperty().asOWLDataProperty().getIRI().getShortForm(), now)));
+            ontology.createIndividual(propertyIndividual, factClass);
+            try {
+//                Write the property
+                ontology.writeIndividualDataProperty(propertyIndividual, property.getProperty().asOWLDataProperty(), property.getObject());
+//                Write the temporal relation
+                ontology.writeIndividualObjectProperty(propertyIndividual, validTimeIRI, df.getOWLNamedIndividual(temporal.getIDAsIRI()));
+//                Write the relation back to the root individual
+                ontology.writeIndividualObjectProperty(propertyIndividual, factOfIRI, rootIndividual);
+//                TODO(nrobison): Write the DB access time
+            } catch (MissingOntologyEntity missingOntologyEntity) {
+                logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
+            }
         });
     }
 
@@ -466,8 +511,19 @@ public class TrestleReasoner {
             final ConstructorArguments constructorArguments = new ConstructorArguments();
             final Optional<List<OWLDataProperty>> dataProperties = ClassBuilder.getPropertyMembers(clazz);
             if (dataProperties.isPresent()) {
-                final Set<OWLDataPropertyAssertionAxiom> propertiesForIndividual = ontology.getDataPropertiesForIndividual(individualIRI, dataProperties.get());
-                propertiesForIndividual.forEach(property -> {
+
+
+//                We need to get the properties from the fact relations
+                final Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
+                final Optional<Set<OWLObjectPropertyAssertionAxiom>> factIndividuals = ontology.getIndividualObjectProperty(individualIRI, hasFactIRI);
+                if (factIndividuals.isPresent()) {
+                    factIndividuals.get().stream()
+                            .map(individual -> ontology.getAllDataPropertiesForIndividual(individual.getObject().asOWLNamedIndividual()))
+                            .forEach(propertySet -> propertySet.forEach(retrievedDataProperties::add));
+                }
+
+//                final Set<OWLDataPropertyAssertionAxiom> propertiesForIndividual = ontology.getDataPropertiesForIndividual(individualIRI, dataProperties.get());
+                retrievedDataProperties.forEach(property -> {
                     final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, clazz);
                     final Object literalValue = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
                     constructorArguments.addArgument(

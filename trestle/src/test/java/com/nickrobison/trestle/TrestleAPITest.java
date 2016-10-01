@@ -4,6 +4,7 @@ import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
+import com.nickrobison.trestle.ontology.OracleOntology;
 import com.nickrobison.trestle.parser.ClassParser;
 import com.nickrobison.trestle.parser.OracleOntologyGAULoader;
 import com.vividsolutions.jts.geom.Geometry;
@@ -15,11 +16,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.opengis.referencing.operation.TransformException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 import java.io.*;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -45,12 +48,13 @@ public class TrestleAPITest {
     @BeforeEach
     public void setup() {
         reasoner = new TrestleBuilder()
-                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-//                .withDBConnection(
-//                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-//                        "spatialUser",
-//                        "spatial1")
+//                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+                .withDBConnection(
+                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
+                        "spatialUser",
+                        "spatial1")
                 .withName("api_test")
+                .withIRI(IRI.create("file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl"))
                 .withInputClasses(TestClasses.GAULTestClass.class,
                         TestClasses.GAULComplexClassTest.class,
                         TestClasses.JTSGeometryTest.class,
@@ -145,12 +149,19 @@ public class TrestleAPITest {
         classObjects.add(esriPolygonTest);
         classObjects.add(offsetDateTimeTest);
 
-        classObjects.parallelStream().forEach(object -> {
+        classObjects.stream().forEach(object -> {
             final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(object);
             try {
                 reasoner.writeObjectAsFact(object);
             } catch (TrestleClassException e) {
                 e.printStackTrace();
+            }
+            if (reasoner.getUnderlyingOntology() instanceof OracleOntology) {
+                try {
+                    ((OracleOntology) reasoner.getUnderlyingOntology()).runInference();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
             final Object returnedObject = reasoner.readAsObject(object.getClass(), owlNamedIndividual.getIRI(), false);
             if (returnedObject instanceof TestClasses.GAULComplexClassTest) {
@@ -163,7 +174,7 @@ public class TrestleAPITest {
                 assertEquals(esriPolygonTest, returnedObject, "Should be equal");
             }
         });
-//        reasoner.writeOntology(new File("/Users/nrobison/Desktop/trestle_test.owl").toURI(), false);
+        reasoner.writeOntology(new File("/Users/nrobison/Desktop/trestle_test.owl").toURI(), false);
 
 //        Geotools
 //
