@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.TestClasses;
+import com.nickrobison.trestle.transactions.TrestleTransaction;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
@@ -91,11 +92,14 @@ public class LocalOntologyGAULLoader {
         final OWLDataProperty valid_from = df.getOWLDataProperty(IRI.create("trestle:", "valid_from"));
         final OWLDataProperty valid_to = df.getOWLDataProperty(IRI.create("trestle:", "valid_to"));
 
-        ontology.openAndLock(true);
-        for (TestClasses.GAULTestClass gaul : gaulObjects) {
-            datasetClass = ClassParser.GetObjectClass(gaul);
+//        TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(true);
+        gaulObjects.parallelStream().forEach(gaul -> {
+            final TrestleTransaction threadTransaction = ontology.createandOpenNewTransaction(true);
+
+//        for (TestClasses.GAULTestClass gaul : gaulObjects) {
+            final OWLClass singleDatasetClass = ClassParser.GetObjectClass(gaul);
             final OWLNamedIndividual gaulIndividual = ClassParser.GetIndividual(gaul);
-            final OWLClassAssertionAxiom testClass = df.getOWLClassAssertionAxiom(datasetClass, gaulIndividual);
+            final OWLClassAssertionAxiom testClass = df.getOWLClassAssertionAxiom(singleDatasetClass, gaulIndividual);
             ontology.createIndividual(testClass);
 
             final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(gaul);
@@ -108,29 +112,43 @@ public class LocalOntologyGAULLoader {
 
 //                Set the object properties to point back to the individual
                 final OWLObjectPropertyAssertionAxiom temporalPropertyAssertion = df.getOWLObjectPropertyAssertionAxiom(temporal_of, temporalIndividual, gaulIndividual);
-                ontology.writeIndividualObjectProperty(temporalPropertyAssertion);
+                try {
+                    ontology.writeIndividualObjectProperty(temporalPropertyAssertion);
+                } catch (MissingOntologyEntity missingOntologyEntity) {
+                    missingOntologyEntity.printStackTrace();
+                }
 
 //                Write the data properties. I know these are closed intervals
                 final OWLLiteral fromLiteral = df.getOWLLiteral(temporal.asInterval().getFromTime().toString(), OWL2Datatype.XSD_DATE_TIME);
                 final OWLLiteral toLiteral = df.getOWLLiteral(temporal.asInterval().getToTime().get().toString(), OWL2Datatype.XSD_DATE_TIME);
                 final OWLDataPropertyAssertionAxiom fromAssertionAxiom = df.getOWLDataPropertyAssertionAxiom(valid_from, temporalIndividual, fromLiteral);
                 final OWLDataPropertyAssertionAxiom toAssertionAxiom = df.getOWLDataPropertyAssertionAxiom(valid_to, temporalIndividual, toLiteral);
-                ontology.writeIndividualDataProperty(fromAssertionAxiom);
-                ontology.writeIndividualDataProperty(toAssertionAxiom);
+                try {
+                    ontology.writeIndividualDataProperty(fromAssertionAxiom);
+                    ontology.writeIndividualDataProperty(toAssertionAxiom);
+                } catch (MissingOntologyEntity missingOntologyEntity) {
+                    missingOntologyEntity.printStackTrace();
+                }
+
             }
 
             //        Write the data properties
             final Optional<List<OWLDataPropertyAssertionAxiom>> gaulDataProperties = ClassParser.GetDataProperties(gaul);
             for (OWLDataPropertyAssertionAxiom dataAxiom : gaulDataProperties.orElseThrow(() -> new RuntimeException("Missing data properties"))) {
 
-                ontology.writeIndividualDataProperty(dataAxiom);
+                try {
+                    ontology.writeIndividualDataProperty(dataAxiom);
+                } catch (MissingOntologyEntity missingOntologyEntity) {
+                    missingOntologyEntity.printStackTrace();
+                }
             }
-        }
-        ontology.unlockAndCommit();
+            ontology.returnAndCommitTransaction(threadTransaction);
+        });
+//        ontology.returnAndCommitTransaction(trestleTransaction);
 //        ontology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);
 
 //        Check to see if it worked.
-        ontology.openAndLock(false);
+        final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(false);
         final Set<OWLNamedIndividual> gaulInstances = ontology.getInstances(datasetClass, true);
         assertEquals(191, gaulInstances.size(), "Wrong number of GAUL records from instances method");
 
@@ -158,12 +176,12 @@ public class LocalOntologyGAULLoader {
 
 //        Try some inference
 //        final OWLNamedIndividual ndorwa = df.getOWLNamedIndividual(IRI.create("trestle:", "Ndorwa"));
-
+//
 //        final OWLObjectProperty has_temporal = df.getOWLObjectProperty(IRI.create("trestle:", "has_temporal"));
 //        final Optional<Set<OWLObjectPropertyAssertionAxiom>> has_temporalProperty = ontology.getIndividualObjectProperty(ndorwa, has_temporal);
 //        assertTrue(has_temporalProperty.isPresent(), "Should have inferred temporal");
 //        assertEquals(1, has_temporalProperty.get().size(), "Should only have 1 temporal");
-        ontology.unlockAndCommit();
+        ontology.returnAndCommitTransaction(trestleTransaction);
     }
 
     @AfterEach

@@ -234,7 +234,6 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
             }
         } finally {
             this.unlockAndCommit();
-            logger.debug("Model transaction closed");
         }
     }
 

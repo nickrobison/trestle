@@ -177,6 +177,8 @@ public class LocalOntology extends JenaOntology {
                 logger.error("Could not delete data directory", e);
             }
         }
+
+        logger.info("Opened {} transactions, committed {}", this.openedTransactions.get(), this.committedTransactions.get());
     }
 
     @Override

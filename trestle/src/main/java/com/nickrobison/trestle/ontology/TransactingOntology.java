@@ -1,7 +1,11 @@
 package com.nickrobison.trestle.ontology;
 
+import com.nickrobison.trestle.transactions.TrestleTransaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Instant;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by nrobison on 9/7/16.
@@ -10,6 +14,8 @@ abstract class TransactingOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(TransactingOntology.class);
     private final static OntologySecurityManager securityManager = new OntologySecurityManager();
+    protected final AtomicInteger openedTransactions = new AtomicInteger();
+    protected final AtomicInteger committedTransactions = new AtomicInteger();
 
 //    Thread locals
     private ThreadLocal<Boolean> threadLocked = new ThreadLocal<Boolean>() {
@@ -26,12 +32,50 @@ abstract class TransactingOntology {
         }
     };
 
+    private ThreadLocal<TrestleTransaction> threadTransactionObject = new ThreadLocal<>();
+
+//    public TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject) {
+//        threadTransactionObject.set(transactionObject);
+//
+//    }
+
+    public TrestleTransaction createandOpenNewTransaction(boolean write) {
+        if (threadTransactionObject.get() == null) {
+            logger.debug("Unowned transaction, opening a new one");
+            this.openAndLock(write);
+            final TrestleTransaction trestleTransaction = new TrestleTransaction(System.nanoTime(), write);
+            threadTransactionObject.set(trestleTransaction);
+            return trestleTransaction;
+        } else {
+            logger.debug("Thread transaction owned, returning empty object");
+            return new TrestleTransaction();
+        }
+    }
+
     /**
-     * Open a transaction and transactionLock it, for lots of bulk action
+     * Try to commit the current thread transaction, if the object owns the currently open transaction
+     * @param transaction - Transaction object to try to commit current transaction with
+     */
+    public void returnAndCommitTransaction(TrestleTransaction transaction) {
+        final TrestleTransaction trestleTransaction = threadTransactionObject.get();
+        if (trestleTransaction != null) {
+            if (trestleTransaction.equals(transaction)) {
+                logger.debug("Owns transaction, committing");
+                threadTransactionObject.set(null);
+                this.unlockAndCommit();
+            } else {
+                logger.debug("Doesn't own transaction, continuing");
+            }
+        } else {
+            logger.warn("Null transaction object, how did that happen?");
+        }
+    }
+
+    /**
+     * Open a transaction and Lock it, for lots of bulk action
      */
     private void lock() {
         this.threadLocked.set(true);
-//        this.applicationLock = true;
     }
 
     /**
@@ -46,15 +90,19 @@ abstract class TransactingOntology {
      * @param write - Open writable transaction?
      */
     public void openAndLock(boolean write) {
-        logger.debug("Locking open");
+        if (this.threadTransactionObject.get() == null) {
 
-        if (this.threadLocked.get()) {
-            logger.debug("Thread already locked, continuing");
+            if (this.threadLocked.get()) {
+                logger.debug("Thread already locked, continuing");
+            } else {
+                logger.debug("Trying to open unlocked transaction");
+                openTransaction(write);
+                logger.debug("Locking open");
+                lock();
+                logger.debug("Transaction opened and locked");
+            }
         } else {
-            logger.debug("Trying to open unlocked transaction");
-            openTransaction(write);
-            lock();
-            logger.debug("Transaction opened and locked");
+            logger.warn("Thread transaction owned by transaction object, not opening or locking");
         }
     }
 
@@ -62,11 +110,16 @@ abstract class TransactingOntology {
      * Unlock the transaction and commit it
      */
     public void unlockAndCommit() {
-        logger.debug("Unlocking and closing");
-        unlock();
-        logger.debug("Trying to commit transaction");
-        commitTransaction();
-        logger.debug("Committed transaction");
+
+        if (threadTransactionObject.get() == null) {
+            logger.debug("Unlocking and closing");
+            unlock();
+            logger.debug("Trying to commit transaction");
+            commitTransaction();
+            logger.debug("Committed transaction");
+        } else {
+            logger.debug("Thread owned by transaction object, not unlocking or committing");
+        }
     }
 
     public void openTransaction(boolean write) {
@@ -77,6 +130,7 @@ abstract class TransactingOntology {
                 this.openDatasetTransaction(write);
                 logger.debug("Opened transaction");
                 this.threadInTransaction.set(true);
+                this.openedTransactions.incrementAndGet();
             } else {
                 logger.debug("Thread unlocked, but already in a transaction");
             }
@@ -92,6 +146,7 @@ abstract class TransactingOntology {
                 this.commitDatasetTransaction();
                 logger.debug("Committed dataset transaction");
                 this.threadInTransaction.set(false);
+                this.committedTransactions.incrementAndGet();
             } else {
                 logger.debug("Thread unlocked, but not in transaction");
             }

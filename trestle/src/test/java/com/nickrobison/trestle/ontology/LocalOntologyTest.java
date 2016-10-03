@@ -101,6 +101,14 @@ public class LocalOntologyTest {
         individualObjectProperty = ontology.getIndividualObjectProperty(test_muni2, has_temporal);
         assertEquals("test_muni1_valid", individualObjectProperty.get().stream().findFirst().get().getObject().asOWLNamedIndividual().getIRI().getRemainder().get(), "Should be test_muni_1_valid");
 
+//        Test the new split class
+        final OWLNamedIndividual maputo_split = df.getOWLNamedIndividual(IRI.create("trestle:", "maputo_split_adm2_name_1"));
+        final Optional<Set<OWLObjectPropertyAssertionAxiom>> valid_time = ontology.getIndividualObjectProperty(maputo_split, df.getOWLObjectProperty(IRI.create("trestle:", "valid_time")));
+        assertTrue(valid_time.isPresent(), "Should have inferrred temporal property");
+        final OWLNamedIndividual maputo_temporal = df.getOWLNamedIndividual(IRI.create("trestle:", "maputo_split_temporal_object"));
+        assertEquals(maputo_temporal.getIRI().getShortForm(), valid_time.get().stream().findFirst().get().getObject().asOWLNamedIndividual().getIRI().getShortForm(), "Individuals should match");
+
+
     }
 
     @Test

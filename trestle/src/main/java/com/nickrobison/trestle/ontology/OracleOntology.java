@@ -145,13 +145,12 @@ public class OracleOntology extends JenaOntology {
 
     @Override
     public void commitDatasetTransaction() {
-        this.model.commit();
         this.model.leaveCriticalSection();
-        try {
-            graph.commitTransaction();
-        } catch (SQLException e) {
-            logger.error("Cannot commit graph transaction", e);
-        }
+//        try {
+//            graph.commitTransaction();
+//        } catch (SQLException e) {
+//            logger.error("Cannot commit graph transaction", e);
+//        }
         logger.debug("Transaction closed and critical section left");
     }
 
