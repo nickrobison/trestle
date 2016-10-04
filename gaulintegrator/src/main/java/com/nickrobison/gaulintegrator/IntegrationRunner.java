@@ -3,7 +3,6 @@ package com.nickrobison.gaulintegrator;
 import com.esri.mapreduce.PolygonFeatureInputFormat;
 import com.nickrobison.trestle.TrestleBuilder;
 import com.nickrobison.trestle.TrestleReasoner;
-import com.nickrobison.trestle.ontology.OracleOntology;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -79,7 +78,7 @@ public class IntegrationRunner extends Configured implements Tool {
 //        job.addCacheFile(URI.create(resource.toString() + "#trestle"));
         job.waitForCompletion(true);
 
-        ((OracleOntology) reasoner.getUnderlyingOntology()).runInference();
+        reasoner.getUnderlyingOntology().runInference();
         reasoner.shutdown(false);
 
         if (job.isSuccessful()) {

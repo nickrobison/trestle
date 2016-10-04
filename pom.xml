@@ -8,7 +8,7 @@
     <artifactId>spatial-difference</artifactId>
     <version>0.4-SNAPSHOT</version>
     <modules>
-        <module>trestle</module>
+        <module>trestle-reasoner</module>
         <module>gaulintegrator</module>
         <module>trestle-exporter</module>
         <module>trestle-raster</module>

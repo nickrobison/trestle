@@ -47,7 +47,7 @@
     <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.2.4" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.apache.hadoop:hadoop-auth:2.6.0-cdh5.5.4" level="project" />
     <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpclient:4.2.6" level="project" />
-    <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpcore:4.1.2" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpcore:4.2.5" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.apache.directory.server:apacheds-kerberos-codec:2.0.0-M15" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.apache.directory.server:apacheds-i18n:2.0.0-M15" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.apache.directory.api:api-asn1-api:1.0.0-M20" level="project" />
@@ -99,34 +99,12 @@
     <orderEntry type="library" name="Maven: com.amazonaws:aws-java-sdk-kms:1.10.6" level="project" />
     <orderEntry type="library" name="Maven: com.amazonaws:aws-java-sdk-core:1.10.6" level="project" />
     <orderEntry type="library" name="Maven: org.postgresql:postgresql:9.4.1209.jre7" level="project" />
-    <orderEntry type="module" module-name="trestle" />
-    <orderEntry type="module" module-name="trestle-exporter" />
-    <orderEntry type="library" name="Maven: org.geotools:gt-shapefile:16-M0" level="project" />
-    <orderEntry type="library" name="Maven: org.geotools:gt-data:16-M0" level="project" />
-    <orderEntry type="library" name="Maven: org.geotools:gt-main:16-M0" level="project" />
-    <orderEntry type="library" name="Maven: org.geotools:gt-api:16-M0" level="project" />
-    <orderEntry type="library" name="Maven: com.vividsolutions:jts:1.13" level="project" />
-    <orderEntry type="library" name="Maven: org.geotools:gt-referencing:16-M0" level="project" />
-    <orderEntry type="library" name="Maven: com.googlecode.efficient-java-matrix-library:core:0.26" level="project" />
-    <orderEntry type="library" name="Maven: commons-pool:commons-pool:1.5.4" level="project" />
-    <orderEntry type="library" name="Maven: org.geotools:gt-metadata:16-M0" level="project" />
-    <orderEntry type="library" name="Maven: org.geotools:gt-opengis:16-M0" level="project" />
-    <orderEntry type="library" name="Maven: net.java.dev.jsr-275:jsr-275:1.0-beta-2" level="project" />
-    <orderEntry type="library" name="Maven: javax.media:jai_core:1.1.3" level="project" />
-    <orderEntry type="library" name="Maven: jgridshift:jgridshift:1.0" level="project" />
-    <orderEntry type="library" name="Maven: net.sf.geographiclib:GeographicLib-Java:1.44" level="project" />
-    <orderEntry type="library" name="Maven: org.jdom:jdom:1.1.3" level="project" />
-    <orderEntry type="library" name="Maven: org.geotools:gt-epsg-hsql:16-M0" level="project" />
-    <orderEntry type="library" name="Maven: org.hsqldb:hsqldb:2.3.0" level="project" />
-    <orderEntry type="library" name="Maven: org.checkerframework:checker:2.0.1" level="project" />
-    <orderEntry type="library" name="Maven: org.checkerframework:checker-qual:2.0.1" level="project" />
-    <orderEntry type="library" name="Maven: org.checkerframework:jdk8:2.0.1" level="project" />
-    <orderEntry type="module" module-name="trestle-common" />
+    <orderEntry type="module" module-name="trestle-reasoner" />
     <orderEntry type="module" module-name="trestle-ontology" />
     <orderEntry type="library" name="Maven: net.sourceforge.owlapi:owlapi-api:5.0.2" level="project" />
     <orderEntry type="library" name="Maven: org.apache.commons:commons-rdf-api:0.1.0-incubating" level="project" />
     <orderEntry type="library" name="Maven: net.sf.trove4j:trove4j:3.0.3" level="project" />
-    <orderEntry type="library" name="Maven: com.github.ben-manes.caffeine:caffeine:2.3.2" level="project" />
+    <orderEntry type="library" name="Maven: com.github.ben-manes.caffeine:caffeine:2.1.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.inject.extensions:guice-assistedinject:4.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.inject.extensions:guice-multibindings:4.0" level="project" />
     <orderEntry type="library" name="Maven: net.sourceforge.owlapi:owlapi-apibinding:5.0.2" level="project" />
@@ -163,19 +141,9 @@
     <orderEntry type="library" name="Maven: org.apache.commons:commons-lang3:3.3.2" level="project" />
     <orderEntry type="library" name="Maven: com.github.andrewoma.dexx:collection:0.6" level="project" />
     <orderEntry type="library" name="Maven: org.apache.thrift:libthrift:0.9.2" level="project" />
-    <orderEntry type="library" name="Maven: joda-time:joda-time:2.9.4" level="project" />
-    <orderEntry type="library" name="Maven: co.paralleluniverse:quasar-core:jdk8:0.7.6" level="project" />
-    <orderEntry type="library" name="Maven: org.hdrhistogram:HdrHistogram:2.1.9" level="project" />
-    <orderEntry type="library" name="Maven: io.dropwizard.metrics:metrics-core:3.1.2" level="project" />
-    <orderEntry type="library" name="Maven: org.latencyutils:LatencyUtils:2.0.3" level="project" />
-    <orderEntry type="library" name="Maven: de.javakaffee:kryo-serializers:0.38" level="project" />
-    <orderEntry type="library" name="Maven: com.esotericsoftware:kryo:4.0.0" level="project" />
-    <orderEntry type="library" name="Maven: com.esotericsoftware:reflectasm:1.11.3" level="project" />
-    <orderEntry type="library" name="Maven: org.ow2.asm:asm:5.0.4" level="project" />
-    <orderEntry type="library" name="Maven: com.esotericsoftware:minlog:1.3.0" level="project" />
-    <orderEntry type="library" name="Maven: org.objenesis:objenesis:2.2" level="project" />
-    <orderEntry type="library" name="Maven: org.openjdk.jmh:jmh-core:1.12" level="project" />
-    <orderEntry type="library" name="Maven: net.sf.jopt-simple:jopt-simple:4.6" level="project" />
+    <orderEntry type="library" name="Maven: org.checkerframework:checker:2.0.1" level="project" />
+    <orderEntry type="library" name="Maven: org.checkerframework:checker-qual:2.0.1" level="project" />
+    <orderEntry type="library" name="Maven: org.checkerframework:jdk8:2.0.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.apache.hadoop:hadoop-minicluster:2.6.0-cdh5.5.4" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.apache.hadoop:hadoop-common:test-jar:tests:2.6.0-cdh5.5.4" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.mortbay.jetty:jetty:6.1.26.cloudera.4" level="project" />

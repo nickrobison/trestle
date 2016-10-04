@@ -17,9 +17,7 @@
         <trestle.location>file:///Users/nrobison/Developer/git/dissertation/trestle-ontology</trestle.location>
     </properties>
 
-    <artifactId>trestle</artifactId>
-    <packaging>jar</packaging>
-    <version>0.4-SNAPSHOT</version>
+    <artifactId>trestle-reasoner</artifactId>
     <dependencies>
         <dependency>
             <groupId>com.nickrobison</groupId>
