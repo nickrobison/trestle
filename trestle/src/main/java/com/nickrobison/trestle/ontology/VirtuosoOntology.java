@@ -11,10 +11,7 @@ import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import virtuoso.jena.driver.VirtGraph;
-import virtuoso.jena.driver.VirtModel;
-import virtuoso.jena.driver.VirtuosoQueryExecution;
-import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
+import virtuoso.jena.driver.*;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.ByteArrayInputStream;
@@ -28,10 +25,12 @@ import java.io.ByteArrayOutputStream;
 public class VirtuosoOntology extends JenaOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(VirtuosoOntology.class);
+    public static final String TRESTLE_RULES = "trestle_rules";
     private static VirtModel virtModel;
 
     VirtuosoOntology(String name, OWLOntology ont, DefaultPrefixManager pm, String connectionString, String username, String password) {
         super(name, initializeVirtModel(name, connectionString, username, password), ont, pm);
+        virtModel.setRuleSet(TRESTLE_RULES);
     }
 
     private static Model initializeVirtModel(String name, String connectionString, String username, String password) {
@@ -48,8 +47,12 @@ public class VirtuosoOntology extends JenaOntology {
     public void initializeOntology() {
         logger.info("Dropping model {}", this.ontologyName);
         if (!virtModel.isEmpty()) {
+            virtModel.removeRuleSet(TRESTLE_RULES, this.ontologyName);
             virtModel.removeAll();
         }
+
+//        Create a new ruleset
+        virtModel.createRuleSet(TRESTLE_RULES, this.ontologyName);
 
         logger.info("Writing new ontology");
 
@@ -67,7 +70,7 @@ public class VirtuosoOntology extends JenaOntology {
 //    TODO(nrobison): This should return a list, not this weird ResultSet thing.
     public ResultSet executeSPARQL(String queryString) {
         ResultSet resultSet;
-        final VirtuosoQueryExecution queryExecution = VirtuosoQueryExecutionFactory.create(queryString, (VirtGraph) this.virtModel.getGraph());
+        final QueryExecution queryExecution = VirtuosoQueryExecutionFactory.create(queryString, (VirtGraph) virtModel.getGraph());
         this.openTransaction(false);
         this.model.enterCriticalSection(Lock.READ);
         try {
@@ -88,6 +91,8 @@ public class VirtuosoOntology extends JenaOntology {
     @Override
     public void close(boolean drop) {
         if (drop) {
+            logger.info("Removing ruleset {}", TRESTLE_RULES);
+            virtModel.removeRuleSet(TRESTLE_RULES, this.ontologyName);
             logger.info("Dropping model {}", this.ontologyName);
             virtModel.removeAll();
         }
@@ -99,15 +104,13 @@ public class VirtuosoOntology extends JenaOntology {
     @Override
     public void openDatasetTransaction(boolean write) {
         virtModel.begin();
-//        this.model.enterCriticalSection(getJenaLock(write));
-        logger.debug("Transaction opened and critical section entered");
+        logger.debug("Virtuoso model transaction opened");
     }
 
     @Override
     public void commitDatasetTransaction(boolean write) {
         virtModel.commit();
-//        this.model.leaveCriticalSection();
-        logger.debug("Transaction closed and critical section left");
+        logger.debug("Virtuoso model transaction committed");
     }
 
     protected static ByteArrayInputStream ontologytoIS(OWLOntology ontology) throws OWLOntologyStorageException {
