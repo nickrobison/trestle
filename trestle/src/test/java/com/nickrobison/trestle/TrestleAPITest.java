@@ -22,7 +22,6 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 import java.io.*;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -48,11 +47,11 @@ public class TrestleAPITest {
     @BeforeEach
     public void setup() {
         reasoner = new TrestleBuilder()
-//                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-                .withDBConnection(
-                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-                        "spatialUser",
-                        "spatial1")
+                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+//                .withDBConnection(
+//                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
+//                        "spatialUser",
+//                        "spatial1")
                 .withName("api_test")
                 .withIRI(IRI.create("file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl"))
                 .withInputClasses(TestClasses.GAULTestClass.class,
@@ -102,7 +101,7 @@ public class TrestleAPITest {
 //        Write the objects
         gaulObjects.parallelStream().forEach(gaul -> {
             try {
-                reasoner.writeObjectAsConcept(gaul);
+                reasoner.writeObjectAsFact(gaul);
             } catch (TrestleClassException e) {
                 throw new RuntimeException(String.format("Problem storing object %s", gaul.adm0_name), e);
             }
@@ -112,14 +111,12 @@ public class TrestleAPITest {
         final Set<OWLNamedIndividual> gaulInstances = reasoner.getInstances(TestClasses.GAULTestClass.class);
         assertEquals(191, gaulInstances.size(), "Wrong number of GAUL records from instances method");
 
-//        reasoner.getUnderlyingOntology().writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);
-
 //        Try to read one out.
 //        final GAULTestClass ancuabe = reasoner.readAsObject(GAULTestClass.class, IRI.create("trestle:", "Ancuabe"));
         final TestClasses.GAULTestClass ancuabe = reasoner.readAsObject(TestClasses.GAULTestClass.class, "Ancuabe");
         assertEquals(ancuabe.adm0_name, "Ancuabe", "Wrong name");
 //        Check the temporal to make sure they got parsed correctly
-        assertEquals(LocalDate.of(1990,1,1).atStartOfDay(), ancuabe.time, "Times should match");
+        assertEquals(LocalDate.of(1990, 1, 1).atStartOfDay(), ancuabe.time, "Times should match");
 
 //        Try to read out the datasets
         final Optional<Set<String>> availableDatasets = reasoner.getAvailableDatasets();
@@ -130,6 +127,13 @@ public class TrestleAPITest {
         assertEquals(ancuabe, ancuabe1, "Objects should be equal");
         final Object ancuabe2 = reasoner.readAsObject(reasoner.getDatasetClass(datasetClassID), "Ancuabe");
         assertEquals(ancuabe, ancuabe2, "Should be equal");
+
+//        Check the spatial intersection
+        final Optional<List<@NonNull Object>> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0);
+        assertTrue(intersectedObjects.isPresent(), "Should have objects");
+        assertTrue(intersectedObjects.get().size() > 0, "Should have more than 1 object");
+
+        reasoner.getUnderlyingOntology().writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);
     }
 
     @Test
@@ -156,13 +160,9 @@ public class TrestleAPITest {
             } catch (TrestleClassException e) {
                 e.printStackTrace();
             }
-            if (reasoner.getUnderlyingOntology() instanceof OracleOntology) {
-                try {
-                    ((OracleOntology) reasoner.getUnderlyingOntology()).runInference();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
+//            if (reasoner.getUnderlyingOntology() instanceof OracleOntology) {
+                reasoner.getUnderlyingOntology().runInference();
+//            }
             final Object returnedObject = reasoner.readAsObject(object.getClass(), owlNamedIndividual.getIRI(), false);
             if (returnedObject instanceof TestClasses.GAULComplexClassTest) {
                 assertEquals(gaulComplexClassTest, returnedObject, "Should have the same object");
@@ -174,7 +174,7 @@ public class TrestleAPITest {
                 assertEquals(esriPolygonTest, returnedObject, "Should be equal");
             }
         });
-        reasoner.writeOntology(new File("/Users/nrobison/Desktop/trestle_test.owl").toURI(), false);
+//        reasoner.writeOntology(new File("/Users/nrobison/Desktop/trestle_test.owl").toURI(), false);
 
 //        Geotools
 //
@@ -194,6 +194,6 @@ public class TrestleAPITest {
     @AfterEach
     public void close() throws OWLOntologyStorageException {
 //        reasoner.getUnderlyingOntology().writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), true);
-        reasoner.shutdown(true);
+        reasoner.shutdown(false);
     }
 }
