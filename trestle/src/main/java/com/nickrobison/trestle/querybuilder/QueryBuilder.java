@@ -116,11 +116,11 @@ public class QueryBuilder {
 
     public String buildSpatialIntersection(DIALECT dialect, OWLClass datasetClass, String wktValue, double buffer, UNITS unit) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
-//        ps.setCommandText("SELECT ?m ?wkt" +
-        ps.setCommandText("SELECT ?m" +
+        ps.setCommandText("SELECT DISTINCT ?m" +
                 " WHERE { " +
                 "?m rdf:type ?type ." +
-                "?m ogc:asWKT ?wkt ");
+                "?m :has_fact ?f ." +
+                "?f ogc:asWKT ?wkt ");
         switch (dialect) {
             case ORACLE: {
 //                We need to remove this, otherwise Oracle substitutes geosparql for ogc
@@ -151,10 +151,10 @@ public class QueryBuilder {
 
     public String buildTemporalSpatialIntersection(DIALECT dialect, OWLClass datasetClass, String wktValue, double buffer, UNITS unit, OffsetDateTime atTime) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
-        ps.setCommandText("SELECT ?m ?tStart ?tEnd" +
+        ps.setCommandText("SELECT DISTINCT ?m ?tStart ?tEnd" +
                 " WHERE { " +
-                "?m rdf:type ?type ." +
-                "?m ogc:asWKT ?wkt ." +
+                "?m :has_fact ?f ." +
+                "?f ogc:asWKT ?wkt ." +
                 "?m :has_temporal ?t ." +
                 "{ ?t :valid_from ?tStart} UNION {?t :exists_from ?tStart} ." +
                 "OPTIONAL{{ ?t :valid_to ?tEnd} UNION {?t :exists_to ?tEnd}} .");
