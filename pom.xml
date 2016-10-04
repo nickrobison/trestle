@@ -13,6 +13,7 @@
         <module>trestle-exporter</module>
         <module>trestle-raster</module>
         <module>trestle-common</module>
+        <module>trestle-ontology</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -20,6 +21,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <storm.version>1.0.0</storm.version>
         <provided.scope>provided</provided.scope>
+        <owl.version>5.0.2</owl.version>
         <slf4j.version>1.7.21</slf4j.version>
         <jmh.version>1.12</jmh.version>
         <junit.jupiter.version>5.0.0-M2</junit.jupiter.version>
@@ -105,6 +107,22 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
                 <version>${slf4j.version}</version>
+            </dependency>
+            <!--OWL Dependencies-->
+            <dependency>
+                <groupId>net.sourceforge.owlapi</groupId>
+                <artifactId>owlapi-api</artifactId>
+                <version>${owl.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.sourceforge.owlapi</groupId>
+                <artifactId>owlapi-apibinding</artifactId>
+                <version>${owl.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.sourceforge.owlapi</groupId>
+                <artifactId>owlapi-parsers</artifactId>
+                <version>${owl.version}</version>
             </dependency>
             <!--Oracle Dependencies-->
             <dependency>
