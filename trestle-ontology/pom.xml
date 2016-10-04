@@ -27,10 +27,6 @@
         <!--Jena dependencies-->
         <dependency>
             <groupId>org.apache.jena</groupId>
-            <artifactId>apache-jena-libs</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.jena</groupId>
             <artifactId>jena-core</artifactId>
         </dependency>
         <dependency>
