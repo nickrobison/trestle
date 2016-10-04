@@ -145,7 +145,8 @@ public class OracleOntology extends JenaOntology {
 
     @Override
     public void commitDatasetTransaction() {
-        this.model.leaveCriticalSection();
+        this.model.commit();
+//        this.model.leaveCriticalSection();
 //        try {
 //            graph.commitTransaction();
 //        } catch (SQLException e) {
@@ -157,7 +158,7 @@ public class OracleOntology extends JenaOntology {
     @Override
     public void openDatasetTransaction(boolean write) {
         this.model.begin();
-        this.model.enterCriticalSection(getJenaLock(write));
+//        this.model.enterCriticalSection(getJenaLock(write));
         logger.debug("Transaction opened and critical section entered");
     }
 
@@ -198,6 +199,7 @@ public class OracleOntology extends JenaOntology {
         long queryStart = System.currentTimeMillis();
         final QueryExecution qExec = QueryExecutionFactory.create(query, this.model);
         this.openTransaction(false);
+        this.model.enterCriticalSection(Lock.READ);
         try {
             ResultSet resultSet = qExec.execSelect();
             long queryEnd = System.currentTimeMillis();
@@ -230,6 +232,7 @@ public class OracleOntology extends JenaOntology {
                 qExec.close();
             }
         } finally {
+            this.model.leaveCriticalSection();
             this.commitTransaction();
         }
 
@@ -246,6 +249,6 @@ public class OracleOntology extends JenaOntology {
      */
     public long getTripleCount() {
 
-        return this.graph.getCount(Triple.ANY);
+        return graph.getCount(Triple.ANY);
     }
 }

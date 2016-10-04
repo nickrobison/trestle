@@ -69,6 +69,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
     public Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property) {
         Set<OWLObjectPropertyAssertionAxiom> properties = new HashSet<>();
         this.openTransaction(false);
+        this.model.enterCriticalSection(Lock.READ);
         try {
             final Resource modelResource = model.getResource(getFullIRI(individual).toString());
             final Property modelProperty = model.getProperty(getFullIRI(property).toString());
@@ -91,6 +92,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
                 stmtIterator.close();
             }
         } finally {
+            model.leaveCriticalSection();
             this.commitTransaction();
         }
         if (properties.isEmpty()) {
@@ -108,6 +110,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
 //        final Resource modelClass;
         this.openAndLock(true);
         logger.debug("Trying to create the individual");
+        this.model.enterCriticalSection(Lock.WRITE);
         try {
             final Resource modelResource = model.getResource(getFullIRIString(owlClassAssertionAxiom.getIndividual().asOWLNamedIndividual()));
             final Resource modelClass = model.getResource(getFullIRIString(owlClassAssertionAxiom.getClassExpression().asOWLClass()));
@@ -119,9 +122,8 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
 
         } catch (TDBTransactionException e) {
             logger.error("Not in transaction", e);
-        } finally
-
-        {
+        } finally {
+            this.model.leaveCriticalSection();
             this.unlockAndCommit();
         }
 
@@ -151,6 +153,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
         final Resource modelSubclass;
         final Resource superClassResource;
         this.openAndLock(true);
+        this.model.enterCriticalSection(Lock.WRITE);
         try {
 
             modelSubclass = model.getResource(getFullIRIString(subClassOfAxiom.getSubClass().asOWLClass()));
@@ -161,6 +164,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
             }
             modelSubclass.addProperty(RDFS.subClassOf, superClassResource);
         } finally {
+            this.model.leaveCriticalSection();
             this.unlockAndCommit();
         }
     }
@@ -169,6 +173,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
     public void createProperty(OWLProperty property) {
 
         this.openTransaction(true);
+        this.model.enterCriticalSection(Lock.WRITE);
         try {
             final Resource modelResource = model.createResource(getFullIRIString(property));
             if (property.isOWLDataProperty()) {
@@ -177,6 +182,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
                 modelResource.addProperty(RDF.type, OWL.ObjectProperty);
             }
         } finally {
+            this.model.leaveCriticalSection();
             this.commitTransaction();
         }
     }
@@ -204,6 +210,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
         final RDFDatatype dataType = TypeMapper.getInstance().getTypeByName(dataProperty.getObject().getDatatype().toStringID());
 
         this.openAndLock(true);
+        this.model.enterCriticalSection(Lock.WRITE);
         try {
             //        Does the individual exist?
             final Resource modelResource = model.getResource(getFullIRIString(dataProperty.getSubject().asOWLNamedIndividual()));
@@ -233,6 +240,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
                         dataProperty.getSubject().asOWLNamedIndividual().getIRI());
             }
         } finally {
+            this.model.leaveCriticalSection();
             this.unlockAndCommit();
         }
     }
@@ -258,6 +266,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
     @Override
     public void writeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property) throws MissingOntologyEntity {
         this.openAndLock(true);
+        this.model.enterCriticalSection(Lock.WRITE);
         try {
             final Resource modelSubject = model.getResource(getFullIRIString(property.getSubject().asOWLNamedIndividual()));
             final Resource modelObject = model.getResource(getFullIRIString(property.getObject().asOWLNamedIndividual()));
@@ -284,6 +293,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
                 logger.error("Cannot set property {} on Individual {}", property.getProperty().asOWLObjectProperty().getIRI(), property.getSubject().asOWLNamedIndividual().getIRI());
             }
         } finally {
+            this.model.leaveCriticalSection();
             this.unlockAndCommit();
         }
     }
@@ -297,10 +307,12 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
     public boolean containsResource(OWLNamedObject individual) {
         logger.debug("checking for resource {}", individual.getIRI());
         this.openTransaction(false);
+        this.model.enterCriticalSection(Lock.READ);
         try {
             final Resource resource = model.getResource(getFullIRIString(individual));
             return model.containsResource(resource);
         } finally {
+            this.model.leaveCriticalSection();
             this.commitTransaction();
         }
     }
@@ -352,6 +364,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
     public Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean inferred) {
         Set<OWLNamedIndividual> instances = new HashSet<>();
         this.openTransaction(false);
+        this.model.enterCriticalSection(Lock.READ);
         try {
             final Resource modelResource = model.getResource(getFullIRIString(owlClass));
             final ResIterator resIterator = model.listResourcesWithProperty(RDF.type, modelResource);
@@ -364,6 +377,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
                 resIterator.close();
             }
         } finally {
+            this.model.leaveCriticalSection();
             this.commitTransaction();
         }
 
@@ -403,6 +417,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
     public Set<OWLDataPropertyAssertionAxiom> getAllDataPropertiesForIndividual(OWLNamedIndividual individual) {
         Set<OWLDataPropertyAssertionAxiom> properties = new HashSet<>();
         this.openTransaction(false);
+        this.model.enterCriticalSection(Lock.READ);
         try {
             final Resource modelResource = model.getResource(getFullIRIString(individual));
             final StmtIterator stmtIterator = modelResource.listProperties();
@@ -435,6 +450,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
                 stmtIterator.close();
             }
         } finally {
+            this.model.leaveCriticalSection();
             this.commitTransaction();
         }
         return properties;
@@ -449,6 +465,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
     public Set<OWLObjectPropertyAssertionAxiom> getAllObjectPropertiesForIndividual(OWLNamedIndividual individual) {
         Set<OWLObjectPropertyAssertionAxiom> properties = new HashSet<>();
         this.openTransaction(false);
+        this.model.enterCriticalSection(Lock.READ);
         try {
             final Resource modelResource = model.getResource(getFullIRIString(individual));
 
@@ -475,6 +492,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
                 stmtIterator.close();
             }
         } finally {
+            this.model.leaveCriticalSection();
             this.commitTransaction();
         }
         return properties;
@@ -484,9 +502,11 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
 
         final Resource modelResource;
         this.openTransaction(false);
+        this.model.enterCriticalSection(Lock.READ);
         try {
             modelResource = model.getResource(getFullIRIString(individual));
         } finally {
+            this.model.leaveCriticalSection();
             this.commitTransaction();
         }
         if (modelResource == null) {
@@ -509,6 +529,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
     public Optional<Set<OWLLiteral>> getIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property) {
         Set<OWLLiteral> properties = new HashSet<>();
         this.openTransaction(false);
+        this.model.enterCriticalSection(Lock.READ);
         try {
             final Resource modelResource = model.getResource(getFullIRIString(individual));
             final Property modelProperty = model.getProperty(getFullIRIString(property));
@@ -538,6 +559,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
                 stmtIterator.close();
             }
         } finally {
+            this.model.leaveCriticalSection();
             this.commitTransaction();
         }
 

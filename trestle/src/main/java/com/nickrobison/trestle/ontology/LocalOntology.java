@@ -48,6 +48,7 @@ public class LocalOntology extends JenaOntology {
         datasetGraphSpatial = (DatasetGraphSpatial) luceneDataset.asDatasetGraph();
         this.index = datasetGraphSpatial.getSpatialIndex();
         spatialIndexContext = new SpatialIndexContext(this.index);
+        this.singleWriterOntology = true;
 
 //        //        Set threadlocals
 //        this.writeTransaction = new ThreadLocal<Boolean>() {
@@ -185,11 +186,11 @@ public class LocalOntology extends JenaOntology {
     public void openDatasetTransaction(boolean write) {
         if (write) {
             luceneDataset.begin(ReadWrite.WRITE);
-            this.model.enterCriticalSection(Lock.WRITE);
+//            this.model.enterCriticalSection(Lock.WRITE);
             logger.debug("Opened writable transaction");
         } else {
             luceneDataset.begin(ReadWrite.READ);
-            this.model.enterCriticalSection(Lock.WRITE);
+//            this.model.enterCriticalSection(Lock.WRITE);
             logger.debug("Opened read-only transaction");
         }
     }
@@ -197,7 +198,7 @@ public class LocalOntology extends JenaOntology {
     @Override
     public void commitDatasetTransaction() {
         luceneDataset.commit();
-        this.model.leaveCriticalSection();
+//        this.model.leaveCriticalSection();
     }
 
 }
