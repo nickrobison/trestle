@@ -5,8 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by nrobison on 9/7/16.
@@ -18,10 +16,6 @@ abstract class TransactingOntology {
     protected final AtomicInteger openedTransactions = new AtomicInteger();
     protected final AtomicInteger committedTransactions = new AtomicInteger();
     protected static boolean singleWriterOntology = false;
-    private final ReentrantLock writeLock = new ReentrantLock();
-    private final Condition writeCondition = writeLock.newCondition();
-    private final Object writerAvailable = new Object();
-//    private Boolean writerAvailable = true;
 
 //    Thread locals
     private ThreadLocal<Boolean> threadLocked = new ThreadLocal<Boolean>() {
@@ -56,6 +50,7 @@ abstract class TransactingOntology {
 
     /**
      * Takes an existing transaction object and inherits
+     *
      * @param transactionObject
      * @param write
      * @return
@@ -85,6 +80,7 @@ abstract class TransactingOntology {
 
     /**
      * Try to commit the current thread transaction, if the object owns the currently open transaction
+     *
      * @param transaction - Transaction object to try to commit current transaction with
      */
     public void returnAndCommitTransaction(TrestleTransaction transaction) {
@@ -123,6 +119,7 @@ abstract class TransactingOntology {
 
     /**
      * Open a transaction and transactionLock it
+     *
      * @param write - Open writable transaction?
      */
     public void openAndLock(boolean write) {
@@ -144,6 +141,7 @@ abstract class TransactingOntology {
 
     /**
      * Unlock the transaction and commit it
+     *
      * @param write - Is this a write transaction?
      */
     public void unlockAndCommit(boolean write) {
@@ -163,29 +161,7 @@ abstract class TransactingOntology {
 
         if (!this.threadLocked.get()) {
             if (!this.threadInTransaction.get()) {
-
                 logger.debug("Trying to open transaction");
-//                If it's a writable transaction, then we need to wait to be free
-//                if (write) {
-//                    writeLock.
-//                    synchronized (writerAvailable) {
-//                        try {
-//                            logger.debug("Thread {} waiting for write lock", Thread.currentThread().getName());
-//                            writerAvailable.wait();
-//                        } catch (InterruptedException e) {
-//                            logger.error("Opening transaction interrupted", e);
-//                        }
-//                    }
-//                }
-//                    synchronized (writerAvailable) {
-////                        this.writeLock.lock();
-//                        this.writerAvailable = false;
-//                        this.openDatasetTransaction(true);
-//                        this.threadInWriteTransaction.set(true);
-//                    }
-//                } else {
-//                    this.openDatasetTransaction(false);
-//                }
                 logger.debug("Thread {} taking the lock", Thread.currentThread().getName());
                 this.openDatasetTransaction(write);
                 logger.debug("Opened transaction");
@@ -207,20 +183,6 @@ abstract class TransactingOntology {
             if (this.threadInTransaction.get()) {
                 logger.debug("Trying to commit transaction");
                 this.commitDatasetTransaction(write);
-//                if (this.threadInWriteTransaction.get()) {
-//                    logger.debug("In write transaction");
-//                    synchronized (writerAvailable) {
-//                        writerAvailable.notifyAll();
-//                        logger.debug("Thread {} releasing the write lock", Thread.currentThread().getName());
-//                    }
-//                }
-//                if (this.threadInWriteTransaction.get()) {
-//                    this.commitDatasetTransaction();
-//                    this.writeLock.unlock();
-//                    this.threadInWriteTransaction.set(false);
-//                } else {
-//                    this.commitDatasetTransaction();
-//                }
                 logger.debug("Committed dataset transaction");
                 this.threadInTransaction.set(false);
                 this.threadTransactionInherited.set(false);

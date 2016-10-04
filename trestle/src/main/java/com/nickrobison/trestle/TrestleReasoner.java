@@ -12,6 +12,7 @@ import com.nickrobison.trestle.exporter.TSIndividual;
 import com.nickrobison.trestle.ontology.*;
 import com.nickrobison.trestle.parser.*;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
+import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
@@ -36,7 +37,6 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -65,7 +65,8 @@ public class TrestleReasoner {
     private static final Logger logger = LoggerFactory.getLogger(TrestleReasoner.class);
     public static final String DEFAULTNAME = "trestle";
 
-    private final ITrestleOntology ontology;
+//    FIXME(nrobison): This should be an interface, with the ability to do transactions
+    private final JenaOntology ontology;
     private final Map<OWLClass, Class<?>> registeredClasses = new HashMap<>();
     private final OWLDataFactory df;
     //    Seems gross?
@@ -138,7 +139,8 @@ public class TrestleReasoner {
                     builder.password);
         }
 
-        ontology = ontologyBuilder.build().orElseThrow(() -> new RuntimeException("Cannot build ontology"));
+//        FIXME(nrobison): Back to interface
+        ontology = (JenaOntology) ontologyBuilder.build().orElseThrow(() -> new RuntimeException("Cannot build ontology"));
         logger.debug("Ontology connected");
         if (builder.initialize) {
             logger.info("Initializing ontology");
@@ -146,12 +148,8 @@ public class TrestleReasoner {
         } else {
 //            If we're not starting fresh, then we might need to update the indexes and inferencer
             if (ontology instanceof OracleOntology) {
-                try {
-                    logger.info("Updating Oracle inference model");
-                    ((OracleOntology) ontology).runInference();
-                } catch (SQLException e) {
-                    logger.error("Could not update inference model", e);
-                }
+                logger.info("Updating Oracle inference model");
+                ((OracleOntology) ontology).runInference();
             }
         }
 
@@ -249,7 +247,6 @@ public class TrestleReasoner {
     private CompletableFuture<Void> writeObjectAsync(Object inputObject, TemporalScope scope) {
 
         return CompletableFuture.runAsync(() -> {
-
             //        Is class in registry?
             final Class aClass = inputObject.getClass();
             try {
@@ -262,6 +259,7 @@ public class TrestleReasoner {
 
 //        Write the class
             final OWLClass owlClass = ClassParser.GetObjectClass(inputObject);
+            final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(true);
             ontology.associateOWLClass(owlClass, datasetClass);
 //        Write the individual
             ontology.createIndividual(owlNamedIndividual, owlClass);
@@ -285,7 +283,9 @@ public class TrestleReasoner {
             final Optional<List<OWLDataPropertyAssertionAxiom>> dataProperties = ClassParser.GetDataProperties(inputObject);
             final CompletableFuture<Void> propertiesFutures = CompletableFuture.runAsync(() -> {
                 if (dataProperties.isPresent()) {
+                    final TrestleTransaction threadTransaction = ontology.createandOpenNewTransaction(trestleTransaction, true);
                     writeDataPropertyAsObject(owlNamedIndividual, dataProperties.get(), temporalObjects.get().get(0));
+                    ontology.returnAndCommitTransaction(threadTransaction);
 //                    dataProperties.get().stream().map(property -> writeDataPropertyAsObject(owlNamedIndividual, property, temporalObjects.get().get(0)));
 //                    dataProperties.get().forEach(property -> {
 //                        try {
@@ -307,6 +307,7 @@ public class TrestleReasoner {
             }
 
 //        Write the object properties
+            ontology.returnAndCommitTransaction(trestleTransaction);
         });
     }
 
@@ -501,6 +502,7 @@ public class TrestleReasoner {
                 logger.error("Unregistered class", e);
                 throw new CompletionException(e);
             }
+            final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(false);
 
 //        Figure out its name
             if (!checkExists(individualIRI)) {
@@ -548,6 +550,7 @@ public class TrestleReasoner {
                     final Set<OWLDataPropertyAssertionAxiom> TemporalProperties = ontology.getAllDataPropertiesForIndividual(first.get().getObject().asOWLNamedIndividual());
                     temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(TemporalProperties, TemporalParser.IsDefault(clazz), baseTemporalType);
                 }
+                ontology.returnAndCommitTransaction(trestleTransaction);
 
                 if (!temporalObject.isPresent()) {
                     throw new RuntimeException(String.format("Cannot restore temporal from ontology for %s", individualIRI));

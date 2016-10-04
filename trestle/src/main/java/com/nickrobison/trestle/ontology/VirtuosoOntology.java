@@ -99,6 +99,7 @@ public class VirtuosoOntology extends JenaOntology {
         logger.info("Closing model", this.ontologyName);
         this.model.close();
         virtModel.close();
+        logger.debug("Opened {} transactions, committed {}", this.openedTransactions.get(), this.committedTransactions.get());
     }
 
     @Override
