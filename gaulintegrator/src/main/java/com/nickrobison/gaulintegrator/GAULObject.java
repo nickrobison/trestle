@@ -6,7 +6,6 @@ import com.nickrobison.gaulintegrator.common.Utils;
 import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
-import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 import java.sql.Date;
 import java.time.LocalDate;
@@ -81,7 +80,7 @@ public class GAULObject {
         return shapePolygon;
     }
 
-    @DataProperty(name = "gaulCode", datatype = OWL2Datatype.XSD_LONG)
+    @DataProperty(name = "gaulCode")
     public long getGaulCode() {
         return gaulCode;
     }
