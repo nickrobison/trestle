@@ -135,7 +135,7 @@ public class OracleOntologyGAULoader {
                 ontology.writeIndividualDataProperty(dataAxiom);
             }
         }
-        ontology.commitTransaction();
+        ontology.commitTransaction(false);
         ontology.runInference();
 
 //        Check to see if it worked.

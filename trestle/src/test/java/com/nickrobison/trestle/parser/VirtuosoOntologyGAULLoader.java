@@ -188,7 +188,7 @@ public class VirtuosoOntologyGAULLoader {
 //        final Optional<Set<OWLObjectProperty>> has_temporalProperty = ontology.getIndividualObjectProperty(ancuabe, has_temporal);
 //        assertTrue(has_temporalProperty.isPresent(), "Should have inferred temporal");
 //        assertEquals(1, has_temporalProperty.get().size(), "Should only have 1 temporal");
-        ontology.unlockAndCommit();
+        ontology.unlockAndCommit(false);
 
 
 //        ontology.writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);

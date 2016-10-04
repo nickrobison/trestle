@@ -194,8 +194,14 @@ public interface ITrestleOntology {
 
     /**
      * Close open transaction
+     * @param write - Is this a write transaction?
      */
-    void commitTransaction();
+    void commitTransaction(boolean write);
+
+    /**
+     * Manually run inference on the ontology
+     */
+    void runInference();
 
     /**
      * Get all the instances of an OWL Class
@@ -344,6 +350,7 @@ public interface ITrestleOntology {
 
     /**
      * Unlock the transaction and commit it
+     * @param write - Is this a write transaction?
      */
-    void unlockAndCommit();
+    void unlockAndCommit(boolean write);
 }

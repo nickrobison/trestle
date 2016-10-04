@@ -220,7 +220,7 @@ public class ConcurrentOntologyGAULLoader {
 //        final Optional<Set<OWLObjectPropertyAssertionAxiom>> has_temporalProperty = ontology.getIndividualObjectProperty(ndorwa, has_temporal);
 //        assertTrue(has_temporalProperty.isPresent(), "Should have inferred temporal");
 //        assertEquals(1, has_temporalProperty.get().size(), "Should only have 1 temporal");
-        ontology.unlockAndCommit();
+        ontology.unlockAndCommit(false);
     }
 
     @AfterEach

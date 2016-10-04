@@ -2,11 +2,9 @@ package com.nickrobison.trestle.ontology;
 
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.*;
-import org.apache.jena.rdf.model.InfModel;
 import org.apache.jena.rdf.model.Model;
 import oracle.spatial.rdf.client.jena.*;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.shared.Lock;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
@@ -46,7 +44,7 @@ public class OracleOntology extends JenaOntology {
         final Attachment owlprime = Attachment.createInstance(
                 new String[]{}, "OWLPRIME",
                 InferenceMaintenanceMode.NO_UPDATE, QueryOptions.DEFAULT);
-        owlprime.setInferenceOption("INC=T,RAW8=T");
+        owlprime.setInferenceOption("INC=T,RAW8=T,DOP=2");
         oracle = new Oracle(connectionString, username, password);
         try {
 //            We need this so that it actually creates the model if it doesn't exist
@@ -94,11 +92,7 @@ public class OracleOntology extends JenaOntology {
         model.read(is, null);
 
 //        Setup Inference engine
-        try {
-            runInference();
-        } catch (SQLException e) {
-            logger.error("Cannot setup inference engine on {}", ontologyName, e);
-        }
+        runInference();
 
         logger.info("Rebuilding indexes for {}", this.ontologyName);
 
@@ -115,11 +109,15 @@ public class OracleOntology extends JenaOntology {
      *
      * @throws SQLException
      */
-    public void runInference() throws SQLException {
+    public void runInference() {
 
         logger.info("Analyzing graph and performing inference");
-        graph.analyze();
-        graph.performInference();
+        try {
+            graph.analyze();
+            graph.performInference();
+        } catch (SQLException e) {
+            logger.error("Cannot run inference on Oracle ontology", e);
+        }
 //        graph.rebuildApplicationTableIndex();
     }
 
@@ -141,17 +139,19 @@ public class OracleOntology extends JenaOntology {
         } catch (SQLException e) {
             throw new RuntimeException("Cannot disconnect from oracle database");
         }
+        logger.debug("Opened {} transaction, committed {}", this.openedTransactions.get(), this.committedTransactions.get());
     }
 
     @Override
-    public void commitDatasetTransaction() {
+    public void commitDatasetTransaction(boolean write) {
         this.model.commit();
-//        this.model.leaveCriticalSection();
-//        try {
-//            graph.commitTransaction();
-//        } catch (SQLException e) {
-//            logger.error("Cannot commit graph transaction", e);
-//        }
+        if (write) {
+            try {
+                graph.commitTransaction();
+            } catch (SQLException e) {
+                logger.error("Cannot commit graph transaction", e);
+            }
+        }
         logger.debug("Transaction closed and critical section left");
     }
 
@@ -172,7 +172,7 @@ public class OracleOntology extends JenaOntology {
         this.openTransaction(false);
         this.model.enterCriticalSection(Lock.READ);
         try {
-             resultSet = qExec.execSelect();
+            resultSet = qExec.execSelect();
             queryEnd = System.currentTimeMillis();
             try {
                 resultSet = ResultSetFactory.copyResults(resultSet);
@@ -183,7 +183,7 @@ public class OracleOntology extends JenaOntology {
         } finally {
             qExec.close();
             this.model.leaveCriticalSection();
-            this.commitTransaction();
+            this.commitTransaction(false);
         }
         logger.debug("Query took {} milliseconds to complete", queryEnd - queryStart);
         logger.debug("Copying the ResultSet took {} milliseconds", copyEnd - queryEnd);
@@ -233,7 +233,7 @@ public class OracleOntology extends JenaOntology {
             }
         } finally {
             this.model.leaveCriticalSection();
-            this.commitTransaction();
+            this.commitTransaction(false);
         }
 
         if (results.isEmpty()) {
@@ -242,7 +242,7 @@ public class OracleOntology extends JenaOntology {
         return Optional.of(results);
     }
 
-        /**
+    /**
      * Return the number of asserted triples in the ontology
      *
      * @return long - Number of triples in ontology

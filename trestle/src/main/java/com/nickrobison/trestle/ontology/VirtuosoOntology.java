@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.ontology;
 
-import org.apache.jena.graph.Graph;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -77,10 +76,13 @@ public class VirtuosoOntology extends JenaOntology {
         } finally {
             queryExecution.close();
             this.model.leaveCriticalSection();
-            this.commitTransaction();
+            this.commitTransaction(false);
         }
 
         return resultSet;
+    }
+
+    public void runInference() {
     }
 
     @Override
@@ -102,7 +104,7 @@ public class VirtuosoOntology extends JenaOntology {
     }
 
     @Override
-    public void commitDatasetTransaction() {
+    public void commitDatasetTransaction(boolean write) {
         virtModel.commit();
 //        this.model.leaveCriticalSection();
         logger.debug("Transaction closed and critical section left");

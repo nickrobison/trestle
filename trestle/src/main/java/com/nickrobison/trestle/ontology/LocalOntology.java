@@ -18,11 +18,9 @@ import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.lucene.document.FieldType;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 
 /**
  * Created by nrobison on 6/15/16.
@@ -159,15 +157,19 @@ public class LocalOntology extends JenaOntology {
         } finally {
             qExec.close();
             model.leaveCriticalSection();
-            this.commitTransaction();
+            this.commitTransaction(false);
         }
 
         return resultSet;
     }
 
+    public void runInference() {
+
+    }
+
     @Override
     public void close(boolean drop) {
-        this.commitTransaction();
+        this.commitTransaction(false);
         model.close();
         TDB.closedown();
         if (drop) {
@@ -196,7 +198,7 @@ public class LocalOntology extends JenaOntology {
     }
 
     @Override
-    public void commitDatasetTransaction() {
+    public void commitDatasetTransaction(boolean write) {
         luceneDataset.commit();
 //        this.model.leaveCriticalSection();
     }

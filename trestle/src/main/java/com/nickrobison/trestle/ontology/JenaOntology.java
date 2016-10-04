@@ -93,7 +93,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
             }
         } finally {
             model.leaveCriticalSection();
-            this.commitTransaction();
+            this.commitTransaction(false);
         }
         if (properties.isEmpty()) {
             logger.error("Individual {} has no properties {}", individual.getIRI(), property.getIRI());
@@ -124,7 +124,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
             logger.error("Not in transaction", e);
         } finally {
             this.model.leaveCriticalSection();
-            this.unlockAndCommit();
+            this.unlockAndCommit(true);
         }
 
     }
@@ -165,7 +165,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
             modelSubclass.addProperty(RDFS.subClassOf, superClassResource);
         } finally {
             this.model.leaveCriticalSection();
-            this.unlockAndCommit();
+            this.unlockAndCommit(true);
         }
     }
 
@@ -183,7 +183,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
             }
         } finally {
             this.model.leaveCriticalSection();
-            this.commitTransaction();
+            this.commitTransaction(false);
         }
     }
 
@@ -241,7 +241,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
             }
         } finally {
             this.model.leaveCriticalSection();
-            this.unlockAndCommit();
+            this.unlockAndCommit(true);
         }
     }
 
@@ -294,7 +294,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
             }
         } finally {
             this.model.leaveCriticalSection();
-            this.unlockAndCommit();
+            this.unlockAndCommit(true);
         }
     }
 
@@ -313,7 +313,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
             return model.containsResource(resource);
         } finally {
             this.model.leaveCriticalSection();
-            this.commitTransaction();
+            this.commitTransaction(false);
         }
     }
 
@@ -337,7 +337,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
         logger.info("Writing ontology to {}", path);
         model.write(fileOutputStream, "N3");
         logger.debug("Finished writing ontology to {}", path);
-        this.unlockAndCommit();
+        this.unlockAndCommit(true);
     }
 
     public OWLOntology getUnderlyingOntology() {
@@ -378,7 +378,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
             }
         } finally {
             this.model.leaveCriticalSection();
-            this.commitTransaction();
+            this.commitTransaction(false);
         }
 
         return instances;
@@ -451,7 +451,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
             }
         } finally {
             this.model.leaveCriticalSection();
-            this.commitTransaction();
+            this.commitTransaction(false);
         }
         return properties;
     }
@@ -493,7 +493,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
             }
         } finally {
             this.model.leaveCriticalSection();
-            this.commitTransaction();
+            this.commitTransaction(false);
         }
         return properties;
     }
@@ -507,7 +507,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
             modelResource = model.getResource(getFullIRIString(individual));
         } finally {
             this.model.leaveCriticalSection();
-            this.commitTransaction();
+            this.commitTransaction(false);
         }
         if (modelResource == null) {
             return Optional.empty();
@@ -552,7 +552,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
                 }
                 if (properties.isEmpty()) {
                     logger.error("Individual {} has no properties {}", individual.getIRI(), property.getIRI());
-                    this.commitTransaction();
+                    this.commitTransaction(false);
                     return Optional.empty();
                 }
             } finally {
@@ -560,7 +560,7 @@ public abstract class JenaOntology extends TransactingOntology implements ITrest
             }
         } finally {
             this.model.leaveCriticalSection();
-            this.commitTransaction();
+            this.commitTransaction(false);
         }
 
         return Optional.of(properties);

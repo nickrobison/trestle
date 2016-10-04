@@ -4,8 +4,9 @@ import com.nickrobison.trestle.transactions.TrestleTransaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by nrobison on 9/7/16.
@@ -13,9 +14,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 abstract class TransactingOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(TransactingOntology.class);
-    private final static OntologySecurityManager securityManager = new OntologySecurityManager();
+    private static final OntologySecurityManager securityManager = new OntologySecurityManager();
     protected final AtomicInteger openedTransactions = new AtomicInteger();
     protected final AtomicInteger committedTransactions = new AtomicInteger();
+    protected static boolean singleWriterOntology = false;
+    private final ReentrantLock writeLock = new ReentrantLock();
+    private final Condition writeCondition = writeLock.newCondition();
+    private final Object writerAvailable = new Object();
+//    private Boolean writerAvailable = true;
 
 //    Thread locals
     private ThreadLocal<Boolean> threadLocked = new ThreadLocal<Boolean>() {
@@ -32,12 +38,37 @@ abstract class TransactingOntology {
         }
     };
 
+    private ThreadLocal<Boolean> threadInWriteTransaction = new ThreadLocal<Boolean>() {
+        @Override
+        public Boolean initialValue() {
+            return false;
+        }
+    };
+
+    private ThreadLocal<Boolean> threadTransactionInherited = new ThreadLocal<Boolean>() {
+        @Override
+        public Boolean initialValue() {
+            return false;
+        }
+    };
+
     private ThreadLocal<TrestleTransaction> threadTransactionObject = new ThreadLocal<>();
 
-//    public TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject) {
-//        threadTransactionObject.set(transactionObject);
-//
-//    }
+    /**
+     * Takes an existing transaction object and inherits
+     * @param transactionObject
+     * @param write
+     * @return
+     */
+    public TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject, boolean write) {
+        logger.debug("Inheriting transaction from existing transaction object, setting flags, but not opening new transaction");
+//        this.openAndLock(write);
+        this.threadLocked.set(true);
+        this.threadInTransaction.set(true);
+        threadTransactionObject.set(transactionObject);
+        threadTransactionInherited.set(true);
+        return transactionObject;
+    }
 
     public TrestleTransaction createandOpenNewTransaction(boolean write) {
         if (threadTransactionObject.get() == null) {
@@ -47,7 +78,7 @@ abstract class TransactingOntology {
             threadTransactionObject.set(trestleTransaction);
             return trestleTransaction;
         } else {
-            logger.debug("Thread transaction owned, returning empty object");
+            logger.warn("Thread transaction owned, returning empty object");
             return new TrestleTransaction();
         }
     }
@@ -57,17 +88,22 @@ abstract class TransactingOntology {
      * @param transaction - Transaction object to try to commit current transaction with
      */
     public void returnAndCommitTransaction(TrestleTransaction transaction) {
-        final TrestleTransaction trestleTransaction = threadTransactionObject.get();
-        if (trestleTransaction != null) {
-            if (trestleTransaction.equals(transaction)) {
-                logger.debug("Owns transaction, committing");
-                threadTransactionObject.set(null);
-                this.unlockAndCommit();
+//        If the transaction state is inherited, don't commit
+        if (!threadTransactionInherited.get()) {
+            final TrestleTransaction trestleTransaction = threadTransactionObject.get();
+            if (trestleTransaction != null) {
+                if (trestleTransaction.equals(transaction)) {
+                    logger.debug("Owns transaction, committing");
+                    threadTransactionObject.set(null);
+                    this.unlockAndCommit(transaction.isWriteTransaction());
+                } else {
+                    logger.debug("Doesn't own transaction, continuing");
+                }
             } else {
-                logger.debug("Doesn't own transaction, continuing");
+                logger.warn("Null transaction object, how did that happen?");
             }
         } else {
-            logger.warn("Null transaction object, how did that happen?");
+            logger.debug("Transaction state is inherited, continuing");
         }
     }
 
@@ -102,20 +138,21 @@ abstract class TransactingOntology {
                 logger.debug("Transaction opened and locked");
             }
         } else {
-            logger.warn("Thread transaction owned by transaction object, not opening or locking");
+            logger.debug("Thread transaction owned by transaction object, not opening or locking");
         }
     }
 
     /**
      * Unlock the transaction and commit it
+     * @param write - Is this a write transaction?
      */
-    public void unlockAndCommit() {
+    public void unlockAndCommit(boolean write) {
 
         if (threadTransactionObject.get() == null) {
             logger.debug("Unlocking and closing");
             unlock();
             logger.debug("Trying to commit transaction");
-            commitTransaction();
+            commitTransaction(write);
             logger.debug("Committed transaction");
         } else {
             logger.debug("Thread owned by transaction object, not unlocking or committing");
@@ -126,11 +163,37 @@ abstract class TransactingOntology {
 
         if (!this.threadLocked.get()) {
             if (!this.threadInTransaction.get()) {
+
                 logger.debug("Trying to open transaction");
+//                If it's a writable transaction, then we need to wait to be free
+//                if (write) {
+//                    writeLock.
+//                    synchronized (writerAvailable) {
+//                        try {
+//                            logger.debug("Thread {} waiting for write lock", Thread.currentThread().getName());
+//                            writerAvailable.wait();
+//                        } catch (InterruptedException e) {
+//                            logger.error("Opening transaction interrupted", e);
+//                        }
+//                    }
+//                }
+//                    synchronized (writerAvailable) {
+////                        this.writeLock.lock();
+//                        this.writerAvailable = false;
+//                        this.openDatasetTransaction(true);
+//                        this.threadInWriteTransaction.set(true);
+//                    }
+//                } else {
+//                    this.openDatasetTransaction(false);
+//                }
+                logger.debug("Thread {} taking the lock", Thread.currentThread().getName());
                 this.openDatasetTransaction(write);
                 logger.debug("Opened transaction");
                 this.threadInTransaction.set(true);
                 this.openedTransactions.incrementAndGet();
+                if (write) {
+                    this.threadInWriteTransaction.set(true);
+                }
             } else {
                 logger.debug("Thread unlocked, but already in a transaction");
             }
@@ -139,19 +202,34 @@ abstract class TransactingOntology {
         }
     }
 
-    public void commitTransaction() {
+    public void commitTransaction(boolean write) {
         if (!this.threadLocked.get()) {
             if (this.threadInTransaction.get()) {
                 logger.debug("Trying to commit transaction");
-                this.commitDatasetTransaction();
+                this.commitDatasetTransaction(write);
+//                if (this.threadInWriteTransaction.get()) {
+//                    logger.debug("In write transaction");
+//                    synchronized (writerAvailable) {
+//                        writerAvailable.notifyAll();
+//                        logger.debug("Thread {} releasing the write lock", Thread.currentThread().getName());
+//                    }
+//                }
+//                if (this.threadInWriteTransaction.get()) {
+//                    this.commitDatasetTransaction();
+//                    this.writeLock.unlock();
+//                    this.threadInWriteTransaction.set(false);
+//                } else {
+//                    this.commitDatasetTransaction();
+//                }
                 logger.debug("Committed dataset transaction");
                 this.threadInTransaction.set(false);
+                this.threadTransactionInherited.set(false);
                 this.committedTransactions.incrementAndGet();
             } else {
                 logger.debug("Thread unlocked, but not in transaction");
             }
         } else {
-            logger.debug("Thread locked, not commiting");
+            logger.debug("Thread locked, not committing");
         }
     }
 
@@ -166,6 +244,6 @@ abstract class TransactingOntology {
 
     public abstract void openDatasetTransaction(boolean write);
 
-    public abstract void commitDatasetTransaction();
+    public abstract void commitDatasetTransaction(boolean write);
 
 }
