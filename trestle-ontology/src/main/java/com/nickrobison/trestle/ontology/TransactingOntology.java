@@ -49,11 +49,11 @@ abstract class TransactingOntology {
     private ThreadLocal<TrestleTransaction> threadTransactionObject = new ThreadLocal<>();
 
     /**
-     * Takes an existing transaction object and inherits
+     * Takes an existing transaction object and inherits from it
      *
-     * @param transactionObject
-     * @param write
-     * @return
+     * @param transactionObject - Transaction Object to take ownership of thread transaction
+     * @param write - Writable transaction?
+     * @return - Transaction Object pass in as argument
      */
     public TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject, boolean write) {
         logger.debug("Inheriting transaction from existing transaction object, setting flags, but not opening new transaction");

@@ -106,8 +106,6 @@ public class OracleOntology extends JenaOntology {
     /**
      * Run the inference engine and rebuild the indexes.
      * The inference engine is only run manually, via this method.
-     *
-     * @throws SQLException
      */
     public void runInference() {
 

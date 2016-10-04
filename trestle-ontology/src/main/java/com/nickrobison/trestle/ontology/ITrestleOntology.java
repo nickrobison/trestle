@@ -96,7 +96,7 @@ public interface ITrestleOntology {
      * @param dataPropertyIRI - IRI of OWLDataProperty to associate with individual
      * @param owlLiteralString - String of raw data property value
      * @param owlLiteralIRI - IRI of OWLDatatype of raw property value
-     * @throws MissingOntologyEntity
+     * @throws MissingOntologyEntity - Throws if individual doesn't exist
      */
     void writeIndividualDataProperty(IRI individualIRI, IRI dataPropertyIRI, String owlLiteralString, IRI owlLiteralIRI) throws MissingOntologyEntity;
 
@@ -106,7 +106,7 @@ public interface ITrestleOntology {
      * @param individual - OWLNameIndividual to associate property
      * @param property   - OWLDataProperty to associate with individual
      * @param value      - OWLLiteral value of data property
-     * @throws MissingOntologyEntity
+     * @throws MissingOntologyEntity - Throws if individual doesn't exist
      */
     void writeIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property, OWLLiteral value) throws MissingOntologyEntity;
 
@@ -125,6 +125,7 @@ public interface ITrestleOntology {
      * @param owlSubject - OWLNamedIndividual subject
      * @param propertyIRI - IRI of OWLObjectProperty
      * @param owlObject - OWLNamedIndividual object
+     * @throws MissingOntologyEntity - Throws if individual doesn't exist
      */
     void writeIndividualObjectProperty(OWLNamedIndividual owlSubject, IRI propertyIRI, OWLNamedIndividual owlObject) throws MissingOntologyEntity;
 
@@ -133,13 +134,14 @@ public interface ITrestleOntology {
      * @param owlSubject - IRI of OWLNamedIndividual subject
      * @param owlProperty - IRI of OWLObjectProperty
      * @param owlObject - IRI of OWLNamedIndividual object
+     * @throws MissingOntologyEntity - Throws if individual doesn't exist
      */
     void writeIndividualObjectProperty(IRI owlSubject, IRI owlProperty, IRI owlObject) throws MissingOntologyEntity;
 
     /**
      * Create object association between two OWLNamedIndividuals
      * @param property - OWLObjectPropertyAssertionAxiom defining relationship between the two objects
-     * @throws MissingOntologyEntity
+     * @throws MissingOntologyEntity - Throws if individual doesn't exist
      */
     void writeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property) throws MissingOntologyEntity;
 
@@ -162,7 +164,7 @@ public interface ITrestleOntology {
      * Write underlying ontology to disk
      * @param path - IRI of path to write ontology
      * @param validate - Validate ontology before writing?
-     * @throws OWLOntologyStorageException
+     * @throws OWLOntologyStorageException - Throws if it can't write the ontology
      */
     void writeOntology(IRI path, boolean validate) throws OWLOntologyStorageException;
 

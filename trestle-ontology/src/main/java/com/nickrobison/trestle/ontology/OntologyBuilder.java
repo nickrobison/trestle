@@ -88,7 +88,7 @@ public class OntologyBuilder {
     /**
      * Builds and returns the correct ontology (either local or database backed)
      * @return - ITrestleOntology for the correct underlying ontology configuration
-     * @throws OWLOntologyCreationException
+     * @throws OWLOntologyCreationException - Throws if it can't create the ontology
      */
 //    TODO(nrobison): Catch the ontology builder exception and return an empty optional instead
     public Optional<ITrestleOntology> build() throws OWLOntologyCreationException {
