@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>gaulintegrator</artifactId>
+    <artifactId>trestle-integrations</artifactId>
 
     <dependencies>
         <dependency>

@@ -9,7 +9,7 @@
     <version>0.4-SNAPSHOT</version>
     <modules>
         <module>trestle-reasoner</module>
-        <module>gaulintegrator</module>
+        <module>trestle-integrations</module>
         <module>trestle-exporter</module>
         <module>trestle-raster</module>
         <module>trestle-common</module>
