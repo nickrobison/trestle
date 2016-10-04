@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.nickrobison</groupId>
-    <artifactId>spatial-difference</artifactId>
+    <artifactId>trestle</artifactId>
     <version>0.4-SNAPSHOT</version>
     <modules>
         <module>trestle-reasoner</module>
