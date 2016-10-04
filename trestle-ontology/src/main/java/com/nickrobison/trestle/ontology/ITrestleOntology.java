@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
+import com.nickrobison.trestle.transactions.TrestleTransaction;
 import org.apache.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import org.semanticweb.owlapi.model.*;
@@ -337,6 +338,24 @@ public interface ITrestleOntology {
 //     * Open a transaction and lock it, for lots of bulk action
 //     */
 //    void lock();
+
+    /**
+     * Takes an existing transaction object and inherits from it
+     *
+     * @param transactionObject - Transaction Object to take ownership of thread transaction
+     * @param write - Writable transaction?
+     * @return - Transaction Object pass in as argument
+     */
+    TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject, boolean write);
+
+    TrestleTransaction createandOpenNewTransaction(boolean write);
+
+    /**
+     * Try to commit the current thread transaction, if the object owns the currently open transaction
+     *
+     * @param transaction - Transaction object to try to commit current transaction with
+     */
+    void returnAndCommitTransaction(TrestleTransaction transaction);
 
     /**
      * Open a transaction and lock it

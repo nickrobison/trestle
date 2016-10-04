@@ -74,6 +74,19 @@
             <version>4.1</version>
             <optional>true</optional>
         </dependency>
+        <!--Sesame dependencies-->
+        <dependency>
+            <groupId>org.openrdf.sesame</groupId>
+            <artifactId>sesame-runtime</artifactId>
+            <version>4.1.2</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>com.ontotext.graphdb</groupId>
+            <artifactId>graphdb-free-runtime</artifactId>
+            <version>7.1.0</version>
+            <optional>true</optional>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

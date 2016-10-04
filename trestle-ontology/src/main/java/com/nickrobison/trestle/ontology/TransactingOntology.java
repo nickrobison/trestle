@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Created by nrobison on 9/7/16.
  */
-abstract class TransactingOntology {
+abstract class TransactingOntology implements ITrestleOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(TransactingOntology.class);
     private static final OntologySecurityManager securityManager = new OntologySecurityManager();
@@ -48,13 +48,7 @@ abstract class TransactingOntology {
 
     private ThreadLocal<TrestleTransaction> threadTransactionObject = new ThreadLocal<>();
 
-    /**
-     * Takes an existing transaction object and inherits from it
-     *
-     * @param transactionObject - Transaction Object to take ownership of thread transaction
-     * @param write - Writable transaction?
-     * @return - Transaction Object pass in as argument
-     */
+    @Override
     public TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject, boolean write) {
         logger.debug("Inheriting transaction from existing transaction object, setting flags, but not opening new transaction");
 //        this.openAndLock(write);
@@ -65,6 +59,7 @@ abstract class TransactingOntology {
         return transactionObject;
     }
 
+    @Override
     public TrestleTransaction createandOpenNewTransaction(boolean write) {
         if (threadTransactionObject.get() == null) {
             logger.debug("Unowned transaction, opening a new one");
@@ -78,11 +73,7 @@ abstract class TransactingOntology {
         }
     }
 
-    /**
-     * Try to commit the current thread transaction, if the object owns the currently open transaction
-     *
-     * @param transaction - Transaction object to try to commit current transaction with
-     */
+    @Override
     public void returnAndCommitTransaction(TrestleTransaction transaction) {
 //        If the transaction state is inherited, don't commit
         if (!threadTransactionInherited.get()) {

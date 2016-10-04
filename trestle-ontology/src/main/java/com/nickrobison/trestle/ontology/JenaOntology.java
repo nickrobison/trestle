@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * Created by nrobison on 7/22/16.
  */
 @ThreadSafe
-public abstract class JenaOntology extends TransactingOntology implements ITrestleOntology {
+public abstract class JenaOntology extends TransactingOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(JenaOntology.class);
 

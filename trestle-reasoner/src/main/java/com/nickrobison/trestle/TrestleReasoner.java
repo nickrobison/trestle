@@ -65,8 +65,7 @@ public class TrestleReasoner {
     private static final Logger logger = LoggerFactory.getLogger(TrestleReasoner.class);
     public static final String DEFAULTNAME = "trestle";
 
-//    FIXME(nrobison): This should be an interface, with the ability to do transactions
-    private final JenaOntology ontology;
+    private final ITrestleOntology ontology;
     private final Map<OWLClass, Class<?>> registeredClasses = new HashMap<>();
     private final OWLDataFactory df;
     //    Seems gross?
@@ -139,18 +138,15 @@ public class TrestleReasoner {
                     builder.password);
         }
 
-//        FIXME(nrobison): Back to interface
-        ontology = (JenaOntology) ontologyBuilder.build().orElseThrow(() -> new RuntimeException("Cannot build ontology"));
+        ontology = ontologyBuilder.build().orElseThrow(() -> new RuntimeException("Cannot build ontology"));
         logger.debug("Ontology connected");
         if (builder.initialize) {
             logger.info("Initializing ontology");
             this.ontology.initializeOntology();
         } else {
 //            If we're not starting fresh, then we might need to update the indexes and inferencer
-            if (ontology instanceof OracleOntology) {
-                logger.info("Updating Oracle inference model");
-                ((OracleOntology) ontology).runInference();
-            }
+                logger.info("Updating inference model");
+               ontology.runInference();
         }
 
 //        Are we a caching reasoner?
