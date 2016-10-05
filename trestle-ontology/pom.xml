@@ -36,56 +36,34 @@
         <dependency>
             <groupId>org.apache.jena</groupId>
             <artifactId>jena-tdb</artifactId>
-            <version>${jena.version}</version>
-            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.apache.jena</groupId>
             <artifactId>jena-spatial</artifactId>
-            <version>${jena.version}</version>
-            <optional>true</optional>
         </dependency>
         <!--Oracle Dependencies-->
         <dependency>
             <groupId>com.oracle</groupId>
             <artifactId>ojdbc7</artifactId>
-            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>oracle.spatial.rdf.client</groupId>
             <artifactId>sdordf</artifactId>
-            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>oracle.spatial.rdf.client</groupId>
             <artifactId>sdordfclient</artifactId>
-            <optional>true</optional>
         </dependency>
         <!--Virtuoso Dependencies-->
         <dependency>
             <groupId>com.openlink.virtuoso</groupId>
             <artifactId>jena3</artifactId>
             <version>1.0</version>
-            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.openlink.virtuoso</groupId>
             <artifactId>virtjdbc</artifactId>
             <version>4.1</version>
-            <optional>true</optional>
-        </dependency>
-        <!--Sesame dependencies-->
-        <dependency>
-            <groupId>org.openrdf.sesame</groupId>
-            <artifactId>sesame-runtime</artifactId>
-            <version>4.1.2</version>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>com.ontotext.graphdb</groupId>
-            <artifactId>graphdb-free-runtime</artifactId>
-            <version>7.1.0</version>
-            <optional>true</optional>
         </dependency>
     </dependencies>
     <build>
