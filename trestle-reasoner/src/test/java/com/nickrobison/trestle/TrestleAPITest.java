@@ -153,7 +153,7 @@ public class TrestleAPITest {
         classObjects.add(esriPolygonTest);
         classObjects.add(offsetDateTimeTest);
 
-        classObjects.stream().forEach(object -> {
+        classObjects.parallelStream().forEach(object -> {
             final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(object);
             try {
                 reasoner.writeObjectAsFact(object);
@@ -174,7 +174,11 @@ public class TrestleAPITest {
                 assertEquals(esriPolygonTest, returnedObject, "Should be equal");
             }
         });
-//        reasoner.writeOntology(new File("/Users/nrobison/Desktop/trestle_test.owl").toURI(), false);
+
+//        Now try to remove it
+        reasoner.removeIndividual(classObjects.toArray(new Object[classObjects.size()]));
+
+        reasoner.writeOntology(new File("/Users/nrobison/Desktop/trestle_test.owl").toURI(), false);
 
 //        Geotools
 //

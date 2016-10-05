@@ -147,6 +147,12 @@ public interface ITrestleOntology {
     void writeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property) throws MissingOntologyEntity;
 
     /**
+     * Removes a given OWL individual and all related assertions
+     * @param individual - OWLNamedIndividual to remove
+     */
+    void deleteIndividual(OWLNamedIndividual individual);
+
+    /**
      * Check whether the ontology contains an individual with the given IRI
      * @param individualIRI - IRI of individual to check
      * @return - boolean, individual exists?

@@ -299,6 +299,28 @@ public abstract class JenaOntology extends TransactingOntology {
     }
 
     @Override
+    public void deleteIndividual(OWLNamedIndividual individual) {
+        this.openTransaction(true);
+        this.model.enterCriticalSection(Lock.WRITE);
+        try {
+            final Resource modelResource = this.model.getResource(getFullIRIString(individual));
+            modelResource.removeProperties();
+//            final StmtIterator stmtIterator = modelResource.listProperties();
+//                try {
+//                    logger.debug("Removing statements for {}", individual.getIRI());
+//                    final List<Statement> statements = stmtIterator.toList();
+//                    model.remove(statements);
+//                } finally {
+//                    stmtIterator.close();
+//                }
+//                Now, remove the individual
+        } finally {
+            this.model.leaveCriticalSection();
+            this.commitTransaction(true);
+        }
+    }
+
+    @Override
     public boolean containsResource(IRI individualIRI) {
         return containsResource(df.getOWLNamedIndividual(individualIRI));
     }
@@ -335,7 +357,9 @@ public abstract class JenaOntology extends TransactingOntology {
             return;
         }
         logger.info("Writing ontology to {}", path);
+        this.model.enterCriticalSection(Lock.READ);
         model.write(fileOutputStream, "N3");
+        this.model.leaveCriticalSection();
         logger.debug("Finished writing ontology to {}", path);
         this.unlockAndCommit(true);
     }

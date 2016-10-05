@@ -725,6 +725,7 @@ public class TrestleReasoner {
     @SuppressWarnings("return.type.incompatible")
     public <T> Optional<Map<@NonNull T, Double>> getRelatedObjects(Class<@NonNull T> clazz, String objectID, double cutoff) {
 
+
         final OWLClass owlClass = ClassParser.GetObjectClass(clazz);
 
         final String relationQuery = qb.buildRelationQuery(df.getOWLNamedIndividual(IRI.create(PREFIX, objectID)), owlClass, cutoff);
@@ -751,6 +752,43 @@ public class TrestleReasoner {
         }
 
         return Optional.of(relatedObjects);
+    }
+
+    /**
+     * Remove individuals from the ontology
+     * @param inputObject - Individual to remove
+     * @param <T> - Type of individual to remove
+     * @return
+     */
+    public <T> void removeIndividual(@NonNull T... inputObject) {
+        T[] objects = inputObject;
+        final List<CompletableFuture<Void>> completableFutures = Arrays.stream(objects)
+                .map(object -> CompletableFuture.supplyAsync(() -> ClassParser.GetIndividual(object)))
+                .map(idFuture -> idFuture.thenApply(ontology::getAllObjectPropertiesForIndividual))
+                .map(propertyFutures -> propertyFutures.thenCompose(this::removeRelatedObjects))
+                .map(removedFuture -> removedFuture.thenAccept(ontology::deleteIndividual))
+                .collect(Collectors.toList());
+        final CompletableFuture<List<Void>> listCompletableFuture = sequenceCompletableFutures(completableFutures);
+        try {
+            listCompletableFuture.get();
+        } catch (InterruptedException e) {
+            logger.error("Delete interrupted", e);
+        } catch (ExecutionException e) {
+            logger.error("Execution error", e);
+        }
+    }
+
+    /**
+     * Given a set of OWL Objects, remove them and return the subject as an OWLNamedIndividual
+     * @param objectProperties - Set of OWLObjectPropertyAssertionAxioms to remove the object assertions from the ontology
+     * @return - OWLNamedIndividual representing the subject of the object assertions
+     */
+    private CompletableFuture<OWLNamedIndividual> removeRelatedObjects(Set<OWLObjectPropertyAssertionAxiom> objectProperties) {
+        return CompletableFuture.supplyAsync(() -> {
+            objectProperties.forEach(object -> ontology.deleteIndividual(object.getObject().asOWLNamedIndividual()));
+            return objectProperties.stream().findAny().orElseThrow(RuntimeException::new).getSubject().asOWLNamedIndividual();
+        });
+
     }
 
     public void registerClass(Class inputClass) throws TrestleClassException {
