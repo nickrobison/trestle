@@ -766,7 +766,7 @@ public class TrestleReasoner {
                 .map(object -> CompletableFuture.supplyAsync(() -> ClassParser.GetIndividual(object)))
                 .map(idFuture -> idFuture.thenApply(ontology::getAllObjectPropertiesForIndividual))
                 .map(propertyFutures -> propertyFutures.thenCompose(this::removeRelatedObjects))
-                .map(removedFuture -> removedFuture.thenAccept(ontology::removeIndividual))
+                .map(removedFuture -> removedFuture.thenAccept(ontology::deleteIndividual))
                 .collect(Collectors.toList());
         final CompletableFuture<List<Void>> listCompletableFuture = sequenceCompletableFutures(completableFutures);
         try {
@@ -785,24 +785,7 @@ public class TrestleReasoner {
      */
     private CompletableFuture<OWLNamedIndividual> removeRelatedObjects(Set<OWLObjectPropertyAssertionAxiom> objectProperties) {
         return CompletableFuture.supplyAsync(() -> {
-//            Remove the facts
-            final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
-            objectProperties
-                    .stream()
-                    .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(hasFactIRI))
-                    .forEach(object -> ontology.removeIndividual(object.getObject().asOWLNamedIndividual()));
-//            And the temporals, but make sure the temporal doesn't have any other dependencies
-            objectProperties
-                    .stream()
-                    .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(hasTemporalIRI))
-                    .map(object -> ontology.getIndividualObjectProperty(object.getObject().asOWLNamedIndividual(), temporalOfIRI))
-                    .filter(Optional::isPresent)
-                    .filter(properties -> properties.orElseThrow(RuntimeException::new).size() <= 1)
-                    .map(properties -> properties.orElseThrow(RuntimeException::new).stream().findAny())
-                    .filter(Optional::isPresent)
-                    .forEach(property -> ontology.removeIndividual(property.orElseThrow(RuntimeException::new).getObject().asOWLNamedIndividual()));
-
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
+            objectProperties.forEach(object -> ontology.deleteIndividual(object.getObject().asOWLNamedIndividual()));
             return objectProperties.stream().findAny().orElseThrow(RuntimeException::new).getSubject().asOWLNamedIndividual();
         });
 
