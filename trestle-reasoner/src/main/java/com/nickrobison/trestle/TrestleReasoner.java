@@ -240,6 +240,7 @@ public class TrestleReasoner {
         writeObject(inputObject, TemporalScope.VALID);
     }
 
+    @SuppressWarnings("unchecked")
     private CompletableFuture<Void> writeObjectAsync(Object inputObject, TemporalScope scope) {
 
         return CompletableFuture.runAsync(() -> {
@@ -252,6 +253,9 @@ public class TrestleReasoner {
             }
 
             final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(inputObject);
+
+//            Create the database time object
+            final IntervalTemporal databaseTemporal = TemporalObjectBuilder.valid().from(OffsetDateTime.now()).withRelations(owlNamedIndividual);
 
 //        Write the class
             final OWLClass owlClass = ClassParser.GetObjectClass(inputObject);
@@ -266,12 +270,20 @@ public class TrestleReasoner {
             if (temporalObjects.isPresent()) {
                 temporalObjects.get().forEach(temporal -> {
                     try {
-                        writeTemporalWithAssociation(temporal, owlNamedIndividual, scope);
+                        writeTemporalWithAssociation(temporal, owlNamedIndividual, scope, null);
                     } catch (MissingOntologyEntity e) {
                         logger.error("Individual {} missing in ontology", e.getIndividual(), e);
                         throw new CompletionException(e);
                     }
                 });
+            }
+
+//            Write the database temporal
+            try {
+                writeTemporalWithAssociation(databaseTemporal, owlNamedIndividual, scope, databaseTimeIRI);
+            } catch (MissingOntologyEntity e) {
+                logger.error("Individual {} missing in ontology", e.getIndividual(), e);
+                throw new CompletionException(e);
             }
 //            });
 
@@ -280,7 +292,7 @@ public class TrestleReasoner {
             final CompletableFuture<Void> propertiesFutures = CompletableFuture.runAsync(() -> {
                 if (dataProperties.isPresent()) {
                     final TrestleTransaction threadTransaction = ontology.createandOpenNewTransaction(trestleTransaction, true);
-                    writeDataPropertyAsObject(owlNamedIndividual, dataProperties.get(), temporalObjects.get().get(0));
+                    writeDataPropertyAsObject(owlNamedIndividual, dataProperties.get(), temporalObjects.get().get(0), databaseTemporal);
                     ontology.returnAndCommitTransaction(threadTransaction);
 //                    dataProperties.get().stream().map(property -> writeDataPropertyAsObject(owlNamedIndividual, property, temporalObjects.get().get(0)));
 //                    dataProperties.get().forEach(property -> {
@@ -309,12 +321,12 @@ public class TrestleReasoner {
 
     /**
      * Writes a data property as an individual object, with relations back to the root dataset individual
-     *
-     * @param rootIndividual - OWLNamedIndividual of the dataset individual
+     *  @param rootIndividual - OWLNamedIndividual of the dataset individual
      * @param properties     - List of OWLDataPropertyAssertionAxioms to write as objects
      * @param temporal       - Temporal to associate with data property individual
+     * @param databaseTemporal - Temporal repsenting database time
      */
-    private void writeDataPropertyAsObject(OWLNamedIndividual rootIndividual, List<OWLDataPropertyAssertionAxiom> properties, TemporalObject temporal) {
+    private void writeDataPropertyAsObject(OWLNamedIndividual rootIndividual, List<OWLDataPropertyAssertionAxiom> properties, TemporalObject temporal, TemporalObject databaseTemporal) {
         final long now = Instant.now().getEpochSecond();
         final OWLClass factClass = df.getOWLClass(factClassIRI);
         properties.forEach(property -> {
@@ -330,6 +342,8 @@ public class TrestleReasoner {
 //                Write the relation back to the root individual
                 ontology.writeIndividualObjectProperty(propertyIndividual, factOfIRI, rootIndividual);
 //                TODO(nrobison): Write the DB access time
+//                Write the database time
+                ontology.writeIndividualObjectProperty(propertyIndividual, databaseTimeIRI, df.getOWLNamedIndividual(databaseTemporal.getIDAsIRI()));
             } catch (MissingOntologyEntity missingOntologyEntity) {
                 logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
             }
@@ -807,6 +821,17 @@ public class TrestleReasoner {
                     .filter(Optional::isPresent)
                     .forEach(property -> ontology.removeIndividual(property.orElseThrow(RuntimeException::new).getObject().asOWLNamedIndividual()));
 
+//            And the database time object
+            objectProperties
+                    .stream()
+                    .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(databaseTimeIRI))
+                    .map(object -> ontology.getIndividualObjectProperty(object.getObject().asOWLNamedIndividual(), databaseTimeOfIRI))
+                    .filter(Optional::isPresent)
+                    .filter(properties -> properties.orElseThrow(RuntimeException::new).size() <= 1)
+                    .map(properties -> properties.orElseThrow(RuntimeException::new).stream().findAny())
+                    .filter(Optional::isPresent)
+                    .forEach(property -> ontology.removeIndividual(property.orElseThrow(RuntimeException::new).getObject().asOWLNamedIndividual()));
+
             this.ontology.returnAndCommitTransaction(trestleTransaction);
             return objectProperties.stream().findAny().orElseThrow(RuntimeException::new).getSubject().asOWLNamedIndividual();
         });
@@ -818,10 +843,10 @@ public class TrestleReasoner {
         this.registeredClasses.put(ClassParser.GetObjectClass(inputClass), inputClass);
     }
 
-    private void writeTemporalWithAssociation(TemporalObject temporal, OWLNamedIndividual individual, @Nullable TemporalScope overrideTemporalScope) throws MissingOntologyEntity {
+    private void writeTemporalWithAssociation(TemporalObject temporal, OWLNamedIndividual individual, @Nullable TemporalScope overrideTemporalScope, @Nullable IRI overrideTemporalAssociation) throws MissingOntologyEntity {
 //        Write the object
         final IRI temporalIRI = temporal.getIDAsIRI();
-        ontology.createIndividual(temporalIRI, StaticIRI.temporalClassIRI);
+        ontology.createIndividual(temporalIRI, temporalClassIRI);
         TemporalScope scope = temporal.getScope();
         TemporalType type = temporal.getType();
 
@@ -884,10 +909,17 @@ public class TrestleReasoner {
         }
 
 //        Associate with individual
-        ontology.writeIndividualObjectProperty(
-                individual.getIRI(),
-                StaticIRI.hasTemporalIRI,
-                temporalIRI);
+        if (overrideTemporalAssociation == null ) {
+            ontology.writeIndividualObjectProperty(
+                    individual.getIRI(),
+                    StaticIRI.hasTemporalIRI,
+                    temporalIRI);
+        } else {
+            ontology.writeIndividualObjectProperty(
+                    individual.getIRI(),
+                    overrideTemporalAssociation,
+                    temporalIRI);
+        }
     }
 
     /**

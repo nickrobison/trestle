@@ -25,6 +25,8 @@ public class StaticIRI {
     public static final IRI validTimeOfIRI = IRI.create(PREFIX, "valid_time_of");
     public static final IRI hasRelationIRI = IRI.create(PREFIX, "has_relation");
     public static final IRI relationOfIRI = IRI.create(PREFIX, "relation_of");
+    public static final IRI databaseTimeIRI = IRI.create(PREFIX, "database_time");
+    public static final IRI databaseTimeOfIRI = IRI.create(PREFIX, "database_time_of");
 //    Classes
     public static final IRI conceptRelationIRI = IRI.create(PREFIX, "Concept_Relation");
     public static final IRI datasetClassIRI = IRI.create(PREFIX, "Dataset");
