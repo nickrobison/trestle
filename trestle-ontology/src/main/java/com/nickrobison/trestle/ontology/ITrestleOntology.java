@@ -150,7 +150,7 @@ public interface ITrestleOntology {
      * Removes a given OWL individual and all related assertions
      * @param individual - OWLNamedIndividual to remove
      */
-    void deleteIndividual(OWLNamedIndividual individual);
+    void removeIndividual(OWLNamedIndividual individual);
 
     /**
      * Check whether the ontology contains an individual with the given IRI

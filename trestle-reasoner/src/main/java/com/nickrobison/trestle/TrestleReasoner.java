@@ -145,8 +145,8 @@ public class TrestleReasoner {
             this.ontology.initializeOntology();
         } else {
 //            If we're not starting fresh, then we might need to update the indexes and inferencer
-                logger.info("Updating inference model");
-               ontology.runInference();
+            logger.info("Updating inference model");
+            ontology.runInference();
         }
 
 //        Are we a caching reasoner?
@@ -262,17 +262,17 @@ public class TrestleReasoner {
 //            this.ontology.commitTransaction();
 //        Write the temporal
 //            final CompletableFuture<Void> temporalFutures = CompletableFuture.runAsync(() -> {
-                final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(inputObject);
-                if (temporalObjects.isPresent()) {
-                    temporalObjects.get().forEach(temporal -> {
-                        try {
-                            writeTemporalWithAssociation(temporal, owlNamedIndividual, scope);
-                        } catch (MissingOntologyEntity e) {
-                            logger.error("Individual {} missing in ontology", e.getIndividual(), e);
-                            throw new CompletionException(e);
-                        }
-                    });
-                }
+            final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(inputObject);
+            if (temporalObjects.isPresent()) {
+                temporalObjects.get().forEach(temporal -> {
+                    try {
+                        writeTemporalWithAssociation(temporal, owlNamedIndividual, scope);
+                    } catch (MissingOntologyEntity e) {
+                        logger.error("Individual {} missing in ontology", e.getIndividual(), e);
+                        throw new CompletionException(e);
+                    }
+                });
+            }
 //            });
 
 //        Write the data properties
@@ -309,9 +309,10 @@ public class TrestleReasoner {
 
     /**
      * Writes a data property as an individual object, with relations back to the root dataset individual
+     *
      * @param rootIndividual - OWLNamedIndividual of the dataset individual
-     * @param properties - List of OWLDataPropertyAssertionAxioms to write as objects
-     * @param temporal - Temporal to associate with data property individual
+     * @param properties     - List of OWLDataPropertyAssertionAxioms to write as objects
+     * @param temporal       - Temporal to associate with data property individual
      */
     private void writeDataPropertyAsObject(OWLNamedIndividual rootIndividual, List<OWLDataPropertyAssertionAxiom> properties, TemporalObject temporal) {
         final long now = Instant.now().getEpochSecond();
@@ -335,7 +336,7 @@ public class TrestleReasoner {
         });
     }
 
-    void writeObject(Object inputObject, TemporalScope scope)  {
+    void writeObject(Object inputObject, TemporalScope scope) {
         final CompletableFuture<Void> voidCompletableFuture = writeObjectAsync(inputObject, scope);
         try {
             voidCompletableFuture.get();
@@ -756,8 +757,9 @@ public class TrestleReasoner {
 
     /**
      * Remove individuals from the ontology
+     *
      * @param inputObject - Individual to remove
-     * @param <T> - Type of individual to remove
+     * @param <T>         - Type of individual to remove
      * @return
      */
     public <T> void removeIndividual(@NonNull T... inputObject) {
@@ -766,7 +768,7 @@ public class TrestleReasoner {
                 .map(object -> CompletableFuture.supplyAsync(() -> ClassParser.GetIndividual(object)))
                 .map(idFuture -> idFuture.thenApply(ontology::getAllObjectPropertiesForIndividual))
                 .map(propertyFutures -> propertyFutures.thenCompose(this::removeRelatedObjects))
-                .map(removedFuture -> removedFuture.thenAccept(ontology::deleteIndividual))
+                .map(removedFuture -> removedFuture.thenAccept(ontology::removeIndividual))
                 .collect(Collectors.toList());
         final CompletableFuture<List<Void>> listCompletableFuture = sequenceCompletableFutures(completableFutures);
         try {
@@ -780,12 +782,31 @@ public class TrestleReasoner {
 
     /**
      * Given a set of OWL Objects, remove them and return the subject as an OWLNamedIndividual
+     *
      * @param objectProperties - Set of OWLObjectPropertyAssertionAxioms to remove the object assertions from the ontology
      * @return - OWLNamedIndividual representing the subject of the object assertions
      */
     private CompletableFuture<OWLNamedIndividual> removeRelatedObjects(Set<OWLObjectPropertyAssertionAxiom> objectProperties) {
         return CompletableFuture.supplyAsync(() -> {
-            objectProperties.forEach(object -> ontology.deleteIndividual(object.getObject().asOWLNamedIndividual()));
+
+            //            Remove the facts
+            final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
+            objectProperties
+                    .stream()
+                    .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(hasFactIRI))
+                    .forEach(object -> ontology.removeIndividual(object.getObject().asOWLNamedIndividual()));
+//            And the temporals, but make sure the temporal doesn't have any other dependencies
+            objectProperties
+                    .stream()
+                    .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(hasTemporalIRI))
+                    .map(object -> ontology.getIndividualObjectProperty(object.getObject().asOWLNamedIndividual(), temporalOfIRI))
+                    .filter(Optional::isPresent)
+                    .filter(properties -> properties.orElseThrow(RuntimeException::new).size() <= 1)
+                    .map(properties -> properties.orElseThrow(RuntimeException::new).stream().findAny())
+                    .filter(Optional::isPresent)
+                    .forEach(property -> ontology.removeIndividual(property.orElseThrow(RuntimeException::new).getObject().asOWLNamedIndividual()));
+
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
             return objectProperties.stream().findAny().orElseThrow(RuntimeException::new).getSubject().asOWLNamedIndividual();
         });
 
@@ -871,6 +892,7 @@ public class TrestleReasoner {
     /**
      * Get a list of currently registered datasets
      * Only returns datasets currently registered with the
+     *
      * @return
      */
     public Optional<Set<String>> getAvailableDatasets() {
@@ -879,7 +901,7 @@ public class TrestleReasoner {
                     .keySet()
                     .stream()
                     .filter(individual -> checkExists(individual.getIRI()))
-                    .map(individual ->  individual.getIRI().getShortForm())
+                    .map(individual -> individual.getIRI().getShortForm())
                     .collect(Collectors.toSet()))
                     .get());
         } catch (InterruptedException e) {
@@ -951,43 +973,43 @@ public class TrestleReasoner {
     private static <T> Optional<TSIndividual> parseIndividualToShapefile(T object, ShapefileSchema shapefileSchema) {
 //        if (objectOptional.isPresent()) {
 //            final T object = objectOptional.get();
-            final Class<?> inputClass = object.getClass();
-            final Optional<OWLDataPropertyAssertionAxiom> spatialProperty = ClassParser.GetSpatialProperty(object);
-            if (!spatialProperty.isPresent()) {
-                logger.error("Individual is not a spatial object");
-                return Optional.empty();
-            }
-            final TSIndividual individual = new TSIndividual(spatialProperty.get().getObject().getLiteral(), shapefileSchema);
+        final Class<?> inputClass = object.getClass();
+        final Optional<OWLDataPropertyAssertionAxiom> spatialProperty = ClassParser.GetSpatialProperty(object);
+        if (!spatialProperty.isPresent()) {
+            logger.error("Individual is not a spatial object");
+            return Optional.empty();
+        }
+        final TSIndividual individual = new TSIndividual(spatialProperty.get().getObject().getLiteral(), shapefileSchema);
 //                    Data properties, filtering out the spatial members
-            final Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = ClassParser.GetDataProperties(object, true);
-            if (owlDataPropertyAssertionAxioms.isPresent()) {
+        final Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = ClassParser.GetDataProperties(object, true);
+        if (owlDataPropertyAssertionAxioms.isPresent()) {
 
-                owlDataPropertyAssertionAxioms.get().forEach(property -> {
-                    final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, object.getClass());
-                    final Object literal = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
-                    individual.addProperty(ClassParser.matchWithClassMember(inputClass, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
-                            literal);
-                });
-            }
+            owlDataPropertyAssertionAxioms.get().forEach(property -> {
+                final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, object.getClass());
+                final Object literal = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
+                individual.addProperty(ClassParser.matchWithClassMember(inputClass, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
+                        literal);
+            });
+        }
 //                    Temporals
-            final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(object);
-            if (temporalObjects.isPresent()) {
-                final TemporalObject temporalObject = temporalObjects.get().get(0);
-                if (temporalObject.isInterval()) {
-                    final IntervalTemporal intervalTemporal = temporalObject.asInterval();
-                    final String startName = intervalTemporal.getStartName();
-                    individual.addProperty(ClassParser.matchWithClassMember(inputClass, intervalTemporal.getStartName()), intervalTemporal.getFromTime().toString());
-                    final Optional toTime = intervalTemporal.getToTime();
-                    if (toTime.isPresent()) {
-                        final Temporal to = (Temporal) toTime.get();
-                        individual.addProperty(ClassParser.matchWithClassMember(inputClass, intervalTemporal.getEndName()), to.toString());
-                    }
-                } else {
-                    final PointTemporal pointTemporal = temporalObject.asPoint();
-                    individual.addProperty(pointTemporal.getParameterName(), pointTemporal.getPointTime().toString());
+        final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(object);
+        if (temporalObjects.isPresent()) {
+            final TemporalObject temporalObject = temporalObjects.get().get(0);
+            if (temporalObject.isInterval()) {
+                final IntervalTemporal intervalTemporal = temporalObject.asInterval();
+                final String startName = intervalTemporal.getStartName();
+                individual.addProperty(ClassParser.matchWithClassMember(inputClass, intervalTemporal.getStartName()), intervalTemporal.getFromTime().toString());
+                final Optional toTime = intervalTemporal.getToTime();
+                if (toTime.isPresent()) {
+                    final Temporal to = (Temporal) toTime.get();
+                    individual.addProperty(ClassParser.matchWithClassMember(inputClass, intervalTemporal.getEndName()), to.toString());
                 }
+            } else {
+                final PointTemporal pointTemporal = temporalObject.asPoint();
+                individual.addProperty(pointTemporal.getParameterName(), pointTemporal.getPointTime().toString());
             }
-            return Optional.of(individual);
+        }
+        return Optional.of(individual);
     }
 
     private boolean checkObjectRelation(OWLNamedIndividual firstIndividual, OWLNamedIndividual secondIndividual) {

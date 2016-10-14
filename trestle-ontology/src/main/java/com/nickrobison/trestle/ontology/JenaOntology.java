@@ -299,7 +299,7 @@ public abstract class JenaOntology extends TransactingOntology {
     }
 
     @Override
-    public void deleteIndividual(OWLNamedIndividual individual) {
+    public void removeIndividual(OWLNamedIndividual individual) {
         this.openTransaction(true);
         this.model.enterCriticalSection(Lock.WRITE);
         try {
