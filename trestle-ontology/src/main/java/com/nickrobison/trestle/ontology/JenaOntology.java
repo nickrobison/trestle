@@ -299,21 +299,12 @@ public abstract class JenaOntology extends TransactingOntology {
     }
 
     @Override
-    public void deleteIndividual(OWLNamedIndividual individual) {
+    public void removeIndividual(OWLNamedIndividual individual) {
         this.openTransaction(true);
         this.model.enterCriticalSection(Lock.WRITE);
         try {
             final Resource modelResource = this.model.getResource(getFullIRIString(individual));
             modelResource.removeProperties();
-//            final StmtIterator stmtIterator = modelResource.listProperties();
-//                try {
-//                    logger.debug("Removing statements for {}", individual.getIRI());
-//                    final List<Statement> statements = stmtIterator.toList();
-//                    model.remove(statements);
-//                } finally {
-//                    stmtIterator.close();
-//                }
-//                Now, remove the individual
         } finally {
             this.model.leaveCriticalSection();
             this.commitTransaction(true);
