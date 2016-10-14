@@ -789,12 +789,13 @@ public class TrestleReasoner {
     private CompletableFuture<OWLNamedIndividual> removeRelatedObjects(Set<OWLObjectPropertyAssertionAxiom> objectProperties) {
         return CompletableFuture.supplyAsync(() -> {
 
-            //            Remove the facts
+//            Remove the facts
             final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
             objectProperties
                     .stream()
                     .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(hasFactIRI))
                     .forEach(object -> ontology.removeIndividual(object.getObject().asOWLNamedIndividual()));
+
 //            And the temporals, but make sure the temporal doesn't have any other dependencies
             objectProperties
                     .stream()
