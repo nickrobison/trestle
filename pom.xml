@@ -5,14 +5,16 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.nickrobison</groupId>
-    <artifactId>spatial-difference</artifactId>
+    <artifactId>trestle</artifactId>
     <version>0.4-SNAPSHOT</version>
     <modules>
-        <module>trestle</module>
-        <module>gaulintegrator</module>
+        <module>trestle-reasoner</module>
+        <module>trestle-integrations</module>
         <module>trestle-exporter</module>
         <module>trestle-raster</module>
         <module>trestle-common</module>
+        <module>trestle-ontology</module>
+        <module>trestle-querybuilder</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -20,6 +22,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <storm.version>1.0.0</storm.version>
         <provided.scope>provided</provided.scope>
+        <owl.version>5.0.2</owl.version>
+        <jena.version>3.1.0</jena.version>
         <slf4j.version>1.7.21</slf4j.version>
         <jmh.version>1.12</jmh.version>
         <junit.jupiter.version>5.0.0-M2</junit.jupiter.version>
@@ -60,6 +64,11 @@
                         <artifactId>hadoop-core</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.vividsolutions</groupId>
+                <artifactId>jts</artifactId>
+                <version>1.13</version>
             </dependency>
             <dependency>
                 <groupId>com.esri.geometry</groupId>
@@ -105,6 +114,44 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
                 <version>${slf4j.version}</version>
+            </dependency>
+            <!--OWL Dependencies-->
+            <dependency>
+                <groupId>net.sourceforge.owlapi</groupId>
+                <artifactId>owlapi-api</artifactId>
+                <version>${owl.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.sourceforge.owlapi</groupId>
+                <artifactId>owlapi-apibinding</artifactId>
+                <version>${owl.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.sourceforge.owlapi</groupId>
+                <artifactId>owlapi-parsers</artifactId>
+                <version>${owl.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.jena</groupId>
+                <artifactId>jena-core</artifactId>
+                <version>${jena.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.jena</groupId>
+                <artifactId>jena-arq</artifactId>
+                <version>${jena.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.jena</groupId>
+                <artifactId>jena-tdb</artifactId>
+                <version>${jena.version}</version>
+                <optional>true</optional>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.jena</groupId>
+                <artifactId>jena-spatial</artifactId>
+                <version>${jena.version}</version>
+                <optional>true</optional>
             </dependency>
             <!--Oracle Dependencies-->
             <dependency>
