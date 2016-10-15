@@ -15,6 +15,7 @@
         <module>trestle-common</module>
         <module>trestle-ontology</module>
         <module>trestle-querybuilder</module>
+        <module>trestle-server</module>
     </modules>
     <packaging>pom</packaging>
 
