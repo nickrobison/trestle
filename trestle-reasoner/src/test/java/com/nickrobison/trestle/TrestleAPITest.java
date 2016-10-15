@@ -4,7 +4,6 @@ import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
-import com.nickrobison.trestle.ontology.OracleOntology;
 import com.nickrobison.trestle.parser.ClassParser;
 import com.nickrobison.trestle.parser.OracleOntologyGAULoader;
 import com.vividsolutions.jts.geom.Geometry;
@@ -132,8 +131,6 @@ public class TrestleAPITest {
         final Optional<List<@NonNull Object>> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0);
         assertTrue(intersectedObjects.isPresent(), "Should have objects");
         assertTrue(intersectedObjects.get().size() > 0, "Should have more than 1 object");
-
-//        reasoner.getUnderlyingOntology().writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), false);
     }
 
     @Test
@@ -160,9 +157,7 @@ public class TrestleAPITest {
             } catch (TrestleClassException e) {
                 e.printStackTrace();
             }
-//            if (reasoner.getUnderlyingOntology() instanceof OracleOntology) {
-                reasoner.getUnderlyingOntology().runInference();
-//            }
+            reasoner.getUnderlyingOntology().runInference();
             final Object returnedObject = reasoner.readAsObject(object.getClass(), owlNamedIndividual.getIRI(), false);
             if (returnedObject instanceof TestClasses.GAULComplexClassTest) {
                 assertEquals(gaulComplexClassTest, returnedObject, "Should have the same object");
@@ -197,7 +192,6 @@ public class TrestleAPITest {
 
     @AfterEach
     public void close() throws OWLOntologyStorageException {
-//        reasoner.getUnderlyingOntology().writeOntology(IRI.create(new File("/Users/nrobison/Desktop/gaul.owl")), true);
         reasoner.shutdown(true);
     }
 }
