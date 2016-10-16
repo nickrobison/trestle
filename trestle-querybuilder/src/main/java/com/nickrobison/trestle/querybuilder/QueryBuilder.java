@@ -225,7 +225,8 @@ public class QueryBuilder {
                 "FILTER (contains(lcase(str(?m)), ?string))}");
 
         if (owlClass == null) {
-            ps.setIri("type", ":TS_Concept");
+//            We need to get the fully expanded Prefix, otherwise Jena won't expanded it properly and give us an <> IRI, which will fail.
+            ps.setIri("type", IRI.create(PREFIX, "Dataset").toString());
         } else {
             ps.setIri("type", getFullIRIString(owlClass));
         }
@@ -240,7 +241,7 @@ public class QueryBuilder {
         ps.setNsPrefixes(this.trimmedPrefixMap);
         return ps;
     }
-
+// TODO(nrobison): Move this to trestle-common
     private IRI getFullIRI(IRI iri) {
         //        Check to see if it's already been expanded
         if (pm.getPrefix(iri.getScheme() + ":") == null) {

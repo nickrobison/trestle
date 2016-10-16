@@ -11,6 +11,7 @@ public class IRIUtils {
 
     /**
      * Determines if a given string represents a full IRI
+     *
      * @param inputString - Inputstring to verify
      * @return - Boolean whether the String represents a full IRI
      */
@@ -27,6 +28,10 @@ public class IRIUtils {
         if (isFullIRI(inputString)) {
             return IRI.create(inputString);
         } else {
+//            If we have the unexpanded base prefix, replace it and move on
+            if (inputString.startsWith("trestle:")) {
+                return IRI.create(PREFIX, inputString.replace("trestle:", ""));
+            }
             return IRI.create(PREFIX, inputString.replaceAll("\\s+", "_"));
         }
     }
