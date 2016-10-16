@@ -171,12 +171,15 @@ public class TrestleAPITest {
         });
 
 //        Search for some matching individuals
-        final List<String> individuals = reasoner.searchForIndividual("43", IRI.create("trestle:", "GAUL_JTS_Test").toString());
-        assertEquals(1, individuals.size(), "Should have 1 individuals");
+        List<String> individuals = reasoner.searchForIndividual("43", IRI.create("trestle:", "GAUL_JTS_Test").toString());
+        assertEquals(1, individuals.size(), "Should only have 1 individual in the JTS class");
+//        FIXME(nrobison): For some reason, the inferencer isn't updating correctly. So the query works, but it's not grabbing the correct values
+//        individuals = reasoner.searchForIndividuals("2");
+//        assertEquals(4, individuals.size(), "Should have 4 individuals, overall");
 
 
 //        Now try to remove it
-//        reasoner.removeIndividual(classObjects.toArray(new Object[classObjects.size()]));
+        reasoner.removeIndividual(classObjects.toArray(new Object[classObjects.size()]));
 
 //        reasoner.writeOntology(new File("/Users/nrobison/Desktop/trestle_test.owl").toURI(), false);
 
@@ -197,6 +200,6 @@ public class TrestleAPITest {
 
     @AfterEach
     public void close() throws OWLOntologyStorageException {
-        reasoner.shutdown(false);
+        reasoner.shutdown(true);
     }
 }

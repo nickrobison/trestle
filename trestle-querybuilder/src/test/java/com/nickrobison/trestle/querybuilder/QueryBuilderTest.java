@@ -112,7 +112,7 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?m WHERE {?m rdf:type <:Dataset> .FILTER (contains(lcase(str(?m)), \"4372\"))}";
+            "SELECT DISTINCT ?m WHERE {?m rdf:type :Dataset .FILTER (contains(lcase(str(?m)), \"4372\"))}";
 
     private static final String individualQueryTestClass = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
