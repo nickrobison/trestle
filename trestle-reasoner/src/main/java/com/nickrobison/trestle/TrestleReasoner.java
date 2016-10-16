@@ -26,6 +26,7 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -891,6 +892,36 @@ public class TrestleReasoner {
             return objectProperties.stream().findAny().orElseThrow(RuntimeException::new).getSubject().asOWLNamedIndividual();
         });
 
+    }
+
+    /**
+     * Search the ontology for individuals with IRIs that match the given search string
+     * @param individualIRI - String to search for matching IRI
+     * @return - List of Strings representing IRIs of matching individuals
+     */
+    public List<String> searchForIndividuals(String individualIRI) {
+        return searchForIndividual(individualIRI, null);
+    }
+
+    /**
+     * Search the ontology for individuals with IRIs that match the given search string
+     * @param individualIRI - String to search for matching IRI
+     * @param datasetClass - Optional datasetClass to restrict search to
+     * @return - List of Strings representing IRIs of matching individuals
+     */
+    public List<String> searchForIndividual(String individualIRI, @Nullable String datasetClass) {
+        @Nullable OWLClass owlClass = null;
+        if (datasetClass != null) {
+            owlClass = df.getOWLClass(parseStringToIRI(datasetClass));
+        }
+        final String query = qb.buildIndividualSearchQuery(individualIRI, owlClass);
+        List<String> individuals = new ArrayList<>();
+        final ResultSet resultSet = ontology.executeSPARQL(query);
+        while (resultSet.hasNext()) {
+            final QuerySolution next = resultSet.next();
+            individuals.add(next.getResource("m").getURI());
+        }
+        return individuals;
     }
 
     public void registerClass(Class inputClass) throws TrestleClassException {

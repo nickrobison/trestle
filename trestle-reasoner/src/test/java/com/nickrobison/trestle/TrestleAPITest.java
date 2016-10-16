@@ -170,10 +170,15 @@ public class TrestleAPITest {
             }
         });
 
-//        Now try to remove it
-        reasoner.removeIndividual(classObjects.toArray(new Object[classObjects.size()]));
+//        Search for some matching individuals
+        final List<String> individuals = reasoner.searchForIndividual("43", IRI.create("trestle:", "GAUL_JTS_Test").toString());
+        assertEquals(1, individuals.size(), "Should have 1 individuals");
 
-        reasoner.writeOntology(new File("/Users/nrobison/Desktop/trestle_test.owl").toURI(), false);
+
+//        Now try to remove it
+//        reasoner.removeIndividual(classObjects.toArray(new Object[classObjects.size()]));
+
+//        reasoner.writeOntology(new File("/Users/nrobison/Desktop/trestle_test.owl").toURI(), false);
 
 //        Geotools
 //
@@ -192,6 +197,6 @@ public class TrestleAPITest {
 
     @AfterEach
     public void close() throws OWLOntologyStorageException {
-        reasoner.shutdown(true);
+        reasoner.shutdown(false);
     }
 }

@@ -213,6 +213,27 @@ public class QueryBuilder {
         return ps.toString();
     }
 
+    /**
+     * Return individuals with IRIs that match the given search string
+     * @return - SPARQL Query string
+     */
+    public String buildIndividualSearchQuery(String individual, @Nullable OWLClass owlClass) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText("SELECT DISTINCT ?m" +
+                " WHERE {" +
+                "?m rdf:type ?type ." +
+                "FILTER (contains(lcase(str(?m)), ?string))}");
+
+        if (owlClass == null) {
+            ps.setIri("type", ":TS_Concept");
+        } else {
+            ps.setIri("type", getFullIRIString(owlClass));
+        }
+        ps.setLiteral("string", individual);
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
     private ParameterizedSparqlString buildBaseString() {
         final ParameterizedSparqlString ps = new ParameterizedSparqlString();
         ps.setBaseUri(baseURI);

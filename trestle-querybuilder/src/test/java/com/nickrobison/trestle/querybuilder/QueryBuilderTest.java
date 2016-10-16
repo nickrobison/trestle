@@ -102,6 +102,30 @@ public class QueryBuilderTest {
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
             "SELECT DISTINCT ?f WHERE { ?m :has_fact ?f .?f :database_time ?d .?d :valid_from ?tStart .OPTIONAL{ ?d :valid_to ?tEnd} . FILTER(?m = <http://nickrobison.com/dissertation/trestle.owl#test_muni4> && !bound(?tEnd))}";
 
+    private static final String individualQueryNullClasString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+            "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+            "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+            "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
+            "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+            "PREFIX xml: <http://www.w3.org/XML/1998/namespace>\n" +
+            "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
+            "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+            "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
+            "SELECT DISTINCT ?m WHERE {?m rdf:type <:Dataset> .FILTER (contains(lcase(str(?m)), \"4372\"))}";
+
+    private static final String individualQueryTestClass = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+            "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+            "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+            "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
+            "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+            "PREFIX xml: <http://www.w3.org/XML/1998/namespace>\n" +
+            "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
+            "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+            "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
+            "SELECT DISTINCT ?m WHERE {?m rdf:type :testClass .FILTER (contains(lcase(str(?m)), \"4372\"))}";
+
     @BeforeAll
     public static void createPrefixes() {
         df = OWLManager.getOWLDataFactory();
@@ -161,5 +185,14 @@ public class QueryBuilderTest {
 
         final String generatedObjectEmptyInterval = qb.buildObjectPropertyRetrievalQuery(test_muni4, null, null);
         assertEquals(objectPropertyEmptyIntervalString, generatedObjectEmptyInterval, "Should be equal");
+    }
+
+    @Test
+    public void testIndividualQuery() {
+        final String nullClassQuery = qb.buildIndividualSearchQuery("4372", null);
+        assertEquals(individualQueryNullClasString, nullClassQuery, "Should be equal");
+        final OWLClass testClass = df.getOWLClass(IRI.create("trestle:", "testClass"));
+        final String testClassQueryString = qb.buildIndividualSearchQuery("4372", testClass);
+        assertEquals(individualQueryTestClass, testClassQueryString, "Should be equal");
     }
 }
