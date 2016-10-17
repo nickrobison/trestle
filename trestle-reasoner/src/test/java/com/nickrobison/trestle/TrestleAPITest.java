@@ -46,11 +46,11 @@ public class TrestleAPITest {
     @BeforeEach
     public void setup() {
         reasoner = new TrestleBuilder()
-//                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-                .withDBConnection(
-                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-                        "spatialUser",
-                        "spatial1")
+                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+//                .withDBConnection(
+//                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
+//                        "spatialUser",
+//                        "spatial1")
                 .withName("api_test")
                 .withIRI(IRI.create("file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl"))
                 .withInputClasses(TestClasses.GAULTestClass.class,
@@ -178,6 +178,8 @@ public class TrestleAPITest {
 //        FIXME(nrobison): For some reason, the inferencer isn't updating correctly. So the query works, but it's not grabbing the correct values
 //        individuals = reasoner.searchForIndividuals("2");
 //        assertEquals(4, individuals.size(), "Should have 4 individuals, overall");
+
+        reasoner.getIndividualAttributes(individuals.get(0));
 
 
 //        Now try to remove it

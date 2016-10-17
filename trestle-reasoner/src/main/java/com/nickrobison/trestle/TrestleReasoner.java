@@ -3,6 +3,7 @@ package com.nickrobison.trestle;
 import com.nickrobison.trestle.caching.TrestleCache;
 import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.common.StaticIRI;
+import com.nickrobison.trestle.common.exceptions.TrestleMissingAttributeException;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.exceptions.*;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
@@ -15,6 +16,8 @@ import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
+import com.nickrobison.trestle.types.TrestleAttribute;
+import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.PointTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
@@ -896,6 +899,7 @@ public class TrestleReasoner {
 
     /**
      * Search the ontology for individuals with IRIs that match the given search string
+     *
      * @param individualIRI - String to search for matching IRI
      * @return - List of Strings representing IRIs of matching individuals
      */
@@ -905,8 +909,9 @@ public class TrestleReasoner {
 
     /**
      * Search the ontology for individuals with IRIs that match the given search string
+     *
      * @param individualIRI - String to search for matching IRI
-     * @param datasetClass - Optional datasetClass to restrict search to
+     * @param datasetClass  - Optional datasetClass to restrict search to
      * @return - List of Strings representing IRIs of matching individuals
      */
     public List<String> searchForIndividual(String individualIRI, @Nullable String datasetClass) {
@@ -922,6 +927,65 @@ public class TrestleReasoner {
             individuals.add(next.getResource("m").getURI());
         }
         return individuals;
+    }
+
+    /**
+     * Return a TrestleIndividual with all the required attributes
+     * @param individualIRI - String of individual IRI
+     * @return - TrestleIndividual
+     */
+    public TrestleIndividual getIndividualAttributes(String individualIRI) {
+
+        final OWLNamedIndividual owlNamedIndividual = df.getOWLNamedIndividual(parseStringToIRI(individualIRI));
+        final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(owlNamedIndividual, hasTemporalIRI);
+        final OWLObjectPropertyAssertionAxiom temporalProperty = individualObjectProperty.get().stream().findFirst().orElseThrow(() -> new TrestleMissingAttributeException(owlNamedIndividual, hasTemporalIRI));
+        final Set<OWLDataPropertyAssertionAxiom> temporalDataProperties = ontology.getAllDataPropertiesForIndividual(temporalProperty.getObject().asOWLNamedIndividual());
+        final Optional<TemporalObject> temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(temporalDataProperties, false, null);
+        final TrestleIndividual trestleIndividual = new TrestleIndividual(owlNamedIndividual.toStringID(), temporalObject.orElseThrow(() -> new TrestleMissingAttributeException(owlNamedIndividual, hasTemporalIRI)));
+
+//                Get all the attributes
+        final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty1 = ontology.getIndividualObjectProperty(owlNamedIndividual, hasFactIRI);
+        final List<TrestleAttribute> attributes = individualObjectProperty1
+                .orElseThrow(() -> new TrestleMissingAttributeException(owlNamedIndividual, hasFactIRI))
+                .stream()
+                .map(property -> buildTrestleAttribute(property.getObject().asOWLNamedIndividual()))
+                .collect(Collectors.toList());
+//                TODO(nrobison): Can we combine these 2 steps? Collect the attributes into the individual?
+        attributes.forEach(trestleIndividual::addAttribute);
+
+        return trestleIndividual;
+    }
+
+    /**
+     * Build a TrestleAttribute from a given OWLIndividual
+     * @param attribute - OWLNamedIndividual to construct attribute from
+     * @return - TrestleAttribute
+     */
+    private TrestleAttribute buildTrestleAttribute(OWLNamedIndividual attribute) {
+        final Set<OWLDataPropertyAssertionAxiom> attributeProperties = ontology.getAllDataPropertiesForIndividual(attribute);
+//        There's only one data property per attribute, so we can do this.
+        final Optional<OWLDataPropertyAssertionAxiom> first = attributeProperties.stream().findFirst();
+
+        final OWLDataPropertyAssertionAxiom attributeAssertion = first.orElseThrow(() -> new TrestleMissingAttributeException(attribute));
+        final Class<?> literalClass = TypeConverter.lookupJavaClassFromOWLDatatype(attributeAssertion, null);
+        final Object literal = TypeConverter.extractOWLLiteral(literalClass, attributeAssertion.getObject());
+
+//            Now the temporals
+        final Optional<Set<OWLObjectPropertyAssertionAxiom>> temporalProperties = ontology.getIndividualObjectProperty(attribute, validTimeIRI);
+        final Optional<OWLObjectPropertyAssertionAxiom> temporalProperty = temporalProperties.orElseThrow(() -> new TrestleMissingAttributeException(attribute, hasTemporalIRI)).stream().findFirst();
+        final Set<OWLDataPropertyAssertionAxiom> temporalDataProperties = ontology.getAllDataPropertiesForIndividual(temporalProperty.orElseThrow(() -> new TrestleMissingAttributeException(attribute, hasTemporalIRI)).getObject().asOWLNamedIndividual());
+        final Optional<TemporalObject> validTemporal = TemporalObjectBuilder.buildTemporalFromProperties(temporalDataProperties, false, null);
+
+//        Database time
+        final Optional<Set<OWLObjectPropertyAssertionAxiom>> databaseTimeProperties = ontology.getIndividualObjectProperty(attribute, databaseTimeIRI);
+        final Optional<OWLObjectPropertyAssertionAxiom> databaseTimeProperty = databaseTimeProperties.orElseThrow(() -> new TrestleMissingAttributeException(attribute, hasTemporalIRI)).stream().findFirst();
+        final Set<OWLDataPropertyAssertionAxiom> databaseTemporalDataProperties = ontology.getAllDataPropertiesForIndividual(databaseTimeProperty.orElseThrow(() -> new TrestleMissingAttributeException(attribute, hasTemporalIRI)).getObject().asOWLNamedIndividual());
+        final Optional<TemporalObject> databaseTemporal = TemporalObjectBuilder.buildTemporalFromProperties(databaseTemporalDataProperties, false, null);
+
+        return new TrestleAttribute<>(attribute.getIRI().toString(),
+                literal,
+                validTemporal.orElseThrow(() -> new TrestleMissingAttributeException(attribute, hasTemporalIRI)),
+                databaseTemporal.orElseThrow(() -> new TrestleMissingAttributeException(attribute, databaseTimeIRI)));
     }
 
     public void registerClass(Class inputClass) throws TrestleClassException {
