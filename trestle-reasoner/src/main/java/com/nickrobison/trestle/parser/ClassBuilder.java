@@ -33,10 +33,11 @@ public class ClassBuilder {
     }
 
     /**
-     *
-     * @param clazz
-     * @param filterSpatial
-     * @return
+     * Parses out the data properties fof a given input class
+     * Only returns the property axioms, not the values themselves
+     * @param clazz - Input class to parse
+     * @param filterSpatial - Boolean to filter out the spatial properties
+     * @return - Optional List of OWLDataProperties
      */
     public static Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz, boolean filterSpatial) {
 

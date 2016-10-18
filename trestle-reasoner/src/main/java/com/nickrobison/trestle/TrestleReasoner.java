@@ -25,11 +25,9 @@ import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -224,8 +222,8 @@ public class TrestleReasoner {
     /**
      * Write a java object as a TS_Concept
      *
-     * @param inputObject
-     * @throws TrestleClassException
+     * @param inputObject - Input object to write as concept
+     * @throws TrestleClassException - Throws an exception if the class doesn't exist or is invalid
      */
     public void writeObjectAsConcept(Object inputObject) throws TrestleClassException {
 
@@ -235,8 +233,8 @@ public class TrestleReasoner {
     /**
      * Write a java object as a TS_Fact
      *
-     * @param inputObject
-     * @throws TrestleClassException
+     * @param inputObject - Input object to write as fact
+     * @throws TrestleClassException - Throws an exception if the class doesn't exist or is invalid
      */
     public void writeObjectAsFact(Object inputObject) throws TrestleClassException {
         writeObject(inputObject, TemporalScope.VALID, null);
@@ -715,6 +713,7 @@ public class TrestleReasoner {
      * @param clazz  - Class of object to return
      * @param wkt    - WKT of spatial boundary to intersect with
      * @param buffer - Double buffer to build around wkt
+     * @param atTemporal - Temporal to filter results to specific valid time point
      * @param <T>    - Class to specialize method with.
      * @return - An Optional List of Object T.
      */
@@ -733,6 +732,15 @@ public class TrestleReasoner {
         throw new RuntimeException("Problem intersecting object");
     }
 
+    /**
+     * Async intersection of given class with WKT boundary
+     * @param clazz - Class of object to return
+     * @param wkt - WKT of spatial boundary to intersect with
+     * @param buffer - Double buffer to build around WKT
+     * @param atTemporal - Temporal to filter results to specific valid time point
+     * @param <T> - Type to specialize Future with
+     * @return - Completable Future of Optional List of T
+     */
     private <T> CompletableFuture<Optional<List<T>>> spatialIntersectAsync(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal atTemporal) {
         return CompletableFuture.supplyAsync(() -> {
             final OWLClass owlClass = ClassParser.GetObjectClass(clazz);
@@ -793,6 +801,7 @@ public class TrestleReasoner {
      * @param clazz    - Java class of object to serialize to
      * @param objectID - Object ID to retrieve related objects
      * @param cutoff   - Double of relation strength cutoff
+     * @param <T> - Type to specialize return with
      * @return - Optional Map of related java objects and their corresponding relational strength
      */
     //    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
@@ -833,7 +842,6 @@ public class TrestleReasoner {
      *
      * @param inputObject - Individual to remove
      * @param <T>         - Type of individual to remove
-     * @return
      */
     public <T> void removeIndividual(@NonNull T... inputObject) {
         T[] objects = inputObject;
@@ -1076,7 +1084,7 @@ public class TrestleReasoner {
      * Get a list of currently registered datasets
      * Only returns datasets currently registered with the
      *
-     * @return
+     * @return - Optional Set of Strings representing available datasets
      */
     public Optional<Set<String>> getAvailableDatasets() {
         try {
