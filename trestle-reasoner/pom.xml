@@ -148,36 +148,36 @@
                     <argLine>-javaagent:${co.paralleluniverse:quasar-core:jar:jdk8}</argLine>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>2.4.3</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <shadedArtifactAttached>false</shadedArtifactAttached>
-                            <createDependencyReducedPom>true</createDependencyReducedPom>
-                            <artifactSet>
-                                <includes>
-                                    <include>com.google.inject:guice</include>
-                                    <include>oracle.repo.oracle.spatial.*:*</include>
-                                    <include>com.openlink.virtuoso:*</include>
-                                </includes>
-                            </artifactSet>
-                            <relocations>
-                                <relocation>
-                                    <pattern>com.google.inject</pattern>
-                                    <shadedPattern>embedded.com.google.inject</shadedPattern>
-                                </relocation>
-                            </relocations>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-shade-plugin</artifactId>-->
+                <!--<version>2.4.3</version>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<phase>package</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>shade</goal>-->
+                        <!--</goals>-->
+                        <!--<configuration>-->
+                            <!--<shadedArtifactAttached>false</shadedArtifactAttached>-->
+                            <!--<createDependencyReducedPom>true</createDependencyReducedPom>-->
+                            <!--<artifactSet>-->
+                                <!--<includes>-->
+                                    <!--<include>com.google.inject:guice</include>-->
+                                    <!--<include>oracle.spatial.*:*</include>-->
+                                    <!--<include>com.openlink.virtuoso:*</include>-->
+                                <!--</includes>-->
+                            <!--</artifactSet>-->
+                            <!--<relocations>-->
+                                <!--<relocation>-->
+                                    <!--<pattern>com.google.inject</pattern>-->
+                                    <!--<shadedPattern>embedded.com.google.inject</shadedPattern>-->
+                                <!--</relocation>-->
+                            <!--</relocations>-->
+                        <!--</configuration>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
         </plugins>
     </build>
 </project>

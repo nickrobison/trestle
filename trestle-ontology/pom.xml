@@ -83,17 +83,17 @@
                             <createDependencyReducedPom>true</createDependencyReducedPom>
                             <artifactSet>
                                 <includes>
-                                    <include>com.google.inject:guice</include>
-                                    <include>oracle.repo.oracle.spatial.*:*</include>
+                                    <!--<include>com.google.inject:guice</include>-->
+                                    <include>oracle.spatial.*:*</include>
                                     <include>com.openlink.virtuoso:*</include>
                                 </includes>
                             </artifactSet>
-                            <relocations>
-                                <relocation>
-                                    <pattern>com.google.inject</pattern>
-                                    <shadedPattern>embedded.com.google.inject</shadedPattern>
-                                </relocation>
-                            </relocations>
+                            <!--<relocations>-->
+                                <!--<relocation>-->
+                                    <!--<pattern>com.google.inject</pattern>-->
+                                    <!--<shadedPattern>embedded.com.google.inject</shadedPattern>-->
+                                <!--</relocation>-->
+                            <!--</relocations>-->
                         </configuration>
                     </execution>
                 </executions>
