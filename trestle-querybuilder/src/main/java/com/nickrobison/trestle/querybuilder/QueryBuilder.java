@@ -180,6 +180,7 @@ public class QueryBuilder {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m ?tStart ?tEnd" +
                 " WHERE { " +
+                "?m rdf:type ?type ." +
                 "?m :has_fact ?f ." +
                 "?f ogc:asWKT ?wkt ." +
                 "?m :has_temporal ?t ." +
