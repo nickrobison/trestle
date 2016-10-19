@@ -221,6 +221,8 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
             }
 
 //            Try from Trestle
+//            Manually run the inferencer, for now
+            reasoner.getUnderlyingOntology().runInference();
             final Optional<List<@NonNull GAULObject>> gaulObjects = reasoner.spatialIntersectObject(newGAULObject, 500);
 
             List<GAULObject> matchedObjects = gaulObjects.orElse(new ArrayList<>());
