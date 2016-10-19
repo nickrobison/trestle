@@ -15,5 +15,6 @@ import java.lang.annotation.Target;
 public @interface DataProperty {
 
     String name();
-    OWL2Datatype datatype() default OWL2Datatype.XSD_STRING;
+//    FIXME(nrobison): This is not the way to handle defaults to ignore. I should probably migrate this to a string or something
+    OWL2Datatype datatype() default OWL2Datatype.XSD_NMTOKEN;
 }
