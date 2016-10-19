@@ -130,9 +130,14 @@ public class TrestleAPITest {
         assertEquals(ancuabe, ancuabe2, "Should be equal");
 
 //        Check the spatial intersection
-        final Optional<List<@NonNull Object>> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0);
+        Optional<List<@NonNull Object>> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0);
         assertTrue(intersectedObjects.isPresent(), "Should have objects");
         assertTrue(intersectedObjects.get().size() > 0, "Should have more than 1 object");
+//
+//        final Class<?> datasetClass = reasoner.getDatasetClass(datasetClassID);
+//        intersectedObjects = reasoner.spatialIntersect(datasetClass, ((TestClasses.GAULTestClass) ancuabe1).wkt, 100.0);
+//        assertTrue(intersectedObjects.isPresent());
+//        assertTrue(intersectedObjects.get().size() > 0, "Should have more than 0 objects");
     }
 
     @Test
@@ -173,7 +178,7 @@ public class TrestleAPITest {
         });
 
 //        Search for some matching individuals
-        List<String> individuals = reasoner.searchForIndividual("43", IRI.create("trestle:", "GAUL_JTS_Test").toString());
+        List<String> individuals = reasoner.searchForIndividual("43", IRI.create("trestle:", "GAUL_JTS_Test").toString(), null);
         assertEquals(1, individuals.size(), "Should only have 1 individual in the JTS class");
 //        FIXME(nrobison): For some reason, the inferencer isn't updating correctly. So the query works, but it's not grabbing the correct values
 //        individuals = reasoner.searchForIndividuals("2");
@@ -204,6 +209,6 @@ public class TrestleAPITest {
 
     @AfterEach
     public void close() throws OWLOntologyStorageException {
-        reasoner.shutdown(true);
+        reasoner.shutdown(false);
     }
 }

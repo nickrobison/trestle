@@ -217,14 +217,17 @@ public class QueryBuilder {
 
     /**
      * Return individuals with IRIs that match the given search string
+     * @param individual - String to search for matching individual
+     * @param owlClass - Optional OWLClass to limit search results
+     * @param limit - Optional limit of query results
      * @return - SPARQL Query string
      */
-    public String buildIndividualSearchQuery(String individual, @Nullable OWLClass owlClass) {
+    public String buildIndividualSearchQuery(String individual, @Nullable OWLClass owlClass, @Nullable Integer limit) {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m" +
                 " WHERE {" +
                 "?m rdf:type ?type ." +
-                "FILTER (contains(lcase(str(?m)), ?string))}");
+                "FILTER (contains(lcase(str(?m)), ?string))} LIMIT ?limit");
 
         if (owlClass == null) {
 //            We need to get the fully expanded Prefix, otherwise Jena won't expanded it properly and give us an <> IRI, which will fail.
@@ -233,6 +236,15 @@ public class QueryBuilder {
             ps.setIri("type", getFullIRIString(owlClass));
         }
         ps.setLiteral("string", individual);
+
+//        Set the limit
+        if (limit == null) {
+            ps.setLiteral("limit", 10);
+        } else {
+            ps.setLiteral("limit", limit);
+        }
+
+
         logger.debug(ps.toString());
         return ps.toString();
     }

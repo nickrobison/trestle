@@ -911,8 +911,8 @@ public class TrestleReasoner {
      * @param individualIRI - String to search for matching IRI
      * @return - List of Strings representing IRIs of matching individuals
      */
-    public List<String> searchForIndividuals(String individualIRI) {
-        return searchForIndividual(individualIRI, null);
+    public List<String> searchForIndividual(String individualIRI) {
+        return searchForIndividual(individualIRI, null, null);
     }
 
     /**
@@ -920,14 +920,15 @@ public class TrestleReasoner {
      *
      * @param individualIRI - String to search for matching IRI
      * @param datasetClass  - Optional datasetClass to restrict search to
+     * @param limit - Optional limit to returned results
      * @return - List of Strings representing IRIs of matching individuals
      */
-    public List<String> searchForIndividual(String individualIRI, @Nullable String datasetClass) {
+    public List<String> searchForIndividual(String individualIRI, @Nullable String datasetClass, @Nullable Integer limit) {
         @Nullable OWLClass owlClass = null;
         if (datasetClass != null) {
             owlClass = df.getOWLClass(parseStringToIRI(datasetClass));
         }
-        final String query = qb.buildIndividualSearchQuery(individualIRI, owlClass);
+        final String query = qb.buildIndividualSearchQuery(individualIRI, owlClass, limit);
         List<String> individuals = new ArrayList<>();
         final ResultSet resultSet = ontology.executeSPARQL(query);
         while (resultSet.hasNext()) {
