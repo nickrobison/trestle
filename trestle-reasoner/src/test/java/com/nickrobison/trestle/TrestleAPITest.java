@@ -6,6 +6,7 @@ import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.parser.ClassParser;
 import com.nickrobison.trestle.parser.OracleOntologyGAULoader;
+import com.nickrobison.trestle.types.TrestleIndividual;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
@@ -184,7 +185,7 @@ public class TrestleAPITest {
 //        individuals = reasoner.searchForIndividuals("2");
 //        assertEquals(4, individuals.size(), "Should have 4 individuals, overall");
 
-        reasoner.getIndividualAttributes(individuals.get(0));
+        final TrestleIndividual individualAttributes = reasoner.getIndividualAttributes(individuals.get(0));
 
 
 //        Now try to remove it

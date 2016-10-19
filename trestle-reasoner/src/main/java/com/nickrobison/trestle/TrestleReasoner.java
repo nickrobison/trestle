@@ -939,23 +939,35 @@ public class TrestleReasoner {
     }
 
     /**
-     * Return a TrestleIndividual with all the required attributes
+     * Return a TrestleIndividual with all the available attributes
+     * Attempts to retrieve from the cache, if enabled
      * @param individualIRI - String of individual IRI
      * @return - TrestleIndividual
      */
     public TrestleIndividual getIndividualAttributes(String individualIRI) {
+        if (cachingEnabled) {
+            return trestleCache.IndividualCache().get(individualIRI, iri -> getIndividualAttributes(df.getOWLNamedIndividual(parseStringToIRI(iri))));
+        }
+        return getIndividualAttributes(df.getOWLNamedIndividual(parseStringToIRI(individualIRI)));
+    }
 
-        final OWLNamedIndividual owlNamedIndividual = df.getOWLNamedIndividual(parseStringToIRI(individualIRI));
-        final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(owlNamedIndividual, hasTemporalIRI);
-        final OWLObjectPropertyAssertionAxiom temporalProperty = individualObjectProperty.get().stream().findFirst().orElseThrow(() -> new TrestleMissingAttributeException(owlNamedIndividual, hasTemporalIRI));
+    /**
+     * Return a TrestleIndividual with all available attributes
+     * @param individual - OWLNamedIndividual to retrieve attributes for
+     * @return - TrestleIndividual
+     */
+    private TrestleIndividual getIndividualAttributes(OWLNamedIndividual individual) {
+
+        final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(individual, hasTemporalIRI);
+        final OWLObjectPropertyAssertionAxiom temporalProperty = individualObjectProperty.get().stream().findFirst().orElseThrow(() -> new TrestleMissingAttributeException(individual, hasTemporalIRI));
         final Set<OWLDataPropertyAssertionAxiom> temporalDataProperties = ontology.getAllDataPropertiesForIndividual(temporalProperty.getObject().asOWLNamedIndividual());
         final Optional<TemporalObject> temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(temporalDataProperties, false, null);
-        final TrestleIndividual trestleIndividual = new TrestleIndividual(owlNamedIndividual.toStringID(), temporalObject.orElseThrow(() -> new TrestleMissingAttributeException(owlNamedIndividual, hasTemporalIRI)));
+        final TrestleIndividual trestleIndividual = new TrestleIndividual(individual.toStringID(), temporalObject.orElseThrow(() -> new TrestleMissingAttributeException(individual, hasTemporalIRI)));
 
 //                Get all the attributes
-        final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty1 = ontology.getIndividualObjectProperty(owlNamedIndividual, hasFactIRI);
+        final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty1 = ontology.getIndividualObjectProperty(individual, hasFactIRI);
         final List<TrestleAttribute> attributes = individualObjectProperty1
-                .orElseThrow(() -> new TrestleMissingAttributeException(owlNamedIndividual, hasFactIRI))
+                .orElseThrow(() -> new TrestleMissingAttributeException(individual, hasFactIRI))
                 .stream()
                 .map(property -> buildTrestleAttribute(property.getObject().asOWLNamedIndividual()))
                 .collect(Collectors.toList());

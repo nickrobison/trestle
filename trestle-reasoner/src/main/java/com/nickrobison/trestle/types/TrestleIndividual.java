@@ -33,6 +33,12 @@ public class TrestleIndividual {
         this.attributes.add(attribute);
     }
 
+    public String getIndividualID() { return this.individualID;}
+
+    public List<TrestleAttribute> getAttributes() { return this.attributes;}
+
+    public TemporalObject getValidTemporal() { return this.validTemporal;}
+
     public Set<TemporalObject> getTemporals() {
         final Set<TemporalObject> attributeTemporals = attributes
                 .stream()

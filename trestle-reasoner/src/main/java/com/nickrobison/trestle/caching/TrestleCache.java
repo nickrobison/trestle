@@ -2,6 +2,7 @@ package com.nickrobison.trestle.caching;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.nickrobison.trestle.types.TrestleIndividual;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
@@ -20,6 +21,7 @@ public class TrestleCache {
     private final Cache<IRI, Object> objectCache;
     private final Cache<String, OWLDataPropertyAssertionAxiom> dataPropertyCache;
     private final Cache<String, OWLObjectPropertyAssertionAxiom> objectPropertyCache;
+    private final Cache<String, TrestleIndividual> individualCache;
 
     private TrestleCache(TrestleCacheBuilder builder) {
 
@@ -42,11 +44,18 @@ public class TrestleCache {
                 .maximumSize(builder.maxSize.orElse(10000L))
                 .expireAfterWrite(builder.time.orElse(10L), builder.unit.orElse(TimeUnit.HOURS))
                 .build();
+
+        individualCache = Caffeine.newBuilder()
+                .maximumSize(builder.maxSize.orElse(10000L))
+                .expireAfterWrite(builder.time.orElse(10L), builder.unit.orElse(TimeUnit.HOURS))
+                .build();
     }
 
     public @NonNull Cache<IRI, Object> ObjectCache() {
         return objectCache;
     }
+
+    public @NonNull Cache<String, TrestleIndividual> IndividualCache() { return individualCache; }
 
 //    TODO(nrobison): To implement
     public Cache<String, OWLDataPropertyAssertionAxiom> DataPropertyCache() {
