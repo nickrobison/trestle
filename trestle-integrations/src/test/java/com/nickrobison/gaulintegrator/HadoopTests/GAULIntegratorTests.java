@@ -30,7 +30,6 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
-
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -71,9 +70,9 @@ public class GAULIntegratorTests {
         final YarnConfiguration clusterConf = new YarnConfiguration();
         cluster = new MiniDFSCluster.Builder(conf).build();
 
-//        String connectionString = "jdbc:virtuoso://localhost:1111";
-//        String userName = "dba";
-//        String password = "dba";
+//        connectionString = "jdbc:virtuoso://localhost:1111";
+//        userName = "dba";
+//        password = "dba";
         connectionString = "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial";
         userName = "spatialUser";
         password = "spatial1";
