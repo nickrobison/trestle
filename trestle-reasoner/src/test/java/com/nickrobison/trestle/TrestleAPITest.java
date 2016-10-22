@@ -104,6 +104,8 @@ public class TrestleAPITest {
                 reasoner.writeObjectAsFact(gaul);
             } catch (TrestleClassException e) {
                 throw new RuntimeException(String.format("Problem storing object %s", gaul.adm0_name), e);
+            } catch (MissingOntologyEntity missingOntologyEntity) {
+                throw new RuntimeException(String.format("Missing individual %s", missingOntologyEntity.getIndividual()), missingOntologyEntity);
             }
         });
 
@@ -159,13 +161,18 @@ public class TrestleAPITest {
         classObjects.add(offsetDateTimeTest);
 
         classObjects.parallelStream().forEach(object -> {
+                    try {
+                        reasoner.writeObjectAsFact(object);
+                    } catch (TrestleClassException e) {
+                        e.printStackTrace();
+                    } catch (MissingOntologyEntity missingOntologyEntity) {
+                        missingOntologyEntity.printStackTrace();
+                    }
+        });
+
+        reasoner.getUnderlyingOntology().runInference();
+        classObjects.parallelStream().forEach(object -> {
             final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(object);
-            try {
-                reasoner.writeObjectAsFact(object);
-            } catch (TrestleClassException e) {
-                e.printStackTrace();
-            }
-            reasoner.getUnderlyingOntology().runInference();
             final Object returnedObject = reasoner.readAsObject(object.getClass(), owlNamedIndividual.getIRI(), false);
             if (returnedObject instanceof TestClasses.GAULComplexClassTest) {
                 assertEquals(gaulComplexClassTest, returnedObject, "Should have the same object");

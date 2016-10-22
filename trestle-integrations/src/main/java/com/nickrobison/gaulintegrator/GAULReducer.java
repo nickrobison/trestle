@@ -4,6 +4,7 @@ import com.esri.core.geometry.*;
 import com.nickrobison.gaulintegrator.common.ObjectID;
 import com.nickrobison.trestle.TrestleBuilder;
 import com.nickrobison.trestle.TrestleReasoner;
+import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
@@ -118,6 +119,8 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 reasoner.writeObjectAsConcept(newObject);
             } catch (TrestleClassException e) {
                 logger.error("Cannot write object to trestle", e);
+            } catch (MissingOntologyEntity missingOntologyEntity) {
+                logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
             }
 
         } else {
@@ -199,6 +202,8 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 reasoner.writeObjectAsFact(newGAULObject);
             } catch (TrestleClassException e) {
                 logger.error("Cannot write {}", newGAULObject.getObjectName(), e);
+            } catch (MissingOntologyEntity missingOntologyEntity) {
+                logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
             }
         }
         context.write(key, new Text("Records: " + inputRecords.size()));

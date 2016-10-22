@@ -5,6 +5,7 @@ import com.nickrobison.trestle.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.annotations.OWLClassName;
 import com.nickrobison.trestle.annotations.TrestleCreator;
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
+import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.TemporalType;
 import com.vividsolutions.jts.geom.Geometry;
@@ -58,7 +59,7 @@ public class RoadLoader {
     }
 
     @Test
-    public void loadRoads() throws IOException, TrestleClassException {
+    public void loadRoads() throws IOException, TrestleClassException, MissingOntologyEntity {
         File shpFile = new File("/Users/nrobison/Movies/groads-v1-africa-shp/gROADS-v1-africa.shp");
 
         Map<String, Object> map = new HashMap();

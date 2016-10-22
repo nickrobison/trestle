@@ -61,7 +61,7 @@ public class ClassValidationTest {
     }
 
     @Test
-    public void testObjectLoading() throws TrestleClassException {
+    public void testObjectLoading() throws TrestleClassException, MissingOntologyEntity {
 
         reasoner.registerClass(GAULObject.class);
 
