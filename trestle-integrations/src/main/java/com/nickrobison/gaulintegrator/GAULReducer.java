@@ -15,6 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.temporal.TemporalAdjusters;
@@ -118,14 +120,6 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 logger.error("Cannot write object to trestle", e);
             }
 
-//            Store into database
-//            Store the object
-            try {
-                reasoner.writeObjectAsConcept(newObject);
-            } catch (TrestleClassException e) {
-                logger.error("Cannot write object to trestle", e);
-            }
-
         } else {
 //            If we have records that don't cover the entirety of the input space, then we need to integrate them
 //            Try to see if any potentially matching records exist.
@@ -154,7 +148,10 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 //            Check to see if anything in the database either has the same name, or intersects the original object, with an added buffer.
 //            Try from Trestle
 //            Manually run the inferencer, for now
+            final Instant infStart = Instant.now();
             reasoner.getUnderlyingOntology().runInference();
+            final Instant infStop = Instant.now();
+            logger.debug("Updating inference took {} ms", Duration.between(infStart, infStop).toMillis());
             final Optional<List<@NonNull GAULObject>> gaulObjects = reasoner.spatialIntersectObject(newGAULObject, 500);
 
             List<GAULObject> matchedObjects = gaulObjects.orElse(new ArrayList<>());

@@ -70,12 +70,13 @@ public class GAULIntegratorTests {
         final YarnConfiguration clusterConf = new YarnConfiguration();
         cluster = new MiniDFSCluster.Builder(conf).build();
 
-//        connectionString = "jdbc:virtuoso://localhost:1111";
-//        userName = "dba";
-//        password = "dba";
-        connectionString = "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial";
-        userName = "spatialUser";
-        password = "spatial1";
+        connectionString = "jdbc:virtuoso://localhost:1111";
+//        connectionString = "jdbc:virtuoso://nuclet:1111";
+        userName = "dba";
+        password = "dba";
+//        connectionString = "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial";
+//        userName = "spatialUser";
+//        password = "spatial1";
         ontologyName = "hadoop_gaul_new";
         conf.set("reasoner.db.connection", connectionString);
         conf.set("reasoner.db.username", userName);

@@ -812,23 +812,33 @@ public class TrestleReasoner {
         final OWLClass owlClass = ClassParser.GetObjectClass(clazz);
 
         final String relationQuery = qb.buildRelationQuery(df.getOWLNamedIndividual(IRI.create(PREFIX, objectID)), owlClass, cutoff);
+        TrestleTransaction transaction = ontology.createandOpenNewTransaction(false);
         final ResultSet resultSet = ontology.executeSPARQL(relationQuery);
 
         Set<IRI> relatedIRIs = new HashSet<>();
         Map<@NonNull T, Double> relatedObjects = new HashMap<>();
+        Map<IRI, Double> relatedObjectResults = new HashMap<>();
         while (resultSet.hasNext()) {
             final QuerySolution next = resultSet.next();
             final IRI relatedIRI = IRI.create(next.getResource("f").getURI());
             final double strength = next.getLiteral("s").getDouble();
+            relatedObjectResults.put(relatedIRI, strength);
             logger.debug("Has related {}", relatedIRI);
-            try {
-                final @NonNull T object = readAsObject(clazz, relatedIRI, false);
-                relatedObjects.put(object, strength);
-            } catch (Exception e) {
-                logger.error("Problem with {}", relatedIRI, e);
-            }
-
         }
+
+        relatedObjectResults
+                .entrySet().forEach(entry -> {
+            final @NonNull T object = readAsObject(clazz, entry.getKey(), false);
+            relatedObjects.put(object, entry.getValue());
+        });
+        ontology.returnAndCommitTransaction(transaction);
+//
+//        try {
+//            final @NonNull T object = readAsObject(clazz, relatedIRI, false);
+//            relatedObjects.put(object, strength);
+//        } catch (Exception e) {
+//            logger.error("Problem with {}", relatedIRI, e);
+//        }
 
         if (relatedObjects.size() == 0) {
             return Optional.empty();
