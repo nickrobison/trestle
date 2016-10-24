@@ -77,7 +77,7 @@ public class GAULIntegratorTests {
 //        connectionString = "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial";
 //        userName = "spatialUser";
 //        password = "spatial1";
-        ontologyName = "hadoop_gaul_new";
+        ontologyName = "hadoop_gaul_new2";
         conf.set("reasoner.db.connection", connectionString);
         conf.set("reasoner.db.username", userName);
         conf.set("reasoner.db.password", password);
@@ -129,7 +129,7 @@ public class GAULIntegratorTests {
                 .withName(ontologyName)
                 .build();
 
-        final Optional<Map<@NonNull GAULObject, Double>> relatedObjects1 = reasoner.getRelatedObjects(GAULObject.class, "0fea0c09-621e-4def-9a8b-bd36b45a09bc", 0.0);
+        final Optional<Map<@NonNull GAULObject, Double>> relatedObjects1 = reasoner.getRelatedObjects(GAULObject.class, "21882:Boane:1990:1997", 0.0);
         assertTrue(relatedObjects1.isPresent(), "Should have related objects");
         assertTrue(relatedObjects1.get().size() > 0, "Should have more than 0 related objects");
         logger.info("Has {} objects}", relatedObjects1.get().size());

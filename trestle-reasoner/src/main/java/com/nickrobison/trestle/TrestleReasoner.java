@@ -40,13 +40,15 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.time.*;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -616,8 +618,6 @@ public class TrestleReasoner {
 
     private <T> Optional<T> readAsObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, @Nullable TemporalObject databaseTemporal) {
 
-//        return CompletableFuture.supplyAsync(() -> {
-//            logger.debug("Executing async");
 //        Contains class?
         try {
             checkRegisteredClass(clazz);
@@ -629,305 +629,278 @@ public class TrestleReasoner {
 //        Do some things before opening a transaction
         final ConstructorArguments constructorArguments = new ConstructorArguments();
         final Optional<List<OWLDataProperty>> dataProperties = ClassBuilder.getPropertyMembers(clazz);
-
-//        final Set<OWLObjectPropertyAssertionAxiom> factIndividuals = new HashSet<>();
         final Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties;
-//        Setup the object property string
-//        final String objectPropertySPARQL;
+//        Setup the database time temporal
         @Nullable OffsetDateTime startTemporal = null;
         @Nullable OffsetDateTime endTemporal = null;
         if (databaseTemporal == null) {
-//            objectPropertySPARQL = qb.buildObjectPropertyRetrievalQuery(df.getOWLNamedIndividual(individualIRI), null, null);
-        } else if (databaseTemporal.asInterval().isContinuing()) {
-            startTemporal = parseTemporalToOntologyDateTime(databaseTemporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
-//            objectPropertySPARQL = qb.buildObjectPropertyRetrievalQuery(df.getOWLNamedIndividual(individualIRI), startTemporal, null);
-        } else {
-            startTemporal = parseTemporalToOntologyDateTime(databaseTemporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
-            endTemporal = parseTemporalToOntologyDateTime((Temporal) databaseTemporal.asInterval().getToTime().get(), TemporalParser.IntervalType.END, ZoneOffset.UTC);
-//            objectPropertySPARQL = qb.buildObjectPropertyRetrievalQueryOptimized(df.getOWLNamedIndividual(individualIRI), startTemporal, endTemporal);
-        }
+            if (databaseTemporal.asInterval().isContinuing()) {
+                startTemporal = parseTemporalToOntologyDateTime(databaseTemporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
+            } else {
+                startTemporal = parseTemporalToOntologyDateTime(databaseTemporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
+                endTemporal = parseTemporalToOntologyDateTime((Temporal) databaseTemporal.asInterval().getToTime().get(), TemporalParser.IntervalType.END, ZoneOffset.UTC);
+            }
 
 //            Get the temporal objects to figure out the correct return type
-        final Optional<List<TemporalObject>> temporalObjectTypes = TemporalParser.GetTemporalObjects(clazz);
+            final Optional<List<TemporalObject>> temporalObjectTypes = TemporalParser.GetTemporalObjects(clazz);
 
-        final Class<? extends Temporal> baseTemporalType = TemporalParser.GetTemporalType(clazz);
+            final Class<? extends Temporal> baseTemporalType = TemporalParser.GetTemporalType(clazz);
 
-        final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(false);
+            final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(false);
 
 //        Figure out its name
-        if (!checkExists(individualIRI)) {
-            logger.error("Missing individual {}", individualIRI);
-            return Optional.empty();
-        }
-
-        if (dataProperties.isPresent()) {
-
-            final Instant individualRetrievalStart = Instant.now();
-            retrievedDataProperties = ontology.GetFactsForIndividual(df.getOWLNamedIndividual(individualIRI), startTemporal, endTemporal);
-//                We need to get the properties from the fact relations
-//            TODO(nrobison): Currently, we do this in a terrible way. Probably need to migrate this to a SPARQL query. Takes about 1 second to get each fact.
-
-//            final ResultSet resultSet = ontology.executeSPARQL(objectPropertySPARQL);
-//            while (resultSet.hasNext()) {
-//                final QuerySolution next = resultSet.next();
-//                final Resource f = next.getResource("f");
-//                factIndividuals.add(df.getOWLObjectPropertyAssertionAxiom(
-//                        df.getOWLObjectProperty(hasFactIRI),
-//                        df.getOWLNamedIndividual(individualIRI),
-//                        df.getOWLNamedIndividual(IRI.create(f.getURI()))));
-//
-//            }
-//            final Instant objectQueryEnd = Instant.now();
-//            logger.debug("Executing object relation query took {} ms", Duration.between(objectQueryStart, objectQueryEnd).toMillis());
-//            final Instant individualRetrievalStart = Instant.now();
-////            I know parallel streams are 'bad', but this seems like a good way to deal with the necessary concurrency, maybe we can move it to concurrent futures at some point. No idea.
-//            factIndividuals.parallelStream()
-//                    .map(individual -> {
-//                        final TrestleTransaction tt = ontology.createandOpenNewTransaction(trestleTransaction, false);
-//                        final Set<OWLDataPropertyAssertionAxiom> allDataPropertiesForIndividual = ontology.getAllDataPropertiesForIndividual(individual.getObject().asOWLNamedIndividual());
-//                        ontology.returnAndCommitTransaction(tt);
-//                        return allDataPropertiesForIndividual;
-//                    })
-//                    .forEach(propertySet -> propertySet.forEach(retrievedDataProperties::add));
-            final Instant individualRetrievalEnd = Instant.now();
-            logger.debug("Retrieving {} facts took {} ms", retrievedDataProperties.size(), Duration.between(individualRetrievalStart, individualRetrievalEnd).toMillis());
-
-//            Get the temporals
-            final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(individualIRI, hasTemporalIRI);
-            Optional<TemporalObject> temporalObject = Optional.empty();
-            if (individualObjectProperty.isPresent()) {
-//                There can only be 1 temporal, so just grab the first one.
-                final Optional<OWLObjectPropertyAssertionAxiom> first = individualObjectProperty.get().stream().findFirst();
-                if (!first.isPresent()) {
-                    throw new RuntimeException(String.format("Missing temporal for individual %s", individualIRI));
-                }
-                final Set<OWLDataPropertyAssertionAxiom> TemporalProperties = ontology.getAllDataPropertiesForIndividual(first.get().getObject().asOWLNamedIndividual());
-                temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(TemporalProperties, TemporalParser.IsDefault(clazz), baseTemporalType);
-            }
-            ontology.returnAndCommitTransaction(trestleTransaction);
-
-            if (!temporalObject.isPresent()) {
-                throw new RuntimeException(String.format("Cannot restore temporal from ontology for %s", individualIRI));
-            }
-
-            retrievedDataProperties.forEach(property -> {
-                final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, clazz);
-                final Object literalValue = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
-                constructorArguments.addArgument(
-                        ClassParser.matchWithClassMember(clazz, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
-                        javaClass,
-                        literalValue);
-            });
-
-//            Add the temporal to the constructor args
-            final TemporalObject temporal = temporalObject.get();
-            if (temporal.isInterval()) {
-                final IntervalTemporal intervalTemporal = temporal.asInterval();
-                constructorArguments.addArgument(
-                        ClassParser.matchWithClassMember(clazz, intervalTemporal.getStartName()),
-                        intervalTemporal.getBaseTemporalType(),
-                        intervalTemporal.getFromTime());
-                if (!intervalTemporal.isDefault() & intervalTemporal.getToTime().isPresent()) {
-                    constructorArguments.addArgument(
-                            ClassParser.matchWithClassMember(clazz, intervalTemporal.getEndName()),
-                            intervalTemporal.getBaseTemporalType(),
-                            intervalTemporal.getToTime().get());
-                }
-            } else {
-                constructorArguments.addArgument(
-                        ClassParser.matchWithClassMember(clazz, temporal.asPoint().getParameterName()),
-                        temporal.asPoint().getBaseTemporalType(),
-                        temporal.asPoint().getPointTime());
-            }
-        }
-        try {
-            final @NonNull T constructedObject = ClassBuilder.ConstructObject(clazz, constructorArguments);
-            return Optional.of(constructedObject);
-        } catch (MissingConstructorException e) {
-            logger.error("Problem with constructor", e);
-            return Optional.empty();
-        }
-//        });
-    }
-
-    /**
-     * Spatial Intersect Object with most recent records in the database
-     * An empty Optional means an error, an Optional of an empty List means no intersected objects
-     *
-     * @param inputObject - Object to intersect
-     * @param buffer      - Additional buffer (in meters)
-     * @param <T>         - Type to specialize method
-     * @return - An Optional List of Object T
-     */
-    @SuppressWarnings("return.type.incompatible")
-    public <T> Optional<List<T>> spatialIntersectObject(@NonNull T inputObject, double buffer) {
-        return spatialIntersectObject(inputObject, buffer, null);
-    }
-
-    /**
-     * Spatial Intersect Object with records in the database valid at that given time
-     * An empty Optional means an error, an Optional of an empty List means no intersected objects
-     *
-     * @param inputObject - Object to intersect
-     * @param buffer      - Additional buffer to build around object (in meters)
-     * @param temporalAt  - Temporal of intersecting time point
-     * @param <T>         - Type to specialize method
-     * @return - An Optional List of Object T
-     */
-    @SuppressWarnings("unchecked")
-    public <T> Optional<List<T>> spatialIntersectObject(@NonNull T inputObject, double buffer, @Nullable Temporal temporalAt) {
-        final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(inputObject);
-        final Optional<String> wktString = SpatialParser.GetSpatialValue(inputObject);
-
-        if (wktString.isPresent()) {
-            return spatialIntersect((Class<T>) inputObject.getClass(), wktString.get(), buffer, temporalAt);
-        }
-
-        logger.info("{} doesn't have a spatial component", owlNamedIndividual);
-        return Optional.empty();
-    }
-
-    /**
-     * Find objects of a given class that intersect with a specific WKT boundary.
-     * An empty Optional means an error, an Optional of an empty List means no intersected objects
-     *
-     * @param clazz  - Class of object to return
-     * @param wkt    - WKT of spatial boundary to intersect with
-     * @param buffer - Double buffer to build around wkt (in meters)
-     * @param <T>    - Type to specialize method
-     * @return - An Optional List of Object T
-     */
-    public <T> Optional<List<T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer) {
-        return spatialIntersect(clazz, wkt, buffer, null);
-    }
-
-    /**
-     * Find objects of a given class that intersect with a specific WKT boundary.
-     * An empty Optional means an error, an Optional of an empty List means no intersected objects
-     *
-     * @param clazz      - Class of object to return
-     * @param wkt        - WKT of spatial boundary to intersect with
-     * @param buffer     - Double buffer to build around wkt
-     * @param atTemporal - Temporal to filter results to specific valid time point
-     * @param <T>        - Class to specialize method with.
-     * @return - An Optional List of Object T.
-     */
-    @SuppressWarnings("return.type.incompatible")
-    public <T> Optional<List<T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal atTemporal) {
-
-        final CompletableFuture<Optional<List<@NonNull T>>> intersectFuture = spatialIntersectAsync(clazz, wkt, buffer, atTemporal);
-        try {
-            return intersectFuture.get();
-        } catch (InterruptedException e) {
-            logger.error("Interrupted", e);
-        } catch (ExecutionException e) {
-            logger.error("Execution exception", e);
-        }
-
-        throw new RuntimeException("Problem intersecting object");
-    }
-
-    /**
-     * Async intersection of given class with WKT boundary
-     *
-     * @param clazz      - Class of object to return
-     * @param wkt        - WKT of spatial boundary to intersect with
-     * @param buffer     - Double buffer to build around WKT
-     * @param atTemporal - Temporal to filter results to specific valid time point
-     * @param <T>        - Type to specialize Future with
-     * @return - Completable Future of Optional List of T
-     */
-    private <T> CompletableFuture<Optional<List<T>>> spatialIntersectAsync(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal atTemporal) {
-        return CompletableFuture.supplyAsync(() -> {
-            final OWLClass owlClass = ClassParser.GetObjectClass(clazz);
-
-            String spatialIntersection = null;
-            try {
-                if (atTemporal == null) {
-                    logger.debug("Running generic spatial intersection");
-                    spatialIntersection = qb.buildSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER);
-                } else {
-                    final OffsetDateTime atLDTime = parseTemporalToOntologyDateTime(atTemporal, TemporalParser.IntervalType.START, ZoneOffset.UTC);
-                    logger.debug("Running spatial intersection at time {}", atLDTime);
-                    spatialIntersection = qb.buildTemporalSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER, atLDTime);
-                }
-            } catch (UnsupportedFeatureException e) {
-                logger.error("Database {] doesn't support spatial intersections.", spatialDalect, e);
+            if (!checkExists(individualIRI)) {
+                logger.error("Missing individual {}", individualIRI);
                 return Optional.empty();
             }
 
-            logger.debug("Executing spatial query");
-            final Instant start = Instant.now();
-            final ResultSet resultSet = ontology.executeSPARQL(spatialIntersection);
-            final Instant end = Instant.now();
-            logger.debug("Spatial query returned in {} ms", Duration.between(start, end).toMillis());
-//            I think I need to rewind the result set
-            ((ResultSetMem) resultSet).rewind();
-            Set<IRI> intersectedIRIs = new HashSet<>();
-            while (resultSet.hasNext()) {
-                final QuerySolution querySolution = resultSet.next();
-                final Resource resource = querySolution.get("m").asResource();
-                intersectedIRIs.add(IRI.create(resource.getURI()));
+            if (dataProperties.isPresent()) {
+
+                final Instant individualRetrievalStart = Instant.now();
+                retrievedDataProperties = ontology.GetFactsForIndividual(df.getOWLNamedIndividual(individualIRI), startTemporal, endTemporal);
+                final Instant individualRetrievalEnd = Instant.now();
+                logger.debug("Retrieving {} facts took {} ms", retrievedDataProperties.size(), Duration.between(individualRetrievalStart, individualRetrievalEnd).toMillis());
+
+//            Get the temporals
+                final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(individualIRI, hasTemporalIRI);
+                Optional<TemporalObject> temporalObject = Optional.empty();
+                if (individualObjectProperty.isPresent()) {
+//                There can only be 1 temporal, so just grab the first one.
+                    final Optional<OWLObjectPropertyAssertionAxiom> first = individualObjectProperty.get().stream().findFirst();
+                    if (!first.isPresent()) {
+                        throw new RuntimeException(String.format("Missing temporal for individual %s", individualIRI));
+                    }
+                    final Set<OWLDataPropertyAssertionAxiom> TemporalProperties = ontology.getAllDataPropertiesForIndividual(first.get().getObject().asOWLNamedIndividual());
+                    temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(TemporalProperties, TemporalParser.IsDefault(clazz), baseTemporalType);
+                }
+                ontology.returnAndCommitTransaction(trestleTransaction);
+
+                if (!temporalObject.isPresent()) {
+                    throw new RuntimeException(String.format("Cannot restore temporal from ontology for %s", individualIRI));
+                }
+
+                retrievedDataProperties.forEach(property -> {
+                    final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, clazz);
+                    final Object literalValue = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
+                    constructorArguments.addArgument(
+                            ClassParser.matchWithClassMember(clazz, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
+                            javaClass,
+                            literalValue);
+                });
+
+//            Add the temporal to the constructor args
+                final TemporalObject temporal = temporalObject.get();
+                if (temporal.isInterval()) {
+                    final IntervalTemporal intervalTemporal = temporal.asInterval();
+                    constructorArguments.addArgument(
+                            ClassParser.matchWithClassMember(clazz, intervalTemporal.getStartName()),
+                            intervalTemporal.getBaseTemporalType(),
+                            intervalTemporal.getFromTime());
+                    if (!intervalTemporal.isDefault() & intervalTemporal.getToTime().isPresent()) {
+                        constructorArguments.addArgument(
+                                ClassParser.matchWithClassMember(clazz, intervalTemporal.getEndName()),
+                                intervalTemporal.getBaseTemporalType(),
+                                intervalTemporal.getToTime().get());
+                    }
+                } else {
+                    constructorArguments.addArgument(
+                            ClassParser.matchWithClassMember(clazz, temporal.asPoint().getParameterName()),
+                            temporal.asPoint().getBaseTemporalType(),
+                            temporal.asPoint().getPointTime());
+                }
             }
-            logger.debug("Intersected with {} objects", intersectedIRIs.size());
-            if (intersectedIRIs.size() == 0) {
-                logger.info("No intersected results");
-                return Optional.of(new ArrayList<@NonNull T>());
+            try {
+                final @NonNull T constructedObject = ClassBuilder.ConstructObject(clazz, constructorArguments);
+                return Optional.of(constructedObject);
+            } catch (MissingConstructorException e) {
+                logger.error("Problem with constructor", e);
+                return Optional.empty();
             }
-
-//            I think I need to suppress this warning to deal with generics in streams
-            @SuppressWarnings("argument.type.incompatible") final List<@NonNull T> intersectedObjects = intersectedIRIs
-                    .stream()
-                    .map(iri -> {
-                        try {
-                            return (@NonNull T) readAsObject(clazz, iri, false);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
-                    .collect(Collectors.toList());
-
-            return Optional.of(intersectedObjects);
-        });
-    }
-
-    /**
-     * Get a map of related objects and their relative strengths
-     *
-     * @param clazz    - Java class of object to serialize to
-     * @param objectID - Object ID to retrieve related objects
-     * @param cutoff   - Double of relation strength cutoff
-     * @param <T>      - Type to specialize return with
-     * @return - Optional Map of related java objects and their corresponding relational strength
-     */
-    //    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
-    @SuppressWarnings("return.type.incompatible")
-    public <T> Optional<Map<@NonNull T, Double>> getRelatedObjects(Class<@NonNull T> clazz, String objectID, double cutoff) {
-
-
-        final OWLClass owlClass = ClassParser.GetObjectClass(clazz);
-
-        final String relationQuery = qb.buildRelationQuery(df.getOWLNamedIndividual(IRI.create(PREFIX, objectID)), owlClass, cutoff);
-        TrestleTransaction transaction = ontology.createandOpenNewTransaction(false);
-        final ResultSet resultSet = ontology.executeSPARQL(relationQuery);
-
-        Set<IRI> relatedIRIs = new HashSet<>();
-        Map<@NonNull T, Double> relatedObjects = new HashMap<>();
-        Map<IRI, Double> relatedObjectResults = new HashMap<>();
-        while (resultSet.hasNext()) {
-            final QuerySolution next = resultSet.next();
-            final IRI relatedIRI = IRI.create(next.getResource("f").getURI());
-            final double strength = next.getLiteral("s").getDouble();
-            relatedObjectResults.put(relatedIRI, strength);
-            logger.debug("Has related {}", relatedIRI);
+//        });
         }
 
-        relatedObjectResults
-                .entrySet().forEach(entry -> {
-            final @NonNull T object = readAsObject(clazz, entry.getKey(), false);
-            relatedObjects.put(object, entry.getValue());
-        });
-        ontology.returnAndCommitTransaction(transaction);
+        /**
+         * Spatial Intersect Object with most recent records in the database
+         * An empty Optional means an error, an Optional of an empty List means no intersected objects
+         *
+         * @param inputObject - Object to intersect
+         * @param buffer      - Additional buffer (in meters)
+         * @param <T>         - Type to specialize method
+         * @return - An Optional List of Object T
+         */
+        @SuppressWarnings("return.type.incompatible")
+        public <T> Optional<List<T>> spatialIntersectObject (@NonNull T inputObject,double buffer){
+            return spatialIntersectObject(inputObject, buffer, null);
+        }
+
+        /**
+         * Spatial Intersect Object with records in the database valid at that given time
+         * An empty Optional means an error, an Optional of an empty List means no intersected objects
+         *
+         * @param inputObject - Object to intersect
+         * @param buffer      - Additional buffer to build around object (in meters)
+         * @param temporalAt  - Temporal of intersecting time point
+         * @param <T>         - Type to specialize method
+         * @return - An Optional List of Object T
+         */
+        @SuppressWarnings("unchecked")
+        public <T> Optional<List<T>> spatialIntersectObject (@NonNull T inputObject,double buffer,
+        @Nullable Temporal temporalAt){
+            final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(inputObject);
+            final Optional<String> wktString = SpatialParser.GetSpatialValue(inputObject);
+
+            if (wktString.isPresent()) {
+                return spatialIntersect((Class<T>) inputObject.getClass(), wktString.get(), buffer, temporalAt);
+            }
+
+            logger.info("{} doesn't have a spatial component", owlNamedIndividual);
+            return Optional.empty();
+        }
+
+        /**
+         * Find objects of a given class that intersect with a specific WKT boundary.
+         * An empty Optional means an error, an Optional of an empty List means no intersected objects
+         *
+         * @param clazz  - Class of object to return
+         * @param wkt    - WKT of spatial boundary to intersect with
+         * @param buffer - Double buffer to build around wkt (in meters)
+         * @param <T>    - Type to specialize method
+         * @return - An Optional List of Object T
+         */
+        public <T> Optional<List<T>> spatialIntersect (Class < @NonNull T > clazz, String wkt,double buffer){
+            return spatialIntersect(clazz, wkt, buffer, null);
+        }
+
+        /**
+         * Find objects of a given class that intersect with a specific WKT boundary.
+         * An empty Optional means an error, an Optional of an empty List means no intersected objects
+         *
+         * @param clazz      - Class of object to return
+         * @param wkt        - WKT of spatial boundary to intersect with
+         * @param buffer     - Double buffer to build around wkt
+         * @param atTemporal - Temporal to filter results to specific valid time point
+         * @param <T>        - Class to specialize method with.
+         * @return - An Optional List of Object T.
+         */
+        @SuppressWarnings("return.type.incompatible")
+        public <T> Optional<List<T>> spatialIntersect (Class < @NonNull T > clazz, String wkt,double buffer,
+        @Nullable Temporal atTemporal){
+
+            final CompletableFuture<Optional<List<@NonNull T>>> intersectFuture = spatialIntersectAsync(clazz, wkt, buffer, atTemporal);
+            try {
+                return intersectFuture.get();
+            } catch (InterruptedException e) {
+                logger.error("Interrupted", e);
+            } catch (ExecutionException e) {
+                logger.error("Execution exception", e);
+            }
+
+            throw new RuntimeException("Problem intersecting object");
+        }
+
+        /**
+         * Async intersection of given class with WKT boundary
+         *
+         * @param clazz      - Class of object to return
+         * @param wkt        - WKT of spatial boundary to intersect with
+         * @param buffer     - Double buffer to build around WKT
+         * @param atTemporal - Temporal to filter results to specific valid time point
+         * @param <T>        - Type to specialize Future with
+         * @return - Completable Future of Optional List of T
+         */
+        private <T> CompletableFuture<Optional<List<T>>> spatialIntersectAsync (Class < @NonNull T > clazz, String wkt,
+        double buffer, @Nullable Temporal atTemporal){
+            return CompletableFuture.supplyAsync(() -> {
+                final OWLClass owlClass = ClassParser.GetObjectClass(clazz);
+
+                String spatialIntersection = null;
+                try {
+                    if (atTemporal == null) {
+                        logger.debug("Running generic spatial intersection");
+                        spatialIntersection = qb.buildSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER);
+                    } else {
+                        final OffsetDateTime atLDTime = parseTemporalToOntologyDateTime(atTemporal, TemporalParser.IntervalType.START, ZoneOffset.UTC);
+                        logger.debug("Running spatial intersection at time {}", atLDTime);
+                        spatialIntersection = qb.buildTemporalSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER, atLDTime);
+                    }
+                } catch (UnsupportedFeatureException e) {
+                    logger.error("Database {] doesn't support spatial intersections.", spatialDalect, e);
+                    return Optional.empty();
+                }
+
+                logger.debug("Executing spatial query");
+                final Instant start = Instant.now();
+                final ResultSet resultSet = ontology.executeSPARQL(spatialIntersection);
+                final Instant end = Instant.now();
+                logger.debug("Spatial query returned in {} ms", Duration.between(start, end).toMillis());
+//            I think I need to rewind the result set
+                ((ResultSetMem) resultSet).rewind();
+                Set<IRI> intersectedIRIs = new HashSet<>();
+                while (resultSet.hasNext()) {
+                    final QuerySolution querySolution = resultSet.next();
+                    final Resource resource = querySolution.get("m").asResource();
+                    intersectedIRIs.add(IRI.create(resource.getURI()));
+                }
+                logger.debug("Intersected with {} objects", intersectedIRIs.size());
+                if (intersectedIRIs.size() == 0) {
+                    logger.info("No intersected results");
+                    return Optional.of(new ArrayList<@NonNull T>());
+                }
+
+//            I think I need to suppress this warning to deal with generics in streams
+                @SuppressWarnings("argument.type.incompatible") final List<@NonNull T> intersectedObjects = intersectedIRIs
+                        .stream()
+                        .map(iri -> {
+                            try {
+                                return (@NonNull T) readAsObject(clazz, iri, false);
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        })
+                        .collect(Collectors.toList());
+
+                return Optional.of(intersectedObjects);
+            });
+        }
+
+        /**
+         * Get a map of related objects and their relative strengths
+         *
+         * @param clazz    - Java class of object to serialize to
+         * @param objectID - Object ID to retrieve related objects
+         * @param cutoff   - Double of relation strength cutoff
+         * @param <T>      - Type to specialize return with
+         * @return - Optional Map of related java objects and their corresponding relational strength
+         */
+        //    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
+        @SuppressWarnings("return.type.incompatible")
+        public <T> Optional<Map<@NonNull T, Double>> getRelatedObjects (Class < @NonNull T > clazz, String objectID,
+        double cutoff){
+
+
+            final OWLClass owlClass = ClassParser.GetObjectClass(clazz);
+
+            final String relationQuery = qb.buildRelationQuery(df.getOWLNamedIndividual(IRI.create(PREFIX, objectID)), owlClass, cutoff);
+            TrestleTransaction transaction = ontology.createandOpenNewTransaction(false);
+            final ResultSet resultSet = ontology.executeSPARQL(relationQuery);
+
+            Set<IRI> relatedIRIs = new HashSet<>();
+            Map<@NonNull T, Double> relatedObjects = new HashMap<>();
+            Map<IRI, Double> relatedObjectResults = new HashMap<>();
+            while (resultSet.hasNext()) {
+                final QuerySolution next = resultSet.next();
+                final IRI relatedIRI = IRI.create(next.getResource("f").getURI());
+                final double strength = next.getLiteral("s").getDouble();
+                relatedObjectResults.put(relatedIRI, strength);
+                logger.debug("Has related {}", relatedIRI);
+            }
+
+            relatedObjectResults
+                    .entrySet().forEach(entry -> {
+                final @NonNull T object = readAsObject(clazz, entry.getKey(), false);
+                relatedObjects.put(object, entry.getValue());
+            });
+            ontology.returnAndCommitTransaction(transaction);
 //
 //        try {
 //            final @NonNull T object = readAsObject(clazz, relatedIRI, false);
@@ -936,19 +909,20 @@ public class TrestleReasoner {
 //            logger.error("Problem with {}", relatedIRI, e);
 //        }
 
-        if (relatedObjects.size() == 0) {
-            return Optional.empty();
+            if (relatedObjects.size() == 0) {
+                return Optional.empty();
+            }
+
+            return Optional.of(relatedObjects);
         }
 
-        return Optional.of(relatedObjects);
-    }
+        /**
+         * Remove individuals from the ontology
+         *
+         * @param inputObject - Individual to remove
+         * @param <T>         - Type of individual to remove
+         */
 
-    /**
-     * Remove individuals from the ontology
-     *
-     * @param inputObject - Individual to remove
-     * @param <T>         - Type of individual to remove
-     */
     public <T> void removeIndividual(@NonNull T... inputObject) {
         T[] objects = inputObject;
         final List<CompletableFuture<Void>> completableFutures = Arrays.stream(objects)
