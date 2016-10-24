@@ -630,19 +630,21 @@ public class TrestleReasoner {
         final ConstructorArguments constructorArguments = new ConstructorArguments();
         final Optional<List<OWLDataProperty>> dataProperties = ClassBuilder.getPropertyMembers(clazz);
 
-        final Set<OWLObjectPropertyAssertionAxiom> factIndividuals = new HashSet<>();
-        final CopyOnWriteArraySet<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new CopyOnWriteArraySet<>();
+//        final Set<OWLObjectPropertyAssertionAxiom> factIndividuals = new HashSet<>();
+        final Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties;
 //        Setup the object property string
-        final String objectPropertySPARQL;
+//        final String objectPropertySPARQL;
+        @Nullable OffsetDateTime startTemporal = null;
+        @Nullable OffsetDateTime endTemporal = null;
         if (databaseTemporal == null) {
-            objectPropertySPARQL = qb.buildObjectPropertyRetrievalQuery(df.getOWLNamedIndividual(individualIRI), null, null);
+//            objectPropertySPARQL = qb.buildObjectPropertyRetrievalQuery(df.getOWLNamedIndividual(individualIRI), null, null);
         } else if (databaseTemporal.asInterval().isContinuing()) {
-            final OffsetDateTime startTemporal = parseTemporalToOntologyDateTime(databaseTemporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
-            objectPropertySPARQL = qb.buildObjectPropertyRetrievalQuery(df.getOWLNamedIndividual(individualIRI), startTemporal, null);
+            startTemporal = parseTemporalToOntologyDateTime(databaseTemporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
+//            objectPropertySPARQL = qb.buildObjectPropertyRetrievalQuery(df.getOWLNamedIndividual(individualIRI), startTemporal, null);
         } else {
-            final OffsetDateTime startTemporal = parseTemporalToOntologyDateTime(databaseTemporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
-            final OffsetDateTime endTemporal = parseTemporalToOntologyDateTime((Temporal) databaseTemporal.asInterval().getToTime().get(), TemporalParser.IntervalType.END, ZoneOffset.UTC);
-            objectPropertySPARQL = qb.buildObjectPropertyRetrievalQuery(df.getOWLNamedIndividual(individualIRI), startTemporal, endTemporal);
+            startTemporal = parseTemporalToOntologyDateTime(databaseTemporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
+            endTemporal = parseTemporalToOntologyDateTime((Temporal) databaseTemporal.asInterval().getToTime().get(), TemporalParser.IntervalType.END, ZoneOffset.UTC);
+//            objectPropertySPARQL = qb.buildObjectPropertyRetrievalQueryOptimized(df.getOWLNamedIndividual(individualIRI), startTemporal, endTemporal);
         }
 
 //            Get the temporal objects to figure out the correct return type
@@ -659,33 +661,36 @@ public class TrestleReasoner {
         }
 
         if (dataProperties.isPresent()) {
+
+            final Instant individualRetrievalStart = Instant.now();
+            retrievedDataProperties = ontology.GetFactsForIndividual(df.getOWLNamedIndividual(individualIRI), startTemporal, endTemporal);
 //                We need to get the properties from the fact relations
 //            TODO(nrobison): Currently, we do this in a terrible way. Probably need to migrate this to a SPARQL query. Takes about 1 second to get each fact.
-            final Instant objectQueryStart = Instant.now();
-            final ResultSet resultSet = ontology.executeSPARQL(objectPropertySPARQL);
-            while (resultSet.hasNext()) {
-                final QuerySolution next = resultSet.next();
-                final Resource f = next.getResource("f");
-                factIndividuals.add(df.getOWLObjectPropertyAssertionAxiom(
-                        df.getOWLObjectProperty(hasFactIRI),
-                        df.getOWLNamedIndividual(individualIRI),
-                        df.getOWLNamedIndividual(IRI.create(f.getURI()))));
 
-            }
-            final Instant objectQueryEnd = Instant.now();
-            logger.debug("Executing object relation query took {} ms", Duration.between(objectQueryStart, objectQueryEnd).toMillis());
-            final Instant individualRetrievalStart = Instant.now();
-//            I know parallel streams are 'bad', but this seems like a good way to deal with the necessary concurrency, maybe we can move it to concurrent futures at some point. No idea.
-            factIndividuals.parallelStream()
-                    .map(individual -> {
-                        final TrestleTransaction tt = ontology.createandOpenNewTransaction(trestleTransaction, false);
-                        final Set<OWLDataPropertyAssertionAxiom> allDataPropertiesForIndividual = ontology.getAllDataPropertiesForIndividual(individual.getObject().asOWLNamedIndividual());
-                        ontology.returnAndCommitTransaction(tt);
-                        return allDataPropertiesForIndividual;
-                    })
-                    .forEach(propertySet -> propertySet.forEach(retrievedDataProperties::add));
+//            final ResultSet resultSet = ontology.executeSPARQL(objectPropertySPARQL);
+//            while (resultSet.hasNext()) {
+//                final QuerySolution next = resultSet.next();
+//                final Resource f = next.getResource("f");
+//                factIndividuals.add(df.getOWLObjectPropertyAssertionAxiom(
+//                        df.getOWLObjectProperty(hasFactIRI),
+//                        df.getOWLNamedIndividual(individualIRI),
+//                        df.getOWLNamedIndividual(IRI.create(f.getURI()))));
+//
+//            }
+//            final Instant objectQueryEnd = Instant.now();
+//            logger.debug("Executing object relation query took {} ms", Duration.between(objectQueryStart, objectQueryEnd).toMillis());
+//            final Instant individualRetrievalStart = Instant.now();
+////            I know parallel streams are 'bad', but this seems like a good way to deal with the necessary concurrency, maybe we can move it to concurrent futures at some point. No idea.
+//            factIndividuals.parallelStream()
+//                    .map(individual -> {
+//                        final TrestleTransaction tt = ontology.createandOpenNewTransaction(trestleTransaction, false);
+//                        final Set<OWLDataPropertyAssertionAxiom> allDataPropertiesForIndividual = ontology.getAllDataPropertiesForIndividual(individual.getObject().asOWLNamedIndividual());
+//                        ontology.returnAndCommitTransaction(tt);
+//                        return allDataPropertiesForIndividual;
+//                    })
+//                    .forEach(propertySet -> propertySet.forEach(retrievedDataProperties::add));
             final Instant individualRetrievalEnd = Instant.now();
-            logger.debug("Retrieving {} facts took {} ms", factIndividuals.size(), Duration.between(individualRetrievalStart, individualRetrievalEnd).toMillis());
+            logger.debug("Retrieving {} facts took {} ms", retrievedDataProperties.size(), Duration.between(individualRetrievalStart, individualRetrievalEnd).toMillis());
 
 //            Get the temporals
             final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(individualIRI, hasTemporalIRI);

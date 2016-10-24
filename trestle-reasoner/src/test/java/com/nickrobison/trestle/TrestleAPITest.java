@@ -171,7 +171,7 @@ public class TrestleAPITest {
         });
 
         reasoner.getUnderlyingOntology().runInference();
-        classObjects.parallelStream().forEach(object -> {
+        classObjects.stream().forEach(object -> {
             final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(object);
             final Object returnedObject = reasoner.readAsObject(object.getClass(), owlNamedIndividual.getIRI(), false);
             if (returnedObject instanceof TestClasses.GAULComplexClassTest) {

@@ -112,6 +112,7 @@ public class QueryBuilder {
         return ps.toString();
     }
 
+    @SuppressWarnings("Duplicates")
     public String buildObjectPropertyRetrievalQuery(OWLNamedIndividual individual, @Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal) {
         final ParameterizedSparqlString ps = buildBaseString();
 
@@ -149,19 +150,18 @@ public class QueryBuilder {
 //        But we can't do it through the normal routes, because then it'll insert superfluous '"' values. Because, of course.
 //        If the start temporal is null, pull the currently valid property
 //        FIXME(nrobison): The union is a horrible hack to get things working for the time being. We need to fix it.
-        ps.setCommandText(String.format("SELECT DISTINCT ?m ?f ?p ?o" +
+        ps.setCommandText(String.format("SELECT DISTINCT ?fact ?property ?object" +
                 " WHERE" +
-                " { ?m :has_fact ?f ." +
-                "?f :database_time ?d ." +
+                " { ?m :has_fact ?fact ." +
+                "?fact :database_time ?d ." +
                 "{ ?d :valid_from ?tStart} UNION {?d :exists_from ?tStart} ." +
                 "OPTIONAL{{ ?d :valid_to ?tEnd} UNION {?d :exists_to ?tEnd}} ." +
-                "?f ?p ?o ." +
-                "?p a owl:DatatypeProperty ."));
+                "?fact ?property ?object ."));
         if (startTemporal == null) {
-            ps.append(String.format("FILTER(?m = %s && !bound(?tEnd))}", String.format("<%s>", getFullIRIString(individual))));
+            ps.append(String.format("FILTER(datatype(?object) != '' && ?m = %s && !bound(?tEnd))}", String.format("<%s>", getFullIRIString(individual))));
 //            Otherwise, we'll find the correct property that satisfies the temporal interval
         } else {
-            ps.append(String.format("FILTER(?m = %s && (?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime))}", String.format("<%s>", getFullIRIString(individual))));
+            ps.append(String.format("FILTER(datatype(?object) != '' && ?m = %s && (?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime))}", String.format("<%s>", getFullIRIString(individual))));
             ps.setLiteral("startVariable", startTemporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
             if (endTemporal != null) {
                 ps.setLiteral("endVariable", endTemporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
