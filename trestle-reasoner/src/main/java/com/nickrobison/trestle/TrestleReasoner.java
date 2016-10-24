@@ -660,6 +660,7 @@ public class TrestleReasoner {
 
         if (dataProperties.isPresent()) {
 //                We need to get the properties from the fact relations
+//            TODO(nrobison): Currently, we do this in a terrible way. Probably need to migrate this to a SPARQL query. Takes about 1 second to get each fact.
             final Instant objectQueryStart = Instant.now();
             final ResultSet resultSet = ontology.executeSPARQL(objectPropertySPARQL);
             while (resultSet.hasNext()) {
