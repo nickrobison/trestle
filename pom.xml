@@ -323,14 +323,14 @@
     </dependencies>
     <repositories>
         <repository>
+            <id>resource</id>
+            <name>Resource Repository</name>
+            <url>file://${user.dir}/src/main/resources/repo</url>
+        </repository>
+        <repository>
             <id>central</id>
             <name>maven</name>
             <url>http://repo1.maven.org/maven2/</url>
-        </repository>
-        <repository>
-            <id>resource</id>
-            <name>Resource Repository</name>
-            <url>file://${project.basedir}/src/main/resources/repo</url>
         </repository>
         <repository>
             <id>maven2-repository.dev.java.net</id>
@@ -506,6 +506,28 @@
                         <goals>
                             <goal>jar</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <inherited>true</inherited>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>1.4.1</version>
+                <executions>
+                    <execution>
+                        <id>enforce-maven-3</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>3.3.0</version>
+                                </requireMavenVersion>
+                            </rules>
+                            <fail>true</fail>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

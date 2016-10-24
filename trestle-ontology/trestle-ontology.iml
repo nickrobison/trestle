@@ -85,10 +85,6 @@
     <orderEntry type="library" name="Maven: org.codehaus.woodstox:wstx-asl:3.2.7" level="project" />
     <orderEntry type="library" name="Maven: org.noggit:noggit:0.5" level="project" />
     <orderEntry type="library" name="Maven: com.oracle:ojdbc7:12.1.0.2" level="project" />
-    <orderEntry type="library" name="Maven: oracle.spatial.rdf.client:sdordf:1.1" level="project" />
-    <orderEntry type="library" name="Maven: oracle.spatial.rdf.client:sdordfclient:3.10" level="project" />
-    <orderEntry type="library" name="Maven: com.openlink.virtuoso:jena3:1.0" level="project" />
-    <orderEntry type="library" name="Maven: com.openlink.virtuoso:virtjdbc:4.1" level="project" />
     <orderEntry type="library" name="Maven: org.checkerframework:checker:2.0.1" level="project" />
     <orderEntry type="library" name="Maven: org.checkerframework:checker-qual:2.0.1" level="project" />
     <orderEntry type="library" name="Maven: org.checkerframework:jdk8:2.0.1" level="project" />

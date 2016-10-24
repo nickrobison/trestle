@@ -75,13 +75,6 @@
     <orderEntry type="library" name="Maven: org.geotools:gt-epsg-hsql:16-M0" level="project" />
     <orderEntry type="library" name="Maven: org.hsqldb:hsqldb:2.3.0" level="project" />
     <orderEntry type="library" name="Maven: com.oracle:ojdbc7:12.1.0.2" level="project" />
-    <orderEntry type="library" name="Maven: oracle.spatial.geometry:api:1.0" level="project" />
-    <orderEntry type="library" name="Maven: oracle.spatial.geometry:type:1.0" level="project" />
-    <orderEntry type="library" name="Maven: oracle.spatial.geometry:util:1.0" level="project" />
-    <orderEntry type="library" name="Maven: oracle.spatial.geometry:topo:1.0" level="project" />
-    <orderEntry type="library" name="Maven: oracle.spatial.geometry:georaster:1.0" level="project" />
-    <orderEntry type="library" name="Maven: com.oracle:xdb:1.0" level="project" />
-    <orderEntry type="library" name="Maven: com.oracle:xmlparserv2:1.0" level="project" />
     <orderEntry type="library" name="Maven: org.postgresql:postgresql:9.4.1209.jre7" level="project" />
     <orderEntry type="module" module-name="trestle-common" />
     <orderEntry type="library" name="Maven: net.sourceforge.owlapi:owlapi-api:5.0.2" level="project" />
