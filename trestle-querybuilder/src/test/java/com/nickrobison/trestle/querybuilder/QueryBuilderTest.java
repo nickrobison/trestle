@@ -88,7 +88,7 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?f WHERE { ?m :has_fact ?f .?f :database_time ?d .{ ?d :valid_from ?tStart} UNION {?d :exists_from ?tStart} .OPTIONAL{{ ?d :valid_to ?tEnd} UNION {?d :exists_to ?tEnd}} .FILTER(?m = <http://nickrobison.com/dissertation/trestle.owl#test_muni4> && (?tStart < \"1989-03-26T00:00:00\"^^xsd:dateTime && ?tEnd >= \"1989-03-26T00:00:00\"^^xsd:dateTime))}";
+            "SELECT DISTINCT ?fact ?property ?object WHERE { ?m :has_fact ?fact .?fact :database_time ?d .{ ?d :valid_from ?tStart} UNION {?d :exists_from ?tStart} .OPTIONAL{{ ?d :valid_to ?tEnd} UNION {?d :exists_to ?tEnd}} .?fact ?property ?object .FILTER(datatype(?object) != '' && ?m = <http://nickrobison.com/dissertation/trestle.owl#test_muni4> && (?tStart < \"1989-03-26T00:00:00\"^^xsd:dateTime && ?tEnd >= \"1989-03-26T00:00:00\"^^xsd:dateTime))}";
 
     private static final String objectPropertyEmptyIntervalString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
@@ -100,9 +100,9 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?f WHERE { ?m :has_fact ?f .?f :database_time ?d .{ ?d :valid_from ?tStart} UNION {?d :exists_from ?tStart} .OPTIONAL{{ ?d :valid_to ?tEnd} UNION {?d :exists_to ?tEnd}} .FILTER(?m = <http://nickrobison.com/dissertation/trestle.owl#test_muni4> && !bound(?tEnd))}";
+            "SELECT DISTINCT ?fact ?property ?object WHERE { ?m :has_fact ?fact .?fact :database_time ?d .{ ?d :valid_from ?tStart} UNION {?d :exists_from ?tStart} .OPTIONAL{{ ?d :valid_to ?tEnd} UNION {?d :exists_to ?tEnd}} .?fact ?property ?object .FILTER(datatype(?object) != '' && ?m = <http://nickrobison.com/dissertation/trestle.owl#test_muni4> && !bound(?tEnd))}";
 
-    private static final String individualQueryNullClasString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+    private static final String individualQueryNullClassString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
@@ -190,7 +190,7 @@ public class QueryBuilderTest {
     @Test
     public void testIndividualQuery() {
         final String nullClassQuery = qb.buildIndividualSearchQuery("4372", null, null);
-        assertEquals(individualQueryNullClasString, nullClassQuery, "Should be equal");
+        assertEquals(individualQueryNullClassString, nullClassQuery, "Should be equal");
         final OWLClass testClass = df.getOWLClass(IRI.create("trestle:", "testClass"));
         final String testClassQueryString = qb.buildIndividualSearchQuery("4372", testClass, 50);
         assertEquals(individualQueryTestClass, testClassQueryString, "Should be equal");

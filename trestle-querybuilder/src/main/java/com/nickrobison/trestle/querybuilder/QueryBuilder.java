@@ -112,38 +112,7 @@ public class QueryBuilder {
         return ps.toString();
     }
 
-    @SuppressWarnings("Duplicates")
     public String buildObjectPropertyRetrievalQuery(OWLNamedIndividual individual, @Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal) {
-        final ParameterizedSparqlString ps = buildBaseString();
-
-//        Jena won't expand URIs in the FILTER operator, so we need to give it the fully expanded value.
-//        But we can't do it through the normal routes, because then it'll insert superfluous '"' values. Because, of course.
-//        If the start temporal is null, pull the currently valid property
-//        FIXME(nrobison): The union is a horrible hack to get things working for the time being. We need to fix it.
-        ps.setCommandText(String.format("SELECT DISTINCT ?f" +
-                " WHERE" +
-                " { ?m :has_fact ?f ." +
-                "?f :database_time ?d ." +
-                "{ ?d :valid_from ?tStart} UNION {?d :exists_from ?tStart} ." +
-                "OPTIONAL{{ ?d :valid_to ?tEnd} UNION {?d :exists_to ?tEnd}} ."));
-        if (startTemporal == null) {
-            ps.append(String.format("FILTER(?m = %s && !bound(?tEnd))}", String.format("<%s>", getFullIRIString(individual))));
-//            Otherwise, we'll find the correct property that satisfies the temporal interval
-        } else {
-            ps.append(String.format("FILTER(?m = %s && (?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime))}", String.format("<%s>", getFullIRIString(individual))));
-            ps.setLiteral("startVariable", startTemporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-            if (endTemporal != null) {
-                ps.setLiteral("endVariable", endTemporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-            } else {
-                ps.setLiteral("endVariable", startTemporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-            }
-        }
-        logger.debug(ps.toString());
-        return ps.toString();
-    }
-
-    @SuppressWarnings("Duplicates")
-    public String buildObjectPropertyRetrievalQueryOptimized(OWLNamedIndividual individual, @Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal) {
         final ParameterizedSparqlString ps = buildBaseString();
 
 //        Jena won't expand URIs in the FILTER operator, so we need to give it the fully expanded value.
