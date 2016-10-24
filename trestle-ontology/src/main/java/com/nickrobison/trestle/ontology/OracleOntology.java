@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.ontology;
 
-import com.nickrobison.trestle.common.JenaUtils;
 import oracle.spatial.rdf.client.jena.*;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.*;
@@ -207,7 +206,7 @@ public class OracleOntology extends JenaOntology {
                         if (rdfNode.isResource()) {
                             rowValues.put(var, df.getOWLNamedIndividual(rdfNode.asResource().getURI()));
                         } else if (rdfNode.isLiteral()) {
-                            final Optional<OWLLiteral> owlLiteral = JenaUtils.parseLiteral(this.df, rdfNode.asLiteral());
+                            final Optional<OWLLiteral> owlLiteral = this.parseLiteral(rdfNode.asLiteral());
                             if (owlLiteral.isPresent()) {
                                 rowValues.put(var, owlLiteral.get());
                             } else {

@@ -1,10 +1,12 @@
 package com.nickrobison.trestle.ontology;
 
-import com.nickrobison.trestle.common.JenaUtils;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Graph;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.shared.AddDeniedException;
 import org.apache.jena.shared.Lock;
@@ -12,15 +14,18 @@ import org.apache.jena.tdb.transaction.TDBTransactionException;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
+import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.*;
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -38,6 +43,7 @@ public abstract class JenaOntology extends TransactingOntology {
     protected final OWLOntology ontology;
     protected final DefaultPrefixManager pm;
     protected final OWLDataFactory df;
+    protected final QueryBuilder qb;
 
     JenaOntology(String ontologyName, Model model, OWLOntology ontology, DefaultPrefixManager pm) {
         this.ontologyName = ontologyName;
@@ -46,6 +52,7 @@ public abstract class JenaOntology extends TransactingOntology {
         this.ontology = ontology;
         this.pm = pm;
         this.df = OWLManager.getOWLDataFactory();
+        this.qb = new QueryBuilder(this.pm);
     }
 
     abstract public boolean isConsistent();
@@ -471,7 +478,7 @@ public abstract class JenaOntology extends TransactingOntology {
         statementLiterals
                 .entrySet().forEach(entry -> {
             final OWLDataProperty owlDataProperty = df.getOWLDataProperty(IRI.create(entry.getKey()));
-            final Optional<OWLLiteral> owlLiteral = JenaUtils.parseLiteral(df, entry.getValue());
+            final Optional<OWLLiteral> owlLiteral = parseLiteral(entry.getValue());
             if (owlLiteral.isPresent()) {
                 properties.add(df.getOWLDataPropertyAssertionAxiom(
                         owlDataProperty,
@@ -572,7 +579,7 @@ public abstract class JenaOntology extends TransactingOntology {
                 while (stmtIterator.hasNext()) {
 //                  If the URI is null, I think that means that it's just a string
                     final Statement statement = stmtIterator.nextStatement();
-                    final Optional<OWLLiteral> parsedLiteral = JenaUtils.parseLiteral(df, statement.getLiteral());
+                    final Optional<OWLLiteral> parsedLiteral = parseLiteral(statement.getLiteral());
                     if (parsedLiteral.isPresent()) {
                         properties.add(parsedLiteral.get());
                     }
@@ -591,6 +598,26 @@ public abstract class JenaOntology extends TransactingOntology {
         }
 
         return Optional.of(properties);
+    }
+
+
+    @Override
+    public Set<OWLDataPropertyAssertionAxiom> GetFactsForIndividual(OWLNamedIndividual individual, @Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal) {
+        final String objectQuery = qb.buildObjectPropertyRetrievalQueryOptimized(individual, startTemporal, endTemporal);
+        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
+        final ResultSet resultSet = this.executeSPARQL(objectQuery);
+        while (resultSet.hasNext()) {
+            final QuerySolution next = resultSet.next();
+            final Optional<OWLLiteral> owlLiteral = this.parseLiteral(next.getLiteral("object"));
+            if (owlLiteral.isPresent()) {
+                retrievedDataProperties.add(df.getOWLDataPropertyAssertionAxiom(
+                        df.getOWLDataProperty(next.getResource("property").getURI()),
+                        individual,
+                        owlLiteral.get()
+                ));
+            }
+        }
+        return retrievedDataProperties;
     }
 
     public IRI getFullIRI(IRI iri) {
@@ -627,24 +654,40 @@ public abstract class JenaOntology extends TransactingOntology {
         return this.model;
     }
 
-//    //    TODO(nrobison): This should return a list, not this weird ResultSet thing.
-//    public ResultSet executeSPARQL(String queryString) {
-//        this.openTransaction(false);
-//        final Query query = QueryFactory.create(queryString);
-//
-//        final QueryExecution qExec = QueryExecutionFactory.create(query, this.model);
-//        ResultSet resultSet = qExec.execSelect();
-//        try {
-//            resultSet = ResultSetFactory.copyResults(resultSet);
-//        } catch (Exception e) {
-//         logger.error("Problem with copying data", e);
-//        }
-////        ResultSetFormatter.out(System.out, resultSet, query);
-//        qExec.close();
-//        this.commitTransaction();
-//
-//        return resultSet;
-//    }
+    protected Optional<OWLLiteral> parseLiteral(Literal literal) {
+        OWLDatatype owlDatatype;
+        if (literal.getDatatypeURI() == null) {
+            logger.error("Literal has an emptyURI");
+            owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_STRING.getIRI());
+        } else if (literal.getDatatypeURI().equals(OWL2Datatype.XSD_DECIMAL.getIRI().toString())) {
+//                Work around Oracle bug by trying to parse an Int and see if it works
+
+            final String numericString = literal.getLexicalForm();
+//            If it has a period in the string, it's a decimal
+            if (numericString.contains(".")) {
+                owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_DECIMAL.getIRI());
+            } else {
+                long l = Long.parseLong(numericString);
+                l = l >> (Integer.SIZE);
+                if (l == 0 | l == -1) {
+                    logger.debug("Decimal seems to be an Int");
+                    owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_INTEGER.getIRI());
+                } else {
+                    logger.debug("Decimal seems to be a Long");
+                    owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_LONG.getIRI());
+                }
+            }
+        } else {
+            owlDatatype = df.getOWLDatatype(IRI.create(literal.getDatatypeURI()));
+        }
+
+        if (owlDatatype.getIRI().toString().equals("nothing")) {
+            logger.error("Datatype {} doesn't exist", literal.getDatatypeURI());
+//                return Optional.empty();
+            return Optional.empty();
+        }
+        return Optional.of(df.getOWLLiteral(literal.getLexicalForm(), owlDatatype));
+    }
 
     abstract public void close(boolean drop);
 

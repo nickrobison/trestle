@@ -17,7 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>com.nickrobison</groupId>
-            <artifactId>trestle-common</artifactId>
+            <artifactId>trestle-querybuilder</artifactId>
             <version>0.4-SNAPSHOT</version>
         </dependency>
         <!--OWL Dependencies-->

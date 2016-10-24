@@ -3,9 +3,11 @@ package com.nickrobison.trestle.ontology;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import org.apache.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -296,6 +298,16 @@ public interface ITrestleOntology {
      * @return - Optional set of OWLLiteral if a property exists on that member
      */
     Optional<Set<OWLLiteral>> getIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property);
+
+    /**
+     * Get all the related facts for an individual, valid at a specific point in database time
+     * If no temporals are specified, we retrieve the currently valid facts
+     * @param individual - OWLNamedIndividual to get facts for
+     * @param startTemporal - Nullable OffsetDateTime representing starting temporal
+     * @param endTemporal - Nullable OffsetDateTime representing ending temporal
+     * @return
+     */
+    Set<OWLDataPropertyAssertionAxiom> GetFactsForIndividual(OWLNamedIndividual individual, @Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal);
 
     /**
      * Get the full IRI expanded from the DefaultPrefixManager
