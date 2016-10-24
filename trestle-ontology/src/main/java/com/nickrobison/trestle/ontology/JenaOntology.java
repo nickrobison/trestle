@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
+import com.nickrobison.trestle.common.JenaUtils;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
@@ -15,16 +16,12 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
-import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.*;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -440,6 +437,7 @@ public abstract class JenaOntology extends TransactingOntology {
     @Override
     public Set<OWLDataPropertyAssertionAxiom> getAllDataPropertiesForIndividual(OWLNamedIndividual individual) {
         Set<OWLDataPropertyAssertionAxiom> properties = new HashSet<>();
+        Map<String, Literal> statementLiterals = new HashMap<>();
         this.openTransaction(false);
         this.model.enterCriticalSection(Lock.READ);
         try {
@@ -454,16 +452,8 @@ public abstract class JenaOntology extends TransactingOntology {
                         if (statement.getObject().isLiteral()) {
 //                Check to see if property is object or data project
                             try {
-                                statement.getLiteral();
-                                final OWLDataProperty owlDataProperty = df.getOWLDataProperty(IRI.create(statement.getPredicate().getURI()));
-                                final Optional<OWLLiteral> owlLiteral = parseLiteral(statement.getLiteral());
-                                if (owlLiteral.isPresent()) {
-                                    properties.add(
-                                            df.getOWLDataPropertyAssertionAxiom(
-                                                    owlDataProperty,
-                                                    individual,
-                                                    owlLiteral.get()));
-                                }
+//                                statement.getLiteral();
+                                statementLiterals.put(statement.getPredicate().getURI(), statement.getLiteral());
                             } catch (Exception e) {
                                 logger.debug("Can't get literal for {}", statement.getSubject(), e);
                             }
@@ -477,6 +467,19 @@ public abstract class JenaOntology extends TransactingOntology {
             this.model.leaveCriticalSection();
             this.commitTransaction(false);
         }
+
+        statementLiterals
+                .entrySet().forEach(entry -> {
+            final OWLDataProperty owlDataProperty = df.getOWLDataProperty(IRI.create(entry.getKey()));
+            final Optional<OWLLiteral> owlLiteral = JenaUtils.parseLiteral(df, entry.getValue());
+            if (owlLiteral.isPresent()) {
+                properties.add(df.getOWLDataPropertyAssertionAxiom(
+                        owlDataProperty,
+                        individual,
+                        owlLiteral.get()));
+            }
+        });
+
         return properties;
     }
 
@@ -564,12 +567,12 @@ public abstract class JenaOntology extends TransactingOntology {
             }
 
             final StmtIterator stmtIterator = modelResource.listProperties(modelProperty);
-            //        Build and return the OWLLiteral
+//          Build and return the OWLLiteral
             try {
                 while (stmtIterator.hasNext()) {
-                    //        If the URI is null, I think that means that it's just a string
+//                  If the URI is null, I think that means that it's just a string
                     final Statement statement = stmtIterator.nextStatement();
-                    final Optional<OWLLiteral> parsedLiteral = parseLiteral(statement.getLiteral());
+                    final Optional<OWLLiteral> parsedLiteral = JenaUtils.parseLiteral(df, statement.getLiteral());
                     if (parsedLiteral.isPresent()) {
                         properties.add(parsedLiteral.get());
                     }
@@ -588,41 +591,6 @@ public abstract class JenaOntology extends TransactingOntology {
         }
 
         return Optional.of(properties);
-    }
-
-    protected Optional<OWLLiteral> parseLiteral(Literal literal) {
-        OWLDatatype owlDatatype;
-        if (literal.getDatatypeURI() == null) {
-            logger.error("Literal has an emptyURI");
-            owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_STRING.getIRI());
-        } else if (literal.getDatatypeURI().equals(OWL2Datatype.XSD_DECIMAL.getIRI().toString())) {
-//                Work around Oracle bug by trying to parse an Int and see if it works
-
-            final String numericString = literal.getLexicalForm();
-//            If it has a period in the string, it's a decimal
-            if (numericString.contains(".")) {
-                owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_DECIMAL.getIRI());
-            } else {
-                long l = Long.parseLong(numericString);
-                l = l >> (Integer.SIZE);
-                if (l == 0 | l == -1) {
-                    logger.debug("Decimal seems to be an Int");
-                    owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_INTEGER.getIRI());
-                } else {
-                    logger.debug("Decimal seems to be a Long");
-                    owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_LONG.getIRI());
-                }
-            }
-        } else {
-            owlDatatype = df.getOWLDatatype(IRI.create(literal.getDatatypeURI()));
-        }
-
-        if (owlDatatype.getIRI().toString().equals("nothing")) {
-            logger.error("Datatype {} doesn't exist", literal.getDatatypeURI());
-//                return Optional.empty();
-            return Optional.empty();
-        }
-        return Optional.of(df.getOWLLiteral(literal.getLexicalForm(), owlDatatype));
     }
 
     public IRI getFullIRI(IRI iri) {

@@ -1,13 +1,17 @@
 package com.nickrobison.trestle.ontology;
 
+import com.nickrobison.trestle.common.JenaUtils;
+import oracle.spatial.rdf.client.jena.*;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
-import oracle.spatial.rdf.client.jena.*;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.shared.Lock;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.OWLLiteral;
+import org.semanticweb.owlapi.model.OWLObject;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -203,7 +207,7 @@ public class OracleOntology extends JenaOntology {
                         if (rdfNode.isResource()) {
                             rowValues.put(var, df.getOWLNamedIndividual(rdfNode.asResource().getURI()));
                         } else if (rdfNode.isLiteral()) {
-                            final Optional<OWLLiteral> owlLiteral = this.parseLiteral(rdfNode.asLiteral());
+                            final Optional<OWLLiteral> owlLiteral = JenaUtils.parseLiteral(this.df, rdfNode.asLiteral());
                             if (owlLiteral.isPresent()) {
                                 rowValues.put(var, owlLiteral.get());
                             } else {

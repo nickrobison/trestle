@@ -15,6 +15,11 @@
     <artifactId>trestle-ontology</artifactId>
 
     <dependencies>
+        <dependency>
+            <groupId>com.nickrobison</groupId>
+            <artifactId>trestle-common</artifactId>
+            <version>0.4-SNAPSHOT</version>
+        </dependency>
         <!--OWL Dependencies-->
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
