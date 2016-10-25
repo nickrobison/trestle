@@ -20,9 +20,11 @@ import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
 
@@ -112,25 +114,30 @@ public class QueryBuilder {
         return ps.toString();
     }
 
-    public String buildObjectPropertyRetrievalQuery(OWLNamedIndividual individual, @Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal) {
+    public String buildObjectPropertyRetrievalQuery(@Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal, OWLNamedIndividual... individual) {
         final ParameterizedSparqlString ps = buildBaseString();
+
+        final String individualValues = Arrays.stream(individual)
+                .map(this::getFullIRIString)
+                .map(ind -> String.format("<%s>", ind))
+                .collect(Collectors.joining(" "));
 
 //        Jena won't expand URIs in the FILTER operator, so we need to give it the fully expanded value.
 //        But we can't do it through the normal routes, because then it'll insert superfluous '"' values. Because, of course.
 //        If the start temporal is null, pull the currently valid property
 //        FIXME(nrobison): The union is a horrible hack to get things working for the time being. We need to fix it.
-        ps.setCommandText(String.format("SELECT DISTINCT ?fact ?property ?object" +
+        ps.setCommandText(String.format("SELECT DISTINCT ?individual ?fact ?property ?object" +
                 " WHERE" +
-                " { ?m :has_fact ?fact ." +
+                " { ?individual :has_fact ?fact ." +
                 "?fact :database_time ?d ." +
                 "{ ?d :valid_from ?tStart} UNION {?d :exists_from ?tStart} ." +
                 "OPTIONAL{{ ?d :valid_to ?tEnd} UNION {?d :exists_to ?tEnd}} ." +
                 "?fact ?property ?object ." +
-                "VALUES ?m { <%s>} ." +
-                "FILTER(isLiteral(?object)) ." +
-                "FILTER(!bound(?tEnd)) .", getFullIRIString(individual)));
+                "VALUES ?individual { %s } ." +
+//                Oracle doesn't support isLiteral() on CLOB types, so we have to do this gross inverse filter.
+                "FILTER(!isURI(?object) && !isBlank(?object)) ." +
+                "FILTER(!bound(?tEnd)) .", individualValues));
         if (startTemporal != null) {
-//            ps.append(String.format("FILTER(datatype(?object) != '' && ?m = %s && (?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime))}", String.format("<%s>", getFullIRIString(individual))));
             ps.append("FILTER(?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime)");
             ps.setLiteral("startVariable", startTemporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
             if (endTemporal != null) {

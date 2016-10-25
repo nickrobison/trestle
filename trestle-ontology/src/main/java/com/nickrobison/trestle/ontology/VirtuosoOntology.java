@@ -67,7 +67,6 @@ public class VirtuosoOntology extends JenaOntology {
 
     @Override
 //    Need to override the SPARQL command because the geospatial extensions will cause Jena to fail the query parsing.
-//    TODO(nrobison): This should return a list, not this weird ResultSet thing.
     public ResultSet executeSPARQL(String queryString) {
         ResultSet resultSet;
         final QueryExecution queryExecution = VirtuosoQueryExecutionFactory.create(queryString, (VirtGraph) virtModel.getGraph());
@@ -81,7 +80,6 @@ public class VirtuosoOntology extends JenaOntology {
             this.model.leaveCriticalSection();
             this.commitTransaction(false);
         }
-
         return resultSet;
     }
 

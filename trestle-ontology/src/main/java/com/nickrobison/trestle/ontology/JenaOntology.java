@@ -603,7 +603,7 @@ public abstract class JenaOntology extends TransactingOntology {
 
     @Override
     public Set<OWLDataPropertyAssertionAxiom> GetFactsForIndividual(OWLNamedIndividual individual, @Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal) {
-        final String objectQuery = qb.buildObjectPropertyRetrievalQuery(individual, startTemporal, endTemporal);
+        final String objectQuery = qb.buildObjectPropertyRetrievalQuery(startTemporal, endTemporal, individual);
         Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
         final ResultSet resultSet = this.executeSPARQL(objectQuery);
         while (resultSet.hasNext()) {
@@ -612,7 +612,7 @@ public abstract class JenaOntology extends TransactingOntology {
             if (owlLiteral.isPresent()) {
                 retrievedDataProperties.add(df.getOWLDataPropertyAssertionAxiom(
                         df.getOWLDataProperty(next.getResource("property").getURI()),
-                        individual,
+                        df.getOWLNamedIndividual(next.getResource("individual").getURI()),
                         owlLiteral.get()
                 ));
             }
