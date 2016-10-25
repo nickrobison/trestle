@@ -1003,6 +1003,7 @@ public class TrestleReasoner {
         final Optional<TemporalObject> databaseTemporal = TemporalObjectBuilder.buildTemporalFromProperties(databaseTemporalDataProperties, false, null);
 
         return new TrestleAttribute<>(attribute.getIRI().toString(),
+                attributeAssertion.getProperty().asOWLDataProperty().getIRI().getShortForm(),
                 literal,
                 validTemporal.orElseThrow(() -> new TrestleMissingAttributeException(attribute, hasTemporalIRI)),
                 databaseTemporal.orElseThrow(() -> new TrestleMissingAttributeException(attribute, databaseTimeIRI)));

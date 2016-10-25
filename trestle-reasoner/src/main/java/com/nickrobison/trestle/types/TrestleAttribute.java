@@ -7,21 +7,25 @@ import com.nickrobison.trestle.types.temporal.TemporalObject;
  */
 public class TrestleAttribute<T> {
 
+    private final String identifier;
     private final String name;
     private final T value;
     private final TemporalObject validTemporal;
     private final TemporalObject databaseTemporal;
 
-    public TrestleAttribute(String name, T value, TemporalObject validTemporal, TemporalObject databaseTemporal) {
+    public TrestleAttribute(String identifier, String name, T value, TemporalObject validTemporal, TemporalObject databaseTemporal) {
+        this.identifier = identifier;
         this.name = name;
         this.value = value;
         this.validTemporal = validTemporal;
         this.databaseTemporal = databaseTemporal;
     }
 
-    public String getName() {
-        return name;
+    public String getIdentifier() {
+        return identifier;
     }
+
+    public String getName() { return name; }
 
     public T getValue() {
         return value;
