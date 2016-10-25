@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 /**
  * Created by nrobison on 7/22/16.
  */
+@SuppressWarnings("Duplicates")
 @ThreadSafe
 public abstract class JenaOntology extends TransactingOntology {
 
@@ -606,6 +607,25 @@ public abstract class JenaOntology extends TransactingOntology {
         final String objectQuery = qb.buildObjectPropertyRetrievalQuery(startTemporal, endTemporal, individual);
         Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
         final ResultSet resultSet = this.executeSPARQL(objectQuery);
+        while (resultSet.hasNext()) {
+            final QuerySolution next = resultSet.next();
+            final Optional<OWLLiteral> owlLiteral = this.parseLiteral(next.getLiteral("object"));
+            if (owlLiteral.isPresent()) {
+                retrievedDataProperties.add(df.getOWLDataPropertyAssertionAxiom(
+                        df.getOWLDataProperty(next.getResource("property").getURI()),
+                        df.getOWLNamedIndividual(next.getResource("individual").getURI()),
+                        owlLiteral.get()
+                ));
+            }
+        }
+        return retrievedDataProperties;
+    }
+
+    @Override
+    public Set<OWLDataPropertyAssertionAxiom> GetTemporalsForIndividual(OWLNamedIndividual individual) {
+        final String temporalQuery = qb.buildIndividualTemporalQuery(individual);
+        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
+        final ResultSet resultSet = this.executeSPARQL(temporalQuery);
         while (resultSet.hasNext()) {
             final QuerySolution next = resultSet.next();
             final Optional<OWLLiteral> owlLiteral = this.parseLiteral(next.getLiteral("object"));

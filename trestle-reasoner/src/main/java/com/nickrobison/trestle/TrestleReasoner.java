@@ -518,24 +518,13 @@ public class TrestleReasoner {
         } else if (startTemporal != null) {
             databaseTemporal = TemporalObjectBuilder.valid().from(startTemporal).withRelations(df.getOWLNamedIndividual(individualIRI));
         }
-        logger.debug("Running async");
         final Optional<@NonNull T> constructedObject = readAsObject(clazz, individualIRI, databaseTemporal);
-//        try {
-//            final Optional<@NonNull T> constructedObject = objectFuture.get();
         if (constructedObject.isPresent()) {
             logger.debug("Done with {}", individualIRI);
             return constructedObject.get();
         } else {
             throw new RuntimeException("Problem constructing object");
         }
-//
-//        } catch (InterruptedException e) {
-//            logger.error("Interrupted", e);
-//        } catch (ExecutionException e) {
-//            logger.error("Execution exception", e);
-//        }
-
-//        throw new RuntimeException("Problem constructing object");
     }
 
     private <T> Optional<T> readAsObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, @Nullable TemporalObject databaseTemporal) {
@@ -549,7 +538,6 @@ public class TrestleReasoner {
         }
 
 //        Do some things before opening a transaction
-        final ConstructorArguments constructorArguments = new ConstructorArguments();
         final Optional<List<OWLDataProperty>> dataProperties = ClassBuilder.getPropertyMembers(clazz);
         final Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties;
 //        Setup the database time temporal
@@ -565,44 +553,47 @@ public class TrestleReasoner {
         }
 
 //            Get the temporal objects to figure out the correct return type
-            final Optional<List<TemporalObject>> temporalObjectTypes = TemporalParser.GetTemporalObjects(clazz);
+        final Optional<List<TemporalObject>> temporalObjectTypes = TemporalParser.GetTemporalObjects(clazz);
 
-            final Class<? extends Temporal> baseTemporalType = TemporalParser.GetTemporalType(clazz);
+        final Class<? extends Temporal> baseTemporalType = TemporalParser.GetTemporalType(clazz);
 
-            final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(false);
+        final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(false);
 
 //        Figure out its name
-            if (!checkExists(individualIRI)) {
-                logger.error("Missing individual {}", individualIRI);
-                return Optional.empty();
-            }
+        if (!checkExists(individualIRI)) {
+            logger.error("Missing individual {}", individualIRI);
+            return Optional.empty();
+        }
 
-            if (dataProperties.isPresent()) {
+        if (dataProperties.isPresent()) {
 
+            @Nullable OffsetDateTime finalStartTemporal = startTemporal;
+            @Nullable OffsetDateTime finalEndTemporal = endTemporal;
+            final CompletableFuture<Set<OWLDataPropertyAssertionAxiom>> factsFuture = CompletableFuture.supplyAsync(() -> {
                 final Instant individualRetrievalStart = Instant.now();
-                retrievedDataProperties = ontology.GetFactsForIndividual(df.getOWLNamedIndividual(individualIRI), startTemporal, endTemporal);
+                final TrestleTransaction tt = ontology.createandOpenNewTransaction(trestleTransaction);
+                final Set<OWLDataPropertyAssertionAxiom> objectFacts = ontology.GetFactsForIndividual(df.getOWLNamedIndividual(individualIRI), finalStartTemporal, finalEndTemporal);
+                ontology.returnAndCommitTransaction(tt);
                 final Instant individualRetrievalEnd = Instant.now();
-                logger.debug("Retrieving {} facts took {} ms", retrievedDataProperties.size(), Duration.between(individualRetrievalStart, individualRetrievalEnd).toMillis());
+                logger.debug("Retrieving {} facts took {} ms", objectFacts.size(), Duration.between(individualRetrievalStart, individualRetrievalEnd).toMillis());
+                return objectFacts;
+            });
 
 //            Get the temporals
-                final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(individualIRI, hasTemporalIRI);
-                Optional<TemporalObject> temporalObject = Optional.empty();
-                if (individualObjectProperty.isPresent()) {
-//                There can only be 1 temporal, so just grab the first one.
-                    final Optional<OWLObjectPropertyAssertionAxiom> first = individualObjectProperty.get().stream().findFirst();
-                    if (!first.isPresent()) {
-                        throw new RuntimeException(String.format("Missing temporal for individual %s", individualIRI));
-                    }
-                    final Set<OWLDataPropertyAssertionAxiom> TemporalProperties = ontology.getAllDataPropertiesForIndividual(first.get().getObject().asOWLNamedIndividual());
-                    temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(TemporalProperties, TemporalParser.IsDefault(clazz), baseTemporalType);
-                }
-                ontology.returnAndCommitTransaction(trestleTransaction);
+            final CompletableFuture<Optional<TemporalObject>> temporalFuture = CompletableFuture.supplyAsync(() -> {
+                final TrestleTransaction tt = ontology.createandOpenNewTransaction(trestleTransaction);
+                final Set<OWLDataPropertyAssertionAxiom> properties = ontology.GetTemporalsForIndividual(df.getOWLNamedIndividual(individualIRI));
+                ontology.returnAndCommitTransaction(tt);
+                return properties;
+            })
+                    .thenApply(temporalProperties -> TemporalObjectBuilder.buildTemporalFromProperties(temporalProperties, TemporalParser.IsDefault(clazz), baseTemporalType));
 
-                if (!temporalObject.isPresent()) {
-                    throw new RuntimeException(String.format("Cannot restore temporal from ontology for %s", individualIRI));
-                }
 
-                retrievedDataProperties.forEach(property -> {
+            final CompletableFuture<ConstructorArguments> argumentsFuture = factsFuture.thenCombine(temporalFuture, (facts, temporals) -> {
+                logger.debug("In the arguments future");
+
+                final ConstructorArguments constructorArguments = new ConstructorArguments();
+                facts.forEach(property -> {
                     final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, clazz);
                     final Object literalValue = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
                     constructorArguments.addArgument(
@@ -610,9 +601,11 @@ public class TrestleReasoner {
                             javaClass,
                             literalValue);
                 });
-
-//            Add the temporal to the constructor args
-                final TemporalObject temporal = temporalObject.get();
+                if (!temporals.isPresent()) {
+                    throw new RuntimeException(String.format("Cannot restore temporal from ontology for %s", individualIRI));
+                }
+                //            Add the temporal to the constructor args
+                final TemporalObject temporal = temporals.get();
                 if (temporal.isInterval()) {
                     final IntervalTemporal intervalTemporal = temporal.asInterval();
                     constructorArguments.addArgument(
@@ -631,8 +624,21 @@ public class TrestleReasoner {
                             temporal.asPoint().getBaseTemporalType(),
                             temporal.asPoint().getPointTime());
                 }
-            }
 
+                return constructorArguments;
+            });
+
+            final ConstructorArguments constructorArguments;
+            try {
+                 constructorArguments = argumentsFuture.get();
+                ontology.returnAndCommitTransaction(trestleTransaction);
+            } catch (InterruptedException e) {
+                logger.error("Read object {} interrupted", individualIRI, e);
+                throw new RuntimeException("Read object interrupted", e);
+            } catch (ExecutionException e) {
+                logger.error("Execution exception when reading object {}", individualIRI, e);
+                throw new RuntimeException("Execution exception when reading object", e);
+            }
             try {
                 final @NonNull T constructedObject = ClassBuilder.ConstructObject(clazz, constructorArguments);
                 return Optional.of(constructedObject);
@@ -640,6 +646,9 @@ public class TrestleReasoner {
                 logger.error("Problem with constructor", e);
                 return Optional.empty();
             }
+        } else {
+            throw new RuntimeException("No data properties, not even trying");
+        }
     }
 
     /**

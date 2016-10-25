@@ -310,6 +310,13 @@ public interface ITrestleOntology {
     Set<OWLDataPropertyAssertionAxiom> GetFactsForIndividual(OWLNamedIndividual individual, @Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal);
 
     /**
+     * Get data properties for temporal from given individuals
+     * @param individual - Individual to retrieve temporal properties from
+     * @return - Set of OWLDataPropertyAssertionAxioms representing temporal properties
+     */
+    Set<OWLDataPropertyAssertionAxiom> GetTemporalsForIndividual(OWLNamedIndividual individual);
+
+    /**
      * Get the full IRI expanded from the DefaultPrefixManager
      *
      * @param iri - Abbreviated IRI
@@ -362,9 +369,16 @@ public interface ITrestleOntology {
      *
      * @param transactionObject - Transaction Object to take ownership of thread transaction
      * @param write - Writable transaction?
-     * @return - Transaction Object pass in as argument
+     * @return - Transaction Object passed in as argument
      */
     TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject, boolean write);
+
+    /**
+     * Takes an existing transaction object and inherits from it
+     * @param transactionObject - Existing TrestleTransactionObject
+     * @return - Transaction Object passed in as argument
+     */
+    TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject);
 
     TrestleTransaction createandOpenNewTransaction(boolean write);
 

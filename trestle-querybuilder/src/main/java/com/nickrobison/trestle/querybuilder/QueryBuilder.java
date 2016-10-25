@@ -151,6 +151,26 @@ public class QueryBuilder {
         return ps.toString();
     }
 
+    public String buildIndividualTemporalQuery(OWLNamedIndividual... individual) {
+        final ParameterizedSparqlString ps = buildBaseString();
+
+        final String individualValues = Arrays.stream(individual)
+                .map(this::getFullIRIString)
+                .map(ind -> String.format("<%s>", ind))
+                .collect(Collectors.joining(" "));
+
+        ps.setCommandText(String.format("SELECT DISTINCT ?individual ?temporal ?property ?object" +
+                " WHERE" +
+                " { ?individual :has_temporal ?temporal ." +
+                " {?temporal :valid_from ?tStart} UNION {?temporal :exists_from ?tStart} ." +
+                " OPTIONAL{{?temporal :valid_to ?tEnd} UNION {?temporal :exists_to ?tEnd}} ." +
+                " ?temporal ?property ?object" +
+                " VALUES ?individual { %s } ." +
+                " FILTER(!isURI(?object) && !isBlank(?object)) .}", individualValues));
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
     public String buildSpatialIntersection(DIALECT dialect, OWLClass datasetClass, String wktValue, double buffer, UNITS unit) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m" +

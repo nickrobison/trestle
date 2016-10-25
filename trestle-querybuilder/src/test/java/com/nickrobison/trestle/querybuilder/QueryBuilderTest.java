@@ -138,6 +138,18 @@ public class QueryBuilderTest {
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
             "SELECT DISTINCT ?m WHERE {?m rdf:type :testClass .FILTER (contains(lcase(str(?m)), \"4372\"))} LIMIT 50";
 
+    private static final String individualTemporalQueryString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+            "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+            "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+            "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
+            "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+            "PREFIX xml: <http://www.w3.org/XML/1998/namespace>\n" +
+            "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
+            "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+            "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
+            "SELECT DISTINCT ?individual ?temporal ?property ?object WHERE { ?individual :has_temporal ?temporal . {?temporal :valid_from ?tStart} UNION {?temporal :exists_from ?tStart} . OPTIONAL{{?temporal :valid_to ?tEnd} UNION {?temporal :exists_to ?tEnd}} . ?temporal ?property ?object VALUES ?individual { <http://nickrobison.com/dissertation/trestle.owl#test_muni4> } . FILTER(!isURI(?object) && !isBlank(?object)) .}";
+
     @BeforeAll
     public static void createPrefixes() {
         df = OWLManager.getOWLDataFactory();
@@ -209,5 +221,12 @@ public class QueryBuilderTest {
         final OWLClass testClass = df.getOWLClass(IRI.create("trestle:", "testClass"));
         final String testClassQueryString = qb.buildIndividualSearchQuery("4372", testClass, 50);
         assertEquals(individualQueryTestClass, testClassQueryString, "Should be equal");
+    }
+
+    @Test
+    public void testTemporalQuery() {
+        final OWLNamedIndividual test_muni4 = df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni4"));
+        final String temporalQuery = qb.buildIndividualTemporalQuery(test_muni4);
+        assertEquals(individualTemporalQueryString, temporalQuery, "Should be equal");
     }
 }
