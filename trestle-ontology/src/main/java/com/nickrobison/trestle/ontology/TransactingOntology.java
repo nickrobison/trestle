@@ -55,7 +55,7 @@ abstract class TransactingOntology implements ITrestleOntology {
         this.threadInTransaction.set(true);
         threadTransactionObject.set(transactionObject);
         threadTransactionInherited.set(true);
-        return transactionObject;
+        return new TrestleTransaction();
     }
 
     @Override
@@ -80,7 +80,8 @@ abstract class TransactingOntology implements ITrestleOntology {
     @Override
     public void returnAndCommitTransaction(TrestleTransaction transaction) {
 //        If the transaction state is inherited, don't commit
-        if (!threadTransactionInherited.get()) {
+//        if (!threadTransactionInherited.get()) {
+        if (transaction.ownsATransaction()) {
             final TrestleTransaction trestleTransaction = threadTransactionObject.get();
             if (trestleTransaction != null) {
                 if (trestleTransaction.equals(transaction)) {
@@ -94,7 +95,8 @@ abstract class TransactingOntology implements ITrestleOntology {
                 logger.warn("Null transaction object, how did that happen?");
             }
         } else {
-            logger.debug("Transaction state is inherited, continuing");
+//            logger.debug("Transaction state is inherited, continuing");
+            logger.debug("Doesn't doesn't own a transaction, assuming inherited and continuing");
         }
     }
 

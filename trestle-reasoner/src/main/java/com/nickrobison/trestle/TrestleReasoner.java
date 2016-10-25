@@ -539,7 +539,6 @@ public class TrestleReasoner {
 
 //        Do some things before opening a transaction
         final Optional<List<OWLDataProperty>> dataProperties = ClassBuilder.getPropertyMembers(clazz);
-        final Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties;
 //        Setup the database time temporal
         @Nullable OffsetDateTime startTemporal = null;
         @Nullable OffsetDateTime endTemporal = null;
@@ -554,7 +553,6 @@ public class TrestleReasoner {
 
 //            Get the temporal objects to figure out the correct return type
         final Optional<List<TemporalObject>> temporalObjectTypes = TemporalParser.GetTemporalObjects(clazz);
-
         final Class<? extends Temporal> baseTemporalType = TemporalParser.GetTemporalType(clazz);
 
         final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(false);
@@ -591,7 +589,6 @@ public class TrestleReasoner {
 
             final CompletableFuture<ConstructorArguments> argumentsFuture = factsFuture.thenCombine(temporalFuture, (facts, temporals) -> {
                 logger.debug("In the arguments future");
-
                 final ConstructorArguments constructorArguments = new ConstructorArguments();
                 facts.forEach(property -> {
                     final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, clazz);
@@ -624,7 +621,6 @@ public class TrestleReasoner {
                             temporal.asPoint().getBaseTemporalType(),
                             temporal.asPoint().getPointTime());
                 }
-
                 return constructorArguments;
             });
 
