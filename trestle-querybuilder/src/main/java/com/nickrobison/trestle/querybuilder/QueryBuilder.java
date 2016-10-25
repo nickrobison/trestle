@@ -125,12 +125,13 @@ public class QueryBuilder {
                 "?fact :database_time ?d ." +
                 "{ ?d :valid_from ?tStart} UNION {?d :exists_from ?tStart} ." +
                 "OPTIONAL{{ ?d :valid_to ?tEnd} UNION {?d :exists_to ?tEnd}} ." +
-                "?fact ?property ?object ."));
-        if (startTemporal == null) {
-            ps.append(String.format("FILTER(datatype(?object) != '' && ?m = %s && !bound(?tEnd))}", String.format("<%s>", getFullIRIString(individual))));
-//            Otherwise, we'll find the correct property that satisfies the temporal interval
-        } else {
-            ps.append(String.format("FILTER(datatype(?object) != '' && ?m = %s && (?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime))}", String.format("<%s>", getFullIRIString(individual))));
+                "?fact ?property ?object ." +
+                "VALUES ?m { <%s>} ." +
+                "FILTER(isLiteral(?object)) ." +
+                "FILTER(!bound(?tEnd)) .", getFullIRIString(individual)));
+        if (startTemporal != null) {
+//            ps.append(String.format("FILTER(datatype(?object) != '' && ?m = %s && (?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime))}", String.format("<%s>", getFullIRIString(individual))));
+            ps.append("FILTER(?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime)");
             ps.setLiteral("startVariable", startTemporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
             if (endTemporal != null) {
                 ps.setLiteral("endVariable", endTemporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
@@ -138,6 +139,7 @@ public class QueryBuilder {
                 ps.setLiteral("endVariable", startTemporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
             }
         }
+        ps.append("}");
         logger.debug(ps.toString());
         return ps.toString();
     }

@@ -88,7 +88,7 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?fact ?property ?object WHERE { ?m :has_fact ?fact .?fact :database_time ?d .{ ?d :valid_from ?tStart} UNION {?d :exists_from ?tStart} .OPTIONAL{{ ?d :valid_to ?tEnd} UNION {?d :exists_to ?tEnd}} .?fact ?property ?object .FILTER(datatype(?object) != '' && ?m = <http://nickrobison.com/dissertation/trestle.owl#test_muni4> && (?tStart < \"1989-03-26T00:00:00\"^^xsd:dateTime && ?tEnd >= \"1989-03-26T00:00:00\"^^xsd:dateTime))}";
+            "SELECT DISTINCT ?fact ?property ?object WHERE { ?m :has_fact ?fact .?fact :database_time ?d .{ ?d :valid_from ?tStart} UNION {?d :exists_from ?tStart} .OPTIONAL{{ ?d :valid_to ?tEnd} UNION {?d :exists_to ?tEnd}} .?fact ?property ?object .VALUES ?m { <http://nickrobison.com/dissertation/trestle.owl#test_muni4>} .FILTER(isLiteral(?object)) .FILTER(!bound(?tEnd)) .FILTER(?tStart < \"1989-03-26T00:00:00\"^^xsd:dateTime && ?tEnd >= \"1989-03-26T00:00:00\"^^xsd:dateTime)}";
 
     private static final String objectPropertyEmptyIntervalString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
@@ -100,7 +100,7 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?fact ?property ?object WHERE { ?m :has_fact ?fact .?fact :database_time ?d .{ ?d :valid_from ?tStart} UNION {?d :exists_from ?tStart} .OPTIONAL{{ ?d :valid_to ?tEnd} UNION {?d :exists_to ?tEnd}} .?fact ?property ?object .FILTER(datatype(?object) != '' && ?m = <http://nickrobison.com/dissertation/trestle.owl#test_muni4> && !bound(?tEnd))}";
+            "SELECT DISTINCT ?fact ?property ?object WHERE { ?m :has_fact ?fact .?fact :database_time ?d .{ ?d :valid_from ?tStart} UNION {?d :exists_from ?tStart} .OPTIONAL{{ ?d :valid_to ?tEnd} UNION {?d :exists_to ?tEnd}} .?fact ?property ?object .VALUES ?m { <http://nickrobison.com/dissertation/trestle.owl#test_muni4>} .FILTER(isLiteral(?object)) .FILTER(!bound(?tEnd)) .}";
 
     private static final String individualQueryNullClassString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
