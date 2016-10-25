@@ -123,10 +123,10 @@ public class TrestleAPITest {
         assertEquals(LocalDate.of(1990, 1, 1).atStartOfDay(), ancuabe.time, "Times should match");
 
 //        Try to read out the datasets
-        final Optional<Set<String>> availableDatasets = reasoner.getAvailableDatasets();
-        assertTrue(availableDatasets.isPresent(), "Should have dataset");
+        final Set<String> availableDatasets = reasoner.getAvailableDatasets();
+        assertTrue(availableDatasets.size() > 0, "Should have dataset");
 
-        datasetClassID = availableDatasets.get().stream().findFirst().get();
+        datasetClassID = availableDatasets.stream().findFirst().get();
         @NonNull final Object ancuabe1 = reasoner.readAsObject(datasetClassID, "Ancuabe");
         assertEquals(ancuabe, ancuabe1, "Objects should be equal");
         final Object ancuabe2 = reasoner.readAsObject(reasoner.getDatasetClass(datasetClassID), "Ancuabe");

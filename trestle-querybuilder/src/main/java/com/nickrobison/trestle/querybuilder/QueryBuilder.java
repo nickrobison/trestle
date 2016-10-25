@@ -88,6 +88,14 @@ public class QueryBuilder {
         this.pm = pm;
     }
 
+    public String buildDatasetQuery() {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText("SELECT ?dataset" +
+                " WHERE { ?dataset rdfs:subClassOf :Dataset }");
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
     public String buildRelationQuery(OWLNamedIndividual individual, @Nullable OWLClass datasetClass, double relationshipStrength) {
         final ParameterizedSparqlString ps = buildBaseString();
 //        Jena won't expand URIs in the FILTER operator, so we need to give it the fully expanded value.
@@ -95,12 +103,13 @@ public class QueryBuilder {
         ps.setCommandText(String.format("SELECT ?f ?s" +
                 " WHERE" +
                 " { ?m rdf:type ?t . " +
-                "?m :has_relation ?r . " +
+                "?m :has_relation{,?depth} ?r . " +
                 "?r rdf:type :Concept_Relation . " +
                 "?r :Relation_Strength ?s . " +
-                "?r :has_relation ?f . " +
-                "?f rdf:type ?t " +
-                "FILTER(?m = %s && ?s >= ?st)}", String.format("<%s>", getFullIRIString(individual))));
+                "?r :relation_of{,?depth} ?f . " +
+                "?f rdf:type ?t ." +
+                " VALUES ?m {%s}" +
+                "FILTER(?s >= ?st)}", String.format("<%s>", getFullIRIString(individual))));
 //        Replace the variables
         if (datasetClass != null) {
             ps.setIri("t", getFullIRIString(datasetClass));
@@ -108,6 +117,7 @@ public class QueryBuilder {
             ps.setIri("t", getFullIRI(IRI.create("trestle:", ":Dataset")).toString());
         }
         ps.setLiteral("st", relationshipStrength);
+        ps.setLiteral("depth", 1);
 
 //        return ps.toString().replace("<", "").replace(">", "");
         logger.debug(ps.toString());

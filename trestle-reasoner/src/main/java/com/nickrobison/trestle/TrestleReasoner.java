@@ -825,13 +825,6 @@ public class TrestleReasoner {
             relatedObjects.put(object, entry.getValue());
         });
         ontology.returnAndCommitTransaction(transaction);
-//
-//        try {
-//            final @NonNull T object = readAsObject(clazz, relatedIRI, false);
-//            relatedObjects.put(object, strength);
-//        } catch (Exception e) {
-//            logger.error("Problem with {}", relatedIRI, e);
-//        }
 
         if (relatedObjects.size() == 0) {
             return Optional.empty();
@@ -1101,26 +1094,25 @@ public class TrestleReasoner {
 
     /**
      * Get a list of currently registered datasets
-     * Only returns datasets currently registered with the
+     * Only returns datasets currently registered with the reasoner. It's up to the client to figure out which ones it cares about
      *
-     * @return - Optional Set of Strings representing available datasets
+     * @return - Set of Strings representing available datasets
      */
-    public Optional<Set<String>> getAvailableDatasets() {
-        try {
-            return Optional.of(CompletableFuture.supplyAsync(() -> this.registeredClasses
-                    .keySet()
-                    .stream()
-                    .filter(individual -> checkExists(individual.getIRI()))
-                    .map(individual -> individual.getIRI().getShortForm())
-                    .collect(Collectors.toSet()))
-                    .get());
-        } catch (InterruptedException e) {
-            logger.error("Interrupted", e);
-        } catch (ExecutionException e) {
-            logger.error("Excepted", e);
+    public Set<String> getAvailableDatasets() {
+
+        final String datasetQuery = qb.buildDatasetQuery();
+        final ResultSet resultSet = ontology.executeSPARQL(datasetQuery);
+        List<OWLClass> datasetsInOntology = new ArrayList<>();
+        while (resultSet.hasNext()) {
+            datasetsInOntology.add(df.getOWLClass(IRI.create(resultSet.next().getResource("dataset").getURI())));
         }
 
-        return Optional.empty();
+        return this.registeredClasses
+                .keySet()
+                .stream()
+                .filter(datasetsInOntology::contains)
+                .map(individual -> individual.getIRI().getShortForm())
+                .collect(Collectors.toSet());
     }
 
     public Class<?> getDatasetClass(String owlClassString) throws UnregisteredClassException {
