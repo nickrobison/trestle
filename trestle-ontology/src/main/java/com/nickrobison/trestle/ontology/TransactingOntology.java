@@ -60,7 +60,12 @@ abstract class TransactingOntology implements ITrestleOntology {
 
     @Override
     public TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject) {
-        return createandOpenNewTransaction(transactionObject, transactionObject.isWriteTransaction());
+        if (transactionObject.ownsATransaction()) {
+            return createandOpenNewTransaction(transactionObject, transactionObject.isWriteTransaction());
+        } else {
+            logger.debug("Provided transaction object doesn't own the current transaction. Continuing");
+            return transactionObject;
+        }
     }
 
     @Override
