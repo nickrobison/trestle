@@ -24,6 +24,7 @@ dist
 /.project
 /RUNNING_PID
 /.settings
+**/dependency-reduced-pom.xml
 
 # Java Ignore
 *.class
