@@ -25,12 +25,17 @@ import java.io.ByteArrayOutputStream;
 public class VirtuosoOntology extends JenaOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(VirtuosoOntology.class);
-    public static final String TRESTLE_RULES = "trestle_rules";
+    private final String TRESTLE_RULES;
     private static VirtModel virtModel;
 
     VirtuosoOntology(String name, OWLOntology ont, DefaultPrefixManager pm, String connectionString, String username, String password) {
         super(name, initializeVirtModel(name, connectionString, username, password), ont, pm);
-        virtModel.setRuleSet(TRESTLE_RULES);
+        TRESTLE_RULES = String.format("%s_trestle_rules", name);
+        try {
+            virtModel.setRuleSet(TRESTLE_RULES);
+        } catch (Exception e) {
+            logger.error("Ruleset {} doesn't exist", TRESTLE_RULES, e);
+        }
     }
 
     private static Model initializeVirtModel(String name, String connectionString, String username, String password) {
@@ -46,9 +51,13 @@ public class VirtuosoOntology extends JenaOntology {
     @Override
     public void initializeOntology() {
         logger.info("Dropping model {}", this.ontologyName);
-        if (!virtModel.isEmpty()) {
-            virtModel.removeRuleSet(TRESTLE_RULES, this.ontologyName);
-            virtModel.removeAll();
+        virtModel.removeRuleSet(TRESTLE_RULES, this.ontologyName);
+        try {
+            if (!virtModel.isEmpty()) {
+                virtModel.removeAll();
+            }
+        } catch (Exception e) {
+            logger.warn("Unable to remove ruleset {}", TRESTLE_RULES, e);
         }
 
 //        Create a new ruleset
@@ -67,7 +76,6 @@ public class VirtuosoOntology extends JenaOntology {
 
     @Override
 //    Need to override the SPARQL command because the geospatial extensions will cause Jena to fail the query parsing.
-//    TODO(nrobison): This should return a list, not this weird ResultSet thing.
     public ResultSet executeSPARQL(String queryString) {
         ResultSet resultSet;
         final QueryExecution queryExecution = VirtuosoQueryExecutionFactory.create(queryString, (VirtGraph) virtModel.getGraph());
@@ -81,7 +89,6 @@ public class VirtuosoOntology extends JenaOntology {
             this.model.leaveCriticalSection();
             this.commitTransaction(false);
         }
-
         return resultSet;
     }
 
