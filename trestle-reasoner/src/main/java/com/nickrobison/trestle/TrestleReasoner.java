@@ -1094,9 +1094,9 @@ public class TrestleReasoner {
 
     /**
      * Get a list of currently registered datasets
-     * Only returns datasets currently registered with the reasoner. It's up to the client to figure out which ones it cares about
+     * Only returns datasets currently registered with the reasoner.
      *
-     * @return - Set of Strings representing available datasets
+     * @return - Set of Strings representing the registered datasets
      */
     public Set<String> getAvailableDatasets() {
 
