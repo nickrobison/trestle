@@ -152,9 +152,9 @@ public class OracleOntologyGAULoader {
 
 //        SPARQL Query of spatial intersections.
         final OWLClass gaul_test = df.getOWLClass(IRI.create("trestle:", "GAUL_Test"));
-        QueryBuilder qb = new QueryBuilder(ontology.getUnderlyingPrefixManager());
+        QueryBuilder qb = new QueryBuilder(QueryBuilder.DIALECT.ORACLE, ontology.getUnderlyingPrefixManager());
 //        queryString = qb.buildOracleIntersection(gaul_test, "Point(39.5398864750001 -12.0671005249999)");
-        queryString = qb.buildSpatialIntersection(QueryBuilder.DIALECT.ORACLE, gaul_test, "Point(39.5398864750001 -12.0671005249999)", 0.0, QueryBuilder.UNITS.METER);
+        queryString = qb.buildSpatialIntersection(gaul_test, "Point(39.5398864750001 -12.0671005249999)", 0.0, QueryBuilder.UNITS.METER);
 
         resultSet = ResultSetFormatter.toList(ontology.executeSPARQL(queryString));
         assertEquals(2, resultSet.size(), "Wrong number of intersected results");

@@ -157,7 +157,6 @@ public class TrestleReasoner {
             trestleCache = builder.sharedCache.orElse(new TrestleCache.TrestleCacheBuilder().build());
         }
 
-
 //        Setup the query builder
         if (ontology instanceof OracleOntology) {
             spatialDalect = QueryBuilder.DIALECT.ORACLE;
@@ -172,7 +171,7 @@ public class TrestleReasoner {
             spatialDalect = QueryBuilder.DIALECT.SESAME;
         }
         logger.debug("Using SPARQL dialect {}", spatialDalect);
-        qb = new QueryBuilder(ontology.getUnderlyingPrefixManager());
+        qb = new QueryBuilder(spatialDalect, ontology.getUnderlyingPrefixManager());
         logger.info("Ontology {} ready", builder.ontologyName.orElse(DEFAULTNAME));
     }
 
@@ -742,11 +741,11 @@ public class TrestleReasoner {
             try {
                 if (atTemporal == null) {
                     logger.debug("Running generic spatial intersection");
-                    spatialIntersection = qb.buildSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER);
+                    spatialIntersection = qb.buildSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.UNITS.METER);
                 } else {
                     final OffsetDateTime atLDTime = parseTemporalToOntologyDateTime(atTemporal, TemporalParser.IntervalType.START, ZoneOffset.UTC);
                     logger.debug("Running spatial intersection at time {}", atLDTime);
-                    spatialIntersection = qb.buildTemporalSpatialIntersection(spatialDalect, owlClass, wkt, buffer, QueryBuilder.UNITS.METER, atLDTime);
+                    spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.UNITS.METER, atLDTime);
                 }
             } catch (UnsupportedFeatureException e) {
                 logger.error("Database {] doesn't support spatial intersections.", spatialDalect, e);

@@ -51,7 +51,7 @@ public class VirtuosoOntologyGAULLoader {
     @BeforeEach
     public void setup() throws IOException, OWLOntologyCreationException {
 
-        final InputStream is = OracleOntologyGAULoader.class.getClassLoader().getResourceAsStream("objects.csv");
+        final InputStream is = VirtuosoOntologyGAULLoader.class.getClassLoader().getResourceAsStream("objects.csv");
 
         final BufferedReader br = new BufferedReader(new InputStreamReader(is));
 
@@ -173,9 +173,9 @@ public class VirtuosoOntologyGAULLoader {
         assertEquals(191, resultSet.size(), "Wrong number of GAUL records from sparql method");
 
 //        SPARQL Query of spatial intersections.
-        QueryBuilder qb = new QueryBuilder(ontology.getUnderlyingPrefixManager());
+        QueryBuilder qb = new QueryBuilder(QueryBuilder.DIALECT.VIRTUOSO, ontology.getUnderlyingPrefixManager());
         final OWLClass gaul_test = df.getOWLClass(IRI.create("trestle:", "GAUL_Test"));
-        queryString = qb.buildSpatialIntersection(QueryBuilder.DIALECT.VIRTUOSO, gaul_test, "Point(39.5398864750001 -12.0671005249999)", 0.0, QueryBuilder.UNITS.MILE);
+        queryString = qb.buildSpatialIntersection(gaul_test, "Point(39.5398864750001 -12.0671005249999)", 0.0, QueryBuilder.UNITS.MILE);
 
         resultSet = ResultSetFormatter.toList(ontology.executeSPARQL(queryString));
         assertEquals(3, resultSet.size(), "Wrong number of intersected results");

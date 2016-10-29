@@ -261,7 +261,7 @@ public class OracleOntologyTest {
         assertEquals(7, individualObjectProperty.get().size(), "Wrong number of related to properties");
 
         final OWLClass gaulClass = df.getOWLClass(IRI.create("trestle:", "GAUL"));
-        final QueryBuilder queryBuilder = new QueryBuilder(ontology.getUnderlyingPrefixManager());
+        final QueryBuilder queryBuilder = new QueryBuilder(QueryBuilder.DIALECT.ORACLE, ontology.getUnderlyingPrefixManager());
         final String builtString = queryBuilder.buildRelationQuery(test_muni4, gaulClass, 0.6);
 
         //        Now for the sparql query

@@ -53,7 +53,7 @@ public abstract class JenaOntology extends TransactingOntology {
         this.ontology = ontology;
         this.pm = pm;
         this.df = OWLManager.getOWLDataFactory();
-        this.qb = new QueryBuilder(this.pm);
+        this.qb = new QueryBuilder(QueryBuilder.DIALECT.JENA, this.pm);
     }
 
     abstract public boolean isConsistent();

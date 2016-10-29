@@ -47,11 +47,9 @@ public class TrestleAPITest {
     @BeforeEach
     public void setup() {
         reasoner = new TrestleBuilder()
-                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-//                .withDBConnection(
-//                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-//                        "spatialUser",
-//                        "spatial1")
+//                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+//                .withDBConnection("jdbc:virtuoso://nuclet:1111", "dba", "dba")
+                .withDBConnection("jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial", "spatialUser", "spatial1")
                 .withName("api_test")
                 .withIRI(IRI.create("file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl"))
                 .withInputClasses(TestClasses.GAULTestClass.class,
@@ -126,7 +124,10 @@ public class TrestleAPITest {
         final Set<String> availableDatasets = reasoner.getAvailableDatasets();
         assertTrue(availableDatasets.size() > 0, "Should have dataset");
 
-        datasetClassID = availableDatasets.stream().findFirst().get();
+        datasetClassID = availableDatasets.stream()
+                .filter(ds -> ds.equals("GAUL_Test"))
+                .findAny()
+                .get();
         @NonNull final Object ancuabe1 = reasoner.readAsObject(datasetClassID, "Ancuabe");
         assertEquals(ancuabe, ancuabe1, "Objects should be equal");
         final Object ancuabe2 = reasoner.readAsObject(reasoner.getDatasetClass(datasetClassID), "Ancuabe");
@@ -217,6 +218,6 @@ public class TrestleAPITest {
 
     @AfterEach
     public void close() throws OWLOntologyStorageException {
-        reasoner.shutdown(false);
+        reasoner.shutdown(true);
     }
 }

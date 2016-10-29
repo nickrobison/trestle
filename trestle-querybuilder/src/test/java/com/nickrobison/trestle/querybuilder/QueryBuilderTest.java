@@ -164,7 +164,7 @@ public class QueryBuilderTest {
 
     @BeforeEach
     public void setup() {
-        qb = new QueryBuilder(pm);
+        qb = new QueryBuilder(QueryBuilder.DIALECT.ORACLE, pm);
     }
 
     @Test
@@ -183,19 +183,19 @@ public class QueryBuilderTest {
         final String wktString = "Point(39.5398864750001 -12.0671005249999)";
 
 //        final String generatedOracle = qb.buildOracleIntersection(gaulClass, wktString);
-        final String generatedOracle = qb.buildSpatialIntersection(QueryBuilder.DIALECT.ORACLE, gaulClass, wktString, 0.0, QueryBuilder.UNITS.KM);
+        final String generatedOracle = qb.buildSpatialIntersection(gaulClass, wktString, 0.0, QueryBuilder.UNITS.KM);
         assertEquals(oracleSpatialString, generatedOracle, "Should be equal");
 
 //        Test virtuoso
-        final String generatedVirtuoso = qb.buildSpatialIntersection(QueryBuilder.DIALECT.VIRTUOSO, gaulClass, wktString, 0.0, QueryBuilder.UNITS.KM);
+        final String generatedVirtuoso = qb.buildSpatialIntersection(gaulClass, wktString, 0.0, QueryBuilder.UNITS.KM);
         assertEquals(virtuosoSpatialString, generatedVirtuoso, "Should be equal");
 
 //        Test Oracle temporal
-        final String generatedOracleTS = qb.buildTemporalSpatialIntersection(QueryBuilder.DIALECT.ORACLE, gaulClass, wktString, 0.0, QueryBuilder.UNITS.KM, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
+        final String generatedOracleTS = qb.buildTemporalSpatialIntersection(gaulClass, wktString, 0.0, QueryBuilder.UNITS.KM, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
         assertEquals(oracleTSString, generatedOracleTS, "Should be equal");
 
 //        Check unsupported
-        assertThrows(UnsupportedFeatureException.class, () -> qb.buildSpatialIntersection(QueryBuilder.DIALECT.STARDOG, gaulClass, wktString, 0.0, QueryBuilder.UNITS.MILE));
+        assertThrows(UnsupportedFeatureException.class, () -> qb.buildSpatialIntersection(gaulClass, wktString, 0.0, QueryBuilder.UNITS.MILE));
 
 //        Check Object Property Retrieval
 
