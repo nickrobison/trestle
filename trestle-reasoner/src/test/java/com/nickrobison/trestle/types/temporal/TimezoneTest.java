@@ -35,11 +35,11 @@ public class TimezoneTest {
     @BeforeAll
     public static void setup() {
         reasoner = new TrestleBuilder()
-                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-//                .withDBConnection(
-//                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-//                        "spatialUser",
-//                        "spatial1")
+//                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+                .withDBConnection(
+                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
+                        "spatialUser",
+                        "spatial1")
                 .withName("timezone_tests")
                 .withInputClasses(DefaultTimeZone.class, DifferentIntervalTimeZones.class)
                 .withoutCaching()
@@ -53,6 +53,7 @@ public class TimezoneTest {
     public void testDefaultTimeZone() throws TrestleClassException, MissingOntologyEntity {
         final DefaultTimeZone defaultTimeZone = new DefaultTimeZone(LocalDate.of(1990, 1, 1).atStartOfDay(), "default-timezone");
         reasoner.writeObjectAsFact(defaultTimeZone);
+        reasoner.getUnderlyingOntology().runInference();
         @NonNull final DefaultTimeZone returnedDefaultTimeZone = reasoner.readAsObject(DefaultTimeZone.class, "default-timezone");
         assertEquals(defaultTimeZone, returnedDefaultTimeZone, "Should be equal");
         assertEquals(defaultTimeZone.defaultTime, returnedDefaultTimeZone.defaultTime, "Times should match");
@@ -62,6 +63,7 @@ public class TimezoneTest {
     public void testDifferentIntervalTimeZones() throws TrestleClassException, MissingOntologyEntity {
         final DifferentIntervalTimeZones differentIntervalTimeZones = new DifferentIntervalTimeZones("different-intervals", LocalDate.of(1990, 1, 1).atStartOfDay(), LocalDate.of(1995, 1, 1).atStartOfDay());
         reasoner.writeObjectAsFact(differentIntervalTimeZones);
+        reasoner.getUnderlyingOntology().runInference();
         @NonNull final DifferentIntervalTimeZones returnedIntervalTimeZones = reasoner.readAsObject(DifferentIntervalTimeZones.class, "different-intervals");
         assertEquals(differentIntervalTimeZones, returnedIntervalTimeZones, "Should be equal");
     }

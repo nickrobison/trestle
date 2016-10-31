@@ -187,7 +187,8 @@ public class QueryBuilder {
         ps.setCommandText(String.format("SELECT DISTINCT ?individual ?temporal ?property ?object" +
                 " WHERE" +
                 " { ?individual :has_temporal ?temporal ." +
-                " {?temporal :valid_from ?tStart} UNION {?temporal :exists_from ?tStart} ." +
+                " OPTIONAL{{?temporal :valid_at ?tAt} UNION {?temporal :exists_at ?tAt}} ." +
+                " OPTIONAL{{?temporal :valid_from ?tStart} UNION {?temporal :exists_from ?tStart}} ." +
                 " OPTIONAL{{?temporal :valid_to ?tEnd} UNION {?temporal :exists_to ?tEnd}} ." +
                 " ?temporal ?property ?object" +
                 " VALUES ?individual { %s } ." +
