@@ -148,7 +148,7 @@ public class VirtuosoOntologyTest {
         final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(relationOfIRI);
         final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(test_muni4, owlObjectProperty);
         assertTrue(individualObjectProperty.isPresent(), "Should have related_to properties");
-        assertEquals(7, individualObjectProperty.get().size(), "Wrong number of related to properties");
+        assertEquals(1, individualObjectProperty.get().size(), "Wrong number of related to properties");
 
         //        Now for the sparql query
 //        TODO(nrobison): Haven't figured out how to do both sparql querying and inferencing at the same time.

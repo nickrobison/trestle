@@ -11,6 +11,7 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSetFormatter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
@@ -32,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Created by nrobison on 7/1/16.
  */
 @SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "Duplicates"})
+@Disabled
 public class OracleOntologyGAULoader {
 
     private List<TestClasses.GAULTestClass> gaulObjects = new ArrayList<>();
