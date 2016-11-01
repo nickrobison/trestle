@@ -5,7 +5,7 @@
     <parent>
         <artifactId>trestle</artifactId>
         <groupId>com.nickrobison</groupId>
-        <version>0.4</version>
+        <version>0.5-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -15,7 +15,7 @@
         <dependency>
             <groupId>com.nickrobison</groupId>
             <artifactId>trestle-common</artifactId>
-            <version>0.4</version>
+            <version>0.5-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
