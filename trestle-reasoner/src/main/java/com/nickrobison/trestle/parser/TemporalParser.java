@@ -664,15 +664,6 @@ public class TemporalParser {
                 logger.error("Unsupported parsing of temporal {} to {}", literal.getDatatype(), destinationType.getTypeName());
                 throw new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype(), destinationType.getTypeName()));
             }
-//        } else if (datatype.getIRI().equals(dateDatatypeIRI)) {
-//            logger.warn("Received xsd:date, should only have xsd:dateTime");
-//            if (destinationType.getTypeName().contains("java.time")) {
-//                final Optional<Temporal> optionalJavaTemporal = parseDateToJavaTemporal(destinationType.getTypeName(), literal);
-//                parsedTemporal = optionalJavaTemporal.orElseThrow(() -> new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype(), destinationType.getTypeName())));
-//            } else {
-//                logger.error("Unsupported parsing of temporal {} to {}", literal.getDatatype(), destinationType.getTypeName());
-//                throw new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype(), destinationType.getTypeName()));
-//            }
         } else {
             logger.error("Unsupported parsing of XSD type {}", datatype);
             throw new RuntimeException(String.format("Unsupported parsing of XSD type %s", datatype));

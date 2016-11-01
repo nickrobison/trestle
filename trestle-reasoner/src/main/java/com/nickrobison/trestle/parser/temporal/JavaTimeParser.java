@@ -43,31 +43,4 @@ public class JavaTimeParser {
             }
         }
     }
-
-    /**
-     * Parse OWL xsd:Date to Java Temporal
-     * SHOULD BE DEPRECATED
-     * @param destinationTypeName - Java Type to parse to
-     * @param literal - OWLLiteral of type xsd:Date
-     * @return - Optional Java Temporal
-     */
-    @Deprecated
-    public static Optional<Temporal> parseDateToJavaTemporal(String destinationTypeName, OWLLiteral literal) {
-        switch (destinationTypeName) {
-            case "java.time.LocalDateTime": {
-                return Optional.of(LocalDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE));
-            }
-            case "java.time.LocalDate": {
-                return Optional.of(LocalDate.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE));
-            }
-            case "java.time.OffsetDateTime": {
-                return Optional.of(OffsetDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE));
-            }
-            default: {
-                logger.error("Unsupported parsing of temporal {} to {}", literal.getDatatype(), destinationTypeName);
-                return Optional.empty();
-            }
-        }
-    }
-
 }
