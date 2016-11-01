@@ -38,7 +38,7 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT ?f ?s WHERE { ?m rdf:type :GAUL . ?m :has_relation ?r . ?r rdf:type :Concept_Relation . ?r :Relation_Strength ?s . ?r :has_relation ?f . ?f rdf:type :GAUL FILTER(?m = <http://nickrobison.com/dissertation/trestle.owl#test_muni4> && ?s >= \"0.6\"^^xsd:double)}";
+            "SELECT ?f ?s WHERE { ?m rdf:type :GAUL . ?m :has_relation ?r . ?r rdf:type :Concept_Relation . ?r :Relation_Strength ?s . ?r :relation_of ?f . ?f rdf:type :GAUL . VALUES ?m {<http://nickrobison.com/dissertation/trestle.owl#test_muni4>}FILTER(?s >= \"0.6\"^^xsd:double)}";
 
     private static final String oracleSpatialString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
@@ -148,8 +148,7 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?individual ?temporal ?property ?object WHERE { ?individual :has_temporal ?temporal . {?temporal :valid_from ?tStart} UNION {?temporal :exists_from ?tStart} . OPTIONAL{{?temporal :valid_to ?tEnd} UNION {?temporal :exists_to ?tEnd}} . ?temporal ?property ?object VALUES ?individual { <http://nickrobison.com/dissertation/trestle.owl#test_muni4> } . FILTER(!isURI(?object) && !isBlank(?object)) .}";
-
+            "SELECT DISTINCT ?individual ?temporal ?property ?object WHERE { ?individual :has_temporal ?temporal . OPTIONAL{{?temporal :valid_at ?tAt} UNION {?temporal :exists_at ?tAt}} . OPTIONAL{{?temporal :valid_from ?tStart} UNION {?temporal :exists_from ?tStart}} . OPTIONAL{{?temporal :valid_to ?tEnd} UNION {?temporal :exists_to ?tEnd}} . ?temporal ?property ?object VALUES ?individual { <http://nickrobison.com/dissertation/trestle.owl#test_muni4> } . FILTER(!isURI(?object) && !isBlank(?object)) .}";
     @BeforeAll
     public static void createPrefixes() {
         df = OWLManager.getOWLDataFactory();
@@ -182,12 +181,12 @@ public class QueryBuilderTest {
         final OWLClass gaulClass = df.getOWLClass(IRI.create("trestle:", "GAUL"));
         final String wktString = "Point(39.5398864750001 -12.0671005249999)";
 
-//        final String generatedOracle = qb.buildOracleIntersection(gaulClass, wktString);
         final String generatedOracle = qb.buildSpatialIntersection(gaulClass, wktString, 0.0, QueryBuilder.UNITS.KM);
         assertEquals(oracleSpatialString, generatedOracle, "Should be equal");
 
 //        Test virtuoso
-        final String generatedVirtuoso = qb.buildSpatialIntersection(gaulClass, wktString, 0.0, QueryBuilder.UNITS.KM);
+        QueryBuilder virtuosoQB = new QueryBuilder(QueryBuilder.DIALECT.VIRTUOSO, pm);
+        final String generatedVirtuoso = virtuosoQB.buildSpatialIntersection(gaulClass, wktString, 0.0, QueryBuilder.UNITS.KM);
         assertEquals(virtuosoSpatialString, generatedVirtuoso, "Should be equal");
 
 //        Test Oracle temporal
@@ -195,7 +194,8 @@ public class QueryBuilderTest {
         assertEquals(oracleTSString, generatedOracleTS, "Should be equal");
 
 //        Check unsupported
-        assertThrows(UnsupportedFeatureException.class, () -> qb.buildSpatialIntersection(gaulClass, wktString, 0.0, QueryBuilder.UNITS.MILE));
+        QueryBuilder stardogQB = new QueryBuilder(QueryBuilder.DIALECT.STARDOG, pm);
+        assertThrows(UnsupportedFeatureException.class, () -> stardogQB.buildSpatialIntersection(gaulClass, wktString, 0.0, QueryBuilder.UNITS.MILE));
 
 //        Check Object Property Retrieval
 
