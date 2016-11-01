@@ -5,8 +5,7 @@ import com.nickrobison.trestle.types.TemporalType;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
-import java.time.ZoneId;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.temporal.Temporal;
 import java.util.*;
 
@@ -14,7 +13,7 @@ import java.util.*;
  * Created by nrobison on 6/30/16.
  */
 // I can suppress both of these warnings because I know for sure they are correct
-@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unchecked", "return.type.incompatible"})
+@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unchecked", "return.type.incompatible", "Duplicates"})
 public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
     private static final TemporalType TYPE = TemporalType.INTERVAL;
@@ -37,8 +36,8 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         this.startName = builder.startName;
         this.endName = builder.endName;
         this.temporalType = (Class<T>) builder.fromTime.getClass();
-        this.startTimeZone = builder.startTimeZone.orElse(ZoneOffset.UTC);
-        this.endTimeZone = builder.endTimeZone.orElse(builder.startTimeZone.orElse(ZoneOffset.UTC));
+        this.startTimeZone = builder.fromTimeZone.orElse(ZoneOffset.UTC);
+        this.endTimeZone = builder.toTimeZone.orElse(builder.fromTimeZone.orElse(ZoneOffset.UTC));
     }
 
     @Override
@@ -83,11 +82,15 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     public boolean isDefault() { return this.isDefault; }
 
     public T getFromTime() {
-        return this.fromTime;
+        return getAdjustedTime(this.fromTime, this.getStartTimeZone());
     }
 
     public Optional<T> getToTime() {
-        return this.toTime;
+        if (this.toTime.isPresent()) {
+            return Optional.of(getAdjustedTime(this.toTime.get(), getEndTimeZone()));
+        } else {
+            return Optional.empty();
+        }
     }
 
     public String getStartName() {
@@ -106,6 +109,16 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         return this.endTimeZone;
     }
 
+    private T getAdjustedTime(T temporal, ZoneId zone) {
+        if (temporal instanceof LocalDateTime) {
+            return (T) ((LocalDateTime) temporal).atZone(zone).toLocalDateTime();
+        } else if (temporal instanceof OffsetDateTime) {
+            return (T) ((OffsetDateTime) temporal).atZoneSameInstant(zone).toOffsetDateTime();
+        } else {
+            return temporal;
+        }
+    }
+
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public static class Builder<T extends Temporal> {
 
@@ -115,8 +128,8 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         private Optional<Set<OWLNamedIndividual>> relations = Optional.empty();
         private Optional<String> startName = Optional.empty();
         private Optional<String> endName = Optional.empty();
-        private Optional<ZoneId> startTimeZone = Optional.empty();
-        private Optional<ZoneId> endTimeZone = Optional.empty();
+        private Optional<ZoneId> fromTimeZone = Optional.empty();
+        private Optional<ZoneId> toTimeZone = Optional.empty();
         private boolean isDefault = false;
 
         Builder(TemporalScope scope, T from) {
@@ -124,16 +137,32 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
             this.fromTime = from;
         }
 
+        /**
+         * Set this temporal as a default, meaning it has no related to parameter
+         * @param isDefault - boolean is default?
+         * @return - Builder
+         */
         public Builder isDefault(boolean isDefault) {
             this.isDefault = isDefault;
             return this;
         }
 
+        /**
+         * Set the to temporal
+         * @param to - Temporal of type T to use for to temporal
+         * @return - Builder
+         */
         public Builder to(T to) {
             this.toTime = Optional.of(to);
             return this;
         }
 
+        /**
+         * Set the parameter names for the from/to temporals
+         * @param startName - String for start name
+         * @param endName - Nullable string for endName
+         * @return
+         */
         public Builder withParameterNames(String startName, @Nullable String endName) {
             this.startName = Optional.of(startName);
             if (endName != null) {
@@ -142,20 +171,55 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
             return this;
         }
 
-        public Builder withStartTimeZone(String zoneId) {
+        /**
+         * Set the time zone for the from temporal
+         * @param zoneId - String to parse into zoneID
+         * @return - Builder
+         */
+        public Builder withFromTimeZone(String zoneId) {
             if (!zoneId.equals("")) {
-                this.startTimeZone = Optional.of(ZoneId.of(zoneId));
+                this.fromTimeZone = Optional.of(ZoneId.of(zoneId));
             }
             return this;
         }
 
-        public Builder withEndTimeZone(String zoneId) {
+        /**
+         * Set the time zone for the from temporal
+         * @param zoneId - ZoneID to use
+         * @return - Builder
+         */
+        public Builder withFromTimeZone(ZoneId zoneId) {
+            this.fromTimeZone = Optional.of(zoneId);
+            return this;
+        }
+
+        /**
+         * Set the time zone for the to temporal
+         * @param zoneId - String to parse into ZoneID
+         * @return - Builder
+         */
+        public Builder withToTimeZone(String zoneId) {
             if (!zoneId.equals("")) {
-                this.endTimeZone = Optional.of(ZoneId.of(zoneId));
+                this.toTimeZone = Optional.of(ZoneId.of(zoneId));
             }
             return this;
         }
 
+        /**
+         * Set the time zone for the to temporal
+         * @param zoneId - ZoneID to use
+         * @return - Builder
+         */
+        public Builder withToTimeZone(ZoneId zoneId) {
+            this.toTimeZone = Optional.of(zoneId);
+            return this;
+        }
+
+        /**
+         * Set the Individuals this temporal relates to
+         * @param relations - OWLNamedIndividuals associated with this temporal
+         * @return - Builder
+         */
         public IntervalTemporal withRelations(OWLNamedIndividual... relations) {
             this.relations = Optional.of(new HashSet<>(Arrays.asList(relations)));
             return new IntervalTemporal<>(this);

@@ -1,7 +1,5 @@
 package com.nickrobison.trestle.parser;
 
-import com.nickrobison.trestle.annotations.DataProperty;
-import com.nickrobison.trestle.annotations.Spatial;
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
@@ -25,7 +23,6 @@ import static com.nickrobison.trestle.common.StaticIRI.*;
 import static com.nickrobison.trestle.parser.ClassParser.df;
 import static com.nickrobison.trestle.parser.ClassParser.filterMethodName;
 import static com.nickrobison.trestle.parser.temporal.JavaTimeParser.parseDateTimeToJavaTemporal;
-import static com.nickrobison.trestle.parser.temporal.JavaTimeParser.parseDateToJavaTemporal;
 import static com.nickrobison.trestle.parser.temporal.JodaTimeParser.parseDateTimeToJodaTemporal;
 
 /**
@@ -65,6 +62,122 @@ public class TemporalParser {
         }
 
         return false;
+    }
+
+    /**
+     * Extract the time zone from StartTemporalProperty
+     * Returns ZoneOffset.UTC if the time zone isn't defined.
+     * @param clazz - Class to parse
+     * @return - ZoneId of either declared timezone, or UTC
+     */
+    public static ZoneId GetStartZoneID(@Nullable Class<?> clazz) {
+
+        if (clazz == null) {
+            return ZoneOffset.UTC;
+        }
+        final Optional<Method> startMethod = Arrays.stream(clazz.getDeclaredMethods())
+                .filter(m -> m.isAnnotationPresent(StartTemporalProperty.class))
+                .findAny();
+
+        if (startMethod.isPresent()) {
+            final StartTemporalProperty startAnnotation = startMethod.get().getAnnotation(StartTemporalProperty.class);
+            return extractZoneIdFromTemporalProperty(startAnnotation.timeZone());
+        }
+
+        final Optional<Field> startField = Arrays.stream(clazz.getDeclaredFields())
+                .filter(f -> f.isAnnotationPresent(StartTemporalProperty.class))
+                .findAny();
+
+        if (startField.isPresent()) {
+            final StartTemporalProperty startAnnotation = startField.get().getAnnotation(StartTemporalProperty.class);
+            return extractZoneIdFromTemporalProperty(startAnnotation.timeZone());
+        }
+
+        throw new RuntimeException(String.format("Unable to extract temporal from %s", clazz.getClass().getSimpleName()));
+    }
+
+    /**
+     * Extract the time zone from EndTemporalProperty
+     * Returns ZoneOffset.UTC if the time zone isn't defined.
+     * @param clazz - Class to parse
+     * @return - ZoneId of either declared timezone, or UTC
+     */
+    public static ZoneId GetEndZoneID(@Nullable Class<?> clazz) {
+        if (clazz == null) {
+            return ZoneOffset.UTC;
+        }
+
+        final Optional<Method> startMethod = Arrays.stream(clazz.getDeclaredMethods())
+                .filter(m -> m.isAnnotationPresent(EndTemporalProperty.class))
+                .findAny();
+
+        if (startMethod.isPresent()) {
+            final EndTemporalProperty startAnnotation = startMethod.get().getAnnotation(EndTemporalProperty.class);
+            return extractZoneIdFromTemporalProperty(startAnnotation.timeZone());
+        }
+
+        final Optional<Field> startField = Arrays.stream(clazz.getDeclaredFields())
+                .filter(f -> f.isAnnotationPresent(EndTemporalProperty.class))
+                .findAny();
+
+        if (startField.isPresent()) {
+            final EndTemporalProperty startAnnotation = startField.get().getAnnotation(EndTemporalProperty.class);
+            return extractZoneIdFromTemporalProperty(startAnnotation.timeZone());
+        }
+
+        throw new RuntimeException(String.format("Unable to extract temporal from %s", clazz.getClass().getSimpleName()));
+    }
+
+    public static ZoneId GetAtZoneID(@Nullable Class<?> clazz) {
+        if (clazz == null) {
+            return ZoneOffset.UTC;
+        }
+
+        if (IsDefault(clazz)) {
+            return GetDefaultZoneID(clazz);
+        } else {
+            return GetStartZoneID(clazz);
+        }
+    }
+
+    /**
+     * Extract the time zone from DefaultTemporalProperty
+     * Returns ZoneOffset.UTC if the time zone isn't defined.
+     * @param clazz - Class to parse
+     * @return - ZoneId of either declared timezone, or UTC
+     */
+    public static ZoneId GetDefaultZoneID(@Nullable Class<?> clazz) {
+        if (clazz == null) {
+            return ZoneOffset.UTC;
+        }
+
+        final Optional<Method> startMethod = Arrays.stream(clazz.getDeclaredMethods())
+                .filter(m -> m.isAnnotationPresent(DefaultTemporalProperty.class))
+                .findAny();
+
+        if (startMethod.isPresent()) {
+            final DefaultTemporalProperty startAnnotation = startMethod.get().getAnnotation(DefaultTemporalProperty.class);
+            return extractZoneIdFromTemporalProperty(startAnnotation.timeZone());
+        }
+
+        final Optional<Field> startField = Arrays.stream(clazz.getDeclaredFields())
+                .filter(f -> f.isAnnotationPresent(DefaultTemporalProperty.class))
+                .findAny();
+
+        if (startField.isPresent()) {
+            final DefaultTemporalProperty startAnnotation = startField.get().getAnnotation(DefaultTemporalProperty.class);
+            return extractZoneIdFromTemporalProperty(startAnnotation.timeZone());
+        }
+
+        throw new RuntimeException(String.format("Unable to extract temporal from %s", clazz.getClass().getSimpleName()));
+    }
+
+    private static ZoneId extractZoneIdFromTemporalProperty(String timeZone) {
+        if (timeZone.equals("")) {
+            return ZoneOffset.UTC;
+        } else {
+            return ZoneId.of(timeZone);
+        }
     }
 
     //    TODO(nrobison): This looks gross, fix it.
@@ -349,13 +462,13 @@ public class TemporalParser {
                             temporalObject = TemporalObjectBuilder.valid()
                                     .from(from)
                                     .to(to)
-                                    .withStartTimeZone(annotation.timeZone())
+                                    .withFromTimeZone(annotation.timeZone())
                                     .isDefault(true)
                                     .withRelations(owlNamedIndividual);
                         } else {
                             temporalObject = TemporalObjectBuilder.valid()
                                     .from(from)
-                                    .withStartTimeZone(annotation.timeZone())
+                                    .withFromTimeZone(annotation.timeZone())
                                     .isDefault(true)
                                     .withRelations(owlNamedIndividual);
                         }
@@ -368,13 +481,13 @@ public class TemporalParser {
                                     .from(from)
                                     .to(to)
                                     .isDefault(true)
-                                    .withStartTimeZone(annotation.timeZone())
+                                    .withFromTimeZone(annotation.timeZone())
                                     .withRelations(owlNamedIndividual);
                         } else {
                             temporalObject = TemporalObjectBuilder.exists()
                                     .from(from)
                                     .isDefault(true)
-                                    .withStartTimeZone(annotation.timeZone())
+                                    .withFromTimeZone(annotation.timeZone())
                                     .withRelations(owlNamedIndividual);
                         }
                         break;
@@ -451,18 +564,18 @@ public class TemporalParser {
 //        final LocalDateTime from = parseTemporalToOntologyDateTime(start);
 
         if (scope == TemporalScope.VALID) {
-            final IntervalTemporal.Builder validBuilder = TemporalObjectBuilder.valid().from(start).withStartTimeZone(startZoneID);
+            final IntervalTemporal.Builder validBuilder = TemporalObjectBuilder.valid().from(start).withFromTimeZone(startZoneID);
             if (end != null && endZoneID != null) {
 //                final LocalDateTime to = parseTemporalToOntologyDateTime(end);
-                return validBuilder.to(end).withEndTimeZone(endZoneID).withRelations(relations);
+                return validBuilder.to(end).withToTimeZone(endZoneID).withRelations(relations);
             }
 
             return validBuilder.withRelations(relations);
         } else {
-            final IntervalTemporal.Builder existsBuilder = TemporalObjectBuilder.exists().from(start).withStartTimeZone(startZoneID);
+            final IntervalTemporal.Builder existsBuilder = TemporalObjectBuilder.exists().from(start).withFromTimeZone(startZoneID);
             if (end != null && endZoneID != null) {
 //                final LocalDateTime to = parseTemporalToOntologyDateTime(end);
-                return existsBuilder.to(end).withEndTimeZone(endZoneID).withRelations(relations);
+                return existsBuilder.to(end).withToTimeZone(endZoneID).withRelations(relations);
             }
 
             return existsBuilder.withRelations(relations);
@@ -506,12 +619,29 @@ public class TemporalParser {
         }
     }
 
+    /**
+     * Parse an OWL Literal to a given Java temporal
+     * @param literal - OWL Literal to parse
+     * @param destinationType - Java destination temporal type
+     * @return - Java temporal
+     */
     public static Temporal parseToTemporal(OWLLiteral literal, Class<? extends Temporal> destinationType) {
+        return parseToTemporal(literal, destinationType, ZoneOffset.UTC);
+    }
+
+    /**
+     * Parse an OWL Literal to a given Java temporal
+     * @param literal - OWL Literal to parse
+     * @param destinationType - Java destination temporal type
+     * @param timeZone - Zone ID to adjust temporal to
+     * @return - Java temporal (adjusted to the given timezone
+     */
+    public static Temporal parseToTemporal(OWLLiteral literal, Class<? extends Temporal> destinationType, ZoneId timeZone) {
         final Temporal parsedTemporal;
         final OWLDatatype datatype = literal.getDatatype();
         if (datatype.getIRI().equals(dateTimeDatatypeIRI)) {
             if (destinationType.getTypeName().contains("java.time")) {
-                final Optional<Temporal> optionalJavaTemporal = parseDateTimeToJavaTemporal(destinationType.getTypeName(), literal);
+                final Optional<Temporal> optionalJavaTemporal = parseDateTimeToJavaTemporal(destinationType.getTypeName(), literal, timeZone);
                 parsedTemporal = optionalJavaTemporal.orElseThrow(() -> new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype(), destinationType.getTypeName())));
             } else if (destinationType.getTypeName().contains("org.joda.time")) {
                 Optional<Temporal> optionalJodaTemporal = parseDateTimeToJodaTemporal(destinationType.getTypeName(), literal);
@@ -520,15 +650,15 @@ public class TemporalParser {
                 logger.error("Unsupported parsing of temporal {} to {}", literal.getDatatype(), destinationType.getTypeName());
                 throw new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype(), destinationType.getTypeName()));
             }
-        } else if (datatype.getIRI().equals(dateDatatypeIRI)) {
-            logger.warn("Received xsd:date, should only have xsd:dateTime");
-            if (destinationType.getTypeName().contains("java.time")) {
-                final Optional<Temporal> optionalJavaTemporal = parseDateToJavaTemporal(destinationType.getTypeName(), literal);
-                parsedTemporal = optionalJavaTemporal.orElseThrow(() -> new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype(), destinationType.getTypeName())));
-            } else {
-                logger.error("Unsupported parsing of temporal {} to {}", literal.getDatatype(), destinationType.getTypeName());
-                throw new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype(), destinationType.getTypeName()));
-            }
+//        } else if (datatype.getIRI().equals(dateDatatypeIRI)) {
+//            logger.warn("Received xsd:date, should only have xsd:dateTime");
+//            if (destinationType.getTypeName().contains("java.time")) {
+//                final Optional<Temporal> optionalJavaTemporal = parseDateToJavaTemporal(destinationType.getTypeName(), literal);
+//                parsedTemporal = optionalJavaTemporal.orElseThrow(() -> new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype(), destinationType.getTypeName())));
+//            } else {
+//                logger.error("Unsupported parsing of temporal {} to {}", literal.getDatatype(), destinationType.getTypeName());
+//                throw new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype(), destinationType.getTypeName()));
+//            }
         } else {
             logger.error("Unsupported parsing of XSD type {}", datatype);
             throw new RuntimeException(String.format("Unsupported parsing of XSD type %s", datatype));

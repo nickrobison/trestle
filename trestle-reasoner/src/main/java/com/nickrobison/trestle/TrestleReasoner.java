@@ -551,7 +551,6 @@ public class TrestleReasoner {
         }
 
 //            Get the temporal objects to figure out the correct return type
-        final Optional<List<TemporalObject>> temporalObjectTypes = TemporalParser.GetTemporalObjects(clazz);
         final Class<? extends Temporal> baseTemporalType = TemporalParser.GetTemporalType(clazz);
 
         final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(false);
@@ -583,7 +582,7 @@ public class TrestleReasoner {
                 ontology.returnAndCommitTransaction(tt);
                 return properties;
             })
-                    .thenApply(temporalProperties -> TemporalObjectBuilder.buildTemporalFromProperties(temporalProperties, TemporalParser.IsDefault(clazz), baseTemporalType));
+                    .thenApply(temporalProperties -> TemporalObjectBuilder.buildTemporalFromProperties(temporalProperties, baseTemporalType, clazz));
 
 
             final CompletableFuture<ConstructorArguments> argumentsFuture = factsFuture.thenCombine(temporalFuture, (facts, temporals) -> {
@@ -958,7 +957,7 @@ public class TrestleReasoner {
         final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(individual, hasTemporalIRI);
         final OWLObjectPropertyAssertionAxiom temporalProperty = individualObjectProperty.get().stream().findFirst().orElseThrow(() -> new TrestleMissingAttributeException(individual, hasTemporalIRI));
         final Set<OWLDataPropertyAssertionAxiom> temporalDataProperties = ontology.getAllDataPropertiesForIndividual(temporalProperty.getObject().asOWLNamedIndividual());
-        final Optional<TemporalObject> temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(temporalDataProperties, false, null);
+        final Optional<TemporalObject> temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(temporalDataProperties, null);
         final TrestleIndividual trestleIndividual = new TrestleIndividual(individual.toStringID(), temporalObject.orElseThrow(() -> new TrestleMissingAttributeException(individual, hasTemporalIRI)));
 
 //                Get all the attributes
@@ -993,13 +992,13 @@ public class TrestleReasoner {
         final Optional<Set<OWLObjectPropertyAssertionAxiom>> temporalProperties = ontology.getIndividualObjectProperty(attribute, validTimeIRI);
         final Optional<OWLObjectPropertyAssertionAxiom> temporalProperty = temporalProperties.orElseThrow(() -> new TrestleMissingAttributeException(attribute, hasTemporalIRI)).stream().findFirst();
         final Set<OWLDataPropertyAssertionAxiom> temporalDataProperties = ontology.getAllDataPropertiesForIndividual(temporalProperty.orElseThrow(() -> new TrestleMissingAttributeException(attribute, hasTemporalIRI)).getObject().asOWLNamedIndividual());
-        final Optional<TemporalObject> validTemporal = TemporalObjectBuilder.buildTemporalFromProperties(temporalDataProperties, false, null);
+        final Optional<TemporalObject> validTemporal = TemporalObjectBuilder.buildTemporalFromProperties(temporalDataProperties, null);
 
 //        Database time
         final Optional<Set<OWLObjectPropertyAssertionAxiom>> databaseTimeProperties = ontology.getIndividualObjectProperty(attribute, databaseTimeIRI);
         final Optional<OWLObjectPropertyAssertionAxiom> databaseTimeProperty = databaseTimeProperties.orElseThrow(() -> new TrestleMissingAttributeException(attribute, hasTemporalIRI)).stream().findFirst();
         final Set<OWLDataPropertyAssertionAxiom> databaseTemporalDataProperties = ontology.getAllDataPropertiesForIndividual(databaseTimeProperty.orElseThrow(() -> new TrestleMissingAttributeException(attribute, hasTemporalIRI)).getObject().asOWLNamedIndividual());
-        final Optional<TemporalObject> databaseTemporal = TemporalObjectBuilder.buildTemporalFromProperties(databaseTemporalDataProperties, false, null);
+        final Optional<TemporalObject> databaseTemporal = TemporalObjectBuilder.buildTemporalFromProperties(databaseTemporalDataProperties, null);
 
         return new TrestleAttribute<>(attribute.getIRI().toString(),
                 attributeAssertion.getProperty().asOWLDataProperty().getIRI().getShortForm(),
