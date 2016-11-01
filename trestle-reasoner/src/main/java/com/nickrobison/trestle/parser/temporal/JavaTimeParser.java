@@ -30,14 +30,12 @@ public class JavaTimeParser {
         switch (destinationTypeName) {
             case "java.time.LocalDateTime": {
                 return Optional.of(OffsetDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME).atZoneSameInstant(zoneId).toLocalDateTime());
-//                return Optional.of(LocalDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME).atZone(zoneId));
             }
             case "java.time.LocalDate": {
                 return Optional.of(OffsetDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME).atZoneSameInstant(zoneId).toLocalDateTime().toLocalDate());
-//                return Optional.of(LocalDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME).atZone(zoneId).toLocalDate());
             }
             case "java.time.OffsetDateTime": {
-                return Optional.of(OffsetDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME).atZoneSameInstant(zoneId));
+                return Optional.of(OffsetDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME));
             }
             default: {
                 logger.error("Unsupported parsing of temporal {} to {}", literal.getDatatype(), destinationTypeName);
