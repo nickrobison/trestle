@@ -5,12 +5,17 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.nickrobison</groupId>
-    <artifactId>spatial-difference</artifactId>
-    <version>0.3</version>
+    <artifactId>trestle</artifactId>
+    <version>0.4-SNAPSHOT</version>
     <modules>
-        <module>trestle</module>
-        <module>gaulintegrator</module>
+        <module>trestle-reasoner</module>
+        <module>trestle-integrations</module>
         <module>trestle-exporter</module>
+        <module>trestle-raster</module>
+        <module>trestle-common</module>
+        <module>trestle-ontology</module>
+        <module>trestle-querybuilder</module>
+        <module>trestle-actor</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -18,9 +23,13 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <storm.version>1.0.0</storm.version>
         <provided.scope>provided</provided.scope>
-        <jmh.version>1.12</jmh.version>
+        <owl.version>5.0.4</owl.version>
+        <jena.version>3.1.0</jena.version>
+        <slf4j.version>1.7.21</slf4j.version>
+        <jmh.version>1.15</jmh.version>
         <junit.jupiter.version>5.0.0-M2</junit.jupiter.version>
-        <geotools.version>16-M0</geotools.version>
+        <geotools.version>16.0</geotools.version>
+        <maven.shade.version>2.4.3</maven.shade.version>
         <!--Checker properties-->
         <checker.version>2.0.1</checker.version>
         <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
@@ -59,6 +68,11 @@
                 </exclusions>
             </dependency>
             <dependency>
+                <groupId>com.vividsolutions</groupId>
+                <artifactId>jts</artifactId>
+                <version>1.13</version>
+            </dependency>
+            <dependency>
                 <groupId>com.esri.geometry</groupId>
                 <artifactId>esri-geometry-api</artifactId>
                 <version>1.2.1</version>
@@ -91,19 +105,114 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>1.7.21</version>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-simple</artifactId>
+                <version>${slf4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
-                <version>1.7.12</version>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <!--OWL Dependencies-->
+            <dependency>
+                <groupId>net.sourceforge.owlapi</groupId>
+                <artifactId>owlapi-api</artifactId>
+                <version>${owl.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.sourceforge.owlapi</groupId>
+                <artifactId>owlapi-apibinding</artifactId>
+                <version>${owl.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.sourceforge.owlapi</groupId>
+                <artifactId>owlapi-parsers</artifactId>
+                <version>${owl.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.jena</groupId>
+                <artifactId>jena-core</artifactId>
+                <version>${jena.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.jena</groupId>
+                <artifactId>jena-arq</artifactId>
+                <version>${jena.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.jena</groupId>
+                <artifactId>jena-tdb</artifactId>
+                <version>${jena.version}</version>
+                <optional>true</optional>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.jena</groupId>
+                <artifactId>jena-spatial</artifactId>
+                <version>${jena.version}</version>
+                <optional>true</optional>
+            </dependency>
+            <!--Oracle Dependencies-->
+            <dependency>
+                <groupId>com.oracle</groupId>
+                <artifactId>ojdbc7</artifactId>
+                <version>12.1.0.2</version>
+            </dependency>
+            <dependency>
+                <groupId>oracle.spatial.rdf.client</groupId>
+                <artifactId>sdordf</artifactId>
+                <version>1.1</version>
+            </dependency>
+            <dependency>
+                <groupId>oracle.spatial.rdf.client</groupId>
+                <artifactId>sdordfclient</artifactId>
+                <version>3.10</version>
+            </dependency>
+            <dependency>
+                <groupId>oracle.spatial.geometry</groupId>
+                <artifactId>api</artifactId>
+                <version>1.0</version>
+                <type>jar</type>
+            </dependency>
+            <dependency>
+                <groupId>oracle.spatial.geometry</groupId>
+                <artifactId>type</artifactId>
+                <version>1.0</version>
+                <type>jar</type>
+            </dependency>
+            <dependency>
+                <groupId>oracle.spatial.geometry</groupId>
+                <artifactId>util</artifactId>
+                <version>1.0</version>
+                <type>jar</type>
+            </dependency>
+            <dependency>
+                <groupId>oracle.spatial.geometry</groupId>
+                <artifactId>topo</artifactId>
+                <version>1.0</version>
+            </dependency>
+            <dependency>
+                <groupId>oracle.spatial.geometry</groupId>
+                <artifactId>georaster</artifactId>
+                <version>1.0</version>
+                <type>jar</type>
+            </dependency>
+            <dependency>
+                <groupId>com.oracle</groupId>
+                <artifactId>xdb</artifactId>
+                <version>1.0</version>
+                <type>jar</type>
+            </dependency>
+            <dependency>
+                <groupId>com.oracle</groupId>
+                <artifactId>xmlparserv2</artifactId>
+                <version>1.0</version>
+                <type>jar</type>
             </dependency>
             <!--Testing dependencies-->
-            <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>4.12</version>
-            </dependency>
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-minicluster</artifactId>
@@ -168,16 +277,57 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+    <dependencies>
+        <!--Checker dependencies-->
+        <dependency>
+            <groupId>org.checkerframework</groupId>
+            <artifactId>checker</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.checkerframework</groupId>
+            <artifactId>checker-qual</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.checkerframework</groupId>
+            <artifactId>jdk8</artifactId>
+        </dependency>
+        <!--Testing/logging dependencies-->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <scope>${provided.scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
     <repositories>
+        <repository>
+            <id>resource</id>
+            <name>Resource Repository</name>
+            <url>file://${user.dir}/src/main/resources/repo</url>
+        </repository>
         <repository>
             <id>central</id>
             <name>maven</name>
             <url>http://repo1.maven.org/maven2/</url>
-        </repository>
-        <repository>
-            <id>resource</id>
-            <name>Resource Repository</name>
-            <url>file://${project.basedir}/src/main/resources/repo</url>
         </repository>
         <repository>
             <id>maven2-repository.dev.java.net</id>
@@ -196,6 +346,11 @@
         <repository>
             <id>cloudera</id>
             <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+        </repository>
+        <!-- Repository for oracle ojdbc7 -->
+        <repository>
+            <id>codelds</id>
+            <url>https://code.lds.org/nexus/content/groups/main-repo</url>
         </repository>
     </repositories>
     <profiles>
@@ -265,28 +420,28 @@
             </resource>
         </resources>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.6</version>
-                <configuration>
-                    <descriptor>src/main/assembly/job.xml</descriptor>
-                    <archive>
-                        <manifest>
-                            <mainClass>com.nickrobison.gaulintegrator.IntegrationRunner</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-assembly-plugin</artifactId>-->
+                <!--<version>2.6</version>-->
+                <!--<configuration>-->
+                    <!--<descriptor>src/main/assembly/job.xml</descriptor>-->
+                    <!--<archive>-->
+                        <!--<manifest>-->
+                            <!--<mainClass>com.nickrobison.gaulintegrator.IntegrationRunner</mainClass>-->
+                        <!--</manifest>-->
+                    <!--</archive>-->
+                <!--</configuration>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<id>make-assembly</id>-->
+                        <!--<phase>package</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>single</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -348,6 +503,28 @@
                         <goals>
                             <goal>jar</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <inherited>true</inherited>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>1.4.1</version>
+                <executions>
+                    <execution>
+                        <id>enforce-maven-3</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>3.0.5</version>
+                                </requireMavenVersion>
+                            </rules>
+                            <fail>true</fail>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

@@ -16,13 +16,15 @@ tmp
 .history
 dist
 /.idea
-/*.iml
+*.iml
+**/*.iml
 /out
 /.idea_modules
 /.classpath
 /.project
 /RUNNING_PID
 /.settings
+**/dependency-reduced-pom.xml
 
 # Java Ignore
 *.class
