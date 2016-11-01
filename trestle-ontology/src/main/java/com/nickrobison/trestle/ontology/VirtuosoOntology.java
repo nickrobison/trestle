@@ -60,9 +60,6 @@ public class VirtuosoOntology extends JenaOntology {
             logger.warn("Unable to remove ruleset {}", TRESTLE_RULES, e);
         }
 
-//        Create a new ruleset
-        virtModel.createRuleSet(TRESTLE_RULES, this.ontologyName);
-
         logger.info("Writing new ontology");
 
         try {
@@ -72,6 +69,12 @@ public class VirtuosoOntology extends JenaOntology {
             throw new RuntimeException("Cannot read ontology", e);
         }
         logger.debug("Finished writing ontology");
+
+//        Create a new ruleset
+//        We have to do this after we load the ontology for disk, otherwise it won't know to create the inferencing rules.
+        virtModel.createRuleSet(TRESTLE_RULES, this.ontologyName);
+        virtModel.setRuleSet(TRESTLE_RULES);
+        logger.info("Creating ruleset {} for ontology {}", TRESTLE_RULES, this.ontologyName);
     }
 
     @Override

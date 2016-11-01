@@ -95,7 +95,7 @@ public class ClassBuilder {
         final Class<?>[] sortedTypes = arguments.getSortedTypes(parameterNames);
         final Object[] sortedValues = arguments.getSortedValues(parameterNames);
         if ((sortedTypes.length != parameterNames.size()) | (sortedValues.length != parameterNames.size())) {
-            logger.error("Constructor has parameters {}, but we have {}", parameterNames, arguments.getNames());
+            logger.error("Constructor for class {} has parameters {}, but we have {}", clazz.getSimpleName(), parameterNames, arguments.getNames());
 
             final List<? extends Class<?>> types = Arrays.stream(parameters)
                     .map(Parameter::getType)
