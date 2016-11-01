@@ -976,6 +976,7 @@ public class TrestleReasoner {
 
     /**
      * Build a TrestleAttribute from a given OWLIndividual
+     * Retrieves all the asserted properties and types of a given Individual, in their native forms.
      *
      * @param attribute - OWLNamedIndividual to construct attribute from
      * @return - TrestleAttribute
