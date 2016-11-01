@@ -20,9 +20,11 @@ import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
 
@@ -50,6 +52,7 @@ public class QueryBuilder {
     }
 
     private static final Logger logger = LoggerFactory.getLogger(QueryBuilder.class);
+    private final DIALECT dialect;
     private final String prefixes;
     private final DefaultPrefixManager pm;
     private final String baseURI;
@@ -57,7 +60,8 @@ public class QueryBuilder {
     private static final WKTReader reader = new WKTReader();
     private static final WKTWriter writer = new WKTWriter();
 
-    public QueryBuilder(DefaultPrefixManager pm) {
+    public QueryBuilder(DIALECT dialect, DefaultPrefixManager pm) {
+        this.dialect = dialect;
         trimmedPrefixMap = new HashMap<>();
         StringBuilder builder = new StringBuilder();
         final Set<Map.Entry<String, String>> entries = pm.getPrefixName2PrefixMap().entrySet();
@@ -86,19 +90,43 @@ public class QueryBuilder {
         this.pm = pm;
     }
 
+    public String buildDatasetQuery() {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText("SELECT ?dataset" +
+                " WHERE { ?dataset rdfs:subClassOf :Dataset }");
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
     public String buildRelationQuery(OWLNamedIndividual individual, @Nullable OWLClass datasetClass, double relationshipStrength) {
         final ParameterizedSparqlString ps = buildBaseString();
 //        Jena won't expand URIs in the FILTER operator, so we need to give it the fully expanded value.
 //        But we can't do it through the normal routes, because then it'll insert superfluous '"' values. Because, of course.
-        ps.setCommandText(String.format("SELECT ?f ?s" +
-                " WHERE" +
-                " { ?m rdf:type ?t . " +
-                "?m :has_relation ?r . " +
-                "?r rdf:type :Concept_Relation . " +
-                "?r :Relation_Strength ?s . " +
-                "?r :has_relation ?f . " +
-                "?f rdf:type ?t " +
-                "FILTER(?m = %s && ?s >= ?st)}", String.format("<%s>", getFullIRIString(individual))));
+//        Virtuoso needs to limit the transitive depth, Oracle doesn't not, and fails
+        if (dialect == DIALECT.VIRTUOSO) {
+            ps.setCommandText(String.format("SELECT ?f ?s" +
+                    " WHERE" +
+                    " { ?m rdf:type ?t . " +
+                    "?m :has_relation{,?depth} ?r . " +
+                    "?r rdf:type :Concept_Relation . " +
+                    "?r :Relation_Strength ?s . " +
+                    "?r :relation_of{,?depth} ?f . " +
+                    "?f rdf:type ?t ." +
+                    " VALUES ?m {%s}" +
+                    "FILTER(?s >= ?st)}", String.format("<%s>", getFullIRIString(individual))));
+            ps.setLiteral("depth", 1);
+        } else {
+            ps.setCommandText(String.format("SELECT ?f ?s" +
+                    " WHERE" +
+                    " { ?m rdf:type ?t . " +
+                    "?m :has_relation ?r . " +
+                    "?r rdf:type :Concept_Relation . " +
+                    "?r :Relation_Strength ?s . " +
+                    "?r :relation_of ?f . " +
+                    "?f rdf:type ?t ." +
+                    " VALUES ?m {%s}" +
+                    "FILTER(?s >= ?st)}", String.format("<%s>", getFullIRIString(individual))));
+        }
 //        Replace the variables
         if (datasetClass != null) {
             ps.setIri("t", getFullIRIString(datasetClass));
@@ -107,28 +135,35 @@ public class QueryBuilder {
         }
         ps.setLiteral("st", relationshipStrength);
 
-//        return ps.toString().replace("<", "").replace(">", "");
         logger.debug(ps.toString());
         return ps.toString();
     }
 
-    public String buildObjectPropertyRetrievalQuery(OWLNamedIndividual individual, @Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal) {
+    public String buildObjectPropertyRetrievalQuery(@Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal, OWLNamedIndividual... individual) {
         final ParameterizedSparqlString ps = buildBaseString();
+
+        final String individualValues = Arrays.stream(individual)
+                .map(this::getFullIRIString)
+                .map(ind -> String.format("<%s>", ind))
+                .collect(Collectors.joining(" "));
 
 //        Jena won't expand URIs in the FILTER operator, so we need to give it the fully expanded value.
 //        But we can't do it through the normal routes, because then it'll insert superfluous '"' values. Because, of course.
 //        If the start temporal is null, pull the currently valid property
-        ps.setCommandText(String.format("SELECT DISTINCT ?f" +
+//        FIXME(nrobison): The union is a horrible hack to get things working for the time being. We need to fix it.
+        ps.setCommandText(String.format("SELECT DISTINCT ?individual ?fact ?property ?object" +
                 " WHERE" +
-                " { ?m :has_fact ?f ." +
-                "?f :database_time ?d ." +
-                "?d :valid_from ?tStart ." +
-                "OPTIONAL{ ?d :valid_to ?tEnd} . "));
-        if (startTemporal == null) {
-            ps.append(String.format("FILTER(?m = %s && !bound(?tEnd))}", String.format("<%s>", getFullIRIString(individual))));
-//            Otherwise, we'll find the correct property that satisfies the temporal interval
-        } else {
-            ps.append(String.format("FILTER(?m = %s && (?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime))}", String.format("<%s>", getFullIRIString(individual))));
+                " { ?individual :has_fact ?fact ." +
+                "?fact :database_time ?d ." +
+                "{ ?d :valid_from ?tStart} UNION {?d :exists_from ?tStart} ." +
+                "OPTIONAL{{ ?d :valid_to ?tEnd} UNION {?d :exists_to ?tEnd}} ." +
+                "?fact ?property ?object ." +
+                "VALUES ?individual { %s } ." +
+//                Oracle doesn't support isLiteral() on CLOB types, so we have to do this gross inverse filter.
+                "FILTER(!isURI(?object) && !isBlank(?object)) ." +
+                "FILTER(!bound(?tEnd)) .", individualValues));
+        if (startTemporal != null) {
+            ps.append("FILTER(?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime)");
             ps.setLiteral("startVariable", startTemporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
             if (endTemporal != null) {
                 ps.setLiteral("endVariable", endTemporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
@@ -136,18 +171,40 @@ public class QueryBuilder {
                 ps.setLiteral("endVariable", startTemporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
             }
         }
+        ps.append("}");
         logger.debug(ps.toString());
         return ps.toString();
     }
 
-    public String buildSpatialIntersection(DIALECT dialect, OWLClass datasetClass, String wktValue, double buffer, UNITS unit) throws UnsupportedFeatureException {
+    public String buildIndividualTemporalQuery(OWLNamedIndividual... individual) {
+        final ParameterizedSparqlString ps = buildBaseString();
+
+        final String individualValues = Arrays.stream(individual)
+                .map(this::getFullIRIString)
+                .map(ind -> String.format("<%s>", ind))
+                .collect(Collectors.joining(" "));
+
+        ps.setCommandText(String.format("SELECT DISTINCT ?individual ?temporal ?property ?object" +
+                " WHERE" +
+                " { ?individual :has_temporal ?temporal ." +
+                " OPTIONAL{{?temporal :valid_at ?tAt} UNION {?temporal :exists_at ?tAt}} ." +
+                " OPTIONAL{{?temporal :valid_from ?tStart} UNION {?temporal :exists_from ?tStart}} ." +
+                " OPTIONAL{{?temporal :valid_to ?tEnd} UNION {?temporal :exists_to ?tEnd}} ." +
+                " ?temporal ?property ?object" +
+                " VALUES ?individual { %s } ." +
+                " FILTER(!isURI(?object) && !isBlank(?object)) .}", individualValues));
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
+    public String buildSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, UNITS unit) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m" +
                 " WHERE { " +
                 "?m rdf:type ?type ." +
                 "?m :has_fact ?f ." +
                 "?f ogc:asWKT ?wkt ");
-        switch (dialect) {
+        switch (this.dialect) {
             case ORACLE: {
 //                We need to remove this, otherwise Oracle substitutes geosparql for ogc
                 ps.removeNsPrefix("geosparql");
@@ -175,16 +232,17 @@ public class QueryBuilder {
         return ps.toString();
     }
 
-    public String buildTemporalSpatialIntersection(DIALECT dialect, OWLClass datasetClass, String wktValue, double buffer, UNITS unit, OffsetDateTime atTime) throws UnsupportedFeatureException {
+    public String buildTemporalSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, UNITS unit, OffsetDateTime atTime) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m ?tStart ?tEnd" +
                 " WHERE { " +
+                "?m rdf:type ?type ." +
                 "?m :has_fact ?f ." +
                 "?f ogc:asWKT ?wkt ." +
                 "?m :has_temporal ?t ." +
                 "{ ?t :valid_from ?tStart} UNION {?t :exists_from ?tStart} ." +
                 "OPTIONAL{{ ?t :valid_to ?tEnd} UNION {?t :exists_to ?tEnd}} .");
-        switch (dialect) {
+        switch (this.dialect) {
             case ORACLE: {
 //                We need to remove this, otherwise Oracle substitutes geosparql for ogc
                 ps.removeNsPrefix("geosparql");
@@ -213,13 +271,47 @@ public class QueryBuilder {
         return ps.toString();
     }
 
+    /**
+     * Return individuals with IRIs that match the given search string
+     * @param individual - String to search for matching individual
+     * @param owlClass - Optional OWLClass to limit search results
+     * @param limit - Optional limit of query results
+     * @return - SPARQL Query string
+     */
+    public String buildIndividualSearchQuery(String individual, @Nullable OWLClass owlClass, @Nullable Integer limit) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText("SELECT DISTINCT ?m" +
+                " WHERE {" +
+                "?m rdf:type ?type ." +
+                "FILTER (contains(lcase(str(?m)), ?string))} LIMIT ?limit");
+
+        if (owlClass == null) {
+//            We need to get the fully expanded Prefix, otherwise Jena won't expanded it properly and give us an <> IRI, which will fail.
+            ps.setIri("type", IRI.create(PREFIX, "Dataset").toString());
+        } else {
+            ps.setIri("type", getFullIRIString(owlClass));
+        }
+        ps.setLiteral("string", individual);
+
+//        Set the limit
+        if (limit == null) {
+            ps.setLiteral("limit", 10);
+        } else {
+            ps.setLiteral("limit", limit);
+        }
+
+
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
     private ParameterizedSparqlString buildBaseString() {
         final ParameterizedSparqlString ps = new ParameterizedSparqlString();
         ps.setBaseUri(baseURI);
         ps.setNsPrefixes(this.trimmedPrefixMap);
         return ps;
     }
-
+// TODO(nrobison): Move this to trestle-common
     private IRI getFullIRI(IRI iri) {
         //        Check to see if it's already been expanded
         if (pm.getPrefix(iri.getScheme() + ":") == null) {

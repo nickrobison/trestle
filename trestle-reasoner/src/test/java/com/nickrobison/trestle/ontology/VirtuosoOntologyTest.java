@@ -44,18 +44,6 @@ public class VirtuosoOntologyTest {
     public void simpleTest() {
 //        ontology.initializeOntology();
 
-        String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
-                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> " +
-                "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#> " +
-                "SELECT * WHERE {?m rdf:type ?type . ?type rdfs:subClassOf ?class}";
-//        String queryString = " SELECT ?subject ?prop ?object WHERE { ?subject ?prop ?object } ";
-
-//        final ResultSet resultSet = ontology.executeSPARQL(queryString);
-//        assertEquals(29, resultSet.getRowNumber(), "Wrong number of classes");
-
-//        final long tripleCount = ontology.getTripleCount();
-//        assertEquals(381, tripleCount, "Inference is wrong");
-
         final OWLNamedIndividual burundi_0 = df.getOWLNamedIndividual(IRI.create("trestle:", "Burundi_0"));
         final OWLDataProperty property = df.getOWLDataProperty(IRI.create("trestle:", "ADM0_Code"));
 
@@ -153,14 +141,14 @@ public class VirtuosoOntologyTest {
         assertEquals(1, muniProperties.size(), "Wrong number of properties");
 
         final Set<OWLObjectPropertyAssertionAxiom> allObjectPropertiesForIndividual = ontology.getAllObjectPropertiesForIndividual(muni1_muni2);
-        assertEquals(15, allObjectPropertiesForIndividual.size(), "Wrong number of object properties");
+        assertEquals(3, allObjectPropertiesForIndividual.size(), "Wrong number of object properties");
 
 //        Check to ensure the relation is transitive and inferred
         final OWLNamedIndividual test_muni4 = df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni4"));
         final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(relationOfIRI);
         final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(test_muni4, owlObjectProperty);
         assertTrue(individualObjectProperty.isPresent(), "Should have related_to properties");
-        assertEquals(7, individualObjectProperty.get().size(), "Wrong number of related to properties");
+        assertEquals(1, individualObjectProperty.get().size(), "Wrong number of related to properties");
 
         //        Now for the sparql query
 //        TODO(nrobison): Haven't figured out how to do both sparql querying and inferencing at the same time.

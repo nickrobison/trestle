@@ -3,9 +3,11 @@ package com.nickrobison.trestle.ontology;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import org.apache.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -298,6 +300,23 @@ public interface ITrestleOntology {
     Optional<Set<OWLLiteral>> getIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property);
 
     /**
+     * Get all the related facts for an individual, valid at a specific point in database time
+     * If no temporals are specified, we retrieve the currently valid facts
+     * @param individual - OWLNamedIndividual to get facts for
+     * @param startTemporal - Nullable OffsetDateTime representing starting temporal
+     * @param endTemporal - Nullable OffsetDateTime representing ending temporal
+     * @return
+     */
+    Set<OWLDataPropertyAssertionAxiom> GetFactsForIndividual(OWLNamedIndividual individual, @Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal);
+
+    /**
+     * Get data properties for temporal from given individuals
+     * @param individual - Individual to retrieve temporal properties from
+     * @return - Set of OWLDataPropertyAssertionAxioms representing temporal properties
+     */
+    Set<OWLDataPropertyAssertionAxiom> GetTemporalsForIndividual(OWLNamedIndividual individual);
+
+    /**
      * Get the full IRI expanded from the DefaultPrefixManager
      *
      * @param iri - Abbreviated IRI
@@ -350,9 +369,16 @@ public interface ITrestleOntology {
      *
      * @param transactionObject - Transaction Object to take ownership of thread transaction
      * @param write - Writable transaction?
-     * @return - Transaction Object pass in as argument
+     * @return - Transaction Object passed in as argument
      */
     TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject, boolean write);
+
+    /**
+     * Takes an existing transaction object and inherits from it
+     * @param transactionObject - Existing TrestleTransactionObject
+     * @return - Transaction Object passed in as argument
+     */
+    TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject);
 
     TrestleTransaction createandOpenNewTransaction(boolean write);
 

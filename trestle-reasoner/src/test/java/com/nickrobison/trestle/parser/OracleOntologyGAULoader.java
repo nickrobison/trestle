@@ -11,6 +11,7 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSetFormatter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
@@ -32,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Created by nrobison on 7/1/16.
  */
 @SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "Duplicates"})
+@Disabled
 public class OracleOntologyGAULoader {
 
     private List<TestClasses.GAULTestClass> gaulObjects = new ArrayList<>();
@@ -152,9 +154,9 @@ public class OracleOntologyGAULoader {
 
 //        SPARQL Query of spatial intersections.
         final OWLClass gaul_test = df.getOWLClass(IRI.create("trestle:", "GAUL_Test"));
-        QueryBuilder qb = new QueryBuilder(ontology.getUnderlyingPrefixManager());
+        QueryBuilder qb = new QueryBuilder(QueryBuilder.DIALECT.ORACLE, ontology.getUnderlyingPrefixManager());
 //        queryString = qb.buildOracleIntersection(gaul_test, "Point(39.5398864750001 -12.0671005249999)");
-        queryString = qb.buildSpatialIntersection(QueryBuilder.DIALECT.ORACLE, gaul_test, "Point(39.5398864750001 -12.0671005249999)", 0.0, QueryBuilder.UNITS.METER);
+        queryString = qb.buildSpatialIntersection(gaul_test, "Point(39.5398864750001 -12.0671005249999)", 0.0, QueryBuilder.UNITS.METER);
 
         resultSet = ResultSetFormatter.toList(ontology.executeSPARQL(queryString));
         assertEquals(2, resultSet.size(), "Wrong number of intersected results");

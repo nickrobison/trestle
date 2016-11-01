@@ -23,6 +23,7 @@ public class JodaTimeParser {
      * @param literal - OWLLiteral of type xsd:dateTime
      * @return - Optional Joda Time Temporal
      */
+//    TODO(nrobison): Should support time zones
     public static Optional<Temporal> parseDateTimeToJodaTemporal(String destinationTypeName, OWLLiteral literal) {
         switch (destinationTypeName) {
             case "org.joda.time.LocalDateTime": {

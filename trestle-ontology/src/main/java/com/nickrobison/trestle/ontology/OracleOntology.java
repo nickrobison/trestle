@@ -1,13 +1,16 @@
 package com.nickrobison.trestle.ontology;
 
+import oracle.spatial.rdf.client.jena.*;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
-import oracle.spatial.rdf.client.jena.*;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.shared.Lock;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.OWLLiteral;
+import org.semanticweb.owlapi.model.OWLObject;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,14 +30,6 @@ public class OracleOntology extends JenaOntology {
     private static GraphOracleSem graph;
     private static Oracle oracle;
     private boolean locked = false;
-    //    private final String ontologyName;
-//    private final OWLOntology ontology;
-////    private final PelletReasoner reasoner;
-//    private final DefaultPrefixManager pm;
-//    private final Oracle oracle;
-//    private final OWLDataFactory df;
-//    private final Model model;
-//    private final GraphOracleSem graph;
 
     OracleOntology(String name, OWLOntology ont, DefaultPrefixManager pm, String connectionString, String username, String password) {
         super(name, createOracleModel(name, connectionString, username, password), ont, pm);
@@ -44,7 +39,7 @@ public class OracleOntology extends JenaOntology {
         final Attachment owlprime = Attachment.createInstance(
                 new String[]{}, "OWLPRIME",
                 InferenceMaintenanceMode.NO_UPDATE, QueryOptions.DEFAULT);
-        owlprime.setInferenceOption("INC=T,RAW8=T,DOP=2");
+        owlprime.setInferenceOption("INC=T,RAW8=T");
         oracle = new Oracle(connectionString, username, password);
         try {
 //            We need this so that it actually creates the model if it doesn't exist
@@ -116,7 +111,6 @@ public class OracleOntology extends JenaOntology {
         } catch (SQLException e) {
             logger.error("Cannot run inference on Oracle ontology", e);
         }
-//        graph.rebuildApplicationTableIndex();
     }
 
     @Override

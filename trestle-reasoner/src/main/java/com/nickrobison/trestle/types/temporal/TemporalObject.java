@@ -5,6 +5,8 @@ import com.nickrobison.trestle.types.TemporalType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
@@ -70,4 +72,23 @@ public abstract class TemporalObject {
      * @return - Temporal subclass of object
      */
     public abstract Class<? extends Temporal> getBaseTemporalType();
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TemporalObject that = (TemporalObject) o;
+
+        if (!id.equals(that.id)) return false;
+        return temporal_of.equals(that.temporal_of);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id.hashCode();
+        result = 31 * result + temporal_of.hashCode();
+        return result;
+    }
 }

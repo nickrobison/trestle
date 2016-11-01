@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.Optional;
@@ -22,15 +23,16 @@ public class JavaTimeParser {
      * Parse OWL xsd:dateTime to Java Temporal
      * @param destinationTypeName - Java type to parse to
      * @param literal - OWLLiteral of type xsd:dateTime
+     * @param zoneId - Time zone to adjust LocalDate and LocalDateTimeTo
      * @return - Optional Java Temporal
      */
-    public static Optional<Temporal> parseDateTimeToJavaTemporal(String destinationTypeName, OWLLiteral literal) {
+    public static Optional<Temporal> parseDateTimeToJavaTemporal(String destinationTypeName, OWLLiteral literal, ZoneId zoneId) {
         switch (destinationTypeName) {
             case "java.time.LocalDateTime": {
-                return Optional.of(LocalDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME));
+                return Optional.of(OffsetDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME).atZoneSameInstant(zoneId).toLocalDateTime());
             }
             case "java.time.LocalDate": {
-                return Optional.of(LocalDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME).toLocalDate());
+                return Optional.of(OffsetDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME).atZoneSameInstant(zoneId).toLocalDateTime().toLocalDate());
             }
             case "java.time.OffsetDateTime": {
                 return Optional.of(OffsetDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME));
@@ -41,30 +43,4 @@ public class JavaTimeParser {
             }
         }
     }
-
-    /**
-     * Parse OWL xsd:Date to Java Temporal
-     * SHOULD BE DEPRECATED
-     * @param destinationTypeName - Java Type to parse to
-     * @param literal - OWLLiteral of type xsd:Date
-     * @return - Optional Java Temporal
-     */
-    public static Optional<Temporal> parseDateToJavaTemporal(String destinationTypeName, OWLLiteral literal) {
-        switch (destinationTypeName) {
-            case "java.time.LocalDateTime": {
-                return Optional.of(LocalDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE));
-            }
-            case "java.time.LocalDate": {
-                return Optional.of(LocalDate.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE));
-            }
-            case "java.time.OffsetDateTime": {
-                return Optional.of(OffsetDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE));
-            }
-            default: {
-                logger.error("Unsupported parsing of temporal {} to {}", literal.getDatatype(), destinationTypeName);
-                return Optional.empty();
-            }
-        }
-    }
-
 }

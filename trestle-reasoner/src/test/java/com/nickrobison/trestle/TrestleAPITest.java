@@ -6,6 +6,7 @@ import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.parser.ClassParser;
 import com.nickrobison.trestle.parser.OracleOntologyGAULoader;
+import com.nickrobison.trestle.types.TrestleIndividual;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
@@ -47,10 +48,8 @@ public class TrestleAPITest {
     public void setup() {
         reasoner = new TrestleBuilder()
                 .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-//                .withDBConnection(
-//                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-//                        "spatialUser",
-//                        "spatial1")
+//                .withDBConnection("jdbc:virtuoso://nuclet:1111", "dba", "dba")
+//                .withDBConnection("jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial", "spatialUser", "spatial1")
                 .withName("api_test")
                 .withIRI(IRI.create("file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl"))
                 .withInputClasses(TestClasses.GAULTestClass.class,
@@ -103,8 +102,12 @@ public class TrestleAPITest {
                 reasoner.writeObjectAsFact(gaul);
             } catch (TrestleClassException e) {
                 throw new RuntimeException(String.format("Problem storing object %s", gaul.adm0_name), e);
+            } catch (MissingOntologyEntity missingOntologyEntity) {
+                throw new RuntimeException(String.format("Missing individual %s", missingOntologyEntity.getIndividual()), missingOntologyEntity);
             }
         });
+
+        reasoner.getUnderlyingOntology().runInference();
 
 //        Validate Results
         final Set<OWLNamedIndividual> gaulInstances = reasoner.getInstances(TestClasses.GAULTestClass.class);
@@ -118,19 +121,27 @@ public class TrestleAPITest {
         assertEquals(LocalDate.of(1990, 1, 1).atStartOfDay(), ancuabe.time, "Times should match");
 
 //        Try to read out the datasets
-        final Optional<Set<String>> availableDatasets = reasoner.getAvailableDatasets();
-        assertTrue(availableDatasets.isPresent(), "Should have dataset");
+        final Set<String> availableDatasets = reasoner.getAvailableDatasets();
+        assertTrue(availableDatasets.size() > 0, "Should have dataset");
 
-        datasetClassID = availableDatasets.get().stream().findFirst().get();
+        datasetClassID = availableDatasets.stream()
+                .filter(ds -> ds.equals("GAUL_Test"))
+                .findAny()
+                .get();
         @NonNull final Object ancuabe1 = reasoner.readAsObject(datasetClassID, "Ancuabe");
         assertEquals(ancuabe, ancuabe1, "Objects should be equal");
         final Object ancuabe2 = reasoner.readAsObject(reasoner.getDatasetClass(datasetClassID), "Ancuabe");
         assertEquals(ancuabe, ancuabe2, "Should be equal");
 
 //        Check the spatial intersection
-        final Optional<List<@NonNull Object>> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0);
+        Optional<List<@NonNull Object>> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0);
         assertTrue(intersectedObjects.isPresent(), "Should have objects");
         assertTrue(intersectedObjects.get().size() > 0, "Should have more than 1 object");
+//
+//        final Class<?> datasetClass = reasoner.getDatasetClass(datasetClassID);
+//        intersectedObjects = reasoner.spatialIntersect(datasetClass, ((TestClasses.GAULTestClass) ancuabe1).wkt, 100.0);
+//        assertTrue(intersectedObjects.isPresent());
+//        assertTrue(intersectedObjects.get().size() > 0, "Should have more than 0 objects");
     }
 
     @Test
@@ -151,13 +162,18 @@ public class TrestleAPITest {
         classObjects.add(offsetDateTimeTest);
 
         classObjects.parallelStream().forEach(object -> {
+                    try {
+                        reasoner.writeObjectAsFact(object);
+                    } catch (TrestleClassException e) {
+                        e.printStackTrace();
+                    } catch (MissingOntologyEntity missingOntologyEntity) {
+                        missingOntologyEntity.printStackTrace();
+                    }
+        });
+
+        reasoner.getUnderlyingOntology().runInference();
+        classObjects.stream().forEach(object -> {
             final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(object);
-            try {
-                reasoner.writeObjectAsFact(object);
-            } catch (TrestleClassException e) {
-                e.printStackTrace();
-            }
-            reasoner.getUnderlyingOntology().runInference();
             final Object returnedObject = reasoner.readAsObject(object.getClass(), owlNamedIndividual.getIRI(), false);
             if (returnedObject instanceof TestClasses.GAULComplexClassTest) {
                 assertEquals(gaulComplexClassTest, returnedObject, "Should have the same object");
@@ -170,10 +186,20 @@ public class TrestleAPITest {
             }
         });
 
+//        Search for some matching individuals
+        List<String> individuals = reasoner.searchForIndividual("43", IRI.create("trestle:", "GAUL_JTS_Test").toString(), null);
+        assertEquals(1, individuals.size(), "Should only have 1 individual in the JTS class");
+//        FIXME(nrobison): For some reason, the inferencer isn't updating correctly. So the query works, but it's not grabbing the correct values
+//        individuals = reasoner.searchForIndividuals("2");
+//        assertEquals(4, individuals.size(), "Should have 4 individuals, overall");
+
+        final TrestleIndividual individualAttributes = reasoner.getIndividualAttributes(individuals.get(0));
+
+
 //        Now try to remove it
         reasoner.removeIndividual(classObjects.toArray(new Object[classObjects.size()]));
 
-        reasoner.writeOntology(new File("/Users/nrobison/Desktop/trestle_test.owl").toURI(), false);
+//        reasoner.writeOntology(new File("/Users/nrobison/Desktop/trestle_test.owl").toURI(), false);
 
 //        Geotools
 //

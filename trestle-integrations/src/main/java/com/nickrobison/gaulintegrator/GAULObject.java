@@ -65,10 +65,14 @@ public class GAULObject {
         return objectID;
     }
 
-    @IndividualIdentifier
     @DataProperty(name = "id")
     public String getObjectIDAsString() {
         return this.objectID.toString();
+    }
+
+    @IndividualIdentifier
+    public String getID() {
+        return String.format("%s:%s:%s:%s", this.gaulCode, this.objectName.replace(" ", "-"), this.getStartDate().getYear(), this.getEndDate().getYear());
     }
 
     public String getObjectName() {

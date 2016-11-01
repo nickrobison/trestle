@@ -4,6 +4,7 @@ import com.esri.core.geometry.*;
 import com.nickrobison.gaulintegrator.common.ObjectID;
 import com.nickrobison.trestle.TrestleBuilder;
 import com.nickrobison.trestle.TrestleReasoner;
+import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
@@ -15,8 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.sql.*;
-import java.sql.Date;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.temporal.TemporalAdjusters;
@@ -32,43 +33,26 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
     private static final Logger logger = LoggerFactory.getLogger(GAULReducer.class);
     private static final String STARTDATE = "temporal.startdate";
     private static final String ENDDATE = "temporal.enddate";
-    private static final String CONNECTION = "hadoop.database.uri";
 
 //    Setup the spatial stuff
     private static final OperatorIntersection operatorIntersection = (OperatorIntersection) OperatorFactoryLocal.getInstance().getOperator(Operator.Type.Intersection);
     private static final int INPUTSRS = 32610;
     private static final SpatialReference inputSR = SpatialReference.create(INPUTSRS);
 
-    private Connection dbConnection;
     private LocalDate startDate;
     private LocalDate endDate;
     private Configuration conf;
     private TrestleReasoner reasoner;
-    private static final String objectRelationInsertString = "INSERT INTO Object_Relations (From_Object, To_Object, Edge_Weight, Start_Time, End_time) VALUES(?,?,?,?,?)";
 
     @Override
     protected void setup(Context context) {
-        //        Load the properties file
-//        TODO(nrobison): Add exception handling
+//        Load the properties file
         conf = context.getConfiguration();
-//        TODO(nrobison): Move these to byte[]
         startDate = LocalDate.ofYearDay(Integer.parseInt(conf.get(STARTDATE)), 1);
         endDate = LocalDate.ofYearDay(Integer.parseInt(conf.get(ENDDATE)), 1).with(TemporalAdjusters.lastDayOfYear());
-        try {
-//            if (logger.isDebugEnabled()) {
-                dbConnection = DriverManager.getConnection("jdbc:postgresql://localhost/gaul", "nrobison", "");
-//            } else {
-                dbConnection = DriverManager.getConnection(conf.get(CONNECTION));
-//            }
-        } catch (SQLException e) {
-            logger.error("Cannot connect to postgres database", e);
-            throw new RuntimeException("Cannot connect to postgres database", e);
-        }
 
 //        Setup the Trestle Reasoner
         reasoner = new TrestleBuilder()
-//                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-//                .withDBConnection("jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial", "spatialUser", "spatial1")
                 .withDBConnection(conf.get("reasoner.db.connection"),
                         conf.get("reasoner.db.username"),
                         conf.get("reasoner.db.password"))
@@ -128,7 +112,6 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                     startDate,
                     endDate,
                     inputRecords.get(0).getPolygonData().polygon);
-//                    values.iterator().next().getPolygonData().polygon);
 
 //            Store into database
 //            Store the object
@@ -136,30 +119,8 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 reasoner.writeObjectAsConcept(newObject);
             } catch (TrestleClassException e) {
                 logger.error("Cannot write object to trestle", e);
-            }
-            try {
-                final PreparedStatement preparedStatement = dbConnection.prepareStatement(newObject.generateSQLInsertStatement());
-                preparedStatement.execute();
-            } catch (SQLException e) {
-                logger.error("Cannot execute SQL insert statement", e);
-                throw new RuntimeException("Cannot execute SQL insert statement", e);
-            }
-//            context.write(key, new Text(newObject.toString()));
-
-//            Store the object relation
-//            final String relationString = "INSERT INTO Object_Relations (From_Object, To_Object, Edge_Weight, Start_Time, End_time) VALUES(?,?,?,?,?)";
-            try {
-                PreparedStatement relationInsert = dbConnection.prepareStatement(objectRelationInsertString);
-                relationInsert.setObject(1, objectID.getID());
-                relationInsert.setObject(2, objectID.getID());
-                relationInsert.setDouble(3, 1.0);
-                relationInsert.setDate(4, Date.valueOf(startDate));
-                relationInsert.setDate(5, Date.valueOf(endDate));
-                relationInsert.execute();
-
-            } catch (SQLException e) {
-                logger.error("Cannot insert into Object_Relation table", e);
-                throw new RuntimeException("Cannot insert into Object_Relation table", e);
+            } catch (MissingOntologyEntity missingOntologyEntity) {
+                logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
             }
 
         } else {
@@ -168,8 +129,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //            Generate a new UUID for this set of objects
             ObjectID objectID = new ObjectID();
-            Set<Text> polygonNames = new HashSet<>();
-            polygonNames = inputRecords
+            Set<Text> polygonNames = inputRecords
                     .stream()
                     .map(MapperOutput::getRegionName)
                     .collect(Collectors.toSet());
@@ -189,44 +149,15 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
             );
 
 //            Check to see if anything in the database either has the same name, or intersects the original object, with an added buffer.
-            String nameRetrieval = "SELECT objectid, gaulcode, objectname, startdate, enddate, st_astext(geom) AS geom FROM Objects AS o1 WHERE ObjectName = ? OR st_intersects(st_buffer(st_geomfromtext(?, 4326), 500), o1.geom)";
-            ResultSet rsName;
-            try {
-                final PreparedStatement nameRetrievalStatement = dbConnection.prepareStatement(nameRetrieval);
-                nameRetrievalStatement.setString(1, objectName);
-                nameRetrievalStatement.setString(2, newGAULObject.getPolygonAsWKT());
-                rsName = nameRetrievalStatement.executeQuery();
-
-            } catch (SQLException e) {
-                logger.error("Cannot retrieve records from database", e);
-                throw new RuntimeException("Cannot retrieve records from database", e);
-            }
-
-            List<GAULObject> matchedObjects_postgres = new ArrayList<>();
-            try {
-                while (rsName.next()) {
-//                    Generate new objects
-                    matchedObjects_postgres.add(new GAULObject(
-                            new ObjectID((UUID) rsName.getObject("objectid"), ObjectID.IDVersion.SIMPLE),
-                            rsName.getLong("GaulCode"),
-                            rsName.getString("objectname"),
-                            rsName.getDate("startdate").toLocalDate(),
-                            rsName.getDate("enddate").toLocalDate(),
-                            (Polygon) GeometryEngine.geometryFromWkt(rsName.getString(6), 0, Geometry.Type.Polygon)
-                    ));
-                }
-            } catch (SQLException e) {
-                logger.error("Cannot iterate through Name resultSet", e);
-                throw new RuntimeException("Cannot iterate through Name resultSet", e);
-            }
-
 //            Try from Trestle
+//            Manually run the inferencer, for now
+            final Instant infStart = Instant.now();
+            reasoner.getUnderlyingOntology().runInference();
+            final Instant infStop = Instant.now();
+            logger.debug("Updating inference took {} ms", Duration.between(infStart, infStop).toMillis());
             final Optional<List<@NonNull GAULObject>> gaulObjects = reasoner.spatialIntersectObject(newGAULObject, 500);
 
             List<GAULObject> matchedObjects = gaulObjects.orElse(new ArrayList<>());
-            if (matchedObjects_postgres.size() != matchedObjects.size()) {
-                logger.warn("Postgres found {} objects, but Trestle only got {}", matchedObjects_postgres.size(), matchedObjects.size());
-            }
 
 
 //            If there are no matching objects in the database, just insert the new record and move on.
@@ -257,49 +188,12 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                     relatedObjects.put(matchedObject, objectWeight);
                 }
 
-//                Now, insert the matchedObjects into the object relations table
-//                This is a <-> relationship, so for each object-pair we insert 2 lookups.
-                for (Map.Entry<GAULObject, Double> relatedEntrySet : relatedObjects.entrySet()) {
-//                    Only store relations with a weight of .2 or higher
-                    if (relatedEntrySet.getValue() >= .2) {
-                        PreparedStatement objectRelationInsert;
-//                    Forward
-                        try {
-                            objectRelationInsert = dbConnection.prepareStatement(objectRelationInsertString);
-                            objectRelationInsert.setObject(1, newGAULObject.getObjectID().getID());
-                            objectRelationInsert.setObject(2, relatedEntrySet.getKey().getObjectID().getID());
-                            objectRelationInsert.setDouble(3, relatedEntrySet.getValue());
-                            objectRelationInsert.setDate(4, Date.valueOf(startDate));
-                            objectRelationInsert.setDate(5, Date.valueOf(endDate));
-
-                            objectRelationInsert.execute();
-
-                        } catch (SQLException e) {
-                            logger.error("Cannot insert new object relation into table", e);
-                            throw new RuntimeException("Cannot insert new object relation into table", e);
-                        }
-
-//                    Backwards
-                        try {
-                            objectRelationInsert = dbConnection.prepareStatement(objectRelationInsertString);
-                            objectRelationInsert.setObject(1, relatedEntrySet.getKey().getObjectID().getID());
-                            objectRelationInsert.setObject(2, newGAULObject.getObjectID().getID());
-                            objectRelationInsert.setDouble(3, relatedEntrySet.getValue());
-                            objectRelationInsert.setDate(4, Date.valueOf(startDate));
-                            objectRelationInsert.setDate(5, Date.valueOf(endDate));
-
-                            objectRelationInsert.execute();
-
-                        } catch (SQLException e) {
-                            logger.error("Cannot insert new object (inverse) relation into table", e);
-                            throw new RuntimeException("Cannot insert new object (inverse) relation into table", e);
-                        }
-
-//                        Now, Trestle, but we only have to write in a single direction.
-                        reasoner.writeFactWithRelation(newGAULObject, relatedEntrySet.getValue(), relatedEntrySet.getKey());
-
-                    }
-                }
+//                Now, insert the matchedObjects into the reasoner
+//                Only store relations with a weight of .2 or higher
+                relatedObjects.entrySet()
+                        .stream()
+                        .filter(relatedEntrySet -> relatedEntrySet.getValue() >= .2)
+                        .forEach(relatedEntrySet -> reasoner.writeFactWithRelation(newGAULObject, relatedEntrySet.getValue(), relatedEntrySet.getKey()));
 
             }
 
@@ -308,46 +202,15 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 reasoner.writeObjectAsFact(newGAULObject);
             } catch (TrestleClassException e) {
                 logger.error("Cannot write {}", newGAULObject.getObjectName(), e);
+            } catch (MissingOntologyEntity missingOntologyEntity) {
+                logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
             }
-            final PreparedStatement singleObjectInsert;
-            try {
-                singleObjectInsert = dbConnection.prepareStatement(newGAULObject.generateSQLInsertStatement());
-                singleObjectInsert.execute();
-            } catch (SQLException e) {
-                logger.error("Cannot insert object into Object table", e);
-                throw new RuntimeException("Cannot insert object into Object table", e);
-            }
-
-//                Now, add it to the Object_Relations Table
-            final PreparedStatement objectRelationInsert;
-            try {
-                objectRelationInsert = dbConnection.prepareStatement(objectRelationInsertString);
-                objectRelationInsert.setObject(1, objectID.getID());
-                objectRelationInsert.setObject(2, objectID.getID());
-                objectRelationInsert.setDouble(3, 1.0);
-                objectRelationInsert.setDate(4, Date.valueOf(startDate));
-                objectRelationInsert.setDate(5, Date.valueOf(endDate));
-
-                objectRelationInsert.execute();
-            } catch (SQLException e) {
-                logger.error("Cannot insert new object's self record in the Object_Relations table", e);
-                throw new RuntimeException("Cannot insert new object's self record in the Object_Relations table", e);
-            }
-
         }
-
         context.write(key, new Text("Records: " + inputRecords.size()));
-
     }
 
     @Override
     public void cleanup(Context context) {
         reasoner.shutdown(false);
-        try {
-            dbConnection.close();
-        } catch (SQLException e) {
-            logger.error("Cannot close database connection", e);
-            throw new RuntimeException("Cannot close database connection", e);
-        }
     }
 }
