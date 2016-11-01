@@ -75,6 +75,11 @@ public class TemporalParser {
         if (clazz == null) {
             return ZoneOffset.UTC;
         }
+
+        if (IsDefault(clazz)) {
+            return GetDefaultZoneID(clazz);
+        }
+
         final Optional<Method> startMethod = Arrays.stream(clazz.getDeclaredMethods())
                 .filter(m -> m.isAnnotationPresent(StartTemporalProperty.class))
                 .findAny();
@@ -93,7 +98,7 @@ public class TemporalParser {
             return extractZoneIdFromTemporalProperty(startAnnotation.timeZone());
         }
 
-        throw new RuntimeException(String.format("Unable to extract temporal from %s", clazz.getClass().getSimpleName()));
+        throw new RuntimeException(String.format("Unable to extract temporal from %s", clazz.getSimpleName()));
     }
 
     /**
@@ -105,6 +110,10 @@ public class TemporalParser {
     public static ZoneId GetEndZoneID(@Nullable Class<?> clazz) {
         if (clazz == null) {
             return ZoneOffset.UTC;
+        }
+
+        if (IsDefault(clazz)) {
+            return GetDefaultZoneID(clazz);
         }
 
         final Optional<Method> startMethod = Arrays.stream(clazz.getDeclaredMethods())
@@ -128,6 +137,11 @@ public class TemporalParser {
         throw new RuntimeException(String.format("Unable to extract temporal from %s", clazz.getClass().getSimpleName()));
     }
 
+    /**
+     * Get the Zone
+     * @param clazz
+     * @return
+     */
     public static ZoneId GetAtZoneID(@Nullable Class<?> clazz) {
         if (clazz == null) {
             return ZoneOffset.UTC;

@@ -4,8 +4,6 @@ import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
@@ -69,21 +67,11 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
     }
 
     public T getPointTime() {
-        return this.getAdjustedTime(this.atTime, this.getTimeZone());
+        return this.atTime;
     }
 
     public String getParameterName() {
         return this.parameterName.orElse("pointTime");
-    }
-
-    private T getAdjustedTime(T temporal, ZoneId zone) {
-        if (temporal instanceof LocalDateTime) {
-            return (T) ((LocalDateTime) temporal).atZone(zone).toLocalDateTime();
-        } else if (temporal instanceof OffsetDateTime) {
-            return (T) ((OffsetDateTime) temporal).atZoneSameInstant(zone).toOffsetDateTime();
-        } else {
-            return temporal;
-        }
     }
 
     /**

@@ -37,7 +37,7 @@ public class JavaTimeParser {
 //                return Optional.of(LocalDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME).atZone(zoneId).toLocalDate());
             }
             case "java.time.OffsetDateTime": {
-                return Optional.of(OffsetDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME));
+                return Optional.of(OffsetDateTime.parse(literal.getLiteral(), DateTimeFormatter.ISO_DATE_TIME).atZoneSameInstant(zoneId));
             }
             default: {
                 logger.error("Unsupported parsing of temporal {} to {}", literal.getDatatype(), destinationTypeName);

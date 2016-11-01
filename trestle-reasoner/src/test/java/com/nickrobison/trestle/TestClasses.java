@@ -12,6 +12,7 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
@@ -44,8 +45,8 @@ public class TestClasses {
             OffsetDateTimeTest that = (OffsetDateTimeTest) o;
 
             if (!adm0_code.equals(that.adm0_code)) return false;
-            if (!startTemporal.equals(that.startTemporal)) return false;
-            return endTemporal.equals(that.endTemporal);
+            if (!startTemporal.atZoneSameInstant(ZoneOffset.UTC).equals(that.startTemporal.atZoneSameInstant(ZoneOffset.UTC))) return false;
+            return endTemporal.atZoneSameInstant(ZoneOffset.UTC).equals(that.endTemporal.atZoneSameInstant(ZoneOffset.UTC));
 
         }
 

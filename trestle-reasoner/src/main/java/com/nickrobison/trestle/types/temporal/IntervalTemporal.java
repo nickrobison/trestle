@@ -5,7 +5,8 @@ import com.nickrobison.trestle.types.TemporalType;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
-import java.time.*;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
 import java.util.*;
 
@@ -82,15 +83,11 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     public boolean isDefault() { return this.isDefault; }
 
     public T getFromTime() {
-        return getAdjustedTime(this.fromTime, this.getStartTimeZone());
+        return this.fromTime;
     }
 
     public Optional<T> getToTime() {
-        if (this.toTime.isPresent()) {
-            return Optional.of(getAdjustedTime(this.toTime.get(), getEndTimeZone()));
-        } else {
-            return Optional.empty();
-        }
+        return this.toTime;
     }
 
     public String getStartName() {
@@ -107,16 +104,6 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
     public ZoneId getEndTimeZone() {
         return this.endTimeZone;
-    }
-
-    private T getAdjustedTime(T temporal, ZoneId zone) {
-        if (temporal instanceof LocalDateTime) {
-            return (T) ((LocalDateTime) temporal).atZone(zone).toLocalDateTime();
-        } else if (temporal instanceof OffsetDateTime) {
-            return (T) ((OffsetDateTime) temporal).atZoneSameInstant(zone).toOffsetDateTime();
-        } else {
-            return temporal;
-        }
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
