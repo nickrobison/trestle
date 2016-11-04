@@ -13,36 +13,36 @@ import java.util.stream.Collectors;
 public class TrestleIndividual {
 
     private final String individualID;
-    private final List<TrestleAttribute> attributes;
+    private final List<TrestleFact> facts;
     private final TemporalObject validTemporal;
 
     public TrestleIndividual(String id, TemporalObject validTemporal) {
-        this.attributes = new ArrayList<>();
+        this.facts = new ArrayList<>();
         this.individualID = id;
         this.validTemporal = validTemporal;
     }
 
     /**
-     * Add an attribute to the individual
-     * @param attribute - TrestleAttribute to add
+     * Add a fact to the individual
+     * @param fact - TrestleFact to add
      */
-    public void addAttribute(TrestleAttribute attribute) {
-        if (this.attributes.contains(attribute)) {
+    public void addFact(TrestleFact fact) {
+        if (this.facts.contains(fact)) {
             return;
         }
-        this.attributes.add(attribute);
+        this.facts.add(fact);
     }
 
     public String getIndividualID() { return this.individualID;}
 
-    public List<TrestleAttribute> getAttributes() { return this.attributes;}
+    public List<TrestleFact> getFacts() { return this.facts;}
 
     public TemporalObject getValidTemporal() { return this.validTemporal;}
 
     public Set<TemporalObject> getTemporals() {
-        final Set<TemporalObject> attributeTemporals = attributes
+        final Set<TemporalObject> attributeTemporals = facts
                 .stream()
-                .map(TrestleAttribute::getValidTemporal)
+                .map(TrestleFact::getValidTemporal)
                 .collect(Collectors.toSet());
         attributeTemporals.add(this.validTemporal);
 
@@ -50,9 +50,9 @@ public class TrestleIndividual {
     }
 
     public Set<TemporalObject> getDatabaseTemporals() {
-        return attributes
+        return facts
                 .stream()
-                .map(TrestleAttribute::getDatabaseTemporal)
+                .map(TrestleFact::getDatabaseTemporal)
                 .collect(Collectors.toSet());
     }
 }

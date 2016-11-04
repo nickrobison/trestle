@@ -199,7 +199,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //            Now, we insert the new itself record into the database
             try {
-                reasoner.writeObjectAsFact(newGAULObject);
+                reasoner.WriteAsTSObject(newGAULObject);
             } catch (TrestleClassException e) {
                 logger.error("Cannot write {}", newGAULObject.getObjectName(), e);
             } catch (MissingOntologyEntity missingOntologyEntity) {

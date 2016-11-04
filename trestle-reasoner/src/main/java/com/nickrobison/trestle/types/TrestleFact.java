@@ -5,7 +5,7 @@ import com.nickrobison.trestle.types.temporal.TemporalObject;
 /**
  * Created by nrobison on 10/16/16.
  */
-public class TrestleAttribute<T> {
+public class TrestleFact<T> {
 
     private final String identifier;
     private final String name;
@@ -13,7 +13,7 @@ public class TrestleAttribute<T> {
     private final TemporalObject validTemporal;
     private final TemporalObject databaseTemporal;
 
-    public TrestleAttribute(String identifier, String name, T value, TemporalObject validTemporal, TemporalObject databaseTemporal) {
+    public TrestleFact(String identifier, String name, T value, TemporalObject validTemporal, TemporalObject databaseTemporal) {
         this.identifier = identifier;
         this.name = name;
         this.value = value;
