@@ -42,10 +42,10 @@ public class OracleOntology extends JenaOntology {
         final Config config = ConfigFactory.load().getConfig("trestle.ontology.oracle");
         final InferenceMaintenanceMode mode;
         if (config.getBoolean("updateOnCommit")) {
-            logger.info("Initializing Oracle: Updating reasoner on Commit");
+            logger.info("Initializing Oracle: Updating inference on commit");
             mode = InferenceMaintenanceMode.UPDATE_WHEN_COMMIT;
         } else {
-            logger.info("Initializing Oracle: Manually updating reasoner");
+            logger.info("Initializing Oracle: Manually updating inference");
             mode = InferenceMaintenanceMode.NO_UPDATE;
         }
         final Attachment owlprime = Attachment.createInstance(
