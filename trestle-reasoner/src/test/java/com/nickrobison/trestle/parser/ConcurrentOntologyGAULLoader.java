@@ -5,6 +5,8 @@ import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSetFormatter;
 import org.junit.jupiter.api.AfterEach;
@@ -75,17 +77,15 @@ public class ConcurrentOntologyGAULLoader {
 //            Need to add a second to get it to format correctly.
             gaulObjects.add(new TestClasses.GAULTestClass(code, splitLine[1].replace("\"", ""), date.atStartOfDay().plusSeconds(1), splitLine[4].replace("\"", "")));
         }
-
-        final IRI iri = IRI.create("file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl");
+        final Config config = ConfigFactory.parseResources("test.configuration.conf");
+        final IRI iri = IRI.create(config.getString("trestle.ontology.location"));
         df = OWLManager.getOWLDataFactory();
 
         ontology = new OntologyBuilder()
                 .fromIRI(iri)
-                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-//                .withDBConnection(
-//                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-//                        "spatialUser",
-//                        "spatial1")
+                .withDBConnection(config.getString("trestle.ontology.connectionString"),
+                config.getString("trestle.ontology.username"),
+                config.getString("trestle.ontology.password"))
                 .name("trestle_concurrent_1")
                 .build().get();
 

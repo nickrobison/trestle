@@ -7,6 +7,8 @@ import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.parser.ClassParser;
 import com.nickrobison.trestle.parser.OracleOntologyGAULoader;
 import com.nickrobison.trestle.types.TrestleIndividual;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
@@ -46,12 +48,13 @@ public class TrestleAPITest {
 
     @BeforeEach
     public void setup() {
+        final Config config = ConfigFactory.parseResources("test.configuration.conf");
         reasoner = new TrestleBuilder()
-                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-//                .withDBConnection("jdbc:virtuoso://nuclet:1111", "dba", "dba")
-//                .withDBConnection("jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial", "spatialUser", "spatial1")
+                .withDBConnection(config.getString("trestle.ontology.connectionString"),
+                        config.getString("trestle.ontology.username"),
+                        config.getString("trestle.ontology.password"))
                 .withName("api_test")
-                .withIRI(IRI.create("file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl"))
+                .withIRI(IRI.create(config.getString("trestle.ontology.location")))
                 .withInputClasses(TestClasses.GAULTestClass.class,
                         TestClasses.GAULComplexClassTest.class,
                         TestClasses.JTSGeometryTest.class,

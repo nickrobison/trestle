@@ -2,13 +2,12 @@ package com.nickrobison.trestle;
 
 import afu.edu.emory.mathcs.backport.java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.nickrobison.trestle.TestClasses;
-import com.nickrobison.trestle.TrestleBuilder;
-import com.nickrobison.trestle.TrestleReasoner;
 import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -31,11 +30,11 @@ public class DataExporterTests {
 
     @BeforeAll
     public static void setup() {
+        final Config config = ConfigFactory.parseResources("test.configuration.conf");
         reasoner = new TrestleBuilder()
-                .withDBConnection(
-                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-                        "spatialUser",
-                        "spatial1")
+                .withDBConnection(config.getString("trestle.ontology.connectionString"),
+                        config.getString("trestle.ontology.username"),
+                        config.getString("trestle.ontology.password"))
                 .withName("hadoop_gaul5")
                 .withInputClasses(SimpleGAULObject.class)
                 .withoutCaching()

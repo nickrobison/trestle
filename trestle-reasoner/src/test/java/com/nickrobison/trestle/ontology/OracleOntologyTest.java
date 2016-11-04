@@ -5,6 +5,8 @@ import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSetFormatter;
 import org.junit.jupiter.api.AfterEach;
@@ -33,14 +35,14 @@ public class OracleOntologyTest {
 
     @BeforeEach
     public void setupNewOntology() throws OWLOntologyCreationException {
-        final IRI iri = IRI.create("file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl");
+        final Config config = ConfigFactory.parseResources("test.configuration.conf");
+        final IRI iri = IRI.create(config.getString("trestle.ontology.location"));
         df = OWLManager.getOWLDataFactory();
 
         ontology = (OracleOntology) new OntologyBuilder()
-                .withDBConnection(
-                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-                        "spatialUser",
-                        "spatial1")
+                .withDBConnection(config.getString("trestle.ontology.connectionString"),
+                        config.getString("trestle.ontology.username"),
+                        config.getString("trestle.ontology.password"))
                 .fromIRI(iri)
                 .name("trestle_test3")
                 .build().get();

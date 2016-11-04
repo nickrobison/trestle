@@ -2,6 +2,8 @@ package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.TestClasses;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
@@ -70,8 +72,9 @@ public class LocalOntologyGAULLoader {
 //            Need to add a second to get it to format correctly.
             gaulObjects.add(new TestClasses.GAULTestClass(code, splitLine[1].replace("\"", ""), date.atStartOfDay().plusSeconds(1), splitLine[4].replace("\"", "")));
         }
+        final Config config = ConfigFactory.parseResources("test.configuration.conf");
 
-        final IRI iri = IRI.create("file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl");
+        final IRI iri = IRI.create(config.getString("trestle.ontology.location"));
         df = OWLManager.getOWLDataFactory();
 
         ontology = (LocalOntology) new OntologyBuilder()

@@ -1,6 +1,8 @@
 package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,12 +31,12 @@ public class LocalOntologyTest {
 
     @BeforeEach
     public void setupNewOntology() throws OWLOntologyCreationException, IOException {
-        final IRI iri = IRI.create("file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl");
+        final Config config = ConfigFactory.parseResources("test.configuration.conf");
+        final IRI iri = IRI.create(config.getString("trestle.ontology.location"));
         final InputStream inputStream = iri.toURI().toURL().openConnection().getInputStream();
         df = OWLManager.getOWLDataFactory();
 
         ontology = (LocalOntology) new OntologyBuilder()
-//                .fromIRI(iri)
                 .fromInputStream(inputStream)
                 .name("trestle")
                 .build().get();
