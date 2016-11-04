@@ -1,5 +1,7 @@
 package com.nickrobison.trestle.ontology;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import oracle.spatial.rdf.client.jena.*;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.*;
@@ -36,10 +38,20 @@ public class OracleOntology extends JenaOntology {
     }
 
     private static Model createOracleModel(String ontologyName, String connectionString, String username, String password) {
+//        Read in the settings file
+        final Config config = ConfigFactory.load().getConfig("trestle.ontology.oracle");
+        final InferenceMaintenanceMode mode;
+        if (config.getBoolean("updateOnCommit")) {
+            logger.info("Initializing Oracle: Updating reasoner on Commit");
+            mode = InferenceMaintenanceMode.UPDATE_WHEN_COMMIT;
+        } else {
+            logger.info("Initializing Oracle: Manually updating reasoner");
+            mode = InferenceMaintenanceMode.NO_UPDATE;
+        }
         final Attachment owlprime = Attachment.createInstance(
                 new String[]{}, "OWLPRIME",
-                InferenceMaintenanceMode.NO_UPDATE, QueryOptions.DEFAULT);
-        owlprime.setInferenceOption("INC=T,RAW8=T");
+                mode, QueryOptions.DEFAULT);
+        owlprime.setInferenceOption(String.format("INC=T,RAW8=T,DOP=%s", config.getInt("parallelism")));
         oracle = new Oracle(connectionString, username, password);
         try {
 //            We need this so that it actually creates the model if it doesn't exist
