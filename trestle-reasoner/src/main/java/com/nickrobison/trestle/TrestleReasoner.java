@@ -282,7 +282,6 @@ public class TrestleReasoner {
                 ontology.writeIndividualObjectProperty(propertyIndividual, validTimeIRI, df.getOWLNamedIndividual(temporal.getIDAsIRI()));
 //                Write the relation back to the root individual
                 ontology.writeIndividualObjectProperty(propertyIndividual, factOfIRI, rootIndividual);
-//                TODO(nrobison): Write the DB access time
 //                Write the database time
                 ontology.writeIndividualObjectProperty(propertyIndividual, databaseTimeIRI, df.getOWLNamedIndividual(databaseTemporal.getIDAsIRI()));
             } catch (MissingOntologyEntity missingOntologyEntity) {
@@ -928,14 +927,12 @@ public class TrestleReasoner {
         final TrestleIndividual trestleIndividual = new TrestleIndividual(individual.toStringID(), temporalObject.orElseThrow(() -> new TrestleMissingFactException(individual, hasTemporalIRI)));
 
 //                Get all the facts
-        final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty1 = ontology.getIndividualObjectProperty(individual, hasFactIRI);
-        final List<TrestleFact> facts = individualObjectProperty1
+        final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualFacts = ontology.getIndividualObjectProperty(individual, hasFactIRI);
+        individualFacts
                 .orElseThrow(() -> new TrestleMissingFactException(individual, hasFactIRI))
                 .stream()
                 .map(property -> buildTrestleFact(property.getObject().asOWLNamedIndividual()))
-                .collect(Collectors.toList());
-//                TODO(nrobison): Can we combine these 2 steps? Collect the facts into the individual?
-        facts.forEach(trestleIndividual::addFact);
+                .forEach(trestleIndividual::addFact);
 
         return trestleIndividual;
     }
