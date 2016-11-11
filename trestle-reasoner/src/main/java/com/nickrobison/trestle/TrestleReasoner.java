@@ -88,10 +88,10 @@ public class TrestleReasoner {
                 ontologyResource = builder.ontologyIRI.get().toURI().toURL();
                 ontologyIS = new FileInputStream(new File(builder.ontologyIRI.get().toURI()));
             } catch (MalformedURLException e) {
-                logger.error("Unable to parse IRI to URI", e);
+                logger.error("Unable to parse IRI to URI", builder.ontologyIRI.get(), e);
                 throw new RuntimeException("Unable to parse IRI to URI", e);
             } catch (FileNotFoundException e) {
-                logger.error("Cannot find ontology file");
+                logger.error("Cannot find ontology file {}", builder.ontologyIRI.get(), e);
                 throw new RuntimeException("File not found", e);
             }
         } else {
