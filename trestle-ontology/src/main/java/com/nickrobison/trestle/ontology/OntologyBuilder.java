@@ -1,14 +1,13 @@
 package com.nickrobison.trestle.ontology;
 
+import com.nickrobison.trestle.ontology.util.ImportsConfigReader;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.*;
 
@@ -94,6 +93,13 @@ public class OntologyBuilder {
     public Optional<ITrestleOntology> build() throws OWLOntologyCreationException {
         final OWLOntologyManager owlOntologyManager = OWLManager.createOWLOntologyManager();
         OWLOntology owlOntology;
+
+        // load ontology mapper (favors local files if present)
+        Set<OWLOntologyIRIMapper> mappers = new HashSet<>();
+        OWLOntologyIRIMapper mapper = getImportsMapper();
+        mappers.add(mapper);
+        owlOntologyManager.setIRIMappers(mappers);
+
         if (this.iri.isPresent()) {
             logger.debug("Loading ontology from: {}", this.iri.get());
             owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument(this.iri.get());
@@ -164,6 +170,35 @@ public class OntologyBuilder {
 //                    classify(owlOntology, new ConsoleProgressMonitor())
             ));
         }
+    }
+
+    private OWLOntologyIRIMapper getImportsMapper()
+    {
+        OWLOntologyIRIMapper iriMapper = new OWLOntologyIRIMapper() {
+            private ImportsConfigReader impConfReader = new ImportsConfigReader();
+            private String importsDirPath;
+            private Map<IRI,String> fileMap;
+            {
+                impConfReader.readConfigFile();
+                importsDirPath = impConfReader.getImportsDirectoryPath();
+                fileMap = impConfReader.getIriToFilenameMap();
+            }
+
+            @Override
+            public IRI getDocumentIRI(IRI iri) {
+                // construct IRI if in mapper
+                IRI documentIRI = null;
+                String fileName = fileMap.get(iri);
+                File importOntFile = new File(importsDirPath+fileName);
+                if(importOntFile.exists()&&importOntFile.isFile()&&importOntFile.canRead()) {
+                    documentIRI = IRI.create(importOntFile);
+                }
+
+                return documentIRI;
+            }
+        };
+
+        return iriMapper;
     }
 
     private static String extractNamefromIRI(IRI iri) {
