@@ -18,16 +18,16 @@ import java.util.Set;
  * Created by detwiler on 10/29/16.
  */
 public class ImportsConfigReader {
-    private String mappingsFileName = "ontology/importMappingConfigs.json";
+    private String mappingsFileName = "ontology/importMappingConfig.json";
     private String importsDirectoryPath = null;
     private Map<IRI,String> iriToFilenameMap = new HashMap<IRI,String>();
 
     public void readConfigFile() {
         ClassLoader classLoader = getClass().getClassLoader();
 
+        // have some reasonable default directory
         String userDir = System.getProperty("user.home");
-        importsDirectoryPath = userDir+"ontology/imports/";
-        System.err.println("user home directory : "+importsDirectoryPath);
+        importsDirectoryPath = userDir+"/ontology/imports/";
 
         // the OWLAPI currently fails to load from this inner-jar IRI
         //importsDirectoryPath = classLoader.getResource("ontology/imports/").getPath();
@@ -48,21 +48,24 @@ public class ImportsConfigReader {
         }
 
         JsonValue mappingsVal = obj.get("mappings");
-        if(mappingsVal!=null && mappingsVal.isArray())
+        if(!mappingsVal.isNull() && mappingsVal.isArray())
         {
             JsonArray mappingsArray = mappingsVal.getAsArray();
             Iterator<JsonValue> mappingsIt = mappingsArray.iterator();
             while(mappingsIt.hasNext())
             {
                 JsonValue mappingVal = mappingsIt.next();
-                //TODO: this next section needs more type checks
                 if(mappingVal.isObject())
                 {
                     JsonObject mappingObj = mappingVal.getAsObject();
-                    String iriString = mappingObj.get("iri").getAsString().value();
-                    String fileString = mappingObj.get("file").getAsString().value();
-                    IRI iri = IRI.create(iriString);
-                    iriToFilenameMap.put(iri,fileString);
+                    JsonValue iriVal = mappingObj.get("iri");
+                    JsonValue fileVal = mappingObj.get("file");
+                    if(!iriVal.isNull()&&iriVal.isString()&&!fileVal.isNull()&&fileVal.isString()) {
+                        String iriString = iriVal.getAsString().value();
+                        String fileString = fileVal.getAsString().value();
+                        IRI iri = IRI.create(iriString);
+                        iriToFilenameMap.put(iri, fileString);
+                    }
                 }
             }
         }
