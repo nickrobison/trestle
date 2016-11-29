@@ -30,7 +30,6 @@
         <jmh.version>1.15</jmh.version>
         <junit.jupiter.version>5.0.0-M2</junit.jupiter.version>
         <geotools.version>16.0</geotools.version>
-        <maven.shade.version>2.4.3</maven.shade.version>
         <!--Checker properties-->
         <checker.version>2.0.1</checker.version>
         <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
