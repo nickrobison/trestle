@@ -1,7 +1,8 @@
-package com.nickrobison.trestle.server;
+package com.nickrobison.trestle.server.resources;
 
 import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.trestle.TrestleReasoner;
+import com.nickrobison.trestle.server.modules.ReasonerModule;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;

@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.server;
 
 import com.hubspot.dropwizard.guice.GuiceBundle;
+import com.nickrobison.trestle.server.modules.TrestleServerModule;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;

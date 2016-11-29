@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.server;
+package com.nickrobison.trestle.server.resources;
 
 import org.apache.commons.io.IOUtils;
 
@@ -16,15 +16,15 @@ import java.io.InputStream;
  */
 @Path("/")
 @Produces(MediaType.TEXT_HTML)
-public class ServerMainResource {
+public class ServerSPAResource {
 
     public static final String ASSETS_INDEX_HTML = "assets/index.html";
 
-    public ServerMainResource() {}
+    public ServerSPAResource() {}
 
     @GET
     public String serveMainPage() {
-        final InputStream webpage = ServerMainResource.class.getClassLoader().getResourceAsStream(ASSETS_INDEX_HTML);
+        final InputStream webpage = ServerSPAResource.class.getClassLoader().getResourceAsStream(ASSETS_INDEX_HTML);
         if (webpage == null) {
             final String errorMessage = String.format("Unable to load webpage from %s", ASSETS_INDEX_HTML);
             throw new WebApplicationException(errorMessage, Response.Status.NOT_FOUND);
