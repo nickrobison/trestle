@@ -2,7 +2,7 @@ package com.nickrobison.trestle.common;
 
 import org.semanticweb.owlapi.model.IRI;
 
-import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
+import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 
 /**
  * Created by nrobison on 9/6/16.
@@ -30,9 +30,9 @@ public class IRIUtils {
         } else {
 //            If we have the unexpanded base prefix, replace it and move on
             if (inputString.startsWith("trestle:")) {
-                return IRI.create(PREFIX, inputString.replace("trestle:", ""));
+                return IRI.create(TRESTLE_PREFIX, inputString.replace("trestle:", ""));
             }
-            return IRI.create(PREFIX, inputString.replaceAll("\\s+", "_"));
+            return IRI.create(TRESTLE_PREFIX, inputString.replaceAll("\\s+", "_"));
         }
     }
 }

@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
+import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 
 /**
  * Created by nrobison on 8/11/16.
@@ -72,7 +72,7 @@ public class QueryBuilder {
                 trimmedPrefixMap.put("", entry.getValue());
             }
             trimmedPrefixMap.put(entry.getKey().replace(":", ""), entry.getValue());
-            builder.append(String.format("PREFIX %s : <%s>\n", entry.getKey().replace(":", ""), entry.getValue()));
+            builder.append(String.format("TRESTLE_PREFIX %s : <%s>\n", entry.getKey().replace(":", ""), entry.getValue()));
         }
         this.prefixes = builder.toString();
         final String defaultPrefix = pm.getDefaultPrefix();
@@ -82,10 +82,10 @@ public class QueryBuilder {
             if (prefix != null) {
                 baseURI = prefix;
             } else {
-                baseURI = PREFIX;
+                baseURI = TRESTLE_PREFIX;
             }
         } else {
-            this.baseURI = PREFIX;
+            this.baseURI = TRESTLE_PREFIX;
         }
         this.pm = pm;
     }
@@ -287,7 +287,7 @@ public class QueryBuilder {
 
         if (owlClass == null) {
 //            We need to get the fully expanded Prefix, otherwise Jena won't expanded it properly and give us an <> IRI, which will fail.
-            ps.setIri("type", IRI.create(PREFIX, "Dataset").toString());
+            ps.setIri("type", IRI.create(TRESTLE_PREFIX, "Dataset").toString());
         } else {
             ps.setIri("type", getFullIRIString(owlClass));
         }

@@ -239,9 +239,9 @@ public class TemporalParser {
             if (defaultMethod.isPresent()) {
                 Method method = defaultMethod.get();
                 if (method.getAnnotation(DefaultTemporalProperty.class).name().equals("")) {
-                    temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, filterMethodName(method))));
+                    temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, filterMethodName(method))));
                 } else {
-                    temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, method.getAnnotation(DefaultTemporalProperty.class).name())));
+                    temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, method.getAnnotation(DefaultTemporalProperty.class).name())));
                 }
             } else {
                 final Optional<Field> defaultField = Arrays.stream(clazz.getDeclaredFields())
@@ -251,9 +251,9 @@ public class TemporalParser {
                 if (defaultField.isPresent()) {
                     Field field = defaultField.get();
                     if (field.getAnnotation(DefaultTemporalProperty.class).name().equals("")) {
-                        temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, field.getName())));
+                        temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getName())));
                     } else {
-                        temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, field.getAnnotation(DefaultTemporalProperty.class).name())));
+                        temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getAnnotation(DefaultTemporalProperty.class).name())));
                     }
                 }
             }
@@ -268,9 +268,9 @@ public class TemporalParser {
             if (startMethod.isPresent()) {
                 Method method = startMethod.get();
                 if (method.getAnnotation(StartTemporalProperty.class).name().equals("")) {
-                    temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, filterMethodName(method))));
+                    temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, filterMethodName(method))));
                 } else {
-                    temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, method.getAnnotation(StartTemporalProperty.class).name())));
+                    temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, method.getAnnotation(StartTemporalProperty.class).name())));
                 }
             } else {
 //                Fields
@@ -281,9 +281,9 @@ public class TemporalParser {
                 if (startField.isPresent()) {
                     Field field = startField.get();
                     if (field.getAnnotation(StartTemporalProperty.class).name().equals("")) {
-                        temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, field.getName())));
+                        temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getName())));
                     } else {
-                        temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, field.getAnnotation(StartTemporalProperty.class).name())));
+                        temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getAnnotation(StartTemporalProperty.class).name())));
                     }
                 }
             }
@@ -297,9 +297,9 @@ public class TemporalParser {
             if (endMethod.isPresent()) {
                 Method method = endMethod.get();
                 if (method.getAnnotation(EndTemporalProperty.class).name().equals("")) {
-                    temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, filterMethodName(method))));
+                    temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, filterMethodName(method))));
                 } else {
-                    temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, method.getAnnotation(EndTemporalProperty.class).name())));
+                    temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, method.getAnnotation(EndTemporalProperty.class).name())));
                 }
             } else {
                 final Optional<Field> endField = Arrays.stream(clazz.getDeclaredFields())
@@ -309,9 +309,9 @@ public class TemporalParser {
                 if (endField.isPresent()) {
                     Field field = endField.get();
                     if (field.getAnnotation(EndTemporalProperty.class).name().equals("")) {
-                        temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, field.getName())));
+                        temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getName())));
                     } else {
-                        temporalProperties.add(df.getOWLDataProperty(IRI.create(PREFIX, field.getAnnotation(EndTemporalProperty.class).name())));
+                        temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getAnnotation(EndTemporalProperty.class).name())));
                     }
                 }
             }

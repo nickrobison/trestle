@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.parser;
 
-import com.github.jsonldjava.utils.Obj;
 import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
@@ -52,7 +51,7 @@ public class ClassParser {
         } else {
             className = clazz.getName();
         }
-        final IRI iri = IRI.create(PREFIX, className);
+        final IRI iri = IRI.create(TRESTLE_PREFIX, className);
         return df.getOWLClass(iri);
     }
 
@@ -89,7 +88,7 @@ public class ClassParser {
         }
 
         final OWLDataFactory df = OWLManager.getOWLDataFactory();
-        return df.getOWLNamedIndividual(IRI.create(PREFIX, identifier));
+        return df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, identifier));
     }
 
     //    TODO(nrobison): Implement this
@@ -173,7 +172,7 @@ public class ClassParser {
             if (filterDataPropertyField(classField, filterSpatial)) {
                 if (classField.isAnnotationPresent(DataProperty.class)) {
                     final DataProperty annotation = classField.getAnnotation(DataProperty.class);
-                    final IRI iri = IRI.create(PREFIX, annotation.name());
+                    final IRI iri = IRI.create(TRESTLE_PREFIX, annotation.name());
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
                     String fieldValue = null;
 
@@ -200,7 +199,7 @@ public class ClassParser {
                         axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, owlLiteral.get()));
                     }
                 } else {
-                    final IRI iri = IRI.create(PREFIX, classField.getName());
+                    final IRI iri = IRI.create(TRESTLE_PREFIX, classField.getName());
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
                     String fieldValue = null;
                     try {
@@ -219,7 +218,7 @@ public class ClassParser {
             if (filterDataPropertyMethod(classMethod, filterSpatial)) {
                 if (classMethod.isAnnotationPresent(DataProperty.class)) {
                     final DataProperty annotation = classMethod.getAnnotation(DataProperty.class);
-                    final IRI iri = IRI.create(PREFIX, annotation.name());
+                    final IRI iri = IRI.create(TRESTLE_PREFIX, annotation.name());
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
 
                     final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
@@ -246,7 +245,7 @@ public class ClassParser {
                         }
                     }
                 } else {
-                    final IRI iri = IRI.create(PREFIX, filterMethodName(classMethod));
+                    final IRI iri = IRI.create(TRESTLE_PREFIX, filterMethodName(classMethod));
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
                     final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
                     if (methodValue.isPresent()) {

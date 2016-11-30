@@ -65,6 +65,7 @@ public class TrestleReasoner {
     private static final Logger logger = LoggerFactory.getLogger(TrestleReasoner.class);
     public static final String DEFAULTNAME = "trestle";
 
+    private final String REASONER_PREFIX;
     private final ITrestleOntology ontology;
     private final Map<OWLClass, Class<?>> registeredClasses = new HashMap<>();
     private final OWLDataFactory df;
@@ -79,6 +80,11 @@ public class TrestleReasoner {
     TrestleReasoner(TrestleBuilder builder) throws OWLOntologyCreationException {
 
         df = OWLManager.getOWLDataFactory();
+
+//        Setup the reasoner prefix
+//        If not specified, use the default Trestle prefix
+        REASONER_PREFIX = builder.reasonerPrefix.orElse(TRESTLE_PREFIX);
+        logger.info("Setting up reasoner with prefix {}", REASONER_PREFIX);
 
 //        If we have a manually specified ontology, use that.
         final URL ontologyResource;
@@ -273,7 +279,7 @@ public class TrestleReasoner {
         properties.forEach(property -> {
 
 //            TODO(nrobison): We should change this to lookup any existing records to correctly increment the record number
-            final OWLNamedIndividual propertyIndividual = df.getOWLNamedIndividual(IRI.create(PREFIX, String.format("%s:%s:%d", rootIndividual.getIRI().getShortForm(), property.getProperty().asOWLDataProperty().getIRI().getShortForm(), now)));
+            final OWLNamedIndividual propertyIndividual = df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, String.format("%s:%s:%d", rootIndividual.getIRI().getShortForm(), property.getProperty().asOWLDataProperty().getIRI().getShortForm(), now)));
             ontology.createIndividual(propertyIndividual, factClass);
             try {
 //                Write the property
@@ -383,7 +389,7 @@ public class TrestleReasoner {
 
 //        If not, store them.
 //        Write the concept relation
-        final IRI conceptIRI = IRI.create(PREFIX,
+        final IRI conceptIRI = IRI.create(TRESTLE_PREFIX,
                 String.format("related-%s-%s",
                         owlNamedIndividual.getIRI().getShortForm(),
                         relatedFactIndividual.getIRI().getShortForm()));
@@ -768,7 +774,7 @@ public class TrestleReasoner {
 
         final OWLClass owlClass = ClassParser.GetObjectClass(clazz);
 
-        final String relationQuery = qb.buildRelationQuery(df.getOWLNamedIndividual(IRI.create(PREFIX, objectID)), owlClass, cutoff);
+        final String relationQuery = qb.buildRelationQuery(df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX, objectID)), owlClass, cutoff);
         TrestleTransaction transaction = ontology.createandOpenNewTransaction(false);
         final ResultSet resultSet = ontology.executeSPARQL(relationQuery);
 

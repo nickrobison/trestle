@@ -7,7 +7,6 @@ import com.nickrobison.trestle.parser.spatial.ESRIParser;
 import com.nickrobison.trestle.parser.spatial.GeotoolsParser;
 import com.nickrobison.trestle.parser.spatial.JTSParser;
 import com.vividsolutions.jts.io.ParseException;
-import org.opengis.referencing.operation.TransformException;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLLiteral;
@@ -20,7 +19,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import static com.nickrobison.trestle.common.StaticIRI.GEOSPARQLPREFIX;
-import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
+import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 import static com.nickrobison.trestle.common.StaticIRI.WKTDatatypeIRI;
 import static com.nickrobison.trestle.parser.ClassParser.df;
 import static com.nickrobison.trestle.parser.ClassParser.filterMethodName;
@@ -143,21 +142,21 @@ public class SpatialParser {
 
     static IRI filterDataSpatialName(Field classField) {
         if (classField.isAnnotationPresent(DataProperty.class)) {
-            return IRI.create(PREFIX, classField.getAnnotation(DataProperty.class).name());
+            return IRI.create(TRESTLE_PREFIX, classField.getAnnotation(DataProperty.class).name());
         } else if (classField.isAnnotationPresent(Spatial.class)) {
             return IRI.create(GEOSPARQLPREFIX, "asWKT");
         } else {
-            return IRI.create(PREFIX, classField.getName());
+            return IRI.create(TRESTLE_PREFIX, classField.getName());
         }
     }
 
     static IRI filterDataSpatialName(Method classMethod) {
         if (classMethod.isAnnotationPresent(DataProperty.class)) {
-            return IRI.create(PREFIX, classMethod.getAnnotation(DataProperty.class).name());
+            return IRI.create(TRESTLE_PREFIX, classMethod.getAnnotation(DataProperty.class).name());
         } else if (classMethod.isAnnotationPresent(Spatial.class)) {
             return IRI.create(GEOSPARQLPREFIX, "asWKT");
         } else {
-            return IRI.create(PREFIX, filterMethodName(classMethod));
+            return IRI.create(TRESTLE_PREFIX, filterMethodName(classMethod));
         }
     }
 }

@@ -54,7 +54,7 @@ public class TrestleAPITest {
                         config.getString("trestle.ontology.username"),
                         config.getString("trestle.ontology.password"))
                 .withName("api_test")
-                .withIRI(IRI.create(config.getString("trestle.ontology.location")))
+                .withOntology(IRI.create(config.getString("trestle.ontology.location")))
                 .withInputClasses(TestClasses.GAULTestClass.class,
                         TestClasses.GAULComplexClassTest.class,
                         TestClasses.JTSGeometryTest.class,

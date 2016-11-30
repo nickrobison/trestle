@@ -49,7 +49,7 @@ public class RoadLoader {
                         config.getString("trestle.ontology.username"),
                         config.getString("trestle.ontology.password"))
                 .withName("api_test")
-                .withIRI(IRI.create(config.getString("trestle.ontology.location")))
+                .withOntology(IRI.create(config.getString("trestle.ontology.location")))
                 .withInputClasses(gROADS.class)
                 .withoutCaching()
                 .initialize()
