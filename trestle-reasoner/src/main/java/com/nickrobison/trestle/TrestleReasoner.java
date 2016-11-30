@@ -4,6 +4,7 @@ import com.nickrobison.trestle.caching.TrestleCache;
 import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingFactException;
+import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.exceptions.*;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
@@ -927,6 +928,9 @@ public class TrestleReasoner {
     private TrestleIndividual GetIndividualFacts(OWLNamedIndividual individual) {
 
         final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(individual, hasTemporalIRI);
+        if (!individualObjectProperty.isPresent()) {
+            throw new TrestleMissingIndividualException(individual);
+        }
         final OWLObjectPropertyAssertionAxiom temporalProperty = individualObjectProperty.get().stream().findFirst().orElseThrow(() -> new TrestleMissingFactException(individual, hasTemporalIRI));
         final Set<OWLDataPropertyAssertionAxiom> temporalDataProperties = ontology.getAllDataPropertiesForIndividual(temporalProperty.getObject().asOWLNamedIndividual());
         final Optional<TemporalObject> temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(temporalDataProperties, null);

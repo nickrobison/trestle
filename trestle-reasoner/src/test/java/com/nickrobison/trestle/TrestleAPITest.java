@@ -43,6 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SuppressWarnings({"Duplicates", "initialization"})
 public class TrestleAPITest {
 
+    public static final String OVERRIDE_PREFIX = "http://nickrobison.com/test-owl#";
     private TrestleReasoner reasoner;
     private OWLDataFactory df;
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
@@ -58,6 +59,7 @@ public class TrestleAPITest {
                         config.getString("trestle.ontology.password"))
                 .withName("api_test")
                 .withOntology(IRI.create(config.getString("trestle.ontology.location")))
+                .withPrefix(OVERRIDE_PREFIX)
                 .withInputClasses(TestClasses.GAULTestClass.class,
                         TestClasses.GAULComplexClassTest.class,
                         TestClasses.JTSGeometryTest.class,
@@ -69,7 +71,7 @@ public class TrestleAPITest {
                 .build();
 
         df = OWLManager.getOWLDataFactory();
-        tp = new TrestleParser(df, TRESTLE_PREFIX);
+        tp = new TrestleParser(df, OVERRIDE_PREFIX);
     }
 
     @Test
@@ -169,13 +171,13 @@ public class TrestleAPITest {
         classObjects.add(offsetDateTimeTest);
 
         classObjects.parallelStream().forEach(object -> {
-                    try {
-                        reasoner.WriteAsTSObject(object);
-                    } catch (TrestleClassException e) {
-                        e.printStackTrace();
-                    } catch (MissingOntologyEntity missingOntologyEntity) {
-                        missingOntologyEntity.printStackTrace();
-                    }
+            try {
+                reasoner.WriteAsTSObject(object);
+            } catch (TrestleClassException e) {
+                e.printStackTrace();
+            } catch (MissingOntologyEntity missingOntologyEntity) {
+                missingOntologyEntity.printStackTrace();
+            }
         });
 
         reasoner.getUnderlyingOntology().runInference();
@@ -194,14 +196,16 @@ public class TrestleAPITest {
         });
 
 //        Search for some matching individuals
-        List<String> individuals = reasoner.searchForIndividual("43", IRI.create("trestle:", "GAUL_JTS_Test").toString(), null);
+        final IRI gaul_jts_test = IRI.create(OVERRIDE_PREFIX, "GAUL_JTS_Test");
+        List<String> individuals = reasoner.searchForIndividual("43", gaul_jts_test.toString(), null);
         assertEquals(1, individuals.size(), "Should only have 1 individual in the JTS class");
 //        FIXME(nrobison): For some reason, the inferencer isn't updating correctly. So the query works, but it's not grabbing the correct values
 //        individuals = reasoner.searchForIndividuals("2");
 //        assertEquals(4, individuals.size(), "Should have 4 individuals, overall");
 
-        final TrestleIndividual individualAttributes = reasoner.GetIndividualFacts(individuals.get(0));
-
+//        Test attribute generation
+        final TrestleIndividual trestleIndividual = reasoner.GetIndividualFacts(individuals.get(0));
+        assertEquals(2, trestleIndividual.getFacts().size(), "Wrong number of attributes");
 
 //        Now try to remove it
         reasoner.removeIndividual(classObjects.toArray(new Object[classObjects.size()]));

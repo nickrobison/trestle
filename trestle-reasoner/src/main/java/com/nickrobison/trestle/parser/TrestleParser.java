@@ -16,6 +16,11 @@ public class TrestleParser {
     public final ClassParser classParser;
     public final TemporalParser temporalParser;
 
+    /**
+     * Create the Trestle Parser class
+     * @param df - OWLDataFactory to use for generating the IRIs
+     * @param ReasonerPrefix - Prefix of the Trestle Reasoner
+     */
     public TrestleParser(OWLDataFactory df, String ReasonerPrefix) {
         this.df = df;
         this.ReasonerPrefix = ReasonerPrefix;
