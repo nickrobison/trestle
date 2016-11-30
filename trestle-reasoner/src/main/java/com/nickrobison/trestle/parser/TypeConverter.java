@@ -25,7 +25,7 @@ import java.util.function.Function;
 
 import static com.nickrobison.trestle.common.StaticIRI.WKTDatatypeIRI;
 import static com.nickrobison.trestle.common.StaticIRI.dateDatatypeIRI;
-import static com.nickrobison.trestle.parser.ClassParser.df;
+import static com.nickrobison.trestle.parser.ClassParser.dfStatic;
 import static com.nickrobison.trestle.parser.ClassParser.getFieldName;
 import static com.nickrobison.trestle.parser.ClassParser.getMethodName;
 
@@ -121,7 +121,7 @@ public class TypeConverter {
                 dataTypeToLookup = verifyOWLType(classToVerify, dataproperty.getProperty().asOWLDataProperty());
             }
             if (dataTypeToLookup == null) {
-                dataTypeToLookup = datatype.getBuiltInDatatype().getDatatype(df);
+                dataTypeToLookup = datatype.getBuiltInDatatype().getDatatype(dfStatic);
             }
             javaClass = datatypeMap.get(dataTypeToLookup);
             if (javaClass == null) {
@@ -194,43 +194,43 @@ public class TypeConverter {
     static Map<OWLDatatype, Class<?>> buildDatatype2ClassMap() {
         Map<OWLDatatype, Class<?>> datatypeMap = new HashMap<>();
 
-        datatypeMap.put(OWL2Datatype.XSD_INTEGER.getDatatype(df), Integer.class);
-        datatypeMap.put(OWL2Datatype.XSD_INT.getDatatype(df), int.class);
-        datatypeMap.put(OWL2Datatype.XSD_LONG.getDatatype(df), long.class);
-        datatypeMap.put(OWL2Datatype.XSD_DOUBLE.getDatatype(df), Double.class);
-        datatypeMap.put(OWL2Datatype.XSD_FLOAT.getDatatype(df), double.class);
-        datatypeMap.put(OWL2Datatype.XSD_DECIMAL.getDatatype(df), Double.class);
-        datatypeMap.put(OWL2Datatype.XSD_DATE_TIME.getDatatype(df), LocalDateTime.class);
-        datatypeMap.put(df.getOWLDatatype(dateDatatypeIRI), LocalDate.class);
-        datatypeMap.put(OWL2Datatype.XSD_BOOLEAN.getDatatype(df), Boolean.class);
-        datatypeMap.put(OWL2Datatype.XSD_STRING.getDatatype(df), String.class);
+        datatypeMap.put(OWL2Datatype.XSD_INTEGER.getDatatype(dfStatic), Integer.class);
+        datatypeMap.put(OWL2Datatype.XSD_INT.getDatatype(dfStatic), int.class);
+        datatypeMap.put(OWL2Datatype.XSD_LONG.getDatatype(dfStatic), long.class);
+        datatypeMap.put(OWL2Datatype.XSD_DOUBLE.getDatatype(dfStatic), Double.class);
+        datatypeMap.put(OWL2Datatype.XSD_FLOAT.getDatatype(dfStatic), double.class);
+        datatypeMap.put(OWL2Datatype.XSD_DECIMAL.getDatatype(dfStatic), Double.class);
+        datatypeMap.put(OWL2Datatype.XSD_DATE_TIME.getDatatype(dfStatic), LocalDateTime.class);
+        datatypeMap.put(dfStatic.getOWLDatatype(dateDatatypeIRI), LocalDate.class);
+        datatypeMap.put(OWL2Datatype.XSD_BOOLEAN.getDatatype(dfStatic), Boolean.class);
+        datatypeMap.put(OWL2Datatype.XSD_STRING.getDatatype(dfStatic), String.class);
 
         return datatypeMap;
     }
 
     private static Map<Class<?>, OWLDatatype> buildClassMap() {
         Map<Class<?>, OWLDatatype> types = new HashMap<>();
-        types.put(Integer.class, OWL2Datatype.XSD_INTEGER.getDatatype(df));
-        types.put(int.class, OWL2Datatype.XSD_INT.getDatatype(df));
-        types.put(Double.class, OWL2Datatype.XSD_DOUBLE.getDatatype(df));
-        types.put(double.class, OWL2Datatype.XSD_FLOAT.getDatatype(df));
-        types.put(Float.class, OWL2Datatype.XSD_DOUBLE.getDatatype(df));
-        types.put(float.class, OWL2Datatype.XSD_FLOAT.getDatatype(df));
-        types.put(Boolean.class, OWL2Datatype.XSD_BOOLEAN.getDatatype(df));
-        types.put(boolean.class, OWL2Datatype.XSD_BOOLEAN.getDatatype(df));
-        types.put(Long.class, OWL2Datatype.XSD_LONG.getDatatype(df));
-        types.put(long.class, OWL2Datatype.XSD_LONG.getDatatype(df));
-        types.put(String.class, OWL2Datatype.XSD_STRING.getDatatype(df));
+        types.put(Integer.class, OWL2Datatype.XSD_INTEGER.getDatatype(dfStatic));
+        types.put(int.class, OWL2Datatype.XSD_INT.getDatatype(dfStatic));
+        types.put(Double.class, OWL2Datatype.XSD_DOUBLE.getDatatype(dfStatic));
+        types.put(double.class, OWL2Datatype.XSD_FLOAT.getDatatype(dfStatic));
+        types.put(Float.class, OWL2Datatype.XSD_DOUBLE.getDatatype(dfStatic));
+        types.put(float.class, OWL2Datatype.XSD_FLOAT.getDatatype(dfStatic));
+        types.put(Boolean.class, OWL2Datatype.XSD_BOOLEAN.getDatatype(dfStatic));
+        types.put(boolean.class, OWL2Datatype.XSD_BOOLEAN.getDatatype(dfStatic));
+        types.put(Long.class, OWL2Datatype.XSD_LONG.getDatatype(dfStatic));
+        types.put(long.class, OWL2Datatype.XSD_LONG.getDatatype(dfStatic));
+        types.put(String.class, OWL2Datatype.XSD_STRING.getDatatype(dfStatic));
 //        Java temporals
-        types.put(LocalDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
-        types.put(LocalDate.class, df.getOWLDatatype(dateDatatypeIRI));
-        types.put(OffsetDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
-        types.put(ZonedDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
+        types.put(LocalDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(dfStatic));
+        types.put(LocalDate.class, dfStatic.getOWLDatatype(dateDatatypeIRI));
+        types.put(OffsetDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(dfStatic));
+        types.put(ZonedDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(dfStatic));
 //        Joda temporals
-        types.put(DateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
-        types.put(org.joda.time.LocalDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
-        types.put(org.joda.time.LocalDate.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(df));
-        types.put(Geometry.class, df.getOWLDatatype(WKTDatatypeIRI));
+        types.put(DateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(dfStatic));
+        types.put(org.joda.time.LocalDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(dfStatic));
+        types.put(org.joda.time.LocalDate.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(dfStatic));
+        types.put(Geometry.class, dfStatic.getOWLDatatype(WKTDatatypeIRI));
 
         return types;
     }
@@ -240,7 +240,7 @@ public class TypeConverter {
         if (annotation.datatype().toString().equals("") || annotation.datatype().equals(OWL2Datatype.XSD_NMTOKEN)) {
             return getDatatypeFromJavaClass(objectClass);
         } else {
-            return annotation.datatype().getDatatype(df);
+            return annotation.datatype().getDatatype(dfStatic);
         }
     }
 
@@ -249,7 +249,7 @@ public class TypeConverter {
         if (owlDatatype == null) {
             logger.error("Unsupported Java type {}", javaTypeClass);
 //            throw new RuntimeException(String.format("Unsupported Java type %s", javaTypeClass));
-            owlDatatype = OWL2Datatype.XSD_STRING.getDatatype(df);
+            owlDatatype = OWL2Datatype.XSD_STRING.getDatatype(dfStatic);
         }
         return owlDatatype;
     }

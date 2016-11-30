@@ -21,7 +21,7 @@ import java.util.Optional;
 import static com.nickrobison.trestle.common.StaticIRI.GEOSPARQLPREFIX;
 import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 import static com.nickrobison.trestle.common.StaticIRI.WKTDatatypeIRI;
-import static com.nickrobison.trestle.parser.ClassParser.df;
+import static com.nickrobison.trestle.parser.ClassParser.dfStatic;
 import static com.nickrobison.trestle.parser.ClassParser.filterMethodName;
 
 /**
@@ -33,20 +33,20 @@ public class SpatialParser {
 
     static Optional<OWLLiteral> parseWKTFromGeom(Object spatialObject) {
 
-        final OWLDatatype wktDatatype = df.getOWLDatatype(WKTDatatypeIRI);
+        final OWLDatatype wktDatatype = dfStatic.getOWLDatatype(WKTDatatypeIRI);
         final OWLLiteral wktLiteral;
         final String typeName = spatialObject.getClass().getTypeName();
         if (typeName.contains("java.lang.String")) {
-            wktLiteral = df.getOWLLiteral(spatialObject.toString().replace("\"", ""), wktDatatype);
+            wktLiteral = dfStatic.getOWLLiteral(spatialObject.toString().replace("\"", ""), wktDatatype);
         } else if (typeName.contains("com.vividsolutions")) {
             String jtsWKT = JTSParser.parseJTSToWKT(spatialObject);
-            wktLiteral = df.getOWLLiteral(jtsWKT, wktDatatype);
+            wktLiteral = dfStatic.getOWLLiteral(jtsWKT, wktDatatype);
         } else if (typeName.contains("com.esri.core.geometry")) {
             final String esriWKT = ESRIParser.parseESRIToWKT((Geometry) spatialObject);
-            wktLiteral = df.getOWLLiteral(esriWKT, wktDatatype);
+            wktLiteral = dfStatic.getOWLLiteral(esriWKT, wktDatatype);
         } else if (typeName.contains("org.opengis.geometry")) {
             final String geoToolsWKT = GeotoolsParser.parseGeotoolsToWKT((org.opengis.geometry.Geometry) spatialObject);
-            wktLiteral = df.getOWLLiteral(geoToolsWKT, wktDatatype);
+            wktLiteral = dfStatic.getOWLLiteral(geoToolsWKT, wktDatatype);
         } else {
             return Optional.empty();
         }

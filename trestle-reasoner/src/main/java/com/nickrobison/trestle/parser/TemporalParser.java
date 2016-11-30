@@ -20,7 +20,7 @@ import java.time.temporal.Temporal;
 import java.util.*;
 
 import static com.nickrobison.trestle.common.StaticIRI.*;
-import static com.nickrobison.trestle.parser.ClassParser.df;
+import static com.nickrobison.trestle.parser.ClassParser.dfStatic;
 import static com.nickrobison.trestle.parser.ClassParser.filterMethodName;
 import static com.nickrobison.trestle.parser.temporal.JavaTimeParser.parseDateTimeToJavaTemporal;
 import static com.nickrobison.trestle.parser.temporal.JodaTimeParser.parseDateTimeToJodaTemporal;
@@ -41,8 +41,11 @@ public class TemporalParser {
         END
     }
 
-    ;
+    private final ClassParser cp;
 
+    TemporalParser(ClassParser cp) {
+        this.cp = cp;
+    }
 
     public static boolean IsDefault(Class<?> clazz) {
 
@@ -57,11 +60,8 @@ public class TemporalParser {
                 .filter(f -> f.isAnnotationPresent(DefaultTemporalProperty.class))
                 .findFirst();
 
-        if (field.isPresent()) {
-            return true;
-        }
+        return field.map(f -> true).orElse(false);
 
-        return false;
     }
 
     /**
@@ -204,18 +204,14 @@ public class TemporalParser {
 
         if (first.isPresent()) {
             return (Class<? extends Temporal>) first.get().getType();
-//            return (Class<? extends Temporal>) first.get().getType();
         }
 
         final Optional<Method> method = Arrays.stream(clazz.getDeclaredMethods())
                 .filter(m -> (m.isAnnotationPresent(DefaultTemporalProperty.class) | m.isAnnotationPresent(StartTemporalProperty.class) | m.isAnnotationPresent(EndTemporalProperty.class)))
                 .filter(m -> Temporal.class.isAssignableFrom(m.getReturnType()))
                 .findFirst();
-        if (method.isPresent()) {
-            return (Class<? extends Temporal>) method.get().getReturnType();
-        }
 
-        return null;
+        return method.map(m -> (Class<? extends Temporal>) m.getReturnType()).orElse(null);
 
     }
 
@@ -225,9 +221,9 @@ public class TemporalParser {
      * @param clazz - Input class to parse properties from
      * @return - Optional List of OWLDataProperties
      */
-    public static Optional<List<OWLDataProperty>> GetTemporalsAsDataProperties(Class<?> clazz) {
+    public Optional<List<OWLDataProperty>> GetTemporalsAsDataProperties(Class<?> clazz) {
 
-        final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(clazz);
+        final OWLNamedIndividual owlNamedIndividual = cp.GetIndividual(clazz);
         List<OWLDataProperty> temporalProperties = new ArrayList<>();
 
         if (IsDefault(clazz)) {
@@ -239,9 +235,9 @@ public class TemporalParser {
             if (defaultMethod.isPresent()) {
                 Method method = defaultMethod.get();
                 if (method.getAnnotation(DefaultTemporalProperty.class).name().equals("")) {
-                    temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, filterMethodName(method))));
+                    temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, filterMethodName(method))));
                 } else {
-                    temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, method.getAnnotation(DefaultTemporalProperty.class).name())));
+                    temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, method.getAnnotation(DefaultTemporalProperty.class).name())));
                 }
             } else {
                 final Optional<Field> defaultField = Arrays.stream(clazz.getDeclaredFields())
@@ -251,9 +247,9 @@ public class TemporalParser {
                 if (defaultField.isPresent()) {
                     Field field = defaultField.get();
                     if (field.getAnnotation(DefaultTemporalProperty.class).name().equals("")) {
-                        temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getName())));
+                        temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getName())));
                     } else {
-                        temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getAnnotation(DefaultTemporalProperty.class).name())));
+                        temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getAnnotation(DefaultTemporalProperty.class).name())));
                     }
                 }
             }
@@ -268,9 +264,9 @@ public class TemporalParser {
             if (startMethod.isPresent()) {
                 Method method = startMethod.get();
                 if (method.getAnnotation(StartTemporalProperty.class).name().equals("")) {
-                    temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, filterMethodName(method))));
+                    temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, filterMethodName(method))));
                 } else {
-                    temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, method.getAnnotation(StartTemporalProperty.class).name())));
+                    temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, method.getAnnotation(StartTemporalProperty.class).name())));
                 }
             } else {
 //                Fields
@@ -281,9 +277,9 @@ public class TemporalParser {
                 if (startField.isPresent()) {
                     Field field = startField.get();
                     if (field.getAnnotation(StartTemporalProperty.class).name().equals("")) {
-                        temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getName())));
+                        temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getName())));
                     } else {
-                        temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getAnnotation(StartTemporalProperty.class).name())));
+                        temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getAnnotation(StartTemporalProperty.class).name())));
                     }
                 }
             }
@@ -297,9 +293,9 @@ public class TemporalParser {
             if (endMethod.isPresent()) {
                 Method method = endMethod.get();
                 if (method.getAnnotation(EndTemporalProperty.class).name().equals("")) {
-                    temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, filterMethodName(method))));
+                    temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, filterMethodName(method))));
                 } else {
-                    temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, method.getAnnotation(EndTemporalProperty.class).name())));
+                    temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, method.getAnnotation(EndTemporalProperty.class).name())));
                 }
             } else {
                 final Optional<Field> endField = Arrays.stream(clazz.getDeclaredFields())
@@ -309,9 +305,9 @@ public class TemporalParser {
                 if (endField.isPresent()) {
                     Field field = endField.get();
                     if (field.getAnnotation(EndTemporalProperty.class).name().equals("")) {
-                        temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getName())));
+                        temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getName())));
                     } else {
-                        temporalProperties.add(df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getAnnotation(EndTemporalProperty.class).name())));
+                        temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getAnnotation(EndTemporalProperty.class).name())));
                     }
                 }
             }
@@ -324,11 +320,11 @@ public class TemporalParser {
         return Optional.of(temporalProperties);
     }
 
-    public static Optional<List<TemporalObject>> GetTemporalObjects(Object inputObject) {
+    public Optional<List<TemporalObject>> GetTemporalObjects(Object inputObject) {
 
         final Class<?> clazz = inputObject.getClass();
         List<TemporalObject> temporalObjects = new ArrayList<>();
-        final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(inputObject);
+        final OWLNamedIndividual owlNamedIndividual = cp.GetIndividual(inputObject);
 
 //        Fields
         for (Field classField : clazz.getDeclaredFields()) {
@@ -352,9 +348,7 @@ public class TemporalParser {
 
 
 //                TODO(nrobison): All of this is gross
-                if (temporalObject.isPresent()) {
-                    temporalObjects.add(temporalObject.get());
-                }
+                temporalObject.ifPresent(temporalObjects::add);
             } else if (classField.isAnnotationPresent(StartTemporalProperty.class)) {
                 final StartTemporalProperty annotation = classField.getAnnotation(StartTemporalProperty.class);
                 TemporalObject temporalObject = null;
@@ -411,9 +405,7 @@ public class TemporalParser {
 
                     final Optional<TemporalObject> temporalObject = parseDefaultTemporal(methodValue.get(), annotation, owlNamedIndividual);
 
-                    if (temporalObject.isPresent()) {
-                        temporalObjects.add(temporalObject.get());
-                    }
+                    temporalObject.ifPresent(temporalObjects::add);
                 }
             } else if (classMethod.isAnnotationPresent(StartTemporalProperty.class)) {
                 final @NonNull StartTemporalProperty annotation = classMethod.getAnnotation(StartTemporalProperty.class);
@@ -421,9 +413,7 @@ public class TemporalParser {
 
                 final Optional<TemporalObject> temporalObject = parseStartTemporal(annotation, methodValue.orElseThrow(RuntimeException::new), owlNamedIndividual, inputObject, ClassParser.AccessType.METHOD, clazz);
 
-                if (temporalObject.isPresent()) {
-                    temporalObjects.add(temporalObject.get());
-                }
+                temporalObject.ifPresent(temporalObjects::add);
             }
         }
 

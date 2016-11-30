@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -43,6 +44,7 @@ public class OracleOntologyGAULoader {
     private OracleOntology ontology;
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
+    private TrestleParser tp;
 
     @BeforeEach
     public void setup() throws IOException, OWLOntologyCreationException {
@@ -86,6 +88,8 @@ public class OracleOntologyGAULoader {
                 .build().get();
 
         ontology.initializeOntology();
+
+        tp = new TrestleParser(df, TRESTLE_PREFIX);
     }
 
     @Test
@@ -105,13 +109,13 @@ public class OracleOntologyGAULoader {
         ontology.associateOWLClass(owlSubClassOfAxiom);
 
         for (TestClasses.GAULTestClass gaul : gaulObjects) {
-            datasetClass = ClassParser.GetObjectClass(gaul);
-            final OWLNamedIndividual gaulIndividual = ClassParser.GetIndividual(gaul);
+            datasetClass = tp.classParser.GetObjectClass(gaul);
+            final OWLNamedIndividual gaulIndividual = tp.classParser.GetIndividual(gaul);
             final OWLClassAssertionAxiom testClass = df.getOWLClassAssertionAxiom(datasetClass, gaulIndividual);
             ontology.createIndividual(testClass);
 
 
-            final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(gaul);
+            final Optional<List<TemporalObject>> temporalObjects = tp.temporalParser.GetTemporalObjects(gaul);
             for (TemporalObject temporal : temporalObjects.orElseThrow(() -> new RuntimeException("Missing temporals"))) {
 
 //                Write the temporal
@@ -133,7 +137,7 @@ public class OracleOntologyGAULoader {
             }
 
             //        Write the data properties
-            final Optional<List<OWLDataPropertyAssertionAxiom>> gaulDataProperties = ClassParser.GetDataProperties(gaul);
+            final Optional<List<OWLDataPropertyAssertionAxiom>> gaulDataProperties = tp.classParser.GetDataProperties(gaul);
             for (OWLDataPropertyAssertionAxiom dataAxiom : gaulDataProperties.orElseThrow(() -> new RuntimeException("Missing data properties"))) {
 
                 ontology.writeIndividualDataProperty(dataAxiom);

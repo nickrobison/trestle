@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -48,6 +49,7 @@ public class ConcurrentOntologyGAULLoader {
     private ITrestleOntology ontology;
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
+    private TrestleParser tp;
 
     @BeforeEach
     public void setup() throws IOException, OWLOntologyCreationException {
@@ -90,6 +92,8 @@ public class ConcurrentOntologyGAULLoader {
                 .build().get();
 
         ontology.initializeOntology();
+
+        tp = new TrestleParser(df, TRESTLE_PREFIX);
     }
 
     @Test
@@ -110,18 +114,18 @@ public class ConcurrentOntologyGAULLoader {
 //            completionService.submit(CompletableFuture.runAsync(() -> {
 
 
-//                datasetClass = ClassParser.GetObjectClass(gaul);
+//                datasetClass = classParser.GetObjectClass(gaul);
 
         final List<CompletableFuture<Void>> completableFutures = gaulObjects
                 .stream()
                 .map(gaul -> CompletableFuture.runAsync(() -> {
-                    final OWLNamedIndividual gaulIndividual = ClassParser.GetIndividual(gaul);
+                    final OWLNamedIndividual gaulIndividual = tp.classParser.GetIndividual(gaul);
                     final OWLClassAssertionAxiom testClass = df.getOWLClassAssertionAxiom(datasetClass, gaulIndividual);
                     logger.debug("Writing main individual");
                     ontology.createIndividual(testClass);
 
                     //        Write the data properties
-                    final Optional<List<OWLDataPropertyAssertionAxiom>> gaulDataProperties = ClassParser.GetDataProperties(gaul);
+                    final Optional<List<OWLDataPropertyAssertionAxiom>> gaulDataProperties = tp.classParser.GetDataProperties(gaul);
                     gaulDataProperties.orElseThrow(() -> new RuntimeException("missing data properties")).forEach(dataAxiom -> {
                         try {
                             ontology.writeIndividualDataProperty(dataAxiom);
@@ -142,7 +146,7 @@ public class ConcurrentOntologyGAULLoader {
 //                            .collect(Collectors.toList());
 //                    final CompletableFuture<Void> voidCompletableFuture = CompletableFuture.allOf(propertiesFuture.toArray(new CompletableFuture[propertiesFuture.size()]));
 
-                    final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(gaul);
+                    final Optional<List<TemporalObject>> temporalObjects = tp.temporalParser.GetTemporalObjects(gaul);
                     for (TemporalObject temporal : temporalObjects.orElseThrow(() -> new RuntimeException("Missing temporals"))) {
                         try {
 
@@ -216,7 +220,7 @@ public class ConcurrentOntologyGAULLoader {
         assertEquals(28419, individualDataProperty.get().stream().findFirst().get().parseInteger(), "Codes don't match");
         //        Try some inference
 
-//        final OWLObjectProperty has_temporal = df.getOWLObjectProperty(IRI.create("trestle:", "has_temporal"));
+//        final OWLObjectProperty has_temporal = dfStatic.getOWLObjectProperty(IRI.create("trestle:", "has_temporal"));
 //        final Optional<Set<OWLObjectPropertyAssertionAxiom>> has_temporalProperty = ontology.getIndividualObjectProperty(ndorwa, has_temporal);
 //        assertTrue(has_temporalProperty.isPresent(), "Should have inferred temporal");
 //        assertEquals(1, has_temporalProperty.get().size(), "Should only have 1 temporal");

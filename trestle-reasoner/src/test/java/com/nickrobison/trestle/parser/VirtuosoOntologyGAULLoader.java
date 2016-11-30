@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -49,6 +50,7 @@ public class VirtuosoOntologyGAULLoader {
     private VirtuosoOntology ontology;
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
+    private TrestleParser tp;
 
     @BeforeEach
     public void setup() throws IOException, OWLOntologyCreationException {
@@ -90,6 +92,8 @@ public class VirtuosoOntologyGAULLoader {
                 .build().get();
 
         ontology.initializeOntology();
+
+        tp = new TrestleParser(df, TRESTLE_PREFIX);
     }
 
     @Test
@@ -101,13 +105,13 @@ public class VirtuosoOntologyGAULLoader {
         final OWLObjectProperty temporal_of = df.getOWLObjectProperty(IRI.create("trestle:", "temporal_of"));
         final OWLDataProperty valid_from = df.getOWLDataProperty(IRI.create("trestle:", "valid_from"));
         final OWLDataProperty valid_to = df.getOWLDataProperty(IRI.create("trestle:", "valid_to"));
-//        datasetClass = ClassParser.GetObjectClass(gaulObjects.get(0));
+//        datasetClass = classParser.GetObjectClass(gaulObjects.get(0));
 
         Instant start = Instant.now();
 //        ontology.openAndLock(true);
         gaulObjects.parallelStream().forEach(gaul -> {
 
-            final OWLNamedIndividual gaulIndividual = ClassParser.GetIndividual(gaul);
+            final OWLNamedIndividual gaulIndividual = tp.classParser.GetIndividual(gaul);
 
 //            if (ontology.containsResource(gaulIndividual)) {
 //                logger.info("{} already exists in the ontology", gaulIndividual);
@@ -116,7 +120,7 @@ public class VirtuosoOntologyGAULLoader {
             final OWLClassAssertionAxiom testClass = df.getOWLClassAssertionAxiom(datasetClass, gaulIndividual);
             ontology.createIndividual(testClass);
 
-            final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(gaul);
+            final Optional<List<TemporalObject>> temporalObjects = tp.temporalParser.GetTemporalObjects(gaul);
 //            for (TemporalObject temporal : temporalObjects.orElseThrow(() -> new RuntimeException("Missing temporals"))) {
             temporalObjects.orElseThrow(() -> new RuntimeException("Missing temporals")).parallelStream().forEach(temporal -> {
 
@@ -147,7 +151,7 @@ public class VirtuosoOntologyGAULLoader {
             });
 
             //        Write the data properties
-            final Optional<List<OWLDataPropertyAssertionAxiom>> gaulDataProperties = ClassParser.GetDataProperties(gaul);
+            final Optional<List<OWLDataPropertyAssertionAxiom>> gaulDataProperties = tp.classParser.GetDataProperties(gaul);
 //            for (OWLDataPropertyAssertionAxiom dataAxiom : gaulDataProperties.orElseThrow(() -> new RuntimeException("Missing data properties"))) {
             gaulDataProperties.orElseThrow(() -> new RuntimeException("Missing data properties")).parallelStream().forEach(dataAxiom -> {
 
@@ -185,9 +189,9 @@ public class VirtuosoOntologyGAULLoader {
 
 //        Try some inference
 //        FIXME(nrobison): Inference is broken
-//        final OWLNamedIndividual ancuabe = df.getOWLNamedIndividual(IRI.create("trestle:", "Ancuabe"));
+//        final OWLNamedIndividual ancuabe = dfStatic.getOWLNamedIndividual(IRI.create("trestle:", "Ancuabe"));
 //
-//        final OWLObjectProperty has_temporal = df.getOWLObjectProperty(IRI.create("trestle:", "has_temporal"));
+//        final OWLObjectProperty has_temporal = dfStatic.getOWLObjectProperty(IRI.create("trestle:", "has_temporal"));
 //        final Optional<Set<OWLObjectProperty>> has_temporalProperty = ontology.getIndividualObjectProperty(ancuabe, has_temporal);
 //        assertTrue(has_temporalProperty.isPresent(), "Should have inferred temporal");
 //        assertEquals(1, has_temporalProperty.get().size(), "Should only have 1 temporal");

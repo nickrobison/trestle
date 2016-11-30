@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -41,6 +42,7 @@ public class LocalOntologyGAULLoader {
     private List<TestClasses.GAULTestClass> gaulObjects = new ArrayList<>();
     private OWLDataFactory df;
     private LocalOntology ontology;
+    private TrestleParser tp;
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
 
@@ -82,6 +84,8 @@ public class LocalOntologyGAULLoader {
                 .name("trestle")
                 .build().get();
 
+        tp = new TrestleParser(df, TRESTLE_PREFIX);
+
 //        ontology.initializeOntology();
     }
 
@@ -100,12 +104,12 @@ public class LocalOntologyGAULLoader {
             final TrestleTransaction threadTransaction = ontology.createandOpenNewTransaction(true);
 
 //        for (TestClasses.GAULTestClass gaul : gaulObjects) {
-            final OWLClass singleDatasetClass = ClassParser.GetObjectClass(gaul);
-            final OWLNamedIndividual gaulIndividual = ClassParser.GetIndividual(gaul);
+            final OWLClass singleDatasetClass = tp.classParser.GetObjectClass(gaul);
+            final OWLNamedIndividual gaulIndividual = tp.classParser.GetIndividual(gaul);
             final OWLClassAssertionAxiom testClass = df.getOWLClassAssertionAxiom(singleDatasetClass, gaulIndividual);
             ontology.createIndividual(testClass);
 
-            final Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(gaul);
+            final Optional<List<TemporalObject>> temporalObjects = tp.temporalParser.GetTemporalObjects(gaul);
             for (TemporalObject temporal : temporalObjects.orElseThrow(() -> new RuntimeException("Missing temporals"))) {
 
 //                Write the temporal
@@ -136,7 +140,7 @@ public class LocalOntologyGAULLoader {
             }
 
             //        Write the data properties
-            final Optional<List<OWLDataPropertyAssertionAxiom>> gaulDataProperties = ClassParser.GetDataProperties(gaul);
+            final Optional<List<OWLDataPropertyAssertionAxiom>> gaulDataProperties = tp.classParser.GetDataProperties(gaul);
             for (OWLDataPropertyAssertionAxiom dataAxiom : gaulDataProperties.orElseThrow(() -> new RuntimeException("Missing data properties"))) {
 
                 try {
@@ -178,9 +182,9 @@ public class LocalOntologyGAULLoader {
 //        assertEquals(2, resultSet.getRowNumber(), "Wrong number of intersected results");
 
 //        Try some inference
-//        final OWLNamedIndividual ndorwa = df.getOWLNamedIndividual(IRI.create("trestle:", "Ndorwa"));
+//        final OWLNamedIndividual ndorwa = dfStatic.getOWLNamedIndividual(IRI.create("trestle:", "Ndorwa"));
 //
-//        final OWLObjectProperty has_temporal = df.getOWLObjectProperty(IRI.create("trestle:", "has_temporal"));
+//        final OWLObjectProperty has_temporal = dfStatic.getOWLObjectProperty(IRI.create("trestle:", "has_temporal"));
 //        final Optional<Set<OWLObjectPropertyAssertionAxiom>> has_temporalProperty = ontology.getIndividualObjectProperty(ndorwa, has_temporal);
 //        assertTrue(has_temporalProperty.isPresent(), "Should have inferred temporal");
 //        assertEquals(1, has_temporalProperty.get().size(), "Should only have 1 temporal");
