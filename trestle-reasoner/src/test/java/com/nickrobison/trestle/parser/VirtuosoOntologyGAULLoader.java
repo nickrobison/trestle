@@ -81,6 +81,7 @@ public class VirtuosoOntologyGAULLoader {
             gaulObjects.add(new TestClasses.GAULTestClass(code, splitLine[1].replace("\"", ""), date.atStartOfDay().plusSeconds(1), splitLine[4].replace("\"", "")));
         }
         final Config config = ConfigFactory.parseResources("test.configuration.conf");
+        final Config localConf = config.getConfig("trestle.ontology.virtuoso");
 
         final IRI iri = IRI.create(config.getString("trestle.ontology.location"));
         df = OWLManager.getOWLDataFactory();
@@ -88,7 +89,9 @@ public class VirtuosoOntologyGAULLoader {
         ontology = (VirtuosoOntology) new OntologyBuilder()
                 .fromIRI(iri)
                 .name("trestle")
-                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+                .withDBConnection(localConf.getString("connectionString"),
+                        localConf.getString("username"),
+                        localConf.getString("password"))
                 .build().get();
 
         ontology.initializeOntology();

@@ -36,13 +36,14 @@ public class OracleOntologyTest {
     @BeforeEach
     public void setupNewOntology() throws OWLOntologyCreationException {
         final Config config = ConfigFactory.parseResources("test.configuration.conf");
+        final Config localConf = config.getConfig("trestle.ontology.oracle");
         final IRI iri = IRI.create(config.getString("trestle.ontology.location"));
         df = OWLManager.getOWLDataFactory();
 
         ontology = (OracleOntology) new OntologyBuilder()
-                .withDBConnection(config.getString("trestle.ontology.connectionString"),
-                        config.getString("trestle.ontology.username"),
-                        config.getString("trestle.ontology.password"))
+                .withDBConnection(localConf.getString("connectionString"),
+                        localConf.getString("username"),
+                        localConf.getString("password"))
                 .fromIRI(iri)
                 .name("trestle_test3")
                 .build().get();

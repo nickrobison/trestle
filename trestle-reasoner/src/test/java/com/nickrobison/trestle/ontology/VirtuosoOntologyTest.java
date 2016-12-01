@@ -31,12 +31,13 @@ public class VirtuosoOntologyTest {
     @BeforeEach
     public void setupNewOntology() throws OWLOntologyCreationException {
         final Config config = ConfigFactory.parseResources("test.configuration.conf");
+        final Config localConf = config.getConfig("trestle.ontology.virtuoso");
         final IRI iri = IRI.create(config.getString("trestle.ontology.location"));
         df = OWLManager.getOWLDataFactory();
 
         ontology = (VirtuosoOntology) new OntologyBuilder()
                 .fromIRI(iri)
-                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
+                .withDBConnection(localConf.getString("connectionString"), localConf.getString("username"), localConf.getString("password"))
                 .name("trestle")
                 .build().get();
 

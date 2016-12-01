@@ -76,13 +76,14 @@ public class OracleOntologyGAULoader {
         }
         final Config config = ConfigFactory.parseResources("test.configuration.conf");
         final IRI iri = IRI.create(config.getString("trestle.ontology.location"));
+        final Config localConf = config.getConfig("trestle.ontology.oracle");
         df = OWLManager.getOWLDataFactory();
 
         ontology = (OracleOntology) new OntologyBuilder()
                 .withDBConnection(
-                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-                        "spatialUser",
-                        "spatial1")
+                        localConf.getString("connectionString"),
+                        localConf.getString("username"),
+                        localConf.getString("password"))
                 .fromIRI(iri)
                 .name("trestle_gaul_loader1")
                 .build().get();
