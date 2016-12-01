@@ -2,15 +2,12 @@ package com.nickrobison.trestle.types.temporal;
 
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.time.temporal.Temporal;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-
-import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 
 /**
  * Created by nrobison on 6/30/16.
@@ -28,10 +25,6 @@ public abstract class TemporalObject {
 
     public String getID() {
         return this.id;
-    }
-
-    public IRI getIDAsIRI() {
-        return IRI.create(TRESTLE_PREFIX, this.id);
     }
 
     public Set<OWLNamedIndividual> getTemporalRelations() {

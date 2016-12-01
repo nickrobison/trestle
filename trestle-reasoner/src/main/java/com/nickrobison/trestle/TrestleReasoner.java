@@ -290,11 +290,11 @@ public class TrestleReasoner {
 //                Write the property
                 ontology.writeIndividualDataProperty(propertyIndividual, property.getProperty().asOWLDataProperty(), property.getObject());
 //                Write the temporal relation
-                ontology.writeIndividualObjectProperty(propertyIndividual, validTimeIRI, df.getOWLNamedIndividual(temporal.getIDAsIRI()));
+                ontology.writeIndividualObjectProperty(propertyIndividual, validTimeIRI, df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX, temporal.getID())));
 //                Write the relation back to the root individual
                 ontology.writeIndividualObjectProperty(propertyIndividual, factOfIRI, rootIndividual);
 //                Write the database time
-                ontology.writeIndividualObjectProperty(propertyIndividual, databaseTimeIRI, df.getOWLNamedIndividual(databaseTemporal.getIDAsIRI()));
+                ontology.writeIndividualObjectProperty(propertyIndividual, databaseTimeIRI, df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX, databaseTemporal.getID())));
             } catch (MissingOntologyEntity missingOntologyEntity) {
                 logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
             }
@@ -989,7 +989,7 @@ public class TrestleReasoner {
 
     private void writeTemporalWithAssociation(TemporalObject temporal, OWLNamedIndividual individual, @Nullable TemporalScope overrideTemporalScope, @Nullable IRI overrideTemporalAssociation) throws MissingOntologyEntity {
 //        Write the object
-        final IRI temporalIRI = temporal.getIDAsIRI();
+        final IRI temporalIRI = IRI.create(REASONER_PREFIX, temporal.getID());
         ontology.createIndividual(temporalIRI, temporalClassIRI);
         TemporalScope scope = temporal.getScope();
         TemporalType type = temporal.getType();
