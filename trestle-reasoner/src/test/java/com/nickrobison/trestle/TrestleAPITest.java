@@ -4,8 +4,6 @@ import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
-import com.nickrobison.trestle.parser.ClassParser;
-import com.nickrobison.trestle.parser.OracleOntologyGAULoader;
 import com.nickrobison.trestle.parser.TrestleParser;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.typesafe.config.Config;
@@ -33,7 +31,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -79,7 +76,7 @@ public class TrestleAPITest {
 //        Parse the CSV
         List<TestClasses.GAULTestClass> gaulObjects = new ArrayList<>();
 
-        final InputStream is = OracleOntologyGAULoader.class.getClassLoader().getResourceAsStream("objects.csv");
+        final InputStream is = TrestleAPITest.class.getClassLoader().getResourceAsStream("objects.csv");
 
         final BufferedReader br = new BufferedReader(new InputStreamReader(is));
 

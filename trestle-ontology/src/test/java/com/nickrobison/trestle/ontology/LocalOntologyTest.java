@@ -1,6 +1,8 @@
 package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.ontology.LocalOntology;
+import com.nickrobison.trestle.ontology.OntologyBuilder;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.junit.jupiter.api.AfterEach;
