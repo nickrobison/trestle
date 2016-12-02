@@ -26,6 +26,7 @@ public class TrestleBuilder {
     Optional<String> reasonerPrefix = Optional.empty();
     boolean initialize = false;
     boolean caching = true;
+    final TrestlePrefixManager pm;
 
     /**
      * Builder pattern for Trestle Reasoner
@@ -34,6 +35,19 @@ public class TrestleBuilder {
         this.username = "";
         this.password = "";
         this.inputClasses = new HashSet<>();
+        pm = new TrestlePrefixManager();
+    }
+
+    /**
+     * Builder pattern for Trestle Reasoner
+     * @param reasonerPrefix - String of reasoner prefix
+     */
+    public TrestleBuilder(String reasonerPrefix) {
+        this.username = "";
+        this.password = "";
+        this.inputClasses = new HashSet<>();
+        pm = new TrestlePrefixManager(reasonerPrefix);
+        this.reasonerPrefix = Optional.of(reasonerPrefix);
     }
 
     /**
@@ -72,6 +86,18 @@ public class TrestleBuilder {
      */
     public TrestleBuilder withPrefix(String iri) {
         this.reasonerPrefix = Optional.of(iri);
+        this.pm.setDefaultPrefix(iri);
+        return this;
+    }
+
+    /**
+     * Add ontology prefix and URI string to expand to
+     * @param prefix - String of ontology prefix
+     * @param uri - String of URI to expand prefix to
+     * @return - TrestleBuilder
+     */
+    public TrestleBuilder addPrefix(String prefix, String uri) {
+        this.pm.addPrefix(prefix, uri);
         return this;
     }
 

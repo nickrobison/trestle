@@ -143,6 +143,7 @@ public class TrestleReasoner {
         OntologyBuilder ontologyBuilder = new OntologyBuilder()
 //                .fromIRI(IRI.create(ontologyResource))
                 .fromInputStream(ontologyIS)
+                .withPrefixManager(builder.pm.getDefaultPrefixManager())
                 .name(builder.ontologyName.orElse(DEFAULTNAME));
         if (builder.connectionString.isPresent()) {
             ontologyBuilder = ontologyBuilder.withDBConnection(builder.connectionString.get(),

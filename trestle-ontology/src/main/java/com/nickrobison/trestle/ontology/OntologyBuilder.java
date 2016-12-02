@@ -12,11 +12,14 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.util.*;
 
+import static com.nickrobison.trestle.common.StaticIRI.GEOSPARQLPREFIX;
+import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
+
 /**
  * Created by nrobison on 6/21/16.
  */
 // FIXME(nrobison): Work to remove this, I feel like my optionals should fix the nullness, right?
-@SuppressWarnings("nullness")
+@SuppressWarnings({"nullness", "OptionalUsedAsFieldOrParameterType"})
 public class OntologyBuilder {
     private static final Logger logger = LoggerFactory.getLogger(OntologyBuilder.class);
 
@@ -161,7 +164,6 @@ public class OntologyBuilder {
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
                     pm.orElse(createDefaultPrefixManager())
-//                    classify(owlOntology, new ConsoleProgressMonitor())
             ));
         }
     }
@@ -172,40 +174,18 @@ public class OntologyBuilder {
 
     private DefaultPrefixManager createDefaultPrefixManager() {
         DefaultPrefixManager pm = new DefaultPrefixManager();
-        pm.setDefaultPrefix("http://nickrobison.com/dissertation/trestle.owl#");
-//        TODO(nrobison): This should be broken into its own thing. Maybe a function to add prefixes?
-//        pm.setPrefix("main_geo:", "http://nickrobison.com/dissertation/main_geo.owl#");
+        pm.setDefaultPrefix(TRESTLE_PREFIX);
         pm.setPrefix("rdf:", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
         pm.setPrefix("rdfs:", "http://www.w3.org/2000/01/rdf-schema#");
         pm.setPrefix("owl:", "http://www.w3.org/2002/07/owl#");
 //        Jena doesn't use the normal geosparql prefix, so we need to define a separate spatial class
         pm.setPrefix("spatial:", "http://www.jena.apache.org/spatial#");
-        pm.setPrefix("geosparql:", "http://www.opengis.net/ont/geosparql#");
-        pm.setPrefix("trestle:", "http://nickrobison.com/dissertation/trestle.owl#");
+        pm.setPrefix("geosparql:", GEOSPARQLPREFIX);
+        pm.setPrefix("trestle:", TRESTLE_PREFIX);
 //        Need the ogc and ogcf prefixes for the oracle spatial
         pm.setPrefix("ogcf:", "http://www.opengis.net/def/function/geosparql/");
         pm.setPrefix("ogc:", "http://www.opengis.net/ont/geosparql#");
         pm.setPrefix("orageo:", "http://xmlns.oracle.com/rdf/geo/");
-
-//        Add any defined prefixes
         return pm;
     }
-
-//    private static PelletReasoner classify(final OWLOntology ontology, final ReasonerProgressMonitor progressMonitor) {
-//        final PelletReasoner reasoner = PelletReasonerFactory.getInstance().createReasoner(ontology, new SimpleConfiguration(progressMonitor));
-//
-//        reasoner.precomputeInferences(
-//                InferenceType.CLASS_ASSERTIONS,
-//                InferenceType.DATA_PROPERTY_ASSERTIONS,
-//                InferenceType.DISJOINT_CLASSES,
-//                InferenceType.SAME_INDIVIDUAL,
-//                InferenceType.CLASS_HIERARCHY,
-//                InferenceType.OBJECT_PROPERTY_HIERARCHY,
-//                InferenceType.OBJECT_PROPERTY_ASSERTIONS,
-//                InferenceType.DIFFERENT_INDIVIDUALS
-//        );
-//
-//        return reasoner;
-//    }
-
 }
