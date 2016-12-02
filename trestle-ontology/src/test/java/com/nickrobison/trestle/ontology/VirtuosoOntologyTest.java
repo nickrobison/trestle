@@ -24,7 +24,7 @@ public class VirtuosoOntologyTest extends OntologyTest {
                 .fromInputStream(inputStream)
                 .withDBConnection(localConf.getString("connectionString"), localConf.getString("username"), localConf.getString("password"))
                 .name("trestle")
-                .build().get();
+                .build();
 
         ontology.initializeOntology();
     }

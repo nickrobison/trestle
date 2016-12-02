@@ -22,7 +22,7 @@ public class LocalOntologyTest extends OntologyTest {
         ontology = new OntologyBuilder()
                 .fromInputStream(inputStream)
                 .name("trestle")
-                .build().get();
+                .build();
         ontology.initializeOntology();
     }
 

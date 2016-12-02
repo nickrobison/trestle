@@ -151,7 +151,7 @@ public class TrestleReasoner {
                     builder.password);
         }
 
-        ontology = ontologyBuilder.build().orElseThrow(() -> new RuntimeException("Cannot build ontology"));
+        ontology = ontologyBuilder.build();
         logger.debug("Ontology connected");
         if (builder.initialize) {
             logger.info("Initializing ontology");

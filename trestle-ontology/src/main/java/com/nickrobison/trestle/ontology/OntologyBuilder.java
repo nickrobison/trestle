@@ -93,8 +93,7 @@ public class OntologyBuilder {
      * @return - ITrestleOntology for the correct underlying ontology configuration
      * @throws OWLOntologyCreationException - Throws if it can't create the ontology
      */
-//    TODO(nrobison): Catch the ontology builder exception and return an empty optional instead
-    public Optional<ITrestleOntology> build() throws OWLOntologyCreationException {
+    public ITrestleOntology build() throws OWLOntologyCreationException {
         final OWLOntologyManager owlOntologyManager = OWLManager.createOWLOntologyManager();
         OWLOntology owlOntology;
         if (this.iri.isPresent()) {
@@ -117,7 +116,7 @@ public class OntologyBuilder {
 //            If there's a connection string, then we need to return a database Ontology
         if (connectionString.isPresent() && connectionString.get().contains("oracle")) {
             logger.info("Connecting to Oracle database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
-            return Optional.of(new OracleOntology(
+            return new OracleOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
                     pm.orElse(createDefaultPrefixManager()),
@@ -125,7 +124,7 @@ public class OntologyBuilder {
                     connectionString.get(),
                     username.orElse(""),
                     password.orElse("")
-            ));
+            );
 //        } else if (connectionString.isPresent() && connectionString.get().contains("postgresql")) {
 //            logger.info("Connecting to Postgres database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
 //            return Optional.of(new SesameOntology(
@@ -138,14 +137,14 @@ public class OntologyBuilder {
 //            ));
         } else if (connectionString.isPresent() && connectionString.get().contains("virtuoso")) {
             logger.info("Connecting to Virtuoso database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
-            return Optional.of(new VirtuosoOntology(
+            return new VirtuosoOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
                     pm.orElse(createDefaultPrefixManager()),
                     connectionString.get(),
                     username.orElse(""),
                     password.orElse("")
-            ));
+            );
 //        } else if (connectionString.isPresent() && connectionString.get().contains("snarl")) {
 //            logger.info("Connecting to Stardog database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
 //            return Optional.of(new StardogOntology(
@@ -160,11 +159,11 @@ public class OntologyBuilder {
 
         else {
             logger.info("Connecting to Local TDB {}", this.ontologyName.orElse(""));
-            return Optional.of(new LocalOntology(
+            return new LocalOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
                     pm.orElse(createDefaultPrefixManager())
-            ));
+            );
         }
     }
 

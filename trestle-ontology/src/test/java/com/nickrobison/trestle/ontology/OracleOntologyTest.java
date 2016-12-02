@@ -28,7 +28,7 @@ public class OracleOntologyTest extends OntologyTest {
                         localConf.getString("password"))
                 .fromInputStream(inputStream)
                 .name("trestle_test3")
-                .build().get();
+                .build();
 
         ontology.initializeOntology();
     }
