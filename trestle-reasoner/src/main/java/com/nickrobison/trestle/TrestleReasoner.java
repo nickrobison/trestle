@@ -434,7 +434,7 @@ public class TrestleReasoner {
 
     public <T> @NonNull T readAsObject(String datasetClassID, String objectID, @Nullable Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, TrestleClassException {
 //        Lookup class
-        final OWLClass datasetClass = df.getOWLClass(parseStringToIRI(datasetClassID));
+        final OWLClass datasetClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, datasetClassID));
         final Optional<OWLClass> matchingClass = this.registeredClasses
                 .keySet()
                 .stream()
@@ -457,7 +457,7 @@ public class TrestleReasoner {
     @SuppressWarnings({"argument.type.incompatible", "dereference.of.nullable"})
     public <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull String objectID, @Nullable Temporal startTemporal, @Nullable Temporal endTemporal) throws TrestleClassException, MissingOntologyEntity {
 
-        final IRI individualIRI = parseStringToIRI(objectID);
+        final IRI individualIRI = parseStringToIRI(REASONER_PREFIX, objectID);
 //        Check cache first
         if (cachingEnabled) {
             logger.debug("Retrieving {} from cache", individualIRI);
@@ -893,7 +893,7 @@ public class TrestleReasoner {
     public List<String> searchForIndividual(String individualIRI, @Nullable String datasetClass, @Nullable Integer limit) {
         @Nullable OWLClass owlClass = null;
         if (datasetClass != null) {
-            owlClass = df.getOWLClass(parseStringToIRI(datasetClass));
+            owlClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, datasetClass));
         }
         final String query = qb.buildIndividualSearchQuery(individualIRI, owlClass, limit);
         List<String> individuals = new ArrayList<>();
@@ -914,9 +914,9 @@ public class TrestleReasoner {
      */
     public TrestleIndividual GetIndividualFacts(String individualIRI) {
         if (cachingEnabled) {
-            return trestleCache.IndividualCache().get(individualIRI, iri -> GetIndividualFacts(df.getOWLNamedIndividual(parseStringToIRI(iri))));
+            return trestleCache.IndividualCache().get(individualIRI, iri -> GetIndividualFacts(df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, iri))));
         }
-        return GetIndividualFacts(df.getOWLNamedIndividual(parseStringToIRI(individualIRI)));
+        return GetIndividualFacts(df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individualIRI)));
     }
 
     /**
@@ -1090,7 +1090,7 @@ public class TrestleReasoner {
     }
 
     public Class<?> getDatasetClass(String owlClassString) throws UnregisteredClassException {
-        final OWLClass owlClass = df.getOWLClass(parseStringToIRI(owlClassString));
+        final OWLClass owlClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, owlClassString));
         final Class<?> aClass = this.registeredClasses.get(owlClass);
         if (aClass == null) {
             throw new UnregisteredClassException(owlClass);
@@ -1117,7 +1117,7 @@ public class TrestleReasoner {
 
         final List<CompletableFuture<Optional<TSIndividual>>> completableFutures = objectID
                 .stream()
-                .map(IRIUtils::parseStringToIRI)
+                .map(id -> IRIUtils.parseStringToIRI(REASONER_PREFIX, id))
 //                .map(id -> readAsObject(inputClass, id))
                 .map(id -> CompletableFuture.supplyAsync(() -> readAsObject(inputClass, id, false)))
                 .map(objectFuture -> objectFuture.thenApply(object -> parseIndividualToShapefile(object, shapefileSchema)))
