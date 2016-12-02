@@ -483,6 +483,8 @@
                 <configuration>
                     <argLine>-XX:+UnlockCommercialFeatures -XX:+FlightRecorder</argLine>
                     <debugForkedProcess>true</debugForkedProcess>
+                    <parallel>classes</parallel>
+                    <forkCount>3</forkCount>
                 </configuration>
             </plugin>
             <plugin>
