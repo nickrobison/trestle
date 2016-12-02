@@ -482,6 +482,7 @@
                 </dependencies>
                 <configuration>
                     <argLine>-XX:+UnlockCommercialFeatures -XX:+FlightRecorder</argLine>
+                    <debugForkedProcess>true</debugForkedProcess>
                 </configuration>
             </plugin>
             <plugin>
