@@ -172,9 +172,25 @@ public class TrestleParserTest {
         owlDataPropertyAssertionAxioms = tp.classParser.GetDataProperties(testMethod);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have method properties");
         assertEquals(5, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of data properties");
-        assertEquals(OWL2Datatype.XSD_INT, owlDataPropertyAssertionAxioms.get().get(3).getObject().getDatatype().getBuiltInDatatype(), "Should have integer datatype");
-        assertEquals(testMethod.getAdm0_code1(), owlDataPropertyAssertionAxioms.get().get(3).getObject().parseInteger(), "Invalid ADM0_Code");
-        assertEquals(testMethod.test_name, owlDataPropertyAssertionAxioms.get().get(1).getObject().getLiteral(), "Invalid Spatial");
+
+//        Get the adm0_code
+        final Optional<OWLDataPropertyAssertionAxiom> adm0_code = owlDataPropertyAssertionAxioms
+                .get()
+                .stream()
+                .filter(axiom -> axiom.getProperty().asOWLDataProperty().getIRI().getRemainder().get().equals("adm0_code"))
+                .findAny();
+
+        final Optional<OWLDataPropertyAssertionAxiom> asWKT = owlDataPropertyAssertionAxioms
+                .get()
+                .stream()
+                .filter(axiom -> axiom.getProperty().asOWLDataProperty().getIRI().getRemainder().get().equals("asWKT"))
+                .findAny();
+
+        assertTrue(adm0_code.isPresent());
+        assertTrue(asWKT.isPresent());
+        assertEquals(OWL2Datatype.XSD_INT, adm0_code.get().getObject().getDatatype().getBuiltInDatatype(), "Should have integer datatype");
+        assertEquals(testMethod.getAdm0_code1(), adm0_code.get().getObject().parseInteger(), "Invalid ADM0_Code");
+        assertEquals(testMethod.test_name, asWKT.get().getObject().getLiteral(), "Invalid Spatial");
 
 //        Temporal
         temporalObjects = tp.temporalParser.GetTemporalObjects(testMethod);

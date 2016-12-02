@@ -170,15 +170,13 @@ public class TrestleAPITest {
         classObjects.parallelStream().forEach(object -> {
             try {
                 reasoner.WriteAsTSObject(object);
-            } catch (TrestleClassException e) {
+            } catch (TrestleClassException | MissingOntologyEntity e) {
                 e.printStackTrace();
-            } catch (MissingOntologyEntity missingOntologyEntity) {
-                missingOntologyEntity.printStackTrace();
             }
         });
 
         reasoner.getUnderlyingOntology().runInference();
-        classObjects.stream().forEach(object -> {
+        classObjects.parallelStream().forEach(object -> {
             final OWLNamedIndividual owlNamedIndividual = tp.classParser.GetIndividual(object);
             final Object returnedObject = reasoner.readAsObject(object.getClass(), owlNamedIndividual.getIRI(), false);
             if (returnedObject instanceof TestClasses.GAULComplexClassTest) {
