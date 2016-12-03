@@ -191,14 +191,6 @@ public class TrestleParserTest {
         assertEquals(OWL2Datatype.XSD_INT, adm0_code.get().getObject().getDatatype().getBuiltInDatatype(), "Should have integer datatype");
         assertEquals(testMethod.getAdm0_code1(), adm0_code.get().getObject().parseInteger(), "Invalid ADM0_Code");
         assertEquals(testMethod.test_name, asWKT.get().getObject().getLiteral(), "Invalid Spatial");
-
-//        Temporal
-        temporalObjects = tp.temporalParser.GetTemporalObjects(testMethod);
-        assertTrue(temporalObjects.isPresent(), "Should have objects");
-        assertEquals(2, temporalObjects.get().size(), "Wrong number of objects");
-        assertEquals(LocalDateTime.of(1989, 3, 26, 0, 0), temporalObjects.get().get(0).asInterval().getFromTime(), "Wrong interval start");
-        assertEquals(LocalDateTime.of(1989, 3, 26, 0, 0).plusYears(5), temporalObjects.get().get(0).asInterval().getToTime().get(), "Wrong interval end");
-        assertEquals(LocalDateTime.of(1998, 3, 26, 0, 0), temporalObjects.get().get(1).asInterval().getFromTime(), "Temporal is incorrect");
     }
 
     @Test
