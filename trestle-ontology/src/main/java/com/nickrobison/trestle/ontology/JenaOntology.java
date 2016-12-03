@@ -610,13 +610,11 @@ public abstract class JenaOntology extends TransactingOntology {
         while (resultSet.hasNext()) {
             final QuerySolution next = resultSet.next();
             final Optional<OWLLiteral> owlLiteral = this.parseLiteral(next.getLiteral("object"));
-            if (owlLiteral.isPresent()) {
-                retrievedDataProperties.add(df.getOWLDataPropertyAssertionAxiom(
-                        df.getOWLDataProperty(next.getResource("property").getURI()),
-                        df.getOWLNamedIndividual(next.getResource("individual").getURI()),
-                        owlLiteral.get()
-                ));
-            }
+            owlLiteral.ifPresent(literal -> retrievedDataProperties.add(df.getOWLDataPropertyAssertionAxiom(
+                    df.getOWLDataProperty(next.getResource("property").getURI()),
+                    df.getOWLNamedIndividual(next.getResource("individual").getURI()),
+                    literal
+            )));
         }
         return retrievedDataProperties;
     }

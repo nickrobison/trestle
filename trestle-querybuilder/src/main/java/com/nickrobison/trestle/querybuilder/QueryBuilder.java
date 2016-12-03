@@ -8,7 +8,9 @@ import com.vividsolutions.jts.io.WKTReader;
 import com.vividsolutions.jts.io.WKTWriter;
 import com.vividsolutions.jts.precision.GeometryPrecisionReducer;
 import com.vividsolutions.jts.simplify.TopologyPreservingSimplifier;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.ParameterizedSparqlString;
+import org.apache.jena.sparql.util.NodeUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -93,7 +95,7 @@ public class QueryBuilder {
     public String buildDatasetQuery() {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT ?dataset" +
-                " WHERE { ?dataset rdfs:subClassOf :Dataset }");
+                " WHERE { ?dataset rdfs:subClassOf trestle:Dataset }");
         logger.debug(ps.toString());
         return ps.toString();
     }
@@ -107,10 +109,10 @@ public class QueryBuilder {
             ps.setCommandText(String.format("SELECT ?f ?s" +
                     " WHERE" +
                     " { ?m rdf:type ?t . " +
-                    "?m :has_relation{,?depth} ?r . " +
-                    "?r rdf:type :Concept_Relation . " +
-                    "?r :Relation_Strength ?s . " +
-                    "?r :relation_of{,?depth} ?f . " +
+                    "?m trestle:has_relation{,?depth} ?r . " +
+                    "?r rdf:type trestle:Concept_Relation . " +
+                    "?r trestle:Relation_Strength ?s . " +
+                    "?r trestle:relation_of{,?depth} ?f . " +
                     "?f rdf:type ?t ." +
                     " VALUES ?m {%s}" +
                     "FILTER(?s >= ?st)}", String.format("<%s>", getFullIRIString(individual))));
@@ -119,19 +121,20 @@ public class QueryBuilder {
             ps.setCommandText(String.format("SELECT ?f ?s" +
                     " WHERE" +
                     " { ?m rdf:type ?t . " +
-                    "?m :has_relation ?r . " +
-                    "?r rdf:type :Concept_Relation . " +
-                    "?r :Relation_Strength ?s . " +
-                    "?r :relation_of ?f . " +
+                    "?m trestle:has_relation ?r . " +
+                    "?r rdf:type trestle:Concept_Relation . " +
+                    "?r trestle:Relation_Strength ?s . " +
+                    "?r trestle:relation_of ?f . " +
                     "?f rdf:type ?t ." +
                     " VALUES ?m {%s}" +
                     "FILTER(?s >= ?st)}", String.format("<%s>", getFullIRIString(individual))));
         }
 //        Replace the variables
         if (datasetClass != null) {
+//            ps.setParam("t", NodeFactory.createURI(String.format(":%s", datasetClass)));
             ps.setIri("t", getFullIRIString(datasetClass));
         } else {
-            ps.setIri("t", getFullIRI(IRI.create("trestle:", ":Dataset")).toString());
+            ps.setIri("t", getFullIRI(IRI.create("trestle:", "Dataset")).toString());
         }
         ps.setLiteral("st", relationshipStrength);
 
@@ -153,10 +156,10 @@ public class QueryBuilder {
 //        FIXME(nrobison): The union is a horrible hack to get things working for the time being. We need to fix it.
         ps.setCommandText(String.format("SELECT DISTINCT ?individual ?fact ?property ?object" +
                 " WHERE" +
-                " { ?individual :has_fact ?fact ." +
-                "?fact :database_time ?d ." +
-                "{ ?d :valid_from ?tStart} UNION {?d :exists_from ?tStart} ." +
-                "OPTIONAL{{ ?d :valid_to ?tEnd} UNION {?d :exists_to ?tEnd}} ." +
+                " { ?individual trestle:has_fact ?fact ." +
+                "?fact trestle:database_time ?d ." +
+                "{ ?d trestle:valid_from ?tStart} UNION {?d trestle:exists_from ?tStart} ." +
+                "OPTIONAL{{ ?d trestle:valid_to ?tEnd} UNION {?d trestle:exists_to ?tEnd}} ." +
                 "?fact ?property ?object ." +
                 "VALUES ?individual { %s } ." +
 //                Oracle doesn't support isLiteral() on CLOB types, so we have to do this gross inverse filter.
@@ -186,10 +189,10 @@ public class QueryBuilder {
 
         ps.setCommandText(String.format("SELECT DISTINCT ?individual ?temporal ?property ?object" +
                 " WHERE" +
-                " { ?individual :has_temporal ?temporal ." +
-                " OPTIONAL{{?temporal :valid_at ?tAt} UNION {?temporal :exists_at ?tAt}} ." +
-                " OPTIONAL{{?temporal :valid_from ?tStart} UNION {?temporal :exists_from ?tStart}} ." +
-                " OPTIONAL{{?temporal :valid_to ?tEnd} UNION {?temporal :exists_to ?tEnd}} ." +
+                " { ?individual trestle:has_temporal ?temporal ." +
+                " OPTIONAL{{?temporal trestle:valid_at ?tAt} UNION {?temporal trestle:exists_at ?tAt}} ." +
+                " OPTIONAL{{?temporal trestle:valid_from ?tStart} UNION {?temporal trestle:exists_from ?tStart}} ." +
+                " OPTIONAL{{?temporal trestle:valid_to ?tEnd} UNION {?temporal trestle:exists_to ?tEnd}} ." +
                 " ?temporal ?property ?object" +
                 " VALUES ?individual { %s } ." +
                 " FILTER(!isURI(?object) && !isBlank(?object)) .}", individualValues));
@@ -202,7 +205,7 @@ public class QueryBuilder {
         ps.setCommandText("SELECT DISTINCT ?m" +
                 " WHERE { " +
                 "?m rdf:type ?type ." +
-                "?m :has_fact ?f ." +
+                "?m trestle:has_fact ?f ." +
                 "?f ogc:asWKT ?wkt ");
         switch (this.dialect) {
             case ORACLE: {
@@ -237,11 +240,11 @@ public class QueryBuilder {
         ps.setCommandText("SELECT DISTINCT ?m ?tStart ?tEnd" +
                 " WHERE { " +
                 "?m rdf:type ?type ." +
-                "?m :has_fact ?f ." +
+                "?m trestle:has_fact ?f ." +
                 "?f ogc:asWKT ?wkt ." +
-                "?m :has_temporal ?t ." +
-                "{ ?t :valid_from ?tStart} UNION {?t :exists_from ?tStart} ." +
-                "OPTIONAL{{ ?t :valid_to ?tEnd} UNION {?t :exists_to ?tEnd}} .");
+                "?m trestle:has_temporal ?t ." +
+                "{ ?t trestle:valid_from ?tStart} UNION {?t trestle:exists_from ?tStart} ." +
+                "OPTIONAL{{ ?t trestle:valid_to ?tEnd} UNION {?t trestle:exists_to ?tEnd}} .");
         switch (this.dialect) {
             case ORACLE: {
 //                We need to remove this, otherwise Oracle substitutes geosparql for ogc
