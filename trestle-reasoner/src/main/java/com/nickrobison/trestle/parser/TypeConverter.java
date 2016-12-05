@@ -46,6 +46,14 @@ public class TypeConverter {
         javaClassConstructors.put(clazz.getTypeName(), constructorFunc);
     }
 
+    /**
+     * Extracts a java object of type T from a given OWL Literal
+     * Also handles the object/primitive conversion
+     * @param javaClass - Java class to cast literal into
+     * @param literal - OWLLiteral to extract
+     * @param <T> - Java type
+     * @return Java type of type T
+     */
     //    I need the unchecked casts in order to get the correct primitives for the constructor generation
     @SuppressWarnings({"unchecked"})
     public static <T> @NonNull T extractOWLLiteral(Class<@NonNull T> javaClass, OWLLiteral literal) {

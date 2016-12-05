@@ -218,7 +218,7 @@ public class OracleOntology extends JenaOntology {
                         if (rdfNode.isResource()) {
                             rowValues.put(var, df.getOWLNamedIndividual(rdfNode.asResource().getURI()));
                         } else if (rdfNode.isLiteral()) {
-                            final Optional<OWLLiteral> owlLiteral = this.parseLiteral(rdfNode.asLiteral());
+                            final Optional<OWLLiteral> owlLiteral = jf.createOWLLiteral(rdfNode.asLiteral());
                             if (owlLiteral.isPresent()) {
                                 rowValues.put(var, owlLiteral.get());
                             } else {

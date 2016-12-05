@@ -42,6 +42,43 @@ abstract public class OntologyTest {
 
     abstract void setupOntology() throws OWLOntologyCreationException;
 
+    @Test
+    public void testTypedLiterals() throws MissingOntologyEntity {
+       final String testString = "Test String";
+
+//       Try to create two typed literals
+        final OWLClass owlCl = df.getOWLClass(IRI.create("trestle:", "test"));
+        final OWLNamedIndividual typedIndividual = df.getOWLNamedIndividual(IRI.create("trestle:", "typedIndividual"));
+        final OWLClassAssertionAxiom owlClassAssertionAxiom = df.getOWLClassAssertionAxiom(owlCl, typedIndividual);
+        final OWLDataProperty testStringProperties = df.getOWLDataProperty(IRI.create("trestle:", "testString"));
+        final OWLLiteral englishLiteral = df.getOWLLiteral(String.format("%s@en", testString), OWL2Datatype.RDF_PLAIN_LITERAL);
+        final OWLLiteral frenchLiteral = df.getOWLLiteral(String.format("%s@fr", testString), OWL2Datatype.RDF_PLAIN_LITERAL);
+        final OWLLiteral plainLiteral = df.getOWLLiteral(testString, OWL2Datatype.RDF_PLAIN_LITERAL);
+        final OWLDataPropertyAssertionAxiom englishAxiom = df.getOWLDataPropertyAssertionAxiom(testStringProperties, typedIndividual, englishLiteral);
+        final OWLDataPropertyAssertionAxiom frenchAxiom = df.getOWLDataPropertyAssertionAxiom(testStringProperties, typedIndividual, frenchLiteral);
+        ontology.createIndividual(owlClassAssertionAxiom);
+        ontology.writeIndividualDataProperty(englishAxiom);
+        ontology.writeIndividualDataProperty(frenchAxiom);
+        ontology.writeIndividualDataProperty(typedIndividual, testStringProperties, plainLiteral);
+        final Set<OWLDataPropertyAssertionAxiom> allDataPropertiesForIndividual = ontology.getAllDataPropertiesForIndividual(typedIndividual);
+        assertEquals(3, allDataPropertiesForIndividual.size(), "Should have the 4 literals");
+
+//        Check sparql
+        String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+                "SELECT DISTINCT ?m ?object ?property WHERE {" +
+                "?m rdf:type :test ." +
+                "?m ?object ?property ." +
+                "FILTER(?property = 'Test String'@fr)}";
+
+        final List<QuerySolution> querySolutions = ResultSetFormatter.toList(ontology.executeSPARQL(queryString));
+        assertEquals(1, querySolutions.size(), "Should only have the french version");
+        assertEquals("Test String", querySolutions.get(0).getLiteral("property").getString(), "Should have the correct string");
+        assertEquals("fr", querySolutions.get(0).getLiteral("property").getLanguage(), "Should be french language");
+
+    }
+
     abstract void shutdownOntology();
 
     @Test

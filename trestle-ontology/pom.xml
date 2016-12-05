@@ -20,6 +20,10 @@
             <artifactId>trestle-querybuilder</artifactId>
             <version>0.5-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
         <!--OWL Dependencies-->
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
