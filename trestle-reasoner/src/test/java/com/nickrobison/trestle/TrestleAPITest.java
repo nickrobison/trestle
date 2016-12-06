@@ -70,7 +70,7 @@ public class TrestleAPITest {
                 .build();
 
         df = OWLManager.getOWLDataFactory();
-        tp = new TrestleParser(df, OVERRIDE_PREFIX);
+        tp = new TrestleParser(df, OVERRIDE_PREFIX, false, null);
     }
 
     @Test
@@ -165,13 +165,13 @@ public class TrestleAPITest {
         final TestClasses.MultiLangTest multiLangTest = new TestClasses.MultiLangTest();
 
         List<Object> classObjects = new ArrayList<>();
-//        classObjects.add(gaulComplexClassTest);
-//        classObjects.add(jtsGeometryTest);
-//        classObjects.add(esriPolygonTest);
-//        classObjects.add(offsetDateTimeTest);
+        classObjects.add(gaulComplexClassTest);
+        classObjects.add(jtsGeometryTest);
+        classObjects.add(esriPolygonTest);
+        classObjects.add(offsetDateTimeTest);
         classObjects.add(multiLangTest);
 
-        classObjects.parallelStream().forEach(object -> {
+        classObjects.stream().forEach(object -> {
             try {
                 reasoner.WriteAsTSObject(object);
             } catch (TrestleClassException | MissingOntologyEntity e) {
@@ -180,7 +180,7 @@ public class TrestleAPITest {
         });
 
         reasoner.getUnderlyingOntology().runInference();
-        classObjects.parallelStream().forEach(object -> {
+        classObjects.stream().forEach(object -> {
             final OWLNamedIndividual owlNamedIndividual = tp.classParser.GetIndividual(object);
             final Object returnedObject = reasoner.readAsObject(object.getClass(), owlNamedIndividual.getIRI(), false);
             if (returnedObject instanceof TestClasses.GAULComplexClassTest) {

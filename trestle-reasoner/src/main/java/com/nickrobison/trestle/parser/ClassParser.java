@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.parser;
 
-import afu.org.apache.commons.codec.language.bm.Lang;
 import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
@@ -38,11 +37,26 @@ public class ClassParser {
 
     private final OWLDataFactory df;
     private final String ReasonerPrefix;
+    private final boolean multiLangEnabled;
+    private final String defaultLanguageCode;
 
 
-    ClassParser(OWLDataFactory df, String ReasonerPrefix) {
+    ClassParser(OWLDataFactory df, String ReasonerPrefix, boolean multiLangEnabled, String defaultLanguageCode) {
         this.df = df;
         this.ReasonerPrefix = ReasonerPrefix;
+        this.multiLangEnabled = multiLangEnabled;
+        this.defaultLanguageCode = defaultLanguageCode;
+    }
+
+    public boolean isMultiLangEnabled() {
+        return this.multiLangEnabled;
+    }
+
+    public @Nullable String getDefaultLanguageCode() {
+        if (this.defaultLanguageCode.equals("")) {
+             return null;
+        }
+        return this.defaultLanguageCode;
     }
 
     public OWLClass GetObjectClass(Object inputObject) {
@@ -184,22 +198,21 @@ public class ClassParser {
                     final DataProperty annotation = classField.getAnnotation(DataProperty.class);
                     final IRI iri = IRI.create(ReasonerPrefix, annotation.name());
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
-                    String fieldValue = null;
+                    Object fieldValue = null;
 
                     try {
-                        fieldValue = classField.get(inputObject).toString();
+                        fieldValue = classField.get(inputObject);
                     } catch (IllegalAccessException e) {
                         logger.debug("Cannot access field {}", classField.getName(), e);
                         continue;
                     }
                     if (fieldValue != null) {
 //                        If the field values is a String, we need to handle
-//                        TODO(nrobison): Implement multi-lang config options
                         final OWLLiteral owlLiteral = fieldValueToMultiLangString(fieldValue,
                                 classField,
-                                true,
-                                null)
-                                .orElse(df.getOWLLiteral(fieldValue,
+                                isMultiLangEnabled(),
+                                getDefaultLanguageCode())
+                                .orElse(df.getOWLLiteral(fieldValue.toString(),
                                         TypeConverter.getDatatypeFromAnnotation(annotation, classField.getType())));
                         axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, owlLiteral));
                     }
@@ -227,11 +240,10 @@ public class ClassParser {
                         }
                         if (fieldValue != null) {
 //                            If the field type is a String, we need to handle any multi-lang modifications
-//                            TODO(nrobison): Implement multi-lang config options
                                 final OWLLiteral owlLiteral = fieldValueToMultiLangString(fieldValue,
                                         classField,
-                                        true,
-                                        null)
+                                        isMultiLangEnabled(),
+                                        getDefaultLanguageCode())
                                         .orElse(df.getOWLLiteral(fieldValue.toString(),
                                                 TypeConverter.getDatatypeFromJavaClass(classField.getType())));
 
@@ -252,11 +264,10 @@ public class ClassParser {
                     final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
 
                     if (methodValue.isPresent()) {
-//                        TODO(nrobison): Implement multi-lang config options
                         final OWLLiteral owlLiteral = methodValueToMultiLangString(methodValue.get(),
                                 classMethod,
-                                true,
-                                null)
+                                isMultiLangEnabled(),
+                                getDefaultLanguageCode())
                                 .orElse(df.getOWLLiteral(methodValue.get().toString(), TypeConverter.getDatatypeFromAnnotation(annotation, classMethod.getReturnType())));
 
                         axioms.add(df.getOWLDataPropertyAssertionAxiom(
@@ -280,11 +291,10 @@ public class ClassParser {
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
                     final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
                     if (methodValue.isPresent()) {
-//                        TODO(nrobison): Implement multi-lang config options
                         final OWLLiteral owlLiteral = methodValueToMultiLangString(methodValue.get(),
                                 classMethod,
-                                true,
-                                null)
+                                isMultiLangEnabled(),
+                                getDefaultLanguageCode())
                                 .orElse(df.getOWLLiteral(methodValue.get().toString(), TypeConverter.getDatatypeFromJavaClass(classMethod.getReturnType())));
                         axioms.add(df.getOWLDataPropertyAssertionAxiom(
                                 owlDataProperty,
@@ -380,6 +390,7 @@ public class ClassParser {
 //        Methods
         final Optional<String> annotatedMethod = Arrays.stream(clazz.getDeclaredMethods())
                 .filter(m -> m.isAnnotationPresent(DataProperty.class))
+                .filter(m -> m.getAnnotation(DataProperty.class).name().equals(classMember))
                 .filter(m -> m.isAnnotationPresent(Language.class))
                 .filter(m -> m.getAnnotation(Language.class).language().toLowerCase().equals(languageTag))
                 .map(ClassParser::filterMethodName)
@@ -391,7 +402,8 @@ public class ClassParser {
 
 //        Fields
         final Optional<String> annotatedField = Arrays.stream(clazz.getDeclaredFields())
-                .filter(f -> f.isAnnotationPresent(Language.class))
+                .filter(f -> f.isAnnotationPresent(DataProperty.class))
+                .filter(f -> f.getAnnotation(DataProperty.class).name().equals(classMember))
                 .filter(f -> f.isAnnotationPresent(Language.class))
                 .filter(f -> f.getAnnotation(Language.class).language().toLowerCase().equals(languageTag))
                 .map(Field::getName)
@@ -404,6 +416,7 @@ public class ClassParser {
 //        If we can't match on language annotation, try to look for the method/field without a language annotation
         final Optional<String> methodNoLanguage = Arrays.stream(clazz.getDeclaredMethods())
                 .filter(m -> m.isAnnotationPresent(DataProperty.class))
+                .filter(m -> m.getAnnotation(DataProperty.class).name().equals(classMember))
                 .filter(m -> !m.isAnnotationPresent(Language.class))
                 .map(ClassParser::filterMethodName)
                 .findAny();
@@ -414,6 +427,7 @@ public class ClassParser {
 
         final Optional<String> fieldNoLanguage = Arrays.stream(clazz.getDeclaredFields())
                 .filter(f -> f.isAnnotationPresent(DataProperty.class))
+                .filter(f -> f.getAnnotation(DataProperty.class).name().equals(classMember))
                 .filter(f -> !f.isAnnotationPresent(Language.class))
                 .map(Field::getName)
                 .findAny();

@@ -23,6 +23,8 @@ import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.PointTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
@@ -64,12 +66,12 @@ import static com.nickrobison.trestle.parser.TemporalParser.parseTemporalToOntol
 public class TrestleReasoner {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleReasoner.class);
+    private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
     public static final String DEFAULTNAME = "trestle";
 
     private final String REASONER_PREFIX;
     private final ITrestleOntology ontology;
     private final Map<OWLClass, Class<?>> registeredClasses = new HashMap<>();
-    private final OWLDataFactory df;
     //    Seems gross?
     private static final OWLClass datasetClass = OWLManager.getOWLDataFactory().getOWLClass(datasetClassIRI);
     private final QueryBuilder qb;
@@ -77,11 +79,13 @@ public class TrestleReasoner {
     private boolean cachingEnabled = true;
     private @Nullable TrestleCache trestleCache = null;
     private final TrestleParser trestleParser;
+    private final Config trestleConfig;
 
     @SuppressWarnings("dereference.of.nullable")
     TrestleReasoner(TrestleBuilder builder) throws OWLOntologyCreationException {
 
-        df = OWLManager.getOWLDataFactory();
+//        Read in the trestleConfig file
+        trestleConfig = ConfigFactory.load().getConfig("trestle");
 
 //        Setup the reasoner prefix
 //        If not specified, use the default Trestle prefix
@@ -114,7 +118,7 @@ public class TrestleReasoner {
         }
         logger.info("Loading ontology from {}", ontologyResource);
 
-        //        Validate ontology name
+//        Validate ontology name
         try {
             validateOntologyName(builder.ontologyName.orElse(DEFAULTNAME));
         } catch (InvalidOntologyName e) {
@@ -123,7 +127,7 @@ public class TrestleReasoner {
         }
 
 //        Setup the Parser
-        trestleParser = new TrestleParser(this.df, REASONER_PREFIX);
+        trestleParser = new TrestleParser(df, REASONER_PREFIX, trestleConfig.getBoolean("enableMultiLanguage"), trestleConfig.getString("defaultLanguage"));
         logger.info("Ontology {} ready", builder.ontologyName.orElse(DEFAULTNAME));
 
 //            validate the classes
@@ -277,7 +281,7 @@ public class TrestleReasoner {
      * @param rootIndividual   - OWLNamedIndividual of the TS_Object individual
      * @param properties       - List of OWLDataPropertyAssertionAxioms to write as Facts
      * @param temporal         - Temporal to associate with data property individual
-     * @param databaseTemporal - Temporal repsenting database time
+     * @param databaseTemporal - Temporal representing database time
      */
     private void writeObjectFact(OWLNamedIndividual rootIndividual, List<OWLDataPropertyAssertionAxiom> properties, TemporalObject temporal, TemporalObject databaseTemporal) {
         final long now = Instant.now().getEpochSecond();

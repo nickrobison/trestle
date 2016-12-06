@@ -413,7 +413,7 @@ public class TestClasses {
         private final String frenchString;
         private final String englishGBString;
         private final LocalDate defaultTime;
-        @Language(language = "kk")
+//        @Language(language = "kk")
         public final String testString2;
         private final String testString2cs;
         @IndividualIdentifier
