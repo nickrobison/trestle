@@ -54,6 +54,9 @@ public class ClassRegister {
 
 //        Check for language
         checkForLanguage(clazz);
+
+//        Check for disabled language
+        checkForDisabledMultiLanguage(clazz);
     }
 
     static void checkIndividualIdentifier(Class aClass) throws InvalidClassException {
@@ -338,6 +341,11 @@ public class ClassRegister {
                 if (!checkLanguageCodeIsValid(language)) {
                     throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, method.getName());
                 }
+
+//                Ensure we're not disabled
+                if (method.isAnnotationPresent(NoMultiLanguage.class)) {
+                    throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, method.getName());
+                }
             }
         }
 
@@ -351,6 +359,29 @@ public class ClassRegister {
 //                Ensure the language points to a correct language code
                 final String language = field.getAnnotation(Language.class).language();
                 if (!checkLanguageCodeIsValid(language)) {
+                    throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, field.getName());
+                }
+
+//                Ensure we're not disabled
+                if (field.isAnnotationPresent(NoMultiLanguage.class)) {
+                    throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, field.getName());
+                }
+            }
+        }
+    }
+
+    private static void checkForDisabledMultiLanguage(Class<?> aClass) throws TrestleClassException {
+        for (Method method: aClass.getDeclaredMethods()) {
+            if (method.isAnnotationPresent(NoMultiLanguage.class)) {
+                if (!method.getReturnType().equals(String.class)) {
+                    throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, method.getName());
+                }
+            }
+        }
+
+        for (Field field: aClass.getDeclaredFields()) {
+            if (field.isAnnotationPresent(NoMultiLanguage.class)) {
+                if (!field.getType().equals(String.class)) {
                     throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, field.getName());
                 }
             }

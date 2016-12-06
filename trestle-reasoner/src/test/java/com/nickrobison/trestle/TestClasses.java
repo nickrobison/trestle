@@ -442,6 +442,7 @@ public class TestClasses {
         public final String testString2;
         private final String testString2cs;
         @IndividualIdentifier
+        @NoMultiLanguage
         public final String id;
 
         public MultiLangTest() {

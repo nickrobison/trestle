@@ -144,6 +144,7 @@ public class ClassParser {
                         | (objectMember.isAnnotationPresent(Spatial.class) && !filterSpatial)
                         | objectMember.isAnnotationPresent(IndividualIdentifier.class)
                         | objectMember.isAnnotationPresent(Language.class)
+                        | objectMember.isAnnotationPresent(NoMultiLanguage.class)
                         | (objectMember.getAnnotations().length == 0)))
 //                Need to filter out the ebean stuff
                 & !(objectMember.getName().contains("_ebean"));
@@ -159,6 +160,7 @@ public class ClassParser {
                         | (objectMember.isAnnotationPresent(Spatial.class) && !filterSpatial)
                         | objectMember.isAnnotationPresent(IndividualIdentifier.class)
                         | objectMember.isAnnotationPresent(Language.class)
+                        | objectMember.isAnnotationPresent(NoMultiLanguage.class)
                         | (objectMember.getAnnotations().length == 0)))
 //                We need this to filter out setters and equals/hashcode stuff
                 & ((objectMember.getParameters().length == 0)
@@ -393,7 +395,20 @@ public class ClassParser {
                 .filter(m -> m.getAnnotation(DataProperty.class).name().equals(classMember))
                 .filter(m -> m.isAnnotationPresent(Language.class))
                 .filter(m -> m.getAnnotation(Language.class).language().toLowerCase().equals(languageTag))
-                .map(ClassParser::filterMethodName)
+                .map(m -> {
+                    try {
+                        if (ClassBuilder.isConstructorArgument(clazz,
+                                filterMethodName(m),
+                                m.getReturnType())) {
+                            return filterMethodName(m);
+                        }
+                    } catch (MissingConstructorException e) {
+                        e.printStackTrace();
+                    }
+                    return m.getAnnotation(DataProperty.class).name();
+                })
+//                .map(ClassParser::filterMethodName)
+//                .map(m -> m.getAnnotation(DataProperty.class).name())
                 .findAny();
 
         if (annotatedMethod.isPresent()) {
@@ -406,7 +421,20 @@ public class ClassParser {
                 .filter(f -> f.getAnnotation(DataProperty.class).name().equals(classMember))
                 .filter(f -> f.isAnnotationPresent(Language.class))
                 .filter(f -> f.getAnnotation(Language.class).language().toLowerCase().equals(languageTag))
-                .map(Field::getName)
+                .map(f -> {
+                    try {
+                        if (ClassBuilder.isConstructorArgument(clazz,
+                                f.getName(),
+                                f.getType())) {
+                            return f.getName();
+                        }
+                    } catch (MissingConstructorException e) {
+                        e.printStackTrace();
+                    }
+                    return f.getAnnotation(DataProperty.class).name();
+                })
+//                .map(Field::getName)
+//                .map(f -> f.getAnnotation(DataProperty.class).name())
                 .findAny();
 
         if (annotatedField.isPresent()) {
@@ -418,7 +446,20 @@ public class ClassParser {
                 .filter(m -> m.isAnnotationPresent(DataProperty.class))
                 .filter(m -> m.getAnnotation(DataProperty.class).name().equals(classMember))
                 .filter(m -> !m.isAnnotationPresent(Language.class))
-                .map(ClassParser::filterMethodName)
+                .map(m -> {
+                    try {
+                        if (ClassBuilder.isConstructorArgument(clazz,
+                                filterMethodName(m),
+                                m.getReturnType())) {
+                            return filterMethodName(m);
+                        }
+                    } catch (MissingConstructorException e) {
+                        e.printStackTrace();
+                    }
+                    return m.getAnnotation(DataProperty.class).name();
+                })
+//                .map(ClassParser::filterMethodName)
+//                .map(m -> m.getAnnotation(DataProperty.class).name())
                 .findAny();
 
         if (methodNoLanguage.isPresent()) {
@@ -429,7 +470,20 @@ public class ClassParser {
                 .filter(f -> f.isAnnotationPresent(DataProperty.class))
                 .filter(f -> f.getAnnotation(DataProperty.class).name().equals(classMember))
                 .filter(f -> !f.isAnnotationPresent(Language.class))
-                .map(Field::getName)
+                .map(f -> {
+                    try {
+                        if (ClassBuilder.isConstructorArgument(clazz,
+                                f.getName(),
+                                f.getType())) {
+                            return f.getName();
+                        }
+                    } catch (MissingConstructorException e) {
+                        e.printStackTrace();
+                    }
+                    return f.getAnnotation(DataProperty.class).name();
+                })
+//                .map(Field::getName)
+//                .map(f -> f.getAnnotation(DataProperty.class).name())
                 .findAny();
 
 //        If nothing returns, run the default matcher

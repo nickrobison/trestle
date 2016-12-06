@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.annotations.Language;
+import com.nickrobison.trestle.annotations.NoMultiLanguage;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLLiteral;
@@ -58,6 +59,11 @@ public class StringParser {
             return Optional.empty();
         }
 
+//        If the field has a no-multi lang tag on it, disable the Multilanguage support
+        if (field.isAnnotationPresent(NoMultiLanguage.class)) {
+            multiLangMode = false;
+        }
+
         @Nullable String languageTag = null;
         if (field.isAnnotationPresent(Language.class)) {
             languageTag = field.getAnnotation(Language.class).language();
@@ -68,6 +74,11 @@ public class StringParser {
     static Optional<OWLLiteral> methodValueToMultiLangString(@NonNull Object methodValue, Method method, boolean multiLangMode, @Nullable String defaultLanguageTag) {
         if (!(methodValue instanceof String)) {
             return Optional.empty();
+        }
+
+//        If the field has a no-multi lang tag on it, disable the Multilanguage support
+        if (method.isAnnotationPresent(NoMultiLanguage.class)) {
+            multiLangMode = false;
         }
 
         @Nullable String languageTag = null;

@@ -6,15 +6,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * Disables multi-language support for the given element
  * Created by nrobison on 12/5/16.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD})
-public @interface Language {
-
-    /**
-     * Set the language for the multi-language support
-     * @return
-     */
-    String language();
+public @interface NoMultiLanguage {
 }

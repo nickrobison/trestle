@@ -108,7 +108,6 @@ public class DataExporterTests {
         public long gaulcode;
         @DataProperty(name = "objectName")
         public String objectname;
-        //    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd hh:mm:ss")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
         @StartTemporalProperty(name = "startDate")
         public LocalDate startdate;
@@ -122,10 +121,10 @@ public class DataExporterTests {
 
 
         @TrestleCreator
-        public SimpleGAULObject(String id, long gaulCode, String objectName, LocalDate startDate, LocalDate endDate, String wkt) {
+        public SimpleGAULObject(String id, long gaulCode, String objectname, LocalDate startDate, LocalDate endDate, String wkt) {
             this.objectid = UUID.fromString(id);
             this.gaulcode = gaulCode;
-            this.objectname = objectName;
+            this.objectname = objectname;
             this.startdate = startDate;
             this.enddate = endDate;
             this.geom = wkt;
@@ -134,6 +133,7 @@ public class DataExporterTests {
 
         @IndividualIdentifier
         @DataProperty(name = "id")
+        @NoMultiLanguage
         public String getObjectID() {
             return this.objectid.toString();
         }
