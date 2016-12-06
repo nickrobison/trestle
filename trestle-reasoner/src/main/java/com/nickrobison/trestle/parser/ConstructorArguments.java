@@ -66,9 +66,7 @@ public class ConstructorArguments {
         List<Class<?>> sortedTypes = new ArrayList<>();
         argumentNames.forEach(arg -> {
             final Optional<Class<?>> type = getType(arg);
-            if (type.isPresent()) {
-                sortedTypes.add(type.get());
-            }
+            type.ifPresent(sortedTypes::add);
         });
         return sortedTypes.toArray(new Class<?>[sortedTypes.size()]);
     }
@@ -81,9 +79,7 @@ public class ConstructorArguments {
         List<Object> sortedObjects = new ArrayList<>();
         argumentNames.forEach(arg -> {
             final Optional<Object> value = getValue(arg);
-            if (value.isPresent()) {
-                sortedObjects.add(value.get());
-            }
+            value.ifPresent(sortedObjects::add);
         });
         return sortedObjects.toArray(new Object[sortedObjects.size()]);
     }

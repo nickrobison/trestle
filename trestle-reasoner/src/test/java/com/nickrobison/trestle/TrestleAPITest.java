@@ -63,7 +63,8 @@ public class TrestleAPITest {
                         TestClasses.JTSGeometryTest.class,
                         TestClasses.ESRIPolygonTest.class,
                         TestClasses.GeotoolsPolygonTest.class,
-                        TestClasses.OffsetDateTimeTest.class)
+                        TestClasses.OffsetDateTimeTest.class,
+                        TestClasses.MultiLangTest.class)
                 .withoutCaching()
                 .initialize()
                 .build();
@@ -161,12 +162,14 @@ public class TrestleAPITest {
         final Polygon geometry = (Polygon) GeometryEngine.geometryFromWkt("POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", 0, com.esri.core.geometry.Geometry.Type.Polygon);
         final TestClasses.ESRIPolygonTest esriPolygonTest = new TestClasses.ESRIPolygonTest(4792, geometry, LocalDate.now());
         final TestClasses.OffsetDateTimeTest offsetDateTimeTest = new TestClasses.OffsetDateTimeTest(5515, OffsetDateTime.now(), OffsetDateTime.now().plusYears(5));
+        final TestClasses.MultiLangTest multiLangTest = new TestClasses.MultiLangTest();
 
         List<Object> classObjects = new ArrayList<>();
-        classObjects.add(gaulComplexClassTest);
-        classObjects.add(jtsGeometryTest);
-        classObjects.add(esriPolygonTest);
-        classObjects.add(offsetDateTimeTest);
+//        classObjects.add(gaulComplexClassTest);
+//        classObjects.add(jtsGeometryTest);
+//        classObjects.add(esriPolygonTest);
+//        classObjects.add(offsetDateTimeTest);
+        classObjects.add(multiLangTest);
 
         classObjects.parallelStream().forEach(object -> {
             try {
@@ -186,7 +189,9 @@ public class TrestleAPITest {
                 assertEquals(jtsGeometryTest, returnedObject, "Should have the same object");
             } else if (returnedObject instanceof TestClasses.OffsetDateTimeTest) {
                 assertEquals(offsetDateTimeTest, returnedObject, "Should have the same object");
-            } else {
+            } else if (returnedObject instanceof TestClasses.MultiLangTest) {
+                assertEquals(multiLangTest, returnedObject, "Should have the same object");
+            } else{
                 assertEquals(esriPolygonTest, returnedObject, "Should be equal");
             }
         });

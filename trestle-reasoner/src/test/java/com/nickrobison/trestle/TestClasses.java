@@ -193,9 +193,6 @@ public class TestClasses {
         }
     }
 
-    /**
-     * Created by nrobison on 6/27/16.
-     */
     @OWLClassName(className="GAUL_Test")
     public static class GAULTestClass {
 
@@ -262,7 +259,6 @@ public class TestClasses {
         }
     }
 
-
     @OWLClassName(className = "gaul-complex")
     public static class GAULComplexClassTest {
 
@@ -315,9 +311,6 @@ public class TestClasses {
         }
     }
 
-    /**
-     * Created by nrobison on 7/29/16.
-     */
     @OWLClassName(className = "GAUL_Test1")
     public static class GAULMethodTest {
 
@@ -407,6 +400,94 @@ public class TestClasses {
             result = 31 * result + privateField.hashCode();
             result = 31 * result + intervalStart.hashCode();
             result = 31 * result + intervalEnd.hashCode();
+            return result;
+        }
+    }
+
+    @OWLClassName(className = "multiLang-test")
+    public static class MultiLangTest {
+
+        @DataProperty(name = "testString")
+        @Language(language = "en")
+        public final String englishString;
+        private final String frenchString;
+        private final String englishGBString;
+        private final LocalDate defaultTime;
+        @Language(language = "kk")
+        public final String testString2;
+        private final String testString2cs;
+        @IndividualIdentifier
+        public final String id;
+
+        public MultiLangTest() {
+            this.englishString = "test string";
+            this.frenchString = "test string";
+            this.englishGBString = "test string";
+            this.defaultTime = LocalDate.now();
+            this.id = "test-multilang";
+            this.testString2 = "second string";
+            this.testString2cs = "second string";
+        }
+
+        @TrestleCreator
+        public MultiLangTest(String englishString, String englishGBString, String frenchString, LocalDate defaultTime, String id, String testString2, String testString2cs) {
+            this.defaultTime = defaultTime;
+            this.frenchString = frenchString;
+            this.englishGBString = englishGBString;
+            this.englishString = englishString;
+            this.id = id;
+            this.testString2 = testString2;
+            this.testString2cs = testString2cs;
+        }
+
+        @DataProperty(name = "testString")
+        @Language(language = "fr")
+        public String getFrenchString() {
+            return frenchString;
+        }
+
+        @DataProperty(name = "testString")
+        @Language(language = "en_GB")
+        public String getEnglishGBString() {
+            return englishGBString;
+        }
+
+        @DefaultTemporalProperty(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        public LocalDate getDefaultTime() {
+            return defaultTime;
+        }
+
+        @DataProperty(name = "testString2")
+        @Language(language = "cs")
+        public String getTestString2cs() {
+            return testString2cs;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            MultiLangTest that = (MultiLangTest) o;
+
+            if (!englishString.equals(that.englishString)) return false;
+            if (!getFrenchString().equals(that.getFrenchString())) return false;
+            if (!getEnglishGBString().equals(that.getEnglishGBString())) return false;
+            if (!getDefaultTime().equals(that.getDefaultTime())) return false;
+            if (!testString2.equals(that.testString2)) return false;
+            if (!getTestString2cs().equals(that.getTestString2cs())) return false;
+            return id.equals(that.id);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = englishString.hashCode();
+            result = 31 * result + getFrenchString().hashCode();
+            result = 31 * result + getEnglishGBString().hashCode();
+            result = 31 * result + getDefaultTime().hashCode();
+            result = 31 * result + testString2.hashCode();
+            result = 31 * result + getTestString2cs().hashCode();
+            result = 31 * result + id.hashCode();
             return result;
         }
     }

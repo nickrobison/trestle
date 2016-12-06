@@ -563,10 +563,14 @@ public class TrestleReasoner {
                 logger.debug("In the arguments future");
                 final ConstructorArguments constructorArguments = new ConstructorArguments();
                 facts.forEach(property -> {
+                    @Nullable String languageTag = null;
+                    if (property.getObject().hasLang()) {
+                        languageTag = property.getObject().getLang();
+                    }
                     final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, clazz);
                     final Object literalValue = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
                     constructorArguments.addArgument(
-                            ClassParser.matchWithClassMember(clazz, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
+                            ClassParser.matchWithClassMember(clazz, property.getProperty().asOWLDataProperty().getIRI().getShortForm(), languageTag),
                             javaClass,
                             literalValue);
                 });
@@ -1103,6 +1107,7 @@ public class TrestleReasoner {
 
         //        Build shapefile schema
 //        TODO(nrobison): Extract type from wkt
+//        FIXME(nrobison): Shapefile schema doesn't support multiple languages. Need to figure out how to flatten
         final ShapefileSchema shapefileSchema = new ShapefileSchema(MultiPolygon.class);
         final Optional<List<OWLDataProperty>> propertyMembers = ClassBuilder.getPropertyMembers(inputClass, true);
         if (propertyMembers.isPresent()) {
