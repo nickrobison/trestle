@@ -144,8 +144,14 @@ public class TypeConverter {
                 javaClass = SpatialParser.GetSpatialClass(classToVerify);
             }
         } else {
-            //            String as a last resort.
-            javaClass = String.class;
+//            Look it up from the datatype map, else return a string
+            final Class<?> matchedClass = datatypeMap.get(datatype);
+            if (matchedClass == null) {
+//            String as a last resort.
+                javaClass = String.class;
+            } else {
+                javaClass = matchedClass;
+            }
         }
 
         return javaClass;
