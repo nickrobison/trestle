@@ -148,7 +148,6 @@ public class TypeConverter {
         if (datatype.isBuiltIn()) {
 
 //            Check with the class to make sure the types are correct. Sometimes the ontologies give us the wrong type
-//            TODO(nrobison): I think most of this is redundant.
             OWLDatatype dataTypeToLookup = null;
             if (classToVerify != null) {
                 dataTypeToLookup = verifyOWLType(classToVerify, dataproperty.getProperty().asOWLDataProperty());
@@ -245,23 +244,6 @@ public class TypeConverter {
     private static @Nullable OWLDatatype verifyOWLType(Class<?> classToVerify, OWLDataProperty property) {
 
         return getDatatypeFromJavaClass(getJavaMemberType(classToVerify, property, null));
-
-//        //        Check to see if it matches any annotated data methods
-//        final Optional<Method> matchedMethod = Arrays.stream(classToVerify.getDeclaredMethods())
-//                .filter(m -> getMethodName(m).equals(property.getIRI().getShortForm()))
-//                .findFirst();
-//
-//        if (matchedMethod.isPresent()) {
-//            return getDatatypeFromJavaClass(matchedMethod.get().getReturnType());
-//        }
-//
-//        //        Fields
-//        final Optional<Field> matchedField = Arrays.stream(classToVerify.getDeclaredFields())
-//                .filter(f -> getFieldName(f).equals(property.getIRI().getShortForm()))
-//                .findFirst();
-//
-//        return matchedField.map(field -> getDatatypeFromJavaClass(field.getType())).orElse(null);
-
     }
 
     static Map<OWLDatatype, Class<?>> buildDatatype2ClassMap() {

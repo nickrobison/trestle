@@ -29,7 +29,10 @@ public class ConstructorArguments {
     public List<Class<?>> getTypes() {
         List<Class<?>> argumentTypes = new ArrayList<>();
         this.arguments.values()
-                .forEach(value -> argumentTypes.add(value.getArgumentType()));
+                .stream()
+                .map(Argument::getArgumentType)
+                .sorted(Comparator.comparing(Class::getName))
+                .forEach(argumentTypes::add);
 
         return argumentTypes;
     }

@@ -1114,15 +1114,11 @@ public class TrestleReasoner {
 //        FIXME(nrobison): Shapefile schema doesn't support multiple languages. Need to figure out how to flatten
         final ShapefileSchema shapefileSchema = new ShapefileSchema(MultiPolygon.class);
         final Optional<List<OWLDataProperty>> propertyMembers = ClassBuilder.getPropertyMembers(inputClass, true);
-        if (propertyMembers.isPresent()) {
-            propertyMembers.get().forEach(property -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, property.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property)));
-        }
+        propertyMembers.ifPresent(owlDataProperties -> owlDataProperties.forEach(property -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, property.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property))));
 
 //        Now the temporals
         final Optional<List<OWLDataProperty>> temporalProperties = trestleParser.temporalParser.GetTemporalsAsDataProperties(inputClass);
-        if (temporalProperties.isPresent()) {
-            temporalProperties.get().forEach(temporal -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, temporal.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, temporal)));
-        }
+        temporalProperties.ifPresent(owlDataProperties -> owlDataProperties.forEach(temporal -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, temporal.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, temporal))));
 
 
         final List<CompletableFuture<Optional<TSIndividual>>> completableFutures = objectID
@@ -1146,9 +1142,7 @@ public class TrestleReasoner {
 
             return shapeFileExporter.writePropertiesToByteBuffer(individuals, null);
 
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
+        } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
 
