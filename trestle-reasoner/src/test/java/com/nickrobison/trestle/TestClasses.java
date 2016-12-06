@@ -473,7 +473,7 @@ public class TestClasses {
         }
 
         @DataProperty(name = "testString")
-        @Language(language = "en_GB")
+        @Language(language = "en-GB")
         public String getEnglishGBString() {
             return englishGBString;
         }
