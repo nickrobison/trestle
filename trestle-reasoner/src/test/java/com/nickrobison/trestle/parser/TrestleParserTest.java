@@ -111,7 +111,7 @@ public class TrestleParserTest {
 //        final OWLLiteral adm0_code_literal = dfStatic.getOWLLiteral("1234", OWL2Datatype.XSD_INTEGER);
         Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = tp.classParser.GetDataProperties(complexObjectClass);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have properties");
-        assertEquals(2, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of properties");
+        assertEquals(7, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of properties");
         final OWLDataPropertyAssertionAxiom parsed_code = owlDataPropertyAssertionAxioms.get().get(0);
         assertEquals(gaul_test, parsed_code.getSubject(), "Wrong named individual");
 

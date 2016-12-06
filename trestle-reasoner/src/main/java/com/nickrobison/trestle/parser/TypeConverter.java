@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -68,6 +70,14 @@ public class TypeConverter {
                 return javaClass.cast(Integer.parseInt(literal.getLiteral()));
             }
 
+            case "short": {
+                return (@NonNull T) (Object) Short.parseShort(literal.getLiteral());
+            }
+
+            case "java.lang.Short": {
+                return javaClass.cast(Short.parseShort(literal.getLiteral()));
+            }
+
             case "long": {
                 return (@NonNull T) (Object) Long.parseLong(literal.getLiteral());
             }
@@ -84,12 +94,26 @@ public class TypeConverter {
                 return javaClass.cast(literal.getLiteral());
             }
 
+            case "double": {
+                return (@NonNull T) (Object) Double.parseDouble(literal.getLiteral());
+            }
+
             case "java.lang.Double": {
                 return javaClass.cast(literal.parseDouble());
             }
 
             case "java.lang.Boolean": {
                 return javaClass.cast(literal.parseBoolean());
+            }
+
+            case "java.math.BigInteger": {
+                return (@NonNull T) new BigInteger(literal.getLiteral());
+//                return javaClass.cast(literal.getLiteral());
+            }
+
+            case "java.math.BigDecimal": {
+                return (@NonNull T) new BigDecimal(literal.getLiteral());
+//                return javaClass.cast(literal.getLiteral());
             }
 
             default: {
@@ -119,11 +143,12 @@ public class TypeConverter {
      */
     @SuppressWarnings("dereference.of.nullable")
     public static Class<?> lookupJavaClassFromOWLDatatype(OWLDataPropertyAssertionAxiom dataproperty, @Nullable Class<?> classToVerify) {
-        final Class<?> javaClass;
+        Class<?> javaClass;
         final OWLDatatype datatype = dataproperty.getObject().getDatatype();
         if (datatype.isBuiltIn()) {
 
-            //            Check with the class to make sure the types are correct
+//            Check with the class to make sure the types are correct. Sometimes the ontologies give us the wrong type
+//            TODO(nrobison): I think most of this is redundant.
             OWLDatatype dataTypeToLookup = null;
             if (classToVerify != null) {
                 dataTypeToLookup = verifyOWLType(classToVerify, dataproperty.getProperty().asOWLDataProperty());
@@ -134,6 +159,10 @@ public class TypeConverter {
             javaClass = datatypeMap.get(dataTypeToLookup);
             if (javaClass == null) {
                 throw new RuntimeException(String.format("Unsupported OWLDatatype %s", datatype));
+            }
+//            If it comes back as a primitive, check if we need the full class
+            if (javaClass.isPrimitive()) {
+                javaClass = getJavaMemberType(classToVerify, dataproperty.getProperty().asOWLDataProperty(), javaClass);
             }
 //            If it's from the geosparql group, we need to figure out the correct return class
 //                Virtuoso smashes everything into its own Geometry class, so geosparql isn't sufficient.
@@ -155,6 +184,37 @@ public class TypeConverter {
         }
 
         return javaClass;
+    }
+
+    /**
+     * Get the java type for the class member matching the OWLDataProperty
+     * @param clazz - Input class to parse
+     * @param property - OWLDataProperty to match with the class
+     * @param inputType - Previously determined type
+     * @return - Nullable java type
+     */
+    private static @Nullable Class<?> getJavaMemberType(@Nullable Class<?> clazz, OWLDataProperty property, Class<?> inputType) {
+        if (clazz == null) {
+            return inputType;
+        }
+        final String classMember = property.asOWLDataProperty().getIRI().getShortForm();
+
+        //        Check to see if it matches any annotated data methods
+        final Optional<Method> matchedMethod = Arrays.stream(clazz.getDeclaredMethods())
+                .filter(m -> getMethodName(m).equals(classMember))
+                .findFirst();
+
+        if (matchedMethod.isPresent()) {
+            return matchedMethod.get().getReturnType();
+        }
+
+        //        Fields
+        final Optional<Field> matchedField = Arrays.stream(clazz.getDeclaredFields())
+                .filter(f -> getFieldName(f).equals(classMember))
+                .findFirst();
+
+        return matchedField.map(Field::getType).orElse(null);
+
     }
 
     /**
@@ -184,57 +244,64 @@ public class TypeConverter {
 
     private static @Nullable OWLDatatype verifyOWLType(Class<?> classToVerify, OWLDataProperty property) {
 
-        //        Check to see if it matches any annotated data methods
-        final Optional<Method> matchedMethod = Arrays.stream(classToVerify.getDeclaredMethods())
-                .filter(m -> getMethodName(m).equals(property.getIRI().getShortForm()))
-                .findFirst();
+        return getDatatypeFromJavaClass(getJavaMemberType(classToVerify, property, null));
 
-        if (matchedMethod.isPresent()) {
-            return getDatatypeFromJavaClass(matchedMethod.get().getReturnType());
-        }
+//        //        Check to see if it matches any annotated data methods
+//        final Optional<Method> matchedMethod = Arrays.stream(classToVerify.getDeclaredMethods())
+//                .filter(m -> getMethodName(m).equals(property.getIRI().getShortForm()))
+//                .findFirst();
+//
+//        if (matchedMethod.isPresent()) {
+//            return getDatatypeFromJavaClass(matchedMethod.get().getReturnType());
+//        }
+//
+//        //        Fields
+//        final Optional<Field> matchedField = Arrays.stream(classToVerify.getDeclaredFields())
+//                .filter(f -> getFieldName(f).equals(property.getIRI().getShortForm()))
+//                .findFirst();
+//
+//        return matchedField.map(field -> getDatatypeFromJavaClass(field.getType())).orElse(null);
 
-        //        Fields
-        final Optional<Field> matchedField = Arrays.stream(classToVerify.getDeclaredFields())
-                .filter(f -> getFieldName(f).equals(property.getIRI().getShortForm()))
-                .findFirst();
-
-        if (matchedField.isPresent()) {
-            return getDatatypeFromJavaClass(matchedField.get().getType());
-        }
-
-        return null;
     }
 
     static Map<OWLDatatype, Class<?>> buildDatatype2ClassMap() {
         Map<OWLDatatype, Class<?>> datatypeMap = new HashMap<>();
 
-        datatypeMap.put(OWL2Datatype.XSD_INTEGER.getDatatype(dfStatic), Integer.class);
+        datatypeMap.put(OWL2Datatype.XSD_INTEGER.getDatatype(dfStatic), BigInteger.class);
         datatypeMap.put(OWL2Datatype.XSD_INT.getDatatype(dfStatic), int.class);
+        datatypeMap.put(OWL2Datatype.XSD_SHORT.getDatatype(dfStatic), short.class);
         datatypeMap.put(OWL2Datatype.XSD_LONG.getDatatype(dfStatic), long.class);
-        datatypeMap.put(OWL2Datatype.XSD_DOUBLE.getDatatype(dfStatic), Double.class);
-        datatypeMap.put(OWL2Datatype.XSD_FLOAT.getDatatype(dfStatic), double.class);
-        datatypeMap.put(OWL2Datatype.XSD_DECIMAL.getDatatype(dfStatic), Double.class);
+        datatypeMap.put(OWL2Datatype.XSD_DOUBLE.getDatatype(dfStatic), double.class);
+        datatypeMap.put(OWL2Datatype.XSD_FLOAT.getDatatype(dfStatic), float.class);
+        datatypeMap.put(OWL2Datatype.XSD_DECIMAL.getDatatype(dfStatic), BigDecimal.class);
         datatypeMap.put(OWL2Datatype.XSD_DATE_TIME.getDatatype(dfStatic), LocalDateTime.class);
         datatypeMap.put(dfStatic.getOWLDatatype(dateDatatypeIRI), LocalDate.class);
-        datatypeMap.put(OWL2Datatype.XSD_BOOLEAN.getDatatype(dfStatic), Boolean.class);
+        datatypeMap.put(OWL2Datatype.XSD_BOOLEAN.getDatatype(dfStatic), boolean.class);
         datatypeMap.put(OWL2Datatype.XSD_STRING.getDatatype(dfStatic), String.class);
+        datatypeMap.put(OWL2Datatype.XSD_BYTE.getDatatype(dfStatic), byte.class);
 
         return datatypeMap;
     }
 
     private static Map<Class<?>, OWLDatatype> buildClassMap() {
         Map<Class<?>, OWLDatatype> types = new HashMap<>();
-        types.put(Integer.class, OWL2Datatype.XSD_INTEGER.getDatatype(dfStatic));
+        types.put(Integer.class, OWL2Datatype.XSD_INT.getDatatype(dfStatic));
         types.put(int.class, OWL2Datatype.XSD_INT.getDatatype(dfStatic));
         types.put(Double.class, OWL2Datatype.XSD_DOUBLE.getDatatype(dfStatic));
-        types.put(double.class, OWL2Datatype.XSD_FLOAT.getDatatype(dfStatic));
-        types.put(Float.class, OWL2Datatype.XSD_DOUBLE.getDatatype(dfStatic));
+        types.put(double.class, OWL2Datatype.XSD_DOUBLE.getDatatype(dfStatic));
         types.put(float.class, OWL2Datatype.XSD_FLOAT.getDatatype(dfStatic));
+        types.put(Float.class, OWL2Datatype.XSD_FLOAT.getDatatype(dfStatic));
         types.put(Boolean.class, OWL2Datatype.XSD_BOOLEAN.getDatatype(dfStatic));
         types.put(boolean.class, OWL2Datatype.XSD_BOOLEAN.getDatatype(dfStatic));
         types.put(Long.class, OWL2Datatype.XSD_LONG.getDatatype(dfStatic));
         types.put(long.class, OWL2Datatype.XSD_LONG.getDatatype(dfStatic));
+        types.put(BigInteger.class, OWL2Datatype.XSD_INTEGER.getDatatype(dfStatic));
+        types.put(BigDecimal.class, OWL2Datatype.XSD_DECIMAL.getDatatype(dfStatic));
+        types.put(short.class, OWL2Datatype.XSD_SHORT.getDatatype(dfStatic));
+        types.put(Short.class, OWL2Datatype.XSD_SHORT.getDatatype(dfStatic));
         types.put(String.class, OWL2Datatype.XSD_STRING.getDatatype(dfStatic));
+        types.put(byte.class, OWL2Datatype.XSD_BYTE.getDatatype(dfStatic));
+        types.put(Byte.class, OWL2Datatype.XSD_BYTE.getDatatype(dfStatic));
 //        Java temporals
         types.put(LocalDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(dfStatic));
         types.put(LocalDate.class, dfStatic.getOWLDatatype(dateDatatypeIRI));

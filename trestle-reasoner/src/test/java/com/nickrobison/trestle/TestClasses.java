@@ -9,6 +9,7 @@ import com.nickrobison.trestle.types.TemporalType;
 import com.vividsolutions.jts.geom.Geometry;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -264,6 +265,11 @@ public class TestClasses {
 
         @IndividualIdentifier
         public UUID id;
+        public final BigInteger testBigInt;
+        public final int testPrimitiveInt;
+        public final Integer testInteger;
+        private final Double testDouble;
+        public final double testPrimitiveDouble;
         private final String wkt;
         private final LocalDate atDate;
 
@@ -271,12 +277,26 @@ public class TestClasses {
             this.id = UUID.randomUUID();
             this.wkt = "POINT(4.0 6.0)";
             this.atDate = LocalDate.of(1989, 3, 26);
+            this.testBigInt = new BigInteger("10");
+            this.testPrimitiveInt = 14;
+            this.testDouble = new Double("3.14");
+            this.testPrimitiveDouble = 3.141592654;
+            this.testInteger = 42;
         }
 
-        public GAULComplexClassTest(UUID id, String wkt, LocalDate atDate) {
+        public GAULComplexClassTest(UUID id, int testPrimitiveInt, String wkt, Double testDouble, Integer testInteger, LocalDate atDate, BigInteger testBigInt, double testPrimitiveDouble) {
             this.id = id;
+            this.testPrimitiveInt = testPrimitiveInt;
             this.wkt = wkt;
+            this.testDouble = testDouble;
             this.atDate = atDate;
+            this.testBigInt = testBigInt;
+            this.testPrimitiveDouble = testPrimitiveDouble;
+            this.testInteger = testInteger;
+        }
+
+        public Double getTestDouble() {
+            return this.testDouble;
         }
 
         @Spatial
@@ -296,15 +316,20 @@ public class TestClasses {
 
             GAULComplexClassTest that = (GAULComplexClassTest) o;
 
+            if (testPrimitiveInt != that.testPrimitiveInt) return false;
             if (!id.equals(that.id)) return false;
+            if (!testBigInt.equals(that.testBigInt)) return false;
+            if (!getTestDouble().equals(that.getTestDouble())) return false;
             if (!getWkt().equals(that.getWkt())) return false;
             return getAtDate().equals(that.getAtDate());
-
         }
 
         @Override
         public int hashCode() {
             int result = id.hashCode();
+            result = 31 * result + testBigInt.hashCode();
+            result = 31 * result + testPrimitiveInt;
+            result = 31 * result + getTestDouble().hashCode();
             result = 31 * result + getWkt().hashCode();
             result = 31 * result + getAtDate().hashCode();
             return result;
