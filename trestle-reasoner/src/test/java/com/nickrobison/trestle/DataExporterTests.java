@@ -47,8 +47,6 @@ public class DataExporterTests {
                 .build();
 
         loadData();
-
-//        ids = new String[]{"bd0ad9b3-df19-4321-af90-4de510de10eb", "a8cc8e68-676f-4eac-946b-8072cec908ef", "3ff89813-6427-44b9-81eb-53fb1a830de6", "9c93841b-2df6-41c8-a529-9e8fa87e5a77", "edc30fba-01e7-4bcb-95bf-4f382d96be0b", "96e07e83-ea8b-4019-98d1-42da5eec5744", "aedd5ca1-ee67-4733-ae46-0d495fc39792", "31db17dc-21e3-4431-abd0-0a42b4fd715a", "be745ece-acf4-4efa-b98c-96b400b89369", "d986b8c5-b716-42c4-9842-026b4fc88f3c"};
     }
 
     private static void loadData() throws IOException {
@@ -90,6 +88,7 @@ public class DataExporterTests {
                     }
                 });
 
+        reasoner.getUnderlyingOntology().runInference();
         final File file = reasoner.exportDataSetObjects(SimpleGAULObject.class, ids, ITrestleExporter.DataType.SHAPEFILE);
         assertTrue(file.length() > 0, "Should have non-zero length");
     }
