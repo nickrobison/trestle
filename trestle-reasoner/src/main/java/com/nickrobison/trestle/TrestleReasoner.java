@@ -58,6 +58,7 @@ import static com.nickrobison.trestle.common.LambdaExceptionUtil.rethrowFunction
 import static com.nickrobison.trestle.common.LambdaUtils.sequenceCompletableFutures;
 import static com.nickrobison.trestle.common.StaticIRI.*;
 import static com.nickrobison.trestle.parser.TemporalParser.parseTemporalToOntologyDateTime;
+import static com.nickrobison.trestle.utils.ConfigValidator.ValidateConfig;
 
 /**
  * Created by nrobison on 5/17/16.
@@ -84,8 +85,9 @@ public class TrestleReasoner {
     @SuppressWarnings("dereference.of.nullable")
     TrestleReasoner(TrestleBuilder builder) throws OWLOntologyCreationException {
 
-//        Read in the trestleConfig file
+//        Read in the trestleConfig file and validate it
         trestleConfig = ConfigFactory.load().getConfig("trestle");
+        ValidateConfig(trestleConfig);
 
 //        Setup the reasoner prefix
 //        If not specified, use the default Trestle prefix
