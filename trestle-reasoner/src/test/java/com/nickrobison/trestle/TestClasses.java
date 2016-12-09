@@ -435,6 +435,9 @@ public class TestClasses {
         @DataProperty(name = "testString")
         @Language(language = "en")
         public final String englishString;
+        @DataProperty(name = "testString")
+        @Language(language = "heb")
+        public final String hebrewString;
         private final String frenchString;
         private final String englishGBString;
         private final LocalDate defaultTime;
@@ -447,8 +450,9 @@ public class TestClasses {
 
         public MultiLangTest() {
             this.englishString = "test string";
-            this.frenchString = "test string";
+            this.frenchString = "Chaîne d'essai";
             this.englishGBString = "test string";
+            this.hebrewString = "מחרוזת בדיקה";
             this.defaultTime = LocalDate.now();
             this.id = "test-multilang";
             this.testString2 = "second string";
@@ -456,7 +460,7 @@ public class TestClasses {
         }
 
         @TrestleCreator
-        public MultiLangTest(String englishString, String englishGBString, String frenchString, LocalDate defaultTime, String id, String testString2, String testString2cs) {
+        public MultiLangTest(String englishString, String englishGBString, String frenchString, String hebrewString, LocalDate defaultTime, String id, String testString2, String testString2cs) {
             this.defaultTime = defaultTime;
             this.frenchString = frenchString;
             this.englishGBString = englishGBString;
@@ -464,6 +468,7 @@ public class TestClasses {
             this.id = id;
             this.testString2 = testString2;
             this.testString2cs = testString2cs;
+            this.hebrewString = hebrewString;
         }
 
         @DataProperty(name = "testString")
@@ -497,6 +502,7 @@ public class TestClasses {
             MultiLangTest that = (MultiLangTest) o;
 
             if (!englishString.equals(that.englishString)) return false;
+            if (!hebrewString.equals(that.hebrewString)) return false;
             if (!getFrenchString().equals(that.getFrenchString())) return false;
             if (!getEnglishGBString().equals(that.getEnglishGBString())) return false;
             if (!getDefaultTime().equals(that.getDefaultTime())) return false;
@@ -508,6 +514,7 @@ public class TestClasses {
         @Override
         public int hashCode() {
             int result = englishString.hashCode();
+            result = 31 * result + hebrewString.hashCode();
             result = 31 * result + getFrenchString().hashCode();
             result = 31 * result + getEnglishGBString().hashCode();
             result = 31 * result + getDefaultTime().hashCode();
