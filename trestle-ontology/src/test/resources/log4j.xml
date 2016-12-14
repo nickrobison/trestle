@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd" >
+<log4j:configuration>
+
+    <appender name="CA" class="org.apache.log4j.ConsoleAppender">
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%p | %c | %d | %F | %L | %m%n"/>
+        </layout>
+    </appender>
+
+    <category name="org.apache.jena">
+        <priority value="TRACE"/>
+        <appender-ref ref="CA"/>
+    </category>
+
+    <category name="org.semanticweb.owlapi">
+        <priority value="OFF"/>
+    </category>
+
+    <root>
+        <priority value="DEBUG"/>
+        <appender-ref ref="CA"/>
+    </root>
+
+</log4j:configuration>
