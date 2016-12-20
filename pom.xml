@@ -27,7 +27,7 @@
         <jena.version>3.1.0</jena.version>
         <slf4j.version>1.7.21</slf4j.version>
         <jmh.version>1.15</jmh.version>
-        <junit.jupiter.version>5.0.0-M2</junit.jupiter.version>
+        <junit.jupiter.version>5.0.0-M3</junit.jupiter.version>
         <geotools.version>16.0</geotools.version>
         <maven.shade.version>2.4.3</maven.shade.version>
         <!--Checker properties-->
@@ -248,17 +248,6 @@
                 <artifactId>junit-jupiter-api</artifactId>
                 <version>${junit.jupiter.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-engine</artifactId>
-                <version>${junit.jupiter.version}</version>
-            </dependency>
-            <!--Need this for the intellij running and printing-->
-            <dependency>
-                <groupId>org.junit.vintage</groupId>
-                <artifactId>junit-vintage-engine</artifactId>
-                <version>4.12.0-M2</version>
-            </dependency>
             <!--Checker dependencies-->
             <dependency>
                 <groupId>org.checkerframework</groupId>
@@ -309,16 +298,6 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -477,13 +456,18 @@
                     <dependency>
                         <groupId>org.junit.platform</groupId>
                         <artifactId>junit-platform-surefire-provider</artifactId>
-                        <version>1.0.0-M2</version>
+                        <version>1.0.0-M3</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter-engine</artifactId>
+                        <version>${junit.jupiter.version}</version>
                     </dependency>
                 </dependencies>
                 <configuration>
                     <argLine>-XX:+UnlockCommercialFeatures -XX:+FlightRecorder</argLine>
-                    <debugForkedProcess>true</debugForkedProcess>
                     <parallel>classes</parallel>
+                    <useUnlimitedThreads>true</useUnlimitedThreads>
                     <forkCount>3</forkCount>
                 </configuration>
             </plugin>
