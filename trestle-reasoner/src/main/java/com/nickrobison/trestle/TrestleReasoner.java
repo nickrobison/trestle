@@ -15,10 +15,9 @@ import com.nickrobison.trestle.ontology.*;
 import com.nickrobison.trestle.parser.*;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
-import com.nickrobison.trestle.types.TemporalScope;
-import com.nickrobison.trestle.types.TemporalType;
-import com.nickrobison.trestle.types.TrestleFact;
-import com.nickrobison.trestle.types.TrestleIndividual;
+import com.nickrobison.trestle.types.*;
+import com.nickrobison.trestle.types.relations.ConceptRelationType;
+import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.PointTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
@@ -235,30 +234,33 @@ public class TrestleReasoner {
         logger.info("Writing Ontology took {} ms", Duration.between(start, end).toMillis());
     }
 
-    /**
-     * Write a Java object as a TS_Concept
-     *
-     * @param inputObject - Input object to write as concept
-     * @throws TrestleClassException - Throws an exception if the class doesn't exist or is invalid
-     */
-//    FIXME(nrobison): This actually doesn't work, we've split the concepts and objects up into their own classes.
-    public void writeObjectAsConcept(Object inputObject) throws TrestleClassException, MissingOntologyEntity {
+//    /**
+//     * Write a Java object as a Trestle_Concept
+//     *
+//     * @param inputObject - Input object to write as concept
+//     * @throws TrestleClassException - Throws an exception if the class doesn't exist or is invalid
+//     */
+////    FIXME(nrobison): This actually doesn't work, we've split the concepts and objects up into their own classes.
+//    public void writeObjectAsConcept(Object inputObject, ConceptRelationType type) throws TrestleClassException, MissingOntologyEntity {
+//
+//        CompletableFuture.supplyAsync(() -> writeObj)
+//
+//        writeObject(inputObject, TemporalScope.EXISTS, null);
+//    }
 
-        writeObject(inputObject, TemporalScope.EXISTS, null);
-    }
 
     /**
-     * Write a Java object as a TS_Object
+     * Write a Java object as a Trestle_Object
      *
      * @param inputObject - Input object to write as fact
      * @throws TrestleClassException - Throws an exception if the class doesn't exist or is invalid
      */
-    public void WriteAsTSObject(Object inputObject) throws TrestleClassException, MissingOntologyEntity {
+    public void WriteAsTrestleObject(Object inputObject) throws TrestleClassException, MissingOntologyEntity {
         writeObject(inputObject, TemporalScope.VALID, null);
     }
 
     /**
-     * Write object into the ontology as a Fact
+     * Write a Java object as a Trestle_Object
      * Use the provided temporals to setup the database time
      *
      * @param inputObject   - Object to write into the ontology
@@ -266,7 +268,7 @@ public class TrestleReasoner {
      * @param endTemporal   - @Nullable Temporal of ending interval time
      */
     @SuppressWarnings("unchecked")
-    public void WriteAsTSObject(Object inputObject, Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, UnregisteredClassException {
+    public void WriteAsTrestleObject(Object inputObject, Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, UnregisteredClassException {
 
         final TemporalObject databaseTemporal;
         if (endTemporal == null) {
@@ -365,7 +367,7 @@ public class TrestleReasoner {
         if (!ontology.containsResource(owlNamedIndividual)) {
             logger.debug("Fact {] doesn't exist, adding", owlNamedIndividual);
             try {
-                WriteAsTSObject(inputFact);
+                WriteAsTrestleObject(inputFact);
             } catch (TrestleClassException e) {
                 logger.error("Could not write object {}", owlNamedIndividual, e);
             } catch (MissingOntologyEntity e) {
@@ -378,7 +380,7 @@ public class TrestleReasoner {
         if (!ontology.containsResource(relatedFactIndividual)) {
             logger.debug("Related Fact {} doesn't exist, adding", relatedFactIndividual);
             try {
-                WriteAsTSObject(relatedFact);
+                WriteAsTrestleObject(relatedFact);
             } catch (TrestleClassException e) {
                 logger.error("Could not write object {}", relatedFactIndividual, e);
             } catch (MissingOntologyEntity e) {
@@ -608,7 +610,7 @@ public class TrestleReasoner {
 
             final ConstructorArguments constructorArguments;
             try {
-                 constructorArguments = argumentsFuture.get();
+                constructorArguments = argumentsFuture.get();
                 ontology.returnAndCommitTransaction(trestleTransaction);
             } catch (InterruptedException e) {
                 logger.error("Read object {} interrupted", individualIRI, e);
@@ -956,6 +958,289 @@ public class TrestleReasoner {
                 .forEach(trestleIndividual::addFact);
 
         return trestleIndividual;
+    }
+
+    /**
+     * Return a set of Trestle_Concepts that intersect with the given WKT
+     *
+     * @param wkt    - String of WKT to intersect with
+     * @param buffer - double buffer to draw around WKT
+     * @return - Optional Set of String URIs for intersected concepts
+     */
+    public Optional<Set<String>> STIntersectConcept(String wkt, double buffer) {
+        final String queryString;
+
+        try {
+            queryString = qb.buildTemporalSpatialConceptIntersection(wkt, buffer, null);
+        } catch (UnsupportedFeatureException e) {
+            logger.error("Database {} does not support spatial queries", this.spatialDalect);
+            return Optional.empty();
+        }
+
+        final Set<String> intersectedConceptURIs = new HashSet<>();
+        final ResultSet resultSet = this.ontology.executeSPARQL(queryString);
+        ((ResultSetMem) resultSet).rewind();
+        while (resultSet.hasNext()) {
+            final Resource m = resultSet.next().getResource("m");
+            intersectedConceptURIs.add(m.getURI());
+        }
+
+        return Optional.of(intersectedConceptURIs);
+    }
+
+    /**
+     * Retrieve all members of a specified concept that match a given class
+     *
+     * @param <T>                  - Generic type T of returned object
+     * @param clazz                - Input class to retrieve from concept
+     * @param conceptID            - String ID of concept to retrieve
+     * @param spatialIntersection  - Optional spatial intersection to restrict results
+     * @param temporalIntersection - Optional temporal intersection to restrict results
+     * @return - Optional Set of T objects
+     */
+    public <T> Optional<List<T>> getConceptMembers(Class<T> clazz, String conceptID, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection) {
+        if ((spatialIntersection != null) || (temporalIntersection != null)) {
+            logger.warn("Spatio-temporal intersections not implemented yet");
+        }
+
+        Set<String> individualIRIs = new HashSet<>();
+        final OWLClass datasetClass = trestleParser.classParser.GetObjectClass(clazz);
+        final String retrievalStatement = qb.buildConceptObjectRetrieval(datasetClass, IRI.create(REASONER_PREFIX, conceptID));
+        final ResultSet resultSet = ontology.executeSPARQL(retrievalStatement);
+        ((ResultSetMem) resultSet).rewind();
+        while (resultSet.hasNext()) {
+            final QuerySolution next = resultSet.next();
+            individualIRIs.add(next.getResource("m").getURI());
+        }
+
+//        Try to retrieve the object members in an async fashion
+        final List<CompletableFuture<T>> completableFutureList = individualIRIs
+                .stream()
+                .map(iri -> CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return this.readAsObject(clazz, iri);
+                    } catch (TrestleClassException e) {
+                        logger.error("Unregistered class", e);
+                        throw new RuntimeException(e);
+                    } catch (MissingOntologyEntity e) {
+                        logger.error("Cannot find ontology individual {}", e.getIndividual(), e);
+                        throw new RuntimeException(e);
+                    }
+                }))
+                .collect(Collectors.toList());
+        final CompletableFuture<List<T>> conceptObjectsFuture = sequenceCompletableFutures(completableFutureList);
+        try {
+            return Optional.of(conceptObjectsFuture.get());
+        } catch (InterruptedException e) {
+            logger.error("Object retrieval for concept {}, interrupted", conceptID, e);
+            return Optional.empty();
+        } catch (ExecutionException e) {
+            logger.error("Unable to retrieve all objects for concept {}", conceptID, e);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Write an object into the database, as a member of a given concept
+     *
+     * @param conceptIRI   - String of
+     * @param inputObject  - Object to write into databse
+     * @param relationType - ConceptRelationType
+     * @param strength     - Strength parameter of relation
+     */
+    public void addObjectToConcept(String conceptIRI, Object inputObject, ConceptRelationType relationType, double strength) {
+//        Write the object
+        try {
+            this.WriteAsTrestleObject(inputObject);
+        } catch (TrestleClassException e) {
+            logger.error("Problem with class", e);
+        } catch (MissingOntologyEntity e) {
+            logger.error("Missing individual", e.getIndividual(), e);
+        }
+//        Create the concept relation
+        final IRI concept = IRI.create(conceptIRI);
+        final OWLNamedIndividual individual = this.trestleParser.classParser.GetIndividual(inputObject);
+        final IRI relationIRI = IRI.create(String.format("%s:%s", concept.getShortForm(), individual.getIRI().getShortForm()));
+        final OWLNamedIndividual relationIndividual = df.getOWLNamedIndividual(relationIRI);
+        final OWLClass relationClass = df.getOWLClass(conceptRelationIRI);
+//        TODO(nrobison): Implement relation types
+//        switch (relationType) {
+//            case SEMANTIC:
+//                relationClass = df.getOWLClass(semanticRelationIRI);
+//                break;
+//            case SPATIAL:
+//                relationClass = df.getOWLClass(spatialRelationIRI);
+//                break;
+//            case TEMPORAL:
+//                relationClass = df.getOWLClass(temporalRelationIRI);
+//                break;
+//            default:
+//                relationClass = df.getOWLClass(trestleConceptIRI);
+//                break;
+//        }
+//        Write the concept properties
+        ontology.createIndividual(df.getOWLClassAssertionAxiom(relationClass, relationIndividual));
+        try {
+            ontology.writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
+                    df.getOWLObjectProperty(relationOfIRI),
+                    relationIndividual,
+                    individual));
+        } catch (MissingOntologyEntity e) {
+            logger.error("Missing individual {}", e.getIndividual(), e);
+        }
+        try {
+            ontology.writeIndividualDataProperty(relationIndividual,
+                    df.getOWLDataProperty(relationStrengthIRI),
+                    df.getOWLLiteral(strength));
+        } catch (MissingOntologyEntity e) {
+            logger.error("Missing individual {}", e.getIndividual(), e);
+        }
+    }
+
+    /**
+     * Write a relationship between two objects.
+     * If one or both of those objects do not exist, create them.
+     *
+     * @param subject - Java object to write as subject of relationship
+     * @param object - Java object to write as object of relationship
+     * @param relation - ObjectRelation between the two object
+     */
+    public void writeObjectRelationship(Object subject, Object object, ObjectRelation relation) {
+        this.writeObjectProperty(subject, object, df.getOWLObjectProperty(relation.getIRI()));
+    }
+
+    /**
+     * Create a spatial overlap association between two objects.
+     * If one or both of the object do not exist, create them.
+     * @param subject - Java object to write as subject of relationship
+     * @param object - Java object to write as object of relationship
+     * @param wkt - String of wkt boundary of spatial overlap
+     */
+    public void writeSpatialOverlap(Object subject, Object object, String wkt) {
+        final OWLNamedIndividual subjectIndividual = trestleParser.classParser.GetIndividual(subject);
+        final OWLNamedIndividual objectIndividual = trestleParser.classParser.GetIndividual(object);
+        final OWLNamedIndividual overlapIndividual = df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX,
+                String.format("overlap:%s:%s",
+                        subjectIndividual.getIRI().getShortForm(),
+                        objectIndividual.getIRI().getShortForm())));
+
+//        Write the overlap
+        final OWLClassAssertionAxiom overlapClassAssertion = df.getOWLClassAssertionAxiom(df.getOWLClass(trestleOverlapIRI), overlapIndividual);
+        this.ontology.createIndividual(overlapClassAssertion);
+//        Write the overlap intersection
+        final OWLDataPropertyAssertionAxiom sOverlapAssertion = df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(sOverlapIRI), overlapIndividual, df.getOWLLiteral(wkt, df.getOWLDatatype(WKTDatatypeIRI)));
+        try {
+            this.ontology.writeIndividualDataProperty(sOverlapAssertion);
+        } catch (MissingOntologyEntity missingOntologyEntity) {
+            logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
+        }
+
+//        Write the subject relation
+        final OWLObjectProperty overlapProperty = df.getOWLObjectProperty(overlapOfIRI);
+        this.writeIndirectObjectProperty(overlapIndividual, subject, overlapProperty);
+
+//        Write the object relation
+        this.writeIndirectObjectProperty(overlapIndividual, object, overlapProperty);
+    }
+
+    /**
+     * Create a spatial overlap association between two objects.
+     * If one or both of the object do not exist, create them.
+     * @param subject - Java object to write as subject of relationship
+     * @param object - Java object to write as object of relationship
+     * @param temporalOverlap - String of temporal overlap between two objects (Not implemented yet)
+     */
+//    TODO(nrobison): Correctly implement this
+    public void writeTemporalOverlap(Object subject, Object object, String temporalOverlap) {
+        logger.warn("Temporal overlaps not implemented yet, overlap value has no meaning");
+        final OWLNamedIndividual subjectIndividual = trestleParser.classParser.GetIndividual(subject);
+        final OWLNamedIndividual objectIndividual = trestleParser.classParser.GetIndividual(object);
+        final OWLNamedIndividual overlapIndividual = df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX,
+                String.format("overlap:%s:%s",
+                        subjectIndividual.getIRI().getShortForm(),
+                        objectIndividual.getIRI().getShortForm())));
+
+//        Write the overlap
+        final OWLClassAssertionAxiom overlapClassAssertion = df.getOWLClassAssertionAxiom(df.getOWLClass(trestleOverlapIRI), overlapIndividual);
+        this.ontology.createIndividual(overlapClassAssertion);
+//        Write the overlap intersection
+        final OWLDataPropertyAssertionAxiom sOverlapAssertion = df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(tOverlapIRI), overlapIndividual, df.getOWLLiteral(temporalOverlap));
+        try {
+            this.ontology.writeIndividualDataProperty(sOverlapAssertion);
+        } catch (MissingOntologyEntity missingOntologyEntity) {
+            logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
+        }
+
+//        Write the subject relation
+        final OWLObjectProperty overlapProperty = df.getOWLObjectProperty(overlapOfIRI);
+        this.writeIndirectObjectProperty(overlapIndividual, subject, overlapProperty);
+
+//        Write the object relation
+        this.writeIndirectObjectProperty(overlapIndividual, object, overlapProperty);
+    }
+
+    /**
+     * Write an indirect object property between a Java object and an intermediate OWL individual
+     * The OWL individual must exist before calling this function, but the Java object is created if it doesn't exist.
+     * @param subject - OWLNamedIndividual of intermediate OWL object
+     * @param object - Java object to write as object of assertion
+     * @param property - OWLObjectProperty to assert
+     */
+    private void writeIndirectObjectProperty(OWLNamedIndividual subject, Object object, OWLObjectProperty property) {
+        final OWLNamedIndividual objectIndividual = trestleParser.classParser.GetIndividual(object);
+        final OWLObjectPropertyAssertionAxiom owlObjectPropertyAssertionAxiom = df.getOWLObjectPropertyAssertionAxiom(property, subject, objectIndividual);
+        try {
+            this.ontology.writeIndividualObjectProperty(owlObjectPropertyAssertionAxiom);
+        } catch (MissingOntologyEntity missingOntologyEntity) {
+            logger.debug("Missing individual {}, creating", missingOntologyEntity.getIndividual(), missingOntologyEntity);
+            try {
+                this.WriteAsTrestleObject(object);
+            } catch (TrestleClassException | MissingOntologyEntity e) {
+                logger.error("Problem writing assertion for individual", objectIndividual, e);
+            }
+        }
+    }
+
+    /**
+     * Write an object property assertion between two objects, writing them into the database if they don't exist.
+     * @param subject - Java object to write as subject of assertion
+     * @param object - Java object to write as object of assertion
+     * @param property - OWLObjectProperty to assert between the two objects
+     */
+    private void writeObjectProperty(Object subject, Object object, OWLObjectProperty property) {
+        final OWLNamedIndividual subjectIndividual = trestleParser.classParser.GetIndividual(subject);
+        final OWLNamedIndividual objectIndividual = trestleParser.classParser.GetIndividual(object);
+        final OWLObjectPropertyAssertionAxiom objectRelationshipAssertion = df.getOWLObjectPropertyAssertionAxiom(property,
+                subjectIndividual,
+                objectIndividual);
+        try {
+            ontology.writeIndividualObjectProperty(objectRelationshipAssertion);
+        } catch (MissingOntologyEntity e) {
+            logger.debug("Individual {} does not exist, creating", e.getIndividual(), e);
+//            Do we need to write the subject, or the object?
+//            Start with object, and then try for the subject
+            if (e.getIndividual().equals(objectIndividual.toString())) {
+                try {
+                    this.WriteAsTrestleObject(subject);
+                } catch (TrestleClassException e1) {
+                    logger.error("Class exception", e1);
+                } catch (MissingOntologyEntity missingOntologyEntity) {
+                    logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
+                }
+                try {
+//                    Try to write again, if it fails, write the subject
+                    ontology.writeIndividualObjectProperty(objectRelationshipAssertion);
+                } catch (MissingOntologyEntity missingOntologyEntity) {
+                    try {
+                        this.WriteAsTrestleObject(object);
+                    } catch (TrestleClassException e2) {
+                        logger.error("Class exception", e2);
+                    } catch (MissingOntologyEntity m2) {
+                        logger.error("Missing individual {}", m2.getIndividual(), m2);
+                    }
+                }
+            }
+        }
     }
 
     /**

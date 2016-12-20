@@ -207,6 +207,146 @@ public class QueryBuilder {
                 "?m rdf:type ?type ." +
                 "?m trestle:has_fact ?f ." +
                 "?f ogc:asWKT ?wkt ");
+        ps.setIri("type", getFullIRIString(datasetClass));
+        buildDatabaseSString(ps, wktValue, buffer);
+
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
+    public String buildTemporalSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, UNITS unit, OffsetDateTime atTime) throws UnsupportedFeatureException {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText("SELECT DISTINCT ?m ?tStart ?tEnd" +
+                " WHERE { " +
+                "?m rdf:type ?type ." +
+                "?m trestle:has_fact ?f ." +
+                "?f ogc:asWKT ?wkt ." +
+                "?m trestle:has_temporal ?t ." +
+                "{ ?t trestle:valid_from ?tStart} UNION {?t trestle:exists_from ?tStart} ." +
+                "OPTIONAL{{ ?t trestle:valid_to ?tEnd} UNION {?t trestle:exists_to ?tEnd}} .");
+        buildDatabaseTSString(ps, wktValue, buffer, atTime);
+//        switch (this.dialect) {
+//            case ORACLE: {
+////                We need to remove this, otherwise Oracle substitutes geosparql for ogc
+//                ps.removeNsPrefix("geosparql");
+////                Add this hint to the query planner
+//                ps.setNsPrefix("ORACLE_SEM_HT_NS", "http://oracle.com/semtech#leading(?wkt)");
+//                ps.append("FILTER((?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
+//                break;
+//            }
+//            case VIRTUOSO: {
+//                logger.warn("Unit conversion not implemented yet, assuming meters as base distance");
+//                ps.append("FILTER((?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime) && bif:st_intersects(?wkt, ?wktString^^ogc:wktLiteral, ?distance)) }");
+//                ps.setLiteral("distance", buffer);
+//                break;
+//            }
+//
+//            default:
+//                throw new UnsupportedFeatureException(String.format("Trestle doesn't yet support spatial queries on %s", dialect));
+//        }
+        ps.setIri("type", getFullIRIString(datasetClass));
+//        We need to simplify the WKT to get under the 4000 character SQL limit.
+        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
+        ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
+    /**
+     * Build SPARQL query to find the concepts that intersect a given space/time pair
+     * @param wktValue - WKT value
+     * @param buffer - buffer value (in meters)
+     * @param atTime - Temporal to select appropriate, valid fact
+     * @return - String of SPARQL query
+     * @throws UnsupportedFeatureException
+     */
+    public String buildTemporalSpatialConceptIntersection(String wktValue, double buffer, @Nullable OffsetDateTime atTime) throws UnsupportedFeatureException {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText("SELECT DISTINCT ?m" +
+                " WHERE { " +
+                "?m rdf:type trestle:Trestle_Concept ." +
+                "?m trestle:has_relation ?r . " +
+                "?r trestle:related_to ?o ." +
+                "?o trestle:has_fact ?f ." +
+                "?f trestle:has_temporal ?ft ." +
+                "?ft trestle:valid_from ?tStart ." +
+                "OPTIONAL{ ?ft trestle:valid_to ?tEnd }." +
+                "?f ogc:asWKT ?wkt .");
+
+        if (atTime != null) {
+            this.buildDatabaseTSString(ps, wktValue, buffer, atTime);
+        } else {
+            this.buildDatabaseSString(ps, wktValue, buffer);
+        }
+
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
+    /**
+     * Build SPARQL Query to retrieve all given members of a Trestle_Concept that are subclassed from the given OWLClass
+     * @param datasetClass OWLClass of individuals to return
+     * @param conceptID - IRI of Trestle_Concept to query
+     * @return - SPARQL Query String
+     */
+//    TODO(nrobison): Implement spatio-temporal intersection
+    public String buildConceptObjectRetrieval(OWLClass datasetClass, IRI conceptID) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText(String.format("SELECT DISTINCT ?m " +
+                "WHERE { " +
+                "?m rdf:type ?type . " +
+                "?m trestle:has_concept ?concept . " +
+                "VALUES ?concept { %s }}", getFullIRI(conceptID).toString()));
+        ps.setIri("type", getFullIRIString(datasetClass));
+
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
+    /**
+     * Common method to build the spatio-temporal intersection component of the SPARQL query
+     * @param ps - ParamaterizedSparqlString to build on
+     * @param wktValue - ParamaterizedSparqlString to build on
+     * @param buffer - double buffer (in meters) around the intersection
+     * @param atTime - OffsetDateTime to set intersection time to
+     * @throws UnsupportedFeatureException
+     */
+    private void buildDatabaseTSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime atTime) throws UnsupportedFeatureException {
+        switch (this.dialect) {
+            case ORACLE: {
+//                We need to remove this, otherwise Oracle substitutes geosparql for ogc
+                ps.removeNsPrefix("geosparql");
+//                Add this hint to the query planner
+                ps.setNsPrefix("ORACLE_SEM_HT_NS", "http://oracle.com/semtech#leading(?wkt)");
+                ps.append("FILTER((?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
+                break;
+            }
+            case VIRTUOSO: {
+                logger.warn("Unit conversion not implemented yet, assuming meters as base distance");
+                ps.append("FILTER((?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime) && bif:st_intersects(?wkt, ?wktString^^ogc:wktLiteral, ?distance)) }");
+                ps.setLiteral("distance", buffer);
+                break;
+            }
+
+            default:
+                throw new UnsupportedFeatureException(String.format("Trestle doesn't yet support spatial queries on %s", dialect));
+        }
+
+        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
+        ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+    }
+
+    /**
+     * Common method for build the Spatial intersection component of the SPARQL query
+     * @param ps - ParamaterizedSparqlString to build on
+     * @param wktValue - ParamaterizedSparqlString to build on
+     * @param buffer - double buffer (in meters) around the intersection
+     * @throws UnsupportedFeatureException
+     */
+    private void buildDatabaseSString(ParameterizedSparqlString ps, String wktValue, double buffer) throws UnsupportedFeatureException {
         switch (this.dialect) {
             case ORACLE: {
 //                We need to remove this, otherwise Oracle substitutes geosparql for ogc
@@ -227,58 +367,17 @@ public class QueryBuilder {
             default:
                 throw new UnsupportedFeatureException(String.format("Trestle doesn't yet support spatial queries on %s", dialect));
         }
-        ps.setIri("type", getFullIRIString(datasetClass));
+
 //        We need to simplify the WKT to get under the 4000 character SQL limit.
         ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
-
-        logger.debug(ps.toString());
-        return ps.toString();
-    }
-
-    public String buildTemporalSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, UNITS unit, OffsetDateTime atTime) throws UnsupportedFeatureException {
-        final ParameterizedSparqlString ps = buildBaseString();
-        ps.setCommandText("SELECT DISTINCT ?m ?tStart ?tEnd" +
-                " WHERE { " +
-                "?m rdf:type ?type ." +
-                "?m trestle:has_fact ?f ." +
-                "?f ogc:asWKT ?wkt ." +
-                "?m trestle:has_temporal ?t ." +
-                "{ ?t trestle:valid_from ?tStart} UNION {?t trestle:exists_from ?tStart} ." +
-                "OPTIONAL{{ ?t trestle:valid_to ?tEnd} UNION {?t trestle:exists_to ?tEnd}} .");
-        switch (this.dialect) {
-            case ORACLE: {
-//                We need to remove this, otherwise Oracle substitutes geosparql for ogc
-                ps.removeNsPrefix("geosparql");
-//                Add this hint to the query planner
-                ps.setNsPrefix("ORACLE_SEM_HT_NS", "http://oracle.com/semtech#leading(?wkt)");
-                ps.append("FILTER((?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
-                break;
-            }
-            case VIRTUOSO: {
-                logger.warn("Unit conversion not implemented yet, assuming meters as base distance");
-                ps.append("FILTER((?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime) && bif:st_intersects(?wkt, ?wktString^^ogc:wktLiteral, ?distance)) }");
-                ps.setLiteral("distance", buffer);
-                break;
-            }
-
-            default:
-                throw new UnsupportedFeatureException(String.format("Trestle doesn't yet support spatial queries on %s", dialect));
-        }
-        ps.setIri("type", getFullIRIString(datasetClass));
-//        We need to simplify the WKT to get under the 4000 character SQL limit.
-        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
-        ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-
-        logger.debug(ps.toString());
-        return ps.toString();
     }
 
     /**
      * Return individuals with IRIs that match the given search string
+     *
      * @param individual - String to search for matching individual
-     * @param owlClass - Optional OWLClass to limit search results
-     * @param limit - Optional limit of query results
+     * @param owlClass   - Optional OWLClass to limit search results
+     * @param limit      - Optional limit of query results
      * @return - SPARQL Query string
      */
     public String buildIndividualSearchQuery(String individual, @Nullable OWLClass owlClass, @Nullable Integer limit) {
@@ -308,13 +407,18 @@ public class QueryBuilder {
         return ps.toString();
     }
 
+    /**
+     * Initialize the base SPARQL String, with the correct prefixes
+     * @return - Base SPARQL string
+     */
     private ParameterizedSparqlString buildBaseString() {
         final ParameterizedSparqlString ps = new ParameterizedSparqlString();
         ps.setBaseUri(baseURI);
         ps.setNsPrefixes(this.trimmedPrefixMap);
         return ps;
     }
-// TODO(nrobison): Move this to trestle-common
+
+    // TODO(nrobison): Move this to trestle-common
     private IRI getFullIRI(IRI iri) {
         //        Check to see if it's already been expanded
         if (pm.getPrefix(iri.getScheme() + ":") == null) {
@@ -328,6 +432,14 @@ public class QueryBuilder {
         return getFullIRI(object.getIRI()).toString();
     }
 
+    /**
+     * Recursively simplify the WKT string.
+     * On first pass, reduce the decimal precision, before attempting simplification
+     * @param wkt - WKT string to simplify
+     * @param factor - Initial starting simplification factor (If 0, reduce precision first)
+     * @param buffer - Buffer to add to WKT
+     * @return - String of simplified WKT
+     */
     private static String simplifyWkt(String wkt, double factor, double buffer) {
 
         final Geometry geom;

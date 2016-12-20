@@ -6,12 +6,13 @@ import com.nickrobison.trestle.TrestleBuilder;
 import com.nickrobison.trestle.TrestleReasoner;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
+import com.nickrobison.trestle.types.relations.ConceptRelationType;
+import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,8 +35,13 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
     private static final String STARTDATE = "temporal.startdate";
     private static final String ENDDATE = "temporal.enddate";
 
-//    Setup the spatial stuff
-    private static final OperatorIntersection operatorIntersection = (OperatorIntersection) OperatorFactoryLocal.getInstance().getOperator(Operator.Type.Intersection);
+    //    Setup the spatial stuff
+    private static final OperatorFactoryLocal instance = OperatorFactoryLocal.getInstance();
+    private static final OperatorIntersection operatorIntersection = (OperatorIntersection) instance.getOperator(Operator.Type.Intersection);
+    private static final OperatorWithin operatorWithin = (OperatorWithin) instance.getOperator(Operator.Type.Intersection);
+    private static final OperatorTouches operatorTouches = (OperatorTouches) instance.getOperator(Operator.Type.Touches);
+    private static final OperatorEquals operatorEquals = (OperatorEquals) instance.getOperator(Operator.Type.Equals);
+    private static final OperatorExportToWkt operatorWKTExport = (OperatorExportToWkt) instance.getOperator(Operator.Type.ExportToWkt);
     private static final int INPUTSRS = 32610;
     private static final SpatialReference inputSR = SpatialReference.create(INPUTSRS);
 
@@ -116,7 +122,8 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 //            Store into database
 //            Store the object
             try {
-                reasoner.writeObjectAsConcept(newObject);
+//                reasoner.writeObjectAsConcept(newObject);
+                reasoner.WriteAsTrestleObject(newObject);
             } catch (TrestleClassException e) {
                 logger.error("Cannot write object to trestle", e);
             } catch (MissingOntologyEntity missingOntologyEntity) {
@@ -148,16 +155,49 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                     inputRecords.get(0).getPolygonData().polygon
             );
 
-//            Check to see if anything in the database either has the same name, or intersects the original object, with an added buffer.
 //            Try from Trestle
 //            Manually run the inferencer, for now
             final Instant infStart = Instant.now();
             reasoner.getUnderlyingOntology().runInference();
             final Instant infStop = Instant.now();
             logger.debug("Updating inference took {} ms", Duration.between(infStart, infStop).toMillis());
-            final Optional<List<@NonNull GAULObject>> gaulObjects = reasoner.spatialIntersectObject(newGAULObject, 500);
 
-            List<GAULObject> matchedObjects = gaulObjects.orElse(new ArrayList<>());
+//            List of objects to compare to given object
+            final List<GAULObject> matchedObjects = new ArrayList<>();
+            boolean hasConcept = false;
+
+
+//            See if there's a concept that spatially intersects the object
+            final Optional<Set<String>> conceptIRIs = reasoner.STIntersectConcept(newGAULObject.getPolygonAsWKT(), 500);
+
+
+//            If true, get all the concept members
+            if (conceptIRIs.isPresent()) {
+                hasConcept = true;
+                conceptIRIs.get().forEach(concept -> {
+                    final Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, concept, null, null);
+                    conceptMembers.ifPresent(members -> members.forEach(matchedObjects::add));
+//                Now add the concept relations
+//                    TODO(nrobison): This feels bad.
+                    reasoner.addObjectToConcept(concept, newGAULObject, ConceptRelationType.TEMPORAL, 1.0);
+                });
+            }
+
+//            If no, find objects to intersect
+            if (!conceptIRIs.isPresent()) {
+                reasoner.spatialIntersectObject(newGAULObject, 500)
+                        .ifPresent(objects -> objects.forEach(matchedObjects::add));
+
+//                Go ahead the create the new concept
+                reasoner.addObjectToConcept(String.format("%s:concept", newGAULObject.getObjectName()), newGAULObject, ConceptRelationType.TEMPORAL, 1.0);
+            }
+
+////            Check to see if anything in the database either has the same name, or intersects the original object, with an added buffer.
+//            final Optional<List<@NonNull GAULObject>> gaulObjects = reasoner.spatialIntersectObject(newGAULObject, 500);
+//
+//            List<GAULObject> matchedObjects = gaulObjects.orElse(new ArrayList<>());
+
+//            Now, do the normal spatial intersection with the new object and its matched objects
 
 
 //            If there are no matching objects in the database, just insert the new record and move on.
@@ -172,6 +212,35 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                         objectWeight = .8;
                     }
 
+//                    Spatial intersections
+//                    We'll go through them one by one and see what works
+//                    Equal?
+                    if (operatorEquals.execute(matchedObject.getShapePolygon(), newGAULObject.getShapePolygon(), inputSR, null)) {
+//                        If equal, write the relationship and continue to the next shape
+                        reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.EQUALS);
+                        continue;
+                    }
+
+//                    Covers?
+
+//                    Contains? Both new object inside matched object, and matched object inside new object
+                    if (operatorWithin.execute(newGAULObject.getShapePolygon(), matchedObject.getShapePolygon(), inputSR, null)) {
+                        reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.CONTAINS);
+                        continue;
+                    }
+
+                    if (operatorWithin.execute(matchedObject.getShapePolygon(), newGAULObject.getShapePolygon(), inputSR, null)) {
+                        reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.INSIDE);
+                        continue;
+                    }
+
+//                    Meets
+                    if (operatorTouches.execute(newGAULObject.getShapePolygon(), matchedObject.getShapePolygon(), inputSR, null)) {
+                        reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.MEETS);
+                        continue;
+                    }
+
+//                    Overlaps
 //                    Compute the total area intersection
                     Polygon intersectedPolygon = new Polygon();
                     final Geometry computedGeometry = operatorIntersection.execute(matchedObject.getShapePolygon(), newGAULObject.getShapePolygon(), inputSR, null);
@@ -181,12 +250,16 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                         logger.error("Incorrectly computed geometry, assuming 0 intersection");
 //                        throw new RuntimeException("Incorrectly computed geometry");
                     }
+                    final String wktBoundary = operatorWKTExport.execute(0, intersectedPolygon, null);
+                    reasoner.writeSpatialOverlap(newGAULObject, matchedObject, wktBoundary);
 
                     double intersectedArea = intersectedPolygon.calculateArea2D() / newGAULObject.getShapePolygon().calculateArea2D();
                     objectWeight += (1 - objectWeight) * intersectedArea;
 
                     relatedObjects.put(matchedObject, objectWeight);
                 }
+
+//                Temporals?
 
 //                Now, insert the matchedObjects into the reasoner
 //                Only store relations with a weight of .2 or higher
@@ -199,7 +272,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //            Now, we insert the new itself record into the database
             try {
-                reasoner.WriteAsTSObject(newGAULObject);
+                reasoner.WriteAsTrestleObject(newGAULObject);
             } catch (TrestleClassException e) {
                 logger.error("Cannot write {}", newGAULObject.getObjectName(), e);
             } catch (MissingOntologyEntity missingOntologyEntity) {
