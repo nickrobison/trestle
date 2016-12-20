@@ -66,7 +66,7 @@ public class ClassValidationTest {
         reasoner.registerClass(GAULObject.class);
 
         try {
-            reasoner.WriteAsTSObject(testObject);
+            reasoner.WriteAsTrestleObject(testObject);
         } catch (TrestleClassException e) {
             e.printStackTrace();
             fail("Should not throw exception");

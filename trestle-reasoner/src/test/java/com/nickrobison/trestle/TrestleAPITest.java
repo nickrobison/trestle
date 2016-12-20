@@ -21,7 +21,6 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
-import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 import java.io.*;
 import java.time.LocalDate;
@@ -107,7 +106,7 @@ public class TrestleAPITest {
 //        Write the objects
         gaulObjects.parallelStream().forEach(gaul -> {
             try {
-                reasoner.WriteAsTSObject(gaul);
+                reasoner.WriteAsTrestleObject(gaul);
             } catch (TrestleClassException e) {
                 throw new RuntimeException(String.format("Problem storing object %s", gaul.adm0_name), e);
             } catch (MissingOntologyEntity missingOntologyEntity) {
@@ -173,7 +172,7 @@ public class TrestleAPITest {
 
         classObjects.stream().forEach(object -> {
             try {
-                reasoner.WriteAsTSObject(object);
+                reasoner.WriteAsTrestleObject(object);
             } catch (TrestleClassException | MissingOntologyEntity e) {
                 e.printStackTrace();
             }
@@ -200,7 +199,6 @@ public class TrestleAPITest {
         final IRI gaul_jts_test = IRI.create(OVERRIDE_PREFIX, "GAUL_JTS_Test");
         List<String> individuals = reasoner.searchForIndividual("43", gaul_jts_test.toString(), null);
         assertEquals(1, individuals.size(), "Should only have 1 individual in the JTS class");
-//        FIXME(nrobison): For some reason, the inferencer isn't updating correctly. So the query works, but it's not grabbing the correct values
 //        individuals = reasoner.searchForIndividuals("2");
 //        assertEquals(4, individuals.size(), "Should have 4 individuals, overall");
 
@@ -209,7 +207,7 @@ public class TrestleAPITest {
         assertEquals(2, trestleIndividual.getFacts().size(), "Wrong number of attributes");
 
 //        Now try to remove it
-        reasoner.removeIndividual(classObjects.toArray(new Object[classObjects.size()]));
+//        reasoner.removeIndividual(classObjects.toArray(new Object[classObjects.size()]));
 
 //        reasoner.writeOntology(new File("/Users/nrobison/Desktop/trestle_test.owl").toURI(), false);
 
@@ -220,7 +218,7 @@ public class TrestleAPITest {
 //        JTS.toGeometry()
 //        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest = new TestClasses.GeotoolsPolygonTest(UUID.randomUUID(), (org.opengis.geometry.coordinate.Polygon) geotoolsGeom, LocalDate.now());
 //        final OWLNamedIndividual owlNamedIndividual = classParser.GetIndividual(geotoolsPolygonTest);
-//        reasoner.WriteAsTSObject(geotoolsPolygonTest);
+//        reasoner.WriteAsTrestleObject(geotoolsPolygonTest);
 //        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest1 = reasoner.readAsObject(geotoolsPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
 //        assertEquals(geotoolsPolygonTest, geotoolsPolygonTest1, "Should be equal");
 
@@ -230,6 +228,6 @@ public class TrestleAPITest {
 
     @AfterEach
     public void close() throws OWLOntologyStorageException {
-        reasoner.shutdown(true);
+        reasoner.shutdown(false);
     }
 }

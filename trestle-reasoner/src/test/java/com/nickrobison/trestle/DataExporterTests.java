@@ -82,7 +82,7 @@ public class DataExporterTests {
                 .parallelStream()
                 .forEach(object -> {
                     try {
-                        reasoner.WriteAsTSObject(object);
+                        reasoner.WriteAsTrestleObject(object);
                     } catch (TrestleClassException | MissingOntologyEntity e) {
                         e.printStackTrace();
                     }
