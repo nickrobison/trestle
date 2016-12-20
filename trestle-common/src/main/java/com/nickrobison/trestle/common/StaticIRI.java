@@ -27,16 +27,22 @@ public class StaticIRI {
     public static final IRI relatedToIRI = IRI.create(TRESTLE_PREFIX, "relatedTo");
     public static final IRI databaseTimeIRI = IRI.create(TRESTLE_PREFIX, "database_time");
     public static final IRI databaseTimeOfIRI = IRI.create(TRESTLE_PREFIX, "database_time_of");
+    public static final IRI hasOverlapIRI = IRI.create(TRESTLE_PREFIX, "has_overlap");
+    public static final IRI overlapOfIRI = IRI.create(TRESTLE_PREFIX, "overlap_of");
 //    Classes
-    public static final IRI conceptRelationIRI = IRI.create(TRESTLE_PREFIX, "Relation");
+    public static final IRI trestleConceptIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Concept");
+    public static final IRI conceptRelationIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Relation");
     public static final IRI spatialRelationIRI = IRI.create(TRESTLE_PREFIX, "Spatial_Relation");
     public static final IRI temporalRelationIRI = IRI.create(TRESTLE_PREFIX, "Temporal_Relation");
     public static final IRI semanticRelationIRI = IRI.create(TRESTLE_PREFIX, "Semantic_Relation");
+    public static final IRI trestleOverlapIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Overlap");
     public static final IRI datasetClassIRI = IRI.create(TRESTLE_PREFIX, "Dataset");
     public static final IRI factClassIRI = IRI.create(TRESTLE_PREFIX, "Fact");
     public static final IRI temporalClassIRI = IRI.create(TRESTLE_PREFIX, "Temporal_Object");
 //    Properties
     public static final IRI relationStrengthIRI = IRI.create(TRESTLE_PREFIX, "Relation_Strength");
+    public static final IRI sOverlapIRI = IRI.create(TRESTLE_PREFIX, "SOverlap");
+    public static final IRI tOverlapIRI = IRI.create(TRESTLE_PREFIX, "TOverlap");
     public static final IRI dateTimeDatatypeIRI = IRI.create(XSDPREFIX, "dateTime");
     public static final IRI dateDatatypeIRI = IRI.create(XSDPREFIX, "date");
     public static final IRI UUIDDatatypeIRI = IRI.create(TRESTLE_PREFIX, "UUID");
