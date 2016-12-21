@@ -39,21 +39,21 @@ public class JenaLiteralFactory {
      * If the OWLLiteral is of type RDF:PlainLiteral, it extracts the language string and returns the new literal
      *
      * @param owlLiteral - OWLLiteral to parse
-     * @return - Jean RDF Literal
+     * @return - Jena RDF Literal
      */
     public Literal createLiteral(OWLLiteral owlLiteral) {
         if (owlLiteral.hasLang()) {
-            logger.debug("Creating typed literal {} with language {}", owlLiteral.getLiteral(), owlLiteral.getLang());
+            logger.trace("Creating typed literal {} with language {}", owlLiteral.getLiteral(), owlLiteral.getLang());
             return model.createLiteral(owlLiteral.getLiteral(), owlLiteral.getLang());
         } else {
             final RDFDatatype rdfType = typeMapper.getSafeTypeByName(owlLiteral.getDatatype().toStringID());
-            logger.debug("Creating typed literal {} with datatype {}", owlLiteral.getDatatype(), rdfType);
+            logger.trace("Creating typed literal {} with datatype {}", owlLiteral.getDatatype(), rdfType);
             return model.createTypedLiteral(owlLiteral.getLiteral(), rdfType);
         }
     }
 
     /**
-     * Create OWLLiteral from Jean Literal
+     * Create OWLLiteral from Jena Literal
      *
      * @param literal - Jena Literal to parse
      * @return - Optional of OWLLiteral
@@ -73,10 +73,10 @@ public class JenaLiteralFactory {
                 long l = Long.parseLong(numericString);
                 l = l >> (Integer.SIZE);
                 if (l == 0 | l == -1) {
-                    logger.debug("Decimal seems to be an Int");
+                    logger.trace("Decimal seems to be an Int");
                     owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_INTEGER.getIRI());
                 } else {
-                    logger.debug("Decimal seems to be a Long");
+                    logger.trace("Decimal seems to be a Long");
                     owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_LONG.getIRI());
                 }
             }
@@ -88,7 +88,6 @@ public class JenaLiteralFactory {
 
         if (owlDatatype.getIRI().toString().equals("nothing")) {
             logger.error("Datatype {} doesn't exist", literal.getDatatypeURI());
-//                return Optional.empty();
             return Optional.empty();
         }
         return Optional.of(df.getOWLLiteral(literal.getLexicalForm(), owlDatatype));
