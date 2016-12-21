@@ -116,18 +116,18 @@ public abstract class JenaOntology extends TransactingOntology {
     @Override
     public void createIndividual(OWLClassAssertionAxiom owlClassAssertionAxiom) {
 
-//        final Resource modelResource;
-//        final Resource modelClass;
+//        TODO(nrobison): This should be more optimistic, don't check, just write.
         this.openAndLock(true);
         logger.debug("Trying to create the individual");
         this.model.enterCriticalSection(Lock.WRITE);
         try {
             final Resource modelResource = model.getResource(getFullIRIString(owlClassAssertionAxiom.getIndividual().asOWLNamedIndividual()));
             final Resource modelClass = model.getResource(getFullIRIString(owlClassAssertionAxiom.getClassExpression().asOWLClass()));
-            if (model.contains(modelResource, RDF.type, modelClass)) {
-                logger.debug("{} already exists in the model", owlClassAssertionAxiom.getIndividual());
-                return;
-            }
+//            I think we can just ignore this and move on, try to add the assertion, it should simply move on if it already exists
+//            if (model.contains(modelResource, RDF.type, modelClass)) {
+//                logger.debug("{} already exists in the model", owlClassAssertionAxiom.getIndividual());
+//                return;
+//            }
             modelResource.addProperty(RDF.type, modelClass);
 
         } catch (TDBTransactionException e) {
@@ -632,13 +632,11 @@ public abstract class JenaOntology extends TransactingOntology {
         while (resultSet.hasNext()) {
             final QuerySolution next = resultSet.next();
             final Optional<OWLLiteral> owlLiteral = this.jf.createOWLLiteral(next.getLiteral("object"));
-            if (owlLiteral.isPresent()) {
-                retrievedDataProperties.add(df.getOWLDataPropertyAssertionAxiom(
-                        df.getOWLDataProperty(next.getResource("property").getURI()),
-                        df.getOWLNamedIndividual(next.getResource("individual").getURI()),
-                        owlLiteral.get()
-                ));
-            }
+            owlLiteral.ifPresent(literal -> retrievedDataProperties.add(df.getOWLDataPropertyAssertionAxiom(
+                    df.getOWLDataProperty(next.getResource("property").getURI()),
+                    df.getOWLNamedIndividual(next.getResource("individual").getURI()),
+                    literal
+            )));
         }
         return retrievedDataProperties;
     }
