@@ -19,12 +19,15 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.semanticweb.owlapi.model.IRI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.sql.SQLException;
 import java.util.Map;
@@ -48,6 +51,8 @@ public class GAULIntegratorTests {
     private static String userName;
     private static String password;
     private static String ontologyName;
+    private static String ontologyPath;
+    private static String ontologyPrefix;
 
     @BeforeAll
     public static void setup() throws IOException {
@@ -76,16 +81,24 @@ public class GAULIntegratorTests {
 //        connectionString = "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial";
 //        userName = "spatialUser";
 //        password = "spatial1";
-        ontologyName = "hadoop_gaul_new2";
+//        ontologyPath = "file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl";
+        ontologyPath = "file:///Users/nrobison/Desktop/testChain.rdf";
+        ontologyPrefix = "http://nickrobison.com/test/hadoop.owl#";
+        ontologyName = "hadoop_gaul_rewrite";
         conf.set("reasoner.db.connection", connectionString);
         conf.set("reasoner.db.username", userName);
         conf.set("reasoner.db.password", password);
         conf.set("reasoner.ontology.name", ontologyName);
 
+        conf.set("reasoner.ontology.path", ontologyPath);
+        conf.set("reasoner.ontology.prefix", ontologyPrefix);
+
 //        Setup reasoner
         reasoner = new TrestleBuilder()
                 .withDBConnection(connectionString, userName, password)
                 .withInputClasses(GAULObject.class)
+                .withOntology(IRI.create(ontologyPath))
+                .withPrefix(ontologyPrefix)
                 .initialize()
                 .withName(ontologyName)
                 .build();
@@ -96,7 +109,7 @@ public class GAULIntegratorTests {
     }
 
     @Test
-    public void testReducer() throws IOException, ClassNotFoundException, InterruptedException, SQLException {
+    public void testReducer() throws IOException, ClassNotFoundException, InterruptedException, SQLException, URISyntaxException {
 
         URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/gates-test/");
         URL OUT_DIR = GAULIntegratorTests.class.getClassLoader().getResource("out/");
@@ -113,6 +126,9 @@ public class GAULIntegratorTests {
         job.setMapOutputValueClass(MapperOutput.class);
         job.setReducerClass(GAULReducer.class);
 
+//        Add ontology to cache
+        job.addCacheFile(new URI(String.format("%s", ontologyPath)));
+
         job.setInputFormatClass(PolygonFeatureInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
         FileInputFormat.setInputDirRecursive(job, false);
@@ -125,6 +141,8 @@ public class GAULIntegratorTests {
         reasoner = new TrestleBuilder()
                 .withDBConnection(connectionString, userName, password)
                 .withInputClasses(GAULObject.class)
+                .withOntology(IRI.create(ontologyPath))
+                .withPrefix(ontologyPrefix)
                 .withName(ontologyName)
                 .build();
 
@@ -139,8 +157,8 @@ public class GAULIntegratorTests {
     public static void close() throws IOException {
         cluster.shutdown();
 
-//        File outputFile = new File("/Users/nrobison/Desktop/hadoop.owl");
-//        reasoner.writeOntology(outputFile.toURI(), true);
+        File outputFile = new File("/Users/nrobison/Desktop/hadoop.owl");
+        reasoner.writeOntology(outputFile.toURI(), true);
         reasoner.shutdown(false);
     }
 }

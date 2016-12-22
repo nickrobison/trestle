@@ -24,14 +24,17 @@ public class StaticIRI {
     public static final IRI validTimeOfIRI = IRI.create(TRESTLE_PREFIX, "valid_time_of");
     public static final IRI hasRelationIRI = IRI.create(TRESTLE_PREFIX, "has_relation");
     public static final IRI relationOfIRI = IRI.create(TRESTLE_PREFIX, "relation_of");
-    public static final IRI relatedToIRI = IRI.create(TRESTLE_PREFIX, "relatedTo");
+    public static final IRI relatedToIRI = IRI.create(TRESTLE_PREFIX, "related_to");
+    public static final IRI relatedByIRI = IRI.create(TRESTLE_PREFIX, "related_by");
+    public static final IRI hasConceptIRI = IRI.create(TRESTLE_PREFIX, "has_concept");
+    public static final IRI conceptOfIRI = IRI.create(TRESTLE_PREFIX, "concept_of");
     public static final IRI databaseTimeIRI = IRI.create(TRESTLE_PREFIX, "database_time");
     public static final IRI databaseTimeOfIRI = IRI.create(TRESTLE_PREFIX, "database_time_of");
     public static final IRI hasOverlapIRI = IRI.create(TRESTLE_PREFIX, "has_overlap");
     public static final IRI overlapOfIRI = IRI.create(TRESTLE_PREFIX, "overlap_of");
 //    Classes
     public static final IRI trestleConceptIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Concept");
-    public static final IRI conceptRelationIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Relation");
+    public static final IRI trestleRelationIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Relation");
     public static final IRI spatialRelationIRI = IRI.create(TRESTLE_PREFIX, "Spatial_Relation");
     public static final IRI temporalRelationIRI = IRI.create(TRESTLE_PREFIX, "Temporal_Relation");
     public static final IRI semanticRelationIRI = IRI.create(TRESTLE_PREFIX, "Semantic_Relation");

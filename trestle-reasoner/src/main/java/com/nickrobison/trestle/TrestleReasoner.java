@@ -403,7 +403,7 @@ public class TrestleReasoner {
                 String.format("related-%s-%s",
                         owlNamedIndividual.getIRI().getShortForm(),
                         relatedFactIndividual.getIRI().getShortForm()));
-        ontology.createIndividual(conceptIRI, conceptRelationIRI);
+        ontology.createIndividual(conceptIRI, trestleRelationIRI);
 
 //        Write the relation strength
         try {
@@ -978,12 +978,14 @@ public class TrestleReasoner {
         }
 
         final Set<String> intersectedConceptURIs = new HashSet<>();
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         final ResultSet resultSet = this.ontology.executeSPARQL(queryString);
         ((ResultSetMem) resultSet).rewind();
         while (resultSet.hasNext()) {
             final Resource m = resultSet.next().getResource("m");
             intersectedConceptURIs.add(m.getURI());
         }
+        this.ontology.returnAndCommitTransaction(trestleTransaction);
 
         return Optional.of(intersectedConceptURIs);
     }
@@ -1006,6 +1008,8 @@ public class TrestleReasoner {
         Set<String> individualIRIs = new HashSet<>();
         final OWLClass datasetClass = trestleParser.classParser.GetObjectClass(clazz);
         final String retrievalStatement = qb.buildConceptObjectRetrieval(datasetClass, IRI.create(REASONER_PREFIX, conceptID));
+
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         final ResultSet resultSet = ontology.executeSPARQL(retrievalStatement);
         ((ResultSetMem) resultSet).rewind();
         while (resultSet.hasNext()) {
@@ -1017,19 +1021,24 @@ public class TrestleReasoner {
         final List<CompletableFuture<T>> completableFutureList = individualIRIs
                 .stream()
                 .map(iri -> CompletableFuture.supplyAsync(() -> {
+                    final TrestleTransaction futureTransaction = this.ontology.createandOpenNewTransaction(trestleTransaction);
                     try {
-                        return this.readAsObject(clazz, iri);
+                        final @NonNull T retrievedObject = this.readAsObject(clazz, iri);
+                        return retrievedObject;
                     } catch (TrestleClassException e) {
                         logger.error("Unregistered class", e);
                         throw new RuntimeException(e);
                     } catch (MissingOntologyEntity e) {
                         logger.error("Cannot find ontology individual {}", e.getIndividual(), e);
                         throw new RuntimeException(e);
+                    } finally {
+                        this.ontology.returnAndCommitTransaction(futureTransaction);
                     }
                 }))
                 .collect(Collectors.toList());
         final CompletableFuture<List<T>> conceptObjectsFuture = sequenceCompletableFutures(completableFutureList);
         try {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
             return Optional.of(conceptObjectsFuture.get());
         } catch (InterruptedException e) {
             logger.error("Object retrieval for concept {}, interrupted", conceptID, e);
@@ -1050,6 +1059,7 @@ public class TrestleReasoner {
      */
     public void addObjectToConcept(String conceptIRI, Object inputObject, ConceptRelationType relationType, double strength) {
 //        Write the object
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         try {
             this.WriteAsTrestleObject(inputObject);
         } catch (TrestleClassException e) {
@@ -1059,10 +1069,11 @@ public class TrestleReasoner {
         }
 //        Create the concept relation
         final IRI concept = IRI.create(conceptIRI);
+        final OWLNamedIndividual conceptIndividual = df.getOWLNamedIndividual(concept);
         final OWLNamedIndividual individual = this.trestleParser.classParser.GetIndividual(inputObject);
-        final IRI relationIRI = IRI.create(String.format("%s:%s", concept.getShortForm(), individual.getIRI().getShortForm()));
+        final IRI relationIRI = IRI.create(String.format("relation:%s:%s", concept.getShortForm(), individual.getIRI().getShortForm()));
         final OWLNamedIndividual relationIndividual = df.getOWLNamedIndividual(relationIRI);
-        final OWLClass relationClass = df.getOWLClass(conceptRelationIRI);
+        final OWLClass relationClass = df.getOWLClass(trestleRelationIRI);
 //        TODO(nrobison): Implement relation types
 //        switch (relationType) {
 //            case SEMANTIC:
@@ -1095,6 +1106,29 @@ public class TrestleReasoner {
         } catch (MissingOntologyEntity e) {
             logger.error("Missing individual {}", e.getIndividual(), e);
         }
+
+//        Write the relation to the concept
+        try {
+            ontology.writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
+                    df.getOWLObjectProperty(relatedToIRI),
+                    relationIndividual,
+                    conceptIndividual
+            ));
+        } catch (MissingOntologyEntity missingOntologyEntity) {
+//            If the concept doesn't exist, create it.
+            logger.debug("Missing concept {}, creating", missingOntologyEntity.getIndividual());
+            ontology.createIndividual(df.getOWLClassAssertionAxiom(df.getOWLClass(trestleConceptIRI), conceptIndividual));
+//            Try again
+            try {
+                ontology.writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
+                        df.getOWLObjectProperty(relatedToIRI),
+                        relationIndividual,
+                        conceptIndividual));
+            } catch (MissingOntologyEntity e) {
+                logger.error("Individual {} does not exist", e.getIndividual());
+            }
+        }
+        this.ontology.returnAndCommitTransaction(trestleTransaction);
     }
 
     /**
@@ -1213,6 +1247,7 @@ public class TrestleReasoner {
         final OWLObjectPropertyAssertionAxiom objectRelationshipAssertion = df.getOWLObjectPropertyAssertionAxiom(property,
                 subjectIndividual,
                 objectIndividual);
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         try {
             ontology.writeIndividualObjectProperty(objectRelationshipAssertion);
         } catch (MissingOntologyEntity e) {
@@ -1241,6 +1276,8 @@ public class TrestleReasoner {
                 }
             }
         }
+
+        this.ontology.returnAndCommitTransaction(trestleTransaction);
     }
 
     /**

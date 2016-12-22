@@ -13,9 +13,11 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.semanticweb.owlapi.model.IRI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -38,7 +40,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
     //    Setup the spatial stuff
     private static final OperatorFactoryLocal instance = OperatorFactoryLocal.getInstance();
     private static final OperatorIntersection operatorIntersection = (OperatorIntersection) instance.getOperator(Operator.Type.Intersection);
-    private static final OperatorWithin operatorWithin = (OperatorWithin) instance.getOperator(Operator.Type.Intersection);
+    private static final OperatorWithin operatorWithin = (OperatorWithin) instance.getOperator(Operator.Type.Within);
     private static final OperatorTouches operatorTouches = (OperatorTouches) instance.getOperator(Operator.Type.Touches);
     private static final OperatorEquals operatorEquals = (OperatorEquals) instance.getOperator(Operator.Type.Equals);
     private static final OperatorExportToWkt operatorWKTExport = (OperatorExportToWkt) instance.getOperator(Operator.Type.ExportToWkt);
@@ -51,20 +53,28 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
     private TrestleReasoner reasoner;
 
     @Override
-    protected void setup(Context context) {
+    protected void setup(Context context) throws IOException {
 //        Load the properties file
         conf = context.getConfiguration();
         startDate = LocalDate.ofYearDay(Integer.parseInt(conf.get(STARTDATE)), 1);
         endDate = LocalDate.ofYearDay(Integer.parseInt(conf.get(ENDDATE)), 1).with(TemporalAdjusters.lastDayOfYear());
 
+//        Get the cached files
+        if (context.getCacheFiles() != null && context.getCacheFiles().length > 0) {
+            File ontologyFile = new File("./ontology");
+
 //        Setup the Trestle Reasoner
-        reasoner = new TrestleBuilder()
-                .withDBConnection(conf.get("reasoner.db.connection"),
-                        conf.get("reasoner.db.username"),
-                        conf.get("reasoner.db.password"))
-                .withInputClasses(GAULObject.class)
-                .withName(conf.get("reasoner.ontology.name"))
-                .build();
+            reasoner = new TrestleBuilder()
+                    .withDBConnection(conf.get("reasoner.db.connection"),
+                            conf.get("reasoner.db.username"),
+                            conf.get("reasoner.db.password"))
+                    .withInputClasses(GAULObject.class)
+                    .withOntology(IRI.create(context.getCacheFiles()[0]))
+                    .withPrefix(conf.get("reasoner.ontology.prefix"))
+                    .withName(conf.get("reasoner.ontology.name"))
+                    .withoutCaching()
+                    .build();
+        }
 
     }
 
@@ -172,7 +182,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 
 //            If true, get all the concept members
-            if (conceptIRIs.isPresent()) {
+            if (conceptIRIs.orElse(new HashSet<>()).size() > 0) {
                 hasConcept = true;
                 conceptIRIs.get().forEach(concept -> {
                     final Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, concept, null, null);
@@ -181,10 +191,8 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 //                    TODO(nrobison): This feels bad.
                     reasoner.addObjectToConcept(concept, newGAULObject, ConceptRelationType.TEMPORAL, 1.0);
                 });
-            }
-
-//            If no, find objects to intersect
-            if (!conceptIRIs.isPresent()) {
+            } else  {
+                //            If no, find objects to intersect
                 reasoner.spatialIntersectObject(newGAULObject, 500)
                         .ifPresent(objects -> objects.forEach(matchedObjects::add));
 
@@ -250,8 +258,10 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                         logger.error("Incorrectly computed geometry, assuming 0 intersection");
 //                        throw new RuntimeException("Incorrectly computed geometry");
                     }
-                    final String wktBoundary = operatorWKTExport.execute(0, intersectedPolygon, null);
-                    reasoner.writeSpatialOverlap(newGAULObject, matchedObject, wktBoundary);
+                    if (computedGeometry.calculateArea2D() > 0.0) {
+                        final String wktBoundary = operatorWKTExport.execute(0, intersectedPolygon, null);
+                        reasoner.writeSpatialOverlap(newGAULObject, matchedObject, wktBoundary);
+                    }
 
                     double intersectedArea = intersectedPolygon.calculateArea2D() / newGAULObject.getShapePolygon().calculateArea2D();
                     objectWeight += (1 - objectWeight) * intersectedArea;

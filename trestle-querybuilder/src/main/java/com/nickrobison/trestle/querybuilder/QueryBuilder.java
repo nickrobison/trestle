@@ -267,12 +267,13 @@ public class QueryBuilder {
         ps.setCommandText("SELECT DISTINCT ?m" +
                 " WHERE { " +
                 "?m rdf:type trestle:Trestle_Concept ." +
-                "?m trestle:has_relation ?r . " +
-                "?r trestle:related_to ?o ." +
-                "?o trestle:has_fact ?f ." +
+                "?m trestle:related_by ?r ." +
+                "?r trestle:relation_of ?object ." +
+//                "?m trestle:concept_of ?object . " +
+                "?object trestle:has_fact ?f ." +
                 "?f trestle:has_temporal ?ft ." +
-                "?ft trestle:valid_from ?tStart ." +
-                "OPTIONAL{ ?ft trestle:valid_to ?tEnd }." +
+//                "?ft trestle:valid_from ?tStart ." +
+//                "OPTIONAL{ ?ft trestle:valid_to ?tEnd }." +
                 "?f ogc:asWKT ?wkt .");
 
         if (atTime != null) {
@@ -448,6 +449,10 @@ public class QueryBuilder {
         } catch (ParseException e) {
             logger.error("Cannot read wkt into geom", e);
             return wkt;
+        }
+
+        if (!geom.isValid()) {
+            logger.error("Invalid geometry at simplification level {}: {}", factor, geom.toString());
         }
 
 //        If needed, add a buffer
