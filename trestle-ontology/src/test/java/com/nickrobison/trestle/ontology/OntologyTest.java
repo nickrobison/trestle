@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static com.nickrobison.trestle.common.StaticIRI.conceptOfIRI;
 import static com.nickrobison.trestle.common.StaticIRI.hasFactIRI;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -148,5 +149,17 @@ abstract public class OntologyTest {
     @AfterEach
     public void shutdown() {
         shutdownOntology();
+    }
+
+    @Test
+    public void testPropertyChaining() {
+//        Try to write some test rules, maybe?
+
+
+//        Try to read test objects
+        final Optional<Set<OWLObjectPropertyAssertionAxiom>> conceptMembers = ontology.getIndividualObjectProperty(df.getOWLNamedIndividual("trestle:", "Cidade_de_maputo_concept"), df.getOWLObjectProperty(conceptOfIRI));
+        assertAll(() -> assertTrue(conceptMembers.isPresent()),
+                () -> assertTrue(conceptMembers.get().size() > 0),
+                () -> assertEquals(df.getOWLNamedIndividual(IRI.create("trestle:", "maputo:2013:3000")), conceptMembers.get().stream().findFirst().get().getSubject(), "Should have maputo object"));
     }
 }
