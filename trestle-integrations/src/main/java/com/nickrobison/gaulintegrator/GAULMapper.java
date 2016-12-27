@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.temporal.TemporalAdjusters;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.lang.StrictMath.toIntExact;
 
@@ -27,6 +29,9 @@ public class GAULMapper extends Mapper<LongWritable, PolygonFeatureWritable, Lon
     private static final Text STRYEAR = new Text("STR2_YEAR");
     private static final Text EXPYEAR = new Text ("EXP2_YEAR");
     private static final Text SHAPELENG = new Text("Shape_Leng");
+
+//    Regex
+    private static final Pattern coordinateRegex = Pattern.compile("(\\-?\\d+\\.\\d+)");
 
     private LongWritable polygonID = new LongWritable();
     private LongWritable startYear = new LongWritable();
@@ -54,6 +59,18 @@ public class GAULMapper extends Mapper<LongWritable, PolygonFeatureWritable, Lon
         LocalDate expirationYear = LocalDate.of(toIntExact(this.expirationYear.get()), Month.DECEMBER, 10);
 //        Expiration date is valid until the last day of that year, so we need to increment the year by one, and grab its first day.
         LocalDate expirationDate = expirationYear.plusYears(1).with(TemporalAdjusters.firstDayOfYear());
+
+//        Ensure the polygon has the correct coordinate system
+        final Matcher matcher = coordinateRegex.matcher(inputRecord.polygon.getBoundary().toString());
+        if (!matcher.find()) {
+            logger.error("Cannot parse boundary for {}, year {}", polygonName, inputYear);
+        }
+        final double firstCoordinate = Double.parseDouble(matcher.group());
+
+//        If the coordinate is outside the bounds of a valid geographic coordinate, then we know this record has bad data.
+        if (firstCoordinate > 180.0 || firstCoordinate < -180.0) {
+            logger.error("{}, Year {} has invalid polygon data. {}", polygonName, inputYear, inputRecord.polygon.getBoundary().toString());
+        }
 
         final MapperOutput outputRecord = new MapperOutput(polygonID, polygonName, inputYear, inputRecord, startDate, expirationDate);
         context.write(polygonID, outputRecord);
