@@ -36,7 +36,6 @@ public class GAULMapper extends Mapper<LongWritable, PolygonFeatureWritable, Lon
     private LongWritable polygonID = new LongWritable();
     private LongWritable startYear = new LongWritable();
     private LongWritable expirationYear = new LongWritable();
-    private FloatWritable shape_leng = new FloatWritable();
     private Text polygonName = new Text();
 
     @Override
@@ -52,7 +51,6 @@ public class GAULMapper extends Mapper<LongWritable, PolygonFeatureWritable, Lon
         expirationYear = (LongWritable) inputRecord.attributes.get(EXPYEAR);
 //        We need to trim off the white space from the text input fields.
         polygonName.set(inputRecord.attributes.getText(NAME.toString()).trim());
-        shape_leng = (FloatWritable) inputRecord.attributes.get(SHAPELENG);
 
 //        Generate start and end dates
         LocalDate startDate = LocalDate.of(toIntExact(startYear.get()), Month.JANUARY, 1);
