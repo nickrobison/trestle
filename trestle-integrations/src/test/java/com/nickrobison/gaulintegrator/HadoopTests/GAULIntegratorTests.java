@@ -81,8 +81,8 @@ public class GAULIntegratorTests {
 //        connectionString = "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial";
 //        userName = "spatialUser";
 //        password = "spatial1";
-//        ontologyPath = "file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl";
-        ontologyPath = "file:///Users/nrobison/Desktop/testChain.rdf";
+        ontologyPath = "file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl";
+//        ontologyPath = "file:///Users/nrobison/Desktop/testChain.rdf";
         ontologyPrefix = "http://nickrobison.com/test/hadoop.owl#";
         ontologyName = "hadoop_gaul_rewrite";
         conf.set("reasoner.db.connection", connectionString);
@@ -97,7 +97,7 @@ public class GAULIntegratorTests {
         reasoner = new TrestleBuilder()
                 .withDBConnection(connectionString, userName, password)
                 .withInputClasses(GAULObject.class)
-                .withOntology(IRI.create(ontologyPath))
+//                .withOntology(IRI.create(ontologyPath))
                 .withPrefix(ontologyPrefix)
                 .initialize()
                 .withName(ontologyName)

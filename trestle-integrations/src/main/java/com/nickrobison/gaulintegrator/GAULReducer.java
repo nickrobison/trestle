@@ -178,7 +178,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 
 //            See if there's a concept that spatially intersects the object
-            final Optional<Set<String>> conceptIRIs = reasoner.STIntersectConcept(newGAULObject.getPolygonAsWKT(), 500);
+            final Optional<Set<String>> conceptIRIs = reasoner.STIntersectConcept(newGAULObject.getPolygonAsWKT(), 0);
 
 
 //            If true, get all the concept members
@@ -192,8 +192,8 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                     reasoner.addObjectToConcept(concept, newGAULObject, ConceptRelationType.TEMPORAL, 1.0);
                 });
             } else  {
-                //            If no, find objects to intersect
-                reasoner.spatialIntersectObject(newGAULObject, 500)
+//            If no, find objects to intersect
+                reasoner.spatialIntersectObject(newGAULObject, 0)
                         .ifPresent(objects -> objects.forEach(matchedObjects::add));
 
 //                Go ahead the create the new concept

@@ -225,28 +225,9 @@ public class QueryBuilder {
                 "{ ?t trestle:valid_from ?tStart} UNION {?t trestle:exists_from ?tStart} ." +
                 "OPTIONAL{{ ?t trestle:valid_to ?tEnd} UNION {?t trestle:exists_to ?tEnd}} .");
         buildDatabaseTSString(ps, wktValue, buffer, atTime);
-//        switch (this.dialect) {
-//            case ORACLE: {
-////                We need to remove this, otherwise Oracle substitutes geosparql for ogc
-//                ps.removeNsPrefix("geosparql");
-////                Add this hint to the query planner
-//                ps.setNsPrefix("ORACLE_SEM_HT_NS", "http://oracle.com/semtech#leading(?wkt)");
-//                ps.append("FILTER((?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
-//                break;
-//            }
-//            case VIRTUOSO: {
-//                logger.warn("Unit conversion not implemented yet, assuming meters as base distance");
-//                ps.append("FILTER((?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime) && bif:st_intersects(?wkt, ?wktString^^ogc:wktLiteral, ?distance)) }");
-//                ps.setLiteral("distance", buffer);
-//                break;
-//            }
-//
-//            default:
-//                throw new UnsupportedFeatureException(String.format("Trestle doesn't yet support spatial queries on %s", dialect));
-//        }
         ps.setIri("type", getFullIRIString(datasetClass));
 //        We need to simplify the WKT to get under the 4000 character SQL limit.
-        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
+//        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
         ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
@@ -271,7 +252,7 @@ public class QueryBuilder {
                 "?r trestle:relation_of ?object ." +
 //                "?m trestle:concept_of ?object . " +
                 "?object trestle:has_fact ?f ." +
-                "?f trestle:has_temporal ?ft ." +
+                "?f trestle:valid_time ?ft ." +
 //                "?ft trestle:valid_from ?tStart ." +
 //                "OPTIONAL{ ?ft trestle:valid_to ?tEnd }." +
                 "?f ogc:asWKT ?wkt .");
@@ -298,8 +279,10 @@ public class QueryBuilder {
         ps.setCommandText(String.format("SELECT DISTINCT ?m " +
                 "WHERE { " +
                 "?m rdf:type ?type . " +
-                "?m trestle:has_concept ?concept . " +
-                "VALUES ?concept { %s }}", getFullIRI(conceptID).toString()));
+                "?m trestle:has_relation ?r ." +
+                "?r trestle:related_to ?concept ." +
+//                "?m trestle:has_concept ?concept . " +
+                "VALUES ?concept { <%s> }}", getFullIRI(conceptID).toString()));
         ps.setIri("type", getFullIRIString(datasetClass));
 
         logger.debug(ps.toString());
