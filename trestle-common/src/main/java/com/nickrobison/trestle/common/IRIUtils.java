@@ -13,7 +13,7 @@ import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
  */
 public class IRIUtils {
 
-    private static final Pattern remainderRegex = Pattern.compile("^(.*)\\:");
+    private static final Pattern remainderRegex = Pattern.compile("[^#]*$");
 
     /**
      * Determines if a given string represents a full IRI
@@ -67,7 +67,7 @@ public class IRIUtils {
      */
     public static String extractTrestleIndividualName(IRI iri) {
         final Matcher matcher = remainderRegex.matcher(iri.toString());
-        if (matcher.matches()) {
+        if (matcher.find()) {
             return matcher.group();
         } else {
             return "";

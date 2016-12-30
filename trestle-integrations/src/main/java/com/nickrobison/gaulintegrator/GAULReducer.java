@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.temporal.TemporalAdjusters;
+import java.time.temporal.TemporalUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -191,7 +192,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 //                    TODO(nrobison): This feels bad.
                     reasoner.addObjectToConcept(concept, newGAULObject, ConceptRelationType.TEMPORAL, 1.0);
                 });
-            } else  {
+            } else {
 //            If no, find objects to intersect
                 reasoner.spatialIntersectObject(newGAULObject, 0)
                         .ifPresent(objects -> objects.forEach(matchedObjects::add));
@@ -263,20 +264,56 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                         reasoner.writeSpatialOverlap(newGAULObject, matchedObject, wktBoundary);
                     }
 
+//                Temporals?
+//                        For the begins, we add 1 day to the new object and see if they're equal
+                    if (newGAULObject.getEndDate().plusDays(1).isEqual(matchedObject.getStartDate())) {
+                        reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.BEGINS);
+//                    New object before matched object?
+                    } else if (newGAULObject.getEndDate().isBefore(matchedObject.getStartDate())) {
+                        reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.BEFORE);
+                    } else if (newGAULObject.getStartDate().minusDays(1).isEqual(matchedObject.getEndDate())) {
+                        reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.ENDS);
+                    } else if (newGAULObject.getStartDate().isAfter(matchedObject.getEndDate())) {
+                        reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.AFTER);
+//                        During, or overlap from start dates?
+                    } else if (newGAULObject.getStartDate().isEqual(matchedObject.getStartDate())) {
+//                        objects have matching starts, do they have matching ends as well?
+                        if (newGAULObject.getEndDate().isEqual(matchedObject.getEndDate())) {
+                            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.DURING);
+                        } else {
+//                            No, but they do overlap
+                            String temporalOverlap;
+                            if (newGAULObject.getEndDate().isBefore(matchedObject.getEndDate())) {
+                                temporalOverlap = String.format("%s:%s", newGAULObject.getStartDate().toString(), newGAULObject.getEndDate().toString());
+                            } else {
+                                temporalOverlap = String.format("%s:%s", matchedObject.getStartDate().toString(), matchedObject.getEndDate().toString());
+                            }
+                            reasoner.writeTemporalOverlap(newGAULObject, matchedObject, temporalOverlap);
+                        }
+                    } else if (newGAULObject.getEndDate().isEqual(matchedObject.getEndDate())) {
+//                        Overlap from end dates?
+                        String temporalOverlap;
+                        if (newGAULObject.getStartDate().isBefore(matchedObject.getStartDate())) {
+                            temporalOverlap = String.format("%s:%s", matchedObject.getStartDate().toString(), matchedObject.getEndDate().toString());
+                        } else {
+                            temporalOverlap = String.format("%s:%s", newGAULObject.getStartDate().toString(), newGAULObject.getEndDate().toString());
+                        }
+                        reasoner.writeTemporalOverlap(newGAULObject, matchedObject, temporalOverlap);
+                    }
+
                     double intersectedArea = intersectedPolygon.calculateArea2D() / newGAULObject.getShapePolygon().calculateArea2D();
                     objectWeight += (1 - objectWeight) * intersectedArea;
 
                     relatedObjects.put(matchedObject, objectWeight);
                 }
 
-//                Temporals?
 
 //                Now, insert the matchedObjects into the reasoner
 //                Only store relations with a weight of .2 or higher
-                relatedObjects.entrySet()
-                        .stream()
-                        .filter(relatedEntrySet -> relatedEntrySet.getValue() >= .2)
-                        .forEach(relatedEntrySet -> reasoner.writeFactWithRelation(newGAULObject, relatedEntrySet.getValue(), relatedEntrySet.getKey()));
+//                relatedObjects.entrySet()
+//                        .stream()
+//                        .filter(relatedEntrySet -> relatedEntrySet.getValue() >= .2)
+//                        .forEach(relatedEntrySet -> reasoner.writeFactWithRelation(newGAULObject, relatedEntrySet.getValue(), relatedEntrySet.getKey()));
 
             }
 

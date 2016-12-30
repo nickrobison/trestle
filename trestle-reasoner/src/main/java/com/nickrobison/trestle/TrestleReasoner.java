@@ -1074,7 +1074,7 @@ public class TrestleReasoner {
         final OWLNamedIndividual individual = this.trestleParser.classParser.GetIndividual(inputObject);
         final IRI relationIRI = IRI.create(String.format("relation:%s:%s",
                 extractTrestleIndividualName(concept),
-                extractTrestleIndividualName(individual.getIRI()));
+                extractTrestleIndividualName(individual.getIRI())));
         final OWLNamedIndividual relationIndividual = df.getOWLNamedIndividual(relationIRI);
         final OWLClass relationClass = df.getOWLClass(trestleRelationIRI);
 //        TODO(nrobison): Implement relation types
