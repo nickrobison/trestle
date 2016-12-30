@@ -52,6 +52,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.nickrobison.trestle.common.IRIUtils.extractTrestleIndividualName;
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
 import static com.nickrobison.trestle.common.LambdaExceptionUtil.rethrowFunction;
 import static com.nickrobison.trestle.common.LambdaUtils.sequenceCompletableFutures;
@@ -1007,7 +1008,7 @@ public class TrestleReasoner {
 
         Set<String> individualIRIs = new HashSet<>();
         final OWLClass datasetClass = trestleParser.classParser.GetObjectClass(clazz);
-        final String retrievalStatement = qb.buildConceptObjectRetrieval(datasetClass, IRI.create(REASONER_PREFIX, conceptID));
+        final String retrievalStatement = qb.buildConceptObjectRetrieval(datasetClass, parseStringToIRI(REASONER_PREFIX, conceptID));
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         final ResultSet resultSet = ontology.executeSPARQL(retrievalStatement);
@@ -1068,10 +1069,12 @@ public class TrestleReasoner {
             logger.error("Missing individual", e.getIndividual(), e);
         }
 //        Create the concept relation
-        final IRI concept = IRI.create(conceptIRI);
+        final IRI concept = parseStringToIRI(REASONER_PREFIX, conceptIRI);
         final OWLNamedIndividual conceptIndividual = df.getOWLNamedIndividual(concept);
         final OWLNamedIndividual individual = this.trestleParser.classParser.GetIndividual(inputObject);
-        final IRI relationIRI = IRI.create(String.format("relation:%s:%s", concept.getShortForm(), individual.getIRI().getShortForm()));
+        final IRI relationIRI = IRI.create(String.format("relation:%s:%s",
+                extractTrestleIndividualName(concept),
+                extractTrestleIndividualName(individual.getIRI()));
         final OWLNamedIndividual relationIndividual = df.getOWLNamedIndividual(relationIRI);
         final OWLClass relationClass = df.getOWLClass(trestleRelationIRI);
 //        TODO(nrobison): Implement relation types

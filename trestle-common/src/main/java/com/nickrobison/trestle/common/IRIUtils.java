@@ -3,12 +3,17 @@ package com.nickrobison.trestle.common;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.semanticweb.owlapi.model.IRI;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 
 /**
  * Created by nrobison on 9/6/16.
  */
 public class IRIUtils {
+
+    private static final Pattern remainderRegex = Pattern.compile("^(.*)\\:");
 
     /**
      * Determines if a given string represents a full IRI
@@ -38,7 +43,7 @@ public class IRIUtils {
     /**
      * Parse an input string and prefix and return a fully expanded IRI
      * @param prefix - Prefix to expand string with
-     * @param inputString - Input string to expande
+     * @param inputString - Input string to expand
      * @return - Fully expanded IRI, using the provided prefix
      */
     public static IRI parseStringToIRI(@NonNull String prefix, @NonNull String inputString) {
@@ -51,6 +56,21 @@ public class IRIUtils {
                 return IRI.create(TRESTLE_PREFIX, inputString.replace("trestle:", ""));
             }
             return IRI.create(prefix, inputString.replaceAll("\\s+", "_"));
+        }
+    }
+
+    /**
+     * Takes an OWL IRI and returns the individual name from the full string
+     * Returns everything after the # character in the IRI, or returns an empty string
+     * @param iri - IRI to extract name from
+     * @return - String of individual name
+     */
+    public static String extractTrestleIndividualName(IRI iri) {
+        final Matcher matcher = remainderRegex.matcher(iri.toString());
+        if (matcher.matches()) {
+            return matcher.group();
+        } else {
+            return "";
         }
     }
 }
