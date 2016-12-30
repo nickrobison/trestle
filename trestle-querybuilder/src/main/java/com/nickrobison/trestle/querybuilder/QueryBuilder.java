@@ -153,13 +153,12 @@ public class QueryBuilder {
 //        Jena won't expand URIs in the FILTER operator, so we need to give it the fully expanded value.
 //        But we can't do it through the normal routes, because then it'll insert superfluous '"' values. Because, of course.
 //        If the start temporal is null, pull the currently valid property
-//        FIXME(nrobison): The union is a horrible hack to get things working for the time being. We need to fix it.
         ps.setCommandText(String.format("SELECT DISTINCT ?individual ?fact ?property ?object" +
                 " WHERE" +
                 " { ?individual trestle:has_fact ?fact ." +
                 "?fact trestle:database_time ?d ." +
-                "{ ?d trestle:valid_from ?tStart} UNION {?d trestle:exists_from ?tStart} ." +
-                "OPTIONAL{{ ?d trestle:valid_to ?tEnd} UNION {?d trestle:exists_to ?tEnd}} ." +
+                "{?d trestle:valid_from ?tStart} ." +
+                "OPTIONAL{?d trestle:valid_to ?tEnd} ." +
                 "?fact ?property ?object ." +
                 "VALUES ?individual { %s } ." +
 //                Oracle doesn't support isLiteral() on CLOB types, so we have to do this gross inverse filter.
@@ -190,9 +189,9 @@ public class QueryBuilder {
         ps.setCommandText(String.format("SELECT DISTINCT ?individual ?temporal ?property ?object" +
                 " WHERE" +
                 " { ?individual trestle:has_temporal ?temporal ." +
-                " OPTIONAL{{?temporal trestle:valid_at ?tAt} UNION {?temporal trestle:exists_at ?tAt}} ." +
-                " OPTIONAL{{?temporal trestle:valid_from ?tStart} UNION {?temporal trestle:exists_from ?tStart}} ." +
-                " OPTIONAL{{?temporal trestle:valid_to ?tEnd} UNION {?temporal trestle:exists_to ?tEnd}} ." +
+                " OPTIONAL{?temporal trestle:exists_at ?tAt} ." +
+                " OPTIONAL{?temporal trestle:exists_from ?tStart} ." +
+                " OPTIONAL{?temporal trestle:exists_to ?tEnd} ." +
                 " ?temporal ?property ?object" +
                 " VALUES ?individual { %s } ." +
                 " FILTER(!isURI(?object) && !isBlank(?object)) .}", individualValues));
@@ -222,8 +221,8 @@ public class QueryBuilder {
                 "?m trestle:has_fact ?f ." +
                 "?f ogc:asWKT ?wkt ." +
                 "?m trestle:has_temporal ?t ." +
-                "{ ?t trestle:valid_from ?tStart} UNION {?t trestle:exists_from ?tStart} ." +
-                "OPTIONAL{{ ?t trestle:valid_to ?tEnd} UNION {?t trestle:exists_to ?tEnd}} .");
+                "{?t trestle:exists_from ?tStart} ." +
+                "OPTIONAL{?t trestle:exists_to ?tEnd} .");
         buildDatabaseTSString(ps, wktValue, buffer, atTime);
         ps.setIri("type", getFullIRIString(datasetClass));
 //        We need to simplify the WKT to get under the 4000 character SQL limit.

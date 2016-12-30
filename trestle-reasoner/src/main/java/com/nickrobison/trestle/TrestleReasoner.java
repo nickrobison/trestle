@@ -277,7 +277,7 @@ public class TrestleReasoner {
         } else {
             databaseTemporal = TemporalObjectBuilder.valid().from(startTemporal).to(endTemporal).withRelations(trestleParser.classParser.GetIndividual(inputObject));
         }
-        writeObject(inputObject, TemporalScope.VALID, databaseTemporal);
+        writeObject(inputObject, TemporalScope.EXISTS, databaseTemporal);
     }
 
     /**
@@ -358,74 +358,6 @@ public class TrestleReasoner {
 
 //        Write the object properties
         ontology.returnAndCommitTransaction(trestleTransaction);
-    }
-
-    public void writeFactWithRelation(Object inputFact, double relation, Object relatedFact) {
-
-//        Check to see if both objects exist
-        final OWLNamedIndividual owlNamedIndividual = trestleParser.classParser.GetIndividual(inputFact);
-        final OWLNamedIndividual relatedFactIndividual = trestleParser.classParser.GetIndividual(relatedFact);
-        if (!ontology.containsResource(owlNamedIndividual)) {
-            logger.debug("Fact {] doesn't exist, adding", owlNamedIndividual);
-            try {
-                WriteAsTrestleObject(inputFact);
-            } catch (TrestleClassException e) {
-                logger.error("Could not write object {}", owlNamedIndividual, e);
-            } catch (MissingOntologyEntity e) {
-                logger.error("Missing individual {}", e.getIndividual(), e);
-            }
-        } else {
-            logger.debug("Fact {} already exists.", owlNamedIndividual);
-        }
-
-        if (!ontology.containsResource(relatedFactIndividual)) {
-            logger.debug("Related Fact {} doesn't exist, adding", relatedFactIndividual);
-            try {
-                WriteAsTrestleObject(relatedFact);
-            } catch (TrestleClassException e) {
-                logger.error("Could not write object {}", relatedFactIndividual, e);
-            } catch (MissingOntologyEntity e) {
-                logger.error("Missing individual {}", e.getIndividual(), e);
-            }
-        } else {
-            logger.debug("Fact {} exists", relatedFactIndividual);
-        }
-
-//        See if they're already related
-        if (checkObjectRelation(owlNamedIndividual, relatedFactIndividual)) {
-//            If they are, move on. We don't support updates, yet.
-            logger.info("{} and {} are already related, skipping.", owlNamedIndividual, relatedFactIndividual);
-            return;
-        }
-
-//        If not, store them.
-//        Write the concept relation
-        final IRI conceptIRI = IRI.create(TRESTLE_PREFIX,
-                String.format("related-%s-%s",
-                        owlNamedIndividual.getIRI().getShortForm(),
-                        relatedFactIndividual.getIRI().getShortForm()));
-        ontology.createIndividual(conceptIRI, trestleRelationIRI);
-
-//        Write the relation strength
-        try {
-            ontology.writeIndividualDataProperty(conceptIRI, relationStrengthIRI, Double.toString(relation), OWL2Datatype.XSD_DOUBLE.getIRI());
-        } catch (MissingOntologyEntity e) {
-            logger.error("Cannot write property {} in individual {}", relationStrengthIRI, conceptIRI, e);
-        }
-
-//        Write the relationOf property
-        try {
-            ontology.writeIndividualObjectProperty(conceptIRI, relationOfIRI, owlNamedIndividual.getIRI());
-        } catch (MissingOntologyEntity e) {
-            logger.error("Missing individual {}", conceptIRI, e);
-        }
-
-//        Write the hasRelation property
-        try {
-            ontology.writeIndividualObjectProperty(conceptIRI, hasRelationIRI, relatedFactIndividual.getIRI());
-        } catch (MissingOntologyEntity e) {
-            logger.error("Missing individual {}", conceptIRI, e);
-        }
     }
 
     private void checkRegisteredClass(Class<?> clazz) throws UnregisteredClassException {

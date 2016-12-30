@@ -306,15 +306,6 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
                     relatedObjects.put(matchedObject, objectWeight);
                 }
-
-
-//                Now, insert the matchedObjects into the reasoner
-//                Only store relations with a weight of .2 or higher
-//                relatedObjects.entrySet()
-//                        .stream()
-//                        .filter(relatedEntrySet -> relatedEntrySet.getValue() >= .2)
-//                        .forEach(relatedEntrySet -> reasoner.writeFactWithRelation(newGAULObject, relatedEntrySet.getValue(), relatedEntrySet.getKey()));
-
             }
 
 //            Now, we insert the new itself record into the database
