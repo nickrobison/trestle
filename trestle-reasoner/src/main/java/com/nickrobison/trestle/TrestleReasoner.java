@@ -257,7 +257,7 @@ public class TrestleReasoner {
      * @throws TrestleClassException - Throws an exception if the class doesn't exist or is invalid
      */
     public void WriteAsTrestleObject(Object inputObject) throws TrestleClassException, MissingOntologyEntity {
-        writeObject(inputObject, TemporalScope.VALID, null);
+        writeObject(inputObject, TemporalScope.EXISTS, null);
     }
 
     /**
@@ -294,6 +294,7 @@ public class TrestleReasoner {
         properties.forEach(property -> {
 
 //            TODO(nrobison): We should change this to lookup any existing records to correctly increment the record number
+//            TODO(nrobison): Should this prefix be the reasoner prefix? Probably, but not sure.
             final OWLNamedIndividual propertyIndividual = df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, String.format("%s:%s:%d", rootIndividual.getIRI().getShortForm(), property.getProperty().asOWLDataProperty().getIRI().getShortForm(), now)));
             ontology.createIndividual(propertyIndividual, factClass);
             try {
@@ -341,16 +342,19 @@ public class TrestleReasoner {
         ontology.createIndividual(owlNamedIndividual, owlClass);
 //        Write the temporal
         final Optional<List<TemporalObject>> temporalObjects = trestleParser.temporalParser.GetTemporalObjects(inputObject);
-        temporalObjects.ifPresent(temporalObjects1 -> temporalObjects1.forEach(temporal -> {
+        temporalObjects.ifPresent(temporalObject -> temporalObject.forEach(temporal -> {
             try {
-                writeTemporalWithAssociation(temporal, owlNamedIndividual, scope, null);
+                writeTemporalWithAssociation(temporal, owlNamedIndividual, scope, existsTimeIRI);
             } catch (MissingOntologyEntity e) {
                 logger.error("Individual {} missing in ontology", e.getIndividual(), e);
             }
         }));
 
 //            Write the database temporal
-        writeTemporalWithAssociation(dTemporal, owlNamedIndividual, scope, databaseTimeIRI);
+//        An object doesn't have a database temporal, just an exists temporal
+//        TODO(nrobison): This shouldn't write an association to the individual itself, just to the facts.
+        writeTemporalWithAssociation(dTemporal, owlNamedIndividual, TemporalScope.VALID, databaseTimeIRI);
+
 
 //        Write the data properties
         final Optional<List<OWLDataPropertyAssertionAxiom>> dataProperties = trestleParser.classParser.GetDataProperties(inputObject);

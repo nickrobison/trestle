@@ -14,6 +14,7 @@ public class StaticIRI {
     public static final IRI hasFactIRI = IRI.create(TRESTLE_PREFIX, "has_fact");
     public static final IRI temporalOfIRI = IRI.create(TRESTLE_PREFIX, "temporal_of");
     public static final IRI hasTemporalIRI = IRI.create(TRESTLE_PREFIX, "has_temporal");
+    public static final IRI existsTimeIRI = IRI.create(TRESTLE_PREFIX, "exists_time");
     public static final IRI temporalExistsAtIRI = IRI.create(TRESTLE_PREFIX, "exists_at");
     public static final IRI temporalValidAtIRI = IRI.create(TRESTLE_PREFIX, "valid_at");
     public static final IRI temporalExistsToIRI = IRI.create(TRESTLE_PREFIX, "exists_to");

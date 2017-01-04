@@ -188,7 +188,7 @@ public class QueryBuilder {
 
         ps.setCommandText(String.format("SELECT DISTINCT ?individual ?temporal ?property ?object" +
                 " WHERE" +
-                " { ?individual trestle:has_temporal ?temporal ." +
+                " { ?individual trestle:exists_time ?temporal ." +
                 " OPTIONAL{?temporal trestle:exists_at ?tAt} ." +
                 " OPTIONAL{?temporal trestle:exists_from ?tStart} ." +
                 " OPTIONAL{?temporal trestle:exists_to ?tEnd} ." +
@@ -213,6 +213,7 @@ public class QueryBuilder {
         return ps.toString();
     }
 
+//    FIXME(nrobison): This needs to account for exists and valid times.
     public String buildTemporalSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, UNITS unit, OffsetDateTime atTime) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m ?tStart ?tEnd" +
@@ -220,9 +221,9 @@ public class QueryBuilder {
                 "?m rdf:type ?type ." +
                 "?m trestle:has_fact ?f ." +
                 "?f ogc:asWKT ?wkt ." +
-                "?m trestle:has_temporal ?t ." +
-                "{?t trestle:exists_from ?tStart} ." +
-                "OPTIONAL{?t trestle:exists_to ?tEnd} .");
+                "?f trestle:valid_time ?t ." +
+                "{?t trestle:start_temporal ?tStart} ." +
+                "OPTIONAL{?t trestle:end_temporal ?tEnd} .");
         buildDatabaseTSString(ps, wktValue, buffer, atTime);
         ps.setIri("type", getFullIRIString(datasetClass));
 //        We need to simplify the WKT to get under the 4000 character SQL limit.

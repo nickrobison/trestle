@@ -317,8 +317,10 @@ public class TestClasses {
             GAULComplexClassTest that = (GAULComplexClassTest) o;
 
             if (testPrimitiveInt != that.testPrimitiveInt) return false;
+            if (Double.compare(that.testPrimitiveDouble, testPrimitiveDouble) != 0) return false;
             if (!id.equals(that.id)) return false;
             if (!testBigInt.equals(that.testBigInt)) return false;
+            if (!testInteger.equals(that.testInteger)) return false;
             if (!getTestDouble().equals(that.getTestDouble())) return false;
             if (!getWkt().equals(that.getWkt())) return false;
             return getAtDate().equals(that.getAtDate());
@@ -326,10 +328,15 @@ public class TestClasses {
 
         @Override
         public int hashCode() {
-            int result = id.hashCode();
+            int result;
+            long temp;
+            result = id.hashCode();
             result = 31 * result + testBigInt.hashCode();
             result = 31 * result + testPrimitiveInt;
+            result = 31 * result + testInteger.hashCode();
             result = 31 * result + getTestDouble().hashCode();
+            temp = Double.doubleToLongBits(testPrimitiveDouble);
+            result = 31 * result + (int) (temp ^ (temp >>> 32));
             result = 31 * result + getWkt().hashCode();
             result = 31 * result + getAtDate().hashCode();
             return result;
