@@ -91,7 +91,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>${maven.shade.version}</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -102,6 +101,7 @@
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>reference.conf</resource>
+                                    <resource>application.conf</resource>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.nickrobison.trestle.actor.TrestleActor</mainClass>
@@ -109,7 +109,7 @@
                             </transformers>
                             <relocations>
                             </relocations>
-                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>tres
                             <createDependencyReducedPom>true</createDependencyReducedPom>
                             <minimizeJar>true</minimizeJar>
                         </configuration>

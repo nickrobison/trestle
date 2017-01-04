@@ -261,6 +261,7 @@ public class TypeConverter {
         datatypeMap.put(OWL2Datatype.XSD_BOOLEAN.getDatatype(dfStatic), boolean.class);
         datatypeMap.put(OWL2Datatype.XSD_STRING.getDatatype(dfStatic), String.class);
         datatypeMap.put(OWL2Datatype.XSD_BYTE.getDatatype(dfStatic), byte.class);
+        datatypeMap.put(OWL2Datatype.RDF_LANG_STRING.getDatatype(dfStatic), String.class);
 
         return datatypeMap;
     }
