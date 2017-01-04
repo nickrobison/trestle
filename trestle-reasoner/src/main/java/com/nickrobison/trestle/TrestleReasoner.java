@@ -778,7 +778,7 @@ public class TrestleReasoner {
                     null,
                     relationStrength);
         }
-        ListMultimap<String, String> conceptIndividuals = HashMultimap.create();
+        ListMultimap<String, String> conceptIndividuals = ArrayListMultimap.create();
         final ResultSet resultSet = this.ontology.executeSPARQL(conceptQuery);
         while (resultSet.hasNext()) {
             final QuerySolution next = resultSet.next();
