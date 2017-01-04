@@ -100,6 +100,36 @@ public class QueryBuilder {
         return ps.toString();
     }
 
+    /**
+     * Build the SPARQL query to return the concepts and individual IRIs related to the given OWLNamedIndividual
+     * If the conceptFilter is specified, results are filtered to only return that concept, if the individual is a member of that concept
+     * @param individual - OWLNamedIndividual
+     * @param conceptFilter - Nullable OWLNamedIndividual of Trestle_Concept to filter on
+     * @param relationshipStrength - double of cutoff value of minimum relation strength to consider an individual a member of that concept
+     * @return - SPARQL Query with variables ?concept ?individual
+     */
+    public String buildConceptRetrievalQuery(OWLNamedIndividual individual, @Nullable OWLNamedIndividual conceptFilter, double relationshipStrength) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText(String.format("SELECT DISTINCT ?concept ?individual" +
+                " WHERE " +
+                "{ ?i trestle:has_relation ?r ." +
+                "?r trestle:Relation_Strength ?strength ." +
+                "?r trestle:related_to ?concept ." +
+                "?concept trestle:related_by ?rc ." +
+                "?rc trestle:Relation_Strength ?strength ." +
+                "?rc trestle:relation_of ?individual ." +
+                "VALUES ?i {%s} ." +
+                "FILTER(?strength >= ?st)", String.format("<%s>", getFullIRIString(individual))));
+        if (conceptFilter != null) {
+            ps.append(String.format(". VALUES ?concept {%s}", String.format("<%s>", getFullIRIString(conceptFilter))));
+        }
+        ps.append("}");
+        ps.setLiteral("st", relationshipStrength);
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
+    @Deprecated
     public String buildRelationQuery(OWLNamedIndividual individual, @Nullable OWLClass datasetClass, double relationshipStrength) {
         final ParameterizedSparqlString ps = buildBaseString();
 //        Jena won't expand URIs in the FILTER operator, so we need to give it the fully expanded value.

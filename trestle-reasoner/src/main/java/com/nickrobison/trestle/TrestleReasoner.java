@@ -1,5 +1,6 @@
 package com.nickrobison.trestle;
 
+import com.google.common.collect.*;
 import com.nickrobison.trestle.caching.TrestleCache;
 import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.common.StaticIRI;
@@ -720,6 +721,7 @@ public class TrestleReasoner {
      */
     //    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
     @SuppressWarnings("return.type.incompatible")
+    @Deprecated
     public <T> Optional<Map<@NonNull T, Double>> getRelatedObjects(Class<@NonNull T> clazz, String objectID, double cutoff) {
 
 
@@ -752,6 +754,41 @@ public class TrestleReasoner {
         }
 
         return Optional.of(relatedObjects);
+    }
+
+    /**
+     * For a given individual, get all related concepts and the IRIs of all members of those concepts,
+     * that have a relation strength above the given cutoff value
+     * @param individual - String of individual IRI to return relations for
+     * @param conceptID - Nullable String of concept IRI to filter members of
+     * @param relationStrength - Cutoff value of minimum relation strength
+     * @return
+     */
+    public Optional<Map<String, List<String>>> getRelatedConcepts(String individual, @Nullable String conceptID, double relationStrength) {
+        final String conceptQuery;
+        final OWLNamedIndividual owlIndividual = df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual));
+        if (conceptID != null) {
+            conceptQuery = this.qb.buildConceptRetrievalQuery(
+                    owlIndividual,
+                    df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, conceptID)),
+                    relationStrength);
+        } else {
+            conceptQuery = this.qb.buildConceptRetrievalQuery(
+                    owlIndividual,
+                    null,
+                    relationStrength);
+        }
+        ListMultimap<String, String> conceptIndividuals = HashMultimap.create();
+        final ResultSet resultSet = this.ontology.executeSPARQL(conceptQuery);
+        while (resultSet.hasNext()) {
+            final QuerySolution next = resultSet.next();
+            conceptIndividuals.put(next.getResource("concept").getURI(), next.getResource("individual").getURI());
+        }
+        if (conceptIndividuals.keySet().size() == 0) {
+            logger.info("Individual {} has no related concepts");
+            return Optional.empty();
+        }
+        return Optional.of(Multimaps.asMap(conceptIndividuals));
     }
 
     /**
