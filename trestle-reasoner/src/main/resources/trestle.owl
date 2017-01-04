@@ -6,7 +6,7 @@
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
      ontologyIRI="http://nickrobison.com/dissertation/trestle.owl"
-     versionIRI="http://nickrobison.com/dissertation/trestle.owl/0.4">
+     versionIRI="http://nickrobison.com/dissertation/trestle.owl/0.9">
     <Prefix name="" IRI="http://nickrobison.com/dissertation/trestle.owl#"/>
     <Prefix name="owl" IRI="http://www.w3.org/2002/07/owl#"/>
     <Prefix name="rdf" IRI="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
@@ -16,7 +16,8 @@
     <Import>http://www.opengis.net/ont/geosparql</Import>
     <Annotation>
         <AnnotationProperty abbreviatedIRI="owl:versionInfo"/>
-        <Literal xml:lang="en" datatypeIRI="http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral">0.4 - Added Concept_Relation and relevant axioms.
+        <Literal xml:lang="en" datatypeIRI="http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral">0.9 - Major refactor of entity relationships. Serious breaking changes.
+0.4 - Added Concept_Relation and relevant axioms.
 0.3 - Renamed to TS_Concept
 0.2 - Concepts and facts are now logically consistent.
 0.1 - Initial spatial concept approach</Literal>
@@ -34,10 +35,10 @@
         <ObjectProperty IRI="#temporal_of"/>
     </Declaration>
     <Declaration>
-        <DataProperty IRI="#ADM2_Code"/>
+        <Class IRI="#Trestle_Overlap"/>
     </Declaration>
     <Declaration>
-        <Class IRI="#Trestle_Overlap"/>
+        <DataProperty IRI="#ADM2_Code"/>
     </Declaration>
     <Declaration>
         <NamedIndividual IRI="#overlaps:1980:1995"/>
@@ -64,13 +65,13 @@
         <ObjectProperty IRI="#has_overlap"/>
     </Declaration>
     <Declaration>
-        <NamedIndividual IRI="#Cidade_de_maputo_concept"/>
+        <ObjectProperty IRI="#during"/>
     </Declaration>
     <Declaration>
         <Class IRI="#Interval_Object"/>
     </Declaration>
     <Declaration>
-        <ObjectProperty IRI="#during"/>
+        <NamedIndividual IRI="#Cidade_de_maputo_concept"/>
     </Declaration>
     <Declaration>
         <Class IRI="#Spatial_Overlap"/>
@@ -91,13 +92,16 @@
         <ObjectProperty IRI="#has_facet"/>
     </Declaration>
     <Declaration>
-        <DataProperty IRI="#GAUL_Properties"/>
+        <ObjectProperty IRI="#exists_time_of"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#ADM0_Code"/>
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="#valid_time_of"/>
     </Declaration>
     <Declaration>
-        <DataProperty IRI="#ADM0_Code"/>
+        <DataProperty IRI="#GAUL_Properties"/>
     </Declaration>
     <Declaration>
         <Class IRI="#Dataset"/>
@@ -127,6 +131,9 @@
         <DataProperty IRI="#Dataset_Properties"/>
     </Declaration>
     <Declaration>
+        <ObjectProperty IRI="#exists_time"/>
+    </Declaration>
+    <Declaration>
         <DataProperty IRI="#exists_to"/>
     </Declaration>
     <Declaration>
@@ -142,16 +149,16 @@
         <Class IRI="#Point_Object"/>
     </Declaration>
     <Declaration>
-        <NamedIndividual IRI="#maputo_split_bounding_box_temporal_1"/>
-    </Declaration>
-    <Declaration>
         <NamedIndividual IRI="#maputo_split_adm2_code_1"/>
     </Declaration>
     <Declaration>
-        <NamedIndividual IRI="#1990_temporal_object"/>
+        <NamedIndividual IRI="#maputo_split_bounding_box_temporal_1"/>
     </Declaration>
     <Declaration>
         <DataProperty IRI="#ADM1_Code"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#1990_temporal_object"/>
     </Declaration>
     <Declaration>
         <Class IRI="#AttributeFact"/>
@@ -181,10 +188,10 @@
         <DataProperty IRI="#Relation_Strength"/>
     </Declaration>
     <Declaration>
-        <DataProperty IRI="#valid_from"/>
+        <Class IRI="#SpatialFact"/>
     </Declaration>
     <Declaration>
-        <Class IRI="#SpatialFact"/>
+        <DataProperty IRI="#valid_from"/>
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="#has_fact"/>
@@ -199,10 +206,10 @@
         <ObjectProperty IRI="#relation_of"/>
     </Declaration>
     <Declaration>
-        <NamedIndividual IRI="#maputo:2013:3000"/>
+        <DataProperty IRI="#TOverlap"/>
     </Declaration>
     <Declaration>
-        <DataProperty IRI="#TOverlap"/>
+        <NamedIndividual IRI="#maputo:2013:3000"/>
     </Declaration>
     <Declaration>
         <NamedIndividual IRI="#municipal_1_disp_1"/>
@@ -229,6 +236,9 @@
         <NamedIndividual IRI="#municipal2:1990:2013"/>
     </Declaration>
     <Declaration>
+        <DataProperty IRI="#start_temporal"/>
+    </Declaration>
+    <Declaration>
         <DataProperty IRI="#valid_at"/>
     </Declaration>
     <Declaration>
@@ -247,10 +257,13 @@
         <ObjectProperty IRI="#contains"/>
     </Declaration>
     <Declaration>
-        <DataProperty IRI="#exists_at"/>
+        <DataProperty IRI="#at_temporal"/>
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="#after"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#exists_at"/>
     </Declaration>
     <Declaration>
         <NamedIndividual IRI="#begin:1980:1990"/>
@@ -265,10 +278,10 @@
         <NamedIndividual IRI="#test_overlap"/>
     </Declaration>
     <Declaration>
-        <NamedIndividual IRI="#municipal_1_adm2_name_1"/>
+        <NamedIndividual IRI="#aero_split_adm2_code_1"/>
     </Declaration>
     <Declaration>
-        <NamedIndividual IRI="#aero_split_adm2_code_1"/>
+        <NamedIndividual IRI="#municipal_1_adm2_name_1"/>
     </Declaration>
     <Declaration>
         <NamedIndividual IRI="#aero_split_bounding_box_1"/>
@@ -305,6 +318,9 @@
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="#Spatial_Relation"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#end_temporal"/>
     </Declaration>
     <Declaration>
         <NamedIndividual IRI="#municipal_1_bounding_box_1"/>
@@ -367,10 +383,10 @@
         <ObjectProperty IRI="#fact_of"/>
     </Declaration>
     <Declaration>
-        <NamedIndividual IRI="#maputo_split_disp_area_1"/>
+        <DataProperty IRI="#ADM0_Name"/>
     </Declaration>
     <Declaration>
-        <DataProperty IRI="#ADM0_Name"/>
+        <NamedIndividual IRI="#maputo_split_disp_area_1"/>
     </Declaration>
     <Declaration>
         <NamedIndividual IRI="#2013_temporal_object"/>
@@ -620,6 +636,11 @@
         <ObjectProperty IRI="#database_time_of"/>
         <NamedIndividual IRI="#maputo_database_temporal"/>
         <NamedIndividual IRI="#municipal_1_disp_1"/>
+    </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#exists_time_of"/>
+        <NamedIndividual IRI="#maputo_object_temporal"/>
+        <NamedIndividual IRI="#maputo:2013:3000"/>
     </ObjectPropertyAssertion>
     <ObjectPropertyAssertion>
         <ObjectProperty IRI="#fact_of"/>
@@ -940,6 +961,10 @@
         <ObjectProperty IRI="#Spatial_Relation"/>
     </SubObjectPropertyOf>
     <SubObjectPropertyOf>
+        <ObjectProperty IRI="#database_time"/>
+        <ObjectProperty IRI="#has_temporal"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
         <ObjectProperty IRI="#disjoint"/>
         <ObjectProperty IRI="#Spatial_Relation"/>
     </SubObjectPropertyOf>
@@ -954,6 +979,10 @@
     <SubObjectPropertyOf>
         <ObjectProperty IRI="#equal"/>
         <ObjectProperty IRI="#Spatial_Relation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#exists_time"/>
+        <ObjectProperty IRI="#has_temporal"/>
     </SubObjectPropertyOf>
     <SubObjectPropertyOf>
         <ObjectProperty IRI="#facet_of"/>
@@ -983,6 +1012,10 @@
         <ObjectProperty IRI="#temporal_overlaps"/>
         <ObjectProperty IRI="#Temporal_Relation"/>
     </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#valid_time"/>
+        <ObjectProperty IRI="#has_temporal"/>
+    </SubObjectPropertyOf>
     <InverseObjectProperties>
         <ObjectProperty IRI="#after"/>
         <ObjectProperty IRI="#before"/>
@@ -1010,6 +1043,10 @@
     <InverseObjectProperties>
         <ObjectProperty IRI="#database_time"/>
         <ObjectProperty IRI="#database_time_of"/>
+    </InverseObjectProperties>
+    <InverseObjectProperties>
+        <ObjectProperty IRI="#exists_time"/>
+        <ObjectProperty IRI="#exists_time_of"/>
     </InverseObjectProperties>
     <InverseObjectProperties>
         <ObjectProperty IRI="#facet_of"/>
@@ -1090,6 +1127,14 @@
         <Class IRI="#Trestle_Concept"/>
     </ObjectPropertyDomain>
     <ObjectPropertyDomain>
+        <ObjectProperty IRI="#database_time"/>
+        <Class IRI="#Fact"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#exists_time"/>
+        <Class IRI="#Trestle_Object"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
         <ObjectProperty IRI="#has_concept"/>
         <Class IRI="#Trestle_Object"/>
     </ObjectPropertyDomain>
@@ -1126,6 +1171,14 @@
         <Class IRI="#Trestle_Object"/>
     </ObjectPropertyRange>
     <ObjectPropertyRange>
+        <ObjectProperty IRI="#database_time"/>
+        <Class IRI="#Database_Object"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#exists_time"/>
+        <Class IRI="#Exists_Object"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
         <ObjectProperty IRI="#facet_of"/>
         <Class IRI="#Dataset"/>
     </ObjectPropertyRange>
@@ -1140,10 +1193,6 @@
     <ObjectPropertyRange>
         <ObjectProperty IRI="#has_relation"/>
         <Class IRI="#Trestle_Relation"/>
-    </ObjectPropertyRange>
-    <ObjectPropertyRange>
-        <ObjectProperty IRI="#has_temporal"/>
-        <Class IRI="#Temporal_Object"/>
     </ObjectPropertyRange>
     <ObjectPropertyRange>
         <ObjectProperty IRI="#overlap_of"/>
@@ -1262,40 +1311,52 @@
         <DataProperty IRI="#GAUL_Properties"/>
     </SubDataPropertyOf>
     <SubDataPropertyOf>
-        <DataProperty IRI="#database_at"/>
+        <DataProperty IRI="#at_temporal"/>
         <DataProperty IRI="#Temporal_Property"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#database_at"/>
+        <DataProperty IRI="#at_temporal"/>
     </SubDataPropertyOf>
     <SubDataPropertyOf>
         <DataProperty IRI="#database_from"/>
-        <DataProperty IRI="#Temporal_Property"/>
+        <DataProperty IRI="#start_temporal"/>
     </SubDataPropertyOf>
     <SubDataPropertyOf>
         <DataProperty IRI="#database_to"/>
+        <DataProperty IRI="#end_temporal"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#end_temporal"/>
         <DataProperty IRI="#Temporal_Property"/>
     </SubDataPropertyOf>
     <SubDataPropertyOf>
         <DataProperty IRI="#exists_at"/>
-        <DataProperty IRI="#Temporal_Property"/>
+        <DataProperty IRI="#at_temporal"/>
     </SubDataPropertyOf>
     <SubDataPropertyOf>
         <DataProperty IRI="#exists_from"/>
-        <DataProperty IRI="#Temporal_Property"/>
+        <DataProperty IRI="#start_temporal"/>
     </SubDataPropertyOf>
     <SubDataPropertyOf>
         <DataProperty IRI="#exists_to"/>
+        <DataProperty IRI="#end_temporal"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#start_temporal"/>
         <DataProperty IRI="#Temporal_Property"/>
     </SubDataPropertyOf>
     <SubDataPropertyOf>
         <DataProperty IRI="#valid_at"/>
-        <DataProperty IRI="#Temporal_Property"/>
+        <DataProperty IRI="#at_temporal"/>
     </SubDataPropertyOf>
     <SubDataPropertyOf>
         <DataProperty IRI="#valid_from"/>
-        <DataProperty IRI="#Temporal_Property"/>
+        <DataProperty IRI="#start_temporal"/>
     </SubDataPropertyOf>
     <SubDataPropertyOf>
         <DataProperty IRI="#valid_to"/>
-        <DataProperty IRI="#Temporal_Property"/>
+        <DataProperty IRI="#end_temporal"/>
     </SubDataPropertyOf>
     <DataPropertyDomain>
         <DataProperty IRI="#Relation_Strength"/>
@@ -1459,22 +1520,6 @@
         <DataProperty IRI="#database_to"/>
         <DataProperty IRI="#exists_to"/>
         <DataProperty IRI="#valid_to"/>
-    </DisjointDataProperties>
-    <DisjointDataProperties>
-        <DataProperty IRI="#exists_at"/>
-        <DataProperty IRI="#valid_at"/>
-    </DisjointDataProperties>
-    <DisjointDataProperties>
-        <DataProperty IRI="#exists_from"/>
-        <DataProperty IRI="#valid_from"/>
-    </DisjointDataProperties>
-    <DisjointDataProperties>
-        <DataProperty IRI="#exists_from"/>
-        <DataProperty IRI="#valid_to"/>
-    </DisjointDataProperties>
-    <DisjointDataProperties>
-        <DataProperty IRI="#exists_to"/>
-        <DataProperty IRI="#valid_from"/>
     </DisjointDataProperties>
     <DisjointDataProperties>
         <DataProperty IRI="#exists_to"/>
