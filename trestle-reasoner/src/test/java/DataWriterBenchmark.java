@@ -1,17 +1,11 @@
-package com.nickrobison.trestle;
-
-import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.jena.rdf.model.InfModel;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.reasoner.ReasonerRegistry;
-import org.apache.jena.shared.AddDeniedException;
 import org.apache.jena.shared.Lock;
 import org.apache.jena.tdb.transaction.TDBTransactionException;
-import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
