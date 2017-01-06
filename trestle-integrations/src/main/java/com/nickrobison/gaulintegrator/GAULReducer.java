@@ -24,7 +24,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.temporal.TemporalAdjusters;
-import java.time.temporal.TemporalUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -134,7 +133,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 //            Store the object
             try {
 //                reasoner.writeObjectAsConcept(newObject);
-                reasoner.WriteAsTrestleObject(newObject);
+                reasoner.writeAsTrestleObject(newObject);
             } catch (TrestleClassException e) {
                 logger.error("Cannot write object to trestle", e);
             } catch (MissingOntologyEntity missingOntologyEntity) {
@@ -310,7 +309,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //            Now, we insert the new itself record into the database
             try {
-                reasoner.WriteAsTrestleObject(newGAULObject);
+                reasoner.writeAsTrestleObject(newGAULObject);
             } catch (TrestleClassException e) {
                 logger.error("Cannot write {}", newGAULObject.getObjectName(), e);
             } catch (MissingOntologyEntity missingOntologyEntity) {

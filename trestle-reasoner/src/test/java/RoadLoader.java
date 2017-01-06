@@ -88,7 +88,7 @@ public class RoadLoader {
 //                        Double.parseDouble(next.getAttribute("SHAPE_LENGTH").toString()),
                         ZonedDateTime.of(1980, 1, 1, 1, 1, 1, 1, ZoneOffset.UTC));
 
-                reasoner.WriteAsTrestleObject(road);
+                reasoner.writeAsTrestleObject(road);
             }
     }
 

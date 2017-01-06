@@ -106,7 +106,7 @@ public class TrestleAPITest {
 //        Write the objects
         gaulObjects.parallelStream().forEach(gaul -> {
             try {
-                reasoner.WriteAsTrestleObject(gaul);
+                reasoner.writeAsTrestleObject(gaul);
             } catch (TrestleClassException e) {
                 throw new RuntimeException(String.format("Problem storing object %s", gaul.adm0_name), e);
             } catch (MissingOntologyEntity missingOntologyEntity) {
@@ -172,7 +172,7 @@ public class TrestleAPITest {
 
         classObjects.stream().forEach(object -> {
             try {
-                reasoner.WriteAsTrestleObject(object);
+                reasoner.writeAsTrestleObject(object);
             } catch (TrestleClassException | MissingOntologyEntity e) {
                 e.printStackTrace();
             }
@@ -203,7 +203,7 @@ public class TrestleAPITest {
 //        assertEquals(4, individuals.size(), "Should have 4 individuals, overall");
 
 //        Test attribute generation
-        final TrestleIndividual trestleIndividual = reasoner.GetIndividualFacts(individuals.get(0));
+        final TrestleIndividual trestleIndividual = reasoner.getIndividualFacts(individuals.get(0));
         assertEquals(2, trestleIndividual.getFacts().size(), "Wrong number of attributes");
 
 //        Now try to remove it
@@ -218,7 +218,7 @@ public class TrestleAPITest {
 //        JTS.toGeometry()
 //        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest = new TestClasses.GeotoolsPolygonTest(UUID.randomUUID(), (org.opengis.geometry.coordinate.Polygon) geotoolsGeom, LocalDate.now());
 //        final OWLNamedIndividual owlNamedIndividual = classParser.GetIndividual(geotoolsPolygonTest);
-//        reasoner.WriteAsTrestleObject(geotoolsPolygonTest);
+//        reasoner.writeAsTrestleObject(geotoolsPolygonTest);
 //        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest1 = reasoner.readAsObject(geotoolsPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
 //        assertEquals(geotoolsPolygonTest, geotoolsPolygonTest1, "Should be equal");
 
