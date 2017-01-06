@@ -22,10 +22,13 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <junitTestSuite>unit,integration</junitTestSuite>
+        <provided.scope>provided</provided.scope>
         <storm.version>1.0.0</storm.version>
         <owl.version>5.0.4</owl.version>
         <jena.version>3.1.0</jena.version>
         <slf4j.version>1.7.21</slf4j.version>
+        <junit.jupiter.version>5.0.0-M3</junit.jupiter.version>
         <jmh.version>1.15</jmh.version>
         <geotools.version>16.0</geotools.version>
         <!--Checker properties-->
@@ -58,6 +61,11 @@
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>20.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.inject</groupId>
+                <artifactId>guice</artifactId>
+                <version>4.1.0</version>
             </dependency>
             <dependency>
                 <groupId>com.esri</groupId>
