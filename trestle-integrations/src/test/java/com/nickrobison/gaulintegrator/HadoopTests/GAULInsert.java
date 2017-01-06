@@ -8,6 +8,7 @@ import com.nickrobison.gaulintegrator.GAULObject;
 import com.nickrobison.gaulintegrator.common.ObjectID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.sql.*;
@@ -20,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * Created by nrobison on 5/9/16.
  */
 @SuppressWarnings("initialization.fields.uninitialized")
+@Tag("integration")
 public class GAULInsert {
 
     private Connection dbConnection;

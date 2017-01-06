@@ -11,6 +11,7 @@ import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -22,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  * Created by nrobison on 8/2/16.
  */
 @SuppressWarnings({"argument.type.incompatible", "initialization.fields.uninitialized"})
+@Tag("integration")
 public class ClassValidationTest {
 
     static TrestleReasoner reasoner;

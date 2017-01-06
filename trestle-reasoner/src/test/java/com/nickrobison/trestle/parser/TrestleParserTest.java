@@ -12,6 +12,7 @@ import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
@@ -33,6 +34,7 @@ import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
  * Created by nrobison on 6/28/16.
  */
 @SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "unchecked"})
+@Tag("unit")
 public class TrestleParserTest {
 
     private TestClasses.GAULTestClass gaulTestClass;

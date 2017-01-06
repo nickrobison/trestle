@@ -6,6 +6,7 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
@@ -19,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Created by nrobison on 5/6/16.
  */
 @SuppressWarnings({"argument.type.incompatible", "initialization.fields.uninitialized"})
+@Tag("unit")
 public class GAULRecordTests {
 
     private MapperOutput mapperOutput;

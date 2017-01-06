@@ -14,6 +14,7 @@ import com.vividsolutions.jts.io.WKTReader;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.opengis.referencing.operation.TransformException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -38,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Created by nrobison on 7/27/16.
  */
 @SuppressWarnings({"Duplicates", "initialization"})
+@Tag("integration")
 public class TrestleAPITest {
 
     public static final String OVERRIDE_PREFIX = "http://nickrobison.com/test-owl#";

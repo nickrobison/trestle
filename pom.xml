@@ -21,8 +21,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <storm.version>1.0.0</storm.version>
         <provided.scope>provided</provided.scope>
+        <junitTestSuite>unit,integration</junitTestSuite>
+        <storm.version>1.0.0</storm.version>
         <owl.version>5.0.4</owl.version>
         <jena.version>3.1.0</jena.version>
         <slf4j.version>1.7.21</slf4j.version>
@@ -473,6 +474,9 @@
                     </dependency>
                 </dependencies>
                 <configuration>
+                    <properties>
+                        <includeTags>${junitTestSuite}</includeTags>
+                    </properties>
                     <parallel>classes</parallel>
                     <useUnlimitedThreads>true</useUnlimitedThreads>
                     <forkCount>3</forkCount>

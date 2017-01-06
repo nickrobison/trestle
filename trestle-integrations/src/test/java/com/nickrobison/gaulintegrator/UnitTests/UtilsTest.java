@@ -4,6 +4,7 @@ import com.nickrobison.gaulintegrator.common.Utils;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * Created by nrobison on 5/9/16.
  */
+@Tag("unit")
 public class UtilsTest {
 
     @Test

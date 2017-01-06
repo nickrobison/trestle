@@ -5,6 +5,7 @@ import com.esri.shp.ShpReader;
 import org.apache.log4j.Logger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.DataInputStream;
@@ -18,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Created by nrobison on 4/29/16.
  */
+@Tag("tag")
 public class ReadShapes {
     private static final Logger logger = Logger.getLogger(ReadShapes.class);
     private final InputStream is = ReadShapes.class.getClassLoader().getResourceAsStream("shapefiles/combined_2000.shp");

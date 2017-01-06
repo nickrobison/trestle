@@ -2,6 +2,7 @@ package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
@@ -18,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Created by nrobison on 7/22/16.
  */
 @SuppressWarnings({"Duplicates", "OptionalGetWithoutIsPresent"})
+@Tag("integration")
 public class LocalOntologyTest extends OntologyTest {
 
     @Override

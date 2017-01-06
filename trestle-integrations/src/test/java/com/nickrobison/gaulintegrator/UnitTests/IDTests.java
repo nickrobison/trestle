@@ -1,6 +1,7 @@
 package com.nickrobison.gaulintegrator.UnitTests;
 
 import com.nickrobison.gaulintegrator.common.ObjectID;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -12,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 /**
  * Created by nrobison on 5/6/16.
  */
+@Tag("unit")
 public class IDTests {
 
     @Test

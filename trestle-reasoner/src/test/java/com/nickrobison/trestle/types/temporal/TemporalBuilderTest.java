@@ -2,6 +2,7 @@ package com.nickrobison.trestle.types.temporal;
 
 import com.nickrobison.trestle.types.TemporalScope;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
@@ -18,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Created by nrobison on 8/1/16.
  */
 @SuppressWarnings({"unchecked", "OptionalGetWithoutIsPresent", "Duplicates", "initialization"})
+@Tag("unit")
 public class TemporalBuilderTest {
 
     private static OWLNamedIndividual test_individual;

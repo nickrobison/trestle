@@ -7,17 +7,14 @@ import com.nickrobison.trestle.exceptions.InvalidClassException;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.TemporalType;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;;
 import org.junit.jupiter.api.Test;
-import org.omg.CORBA.DynAnyPackage.Invalid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.UUID;
 
 import static com.nickrobison.trestle.exceptions.InvalidClassException.State.EXCESS;
 import static com.nickrobison.trestle.exceptions.InvalidClassException.State.INVALID;
@@ -28,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Created by nrobison on 7/26/16.
  */
 @SuppressWarnings({"initialization"})
+@Tag("unit")
 public class ClassRegisterTest {
 
     private static EmptyTest eTest;
