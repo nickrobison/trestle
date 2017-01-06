@@ -41,7 +41,7 @@ public class DataWriterBenchmark {
 
     @Setup
     public void setupTests() {
-        final Config config = ConfigFactory.parseResources("test.configuration.conf").getConfig("trestle.ontology");
+        final Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf")).getConfig("trestle.ontology");
         virtModel = VirtModel.openDatabaseModel("create-bench",
                 config.getString("connectionString"),
                 config.getString("username"),

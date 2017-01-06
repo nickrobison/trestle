@@ -49,7 +49,7 @@ public class TrestleAPITest {
 
     @BeforeEach
     public void setup() {
-        final Config config = ConfigFactory.parseResources("test.configuration.conf");
+        final Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
         reasoner = new TrestleBuilder()
                 .withDBConnection(config.getString("trestle.ontology.connectionString"),
                         config.getString("trestle.ontology.username"),

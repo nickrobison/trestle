@@ -36,7 +36,7 @@ abstract public class OntologyTest {
     @BeforeEach
     public void setup() throws OWLOntologyCreationException, IOException {
         df = OWLManager.getOWLDataFactory();
-        config = ConfigFactory.parseResources("test.configuration.conf");
+        config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
         final IRI iri = IRI.create(config.getString("trestle.ontology.location"));
         inputStream = iri.toURI().toURL().openConnection().getInputStream();
         setupOntology();
