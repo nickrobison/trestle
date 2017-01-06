@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.parser;
 
-import com.github.jsonldjava.utils.Obj;
 import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
@@ -18,6 +17,8 @@ import java.util.*;
 
 import static com.nickrobison.trestle.common.StaticIRI.*;
 import static com.nickrobison.trestle.parser.SpatialParser.parseWKTFromGeom;
+import static com.nickrobison.trestle.parser.StringParser.fieldValueToMultiLangString;
+import static com.nickrobison.trestle.parser.StringParser.methodValueToMultiLangString;
 
 /**
  * Created by nrobison on 6/28/16.
@@ -31,32 +32,52 @@ public class ClassParser {
     }
 
     private static final Logger logger = LoggerFactory.getLogger(ClassParser.class);
-    static final OWLDataFactory df = OWLManager.getOWLDataFactory();
+//    TODO(nrobison): Move all of this into a non-static context
+    static final OWLDataFactory dfStatic = OWLManager.getOWLDataFactory();
+
+    private final OWLDataFactory df;
+    private final String ReasonerPrefix;
+    private final boolean multiLangEnabled;
+    private final String defaultLanguageCode;
 
 
-    private ClassParser() {
+    ClassParser(OWLDataFactory df, String ReasonerPrefix, boolean multiLangEnabled, String defaultLanguageCode) {
+        this.df = df;
+        this.ReasonerPrefix = ReasonerPrefix;
+        this.multiLangEnabled = multiLangEnabled;
+        this.defaultLanguageCode = defaultLanguageCode;
     }
 
-    public static OWLClass GetObjectClass(Object inputObject) {
+    public boolean isMultiLangEnabled() {
+        return this.multiLangEnabled;
+    }
+
+    public @Nullable String getDefaultLanguageCode() {
+        if (this.defaultLanguageCode.equals("")) {
+             return null;
+        }
+        return this.defaultLanguageCode;
+    }
+
+    public OWLClass GetObjectClass(Object inputObject) {
         //        Get the class name, from the annotation, if possible;
         final Class<?> clazz = inputObject.getClass();
         return GetObjectClass(clazz);
     }
 
-    public static OWLClass GetObjectClass(Class<?> clazz) {
+    public OWLClass GetObjectClass(Class<?> clazz) {
 
         final String className;
-//        final OWLClassName declaredAnnotation = clazz.getDeclaredAnnotation(OWLClassName.class);
         if (clazz.isAnnotationPresent(OWLClassName.class)) {
             className = clazz.getDeclaredAnnotation(OWLClassName.class).className();
         } else {
             className = clazz.getName();
         }
-        final IRI iri = IRI.create(PREFIX, className);
+        final IRI iri = IRI.create(this.ReasonerPrefix, className);
         return df.getOWLClass(iri);
     }
 
-    public static OWLNamedIndividual GetIndividual(Object inputObject) {
+    public OWLNamedIndividual GetIndividual(Object inputObject) {
 
         final Class<?> clazz = inputObject.getClass();
         String identifier = UUID.randomUUID().toString();
@@ -89,7 +110,7 @@ public class ClassParser {
         }
 
         final OWLDataFactory df = OWLManager.getOWLDataFactory();
-        return df.getOWLNamedIndividual(IRI.create(PREFIX, identifier));
+        return df.getOWLNamedIndividual(IRI.create(ReasonerPrefix, identifier));
     }
 
     //    TODO(nrobison): Implement this
@@ -122,6 +143,8 @@ public class ClassParser {
                 objectMember.isAnnotationPresent(DataProperty.class)
                         | (objectMember.isAnnotationPresent(Spatial.class) && !filterSpatial)
                         | objectMember.isAnnotationPresent(IndividualIdentifier.class)
+                        | objectMember.isAnnotationPresent(Language.class)
+                        | objectMember.isAnnotationPresent(NoMultiLanguage.class)
                         | (objectMember.getAnnotations().length == 0)))
 //                Need to filter out the ebean stuff
                 & !(objectMember.getName().contains("_ebean"));
@@ -136,6 +159,8 @@ public class ClassParser {
                 objectMember.isAnnotationPresent(DataProperty.class)
                         | (objectMember.isAnnotationPresent(Spatial.class) && !filterSpatial)
                         | objectMember.isAnnotationPresent(IndividualIdentifier.class)
+                        | objectMember.isAnnotationPresent(Language.class)
+                        | objectMember.isAnnotationPresent(NoMultiLanguage.class)
                         | (objectMember.getAnnotations().length == 0)))
 //                We need this to filter out setters and equals/hashcode stuff
                 & ((objectMember.getParameters().length == 0)
@@ -152,7 +177,7 @@ public class ClassParser {
      * @param inputObject - Object to parse
      * @return - Optional List of OWLDataPropertyAssertionAxioms
      */
-    public static Optional<List<OWLDataPropertyAssertionAxiom>> GetDataProperties(Object inputObject) {
+    public Optional<List<OWLDataPropertyAssertionAxiom>> GetDataProperties(Object inputObject) {
         return GetDataProperties(inputObject, false);
     }
 
@@ -162,7 +187,7 @@ public class ClassParser {
      * @param filterSpatial - Boolean to determine whether or not to filter out the spatial annotations
      * @return - Optional List of OWLDataPropertyAssertionAxioms
      */
-    public static Optional<List<OWLDataPropertyAssertionAxiom>> GetDataProperties(Object inputObject, boolean filterSpatial) {
+    public Optional<List<OWLDataPropertyAssertionAxiom>> GetDataProperties(Object inputObject, boolean filterSpatial) {
         final Class<?> clazz = inputObject.getClass();
         final List<OWLDataPropertyAssertionAxiom> axioms = new ArrayList<>();
 
@@ -173,18 +198,26 @@ public class ClassParser {
             if (filterDataPropertyField(classField, filterSpatial)) {
                 if (classField.isAnnotationPresent(DataProperty.class)) {
                     final DataProperty annotation = classField.getAnnotation(DataProperty.class);
-                    final IRI iri = IRI.create(PREFIX, annotation.name());
+                    final IRI iri = IRI.create(ReasonerPrefix, annotation.name());
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
-                    String fieldValue = null;
+                    Object fieldValue = null;
 
                     try {
-                        fieldValue = classField.get(inputObject).toString();
+                        fieldValue = classField.get(inputObject);
                     } catch (IllegalAccessException e) {
                         logger.debug("Cannot access field {}", classField.getName(), e);
                         continue;
                     }
-                    final OWLLiteral owlLiteral = df.getOWLLiteral(fieldValue, TypeConverter.getDatatypeFromAnnotation(annotation, classField.getType()));
-                    axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, owlLiteral));
+                    if (fieldValue != null) {
+//                        If the field values is a String, we need to handle
+                        final OWLLiteral owlLiteral = fieldValueToMultiLangString(fieldValue,
+                                classField,
+                                isMultiLangEnabled(),
+                                getDefaultLanguageCode())
+                                .orElse(df.getOWLLiteral(fieldValue.toString(),
+                                        TypeConverter.getDatatypeFromAnnotation(annotation, classField.getType())));
+                        axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, owlLiteral));
+                    }
                 } else if (classField.isAnnotationPresent(Spatial.class) && !filterSpatial) {
                     final IRI iri = IRI.create(GEOSPARQLPREFIX, "asWKT");
                     final OWLDataProperty spatialDataProperty = df.getOWLDataProperty(iri);
@@ -196,20 +229,28 @@ public class ClassParser {
                         continue;
                     }
                     final Optional<OWLLiteral> owlLiteral = parseWKTFromGeom(fieldValue);
-                    if (owlLiteral.isPresent()) {
-                        axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, owlLiteral.get()));
-                    }
+                    owlLiteral.ifPresent(owlLiteral1 -> axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, owlLiteral1)));
                 } else {
-                    final IRI iri = IRI.create(PREFIX, classField.getName());
-                    final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
-                    String fieldValue = null;
-                    try {
-                        fieldValue = classField.get(inputObject).toString();
-                    } catch (IllegalAccessException e) {
-                        logger.debug("Cannot access field {}", classField.getName(), e);
-                        continue;
-                    }
-                    axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, fieldValue));
+                        final IRI iri = IRI.create(ReasonerPrefix, classField.getName());
+                        final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
+                        Object fieldValue = null;
+                        try {
+                            fieldValue = classField.get(inputObject);
+                        } catch (IllegalAccessException e) {
+                            logger.debug("Cannot access field {}", classField.getName(), e);
+                            continue;
+                        }
+                        if (fieldValue != null) {
+//                            If the field type is a String, we need to handle any multi-lang modifications
+                                final OWLLiteral owlLiteral = fieldValueToMultiLangString(fieldValue,
+                                        classField,
+                                        isMultiLangEnabled(),
+                                        getDefaultLanguageCode())
+                                        .orElse(df.getOWLLiteral(fieldValue.toString(),
+                                                TypeConverter.getDatatypeFromJavaClass(classField.getType())));
+
+                            axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, owlLiteral));
+                        }
                 }
             }
         }
@@ -219,13 +260,18 @@ public class ClassParser {
             if (filterDataPropertyMethod(classMethod, filterSpatial)) {
                 if (classMethod.isAnnotationPresent(DataProperty.class)) {
                     final DataProperty annotation = classMethod.getAnnotation(DataProperty.class);
-                    final IRI iri = IRI.create(PREFIX, annotation.name());
+                    final IRI iri = IRI.create(ReasonerPrefix, annotation.name());
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
 
                     final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
 
                     if (methodValue.isPresent()) {
-                        final OWLLiteral owlLiteral = df.getOWLLiteral(methodValue.get().toString(), TypeConverter.getDatatypeFromAnnotation(annotation, classMethod.getReturnType()));
+                        final OWLLiteral owlLiteral = methodValueToMultiLangString(methodValue.get(),
+                                classMethod,
+                                isMultiLangEnabled(),
+                                getDefaultLanguageCode())
+                                .orElse(df.getOWLLiteral(methodValue.get().toString(), TypeConverter.getDatatypeFromAnnotation(annotation, classMethod.getReturnType())));
+
                         axioms.add(df.getOWLDataPropertyAssertionAxiom(
                                 owlDataProperty,
                                 owlNamedIndividual,
@@ -233,24 +279,25 @@ public class ClassParser {
                         ));
                     }
                 } else if (classMethod.isAnnotationPresent(Spatial.class) && !filterSpatial) {
-                    final IRI iri = IRI.create("geosparql:", "asWKT");
+                    final IRI iri = IRI.create(GEOSPARQLPREFIX, "asWKT");
                     final OWLDataProperty spatialDataProperty = df.getOWLDataProperty(iri);
                     final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
 
                     if (methodValue.isPresent()) {
                         final Optional<OWLLiteral> owlLiteral = parseWKTFromGeom(methodValue.get());
-                        if (owlLiteral.isPresent()) {
-////                    Since it's a literal, we need to strip out the double quotes.
-//                        final OWLLiteral wktLiteral = df.getOWLLiteral(methodValue.get().toString().replace("\"", ""), wktDatatype);
-                            axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, owlLiteral.get()));
-                        }
+//                    Since it's a literal, we need to strip out the double quotes.
+                        owlLiteral.ifPresent(owlLiteral1 -> axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, owlLiteral1)));
                     }
                 } else {
-                    final IRI iri = IRI.create(PREFIX, filterMethodName(classMethod));
+                    final IRI iri = IRI.create(ReasonerPrefix, filterMethodName(classMethod));
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
                     final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
                     if (methodValue.isPresent()) {
-                        final OWLLiteral owlLiteral = df.getOWLLiteral(methodValue.get().toString(), TypeConverter.getDatatypeFromJavaClass(classMethod.getReturnType()));
+                        final OWLLiteral owlLiteral = methodValueToMultiLangString(methodValue.get(),
+                                classMethod,
+                                isMultiLangEnabled(),
+                                getDefaultLanguageCode())
+                                .orElse(df.getOWLLiteral(methodValue.get().toString(), TypeConverter.getDatatypeFromJavaClass(classMethod.getReturnType())));
                         axioms.add(df.getOWLDataPropertyAssertionAxiom(
                                 owlDataProperty,
                                 owlNamedIndividual,
@@ -272,7 +319,7 @@ public class ClassParser {
      * @param inputObject - Object to parse for spatial property
      * @return - Optional of OWLDataPropertyAssertionAxiom representing spatial property
      */
-    public static Optional<OWLDataPropertyAssertionAxiom> GetSpatialProperty(Object inputObject) {
+    public Optional<OWLDataPropertyAssertionAxiom> GetSpatialProperty(Object inputObject) {
         final OWLNamedIndividual owlNamedIndividual = GetIndividual(inputObject);
         final IRI iri = IRI.create(GEOSPARQLPREFIX, "asWKT");
         final OWLDataProperty spatialDataProperty = df.getOWLDataProperty(iri);
@@ -288,7 +335,7 @@ public class ClassParser {
                 final Optional<OWLLiteral> owlLiteral = parseWKTFromGeom(methodValue.get());
                 if (owlLiteral.isPresent()) {
 ////                    Since it's a literal, we need to strip out the double quotes.
-//                        final OWLLiteral wktLiteral = df.getOWLLiteral(methodValue.get().toString().replace("\"", ""), wktDatatype);
+//                        final OWLLiteral wktLiteral = dfStatic.getOWLLiteral(methodValue.get().toString().replace("\"", ""), wktDatatype);
                     return Optional.of(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, owlLiteral.get()));
                 }
             }
@@ -328,6 +375,127 @@ public class ClassParser {
         return name;
     }
 
+    /**
+     * Match a given String, representing the short-form of a OWLDataProperty IRI with the appropriate class member
+     * If the languageCode param is not null, the method attempts to match the correct data property and language pair.
+     * @param clazz - Java class to parse
+     * @param classMember - IRI short-form to match against class
+     * @param languageTag - Nullable languageCode determining multi-lang String support required
+     * @return - String name of matching class member
+     */
+    public static String matchWithClassMember(Class<?> clazz, String classMember, @Nullable String languageTag) {
+        if (languageTag == null) {
+            return matchWithClassMember(clazz, classMember);
+        }
+
+//        See if we can match right off the language
+//        Methods
+        final Optional<String> annotatedMethod = Arrays.stream(clazz.getDeclaredMethods())
+                .filter(m -> m.isAnnotationPresent(DataProperty.class))
+                .filter(m -> m.getAnnotation(DataProperty.class).name().equals(classMember))
+                .filter(m -> m.isAnnotationPresent(Language.class))
+                .filter(m -> m.getAnnotation(Language.class).language().toLowerCase().equals(languageTag))
+                .map(m -> {
+                    try {
+                        if (ClassBuilder.isConstructorArgument(clazz,
+                                filterMethodName(m),
+                                m.getReturnType())) {
+                            return filterMethodName(m);
+                        }
+                    } catch (MissingConstructorException e) {
+                        e.printStackTrace();
+                    }
+                    return m.getAnnotation(DataProperty.class).name();
+                })
+//                .map(ClassParser::filterMethodName)
+//                .map(m -> m.getAnnotation(DataProperty.class).name())
+                .findAny();
+
+        if (annotatedMethod.isPresent()) {
+            return annotatedMethod.get();
+        }
+
+//        Fields
+        final Optional<String> annotatedField = Arrays.stream(clazz.getDeclaredFields())
+                .filter(f -> f.isAnnotationPresent(DataProperty.class))
+                .filter(f -> f.getAnnotation(DataProperty.class).name().equals(classMember))
+                .filter(f -> f.isAnnotationPresent(Language.class))
+                .filter(f -> f.getAnnotation(Language.class).language().toLowerCase().equals(languageTag))
+                .map(f -> {
+                    try {
+                        if (ClassBuilder.isConstructorArgument(clazz,
+                                f.getName(),
+                                f.getType())) {
+                            return f.getName();
+                        }
+                    } catch (MissingConstructorException e) {
+                        e.printStackTrace();
+                    }
+                    return f.getAnnotation(DataProperty.class).name();
+                })
+//                .map(Field::getName)
+//                .map(f -> f.getAnnotation(DataProperty.class).name())
+                .findAny();
+
+        if (annotatedField.isPresent()) {
+            return annotatedField.get();
+        }
+
+//        If we can't match on language annotation, try to look for the method/field without a language annotation
+        final Optional<String> methodNoLanguage = Arrays.stream(clazz.getDeclaredMethods())
+                .filter(m -> m.isAnnotationPresent(DataProperty.class))
+                .filter(m -> m.getAnnotation(DataProperty.class).name().equals(classMember))
+                .filter(m -> !m.isAnnotationPresent(Language.class))
+                .map(m -> {
+                    try {
+                        if (ClassBuilder.isConstructorArgument(clazz,
+                                filterMethodName(m),
+                                m.getReturnType())) {
+                            return filterMethodName(m);
+                        }
+                    } catch (MissingConstructorException e) {
+                        e.printStackTrace();
+                    }
+                    return m.getAnnotation(DataProperty.class).name();
+                })
+//                .map(ClassParser::filterMethodName)
+//                .map(m -> m.getAnnotation(DataProperty.class).name())
+                .findAny();
+
+        if (methodNoLanguage.isPresent()) {
+            return methodNoLanguage.get();
+        }
+
+        final Optional<String> fieldNoLanguage = Arrays.stream(clazz.getDeclaredFields())
+                .filter(f -> f.isAnnotationPresent(DataProperty.class))
+                .filter(f -> f.getAnnotation(DataProperty.class).name().equals(classMember))
+                .filter(f -> !f.isAnnotationPresent(Language.class))
+                .map(f -> {
+                    try {
+                        if (ClassBuilder.isConstructorArgument(clazz,
+                                f.getName(),
+                                f.getType())) {
+                            return f.getName();
+                        }
+                    } catch (MissingConstructorException e) {
+                        e.printStackTrace();
+                    }
+                    return f.getAnnotation(DataProperty.class).name();
+                })
+//                .map(Field::getName)
+//                .map(f -> f.getAnnotation(DataProperty.class).name())
+                .findAny();
+
+//        If nothing returns, run the default matcher
+        return fieldNoLanguage.orElse(matchWithClassMember(clazz, classMember));
+    }
+
+    /**
+     * Match a given String, representing the short-form of a OWLDataProperty IRI with the appropriate class member
+     * @param clazz - Java class to parse
+     * @param classMember - IRI short-form to match against class
+     * @return - String name of matching class member
+     */
     public static String matchWithClassMember(Class<?> clazz, String classMember) {
 //        Check for a matching field
         Field classField = null;

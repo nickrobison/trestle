@@ -9,6 +9,7 @@ import com.nickrobison.trestle.types.TemporalType;
 import com.vividsolutions.jts.geom.Geometry;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -193,9 +194,6 @@ public class TestClasses {
         }
     }
 
-    /**
-     * Created by nrobison on 6/27/16.
-     */
     @OWLClassName(className="GAUL_Test")
     public static class GAULTestClass {
 
@@ -262,12 +260,16 @@ public class TestClasses {
         }
     }
 
-
     @OWLClassName(className = "gaul-complex")
     public static class GAULComplexClassTest {
 
         @IndividualIdentifier
         public UUID id;
+        public final BigInteger testBigInt;
+        public final int testPrimitiveInt;
+        public final Integer testInteger;
+        private final Double testDouble;
+        public final double testPrimitiveDouble;
         private final String wkt;
         private final LocalDate atDate;
 
@@ -275,12 +277,26 @@ public class TestClasses {
             this.id = UUID.randomUUID();
             this.wkt = "POINT(4.0 6.0)";
             this.atDate = LocalDate.of(1989, 3, 26);
+            this.testBigInt = new BigInteger("10");
+            this.testPrimitiveInt = 14;
+            this.testDouble = new Double("3.14");
+            this.testPrimitiveDouble = 3.141592654;
+            this.testInteger = 42;
         }
 
-        public GAULComplexClassTest(UUID id, String wkt, LocalDate atDate) {
+        public GAULComplexClassTest(UUID id, int testPrimitiveInt, String wkt, Double testDouble, Integer testInteger, LocalDate atDate, BigInteger testBigInt, double testPrimitiveDouble) {
             this.id = id;
+            this.testPrimitiveInt = testPrimitiveInt;
             this.wkt = wkt;
+            this.testDouble = testDouble;
             this.atDate = atDate;
+            this.testBigInt = testBigInt;
+            this.testPrimitiveDouble = testPrimitiveDouble;
+            this.testInteger = testInteger;
+        }
+
+        public Double getTestDouble() {
+            return this.testDouble;
         }
 
         @Spatial
@@ -300,24 +316,33 @@ public class TestClasses {
 
             GAULComplexClassTest that = (GAULComplexClassTest) o;
 
+            if (testPrimitiveInt != that.testPrimitiveInt) return false;
+            if (Double.compare(that.testPrimitiveDouble, testPrimitiveDouble) != 0) return false;
             if (!id.equals(that.id)) return false;
+            if (!testBigInt.equals(that.testBigInt)) return false;
+            if (!testInteger.equals(that.testInteger)) return false;
+            if (!getTestDouble().equals(that.getTestDouble())) return false;
             if (!getWkt().equals(that.getWkt())) return false;
             return getAtDate().equals(that.getAtDate());
-
         }
 
         @Override
         public int hashCode() {
-            int result = id.hashCode();
+            int result;
+            long temp;
+            result = id.hashCode();
+            result = 31 * result + testBigInt.hashCode();
+            result = 31 * result + testPrimitiveInt;
+            result = 31 * result + testInteger.hashCode();
+            result = 31 * result + getTestDouble().hashCode();
+            temp = Double.doubleToLongBits(testPrimitiveDouble);
+            result = 31 * result + (int) (temp ^ (temp >>> 32));
             result = 31 * result + getWkt().hashCode();
             result = 31 * result + getAtDate().hashCode();
             return result;
         }
     }
 
-    /**
-     * Created by nrobison on 7/29/16.
-     */
     @OWLClassName(className = "GAUL_Test1")
     public static class GAULMethodTest {
 
@@ -407,6 +432,102 @@ public class TestClasses {
             result = 31 * result + privateField.hashCode();
             result = 31 * result + intervalStart.hashCode();
             result = 31 * result + intervalEnd.hashCode();
+            return result;
+        }
+    }
+
+    @OWLClassName(className = "multiLang-test")
+    public static class MultiLangTest {
+
+        @DataProperty(name = "testString")
+        @Language(language = "en")
+        public final String englishString;
+        @DataProperty(name = "testString")
+        @Language(language = "heb")
+        public final String hebrewString;
+        private final String frenchString;
+        private final String englishGBString;
+        private final LocalDate defaultTime;
+//        @Language(language = "kk")
+        public final String testString2;
+        private final String testString2cs;
+        @IndividualIdentifier
+        @NoMultiLanguage
+        public final String id;
+
+        public MultiLangTest() {
+            this.englishString = "test string";
+            this.frenchString = "Chaîne d'essai";
+            this.englishGBString = "test string";
+            this.hebrewString = "מחרוזת בדיקה";
+            this.defaultTime = LocalDate.now();
+            this.id = "test-multilang";
+            this.testString2 = "second string";
+            this.testString2cs = "second string";
+        }
+
+        @TrestleCreator
+        public MultiLangTest(String englishString, String englishGBString, String frenchString, String hebrewString, LocalDate defaultTime, String id, String testString2, String testString2cs) {
+            this.defaultTime = defaultTime;
+            this.frenchString = frenchString;
+            this.englishGBString = englishGBString;
+            this.englishString = englishString;
+            this.id = id;
+            this.testString2 = testString2;
+            this.testString2cs = testString2cs;
+            this.hebrewString = hebrewString;
+        }
+
+        @DataProperty(name = "testString")
+        @Language(language = "fr")
+        public String getFrenchString() {
+            return frenchString;
+        }
+
+        @DataProperty(name = "testString")
+        @Language(language = "en-GB")
+        public String getEnglishGBString() {
+            return englishGBString;
+        }
+
+        @DefaultTemporalProperty(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        public LocalDate getDefaultTime() {
+            return defaultTime;
+        }
+
+        @DataProperty(name = "testString2")
+        @Language(language = "cs")
+        public String getTestString2cs() {
+            return testString2cs;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            MultiLangTest that = (MultiLangTest) o;
+
+            if (!englishString.equals(that.englishString)) return false;
+            if (!hebrewString.equals(that.hebrewString)) return false;
+            if (!getFrenchString().equals(that.getFrenchString())) return false;
+            if (!getEnglishGBString().equals(that.getEnglishGBString())) return false;
+            if (!getDefaultTime().equals(that.getDefaultTime())) return false;
+            if (!testString2.equals(that.testString2)) return false;
+            if (!getTestString2cs().equals(that.getTestString2cs())) return false;
+            return id.equals(that.id);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = englishString.hashCode();
+            result = 31 * result + hebrewString.hashCode();
+            result = 31 * result + getFrenchString().hashCode();
+            result = 31 * result + getEnglishGBString().hashCode();
+            result = 31 * result + getDefaultTime().hashCode();
+            result = 31 * result + testString2.hashCode();
+            result = 31 * result + getTestString2cs().hashCode();
+            result = 31 * result + id.hashCode();
             return result;
         }
     }

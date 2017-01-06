@@ -1,13 +1,19 @@
 package com.nickrobison.trestle.common;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.semanticweb.owlapi.model.IRI;
 
-import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 
 /**
  * Created by nrobison on 9/6/16.
  */
 public class IRIUtils {
+
+    private static final Pattern remainderRegex = Pattern.compile("[^#]*$");
 
     /**
      * Determines if a given string represents a full IRI
@@ -23,16 +29,48 @@ public class IRIUtils {
         return false;
     }
 
-    public static IRI parseStringToIRI(String inputString) {
+    /**
+     * Parse an input string and return a fully expanded IRI
+     * Automatically uses the TRESTLE_PREFIX as part of the full expansion
+     * @param inputString - Input string to expand
+     * @return - Fully expanded IRI, using the TRESTLE_PREFIX
+     */
+//    TODO(nrobison): Add some sanitation processes
+    public static IRI parseStringToIRI(@NonNull String inputString) {
+        return parseStringToIRI(TRESTLE_PREFIX, inputString);
+    }
+
+    /**
+     * Parse an input string and prefix and return a fully expanded IRI
+     * @param prefix - Prefix to expand string with
+     * @param inputString - Input string to expand
+     * @return - Fully expanded IRI, using the provided prefix
+     */
+    public static IRI parseStringToIRI(@NonNull String prefix, @NonNull String inputString) {
 //        Check to see if the inputString is an expanded IRI
         if (isFullIRI(inputString)) {
             return IRI.create(inputString);
         } else {
 //            If we have the unexpanded base prefix, replace it and move on
             if (inputString.startsWith("trestle:")) {
-                return IRI.create(PREFIX, inputString.replace("trestle:", ""));
+                return IRI.create(TRESTLE_PREFIX, inputString.replace("trestle:", ""));
             }
-            return IRI.create(PREFIX, inputString.replaceAll("\\s+", "_"));
+            return IRI.create(prefix, inputString.replaceAll("\\s+", "_"));
+        }
+    }
+
+    /**
+     * Takes an OWL IRI and returns the individual name from the full string
+     * Returns everything after the # character in the IRI, or returns an empty string
+     * @param iri - IRI to extract name from
+     * @return - String of individual name
+     */
+    public static String extractTrestleIndividualName(IRI iri) {
+        final Matcher matcher = remainderRegex.matcher(iri.toString());
+        if (matcher.find()) {
+            return matcher.group();
+        } else {
+            return "";
         }
     }
 }

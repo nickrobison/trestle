@@ -23,12 +23,10 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <storm.version>1.0.0</storm.version>
-        <provided.scope>provided</provided.scope>
         <owl.version>5.0.4</owl.version>
         <jena.version>3.1.0</jena.version>
         <slf4j.version>1.7.21</slf4j.version>
         <jmh.version>1.15</jmh.version>
-        <junit.jupiter.version>5.0.0-M2</junit.jupiter.version>
         <geotools.version>16.0</geotools.version>
         <!--Checker properties-->
         <checker.version>2.0.1</checker.version>
@@ -59,12 +57,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>19.0</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.inject</groupId>
-                <artifactId>guice</artifactId>
-                <version>4.1.0</version>
+                <version>20.0</version>
             </dependency>
             <dependency>
                 <groupId>com.esri</groupId>
@@ -115,11 +108,6 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>${slf4j.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-simple</artifactId>
                 <version>${slf4j.version}</version>
             </dependency>
             <dependency>
@@ -263,17 +251,6 @@
                 <artifactId>junit-jupiter-api</artifactId>
                 <version>${junit.jupiter.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-engine</artifactId>
-                <version>${junit.jupiter.version}</version>
-            </dependency>
-            <!--Need this for the intellij running and printing-->
-            <dependency>
-                <groupId>org.junit.vintage</groupId>
-                <artifactId>junit-vintage-engine</artifactId>
-                <version>4.12.0-M2</version>
-            </dependency>
             <!--Checker dependencies-->
             <dependency>
                 <groupId>org.checkerframework</groupId>
@@ -318,22 +295,12 @@
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
+            <artifactId>slf4j-log4j12</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -506,11 +473,21 @@
                     <dependency>
                         <groupId>org.junit.platform</groupId>
                         <artifactId>junit-platform-surefire-provider</artifactId>
-                        <version>1.0.0-M2</version>
+                        <version>1.0.0-M3</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter-engine</artifactId>
+                        <version>${junit.jupiter.version}</version>
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <argLine>-XX:+UnlockCommercialFeatures -XX:+FlightRecorder</argLine>
+                    <properties>
+                        <includeTags>${junitTestSuite}</includeTags>
+                    </properties>
+                    <parallel>classes</parallel>
+                    <useUnlimitedThreads>true</useUnlimitedThreads>
+                    <forkCount>3</forkCount>
                 </configuration>
             </plugin>
             <plugin>

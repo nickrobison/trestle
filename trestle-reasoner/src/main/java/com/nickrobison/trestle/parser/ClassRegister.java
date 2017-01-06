@@ -1,9 +1,6 @@
 package com.nickrobison.trestle.parser;
 
-import com.nickrobison.trestle.annotations.IndividualIdentifier;
-import com.nickrobison.trestle.annotations.OWLClassName;
-import com.nickrobison.trestle.annotations.Spatial;
-import com.nickrobison.trestle.annotations.TrestleCreator;
+import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
@@ -25,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.nickrobison.trestle.common.LanguageUtils.checkLanguageCodeIsValid;
 import static com.nickrobison.trestle.parser.ClassParser.filterMethodName;
 
 /**
@@ -54,21 +52,11 @@ public class ClassRegister {
 //        Check for temporals
         checkForTemporals(clazz);
 
-//        Check for valid temporals
-//        if (aClass.isAnnotationPresent(TemporalProperty.class)) {
-//            for (final Field field : aClass.getDeclaredFields()) {
-//                if (field.isAnnotationPresent(TemporalProperty.class)) {
-//                    final TemporalProperty declaredAnnotation = field.getDeclaredAnnotation(TemporalProperty.class);
-//
-////                    Check for property built StartTemporal
-//                    if (declaredAnnotation instanceof StartTemporalProperty) {
-//                        if (((StartTemporalProperty) declaredAnnotation).type() == TemporalType.INTERVAL) {
-////                            If it's an interval, we need to look for its
-//                        }
-//                    }
-//                }
-//            }
-//        }
+//        Check for language
+        checkForLanguage(clazz);
+
+//        Check for disabled language
+        checkForDisabledMultiLanguage(clazz);
     }
 
     static void checkIndividualIdentifier(Class aClass) throws InvalidClassException {
@@ -337,6 +325,67 @@ public class ClassRegister {
             verifyTimeZone(aClass, endField.getAnnotation(EndTemporalProperty.class).timeZone(), EndTemporalProperty.class);
         }
 
+    }
+
+    static void checkForLanguage(Class<?> aClass) throws TrestleClassException {
+//        Start with methods
+        for (Method method : aClass.getDeclaredMethods()) {
+            if (method.isAnnotationPresent(Language.class)) {
+//                Ensure the return type is a string
+                if (!method.getReturnType().equals(String.class)) {
+                    throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, method.getName());
+                }
+
+//                Ensure the language points to a correct language code
+                final String language = method.getAnnotation(Language.class).language();
+                if (!checkLanguageCodeIsValid(language)) {
+                    throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, method.getName());
+                }
+
+//                Ensure we're not disabled
+                if (method.isAnnotationPresent(NoMultiLanguage.class)) {
+                    throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, method.getName());
+                }
+            }
+        }
+
+        for (Field field : aClass.getDeclaredFields()) {
+            if (field.isAnnotationPresent(Language.class)) {
+//                Ensure the return type is a string
+                if (!field.getType().equals(String.class)) {
+                    throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, field.getName());
+                }
+
+//                Ensure the language points to a correct language code
+                final String language = field.getAnnotation(Language.class).language();
+                if (!checkLanguageCodeIsValid(language)) {
+                    throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, field.getName());
+                }
+
+//                Ensure we're not disabled
+                if (field.isAnnotationPresent(NoMultiLanguage.class)) {
+                    throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, field.getName());
+                }
+            }
+        }
+    }
+
+    private static void checkForDisabledMultiLanguage(Class<?> aClass) throws TrestleClassException {
+        for (Method method: aClass.getDeclaredMethods()) {
+            if (method.isAnnotationPresent(NoMultiLanguage.class)) {
+                if (!method.getReturnType().equals(String.class)) {
+                    throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, method.getName());
+                }
+            }
+        }
+
+        for (Field field: aClass.getDeclaredFields()) {
+            if (field.isAnnotationPresent(NoMultiLanguage.class)) {
+                if (!field.getType().equals(String.class)) {
+                    throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, field.getName());
+                }
+            }
+        }
     }
 
     private static void verifyTimeZone(Class<?> clazz, String zoneID, Class<? extends Annotation> annotation) throws InvalidClassException {

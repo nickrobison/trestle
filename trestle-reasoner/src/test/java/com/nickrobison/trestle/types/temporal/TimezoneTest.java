@@ -10,14 +10,16 @@ import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.TemporalType;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 
-import java.io.File;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -27,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * Created by nrobison on 9/14/16.
  */
+@Tag("integration")
 public class TimezoneTest {
 
     private static TrestleReasoner reasoner;
@@ -34,12 +37,11 @@ public class TimezoneTest {
 
     @BeforeAll
     public static void setup() {
+        final Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
         reasoner = new TrestleBuilder()
-//                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-                .withDBConnection(
-                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-                        "spatialUser",
-                        "spatial1")
+                .withDBConnection(config.getString("trestle.ontology.connectionString"),
+                        config.getString("trestle.ontology.username"),
+                        config.getString("trestle.ontology.password"))
                 .withName("timezone_tests")
                 .withInputClasses(DefaultTimeZone.class, DifferentIntervalTimeZones.class)
                 .withoutCaching()
@@ -52,7 +54,7 @@ public class TimezoneTest {
     @Test
     public void testDefaultTimeZone() throws TrestleClassException, MissingOntologyEntity {
         final DefaultTimeZone defaultTimeZone = new DefaultTimeZone(LocalDate.of(1990, 1, 1).atStartOfDay(), "default-timezone");
-        reasoner.writeObjectAsFact(defaultTimeZone);
+        reasoner.writeAsTrestleObject(defaultTimeZone);
         reasoner.getUnderlyingOntology().runInference();
         @NonNull final DefaultTimeZone returnedDefaultTimeZone = reasoner.readAsObject(DefaultTimeZone.class, "default-timezone");
         assertEquals(defaultTimeZone, returnedDefaultTimeZone, "Should be equal");
@@ -62,7 +64,7 @@ public class TimezoneTest {
     @Test
     public void testDifferentIntervalTimeZones() throws TrestleClassException, MissingOntologyEntity {
         final DifferentIntervalTimeZones differentIntervalTimeZones = new DifferentIntervalTimeZones("different-intervals", LocalDate.of(1990, 1, 1).atStartOfDay(), LocalDate.of(1995, 1, 1).atStartOfDay());
-        reasoner.writeObjectAsFact(differentIntervalTimeZones);
+        reasoner.writeAsTrestleObject(differentIntervalTimeZones);
         reasoner.getUnderlyingOntology().runInference();
         @NonNull final DifferentIntervalTimeZones returnedIntervalTimeZones = reasoner.readAsObject(DifferentIntervalTimeZones.class, "different-intervals");
         assertEquals(differentIntervalTimeZones, returnedIntervalTimeZones, "Should be equal");

@@ -1,42 +1,55 @@
 package com.nickrobison.trestle.common;
 
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 /**
  * Created by nrobison on 8/1/16.
  */
 public class StaticIRI {
-    public static final String PREFIX = "http://nickrobison.com/dissertation/trestle.owl#";
+    public static final String TRESTLE_PREFIX = "http://nickrobison.com/dissertation/trestle.owl#";
     public static final String GEOSPARQLPREFIX = "http://www.opengis.net/ont/geosparql#";
     public static final String XSDPREFIX = "http://www.w3.org/2001/XMLSchema#";
 //    Relations
-    public static final IRI factOfIRI = IRI.create(PREFIX, "fact_of");
-    public static final IRI hasFactIRI = IRI.create(PREFIX, "has_fact");
-    public static final IRI temporalOfIRI = IRI.create(PREFIX, "temporal_of");
-    public static final IRI hasTemporalIRI = IRI.create(PREFIX, "has_temporal");
-    public static final IRI temporalExistsAtIRI = IRI.create(PREFIX, "exists_at");
-    public static final IRI temporalValidAtIRI = IRI.create(PREFIX, "valid_at");
-    public static final IRI temporalExistsToIRI = IRI.create(PREFIX, "exists_to");
-    public static final IRI temporalExistsFromIRI = IRI.create(PREFIX, "exists_from");
-    public static final IRI temporalValidToIRI = IRI.create(PREFIX, "valid_to");
-    public static final IRI temporalValidFromIRI = IRI.create(PREFIX, "valid_from");
-    public static final IRI validTimeIRI = IRI.create(PREFIX, "valid_time");
-    public static final IRI validTimeOfIRI = IRI.create(PREFIX, "valid_time_of");
-    public static final IRI hasRelationIRI = IRI.create(PREFIX, "has_relation");
-    public static final IRI relationOfIRI = IRI.create(PREFIX, "relation_of");
-    public static final IRI databaseTimeIRI = IRI.create(PREFIX, "database_time");
-    public static final IRI databaseTimeOfIRI = IRI.create(PREFIX, "database_time_of");
+    public static final IRI factOfIRI = IRI.create(TRESTLE_PREFIX, "fact_of");
+    public static final IRI hasFactIRI = IRI.create(TRESTLE_PREFIX, "has_fact");
+    public static final IRI temporalOfIRI = IRI.create(TRESTLE_PREFIX, "temporal_of");
+    public static final IRI hasTemporalIRI = IRI.create(TRESTLE_PREFIX, "has_temporal");
+    public static final IRI existsTimeIRI = IRI.create(TRESTLE_PREFIX, "exists_time");
+    public static final IRI temporalExistsAtIRI = IRI.create(TRESTLE_PREFIX, "exists_at");
+    public static final IRI temporalValidAtIRI = IRI.create(TRESTLE_PREFIX, "valid_at");
+    public static final IRI temporalExistsToIRI = IRI.create(TRESTLE_PREFIX, "exists_to");
+    public static final IRI temporalExistsFromIRI = IRI.create(TRESTLE_PREFIX, "exists_from");
+    public static final IRI temporalValidToIRI = IRI.create(TRESTLE_PREFIX, "valid_to");
+    public static final IRI temporalValidFromIRI = IRI.create(TRESTLE_PREFIX, "valid_from");
+    public static final IRI validTimeIRI = IRI.create(TRESTLE_PREFIX, "valid_time");
+    public static final IRI validTimeOfIRI = IRI.create(TRESTLE_PREFIX, "valid_time_of");
+    public static final IRI hasRelationIRI = IRI.create(TRESTLE_PREFIX, "has_relation");
+    public static final IRI relationOfIRI = IRI.create(TRESTLE_PREFIX, "relation_of");
+    public static final IRI relatedToIRI = IRI.create(TRESTLE_PREFIX, "related_to");
+    public static final IRI relatedByIRI = IRI.create(TRESTLE_PREFIX, "related_by");
+    public static final IRI hasConceptIRI = IRI.create(TRESTLE_PREFIX, "has_concept");
+    public static final IRI conceptOfIRI = IRI.create(TRESTLE_PREFIX, "concept_of");
+    public static final IRI databaseTimeIRI = IRI.create(TRESTLE_PREFIX, "database_time");
+    public static final IRI databaseTimeOfIRI = IRI.create(TRESTLE_PREFIX, "database_time_of");
+    public static final IRI hasOverlapIRI = IRI.create(TRESTLE_PREFIX, "has_overlap");
+    public static final IRI overlapOfIRI = IRI.create(TRESTLE_PREFIX, "overlap_of");
 //    Classes
-    public static final IRI conceptRelationIRI = IRI.create(PREFIX, "Concept_Relation");
-    public static final IRI datasetClassIRI = IRI.create(PREFIX, "Dataset");
-    public static final IRI factClassIRI = IRI.create(PREFIX, "Fact");
-    public static final IRI temporalClassIRI = IRI.create(PREFIX, "Temporal_Object");
+    public static final IRI trestleConceptIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Concept");
+    public static final IRI trestleRelationIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Relation");
+    public static final IRI spatialRelationIRI = IRI.create(TRESTLE_PREFIX, "Spatial_Relation");
+    public static final IRI temporalRelationIRI = IRI.create(TRESTLE_PREFIX, "Temporal_Relation");
+    public static final IRI semanticRelationIRI = IRI.create(TRESTLE_PREFIX, "Semantic_Relation");
+    public static final IRI trestleOverlapIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Overlap");
+    public static final IRI datasetClassIRI = IRI.create(TRESTLE_PREFIX, "Dataset");
+    public static final IRI factClassIRI = IRI.create(TRESTLE_PREFIX, "Fact");
+    public static final IRI temporalClassIRI = IRI.create(TRESTLE_PREFIX, "Temporal_Object");
 //    Properties
-    public static final IRI relationStrengthIRI = IRI.create(PREFIX, "Relation_Strength");
+    public static final IRI relationStrengthIRI = IRI.create(TRESTLE_PREFIX, "Relation_Strength");
+    public static final IRI sOverlapIRI = IRI.create(TRESTLE_PREFIX, "SOverlap");
+    public static final IRI tOverlapIRI = IRI.create(TRESTLE_PREFIX, "TOverlap");
     public static final IRI dateTimeDatatypeIRI = IRI.create(XSDPREFIX, "dateTime");
     public static final IRI dateDatatypeIRI = IRI.create(XSDPREFIX, "date");
-    public static final IRI UUIDDatatypeIRI = IRI.create(PREFIX, "UUID");
+    public static final IRI UUIDDatatypeIRI = IRI.create(TRESTLE_PREFIX, "UUID");
     public static final IRI WKTDatatypeIRI = IRI.create(GEOSPARQLPREFIX, "wktLiteral");
 
 }

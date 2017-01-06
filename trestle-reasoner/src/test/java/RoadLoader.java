@@ -43,13 +43,13 @@ public class RoadLoader {
 
     @BeforeAll
     public static void setup() {
-        final Config config = ConfigFactory.parseResources("test.configuration.conf");
+        final Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
         reasoner = new TrestleBuilder()
                 .withDBConnection(config.getString("trestle.ontology.connectionString"),
                         config.getString("trestle.ontology.username"),
                         config.getString("trestle.ontology.password"))
                 .withName("api_test")
-                .withIRI(IRI.create(config.getString("trestle.ontology.location")))
+                .withOntology(IRI.create(config.getString("trestle.ontology.location")))
                 .withInputClasses(gROADS.class)
                 .withoutCaching()
                 .initialize()
@@ -88,7 +88,7 @@ public class RoadLoader {
 //                        Double.parseDouble(next.getAttribute("SHAPE_LENGTH").toString()),
                         ZonedDateTime.of(1980, 1, 1, 1, 1, 1, 1, ZoneOffset.UTC));
 
-                reasoner.writeObjectAsFact(road);
+                reasoner.writeAsTrestleObject(road);
             }
     }
 

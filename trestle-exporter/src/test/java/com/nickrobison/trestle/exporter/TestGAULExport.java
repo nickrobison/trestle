@@ -3,6 +3,7 @@ package com.nickrobison.trestle.exporter;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
  */
 @SuppressWarnings("unchecked")
 @Disabled
+@Tag("integration")
 // FIXME(nrobison): Need to load some gaul records and then export them.
 public class TestGAULExport {
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
