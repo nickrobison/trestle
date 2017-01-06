@@ -228,6 +228,6 @@ public class TrestleAPITest {
 
     @AfterEach
     public void close() throws OWLOntologyStorageException {
-        reasoner.shutdown(false);
+        reasoner.shutdown(true);
     }
 }

@@ -75,14 +75,13 @@ public class GAULIntegratorTests {
         final YarnConfiguration clusterConf = new YarnConfiguration();
         cluster = new MiniDFSCluster.Builder(conf).build();
 
-        connectionString = "jdbc:virtuoso://localhost:1111";
-        userName = "dba";
-        password = "dba";
-//        connectionString = "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial";
-//        userName = "spatialUser";
-//        password = "spatial1";
+//        connectionString = "jdbc:virtuoso://localhost:1111";
+//        userName = "dba";
+//        password = "dba";
+        connectionString = "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial";
+        userName = "spatialUser";
+        password = "spatial1";
         ontologyPath = "file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl";
-//        ontologyPath = "file:///Users/nrobison/Desktop/testChain.rdf";
         ontologyPrefix = "http://nickrobison.com/test/hadoop.owl#";
         ontologyName = "hadoop_gaul_rewrite";
         conf.set("reasoner.db.connection", connectionString);

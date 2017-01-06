@@ -7,6 +7,7 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSetFormatter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
@@ -152,6 +153,7 @@ abstract public class OntologyTest {
     }
 
     @Test
+    @Disabled
     public void testPropertyChaining() {
 //        Try to write some test rules, maybe?
 

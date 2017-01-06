@@ -473,7 +473,6 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <argLine>-XX:+UnlockCommercialFeatures -XX:+FlightRecorder</argLine>
                     <parallel>classes</parallel>
                     <useUnlimitedThreads>true</useUnlimitedThreads>
                     <forkCount>3</forkCount>
