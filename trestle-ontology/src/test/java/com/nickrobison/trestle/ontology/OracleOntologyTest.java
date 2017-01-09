@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "Duplicates", "unchecked"})
 @Tag("integration")
+@Tag("oracle")
 public class OracleOntologyTest extends OntologyTest {
 
 

@@ -3,7 +3,6 @@ package com.nickrobison.trestle.querybuilder;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
@@ -16,15 +15,12 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by nrobison on 8/11/16.
  */
 @SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization"})
-@Tag("unit")
 public class QueryBuilderTest {
 
     private static DefaultPrefixManager pm;

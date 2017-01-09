@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.common;
 
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static com.nickrobison.trestle.common.LanguageUtils.checkLanguageCodeIsValid;
@@ -11,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Created by nrobison on 12/5/16.
  */
-@Tag("unit")
 public class TestLanguageUtils {
 
     @Test

@@ -22,7 +22,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <junitTestSuite>unit,integration</junitTestSuite>
+        <excludeTags>integration</excludeTags>
         <provided.scope>provided</provided.scope>
         <storm.version>1.0.0</storm.version>
         <owl.version>5.0.4</owl.version>
@@ -491,7 +491,7 @@
                 </dependencies>
                 <configuration>
                     <properties>
-                        <includeTags>${junitTestSuite}</includeTags>
+                        <excludeTags>${excludeTags}</excludeTags>
                     </properties>
                     <parallel>classes</parallel>
                     <useUnlimitedThreads>true</useUnlimitedThreads>
