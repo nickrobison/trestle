@@ -912,14 +912,24 @@ public class TrestleReasoner {
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
 
-        final CompletableFuture<TrestleIndividual> temporalFuture = CompletableFuture.supplyAsync(() -> ontology.getIndividualObjectProperty(individual, hasTemporalIRI))
+        final CompletableFuture<TrestleIndividual> temporalFuture = CompletableFuture.supplyAsync(() -> {
+            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+            final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(individual, hasTemporalIRI);
+            this.ontology.returnAndCommitTransaction(tt);
+            return individualObjectProperty;
+        })
                 .thenApply(individualObjectProperty -> {
                     if (!individualObjectProperty.isPresent()) {
                         throw new CompletionException(new TrestleMissingIndividualException(individual));
                     }
                     return individualObjectProperty.get().stream().findFirst().orElseThrow(() -> new CompletionException(new TrestleMissingFactException(individual, hasTemporalIRI)));
                 })
-                .thenApply(temporalProperty -> ontology.getAllDataPropertiesForIndividual(temporalProperty.getObject().asOWLNamedIndividual()))
+                .thenApply(temporalProperty -> {
+                    final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                    final Set<OWLDataPropertyAssertionAxiom> temporalDataProperties = ontology.getAllDataPropertiesForIndividual(temporalProperty.getObject().asOWLNamedIndividual());
+                    this.ontology.returnAndCommitTransaction(tt);
+                    return temporalDataProperties;
+                })
                 .thenApply(temporalDataProperties -> TemporalObjectBuilder.buildTemporalFromProperties(temporalDataProperties, null))
                 .thenApply(temporalObject -> new TrestleIndividual(individual.toStringID(), temporalObject.orElseThrow(() -> new CompletionException(new TrestleMissingFactException(individual, hasTemporalIRI)))));
 
@@ -927,7 +937,12 @@ public class TrestleReasoner {
         final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualFacts = ontology.getIndividualObjectProperty(individual, hasFactIRI);
         final List<CompletableFuture<TrestleFact>> factFutureList = individualFacts.orElse(new HashSet<>())
                 .stream()
-                .map(fact -> CompletableFuture.supplyAsync(() -> buildTrestleFact(fact.getObject().asOWLNamedIndividual())))
+                .map(fact -> CompletableFuture.supplyAsync(() -> {
+                    final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                    final TrestleFact trestleFact = buildTrestleFact(fact.getObject().asOWLNamedIndividual());
+                    this.ontology.returnAndCommitTransaction(tt);
+                    return trestleFact;
+                }))
                 .collect(Collectors.toList());
 
 //        Sequence the futures into a single future, waiting for everything to be complete
