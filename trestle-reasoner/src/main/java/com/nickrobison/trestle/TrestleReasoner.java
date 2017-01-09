@@ -913,6 +913,8 @@ public class TrestleReasoner {
      */
     private TrestleIndividual getIndividualFacts(OWLNamedIndividual individual) {
 
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+
         final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(individual, hasTemporalIRI);
         if (!individualObjectProperty.isPresent()) {
             throw new TrestleMissingIndividualException(individual);
@@ -929,6 +931,8 @@ public class TrestleReasoner {
                 .stream()
                 .map(property -> buildTrestleFact(property.getObject().asOWLNamedIndividual()))
                 .forEach(trestleIndividual::addFact);
+
+        this.ontology.returnAndCommitTransaction(trestleTransaction);
 
         return trestleIndividual;
     }
