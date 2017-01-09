@@ -335,7 +335,7 @@ public class TemporalParser {
                 try {
                     fieldValue = classField.get(inputObject);
                 } catch (IllegalAccessException e) {
-                    logger.debug("Cannot access field {}", classField.getName(), e);
+                    logger.warn("Cannot access field {}", classField.getName(), e);
 //                    should this be here?
                     continue;
                 }
@@ -357,7 +357,7 @@ public class TemporalParser {
                 try {
                     fieldValue = classField.get(inputObject);
                 } catch (IllegalAccessException e) {
-                    logger.debug("Cannot access field {}", classField.getName(), e);
+                    logger.warn("Cannot access field {}", classField.getName(), e);
 //                    should this be here?
                     continue;
                 }
@@ -548,7 +548,7 @@ public class TemporalParser {
                         String endZoneID = endField.get().getAnnotation(EndTemporalProperty.class).timeZone();
                         return Optional.of(buildIntervalTemporal((Temporal) fieldValue, annotation.timeZone(), (Temporal) endFieldValue, endZoneID, annotation.scope(), owlNamedIndividual));
                     } catch (IllegalAccessException e) {
-                        logger.debug("Cannot access field {}", endField.get().getName(), e);
+                        logger.warn("Cannot access field {}", endField.get().getName(), e);
                     }
                 } else {
                     return Optional.of(buildIntervalTemporal((Temporal) fieldValue, annotation.timeZone(), null, null, annotation.scope(), owlNamedIndividual));

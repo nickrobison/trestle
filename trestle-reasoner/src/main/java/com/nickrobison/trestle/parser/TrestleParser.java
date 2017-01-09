@@ -1,16 +1,11 @@
 package com.nickrobison.trestle.parser;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Created by nrobison on 11/30/16.
  */
 public class TrestleParser {
-
-    private static final Logger logger = LoggerFactory.getLogger(TrestleParser.class);
 
     private final OWLDataFactory df;
     private final String ReasonerPrefix;

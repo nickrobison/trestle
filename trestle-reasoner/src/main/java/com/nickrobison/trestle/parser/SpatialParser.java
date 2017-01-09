@@ -129,7 +129,7 @@ public class SpatialParser {
             try {
                 fieldValue = matchedField.get().get(inputObject).toString();
             } catch (IllegalAccessException e) {
-                logger.debug("Cannot access field {}", matchedField.get().getName(), e);
+                logger.warn("Cannot access field {}", matchedField.get().getName(), e);
             }
 
             if (fieldValue != null) {

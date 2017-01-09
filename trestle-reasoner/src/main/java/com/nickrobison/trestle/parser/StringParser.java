@@ -46,7 +46,7 @@ public class StringParser {
                 logger.warn("No language tags specified, returning with type {}", OWL2Datatype.XSD_STRING);
                 return dfStatic.getOWLLiteral(inputString);
             }
-            logger.debug("Using default language tag {} for string {}", defaultLanguageTag, inputString);
+            logger.trace("Using default language tag {} for string {}", defaultLanguageTag, inputString);
             return dfStatic.getOWLLiteral(inputString, defaultLanguageTag);
         }
 
