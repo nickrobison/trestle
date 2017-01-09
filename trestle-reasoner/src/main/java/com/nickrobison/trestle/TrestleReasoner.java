@@ -758,8 +758,9 @@ public class TrestleReasoner {
     /**
      * For a given individual, get all related concepts and the IRIs of all members of those concepts,
      * that have a relation strength above the given cutoff value
-     * @param individual - String of individual IRI to return relations for
-     * @param conceptID - Nullable String of concept IRI to filter members of
+     *
+     * @param individual       - String of individual IRI to return relations for
+     * @param conceptID        - Nullable String of concept IRI to filter members of
      * @param relationStrength - Cutoff value of minimum relation strength
      * @return
      */
@@ -913,28 +914,43 @@ public class TrestleReasoner {
      */
     private TrestleIndividual getIndividualFacts(OWLNamedIndividual individual) {
 
+        logger.debug("Building trestle individual {}", individual);
+
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
 
-        final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(individual, hasTemporalIRI);
-        if (!individualObjectProperty.isPresent()) {
-            throw new TrestleMissingIndividualException(individual);
-        }
-        final OWLObjectPropertyAssertionAxiom temporalProperty = individualObjectProperty.get().stream().findFirst().orElseThrow(() -> new TrestleMissingFactException(individual, hasTemporalIRI));
-        final Set<OWLDataPropertyAssertionAxiom> temporalDataProperties = ontology.getAllDataPropertiesForIndividual(temporalProperty.getObject().asOWLNamedIndividual());
-        final Optional<TemporalObject> temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(temporalDataProperties, null);
-        final TrestleIndividual trestleIndividual = new TrestleIndividual(individual.toStringID(), temporalObject.orElseThrow(() -> new TrestleMissingFactException(individual, hasTemporalIRI)));
+        final CompletableFuture<TrestleIndividual> temporalFuture = CompletableFuture.supplyAsync(() -> ontology.getIndividualObjectProperty(individual, hasTemporalIRI))
+                .thenApply(individualObjectProperty -> {
+                    if (!individualObjectProperty.isPresent()) {
+                        throw new CompletionException(new TrestleMissingIndividualException(individual));
+                    }
+                    return individualObjectProperty.get().stream().findFirst().orElseThrow(() -> new CompletionException(new TrestleMissingFactException(individual, hasTemporalIRI)));
+                })
+                .thenApply(temporalProperty -> ontology.getAllDataPropertiesForIndividual(temporalProperty.getObject().asOWLNamedIndividual()))
+                .thenApply(temporalDataProperties -> TemporalObjectBuilder.buildTemporalFromProperties(temporalDataProperties, null))
+                .thenApply(temporalObject -> new TrestleIndividual(individual.toStringID(), temporalObject.orElseThrow(() -> new CompletionException(new TrestleMissingFactException(individual, hasTemporalIRI)))));
 
 //                Get all the facts
         final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualFacts = ontology.getIndividualObjectProperty(individual, hasFactIRI);
-        individualFacts
-                .orElseThrow(() -> new TrestleMissingFactException(individual, hasFactIRI))
+        final List<CompletableFuture<TrestleFact>> factFutureList = individualFacts.orElse(new HashSet<>())
                 .stream()
-                .map(property -> buildTrestleFact(property.getObject().asOWLNamedIndividual()))
-                .forEach(trestleIndividual::addFact);
+                .map(fact -> CompletableFuture.supplyAsync(() -> buildTrestleFact(fact.getObject().asOWLNamedIndividual())))
+                .collect(Collectors.toList());
 
-        this.ontology.returnAndCommitTransaction(trestleTransaction);
+//        Sequence the futures into a single future, waiting for everything to be complete
+        final CompletableFuture<List<TrestleFact>> factsFuture = sequenceCompletableFutures(factFutureList);
 
-        return trestleIndividual;
+        final CompletableFuture<TrestleIndividual> individualFuture = temporalFuture.thenCombine(factsFuture, (trestleIndividual, facts) -> {
+            facts.forEach(trestleIndividual::addFact);
+            return trestleIndividual;
+        });
+
+        try {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+            return individualFuture.get();
+        } catch (InterruptedException | ExecutionException e) {
+            logger.error("Interruption exception building Trestle Individual {}", individual, e);
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -1114,8 +1130,8 @@ public class TrestleReasoner {
      * Write a relationship between two objects.
      * If one or both of those objects do not exist, create them.
      *
-     * @param subject - Java object to write as subject of relationship
-     * @param object - Java object to write as object of relationship
+     * @param subject  - Java object to write as subject of relationship
+     * @param object   - Java object to write as object of relationship
      * @param relation - ObjectRelation between the two object
      */
     public void writeObjectRelationship(Object subject, Object object, ObjectRelation relation) {
@@ -1125,9 +1141,10 @@ public class TrestleReasoner {
     /**
      * Create a spatial overlap association between two objects.
      * If one or both of the object do not exist, create them.
+     *
      * @param subject - Java object to write as subject of relationship
-     * @param object - Java object to write as object of relationship
-     * @param wkt - String of wkt boundary of spatial overlap
+     * @param object  - Java object to write as object of relationship
+     * @param wkt     - String of wkt boundary of spatial overlap
      */
     public void writeSpatialOverlap(Object subject, Object object, String wkt) {
         final OWLNamedIndividual subjectIndividual = trestleParser.classParser.GetIndividual(subject);
@@ -1159,8 +1176,9 @@ public class TrestleReasoner {
     /**
      * Create a spatial overlap association between two objects.
      * If one or both of the object do not exist, create them.
-     * @param subject - Java object to write as subject of relationship
-     * @param object - Java object to write as object of relationship
+     *
+     * @param subject         - Java object to write as subject of relationship
+     * @param object          - Java object to write as object of relationship
      * @param temporalOverlap - String of temporal overlap between two objects (Not implemented yet)
      */
 //    TODO(nrobison): Correctly implement this
@@ -1195,8 +1213,9 @@ public class TrestleReasoner {
     /**
      * Write an indirect object property between a Java object and an intermediate OWL individual
      * The OWL individual must exist before calling this function, but the Java object is created if it doesn't exist.
-     * @param subject - OWLNamedIndividual of intermediate OWL object
-     * @param object - Java object to write as object of assertion
+     *
+     * @param subject  - OWLNamedIndividual of intermediate OWL object
+     * @param object   - Java object to write as object of assertion
      * @param property - OWLObjectProperty to assert
      */
     private void writeIndirectObjectProperty(OWLNamedIndividual subject, Object object, OWLObjectProperty property) {
@@ -1216,8 +1235,9 @@ public class TrestleReasoner {
 
     /**
      * Write an object property assertion between two objects, writing them into the database if they don't exist.
-     * @param subject - Java object to write as subject of assertion
-     * @param object - Java object to write as object of assertion
+     *
+     * @param subject  - Java object to write as subject of assertion
+     * @param object   - Java object to write as object of assertion
      * @param property - OWLObjectProperty to assert between the two objects
      */
     private void writeObjectProperty(Object subject, Object object, OWLObjectProperty property) {
