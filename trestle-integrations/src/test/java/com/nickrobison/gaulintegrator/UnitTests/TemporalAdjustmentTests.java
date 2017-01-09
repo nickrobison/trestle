@@ -1,6 +1,5 @@
 package com.nickrobison.gaulintegrator.UnitTests;
 
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -13,7 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * Created by nrobison on 5/6/16.
  */
-@Tag("unit")
 public class TemporalAdjustmentTests {
 
     @Test

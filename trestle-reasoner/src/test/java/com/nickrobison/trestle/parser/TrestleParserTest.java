@@ -1,6 +1,10 @@
 package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.TestClasses;
+import com.nickrobison.trestle.annotations.Ignore;
+import com.nickrobison.trestle.annotations.IndividualIdentifier;
+import com.nickrobison.trestle.annotations.OWLClassName;
+import com.nickrobison.trestle.annotations.Spatial;
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
@@ -9,10 +13,8 @@ import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
-import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
@@ -26,15 +28,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 
 /**
  * Created by nrobison on 6/28/16.
  */
 @SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "unchecked"})
-@Tag("unit")
 public class TrestleParserTest {
 
     private TestClasses.GAULTestClass gaulTestClass;

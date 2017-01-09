@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @SuppressWarnings({"Duplicates", "initialization", "OptionalGetWithoutIsPresent"})
 @Tag("integration")
+@Tag("virtuoso")
 public class VirtuosoOntologyTest extends OntologyTest {
 
     @Override

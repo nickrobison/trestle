@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @SuppressWarnings({"Duplicates", "OptionalGetWithoutIsPresent"})
 @Tag("integration")
+@Tag("local")
 public class LocalOntologyTest extends OntologyTest {
 
     @Override
