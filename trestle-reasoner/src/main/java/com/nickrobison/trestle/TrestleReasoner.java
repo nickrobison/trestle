@@ -908,28 +908,43 @@ public class TrestleReasoner {
      */
     private TrestleIndividual getIndividualFacts(OWLNamedIndividual individual) {
 
+        logger.debug("Building trestle individual {}", individual);
+
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
 
-        final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(individual, hasTemporalIRI);
-        if (!individualObjectProperty.isPresent()) {
-            throw new TrestleMissingIndividualException(individual);
-        }
-        final OWLObjectPropertyAssertionAxiom temporalProperty = individualObjectProperty.get().stream().findFirst().orElseThrow(() -> new TrestleMissingFactException(individual, hasTemporalIRI));
-        final Set<OWLDataPropertyAssertionAxiom> temporalDataProperties = ontology.getAllDataPropertiesForIndividual(temporalProperty.getObject().asOWLNamedIndividual());
-        final Optional<TemporalObject> temporalObject = TemporalObjectBuilder.buildTemporalFromProperties(temporalDataProperties, null);
-        final TrestleIndividual trestleIndividual = new TrestleIndividual(individual.toStringID(), temporalObject.orElseThrow(() -> new TrestleMissingFactException(individual, hasTemporalIRI)));
+        final CompletableFuture<TrestleIndividual> temporalFuture = CompletableFuture.supplyAsync(() -> ontology.getIndividualObjectProperty(individual, hasTemporalIRI))
+                .thenApply(individualObjectProperty -> {
+                    if (!individualObjectProperty.isPresent()) {
+                        throw new CompletionException(new TrestleMissingIndividualException(individual));
+                    }
+                    return individualObjectProperty.get().stream().findFirst().orElseThrow(() -> new CompletionException(new TrestleMissingFactException(individual, hasTemporalIRI)));
+                })
+                .thenApply(temporalProperty -> ontology.getAllDataPropertiesForIndividual(temporalProperty.getObject().asOWLNamedIndividual()))
+                .thenApply(temporalDataProperties -> TemporalObjectBuilder.buildTemporalFromProperties(temporalDataProperties, null))
+                .thenApply(temporalObject -> new TrestleIndividual(individual.toStringID(), temporalObject.orElseThrow(() -> new CompletionException(new TrestleMissingFactException(individual, hasTemporalIRI)))));
 
 //                Get all the facts
         final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualFacts = ontology.getIndividualObjectProperty(individual, hasFactIRI);
-        individualFacts
-                .orElseThrow(() -> new TrestleMissingFactException(individual, hasFactIRI))
+        final List<CompletableFuture<TrestleFact>> factFutureList = individualFacts.orElse(new HashSet<>())
                 .stream()
-                .map(property -> buildTrestleFact(property.getObject().asOWLNamedIndividual()))
-                .forEach(trestleIndividual::addFact);
+                .map(fact -> CompletableFuture.supplyAsync(() -> buildTrestleFact(fact.getObject().asOWLNamedIndividual())))
+                .collect(Collectors.toList());
 
-        this.ontology.returnAndCommitTransaction(trestleTransaction);
+//        Sequence the futures into a single future, waiting for everything to be complete
+        final CompletableFuture<List<TrestleFact>> factsFuture = sequenceCompletableFutures(factFutureList);
 
-        return trestleIndividual;
+        final CompletableFuture<TrestleIndividual> individualFuture = temporalFuture.thenCombine(factsFuture, (trestleIndividual, facts) -> {
+            facts.forEach(trestleIndividual::addFact);
+            return trestleIndividual;
+        });
+
+        try {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+            return individualFuture.get();
+        } catch (InterruptedException | ExecutionException e) {
+            logger.error("Interruption exception building Trestle Individual {}", individual, e);
+            throw new RuntimeException(e);
+        }
     }
 
     /**
