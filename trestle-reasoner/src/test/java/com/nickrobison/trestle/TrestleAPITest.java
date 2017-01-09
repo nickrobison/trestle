@@ -22,8 +22,12 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -42,6 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Tag("integration")
 public class TrestleAPITest {
 
+    private static final Logger logger = LoggerFactory.getLogger(TrestleAPITest.class);
     public static final String OVERRIDE_PREFIX = "http://nickrobison.com/test-owl#";
     private TrestleReasoner reasoner;
     private OWLDataFactory df;
@@ -205,7 +210,10 @@ public class TrestleAPITest {
 //        assertEquals(4, individuals.size(), "Should have 4 individuals, overall");
 
 //        Test attribute generation
+        final Instant iStart = Instant.now();
         final TrestleIndividual trestleIndividual = reasoner.getIndividualFacts(individuals.get(0));
+        final Instant iEnd = Instant.now();
+        logger.info("Creating individual took {} ms", Duration.between(iStart, iEnd).toMillis());
         assertEquals(2, trestleIndividual.getFacts().size(), "Wrong number of attributes");
 
 //        Now try to remove it
