@@ -15,11 +15,13 @@ public class TrestleIndividual {
     private final String individualID;
     private final List<TrestleFact> facts;
     private final TemporalObject validTemporal;
+    private final List<TrestleRelation> relations;
 
     public TrestleIndividual(String id, TemporalObject validTemporal) {
         this.facts = new ArrayList<>();
         this.individualID = id;
         this.validTemporal = validTemporal;
+        this.relations = new ArrayList<>();
     }
 
     /**
@@ -31,6 +33,17 @@ public class TrestleIndividual {
             return;
         }
         this.facts.add(fact);
+    }
+
+    /**
+     * Add relation to the individual
+     * @param relation - TrestleRelation to add
+     */
+    public void addRelation(TrestleRelation relation) {
+        if (this.relations.contains(relation)) {
+            return;
+        }
+        this.relations.add(relation);
     }
 
     public String getIndividualID() { return this.individualID;}
