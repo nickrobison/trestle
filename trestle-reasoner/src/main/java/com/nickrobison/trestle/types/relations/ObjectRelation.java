@@ -3,6 +3,8 @@ package com.nickrobison.trestle.types.relations;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 
+import java.util.Arrays;
+
 import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 
 /**
@@ -45,5 +47,19 @@ public enum ObjectRelation {
      */
     public String getIRIString() {
         return relationIRI.getIRIString();
+    }
+
+    /**
+     * Find the ObjectRelation that matches the given IRI
+     * Throws a RuntimeException if the given IRI doesn't match any known relations
+     * @param relationIRI - IRI to match on
+     * @return - ObjectRelation that matches the given IRI
+     */
+    public static ObjectRelation getRelationFromIRI(IRI relationIRI) {
+        return Arrays.stream(ObjectRelation.values())
+                .filter(object -> object.getIRI().equals(relationIRI))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException(String.format("Cannot find ObjectRelation for IRI %s", relationIRI.getIRIString())));
+
     }
 }
