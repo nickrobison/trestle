@@ -212,7 +212,7 @@ public class TrestleAPITest {
 
 //        Test attribute generation
         final Instant iStart = Instant.now();
-        final TrestleIndividual trestleIndividual = reasoner.getIndividualFacts(individuals.get(0));
+        final TrestleIndividual trestleIndividual = reasoner.getTrestleIndividual(individuals.get(0));
         final Instant iEnd = Instant.now();
         logger.info("Creating individual took {} ms", Duration.between(iStart, iEnd).toMillis());
         assertEquals(2, trestleIndividual.getFacts().size(), "Wrong number of attributes");
