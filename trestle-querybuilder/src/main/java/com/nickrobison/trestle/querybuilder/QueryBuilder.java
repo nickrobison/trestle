@@ -218,7 +218,6 @@ public class QueryBuilder {
 
         ps.setCommandText(String.format("SELECT DISTINCT ?m ?o ?p " +
                 "WHERE { { " +
-                "?m rdf:type trestle:GAUL . " +
                 "?m ?o ?p . " +
                 "?o rdfs:subPropertyOf trestle:Temporal_Relation } " +
                 "UNION { " +
