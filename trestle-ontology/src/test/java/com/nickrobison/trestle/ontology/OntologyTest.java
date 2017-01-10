@@ -150,7 +150,7 @@ abstract public class OntologyTest {
                 "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
                 "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
                 "SELECT DISTINCT ?m ?p ?o WHERE { ?m rdf:type :GAUL . ?m ?p ?o. ?p rdfs:subPropertyOf :Temporal_Relation . " +
-                "VALUES ?m {<http://nickrobison.com/dissertation/trestle.owl#maputo:2013:3000>} }";
+                "VALUES ?m {<http://nickrobison.com/dissertation/trestle.owl#municipal1:1990:2013>} }";
 
 
 //        final Optional<Set<OWLObjectPropertyAssertionAxiom>> temporalRelations = ontology.getIndividualObjectProperty(test_maputo, temporalRelationIRI);
@@ -160,7 +160,7 @@ abstract public class OntologyTest {
                 df.getOWLNamedIndividual(IRI.create(solution.getResource("m").getURI())),
                 df.getOWLNamedIndividual(IRI.create(solution.getResource("o").getURI()))))
                 .collect(Collectors.toSet());
-        assertAll(() -> assertEquals(6, temporalRelations.size(), "Wrong number of temporal relations for test_maputo"),
+        assertAll(() -> assertEquals(4, temporalRelations.size(), "Wrong number of temporal relations for test_maputo"),
                 () -> assertTrue(temporalRelations
                         .stream()
                         .anyMatch(relation -> relation.getObject().equals(df.getOWLNamedIndividual(IRI.create("trestle:", "municipal2:1990:2013")))), "test_maputo is not related to municipal2")
