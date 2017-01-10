@@ -23,6 +23,8 @@ import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.PointTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
+import com.nickrobison.trestle.utils.FactPair;
+import com.nickrobison.trestle.utils.TemporalPair;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
@@ -893,26 +895,26 @@ public class TrestleReasoner {
     }
 
     /**
-     * Return a TrestleIndividual with all the available facts
+     * Return a TrestleIndividual with all the available facts and properties
      * Attempts to retrieve from the cache, if enabled and present
      *
      * @param individualIRI - String of individual IRI
      * @return - TrestleIndividual
      */
-    public TrestleIndividual getIndividualFacts(String individualIRI) {
+    public TrestleIndividual getTrestleIndividual(String individualIRI) {
         if (cachingEnabled) {
-            return trestleCache.IndividualCache().get(individualIRI, iri -> getIndividualFacts(df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, iri))));
+            return trestleCache.IndividualCache().get(individualIRI, iri -> getTrestleIndividual(df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, iri))));
         }
-        return getIndividualFacts(df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individualIRI)));
+        return getTrestleIndividual(df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individualIRI)));
     }
 
     /**
-     * Return a TrestleIndividual with all available facts
+     * Return a TrestleIndividual with all available facts and properties
      *
      * @param individual - OWLNamedIndividual to retrieve facts for
      * @return - TrestleIndividual
      */
-    private TrestleIndividual getIndividualFacts(OWLNamedIndividual individual) {
+    private TrestleIndividual getTrestleIndividual(OWLNamedIndividual individual) {
 
         logger.debug("Building trestle individual {}", individual);
 
@@ -943,13 +945,15 @@ public class TrestleReasoner {
         final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualFacts = ontology.getIndividualObjectProperty(individual, hasFactIRI);
         final List<CompletableFuture<TrestleFact>> factFutureList = individualFacts.orElse(new HashSet<>())
                 .stream()
-                .map(fact -> CompletableFuture.supplyAsync(() -> {
-                    final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-                    final TrestleFact trestleFact = buildTrestleFact(fact.getObject().asOWLNamedIndividual());
-                    this.ontology.returnAndCommitTransaction(tt);
-                    return trestleFact;
-                }))
+                .map(fact -> buildTrestleFact(fact.getObject().asOWLNamedIndividual()))
                 .collect(Collectors.toList());
+//                .map(fact -> CompletableFuture.(() -> {
+////                    final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+//                    final TrestleFact trestleFact = buildTrestleFact(fact.getObject().asOWLNamedIndividual());
+////                    this.ontology.returnAndCommitTransaction(tt);
+//                    return trestleFact;
+//                }))
+//                .collect(Collectors.toList());
 
 //        Sequence the futures into a single future, waiting for everything to be complete
         final CompletableFuture<List<TrestleFact>> factsFuture = sequenceCompletableFutures(factFutureList);
@@ -1301,32 +1305,64 @@ public class TrestleReasoner {
      * @param factIndividual - OWLNamedIndividual to construct fact from
      * @return - TrestleFact
      */
-    private TrestleFact buildTrestleFact(OWLNamedIndividual factIndividual) {
-        final Set<OWLDataPropertyAssertionAxiom> factProperties = ontology.getAllDataPropertiesForIndividual(factIndividual);
-//        There's only one data property per fact, so we can do this.
-        final Optional<OWLDataPropertyAssertionAxiom> first = factProperties.stream().findFirst();
+    @SuppressWarnings("unchecked")
+    private CompletableFuture<TrestleFact> buildTrestleFact(OWLNamedIndividual factIndividual) {
 
-        final OWLDataPropertyAssertionAxiom factAssertion = first.orElseThrow(() -> new TrestleMissingFactException(factIndividual));
-        final Class<?> literalClass = TypeConverter.lookupJavaClassFromOWLDatatype(factAssertion, null);
-        final Object literal = TypeConverter.extractOWLLiteral(literalClass, factAssertion.getObject());
+        final CompletableFuture<FactPair> factFuture = CompletableFuture.supplyAsync(() -> ontology.getAllDataPropertiesForIndividual(factIndividual))
+//        There's only one data property per fact, so we can do this.
+                .thenApply(factProperties -> factProperties.stream().findFirst())
+                .thenApply(first -> first.orElseThrow(() -> new TrestleMissingFactException(factIndividual)))
+                .thenApply(factAssertion -> {
+//                    final Class<?> literalClass = TypeConverter.lookupJavaClassFromOWLDatatype(factAssertion, null);
+                    return new FactPair(factAssertion, factAssertion.getObject());
+//                    return new FactPair(factAssertion, TypeConverter.extractOWLLiteral(literalClass, factAssertion.getObject()));
+                });
+//        final Set<OWLDataPropertyAssertionAxiom> factProperties = ontology.getAllDataPropertiesForIndividual(factIndividual);
+
+//        final Optional<OWLDataPropertyAssertionAxiom> first = factProperties.stream().findFirst();
+//
+//        final OWLDataPropertyAssertionAxiom factAssertion = first.orElseThrow(() -> new TrestleMissingFactException(factIndividual));
+//        final Class<?> literalClass = TypeConverter.lookupJavaClassFromOWLDatatype(factAssertion, null);
+//        final Object literal = TypeConverter.extractOWLLiteral(literalClass, factAssertion.getObject());
 
 //            Now the temporals
-        final Optional<Set<OWLObjectPropertyAssertionAxiom>> temporalProperties = ontology.getIndividualObjectProperty(factIndividual, validTimeIRI);
-        final Optional<OWLObjectPropertyAssertionAxiom> temporalProperty = temporalProperties.orElseThrow(() -> new TrestleMissingFactException(factIndividual, hasTemporalIRI)).stream().findFirst();
-        final Set<OWLDataPropertyAssertionAxiom> temporalDataProperties = ontology.getAllDataPropertiesForIndividual(temporalProperty.orElseThrow(() -> new TrestleMissingFactException(factIndividual, hasTemporalIRI)).getObject().asOWLNamedIndividual());
-        final Optional<TemporalObject> validTemporal = TemporalObjectBuilder.buildTemporalFromProperties(temporalDataProperties, null);
+
+        final CompletableFuture<Optional<TemporalObject>> validFuture = CompletableFuture.supplyAsync(() -> ontology.getIndividualObjectProperty(factIndividual, validTimeIRI))
+                .thenApply(temporalProperties -> temporalProperties.orElseThrow(() -> new TrestleMissingFactException(factIndividual, hasTemporalIRI)).stream().findFirst())
+                .thenApply(temporalProperty -> ontology.getAllDataPropertiesForIndividual(temporalProperty.orElseThrow(() -> new TrestleMissingFactException(factIndividual, validTimeIRI)).getObject().asOWLNamedIndividual()))
+                .thenApply(temporalDataProperties -> TemporalObjectBuilder.buildTemporalFromProperties(temporalDataProperties, null));
+
+        final CompletableFuture<Optional<TemporalObject>> databaseFuture = CompletableFuture.supplyAsync(() -> ontology.getIndividualObjectProperty(factIndividual, databaseTimeIRI))
+                .thenApply(temporalProperties -> temporalProperties.orElseThrow(() -> new TrestleMissingFactException(factIndividual, hasTemporalIRI)).stream().findFirst())
+                .thenApply(temporalProperty -> ontology.getAllDataPropertiesForIndividual(temporalProperty.orElseThrow(() -> new TrestleMissingFactException(factIndividual, databaseTimeIRI)).getObject().asOWLNamedIndividual()))
+                .thenApply(temporalDataProperties -> TemporalObjectBuilder.buildTemporalFromProperties(temporalDataProperties, null));
+
+//        Sequence the temporals in valid/database order
+        final CompletableFuture<TemporalPair> temporalsFuture = validFuture.thenCombine(databaseFuture, (valid, database) -> new TemporalPair(
+                valid.orElseThrow(() -> new TrestleMissingFactException(factIndividual, hasTemporalIRI)),
+                database.orElseThrow(() -> new TrestleMissingFactException(factIndividual, hasTemporalIRI))));
+//        final Optional<Set<OWLObjectPropertyAssertionAxiom>> temporalProperties = ontology.getIndividualObjectProperty(factIndividual, validTimeIRI);
+//        final Optional<OWLObjectPropertyAssertionAxiom> temporalProperty = temporalProperties.orElseThrow(() -> new TrestleMissingFactException(factIndividual, hasTemporalIRI)).stream().findFirst();
+//        final Set<OWLDataPropertyAssertionAxiom> temporalDataProperties = ontology.getAllDataPropertiesForIndividual(temporalProperty.orElseThrow(() -> new TrestleMissingFactException(factIndividual, hasTemporalIRI)).getObject().asOWLNamedIndividual());
+//        final Optional<TemporalObject> validTemporal = TemporalObjectBuilder.buildTemporalFromProperties(temporalDataProperties, null);
 
 //        Database time
-        final Optional<Set<OWLObjectPropertyAssertionAxiom>> databaseTimeProperties = ontology.getIndividualObjectProperty(factIndividual, databaseTimeIRI);
-        final Optional<OWLObjectPropertyAssertionAxiom> databaseTimeProperty = databaseTimeProperties.orElseThrow(() -> new TrestleMissingFactException(factIndividual, hasTemporalIRI)).stream().findFirst();
-        final Set<OWLDataPropertyAssertionAxiom> databaseTemporalDataProperties = ontology.getAllDataPropertiesForIndividual(databaseTimeProperty.orElseThrow(() -> new TrestleMissingFactException(factIndividual, hasTemporalIRI)).getObject().asOWLNamedIndividual());
-        final Optional<TemporalObject> databaseTemporal = TemporalObjectBuilder.buildTemporalFromProperties(databaseTemporalDataProperties, null);
+//        final Optional<Set<OWLObjectPropertyAssertionAxiom>> databaseTimeProperties = ontology.getIndividualObjectProperty(factIndividual, databaseTimeIRI);
+//        final Optional<OWLObjectPropertyAssertionAxiom> databaseTimeProperty = databaseTimeProperties.orElseThrow(() -> new TrestleMissingFactException(factIndividual, hasTemporalIRI)).stream().findFirst();
+//        final Set<OWLDataPropertyAssertionAxiom> databaseTemporalDataProperties = ontology.getAllDataPropertiesForIndividual(databaseTimeProperty.orElseThrow(() -> new TrestleMissingFactException(factIndividual, hasTemporalIRI)).getObject().asOWLNamedIndividual());
+//        final Optional<TemporalObject> databaseTemporal = TemporalObjectBuilder.buildTemporalFromProperties(databaseTemporalDataProperties, null);
 
-        return new TrestleFact<>(factIndividual.getIRI().toString(),
-                factAssertion.getProperty().asOWLDataProperty().getIRI().getShortForm(),
-                literal,
-                validTemporal.orElseThrow(() -> new TrestleMissingFactException(factIndividual, hasTemporalIRI)),
-                databaseTemporal.orElseThrow(() -> new TrestleMissingFactException(factIndividual, databaseTimeIRI)));
+        return temporalsFuture.thenCombine(factFuture, (temporalPair, factPair) -> new TrestleFact<>(factIndividual.getIRI().toString(),
+                factPair.getAssertion().getProperty().asOWLDataProperty().getIRI().getShortForm(),
+                factPair.getLiteral(),
+                temporalPair.getValid(),
+                temporalPair.getDatabase()));
+
+//        return new TrestleFact<>(factIndividual.getIRI().toString(),
+//                factAssertion.getProperty().asOWLDataProperty().getIRI().getShortForm(),
+//                literal,
+//                validTemporal.orElseThrow(() -> new TrestleMissingFactException(factIndividual, hasTemporalIRI)),
+//                databaseTemporal.orElseThrow(() -> new TrestleMissingFactException(factIndividual, databaseTimeIRI)));
     }
 
     public void registerClass(Class inputClass) throws TrestleClassException {
