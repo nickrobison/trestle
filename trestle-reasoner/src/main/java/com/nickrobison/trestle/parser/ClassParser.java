@@ -93,7 +93,7 @@ public class ClassParser {
                     identifier = classField.get(inputObject).toString().replaceAll("\\s+", "_");
                     break;
                 } catch (IllegalAccessException e) {
-                    logger.error("Cannot access field {}", classField.getName(), e);
+                    logger.warn("Cannot access field {}", classField.getName(), e);
                 }
             }
         }
@@ -205,7 +205,7 @@ public class ClassParser {
                     try {
                         fieldValue = classField.get(inputObject);
                     } catch (IllegalAccessException e) {
-                        logger.debug("Cannot access field {}", classField.getName(), e);
+                        logger.warn("Cannot access field {}", classField.getName(), e);
                         continue;
                     }
                     if (fieldValue != null) {
@@ -225,7 +225,7 @@ public class ClassParser {
                     try {
                         fieldValue = classField.get(inputObject);
                     } catch (IllegalAccessException e) {
-                        logger.debug("Cannot access field {}", classField.getName(), e);
+                        logger.warn("Cannot access field {}", classField.getName(), e);
                         continue;
                     }
                     final Optional<OWLLiteral> owlLiteral = parseWKTFromGeom(fieldValue);
@@ -237,7 +237,7 @@ public class ClassParser {
                         try {
                             fieldValue = classField.get(inputObject);
                         } catch (IllegalAccessException e) {
-                            logger.debug("Cannot access field {}", classField.getName(), e);
+                            logger.warn("Cannot access field {}", classField.getName(), e);
                             continue;
                         }
                         if (fieldValue != null) {
@@ -352,7 +352,7 @@ public class ClassParser {
             try {
                 fieldValue = field.get().get(inputObject);
             } catch (IllegalAccessException e) {
-                logger.debug("Cannot access field {}", field.get().getName(), e);
+                logger.warn("Cannot access field {}", field.get().getName(), e);
                 return Optional.empty();
             }
             final Optional<OWLLiteral> owlLiteral = parseWKTFromGeom(fieldValue);
@@ -680,10 +680,10 @@ public class ClassParser {
             final Class<?> returnType = TypeConverter.parsePrimitiveClass(classMethod.getReturnType());
             final Object invokedObject;
             invokedObject = classMethod.invoke(inputObject);
-            logger.debug("Method {} has return type {}", classMethod.getName(), returnType);
+            logger.trace("Method {} has return type {}", classMethod.getName(), returnType);
             castReturn = returnType.cast(invokedObject);
         } catch (IllegalAccessException e) {
-            logger.debug("Cannot access method {}", classMethod.getName(), e);
+            logger.warn("Cannot access method {}", classMethod.getName(), e);
         } catch (InvocationTargetException e) {
             logger.error("Invocation failed on method {}", classMethod.getName(), e);
         } catch (ClassCastException e) {
