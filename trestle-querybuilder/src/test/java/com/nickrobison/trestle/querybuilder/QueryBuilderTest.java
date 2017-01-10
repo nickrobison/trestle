@@ -186,6 +186,8 @@ public class QueryBuilderTest {
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
             "SELECT DISTINCT ?m WHERE { ?m rdf:type trestle:Trestle_Concept .?m trestle:related_by ?r .?r trestle:relation_of ?object .?object trestle:has_fact ?f .?f trestle:valid_time ?ft .?f ogc:asWKT ?wkt .FILTER(ogcf:sfIntersects(?wkt, \"POINT (39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }";
 
+    private static final String individualRelationString = "";
+
     @BeforeAll
     public static void createPrefixes() {
         df = OWLManager.getOWLDataFactory();
@@ -268,7 +270,11 @@ public class QueryBuilderTest {
                 () -> {
                     final String generatedMultiIRI = qb.buildObjectPropertyRetrievalQuery(OffsetDateTime.of(LocalDate.of(1989, 3, 26).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2012, 1, 1).atStartOfDay(), ZoneOffset.UTC), test_muni4, df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni2")), df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni5")));
                     assertEquals(objectPropertyMultiIRIString, generatedMultiIRI, "Should be equal");
-                });
+                },
+                () -> {
+            final String generatedIndividualRelation = qb.buildIndividualRelationQuery(test_muni4);
+            assertEquals(individualRelationString, generatedIndividualRelation, "Individual object query");
+        });
     }
 
     @Test
