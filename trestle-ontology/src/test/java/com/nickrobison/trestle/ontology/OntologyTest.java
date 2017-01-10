@@ -10,14 +10,18 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
+import javax.xml.transform.Result;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.StaticIRI.conceptOfIRI;
 import static com.nickrobison.trestle.common.StaticIRI.hasFactIRI;
+import static com.nickrobison.trestle.common.StaticIRI.temporalRelationIRI;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -140,6 +144,27 @@ abstract public class OntologyTest {
         final List<QuerySolution> resultSet = ResultSetFormatter.toList(ontology.executeSPARQL(queryString));
         assertEquals(1, resultSet.size(), "Wrong number of relations");
 
+//        Test for spatial/temporal object relations and that they're inferred correctly.
+        queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
+                "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+                "SELECT DISTINCT ?m ?p ?o WHERE { ?m rdf:type :GAUL . ?m ?p ?o. ?p rdfs:subPropertyOf :Temporal_Relation . " +
+                "VALUES ?m {<http://nickrobison.com/dissertation/trestle.owl#maputo:2013:3000>} }";
+
+
+//        final Optional<Set<OWLObjectPropertyAssertionAxiom>> temporalRelations = ontology.getIndividualObjectProperty(test_maputo, temporalRelationIRI);
+        final List<QuerySolution> querySolutions = ResultSetFormatter.toList(ontology.executeSPARQL(queryString));
+        Set<OWLObjectPropertyAssertionAxiom> temporalRelations = querySolutions.stream().map(solution -> df.getOWLObjectPropertyAssertionAxiom(
+                df.getOWLObjectProperty(IRI.create(solution.getResource("p").getURI())),
+                df.getOWLNamedIndividual(IRI.create(solution.getResource("m").getURI())),
+                df.getOWLNamedIndividual(IRI.create(solution.getResource("o").getURI()))))
+                .collect(Collectors.toSet());
+        assertAll(() -> assertEquals(6, temporalRelations.size(), "Wrong number of temporal relations for test_maputo"),
+                () -> assertTrue(temporalRelations
+                        .stream()
+                        .anyMatch(relation -> relation.getObject().equals(df.getOWLNamedIndividual(IRI.create("trestle:", "municipal2:1990:2013")))), "test_maputo is not related to municipal2")
+        );
     }
 
     //    Override Tests
