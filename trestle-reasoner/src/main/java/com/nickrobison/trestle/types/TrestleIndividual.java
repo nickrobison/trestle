@@ -68,4 +68,8 @@ public class TrestleIndividual {
                 .map(TrestleFact::getDatabaseTemporal)
                 .collect(Collectors.toSet());
     }
+
+    public List<TrestleRelation> getRelations() {
+        return this.relations;
+    }
 }
