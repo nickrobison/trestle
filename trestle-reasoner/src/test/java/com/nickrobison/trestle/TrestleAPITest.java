@@ -6,6 +6,7 @@ import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.parser.TrestleParser;
 import com.nickrobison.trestle.types.TrestleIndividual;
+import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.Geometry;
@@ -36,6 +37,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -211,11 +213,18 @@ public class TrestleAPITest {
 //        assertEquals(4, individuals.size(), "Should have 4 individuals, overall");
 
 //        Test attribute generation
+//        Try to write some relations between two objects
+        reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(0), ObjectRelation.MEETS);
+        reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(3), ObjectRelation.DURING);
+//        Update the inferencer, again?
+        reasoner.getUnderlyingOntology().runInference();
         final Instant iStart = Instant.now();
         final TrestleIndividual trestleIndividual = reasoner.getTrestleIndividual(individuals.get(0));
         final Instant iEnd = Instant.now();
         logger.info("Creating individual took {} ms", Duration.between(iStart, iEnd).toMillis());
-        assertEquals(2, trestleIndividual.getFacts().size(), "Wrong number of attributes");
+        assertAll(() -> assertEquals(2, trestleIndividual.getFacts().size(), "Wrong number of attributes"),
+                () -> assertEquals(1, trestleIndividual.getRelations().size(), "Wrong number of relations"));
+
 
 //        Now try to remove it
 //        reasoner.removeIndividual(classObjects.toArray(new Object[classObjects.size()]));
