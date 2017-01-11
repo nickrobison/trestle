@@ -13,6 +13,7 @@ import com.nickrobison.trestle.exporter.ShapefileExporter;
 import com.nickrobison.trestle.exporter.ShapefileSchema;
 import com.nickrobison.trestle.exporter.TSIndividual;
 import com.nickrobison.trestle.ontology.*;
+import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.parser.*;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
@@ -676,17 +677,21 @@ public class TrestleReasoner {
 
             logger.debug("Executing spatial query");
             final Instant start = Instant.now();
-            final ResultSet resultSet = ontology.executeSPARQL(spatialIntersection);
+//            final ResultSet resultSet = ontology.executeSPARQL(spatialIntersection);
+            final TrestleResultSet resultSet = this.ontology.executeSPARQLTRS(spatialIntersection);
             final Instant end = Instant.now();
             logger.debug("Spatial query returned in {} ms", Duration.between(start, end).toMillis());
 //            I think I need to rewind the result set
-            ((ResultSetMem) resultSet).rewind();
-            Set<IRI> intersectedIRIs = new HashSet<>();
-            while (resultSet.hasNext()) {
-                final QuerySolution querySolution = resultSet.next();
-                final Resource resource = querySolution.get("m").asResource();
-                intersectedIRIs.add(IRI.create(resource.getURI()));
-            }
+//            ((ResultSetMem) resultSet).rewind();
+            Set<IRI> intersectedIRIs = resultSet.getResults()
+                    .stream()
+                    .map(result -> IRI.create(result.getIndividual("m").toStringID()))
+                    .collect(Collectors.toSet());
+//            while (resultSet.hasNext()) {
+//                final QuerySolution querySolution = resultSet.next();
+//                final Resource resource = querySolution.get("m").asResource();
+//                intersectedIRIs.add(IRI.create(resource.getURI()));
+//            }
             logger.debug("Intersected with {} objects", intersectedIRIs.size());
             if (intersectedIRIs.size() == 0) {
                 logger.info("No intersected results");
@@ -728,18 +733,22 @@ public class TrestleReasoner {
 
         final String relationQuery = qb.buildRelationQuery(df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX, objectID)), owlClass, cutoff);
         TrestleTransaction transaction = ontology.createandOpenNewTransaction(false);
-        final ResultSet resultSet = ontology.executeSPARQL(relationQuery);
+        final TrestleResultSet resultSet = this.ontology.executeSPARQLTRS(relationQuery);
+//        final ResultSet resultSet = ontology.executeSPARQL(relationQuery);
 
         Set<IRI> relatedIRIs = new HashSet<>();
         Map<@NonNull T, Double> relatedObjects = new HashMap<>();
         Map<IRI, Double> relatedObjectResults = new HashMap<>();
-        while (resultSet.hasNext()) {
-            final QuerySolution next = resultSet.next();
-            final IRI relatedIRI = IRI.create(next.getResource("f").getURI());
-            final double strength = next.getLiteral("s").getDouble();
-            relatedObjectResults.put(relatedIRI, strength);
-            logger.debug("Has related {}", relatedIRI);
-        }
+        resultSet.getResults()
+                .stream()
+                .forEach(result -> relatedObjectResults.put(IRI.create(result.getIndividual("f").toStringID()), result.getLiteral("s").parseDouble()));
+//        while (resultSet.hasNext()) {
+//            final QuerySolution next = resultSet.next();
+//            final IRI relatedIRI = IRI.create(next.getResource("f").getURI());
+//            final double strength = next.getLiteral("s").getDouble();
+//            relatedObjectResults.put(relatedIRI, strength);
+//            logger.debug("Has related {}", relatedIRI);
+//        }
 
         relatedObjectResults
                 .entrySet().forEach(entry -> {
@@ -778,11 +787,14 @@ public class TrestleReasoner {
                     relationStrength);
         }
         ListMultimap<String, String> conceptIndividuals = ArrayListMultimap.create();
-        final ResultSet resultSet = this.ontology.executeSPARQL(conceptQuery);
-        while (resultSet.hasNext()) {
-            final QuerySolution next = resultSet.next();
-            conceptIndividuals.put(next.getResource("concept").getURI(), next.getResource("individual").getURI());
-        }
+//        final ResultSet resultSet = this.ontology.executeSPARQL(conceptQuery);
+        final TrestleResultSet resultSet = this.ontology.executeSPARQLTRS(conceptQuery);
+        resultSet.getResults()
+                .forEach(result -> conceptIndividuals.put(result.getIndividual("concept").toStringID(), result.getIndividual("individual").toStringID()));
+//        while (resultSet.hasNext()) {
+//            final QuerySolution next = resultSet.next();
+//            conceptIndividuals.put(next.getResource("concept").getURI(), next.getResource("individual").getURI());
+//        }
         if (conceptIndividuals.keySet().size() == 0) {
             logger.info("Individual {} has no related concepts");
             return Optional.empty();
@@ -882,12 +894,17 @@ public class TrestleReasoner {
             owlClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, datasetClass));
         }
         final String query = qb.buildIndividualSearchQuery(individualIRI, owlClass, limit);
-        List<String> individuals = new ArrayList<>();
-        final ResultSet resultSet = ontology.executeSPARQL(query);
-        while (resultSet.hasNext()) {
-            final QuerySolution next = resultSet.next();
-            individuals.add(next.getResource("m").getURI());
-        }
+//        List<String> individuals = new ArrayList<>();
+//        final ResultSet resultSet = ontology.executeSPARQL(query);
+        final TrestleResultSet resultSet = ontology.executeSPARQLTRS(query);
+        List<String> individuals = resultSet.getResults()
+                .stream()
+                .map(result -> result.getIndividual("m").toStringID())
+                .collect(Collectors.toList());
+//        while (resultSet.hasNext()) {
+//            final QuerySolution next = resultSet.next();
+//            individuals.add(next.getResource("m").getURI());
+//        }
         return individuals;
     }
 
@@ -950,14 +967,19 @@ public class TrestleReasoner {
             return Optional.empty();
         }
 
-        final Set<String> intersectedConceptURIs = new HashSet<>();
+
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        final ResultSet resultSet = this.ontology.executeSPARQL(queryString);
-        ((ResultSetMem) resultSet).rewind();
-        while (resultSet.hasNext()) {
-            final Resource m = resultSet.next().getResource("m");
-            intersectedConceptURIs.add(m.getURI());
-        }
+//        final ResultSet resultSet = this.ontology.executeSPARQL(queryString);
+        final TrestleResultSet resultSet = this.ontology.executeSPARQLTRS(queryString);
+        final Set<String> intersectedConceptURIs = resultSet.getResults()
+                .stream()
+                .map(result -> result.getIndividual("m").toStringID())
+                .collect(Collectors.toSet());
+//        ((ResultSetMem) resultSet).rewind();
+//        while (resultSet.hasNext()) {
+//            final Resource m = resultSet.next().getResource("m");
+//            intersectedConceptURIs.add(m.getURI());
+//        }
         this.ontology.returnAndCommitTransaction(trestleTransaction);
 
         return Optional.of(intersectedConceptURIs);
@@ -978,17 +1000,22 @@ public class TrestleReasoner {
             logger.warn("Spatio-temporal intersections not implemented yet");
         }
 
-        Set<String> individualIRIs = new HashSet<>();
+
         final OWLClass datasetClass = trestleParser.classParser.GetObjectClass(clazz);
         final String retrievalStatement = qb.buildConceptObjectRetrieval(datasetClass, parseStringToIRI(REASONER_PREFIX, conceptID));
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        final ResultSet resultSet = ontology.executeSPARQL(retrievalStatement);
-        ((ResultSetMem) resultSet).rewind();
-        while (resultSet.hasNext()) {
-            final QuerySolution next = resultSet.next();
-            individualIRIs.add(next.getResource("m").getURI());
-        }
+        Set<String> individualIRIs = this.ontology.executeSPARQLTRS(retrievalStatement)
+                .getResults()
+                .stream()
+                .map(result -> result.getIndividual("m").toStringID())
+                .collect(Collectors.toSet());
+//        final ResultSet resultSet = ontology.executeSPARQL(retrievalStatement);
+//        ((ResultSetMem) resultSet).rewind();
+//        while (resultSet.hasNext()) {
+//            final QuerySolution next = resultSet.next();
+//            individualIRIs.add(next.getResource("m").getURI());
+//        }
 
 //        Try to retrieve the object members in an async fashion
         final List<CompletableFuture<T>> completableFutureList = individualIRIs
@@ -1383,11 +1410,16 @@ public class TrestleReasoner {
     public Set<String> getAvailableDatasets() {
 
         final String datasetQuery = qb.buildDatasetQuery();
-        final ResultSet resultSet = ontology.executeSPARQL(datasetQuery);
-        List<OWLClass> datasetsInOntology = new ArrayList<>();
-        while (resultSet.hasNext()) {
-            datasetsInOntology.add(df.getOWLClass(IRI.create(resultSet.next().getResource("dataset").getURI())));
-        }
+//        final ResultSet resultSet = ontology.executeSPARQL(datasetQuery);
+        final TrestleResultSet resultSet = ontology.executeSPARQLTRS(datasetQuery);
+        List<OWLClass> datasetsInOntology = resultSet
+                .getResults()
+                .stream()
+                .map(result -> df.getOWLClass(result.getIndividual("dataset").toStringID()))
+                .collect(Collectors.toList());
+//        while (resultSet.hasNext()) {
+//            datasetsInOntology.add(df.getOWLClass(IRI.create(resultSet.next().getResource("dataset").getURI())));
+//        }
 
         return this.registeredClasses
                 .keySet()

@@ -609,34 +609,49 @@ public abstract class JenaOntology extends TransactingOntology {
     @Override
     public Set<OWLDataPropertyAssertionAxiom> GetFactsForIndividual(OWLNamedIndividual individual, @Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal) {
         final String objectQuery = qb.buildObjectPropertyRetrievalQuery(startTemporal, endTemporal, individual);
-        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
-        final ResultSet resultSet = this.executeSPARQL(objectQuery);
-        while (resultSet.hasNext()) {
-            final QuerySolution next = resultSet.next();
-            final Optional<OWLLiteral> owlLiteral = this.jf.createOWLLiteral(next.getLiteral("object"));
-            owlLiteral.ifPresent(literal -> retrievedDataProperties.add(df.getOWLDataPropertyAssertionAxiom(
-                    df.getOWLDataProperty(next.getResource("property").getURI()),
-                    df.getOWLNamedIndividual(next.getResource("individual").getURI()),
-                    literal
-            )));
-        }
+//        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
+        final TrestleResultSet resultSet = this.executeSPARQLTRS(objectQuery);
+//        final ResultSet resultSet = this.executeSPARQL(objectQuery);
+        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = resultSet.getResults().stream().map(result -> df.getOWLDataPropertyAssertionAxiom(
+                df.getOWLDataProperty(IRI.create(result.getIndividual("property").toStringID())),
+                df.getOWLNamedIndividual(IRI.create(result.getIndividual("individual").toStringID())),
+                result.getLiteral("object")))
+                .collect(Collectors.toSet());
+
+
+
+//        while (resultSet.hasNext()) {
+//            final QuerySolution next = resultSet.next();
+//            final Optional<OWLLiteral> owlLiteral = this.jf.createOWLLiteral(next.getLiteral("object"));
+//            owlLiteral.ifPresent(literal -> retrievedDataProperties.add(df.getOWLDataPropertyAssertionAxiom(
+//                    df.getOWLDataProperty(next.getResource("property").getURI()),
+//                    df.getOWLNamedIndividual(next.getResource("individual").getURI()),
+//                    literal
+//            )));
+//        }
         return retrievedDataProperties;
     }
 
     @Override
     public Set<OWLDataPropertyAssertionAxiom> GetTemporalsForIndividual(OWLNamedIndividual individual) {
         final String temporalQuery = qb.buildIndividualTemporalQuery(individual);
-        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
-        final ResultSet resultSet = this.executeSPARQL(temporalQuery);
-        while (resultSet.hasNext()) {
-            final QuerySolution next = resultSet.next();
-            final Optional<OWLLiteral> owlLiteral = this.jf.createOWLLiteral(next.getLiteral("object"));
-            owlLiteral.ifPresent(literal -> retrievedDataProperties.add(df.getOWLDataPropertyAssertionAxiom(
-                    df.getOWLDataProperty(next.getResource("property").getURI()),
-                    df.getOWLNamedIndividual(next.getResource("individual").getURI()),
-                    literal
-            )));
-        }
+//        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
+        final TrestleResultSet resultSet = this.executeSPARQLTRS(temporalQuery);
+        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = resultSet.getResults().stream().map(result -> df.getOWLDataPropertyAssertionAxiom(
+                df.getOWLDataProperty(IRI.create(result.getIndividual("property").toStringID())),
+                df.getOWLNamedIndividual(IRI.create(result.getIndividual("individual").toStringID())),
+                result.getLiteral("object")))
+                .collect(Collectors.toSet());
+//        final ResultSet resultSet = this.executeSPARQL(temporalQuery);
+//        while (resultSet.hasNext()) {
+//            final QuerySolution next = resultSet.next();
+//            final Optional<OWLLiteral> owlLiteral = this.jf.createOWLLiteral(next.getLiteral("object"));
+//            owlLiteral.ifPresent(literal -> retrievedDataProperties.add(df.getOWLDataPropertyAssertionAxiom(
+//                    df.getOWLDataProperty(next.getResource("property").getURI()),
+//                    df.getOWLNamedIndividual(next.getResource("individual").getURI()),
+//                    literal
+//            )));
+//        }
         return retrievedDataProperties;
     }
 
