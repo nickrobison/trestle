@@ -1,47 +1,35 @@
 package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 import java.util.Optional;
 import java.util.Set;
 
-import static com.nickrobison.trestle.common.StaticIRI.conceptOfIRI;
-import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Created by nrobison on 7/22/16.
+ * Created by nrobison on 1/10/17.
  */
-@SuppressWarnings({"Duplicates", "OptionalGetWithoutIsPresent"})
-@Tag("integration")
-@Tag("local")
-public class LocalOntologyTest extends OntologyTest {
-
+public class GraphDBOntologyTest extends OntologyTest {
     @Override
-    public void setupOntology() throws OWLOntologyCreationException {
+    void setupOntology() throws OWLOntologyCreationException {
         ontology = new OntologyBuilder()
                 .fromInputStream(inputStream)
+                .withDBConnection("graphdb", "", "")
                 .name("trestle")
                 .build();
         ontology.initializeOntology();
     }
 
     @Override
-    @Disabled
-    public void testRelationAssociation() {
-
+    void shutdownOntology() {
+        ontology.close(true);
     }
 
     @Override
-    @Test
     public void testByteParsing() throws MissingOntologyEntity {
-
         int smallInt = 4321;
         int bigInt = Integer.MAX_VALUE;
         int negativeInt = Integer.MIN_VALUE;
@@ -130,10 +118,5 @@ public class LocalOntologyTest extends OntologyTest {
         individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
         assertEquals(Long.toString(negativeBigLong), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
         assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
-    }
-
-    @Override
-    public void shutdownOntology() {
-        ontology.close(true);
     }
 }
