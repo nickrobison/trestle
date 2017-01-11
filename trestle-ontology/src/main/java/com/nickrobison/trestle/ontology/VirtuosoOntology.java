@@ -98,7 +98,19 @@ public class VirtuosoOntology extends JenaOntology {
 
     @Override
     public TrestleResultSet executeSPARQLTRS(String queryString) {
-        return null;
+//        ResultSet resultSet;
+        final TrestleResultSet resultSet;
+        final QueryExecution queryExecution = VirtuosoQueryExecutionFactory.create(queryString, (VirtGraph) virtModel.getGraph());
+        this.openTransaction(false);
+        this.model.enterCriticalSection(Lock.READ);
+        try {
+            resultSet = this.buildResultSet(queryExecution.execSelect());
+        } finally {
+            queryExecution.close();
+            this.model.leaveCriticalSection();
+            this.commitTransaction(false);
+        }
+        return resultSet;
     }
 
     public void runInference() {
