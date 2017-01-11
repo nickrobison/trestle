@@ -161,9 +161,14 @@ public class OntologyBuilder {
 //                    username.orElse(""),
 //                    password.orElse("")
 //            ));
-        }
-
-        else {
+        } else if (connectionString.isPresent() && connectionString.get().contains("graphdb")) {
+            logger.info("Connect to embedded GraphDB instance {}", this.ontologyName.orElse(""));
+            return new GraphDBOntology(
+                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
+                    owlOntology,
+                    pm.orElse(createDefaultPrefixManager())
+            );
+        } else {
             logger.info("Connecting to Local TDB {}", this.ontologyName.orElse(""));
             return new LocalOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),

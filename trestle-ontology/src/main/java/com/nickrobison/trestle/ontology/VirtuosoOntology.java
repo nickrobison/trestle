@@ -20,7 +20,7 @@ import java.io.ByteArrayOutputStream;
 /**
  * Created by nrobison on 7/22/16.
  */
-@SuppressWarnings({"initialization"})
+@SuppressWarnings({"initialization", "Duplicates"})
 @ThreadSafe
 public class VirtuosoOntology extends JenaOntology {
 
