@@ -1,27 +1,22 @@
 package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.apache.jena.query.QuerySolution;
-import org.apache.jena.query.ResultSetFormatter;
 import org.junit.jupiter.api.*;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
-import javax.xml.transform.Result;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.StaticIRI.conceptOfIRI;
 import static com.nickrobison.trestle.common.StaticIRI.hasFactIRI;
-import static com.nickrobison.trestle.common.StaticIRI.temporalRelationIRI;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -48,7 +43,7 @@ abstract public class OntologyTest {
 
     @Test
     public void testTypedLiterals() throws MissingOntologyEntity {
-       final String testString = "Test String";
+        final String testString = "Test String";
 
 //       Try to create two typed literals
         final OWLClass owlCl = df.getOWLClass(IRI.create("trestle:", "test"));
@@ -76,10 +71,10 @@ abstract public class OntologyTest {
                 "?m ?object ?property ." +
                 "FILTER(?property = 'Test String'@fr)}";
 
-        final List<QuerySolution> querySolutions = ResultSetFormatter.toList(ontology.executeSPARQL(queryString));
-        assertEquals(1, querySolutions.size(), "Should only have the french version");
-        assertEquals("Test String", querySolutions.get(0).getLiteral("property").getString(), "Should have the correct string");
-        assertEquals("fr", querySolutions.get(0).getLiteral("property").getLanguage(), "Should be french language");
+        final TrestleResultSet trestleResultSet = ontology.executeSPARQLTRS(queryString);
+        assertEquals(1, trestleResultSet.getResults().size(), "Should only have the french version");
+        assertEquals("Test String", trestleResultSet.getResults().get(0).getLiteral("property").getLiteral(), "Should have the correct string");
+        assertEquals("fr", trestleResultSet.getResults().get(0).getLiteral("property").getLang(), "Should be french language");
 
     }
 
@@ -141,8 +136,8 @@ abstract public class OntologyTest {
                 "?f :valid_time ?t." +
                 "FILTER(!isURI(?object) && !isBlank(?object) && ?object = 41374) }";
 
-        final List<QuerySolution> resultSet = ResultSetFormatter.toList(ontology.executeSPARQL(queryString));
-        assertEquals(1, resultSet.size(), "Wrong number of relations");
+        final TrestleResultSet resultSet = ontology.executeSPARQLTRS(queryString);
+        assertEquals(1, resultSet.getResults().size(), "Wrong number of relations");
 
 //        Test for spatial/temporal object relations and that they're inferred correctly.
         queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
@@ -152,13 +147,12 @@ abstract public class OntologyTest {
                 "SELECT DISTINCT ?m ?p ?o WHERE { ?m rdf:type :GAUL . ?m ?p ?o. ?p rdfs:subPropertyOf :Temporal_Relation . " +
                 "VALUES ?m {<http://nickrobison.com/dissertation/trestle.owl#municipal1:1990:2013>} }";
 
-
-//        final Optional<Set<OWLObjectPropertyAssertionAxiom>> temporalRelations = ontology.getIndividualObjectProperty(test_maputo, temporalRelationIRI);
-        final List<QuerySolution> querySolutions = ResultSetFormatter.toList(ontology.executeSPARQL(queryString));
-        Set<OWLObjectPropertyAssertionAxiom> temporalRelations = querySolutions.stream().map(solution -> df.getOWLObjectPropertyAssertionAxiom(
-                df.getOWLObjectProperty(IRI.create(solution.getResource("p").getURI())),
-                df.getOWLNamedIndividual(IRI.create(solution.getResource("m").getURI())),
-                df.getOWLNamedIndividual(IRI.create(solution.getResource("o").getURI()))))
+        final TrestleResultSet trestleResultSet = ontology.executeSPARQLTRS(queryString);
+        Set<OWLObjectPropertyAssertionAxiom> temporalRelations = trestleResultSet.getResults().stream().map(solution ->
+                df.getOWLObjectPropertyAssertionAxiom(
+                        df.getOWLObjectProperty(IRI.create(solution.getIndividual("p").toStringID())),
+                        df.getOWLNamedIndividual(IRI.create(solution.getIndividual("m").toStringID())),
+                        df.getOWLNamedIndividual(IRI.create(solution.getIndividual("o").toStringID()))))
                 .collect(Collectors.toSet());
         assertAll(() -> assertEquals(4, temporalRelations.size(), "Wrong number of temporal relations for test_maputo"),
                 () -> assertTrue(temporalRelations

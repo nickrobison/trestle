@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
+import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.query.*;
 import org.apache.jena.query.spatial.*;
@@ -144,16 +145,14 @@ public class LocalOntology extends JenaOntology {
 //    }
 
     @Override
-//    Need to override this in order to get access to the correct dataset
-    public ResultSet executeSPARQL(String queryString) {
-        ResultSet resultSet;
+    public TrestleResultSet executeSPARQLTRS(String queryString) {
+        final TrestleResultSet resultSet;
         final Query query = QueryFactory.create(queryString);
         final QueryExecution qExec = QueryExecutionFactory.create(query, luceneDataset);
         this.openTransaction(false);
         model.enterCriticalSection(Lock.READ);
         try {
-            resultSet = qExec.execSelect();
-            resultSet = ResultSetFactory.copyResults(resultSet);
+            resultSet = this.buildResultSet(qExec.execSelect());
         } finally {
             qExec.close();
             model.leaveCriticalSection();

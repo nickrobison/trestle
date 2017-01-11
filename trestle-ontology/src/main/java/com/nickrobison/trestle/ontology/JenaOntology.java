@@ -3,6 +3,8 @@ package com.nickrobison.trestle.ontology;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.ontology.types.TrestleResult;
+import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.utils.JenaLiteralFactory;
 import org.apache.jena.graph.Graph;
@@ -26,10 +28,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.*;
 import java.time.OffsetDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -610,34 +609,49 @@ public abstract class JenaOntology extends TransactingOntology {
     @Override
     public Set<OWLDataPropertyAssertionAxiom> GetFactsForIndividual(OWLNamedIndividual individual, @Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal) {
         final String objectQuery = qb.buildObjectPropertyRetrievalQuery(startTemporal, endTemporal, individual);
-        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
-        final ResultSet resultSet = this.executeSPARQL(objectQuery);
-        while (resultSet.hasNext()) {
-            final QuerySolution next = resultSet.next();
-            final Optional<OWLLiteral> owlLiteral = this.jf.createOWLLiteral(next.getLiteral("object"));
-            owlLiteral.ifPresent(literal -> retrievedDataProperties.add(df.getOWLDataPropertyAssertionAxiom(
-                    df.getOWLDataProperty(next.getResource("property").getURI()),
-                    df.getOWLNamedIndividual(next.getResource("individual").getURI()),
-                    literal
-            )));
-        }
+//        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
+        final TrestleResultSet resultSet = this.executeSPARQLTRS(objectQuery);
+//        final ResultSet resultSet = this.executeSPARQL(objectQuery);
+        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = resultSet.getResults().stream().map(result -> df.getOWLDataPropertyAssertionAxiom(
+                df.getOWLDataProperty(IRI.create(result.getIndividual("property").toStringID())),
+                df.getOWLNamedIndividual(IRI.create(result.getIndividual("individual").toStringID())),
+                result.getLiteral("object")))
+                .collect(Collectors.toSet());
+
+
+
+//        while (resultSet.hasNext()) {
+//            final QuerySolution next = resultSet.next();
+//            final Optional<OWLLiteral> owlLiteral = this.jf.createOWLLiteral(next.getLiteral("object"));
+//            owlLiteral.ifPresent(literal -> retrievedDataProperties.add(df.getOWLDataPropertyAssertionAxiom(
+//                    df.getOWLDataProperty(next.getResource("property").getURI()),
+//                    df.getOWLNamedIndividual(next.getResource("individual").getURI()),
+//                    literal
+//            )));
+//        }
         return retrievedDataProperties;
     }
 
     @Override
     public Set<OWLDataPropertyAssertionAxiom> GetTemporalsForIndividual(OWLNamedIndividual individual) {
         final String temporalQuery = qb.buildIndividualTemporalQuery(individual);
-        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
-        final ResultSet resultSet = this.executeSPARQL(temporalQuery);
-        while (resultSet.hasNext()) {
-            final QuerySolution next = resultSet.next();
-            final Optional<OWLLiteral> owlLiteral = this.jf.createOWLLiteral(next.getLiteral("object"));
-            owlLiteral.ifPresent(literal -> retrievedDataProperties.add(df.getOWLDataPropertyAssertionAxiom(
-                    df.getOWLDataProperty(next.getResource("property").getURI()),
-                    df.getOWLNamedIndividual(next.getResource("individual").getURI()),
-                    literal
-            )));
-        }
+//        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
+        final TrestleResultSet resultSet = this.executeSPARQLTRS(temporalQuery);
+        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = resultSet.getResults().stream().map(result -> df.getOWLDataPropertyAssertionAxiom(
+                df.getOWLDataProperty(IRI.create(result.getIndividual("property").toStringID())),
+                df.getOWLNamedIndividual(IRI.create(result.getIndividual("individual").toStringID())),
+                result.getLiteral("object")))
+                .collect(Collectors.toSet());
+//        final ResultSet resultSet = this.executeSPARQL(temporalQuery);
+//        while (resultSet.hasNext()) {
+//            final QuerySolution next = resultSet.next();
+//            final Optional<OWLLiteral> owlLiteral = this.jf.createOWLLiteral(next.getLiteral("object"));
+//            owlLiteral.ifPresent(literal -> retrievedDataProperties.add(df.getOWLDataPropertyAssertionAxiom(
+//                    df.getOWLDataProperty(next.getResource("property").getURI()),
+//                    df.getOWLNamedIndividual(next.getResource("individual").getURI()),
+//                    literal
+//            )));
+//        }
         return retrievedDataProperties;
     }
 
@@ -694,5 +708,31 @@ public abstract class JenaOntology extends TransactingOntology {
             return Lock.WRITE;
         }
         return Lock.READ;
+    }
+
+    /**
+     * Build TrestleResultSet from Jena ResultSet
+     * @param resultSet - Jena ResultSet to parse
+     * @return - TrestleResultSet
+     */
+    protected TrestleResultSet buildResultSet(ResultSet resultSet) {
+        final TrestleResultSet trestleResultSet = new TrestleResultSet(resultSet.getRowNumber());
+        while (resultSet.hasNext()) {
+            final QuerySolution next = resultSet.next();
+            final TrestleResult results = new TrestleResult();
+            final Iterator<String> varNames = next.varNames();
+            while (varNames.hasNext()) {
+                final String varName = varNames.next();
+                final RDFNode rdfNode = next.get(varName);
+                if (rdfNode.isResource()) {
+                    results.addValue(varName, df.getOWLNamedIndividual(IRI.create(rdfNode.asResource().getURI())));
+                } else {
+                    final Optional<OWLLiteral> literal = this.jf.createOWLLiteral(rdfNode.asLiteral());
+                    literal.ifPresent(literalValue -> results.addValue(varName, literalValue));
+                }
+            }
+            trestleResultSet.addResult(results);
+        }
+        return trestleResultSet;
     }
 }

@@ -1,6 +1,8 @@
 package com.nickrobison.trestle;
 
-import com.google.common.collect.*;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimaps;
 import com.nickrobison.trestle.caching.TrestleCache;
 import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.common.StaticIRI;
@@ -13,10 +15,14 @@ import com.nickrobison.trestle.exporter.ShapefileExporter;
 import com.nickrobison.trestle.exporter.ShapefileSchema;
 import com.nickrobison.trestle.exporter.TSIndividual;
 import com.nickrobison.trestle.ontology.*;
+import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.parser.*;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
-import com.nickrobison.trestle.types.*;
+import com.nickrobison.trestle.types.TemporalScope;
+import com.nickrobison.trestle.types.TemporalType;
+import com.nickrobison.trestle.types.TrestleFact;
+import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
@@ -26,10 +32,6 @@ import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
-import org.apache.jena.query.QuerySolution;
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -42,7 +44,10 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.time.*;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.*;
@@ -676,17 +681,13 @@ public class TrestleReasoner {
 
             logger.debug("Executing spatial query");
             final Instant start = Instant.now();
-            final ResultSet resultSet = ontology.executeSPARQL(spatialIntersection);
+            final TrestleResultSet resultSet = this.ontology.executeSPARQLTRS(spatialIntersection);
             final Instant end = Instant.now();
             logger.debug("Spatial query returned in {} ms", Duration.between(start, end).toMillis());
-//            I think I need to rewind the result set
-            ((ResultSetMem) resultSet).rewind();
-            Set<IRI> intersectedIRIs = new HashSet<>();
-            while (resultSet.hasNext()) {
-                final QuerySolution querySolution = resultSet.next();
-                final Resource resource = querySolution.get("m").asResource();
-                intersectedIRIs.add(IRI.create(resource.getURI()));
-            }
+            Set<IRI> intersectedIRIs = resultSet.getResults()
+                    .stream()
+                    .map(result -> IRI.create(result.getIndividual("m").toStringID()))
+                    .collect(Collectors.toSet());
             logger.debug("Intersected with {} objects", intersectedIRIs.size());
             if (intersectedIRIs.size() == 0) {
                 logger.info("No intersected results");
@@ -728,18 +729,13 @@ public class TrestleReasoner {
 
         final String relationQuery = qb.buildRelationQuery(df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX, objectID)), owlClass, cutoff);
         TrestleTransaction transaction = ontology.createandOpenNewTransaction(false);
-        final ResultSet resultSet = ontology.executeSPARQL(relationQuery);
+        final TrestleResultSet resultSet = this.ontology.executeSPARQLTRS(relationQuery);
 
         Set<IRI> relatedIRIs = new HashSet<>();
         Map<@NonNull T, Double> relatedObjects = new HashMap<>();
         Map<IRI, Double> relatedObjectResults = new HashMap<>();
-        while (resultSet.hasNext()) {
-            final QuerySolution next = resultSet.next();
-            final IRI relatedIRI = IRI.create(next.getResource("f").getURI());
-            final double strength = next.getLiteral("s").getDouble();
-            relatedObjectResults.put(relatedIRI, strength);
-            logger.debug("Has related {}", relatedIRI);
-        }
+        resultSet.getResults()
+                .forEach(result -> relatedObjectResults.put(IRI.create(result.getIndividual("f").toStringID()), result.getLiteral("s").parseDouble()));
 
         relatedObjectResults
                 .entrySet().forEach(entry -> {
@@ -758,8 +754,9 @@ public class TrestleReasoner {
     /**
      * For a given individual, get all related concepts and the IRIs of all members of those concepts,
      * that have a relation strength above the given cutoff value
-     * @param individual - String of individual IRI to return relations for
-     * @param conceptID - Nullable String of concept IRI to filter members of
+     *
+     * @param individual       - String of individual IRI to return relations for
+     * @param conceptID        - Nullable String of concept IRI to filter members of
      * @param relationStrength - Cutoff value of minimum relation strength
      * @return
      */
@@ -778,11 +775,10 @@ public class TrestleReasoner {
                     relationStrength);
         }
         ListMultimap<String, String> conceptIndividuals = ArrayListMultimap.create();
-        final ResultSet resultSet = this.ontology.executeSPARQL(conceptQuery);
-        while (resultSet.hasNext()) {
-            final QuerySolution next = resultSet.next();
-            conceptIndividuals.put(next.getResource("concept").getURI(), next.getResource("individual").getURI());
-        }
+        final TrestleResultSet resultSet = this.ontology.executeSPARQLTRS(conceptQuery);
+        resultSet.getResults()
+                .forEach(result -> conceptIndividuals.put(result.getIndividual("concept").toStringID(), result.getIndividual("individual").toStringID()));
+
         if (conceptIndividuals.keySet().size() == 0) {
             logger.info("Individual {} has no related concepts");
             return Optional.empty();
@@ -882,12 +878,11 @@ public class TrestleReasoner {
             owlClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, datasetClass));
         }
         final String query = qb.buildIndividualSearchQuery(individualIRI, owlClass, limit);
-        List<String> individuals = new ArrayList<>();
-        final ResultSet resultSet = ontology.executeSPARQL(query);
-        while (resultSet.hasNext()) {
-            final QuerySolution next = resultSet.next();
-            individuals.add(next.getResource("m").getURI());
-        }
+        final TrestleResultSet resultSet = ontology.executeSPARQLTRS(query);
+        List<String> individuals = resultSet.getResults()
+                .stream()
+                .map(result -> result.getIndividual("m").toStringID())
+                .collect(Collectors.toList());
         return individuals;
     }
 
@@ -950,14 +945,13 @@ public class TrestleReasoner {
             return Optional.empty();
         }
 
-        final Set<String> intersectedConceptURIs = new HashSet<>();
+
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        final ResultSet resultSet = this.ontology.executeSPARQL(queryString);
-        ((ResultSetMem) resultSet).rewind();
-        while (resultSet.hasNext()) {
-            final Resource m = resultSet.next().getResource("m");
-            intersectedConceptURIs.add(m.getURI());
-        }
+        final TrestleResultSet resultSet = this.ontology.executeSPARQLTRS(queryString);
+        final Set<String> intersectedConceptURIs = resultSet.getResults()
+                .stream()
+                .map(result -> result.getIndividual("m").toStringID())
+                .collect(Collectors.toSet());
         this.ontology.returnAndCommitTransaction(trestleTransaction);
 
         return Optional.of(intersectedConceptURIs);
@@ -978,17 +972,16 @@ public class TrestleReasoner {
             logger.warn("Spatio-temporal intersections not implemented yet");
         }
 
-        Set<String> individualIRIs = new HashSet<>();
+
         final OWLClass datasetClass = trestleParser.classParser.GetObjectClass(clazz);
         final String retrievalStatement = qb.buildConceptObjectRetrieval(datasetClass, parseStringToIRI(REASONER_PREFIX, conceptID));
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        final ResultSet resultSet = ontology.executeSPARQL(retrievalStatement);
-        ((ResultSetMem) resultSet).rewind();
-        while (resultSet.hasNext()) {
-            final QuerySolution next = resultSet.next();
-            individualIRIs.add(next.getResource("m").getURI());
-        }
+        Set<String> individualIRIs = this.ontology.executeSPARQLTRS(retrievalStatement)
+                .getResults()
+                .stream()
+                .map(result -> result.getIndividual("m").toStringID())
+                .collect(Collectors.toSet());
 
 //        Try to retrieve the object members in an async fashion
         final List<CompletableFuture<T>> completableFutureList = individualIRIs
@@ -1110,8 +1103,8 @@ public class TrestleReasoner {
      * Write a relationship between two objects.
      * If one or both of those objects do not exist, create them.
      *
-     * @param subject - Java object to write as subject of relationship
-     * @param object - Java object to write as object of relationship
+     * @param subject  - Java object to write as subject of relationship
+     * @param object   - Java object to write as object of relationship
      * @param relation - ObjectRelation between the two object
      */
     public void writeObjectRelationship(Object subject, Object object, ObjectRelation relation) {
@@ -1121,9 +1114,10 @@ public class TrestleReasoner {
     /**
      * Create a spatial overlap association between two objects.
      * If one or both of the object do not exist, create them.
+     *
      * @param subject - Java object to write as subject of relationship
-     * @param object - Java object to write as object of relationship
-     * @param wkt - String of wkt boundary of spatial overlap
+     * @param object  - Java object to write as object of relationship
+     * @param wkt     - String of wkt boundary of spatial overlap
      */
     public void writeSpatialOverlap(Object subject, Object object, String wkt) {
         final OWLNamedIndividual subjectIndividual = trestleParser.classParser.GetIndividual(subject);
@@ -1155,8 +1149,9 @@ public class TrestleReasoner {
     /**
      * Create a spatial overlap association between two objects.
      * If one or both of the object do not exist, create them.
-     * @param subject - Java object to write as subject of relationship
-     * @param object - Java object to write as object of relationship
+     *
+     * @param subject         - Java object to write as subject of relationship
+     * @param object          - Java object to write as object of relationship
      * @param temporalOverlap - String of temporal overlap between two objects (Not implemented yet)
      */
 //    TODO(nrobison): Correctly implement this
@@ -1191,8 +1186,9 @@ public class TrestleReasoner {
     /**
      * Write an indirect object property between a Java object and an intermediate OWL individual
      * The OWL individual must exist before calling this function, but the Java object is created if it doesn't exist.
-     * @param subject - OWLNamedIndividual of intermediate OWL object
-     * @param object - Java object to write as object of assertion
+     *
+     * @param subject  - OWLNamedIndividual of intermediate OWL object
+     * @param object   - Java object to write as object of assertion
      * @param property - OWLObjectProperty to assert
      */
     private void writeIndirectObjectProperty(OWLNamedIndividual subject, Object object, OWLObjectProperty property) {
@@ -1212,8 +1208,9 @@ public class TrestleReasoner {
 
     /**
      * Write an object property assertion between two objects, writing them into the database if they don't exist.
-     * @param subject - Java object to write as subject of assertion
-     * @param object - Java object to write as object of assertion
+     *
+     * @param subject  - Java object to write as subject of assertion
+     * @param object   - Java object to write as object of assertion
      * @param property - OWLObjectProperty to assert between the two objects
      */
     private void writeObjectProperty(Object subject, Object object, OWLObjectProperty property) {
@@ -1383,11 +1380,12 @@ public class TrestleReasoner {
     public Set<String> getAvailableDatasets() {
 
         final String datasetQuery = qb.buildDatasetQuery();
-        final ResultSet resultSet = ontology.executeSPARQL(datasetQuery);
-        List<OWLClass> datasetsInOntology = new ArrayList<>();
-        while (resultSet.hasNext()) {
-            datasetsInOntology.add(df.getOWLClass(IRI.create(resultSet.next().getResource("dataset").getURI())));
-        }
+        final TrestleResultSet resultSet = ontology.executeSPARQLTRS(datasetQuery);
+        List<OWLClass> datasetsInOntology = resultSet
+                .getResults()
+                .stream()
+                .map(result -> df.getOWLClass(result.getIndividual("dataset").toStringID()))
+                .collect(Collectors.toList());
 
         return this.registeredClasses
                 .keySet()
