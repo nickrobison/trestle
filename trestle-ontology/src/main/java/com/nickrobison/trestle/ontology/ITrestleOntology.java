@@ -2,7 +2,6 @@ package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
-import org.apache.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.*;
@@ -352,14 +351,6 @@ public interface ITrestleOntology {
      * @return - String of OWL Object IRI
      */
     String getFullIRIString(OWLNamedObject owlNamedObject);
-
-    /**
-     * Execute a raw SPARQL query against the ontology
-     * @param query - String representing SPARQL query
-     * @return - ResultSet from given query
-     */
-    @Deprecated
-    ResultSet executeSPARQL(String query);
 
     /**
      * Excecute a raw SPARQL query against the ontology

@@ -79,24 +79,6 @@ public class VirtuosoOntology extends JenaOntology {
     }
 
     @Override
-//    Need to override the SPARQL command because the geospatial extensions will cause Jena to fail the query parsing.
-    public ResultSet executeSPARQL(String queryString) {
-        ResultSet resultSet;
-        final QueryExecution queryExecution = VirtuosoQueryExecutionFactory.create(queryString, (VirtGraph) virtModel.getGraph());
-        this.openTransaction(false);
-        this.model.enterCriticalSection(Lock.READ);
-        try {
-            resultSet = queryExecution.execSelect();
-            resultSet = ResultSetFactory.copyResults(resultSet);
-        } finally {
-            queryExecution.close();
-            this.model.leaveCriticalSection();
-            this.commitTransaction(false);
-        }
-        return resultSet;
-    }
-
-    @Override
     public TrestleResultSet executeSPARQLTRS(String queryString) {
 //        ResultSet resultSet;
         final TrestleResultSet resultSet;

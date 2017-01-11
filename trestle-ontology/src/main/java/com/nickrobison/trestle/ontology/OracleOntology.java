@@ -166,35 +166,6 @@ public class OracleOntology extends JenaOntology {
         logger.debug("Transaction opened and critical section entered");
     }
 
-    public ResultSet executeSPARQL(String queryString) {
-        ResultSet resultSet;
-        final Query query = QueryFactory.create(queryString);
-        final long queryEnd;
-        final long copyEnd;
-        long queryStart = System.currentTimeMillis();
-        final QueryExecution qExec = QueryExecutionFactory.create(query, this.model);
-        this.openTransaction(false);
-        this.model.enterCriticalSection(Lock.READ);
-        try {
-            resultSet = qExec.execSelect();
-            queryEnd = System.currentTimeMillis();
-            try {
-                resultSet = ResultSetFactory.copyResults(resultSet);
-            } catch (Exception e) {
-                logger.error("Problem with copying data", e);
-            }
-            copyEnd = System.currentTimeMillis();
-        } finally {
-            qExec.close();
-            this.model.leaveCriticalSection();
-            this.commitTransaction(false);
-        }
-        logger.debug("Query took {} milliseconds to complete", queryEnd - queryStart);
-        logger.debug("Copying the ResultSet took {} milliseconds", copyEnd - queryEnd);
-
-        return resultSet;
-    }
-
     @Override
     public TrestleResultSet executeSPARQLTRS(String queryString) {
         final Query query = QueryFactory.create(queryString);
@@ -210,57 +181,6 @@ public class OracleOntology extends JenaOntology {
             this.commitTransaction(false);
         }
         return resultSet;
-    }
-
-    public Optional<List<Map<String, OWLObject>>> sparqlResults(String queryString) {
-        List<Map<String, OWLObject>> results = new ArrayList<>();
-        final Query query = QueryFactory.create(queryString);
-//        Get the query result vars
-        final List<String> resultVars = query.getResultVars();
-        long queryStart = System.currentTimeMillis();
-        final QueryExecution qExec = QueryExecutionFactory.create(query, this.model);
-        this.openTransaction(false);
-        this.model.enterCriticalSection(Lock.READ);
-        try {
-            ResultSet resultSet = qExec.execSelect();
-            long queryEnd = System.currentTimeMillis();
-
-            try {
-                while (resultSet.hasNext()) {
-                    Map<String, OWLObject> rowValues = new HashMap<>();
-//                For each result, get the params and do what's needed
-                    final QuerySolution next = resultSet.next();
-                    resultVars.forEach(var -> {
-                        final RDFNode rdfNode = next.get(var);
-                        if (rdfNode.isResource()) {
-                            rowValues.put(var, df.getOWLNamedIndividual(rdfNode.asResource().getURI()));
-                        } else if (rdfNode.isLiteral()) {
-                            final Optional<OWLLiteral> owlLiteral = jf.createOWLLiteral(rdfNode.asLiteral());
-                            if (owlLiteral.isPresent()) {
-                                rowValues.put(var, owlLiteral.get());
-                            } else {
-                                logger.warn("Unable to parse OWL Literal {} for {}", rdfNode.toString(), var);
-                            }
-                        } else {
-                            logger.warn("Unable to parse {} for {}", rdfNode.toString(), var);
-                        }
-                    });
-                    results.add(rowValues);
-                }
-            } catch (Exception e) {
-                logger.error("Problem iterating through resultset", e);
-            } finally {
-                qExec.close();
-            }
-        } finally {
-            this.model.leaveCriticalSection();
-            this.commitTransaction(false);
-        }
-
-        if (results.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(results);
     }
 
     /**

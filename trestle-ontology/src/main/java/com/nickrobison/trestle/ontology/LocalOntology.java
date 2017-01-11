@@ -145,26 +145,6 @@ public class LocalOntology extends JenaOntology {
 //    }
 
     @Override
-//    Need to override this in order to get access to the correct dataset
-    public ResultSet executeSPARQL(String queryString) {
-        ResultSet resultSet;
-        final Query query = QueryFactory.create(queryString);
-        final QueryExecution qExec = QueryExecutionFactory.create(query, luceneDataset);
-        this.openTransaction(false);
-        model.enterCriticalSection(Lock.READ);
-        try {
-            resultSet = qExec.execSelect();
-            resultSet = ResultSetFactory.copyResults(resultSet);
-        } finally {
-            qExec.close();
-            model.leaveCriticalSection();
-            this.commitTransaction(false);
-        }
-
-        return resultSet;
-    }
-
-    @Override
     public TrestleResultSet executeSPARQLTRS(String queryString) {
         final TrestleResultSet resultSet;
         final Query query = QueryFactory.create(queryString);
