@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
@@ -29,6 +30,7 @@ public class GraphDBOntologyTest extends OntologyTest {
     }
 
     @Override
+    @Test
     public void testByteParsing() throws MissingOntologyEntity {
         int smallInt = 4321;
         int bigInt = Integer.MAX_VALUE;
@@ -47,7 +49,7 @@ public class GraphDBOntologyTest extends OntologyTest {
         ontology.createIndividual(owlClassAssertionAxiom);
         ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
         Optional<Set<OWLLiteral>> individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
-        assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
+        assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
 
 //        Big long
         aLong = df.getOWLDataProperty(IRI.create("trestle:", "long_big"));
@@ -108,7 +110,7 @@ public class GraphDBOntologyTest extends OntologyTest {
         individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
         assertEquals(Long.toString(negativeLong), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
 //        Oracle can't tell the difference between an int and a small long, so it treats them as longs.
-        assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
+        assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
 
         aLong = df.getOWLDataProperty(IRI.create("trestle:", "neg_big_long"));
         owlLiteral = df.getOWLLiteral(Long.toString(negativeBigLong), OWL2Datatype.XSD_LONG);
