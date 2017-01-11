@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
+import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -93,6 +94,11 @@ public class VirtuosoOntology extends JenaOntology {
             this.commitTransaction(false);
         }
         return resultSet;
+    }
+
+    @Override
+    public TrestleResultSet executeSPARQLTRS(String queryString) {
+        return null;
     }
 
     public void runInference() {

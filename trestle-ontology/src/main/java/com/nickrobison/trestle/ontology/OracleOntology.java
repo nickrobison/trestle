@@ -1,18 +1,18 @@
 package com.nickrobison.trestle.ontology;
 
+import com.nickrobison.trestle.ontology.types.TrestleResult;
+import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import oracle.spatial.rdf.client.jena.*;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.*;
+import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.shared.Lock;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
-import org.semanticweb.owlapi.model.OWLLiteral;
-import org.semanticweb.owlapi.model.OWLObject;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -192,6 +192,23 @@ public class OracleOntology extends JenaOntology {
         logger.debug("Query took {} milliseconds to complete", queryEnd - queryStart);
         logger.debug("Copying the ResultSet took {} milliseconds", copyEnd - queryEnd);
 
+        return resultSet;
+    }
+
+    @Override
+    public TrestleResultSet executeSPARQLTRS(String queryString) {
+        final Query query = QueryFactory.create(queryString);
+        final QueryExecution qExec = QueryExecutionFactory.create(query, this.model);
+        this.openTransaction(false);
+        this.model.enterCriticalSection(Lock.READ);
+        final TrestleResultSet resultSet;
+        try {
+            resultSet = this.buildResultSet(qExec.execSelect());
+        } finally {
+            qExec.close();
+            this.model.leaveCriticalSection();
+            this.commitTransaction(false);
+        }
         return resultSet;
     }
 

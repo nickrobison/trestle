@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
+import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.query.*;
 import org.apache.jena.query.spatial.*;
@@ -161,6 +162,11 @@ public class LocalOntology extends JenaOntology {
         }
 
         return resultSet;
+    }
+
+    @Override
+    public TrestleResultSet executeSPARQLTRS(String queryString) {
+        return null;
     }
 
     public void runInference() {
