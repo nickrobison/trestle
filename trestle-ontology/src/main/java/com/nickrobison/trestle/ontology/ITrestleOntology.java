@@ -46,7 +46,6 @@ public interface ITrestleOntology {
      * @param property   - OWLObjectProperty to retrieve
      * @return - Optional set of all asserted property values
      */
-//    TODO(nrobison): Close iterator
     Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property);
 
     /**
