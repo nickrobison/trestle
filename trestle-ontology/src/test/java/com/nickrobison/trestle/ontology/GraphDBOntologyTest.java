@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.*;
@@ -34,6 +35,7 @@ public class GraphDBOntologyTest extends OntologyTest {
 
     @Override
     @Test
+    @Disabled
     public void testByteParsing() throws MissingOntologyEntity {
         int smallInt = 4321;
         int bigInt = Integer.MAX_VALUE;
