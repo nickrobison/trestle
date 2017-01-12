@@ -1,5 +1,7 @@
 package com.nickrobison.trestle.utils;
 
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
@@ -11,6 +13,7 @@ import org.slf4j.LoggerFactory;
 public class SharedLiteralUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(SharedLiteralUtils.class);
+    private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
 
     /**
      * Parse a Literal string, representing a numeric value, to determine its correct datatype
@@ -20,6 +23,7 @@ public class SharedLiteralUtils {
      * @return - OWLDataype deduced from string
      */
     static OWLDatatype parseNumericDatatype(String numericString) {
+        final OWLDatatype owlDatatype;
 //            If it has a period in the string, it's a decimal
         if (numericString.contains(".")) {
             owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_DECIMAL.getIRI());
@@ -34,5 +38,6 @@ public class SharedLiteralUtils {
                 owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_LONG.getIRI());
             }
         }
+        return owlDatatype;
     }
 }

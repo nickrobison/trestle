@@ -154,7 +154,7 @@ abstract public class OntologyTest {
                         df.getOWLNamedIndividual(IRI.create(solution.getIndividual("m").toStringID())),
                         df.getOWLNamedIndividual(IRI.create(solution.getIndividual("o").toStringID()))))
                 .collect(Collectors.toSet());
-        assertAll(() -> assertEquals(4, temporalRelations.size(), "Wrong number of temporal relations for test_maputo"),
+        assertAll(() -> assertEquals(12, temporalRelations.size(), "Wrong number of temporal relations for test_maputo"),
                 () -> assertTrue(temporalRelations
                         .stream()
                         .anyMatch(relation -> relation.getObject().equals(df.getOWLNamedIndividual(IRI.create("http://nickrobison.com/dissertation/trestle.owl#municipal2:1990:2013")))), "test_maputo is not related to municipal2")
