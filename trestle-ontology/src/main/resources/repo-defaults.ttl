@@ -3,7 +3,6 @@
 @prefix sr: <http://www.openrdf.org/config/repository/sail#>.
 @prefix sail: <http://www.openrdf.org/config/sail#>.
 @prefix owlim: <http://www.ontotext.com/trree/owlim#>.
-@prefix geo: <http://www.ontotext.com/plugins/geosparql#>.
 
 [] a rep:Repository ;
   rep:repositoryID "graphdb-repo" ;
@@ -18,6 +17,5 @@
       owlim:repository-type "file-repository" ;
       owlim:imports "/Users/nrobison/Desktop/trestle.xml" ;
       owlim:defaultNS "http://nickrobison.com/dissertation/trestle.owl#" ;
-      geo:enabled "true" ;
     ]
   ].

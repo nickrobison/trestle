@@ -66,19 +66,16 @@ public class SesameTest {
         final Repository repository = repositoryManager.getRepository("graphdb-repo");
 
         connection = repository.getConnection();
+
+        //        Enable?
+        final String enableGEOSPARQL = "PREFIX : <http://www.ontotext.com/plugins/geosparql#> INSERT DATA { _:s :enabled 'true' .}";
+        final Update update = connection.prepareUpdate(QueryLanguage.SPARQL, enableGEOSPARQL);
+        update.execute();
+
+
         connection.begin();
         connection.add(new File("/Users/nrobison/Desktop/trestle.xml"), "urn:base", RDFFormat.RDFXML);
         connection.commit();
-
-        //        Enable?
-        final String enableGEOSPARQL = "PREFIX : <http://www.ontotext.com/plugins/geosparql#>\n" +
-                "\n" +
-                "INSERT DATA {\n" +
-                "  _:s :enabled 'true' .\n" +
-                "}";
-
-        final Update update = connection.prepareUpdate(QueryLanguage.SPARQL, enableGEOSPARQL);
-        update.execute();
     }
 
     @Test
@@ -143,7 +140,7 @@ public class SesameTest {
                 "PREFIX geo: <http://www.opengis.net/ont/geosparql#>\n" +
                 "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
                 "PREFIX geof: <http://www.opengis.net/def/function/geosparql/>\n" +
-                "SELECT DISTINCT ?m WHERE { ?m rdf:type trestle:GAUL .?m trestle:has_fact ?f .?f geo:asWKT ?wkt FILTER(geof:intersection(?wkt, '<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POINT (39.5398864750001 -12.0671005249999)'^^geo:wktLiteral)) }";
+                "SELECT DISTINCT ?m WHERE { ?m rdf:type trestle:GAUL .?m trestle:has_fact ?f .?f geo:asWKT ?wkt FILTER(geof:sfIntersects(?wkt, 'MULTIPOLYGON(((32.9915311 -25.9701193999999,32.9553558000001 -26.0791321,32.9391123 -26.0327745,32.9136869000001 -26.0241227999999,32.9257746000001 -26.0450888,32.9044608040001 -26.0701784999999,32.8960634000001 -26.0516855999999,32.9143349 -26.0033473,32.9427438000001 -25.9861478999999,32.9573777000001 -25.9982697,32.9915311 -25.9701193999999)),((32.5096456000001 -25.967816,32.5549668 -25.9741010999999,32.5695855000001 -26.0133028,32.6053314210001 -26.0416069029999,32.5701370240001 -26.0840835569999,32.53560257 -26.075172424,32.4560050960001 -26.091545105,32.4411926270001 -26.0584659579999,32.4727706910001 -26.0565986629999,32.4908142090001 -26.035755157,32.4928904000001 -25.9757911,32.5096456000001 -25.967816)),((32.9103849900001 -25.9692587509999,32.9221983 -25.9703081,32.9139718000001 -25.982851,32.9009066 -25.973668,32.9103849900001 -25.9692587509999)),((32.611003876 -25.9445438389999,32.5932554 -25.9838586999999,32.5529831420001 -25.96678773,32.611003876 -25.9445438389999)))'^^geo:wktLiteral)) }";
 
         tupleQuery = connection.prepareTupleQuery(QueryLanguage.SPARQL, spatialString);
         tupleQueryResult = tupleQuery.evaluate();
