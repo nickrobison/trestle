@@ -1,7 +1,10 @@
 package com.nickrobison.trestle.ontology;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.ontotext.trree.entitypool.impl.CustomLiteralImpl;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
@@ -24,6 +27,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static com.nickrobison.trestle.utils.RDF4JLiteralFactory.createLiteral;
+import static com.nickrobison.trestle.utils.RDF4JLiteralFactory.createOWLLiteral;
 
 public abstract class SesameOntology extends TransactingOntology {
 
@@ -258,12 +262,52 @@ public abstract class SesameOntology extends TransactingOntology {
 
     @Override
     public Set<OWLDataPropertyAssertionAxiom> getAllDataPropertiesForIndividual(IRI individualIRI) {
-        return null;
+        return this.getAllDataPropertiesForIndividual(df.getOWLNamedIndividual(individualIRI));
     }
 
     @Override
     public Set<OWLDataPropertyAssertionAxiom> getAllDataPropertiesForIndividual(OWLNamedIndividual individual) {
-        return null;
+        Set<OWLDataPropertyAssertionAxiom> properties = new HashSet<>();
+        Multimap<String, Literal> statementLiterals = ArrayListMultimap.create();
+        final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
+
+        this.openTransaction(false);
+        try {
+            final RepositoryResult<Statement> statements = connection.getStatements(individualIRI, null, null);
+            try {
+
+                while (statements.hasNext()) {
+                    final Statement statement = statements.next();
+                    if (!statement.getPredicate().getNamespace().contains("rdf-syntax")) {
+                        final Value object = statement.getObject();
+                        if (object instanceof Literal) {
+                            statementLiterals.put(statement.getPredicate().toString(), Literal.class.cast(object));
+                        }
+                    }
+                }
+            } finally {
+                statements.close();
+            }
+        } finally {
+            this.commitTransaction(false);
+        }
+
+        statementLiterals
+                .asMap()
+                .entrySet()
+                .forEach(entry -> {
+                    final OWLDataProperty owlDataProperty = df.getOWLDataProperty(IRI.create(entry.getKey()));
+                    entry
+                            .getValue().forEach(literal -> {
+                        final Optional<OWLLiteral> owlLiteral = createOWLLiteral(literal);
+                        owlLiteral.ifPresent(owlLiteral1 -> properties.add(df.getOWLDataPropertyAssertionAxiom(
+                                owlDataProperty,
+                                individual,
+                                owlLiteral1)));
+                    });
+                });
+
+        return properties;
     }
 
     @Override

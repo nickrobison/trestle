@@ -691,12 +691,6 @@ public abstract class JenaOntology extends TransactingOntology {
 
     abstract public void close(boolean drop);
 
-    protected static ByteArrayInputStream ontologytoIS(OWLOntology ontology) throws OWLOntologyStorageException {
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ontology.saveOntology(new RDFXMLDocumentFormat(), out);
-        return new ByteArrayInputStream(out.toByteArray());
-    }
-
     /**
      * Parse boolean to correct Jena transaction
      *
@@ -715,7 +709,7 @@ public abstract class JenaOntology extends TransactingOntology {
      * @param resultSet - Jena ResultSet to parse
      * @return - TrestleResultSet
      */
-    protected TrestleResultSet buildResultSet(ResultSet resultSet) {
+    TrestleResultSet buildResultSet(ResultSet resultSet) {
         final TrestleResultSet trestleResultSet = new TrestleResultSet(resultSet.getRowNumber());
         while (resultSet.hasNext()) {
             final QuerySolution next = resultSet.next();
