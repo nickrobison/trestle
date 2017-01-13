@@ -11,9 +11,6 @@
       sail:sailType "graphdb:FreeSail" ;
       owlim:ruleset "owl2-rl-optimized" ;
       owlim:storage-folder "storage" ;
-      owlim:base-URL "http://nickrobison.com/dissertation/trestle.owl#" ;
       owlim:repository-type "file-repository" ;
-      owlim:imports "/Users/nrobison/Desktop/trestle.xml" ;
-      owlim:defaultNS "http://nickrobison.com/dissertation/trestle.owl#" ;
     ]
   ].
