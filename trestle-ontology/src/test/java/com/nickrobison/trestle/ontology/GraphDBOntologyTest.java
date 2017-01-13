@@ -22,7 +22,7 @@ public class GraphDBOntologyTest extends OntologyTest {
         ontology = new OntologyBuilder()
                 .fromInputStream(inputStream)
                 .withDBConnection("graphdb", "", "")
-                .name("graphdb-repo")
+                .name("trestle")
                 .build();
         ontology.initializeOntology();
     }

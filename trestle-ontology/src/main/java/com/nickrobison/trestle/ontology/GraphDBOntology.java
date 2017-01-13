@@ -3,6 +3,8 @@ package com.nickrobison.trestle.ontology;
 import afu.org.apache.commons.io.FileUtils;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
@@ -69,11 +71,12 @@ public class GraphDBOntology extends SesameOntology {
     }
 
     private static void setupNewRepository(String ontologyName) {
+        final Config config = ConfigFactory.load().getConfig("trestle.ontology.graphdb");
         logger.info("Creating new Repository {}", ontologyName);
         final TreeModel graph = new TreeModel();
 
 //        Read configuration file
-        final InputStream is = GraphDBOntology.class.getClassLoader().getResourceAsStream("./repo-defaults.ttl");
+        final InputStream is = GraphDBOntology.class.getClassLoader().getResourceAsStream(config.getString("defaults-file"));
         final RDFParser parser = Rio.createParser(RDFFormat.TURTLE);
         parser.setRDFHandler(new StatementCollector(graph));
         try {
@@ -86,6 +89,8 @@ public class GraphDBOntology extends SesameOntology {
 
         final Resource repositoryNode = GraphUtil.getUniqueSubject(graph, RDF.TYPE, RepositoryConfigSchema.REPOSITORY);
         final RepositoryConfig repositoryConfig = RepositoryConfig.create(graph, repositoryNode);
+        repositoryConfig.setID(ontologyName);
+        repositoryConfig.setTitle(String.format("Trestle Ontology: %s", ontologyName));
         repositoryManager.addRepositoryConfig(repositoryConfig);
 
         repository = repositoryManager.getRepository(ontologyName);

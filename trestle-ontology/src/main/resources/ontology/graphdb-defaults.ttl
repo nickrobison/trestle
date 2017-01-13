@@ -5,8 +5,6 @@
 @prefix owlim: <http://www.ontotext.com/trree/owlim#>.
 
 [] a rep:Repository ;
-  rep:repositoryID "graphdb-repo" ;
-  rdfs:label "GraphDB Getting Started" ;
   rep:repositoryImpl [
     rep:repositoryType "openrdf:SailRepository" ;
     sr:sailImpl [
