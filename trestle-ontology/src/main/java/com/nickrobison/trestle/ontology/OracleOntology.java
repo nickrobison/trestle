@@ -48,15 +48,15 @@ public class OracleOntology extends JenaOntology {
             logger.info("Initializing Oracle: Manually updating inference");
             mode = InferenceMaintenanceMode.NO_UPDATE;
         }
-        final Attachment owlprime = Attachment.createInstance(
-                new String[]{}, "OWLPRIME",
+        final Attachment reasonerAttachment = Attachment.createInstance(
+                new String[]{}, "OWL2RL",
                 mode, QueryOptions.DEFAULT);
-        owlprime.setInferenceOption(String.format("INC=T,RAW8=T,DOP=%s", config.getInt("parallelism")));
+        reasonerAttachment.setInferenceOption(String.format("INC=T,RAW8=T,DOP=%s", config.getInt("parallelism")));
         oracle = new Oracle(connectionString, username, password);
         try {
 //            We need this so that it actually creates the model if it doesn't exist
             ModelOracleSem.createOracleSemModel(oracle, ontologyName);
-            graph = new GraphOracleSem(oracle, ontologyName, owlprime);
+            graph = new GraphOracleSem(oracle, ontologyName, reasonerAttachment);
         } catch (SQLException e) {
             throw new RuntimeException("Can't create oracle model", e);
         }
