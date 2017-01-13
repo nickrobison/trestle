@@ -139,13 +139,6 @@
                                     </excludes>
                                 </filter>
                             </filters>
-                            <!--<artifactSet>-->
-                            <!--<includes>-->
-                            <!--<include>com.google.inject:guice</include>-->
-                            <!--<include>oracle.spatial.*:*</include>-->
-                            <!--<include>com.openlink.virtuoso:*</include>-->
-                            <!--</includes>-->
-                            <!--</artifactSet>-->
                             <relocations>
                                 <relocation>
                                     <pattern>com.google.inject</pattern>
