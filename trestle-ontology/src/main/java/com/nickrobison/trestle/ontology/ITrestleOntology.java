@@ -353,7 +353,7 @@ public interface ITrestleOntology {
 
     /**
      * Excecute a raw SPARQL query against the ontology
-     * @param query - String representing SPARQL query
+     * @param queryString - String representing SPARQL query
      * @return - TrestleResultSet for given query
      */
     TrestleResultSet executeSPARQLTRS(String queryString);

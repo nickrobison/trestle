@@ -20,7 +20,7 @@ public class SharedOntologyFunctions {
      * Currently fixed to use the RDF/XML Format
      * @param ontology - OWLOntology
      * @return - InputStream of OWLOntology
-     * @throws OWLOntologyStorageException
+     * @throws OWLOntologyStorageException - Throws an error when it fails
      */
     public static ByteArrayInputStream ontologytoIS(OWLOntology ontology) throws OWLOntologyStorageException {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
