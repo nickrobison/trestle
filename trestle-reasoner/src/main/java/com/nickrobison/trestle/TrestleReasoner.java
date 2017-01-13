@@ -1004,8 +1004,9 @@ public class TrestleReasoner {
                 .collect(Collectors.toList());
         final CompletableFuture<List<T>> conceptObjectsFuture = sequenceCompletableFutures(completableFutureList);
         try {
+            List<T> objects = conceptObjectsFuture.get();
             this.ontology.returnAndCommitTransaction(trestleTransaction);
-            return Optional.of(conceptObjectsFuture.get());
+            return Optional.of(objects);
         } catch (InterruptedException e) {
             logger.error("Object retrieval for concept {}, interrupted", conceptID, e);
             return Optional.empty();

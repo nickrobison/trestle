@@ -18,7 +18,6 @@ import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.query.*;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.config.RepositoryConfig;
 import org.eclipse.rdf4j.repository.config.RepositoryConfigSchema;
 import org.eclipse.rdf4j.repository.manager.LocalRepositoryManager;
@@ -45,6 +44,7 @@ import java.util.Set;
 
 import static com.nickrobison.trestle.utils.RDF4JLiteralFactory.createOWLLiteral;
 import static com.nickrobison.trestle.utils.SharedOntologyFunctions.ontologytoIS;
+import static org.eclipse.rdf4j.model.vocabulary.SESAME.WILDCARD;
 
 /**
  * Created by nrobison on 1/10/17.
@@ -78,14 +78,14 @@ public class GraphDBOntology extends SesameOntology {
         repository = repositoryManager.getRepository(ontologyName);
 //        If the repository doesn't exist, create it
         if (repository == null) {
-            constructLocalRepository(ontologyName);
+            setupNewRepository(ontologyName);
         } else {
             connection = repository.getConnection();
         }
         return connection;
     }
 
-    private static void constructLocalRepository(String ontologyName) {
+    private static void setupNewRepository(String ontologyName) {
         logger.info("Creating new Local Repository {}", ontologyName);
         final TreeModel graph = new TreeModel();
 
@@ -121,14 +121,6 @@ public class GraphDBOntology extends SesameOntology {
         connection = repository.getConnection();
         connection.setIsolationLevel(IsolationLevels.READ_COMMITTED);
     }
-
-    private static void setupNewRepository(String ontologyName) {
-
-        if (repositoryManager instanceof LocalRepositoryManager) {
-            constructLocalRepository(ontologyName);
-        }
-    }
-
 //    private static Model constructJenaModel() {
 //        OwlimSchemaRepository schema = new OwlimSchemaRepository();
 //        schema.setDataDir(new File(DATA_DIRECTORY));
@@ -156,6 +148,10 @@ public class GraphDBOntology extends SesameOntology {
     @Override
     public void initializeOntology() {
         logger.info("Initializing new ontology {}", this.ontologyName);
+        logger.info("Removing all statements from repository");
+        connection.begin();
+        connection.remove(WILDCARD, WILDCARD, WILDCARD);
+        connection.commit();
         connection.begin();
         try {
             connection.add(ontologytoIS(this.ontology), "urn:base", RDFFormat.RDFXML);
@@ -211,12 +207,14 @@ public class GraphDBOntology extends SesameOntology {
     @Override
     public TrestleResultSet executeSPARQLTRS(String queryString) {
         final TrestleResultSet results;
+        this.openTransaction(false);
         final TupleQuery tupleQuery = connection.prepareTupleQuery(QueryLanguage.SPARQL, queryString);
         final TupleQueryResult resultSet = tupleQuery.evaluate();
         try {
             results = buildResultSet(resultSet);
         } finally {
             resultSet.close();
+            this.commitTransaction(false);
         }
         return results;
     }
@@ -244,26 +242,13 @@ public class GraphDBOntology extends SesameOntology {
 
     @Override
     public void openDatasetTransaction(boolean write) {
-        if (!connection.isActive()) {
-            connection.begin();
-        } else {
-            logger.warn("Already in transaction");
-        }
-
-//        try {
-//            connection.begin();
-//            logger.debug("Opened GraphDB transaction");
-//        } catch (RepositoryException e) {
-//        }
+        connection.begin();
+        logger.debug("Opened GraphDB transaction");
     }
 
     @Override
     public void commitDatasetTransaction(boolean write) {
-        if (connection.isActive()) {
-            connection.commit();
-            logger.debug("GraphDB model transaction committed");
-        } else {
-            logger.warn("Not in a transaction, continuing");
-        }
+        connection.commit();
+        logger.debug("GraphDB model transaction committed");
     }
 }

@@ -63,11 +63,21 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
         if (context.getCacheFiles() != null && context.getCacheFiles().length > 0) {
             File ontologyFile = new File("./ontology");
 
+
 //        Setup the Trestle Reasoner
+//            The conf file will strip out parameters with empty values, so we need to check for that and reset them.
+            String username = conf.get("reasoner.db.username");
+            if (username == null) {
+                username = "";
+            }
+            String password = conf.get("reasoner.db.password");
+            if (password == null) {
+                password = "";
+            }
             reasoner = new TrestleBuilder()
                     .withDBConnection(conf.get("reasoner.db.connection"),
-                            conf.get("reasoner.db.username"),
-                            conf.get("reasoner.db.password"))
+                            username,
+                            password)
                     .withInputClasses(GAULObject.class)
                     .withOntology(IRI.create(context.getCacheFiles()[0]))
                     .withPrefix(conf.get("reasoner.ontology.prefix"))
