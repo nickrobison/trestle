@@ -17,7 +17,6 @@
         <module>trestle-querybuilder</module>
         <module>trestle-actor</module>
         <module>trestle-server</module>
-        <module>graphdb-triplestore</module>
     </modules>
     <packaging>pom</packaging>
 
