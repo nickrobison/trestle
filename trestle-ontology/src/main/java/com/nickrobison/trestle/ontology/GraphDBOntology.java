@@ -17,6 +17,7 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.config.RepositoryConfig;
 import org.eclipse.rdf4j.repository.config.RepositoryConfigSchema;
 import org.eclipse.rdf4j.repository.manager.LocalRepositoryManager;
+import org.eclipse.rdf4j.repository.manager.RepositoryManager;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
@@ -46,9 +47,10 @@ public class GraphDBOntology extends SesameOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(GraphDBOntology.class);
     private static final String DATA_DIRECTORY = "./target/data";
-    private static LocalRepositoryManager repositoryManager;
+    private static RepositoryManager repositoryManager;
     private static RepositoryConnection connection;
     private static Repository repository;
+    private static final Config config = ConfigFactory.load().getConfig("trestle.ontology.graphdb");
 
 
     GraphDBOntology(String ontologyName, OWLOntology ont, DefaultPrefixManager pm) {
@@ -56,6 +58,7 @@ public class GraphDBOntology extends SesameOntology {
     }
 
     private static RepositoryConnection constructRepository(String ontologyName) {
+
         final LocalRepositoryManager rm = new LocalRepositoryManager(new File(DATA_DIRECTORY));
         rm.initialize();
         repositoryManager = rm;
@@ -71,7 +74,6 @@ public class GraphDBOntology extends SesameOntology {
     }
 
     private static void setupNewRepository(String ontologyName) {
-        final Config config = ConfigFactory.load().getConfig("trestle.ontology.graphdb");
         logger.info("Creating new Repository {}", ontologyName);
         final TreeModel graph = new TreeModel();
 
@@ -157,14 +159,17 @@ public class GraphDBOntology extends SesameOntology {
             logger.info("Dropping model {} at {}", this.ontologyName, DATA_DIRECTORY);
             if (repositoryManager.isSafeToRemove(this.ontologyName)) {
                 repositoryManager.removeRepository(this.ontologyName);
+                if (config.getBoolean("removeDirectory") && (repositoryManager instanceof LocalRepositoryManager)) {
+                    logger.info("Removing base directory {}", DATA_DIRECTORY);
+                    try {
+                        FileUtils.deleteDirectory(new File(DATA_DIRECTORY));
+                    } catch (IOException e) {
+                        logger.error("Could not delete data directory {}", DATA_DIRECTORY, e);
+                    }
+                }
             } else {
                 logger.error("Cannot remove repository {}", this.ontologyName);
             }
-//            try {
-//                FileUtils.deleteDirectory(new File(DATA_DIRECTORY));
-//            } catch (IOException e) {
-//                logger.error("Could not delete data directory {}", DATA_DIRECTORY, e);
-//            }
         }
         repositoryManager.shutDown();
         logger.debug("Opened {} transactions, committed {}", this.openedTransactions.get(), this.committedTransactions.get());
@@ -212,19 +217,11 @@ public class GraphDBOntology extends SesameOntology {
     public void openDatasetTransaction(boolean write) {
         connection.begin();
         logger.debug("Opened GraphDB transaction");
-//        if (write) {
-//            connection.begin();
-//            logger.debug("GraphDB model write transaction opened");
-//        } else {
-//            dataset.begin(ReadWrite.READ);
-//            logger.debug("GraphDB model read transaction opened");
-//        }
     }
 
     @Override
     public void commitDatasetTransaction(boolean write) {
         connection.commit();
-//        dataset.commit();
         logger.debug("GraphDB model transaction committed");
     }
 }
