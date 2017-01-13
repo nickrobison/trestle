@@ -26,11 +26,6 @@
             <version>0.5-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.nickrobison</groupId>
-            <artifactId>graphdb-triplestore</artifactId>
-            <version>0.5-SNAPSHOT</version>
-        </dependency>
-        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>
