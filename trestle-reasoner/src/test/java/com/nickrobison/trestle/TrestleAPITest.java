@@ -106,7 +106,8 @@ public class TrestleAPITest {
         }
 
 //        Write the objects
-        gaulObjects.parallelStream().forEach(gaul -> {
+//        Disable the parallel
+        gaulObjects.stream().forEach(gaul -> {
             try {
                 reasoner.writeAsTrestleObject(gaul);
             } catch (TrestleClassException e) {

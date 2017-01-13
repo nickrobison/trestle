@@ -7,6 +7,7 @@ import com.ontotext.trree.config.OWLIMSailSchema;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.eclipse.rdf4j.IsolationLevels;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
@@ -17,6 +18,7 @@ import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.query.*;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.config.RepositoryConfig;
 import org.eclipse.rdf4j.repository.config.RepositoryConfigSchema;
 import org.eclipse.rdf4j.repository.manager.LocalRepositoryManager;
@@ -117,6 +119,7 @@ public class GraphDBOntology extends SesameOntology {
         repository = repositoryManager.getRepository(ontologyName);
 
         connection = repository.getConnection();
+        connection.setIsolationLevel(IsolationLevels.READ_COMMITTED);
     }
 
     private static void setupNewRepository(String ontologyName) {
@@ -241,13 +244,26 @@ public class GraphDBOntology extends SesameOntology {
 
     @Override
     public void openDatasetTransaction(boolean write) {
-        connection.begin();
-        logger.debug("Opened GraphDB transaction");
+        if (!connection.isActive()) {
+            connection.begin();
+        } else {
+            logger.warn("Already in transaction");
+        }
+
+//        try {
+//            connection.begin();
+//            logger.debug("Opened GraphDB transaction");
+//        } catch (RepositoryException e) {
+//        }
     }
 
     @Override
     public void commitDatasetTransaction(boolean write) {
-        connection.commit();
-        logger.debug("GraphDB model transaction committed");
+        if (connection.isActive()) {
+            connection.commit();
+            logger.debug("GraphDB model transaction committed");
+        } else {
+            logger.warn("Not in a transaction, continuing");
+        }
     }
 }
