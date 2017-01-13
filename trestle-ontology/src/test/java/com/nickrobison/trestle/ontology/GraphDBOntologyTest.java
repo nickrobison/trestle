@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import com.typesafe.config.Config;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.*;
@@ -19,9 +20,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class GraphDBOntologyTest extends OntologyTest {
     @Override
     void setupOntology() throws OWLOntologyCreationException {
+        final Config localConf = config.getConfig("trestle.ontology.graphdb");
         ontology = new OntologyBuilder()
                 .fromInputStream(inputStream)
-//                .withDBConnection("http://localhost:7200", "", "")
+                .withDBConnection(localConf.getString("connectionString"), localConf.getString("username"), localConf.getString("password"))
                 .name("trestle")
                 .build();
         ontology.initializeOntology();
