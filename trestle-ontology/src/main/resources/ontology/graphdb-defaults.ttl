@@ -9,8 +9,9 @@
     rep:repositoryType "openrdf:SailRepository" ;
     sr:sailImpl [
       sail:sailType "graphdb:FreeSail" ;
-      owlim:ruleset "owl2-rl-optimized" ;
       owlim:storage-folder "storage" ;
       owlim:repository-type "file-repository" ;
+      owlim:enablePredicateList "true";
+      owlim:enable-literal-index "true";
     ]
   ].

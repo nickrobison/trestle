@@ -3,6 +3,7 @@ package com.nickrobison.trestle.ontology;
 import afu.org.apache.commons.io.FileUtils;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.ontotext.trree.config.OWLIMSailSchema;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -10,8 +11,9 @@ import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.TreeModel;
-import org.eclipse.rdf4j.model.util.GraphUtil;
+import org.eclipse.rdf4j.model.util.Models;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.query.*;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -20,6 +22,7 @@ import org.eclipse.rdf4j.repository.config.RepositoryConfigSchema;
 import org.eclipse.rdf4j.repository.manager.LocalRepositoryManager;
 import org.eclipse.rdf4j.repository.manager.RemoteRepositoryManager;
 import org.eclipse.rdf4j.repository.manager.RepositoryManager;
+import org.eclipse.rdf4j.repository.sail.config.SailRepositorySchema;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
@@ -96,10 +99,19 @@ public class GraphDBOntology extends SesameOntology {
             throw new RuntimeException(e);
         }
 
-        final Resource repositoryNode = GraphUtil.getUniqueSubject(graph, RDF.TYPE, RepositoryConfigSchema.REPOSITORY);
+        final Resource repositoryNode = Models.subject(graph.filter(null, RDF.TYPE, RepositoryConfigSchema.REPOSITORY)).orElse(null);
+        graph.add(repositoryNode, RepositoryConfigSchema.REPOSITORYID, vf.createLiteral(ontologyName));
+        graph.add(repositoryNode, RDFS.LABEL, vf.createLiteral(String.format("Trestle Ontology: %s", ontologyName)));
+
+//        Manually set some parameters
+        final Resource configNode = (Resource) Models.object(graph.filter(null, SailRepositorySchema.SAILIMPL, null)).orElse(null);
+//        Set reasoner profile
+        final org.eclipse.rdf4j.model.IRI reasonerKey = vf.createIRI(OWLIMSailSchema.NAMESPACE, "ruleset");
+        final Literal reasonerValue = vf.createLiteral(config.getString("ruleset"));
+        graph.remove(configNode, reasonerKey, null);
+        graph.add(configNode, reasonerKey, reasonerValue);
+
         final RepositoryConfig repositoryConfig = RepositoryConfig.create(graph, repositoryNode);
-        repositoryConfig.setID(ontologyName);
-        repositoryConfig.setTitle(String.format("Trestle Ontology: %s", ontologyName));
         repositoryManager.addRepositoryConfig(repositoryConfig);
 
         repository = repositoryManager.getRepository(ontologyName);
@@ -159,8 +171,8 @@ public class GraphDBOntology extends SesameOntology {
                 "  _:s :enabled 'true' .\n" +
                 "}";
 
-        final Update update = connection.prepareUpdate(QueryLanguage.SPARQL, enableGEOSPARQL);
-        update.execute();
+//        final Update update = connection.prepareUpdate(QueryLanguage.SPARQL, enableGEOSPARQL);
+//        update.execute();
         logger.info("Ontology {} ready to go", this.ontologyName);
     }
 

@@ -21,7 +21,7 @@ public class GraphDBOntologyTest extends OntologyTest {
     void setupOntology() throws OWLOntologyCreationException {
         ontology = new OntologyBuilder()
                 .fromInputStream(inputStream)
-                .withDBConnection("http://localhost:7200", "", "")
+//                .withDBConnection("http://localhost:7200", "", "")
                 .name("trestle")
                 .build();
         ontology.initializeOntology();
@@ -29,7 +29,7 @@ public class GraphDBOntologyTest extends OntologyTest {
 
     @Override
     void shutdownOntology() {
-        ontology.close(false);
+        ontology.close(true);
     }
 
     @Override
