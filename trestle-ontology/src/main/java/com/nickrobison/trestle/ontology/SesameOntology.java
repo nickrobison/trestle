@@ -3,8 +3,8 @@ package com.nickrobison.trestle.ontology;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
-import com.nickrobison.trestle.ontology.types.TrestleResultSet;
-import com.ontotext.trree.entitypool.impl.CustomLiteralImpl;
+import com.nickrobison.trestle.ontology.types.TrestleResultSet;;
+import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
@@ -28,6 +28,8 @@ import java.util.Set;
 
 import static com.nickrobison.trestle.utils.RDF4JLiteralFactory.createLiteral;
 import static com.nickrobison.trestle.utils.RDF4JLiteralFactory.createOWLLiteral;
+import static com.nickrobison.trestle.utils.SharedOntologyFunctions.filterIndividualDataProperties;
+import static com.nickrobison.trestle.utils.SharedOntologyFunctions.getDataPropertiesFromIndividualFacts;
 
 public abstract class SesameOntology extends TransactingOntology {
 
@@ -38,6 +40,7 @@ public abstract class SesameOntology extends TransactingOntology {
     protected final OWLOntology ontology;
     protected final DefaultPrefixManager pm;
     protected final OWLDataFactory df;
+    protected final QueryBuilder qb;
 
 
     SesameOntology(String ontologyName, RepositoryConnection connection, OWLOntology ontology, DefaultPrefixManager pm) {
@@ -46,6 +49,7 @@ public abstract class SesameOntology extends TransactingOntology {
         this.ontology = ontology;
         this.pm = pm;
         this.df = OWLManager.getOWLDataFactory();
+        this.qb = new QueryBuilder(QueryBuilder.DIALECT.SESAME, this.pm);
     }
 
 
@@ -213,22 +217,42 @@ public abstract class SesameOntology extends TransactingOntology {
 
     @Override
     public void removeIndividual(OWLNamedIndividual individual) {
-
+        final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
+        this.openTransaction(true);
+        try {
+            connection.remove(individualIRI, null, null);
+        } finally {
+            this.commitTransaction(true);
+        }
     }
 
     @Override
     public boolean containsResource(IRI individualIRI) {
-        return false;
+        return containsResource(df.getOWLNamedIndividual(individualIRI));
     }
 
     @Override
     public boolean containsResource(OWLNamedObject individual) {
-        return false;
+        final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
+        this.openTransaction(false);
+        try {
+            final RepositoryResult<Statement> statements = connection.getStatements(individualIRI, null, null);
+            if (statements.hasNext()) {
+                statements.close();
+                return true;
+            } else {
+                statements.close();
+                return false;
+            }
+        } finally {
+            this.commitTransaction(false);
+        }
+
     }
 
     @Override
     public void writeOntology(IRI path, boolean validate) throws OWLOntologyStorageException {
-
+        logger.error("Write ontology not-implemented for Sesame Ontology");
     }
 
     public abstract void close(boolean drop);
@@ -247,17 +271,36 @@ public abstract class SesameOntology extends TransactingOntology {
 
     @Override
     public Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean inferred) {
-        return null;
+        Set<OWLNamedIndividual> instances = new HashSet<>();
+        final org.eclipse.rdf4j.model.IRI classIRI = vf.createIRI(getFullIRIString(owlClass));
+        this.openTransaction(false);
+        try {
+            final RepositoryResult<Statement> statements = connection.getStatements(null, RDF.TYPE, classIRI);
+            try {
+                while (statements.hasNext()) {
+                    final Statement next = statements.next();
+                    instances.add(df.getOWLNamedIndividual(IRI.create(next.getSubject().stringValue())));
+                }
+            } finally {
+                statements.close();
+            }
+        } finally {
+            this.commitTransaction(false);
+        }
+        return instances;
     }
 
     @Override
     public Set<OWLDataPropertyAssertionAxiom> getDataPropertiesForIndividual(IRI individualIRI, List<OWLDataProperty> properties) {
-        return null;
+        return this.getDataPropertiesForIndividual(df.getOWLNamedIndividual(individualIRI), properties);
     }
 
     @Override
     public Set<OWLDataPropertyAssertionAxiom> getDataPropertiesForIndividual(OWLNamedIndividual individual, List<OWLDataProperty> properties) {
-        return null;
+
+        final Set<OWLDataPropertyAssertionAxiom> allDataPropertiesForIndividual = getAllDataPropertiesForIndividual(individual);
+        logger.debug("Requested {} properties, returned {}", properties.size(), allDataPropertiesForIndividual.size());
+        return filterIndividualDataProperties(properties, allDataPropertiesForIndividual);
     }
 
     @Override
@@ -312,42 +355,101 @@ public abstract class SesameOntology extends TransactingOntology {
 
     @Override
     public Set<OWLObjectPropertyAssertionAxiom> getAllObjectPropertiesForIndividual(IRI individual) {
-        return null;
+        return getAllObjectPropertiesForIndividual(df.getOWLNamedIndividual(individual));
     }
 
     @Override
     public Set<OWLObjectPropertyAssertionAxiom> getAllObjectPropertiesForIndividual(OWLNamedIndividual individual) {
-        return null;
+        Set<OWLObjectPropertyAssertionAxiom> properties = new HashSet<>();
+        final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
+        this.openTransaction(false);
+        try {
+            final RepositoryResult<Statement> statements = connection.getStatements(individualIRI, null, null);
+            try {
+                while (statements.hasNext()) {
+                    final Statement statement = statements.next();
+
+                    if (!statement.getPredicate().getNamespace().contains("rdf-syntax")) {
+                        final Value object = statement.getObject();
+//                        FIXME(nrobison): Implement this
+                        if (object instanceof Literal) {
+                            final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(IRI.create(statement.getPredicate().toString()));
+                            final OWLNamedIndividual objectIndividual = df.getOWLNamedIndividual(IRI.create(statement.getObject().stringValue()));
+                            properties.add(df.getOWLObjectPropertyAssertionAxiom(
+                                    owlObjectProperty,
+                                    individual,
+                                    objectIndividual));
+                        }
+                    }
+                }
+            } finally {
+                statements.close();
+            }
+        } finally {
+            this.commitTransaction(false);
+        }
+        return properties;
     }
 
     @Override
     public Optional<OWLNamedIndividual> getIndividual(OWLNamedIndividual individual) {
-        return null;
+        logger.error("Get Individual unimplemented on SesameOntology");
+        return Optional.empty();
     }
 
     @Override
     public Optional<Set<OWLLiteral>> getIndividualDataProperty(OWLNamedIndividual individual, IRI propertyIRI) {
-        return null;
+        return getIndividualDataProperty(individual, df.getOWLDataProperty(propertyIRI));
     }
 
     @Override
     public Optional<Set<OWLLiteral>> getIndividualDataProperty(IRI individualIRI, OWLDataProperty property) {
-        return null;
+        return getIndividualDataProperty(df.getOWLNamedIndividual(individualIRI), property);
     }
 
     @Override
     public Optional<Set<OWLLiteral>> getIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property) {
-        return null;
+        Set<OWLLiteral> properties = new HashSet<>();
+        final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
+        final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(property));
+        this.openTransaction(false);
+        try {
+            final RepositoryResult<Statement> statements = connection.getStatements(individualIRI, propertyIRI, null);
+            try {
+                while (statements.hasNext()) {
+                    final Statement next = statements.next();
+                    final Value object = next.getObject();
+                    if (object instanceof Literal) {
+                        createOWLLiteral(Literal.class.cast(object)).ifPresent(properties::add);
+                    } else {
+                        logger.warn("{} on {} is not a literal", next.getPredicate(), individual);
+                    }
+                }
+            } finally {
+                statements.close();
+            }
+        } finally {
+            this.commitTransaction(false);
+        }
+
+        if (properties.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(properties);
     }
 
     @Override
     public Set<OWLDataPropertyAssertionAxiom> GetFactsForIndividual(OWLNamedIndividual individual, @Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal) {
-        return null;
+        final String objectQuery = qb.buildObjectPropertyRetrievalQuery(startTemporal, endTemporal, individual);
+        final TrestleResultSet resultSet = this.executeSPARQLTRS(objectQuery);
+        return getDataPropertiesFromIndividualFacts(this.df, resultSet);
     }
 
     @Override
     public Set<OWLDataPropertyAssertionAxiom> GetTemporalsForIndividual(OWLNamedIndividual individual) {
-        return null;
+        final String temporalQuery = this.qb.buildIndividualTemporalQuery(individual);
+        final TrestleResultSet resultSet = this.executeSPARQLTRS(temporalQuery);
+        return getDataPropertiesFromIndividualFacts(this.df, resultSet);
     }
 
     @Override

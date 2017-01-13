@@ -72,7 +72,7 @@ public class GraphDBOntologyTest extends OntologyTest {
         ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
         individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
         assertEquals(Integer.toString(smallInt), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
-        assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
+        assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be int");
 
         //        Big Int
         aLong = df.getOWLDataProperty(IRI.create("trestle:", "int_big"));
@@ -82,7 +82,7 @@ public class GraphDBOntologyTest extends OntologyTest {
         ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
         individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
         assertEquals(Integer.toString(bigInt), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
-        assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
+        assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be int");
 
         //        Negative Int
         aLong = df.getOWLDataProperty(IRI.create("trestle:", "neg_int"));
@@ -112,7 +112,6 @@ public class GraphDBOntologyTest extends OntologyTest {
         ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
         individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
         assertEquals(Long.toString(negativeLong), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
-//        Oracle can't tell the difference between an int and a small long, so it treats them as longs.
         assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
 
         aLong = df.getOWLDataProperty(IRI.create("trestle:", "neg_big_long"));

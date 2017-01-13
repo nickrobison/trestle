@@ -7,6 +7,7 @@ import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.utils.JenaLiteralFactory;
+import com.nickrobison.trestle.utils.SharedOntologyFunctions;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
@@ -19,7 +20,6 @@ import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
@@ -29,7 +29,6 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.io.*;
 import java.time.OffsetDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Created by nrobison on 7/22/16.
@@ -422,21 +421,9 @@ public abstract class JenaOntology extends TransactingOntology {
 
     @Override
     public Set<OWLDataPropertyAssertionAxiom> getDataPropertiesForIndividual(OWLNamedIndividual individual, List<OWLDataProperty> properties) {
-        final Set<OWLDataPropertyAssertionAxiom> propertyAxioms;
-
-        logger.debug("Collapsing reads into a single transaction");
         final Set<OWLDataPropertyAssertionAxiom> allDataPropertiesForIndividual = getAllDataPropertiesForIndividual(individual);
         logger.debug("Requested {} properties, returned {}", properties.size(), allDataPropertiesForIndividual.size());
-//        If the sizes don't match, filter them down
-        if (allDataPropertiesForIndividual.size() != properties.size()) {
-            propertyAxioms = allDataPropertiesForIndividual
-                    .stream()
-                    .filter(property -> properties.contains(property.getProperty().asOWLDataProperty()))
-                    .collect(Collectors.toSet());
-        } else {
-            propertyAxioms = allDataPropertiesForIndividual;
-        }
-        return propertyAxioms;
+        return SharedOntologyFunctions.filterIndividualDataProperties(properties, allDataPropertiesForIndividual);
     }
 
     @Override
@@ -612,11 +599,7 @@ public abstract class JenaOntology extends TransactingOntology {
 //        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
         final TrestleResultSet resultSet = this.executeSPARQLTRS(objectQuery);
 //        final ResultSet resultSet = this.executeSPARQL(objectQuery);
-        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = resultSet.getResults().stream().map(result -> df.getOWLDataPropertyAssertionAxiom(
-                df.getOWLDataProperty(IRI.create(result.getIndividual("property").toStringID())),
-                df.getOWLNamedIndividual(IRI.create(result.getIndividual("individual").toStringID())),
-                result.getLiteral("object")))
-                .collect(Collectors.toSet());
+        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = SharedOntologyFunctions.getDataPropertiesFromIndividualFacts(df, resultSet);
 
 
 
@@ -637,11 +620,7 @@ public abstract class JenaOntology extends TransactingOntology {
         final String temporalQuery = qb.buildIndividualTemporalQuery(individual);
 //        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
         final TrestleResultSet resultSet = this.executeSPARQLTRS(temporalQuery);
-        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = resultSet.getResults().stream().map(result -> df.getOWLDataPropertyAssertionAxiom(
-                df.getOWLDataProperty(IRI.create(result.getIndividual("property").toStringID())),
-                df.getOWLNamedIndividual(IRI.create(result.getIndividual("individual").toStringID())),
-                result.getLiteral("object")))
-                .collect(Collectors.toSet());
+        return SharedOntologyFunctions.getDataPropertiesFromIndividualFacts(df, resultSet);
 //        final ResultSet resultSet = this.executeSPARQL(temporalQuery);
 //        while (resultSet.hasNext()) {
 //            final QuerySolution next = resultSet.next();
@@ -652,7 +631,6 @@ public abstract class JenaOntology extends TransactingOntology {
 //                    literal
 //            )));
 //        }
-        return retrievedDataProperties;
     }
 
     public IRI getFullIRI(IRI iri) {
