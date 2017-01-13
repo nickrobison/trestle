@@ -27,6 +27,7 @@ public class LocalOntologyTest extends OntologyTest {
     public void setupOntology() throws OWLOntologyCreationException {
         ontology = new OntologyBuilder()
                 .fromInputStream(inputStream)
+                .withDBConnection("tdb", "", "")
                 .name("trestle")
                 .build();
         ontology.initializeOntology();

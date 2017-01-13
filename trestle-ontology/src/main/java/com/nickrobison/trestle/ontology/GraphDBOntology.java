@@ -5,6 +5,7 @@ import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
@@ -53,16 +54,20 @@ public class GraphDBOntology extends SesameOntology {
     private static final Config config = ConfigFactory.load().getConfig("trestle.ontology.graphdb");
 
 
-    GraphDBOntology(String ontologyName, OWLOntology ont, DefaultPrefixManager pm) {
-        super(ontologyName, constructRepository(ontologyName), ont, pm);
+    GraphDBOntology(String ontologyName, @Nullable String connectionString, String username, String password, OWLOntology ont, DefaultPrefixManager pm) {
+        super(ontologyName, constructRepository(ontologyName, connectionString, username, password), ont, pm);
     }
 
-    private static RepositoryConnection constructRepository(String ontologyName) {
+    private static RepositoryConnection constructRepository(String ontologyName, @Nullable String connectionString, String username, String password) {
 
-        final LocalRepositoryManager rm = new LocalRepositoryManager(new File(DATA_DIRECTORY));
-        rm.initialize();
-        repositoryManager = rm;
+        if (connectionString == null) {
+//            Connect to local ontology
+            repositoryManager = new LocalRepositoryManager(new File(DATA_DIRECTORY));
+        } else {
+//            Connect to remove ontology
+        }
 
+        repositoryManager.initialize();
         repository = repositoryManager.getRepository(ontologyName);
 //        If the repository doesn't exist, create it
         if (repository == null) {
@@ -73,8 +78,8 @@ public class GraphDBOntology extends SesameOntology {
         return connection;
     }
 
-    private static void setupNewRepository(String ontologyName) {
-        logger.info("Creating new Repository {}", ontologyName);
+    private static void constructLocalRepository(String ontologyName) {
+        logger.info("Creating new Local Repository {}", ontologyName);
         final TreeModel graph = new TreeModel();
 
 //        Read configuration file
@@ -98,6 +103,13 @@ public class GraphDBOntology extends SesameOntology {
         repository = repositoryManager.getRepository(ontologyName);
 
         connection = repository.getConnection();
+    }
+
+    private static void setupNewRepository(String ontologyName) {
+
+        if (repositoryManager instanceof LocalRepositoryManager) {
+            constructLocalRepository(ontologyName);
+        }
     }
 
 //    private static Model constructJenaModel() {
