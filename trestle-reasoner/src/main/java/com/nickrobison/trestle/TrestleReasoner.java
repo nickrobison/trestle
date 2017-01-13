@@ -675,7 +675,7 @@ public class TrestleReasoner {
                     spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.UNITS.METER, atLDTime);
                 }
             } catch (UnsupportedFeatureException e) {
-                logger.error("Database {] doesn't support spatial intersections.", spatialDalect, e);
+                logger.error("Database {} doesn't support spatial intersections.", spatialDalect, e);
                 return Optional.empty();
             }
 

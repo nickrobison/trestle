@@ -342,6 +342,11 @@ public class QueryBuilder {
                 ps.append("FILTER((?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime) && bif:st_intersects(?wkt, ?wktString^^ogc:wktLiteral, ?distance)) }");
                 ps.setLiteral("distance", buffer);
                 break;
+            } case SESAME: {
+//                We need to remove this, otherwise GraphDB substitutes geosparql for ogc
+                ps.removeNsPrefix("geosparql");
+                ps.append("FILTER((?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
+                break;
             }
 
             default:
@@ -367,7 +372,6 @@ public class QueryBuilder {
                 ps.removeNsPrefix("geosparql");
 //                Add this hint to the query planner
                 ps.setNsPrefix("ORACLE_SEM_HT_NS", "http://oracle.com/semtech#leading(?wkt)");
-//                TODO(nrobison): Fix this, gross
                 ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
                 break;
             }
@@ -375,6 +379,10 @@ public class QueryBuilder {
                 logger.warn("Unit conversion not implemented yet, assuming meters as base distance");
                 ps.append("FILTER(bif:st_intersects(?wkt, ?wktString^^ogc:wktLiteral, ?distance)) }");
                 ps.setLiteral("distance", buffer);
+                break;
+            } case SESAME: {
+                ps.removeNsPrefix("geosparql");
+                ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
                 break;
             }
 
