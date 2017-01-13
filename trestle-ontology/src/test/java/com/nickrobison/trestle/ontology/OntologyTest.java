@@ -115,30 +115,30 @@ abstract public class OntologyTest {
         assertEquals(1, individualProperty.get().size(), "Wrong number of values");
         assertEquals(owlLiteral, individualProperty.get().stream().findFirst().get(), "Wrong property literal");
 
-//        Try to write a property value to an individual that doesn't exist
-        final OWLNamedIndividual missing_individual = df.getOWLNamedIndividual(IRI.create("trestle:", "missing_individual"));
-        final OWLDataPropertyAssertionAxiom propertyForMissingIndividual = df.getOWLDataPropertyAssertionAxiom(
-                trestle_property,
-                missing_individual,
-                42);
-        ontology.writeIndividualDataProperty(propertyForMissingIndividual);
-
-//        Try to write a value for a non-existent property to an existing individual
-        final OWLDataProperty missing_data_property = df.getOWLDataProperty(IRI.create("trestle:", "missing_data_property"));
-        final OWLDataPropertyAssertionAxiom missingPropertyForIndividual = df.getOWLDataPropertyAssertionAxiom(
-                missing_data_property,
-                test_individual,
-                42);
-        ontology.writeIndividualDataProperty(propertyForMissingIndividual);
-
-//        Test object Property as well
-        final OWLObjectProperty missing_object_property = df.getOWLObjectProperty(IRI.create("trestle:", "missing_object_property"));
-        final OWLObjectPropertyAssertionAxiom missingObjectProperty = df.getOWLObjectPropertyAssertionAxiom(
-                missing_object_property,
-                test_individual,
-                missing_individual);
-
-        ontology.writeIndividualObjectProperty(missingObjectProperty);
+////        Try to write a property value to an individual that doesn't exist
+//        final OWLNamedIndividual missing_individual = df.getOWLNamedIndividual(IRI.create("trestle:", "missing_individual"));
+//        final OWLDataPropertyAssertionAxiom propertyForMissingIndividual = df.getOWLDataPropertyAssertionAxiom(
+//                trestle_property,
+//                missing_individual,
+//                42);
+//        ontology.writeIndividualDataProperty(propertyForMissingIndividual);
+//
+////        Try to write a value for a non-existent property to an existing individual
+//        final OWLDataProperty missing_data_property = df.getOWLDataProperty(IRI.create("trestle:", "missing_data_property"));
+//        final OWLDataPropertyAssertionAxiom missingPropertyForIndividual = df.getOWLDataPropertyAssertionAxiom(
+//                missing_data_property,
+//                test_individual,
+//                42);
+//        ontology.writeIndividualDataProperty(propertyForMissingIndividual);
+//
+////        Test object Property as well
+//        final OWLObjectProperty missing_object_property = df.getOWLObjectProperty(IRI.create("trestle:", "missing_object_property"));
+//        final OWLObjectPropertyAssertionAxiom missingObjectProperty = df.getOWLObjectPropertyAssertionAxiom(
+//                missing_object_property,
+//                test_individual,
+//                missing_individual);
+//
+//        ontology.writeIndividualObjectProperty(missingObjectProperty);
     }
 
     @Test
