@@ -129,13 +129,23 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <artifactSet>
-                                <includes>
-                                    <include>com.google.inject:guice</include>
-                                    <include>oracle.spatial.*:*</include>
-                                    <include>com.openlink.virtuoso:*</include>
-                                </includes>
-                            </artifactSet>
+                            <filters>
+                                <filter>
+                                    <artifact>*.*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <!--<artifactSet>-->
+                            <!--<includes>-->
+                            <!--<include>com.google.inject:guice</include>-->
+                            <!--<include>oracle.spatial.*:*</include>-->
+                            <!--<include>com.openlink.virtuoso:*</include>-->
+                            <!--</includes>-->
+                            <!--</artifactSet>-->
                             <relocations>
                                 <relocation>
                                     <pattern>com.google.inject</pattern>

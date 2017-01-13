@@ -72,7 +72,7 @@ public class LocalOntology extends JenaOntology {
         Dataset spatialDataset = null;
         logger.debug("Building TDB and Lucene database");
         try {
-            indexDirectory = FSDirectory.open(new File(DATA_DIRECTORY + "/lucene").toPath());
+            indexDirectory = FSDirectory.open(new File(DATA_DIRECTORY + "/lucene"));
 //            Not sure if these entity and geo fields are correct, but oh well.
             EntityDefinition ed = new EntityDefinition("entityField", "geoField");
 //            ed.setSpatialContextFactory("com.spatial4j.core.context.jts.JtsSpatialContextFactory");
