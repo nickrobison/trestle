@@ -168,6 +168,13 @@ public class OntologyBuilder {
                     owlOntology,
                     pm.orElse(createDefaultPrefixManager())
             );
+        } else if (connectionString.isPresent() && connectionString.get().contains("http")) {
+            logger.info("Connecting to remote GraphDB instance {} at: {}", this.ontologyName.orElse(""), this.connectionString.get());
+            return new GraphDBOntology(
+                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
+                    connectionString.get(),username.orElse(""), password.orElse(""), owlOntology,
+                    pm.orElse(createDefaultPrefixManager())
+            );
         } else {
             logger.info("Connect to embedded GraphDB instance {}", this.ontologyName.orElse(""));
             return new GraphDBOntology(

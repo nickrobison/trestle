@@ -18,6 +18,7 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.config.RepositoryConfig;
 import org.eclipse.rdf4j.repository.config.RepositoryConfigSchema;
 import org.eclipse.rdf4j.repository.manager.LocalRepositoryManager;
+import org.eclipse.rdf4j.repository.manager.RemoteRepositoryManager;
 import org.eclipse.rdf4j.repository.manager.RepositoryManager;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParser;
@@ -61,17 +62,18 @@ public class GraphDBOntology extends SesameOntology {
     private static RepositoryConnection constructRepository(String ontologyName, @Nullable String connectionString, String username, String password) {
 
         if (connectionString == null) {
-//            Connect to local ontology
+//            Connect to local repository
             repositoryManager = new LocalRepositoryManager(new File(DATA_DIRECTORY));
         } else {
-//            Connect to remove ontology
+//            Connect to remote repository
+            repositoryManager = RemoteRepositoryManager.getInstance(connectionString, username, password);
         }
 
         repositoryManager.initialize();
         repository = repositoryManager.getRepository(ontologyName);
 //        If the repository doesn't exist, create it
         if (repository == null) {
-            setupNewRepository(ontologyName);
+            constructLocalRepository(ontologyName);
         } else {
             connection = repository.getConnection();
         }
