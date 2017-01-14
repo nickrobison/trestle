@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.utils.SharedOntologyFunctions;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.query.*;
 import org.apache.jena.query.spatial.*;
@@ -118,7 +119,7 @@ public class LocalOntology extends JenaOntology {
         logger.debug("Writing out the ontology to byte array");
 
         try {
-            model.read(ontologytoIS(this.ontology), null);
+            model.read(SharedOntologyFunctions.ontologytoIS(this.ontology), null);
         } catch (OWLOntologyStorageException e) {
             logger.error("Cannot read ontology into model", e);
             throw new RuntimeException("Cannot read ontology in model", e);

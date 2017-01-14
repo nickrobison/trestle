@@ -80,9 +80,12 @@ public class GAULIntegratorTests {
 //        connectionString = "jdbc:virtuoso://localhost:1111";
 //        userName = "dba";
 //        password = "dba";
-        connectionString = "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial";
-        userName = "spatialUser";
-        password = "spatial1";
+//        connectionString = "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial";
+//        userName = "spatialUser";
+//        password = "spatial1";
+        connectionString = "http://localhost:7200";
+        userName = "";
+        password = "";
         ontologyPath = "file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl";
         ontologyPrefix = "http://nickrobison.com/test/hadoop.owl#";
         ontologyName = "hadoop_gaul_rewrite";

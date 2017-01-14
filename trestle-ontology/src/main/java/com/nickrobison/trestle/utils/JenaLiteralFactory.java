@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Optional;
 
+import static com.nickrobison.trestle.utils.SharedLiteralUtils.parseNumericDatatype;
+
 /**
  * Created by nrobison on 12/4/16.
  */
@@ -66,20 +68,22 @@ public class JenaLiteralFactory {
         } else if (literal.getDatatypeURI().equals(OWL2Datatype.XSD_DECIMAL.getIRI().toString())) {
 //                Work around Oracle bug by trying to parse an Int and see if it works
             final String numericString = literal.getLexicalForm();
-//            If it has a period in the string, it's a decimal
-            if (numericString.contains(".")) {
-                owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_DECIMAL.getIRI());
-            } else {
-                long l = Long.parseLong(numericString);
-                l = l >> (Integer.SIZE);
-                if (l == 0 | l == -1) {
-                    logger.trace("Decimal seems to be an Int");
-                    owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_INTEGER.getIRI());
-                } else {
-                    logger.trace("Decimal seems to be a Long");
-                    owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_LONG.getIRI());
-                }
-            }
+            owlDatatype = parseNumericDatatype(numericString);
+
+////            If it has a period in the string, it's a decimal
+//            if (numericString.contains(".")) {
+//                owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_DECIMAL.getIRI());
+//            } else {
+//                long l = Long.parseLong(numericString);
+//                l = l >> (Integer.SIZE);
+//                if (l == 0 | l == -1) {
+//                    logger.trace("Decimal seems to be an Int");
+//                    owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_INTEGER.getIRI());
+//                } else {
+//                    logger.trace("Decimal seems to be a Long");
+//                    owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_LONG.getIRI());
+//                }
+//            }
         } else if (literal.getDatatype() == RDF.dtLangString) {
             return Optional.of(df.getOWLLiteral(literal.getLexicalForm(), literal.getLanguage()));
         } else {

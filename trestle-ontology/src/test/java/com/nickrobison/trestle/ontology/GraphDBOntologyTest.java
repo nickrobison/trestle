@@ -1,7 +1,7 @@
 package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
-import org.junit.jupiter.api.Disabled;
+import com.typesafe.config.Config;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.*;
@@ -10,39 +10,33 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import java.util.Optional;
 import java.util.Set;
 
-import static com.nickrobison.trestle.common.StaticIRI.conceptOfIRI;
-import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Created by nrobison on 7/22/16.
+ * Created by nrobison on 1/10/17.
  */
-@SuppressWarnings({"Duplicates", "OptionalGetWithoutIsPresent"})
 @Tag("integration")
-@Tag("local")
-public class LocalOntologyTest extends OntologyTest {
-
+@Tag("GraphDB")
+public class GraphDBOntologyTest extends OntologyTest {
     @Override
-    public void setupOntology() throws OWLOntologyCreationException {
+    void setupOntology() throws OWLOntologyCreationException {
+        final Config localConf = config.getConfig("trestle.ontology.graphdb");
         ontology = new OntologyBuilder()
                 .fromInputStream(inputStream)
-                .withDBConnection("tdb", "", "")
+                .withDBConnection(localConf.getString("connectionString"), localConf.getString("username"), localConf.getString("password"))
                 .name("trestle")
                 .build();
         ontology.initializeOntology();
     }
 
     @Override
-    @Disabled
-    public void testRelationAssociation() {
-
+    void shutdownOntology() {
+        ontology.close(true);
     }
 
     @Override
     @Test
     public void testByteParsing() throws MissingOntologyEntity {
-
         int smallInt = 4321;
         int bigInt = Integer.MAX_VALUE;
         int negativeInt = Integer.MIN_VALUE;
@@ -60,7 +54,7 @@ public class LocalOntologyTest extends OntologyTest {
         ontology.createIndividual(owlClassAssertionAxiom);
         ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
         Optional<Set<OWLLiteral>> individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
-        assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
+        assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
 
 //        Big long
         aLong = df.getOWLDataProperty(IRI.create("trestle:", "long_big"));
@@ -80,7 +74,7 @@ public class LocalOntologyTest extends OntologyTest {
         ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
         individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
         assertEquals(Integer.toString(smallInt), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
-        assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
+        assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be int");
 
         //        Big Int
         aLong = df.getOWLDataProperty(IRI.create("trestle:", "int_big"));
@@ -90,7 +84,7 @@ public class LocalOntologyTest extends OntologyTest {
         ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
         individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
         assertEquals(Integer.toString(bigInt), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
-        assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
+        assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be int");
 
         //        Negative Int
         aLong = df.getOWLDataProperty(IRI.create("trestle:", "neg_int"));
@@ -120,8 +114,7 @@ public class LocalOntologyTest extends OntologyTest {
         ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
         individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
         assertEquals(Long.toString(negativeLong), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
-//        Oracle can't tell the difference between an int and a small long, so it treats them as longs.
-        assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
+        assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
 
         aLong = df.getOWLDataProperty(IRI.create("trestle:", "neg_big_long"));
         owlLiteral = df.getOWLLiteral(Long.toString(negativeBigLong), OWL2Datatype.XSD_LONG);
@@ -131,10 +124,5 @@ public class LocalOntologyTest extends OntologyTest {
         individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
         assertEquals(Long.toString(negativeBigLong), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
         assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
-    }
-
-    @Override
-    public void shutdownOntology() {
-        ontology.close(true);
     }
 }

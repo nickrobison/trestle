@@ -675,7 +675,7 @@ public class TrestleReasoner {
                     spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.UNITS.METER, atLDTime);
                 }
             } catch (UnsupportedFeatureException e) {
-                logger.error("Database {] doesn't support spatial intersections.", spatialDalect, e);
+                logger.error("Database {} doesn't support spatial intersections.", spatialDalect, e);
                 return Optional.empty();
             }
 
@@ -1004,8 +1004,9 @@ public class TrestleReasoner {
                 .collect(Collectors.toList());
         final CompletableFuture<List<T>> conceptObjectsFuture = sequenceCompletableFutures(completableFutureList);
         try {
+            List<T> objects = conceptObjectsFuture.get();
             this.ontology.returnAndCommitTransaction(trestleTransaction);
-            return Optional.of(conceptObjectsFuture.get());
+            return Optional.of(objects);
         } catch (InterruptedException e) {
             logger.error("Object retrieval for concept {}, interrupted", conceptID, e);
             return Optional.empty();

@@ -26,6 +26,10 @@ dist
 /.settings
 **/dependency-reduced-pom.xml
 
+# Ignore files I generate
+trestle-integrations/*.err
+trestle-integrations/*.owl
+
 # Java Ignore
 *.class
 
