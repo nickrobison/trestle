@@ -170,7 +170,7 @@ abstract public class OntologyTest {
                 "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
                 "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
                 "SELECT DISTINCT ?m ?p ?o WHERE { ?m rdf:type :GAUL . ?m ?p ?o. ?p rdfs:subPropertyOf :Temporal_Relation . " +
-                "VALUES ?m {<http://nickrobison.com/dissertation/trestle.owl#municipal2:1990:2013>} }";
+                "VALUES ?m {<http://nickrobison.com/dissertation/trestle.owl#municipal1:1990:2013>} }";
 
         final TrestleResultSet trestleResultSet = ontology.executeSPARQLTRS(queryString);
         Set<OWLObjectPropertyAssertionAxiom> temporalRelations = trestleResultSet.getResults().stream().map(solution ->
@@ -179,7 +179,7 @@ abstract public class OntologyTest {
                         df.getOWLNamedIndividual(IRI.create(solution.getIndividual("m").toStringID())),
                         df.getOWLNamedIndividual(IRI.create(solution.getIndividual("o").toStringID()))))
                 .collect(Collectors.toSet());
-        assertAll(() -> assertEquals(12, temporalRelations.size(), "Wrong number of temporal relations for test_maputo"),
+        assertAll(() -> assertEquals(12, temporalRelations.size(), "Wrong number of temporal relations for municipal1"),
                 () -> assertTrue(temporalRelations
                         .stream()
                         .anyMatch(relation -> relation.getObject().equals(df.getOWLNamedIndividual(IRI.create("http://nickrobison.com/dissertation/trestle.owl#municipal2:1990:2013")))), "test_maputo is not related to municipal2")
