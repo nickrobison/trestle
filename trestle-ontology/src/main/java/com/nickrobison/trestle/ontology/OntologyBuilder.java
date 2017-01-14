@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
-import com.nickrobison.trestle.ontology.util.ImportsConfigReader;
+import com.typesafe.config.*;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.InputStream;
 import java.util.*;
+import java.util.Optional;
 
 import static com.nickrobison.trestle.common.StaticIRI.GEOSPARQLPREFIX;
 import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
@@ -21,6 +22,7 @@ import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 @SuppressWarnings({"nullness", "OptionalUsedAsFieldOrParameterType"})
 public class OntologyBuilder {
     private static final Logger logger = LoggerFactory.getLogger(OntologyBuilder.class);
+    private static Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
 
     private Optional<IRI> iri = Optional.empty();
     private Optional<InputStream> is = Optional.empty();
@@ -188,13 +190,22 @@ public class OntologyBuilder {
     private OWLOntologyIRIMapper getImportsMapper()
     {
         OWLOntologyIRIMapper iriMapper = new OWLOntologyIRIMapper() {
-            private ImportsConfigReader impConfReader = new ImportsConfigReader();
-            private String importsDirPath;
+            private Config importsConfig = config.getConfig("trestle.ontology.imports");
+            private String importsDirPath = importsConfig.getString("importsDirectory");
             private Map<IRI,String> fileMap;
             {
-                impConfReader.readConfigFile();
-                importsDirPath = impConfReader.getImportsDirectoryPath();
-                fileMap = impConfReader.getIriToFilenameMap();
+
+                fileMap = new HashMap<IRI,String>();
+                for(ConfigObject mappingObj : importsConfig.getObjectList("importsIRIMappings"))
+                {
+                    Config mappingConfig = mappingObj.toConfig();
+                    if(mappingObj.containsKey("iri")&&mappingObj.containsKey("file")) {
+                        String iriString = mappingConfig.getString("iri");
+                        IRI iri = IRI.create(iriString);
+                        String fileString = mappingConfig.getString("file");
+                        fileMap.put(iri, fileString);
+                    }
+                }
             }
 
             @Override
