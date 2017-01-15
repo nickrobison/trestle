@@ -15,7 +15,6 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
@@ -31,10 +30,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.sql.SQLException;
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by nrobison on 5/5/16.
@@ -150,10 +150,9 @@ public class GAULIntegratorTests {
                 .withName(ontologyName)
                 .build();
 
-        final Optional<Map<@NonNull GAULObject, Double>> relatedObjects1 = reasoner.getRelatedObjects(GAULObject.class, "21882:Boane:1990:1997", 0.0);
-        assertTrue(relatedObjects1.isPresent(), "Should have related objects");
-        assertTrue(relatedObjects1.get().size() > 0, "Should have more than 0 related objects");
-        logger.info("Has {} objects}", relatedObjects1.get().size());
+        Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, "Manhica:concept", null, null);
+        assertAll(() -> assertTrue(conceptMembers.isPresent(), "Should have Manhica concept members"),
+                () -> assertEquals(3, conceptMembers.get().size(), "Wrong number of members for Manhica"));
 
     }
 
@@ -161,8 +160,8 @@ public class GAULIntegratorTests {
     public static void close() throws IOException {
         cluster.shutdown();
 
-        File outputFile = new File("/Users/nrobison/Desktop/hadoop.owl");
-        reasoner.writeOntology(outputFile.toURI(), true);
+//        File outputFile = new File("/Users/nrobison/Desktop/hadoop.owl");
+//        reasoner.writeOntology(outputFile.toURI(), true);
         reasoner.shutdown(false);
     }
 }
