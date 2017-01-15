@@ -30,6 +30,13 @@ abstract class TransactingOntology implements ITrestleOntology {
 
     private ThreadLocal<TrestleTransaction> threadTransactionObject = new ThreadLocal<>();
 
+    /**
+     * Set the current thread transaction state, using the information inherited from the TrestleTransaction object
+     *
+     * @param transactionObject - Transaction Object to take ownership of thread transaction
+     * @param write - Writable transaction?
+     * @return
+     */
     @Override
     public TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject, boolean write) {
         logger.debug("Inheriting transaction from existing transaction object, setting flags, but not opening new transaction");
@@ -40,16 +47,28 @@ abstract class TransactingOntology implements ITrestleOntology {
         return transactionObject;
     }
 
+    /**
+     * Set the current thread transaction state as a read transaction, using the information inherited from the TrestleTransaction object
+     * @param transactionObject - Existing TrestleTransactionObject
+     * @return - TrestleTransaction object inheriting from parent transaction
+     */
     @Override
     public TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject) {
-        if (transactionObject.ownsATransaction()) {
-            return createandOpenNewTransaction(transactionObject, transactionObject.isWriteTransaction());
-        } else {
-            logger.debug("Provided transaction object doesn't own the current transaction. Continuing");
-            return transactionObject;
-        }
+        return createandOpenNewTransaction(transactionObject, transactionObject.isWriteTransaction());
+//        if (transactionObject.ownsATransaction()) {
+//            return createandOpenNewTransaction(transactionObject, transactionObject.isWriteTransaction());
+//        } else {
+//            logger.debug("Provided transaction object doesn't own the current transaction. Continuing");
+//            return transactionObject;
+//        }
     }
 
+    /**
+     * Create and open a new transaction.
+     * If the thread is already in an open transaction, we return an empty TrestleTransaction object
+     * @param write - Is this a write transaction?
+     * @return
+     */
     @Override
     public TrestleTransaction createandOpenNewTransaction(boolean write) {
         if (threadTransactionObject.get() == null) {
@@ -60,10 +79,15 @@ abstract class TransactingOntology implements ITrestleOntology {
             return trestleTransaction;
         } else {
             logger.warn("Thread transaction owned, returning empty object");
-            return new TrestleTransaction();
+            return new TrestleTransaction(write);
         }
     }
 
+    /**
+     * Return a TrestleTransaction object and attempt to commit the current Transaction
+     * If the TrestleTransaction object does not own the current transaction, we continue without committing
+     * @param transaction - Transaction object to try to commit current transaction with
+     */
     @Override
     public void returnAndCommitTransaction(TrestleTransaction transaction) {
 //        If the transaction state is inherited, don't commit
