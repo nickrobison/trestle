@@ -19,10 +19,7 @@ import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.parser.*;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
-import com.nickrobison.trestle.types.TemporalScope;
-import com.nickrobison.trestle.types.TemporalType;
-import com.nickrobison.trestle.types.TrestleFact;
-import com.nickrobison.trestle.types.TrestleIndividual;
+import com.nickrobison.trestle.types.*;
 import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
@@ -955,16 +952,14 @@ public class TrestleReasoner {
 //        Get the object relations
         final CompletableFuture<List<TrestleRelation>> relationsFuture = CompletableFuture.supplyAsync(() -> {
             final String query = this.qb.buildIndividualRelationQuery(individual);
-            return ontology.executeSPARQL(query);
+            return ontology.executeSPARQLTRS(query);
         })
                 .thenApply(sparqlResults -> {
                     List<TrestleRelation> relations = new ArrayList<>();
-                    while (sparqlResults.hasNext()) {
-                        final QuerySolution next = sparqlResults.next();
-                        relations.add(new TrestleRelation(next.getResource("m").getURI(),
-                                ObjectRelation.getRelationFromIRI(IRI.create(next.getResource("o").getURI())),
-                                next.getResource("p").getURI()));
-                    }
+                    sparqlResults.getResults()
+                            .forEach(result -> relations.add(new TrestleRelation(result.getIndividual("m").toStringID(),
+                                    ObjectRelation.getRelationFromIRI(IRI.create(result.getIndividual("o").toStringID())),
+                                    result.getIndividual("p").toStringID())));
                     return relations;
                 });
 
