@@ -936,8 +936,15 @@ public class TrestleReasoner {
         final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualFacts = ontology.getIndividualObjectProperty(individual, hasFactIRI);
         final List<CompletableFuture<TrestleFact>> factFutureList = individualFacts.orElse(new HashSet<>())
                 .stream()
-            return ontology.executeSPARQLTRS(query);
-        })
+                .map(fact -> buildTrestleFact(fact.getObject().asOWLNamedIndividual()))
+                .collect(Collectors.toList());
+
+        CompletableFuture<List<TrestleFact>> factsFuture = sequenceCompletableFutures(factFutureList);
+
+        final CompletableFuture<List<TrestleRelation>> relationsFuture = CompletableFuture.supplyAsync(() -> {
+                String query = this.qb.buildIndividualRelationQuery(individual);
+                return ontology.executeSPARQLTRS(query);
+            })
                 .thenApply(sparqlResults -> {
                     List<TrestleRelation> relations = new ArrayList<>();
                     sparqlResults.getResults()
