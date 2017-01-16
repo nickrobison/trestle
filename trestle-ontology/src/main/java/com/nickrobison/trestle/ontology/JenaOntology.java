@@ -62,20 +62,20 @@ public abstract class JenaOntology extends TransactingOntology {
     abstract public boolean isConsistent();
 
     @Override
-    public Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, IRI propertyIRI) {
+    public Optional<List<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, IRI propertyIRI) {
         return this.getIndividualObjectProperty(individual, df.getOWLObjectProperty(propertyIRI));
     }
 
 
     @Override
-    public Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(IRI individualIRI, IRI objectPropertyIRI) {
+    public Optional<List<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(IRI individualIRI, IRI objectPropertyIRI) {
         return this.getIndividualObjectProperty(df.getOWLNamedIndividual(individualIRI),
                 df.getOWLObjectProperty(objectPropertyIRI));
     }
 
     @Override
-    public Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property) {
-        Set<OWLObjectPropertyAssertionAxiom> properties = new HashSet<>();
+    public Optional<List<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property) {
+        List<OWLObjectPropertyAssertionAxiom> properties = new ArrayList<>();
         this.openTransaction(false);
         this.model.enterCriticalSection(Lock.READ);
         try {

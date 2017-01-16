@@ -11,6 +11,7 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -147,7 +148,7 @@ abstract public class OntologyTest {
 //        Check to ensure the relation is inferred
         final OWLNamedIndividual test_maputo = df.getOWLNamedIndividual(IRI.create("trestle:", "maputo:2013:3000"));
         final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(hasFactIRI);
-        final Optional<Set<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(test_maputo, owlObjectProperty);
+        final Optional<List<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(test_maputo, owlObjectProperty);
         assertTrue(individualObjectProperty.isPresent(), "Should have related facts");
         assertEquals(4, individualObjectProperty.get().size(), "Wrong number of facts");
 
@@ -201,7 +202,7 @@ abstract public class OntologyTest {
 
 
 //        Try to read test objects
-        final Optional<Set<OWLObjectPropertyAssertionAxiom>> conceptMembers = ontology.getIndividualObjectProperty(df.getOWLNamedIndividual("trestle:", "Cidade_de_maputo_concept"), df.getOWLObjectProperty(conceptOfIRI));
+        final Optional<List<OWLObjectPropertyAssertionAxiom>> conceptMembers = ontology.getIndividualObjectProperty(df.getOWLNamedIndividual("trestle:", "Cidade_de_maputo_concept"), df.getOWLObjectProperty(conceptOfIRI));
         assertAll(() -> assertTrue(conceptMembers.isPresent()),
                 () -> assertTrue(conceptMembers.get().size() > 0),
                 () -> assertEquals(df.getOWLNamedIndividual(IRI.create("trestle:", "maputo:2013:3000")), conceptMembers.get().stream().findFirst().get().getSubject(), "Should have maputo object"));

@@ -187,6 +187,9 @@ public class TrestleAPITest {
                 e.printStackTrace();
             }
         });
+//        Try to write some relations between two objects
+        reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(0), ObjectRelation.MEETS);
+        reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(3), ObjectRelation.DURING);
 
         reasoner.getUnderlyingOntology().runInference();
         classObjects.stream().forEach(object -> {
@@ -213,11 +216,6 @@ public class TrestleAPITest {
 //        assertEquals(4, individuals.size(), "Should have 4 individuals, overall");
 
 //        Test attribute generation
-//        Try to write some relations between two objects
-        reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(0), ObjectRelation.MEETS);
-        reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(3), ObjectRelation.DURING);
-//        Update the inferencer, again?
-        reasoner.getUnderlyingOntology().runInference();
         final Instant iStart = Instant.now();
         final TrestleIndividual trestleIndividual = reasoner.getTrestleIndividual(individuals.get(0));
         final Instant iEnd = Instant.now();
