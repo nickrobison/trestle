@@ -11,7 +11,7 @@
 
     <artifactId>trestle-actor</artifactId>
     <properties>
-        <logback.version>1.1.7</logback.version>
+        <logback.version>1.1.8</logback.version>
     </properties>
 
     <dependencies>

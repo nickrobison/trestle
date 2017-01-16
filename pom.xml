@@ -25,16 +25,16 @@
         <excludeTags>integration</excludeTags>
         <provided.scope>provided</provided.scope>
         <storm.version>1.0.0</storm.version>
-        <owl.version>5.0.4</owl.version>
+        <owl.version>5.0.5</owl.version>
         <jena.version>3.1.0</jena.version>
-        <slf4j.version>1.7.21</slf4j.version>
+        <slf4j.version>1.7.22</slf4j.version>
         <junit.jupiter.version>5.0.0-M3</junit.jupiter.version>
-        <jmh.version>1.15</jmh.version>
-        <geotools.version>16.0</geotools.version>
+        <jmh.version>1.17.3</jmh.version>
+        <geotools.version>16.1</geotools.version>
         <!--Checker properties-->
         <checker.version>2.0.1</checker.version>
         <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
-        <compiler.version>3.5.1</compiler.version>
+        <compiler.version>3.6.0</compiler.version>
         <compiler.default.args>-parameters</compiler.default.args>
     </properties>
     <dependencyManagement>
@@ -60,7 +60,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>20.0</version>
+                <version>21.0</version>
             </dependency>
             <dependency>
                 <groupId>com.google.inject</groupId>
@@ -111,7 +111,7 @@
             <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
-                <version>9.4.1209.jre7</version>
+                <version>9.4.1212.jre7</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
