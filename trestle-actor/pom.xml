@@ -5,13 +5,13 @@
     <parent>
         <artifactId>trestle</artifactId>
         <groupId>com.nickrobison</groupId>
-        <version>0.5-SNAPSHOT</version>
+        <version>0.5</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>trestle-actor</artifactId>
     <properties>
-        <logback.version>1.1.7</logback.version>
+        <logback.version>1.1.8</logback.version>
     </properties>
 
     <dependencies>
@@ -61,12 +61,12 @@
         <dependency>
             <groupId>com.nickrobison</groupId>
             <artifactId>trestle-reasoner</artifactId>
-            <version>0.5-SNAPSHOT</version>
+            <version>0.5</version>
         </dependency>
         <dependency>
             <groupId>com.nickrobison</groupId>
             <artifactId>trestle-ontology</artifactId>
-            <version>0.5-SNAPSHOT</version>
+            <version>0.5</version>
         </dependency>
         <!--Logging dependencies-->
         <!--Need to override the slf4j dependency, since we're running as a command line application-->
