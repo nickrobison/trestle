@@ -14,13 +14,13 @@ public class TrestleIndividual {
 
     private final String individualID;
     private final List<TrestleFact> facts;
-    private final TemporalObject validTemporal;
+    private final TemporalObject existsTemporal;
     private final List<TrestleRelation> relations;
 
-    public TrestleIndividual(String id, TemporalObject validTemporal) {
+    public TrestleIndividual(String id, TemporalObject existsTemporal) {
         this.facts = new ArrayList<>();
         this.individualID = id;
-        this.validTemporal = validTemporal;
+        this.existsTemporal = existsTemporal;
         this.relations = new ArrayList<>();
     }
 
@@ -50,14 +50,14 @@ public class TrestleIndividual {
 
     public List<TrestleFact> getFacts() { return this.facts;}
 
-    public TemporalObject getValidTemporal() { return this.validTemporal;}
+    public TemporalObject getExistsTemporal() { return this.existsTemporal;}
 
     public Set<TemporalObject> getTemporals() {
         final Set<TemporalObject> attributeTemporals = facts
                 .stream()
                 .map(TrestleFact::getValidTemporal)
                 .collect(Collectors.toSet());
-        attributeTemporals.add(this.validTemporal);
+        attributeTemporals.add(this.existsTemporal);
 
         return attributeTemporals;
     }
