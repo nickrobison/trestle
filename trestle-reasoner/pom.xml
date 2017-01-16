@@ -5,7 +5,7 @@
     <parent>
         <artifactId>trestle</artifactId>
         <groupId>com.nickrobison</groupId>
-        <version>0.5-SNAPSHOT</version>
+        <version>0.5</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
@@ -17,22 +17,22 @@
         <dependency>
             <groupId>com.nickrobison</groupId>
             <artifactId>trestle-exporter</artifactId>
-            <version>0.5-SNAPSHOT</version>
+            <version>0.5</version>
         </dependency>
         <dependency>
             <groupId>com.nickrobison</groupId>
             <artifactId>trestle-common</artifactId>
-            <version>0.5-SNAPSHOT</version>
+            <version>0.5</version>
         </dependency>
         <dependency>
             <groupId>com.nickrobison</groupId>
             <artifactId>trestle-ontology</artifactId>
-            <version>0.5-SNAPSHOT</version>
+            <version>0.5</version>
         </dependency>
         <dependency>
             <groupId>com.nickrobison</groupId>
             <artifactId>trestle-querybuilder</artifactId>
-            <version>0.5-SNAPSHOT</version>
+            <version>0.5</version>
         </dependency>
         <!--OWL Dependencies-->
         <dependency>
