@@ -948,6 +948,12 @@ public class TrestleReasoner {
                 .thenApply(sparqlResults -> {
                     List<TrestleRelation> relations = new ArrayList<>();
                     sparqlResults.getResults()
+                            .stream()
+//                            We want the subProperties of Temporal/Spatial relations. So we filter them out
+                            .filter(result -> !result.getIndividual("o").asOWLNamedIndividual().getIRI().equals(temporalRelationIRI))
+                            .filter(result -> !result.getIndividual("o").asOWLNamedIndividual().getIRI().equals(spatialRelationIRI))
+//                            Filter out self
+                            .filter(result -> !result.getIndividual("p").asOWLNamedIndividual().equals(individual))
                             .forEach(result -> relations.add(new TrestleRelation(result.getIndividual("m").toStringID(),
                                     ObjectRelation.getRelationFromIRI(IRI.create(result.getIndividual("o").toStringID())),
                                     result.getIndividual("p").toStringID())));

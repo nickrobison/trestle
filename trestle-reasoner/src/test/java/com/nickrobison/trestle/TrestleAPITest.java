@@ -223,7 +223,7 @@ public class TrestleAPITest {
         final Instant iEnd = Instant.now();
         logger.info("Creating individual took {} ms", Duration.between(iStart, iEnd).toMillis());
         assertAll(() -> assertEquals(2, trestleIndividual.getFacts().size(), "Wrong number of attributes"),
-                () -> assertEquals(1, trestleIndividual.getRelations().size(), "Wrong number of relations"));
+                () -> assertEquals(2, trestleIndividual.getRelations().size(), "Wrong number of relations"));
 
 
 //        Now try to remove it

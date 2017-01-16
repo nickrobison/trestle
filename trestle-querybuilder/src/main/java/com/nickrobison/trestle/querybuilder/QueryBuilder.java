@@ -221,7 +221,6 @@ public class QueryBuilder {
                 "?m ?o ?p . " +
                 "?o rdfs:subPropertyOf trestle:Temporal_Relation } " +
                 "UNION { " +
-                "?m rdf:type trestle:GAUL . " +
                 "?m ?o ?p . " +
                 "?o rdfs:subPropertyOf trestle:Spatial_Relation ." +
                 "} . " +

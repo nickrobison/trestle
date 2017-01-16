@@ -196,7 +196,7 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?m ?o ?p WHERE { { ?m ?o ?p . ?o rdfs:subPropertyOf trestle:Temporal_Relation } UNION { ?m rdf:type trestle:GAUL . ?m ?o ?p . ?o rdfs:subPropertyOf trestle:Spatial_Relation .} . VALUES ?m {<http://nickrobison.com/dissertation/trestle.owl#test_muni4>}}";
+            "SELECT DISTINCT ?m ?o ?p WHERE { { ?m ?o ?p . ?o rdfs:subPropertyOf trestle:Temporal_Relation } UNION { ?m ?o ?p . ?o rdfs:subPropertyOf trestle:Spatial_Relation .} . VALUES ?m {<http://nickrobison.com/dissertation/trestle.owl#test_muni4>}}";
 
     @BeforeAll
     public static void createPrefixes() {
