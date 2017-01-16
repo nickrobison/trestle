@@ -1,16 +1,12 @@
 package com.nickrobison.trestle;
 
 import com.nickrobison.trestle.caching.TrestleCache;
-import com.nickrobison.trestle.exceptions.TrestleClassException;
-import com.nickrobison.trestle.parser.ClassRegister;
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.function.Function;
 
 /**
  * Created by nrobison on 8/25/16.
@@ -27,8 +23,10 @@ public class TrestleBuilder {
     Optional<String> ontologyName = Optional.empty();
     Optional<TrestleCache> sharedCache = Optional.empty();
     Optional<IRI> ontologyIRI = Optional.empty();
+    Optional<String> reasonerPrefix = Optional.empty();
     boolean initialize = false;
     boolean caching = true;
+    final TrestlePrefixManager pm;
 
     /**
      * Builder pattern for Trestle Reasoner
@@ -37,6 +35,19 @@ public class TrestleBuilder {
         this.username = "";
         this.password = "";
         this.inputClasses = new HashSet<>();
+        pm = new TrestlePrefixManager();
+    }
+
+    /**
+     * Builder pattern for Trestle Reasoner
+     * @param reasonerPrefix - String of reasoner prefix
+     */
+    public TrestleBuilder(String reasonerPrefix) {
+        this.username = "";
+        this.password = "";
+        this.inputClasses = new HashSet<>();
+        pm = new TrestlePrefixManager(reasonerPrefix);
+        this.reasonerPrefix = Optional.of(reasonerPrefix);
     }
 
     /**
@@ -57,12 +68,36 @@ public class TrestleBuilder {
     }
 
     /**
-     * Build Trestle with specific ontology
+     * Setup Trestle with specific ontology
+     * If no ontology is specified, it loads the vendored ontology
      * @param iri - IRI of ontology to load
      * @return - TrestleBuilder
      */
-    public TrestleBuilder withIRI(IRI iri) {
+    public TrestleBuilder withOntology(IRI iri) {
         this.ontologyIRI = Optional.of(iri);
+        return this;
+    }
+
+    /**
+     * Set the prefix of the reasoner.
+     * If no prefix is specified, it defaults to using the trestle prefix
+     * @param iri - String representing prefix to use for Reasoner
+     * @return - TrestleBuilder
+     */
+    public TrestleBuilder withPrefix(String iri) {
+        this.reasonerPrefix = Optional.of(iri);
+        this.pm.setDefaultPrefix(iri);
+        return this;
+    }
+
+    /**
+     * Add ontology prefix and URI string to expand to
+     * @param prefix - String of ontology prefix
+     * @param uri - String of URI to expand prefix to
+     * @return - TrestleBuilder
+     */
+    public TrestleBuilder addPrefix(String prefix, String uri) {
+        this.pm.addPrefix(prefix, uri);
         return this;
     }
 
@@ -88,7 +123,7 @@ public class TrestleBuilder {
     }
 
     /**
-     * Setup trestle with a preexisting shared cache
+     * Setup Trestle with a preexisting shared cache
      *
      * @param cache - TrestleCache to use
      * @return - TrestleBuilder

@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
+import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -20,7 +21,7 @@ import java.io.ByteArrayOutputStream;
 /**
  * Created by nrobison on 7/22/16.
  */
-@SuppressWarnings({"initialization"})
+@SuppressWarnings({"initialization", "Duplicates"})
 @ThreadSafe
 public class VirtuosoOntology extends JenaOntology {
 
@@ -78,15 +79,14 @@ public class VirtuosoOntology extends JenaOntology {
     }
 
     @Override
-//    Need to override the SPARQL command because the geospatial extensions will cause Jena to fail the query parsing.
-    public ResultSet executeSPARQL(String queryString) {
-        ResultSet resultSet;
+    public TrestleResultSet executeSPARQLTRS(String queryString) {
+//        ResultSet resultSet;
+        final TrestleResultSet resultSet;
         final QueryExecution queryExecution = VirtuosoQueryExecutionFactory.create(queryString, (VirtGraph) virtModel.getGraph());
         this.openTransaction(false);
         this.model.enterCriticalSection(Lock.READ);
         try {
-            resultSet = queryExecution.execSelect();
-            resultSet = ResultSetFactory.copyResults(resultSet);
+            resultSet = this.buildResultSet(queryExecution.execSelect());
         } finally {
             queryExecution.close();
             this.model.leaveCriticalSection();

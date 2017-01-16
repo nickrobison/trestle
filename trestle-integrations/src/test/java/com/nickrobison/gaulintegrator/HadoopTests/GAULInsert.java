@@ -6,27 +6,29 @@ import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
 import com.nickrobison.gaulintegrator.GAULObject;
 import com.nickrobison.gaulintegrator.common.ObjectID;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Created by nrobison on 5/9/16.
  */
 @SuppressWarnings("initialization.fields.uninitialized")
+@Tag("integration")
 public class GAULInsert {
 
     private Connection dbConnection;
     private GAULObject testObject;
     private ObjectID testID;
 
-    @Before
+    @BeforeEach
     public void setup() throws SQLException {
         dbConnection = DriverManager.getConnection("jdbc:postgresql://localhost/gaul", "nrobison", "");
 
@@ -63,11 +65,11 @@ public class GAULInsert {
                 (Polygon) GeometryEngine.geometryFromWkt(rs.getString("Geom"), 0, Geometry.Type.Polygon)
                 );
 
-        assertEquals("Objects should be the same", testObject.toString(), retrievedObject.toString());
+        assertEquals(testObject.toString(), retrievedObject.toString(), "Objects should be the same");
 
     }
 
-    @After
+    @AfterEach
     public void cleanup() throws SQLException {
         String deleteTestDataString = "DELETE FROM objects where ObjectID = ?";
         final PreparedStatement deleteStatement = dbConnection.prepareStatement(deleteTestDataString);

@@ -1,24 +1,28 @@
 package com.nickrobison.trestle.ontology;
 
+import com.typesafe.config.*;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.*;
+import java.util.Optional;
+
+import static com.nickrobison.trestle.common.StaticIRI.GEOSPARQLPREFIX;
+import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 
 /**
  * Created by nrobison on 6/21/16.
  */
 // FIXME(nrobison): Work to remove this, I feel like my optionals should fix the nullness, right?
-@SuppressWarnings("nullness")
+@SuppressWarnings({"nullness", "OptionalUsedAsFieldOrParameterType"})
 public class OntologyBuilder {
     private static final Logger logger = LoggerFactory.getLogger(OntologyBuilder.class);
+    private static Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
 
     private Optional<IRI> iri = Optional.empty();
     private Optional<InputStream> is = Optional.empty();
@@ -90,10 +94,16 @@ public class OntologyBuilder {
      * @return - ITrestleOntology for the correct underlying ontology configuration
      * @throws OWLOntologyCreationException - Throws if it can't create the ontology
      */
-//    TODO(nrobison): Catch the ontology builder exception and return an empty optional instead
-    public Optional<ITrestleOntology> build() throws OWLOntologyCreationException {
+    public ITrestleOntology build() throws OWLOntologyCreationException {
         final OWLOntologyManager owlOntologyManager = OWLManager.createOWLOntologyManager();
         OWLOntology owlOntology;
+
+        // load ontology mapper (favors local files if present)
+        Set<OWLOntologyIRIMapper> mappers = new HashSet<>();
+        OWLOntologyIRIMapper mapper = getImportsMapper();
+        mappers.add(mapper);
+        owlOntologyManager.setIRIMappers(mappers);
+
         if (this.iri.isPresent()) {
             logger.debug("Loading ontology from: {}", this.iri.get());
             owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument(this.iri.get());
@@ -114,7 +124,7 @@ public class OntologyBuilder {
 //            If there's a connection string, then we need to return a database Ontology
         if (connectionString.isPresent() && connectionString.get().contains("oracle")) {
             logger.info("Connecting to Oracle database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
-            return Optional.of(new OracleOntology(
+            return new OracleOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
                     pm.orElse(createDefaultPrefixManager()),
@@ -122,7 +132,7 @@ public class OntologyBuilder {
                     connectionString.get(),
                     username.orElse(""),
                     password.orElse("")
-            ));
+            );
 //        } else if (connectionString.isPresent() && connectionString.get().contains("postgresql")) {
 //            logger.info("Connecting to Postgres database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
 //            return Optional.of(new SesameOntology(
@@ -135,14 +145,14 @@ public class OntologyBuilder {
 //            ));
         } else if (connectionString.isPresent() && connectionString.get().contains("virtuoso")) {
             logger.info("Connecting to Virtuoso database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
-            return Optional.of(new VirtuosoOntology(
+            return new VirtuosoOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
                     pm.orElse(createDefaultPrefixManager()),
                     connectionString.get(),
                     username.orElse(""),
                     password.orElse("")
-            ));
+            );
 //        } else if (connectionString.isPresent() && connectionString.get().contains("snarl")) {
 //            logger.info("Connecting to Stardog database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
 //            return Optional.of(new StardogOntology(
@@ -153,17 +163,66 @@ public class OntologyBuilder {
 //                    username.orElse(""),
 //                    password.orElse("")
 //            ));
-        }
-
-        else {
+        } else if (connectionString.isPresent() && connectionString.get().contains("tdb")) {
             logger.info("Connecting to Local TDB {}", this.ontologyName.orElse(""));
-            return Optional.of(new LocalOntology(
+            return new LocalOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
                     owlOntology,
                     pm.orElse(createDefaultPrefixManager())
-//                    classify(owlOntology, new ConsoleProgressMonitor())
-            ));
+            );
+        } else if (connectionString.isPresent() && connectionString.get().contains("http")) {
+            logger.info("Connecting to remote GraphDB instance {} at: {}", this.ontologyName.orElse(""), this.connectionString.get());
+            return new GraphDBOntology(
+                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
+                    connectionString.get(),username.orElse(""), password.orElse(""), owlOntology,
+                    pm.orElse(createDefaultPrefixManager())
+            );
+        } else {
+            logger.info("Connect to embedded GraphDB instance {}", this.ontologyName.orElse(""));
+            return new GraphDBOntology(
+                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
+                    null, "", "", owlOntology,
+                    pm.orElse(createDefaultPrefixManager())
+            );
         }
+    }
+
+    private OWLOntologyIRIMapper getImportsMapper()
+    {
+        OWLOntologyIRIMapper iriMapper = new OWLOntologyIRIMapper() {
+            private Config importsConfig = config.getConfig("trestle.ontology.imports");
+            private String importsDirPath = importsConfig.getString("importsDirectory");
+            private Map<IRI,String> fileMap;
+            {
+
+                fileMap = new HashMap<IRI,String>();
+                for(ConfigObject mappingObj : importsConfig.getObjectList("importsIRIMappings"))
+                {
+                    Config mappingConfig = mappingObj.toConfig();
+                    if(mappingObj.containsKey("iri")&&mappingObj.containsKey("file")) {
+                        String iriString = mappingConfig.getString("iri");
+                        IRI iri = IRI.create(iriString);
+                        String fileString = mappingConfig.getString("file");
+                        fileMap.put(iri, fileString);
+                    }
+                }
+            }
+
+            @Override
+            public IRI getDocumentIRI(IRI iri) {
+                // construct IRI if in mapper
+                IRI documentIRI = null;
+                String fileName = fileMap.get(iri);
+                File importOntFile = new File(importsDirPath+fileName);
+                if(importOntFile.exists()&&importOntFile.isFile()&&importOntFile.canRead()) {
+                    documentIRI = IRI.create(importOntFile);
+                }
+
+                return documentIRI;
+            }
+        };
+
+        return iriMapper;
     }
 
     private static String extractNamefromIRI(IRI iri) {
@@ -172,40 +231,18 @@ public class OntologyBuilder {
 
     private DefaultPrefixManager createDefaultPrefixManager() {
         DefaultPrefixManager pm = new DefaultPrefixManager();
-        pm.setDefaultPrefix("http://nickrobison.com/dissertation/trestle.owl#");
-//        TODO(nrobison): This should be broken into its own thing. Maybe a function to add prefixes?
-//        pm.setPrefix("main_geo:", "http://nickrobison.com/dissertation/main_geo.owl#");
+        pm.setDefaultPrefix(TRESTLE_PREFIX);
         pm.setPrefix("rdf:", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
         pm.setPrefix("rdfs:", "http://www.w3.org/2000/01/rdf-schema#");
         pm.setPrefix("owl:", "http://www.w3.org/2002/07/owl#");
 //        Jena doesn't use the normal geosparql prefix, so we need to define a separate spatial class
         pm.setPrefix("spatial:", "http://www.jena.apache.org/spatial#");
-        pm.setPrefix("geosparql:", "http://www.opengis.net/ont/geosparql#");
-        pm.setPrefix("trestle:", "http://nickrobison.com/dissertation/trestle.owl#");
+        pm.setPrefix("geosparql:", GEOSPARQLPREFIX);
+        pm.setPrefix("trestle:", TRESTLE_PREFIX);
 //        Need the ogc and ogcf prefixes for the oracle spatial
         pm.setPrefix("ogcf:", "http://www.opengis.net/def/function/geosparql/");
         pm.setPrefix("ogc:", "http://www.opengis.net/ont/geosparql#");
         pm.setPrefix("orageo:", "http://xmlns.oracle.com/rdf/geo/");
-
-//        Add any defined prefixes
         return pm;
     }
-
-//    private static PelletReasoner classify(final OWLOntology ontology, final ReasonerProgressMonitor progressMonitor) {
-//        final PelletReasoner reasoner = PelletReasonerFactory.getInstance().createReasoner(ontology, new SimpleConfiguration(progressMonitor));
-//
-//        reasoner.precomputeInferences(
-//                InferenceType.CLASS_ASSERTIONS,
-//                InferenceType.DATA_PROPERTY_ASSERTIONS,
-//                InferenceType.DISJOINT_CLASSES,
-//                InferenceType.SAME_INDIVIDUAL,
-//                InferenceType.CLASS_HIERARCHY,
-//                InferenceType.OBJECT_PROPERTY_HIERARCHY,
-//                InferenceType.OBJECT_PROPERTY_ASSERTIONS,
-//                InferenceType.DIFFERENT_INDIVIDUALS
-//        );
-//
-//        return reasoner;
-//    }
-
 }

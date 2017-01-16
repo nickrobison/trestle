@@ -5,7 +5,7 @@
     <parent>
         <artifactId>trestle</artifactId>
         <groupId>com.nickrobison</groupId>
-        <version>0.4</version>
+        <version>0.5</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -80,7 +80,7 @@
         <dependency>
             <groupId>com.nickrobison</groupId>
             <artifactId>trestle-common</artifactId>
-            <version>0.4</version>
+            <version>0.5</version>
         </dependency>
     </dependencies>
     <build>
@@ -88,7 +88,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>${maven.shade.version}</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -96,14 +95,14 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <createDependencyReducedPom>true</createDependencyReducedPom>
-                            <shadedArtifactAttached>false</shadedArtifactAttached>
                             <artifactSet>
                                 <includes>
                                     <include>oracle.spatial.*:*</include>
                                     <include>com.oracle:*</include>
                                 </includes>
                             </artifactSet>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <createDependencyReducedPom>true</createDependencyReducedPom>
                         </configuration>
                     </execution>
                 </executions>

@@ -4,15 +4,18 @@ import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
-import com.nickrobison.trestle.parser.ClassParser;
-import com.nickrobison.trestle.parser.OracleOntologyGAULoader;
+import com.nickrobison.trestle.parser.TrestleParser;
 import com.nickrobison.trestle.types.TrestleIndividual;
+import com.nickrobison.trestle.types.relations.ObjectRelation;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.opengis.referencing.operation.TransformException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -20,8 +23,12 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -30,6 +37,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -37,32 +45,40 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Created by nrobison on 7/27/16.
  */
 @SuppressWarnings({"Duplicates", "initialization"})
+@Tag("integration")
 public class TrestleAPITest {
 
+    private static final Logger logger = LoggerFactory.getLogger(TrestleAPITest.class);
+    public static final String OVERRIDE_PREFIX = "http://nickrobison.com/test-owl#";
     private TrestleReasoner reasoner;
     private OWLDataFactory df;
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
     private String datasetClassID;
+    private TrestleParser tp;
 
     @BeforeEach
     public void setup() {
+        final Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
         reasoner = new TrestleBuilder()
-                .withDBConnection("jdbc:virtuoso://localhost:1111", "dba", "dba")
-//                .withDBConnection("jdbc:virtuoso://nuclet:1111", "dba", "dba")
-//                .withDBConnection("jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial", "spatialUser", "spatial1")
+                .withDBConnection(config.getString("trestle.ontology.connectionString"),
+                        config.getString("trestle.ontology.username"),
+                        config.getString("trestle.ontology.password"))
                 .withName("api_test")
-                .withIRI(IRI.create("file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl"))
+                .withOntology(IRI.create(config.getString("trestle.ontology.location")))
+                .withPrefix(OVERRIDE_PREFIX)
                 .withInputClasses(TestClasses.GAULTestClass.class,
                         TestClasses.GAULComplexClassTest.class,
                         TestClasses.JTSGeometryTest.class,
                         TestClasses.ESRIPolygonTest.class,
                         TestClasses.GeotoolsPolygonTest.class,
-                        TestClasses.OffsetDateTimeTest.class)
+                        TestClasses.OffsetDateTimeTest.class,
+                        TestClasses.MultiLangTest.class)
                 .withoutCaching()
                 .initialize()
                 .build();
 
         df = OWLManager.getOWLDataFactory();
+        tp = new TrestleParser(df, OVERRIDE_PREFIX, false, null);
     }
 
     @Test
@@ -70,7 +86,7 @@ public class TrestleAPITest {
 //        Parse the CSV
         List<TestClasses.GAULTestClass> gaulObjects = new ArrayList<>();
 
-        final InputStream is = OracleOntologyGAULoader.class.getClassLoader().getResourceAsStream("objects.csv");
+        final InputStream is = TrestleAPITest.class.getClassLoader().getResourceAsStream("objects.csv");
 
         final BufferedReader br = new BufferedReader(new InputStreamReader(is));
 
@@ -97,9 +113,10 @@ public class TrestleAPITest {
         }
 
 //        Write the objects
-        gaulObjects.parallelStream().forEach(gaul -> {
+//        Disable the parallel
+        gaulObjects.stream().forEach(gaul -> {
             try {
-                reasoner.writeObjectAsFact(gaul);
+                reasoner.writeAsTrestleObject(gaul);
             } catch (TrestleClassException e) {
                 throw new RuntimeException(String.format("Problem storing object %s", gaul.adm0_name), e);
             } catch (MissingOntologyEntity missingOntologyEntity) {
@@ -154,26 +171,29 @@ public class TrestleAPITest {
         final Polygon geometry = (Polygon) GeometryEngine.geometryFromWkt("POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", 0, com.esri.core.geometry.Geometry.Type.Polygon);
         final TestClasses.ESRIPolygonTest esriPolygonTest = new TestClasses.ESRIPolygonTest(4792, geometry, LocalDate.now());
         final TestClasses.OffsetDateTimeTest offsetDateTimeTest = new TestClasses.OffsetDateTimeTest(5515, OffsetDateTime.now(), OffsetDateTime.now().plusYears(5));
+        final TestClasses.MultiLangTest multiLangTest = new TestClasses.MultiLangTest();
 
         List<Object> classObjects = new ArrayList<>();
         classObjects.add(gaulComplexClassTest);
         classObjects.add(jtsGeometryTest);
         classObjects.add(esriPolygonTest);
         classObjects.add(offsetDateTimeTest);
+        classObjects.add(multiLangTest);
 
-        classObjects.parallelStream().forEach(object -> {
-                    try {
-                        reasoner.writeObjectAsFact(object);
-                    } catch (TrestleClassException e) {
-                        e.printStackTrace();
-                    } catch (MissingOntologyEntity missingOntologyEntity) {
-                        missingOntologyEntity.printStackTrace();
-                    }
+        classObjects.stream().forEach(object -> {
+            try {
+                reasoner.writeAsTrestleObject(object);
+            } catch (TrestleClassException | MissingOntologyEntity e) {
+                e.printStackTrace();
+            }
         });
+//        Try to write some relations between two objects
+        reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(0), ObjectRelation.MEETS);
+        reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(3), ObjectRelation.DURING);
 
         reasoner.getUnderlyingOntology().runInference();
         classObjects.stream().forEach(object -> {
-            final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(object);
+            final OWLNamedIndividual owlNamedIndividual = tp.classParser.GetIndividual(object);
             final Object returnedObject = reasoner.readAsObject(object.getClass(), owlNamedIndividual.getIRI(), false);
             if (returnedObject instanceof TestClasses.GAULComplexClassTest) {
                 assertEquals(gaulComplexClassTest, returnedObject, "Should have the same object");
@@ -181,23 +201,31 @@ public class TrestleAPITest {
                 assertEquals(jtsGeometryTest, returnedObject, "Should have the same object");
             } else if (returnedObject instanceof TestClasses.OffsetDateTimeTest) {
                 assertEquals(offsetDateTimeTest, returnedObject, "Should have the same object");
-            } else {
+            } else if (returnedObject instanceof TestClasses.MultiLangTest) {
+                assertEquals(multiLangTest, returnedObject, "Should have the same object");
+            } else{
                 assertEquals(esriPolygonTest, returnedObject, "Should be equal");
             }
         });
 
 //        Search for some matching individuals
-        List<String> individuals = reasoner.searchForIndividual("43", IRI.create("trestle:", "GAUL_JTS_Test").toString(), null);
+        final IRI gaul_jts_test = IRI.create(OVERRIDE_PREFIX, "GAUL_JTS_Test");
+        List<String> individuals = reasoner.searchForIndividual("43", gaul_jts_test.toString(), null);
         assertEquals(1, individuals.size(), "Should only have 1 individual in the JTS class");
-//        FIXME(nrobison): For some reason, the inferencer isn't updating correctly. So the query works, but it's not grabbing the correct values
 //        individuals = reasoner.searchForIndividuals("2");
 //        assertEquals(4, individuals.size(), "Should have 4 individuals, overall");
 
-        final TrestleIndividual individualAttributes = reasoner.getIndividualAttributes(individuals.get(0));
+//        Test attribute generation
+        final Instant iStart = Instant.now();
+        final TrestleIndividual trestleIndividual = reasoner.getTrestleIndividual(individuals.get(0));
+        final Instant iEnd = Instant.now();
+        logger.info("Creating individual took {} ms", Duration.between(iStart, iEnd).toMillis());
+        assertAll(() -> assertEquals(2, trestleIndividual.getFacts().size(), "Wrong number of attributes"),
+                () -> assertEquals(2, trestleIndividual.getRelations().size(), "Wrong number of relations"));
 
 
 //        Now try to remove it
-        reasoner.removeIndividual(classObjects.toArray(new Object[classObjects.size()]));
+//        reasoner.removeIndividual(classObjects.toArray(new Object[classObjects.size()]));
 
 //        reasoner.writeOntology(new File("/Users/nrobison/Desktop/trestle_test.owl").toURI(), false);
 
@@ -207,8 +235,8 @@ public class TrestleAPITest {
 //        final Geometry geotoolsGeom = JTS.toGeographic(new WKTReader().read("POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))"), DefaultGeographicCRS.WGS84);
 //        JTS.toGeometry()
 //        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest = new TestClasses.GeotoolsPolygonTest(UUID.randomUUID(), (org.opengis.geometry.coordinate.Polygon) geotoolsGeom, LocalDate.now());
-//        final OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(geotoolsPolygonTest);
-//        reasoner.writeObjectAsFact(geotoolsPolygonTest);
+//        final OWLNamedIndividual owlNamedIndividual = classParser.GetIndividual(geotoolsPolygonTest);
+//        reasoner.writeAsTrestleObject(geotoolsPolygonTest);
 //        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest1 = reasoner.readAsObject(geotoolsPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
 //        assertEquals(geotoolsPolygonTest, geotoolsPolygonTest1, "Should be equal");
 

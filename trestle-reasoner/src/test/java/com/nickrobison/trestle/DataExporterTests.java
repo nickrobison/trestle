@@ -1,59 +1,103 @@
 package com.nickrobison.trestle;
 
-import afu.edu.emory.mathcs.backport.java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.nickrobison.trestle.TestClasses;
-import com.nickrobison.trestle.TrestleBuilder;
-import com.nickrobison.trestle.TrestleReasoner;
 import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
+import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.OWLDataFactory;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Created by nrobison on 9/15/16.
  */
+@SuppressWarnings("Duplicates")
+@Tag("integration")
 public class DataExporterTests {
 
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
     private static TrestleReasoner reasoner;
-    private static OWLDataFactory df;
-    private static String[] ids;
+    private static List<String> ids = new ArrayList<>();
+    private static List<SimpleGAULObject> gaulObjects = new ArrayList<>();
 
     @BeforeAll
-    public static void setup() {
+    public static void setup() throws IOException {
+        final Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf")).getConfig("trestle.ontology");
         reasoner = new TrestleBuilder()
-                .withDBConnection(
-                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-                        "spatialUser",
-                        "spatial1")
-                .withName("hadoop_gaul5")
+                .withDBConnection(config.getString("connectionString"),
+                        config.getString("username"),
+                        config.getString("password"))
+                .withName("hadoop_gaul_exporter")
                 .withInputClasses(SimpleGAULObject.class)
                 .withoutCaching()
+                .initialize()
                 .build();
 
-        df = OWLManager.getOWLDataFactory();
+        loadData();
+    }
 
-        ids = new String[]{"bd0ad9b3-df19-4321-af90-4de510de10eb", "a8cc8e68-676f-4eac-946b-8072cec908ef", "3ff89813-6427-44b9-81eb-53fb1a830de6", "9c93841b-2df6-41c8-a529-9e8fa87e5a77", "edc30fba-01e7-4bcb-95bf-4f382d96be0b", "96e07e83-ea8b-4019-98d1-42da5eec5744", "aedd5ca1-ee67-4733-ae46-0d495fc39792", "31db17dc-21e3-4431-abd0-0a42b4fd715a", "be745ece-acf4-4efa-b98c-96b400b89369", "d986b8c5-b716-42c4-9842-026b4fc88f3c"};
+    private static void loadData() throws IOException {
+        final InputStream is = TrestleAPITest.class.getClassLoader().getResourceAsStream("objects.csv");
+
+        final BufferedReader br = new BufferedReader(new InputStreamReader(is));
+
+        String line;
+
+        while ((line = br.readLine()) != null) {
+
+
+            final String[] splitLine = line.split(";");
+            final long code;
+            try {
+                code = Long.parseLong(splitLine[0]);
+            } catch (NumberFormatException e) {
+                continue;
+            }
+
+
+            LocalDate date = LocalDate.parse(splitLine[2].replace("\"", ""), formatter);
+            final String id = UUID.randomUUID().toString();
+            gaulObjects.add(new SimpleGAULObject(id, code, splitLine[1].replace("\"", ""), date, date.plusYears(5), splitLine[4].replace("\"", "")));
+            ids.add(id);
+        }
     }
 
     @Test
     public void testExport() throws IOException {
-        final File file = reasoner.exportDataSetObjects(SimpleGAULObject.class, Arrays.asList(ids), ITrestleExporter.DataType.SHAPEFILE);
+
+        gaulObjects
+                .stream()
+                .forEach(object -> {
+                    try {
+                        reasoner.writeAsTrestleObject(object);
+                    } catch (TrestleClassException | MissingOntologyEntity e) {
+                        e.printStackTrace();
+                    }
+                });
+
+        reasoner.getUnderlyingOntology().runInference();
+        final File file = reasoner.exportDataSetObjects(SimpleGAULObject.class, ids, ITrestleExporter.DataType.SHAPEFILE);
+        assertTrue(file.length() > 0, "Should have non-zero length");
     }
 
     @AfterAll
     public static void shutdown() {
-        reasoner.shutdown(false);
+        reasoner.shutdown(true);
     }
 
 
@@ -65,7 +109,6 @@ public class DataExporterTests {
         public long gaulcode;
         @DataProperty(name = "objectName")
         public String objectname;
-        //    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd hh:mm:ss")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
         @StartTemporalProperty(name = "startDate")
         public LocalDate startdate;
@@ -79,10 +122,10 @@ public class DataExporterTests {
 
 
         @TrestleCreator
-        public SimpleGAULObject(String id, long gaulCode, String objectName, LocalDate startDate, LocalDate endDate, String wkt) {
+        public SimpleGAULObject(String id, long gaulCode, String objectname, LocalDate startDate, LocalDate endDate, String wkt) {
             this.objectid = UUID.fromString(id);
             this.gaulcode = gaulCode;
-            this.objectname = objectName;
+            this.objectname = objectname;
             this.startdate = startDate;
             this.enddate = endDate;
             this.geom = wkt;
@@ -91,6 +134,7 @@ public class DataExporterTests {
 
         @IndividualIdentifier
         @DataProperty(name = "id")
+        @NoMultiLanguage
         public String getObjectID() {
             return this.objectid.toString();
         }

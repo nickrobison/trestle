@@ -1,7 +1,7 @@
 package com.nickrobison.trestle.ontology;
 
+import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
-import org.apache.jena.query.ResultSet;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.*;
@@ -24,30 +24,29 @@ public interface ITrestleOntology {
     boolean isConsistent();
 
     /**
-     * Returns an optional set of asserted property values from a given individual
+     * Returns an optional list of asserted property values from a given individual
      * @param individual - OWLNamedIndividual to query
      * @param propertyIRI - IRI of property to retrieve
-     * @return - Optional set of all asserted property values
+     * @return - Optional list of all asserted property values
      */
-    Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, IRI propertyIRI);
+    Optional<List<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, IRI propertyIRI);
 
     /**
-     * Returns an optional set of asserted property values from a given individual
+     * Returns an optional list of asserted property values from a given individual
      * @param individualIRI - IRI of individual to query
      * @param objectPropertyIRI - IRI of property to retrieve
-     * @return - Optional set of all asserted property values
+     * @return - Optional list of all asserted property values
      */
-    Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(IRI individualIRI, IRI objectPropertyIRI);
+    Optional<List<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(IRI individualIRI, IRI objectPropertyIRI);
 
     /**
-     * Returns an optional set of asserted property values from a given individual
+     * Returns an optional list of asserted property values from a given individual
      *
      * @param individual - OWLNamedIndividual to query
      * @param property   - OWLObjectProperty to retrieve
-     * @return - Optional set of all asserted property values
+     * @return - Optional list of all asserted property values
      */
-//    TODO(nrobison): Close iterator
-    Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property);
+    Optional<List<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property);
 
     /**
      * Store an OWLNamedIndividual in the ontology from a given classAxiom
@@ -353,11 +352,11 @@ public interface ITrestleOntology {
     String getFullIRIString(OWLNamedObject owlNamedObject);
 
     /**
-     * Execute a raw SPARQL query against the ontology
-     * @param query - String representing SPARQL query
-     * @return - ResultSet from given query
+     * Excecute a raw SPARQL query against the ontology
+     * @param queryString - String representing SPARQL query
+     * @return - TrestleResultSet for given query
      */
-    ResultSet executeSPARQL(String query);
+    TrestleResultSet executeSPARQLTRS(String queryString);
 
 //    /**
 //     * Open a transaction and lock it, for lots of bulk action

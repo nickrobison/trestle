@@ -18,7 +18,7 @@ import java.time.temporal.ChronoUnit;
 public @interface DefaultTemporalProperty {
     String name() default "";
     TemporalType type();
-    TemporalScope scope() default TemporalScope.VALID;
+    TemporalScope scope() default TemporalScope.EXISTS;
     int duration();
     ChronoUnit unit();
     String timeZone() default "";

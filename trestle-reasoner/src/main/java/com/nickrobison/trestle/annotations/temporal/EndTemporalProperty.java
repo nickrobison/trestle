@@ -18,6 +18,6 @@ import java.lang.annotation.Target;
 public @interface EndTemporalProperty {
     String name() default "";
     TemporalType type() default TemporalType.INTERVAL;
-    TemporalScope scope() default TemporalScope.VALID;
+    TemporalScope scope() default TemporalScope.EXISTS;
     String timeZone() default "";
 }

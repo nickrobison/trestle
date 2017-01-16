@@ -1,6 +1,10 @@
 package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.TestClasses;
+import com.nickrobison.trestle.annotations.Ignore;
+import com.nickrobison.trestle.annotations.IndividualIdentifier;
+import com.nickrobison.trestle.annotations.OWLClassName;
+import com.nickrobison.trestle.annotations.Spatial;
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
@@ -9,7 +13,6 @@ import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
-import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,9 +28,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
 
 /**
  * Created by nrobison on 6/28/16.
@@ -42,6 +45,7 @@ public class TrestleParserTest {
     private TemporalObject temporalPoint;
     private TestClasses.GAULMethodTest testMethod;
     private TestClasses.GAULComplexClassTest complexObjectClass;
+    private TrestleParser tp;
 
     @BeforeEach
     public void Setup() {
@@ -52,26 +56,27 @@ public class TrestleParserTest {
         df = OWLManager.getOWLDataFactory();
         LocalDateTime dt = LocalDateTime.of(1989, 3, 26, 0, 0);
         LocalDate ld = LocalDate.of(1989, 3, 26);
-        temporal = TemporalObjectBuilder.valid().from(dt).to(dt.plusYears(1)).withRelations();
+        temporal = TemporalObjectBuilder.exists().from(dt).to(dt.plusYears(1)).withRelations();
         temporalPoint = TemporalObjectBuilder.exists().at(ld).withRelations();
+        tp = new TrestleParser(df, TRESTLE_PREFIX, true, "");
     }
 
     @Test
     public void TestSimpleGAULClass() {
 //        Test the class
-        final OWLClass owlClass = ClassParser.GetObjectClass(gaulTestClass);
-        final OWLClass gaul_test1 = df.getOWLClass(IRI.create(PREFIX, "GAUL_Test"));
+        final OWLClass owlClass = tp.classParser.GetObjectClass(gaulTestClass);
+        final OWLClass gaul_test1 = df.getOWLClass(IRI.create(TRESTLE_PREFIX, "GAUL_Test"));
         assertEquals(gaul_test1, owlClass, "Wrong OWL Class");
 //        Test the named individual
-        OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(gaulTestClass);
-        OWLNamedIndividual gaul_test = df.getOWLNamedIndividual(IRI.create(PREFIX, "test_me"));
+        OWLNamedIndividual owlNamedIndividual = tp.classParser.GetIndividual(gaulTestClass);
+        OWLNamedIndividual gaul_test = df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, "test_me"));
         assertEquals(gaul_test, owlNamedIndividual, "Wrong named individual");
 
 //        Test the data property parser
 //        Code
-        final OWLDataProperty adm0_code = df.getOWLDataProperty(IRI.create(PREFIX, "ADM0_Code"));
+        final OWLDataProperty adm0_code = df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, "ADM0_Code"));
         final OWLLiteral adm0_code_literal = df.getOWLLiteral("1234", OWL2Datatype.XSD_INTEGER);
-        Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = ClassParser.GetDataProperties(gaulTestClass);
+        Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = tp.classParser.GetDataProperties(gaulTestClass);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have properties");
         assertEquals(3, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of properties");
         final OWLDataPropertyAssertionAxiom parsed_code = owlDataPropertyAssertionAxioms.get().get(0);
@@ -80,7 +85,7 @@ public class TrestleParserTest {
         assertEquals(adm0_code_literal, parsed_code.getObject(), "Data property values are wrong");
 
 //        Name
-        final OWLDataProperty adm0_name = df.getOWLDataProperty(IRI.create(PREFIX, "adm0_name"));
+        final OWLDataProperty adm0_name = df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, "adm0_name"));
         final OWLLiteral adm0_name_literal = df.getOWLLiteral("gaulTestClass");
         final OWLDataPropertyAssertionAxiom parsed_name = owlDataPropertyAssertionAxioms.get().get(1);
         assertEquals(gaul_test, parsed_name.getSubject(), "Wrong named individual");
@@ -92,29 +97,29 @@ public class TrestleParserTest {
     public void TestGAULComplexObjectClass() {
 
 //        Test the class
-        final OWLClass owlClass = ClassParser.GetObjectClass(complexObjectClass);
-        final OWLClass gaul_test1 = df.getOWLClass(IRI.create(PREFIX, "gaul-complex"));
+        final OWLClass owlClass = tp.classParser.GetObjectClass(complexObjectClass);
+        final OWLClass gaul_test1 = df.getOWLClass(IRI.create(TRESTLE_PREFIX, "gaul-complex"));
         assertEquals(gaul_test1, owlClass, "Wrong OWL Class");
 //        Test the named individual
 //        Since we're using a UUID, we'll need to set it so we can match correctly
         final UUID individualUUID = UUID.randomUUID();
         complexObjectClass.id = individualUUID;
-        OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(complexObjectClass);
-        OWLNamedIndividual gaul_test = df.getOWLNamedIndividual(IRI.create(PREFIX, individualUUID.toString()));
+        OWLNamedIndividual owlNamedIndividual = tp.classParser.GetIndividual(complexObjectClass);
+        OWLNamedIndividual gaul_test = df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, individualUUID.toString()));
         assertEquals(gaul_test, owlNamedIndividual, "Wrong named individual");
 
 //        Test the data property parser
 //        Code
-//        final OWLDataProperty adm0_code = df.getOWLDataProperty(IRI.create(PREFIX, "ADM0_Code"));
-//        final OWLLiteral adm0_code_literal = df.getOWLLiteral("1234", OWL2Datatype.XSD_INTEGER);
-        Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = ClassParser.GetDataProperties(complexObjectClass);
+//        final OWLDataProperty adm0_code = dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, "ADM0_Code"));
+//        final OWLLiteral adm0_code_literal = dfStatic.getOWLLiteral("1234", OWL2Datatype.XSD_INTEGER);
+        Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = tp.classParser.GetDataProperties(complexObjectClass);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have properties");
-        assertEquals(2, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of properties");
+        assertEquals(7, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of properties");
         final OWLDataPropertyAssertionAxiom parsed_code = owlDataPropertyAssertionAxioms.get().get(0);
         assertEquals(gaul_test, parsed_code.getSubject(), "Wrong named individual");
 
 //        Test the temporals
-        Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(complexObjectClass);
+        Optional<List<TemporalObject>> temporalObjects = tp.temporalParser.GetTemporalObjects(complexObjectClass);
         assertTrue(temporalObjects.isPresent(), "Should have objects");
         assertEquals(1, temporalObjects.get().size(), "Wrong number of objects");
         assertEquals(LocalDate.of(1989, 3, 26), temporalObjects.get().get(0).asInterval().getFromTime());
@@ -128,16 +133,16 @@ public class TrestleParserTest {
 
 //        Test the new gaul test
         //        Test the named individual
-        OWLNamedIndividual owlNamedIndividual = ClassParser.GetIndividual(expandedGAULClass);
-        OWLNamedIndividual gaul_test = df.getOWLNamedIndividual(IRI.create(PREFIX, "test_region"));
+        OWLNamedIndividual owlNamedIndividual = tp.classParser.GetIndividual(expandedGAULClass);
+        OWLNamedIndividual gaul_test = df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, "test_region"));
         assertEquals(gaul_test, owlNamedIndividual, "Wrong named individual");
 
-        Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = ClassParser.GetDataProperties(expandedGAULClass);
+        Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = tp.classParser.GetDataProperties(expandedGAULClass);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have properties");
         assertEquals(3, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of properties");
 
 //        Test the temporal
-        Optional<List<TemporalObject>> temporalObjects = TemporalParser.GetTemporalObjects(expandedGAULClass);
+        Optional<List<TemporalObject>> temporalObjects = tp.temporalParser.GetTemporalObjects(expandedGAULClass);
         assertTrue(temporalObjects.isPresent(), "Should have objects");
         assertEquals(4, temporalObjects.get().size(), "Wrong number of temporal objects");
 //        Check for the same type and scope for interval
@@ -162,25 +167,33 @@ public class TrestleParserTest {
 
 //        Check methods
 //        Individual
-        owlNamedIndividual = ClassParser.GetIndividual(testMethod);
-        gaul_test = df.getOWLNamedIndividual(IRI.create(PREFIX, "string_from_method"));
+        owlNamedIndividual = tp.classParser.GetIndividual(testMethod);
+        gaul_test = df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, "string_from_method"));
         assertEquals(gaul_test, owlNamedIndividual, "Wrong named individual");
 
 //        Data properties
-        owlDataPropertyAssertionAxioms = ClassParser.GetDataProperties(testMethod);
+        owlDataPropertyAssertionAxioms = tp.classParser.GetDataProperties(testMethod);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have method properties");
         assertEquals(5, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of data properties");
-        assertEquals(OWL2Datatype.XSD_INT, owlDataPropertyAssertionAxioms.get().get(3).getObject().getDatatype().getBuiltInDatatype(), "Should have integer datatype");
-        assertEquals(testMethod.getAdm0_code1(), owlDataPropertyAssertionAxioms.get().get(3).getObject().parseInteger(), "Invalid ADM0_Code");
-        assertEquals(testMethod.test_name, owlDataPropertyAssertionAxioms.get().get(1).getObject().getLiteral(), "Invalid Spatial");
 
-//        Temporal
-        temporalObjects = TemporalParser.GetTemporalObjects(testMethod);
-        assertTrue(temporalObjects.isPresent(), "Should have objects");
-        assertEquals(2, temporalObjects.get().size(), "Wrong number of objects");
-        assertEquals(LocalDateTime.of(1989, 3, 26, 0, 0), temporalObjects.get().get(0).asInterval().getFromTime(), "Wrong interval start");
-        assertEquals(LocalDateTime.of(1989, 3, 26, 0, 0).plusYears(5), temporalObjects.get().get(0).asInterval().getToTime().get(), "Wrong interval end");
-        assertEquals(LocalDateTime.of(1998, 3, 26, 0, 0), temporalObjects.get().get(1).asInterval().getFromTime(), "Temporal is incorrect");
+//        Get the adm0_code
+        final Optional<OWLDataPropertyAssertionAxiom> adm0_code = owlDataPropertyAssertionAxioms
+                .get()
+                .stream()
+                .filter(axiom -> axiom.getProperty().asOWLDataProperty().getIRI().getRemainder().get().equals("adm0_code"))
+                .findAny();
+
+        final Optional<OWLDataPropertyAssertionAxiom> asWKT = owlDataPropertyAssertionAxioms
+                .get()
+                .stream()
+                .filter(axiom -> axiom.getProperty().asOWLDataProperty().getIRI().getRemainder().get().equals("asWKT"))
+                .findAny();
+
+        assertTrue(adm0_code.isPresent());
+        assertTrue(asWKT.isPresent());
+        assertEquals(OWL2Datatype.XSD_INT, adm0_code.get().getObject().getDatatype().getBuiltInDatatype(), "Should have integer datatype");
+        assertEquals(testMethod.getAdm0_code1(), adm0_code.get().getObject().parseInteger(), "Invalid ADM0_Code");
+        assertEquals(testMethod.test_name, asWKT.get().getObject().getLiteral(), "Invalid Spatial");
     }
 
     @Test
@@ -190,19 +203,19 @@ public class TrestleParserTest {
         final OWLNamedIndividual owlNamedIndividual = df.getOWLNamedIndividual(IRI.create("trestle:", "string_from_method"));
 //        Build the data objects
         final OWLDataPropertyAssertionAxiom admcode = df.getOWLDataPropertyAssertionAxiom(
-                df.getOWLDataProperty(IRI.create(PREFIX, "adm0_code")),
+                df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, "adm0_code")),
                 owlNamedIndividual,
                 df.getOWLLiteral(4326));
         testProperties.add(admcode);
 
         final OWLDataPropertyAssertionAxiom adm0Name = df.getOWLDataPropertyAssertionAxiom(
-                df.getOWLDataProperty(IRI.create(PREFIX, "adm0_name")),
+                df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, "adm0_name")),
                 owlNamedIndividual,
                 df.getOWLLiteral("test region"));
         testProperties.add(adm0Name);
 
         final OWLDataPropertyAssertionAxiom testName = df.getOWLDataPropertyAssertionAxiom(
-                df.getOWLDataProperty(IRI.create(PREFIX, "test_name")),
+                df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, "test_name")),
                 owlNamedIndividual,
                 df.getOWLLiteral("new_test"));
         testProperties.add(testName);
@@ -245,7 +258,7 @@ public class TrestleParserTest {
 //            final Object literalValue = javaClass.cast(property.getObject().getLiteral());
             inputObjects.add(literalValue);
             constructorArguments.addArgument(
-                    ClassParser.matchWithClassMember(TestClasses.GAULMethodTest.class, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
+                    tp.classParser.matchWithClassMember(TestClasses.GAULMethodTest.class, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
                     javaClass,
                     literalValue);
         });

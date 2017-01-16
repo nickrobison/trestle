@@ -10,14 +10,23 @@ public class TrestleTransaction {
     private final Long transactionID;
     private final Boolean writeTransaction;
 
+    /**
+     * Create a new TrestleTransaction with the current timestamp, indicating the tread owns the current transaction
+     * @param id - Long of unix timestamp
+     * @param write - Is this a write transaction?
+     */
     public TrestleTransaction(Long id, boolean write) {
         this.transactionID = id;
         this.writeTransaction = write;
     }
 
-    public TrestleTransaction() {
+    /**
+     * Create TrestleTransaction object that does not own the current transaction
+     * @param write - Is this a write transaction?
+     */
+    public TrestleTransaction(boolean write) {
         this.transactionID = null;
-        this.writeTransaction = null;
+        this.writeTransaction = write;
     }
 
     /**

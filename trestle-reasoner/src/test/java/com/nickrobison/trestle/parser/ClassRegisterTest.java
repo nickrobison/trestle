@@ -1,9 +1,6 @@
 package com.nickrobison.trestle.parser;
 
-import com.nickrobison.trestle.annotations.IndividualIdentifier;
-import com.nickrobison.trestle.annotations.OWLClassName;
-import com.nickrobison.trestle.annotations.Spatial;
-import com.nickrobison.trestle.annotations.TrestleCreator;
+import com.nickrobison.trestle.annotations.*;
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
 import com.nickrobison.trestle.exceptions.InvalidClassException;
@@ -11,20 +8,17 @@ import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.TemporalType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.omg.CORBA.DynAnyPackage.Invalid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.UUID;
 
-import static com.nickrobison.trestle.exceptions.InvalidClassException.State.EXCESS;
-import static com.nickrobison.trestle.exceptions.InvalidClassException.State.MISSING;
+import static com.nickrobison.trestle.exceptions.InvalidClassException.State.*;
 import static org.junit.jupiter.api.Assertions.*;
+
+;
 
 /**
  * Created by nrobison on 7/26/16.
@@ -38,12 +32,16 @@ public class ClassRegisterTest {
     private static SpatialMembers sTest;
     private static PassingTemporalTest pTest;
     private static FailingTemporalTest ftTest;
+    private static LanguageTest lTest;
+    private static FailingLanguageTest flTest;
     private static Class<? extends SpatialMembers> sClass;
     private static Class<? extends FullTest> fClass;
     private static Class<? extends EmptyTest> eClass;
     private static Class<? extends ExtraMembers> xClass;
     private static Class<? extends PassingTemporalTest> pClass;
     private static Class<? extends FailingTemporalTest> ftClass;
+    private static Class<? extends LanguageTest> lClass;
+    private static Class<? extends FailingLanguageTest> flClass;
     private static final Logger logger = LoggerFactory.getLogger(ClassRegisterTest.class);
 
     @BeforeAll
@@ -54,6 +52,8 @@ public class ClassRegisterTest {
         sTest = new SpatialMembers();
         pTest = new PassingTemporalTest(LocalDate.now(), LocalDate.now());
         ftTest = new FailingTemporalTest(LocalDateTime.now(), LocalDateTime.now());
+        lTest = new LanguageTest();
+        flTest = new FailingLanguageTest();
 
 
         fClass = fTest.getClass();
@@ -62,6 +62,8 @@ public class ClassRegisterTest {
         sClass = sTest.getClass();
         pClass = pTest.getClass();
         ftClass = ftTest.getClass();
+        lClass = lTest.getClass();
+        flClass = flTest.getClass();
     }
 
     @Test
@@ -147,6 +149,19 @@ public class ClassRegisterTest {
             e.printStackTrace();
             fail("Should not throw exception");
         }
+    }
+
+    @Test
+    public void testLanguage() {
+        try {
+            ClassRegister.checkForLanguage(lClass);
+        } catch (TrestleClassException e) {
+            e.printStackTrace();
+            fail("Should not throw exception");
+        }
+
+        final InvalidClassException invalidClassException = expectThrows(InvalidClassException.class, () -> ClassRegister.checkForLanguage(flClass));
+        assertEquals(INVALID, invalidClassException.getProblemState());
     }
 
     private static class PassingTemporalTest {
@@ -271,6 +286,42 @@ public class ClassRegisterTest {
         @Spatial(name = "wrongWKT")
         public String getWKT() {
             return this.wkt;
+        }
+    }
+
+    private static class LanguageTest {
+        @DataProperty(name = "testString")
+        @Language(language = "fr")
+        public final String testString;
+        private final String testString2;
+
+        LanguageTest() {
+            this.testString = "test string";
+            this.testString2 = "test string";
+        }
+
+        @DataProperty(name = "testString")
+        @Language(language = "en")
+        public String getTestString2() {
+            return this.testString2;
+        }
+    }
+
+    private static class FailingLanguageTest {
+        @DataProperty(name = "testString")
+        @Language(language = "fr")
+        public final String testString;
+        private final String testString2;
+
+        FailingLanguageTest() {
+            this.testString = "test string";
+            this.testString2 = "test string";
+        }
+
+        @DataProperty(name = "testString")
+        @Language(language = "en-Nick")
+        public String getTestString2() {
+            return this.testString2;
         }
     }
 }

@@ -1,4 +1,3 @@
-import com.nickrobison.trestle.DataExporterTests;
 import com.nickrobison.trestle.TrestleBuilder;
 import com.nickrobison.trestle.TrestleReasoner;
 import com.nickrobison.trestle.annotations.IndividualIdentifier;
@@ -8,6 +7,8 @@ import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.TemporalType;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.MultiLineString;
 import org.geotools.data.DataStore;
@@ -19,19 +20,16 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.Filter;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -45,14 +43,16 @@ public class RoadLoader {
 
     @BeforeAll
     public static void setup() {
+        final Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
         reasoner = new TrestleBuilder()
-                .withDBConnection(
-                        "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial",
-                        "spatialUser",
-                        "spatial1")
-                .withName("hadoop_gaul")
+                .withDBConnection(config.getString("trestle.ontology.connectionString"),
+                        config.getString("trestle.ontology.username"),
+                        config.getString("trestle.ontology.password"))
+                .withName("api_test")
+                .withOntology(IRI.create(config.getString("trestle.ontology.location")))
                 .withInputClasses(gROADS.class)
                 .withoutCaching()
+                .initialize()
                 .build();
 
         df = OWLManager.getOWLDataFactory();
@@ -88,7 +88,7 @@ public class RoadLoader {
 //                        Double.parseDouble(next.getAttribute("SHAPE_LENGTH").toString()),
                         ZonedDateTime.of(1980, 1, 1, 1, 1, 1, 1, ZoneOffset.UTC));
 
-                reasoner.writeObjectAsFact(road);
+                reasoner.writeAsTrestleObject(road);
             }
     }
 

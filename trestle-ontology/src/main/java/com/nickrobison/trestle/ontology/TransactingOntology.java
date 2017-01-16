@@ -4,7 +4,7 @@ import com.nickrobison.trestle.transactions.TrestleTransaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by nrobison on 9/7/16.
@@ -13,41 +13,30 @@ abstract class TransactingOntology implements ITrestleOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(TransactingOntology.class);
     private static final OntologySecurityManager securityManager = new OntologySecurityManager();
-    protected final AtomicInteger openedTransactions = new AtomicInteger();
-    protected final AtomicInteger committedTransactions = new AtomicInteger();
+    protected long openWriteTransactions = 0;
+    protected long openReadTransactions = 0;
+    protected final AtomicLong openedTransactions = new AtomicLong();
+    protected final AtomicLong committedTransactions = new AtomicLong();
     protected static boolean singleWriterOntology = false;
 
 //    Thread locals
-    private ThreadLocal<Boolean> threadLocked = new ThreadLocal<Boolean>() {
-        @Override
-        public Boolean initialValue() {
-            return false;
-        }
-    };
+    private ThreadLocal<Boolean> threadLocked = ThreadLocal.withInitial(() -> false);
 
-    private ThreadLocal<Boolean> threadInTransaction = new ThreadLocal<Boolean>() {
-        @Override
-        public Boolean initialValue() {
-            return false;
-        }
-    };
+    private ThreadLocal<Boolean> threadInTransaction = ThreadLocal.withInitial(() -> false);
 
-    private ThreadLocal<Boolean> threadInWriteTransaction = new ThreadLocal<Boolean>() {
-        @Override
-        public Boolean initialValue() {
-            return false;
-        }
-    };
+    private ThreadLocal<Boolean> threadInWriteTransaction = ThreadLocal.withInitial(() -> false);
 
-    private ThreadLocal<Boolean> threadTransactionInherited = new ThreadLocal<Boolean>() {
-        @Override
-        public Boolean initialValue() {
-            return false;
-        }
-    };
+    private ThreadLocal<Boolean> threadTransactionInherited = ThreadLocal.withInitial(() -> false);
 
     private ThreadLocal<TrestleTransaction> threadTransactionObject = new ThreadLocal<>();
 
+    /**
+     * Set the current thread transaction state, using the information inherited from the TrestleTransaction object
+     *
+     * @param transactionObject - Transaction Object to take ownership of thread transaction
+     * @param write - Writable transaction?
+     * @return
+     */
     @Override
     public TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject, boolean write) {
         logger.debug("Inheriting transaction from existing transaction object, setting flags, but not opening new transaction");
@@ -58,16 +47,28 @@ abstract class TransactingOntology implements ITrestleOntology {
         return transactionObject;
     }
 
+    /**
+     * Set the current thread transaction state as a read transaction, using the information inherited from the TrestleTransaction object
+     * @param transactionObject - Existing TrestleTransactionObject
+     * @return - TrestleTransaction object inheriting from parent transaction
+     */
     @Override
     public TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject) {
-        if (transactionObject.ownsATransaction()) {
-            return createandOpenNewTransaction(transactionObject, transactionObject.isWriteTransaction());
-        } else {
-            logger.debug("Provided transaction object doesn't own the current transaction. Continuing");
-            return transactionObject;
-        }
+        return createandOpenNewTransaction(transactionObject, transactionObject.isWriteTransaction());
+//        if (transactionObject.ownsATransaction()) {
+//            return createandOpenNewTransaction(transactionObject, transactionObject.isWriteTransaction());
+//        } else {
+//            logger.debug("Provided transaction object doesn't own the current transaction. Continuing");
+//            return transactionObject;
+//        }
     }
 
+    /**
+     * Create and open a new transaction.
+     * If the thread is already in an open transaction, we return an empty TrestleTransaction object
+     * @param write - Is this a write transaction?
+     * @return
+     */
     @Override
     public TrestleTransaction createandOpenNewTransaction(boolean write) {
         if (threadTransactionObject.get() == null) {
@@ -78,10 +79,15 @@ abstract class TransactingOntology implements ITrestleOntology {
             return trestleTransaction;
         } else {
             logger.warn("Thread transaction owned, returning empty object");
-            return new TrestleTransaction();
+            return new TrestleTransaction(write);
         }
     }
 
+    /**
+     * Return a TrestleTransaction object and attempt to commit the current Transaction
+     * If the TrestleTransaction object does not own the current transaction, we continue without committing
+     * @param transaction - Transaction object to try to commit current transaction with
+     */
     @Override
     public void returnAndCommitTransaction(TrestleTransaction transaction) {
 //        If the transaction state is inherited, don't commit
@@ -126,16 +132,16 @@ abstract class TransactingOntology implements ITrestleOntology {
         if (this.threadTransactionObject.get() == null) {
 
             if (this.threadLocked.get()) {
-                logger.debug("Thread already locked, continuing");
+                logger.trace("Thread already locked, continuing");
             } else {
-                logger.debug("Trying to open unlocked transaction");
+                logger.trace("Trying to open unlocked transaction");
                 openTransaction(write);
-                logger.debug("Locking open");
+                logger.trace("Locking open");
                 lock();
-                logger.debug("Transaction opened and locked");
+                logger.trace("Transaction opened and locked");
             }
         } else {
-            logger.debug("Thread transaction owned by transaction object, not opening or locking");
+            logger.trace("Thread transaction owned by transaction object, not opening or locking");
         }
     }
 
@@ -147,13 +153,13 @@ abstract class TransactingOntology implements ITrestleOntology {
     public void unlockAndCommit(boolean write) {
 
         if (threadTransactionObject.get() == null) {
-            logger.debug("Unlocking and closing");
+            logger.trace("Unlocking and closing");
             unlock();
-            logger.debug("Trying to commit transaction");
+            logger.trace("Trying to commit transaction");
             commitTransaction(write);
-            logger.debug("Committed transaction");
+            logger.trace("Committed transaction");
         } else {
-            logger.debug("Thread owned by transaction object, not unlocking or committing");
+            logger.trace("Thread owned by transaction object, not unlocking or committing");
         }
     }
 
@@ -161,38 +167,72 @@ abstract class TransactingOntology implements ITrestleOntology {
 
         if (!this.threadLocked.get()) {
             if (!this.threadInTransaction.get()) {
-                logger.debug("Trying to open transaction");
-                logger.debug("Thread {} taking the lock", Thread.currentThread().getName());
+                logger.trace("Trying to open transaction");
+                logger.trace("Thread {} taking the lock", Thread.currentThread().getName());
                 this.openDatasetTransaction(write);
                 logger.debug("Opened transaction");
+
                 this.threadInTransaction.set(true);
                 this.openedTransactions.incrementAndGet();
+//                Track read/write transactions
+                synchronized (this) {
+                    if (write) {
+                        this.openWriteTransactions++;
+                    } else {
+                        this.openReadTransactions++;
+                    }
+                    logger.debug("{}/{} open read/write transactions", this.openReadTransactions, this.openWriteTransactions);
+                }
                 if (write) {
                     this.threadInWriteTransaction.set(true);
                 }
             } else {
-                logger.debug("Thread unlocked, but already in a transaction");
+                logger.trace("Thread unlocked, but already in a transaction");
             }
         } else {
-            logger.debug("Thread locked, continuing");
+            logger.trace("Thread locked, continuing");
         }
     }
 
     public void commitTransaction(boolean write) {
         if (!this.threadLocked.get()) {
             if (this.threadInTransaction.get()) {
-                logger.debug("Trying to commit transaction");
+                logger.trace("Trying to commit transaction");
                 this.commitDatasetTransaction(write);
-                logger.debug("Committed dataset transaction");
+                logger.trace("Committed dataset transaction");
                 this.threadInTransaction.set(false);
                 this.threadTransactionInherited.set(false);
                 this.committedTransactions.incrementAndGet();
+                synchronized (this) {
+                    if (write) {
+                        this.openWriteTransactions--;
+                    } else {
+                        this.openReadTransactions--;
+                    }
+                    logger.debug("{}/{} open read/write transactions", this.openReadTransactions, this.openWriteTransactions);
+                }
             } else {
-                logger.debug("Thread unlocked, but not in transaction");
+                logger.trace("Thread unlocked, but not in transaction");
             }
         } else {
-            logger.debug("Thread locked, not committing");
+            logger.trace("Thread locked, not committing");
         }
+    }
+
+    /**
+     * Get the current number of opened transactions, for the lifetime of the application
+     * @return - long of opened transactions
+     */
+    public long getOpenedTransactionCount() {
+        return this.openedTransactions.get();
+    }
+
+    /**
+     * Get the current number of committed transactions, for the lifetime of the application
+     * @return - long of committed transactions
+     */
+    public long getCommittedTransactionCount() {
+        return this.committedTransactions.get();
     }
 
 

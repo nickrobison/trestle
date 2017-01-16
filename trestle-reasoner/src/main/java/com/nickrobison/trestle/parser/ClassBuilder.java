@@ -44,11 +44,11 @@ public class ClassBuilder {
         List<OWLDataProperty> classFields = new ArrayList<>();
         Arrays.stream(clazz.getDeclaredFields())
                 .filter(f -> filterDataPropertyField(f, filterSpatial))
-                .forEach(field -> classFields.add(df.getOWLDataProperty(SpatialParser.filterDataSpatialName(field))));
+                .forEach(field -> classFields.add(dfStatic.getOWLDataProperty(SpatialParser.filterDataSpatialName(field))));
 
         Arrays.stream(clazz.getDeclaredMethods())
                 .filter(m -> filterDataPropertyMethod(m, filterSpatial))
-                .forEach(method -> classFields.add(df.getOWLDataProperty(SpatialParser.filterDataSpatialName(method))));
+                .forEach(method -> classFields.add(dfStatic.getOWLDataProperty(SpatialParser.filterDataSpatialName(method))));
 
         if (classFields.isEmpty()) {
             return Optional.empty();
@@ -99,6 +99,7 @@ public class ClassBuilder {
 
             final List<? extends Class<?>> types = Arrays.stream(parameters)
                     .map(Parameter::getType)
+                    .sorted(Comparator.comparing(Class::getTypeName))
                     .collect(Collectors.toList());
             logger.error("Constructor has parameter types {}, but we have {}", types, arguments.getTypes());
             throw new RuntimeException("Missing parameters required for constructor generation");
@@ -108,7 +109,7 @@ public class ClassBuilder {
 
     }
 
-    //    I don't like suppressing the @UnknownInitialization warning, but I can't figure out when it would case an error
+    //    I don't like suppressing the @UnknownInitialization warning, but I can't figure out when it would cause an error
     @SuppressWarnings("initialization")
     static Optional<Constructor<?>> findTrestleConstructor(Class<?> clazz) {
         @MonotonicNonNull Constructor<?> declaredConstructor = null;
@@ -139,6 +140,14 @@ public class ClassBuilder {
         return Optional.empty();
     }
 
+    /**
+     * Determines if a given argument name/type pair matches the declared TrestleConstructor
+     * @param clazz - Java class to aprse
+     * @param argumentName - Argument name to match
+     * @param argumentType - Nullable argument type to match
+     * @return - Boolean if name/type pair matches
+     * @throws MissingConstructorException
+     */
     static boolean isConstructorArgument(Class<?> clazz, String argumentName, @Nullable Class<?> argumentType) throws MissingConstructorException {
         final Optional<Constructor<?>> trestleConstructor = findTrestleConstructor(clazz);
 
@@ -146,18 +155,7 @@ public class ClassBuilder {
                 .filter(p -> p.getName().equals(argumentName))
                 .findFirst();
 
-        if (matchingParam.isPresent()) {
-            if (argumentType != null) {
-
-                if (matchingParam.get().getAnnotatedType().equals(argumentType)) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-            return true;
-        }
-        return false;
+        return matchingParam.map(parameter -> argumentType == null || parameter.getType().equals(argumentType)).orElse(false);
     }
 
 

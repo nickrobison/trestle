@@ -1,5 +1,7 @@
 package com.nickrobison.trestle.ontology;
 
+import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.utils.SharedOntologyFunctions;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.query.*;
 import org.apache.jena.query.spatial.*;
@@ -117,7 +119,7 @@ public class LocalOntology extends JenaOntology {
         logger.debug("Writing out the ontology to byte array");
 
         try {
-            model.read(ontologytoIS(this.ontology), null);
+            model.read(SharedOntologyFunctions.ontologytoIS(this.ontology), null);
         } catch (OWLOntologyStorageException e) {
             logger.error("Cannot read ontology into model", e);
             throw new RuntimeException("Cannot read ontology in model", e);
@@ -144,16 +146,14 @@ public class LocalOntology extends JenaOntology {
 //    }
 
     @Override
-//    Need to override this in order to get access to the correct dataset
-    public ResultSet executeSPARQL(String queryString) {
-        ResultSet resultSet;
+    public TrestleResultSet executeSPARQLTRS(String queryString) {
+        final TrestleResultSet resultSet;
         final Query query = QueryFactory.create(queryString);
         final QueryExecution qExec = QueryExecutionFactory.create(query, luceneDataset);
         this.openTransaction(false);
         model.enterCriticalSection(Lock.READ);
         try {
-            resultSet = qExec.execSelect();
-            resultSet = ResultSetFactory.copyResults(resultSet);
+            resultSet = this.buildResultSet(qExec.execSelect());
         } finally {
             qExec.close();
             model.leaveCriticalSection();

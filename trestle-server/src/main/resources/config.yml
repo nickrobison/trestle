@@ -1,0 +1,6 @@
+connectionString: "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial"
+username: "spatialUser"
+password: "spatial1"
+
+logging:
+  level: INFO

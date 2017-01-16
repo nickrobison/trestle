@@ -2,19 +2,12 @@ package com.nickrobison.trestle.types.temporal;
 
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-
-import static com.nickrobison.trestle.common.StaticIRI.PREFIX;
 
 /**
  * Created by nrobison on 6/30/16.
@@ -32,10 +25,6 @@ public abstract class TemporalObject {
 
     public String getID() {
         return this.id;
-    }
-
-    public IRI getIDAsIRI() {
-        return IRI.create(PREFIX, this.id);
     }
 
     public Set<OWLNamedIndividual> getTemporalRelations() {
@@ -72,6 +61,14 @@ public abstract class TemporalObject {
      * @return - Temporal subclass of object
      */
     public abstract Class<? extends Temporal> getBaseTemporalType();
+
+    /**
+     * Cast TemporalObject to a different temporal scope
+     * Always results in a new object even if the TemporalObject has the same temporal scope
+     * @param castScope - TemporalScope to cast object to
+     * @return - new TemporalObject
+     */
+    public abstract TemporalObject castTo(TemporalScope castScope);
 
     @Override
     public boolean equals(Object o) {

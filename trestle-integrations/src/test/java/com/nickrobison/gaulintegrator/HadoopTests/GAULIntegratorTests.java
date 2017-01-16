@@ -15,27 +15,32 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.semanticweb.owlapi.model.IRI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.sql.SQLException;
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by nrobison on 5/5/16.
  */
 @SuppressWarnings({"argument.type.incompatible", "initialization.fields.uninitialized", "OptionalGetWithoutIsPresent"})
+@Tag("integration")
 public class GAULIntegratorTests {
 
     private static FileSystem fileSystem;
@@ -48,6 +53,8 @@ public class GAULIntegratorTests {
     private static String userName;
     private static String password;
     private static String ontologyName;
+    private static String ontologyPath;
+    private static String ontologyPrefix;
 
     @BeforeAll
     public static void setup() throws IOException {
@@ -71,22 +78,31 @@ public class GAULIntegratorTests {
         cluster = new MiniDFSCluster.Builder(conf).build();
 
 //        connectionString = "jdbc:virtuoso://localhost:1111";
-        connectionString = "jdbc:virtuoso://nuclet:1111";
-        userName = "dba";
-        password = "dba";
+//        userName = "dba";
+//        password = "dba";
 //        connectionString = "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial";
 //        userName = "spatialUser";
 //        password = "spatial1";
-        ontologyName = "hadoop_gaul_new2";
+        connectionString = "http://localhost:7200";
+        userName = "";
+        password = "";
+        ontologyPath = "file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl";
+        ontologyPrefix = "http://nickrobison.com/test/hadoop.owl#";
+        ontologyName = "hadoop_gaul_rewrite";
         conf.set("reasoner.db.connection", connectionString);
         conf.set("reasoner.db.username", userName);
         conf.set("reasoner.db.password", password);
         conf.set("reasoner.ontology.name", ontologyName);
 
+        conf.set("reasoner.ontology.path", ontologyPath);
+        conf.set("reasoner.ontology.prefix", ontologyPrefix);
+
 //        Setup reasoner
         reasoner = new TrestleBuilder()
                 .withDBConnection(connectionString, userName, password)
                 .withInputClasses(GAULObject.class)
+//                .withOntology(IRI.create(ontologyPath))
+                .withPrefix(ontologyPrefix)
                 .initialize()
                 .withName(ontologyName)
                 .build();
@@ -97,7 +113,7 @@ public class GAULIntegratorTests {
     }
 
     @Test
-    public void testReducer() throws IOException, ClassNotFoundException, InterruptedException, SQLException {
+    public void testReducer() throws IOException, ClassNotFoundException, InterruptedException, SQLException, URISyntaxException {
 
         URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/gates-test/");
         URL OUT_DIR = GAULIntegratorTests.class.getClassLoader().getResource("out/");
@@ -114,6 +130,9 @@ public class GAULIntegratorTests {
         job.setMapOutputValueClass(MapperOutput.class);
         job.setReducerClass(GAULReducer.class);
 
+//        Add ontology to cache
+        job.addCacheFile(new URI(String.format("%s", ontologyPath)));
+
         job.setInputFormatClass(PolygonFeatureInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
         FileInputFormat.setInputDirRecursive(job, false);
@@ -126,13 +145,14 @@ public class GAULIntegratorTests {
         reasoner = new TrestleBuilder()
                 .withDBConnection(connectionString, userName, password)
                 .withInputClasses(GAULObject.class)
+                .withOntology(IRI.create(ontologyPath))
+                .withPrefix(ontologyPrefix)
                 .withName(ontologyName)
                 .build();
 
-        final Optional<Map<@NonNull GAULObject, Double>> relatedObjects1 = reasoner.getRelatedObjects(GAULObject.class, "21882:Boane:1990:1997", 0.0);
-        assertTrue(relatedObjects1.isPresent(), "Should have related objects");
-        assertTrue(relatedObjects1.get().size() > 0, "Should have more than 0 related objects");
-        logger.info("Has {} objects}", relatedObjects1.get().size());
+        Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, "Manhica:concept", null, null);
+        assertAll(() -> assertTrue(conceptMembers.isPresent(), "Should have Manhica concept members"),
+                () -> assertEquals(3, conceptMembers.get().size(), "Wrong number of members for Manhica"));
 
     }
 
