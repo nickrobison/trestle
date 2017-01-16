@@ -24,7 +24,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
     private ZoneId timeZone;
 
     private PointTemporal(Builder<T> builder) {
-        super(UUID.randomUUID().toString(), builder.relations);
+        super(builder.temporalID.orElse(UUID.randomUUID().toString()), builder.relations);
         this.scope = builder.scope;
         this.atTime = builder.atTime;
         this.parameterName = builder.parameterName;
@@ -96,6 +96,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
         private T atTime;
         private Optional<Set<OWLNamedIndividual>> relations = Optional.empty();
         private Optional<String> parameterName = Optional.empty();
+        private Optional<String> temporalID = Optional.empty();
         private Optional<ZoneId> explicitTimeZone = Optional.empty();
 
         Builder(TemporalScope scope, T at) {
@@ -110,6 +111,16 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
          */
         public Builder withParameterName(String name) {
             this.parameterName = Optional.of(name);
+            return this;
+        }
+
+        /**
+         * Manually set temporalID
+         * @param temporalID - String of TemporalID
+         * @return - Builder
+         */
+        public Builder withID(String temporalID) {
+            this.temporalID = Optional.of(temporalID);
             return this;
         }
 

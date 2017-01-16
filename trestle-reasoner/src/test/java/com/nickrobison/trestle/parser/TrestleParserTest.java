@@ -56,7 +56,7 @@ public class TrestleParserTest {
         df = OWLManager.getOWLDataFactory();
         LocalDateTime dt = LocalDateTime.of(1989, 3, 26, 0, 0);
         LocalDate ld = LocalDate.of(1989, 3, 26);
-        temporal = TemporalObjectBuilder.valid().from(dt).to(dt.plusYears(1)).withRelations();
+        temporal = TemporalObjectBuilder.exists().from(dt).to(dt.plusYears(1)).withRelations();
         temporalPoint = TemporalObjectBuilder.exists().at(ld).withRelations();
         tp = new TrestleParser(df, TRESTLE_PREFIX, true, "");
     }

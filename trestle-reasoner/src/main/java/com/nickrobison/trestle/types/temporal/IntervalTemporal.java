@@ -29,7 +29,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     private final ZoneId endTimeZone;
 
     private IntervalTemporal(Builder<T> builder) {
-        super(UUID.randomUUID().toString(), builder.relations);
+        super(builder.temporalID.orElse(UUID.randomUUID().toString()), builder.relations);
         this.scope = builder.scope;
         this.fromTime = builder.fromTime;
         this.toTime = builder.toTime;
@@ -132,6 +132,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         private Optional<Set<OWLNamedIndividual>> relations = Optional.empty();
         private Optional<String> startName = Optional.empty();
         private Optional<String> endName = Optional.empty();
+        private Optional<String> temporalID = Optional.empty();
         private Optional<ZoneId> fromTimeZone = Optional.empty();
         private Optional<ZoneId> toTimeZone = Optional.empty();
         private boolean isDefault = false;
@@ -168,13 +169,23 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
          *
          * @param startName - String for start name
          * @param endName   - Nullable string for endName
-         * @return
+         * @return - Builder
          */
         public Builder withParameterNames(String startName, @Nullable String endName) {
             this.startName = Optional.of(startName);
             if (endName != null) {
                 this.endName = Optional.of(endName);
             }
+            return this;
+        }
+
+        /**
+         * Manually set temporalID
+         * @param temporalID - String of TemporalID
+         * @return - Builder
+         */
+        public Builder withID(String temporalID) {
+            this.temporalID = Optional.of(temporalID);
             return this;
         }
 
