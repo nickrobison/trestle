@@ -57,6 +57,14 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
     }
 
     @Override
+    public TemporalObject castTo(TemporalScope castScope) {
+        if (castScope == TemporalScope.VALID) {
+            return TemporalObjectBuilder.valid().at(this.atTime).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
+        }
+        return TemporalObjectBuilder.exists().at(this.atTime).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
+    }
+
+    @Override
     public boolean isPoint() {
         return true;
     }

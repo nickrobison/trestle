@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.types.temporal;
 
 import com.nickrobison.trestle.parser.TemporalParser;
+import com.nickrobison.trestle.types.TemporalScope;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
 
