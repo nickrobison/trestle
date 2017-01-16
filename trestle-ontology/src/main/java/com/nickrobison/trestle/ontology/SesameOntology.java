@@ -20,6 +20,7 @@ import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +32,7 @@ import static com.nickrobison.trestle.utils.RDF4JLiteralFactory.createOWLLiteral
 import static com.nickrobison.trestle.utils.SharedOntologyFunctions.filterIndividualDataProperties;
 import static com.nickrobison.trestle.utils.SharedOntologyFunctions.getDataPropertiesFromIndividualFacts;
 
+@NotThreadSafe
 public abstract class SesameOntology extends TransactingOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(SesameOntology.class);

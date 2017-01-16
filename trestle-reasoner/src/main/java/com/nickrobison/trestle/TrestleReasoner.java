@@ -1553,11 +1553,17 @@ public class TrestleReasoner {
         temporalProperties.ifPresent(owlDataProperties -> owlDataProperties.forEach(temporal -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, temporal.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, temporal))));
 
 
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         final List<CompletableFuture<Optional<TSIndividual>>> completableFutures = objectID
                 .stream()
                 .map(id -> IRIUtils.parseStringToIRI(REASONER_PREFIX, id))
 //                .map(id -> readAsObject(inputClass, id))
-                .map(id -> CompletableFuture.supplyAsync(() -> readAsObject(inputClass, id, false)))
+                .map(id -> CompletableFuture.supplyAsync(() -> {
+                    final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                    final @NonNull T object = readAsObject(inputClass, id, false);
+                    this.ontology.returnAndCommitTransaction(tt);
+                    return object;
+                }))
                 .map(objectFuture -> objectFuture.thenApply(object -> parseIndividualToShapefile(object, shapefileSchema)))
                 .collect(Collectors.toList());
 
