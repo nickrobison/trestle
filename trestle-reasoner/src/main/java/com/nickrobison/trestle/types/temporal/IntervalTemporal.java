@@ -29,7 +29,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     private final ZoneId endTimeZone;
 
     private IntervalTemporal(Builder<T> builder) {
-        super(UUID.randomUUID().toString(), builder.relations);
+        super(builder.temporalID.orElse(UUID.randomUUID().toString()), builder.relations);
         this.scope = builder.scope;
         this.fromTime = builder.fromTime;
         this.toTime = builder.toTime;
@@ -67,6 +67,21 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     }
 
     @Override
+    public TemporalObject castTo(TemporalScope castTemporal) {
+        if (castTemporal == TemporalScope.VALID) {
+            if (isContinuing()) {
+                return TemporalObjectBuilder.valid().from(this.fromTime).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
+            }
+            return TemporalObjectBuilder.valid().from(this.fromTime).to(this.toTime.get()).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
+        } else {
+            if (isContinuing()) {
+                return TemporalObjectBuilder.exists().from(this.fromTime).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
+            }
+            return TemporalObjectBuilder.exists().from(this.fromTime).to(this.toTime.get()).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
+        }
+    }
+
+    @Override
     public boolean isPoint() {
         return false;
     }
@@ -80,7 +95,9 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         return !toTime.isPresent();
     }
 
-    public boolean isDefault() { return this.isDefault; }
+    public boolean isDefault() {
+        return this.isDefault;
+    }
 
     public T getFromTime() {
         return this.fromTime;
@@ -115,6 +132,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         private Optional<Set<OWLNamedIndividual>> relations = Optional.empty();
         private Optional<String> startName = Optional.empty();
         private Optional<String> endName = Optional.empty();
+        private Optional<String> temporalID = Optional.empty();
         private Optional<ZoneId> fromTimeZone = Optional.empty();
         private Optional<ZoneId> toTimeZone = Optional.empty();
         private boolean isDefault = false;
@@ -126,6 +144,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Set this temporal as a default, meaning it has no related to parameter
+         *
          * @param isDefault - boolean is default?
          * @return - Builder
          */
@@ -136,6 +155,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Set the to temporal
+         *
          * @param to - Temporal of type T to use for to temporal
          * @return - Builder
          */
@@ -146,9 +166,10 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Set the parameter names for the from/to temporals
+         *
          * @param startName - String for start name
-         * @param endName - Nullable string for endName
-         * @return
+         * @param endName   - Nullable string for endName
+         * @return - Builder
          */
         public Builder withParameterNames(String startName, @Nullable String endName) {
             this.startName = Optional.of(startName);
@@ -159,7 +180,18 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         }
 
         /**
+         * Manually set temporalID
+         * @param temporalID - String of TemporalID
+         * @return - Builder
+         */
+        public Builder withID(String temporalID) {
+            this.temporalID = Optional.of(temporalID);
+            return this;
+        }
+
+        /**
          * Set the time zone for the from temporal
+         *
          * @param zoneId - String to parse into zoneID
          * @return - Builder
          */
@@ -172,6 +204,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Set the time zone for the from temporal
+         *
          * @param zoneId - ZoneID to use
          * @return - Builder
          */
@@ -182,6 +215,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Set the time zone for the to temporal
+         *
          * @param zoneId - String to parse into ZoneID
          * @return - Builder
          */
@@ -194,6 +228,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Set the time zone for the to temporal
+         *
          * @param zoneId - ZoneID to use
          * @return - Builder
          */
@@ -204,6 +239,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Set the Individuals this temporal relates to
+         *
          * @param relations - OWLNamedIndividuals associated with this temporal
          * @return - Builder
          */

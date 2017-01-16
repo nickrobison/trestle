@@ -24,29 +24,29 @@ public interface ITrestleOntology {
     boolean isConsistent();
 
     /**
-     * Returns an optional set of asserted property values from a given individual
+     * Returns an optional list of asserted property values from a given individual
      * @param individual - OWLNamedIndividual to query
      * @param propertyIRI - IRI of property to retrieve
-     * @return - Optional set of all asserted property values
+     * @return - Optional list of all asserted property values
      */
-    Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, IRI propertyIRI);
+    Optional<List<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, IRI propertyIRI);
 
     /**
-     * Returns an optional set of asserted property values from a given individual
+     * Returns an optional list of asserted property values from a given individual
      * @param individualIRI - IRI of individual to query
      * @param objectPropertyIRI - IRI of property to retrieve
-     * @return - Optional set of all asserted property values
+     * @return - Optional list of all asserted property values
      */
-    Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(IRI individualIRI, IRI objectPropertyIRI);
+    Optional<List<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(IRI individualIRI, IRI objectPropertyIRI);
 
     /**
-     * Returns an optional set of asserted property values from a given individual
+     * Returns an optional list of asserted property values from a given individual
      *
      * @param individual - OWLNamedIndividual to query
      * @param property   - OWLObjectProperty to retrieve
-     * @return - Optional set of all asserted property values
+     * @return - Optional list of all asserted property values
      */
-    Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property);
+    Optional<List<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property);
 
     /**
      * Store an OWLNamedIndividual in the ontology from a given classAxiom

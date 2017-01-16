@@ -208,6 +208,28 @@ public class QueryBuilder {
         return ps.toString();
     }
 
+    /**
+     * Build SPARQL query to return all temporal/spatial relations for a given object
+     * @param individual - OWLNamedIndividual to retrieve relations for
+     * @return - SPARQL query string
+     */
+    public String buildIndividualRelationQuery(OWLNamedIndividual individual) {
+        final ParameterizedSparqlString ps = buildBaseString();
+
+        ps.setCommandText(String.format("SELECT DISTINCT ?m ?o ?p " +
+                "WHERE { { " +
+                "?m ?o ?p . " +
+                "?o rdfs:subPropertyOf trestle:Temporal_Relation } " +
+                "UNION { " +
+                "?m ?o ?p . " +
+                "?o rdfs:subPropertyOf trestle:Spatial_Relation ." +
+                "} . " +
+                "VALUES ?m {<%s>}}", getFullIRIString(individual)));
+
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
     public String buildIndividualTemporalQuery(OWLNamedIndividual... individual) {
         final ParameterizedSparqlString ps = buildBaseString();
 

@@ -62,6 +62,14 @@ public abstract class TemporalObject {
      */
     public abstract Class<? extends Temporal> getBaseTemporalType();
 
+    /**
+     * Cast TemporalObject to a different temporal scope
+     * Always results in a new object even if the TemporalObject has the same temporal scope
+     * @param castScope - TemporalScope to cast object to
+     * @return - new TemporalObject
+     */
+    public abstract TemporalObject castTo(TemporalScope castScope);
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

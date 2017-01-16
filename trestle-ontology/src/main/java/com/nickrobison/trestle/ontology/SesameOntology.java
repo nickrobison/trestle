@@ -20,17 +20,16 @@ import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.time.OffsetDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static com.nickrobison.trestle.utils.RDF4JLiteralFactory.createLiteral;
 import static com.nickrobison.trestle.utils.RDF4JLiteralFactory.createOWLLiteral;
 import static com.nickrobison.trestle.utils.SharedOntologyFunctions.filterIndividualDataProperties;
 import static com.nickrobison.trestle.utils.SharedOntologyFunctions.getDataPropertiesFromIndividualFacts;
 
+@NotThreadSafe
 public abstract class SesameOntology extends TransactingOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(SesameOntology.class);
@@ -56,19 +55,19 @@ public abstract class SesameOntology extends TransactingOntology {
     public abstract boolean isConsistent();
 
     @Override
-    public Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, IRI propertyIRI) {
+    public Optional<List<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, IRI propertyIRI) {
         return this.getIndividualObjectProperty(individual, df.getOWLObjectProperty(propertyIRI));
     }
 
     @Override
-    public Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(IRI individualIRI, IRI objectPropertyIRI) {
+    public Optional<List<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(IRI individualIRI, IRI objectPropertyIRI) {
         return this.getIndividualObjectProperty(df.getOWLNamedIndividual(individualIRI),
                 df.getOWLObjectProperty(objectPropertyIRI));
     }
 
     @Override
-    public Optional<Set<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property) {
-        Set<OWLObjectPropertyAssertionAxiom> properties = new HashSet<>();
+    public Optional<List<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property) {
+        List<OWLObjectPropertyAssertionAxiom> properties = new ArrayList<>();
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
         final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(property));
         this.openTransaction(false);

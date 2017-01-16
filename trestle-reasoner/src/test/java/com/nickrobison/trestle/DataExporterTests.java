@@ -81,7 +81,7 @@ public class DataExporterTests {
     public void testExport() throws IOException {
 
         gaulObjects
-                .parallelStream()
+                .stream()
                 .forEach(object -> {
                     try {
                         reasoner.writeAsTrestleObject(object);
