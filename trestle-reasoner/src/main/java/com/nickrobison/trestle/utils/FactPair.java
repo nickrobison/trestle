@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.utils;
 
+import com.nickrobison.trestle.parser.TypeConverter;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLLiteral;
 
@@ -27,5 +28,14 @@ public class FactPair {
 
     public OWLLiteral getLiteral() {
         return literal;
+    }
+
+    /**
+     * Extract Java object from OWLLiteral
+     * @return - Java object
+     */
+    public Object extractLiteral() {
+        final Class<?> datatype = TypeConverter.lookupJavaClassFromOWLDatatype(this.assertion, null);
+        return TypeConverter.extractOWLLiteral(datatype, this.literal);
     }
 }

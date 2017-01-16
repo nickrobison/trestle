@@ -1320,7 +1320,7 @@ public class TrestleReasoner {
      * Build a TrestleFact from a given OWLIndividual
      * Retrieves all the asserted properties and types of a given Individual, in their native forms.
      *
-     * @param factIndividual - OWLNamedIndividual to construct fact from
+     * @param factIndividual    - OWLNamedIndividual to construct fact from
      * @param transactionObject - TrestleTransaction object that gets passed from the parent function
      * @return - TrestleFact
      */
@@ -1347,19 +1347,22 @@ public class TrestleReasoner {
 //        Sequence the temporals in valid/database order
         final CompletableFuture<TemporalPair> temporalsFuture = validFuture.thenCombine(databaseFuture, (valid, database) -> new TemporalPair(
                 valid.orElseThrow(() -> new TrestleMissingFactException(factIndividual, validTimeIRI)),
-                 database.orElseThrow(() -> new TrestleMissingFactException(factIndividual, databaseTimeIRI))));
+                database.orElseThrow(() -> new TrestleMissingFactException(factIndividual, databaseTimeIRI))));
 
-        return temporalsFuture.thenCombine(factFuture, (temporalPair, factPair) -> new TrestleFact<>(factIndividual.getIRI().toString(),
-                factPair.getAssertion().getProperty().asOWLDataProperty().getIRI().getShortForm(),
-                factPair.getLiteral(),
-                temporalPair.getValid(),
-                temporalPair.getDatabase()));
+        return temporalsFuture.thenCombine(factFuture, (temporalPair, factPair) ->
+                new TrestleFact<>(
+                        factIndividual.getIRI().toString(),
+                        factPair.getAssertion().getProperty().asOWLDataProperty().getIRI().getShortForm(),
+                        factPair.extractLiteral(),
+                        temporalPair.getValid(),
+                        temporalPair.getDatabase()));
     }
 
     /**
      * Get temporal objects for given Fact
-     * @param individual - Fact OWLNamedIndividual
-     * @param temporalIRI - IRI of temporalProperties to retrieve
+     *
+     * @param individual        - Fact OWLNamedIndividual
+     * @param temporalIRI       - IRI of temporalProperties to retrieve
      * @param transactionObject - TrestleTransaction object that gets passed from the parent function
      * @return - Completable future of Optional TemporalObject of given Fact individual
      */
@@ -1389,9 +1392,10 @@ public class TrestleReasoner {
     /**
      * Write temporal object into the database, optionally override given scope
      * If no OWLNamedIndividual is given, don't write any association
-     * @param temporal- TemporalObject to create
-     * @param individual - Optional OWLNamedIndividual to associate with temporal
-     * @param overrideTemporalScope - Optionally override scope of temporal object
+     *
+     * @param temporal-                   TemporalObject to create
+     * @param individual                  - Optional OWLNamedIndividual to associate with temporal
+     * @param overrideTemporalScope       - Optionally override scope of temporal object
      * @param overrideTemporalAssociation - Optionally override temporal association
      * @throws MissingOntologyEntity - Throws if it can't find the temporal to write properties on
      */
