@@ -6,6 +6,7 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -15,8 +16,8 @@ abstract class TransactingOntology implements ITrestleOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(TransactingOntology.class);
     private static final OntologySecurityManager securityManager = new OntologySecurityManager();
-    protected long openWriteTransactions = 0;
-    protected long openReadTransactions = 0;
+    protected final AtomicInteger openWriteTransactions = new AtomicInteger();
+    protected final AtomicInteger openReadTransactions = new AtomicInteger();
     protected final AtomicLong openedTransactions = new AtomicLong();
     protected final AtomicLong committedTransactions = new AtomicLong();
     protected static boolean singleWriterOntology = false;
@@ -223,14 +224,12 @@ abstract class TransactingOntology implements ITrestleOntology {
                     this.threadInTransaction.set(true);
                     this.openedTransactions.incrementAndGet();
 //                Track read/write transactions
-                    synchronized (this) {
                         if (write) {
-                            this.openWriteTransactions++;
+                            this.openWriteTransactions.incrementAndGet();
                         } else {
-                            this.openReadTransactions++;
+                            this.openReadTransactions.incrementAndGet();
                         }
-                        logger.debug("{}/{} open read/write transactions", this.openReadTransactions, this.openWriteTransactions);
-                    }
+                        logger.debug("{}/{} open read/write transactions", this.openReadTransactions.get(), this.openWriteTransactions.get());
                     if (write) {
                         this.threadInWriteTransaction.set(true);
                     }
@@ -262,27 +261,29 @@ abstract class TransactingOntology implements ITrestleOntology {
         if (force) {
             logger.trace("Forcing closed transaction");
         }
-        if (!this.threadLocked.get() || force) {
-            if (this.threadInTransaction.get()) {
-                logger.trace("Trying to commit transaction");
-                this.commitDatasetTransaction(write);
-                logger.trace("Committed dataset transaction");
-                this.threadInTransaction.set(false);
-                this.threadTransactionInherited.set(false);
-                this.committedTransactions.incrementAndGet();
-                synchronized (this) {
-                    if (write) {
-                        this.openWriteTransactions--;
-                    } else {
-                        this.openReadTransactions--;
-                    }
-                    logger.debug("{}/{} open read/write transactions", this.openReadTransactions, this.openWriteTransactions);
+        if (threadTransactionObject.get() == null || force) {
+            if (!this.threadLocked.get() || force) {
+                if (this.threadInTransaction.get()) {
+                    logger.trace("Trying to commit transaction");
+                    this.commitDatasetTransaction(write);
+                    logger.trace("Committed dataset transaction");
+                    this.threadInTransaction.set(false);
+                    this.threadTransactionInherited.set(false);
+                    this.committedTransactions.incrementAndGet();
+                        if (write) {
+                            this.openWriteTransactions.incrementAndGet();
+                        } else {
+                            this.openReadTransactions.incrementAndGet();
+                        }
+                        logger.debug("{}/{} open read/write transactions", this.openReadTransactions.get(), this.openWriteTransactions.get());
+                } else {
+                    logger.trace("Thread unlocked, but not in transaction");
                 }
             } else {
-                logger.trace("Thread unlocked, but not in transaction");
+                logger.trace("Thread locked, not committing");
             }
         } else {
-            logger.trace("Thread locked, not committing");
+            logger.trace("Thread owned by transaction object, not committing");
         }
     }
 
