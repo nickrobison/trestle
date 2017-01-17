@@ -247,6 +247,7 @@ public class GraphDBOntology extends SesameOntology {
     @Override
     public void commitDatasetTransaction(boolean write) {
         this.tc.get().commit();
+        this.resetThreadConnection();
         logger.debug("GraphDB model transaction committed");
     }
 }

@@ -513,6 +513,15 @@ public abstract class SesameOntology extends TransactingOntology {
         }
     }
 
+    /**
+     * Reset thread connection to null and return the connection to the {@link SesameConnectionManager}
+     */
+    protected void resetThreadConnection() {
+        @Nullable final RepositoryConnection connection = this.tc.get();
+        this.tc.set(null);
+        this.cm.returnConnection(connection);
+    }
+
     @Override
     public @Nullable RepositoryConnection getOntologyConnection() {
         return this.cm.getConnection();

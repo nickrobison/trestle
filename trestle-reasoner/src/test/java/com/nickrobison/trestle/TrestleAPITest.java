@@ -114,7 +114,7 @@ public class TrestleAPITest {
 
 //        Write the objects
 //        Disable the parallel
-        gaulObjects.stream().forEach(gaul -> {
+        gaulObjects.parallelStream().forEach(gaul -> {
             try {
                 reasoner.writeAsTrestleObject(gaul);
             } catch (TrestleClassException e) {
@@ -192,7 +192,7 @@ public class TrestleAPITest {
         reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(3), ObjectRelation.DURING);
 
         reasoner.getUnderlyingOntology().runInference();
-        classObjects.stream().forEach(object -> {
+        classObjects.parallelStream().forEach(object -> {
             final OWLNamedIndividual owlNamedIndividual = tp.classParser.GetIndividual(object);
             final Object returnedObject = reasoner.readAsObject(object.getClass(), owlNamedIndividual.getIRI(), false);
             if (returnedObject instanceof TestClasses.GAULComplexClassTest) {

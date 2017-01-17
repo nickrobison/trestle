@@ -67,7 +67,7 @@ public class SesameConnectionManager {
      * If the connection is still in a transaction, an error is thrown
      * @param connection - {@link RepositoryConnection} to return to queue
      */
-    private void returnConnection(RepositoryConnection connection) {
+    public void returnConnection(RepositoryConnection connection) {
         if (connection.isActive()) {
             logger.error("Connection still has live transaction");
         }

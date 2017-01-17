@@ -47,6 +47,7 @@ abstract class TransactingOntology implements ITrestleOntology {
         this.threadInTransaction.set(true);
         threadTransactionObject.set(transactionObject);
         threadTransactionInherited.set(true);
+        this.setOntologyConnection();
         return transactionObject;
     }
 
@@ -271,9 +272,9 @@ abstract class TransactingOntology implements ITrestleOntology {
                     this.threadTransactionInherited.set(false);
                     this.committedTransactions.incrementAndGet();
                         if (write) {
-                            this.openWriteTransactions.incrementAndGet();
+                            this.openWriteTransactions.decrementAndGet();
                         } else {
-                            this.openReadTransactions.incrementAndGet();
+                            this.openReadTransactions.decrementAndGet();
                         }
                         logger.debug("{}/{} open read/write transactions", this.openReadTransactions.get(), this.openWriteTransactions.get());
                 } else {

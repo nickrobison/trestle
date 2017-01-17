@@ -60,7 +60,7 @@ public class TrestleTransaction {
 
     /**
      * Get the ontology RepositoryConnection to use for the remainder of the transaction
-     * For a JenaOntology, the connection will always be null
+     * For a {@link com.nickrobison.trestle.ontology.JenaOntology}, the connection will always be null
      * @return - RepositoryConnection for current transaction
      */
     public @Nullable RepositoryConnection getConnection() {
