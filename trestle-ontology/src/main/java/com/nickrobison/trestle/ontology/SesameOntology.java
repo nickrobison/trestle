@@ -7,6 +7,8 @@ import com.nickrobison.trestle.ontology.types.TrestleResultSet;;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.utils.SesameConnectionManager;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
@@ -50,6 +52,7 @@ public abstract class SesameOntology extends TransactingOntology {
 
 
     SesameOntology(String ontologyName, Repository repository, OWLOntology ontology, DefaultPrefixManager pm) {
+        final Config config = ConfigFactory.load().getConfig("trestle.ontology.sesame");
         this.ontologyName = ontologyName;
         this.repository = repository;
         this.adminConnection = repository.getConnection();
@@ -57,7 +60,7 @@ public abstract class SesameOntology extends TransactingOntology {
         this.pm = pm;
         this.df = OWLManager.getOWLDataFactory();
         this.qb = new QueryBuilder(QueryBuilder.DIALECT.SESAME, this.pm);
-        this.cm = new SesameConnectionManager(this.repository, 10, 2);
+        this.cm = new SesameConnectionManager(this.repository, config.getInt("connectionPool.maxSize"), config.getInt("connectionPool.initialConnections"));
     }
 
 
