@@ -27,7 +27,7 @@ public class SesameConnectionManager {
         this.connectionQueue = new ManyToManyConcurrentArrayQueue<>(poolSize);
         this.repository = repository;
 
-        if (initialConnections < poolSize) {
+        if (initialConnections > poolSize) {
             throw new RuntimeException(String.format("Connection pool size is less than requested number of initial connections"));
         }
 
@@ -75,7 +75,7 @@ public class SesameConnectionManager {
             logger.debug("Queue full, closing connection");
             connection.close();
         }
-        logger.debug("Returned connection to pool, {} available", getConnection());
+        logger.debug("Returned connection to pool, {} available", getConnectionCount());
     }
 
     /**
@@ -84,5 +84,15 @@ public class SesameConnectionManager {
      */
     private int getConnectionCount() {
         return this.connectionQueue.size();
+    }
+
+    /**
+     * Shutdown connection pool by draining the queue and closing the connection
+     * Any open connections will be rolled-back
+     */
+    public void shutdownPool() {
+        logger.info("Draining connection pool");
+        this.connectionQueue.drain(RepositoryConnection::close);
+        logger.info("Connection pool shutdown");
     }
 }

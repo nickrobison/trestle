@@ -5,6 +5,7 @@ import com.google.common.collect.Multimap;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
+import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.utils.SesameConnectionManager;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.model.*;
@@ -267,6 +268,7 @@ public abstract class SesameOntology extends TransactingOntology {
     public void close(boolean drop) {
         this.adminConnection.close();
         repository.shutDown();
+        this.cm.shutdownPool();
         this.closeDatabase(drop);
         logger.debug("Opened {} transactions, committed {}", this.openedTransactions.get(), this.committedTransactions.get());
     }
@@ -500,8 +502,15 @@ public abstract class SesameOntology extends TransactingOntology {
     public abstract void commitDatasetTransaction(boolean write);
 
     @Override
-    public void setOntologyConnection(RepositoryConnection connection) {
-        this.tc.set(this.getThreadTransactionObject().getConnection());
+    public void setOntologyConnection() {
+        final TrestleTransaction threadTransactionObject = this.getThreadTransactionObject();
+        if (threadTransactionObject == null) {
+            logger.warn("Thread has no transaction object, getting connection from the pool");
+            this.tc.set(this.cm.getConnection());
+        } else {
+            logger.debug("Setting thread connection from transaction object");
+            this.tc.set(threadTransactionObject.getConnection());
+        }
     }
 
     @Override
