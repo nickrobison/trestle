@@ -1,6 +1,8 @@
 package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.transactions.TrestleTransaction;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,12 +57,6 @@ abstract class TransactingOntology implements ITrestleOntology {
     @Override
     public TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject) {
         return createandOpenNewTransaction(transactionObject, transactionObject.isWriteTransaction());
-//        if (transactionObject.ownsATransaction()) {
-//            return createandOpenNewTransaction(transactionObject, transactionObject.isWriteTransaction());
-//        } else {
-//            logger.debug("Provided transaction object doesn't own the current transaction. Continuing");
-//            return transactionObject;
-//        }
     }
 
     /**
@@ -73,9 +69,10 @@ abstract class TransactingOntology implements ITrestleOntology {
     public TrestleTransaction createandOpenNewTransaction(boolean write) {
         if (threadTransactionObject.get() == null) {
             logger.debug("Unowned transaction, opening a new one");
-            this.openAndLock(write);
             final TrestleTransaction trestleTransaction = new TrestleTransaction(System.nanoTime(), write);
+            trestleTransaction.setConnection(this.getOntologyConnection());
             threadTransactionObject.set(trestleTransaction);
+            this.openAndLock(write);
             return trestleTransaction;
         } else {
             logger.warn("Thread transaction owned, returning empty object");
@@ -247,5 +244,21 @@ abstract class TransactingOntology implements ITrestleOntology {
     public abstract void openDatasetTransaction(boolean write);
 
     public abstract void commitDatasetTransaction(boolean write);
+
+    /**
+     * Set the thread repository connection from the TrestleTransaction object
+     * @param connection - RepositoryConnection to use
+     */
+    public abstract void setOntologyConnection(RepositoryConnection connection);
+
+    /**
+     * Get the thread repository connection to use with the TrestleTransaction object
+     * @return - RepositoryConnection for transaction
+     */
+    public abstract @Nullable RepositoryConnection getOntologyConnection();
+
+    protected TrestleTransaction getThreadTransactionObject() {
+        return this.threadTransactionObject.get();
+    }
 
 }
