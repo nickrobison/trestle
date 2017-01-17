@@ -1,6 +1,8 @@
 package com.nickrobison.trestle.transactions;
 
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 
 /**
  * Created by nrobison on 10/3/16.
@@ -9,6 +11,7 @@ public class TrestleTransaction {
 
     private final Long transactionID;
     private final Boolean writeTransaction;
+    private @MonotonicNonNull RepositoryConnection connection;
 
     /**
      * Create a new TrestleTransaction with the current timestamp, indicating the tread owns the current transaction
@@ -53,6 +56,19 @@ public class TrestleTransaction {
      */
     public boolean ownsATransaction() {
         return transactionID != null;
+    }
+
+    /**
+     * Get the ontology RepositoryConnection to use for the remainder of the transaction
+     * For a {@link com.nickrobison.trestle.ontology.JenaOntology}, the connection will always be null
+     * @return - RepositoryConnection for current transaction
+     */
+    public @Nullable RepositoryConnection getConnection() {
+        return connection;
+    }
+
+    public void setConnection(RepositoryConnection connection) {
+        this.connection = connection;
     }
 
     @Override

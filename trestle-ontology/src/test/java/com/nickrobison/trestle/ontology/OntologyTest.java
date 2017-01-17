@@ -2,6 +2,7 @@ package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.junit.jupiter.api.*;
@@ -95,17 +96,22 @@ abstract public class OntologyTest {
         final OWLDataPropertyAssertionAxiom owlDataPropertyAssertionAxiom1 = df.getOWLDataPropertyAssertionAxiom(test_new_property, test_individual, owlLiteral);
 
 //        Check if the ontology has what we want
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         assertFalse(ontology.containsResource(test_individual), "Shouldn't have the individual");
         assertTrue(ontology.containsResource(owlClass), "Should have the class");
         assertTrue(ontology.containsResource(trestle_property), "Should have the ADM_0 Code");
         assertFalse(ontology.containsResource(test_new_property), "Shouldn't have test property");
+        this.ontology.returnAndCommitTransaction(trestleTransaction);
 
 
 //        Try to write everything
+        final TrestleTransaction t1 = this.ontology.createandOpenNewTransaction(true);
         ontology.createIndividual(owlClassAssertionAxiom);
         ontology.writeIndividualDataProperty(owlDataPropertyAssertionAxiom);
         ontology.writeIndividualDataProperty(owlDataPropertyAssertionAxiom1);
+        this.ontology.returnAndCommitTransaction(t1);
 
+        final TrestleTransaction t2 = this.ontology.createandOpenNewTransaction(false);
         Optional<Set<OWLLiteral>> individualProperty = ontology.getIndividualDataProperty(test_individual, trestle_property);
         assertTrue(individualProperty.isPresent(), "Should have values");
         assertEquals(1, individualProperty.get().size(), "Wrong number of values");
@@ -115,6 +121,7 @@ abstract public class OntologyTest {
         assertTrue(individualProperty.isPresent(), "Should have values");
         assertEquals(1, individualProperty.get().size(), "Wrong number of values");
         assertEquals(owlLiteral, individualProperty.get().stream().findFirst().get(), "Wrong property literal");
+        this.ontology.returnAndCommitTransaction(t2);
 
 ////        Try to write a property value to an individual that doesn't exist
 //        final OWLNamedIndividual missing_individual = df.getOWLNamedIndividual(IRI.create("trestle:", "missing_individual"));
@@ -146,6 +153,7 @@ abstract public class OntologyTest {
     public void testRelationAssociation() {
 
 //        Check to ensure the relation is inferred
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         final OWLNamedIndividual test_maputo = df.getOWLNamedIndividual(IRI.create("trestle:", "maputo:2013:3000"));
         final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(hasFactIRI);
         final Optional<List<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(test_maputo, owlObjectProperty);
@@ -185,6 +193,7 @@ abstract public class OntologyTest {
                         .stream()
                         .anyMatch(relation -> relation.getObject().equals(df.getOWLNamedIndividual(IRI.create("http://nickrobison.com/dissertation/trestle.owl#municipal2:1990:2013")))), "test_maputo is not related to municipal2")
         );
+        this.ontology.returnAndCommitTransaction(trestleTransaction);
     }
 
     //    Override Tests

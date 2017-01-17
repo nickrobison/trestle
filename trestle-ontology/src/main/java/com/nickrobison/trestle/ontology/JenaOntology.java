@@ -19,6 +19,7 @@ import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
@@ -680,6 +681,14 @@ public abstract class JenaOntology extends TransactingOntology {
             return Lock.WRITE;
         }
         return Lock.READ;
+    }
+
+    @Override
+    public void setOntologyConnection() { }
+
+    @Override
+    public @Nullable RepositoryConnection getOntologyConnection() {
+        return null;
     }
 
     /**

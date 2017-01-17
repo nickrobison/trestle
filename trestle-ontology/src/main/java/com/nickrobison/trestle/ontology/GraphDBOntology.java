@@ -55,8 +55,8 @@ public class GraphDBOntology extends SesameOntology {
     private static final Logger logger = LoggerFactory.getLogger(GraphDBOntology.class);
     private static final String DATA_DIRECTORY = "./target/data";
     private static RepositoryManager repositoryManager;
-    private static RepositoryConnection connection;
-    private static Repository repository;
+//    private static RepositoryConnection connection;
+//    private static Repository repository;
     private static final Config config = ConfigFactory.load().getConfig("trestle.ontology.graphdb");
 
 
@@ -64,7 +64,7 @@ public class GraphDBOntology extends SesameOntology {
         super(ontologyName, constructRepository(ontologyName, connectionString, username, password), ont, pm);
     }
 
-    private static RepositoryConnection constructRepository(String ontologyName, @Nullable String connectionString, String username, String password) {
+    private static Repository constructRepository(String ontologyName, @Nullable String connectionString, String username, String password) {
 
         if (connectionString == null) {
 //            Connect to local repository
@@ -75,17 +75,15 @@ public class GraphDBOntology extends SesameOntology {
         }
 
         repositoryManager.initialize();
-        repository = repositoryManager.getRepository(ontologyName);
+        final Repository repository = repositoryManager.getRepository(ontologyName);
 //        If the repository doesn't exist, create it
         if (repository == null) {
-            setupNewRepository(ontologyName);
-        } else {
-            connection = repository.getConnection();
+            return setupNewRepository(ontologyName);
         }
-        return connection;
+        return repository;
     }
 
-    private static void setupNewRepository(String ontologyName) {
+    private static Repository setupNewRepository(String ontologyName) {
         logger.info("Creating new Local Repository {}", ontologyName);
         final TreeModel graph = new TreeModel();
 
@@ -116,10 +114,10 @@ public class GraphDBOntology extends SesameOntology {
         final RepositoryConfig repositoryConfig = RepositoryConfig.create(graph, repositoryNode);
         repositoryManager.addRepositoryConfig(repositoryConfig);
 
-        repository = repositoryManager.getRepository(ontologyName);
+        return repositoryManager.getRepository(ontologyName);
 
-        connection = repository.getConnection();
-        connection.setIsolationLevel(IsolationLevels.READ_COMMITTED);
+//        connection = repository.getConnection();
+//        connection.setIsolationLevel(IsolationLevels.READ_COMMITTED);
     }
 //    private static Model constructJenaModel() {
 //        OwlimSchemaRepository schema = new OwlimSchemaRepository();
@@ -149,17 +147,17 @@ public class GraphDBOntology extends SesameOntology {
     public void initializeOntology() {
         logger.info("Initializing new ontology {}", this.ontologyName);
         logger.info("Removing all statements from repository");
-        connection.begin();
-        connection.remove(WILDCARD, WILDCARD, WILDCARD);
-        connection.commit();
-        connection.begin();
+        this.adminConnection.begin();
+        this.adminConnection.remove(WILDCARD, WILDCARD, WILDCARD);
+        this.adminConnection.commit();
+        this.adminConnection.begin();
         try {
-            connection.add(ontologytoIS(this.ontology), "urn:base", RDFFormat.RDFXML);
+            this.adminConnection.add(ontologytoIS(this.ontology), "urn:base", RDFFormat.RDFXML);
         } catch (IOException | OWLOntologyStorageException e) {
             logger.error("Cannot load ontology", e);
             throw new RuntimeException("Cannot load ontology", e);
         } finally {
-            connection.commit();
+            this.adminConnection.commit();
         }
 
         //        Enable GeoSPARQL support
@@ -176,10 +174,7 @@ public class GraphDBOntology extends SesameOntology {
     }
 
     @Override
-    public void close(boolean drop) {
-        connection.close();
-        repository.shutDown();
-
+    public void closeDatabase(boolean drop) {
         if (drop) {
             logger.info("Dropping model {} at {}", this.ontologyName, DATA_DIRECTORY);
             if (repositoryManager.isSafeToRemove(this.ontologyName)) {
@@ -197,7 +192,6 @@ public class GraphDBOntology extends SesameOntology {
             }
         }
         repositoryManager.shutDown();
-        logger.debug("Opened {} transactions, committed {}", this.openedTransactions.get(), this.committedTransactions.get());
     }
 
     @Override
@@ -208,7 +202,7 @@ public class GraphDBOntology extends SesameOntology {
     public TrestleResultSet executeSPARQLTRS(String queryString) {
         final TrestleResultSet results;
         this.openTransaction(false);
-        final TupleQuery tupleQuery = connection.prepareTupleQuery(QueryLanguage.SPARQL, queryString);
+        final TupleQuery tupleQuery = this.tc.get().prepareTupleQuery(QueryLanguage.SPARQL, queryString);
         final TupleQueryResult resultSet = tupleQuery.evaluate();
         try {
             results = buildResultSet(resultSet);
@@ -242,13 +236,18 @@ public class GraphDBOntology extends SesameOntology {
 
     @Override
     public void openDatasetTransaction(boolean write) {
-        connection.begin();
+        if (this.tc.get() == null) {
+            logger.warn("Thread has no open connection, creating a new one");
+            this.setOntologyConnection();
+        }
+        this.tc.get().begin();
         logger.debug("Opened GraphDB transaction");
     }
 
     @Override
     public void commitDatasetTransaction(boolean write) {
-        connection.commit();
+        this.tc.get().commit();
+        this.resetThreadConnection();
         logger.debug("GraphDB model transaction committed");
     }
 }
