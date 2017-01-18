@@ -36,6 +36,11 @@
             <artifactId>dropwizard-guice</artifactId>
             <version>1.0.0.2</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.dirkraft.dropwizard</groupId>
+            <artifactId>dropwizard-file-assets</artifactId>
+            <version>0.0.2</version>
+        </dependency>
         <!--General application dependencies-->
         <dependency>
             <groupId>commons-io</groupId>

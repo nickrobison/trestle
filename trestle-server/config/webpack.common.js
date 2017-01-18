@@ -21,7 +21,8 @@ var options = {
         loaders: [
             {
                 test: /\.tsx?$/,
-                loaders: ["awesome-typescript-loader", "angular2-template-loader?keepUrl=true"]
+                loaders: ["awesome-typescript-loader", "angular2-template-loader?keepUrl=true"],
+                exclude: [/\.(spec|e2e)\.ts$/]
             },
             {
                 test: /\.html$/,
@@ -31,15 +32,19 @@ var options = {
                 test: /\.(png|jpe?g|gif|svg|woff|woff2|ttf|eot|ico)$/,
                 loader: "file?name=assets/[name].[hash].[ext]"
             },
+            // {
+            //     test: /\.css$/,
+            //     exclude: helper.root("src/main/webapp/", "app"),
+            //     loader: ExtractTextPlugin.extract(["style-loader", "css-loader?sourceMap"])
+            // },
             {
                 test: /\.css$/,
-                exclude: helper.root("src", "app"),
-                loader: ExtractTextPlugin.extract(["style-loader", "css-loader?sourceMap"])
+                loader: "raw-loader",
+                exclude: /\.async\.(html|css)$/
             },
             {
-                test: /\.css$/,
-                include: helper.root("src, app"),
-                loader: "raw-loader"
+                test: /\.async\.(html|css)$/,
+                loaders: ['file?name=[name].[hash].[ext]', 'extract']
             },
             {
                 test: /\.scss$/,
