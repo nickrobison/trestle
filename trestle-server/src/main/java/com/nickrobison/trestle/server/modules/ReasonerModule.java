@@ -38,9 +38,8 @@ public class ReasonerModule implements Managed {
                 .withDBConnection(configuration.getConnectionString(),
                         configuration.getUsername(),
                         configuration.getPassword())
-                .withName("api_test")
+                .withName("gaul_hadoop_rewrite")
                 .withoutCaching()
-                .initialize()
                 .build();
 
         logger.info("Reasoner started");

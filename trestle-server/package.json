@@ -12,6 +12,7 @@
     "@angular/material": "^2.0.0-beta.1",
     "@angular/platform-browser": "^2.4.3",
     "@angular/platform-browser-dynamic": "^2.4.3",
+    "@angular/router": "^3.4.3",
     "core-js": "^2.4.1",
     "es6-shim": "^0.35.2",
     "hammerjs": "^2.0.8",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@types/hammerjs": "^2.0.34",
+    "@types/node": "^7.0.0",
     "angular2-template-loader": "^0.6.0",
     "awesome-typescript-loader": "^3.0.0-beta.18",
     "extract-text-webpack-plugin": "2.0.0-beta.5",
@@ -28,6 +30,7 @@
     "node-sass": "^4.3.0",
     "raw-loader": "^0.5.1",
     "sass-loader": "^4.1.1",
+    "style-loader": "^0.13.1",
     "typescript": "^2.1.5",
     "webpack": "beta",
     "webpack-merge": "^2.4.0"

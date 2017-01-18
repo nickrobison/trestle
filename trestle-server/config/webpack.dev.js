@@ -10,7 +10,7 @@ var devOptions = {
     devtool: "source-map",
     output: {
         path: helpers.root("src/main/resources/build"),
-        publicPath: "admin/",
+        // publicPath: "admin/",
         filename: "[name].bundle.js",
         sourceMapFilename: "[name].map",
         chunkFilename: "[id].chunk.js"
