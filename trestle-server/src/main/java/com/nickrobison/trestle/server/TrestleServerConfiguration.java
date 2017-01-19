@@ -15,9 +15,9 @@ public class TrestleServerConfiguration extends Configuration {
 
     @NotEmpty
     private String connectionString;
-    @NotEmpty
+    @NotNull
     private String username;
-    @NotEmpty
+    @NotNull
     private String password;
     @Valid
     @NotNull
