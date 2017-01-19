@@ -9,8 +9,8 @@ const helpers = require("./helpers");
 var devOptions = {
     devtool: "source-map",
     output: {
-        path: helpers.root("src/main/resources/build"),
-        // publicPath: "admin/",
+        path: helpers.root("target/classes/build"),
+        publicPath: "static/",
         filename: "[name].bundle.js",
         sourceMapFilename: "[name].map",
         chunkFilename: "[id].chunk.js"

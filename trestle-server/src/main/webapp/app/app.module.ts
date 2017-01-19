@@ -5,10 +5,11 @@ import {NgModule} from "@angular/core";
 import {HttpModule} from "@angular/http";
 import {BrowserModule} from "@angular/platform-browser";
 import {MaterialModule} from "@angular/material";
-import {AppComponent} from "./app.component";
-import {DashboardComponent} from "./dashboard/app.dashboard";
 import {RouterModule} from "@angular/router";
 import {AppRoutes} from "./app.routes";
+import {LoginComponent} from "./login/app.login";
+import {AppComponent} from "./app.component";
+import {MaterializeDirective} from "angular2-materialize";
 
 @NgModule({
     imports: [
@@ -17,7 +18,7 @@ import {AppRoutes} from "./app.routes";
         MaterialModule.forRoot(),
         RouterModule.forRoot(AppRoutes)
     ],
-    declarations: [AppComponent, DashboardComponent],
+    declarations: [AppComponent, LoginComponent, MaterializeDirective],
     bootstrap: [AppComponent]
 
 })

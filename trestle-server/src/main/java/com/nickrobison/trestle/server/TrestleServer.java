@@ -2,13 +2,10 @@ package com.nickrobison.trestle.server;
 
 import com.github.dirkraft.dropwizard.fileassets.FileAssetsBundle;
 import com.hubspot.dropwizard.guice.GuiceBundle;
-import com.nickrobison.trestle.server.models.User;
-import com.nickrobison.trestle.server.models.UserDAO;
 import com.nickrobison.trestle.server.modules.HibernateModule;
 import com.nickrobison.trestle.server.modules.TrestleServerModule;
 import io.dropwizard.Application;
 import io.dropwizard.db.PooledDataSourceFactory;
-import io.dropwizard.hibernate.HibernateBundle;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -44,7 +41,7 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
 
     @Override
     public void initialize(Bootstrap<TrestleServerConfiguration> bootstrap) {
-        bootstrap.addBundle(new FileAssetsBundle("src/main/resources/build/", "/admin", "index.html"));
+        bootstrap.addBundle(new FileAssetsBundle("src/main/resources/build/", "/static", "index.html"));
 //        bootstrap.addBundle(hibernate);
         bootstrap.addBundle(migrations);
 
