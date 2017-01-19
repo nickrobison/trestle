@@ -1,11 +1,8 @@
-.app-content {
-    padding: 20px;
-}
-
-.toolbar-spacer {
-    flex: 1 1 auto;
+html {
+    height: 100%;
 }
 body {
     margin: 0;
     text-align: center;
+    min-height: 100%;
 }

@@ -8,3 +8,5 @@ import "@angular/core";
 import "@angular/http";
 import "hammerjs";
 import "@angular/material";
+import "materialize-css";
+import "angular2-materialize";

@@ -21,16 +21,20 @@ var options = {
         loaders: [
             {
                 test: /\.tsx?$/,
-                loaders: ["awesome-typescript-loader", "angular2-template-loader?keepUrl=true"],
+                loaders: ["awesome-typescript-loader", "angular2-template-loader?keepUrl=true", "angular2-router-loader"],
                 exclude: [/\.(spec|e2e)\.ts$/]
             },
             {
                 test: /\.html$/,
                 loader: "html-loader"
             },
+            // {
+            //   test: /\.(png|jpe?g)$/,
+            //     loader: "url-loader"
+            // },
             {
                 test: /\.(png|jpe?g|gif|svg|woff|woff2|ttf|eot|ico)$/,
-                loader: "file?name=assets/[name].[hash].[ext]"
+                loader: "file-loader?name=assets/[name].[hash].[ext]"
             },
             // {
             //     test: /\.css$/,

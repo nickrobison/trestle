@@ -1,0 +1,12 @@
+.app-content {
+    padding: 20px;
+    height: 100%;
+}
+
+.toolbar-spacer {
+    flex: 1 1 auto;
+}
+
+.top-layout {
+    height: 50px;
+}

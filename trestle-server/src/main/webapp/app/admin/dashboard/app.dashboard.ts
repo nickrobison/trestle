@@ -4,7 +4,7 @@
 
 import {Component} from "@angular/core";
 @Component({
-    selector: "dashboard",
+    selector: "admin-dashboard",
     templateUrl: "./app.dashboard.html",
     styleUrls: ["./app.dashboard.css"]
 })

@@ -6,9 +6,10 @@ import io.dropwizard.hibernate.UnitOfWork;
 import io.dropwizard.jersey.params.LongParam;
 
 import javax.inject.Inject;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,6 +30,7 @@ public class UserResource {
 
     @GET
     @UnitOfWork
+    @Valid
     public List<User> findByName(@QueryParam("name") Optional<String> name) {
         if (name.isPresent()) {
             return userDAO.findByname(name.get());
@@ -38,16 +40,15 @@ public class UserResource {
 
     @POST
     @UnitOfWork
-    public Response putUser(User user) {
-        final long userID = userDAO.create(user);
-        return Response.status(Response.Status.CREATED).entity(userID).build();
+    public long putUser(@NotNull @Valid User user) {
+        return userDAO.create(user);
     }
 
     @GET
     @Path(("/{id}"))
     @UnitOfWork
-    public Response findByID(@PathParam("id") LongParam id) {
-        final Optional<User> user = userDAO.findById(id.get());
-        return Response.status(Response.Status.OK).entity(user).build();
+    @Valid
+    public Optional<User> findByID(@PathParam("id") LongParam id) {
+        return userDAO.findById(id.get());
     }
 }
