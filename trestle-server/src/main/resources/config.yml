@@ -4,3 +4,11 @@ password: "spatial1"
 
 logging:
   level: INFO
+
+database:
+  driverClass: org.h2.Driver
+  user: sa
+  url: jdbc:h2:~/test
+  properties:
+    charSet: UTF-8
+    hibernate.dialect: org.hibernate.dialect.H2Dialect
