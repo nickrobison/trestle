@@ -8,6 +8,41 @@ import {tokenNotExpired, JwtHelper} from "angular2-jwt";
 
 const _key: string = "id_token";
 
+export enum Privileges {
+    USER = 1,
+    ADMIN = 2,
+    DBA = 4
+}
+//
+// export interface ITrestleToken {
+//     exp: number;
+//     iat: number;
+//     user: ITrestleUser;
+// }
+
+export class TrestleToken {
+
+    exp: number;
+    iat: number;
+    user: ITrestleUser;
+
+    public constructor(token: any) {
+        this.exp = token["exp"];
+       this.iat = token["iat"];
+       this.user = JSON.parse(token["data4j"]);
+    }
+}
+
+export interface ITrestleUser {
+    id: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+    email: string;
+    password: string;
+    privileges: number;
+}
+
 @Injectable()
 export class AuthService {
 
@@ -20,10 +55,10 @@ export class AuthService {
     public login(username: string, password: string): void {
         this.http.post("/auth/login", {username: username, password: password})
             .subscribe(response => {
-            console.debug("has token");
-            console.log(response.text());
-            localStorage.setItem(_key, response.text());
-        }, (error: Error) => console.log(error))
+                console.debug("has token");
+                console.log(response);
+                localStorage.setItem(_key, response.text());
+            }, (error: Error) => console.log(error))
     }
 
     public logout(): void {
@@ -47,4 +82,27 @@ export class AuthService {
         }
         return tokenNotExpired();
     }
+
+    public hasRoles(roles: Array<Privileges>): boolean {
+        let token = new TrestleToken(this.jwtHelper.decodeToken(localStorage.getItem(_key)));
+        console.debug("Role token", token);
+
+        if (token) {
+            return (token.user.privileges & this.buildRoleValue(roles)) > 0;
+        }
+
+        return false;
+    }
+
+    private buildRoleValue(roles: Array<Privileges>): number {
+        let roleValue = 0;
+        roles.forEach((role) => {
+            console.log(Privileges[role]);
+            roleValue = roleValue | role;
+        });
+        console.debug("Role value", roleValue);
+        return roleValue;
+    }
+
+
 }

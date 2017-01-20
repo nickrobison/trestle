@@ -2,7 +2,8 @@
  * Created by nrobison on 1/19/17.
  */
 import {Component, OnInit} from "@angular/core";
-import {UserService, ITrestleUser} from "./users.service";
+import {UserService} from "./users.service";
+import {ITrestleUser} from "../../authentication.service";
 
 @Component({
     selector: "admin-users",

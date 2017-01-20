@@ -9,13 +9,22 @@ import {AdminComponent} from "./admin.component";
 import {UsersComponent} from "./users/users.component";
 import {UserService} from "./users/users.service";
 import {CommonModule} from "@angular/common";
-import {MaterializeDirective} from "angular2-materialize";
-import {AuthGuard} from "../../AuthGuard";
+import {LoggedInGuard} from "../LoggedInGuard";
+import {PermissionsGuard} from "../PermissionsGuard";
+import {Privileges} from "../authentication.service";
 
-const routes: Array<Route> = [
+interface ITrestleRoute extends Route {
+    data?: ITrestleRouteData
+}
+
+interface ITrestleRouteData {
+    roles: Array<Privileges>;
+}
+
+const routes: Array<ITrestleRoute> = [
     {path: "", component: AdminComponent, children: [
         {path: "dashboard", component: DashboardComponent},
-        {path: "users", component: UsersComponent, canActivate: [AuthGuard]},
+        {path: "users", component: UsersComponent, canActivate: [LoggedInGuard, PermissionsGuard], data: {roles: [Privileges.ADMIN]}},
         {path: "", redirectTo: "/dashboard", pathMatch: "full"}
     ]}
 ];

@@ -12,8 +12,9 @@ import {AppComponent} from "./app.component";
 import {MaterializeDirective} from "angular2-materialize";
 import {FormsModule} from "@angular/forms";
 import {AuthService} from "./authentication.service";
-import {AuthGuard} from "../AuthGuard";
+import {LoggedInGuard} from "./LoggedInGuard";
 import {AuthHttp, AuthConfig} from "angular2-jwt";
+import {PermissionsGuard} from "./PermissionsGuard";
 
 @NgModule({
     imports: [
@@ -25,7 +26,8 @@ import {AuthHttp, AuthConfig} from "angular2-jwt";
     ],
     declarations: [AppComponent, LoginComponent, MaterializeDirective],
     providers: [AuthService,
-        AuthGuard,
+        LoggedInGuard,
+        PermissionsGuard,
         {
             provide: AuthHttp,
             useFactory: authHttpServiceFactory,
