@@ -10,11 +10,12 @@ import {UsersComponent} from "./users/users.component";
 import {UserService} from "./users/users.service";
 import {CommonModule} from "@angular/common";
 import {MaterializeDirective} from "angular2-materialize";
+import {AuthGuard} from "../../AuthGuard";
 
 const routes: Array<Route> = [
     {path: "", component: AdminComponent, children: [
         {path: "dashboard", component: DashboardComponent},
-        {path: "users", component: UsersComponent},
+        {path: "users", component: UsersComponent, canActivate: [AuthGuard]},
         {path: "", redirectTo: "/dashboard", pathMatch: "full"}
     ]}
 ];

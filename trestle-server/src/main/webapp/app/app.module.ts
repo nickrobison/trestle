@@ -10,15 +10,20 @@ import {AppRoutes} from "./app.routes";
 import {LoginComponent} from "./login/app.login";
 import {AppComponent} from "./app.component";
 import {MaterializeDirective} from "angular2-materialize";
+import {FormsModule} from "@angular/forms";
+import {AuthService} from "./authentication.service";
+import {AuthGuard} from "../AuthGuard";
 
 @NgModule({
     imports: [
         HttpModule,
         BrowserModule,
+        FormsModule,
         MaterialModule.forRoot(),
         RouterModule.forRoot(AppRoutes)
     ],
     declarations: [AppComponent, LoginComponent, MaterializeDirective],
+    providers: [AuthService, AuthGuard],
     bootstrap: [AppComponent]
 
 })
