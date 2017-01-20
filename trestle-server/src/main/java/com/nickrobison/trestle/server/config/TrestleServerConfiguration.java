@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.server;
+package com.nickrobison.trestle.server.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
@@ -23,6 +23,10 @@ public class TrestleServerConfiguration extends Configuration {
     @NotNull
     @JsonProperty
     private DataSourceFactory database = new DataSourceFactory();
+    @Valid
+    @NotNull
+    @JsonProperty
+    private JWTConfig jwt;
 
     @JsonProperty
     public String getConnectionString() {
@@ -57,5 +61,10 @@ public class TrestleServerConfiguration extends Configuration {
     @JsonProperty("database")
     public DataSourceFactory getDataSourceFactory() {
         return this.database;
+    }
+
+    @JsonProperty("jwt")
+    public JWTConfig getJwtConfig() {
+        return this.jwt;
     }
 }

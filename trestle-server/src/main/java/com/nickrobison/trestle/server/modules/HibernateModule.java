@@ -7,7 +7,7 @@ package com.nickrobison.trestle.server.modules;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.nickrobison.trestle.server.TrestleServerConfiguration;
+import com.nickrobison.trestle.server.config.TrestleServerConfiguration;
 import io.dropwizard.ConfiguredBundle;
 import io.dropwizard.db.PooledDataSourceFactory;
 import io.dropwizard.hibernate.HibernateBundle;
@@ -17,7 +17,6 @@ import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.persistence.Entity;
 import java.security.ProviderException;
