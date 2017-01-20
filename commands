@@ -7,4 +7,5 @@ case ${1} in
   cloc --exclude-dir=$(tr '\n' ',' < ./.clocignore) .
   ;;
 esac
+shift
 done
