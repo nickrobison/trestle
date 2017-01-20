@@ -21,7 +21,6 @@ import java.util.Optional;
  */
 @Path("/users")
 @Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
 public class UserResource {
 
     private final UserDAO userDAO;
@@ -34,15 +33,16 @@ public class UserResource {
     @GET
     @UnitOfWork
     @Valid
-    public List<User> findByName(@QueryParam("name") Optional<String> name) {
+    public List<User> findByName(@AuthRequired({Privilege.ADMIN}) User user, @QueryParam("name") Optional<String> name) {
         if (name.isPresent()) {
-            return userDAO.findByname(name.get());
+            return userDAO.findByName(name.get());
         }
         return userDAO.findAll();
     }
 
     @POST
     @UnitOfWork
+    @Consumes(MediaType.APPLICATION_JSON)
     public long putUser(@NotNull @Valid User user) {
         return userDAO.create(user);
     }

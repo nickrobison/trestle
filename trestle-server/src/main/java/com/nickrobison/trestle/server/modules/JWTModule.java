@@ -39,6 +39,8 @@ public class JWTModule extends AbstractModule {
         return new JWTHandlerBuilder<User>()
                 .withSecret(jwtConfig.getAuthSalt().getBytes())
                 .withDataClass(User.class)
+                .withIssuedAtEnabled(true)
+                .withExpirationSeconds(600)
                 .build();
     }
 }

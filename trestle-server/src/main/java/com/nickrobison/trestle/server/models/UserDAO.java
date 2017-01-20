@@ -31,11 +31,16 @@ public class UserDAO extends AbstractDAO<User> {
         return list(namedQuery("com.nickrobison.trestle.server.queries.User.findAll"));
     }
 
-    public List<User> findByname(String name) {
+    public List<User> findByName(String name) {
         StringBuilder builder = new StringBuilder("%");
         builder.append(name).append("%");
         return list(namedQuery("com.nickrobison.trestle.server.queries.User.findByName")
         .setParameter("name", builder.toString())
         );
+    }
+
+    public Optional<User> findByUsername(String username) {
+        return Optional.ofNullable(uniqueResult(namedQuery("com.nickrobison.trestle.server.queries.User.findByUsername")
+                .setParameter("username", username)));
     }
 }

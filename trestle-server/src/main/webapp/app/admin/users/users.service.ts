@@ -2,8 +2,9 @@
  * Created by nrobison on 1/19/17.
  */
 import {Injectable} from "@angular/core";
-import {Http, Response} from "@angular/http";
+import {Response} from "@angular/http";
 import {Observable} from "rxjs";
+import {AuthHttp} from "angular2-jwt";
 
 export interface ITrestleUser {
     id: string;
@@ -15,10 +16,10 @@ export interface ITrestleUser {
 
 @Injectable()
 export class UserService {
-    constructor(private http: Http) {}
+    constructor(private authHttp: AuthHttp) {}
 
     getUsers(): Observable<Array<ITrestleUser>> {
-        return this.http.get("/users")
+        return this.authHttp.get("/users")
             .map((res: Response) => res.json())
             .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
