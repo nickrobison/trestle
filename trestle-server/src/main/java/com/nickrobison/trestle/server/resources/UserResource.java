@@ -1,5 +1,7 @@
 package com.nickrobison.trestle.server.resources;
 
+import com.nickrobison.trestle.server.annotations.AuthRequired;
+import com.nickrobison.trestle.server.auth.Privilege;
 import com.nickrobison.trestle.server.models.User;
 import com.nickrobison.trestle.server.models.UserDAO;
 import io.dropwizard.hibernate.UnitOfWork;
@@ -10,6 +12,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,7 +51,14 @@ public class UserResource {
     @Path(("/{id}"))
     @UnitOfWork
     @Valid
-    public Optional<User> findByID(@PathParam("id") LongParam id) {
+    public Optional<User> findByID(@AuthRequired({Privilege.ADMIN}) User user, @PathParam("id") LongParam id) {
         return userDAO.findById(id.get());
+    }
+
+
+    @GET
+    @Path("/secure")
+    public Response secured() {
+        return Response.ok().build();
     }
 }

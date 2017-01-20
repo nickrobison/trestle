@@ -142,6 +142,11 @@
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.jwt4j</groupId>
+            <artifactId>jwt4j</artifactId>
+            <version>0.1.1</version>
+        </dependency>
     </dependencies>
 
     <build>
