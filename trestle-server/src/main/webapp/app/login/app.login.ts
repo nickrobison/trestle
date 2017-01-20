@@ -17,6 +17,6 @@ export class LoginComponent {
 
     public login() {
         console.debug("Logging in with", this.username, "and", this.password);
-        this.authService.login(this.username);
+        this.authService.login(this.username, this.password);
     }
 }

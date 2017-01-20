@@ -17,5 +17,5 @@ database:
     hibernate.dialect: org.hibernate.dialect.H2Dialect
 
 jwt:
-  authHeader: "test"
+  authHeader: "Authorization"
   authSalt: "test-salt"

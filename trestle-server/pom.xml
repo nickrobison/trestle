@@ -130,6 +130,11 @@
         </dependency>
         <!--General application dependencies-->
         <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
         </dependency>
@@ -162,7 +167,7 @@
                             <goal>install-node-and-yarn</goal>
                         </goals>
                         <configuration>
-                            <nodeVersion>7.4.0</nodeVersion>
+                            <nodeVersion>v7.4.0</nodeVersion>
                             <yarnVersion>0.19.1</yarnVersion>
                         </configuration>
                     </execution>

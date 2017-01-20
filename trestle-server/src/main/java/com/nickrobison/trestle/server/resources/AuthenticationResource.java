@@ -19,6 +19,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
+import java.util.Optional;
+
+import static javax.ws.rs.core.Response.*;
 
 /**
  * Created by nrobison on 1/19/17.
@@ -44,19 +47,19 @@ public class AuthenticationResource {
     @Path("/login")
     public Response login(@Context ContainerRequestContext context, @Valid UserCredentials user) {
         final String name = user.getUsername();
-        final List<User> users = userDAO.findByname(name);
-        if (!users.isEmpty()) {
+        final Optional<User> dbUser = userDAO.findByUsername(name);
+        if (dbUser.isPresent()) {
             logger.info("Logging in {}", name);
-            final String jwtToken = jwtHandler.encode(users.get(0));
-            return Response.ok(jwtToken).build();
+            final String jwtToken = jwtHandler.encode(dbUser.get());
+            return ok(jwtToken).build();
         }
         logger.warn("Unauthorized user {}", name);
-        return Response.status(Response.Status.UNAUTHORIZED).build();
+        return status(Status.UNAUTHORIZED).build();
     }
 
     @POST
     @Path("/logout")
     public Response logout(@Context ContainerRequestContext context) {
-        return Response.ok().build();
+        return ok().build();
     }
 }
