@@ -5,14 +5,7 @@ import {Injectable} from "@angular/core";
 import {Response} from "@angular/http";
 import {Observable} from "rxjs";
 import {AuthHttp} from "angular2-jwt";
-
-export interface ITrestleUser {
-    id: string;
-    firstName: string;
-    lastName: string;
-    username: string;
-    email: string;
-}
+import {ITrestleUser} from "../../authentication.service";
 
 @Injectable()
 export class UserService {
