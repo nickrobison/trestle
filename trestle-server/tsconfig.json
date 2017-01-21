@@ -10,12 +10,17 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "sourceMap": true,
-    "target": "es5",
-    "outDir": "build"
+    "target": "es5"
   },
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "**/*.ngfactory.ts",
+    "**/*.shim.ts",
+    "src/main/webapp/polyfills.ts",
+    "src/main/webapp/vendor.ts",
+    "src/main/webapp/app/app.module.ts"
+
   ],
   "compileOnSave": true,
   "buildOnSave": false
