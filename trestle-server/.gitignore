@@ -1,1 +1,4 @@
 node_modules/
+binaries/
+**/*.map
+src/main/webapp/**/*.js

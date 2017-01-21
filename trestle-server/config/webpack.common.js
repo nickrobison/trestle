@@ -9,11 +9,6 @@ const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 var options = {
-    entry: {
-        "polyfills": "./src/main/webapp/polyfills.ts",
-        "vendor": "./src/main/webapp/vendor.ts",
-        "app": "./src/main/webapp/bootstrap.ts"
-    },
     resolve: {
         extensions: [".webpack.js", ".web.js", ".ts", ".tsx", ".js"]
     },

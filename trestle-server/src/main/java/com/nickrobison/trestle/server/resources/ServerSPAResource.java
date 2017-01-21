@@ -1,12 +1,12 @@
 package com.nickrobison.trestle.server.resources;
 
-import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
@@ -17,16 +17,20 @@ import java.util.Optional;
 @Path("/admin/{seg: .*}")
 @Produces(MediaType.TEXT_HTML)
 public class ServerSPAResource {
+    private static final Logger logger = LoggerFactory.getLogger(ServerSPAResource.class);
 
     public static final String ASSETS_INDEX_HTML = "build/index.html";
 
-    public ServerSPAResource() {}
+    public ServerSPAResource() {
+    }
 
     @GET
     public Response serveMainPage(@PathParam("seg") List<PathSegment> segments) {
         final Optional<String> staticPath = segments.stream().map(PathSegment::getPath).filter(path -> path.contains("static")).findAny();
         if (staticPath.isPresent()) {
-            final InputStream jsStream = ServerSPAResource.class.getClassLoader().getResourceAsStream(String.format("%s/%s", "build/", segments.get(segments.size() - 1).getPath()));
+            final String jsPath = String.format("%s/%s", "build", segments.get(segments.size() - 1).getPath());
+            logger.info("Returning JS at path {}", jsPath);
+            final InputStream jsStream = ServerSPAResource.class.getClassLoader().getResourceAsStream(jsPath);
             return Response.ok(jsStream).build();
 
 

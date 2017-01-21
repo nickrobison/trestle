@@ -1,12 +1,12 @@
 /**
- * Created by nrobison on 1/17/17.
+ * Created by nrobison on 1/20/17.
  */
 const webpackMerge = require("webpack-merge");
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const commonConfig = require("./webpack.common");
 const helpers = require("./helpers");
 
-var devOptions = {
+var prodOptions = {
     entry: {
         "polyfills": "./src/main/webapp/polyfills.ts",
         "vendor": "./src/main/webapp/vendor.ts",
@@ -14,7 +14,7 @@ var devOptions = {
     },
     devtool: "source-map",
     output: {
-        path: helpers.root("target/classes/build"),
+        path: helpers.root("src/main/resources/build"),
         publicPath: "static/",
         filename: "[name].bundle.js",
         sourceMapFilename: "[name].map",
@@ -25,4 +25,4 @@ var devOptions = {
     ]
 };
 
-module.exports = webpackMerge(commonConfig, devOptions);
+module.exports = webpackMerge(commonConfig, prodOptions);
