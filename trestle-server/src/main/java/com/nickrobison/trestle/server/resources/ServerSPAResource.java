@@ -1,8 +1,5 @@
 package com.nickrobison.trestle.server.resources;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
@@ -17,9 +14,7 @@ import java.util.Optional;
 @Path("/admin/{seg: .*}")
 @Produces(MediaType.TEXT_HTML)
 public class ServerSPAResource {
-    private static final Logger logger = LoggerFactory.getLogger(ServerSPAResource.class);
-
-    public static final String ASSETS_INDEX_HTML = "build/index.html";
+    private static final String ASSETS_INDEX_HTML = "build/index.html";
 
     public ServerSPAResource() {
     }
@@ -29,7 +24,6 @@ public class ServerSPAResource {
         final Optional<String> staticPath = segments.stream().map(PathSegment::getPath).filter(path -> path.contains("static")).findAny();
         if (staticPath.isPresent()) {
             final String jsPath = String.format("%s/%s", "build", segments.get(segments.size() - 1).getPath());
-            logger.info("Returning JS at path {}", jsPath);
             final InputStream jsStream = ServerSPAResource.class.getClassLoader().getResourceAsStream(jsPath);
             return Response.ok(jsStream).build();
 
