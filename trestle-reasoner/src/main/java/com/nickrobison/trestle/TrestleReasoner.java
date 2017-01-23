@@ -261,7 +261,7 @@ public class TrestleReasoner {
      * @param inputObject - Input object to write as fact
      * @throws TrestleClassException - Throws an exception if the class doesn't exist or is invalid
      */
-    public void writeAsTrestleObject(Object inputObject) throws TrestleClassException, MissingOntologyEntity {
+    public void writeTrestleObject(Object inputObject) throws TrestleClassException, MissingOntologyEntity {
         writeTrestleObject(inputObject, null);
     }
 
@@ -274,7 +274,7 @@ public class TrestleReasoner {
      * @param endTemporal   - @Nullable Temporal of ending interval time
      */
     @SuppressWarnings("unchecked")
-    public void writeAsTrestleObject(Object inputObject, Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, UnregisteredClassException {
+    public void writeTrestleObject(Object inputObject, Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, UnregisteredClassException {
 
         final TemporalObject databaseTemporal;
         if (endTemporal == null) {
@@ -1081,7 +1081,7 @@ public class TrestleReasoner {
 //        Write the object
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         try {
-            this.writeAsTrestleObject(inputObject);
+            this.writeTrestleObject(inputObject);
         } catch (TrestleClassException e) {
             logger.error("Problem with class", e);
         } catch (MissingOntologyEntity e) {
@@ -1253,7 +1253,7 @@ public class TrestleReasoner {
         } catch (MissingOntologyEntity missingOntologyEntity) {
             logger.debug("Missing individual {}, creating", missingOntologyEntity.getIndividual(), missingOntologyEntity);
             try {
-                this.writeAsTrestleObject(object);
+                this.writeTrestleObject(object);
             } catch (TrestleClassException | MissingOntologyEntity e) {
                 logger.error("Problem writing assertion for individual", objectIndividual, e);
             }
@@ -1283,7 +1283,7 @@ public class TrestleReasoner {
 //            Start with object, and then try for the subject
             if (e.getIndividual().equals(objectIndividual.toString())) {
                 try {
-                    this.writeAsTrestleObject(subject);
+                    this.writeTrestleObject(subject);
                 } catch (TrestleClassException e1) {
                     logger.error("Class exception", e1);
                 } catch (MissingOntologyEntity missingOntologyEntity) {
@@ -1294,7 +1294,7 @@ public class TrestleReasoner {
                     ontology.writeIndividualObjectProperty(objectRelationshipAssertion);
                 } catch (MissingOntologyEntity missingOntologyEntity) {
                     try {
-                        this.writeAsTrestleObject(object);
+                        this.writeTrestleObject(object);
                     } catch (TrestleClassException e2) {
                         logger.error("Class exception", e2);
                     } catch (MissingOntologyEntity m2) {

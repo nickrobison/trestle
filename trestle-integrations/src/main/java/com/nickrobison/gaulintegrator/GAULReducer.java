@@ -143,7 +143,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 //            Store the object
             try {
 //                reasoner.writeObjectAsConcept(newObject);
-                reasoner.writeAsTrestleObject(newObject);
+                reasoner.writeTrestleObject(newObject);
             } catch (TrestleClassException e) {
                 logger.error("Cannot write object to trestle", e);
             } catch (MissingOntologyEntity missingOntologyEntity) {
@@ -319,7 +319,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //            Now, we insert the new itself record into the database
             try {
-                reasoner.writeAsTrestleObject(newGAULObject);
+                reasoner.writeTrestleObject(newGAULObject);
             } catch (TrestleClassException e) {
                 logger.error("Cannot write {}", newGAULObject.getObjectName(), e);
             } catch (MissingOntologyEntity missingOntologyEntity) {

@@ -116,7 +116,7 @@ public class TrestleAPITest {
 //        Disable the parallel
         gaulObjects.parallelStream().forEach(gaul -> {
             try {
-                reasoner.writeAsTrestleObject(gaul);
+                reasoner.writeTrestleObject(gaul);
             } catch (TrestleClassException e) {
                 throw new RuntimeException(String.format("Problem storing object %s", gaul.adm0_name), e);
             } catch (MissingOntologyEntity missingOntologyEntity) {
@@ -182,7 +182,7 @@ public class TrestleAPITest {
 
         classObjects.stream().forEach(object -> {
             try {
-                reasoner.writeAsTrestleObject(object);
+                reasoner.writeTrestleObject(object);
             } catch (TrestleClassException | MissingOntologyEntity e) {
                 e.printStackTrace();
             }
@@ -236,7 +236,7 @@ public class TrestleAPITest {
 //        JTS.toGeometry()
 //        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest = new TestClasses.GeotoolsPolygonTest(UUID.randomUUID(), (org.opengis.geometry.coordinate.Polygon) geotoolsGeom, LocalDate.now());
 //        final OWLNamedIndividual owlNamedIndividual = classParser.GetIndividual(geotoolsPolygonTest);
-//        reasoner.writeAsTrestleObject(geotoolsPolygonTest);
+//        reasoner.writeTrestleObject(geotoolsPolygonTest);
 //        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest1 = reasoner.readAsObject(geotoolsPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
 //        assertEquals(geotoolsPolygonTest, geotoolsPolygonTest1, "Should be equal");
 

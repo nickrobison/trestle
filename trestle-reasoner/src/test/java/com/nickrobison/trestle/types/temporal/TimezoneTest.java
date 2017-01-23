@@ -54,7 +54,7 @@ public class TimezoneTest {
     @Test
     public void testDefaultTimeZone() throws TrestleClassException, MissingOntologyEntity {
         final DefaultTimeZone defaultTimeZone = new DefaultTimeZone(LocalDate.of(1990, 1, 1).atStartOfDay(), "default-timezone");
-        reasoner.writeAsTrestleObject(defaultTimeZone);
+        reasoner.writeTrestleObject(defaultTimeZone);
         reasoner.getUnderlyingOntology().runInference();
         @NonNull final DefaultTimeZone returnedDefaultTimeZone = reasoner.readAsObject(DefaultTimeZone.class, "default-timezone");
         assertEquals(defaultTimeZone, returnedDefaultTimeZone, "Should be equal");
@@ -64,7 +64,7 @@ public class TimezoneTest {
     @Test
     public void testDifferentIntervalTimeZones() throws TrestleClassException, MissingOntologyEntity {
         final DifferentIntervalTimeZones differentIntervalTimeZones = new DifferentIntervalTimeZones("different-intervals", LocalDate.of(1990, 1, 1).atStartOfDay(), LocalDate.of(1995, 1, 1).atStartOfDay());
-        reasoner.writeAsTrestleObject(differentIntervalTimeZones);
+        reasoner.writeTrestleObject(differentIntervalTimeZones);
         reasoner.getUnderlyingOntology().runInference();
         @NonNull final DifferentIntervalTimeZones returnedIntervalTimeZones = reasoner.readAsObject(DifferentIntervalTimeZones.class, "different-intervals");
         assertEquals(differentIntervalTimeZones, returnedIntervalTimeZones, "Should be equal");

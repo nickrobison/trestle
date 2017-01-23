@@ -84,7 +84,7 @@ public class DataExporterTests {
                 .stream()
                 .forEach(object -> {
                     try {
-                        reasoner.writeAsTrestleObject(object);
+                        reasoner.writeTrestleObject(object);
                     } catch (TrestleClassException | MissingOntologyEntity e) {
                         e.printStackTrace();
                     }
