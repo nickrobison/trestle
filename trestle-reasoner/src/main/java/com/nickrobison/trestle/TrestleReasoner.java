@@ -251,7 +251,7 @@ public class TrestleReasoner {
 //
 //        CompletableFuture.supplyAsync(() -> writeObj)
 //
-//        writeObject(inputObject, TemporalScope.EXISTS, null);
+//        writeTrestleObject(inputObject, TemporalScope.EXISTS, null);
 //    }
 
 
@@ -262,7 +262,7 @@ public class TrestleReasoner {
      * @throws TrestleClassException - Throws an exception if the class doesn't exist or is invalid
      */
     public void writeAsTrestleObject(Object inputObject) throws TrestleClassException, MissingOntologyEntity {
-        writeObject(inputObject, TemporalScope.EXISTS, null);
+        writeTrestleObject(inputObject, null);
     }
 
     /**
@@ -282,7 +282,7 @@ public class TrestleReasoner {
         } else {
             databaseTemporal = TemporalObjectBuilder.valid().from(startTemporal).to(endTemporal).withRelations(trestleParser.classParser.GetIndividual(inputObject));
         }
-        writeObject(inputObject, TemporalScope.EXISTS, databaseTemporal);
+        writeTrestleObject(inputObject, databaseTemporal);
     }
 
     /**
@@ -320,12 +320,10 @@ public class TrestleReasoner {
     /**
      * Writes an object into the ontology using the given temporal scope
      * If a temporal is provided it uses that for the database time interval
-     *
      * @param inputObject      - Object to write to the ontology
-     * @param scope            - TemporalScope to determine if it's a fact or concept
      * @param databaseTemporal - Optional TemporalObject to manually set database time
      */
-    void writeObject(Object inputObject, TemporalScope scope, @Nullable TemporalObject databaseTemporal) throws UnregisteredClassException, MissingOntologyEntity {
+    private void writeTrestleObject(Object inputObject, @Nullable TemporalObject databaseTemporal) throws UnregisteredClassException, MissingOntologyEntity {
         final Class aClass = inputObject.getClass();
         checkRegisteredClass(aClass);
 
@@ -348,13 +346,6 @@ public class TrestleReasoner {
 //        Write the temporal
         final Optional<List<TemporalObject>> temporalObjects = trestleParser.temporalParser.GetTemporalObjects(inputObject);
         TemporalObject objectTemporal = temporalObjects.orElseThrow(() -> new RuntimeException(String.format("Cannot parse temporals for %s", owlNamedIndividual))).get(0);
-//        temporalObjects.ifPresent(temporalObject -> temporalObject.forEach(temporal -> {
-//            try {
-//                writeTemporal(temporal, owlNamedIndividual, scope, existsTimeIRI);
-//            } catch (MissingOntologyEntity e) {
-//                logger.error("Individual {} missing in ontology", e.getIndividual(), e);
-//            }
-//        }));
 
 //            Write the database temporal
 //        An object doesn't have a database temporal, just an exists temporal
