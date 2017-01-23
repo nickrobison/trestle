@@ -240,19 +240,24 @@ public class TrestleReasoner {
         logger.info("Writing Ontology took {} ms", Duration.between(start, end).toMillis());
     }
 
-//    /**
-//     * Write a Java object as a Trestle_Concept
-//     *
-//     * @param inputObject - Input object to write as concept
-//     * @throws TrestleClassException - Throws an exception if the class doesn't exist or is invalid
-//     */
-////    FIXME(nrobison): This actually doesn't work, we've split the concepts and objects up into their own classes.
-//    public void writeObjectAsConcept(Object inputObject, ConceptRelationType type) throws TrestleClassException, MissingOntologyEntity {
-//
-//        CompletableFuture.supplyAsync(() -> writeObj)
-//
-//        writeTrestleObject(inputObject, TemporalScope.EXISTS, null);
-//    }
+
+//    ----------------------------
+//    Validate Methods
+//    ----------------------------
+
+    private void checkRegisteredClass(Class<?> clazz) throws UnregisteredClassException {
+        if (!this.registeredClasses.containsValue(clazz)) {
+            throw new UnregisteredClassException(clazz);
+        }
+    }
+
+    private boolean checkExists(IRI individualIRI) {
+        return ontology.containsResource(individualIRI);
+    }
+
+//    ----------------------------
+//    READ Methods
+//    ----------------------------
 
 
     /**
@@ -283,38 +288,6 @@ public class TrestleReasoner {
             databaseTemporal = TemporalObjectBuilder.valid().from(startTemporal).to(endTemporal).withRelations(trestleParser.classParser.GetIndividual(inputObject));
         }
         writeTrestleObject(inputObject, databaseTemporal);
-    }
-
-    /**
-     * Writes a data property as an asserted fact for an individual TS_Object.
-     *
-     * @param rootIndividual   - OWLNamedIndividual of the TS_Object individual
-     * @param properties       - List of OWLDataPropertyAssertionAxioms to write as Facts
-     * @param temporal         - Temporal to associate with data property individual
-     * @param databaseTemporal - Temporal representing database time
-     */
-    private void writeObjectFact(OWLNamedIndividual rootIndividual, List<OWLDataPropertyAssertionAxiom> properties, TemporalObject temporal, TemporalObject databaseTemporal) {
-        final long now = Instant.now().getEpochSecond();
-        final OWLClass factClass = df.getOWLClass(factClassIRI);
-        properties.forEach(property -> {
-
-//            TODO(nrobison): We should change this to lookup any existing records to correctly increment the record number
-//            TODO(nrobison): Should this prefix be the reasoner prefix? Probably, but not sure.
-            final OWLNamedIndividual propertyIndividual = df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, String.format("%s:%s:%d", rootIndividual.getIRI().getShortForm(), property.getProperty().asOWLDataProperty().getIRI().getShortForm(), now)));
-            ontology.createIndividual(propertyIndividual, factClass);
-            try {
-//                Write the property
-                ontology.writeIndividualDataProperty(propertyIndividual, property.getProperty().asOWLDataProperty(), property.getObject());
-//                Write the temporal relation
-                ontology.writeIndividualObjectProperty(propertyIndividual, validTimeIRI, df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX, temporal.getID())));
-//                Write the relation back to the root individual
-                ontology.writeIndividualObjectProperty(propertyIndividual, factOfIRI, rootIndividual);
-//                Write the database time
-                ontology.writeIndividualObjectProperty(propertyIndividual, databaseTimeIRI, df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX, databaseTemporal.getID())));
-            } catch (MissingOntologyEntity missingOntologyEntity) {
-                logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
-            }
-        });
     }
 
     /**
@@ -366,15 +339,42 @@ public class TrestleReasoner {
         ontology.returnAndCommitTransaction(trestleTransaction);
     }
 
-    private void checkRegisteredClass(Class<?> clazz) throws UnregisteredClassException {
-        if (!this.registeredClasses.containsValue(clazz)) {
-            throw new UnregisteredClassException(clazz);
-        }
+    /**
+     * Writes a data property as an asserted fact for an individual TS_Object.
+     *
+     * @param rootIndividual   - OWLNamedIndividual of the TS_Object individual
+     * @param properties       - List of OWLDataPropertyAssertionAxioms to write as Facts
+     * @param temporal         - Temporal to associate with data property individual
+     * @param databaseTemporal - Temporal representing database time
+     */
+    private void writeObjectFact(OWLNamedIndividual rootIndividual, List<OWLDataPropertyAssertionAxiom> properties, TemporalObject temporal, TemporalObject databaseTemporal) {
+        final long now = Instant.now().getEpochSecond();
+        final OWLClass factClass = df.getOWLClass(factClassIRI);
+        properties.forEach(property -> {
+
+//            TODO(nrobison): We should change this to lookup any existing records to correctly increment the record number
+//            TODO(nrobison): Should this prefix be the reasoner prefix? Probably, but not sure.
+            final OWLNamedIndividual propertyIndividual = df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, String.format("%s:%s:%d", rootIndividual.getIRI().getShortForm(), property.getProperty().asOWLDataProperty().getIRI().getShortForm(), now)));
+            ontology.createIndividual(propertyIndividual, factClass);
+            try {
+//                Write the property
+                ontology.writeIndividualDataProperty(propertyIndividual, property.getProperty().asOWLDataProperty(), property.getObject());
+//                Write the temporal relation
+                ontology.writeIndividualObjectProperty(propertyIndividual, validTimeIRI, df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX, temporal.getID())));
+//                Write the relation back to the root individual
+                ontology.writeIndividualObjectProperty(propertyIndividual, factOfIRI, rootIndividual);
+//                Write the database time
+                ontology.writeIndividualObjectProperty(propertyIndividual, databaseTimeIRI, df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX, databaseTemporal.getID())));
+            } catch (MissingOntologyEntity missingOntologyEntity) {
+                logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
+            }
+        });
     }
 
-    private boolean checkExists(IRI individualIRI) {
-        return ontology.containsResource(individualIRI);
-    }
+
+//    ----------------------------
+//    READ Methods
+//    ----------------------------
 
     public <T> @NonNull T readAsObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException {
         return readAsObject(datasetClassID, objectID, null, null);
