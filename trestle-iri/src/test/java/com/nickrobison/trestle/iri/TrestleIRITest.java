@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.iri;
 
+import com.nickrobison.trestle.iri.exceptions.IRIVersionException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.IRI;
@@ -31,16 +32,28 @@ public class TrestleIRITest {
 
     @Test
     public void testEncode() {
-        final ITrestleIRIBuilder iriBuilder = TrestleIRIFactory.getIRIBuilder(IRIVersion.V1);
-        final IRI objectIRI = iriBuilder.encodeIRI(TEST_PREFIX, OBJECT_ID, null, TEST_DATE, TEST_DB_TEMPORAL);
-        final IRI factIRI = iriBuilder.encodeIRI(TEST_PREFIX, OBJECT_ID, OBJECT_FACT, TEST_DATE, TEST_DB_TEMPORAL);
+//        V1 Encode
+        final IRI objectIRI = IRIBuilder.encodeIRI(IRIVersion.V1, TEST_PREFIX, OBJECT_ID, null, TEST_DATE, TEST_DB_TEMPORAL);
+        final IRI factIRI = IRIBuilder.encodeIRI(IRIVersion.V1, TEST_PREFIX, OBJECT_ID, OBJECT_FACT, TEST_DATE, TEST_DB_TEMPORAL);
         assertAll(() -> assertEquals(objectNoFactIRI, objectIRI, "Object (no fact) is incorrectly encoded"),
                 () -> assertEquals(objectFactIRI, factIRI, "Object (with fact) is incorrectly encoded"));
     }
 
     @Test
+    public void testDecode() {
+        assertAll(() -> assertEquals(OBJECT_ID, IRIBuilder.getObjectID(objectFactIRI), "Object (with fact) has incorrectly decoded ID"),
+                () -> assertEquals(OBJECT_ID, IRIBuilder.getObjectID(objectNoFactIRI), "Object (without fact) has incorrectly decoded ID"),
+                () -> assertEquals(OBJECT_FACT, IRIBuilder.getObjectFact(objectFactIRI).orElse(""), "Object (with fact) has incorrectly decoded Fact ID"),
+                () -> assertEquals("", IRIBuilder.getObjectFact(objectNoFactIRI).orElse(""), "Object (without fact) has incorrectly decoded Fact ID"),
+                () -> assertEquals(TEST_DATE, IRIBuilder.getObjectTemporal(objectFactIRI).get(), "Object (with fact) has incorrectly decoded Object Temporal"),
+                () -> assertEquals(TEST_DATE, IRIBuilder.getObjectTemporal(objectNoFactIRI).get(), "Object (no fact) has incorrectly decoded Object Temporal"),
+                () -> assertEquals(TEST_DB_TEMPORAL, IRIBuilder.getDatabaseTemporal(objectFactIRI).get(), "Object (with fact) has incorrectly decoded Database Temporal"),
+                () -> assertEquals(TEST_DB_TEMPORAL, IRIBuilder.getDatabaseTemporal(objectNoFactIRI).get(), "Object (no fact) has incorrectly decoded Database Temporal"));
+    }
+
+    @Test
     public void testOtherVersions() {
-        assertAll(() -> assertThrows(RuntimeException.class, () -> TrestleIRIFactory.getIRIBuilder(IRIVersion.V2)),
-                () -> assertThrows(RuntimeException.class, () -> TrestleIRIFactory.getIRIBuilder(IRIVersion.V3)));
+        assertAll(() -> assertThrows(IRIVersionException.class, () -> IRIBuilder.encodeIRI(IRIVersion.V2, TEST_PREFIX, OBJECT_ID, null, null, null)),
+                () -> assertThrows(IRIVersionException.class, () -> IRIBuilder.encodeIRI(IRIVersion.V3, TEST_PREFIX, OBJECT_ID, null, null, null)));
     }
 }
