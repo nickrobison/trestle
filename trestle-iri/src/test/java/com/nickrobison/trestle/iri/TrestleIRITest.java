@@ -52,6 +52,15 @@ public class TrestleIRITest {
     }
 
     @Test
+    public void testTZ() {
+        final OffsetDateTime PDTTime = OffsetDateTime.of(LocalDateTime.of(1989, 3, 26, 8, 15, 15), ZoneOffset.ofHours(-8));
+        final OffsetDateTime everestTime = OffsetDateTime.of(LocalDateTime.of(1989, 3, 26, 8, 15, 15), ZoneOffset.ofHoursMinutes(5, 45));
+        final IRI timeZoneTestIRI = IRIBuilder.encodeIRI(IRIVersion.V1, TEST_PREFIX, OBJECT_ID, null, PDTTime, everestTime);
+        assertAll(() -> assertTrue(PDTTime.atZoneSameInstant(ZoneOffset.UTC).toString().equals(IRIBuilder.getObjectTemporal(timeZoneTestIRI).get().toString()), "Object temporals don't match at UTC"),
+                () -> assertTrue(everestTime.atZoneSameInstant(ZoneOffset.UTC).toString().equals(IRIBuilder.getDatabaseTemporal(timeZoneTestIRI).get().toString()), "Database temporals don't match at UTC"));
+    }
+
+    @Test
     public void testOtherVersions() {
         assertAll(() -> assertThrows(IRIVersionException.class, () -> IRIBuilder.encodeIRI(IRIVersion.V2, TEST_PREFIX, OBJECT_ID, null, null, null)),
                 () -> assertThrows(IRIVersionException.class, () -> IRIBuilder.encodeIRI(IRIVersion.V3, TEST_PREFIX, OBJECT_ID, null, null, null)));
