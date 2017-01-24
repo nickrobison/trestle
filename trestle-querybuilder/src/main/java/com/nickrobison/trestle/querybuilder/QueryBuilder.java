@@ -103,8 +103,9 @@ public class QueryBuilder {
     /**
      * Build the SPARQL query to return the concepts and individual IRIs related to the given OWLNamedIndividual
      * If the conceptFilter is specified, results are filtered to only return that concept, if the individual is a member of that concept
-     * @param individual - OWLNamedIndividual
-     * @param conceptFilter - Nullable OWLNamedIndividual of Trestle_Concept to filter on
+     *
+     * @param individual           - OWLNamedIndividual
+     * @param conceptFilter        - Nullable OWLNamedIndividual of Trestle_Concept to filter on
      * @param relationshipStrength - double of cutoff value of minimum relation strength to consider an individual a member of that concept
      * @return - SPARQL Query with variables ?concept ?individual
      */
@@ -172,7 +173,7 @@ public class QueryBuilder {
         return ps.toString();
     }
 
-    public String buildObjectPropertyRetrievalQuery(@Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal, OWLNamedIndividual... individual) {
+    public String buildObjectPropertyRetrievalQuery(@Nullable OffsetDateTime validTemporal, @Nullable OffsetDateTime databaseTemporal, OWLNamedIndividual... individual) {
         final ParameterizedSparqlString ps = buildBaseString();
 
         final String individualValues = Arrays.stream(individual)
@@ -187,21 +188,30 @@ public class QueryBuilder {
                 " WHERE" +
                 " { ?individual trestle:has_fact ?fact ." +
                 "?fact trestle:database_time ?d ." +
-                "{?d trestle:valid_from ?tStart} ." +
-                "OPTIONAL{?d trestle:valid_to ?tEnd} ." +
+                "{?d trestle:valid_from ?df} ." +
+                "OPTIONAL{?d trestle:valid_to ?dt} ." +
+                "?fact trestle:valid_time ?v ." +
+                "OPTIONAL{?v trestle:valid_from ?vf} ." +
+                "OPTIONAL{?v trestle:valid_to ?vf} ." +
+                "OPTIONAL{?v trestle:valid_at ?va} ." +
                 "?fact ?property ?object ." +
                 "VALUES ?individual { %s } ." +
 //                Oracle doesn't support isLiteral() on CLOB types, so we have to do this gross inverse filter.
                 "FILTER(!isURI(?object) && !isBlank(?object)) ." +
                 "FILTER(!bound(?tEnd)) .", individualValues));
-        if (startTemporal != null) {
-            ps.append("FILTER(?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime)");
-            ps.setLiteral("startVariable", startTemporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-            if (endTemporal != null) {
-                ps.setLiteral("endVariable", endTemporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-            } else {
-                ps.setLiteral("endVariable", startTemporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-            }
+//        If the temporals are specified, constrain with them. Otherwise, find the facts with the unbound ending temporals
+        if (validTemporal != null) {
+            ps.append("FILTER((!bound(?vf) || ?vf <= ?validVariable^^xsd:dateTime) && (!bound(?vt) || ?vt > ?validVariable^^xsd:dateTime)) .");
+            ps.append("FILTER(!bound(?va) || ?va = ?validVariable^^xsd:dateTime) .");
+            ps.setLiteral("validVariable", validTemporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        } else {
+            ps.append("FILTER(!bound(?vt))");
+        }
+        if (databaseTemporal != null) {
+            ps.append("FILTER((!bound(?df) || ?df <= ?databaseVariable^^xsd:dateTime) && (!bound(?dt) || ?dt > ?databaseVariable^^xsd:dateTime)) .");
+            ps.setLiteral("databaseVariable", databaseTemporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        } else {
+            ps.append("FILTER(!bound(?dt))");
         }
         ps.append("}");
         logger.debug(ps.toString());
@@ -210,6 +220,7 @@ public class QueryBuilder {
 
     /**
      * Build SPARQL query to return all temporal/spatial relations for a given object
+     *
      * @param individual - OWLNamedIndividual to retrieve relations for
      * @return - SPARQL query string
      */
@@ -265,7 +276,7 @@ public class QueryBuilder {
         return ps.toString();
     }
 
-//    FIXME(nrobison): This needs to account for exists and valid times.
+    //    FIXME(nrobison): This needs to account for exists and valid times.
     public String buildTemporalSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, UNITS unit, OffsetDateTime atTime) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m ?tStart ?tEnd" +
@@ -289,9 +300,10 @@ public class QueryBuilder {
 
     /**
      * Build SPARQL query to find the concepts that intersect a given space/time pair
+     *
      * @param wktValue - WKT value
-     * @param buffer - buffer value (in meters)
-     * @param atTime - Temporal to select appropriate, valid fact
+     * @param buffer   - buffer value (in meters)
+     * @param atTime   - Temporal to select appropriate, valid fact
      * @return - String of SPARQL query
      * @throws UnsupportedFeatureException
      */
@@ -321,8 +333,9 @@ public class QueryBuilder {
 
     /**
      * Build SPARQL Query to retrieve all given members of a Trestle_Concept that are subclassed from the given OWLClass
+     *
      * @param datasetClass OWLClass of individuals to return
-     * @param conceptID - IRI of Trestle_Concept to query
+     * @param conceptID    - IRI of Trestle_Concept to query
      * @return - SPARQL Query String
      */
 //    TODO(nrobison): Implement spatio-temporal intersection
@@ -343,10 +356,11 @@ public class QueryBuilder {
 
     /**
      * Common method to build the spatio-temporal intersection component of the SPARQL query
-     * @param ps - ParamaterizedSparqlString to build on
+     *
+     * @param ps       - ParamaterizedSparqlString to build on
      * @param wktValue - ParamaterizedSparqlString to build on
-     * @param buffer - double buffer (in meters) around the intersection
-     * @param atTime - OffsetDateTime to set intersection time to
+     * @param buffer   - double buffer (in meters) around the intersection
+     * @param atTime   - OffsetDateTime to set intersection time to
      * @throws UnsupportedFeatureException
      */
     private void buildDatabaseTSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime atTime) throws UnsupportedFeatureException {
@@ -364,7 +378,8 @@ public class QueryBuilder {
                 ps.append("FILTER((?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime) && bif:st_intersects(?wkt, ?wktString^^ogc:wktLiteral, ?distance)) }");
                 ps.setLiteral("distance", buffer);
                 break;
-            } case SESAME: {
+            }
+            case SESAME: {
 //                We need to remove this, otherwise GraphDB substitutes geosparql for ogc
                 ps.removeNsPrefix("geosparql");
                 ps.append("FILTER((?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
@@ -382,9 +397,10 @@ public class QueryBuilder {
 
     /**
      * Common method for build the Spatial intersection component of the SPARQL query
-     * @param ps - ParamaterizedSparqlString to build on
+     *
+     * @param ps       - ParamaterizedSparqlString to build on
      * @param wktValue - ParamaterizedSparqlString to build on
-     * @param buffer - double buffer (in meters) around the intersection
+     * @param buffer   - double buffer (in meters) around the intersection
      * @throws UnsupportedFeatureException
      */
     private void buildDatabaseSString(ParameterizedSparqlString ps, String wktValue, double buffer) throws UnsupportedFeatureException {
@@ -402,7 +418,8 @@ public class QueryBuilder {
                 ps.append("FILTER(bif:st_intersects(?wkt, ?wktString^^ogc:wktLiteral, ?distance)) }");
                 ps.setLiteral("distance", buffer);
                 break;
-            } case SESAME: {
+            }
+            case SESAME: {
                 ps.removeNsPrefix("geosparql");
                 ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
                 break;
@@ -453,6 +470,7 @@ public class QueryBuilder {
 
     /**
      * Initialize the base SPARQL String, with the correct prefixes
+     *
      * @return - Base SPARQL string
      */
     private ParameterizedSparqlString buildBaseString() {
@@ -479,7 +497,8 @@ public class QueryBuilder {
     /**
      * Recursively simplify the WKT string.
      * On first pass, reduce the decimal precision, before attempting simplification
-     * @param wkt - WKT string to simplify
+     *
+     * @param wkt    - WKT string to simplify
      * @param factor - Initial starting simplification factor (If 0, reduce precision first)
      * @param buffer - Buffer to add to WKT
      * @return - String of simplified WKT

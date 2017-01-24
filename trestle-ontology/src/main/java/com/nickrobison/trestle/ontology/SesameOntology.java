@@ -458,14 +458,14 @@ public abstract class SesameOntology extends TransactingOntology {
     }
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> GetFactsForIndividual(OWLNamedIndividual individual, @Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal) {
-        final String objectQuery = qb.buildObjectPropertyRetrievalQuery(startTemporal, endTemporal, individual);
+    public Set<OWLDataPropertyAssertionAxiom> getFactsForIndividual(OWLNamedIndividual individual, @Nullable OffsetDateTime validTemporal, @Nullable OffsetDateTime databaseTemporal) {
+        final String objectQuery = qb.buildObjectPropertyRetrievalQuery(validTemporal, databaseTemporal, individual);
         final TrestleResultSet resultSet = this.executeSPARQLTRS(objectQuery);
         return getDataPropertiesFromIndividualFacts(this.df, resultSet);
     }
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> GetTemporalsForIndividual(OWLNamedIndividual individual) {
+    public Set<OWLDataPropertyAssertionAxiom> getTemporalsForIndividual(OWLNamedIndividual individual) {
         final String temporalQuery = this.qb.buildIndividualTemporalQuery(individual);
         final TrestleResultSet resultSet = this.executeSPARQLTRS(temporalQuery);
         return getDataPropertiesFromIndividualFacts(this.df, resultSet);
