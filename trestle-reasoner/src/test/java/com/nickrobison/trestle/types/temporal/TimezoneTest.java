@@ -2,8 +2,8 @@ package com.nickrobison.trestle.types.temporal;
 
 import com.nickrobison.trestle.TrestleBuilder;
 import com.nickrobison.trestle.TrestleReasoner;
+import com.nickrobison.trestle.annotations.DatasetClass;
 import com.nickrobison.trestle.annotations.IndividualIdentifier;
-import com.nickrobison.trestle.annotations.OWLClassName;
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
@@ -77,7 +77,7 @@ public class TimezoneTest {
     }
 
 
-    @OWLClassName(className = "defaulttimezone-test")
+    @DatasetClass(name = "defaulttimezone-test")
     public static class DefaultTimeZone {
         @IndividualIdentifier
         public String id;
@@ -109,7 +109,7 @@ public class TimezoneTest {
         }
     }
 
-    @OWLClassName(className = "intervaltimezone-test")
+    @DatasetClass(name = "intervaltimezone-test")
     public static class DifferentIntervalTimeZones {
         private final String id;
         private final LocalDateTime startTime;

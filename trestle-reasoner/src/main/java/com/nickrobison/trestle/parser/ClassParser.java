@@ -68,8 +68,8 @@ public class ClassParser {
     public OWLClass GetObjectClass(Class<?> clazz) {
 
         final String className;
-        if (clazz.isAnnotationPresent(OWLClassName.class)) {
-            className = clazz.getDeclaredAnnotation(OWLClassName.class).className();
+        if (clazz.isAnnotationPresent(DatasetClass.class)) {
+            className = clazz.getDeclaredAnnotation(DatasetClass.class).name();
         } else {
             className = clazz.getName();
         }

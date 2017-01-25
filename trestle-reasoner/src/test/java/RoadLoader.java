@@ -1,7 +1,7 @@
 import com.nickrobison.trestle.TrestleBuilder;
 import com.nickrobison.trestle.TrestleReasoner;
+import com.nickrobison.trestle.annotations.DatasetClass;
 import com.nickrobison.trestle.annotations.IndividualIdentifier;
-import com.nickrobison.trestle.annotations.OWLClassName;
 import com.nickrobison.trestle.annotations.TrestleCreator;
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
@@ -98,7 +98,7 @@ public class RoadLoader {
     }
 
 
-    @OWLClassName(className = "Africa-Roads")
+    @DatasetClass(name = "Africa-Roads")
     public static class gROADS {
         private final String ObjectID;
         private final Geometry geom;

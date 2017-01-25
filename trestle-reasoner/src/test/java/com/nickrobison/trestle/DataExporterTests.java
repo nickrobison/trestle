@@ -101,7 +101,7 @@ public class DataExporterTests {
     }
 
 
-    @OWLClassName(className = "gaul-test")
+    @DatasetClass(name = "gaul-test")
     public static class SimpleGAULObject {
         @Ignore
         public UUID objectid;

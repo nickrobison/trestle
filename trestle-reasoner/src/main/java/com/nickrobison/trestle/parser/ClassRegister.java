@@ -84,13 +84,13 @@ public class ClassRegister {
     }
 
     static void checkForClassName(Class aClass) throws InvalidClassException {
-        if (!aClass.isAnnotationPresent(OWLClassName.class)) {
-//            I don't think I need this check, because a blank className just means take the name of the java class
-//            final OWLClassName className = aClass.getAnnotation(OWLClassName.class);
-//            if (className.className().equals("")) {
-//                throw new InvalidClassException(OWLClassName.class.toString(), TrestleClassException.State.INCOMPLETE, "className")
+        if (!aClass.isAnnotationPresent(DatasetClass.class)) {
+//            I don't think I need this check, because a blank name just means take the name of the java class
+//            final DatasetClass name = aClass.getAnnotation(DatasetClass.class);
+//            if (name.name().equals("")) {
+//                throw new InvalidClassException(DatasetClass.class.toString(), TrestleClassException.State.INCOMPLETE, "name")
 //            }
-            throw new InvalidClassException(OWLClassName.class.toString(), InvalidClassException.State.MISSING);
+            throw new InvalidClassException(DatasetClass.class.toString(), InvalidClassException.State.MISSING);
         }
     }
 

@@ -223,7 +223,7 @@ public class ClassRegisterTest {
         }
     }
 
-    @OWLClassName(className = "ready")
+    @DatasetClass(name = "ready")
     private static class FullTest {
         @IndividualIdentifier
         public String thing;

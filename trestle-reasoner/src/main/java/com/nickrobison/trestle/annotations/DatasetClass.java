@@ -10,8 +10,8 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface OWLClassName {
+public @interface DatasetClass {
 
-    String className() default "";
+    String name() default "";
 
 }

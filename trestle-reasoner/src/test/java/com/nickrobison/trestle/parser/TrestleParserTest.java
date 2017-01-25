@@ -1,9 +1,9 @@
 package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.TestClasses;
+import com.nickrobison.trestle.annotations.DatasetClass;
 import com.nickrobison.trestle.annotations.Ignore;
 import com.nickrobison.trestle.annotations.IndividualIdentifier;
-import com.nickrobison.trestle.annotations.OWLClassName;
 import com.nickrobison.trestle.annotations.Spatial;
 import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
 import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
@@ -301,7 +301,7 @@ public class TrestleParserTest {
         assertEquals(expectedClass, gaulMethodTest, "Should match");
     }
 
-    @OWLClassName(className = "GAUL_Test")
+    @DatasetClass(name = "GAUL_Test")
     protected class ExpandedGAULTests {
 
         public int adm0_code;

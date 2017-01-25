@@ -13,7 +13,7 @@ import java.time.LocalDate;
 /**
  * Created by nrobison on 5/6/16.
  */
-@OWLClassName(className = "gaul-test")
+@DatasetClass(name = "gaul-test")
 public class GAULObject {
 
     private static final int DATESIZE = 16;

@@ -22,7 +22,7 @@ import java.util.UUID;
  */
 public class TestClasses {
 
-    @OWLClassName(className = "odt-test")
+    @DatasetClass(name = "odt-test")
     protected static class OffsetDateTimeTest {
 
         @IndividualIdentifier
@@ -60,7 +60,7 @@ public class TestClasses {
         }
     }
 
-    @OWLClassName(className = "GAUL_JTS_Test")
+    @DatasetClass(name = "GAUL_JTS_Test")
     protected static class JTSGeometryTest {
 
         private final Integer adm0_code;
@@ -110,7 +110,7 @@ public class TestClasses {
         }
     }
 
-    @OWLClassName(className = "GAUL_ESRI_Test")
+    @DatasetClass(name = "GAUL_ESRI_Test")
     protected static class ESRIPolygonTest {
 
         private final Integer adm0_code;
@@ -157,7 +157,7 @@ public class TestClasses {
         }
     }
 
-    @OWLClassName(className = "GAUL_GeoTools_Test")
+    @DatasetClass(name = "GAUL_GeoTools_Test")
     public static class GeotoolsPolygonTest {
         @IndividualIdentifier
         public final UUID id;
@@ -194,7 +194,7 @@ public class TestClasses {
         }
     }
 
-    @OWLClassName(className="GAUL_Test")
+    @DatasetClass(name ="GAUL_Test")
     public static class GAULTestClass {
 
         @Fact(name="ADM0_Code", datatype= OWL2Datatype.XSD_INTEGER)
@@ -260,7 +260,7 @@ public class TestClasses {
         }
     }
 
-    @OWLClassName(className = "gaul-complex")
+    @DatasetClass(name = "gaul-complex")
     public static class GAULComplexClassTest {
 
         @IndividualIdentifier
@@ -343,7 +343,7 @@ public class TestClasses {
         }
     }
 
-    @OWLClassName(className = "GAUL_Test1")
+    @DatasetClass(name = "GAUL_Test1")
     public static class GAULMethodTest {
 
         public int adm0_code;
@@ -436,7 +436,7 @@ public class TestClasses {
         }
     }
 
-    @OWLClassName(className = "multiLang-test")
+    @DatasetClass(name = "multiLang-test")
     public static class MultiLangTest {
 
         @Fact(name = "testString")
