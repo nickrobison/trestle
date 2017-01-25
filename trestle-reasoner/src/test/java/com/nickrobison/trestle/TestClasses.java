@@ -2,9 +2,9 @@ package com.nickrobison.trestle;
 
 import com.esri.core.geometry.Polygon;
 import com.nickrobison.trestle.annotations.*;
-import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
+import com.nickrobison.trestle.annotations.temporal.DefaultTemporal;
+import com.nickrobison.trestle.annotations.temporal.EndTemporal;
+import com.nickrobison.trestle.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.types.TemporalType;
 import com.vividsolutions.jts.geom.Geometry;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
@@ -27,9 +27,9 @@ public class TestClasses {
 
         @IndividualIdentifier
         public final Integer adm0_code;
-        @StartTemporalProperty
+        @StartTemporal
         public final OffsetDateTime startTemporal;
-        @EndTemporalProperty
+        @EndTemporal
         public final OffsetDateTime endTemporal;
 
         public OffsetDateTimeTest(Integer adm0_code, OffsetDateTime startTemporal, OffsetDateTime endTemporal) {
@@ -83,7 +83,7 @@ public class TestClasses {
             return this.geom;
         }
 
-        @DefaultTemporalProperty(name = "date", type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        @DefaultTemporal(name = "date", type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
         public LocalDate getDate() {
             return this.date;
         }
@@ -129,7 +129,7 @@ public class TestClasses {
             return this.adm0_code;
         }
 
-        @DefaultTemporalProperty(name = "date", type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        @DefaultTemporal(name = "date", type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
         public LocalDate getDate() {
             return this.date;
         }
@@ -163,7 +163,7 @@ public class TestClasses {
         public final UUID id;
         @Spatial
         public final org.opengis.geometry.coordinate.Polygon geom;
-        @DefaultTemporalProperty(name = "date", type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS, timeZone = "America/Los_Angeles")
+        @DefaultTemporal(name = "date", type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS, timeZone = "America/Los_Angeles")
         public final LocalDate date;
 
         public GeotoolsPolygonTest(UUID id, org.opengis.geometry.coordinate.Polygon geom, LocalDate date) {
@@ -205,7 +205,7 @@ public class TestClasses {
         public String test_name;
         @Spatial
         public String wkt;
-        @DefaultTemporalProperty(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        @DefaultTemporal(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
         public LocalDateTime time;
 
         GAULTestClass() {
@@ -304,7 +304,7 @@ public class TestClasses {
             return this.wkt;
         }
 
-        @StartTemporalProperty
+        @StartTemporal
         public LocalDate getAtDate() {
             return this.atDate;
         }
@@ -354,7 +354,7 @@ public class TestClasses {
         @Ignore
         public LocalDateTime defaultTime;
         private String privateField;
-        //        @DefaultTemporalProperty(type = TemporalType.POINT, scope= TemporalScope.EXISTS, duration = 0, unit = ChronoUnit.YEARS)
+        //        @DefaultTemporal(type = TemporalType.POINT, scope= TemporalScope.EXISTS, duration = 0, unit = ChronoUnit.YEARS)
         private LocalDateTime intervalStart;
         private LocalDateTime intervalEnd;
 
@@ -391,17 +391,17 @@ public class TestClasses {
             return this.adm0_name;
         }
 
-        @DefaultTemporalProperty(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        @DefaultTemporal(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
         public LocalDateTime getTime() {
             return this.defaultTime;
         }
 
-        @StartTemporalProperty(type = TemporalType.INTERVAL)
+        @StartTemporal(type = TemporalType.INTERVAL)
         public LocalDateTime getStart() {
             return this.intervalStart;
         }
 
-        @EndTemporalProperty()
+        @EndTemporal()
         public LocalDateTime getEnd() {
             return this.intervalEnd;
         }
@@ -490,7 +490,7 @@ public class TestClasses {
             return englishGBString;
         }
 
-        @DefaultTemporalProperty(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        @DefaultTemporal(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
         public LocalDate getDefaultTime() {
             return defaultTime;
         }

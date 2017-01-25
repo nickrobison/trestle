@@ -3,7 +3,7 @@ import com.nickrobison.trestle.TrestleReasoner;
 import com.nickrobison.trestle.annotations.DatasetClass;
 import com.nickrobison.trestle.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.annotations.TrestleCreator;
-import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
+import com.nickrobison.trestle.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.TemporalType;
@@ -162,7 +162,7 @@ public class RoadLoader {
             return Shape_Length;
         }
 
-        @DefaultTemporalProperty(type = TemporalType.INTERVAL, duration = 15, unit = ChronoUnit.YEARS)
+        @DefaultTemporal(type = TemporalType.INTERVAL, duration = 15, unit = ChronoUnit.YEARS)
         public ZonedDateTime getDefaultTime() {
             return this.defaultTime;
         }

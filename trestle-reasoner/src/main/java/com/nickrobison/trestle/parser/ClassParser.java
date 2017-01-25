@@ -1,9 +1,9 @@
 package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.annotations.*;
-import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
+import com.nickrobison.trestle.annotations.temporal.DefaultTemporal;
+import com.nickrobison.trestle.annotations.temporal.EndTemporal;
+import com.nickrobison.trestle.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.exceptions.MissingConstructorException;
 import com.nickrobison.trestle.types.ObjectRestriction;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -590,12 +590,12 @@ public class ClassParser {
 //        Default
         if (TemporalParser.IsDefault(clazz)) {
             final Optional<Field> temporalField = Arrays.stream(clazz.getDeclaredFields())
-                    .filter(f -> (f.isAnnotationPresent(DefaultTemporalProperty.class)))
+                    .filter(f -> (f.isAnnotationPresent(DefaultTemporal.class)))
                     .findFirst();
 
             if (temporalField.isPresent()) {
 //                Check to see if we have a given temporal property
-                final String annotationName = temporalField.get().getAnnotation(DefaultTemporalProperty.class).name();
+                final String annotationName = temporalField.get().getAnnotation(DefaultTemporal.class).name();
                 if (annotationName.equals("")) {
                     return temporalField.get().getName();
                 } else {
@@ -604,12 +604,12 @@ public class ClassParser {
             }
 
             final Optional<Method> temporalMethod = Arrays.stream(clazz.getDeclaredMethods())
-                    .filter(f -> (f.isAnnotationPresent(DefaultTemporalProperty.class)))
+                    .filter(f -> (f.isAnnotationPresent(DefaultTemporal.class)))
                     .findFirst();
 
 
             if (temporalMethod.isPresent()) {
-                final String annotationName = temporalMethod.get().getAnnotation(DefaultTemporalProperty.class).name();
+                final String annotationName = temporalMethod.get().getAnnotation(DefaultTemporal.class).name();
                 if (annotationName.equals("")) {
                     return filterMethodName(temporalMethod.get());
                 } else {
@@ -620,11 +620,11 @@ public class ClassParser {
         } else if (classMember.toLowerCase().contains("start")) {
 //            Check for start/end temporal names
             final Optional<Field> temporalField = Arrays.stream(clazz.getDeclaredFields())
-                    .filter(f -> (f.isAnnotationPresent(StartTemporalProperty.class)))
+                    .filter(f -> (f.isAnnotationPresent(StartTemporal.class)))
                     .findFirst();
 
             if (temporalField.isPresent()) {
-                final String annotationName = temporalField.get().getAnnotation(StartTemporalProperty.class).name();
+                final String annotationName = temporalField.get().getAnnotation(StartTemporal.class).name();
                 if (annotationName.equals("")) {
                     return temporalField.get().getName();
                 } else {
@@ -633,10 +633,10 @@ public class ClassParser {
             }
 
             final Optional<Method> temporalMethod = Arrays.stream(clazz.getDeclaredMethods())
-                    .filter(f -> (f.isAnnotationPresent(StartTemporalProperty.class)))
+                    .filter(f -> (f.isAnnotationPresent(StartTemporal.class)))
                     .findFirst();
             if (temporalMethod.isPresent()) {
-                final String annotationName = temporalMethod.get().getAnnotation(StartTemporalProperty.class).name();
+                final String annotationName = temporalMethod.get().getAnnotation(StartTemporal.class).name();
                 if (annotationName.equals("")) {
                     return filterMethodName(temporalMethod.get());
                 } else {
@@ -646,11 +646,11 @@ public class ClassParser {
 
         } else {
             final Optional<Field> temporalField = Arrays.stream(clazz.getDeclaredFields())
-                    .filter(f -> (f.isAnnotationPresent(EndTemporalProperty.class)))
+                    .filter(f -> (f.isAnnotationPresent(EndTemporal.class)))
                     .findFirst();
 
             if (temporalField.isPresent()) {
-                final String annotationName = temporalField.get().getAnnotation(EndTemporalProperty.class).name();
+                final String annotationName = temporalField.get().getAnnotation(EndTemporal.class).name();
                 if (annotationName.equals("")) {
                     return temporalField.get().getName();
                 } else {
@@ -659,10 +659,10 @@ public class ClassParser {
             }
 
             final Optional<Method> temporalMethod = Arrays.stream(clazz.getDeclaredMethods())
-                    .filter(f -> (f.isAnnotationPresent(EndTemporalProperty.class)))
+                    .filter(f -> (f.isAnnotationPresent(EndTemporal.class)))
                     .findFirst();
             if (temporalMethod.isPresent()) {
-                final String annotationName = temporalMethod.get().getAnnotation(EndTemporalProperty.class).name();
+                final String annotationName = temporalMethod.get().getAnnotation(EndTemporal.class).name();
                 if (annotationName.equals("")) {
                     return filterMethodName(temporalMethod.get());
                 } else {
@@ -719,22 +719,22 @@ public class ClassParser {
             } else {
                 return fieldName;
             }
-        } else if (field.isAnnotationPresent(DefaultTemporalProperty.class)) {
-            final String fieldName = field.getAnnotation(DefaultTemporalProperty.class).name();
+        } else if (field.isAnnotationPresent(DefaultTemporal.class)) {
+            final String fieldName = field.getAnnotation(DefaultTemporal.class).name();
             if (fieldName.equals("")) {
                 return field.getName();
             } else {
                 return fieldName;
             }
-        } else if (field.isAnnotationPresent(StartTemporalProperty.class)) {
-            final String fieldName = field.getAnnotation(StartTemporalProperty.class).name();
+        } else if (field.isAnnotationPresent(StartTemporal.class)) {
+            final String fieldName = field.getAnnotation(StartTemporal.class).name();
             if (fieldName.equals("")) {
                 return field.getName();
             } else {
                 return fieldName;
             }
-        } else if (field.isAnnotationPresent(EndTemporalProperty.class)) {
-            final String fieldName = field.getAnnotation(EndTemporalProperty.class).name();
+        } else if (field.isAnnotationPresent(EndTemporal.class)) {
+            final String fieldName = field.getAnnotation(EndTemporal.class).name();
             if (fieldName.equals("")) {
                 return field.getName();
             } else {
@@ -766,22 +766,22 @@ public class ClassParser {
             } else {
                 return methodName;
             }
-        } else if (method.isAnnotationPresent(DefaultTemporalProperty.class)) {
-            final String methodName = method.getAnnotation(DefaultTemporalProperty.class).name();
+        } else if (method.isAnnotationPresent(DefaultTemporal.class)) {
+            final String methodName = method.getAnnotation(DefaultTemporal.class).name();
             if (methodName.equals("")) {
                 return filterMethodName(method);
             } else {
                 return methodName;
             }
-        } else if (method.isAnnotationPresent(StartTemporalProperty.class)) {
-            final String methodName = method.getAnnotation(StartTemporalProperty.class).name();
+        } else if (method.isAnnotationPresent(StartTemporal.class)) {
+            final String methodName = method.getAnnotation(StartTemporal.class).name();
             if (methodName.equals("")) {
                 return filterMethodName(method);
             } else {
                 return methodName;
             }
-        } else if (method.isAnnotationPresent(EndTemporalProperty.class)) {
-            final String methodName = method.getAnnotation(EndTemporalProperty.class).name();
+        } else if (method.isAnnotationPresent(EndTemporal.class)) {
+            final String methodName = method.getAnnotation(EndTemporal.class).name();
             if (methodName.equals("")) {
                 return filterMethodName(method);
             } else {

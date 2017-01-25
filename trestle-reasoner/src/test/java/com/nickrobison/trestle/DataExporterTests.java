@@ -2,8 +2,8 @@ package com.nickrobison.trestle;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.nickrobison.trestle.annotations.*;
-import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
+import com.nickrobison.trestle.annotations.temporal.EndTemporal;
+import com.nickrobison.trestle.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
@@ -110,10 +110,10 @@ public class DataExporterTests {
         @Fact(name = "objectName")
         public String objectname;
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-        @StartTemporalProperty(name = "startDate")
+        @StartTemporal(name = "startDate")
         public LocalDate startdate;
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-        @EndTemporalProperty(name = "endDate")
+        @EndTemporal(name = "endDate")
         public LocalDate enddate;
         @Spatial(name = "wkt")
         public String geom;

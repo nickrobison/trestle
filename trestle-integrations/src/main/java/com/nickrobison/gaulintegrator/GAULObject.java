@@ -4,8 +4,8 @@ import com.esri.core.geometry.*;
 import com.nickrobison.gaulintegrator.common.ObjectID;
 import com.nickrobison.gaulintegrator.common.Utils;
 import com.nickrobison.trestle.annotations.*;
-import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
+import com.nickrobison.trestle.annotations.temporal.EndTemporal;
+import com.nickrobison.trestle.annotations.temporal.StartTemporal;
 
 import java.sql.Date;
 import java.time.LocalDate;
@@ -98,12 +98,12 @@ public class GAULObject {
         return GeometryEngine.geometryToWkt(shapePolygon, 0);
     }
 
-    @StartTemporalProperty
+    @StartTemporal
     public LocalDate getStartDate() {
         return Utils.ReadStartDate(this.validRange);
     }
 
-    @EndTemporalProperty
+    @EndTemporal
     public LocalDate getEndDate() {
         return Utils.ReadExpirationDate(this.validRange);
     }

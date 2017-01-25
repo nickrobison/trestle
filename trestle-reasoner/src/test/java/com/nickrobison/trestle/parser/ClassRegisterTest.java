@@ -1,8 +1,8 @@
 package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.annotations.*;
-import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
+import com.nickrobison.trestle.annotations.temporal.DefaultTemporal;
+import com.nickrobison.trestle.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.exceptions.InvalidClassException;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.TemporalType;
@@ -174,7 +174,7 @@ public class ClassRegisterTest {
             this.endDate = endDate;
         }
 
-        @StartTemporalProperty
+        @StartTemporal
         public LocalDate getStartDate() {
             return this.startDate;
         }
@@ -186,9 +186,9 @@ public class ClassRegisterTest {
 
     private static class FailingTemporalTest {
 
-        @DefaultTemporalProperty(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        @DefaultTemporal(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
         public LocalDateTime startDate;
-        @StartTemporalProperty
+        @StartTemporal
         public LocalDateTime endDate;
 
         FailingTemporalTest(LocalDateTime startDate, LocalDateTime endDate) {
@@ -198,7 +198,7 @@ public class ClassRegisterTest {
     }
 
     private static class TimeZoneParsingTest {
-        @DefaultTemporalProperty(timeZone = "America/Los_Angeles", type = TemporalType.POINT, duration = 0, unit = ChronoUnit.YEARS)
+        @DefaultTemporal(timeZone = "America/Los_Angeles", type = TemporalType.POINT, duration = 0, unit = ChronoUnit.YEARS)
         public LocalDate defaultDate;
 
         TimeZoneParsingTest(LocalDate defaultDate) {

@@ -4,9 +4,9 @@ import com.nickrobison.trestle.TrestleBuilder;
 import com.nickrobison.trestle.TrestleReasoner;
 import com.nickrobison.trestle.annotations.DatasetClass;
 import com.nickrobison.trestle.annotations.IndividualIdentifier;
-import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
+import com.nickrobison.trestle.annotations.temporal.DefaultTemporal;
+import com.nickrobison.trestle.annotations.temporal.EndTemporal;
+import com.nickrobison.trestle.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.TemporalType;
@@ -81,7 +81,7 @@ public class TimezoneTest {
     public static class DefaultTimeZone {
         @IndividualIdentifier
         public String id;
-        @DefaultTemporalProperty(type = TemporalType.POINT, duration = 1, unit = ChronoUnit.YEARS, timeZone = "America/Los_Angeles")
+        @DefaultTemporal(type = TemporalType.POINT, duration = 1, unit = ChronoUnit.YEARS, timeZone = "America/Los_Angeles")
         public LocalDateTime defaultTime;
 
         public DefaultTimeZone(LocalDateTime defaultTime, String id) {
@@ -113,7 +113,7 @@ public class TimezoneTest {
     public static class DifferentIntervalTimeZones {
         private final String id;
         private final LocalDateTime startTime;
-        @EndTemporalProperty(timeZone = "America/Los_Angeles")
+        @EndTemporal(timeZone = "America/Los_Angeles")
         public final LocalDateTime endTime;
 
         public DifferentIntervalTimeZones(String id, LocalDateTime startTime, LocalDateTime endTime) {
@@ -127,7 +127,7 @@ public class TimezoneTest {
             return id;
         }
 
-        @StartTemporalProperty
+        @StartTemporal
         public LocalDateTime getStartTime() {
             return startTime;
         }

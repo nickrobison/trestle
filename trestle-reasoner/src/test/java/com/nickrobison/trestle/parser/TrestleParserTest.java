@@ -5,9 +5,9 @@ import com.nickrobison.trestle.annotations.DatasetClass;
 import com.nickrobison.trestle.annotations.Ignore;
 import com.nickrobison.trestle.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.annotations.Spatial;
-import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
+import com.nickrobison.trestle.annotations.temporal.DefaultTemporal;
+import com.nickrobison.trestle.annotations.temporal.EndTemporal;
+import com.nickrobison.trestle.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.exceptions.MissingConstructorException;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
@@ -309,17 +309,17 @@ public class TrestleParserTest {
         public String adm0_name;
         @Spatial
         public String test_name;
-        @DefaultTemporalProperty(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        @DefaultTemporal(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
         @Ignore
         public LocalDateTime testtime;
         private String privateField;
-        @DefaultTemporalProperty(type = TemporalType.POINT, scope = TemporalScope.EXISTS, duration = 0, unit = ChronoUnit.YEARS)
+        @DefaultTemporal(type = TemporalType.POINT, scope = TemporalScope.EXISTS, duration = 0, unit = ChronoUnit.YEARS)
         public LocalDateTime testpoint;
-        @StartTemporalProperty(type = TemporalType.INTERVAL)
+        @StartTemporal(type = TemporalType.INTERVAL)
         public LocalDateTime teststart;
-        @EndTemporalProperty()
+        @EndTemporal()
         public LocalDateTime testend;
-        @StartTemporalProperty(type = TemporalType.POINT)
+        @StartTemporal(type = TemporalType.POINT)
         public LocalDateTime testat;
 
         public ExpandedGAULTests() {
