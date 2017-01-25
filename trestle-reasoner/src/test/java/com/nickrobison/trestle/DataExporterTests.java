@@ -105,9 +105,9 @@ public class DataExporterTests {
     public static class SimpleGAULObject {
         @Ignore
         public UUID objectid;
-        @DataProperty(name = "gaulCode")
+        @Fact(name = "gaulCode")
         public long gaulcode;
-        @DataProperty(name = "objectName")
+        @Fact(name = "objectName")
         public String objectname;
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
         @StartTemporalProperty(name = "startDate")
@@ -133,7 +133,7 @@ public class DataExporterTests {
         }
 
         @IndividualIdentifier
-        @DataProperty(name = "id")
+        @Fact(name = "id")
         @NoMultiLanguage
         public String getObjectID() {
             return this.objectid.toString();

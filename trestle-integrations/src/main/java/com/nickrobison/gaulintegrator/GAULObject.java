@@ -65,7 +65,7 @@ public class GAULObject {
         return objectID;
     }
 
-    @DataProperty(name = "id")
+    @Fact(name = "id")
     public String getObjectIDAsString() {
         return this.objectID.toString();
     }
@@ -84,7 +84,7 @@ public class GAULObject {
         return shapePolygon;
     }
 
-    @DataProperty(name = "gaulCode")
+    @Fact(name = "gaulCode")
     public long getGaulCode() {
         return gaulCode;
     }

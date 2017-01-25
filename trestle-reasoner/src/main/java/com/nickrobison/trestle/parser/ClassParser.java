@@ -134,13 +134,13 @@ public class ClassParser {
         return Optional.empty();
     }
 
-    static boolean filterDataPropertyField(Field objectMember, boolean filterSpatial) {
+    static boolean filterFactField(Field objectMember, boolean filterSpatial) {
 //        Check first to ignore the field
         return (!objectMember.isAnnotationPresent(Ignore.class)
 //                Only access it if it's public
                 & Modifier.isPublic(objectMember.getModifiers())
                 & (
-                objectMember.isAnnotationPresent(DataProperty.class)
+                objectMember.isAnnotationPresent(Fact.class)
                         | (objectMember.isAnnotationPresent(Spatial.class) && !filterSpatial)
                         | objectMember.isAnnotationPresent(IndividualIdentifier.class)
                         | objectMember.isAnnotationPresent(Language.class)
@@ -150,13 +150,13 @@ public class ClassParser {
                 & !(objectMember.getName().contains("_ebean"));
     }
 
-    static boolean filterDataPropertyMethod(Method objectMember, boolean filterSpatial) {
+    static boolean filterFactMethod(Method objectMember, boolean filterSpatial) {
 //        Check first to ignore the field
         return (!objectMember.isAnnotationPresent(Ignore.class)
 //                Only access it if it's public
                 & Modifier.isPublic(objectMember.getModifiers())
                 & (
-                objectMember.isAnnotationPresent(DataProperty.class)
+                objectMember.isAnnotationPresent(Fact.class)
                         | (objectMember.isAnnotationPresent(Spatial.class) && !filterSpatial)
                         | objectMember.isAnnotationPresent(IndividualIdentifier.class)
                         | objectMember.isAnnotationPresent(Language.class)
@@ -177,8 +177,8 @@ public class ClassParser {
      * @param inputObject - Object to parse
      * @return - Optional List of OWLDataPropertyAssertionAxioms
      */
-    public Optional<List<OWLDataPropertyAssertionAxiom>> GetDataProperties(Object inputObject) {
-        return GetDataProperties(inputObject, false);
+    public Optional<List<OWLDataPropertyAssertionAxiom>> GetFacts(Object inputObject) {
+        return GetFacts(inputObject, false);
     }
 
     /**
@@ -187,7 +187,7 @@ public class ClassParser {
      * @param filterSpatial - Boolean to determine whether or not to filter out the spatial annotations
      * @return - Optional List of OWLDataPropertyAssertionAxioms
      */
-    public Optional<List<OWLDataPropertyAssertionAxiom>> GetDataProperties(Object inputObject, boolean filterSpatial) {
+    public Optional<List<OWLDataPropertyAssertionAxiom>> GetFacts(Object inputObject, boolean filterSpatial) {
         final Class<?> clazz = inputObject.getClass();
         final List<OWLDataPropertyAssertionAxiom> axioms = new ArrayList<>();
 
@@ -195,9 +195,9 @@ public class ClassParser {
 
 //        Fields:
         for (Field classField : clazz.getDeclaredFields()) {
-            if (filterDataPropertyField(classField, filterSpatial)) {
-                if (classField.isAnnotationPresent(DataProperty.class)) {
-                    final DataProperty annotation = classField.getAnnotation(DataProperty.class);
+            if (filterFactField(classField, filterSpatial)) {
+                if (classField.isAnnotationPresent(Fact.class)) {
+                    final Fact annotation = classField.getAnnotation(Fact.class);
                     final IRI iri = IRI.create(ReasonerPrefix, annotation.name());
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
                     Object fieldValue = null;
@@ -257,9 +257,9 @@ public class ClassParser {
 
 //        Methods
         for (Method classMethod : clazz.getDeclaredMethods()) {
-            if (filterDataPropertyMethod(classMethod, filterSpatial)) {
-                if (classMethod.isAnnotationPresent(DataProperty.class)) {
-                    final DataProperty annotation = classMethod.getAnnotation(DataProperty.class);
+            if (filterFactMethod(classMethod, filterSpatial)) {
+                if (classMethod.isAnnotationPresent(Fact.class)) {
+                    final Fact annotation = classMethod.getAnnotation(Fact.class);
                     final IRI iri = IRI.create(ReasonerPrefix, annotation.name());
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
 
@@ -319,7 +319,7 @@ public class ClassParser {
      * @param inputObject - Object to parse for spatial property
      * @return - Optional of OWLDataPropertyAssertionAxiom representing spatial property
      */
-    public Optional<OWLDataPropertyAssertionAxiom> GetSpatialProperty(Object inputObject) {
+    public Optional<OWLDataPropertyAssertionAxiom> GetSpatialFact(Object inputObject) {
         final OWLNamedIndividual owlNamedIndividual = GetIndividual(inputObject);
         final IRI iri = IRI.create(GEOSPARQLPREFIX, "asWKT");
         final OWLDataProperty spatialDataProperty = df.getOWLDataProperty(iri);
@@ -391,8 +391,8 @@ public class ClassParser {
 //        See if we can match right off the language
 //        Methods
         final Optional<String> annotatedMethod = Arrays.stream(clazz.getDeclaredMethods())
-                .filter(m -> m.isAnnotationPresent(DataProperty.class))
-                .filter(m -> m.getAnnotation(DataProperty.class).name().equals(classMember))
+                .filter(m -> m.isAnnotationPresent(Fact.class))
+                .filter(m -> m.getAnnotation(Fact.class).name().equals(classMember))
                 .filter(m -> m.isAnnotationPresent(Language.class))
                 .filter(m -> m.getAnnotation(Language.class).language().toLowerCase().equals(languageTag))
                 .map(m -> {
@@ -405,10 +405,10 @@ public class ClassParser {
                     } catch (MissingConstructorException e) {
                         e.printStackTrace();
                     }
-                    return m.getAnnotation(DataProperty.class).name();
+                    return m.getAnnotation(Fact.class).name();
                 })
 //                .map(ClassParser::filterMethodName)
-//                .map(m -> m.getAnnotation(DataProperty.class).name())
+//                .map(m -> m.getAnnotation(Fact.class).name())
                 .findAny();
 
         if (annotatedMethod.isPresent()) {
@@ -417,8 +417,8 @@ public class ClassParser {
 
 //        Fields
         final Optional<String> annotatedField = Arrays.stream(clazz.getDeclaredFields())
-                .filter(f -> f.isAnnotationPresent(DataProperty.class))
-                .filter(f -> f.getAnnotation(DataProperty.class).name().equals(classMember))
+                .filter(f -> f.isAnnotationPresent(Fact.class))
+                .filter(f -> f.getAnnotation(Fact.class).name().equals(classMember))
                 .filter(f -> f.isAnnotationPresent(Language.class))
                 .filter(f -> f.getAnnotation(Language.class).language().toLowerCase().equals(languageTag))
                 .map(f -> {
@@ -431,10 +431,10 @@ public class ClassParser {
                     } catch (MissingConstructorException e) {
                         e.printStackTrace();
                     }
-                    return f.getAnnotation(DataProperty.class).name();
+                    return f.getAnnotation(Fact.class).name();
                 })
 //                .map(Field::getName)
-//                .map(f -> f.getAnnotation(DataProperty.class).name())
+//                .map(f -> f.getAnnotation(Fact.class).name())
                 .findAny();
 
         if (annotatedField.isPresent()) {
@@ -443,8 +443,8 @@ public class ClassParser {
 
 //        If we can't match on language annotation, try to look for the method/field without a language annotation
         final Optional<String> methodNoLanguage = Arrays.stream(clazz.getDeclaredMethods())
-                .filter(m -> m.isAnnotationPresent(DataProperty.class))
-                .filter(m -> m.getAnnotation(DataProperty.class).name().equals(classMember))
+                .filter(m -> m.isAnnotationPresent(Fact.class))
+                .filter(m -> m.getAnnotation(Fact.class).name().equals(classMember))
                 .filter(m -> !m.isAnnotationPresent(Language.class))
                 .map(m -> {
                     try {
@@ -456,10 +456,10 @@ public class ClassParser {
                     } catch (MissingConstructorException e) {
                         e.printStackTrace();
                     }
-                    return m.getAnnotation(DataProperty.class).name();
+                    return m.getAnnotation(Fact.class).name();
                 })
 //                .map(ClassParser::filterMethodName)
-//                .map(m -> m.getAnnotation(DataProperty.class).name())
+//                .map(m -> m.getAnnotation(Fact.class).name())
                 .findAny();
 
         if (methodNoLanguage.isPresent()) {
@@ -467,8 +467,8 @@ public class ClassParser {
         }
 
         final Optional<String> fieldNoLanguage = Arrays.stream(clazz.getDeclaredFields())
-                .filter(f -> f.isAnnotationPresent(DataProperty.class))
-                .filter(f -> f.getAnnotation(DataProperty.class).name().equals(classMember))
+                .filter(f -> f.isAnnotationPresent(Fact.class))
+                .filter(f -> f.getAnnotation(Fact.class).name().equals(classMember))
                 .filter(f -> !f.isAnnotationPresent(Language.class))
                 .map(f -> {
                     try {
@@ -480,10 +480,10 @@ public class ClassParser {
                     } catch (MissingConstructorException e) {
                         e.printStackTrace();
                     }
-                    return f.getAnnotation(DataProperty.class).name();
+                    return f.getAnnotation(Fact.class).name();
                 })
 //                .map(Field::getName)
-//                .map(f -> f.getAnnotation(DataProperty.class).name())
+//                .map(f -> f.getAnnotation(Fact.class).name())
                 .findAny();
 
 //        If nothing returns, run the default matcher
@@ -516,8 +516,8 @@ public class ClassParser {
 
         if (classField == null) {
             final Optional<Field> dataField = Arrays.stream(clazz.getDeclaredFields())
-                    .filter(f -> f.isAnnotationPresent(DataProperty.class))
-                    .filter(f -> f.getAnnotation(DataProperty.class).name().equals(classMember))
+                    .filter(f -> f.isAnnotationPresent(Fact.class))
+                    .filter(f -> f.getAnnotation(Fact.class).name().equals(classMember))
                     .findFirst();
 
             if (dataField.isPresent()) {
@@ -539,8 +539,8 @@ public class ClassParser {
         }
 
         final Optional<Method> annotatedMethod = Arrays.stream(clazz.getDeclaredMethods())
-                .filter(m -> m.isAnnotationPresent(DataProperty.class))
-                .filter(m -> m.getAnnotation(DataProperty.class).name().equals(classMember))
+                .filter(m -> m.isAnnotationPresent(Fact.class))
+                .filter(m -> m.getAnnotation(Fact.class).name().equals(classMember))
                 .findFirst();
         if (annotatedMethod.isPresent()) {
             return filterMethodName(annotatedMethod.get());
@@ -705,8 +705,8 @@ public class ClassParser {
     static String getFieldName(Field field) {
 
 //        Iterate through the various annotations and figure out if we need to get an annotated values
-        if (field.isAnnotationPresent(DataProperty.class)) {
-            final String fieldName = field.getAnnotation(DataProperty.class).name();
+        if (field.isAnnotationPresent(Fact.class)) {
+            final String fieldName = field.getAnnotation(Fact.class).name();
             if (fieldName.equals("")) {
                 return field.getName();
             } else {
@@ -752,8 +752,8 @@ public class ClassParser {
      */
     static String getMethodName(Method method) {
         //        Iterate through the various annotations and figure out if we need to get an annotated values
-        if (method.isAnnotationPresent(DataProperty.class)) {
-            final String methodName = method.getAnnotation(DataProperty.class).name();
+        if (method.isAnnotationPresent(Fact.class)) {
+            final String methodName = method.getAnnotation(Fact.class).name();
             if (methodName.equals("")) {
                 return filterMethodName(method);
             } else {

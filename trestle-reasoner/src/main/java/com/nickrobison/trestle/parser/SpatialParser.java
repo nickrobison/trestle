@@ -1,7 +1,7 @@
 package com.nickrobison.trestle.parser;
 
 import com.esri.core.geometry.Geometry;
-import com.nickrobison.trestle.annotations.DataProperty;
+import com.nickrobison.trestle.annotations.Fact;
 import com.nickrobison.trestle.annotations.Spatial;
 import com.nickrobison.trestle.parser.spatial.ESRIParser;
 import com.nickrobison.trestle.parser.spatial.GeotoolsParser;
@@ -141,8 +141,8 @@ public class SpatialParser {
     }
 
     static IRI filterDataSpatialName(Field classField) {
-        if (classField.isAnnotationPresent(DataProperty.class)) {
-            return IRI.create(TRESTLE_PREFIX, classField.getAnnotation(DataProperty.class).name());
+        if (classField.isAnnotationPresent(Fact.class)) {
+            return IRI.create(TRESTLE_PREFIX, classField.getAnnotation(Fact.class).name());
         } else if (classField.isAnnotationPresent(Spatial.class)) {
             return IRI.create(GEOSPARQLPREFIX, "asWKT");
         } else {
@@ -151,8 +151,8 @@ public class SpatialParser {
     }
 
     static IRI filterDataSpatialName(Method classMethod) {
-        if (classMethod.isAnnotationPresent(DataProperty.class)) {
-            return IRI.create(TRESTLE_PREFIX, classMethod.getAnnotation(DataProperty.class).name());
+        if (classMethod.isAnnotationPresent(Fact.class)) {
+            return IRI.create(TRESTLE_PREFIX, classMethod.getAnnotation(Fact.class).name());
         } else if (classMethod.isAnnotationPresent(Spatial.class)) {
             return IRI.create(GEOSPARQLPREFIX, "asWKT");
         } else {

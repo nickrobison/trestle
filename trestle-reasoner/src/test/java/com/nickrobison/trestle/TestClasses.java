@@ -197,7 +197,7 @@ public class TestClasses {
     @OWLClassName(className="GAUL_Test")
     public static class GAULTestClass {
 
-        @DataProperty(name="ADM0_Code", datatype= OWL2Datatype.XSD_INTEGER)
+        @Fact(name="ADM0_Code", datatype= OWL2Datatype.XSD_INTEGER)
         public int adm0_code;
         public String adm0_name;
         @IndividualIdentifier
@@ -439,10 +439,10 @@ public class TestClasses {
     @OWLClassName(className = "multiLang-test")
     public static class MultiLangTest {
 
-        @DataProperty(name = "testString")
+        @Fact(name = "testString")
         @Language(language = "en")
         public final String englishString;
-        @DataProperty(name = "testString")
+        @Fact(name = "testString")
         @Language(language = "heb")
         public final String hebrewString;
         private final String frenchString;
@@ -478,13 +478,13 @@ public class TestClasses {
             this.hebrewString = hebrewString;
         }
 
-        @DataProperty(name = "testString")
+        @Fact(name = "testString")
         @Language(language = "fr")
         public String getFrenchString() {
             return frenchString;
         }
 
-        @DataProperty(name = "testString")
+        @Fact(name = "testString")
         @Language(language = "en-GB")
         public String getEnglishGBString() {
             return englishGBString;
@@ -495,7 +495,7 @@ public class TestClasses {
             return defaultTime;
         }
 
-        @DataProperty(name = "testString2")
+        @Fact(name = "testString2")
         @Language(language = "cs")
         public String getTestString2cs() {
             return testString2cs;

@@ -290,7 +290,7 @@ public class ClassRegisterTest {
     }
 
     private static class LanguageTest {
-        @DataProperty(name = "testString")
+        @Fact(name = "testString")
         @Language(language = "fr")
         public final String testString;
         private final String testString2;
@@ -300,7 +300,7 @@ public class ClassRegisterTest {
             this.testString2 = "test string";
         }
 
-        @DataProperty(name = "testString")
+        @Fact(name = "testString")
         @Language(language = "en")
         public String getTestString2() {
             return this.testString2;
@@ -308,7 +308,7 @@ public class ClassRegisterTest {
     }
 
     private static class FailingLanguageTest {
-        @DataProperty(name = "testString")
+        @Fact(name = "testString")
         @Language(language = "fr")
         public final String testString;
         private final String testString2;
@@ -318,7 +318,7 @@ public class ClassRegisterTest {
             this.testString2 = "test string";
         }
 
-        @DataProperty(name = "testString")
+        @Fact(name = "testString")
         @Language(language = "en-Nick")
         public String getTestString2() {
             return this.testString2;

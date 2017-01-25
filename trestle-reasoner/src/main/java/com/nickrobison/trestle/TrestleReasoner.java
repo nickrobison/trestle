@@ -329,7 +329,7 @@ public class TrestleReasoner {
 
 
 //        Write the data properties
-        final Optional<List<OWLDataPropertyAssertionAxiom>> dataProperties = trestleParser.classParser.GetDataProperties(inputObject);
+        final Optional<List<OWLDataPropertyAssertionAxiom>> dataProperties = trestleParser.classParser.GetFacts(inputObject);
         dataProperties.ifPresent(owlDataPropertyAssertionAxioms -> writeObjectFact(owlNamedIndividual, owlDataPropertyAssertionAxioms, factTemporal, dTemporal));
 
 //        Write the object properties
@@ -1646,14 +1646,14 @@ public class TrestleReasoner {
 //        if (objectOptional.isPresent()) {
 //            final T object = objectOptional.get();
         final Class<?> inputClass = object.getClass();
-        final Optional<OWLDataPropertyAssertionAxiom> spatialProperty = trestleParser.classParser.GetSpatialProperty(object);
+        final Optional<OWLDataPropertyAssertionAxiom> spatialProperty = trestleParser.classParser.GetSpatialFact(object);
         if (!spatialProperty.isPresent()) {
             logger.error("Individual is not a spatial object");
             return Optional.empty();
         }
         final TSIndividual individual = new TSIndividual(spatialProperty.get().getObject().getLiteral(), shapefileSchema);
 //                    Data properties, filtering out the spatial members
-        final Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = trestleParser.classParser.GetDataProperties(object, true);
+        final Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = trestleParser.classParser.GetFacts(object, true);
         owlDataPropertyAssertionAxioms.ifPresent(owlDataPropertyAssertionAxioms1 -> owlDataPropertyAssertionAxioms1.forEach(property -> {
             final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, object.getClass());
             final Object literal = TypeConverter.extractOWLLiteral(javaClass, property.getObject());

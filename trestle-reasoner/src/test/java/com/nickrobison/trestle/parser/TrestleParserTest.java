@@ -76,7 +76,7 @@ public class TrestleParserTest {
 //        Code
         final OWLDataProperty adm0_code = df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, "ADM0_Code"));
         final OWLLiteral adm0_code_literal = df.getOWLLiteral("1234", OWL2Datatype.XSD_INTEGER);
-        Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = tp.classParser.GetDataProperties(gaulTestClass);
+        Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = tp.classParser.GetFacts(gaulTestClass);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have properties");
         assertEquals(3, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of properties");
         final OWLDataPropertyAssertionAxiom parsed_code = owlDataPropertyAssertionAxioms.get().get(0);
@@ -112,7 +112,7 @@ public class TrestleParserTest {
 //        Code
 //        final OWLDataProperty adm0_code = dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, "ADM0_Code"));
 //        final OWLLiteral adm0_code_literal = dfStatic.getOWLLiteral("1234", OWL2Datatype.XSD_INTEGER);
-        Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = tp.classParser.GetDataProperties(complexObjectClass);
+        Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = tp.classParser.GetFacts(complexObjectClass);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have properties");
         assertEquals(7, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of properties");
         final OWLDataPropertyAssertionAxiom parsed_code = owlDataPropertyAssertionAxioms.get().get(0);
@@ -137,7 +137,7 @@ public class TrestleParserTest {
         OWLNamedIndividual gaul_test = df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, "test_region"));
         assertEquals(gaul_test, owlNamedIndividual, "Wrong named individual");
 
-        Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = tp.classParser.GetDataProperties(expandedGAULClass);
+        Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = tp.classParser.GetFacts(expandedGAULClass);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have properties");
         assertEquals(3, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of properties");
 
@@ -172,7 +172,7 @@ public class TrestleParserTest {
         assertEquals(gaul_test, owlNamedIndividual, "Wrong named individual");
 
 //        Data properties
-        owlDataPropertyAssertionAxioms = tp.classParser.GetDataProperties(testMethod);
+        owlDataPropertyAssertionAxioms = tp.classParser.GetFacts(testMethod);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have method properties");
         assertEquals(5, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of data properties");
 

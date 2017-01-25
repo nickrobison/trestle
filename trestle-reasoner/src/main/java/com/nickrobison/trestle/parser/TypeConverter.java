@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.parser;
 
-import com.nickrobison.trestle.annotations.DataProperty;
+import com.nickrobison.trestle.annotations.Fact;
 import com.vividsolutions.jts.geom.Geometry;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -299,7 +299,7 @@ public class TypeConverter {
         return types;
     }
 
-    static OWLDatatype getDatatypeFromAnnotation(DataProperty annotation, Class<?> objectClass) {
+    static OWLDatatype getDatatypeFromAnnotation(Fact annotation, Class<?> objectClass) {
 //        I don't think this will ever be true
         if (annotation.datatype().toString().equals("") || annotation.datatype().equals(OWL2Datatype.XSD_NMTOKEN)) {
             return getDatatypeFromJavaClass(objectClass);
