@@ -294,8 +294,8 @@ public class QueryBuilder {
         ps.setIri("type", getFullIRIString(datasetClass));
 //        We need to simplify the WKT to get under the 4000 character SQL limit.
 //        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
-        ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
         logger.debug(ps.toString());
         return ps.toString();
@@ -394,8 +394,8 @@ public class QueryBuilder {
         }
 
         ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
-        ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
     }
 
     /**
@@ -487,7 +487,7 @@ public class QueryBuilder {
                 "?m rdf:type trestle:Interval_Object ." +
                 "FILTER(?m = <%s> && !bound(?vt))}", getFullIRIString(individual)));
 
-        ps.setLiteral("newValue", temporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        ps.setLiteral("newValue", temporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
         logger.debug(ps.toString());
         return ps.toString();

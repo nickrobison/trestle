@@ -99,7 +99,7 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?m ?tStart ?tEnd WHERE { ?m rdf:type trestle:GAUL .?m trestle:has_fact ?f .?f ogc:asWKT ?wkt .?f trestle:valid_time ?t .{?t trestle:start_temporal ?tStart} .OPTIONAL{?t trestle:end_temporal ?tEnd} .FILTER((?tStart < \"2014-01-01T00:00:00\"^^xsd:dateTime && ?tEnd >= \"2014-01-01T00:00:00\"^^xsd:dateTime) && ogcf:sfIntersects(?wkt, \"POINT (39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }";
+            "SELECT DISTINCT ?m ?tStart ?tEnd WHERE { ?m rdf:type trestle:GAUL .?m trestle:has_fact ?f .?f ogc:asWKT ?wkt .?f trestle:valid_time ?t .{?t trestle:start_temporal ?tStart} .OPTIONAL{?t trestle:end_temporal ?tEnd} .FILTER((?tStart < \"2014-01-01T00:00:00Z\"^^xsd:dateTime && ?tEnd >= \"2014-01-01T00:00:00Z\"^^xsd:dateTime) && ogcf:sfIntersects(?wkt, \"POINT (39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }";
 
     private static final String objectPropertyStartIntervalString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
@@ -111,19 +111,7 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?individual ?fact ?property ?object WHERE { ?individual trestle:has_fact ?fact .?fact trestle:database_time ?d .{?d trestle:valid_from ?tStart} .OPTIONAL{?d trestle:valid_to ?tEnd} .?fact ?property ?object .VALUES ?individual { <http://nickrobison.com/dissertation/trestle.owl#test_muni4> } .FILTER(!isURI(?object) && !isBlank(?object)) .FILTER(!bound(?tEnd)) .FILTER(?tStart < \"1989-03-26T00:00:00\"^^xsd:dateTime && ?tEnd >= \"1989-03-26T00:00:00\"^^xsd:dateTime)}";
-
-    private static final String objectPropertyEmptyIntervalString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
-            "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
-            "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
-            "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
-            "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
-            "PREFIX xml: <http://www.w3.org/XML/1998/namespace>\n" +
-            "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
-            "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
-            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
-            "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?individual ?fact ?property ?object WHERE { ?individual trestle:has_fact ?fact .?fact trestle:database_time ?d .{?d trestle:valid_from ?tStart} .OPTIONAL{?d trestle:valid_to ?tEnd} .?fact ?property ?object .VALUES ?individual { <http://nickrobison.com/dissertation/trestle.owl#test_muni4> } .FILTER(!isURI(?object) && !isBlank(?object)) .FILTER(!bound(?tEnd)) .}";
+            "SELECT DISTINCT ?individual ?fact ?property ?object WHERE { ?individual trestle:has_fact ?fact .{?fact trestle:database_from ?df} .OPTIONAL{?fact trestle:database_to ?dt} .OPTIONAL{?fact trestle:valid_from ?vf} .OPTIONAL{?fact trestle:valid_to ?vt} .OPTIONAL{?fact trestle:valid_at ?va} .?fact ?property ?object .VALUES ?individual { <http://nickrobison.com/dissertation/trestle.owl#test_muni4> } .FILTER(!isURI(?object) && !isBlank(?object)) .FILTER(!bound(?tEnd)) .FILTER((!bound(?vf) || ?vf <= \"1989-03-26T00:00:00Z\"^^xsd:dateTime) && (!bound(?vt) || ?vt > \"1989-03-26T00:00:00Z\"^^xsd:dateTime)) .FILTER(!bound(?va) || ?va = \"1989-03-26T00:00:00Z\"^^xsd:dateTime) .FILTER((!bound(?df) || ?df <= \"2012-01-01T00:00:00Z\"^^xsd:dateTime) && (!bound(?dt) || ?dt > \"2012-01-01T00:00:00Z\"^^xsd:dateTime)) . FILTER NOT EXISTS {?property rdfs:subPropertyOf trestle:Temporal_Property}}";
 
     private static final String objectPropertyMultiIRIString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
@@ -135,7 +123,7 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?individual ?fact ?property ?object WHERE { ?individual trestle:has_fact ?fact .?fact trestle:database_time ?d .{?d trestle:valid_from ?tStart} .OPTIONAL{?d trestle:valid_to ?tEnd} .?fact ?property ?object .VALUES ?individual { <http://nickrobison.com/dissertation/trestle.owl#test_muni4> <http://nickrobison.com/dissertation/trestle.owl#test_muni2> <http://nickrobison.com/dissertation/trestle.owl#test_muni5> } .FILTER(!isURI(?object) && !isBlank(?object)) .FILTER(!bound(?tEnd)) .FILTER(?tStart < \"1989-03-26T00:00:00\"^^xsd:dateTime && ?tEnd >= \"2012-01-01T00:00:00\"^^xsd:dateTime)}";
+            "SELECT DISTINCT ?individual ?fact ?property ?object WHERE { ?individual trestle:has_fact ?fact .{?fact trestle:database_from ?df} .OPTIONAL{?fact trestle:database_to ?dt} .OPTIONAL{?fact trestle:valid_from ?vf} .OPTIONAL{?fact trestle:valid_to ?vt} .OPTIONAL{?fact trestle:valid_at ?va} .?fact ?property ?object .VALUES ?individual { <http://nickrobison.com/dissertation/trestle.owl#test_muni4> <http://nickrobison.com/dissertation/trestle.owl#test_muni2> <http://nickrobison.com/dissertation/trestle.owl#test_muni5> } .FILTER(!isURI(?object) && !isBlank(?object)) .FILTER(!bound(?tEnd)) .FILTER((!bound(?vf) || ?vf <= \"1989-03-26T00:00:00Z\"^^xsd:dateTime) && (!bound(?vt) || ?vt > \"1989-03-26T00:00:00Z\"^^xsd:dateTime)) .FILTER(!bound(?va) || ?va = \"1989-03-26T00:00:00Z\"^^xsd:dateTime) .FILTER((!bound(?df) || ?df <= \"2012-01-01T00:00:00Z\"^^xsd:dateTime) && (!bound(?dt) || ?dt > \"2012-01-01T00:00:00Z\"^^xsd:dateTime)) . FILTER NOT EXISTS {?property rdfs:subPropertyOf trestle:Temporal_Property}}";
 
     private static final String individualQueryNullClassString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
@@ -171,7 +159,7 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?individual ?temporal ?property ?object WHERE { ?individual trestle:exists_time ?temporal . OPTIONAL{?temporal trestle:exists_at ?tAt} . OPTIONAL{?temporal trestle:exists_from ?tStart} . OPTIONAL{?temporal trestle:exists_to ?tEnd} . ?temporal ?property ?object VALUES ?individual { <http://nickrobison.com/dissertation/trestle.owl#test_muni4> } . FILTER(!isURI(?object) && !isBlank(?object)) .}";
+            "SELECT DISTINCT ?individual ?property ?object WHERE { OPTIONAL{?individual trestle:exists_at ?tAt} . OPTIONAL{?individual trestle:exists_from ?tStart} . OPTIONAL{?individual trestle:exists_to ?tEnd} . ?individual ?property ?object VALUES ?individual { <http://nickrobison.com/dissertation/trestle.owl#test_muni4> } . FILTER(!isURI(?object) && !isBlank(?object)) .}";
 
     private static final String tsConceptString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
@@ -197,6 +185,18 @@ public class QueryBuilderTest {
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
             "SELECT DISTINCT ?m ?o ?p WHERE { { ?m ?o ?p . ?o rdfs:subPropertyOf trestle:Temporal_Relation } UNION { ?m ?o ?p . ?o rdfs:subPropertyOf trestle:Spatial_Relation .} . VALUES ?m {<http://nickrobison.com/dissertation/trestle.owl#test_muni4>}}";
+
+    private static final String updateTemporalString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+            "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
+            "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+            "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
+            "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+            "PREFIX xml: <http://www.w3.org/XML/1998/namespace>\n" +
+            "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
+            "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+            "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
+            "INSERT {?m trestle:valid_to \"2017-03-11T00:00:00Z\"^^xsd:dateTime}  WHERE { OPTIONAL{?m trestle:valid_to ?vt} . ?m rdf:type trestle:Interval_Object .FILTER(?m = <http://nickrobison.com/dissertation/trestle.owl#test_muni4> && !bound(?vt))}";
 
     @BeforeAll
     public static void createPrefixes() {
@@ -270,21 +270,17 @@ public class QueryBuilderTest {
 
         final OWLNamedIndividual test_muni4 = df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni4"));
         assertAll(() -> {
-                    final String generatedObjectStartInterval = qb.buildObjectPropertyRetrievalQuery(OffsetDateTime.of(LocalDate.of(1989, 3, 26).atStartOfDay(), ZoneOffset.UTC), null, true, test_muni4);
-                    assertEquals(objectPropertyStartIntervalString, generatedObjectStartInterval, "Should be equal");
-                },
-                () -> {
-                    final String generatedObjectEmptyInterval = qb.buildObjectPropertyRetrievalQuery(null, null, true, test_muni4);
-                    assertEquals(objectPropertyEmptyIntervalString, generatedObjectEmptyInterval, "Should be equal");
+                    final String generatedObjectStartInterval = qb.buildObjectPropertyRetrievalQuery(OffsetDateTime.of(LocalDate.of(1989, 3, 26).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2012, 1, 1).atStartOfDay(), ZoneOffset.UTC), true, test_muni4);
+                    assertEquals(objectPropertyStartIntervalString, generatedObjectStartInterval, "Start interval query should be equal");
                 },
                 () -> {
                     final String generatedMultiIRI = qb.buildObjectPropertyRetrievalQuery(OffsetDateTime.of(LocalDate.of(1989, 3, 26).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2012, 1, 1).atStartOfDay(), ZoneOffset.UTC), true, test_muni4, df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni2")), df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni5")));
-                    assertEquals(objectPropertyMultiIRIString, generatedMultiIRI, "Should be equal");
+                    assertEquals(objectPropertyMultiIRIString, generatedMultiIRI, "Multi IRI property query Should be equal");
                 },
                 () -> {
-            final String generatedIndividualRelation = qb.buildIndividualRelationQuery(test_muni4);
-            assertEquals(individualRelationString, generatedIndividualRelation, "Individual object query");
-        });
+                    final String generatedIndividualRelation = qb.buildIndividualRelationQuery(test_muni4);
+                    assertEquals(individualRelationString, generatedIndividualRelation, "Individual object query");
+                });
     }
 
     @Test
@@ -303,7 +299,13 @@ public class QueryBuilderTest {
     @Test
     public void testTemporalQuery() {
         final OWLNamedIndividual test_muni4 = df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni4"));
-        final String temporalQuery = qb.buildIndividualTemporalQuery(test_muni4);
-        assertEquals(individualTemporalQueryString, temporalQuery, "Should be equal");
+        assertAll(() -> {
+                    final String temporalQuery = qb.buildIndividualTemporalQuery(test_muni4);
+                    assertEquals(individualTemporalQueryString, temporalQuery, "Should be equal");
+                },
+                () -> {
+                    final String updateUnboundedTemporal = qb.buildUpdateUnboundedTemporal(test_muni4, OffsetDateTime.of(2017, 3, 11, 0, 0, 0, 0, ZoneOffset.UTC));
+                    assertEquals(updateTemporalString, updateUnboundedTemporal, "Update unbounded temporal should match");
+                });
     }
 }
