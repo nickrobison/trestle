@@ -45,18 +45,12 @@ public class TestClasses {
 
             OffsetDateTimeTest that = (OffsetDateTimeTest) o;
 
-            if (!adm0_code.equals(that.adm0_code)) return false;
-            if (!startTemporal.atZoneSameInstant(ZoneOffset.UTC).equals(that.startTemporal.atZoneSameInstant(ZoneOffset.UTC))) return false;
-            return endTemporal.atZoneSameInstant(ZoneOffset.UTC).equals(that.endTemporal.atZoneSameInstant(ZoneOffset.UTC));
-
+            return adm0_code.equals(that.adm0_code);
         }
 
         @Override
         public int hashCode() {
-            int result = adm0_code.hashCode();
-            result = 31 * result + startTemporal.hashCode();
-            result = 31 * result + endTemporal.hashCode();
-            return result;
+            return adm0_code.hashCode();
         }
     }
 
@@ -96,16 +90,13 @@ public class TestClasses {
             JTSGeometryTest that = (JTSGeometryTest) o;
 
             if (!getAdm0_code().equals(that.getAdm0_code())) return false;
-            if (!getGeom().equals(that.getGeom())) return false;
-            return getDate().equals(that.getDate());
-
+            return getGeom().equals(that.getGeom());
         }
 
         @Override
         public int hashCode() {
             int result = getAdm0_code().hashCode();
             result = 31 * result + getGeom().hashCode();
-            result = 31 * result + getDate().hashCode();
             return result;
         }
     }
@@ -141,18 +132,14 @@ public class TestClasses {
 
             ESRIPolygonTest that = (ESRIPolygonTest) o;
 
-//            There are very subtle differences in the way WKTs are stored and managed, so we do a bit of munging to figure out the differences in area
             if (!getAdm0_code().equals(that.getAdm0_code())) return false;
-            if (!(Math.round(geom.calculateArea2D() - that.geom.calculateArea2D()) == 0)) return false;
-            return getDate().equals(that.getDate());
-
+            return geom.equals(that.geom);
         }
 
         @Override
         public int hashCode() {
             int result = getAdm0_code().hashCode();
             result = 31 * result + geom.hashCode();
-            result = 31 * result + getDate().hashCode();
             return result;
         }
     }
@@ -180,16 +167,13 @@ public class TestClasses {
             GeotoolsPolygonTest that = (GeotoolsPolygonTest) o;
 
             if (!id.equals(that.id)) return false;
-            if (!geom.equals(that.geom)) return false;
-            return date != null ? date.equals(that.date) : that.date == null;
-
+            return geom.equals(that.geom);
         }
 
         @Override
         public int hashCode() {
             int result = id.hashCode();
             result = 31 * result + geom.hashCode();
-            result = 31 * result + (date != null ? date.hashCode() : 0);
             return result;
         }
     }
@@ -244,9 +228,7 @@ public class TestClasses {
             if (adm0_code != that.adm0_code) return false;
             if (!adm0_name.equals(that.adm0_name)) return false;
             if (!test_name.equals(that.test_name)) return false;
-            if (!wkt.equals(that.wkt)) return false;
-            return time.equals(that.time);
-
+            return wkt.equals(that.wkt);
         }
 
         @Override
@@ -255,7 +237,6 @@ public class TestClasses {
             result = 31 * result + adm0_name.hashCode();
             result = 31 * result + test_name.hashCode();
             result = 31 * result + wkt.hashCode();
-            result = 31 * result + time.hashCode();
             return result;
         }
     }
@@ -322,8 +303,7 @@ public class TestClasses {
             if (!testBigInt.equals(that.testBigInt)) return false;
             if (!testInteger.equals(that.testInteger)) return false;
             if (!getTestDouble().equals(that.getTestDouble())) return false;
-            if (!getWkt().equals(that.getWkt())) return false;
-            return getAtDate().equals(that.getAtDate());
+            return getWkt().equals(that.getWkt());
         }
 
         @Override
@@ -338,7 +318,6 @@ public class TestClasses {
             temp = Double.doubleToLongBits(testPrimitiveDouble);
             result = 31 * result + (int) (temp ^ (temp >>> 32));
             result = 31 * result + getWkt().hashCode();
-            result = 31 * result + getAtDate().hashCode();
             return result;
         }
     }
@@ -357,6 +336,28 @@ public class TestClasses {
         //        @DefaultTemporal(type = TemporalType.POINT, scope= TemporalScope.EXISTS, duration = 0, unit = ChronoUnit.YEARS)
         private LocalDateTime intervalStart;
         private LocalDateTime intervalEnd;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            GAULMethodTest that = (GAULMethodTest) o;
+
+            if (adm0_code != that.adm0_code) return false;
+            if (!adm0_name.equals(that.adm0_name)) return false;
+            if (!test_name.equals(that.test_name)) return false;
+            return privateField.equals(that.privateField);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = adm0_code;
+            result = 31 * result + adm0_name.hashCode();
+            result = 31 * result + test_name.hashCode();
+            result = 31 * result + privateField.hashCode();
+            return result;
+        }
 
         public GAULMethodTest() {
             this.adm0_code = 4326;
@@ -406,34 +407,6 @@ public class TestClasses {
             return this.intervalEnd;
         }
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            GAULMethodTest that = (GAULMethodTest) o;
-
-            if (getAdm0_code1() != that.getAdm0_code1()) return false;
-            if (!adm0_name.equals(that.adm0_name)) return false;
-            if (!test_name.equals(that.test_name)) return false;
-            if (!defaultTime.equals(that.defaultTime)) return false;
-            if (!privateField.equals(that.privateField)) return false;
-            if (!intervalStart.equals(that.intervalStart)) return false;
-            return intervalEnd.equals(that.intervalEnd);
-
-        }
-
-        @Override
-        public int hashCode() {
-            int result = getAdm0_code1();
-            result = 31 * result + adm0_name.hashCode();
-            result = 31 * result + test_name.hashCode();
-            result = 31 * result + defaultTime.hashCode();
-            result = 31 * result + privateField.hashCode();
-            result = 31 * result + intervalStart.hashCode();
-            result = 31 * result + intervalEnd.hashCode();
-            return result;
-        }
     }
 
     @DatasetClass(name = "multiLang-test")
@@ -512,7 +485,6 @@ public class TestClasses {
             if (!hebrewString.equals(that.hebrewString)) return false;
             if (!getFrenchString().equals(that.getFrenchString())) return false;
             if (!getEnglishGBString().equals(that.getEnglishGBString())) return false;
-            if (!getDefaultTime().equals(that.getDefaultTime())) return false;
             if (!testString2.equals(that.testString2)) return false;
             if (!getTestString2cs().equals(that.getTestString2cs())) return false;
             return id.equals(that.id);
@@ -524,7 +496,6 @@ public class TestClasses {
             result = 31 * result + hebrewString.hashCode();
             result = 31 * result + getFrenchString().hashCode();
             result = 31 * result + getEnglishGBString().hashCode();
-            result = 31 * result + getDefaultTime().hashCode();
             result = 31 * result + testString2.hashCode();
             result = 31 * result + getTestString2cs().hashCode();
             result = 31 * result + id.hashCode();

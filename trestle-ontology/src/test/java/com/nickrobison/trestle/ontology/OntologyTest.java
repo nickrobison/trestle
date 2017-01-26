@@ -164,10 +164,9 @@ abstract public class OntologyTest {
         String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
                 "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
                 "PREFIX : <http://nickrobison.com/dissertation/trestle.owl#>\n" +
-                "SELECT DISTINCT ?f ?m ?t WHERE { ?m rdf:type :GAUL . " +
+                "SELECT DISTINCT ?f ?m WHERE { ?m rdf:type :GAUL . " +
                 "?m :has_fact ?f ." +
                 "?f ?property ?object ." +
-                "?f :valid_time ?t." +
                 "FILTER(!isURI(?object) && !isBlank(?object) && ?object = 41374) }";
 
         final TrestleResultSet resultSet = ontology.executeSPARQLResults(queryString);

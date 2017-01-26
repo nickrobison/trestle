@@ -8,9 +8,7 @@ import com.vividsolutions.jts.io.WKTReader;
 import com.vividsolutions.jts.io.WKTWriter;
 import com.vividsolutions.jts.precision.GeometryPrecisionReducer;
 import com.vividsolutions.jts.simplify.TopologyPreservingSimplifier;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.ParameterizedSparqlString;
-import org.apache.jena.sparql.util.NodeUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -22,7 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.Temporal;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -174,7 +171,7 @@ public class QueryBuilder {
         return ps.toString();
     }
 
-    public String buildObjectPropertyRetrievalQuery(@Nullable OffsetDateTime validTemporal, @Nullable OffsetDateTime databaseTemporal, OWLNamedIndividual... individual) {
+    public String buildObjectPropertyRetrievalQuery(OffsetDateTime validTemporal, OffsetDateTime databaseTemporal, boolean filterTemporals, OWLNamedIndividual... individual) {
         final ParameterizedSparqlString ps = buildBaseString();
 
         final String individualValues = Arrays.stream(individual)
@@ -188,31 +185,36 @@ public class QueryBuilder {
         ps.setCommandText(String.format("SELECT DISTINCT ?individual ?fact ?property ?object" +
                 " WHERE" +
                 " { ?individual trestle:has_fact ?fact ." +
-                "?fact trestle:database_time ?d ." +
-                "{?d trestle:valid_from ?df} ." +
-                "OPTIONAL{?d trestle:valid_to ?dt} ." +
-                "?fact trestle:valid_time ?v ." +
-                "OPTIONAL{?v trestle:valid_from ?vf} ." +
-                "OPTIONAL{?v trestle:valid_to ?vt} ." +
-                "OPTIONAL{?v trestle:valid_at ?va} ." +
+//                "?fact trestle:database_time ?d ." +
+                "{?fact trestle:database_from ?df} ." +
+                "OPTIONAL{?fact trestle:database_to ?dt} ." +
+//                "?fact trestle:valid_time ?v ." +
+                "OPTIONAL{?fact trestle:valid_from ?vf} ." +
+                "OPTIONAL{?fact trestle:valid_to ?vt} ." +
+                "OPTIONAL{?fact trestle:valid_at ?va} ." +
                 "?fact ?property ?object ." +
                 "VALUES ?individual { %s } ." +
 //                Oracle doesn't support isLiteral() on CLOB types, so we have to do this gross inverse filter.
                 "FILTER(!isURI(?object) && !isBlank(?object)) ." +
                 "FILTER(!bound(?tEnd)) .", individualValues));
 //        If the temporals are specified, constrain with them. Otherwise, find the facts with the unbound ending temporals
-        if (validTemporal != null) {
+//        if (validTemporal != null) {
             ps.append("FILTER((!bound(?vf) || ?vf <= ?validVariable^^xsd:dateTime) && (!bound(?vt) || ?vt > ?validVariable^^xsd:dateTime)) .");
             ps.append("FILTER(!bound(?va) || ?va = ?validVariable^^xsd:dateTime) .");
-            ps.setLiteral("validVariable", validTemporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        } else {
-            ps.append("FILTER(!bound(?vt))");
-        }
-        if (databaseTemporal != null) {
+            ps.setLiteral("validVariable", validTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+//        } else {
+//            ps.append("FILTER(!bound(?vt))");
+//        }
+//        if (databaseTemporal != null) {
             ps.append("FILTER((!bound(?df) || ?df <= ?databaseVariable^^xsd:dateTime) && (!bound(?dt) || ?dt > ?databaseVariable^^xsd:dateTime)) .");
-            ps.setLiteral("databaseVariable", databaseTemporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            ps.setLiteral("databaseVariable", databaseTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+//        } else {
+//            ps.append("FILTER(!bound(?dt))");
+//        }
+        if (filterTemporals) {
+            ps.append(" FILTER NOT EXISTS {?property rdfs:subPropertyOf trestle:Temporal_Property}");
         } else {
-            ps.append("FILTER(!bound(?dt))");
+            ps.append(" FILTER EXISTS {?property rdfs:subPropertyOf trestle:Temporal_Property}");
         }
         ps.append("}");
         logger.debug(ps.toString());
@@ -250,13 +252,13 @@ public class QueryBuilder {
                 .map(ind -> String.format("<%s>", ind))
                 .collect(Collectors.joining(" "));
 
-        ps.setCommandText(String.format("SELECT DISTINCT ?individual ?temporal ?property ?object" +
-                " WHERE" +
-                " { ?individual trestle:exists_time ?temporal ." +
-                " OPTIONAL{?temporal trestle:exists_at ?tAt} ." +
-                " OPTIONAL{?temporal trestle:exists_from ?tStart} ." +
-                " OPTIONAL{?temporal trestle:exists_to ?tEnd} ." +
-                " ?temporal ?property ?object" +
+        ps.setCommandText(String.format("SELECT DISTINCT ?individual ?property ?object" +
+                " WHERE {" +
+//                " { ?individual trestle:exists_time ?temporal ." +
+                " OPTIONAL{?individual trestle:exists_at ?tAt} ." +
+                " OPTIONAL{?individual trestle:exists_from ?tStart} ." +
+                " OPTIONAL{?individual trestle:exists_to ?tEnd} ." +
+                " ?individual ?property ?object" +
                 " VALUES ?individual { %s } ." +
                 " FILTER(!isURI(?object) && !isBlank(?object)) .}", individualValues));
         logger.debug(ps.toString());

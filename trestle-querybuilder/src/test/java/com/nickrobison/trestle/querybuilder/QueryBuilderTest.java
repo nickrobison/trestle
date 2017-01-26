@@ -270,15 +270,15 @@ public class QueryBuilderTest {
 
         final OWLNamedIndividual test_muni4 = df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni4"));
         assertAll(() -> {
-                    final String generatedObjectStartInterval = qb.buildObjectPropertyRetrievalQuery(OffsetDateTime.of(LocalDate.of(1989, 3, 26).atStartOfDay(), ZoneOffset.UTC), null, test_muni4);
+                    final String generatedObjectStartInterval = qb.buildObjectPropertyRetrievalQuery(OffsetDateTime.of(LocalDate.of(1989, 3, 26).atStartOfDay(), ZoneOffset.UTC), null, true, test_muni4);
                     assertEquals(objectPropertyStartIntervalString, generatedObjectStartInterval, "Should be equal");
                 },
                 () -> {
-                    final String generatedObjectEmptyInterval = qb.buildObjectPropertyRetrievalQuery(null, null, test_muni4);
+                    final String generatedObjectEmptyInterval = qb.buildObjectPropertyRetrievalQuery(null, null, true, test_muni4);
                     assertEquals(objectPropertyEmptyIntervalString, generatedObjectEmptyInterval, "Should be equal");
                 },
                 () -> {
-                    final String generatedMultiIRI = qb.buildObjectPropertyRetrievalQuery(OffsetDateTime.of(LocalDate.of(1989, 3, 26).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2012, 1, 1).atStartOfDay(), ZoneOffset.UTC), test_muni4, df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni2")), df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni5")));
+                    final String generatedMultiIRI = qb.buildObjectPropertyRetrievalQuery(OffsetDateTime.of(LocalDate.of(1989, 3, 26).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2012, 1, 1).atStartOfDay(), ZoneOffset.UTC), true, test_muni4, df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni2")), df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni5")));
                     assertEquals(objectPropertyMultiIRIString, generatedMultiIRI, "Should be equal");
                 },
                 () -> {

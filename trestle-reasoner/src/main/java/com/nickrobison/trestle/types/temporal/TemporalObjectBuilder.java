@@ -32,6 +32,10 @@ public class TemporalObjectBuilder {
         return new ExistsTemporal.Builder();
     }
 
+    public static DatabaseTemporal.Builder database() {
+        return new DatabaseTemporal.Builder();
+    }
+
     public static Optional<TemporalObject> buildTemporalFromProperties(Set<OWLDataPropertyAssertionAxiom> properties, @Nullable Class<? extends Temporal> temporalType, String temporalID) {
         return buildTemporalFromProperties(properties, temporalType, null, temporalID);
     }

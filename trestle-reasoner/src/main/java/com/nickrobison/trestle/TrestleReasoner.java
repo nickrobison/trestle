@@ -277,9 +277,9 @@ public class TrestleReasoner {
 
         final TemporalObject databaseTemporal;
         if (endTemporal == null) {
-            databaseTemporal = TemporalObjectBuilder.valid().from(startTemporal).withRelations(trestleParser.classParser.getIndividual(inputObject));
+            databaseTemporal = TemporalObjectBuilder.database().from(startTemporal).build();
         } else {
-            databaseTemporal = TemporalObjectBuilder.valid().from(startTemporal).to(endTemporal).withRelations(trestleParser.classParser.getIndividual(inputObject));
+            databaseTemporal = TemporalObjectBuilder.database().from(startTemporal).to(endTemporal).build();
         }
         writeTrestleObject(inputObject, databaseTemporal);
     }
@@ -297,10 +297,10 @@ public class TrestleReasoner {
 
         final OWLNamedIndividual owlNamedIndividual = trestleParser.classParser.getIndividual(inputObject);
 
-//            Create the database time object
+//            Create the database time object, set to UTC, of course
         final TemporalObject dTemporal;
         if (databaseTemporal == null) {
-            dTemporal = TemporalObjectBuilder.valid().from(OffsetDateTime.now()).withRelations(owlNamedIndividual);
+            dTemporal = TemporalObjectBuilder.database().from(OffsetDateTime.now().atZoneSameInstant(ZoneOffset.UTC).toOffsetDateTime()).build();
         } else {
             dTemporal = databaseTemporal;
         }
@@ -317,7 +317,7 @@ public class TrestleReasoner {
 //            Get all the currently valid facts
 //            final Set<OWLDataPropertyAssertionAxiom> factsForIndividual = ontology.getFactsForIndividual(owlNamedIndividual, null, null);
             if (individualFacts.isPresent()) {
-                final String individualFactquery = this.qb.buildObjectPropertyRetrievalQuery(null, null, owlNamedIndividual);
+                final String individualFactquery = this.qb.buildObjectPropertyRetrievalQuery(null, null, true, owlNamedIndividual);
                 final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(individualFactquery);
                 resultSet.getResults()
                         .forEach(result -> {
@@ -329,12 +329,6 @@ public class TrestleReasoner {
 //                            If we don't have this exact fact already asserted, we need to either insert a completely new one, or assert a new value for that fact
                             if (!individualFacts.get().contains(existingFactValue)) {
                                 individualFacts.get().stream().filter(fact -> fact.getProperty().equals(existingFactValue.getProperty())).findFirst().ifPresent(fact -> {
-                                    try {
-                                        writeTemporal(factTemporal, null, null, null);
-                                        writeTemporal(dTemporal, null, null, null);
-                                    } catch (MissingOntologyEntity e) {
-                                        logger.error("Can't write temporal for merged object {}", owlNamedIndividual, e);
-                                    }
                                     final OffsetDateTime offsetDateTime = TemporalParser.parseTemporalToOntologyDateTime(factTemporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
                                     final String temporalUpdateQuery = this.qb.buildUpdateUnboundedTemporal(result.getIndividual("fact").asOWLNamedIndividual(), offsetDateTime);
                                     this.ontology.executeUpdateSPARQL(temporalUpdateQuery);
@@ -370,15 +364,16 @@ public class TrestleReasoner {
             ontology.associateOWLClass(owlClass, datasetClass);
 //        Write the individual
             ontology.createIndividual(owlNamedIndividual, owlClass);
+            writeTemporal(objectTemporal, owlNamedIndividual);
 
 //            Write the database temporal
 //        An object doesn't have a database temporal, just an exists temporal
-            writeTemporal(dTemporal, null, null, null);
+//            writeTemporal(dTemporal, null, null, null);
 //        Write the individual temporal
 //        FIXME(nrobison): Figure out how to set the exists temporal, without just relying on what the class definition says
-            writeTemporal(objectTemporal, owlNamedIndividual, TemporalScope.EXISTS, existsTimeIRI);
+//            writeTemporal(objectTemporal, owlNamedIndividual, TemporalScope.EXISTS, existsTimeIRI);
 //        Create a facts temporal and write it, with no association
-            writeTemporal(factTemporal, null, null, null);
+//            writeTemporal(factTemporal, null, null, null);
 
 //        Write the data facts
 //        TODO(nrobison): Asyncify
@@ -395,10 +390,10 @@ public class TrestleReasoner {
      *
      * @param rootIndividual   - OWLNamedIndividual of the TS_Object individual
      * @param properties       - List of OWLDataPropertyAssertionAxioms to write as Facts
-     * @param temporal         - Temporal to associate with data property individual
+     * @param validTemporal         - Temporal to associate with data property individual
      * @param databaseTemporal - Temporal representing database time
      */
-    private void writeObjectFacts(OWLNamedIndividual rootIndividual, List<OWLDataPropertyAssertionAxiom> properties, TemporalObject temporal, TemporalObject databaseTemporal) {
+    private void writeObjectFacts(OWLNamedIndividual rootIndividual, List<OWLDataPropertyAssertionAxiom> properties, TemporalObject validTemporal, TemporalObject databaseTemporal) {
         final long now = Instant.now().getEpochSecond();
         final OWLClass factClass = df.getOWLClass(factClassIRI);
         properties.forEach(property -> {
@@ -410,12 +405,14 @@ public class TrestleReasoner {
             try {
 //                Write the property
                 ontology.writeIndividualDataProperty(propertyIndividual, property.getProperty().asOWLDataProperty(), property.getObject());
-//                Write the temporal relation
-                ontology.writeIndividualObjectProperty(propertyIndividual, validTimeIRI, df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX, temporal.getID())));
+//                Write the valid validTemporal
+                writeTemporal(validTemporal, propertyIndividual);
+//                ontology.writeIndividualObjectProperty(propertyIndividual, validTimeIRI, df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX, validTemporal.getID())));
 //                Write the relation back to the root individual
                 ontology.writeIndividualObjectProperty(propertyIndividual, factOfIRI, rootIndividual);
 //                Write the database time
-                ontology.writeIndividualObjectProperty(propertyIndividual, databaseTimeIRI, df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX, databaseTemporal.getID())));
+                writeTemporal(databaseTemporal, propertyIndividual);
+//                ontology.writeIndividualObjectProperty(propertyIndividual, databaseTimeIRI, df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX, databaseTemporal.getID())));
             } catch (MissingOntologyEntity missingOntologyEntity) {
                 logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
             }
@@ -603,15 +600,17 @@ public class TrestleReasoner {
 
 //        Do some things before opening a transaction
         final Optional<List<OWLDataProperty>> dataProperties = ClassBuilder.getPropertyMembers(clazz);
-//        Setup the database time temporal
-        @Nullable OffsetDateTime dbAtTemporal = null;
-        @Nullable OffsetDateTime validAtTemporal = null;
+
+//        If no temporals are provided, perform the intersection at query time.
+        final OffsetDateTime dbAtTemporal;
+        final OffsetDateTime validAtTemporal;
 //        @Nullable OffsetDateTime startTemporal = null;
 //        @Nullable OffsetDateTime endTemporal = null;
         if (databaseTemporal != null) {
             dbAtTemporal = parseTemporalToOntologyDateTime(databaseTemporal.getPointTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
+        } else {
+            dbAtTemporal = OffsetDateTime.now();
         }
-//            if (databaseTemporal.asInterval().isContinuing()) {
 //                startTemporal = parseTemporalToOntologyDateTime(databaseTemporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
 //            } else {
 //                startTemporal = parseTemporalToOntologyDateTime(databaseTemporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
@@ -619,6 +618,8 @@ public class TrestleReasoner {
 //            }
         if (validTemporal != null) {
             validAtTemporal = parseTemporalToOntologyDateTime(databaseTemporal.getPointTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
+        } else {
+            validAtTemporal = OffsetDateTime.now();
         }
 
 //            Get the temporal objects to figure out the correct return type
@@ -634,22 +635,21 @@ public class TrestleReasoner {
 
         if (dataProperties.isPresent()) {
 
-            @Nullable OffsetDateTime finalValidTemporal = validAtTemporal;
-            @Nullable OffsetDateTime finalDBTemporal = dbAtTemporal;
             final CompletableFuture<Set<OWLDataPropertyAssertionAxiom>> factsFuture = CompletableFuture.supplyAsync(() -> {
                 final Instant individualRetrievalStart = Instant.now();
                 final TrestleTransaction tt = ontology.createandOpenNewTransaction(trestleTransaction);
-                final Set<OWLDataPropertyAssertionAxiom> objectFacts = ontology.getFactsForIndividual(df.getOWLNamedIndividual(individualIRI), finalValidTemporal, finalDBTemporal);
+                final Set<OWLDataPropertyAssertionAxiom> objectFacts = ontology.getFactsForIndividual(df.getOWLNamedIndividual(individualIRI), validAtTemporal, dbAtTemporal, true);
                 logger.debug("Retrieved {} facts for {}", objectFacts.size(), individualIRI);
                 ontology.returnAndCommitTransaction(tt);
                 final Instant individualRetrievalEnd = Instant.now();
                 logger.debug("Retrieving {} facts took {} ms", objectFacts.size(), Duration.between(individualRetrievalStart, individualRetrievalEnd).toMillis());
                 return objectFacts;
             });
-
+//            TODO(nrobison): This should be collapsed into a single async call. We can do both of them at the same time, since all the properties are on the same individual
 //            Get the temporals
             final CompletableFuture<Optional<TemporalObject>> temporalFuture = CompletableFuture.supplyAsync(() -> {
                 final TrestleTransaction tt = ontology.createandOpenNewTransaction(trestleTransaction);
+//                final Set<OWLDataPropertyAssertionAxiom> properties = ontology.getFactsForIndividual(df.getOWLNamedIndividual(individualIRI), validAtTemporal, dbAtTemporal, false);
                 final Set<OWLDataPropertyAssertionAxiom> properties = ontology.getTemporalsForIndividual(df.getOWLNamedIndividual(individualIRI));
                 ontology.returnAndCommitTransaction(tt);
                 return properties;
@@ -1541,6 +1541,7 @@ public class TrestleReasoner {
      * @param overrideTemporalAssociation - Optionally override temporal association
      * @throws MissingOntologyEntity - Throws if it can't find the temporal to write properties on
      */
+    @Deprecated
     private void writeTemporal(TemporalObject temporal, @Nullable OWLNamedIndividual individual, @Nullable TemporalScope overrideTemporalScope, @Nullable IRI overrideTemporalAssociation) throws MissingOntologyEntity {
 //        Write the object
         final IRI temporalIRI = IRI.create(REASONER_PREFIX, temporal.getID());
@@ -1618,6 +1619,91 @@ public class TrestleReasoner {
                         individual.getIRI(),
                         overrideTemporalAssociation,
                         temporalIRI);
+            }
+        }
+    }
+
+    private void writeTemporal(TemporalObject temporal, @Nullable OWLNamedIndividual individual) throws MissingOntologyEntity {
+//        Write the object
+//        final IRI temporalIRI = IRI.create(REASONER_PREFIX, temporal.getID());
+//        ontology.createIndividual(temporalIRI, temporalClassIRI);
+        TemporalScope scope = temporal.getScope();
+        TemporalType type = temporal.getType();
+
+//        if (overrideTemporalScope != null) {
+//            scope = overrideTemporalScope;
+//        }
+
+//        Write the properties using the scope and type variables set above
+        if (type == TemporalType.INTERVAL) {
+            if (scope == TemporalScope.VALID) {
+//                Write from
+                ontology.writeIndividualDataProperty(
+                        individual.getIRI(),
+                        temporalValidFromIRI,
+                        parseTemporalToOntologyDateTime(temporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, temporal.asInterval().getStartTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                        dateTimeDatatypeIRI);
+
+//                Write to, if exists
+                final Optional<Temporal> toTime = temporal.asInterval().getToTime();
+                if (toTime.isPresent()) {
+                    ontology.writeIndividualDataProperty(
+                            individual.getIRI(),
+                            temporalValidToIRI,
+                            parseTemporalToOntologyDateTime(toTime.get(), TemporalParser.IntervalType.END, temporal.asInterval().getEndTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                            dateTimeDatatypeIRI);
+                }
+            } else if (scope == TemporalScope.DATABASE) {
+                //                Write from
+                ontology.writeIndividualDataProperty(
+                        individual.getIRI(),
+                        temporalDatabaseFromIRI,
+                        parseTemporalToOntologyDateTime(temporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, temporal.asInterval().getStartTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                        dateTimeDatatypeIRI);
+
+//                Write to, if exists
+                final Optional<Temporal> toTime = temporal.asInterval().getToTime();
+                if (toTime.isPresent()) {
+                    ontology.writeIndividualDataProperty(
+                            individual.getIRI(),
+                            temporalDatabaseToIRI,
+                            parseTemporalToOntologyDateTime(toTime.get(), TemporalParser.IntervalType.END, temporal.asInterval().getEndTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                            dateTimeDatatypeIRI);
+                }
+            } else {
+//                Write from
+                ontology.writeIndividualDataProperty(
+                        individual.getIRI(),
+                        StaticIRI.temporalExistsFromIRI,
+                        parseTemporalToOntologyDateTime(temporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, temporal.asInterval().getStartTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                        dateTimeDatatypeIRI);
+
+//                Write to, if exists
+                final Optional<Temporal> toTime = temporal.asInterval().getToTime();
+                if (toTime.isPresent()) {
+                    ontology.writeIndividualDataProperty(
+                            individual.getIRI(),
+                            StaticIRI.temporalExistsToIRI,
+                            parseTemporalToOntologyDateTime(toTime.get(), TemporalParser.IntervalType.END, temporal.asInterval().getEndTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                            dateTimeDatatypeIRI);
+                }
+            }
+        } else {
+//            Is point
+            if (scope == TemporalScope.VALID) {
+                ontology.writeIndividualDataProperty(
+                        individual.getIRI(),
+                        StaticIRI.temporalValidAtIRI,
+                        parseTemporalToOntologyDateTime(temporal.asPoint().getPointTime(), TemporalParser.IntervalType.END, temporal.asPoint().getTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                        dateTimeDatatypeIRI);
+            } else if (scope == TemporalScope.DATABASE) {
+                logger.warn("Database time cannot be a point {}", individual);
+            } else {
+                ontology.writeIndividualDataProperty(
+                        individual.getIRI(),
+                        StaticIRI.temporalExistsAtIRI,
+                        parseTemporalToOntologyDateTime(temporal.asPoint().getPointTime(), TemporalParser.IntervalType.END, temporal.asPoint().getTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                        dateTimeDatatypeIRI);
             }
         }
     }

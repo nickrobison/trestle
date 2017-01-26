@@ -21,6 +21,8 @@ public class StaticIRI {
     public static final IRI temporalExistsFromIRI = IRI.create(TRESTLE_PREFIX, "exists_from");
     public static final IRI temporalValidToIRI = IRI.create(TRESTLE_PREFIX, "valid_to");
     public static final IRI temporalValidFromIRI = IRI.create(TRESTLE_PREFIX, "valid_from");
+    public static final IRI temporalDatabaseToIRI = IRI.create(TRESTLE_PREFIX, "database_to");
+    public static final IRI temporalDatabaseFromIRI = IRI.create(TRESTLE_PREFIX, "database_from");
     public static final IRI validTimeIRI = IRI.create(TRESTLE_PREFIX, "valid_time");
     public static final IRI validTimeOfIRI = IRI.create(TRESTLE_PREFIX, "valid_time_of");
     public static final IRI hasRelationIRI = IRI.create(TRESTLE_PREFIX, "has_relation");
