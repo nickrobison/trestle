@@ -250,12 +250,12 @@ public class QueryBuilderTest {
                 },
                 () -> {
                     //        Test Oracle temporal
-                    final String generatedOracleTS = qb.buildTemporalSpatialIntersection(gaulClass, wktString, 0.0, QueryBuilder.UNITS.KM, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
+                    final String generatedOracleTS = qb.buildTemporalSpatialIntersection(gaulClass, wktString, 0.0, QueryBuilder.UNITS.KM, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.now());
                     assertEquals(oracleTSString, generatedOracleTS, "Should be equal");
                 },
                 () -> {
                     //        Test concept
-                    final String generatedTSConceptString = qb.buildTemporalSpatialConceptIntersection(wktString, 0.0, null);
+                    final String generatedTSConceptString = qb.buildTemporalSpatialConceptIntersection(wktString, 0.0, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
                     assertEquals(tsConceptString, generatedTSConceptString, "Should be equal");
                 },
                 () -> {

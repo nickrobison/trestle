@@ -808,24 +808,36 @@ public class TrestleReasoner {
      * @param clazz      - Class of object to return
      * @param wkt        - WKT of spatial boundary to intersect with
      * @param buffer     - Double buffer to build around WKT
-     * @param atTemporal - Temporal to filter results to specific valid time point
+     * @param validAt - Temporal to filter results to specific valid time point
      * @param <T>        - Type to specialize Future with
      * @return - Completable Future of Optional List of T
      */
-    private <T> CompletableFuture<Optional<List<T>>> spatialIntersectAsync(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal atTemporal) {
+    private <T> CompletableFuture<Optional<List<T>>> spatialIntersectAsync(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal validAt) {
         return CompletableFuture.supplyAsync(() -> {
             final OWLClass owlClass = trestleParser.classParser.getObjectClass(clazz);
 
+            final OffsetDateTime atTemporal;
+            final OffsetDateTime dbTemporal;
+
+            if (validAt == null) {
+                atTemporal = OffsetDateTime.now();
+            } else {
+                atTemporal = parseTemporalToOntologyDateTime(validAt, ZoneOffset.UTC);
+            }
+
+//            TODO(nrobison): Implement DB intersection
+            dbTemporal = OffsetDateTime.now();
+
             String spatialIntersection = null;
             try {
-                if (atTemporal == null) {
-                    logger.debug("Running generic spatial intersection");
-                    spatialIntersection = qb.buildSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.UNITS.METER);
-                } else {
-                    final OffsetDateTime atLDTime = parseTemporalToOntologyDateTime(atTemporal, ZoneOffset.UTC);
-                    logger.debug("Running spatial intersection at time {}", atLDTime);
-                    spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.UNITS.METER, atLDTime);
-                }
+//                if (validAt == null) {
+//                    logger.debug("Running generic spatial intersection");
+//                    spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.UNITS.METER, OffsetDateTime.now(), OffsetDateTime.now());
+//                } else {
+//                    final OffsetDateTime atLDTime = parseTemporalToOntologyDateTime(validAt, ZoneOffset.UTC);
+                    logger.debug("Running spatial intersection at time {}", atTemporal);
+                    spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.UNITS.METER, atTemporal, dbTemporal);
+//                }
             } catch (UnsupportedFeatureException e) {
                 logger.error("Database {} doesn't support spatial intersections.", spatialDalect, e);
                 return Optional.empty();
@@ -851,7 +863,7 @@ public class TrestleReasoner {
                     .stream()
                     .map(iri -> {
                         try {
-                            return (@NonNull T) readAsObject(clazz, iri, false);
+                            return (@NonNull T) readAsObject(clazz, iri, false, atTemporal, dbTemporal);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
@@ -1143,11 +1155,19 @@ public class TrestleReasoner {
      * @param buffer - double buffer to draw around WKT
      * @return - Optional Set of String URIs for intersected concepts
      */
-    public Optional<Set<String>> STIntersectConcept(String wkt, double buffer) {
+    public Optional<Set<String>> STIntersectConcept(String wkt, double buffer, Temporal validAt, @Nullable Temporal dbAt) {
         final String queryString;
 
+        final OffsetDateTime atTemporal = parseTemporalToOntologyDateTime(validAt, ZoneOffset.UTC);
+        final OffsetDateTime dbTemporal;
+        if (dbAt == null) {
+            dbTemporal = OffsetDateTime.now();
+        } else {
+            dbTemporal = parseTemporalToOntologyDateTime(dbAt, ZoneOffset.UTC);
+        }
+
         try {
-            queryString = qb.buildTemporalSpatialConceptIntersection(wkt, buffer, null);
+            queryString = qb.buildTemporalSpatialConceptIntersection(wkt, buffer, atTemporal, dbTemporal);
         } catch (UnsupportedFeatureException e) {
             logger.error("Database {} does not support spatial queries", this.spatialDalect);
             return Optional.empty();

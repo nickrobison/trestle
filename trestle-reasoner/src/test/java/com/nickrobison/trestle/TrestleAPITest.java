@@ -31,10 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -76,7 +73,7 @@ public class TrestleAPITest {
                         TestClasses.MultiLangTest.class,
                         FactVersionTest.class)
                 .withoutCaching()
-                .initialize()
+//                .initialize()
                 .build();
 
         df = OWLManager.getOWLDataFactory();
@@ -116,15 +113,15 @@ public class TrestleAPITest {
 
 //        Write the objects
 //        Disable the parallel
-        gaulObjects.parallelStream().forEach(gaul -> {
-            try {
-                reasoner.writeTrestleObject(gaul);
-            } catch (TrestleClassException e) {
-                throw new RuntimeException(String.format("Problem storing object %s", gaul.adm0_name), e);
-            } catch (MissingOntologyEntity missingOntologyEntity) {
-                throw new RuntimeException(String.format("Missing individual %s", missingOntologyEntity.getIndividual()), missingOntologyEntity);
-            }
-        });
+//        gaulObjects.parallelStream().forEach(gaul -> {
+//            try {
+//                reasoner.writeTrestleObject(gaul);
+//            } catch (TrestleClassException e) {
+//                throw new RuntimeException(String.format("Problem storing object %s", gaul.adm0_name), e);
+//            } catch (MissingOntologyEntity missingOntologyEntity) {
+//                throw new RuntimeException(String.format("Missing individual %s", missingOntologyEntity.getIndividual()), missingOntologyEntity);
+//            }
+//        });
 
         reasoner.getUnderlyingOntology().runInference();
 
@@ -134,7 +131,7 @@ public class TrestleAPITest {
 
 //        Try to read one out.
 //        final GAULTestClass ancuabe = reasoner.readAsObject(GAULTestClass.class, IRI.create("trestle:", "Ancuabe"));
-        final TestClasses.GAULTestClass ancuabe = reasoner.readAsObject(TestClasses.GAULTestClass.class, "Ancuabe");
+        final TestClasses.GAULTestClass ancuabe = reasoner.readAsObject(TestClasses.GAULTestClass.class, IRI.create(OVERRIDE_PREFIX, "Ancuabe"), true, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
         assertEquals(ancuabe.adm0_name, "Ancuabe", "Wrong name");
 //        Check the temporal to make sure they got parsed correctly
         assertEquals(LocalDate.of(1990, 1, 1).atStartOfDay(), ancuabe.time, "Times should match");
@@ -147,13 +144,13 @@ public class TrestleAPITest {
                 .filter(ds -> ds.equals("GAUL_Test"))
                 .findAny()
                 .get();
-        @NonNull final Object ancuabe1 = reasoner.readAsObject(datasetClassID, "Ancuabe");
+        @NonNull final Object ancuabe1 = reasoner.readAsObject(datasetClassID, "Ancuabe", OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
         assertEquals(ancuabe, ancuabe1, "Objects should be equal");
-        final Object ancuabe2 = reasoner.readAsObject(reasoner.getDatasetClass(datasetClassID), "Ancuabe");
+        final Object ancuabe2 = reasoner.readAsObject(reasoner.getDatasetClass(datasetClassID), "Ancuabe", OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
         assertEquals(ancuabe, ancuabe2, "Should be equal");
 
 //        Check the spatial intersection
-        Optional<List<@NonNull Object>> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0);
+        Optional<List<@NonNull Object>> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC));
         assertTrue(intersectedObjects.isPresent(), "Should have objects");
         assertTrue(intersectedObjects.get().size() > 0, "Should have more than 1 object");
 //
@@ -287,13 +284,15 @@ public class TrestleAPITest {
         final FactVersionTest v3ReturnHistorical = reasoner.readAsObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(2016, 3, 26), null);
         assertEquals(v3, v3ReturnHistorical, "Historical query should be equal to V3");
 
+//        Test database temporals
+
 
     }
 
 
     @AfterEach
     public void close() throws OWLOntologyStorageException {
-        reasoner.shutdown(true);
+        reasoner.shutdown(false);
     }
 
     @DatasetClass(name = "VersionTest")

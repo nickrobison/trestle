@@ -265,6 +265,7 @@ public class QueryBuilder {
         return ps.toString();
     }
 
+    @Deprecated
     public String buildSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, UNITS unit) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m" +
@@ -280,17 +281,20 @@ public class QueryBuilder {
     }
 
     //    FIXME(nrobison): This needs to account for exists and valid times.
-    public String buildTemporalSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, UNITS unit, OffsetDateTime atTime) throws UnsupportedFeatureException {
+    public String buildTemporalSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, UNITS unit, OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m ?tStart ?tEnd" +
                 " WHERE { " +
                 "?m rdf:type ?type ." +
                 "?m trestle:has_fact ?f ." +
                 "?f ogc:asWKT ?wkt ." +
-                "?f trestle:valid_time ?t ." +
-                "{?t trestle:start_temporal ?tStart} ." +
-                "OPTIONAL{?t trestle:end_temporal ?tEnd} .");
-        buildDatabaseTSString(ps, wktValue, buffer, atTime);
+//                "?f trestle:valid_time ?t ." +
+                "OPTIONAL{?f trestle:valid_from ?tStart} ." +
+                "OPTIONAL{?f trestle:valid_to ?tEnd} ." +
+                "OPTIONAL{?f trestle:valid_at ?tAt} ." +
+                "?f trestle:database_from ?df ." +
+                "OPTIONAL{?f trestle:database_to ?dt} .");
+        buildDatabaseTSString(ps, wktValue, buffer, atTime, dbAtTime);
         ps.setIri("type", getFullIRIString(datasetClass));
 //        We need to simplify the WKT to get under the 4000 character SQL limit.
 //        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
@@ -307,10 +311,11 @@ public class QueryBuilder {
      * @param wktValue - WKT value
      * @param buffer   - buffer value (in meters)
      * @param atTime   - Temporal to select appropriate, valid fact
+     * @param dbAtTime
      * @return - String of SPARQL query
      * @throws UnsupportedFeatureException
      */
-    public String buildTemporalSpatialConceptIntersection(String wktValue, double buffer, @Nullable OffsetDateTime atTime) throws UnsupportedFeatureException {
+    public String buildTemporalSpatialConceptIntersection(String wktValue, double buffer, OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m" +
                 " WHERE { " +
@@ -325,7 +330,7 @@ public class QueryBuilder {
                 "?f ogc:asWKT ?wkt .");
 
         if (atTime != null) {
-            this.buildDatabaseTSString(ps, wktValue, buffer, atTime);
+            this.buildDatabaseTSString(ps, wktValue, buffer, atTime, dbAtTime);
         } else {
             this.buildDatabaseSString(ps, wktValue, buffer);
         }
@@ -364,28 +369,32 @@ public class QueryBuilder {
      * @param wktValue - ParamaterizedSparqlString to build on
      * @param buffer   - double buffer (in meters) around the intersection
      * @param atTime   - OffsetDateTime to set intersection time to
+     * @param dbAtTime
      * @throws UnsupportedFeatureException
      */
-    private void buildDatabaseTSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime atTime) throws UnsupportedFeatureException {
+    private void buildDatabaseTSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
+//        Add DB intersection
+        ps.append("FILTER(?df <= ?dbStart^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbEnd^^xsd:dateTime)) .");
         switch (this.dialect) {
             case ORACLE: {
 //                We need to remove this, otherwise Oracle substitutes geosparql for ogc
                 ps.removeNsPrefix("geosparql");
 //                Add this hint to the query planner
                 ps.setNsPrefix("ORACLE_SEM_HT_NS", "http://oracle.com/semtech#leading(?wkt)");
-                ps.append("FILTER((?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
+                ps.append("FILTER(((!bound(?tStart) || ?tStart <= ?startVariable^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > ?endVariable^^xsd:dateTime)) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
+//                ps.append("FILTER((?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
                 break;
             }
             case VIRTUOSO: {
                 logger.warn("Unit conversion not implemented yet, assuming meters as base distance");
-                ps.append("FILTER((?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime) && bif:st_intersects(?wkt, ?wktString^^ogc:wktLiteral, ?distance)) }");
+                ps.append("FILTER(((!bound(?tStart) || ?tStart <= ?startVariable^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > ?endVariable^^xsd:dateTime)) && bif:st_intersects(?wkt, ?wktString^^ogc:wktLiteral, ?distance)) }");
                 ps.setLiteral("distance", buffer);
                 break;
             }
             case SESAME: {
 //                We need to remove this, otherwise GraphDB substitutes geosparql for ogc
                 ps.removeNsPrefix("geosparql");
-                ps.append("FILTER((?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
+                ps.append("FILTER(((!bound(?tStart) || ?tStart <= ?startVariable^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > ?endVariable^^xsd:dateTime)) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
                 break;
             }
 
@@ -396,6 +405,8 @@ public class QueryBuilder {
         ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
         ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        ps.setLiteral("dbStart", dbAtTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        ps.setLiteral("dbEnd", dbAtTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
     }
 
     /**
@@ -406,6 +417,7 @@ public class QueryBuilder {
      * @param buffer   - double buffer (in meters) around the intersection
      * @throws UnsupportedFeatureException
      */
+    @Deprecated
     private void buildDatabaseSString(ParameterizedSparqlString ps, String wktValue, double buffer) throws UnsupportedFeatureException {
         switch (this.dialect) {
             case ORACLE: {
