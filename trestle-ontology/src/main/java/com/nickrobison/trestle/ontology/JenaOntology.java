@@ -596,7 +596,7 @@ public abstract class JenaOntology extends TransactingOntology {
 
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> getFactsForIndividual(OWLNamedIndividual individual, @Nullable OffsetDateTime validTemporal, @Nullable OffsetDateTime databaseTemporal, boolean filterTemporals) {
+    public Set<OWLDataPropertyAssertionAxiom> getFactsForIndividual(OWLNamedIndividual individual, OffsetDateTime validTemporal, OffsetDateTime databaseTemporal, boolean filterTemporals) {
         final String objectQuery = qb.buildObjectPropertyRetrievalQuery(validTemporal, databaseTemporal, true, individual);
 //        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
         final TrestleResultSet resultSet = this.executeSPARQLResults(objectQuery);

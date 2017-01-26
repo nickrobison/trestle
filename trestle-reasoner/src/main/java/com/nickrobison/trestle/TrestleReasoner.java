@@ -300,7 +300,7 @@ public class TrestleReasoner {
 //            Create the database time object, set to UTC, of course
         final TemporalObject dTemporal;
         if (databaseTemporal == null) {
-            dTemporal = TemporalObjectBuilder.database().from(OffsetDateTime.now().atZoneSameInstant(ZoneOffset.UTC).toOffsetDateTime()).build();
+            dTemporal = TemporalObjectBuilder.database().from(OffsetDateTime.now().atZoneSameInstant(ZoneOffset.UTC)).build();
         } else {
             dTemporal = databaseTemporal;
         }
@@ -317,7 +317,7 @@ public class TrestleReasoner {
 //            Get all the currently valid facts
 //            final Set<OWLDataPropertyAssertionAxiom> factsForIndividual = ontology.getFactsForIndividual(owlNamedIndividual, null, null);
             if (individualFacts.isPresent()) {
-                final String individualFactquery = this.qb.buildObjectPropertyRetrievalQuery(null, null, true, owlNamedIndividual);
+                final String individualFactquery = this.qb.buildObjectPropertyRetrievalQuery(OffsetDateTime.now(), OffsetDateTime.now(), true, owlNamedIndividual);
                 final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(individualFactquery);
                 resultSet.getResults()
                         .forEach(result -> {
@@ -617,7 +617,7 @@ public class TrestleReasoner {
 //                endTemporal = parseTemporalToOntologyDateTime((Temporal) databaseTemporal.asInterval().getToTime().get(), TemporalParser.IntervalType.END, ZoneOffset.UTC);
 //            }
         if (validTemporal != null) {
-            validAtTemporal = parseTemporalToOntologyDateTime(databaseTemporal.getPointTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
+            validAtTemporal = parseTemporalToOntologyDateTime(validTemporal.getPointTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
         } else {
             validAtTemporal = OffsetDateTime.now();
         }
