@@ -285,7 +285,7 @@ public class TrestleAPITest {
 
 //        Check to make sure we have all the facts
         final TrestleIndividual trestleIndividual = reasoner.getTrestleIndividual("test-object");
-        assertEquals(4, trestleIndividual.getFacts().size(), "Should have 4 facts over the lifetime of the object");
+        assertEquals(5, trestleIndividual.getFacts().size(), "Should have 4 facts over the lifetime of the object");
 
 //        Test database temporals
 
