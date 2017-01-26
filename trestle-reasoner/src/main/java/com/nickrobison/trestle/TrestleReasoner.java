@@ -644,6 +644,9 @@ public class TrestleReasoner {
                 final TrestleTransaction tt = ontology.createandOpenNewTransaction(trestleTransaction);
                 final Set<OWLDataPropertyAssertionAxiom> objectFacts = ontology.getFactsForIndividual(df.getOWLNamedIndividual(individualIRI), validAtTemporal, dbAtTemporal, true);
                 logger.debug("Retrieved {} facts for {}", objectFacts.size(), individualIRI);
+                if (objectFacts.isEmpty()) {
+                    throw new NoValidState(individualIRI, validAtTemporal, dbAtTemporal);
+                }
                 ontology.returnAndCommitTransaction(tt);
                 final Instant individualRetrievalEnd = Instant.now();
                 logger.debug("Retrieving {} facts took {} ms", objectFacts.size(), Duration.between(individualRetrievalStart, individualRetrievalEnd).toMillis());
