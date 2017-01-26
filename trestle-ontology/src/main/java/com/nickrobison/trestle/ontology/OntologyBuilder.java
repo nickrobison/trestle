@@ -2,6 +2,8 @@ package com.nickrobison.trestle.ontology;
 
 import com.typesafe.config.*;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.io.IRIDocumentSource;
+import org.semanticweb.owlapi.io.StreamDocumentSource;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
@@ -96,7 +98,7 @@ public class OntologyBuilder {
      */
     public ITrestleOntology build() throws OWLOntologyCreationException {
         final OWLOntologyManager owlOntologyManager = OWLManager.createOWLOntologyManager();
-        OWLOntology owlOntology;
+        OWLOntology owlOntology = null;
 
         // load ontology mapper (favors local files if present)
         Set<OWLOntologyIRIMapper> mappers = new HashSet<>();
@@ -104,25 +106,32 @@ public class OntologyBuilder {
         mappers.add(mapper);
         owlOntologyManager.setIRIMappers(mappers);
 
-        if (this.iri.isPresent()) {
-            logger.debug("Loading ontology from: {}", this.iri.get());
-            owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument(this.iri.get());
-            logger.info("Loaded version {} of ontology {}",
-                    owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
-                    owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
-        } else if (this.is.isPresent()){
-            logger.debug("Loading ontology from input stream");
-            owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument(this.is.get());
-            logger.info("Loaded version {} of ontology {}",
-                    owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
-                    owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
-        }
-        else {
-            owlOntology = owlOntologyManager.createOntology();
+        OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration();
+        config.setMissingImportHandlingStrategy(MissingImportHandlingStrategy.THROW_EXCEPTION);
+
+        try {
+            if (this.iri.isPresent()) {
+                logger.debug("Loading ontology from: {}", this.iri.get());
+                owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument((new IRIDocumentSource(this.iri.get())),config);
+                logger.info("Loaded version {} of ontology {}",
+                        owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
+                        owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
+            } else if (this.is.isPresent()){
+                logger.debug("Loading ontology from input stream");
+                owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument((new StreamDocumentSource(this.is.get())),config);
+                logger.info("Loaded version {} of ontology {}",
+                        owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
+                        owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
+            }
+            else {
+                owlOntology = owlOntologyManager.createOntology();
+            }
+        } catch (OWLOntologyCreationException e) {
+            e.printStackTrace();
         }
 
 //            If there's a connection string, then we need to return a database Ontology
-        if (connectionString.isPresent() && connectionString.get().contains("oracle")) {
+        if (connectionString.isPresent() && connectionString.get().contains("oracle")&&owlOntology!=null) {
             logger.info("Connecting to Oracle database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
             return new OracleOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
