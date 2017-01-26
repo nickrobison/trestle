@@ -67,6 +67,7 @@ public class TemporalParser {
     /**
      * Extract the time zone from StartTemporal
      * Returns ZoneOffset.UTC if the time zone isn't defined.
+     *
      * @param clazz - Class to parse
      * @return - ZoneId of either declared timezone, or UTC
      */
@@ -104,6 +105,7 @@ public class TemporalParser {
     /**
      * Extract the time zone from EndTemporal
      * Returns ZoneOffset.UTC if the time zone isn't defined.
+     *
      * @param clazz - Class to parse
      * @return - ZoneId of either declared timezone, or UTC
      */
@@ -139,6 +141,7 @@ public class TemporalParser {
 
     /**
      * Get the Zone
+     *
      * @param clazz
      * @return
      */
@@ -157,6 +160,7 @@ public class TemporalParser {
     /**
      * Extract the time zone from DefaultTemporal
      * Returns ZoneOffset.UTC if the time zone isn't defined.
+     *
      * @param clazz - Class to parse
      * @return - ZoneId of either declared timezone, or UTC
      */
@@ -218,6 +222,7 @@ public class TemporalParser {
     /**
      * Extract temporal properties as OWLDataProperties from a given Java class
      * Does not return any values, just the property definitions
+     *
      * @param clazz - Input class to parse properties from
      * @return - Optional List of OWLDataProperties
      */
@@ -424,7 +429,7 @@ public class TemporalParser {
         return Optional.of(temporalObjects);
     }
 
-//    TODO(nrobison): Get the timezone from the temporal, if it supports it.
+    //    TODO(nrobison): Get the timezone from the temporal, if it supports it.
     private static Optional<TemporalObject> parseDefaultTemporal(Object fieldValue, DefaultTemporal annotation, OWLNamedIndividual owlNamedIndividual) {
 
         final TemporalObject temporalObject;
@@ -514,7 +519,7 @@ public class TemporalParser {
         return Optional.of(temporalObject);
     }
 
-//    TODO(nrobison): Extract the time zone from the temporal, if it supports it.
+    //    TODO(nrobison): Extract the time zone from the temporal, if it supports it.
     private static Optional<TemporalObject> parseStartTemporal(StartTemporal annotation, Object fieldValue, OWLNamedIndividual owlNamedIndividual, Object inputObject, ClassParser.AccessType access, Class clazz) {
 //        @Nullable final TemporalObject temporalObject;
         switch (annotation.type()) {
@@ -592,28 +597,21 @@ public class TemporalParser {
      * If we're given a date, we take the offset from either the start or end of the day, depending on the IntervalType parameter
      *
      * @param temporal     - Temporal to parse to ontology storage format
-     * @param intervalType - Whether to extract the time from the date object at the start or end of the day.
      * @param zoneId       - ZoneId of given temporal
      * @return - OffsetDateTime to store in ontology
      */
 //    TODO(nrobison): Is this the best way to handle temporal parsing? Should the zones be different?
 //    TODO(nrobison): Add Joda time support
-    public static OffsetDateTime parseTemporalToOntologyDateTime(Temporal temporal, IntervalType intervalType, ZoneId zoneId) {
+    public static OffsetDateTime parseTemporalToOntologyDateTime(Temporal temporal, ZoneId zoneId) {
 
         if (temporal instanceof LocalDateTime) {
             final LocalDateTime ldt = (LocalDateTime) temporal;
             final ZoneOffset zoneOffset = zoneId.getRules().getOffset(ldt);
             return OffsetDateTime.of(ldt, zoneOffset);
         } else if (temporal instanceof LocalDate) {
-            if (intervalType == IntervalType.START) {
-                final LocalDateTime startOfDay = ((LocalDate) temporal).atStartOfDay();
-                final ZoneOffset zoneOffset = zoneId.getRules().getOffset(startOfDay);
-                return OffsetDateTime.of(startOfDay, zoneOffset);
-            } else {
-                final LocalDateTime endOfDay = ((LocalDate) temporal).atTime(23, 59, 59, 999999999);
-                final ZoneOffset zoneOffset = zoneId.getRules().getOffset(endOfDay);
-                return OffsetDateTime.of(endOfDay, zoneOffset);
-            }
+            final LocalDateTime startOfDay = ((LocalDate) temporal).atStartOfDay();
+            final ZoneOffset zoneOffset = zoneId.getRules().getOffset(startOfDay);
+            return OffsetDateTime.of(startOfDay, zoneOffset);
         } else if (temporal instanceof ZonedDateTime) {
             return ((ZonedDateTime) temporal).toOffsetDateTime();
         } else if (temporal instanceof OffsetDateTime) {
@@ -625,7 +623,8 @@ public class TemporalParser {
 
     /**
      * Parse an OWL Literal to a given Java temporal
-     * @param literal - OWL Literal to parse
+     *
+     * @param literal         - OWL Literal to parse
      * @param destinationType - Java destination temporal type
      * @return - Java temporal
      */
@@ -635,9 +634,10 @@ public class TemporalParser {
 
     /**
      * Parse an OWL Literal to a given Java temporal
-     * @param literal - OWL Literal to parse
+     *
+     * @param literal         - OWL Literal to parse
      * @param destinationType - Java destination temporal type
-     * @param timeZone - Zone ID to adjust temporal to
+     * @param timeZone        - Zone ID to adjust temporal to
      * @return - Java temporal (adjusted to the given timezone
      */
     public static Temporal parseToTemporal(OWLLiteral literal, Class<? extends Temporal> destinationType, ZoneId timeZone) {
