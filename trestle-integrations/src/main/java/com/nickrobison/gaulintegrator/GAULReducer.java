@@ -188,14 +188,14 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 
 //            See if there's a concept that spatially intersects the object
-            final Optional<Set<String>> conceptIRIs = reasoner.STIntersectConcept(newGAULObject.getPolygonAsWKT(), 0, newGAULObject.getStartDate(), null);
+            final Optional<Set<String>> conceptIRIs = reasoner.STIntersectConcept(newGAULObject.getPolygonAsWKT(), 0, null, null);
 
 
 //            If true, get all the concept members
             if (conceptIRIs.orElse(new HashSet<>()).size() > 0) {
                 hasConcept = true;
                 conceptIRIs.get().forEach(concept -> {
-                    final Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, concept, null, null);
+                    final Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, concept, null, newGAULObject.getStartDate());
                     conceptMembers.ifPresent(members -> members.forEach(matchedObjects::add));
 //                Now add the concept relations
 //                    TODO(nrobison): This feels bad.

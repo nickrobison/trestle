@@ -274,7 +274,7 @@ public class QueryBuilder {
                 "?m trestle:has_fact ?f ." +
                 "?f ogc:asWKT ?wkt ");
         ps.setIri("type", getFullIRIString(datasetClass));
-        buildDatabaseSString(ps, wktValue, buffer);
+        buildDatabaseSString(ps, wktValue, buffer, OffsetDateTime.now());
 
         logger.debug(ps.toString());
         return ps.toString();
@@ -307,32 +307,33 @@ public class QueryBuilder {
 
     /**
      * Build SPARQL query to find the concepts that intersect a given space/time pair
-     *
+     *If a validAt temporal is given, intersect at that point in time, otherwise, find anything that intersects, ever
      * @param wktValue - WKT value
      * @param buffer   - buffer value (in meters)
      * @param atTime   - Temporal to select appropriate, valid fact
-     * @param dbAtTime
+     * @param dbAtTime - Temporal to select currently valid version of the fact
      * @return - String of SPARQL query
      * @throws UnsupportedFeatureException
      */
-    public String buildTemporalSpatialConceptIntersection(String wktValue, double buffer, OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
+    public String buildTemporalSpatialConceptIntersection(String wktValue, double buffer, @Nullable OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m" +
                 " WHERE { " +
                 "?m rdf:type trestle:Trestle_Concept ." +
                 "?m trestle:related_by ?r ." +
                 "?r trestle:relation_of ?object ." +
-//                "?m trestle:concept_of ?object . " +
                 "?object trestle:has_fact ?f ." +
-                "?f trestle:valid_time ?ft ." +
-//                "?ft trestle:valid_from ?tStart ." +
-//                "OPTIONAL{ ?ft trestle:valid_to ?tEnd }." +
+                "OPTIONAL {?f trestle:valid_from ?tStart }." +
+                "OPTIONAL {?f trestle:valid_to ?tEnd }." +
+                "OPTIONAL {?f trestle:valid_at ?tAt }." +
+                "?f trestle:database_from ?df ." +
+                "OPTIONAL {?f trestle:database_to ?dt }." +
                 "?f ogc:asWKT ?wkt .");
 
-        if (atTime != null) {
-            this.buildDatabaseTSString(ps, wktValue, buffer, atTime, dbAtTime);
+        if (atTime == null) {
+            this.buildDatabaseSString(ps, wktValue, buffer, dbAtTime);
         } else {
-            this.buildDatabaseSString(ps, wktValue, buffer);
+            this.buildDatabaseTSString(ps, wktValue, buffer, atTime, dbAtTime);
         }
 
         logger.debug(ps.toString());
@@ -374,7 +375,7 @@ public class QueryBuilder {
      */
     private void buildDatabaseTSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
 //        Add DB intersection
-        ps.append("FILTER(?df <= ?dbStart^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbEnd^^xsd:dateTime)) .");
+        ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime)) .");
         switch (this.dialect) {
             case ORACLE: {
 //                We need to remove this, otherwise Oracle substitutes geosparql for ogc
@@ -405,8 +406,7 @@ public class QueryBuilder {
         ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
         ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        ps.setLiteral("dbStart", dbAtTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        ps.setLiteral("dbEnd", dbAtTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        ps.setLiteral("dbAt", dbAtTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
     }
 
     /**
@@ -417,8 +417,8 @@ public class QueryBuilder {
      * @param buffer   - double buffer (in meters) around the intersection
      * @throws UnsupportedFeatureException
      */
-    @Deprecated
-    private void buildDatabaseSString(ParameterizedSparqlString ps, String wktValue, double buffer) throws UnsupportedFeatureException {
+    private void buildDatabaseSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime dbAt) throws UnsupportedFeatureException {
+        ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime)) .");
         switch (this.dialect) {
             case ORACLE: {
 //                We need to remove this, otherwise Oracle substitutes geosparql for ogc
@@ -443,6 +443,7 @@ public class QueryBuilder {
             default:
                 throw new UnsupportedFeatureException(String.format("Trestle doesn't yet support spatial queries on %s", dialect));
         }
+        ps.setLiteral("dbAt", dbAt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
 //        We need to simplify the WKT to get under the 4000 character SQL limit.
         ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));

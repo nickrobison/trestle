@@ -866,7 +866,7 @@ public class TrestleReasoner {
                     .stream()
                     .map(iri -> {
                         try {
-                            return (@NonNull T) readAsObject(clazz, iri, false, atTemporal, dbTemporal);
+                            return readAsObject(clazz, iri, false, atTemporal, dbTemporal);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
@@ -1147,9 +1147,13 @@ public class TrestleReasoner {
      */
     public Optional<Set<String>> STIntersectConcept(String wkt, double buffer, Temporal validAt, @Nullable Temporal dbAt) {
         final String queryString;
-
-        final OffsetDateTime atTemporal = parseTemporalToOntologyDateTime(validAt, ZoneOffset.UTC);
+        final OffsetDateTime atTemporal;
         final OffsetDateTime dbTemporal;
+        if (validAt == null) {
+            atTemporal = null;
+        } else {
+            atTemporal = parseTemporalToOntologyDateTime(validAt, ZoneOffset.UTC);
+        }
         if (dbAt == null) {
             dbTemporal = OffsetDateTime.now();
         } else {
@@ -1186,9 +1190,6 @@ public class TrestleReasoner {
      * @return - Optional Set of T objects
      */
     public <T> Optional<List<T>> getConceptMembers(Class<T> clazz, String conceptID, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection) {
-        if ((spatialIntersection != null) || (temporalIntersection != null)) {
-            logger.warn("Spatio-temporal intersections not implemented yet");
-        }
 
 
         final OWLClass datasetClass = trestleParser.classParser.getObjectClass(clazz);
@@ -1207,7 +1208,8 @@ public class TrestleReasoner {
                 .map(iri -> CompletableFuture.supplyAsync(() -> {
                     final TrestleTransaction futureTransaction = this.ontology.createandOpenNewTransaction(trestleTransaction);
                     try {
-                        final @NonNull T retrievedObject = this.readAsObject(clazz, iri);
+                        final @NonNull T retrievedObject = this.readAsObject(clazz, iri, temporalIntersection, null);
+                        this.ontology.returnAndCommitTransaction(futureTransaction);
                         return retrievedObject;
                     } catch (TrestleClassException e) {
                         logger.error("Unregistered class", e);
@@ -1215,8 +1217,6 @@ public class TrestleReasoner {
                     } catch (MissingOntologyEntity e) {
                         logger.error("Cannot find ontology individual {}", e.getIndividual(), e);
                         throw new RuntimeException(e);
-                    } finally {
-                        this.ontology.returnAndCommitTransaction(futureTransaction);
                     }
                 }))
                 .collect(Collectors.toList());
