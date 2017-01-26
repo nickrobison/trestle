@@ -9,7 +9,7 @@ import java.time.OffsetDateTime;
  */
 public class NoValidState extends RuntimeException {
 
-    private final IRI individualIRI
+    private final IRI individualIRI;
     private final OffsetDateTime validTemporal;
     private final OffsetDateTime dbTemporal;
 
