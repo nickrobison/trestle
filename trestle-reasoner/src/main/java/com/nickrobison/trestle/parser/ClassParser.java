@@ -59,13 +59,13 @@ public class ClassParser {
         return this.defaultLanguageCode;
     }
 
-    public OWLClass GetObjectClass(Object inputObject) {
+    public OWLClass getObjectClass(Object inputObject) {
         //        Get the class name, from the annotation, if possible;
         final Class<?> clazz = inputObject.getClass();
-        return GetObjectClass(clazz);
+        return getObjectClass(clazz);
     }
 
-    public OWLClass GetObjectClass(Class<?> clazz) {
+    public OWLClass getObjectClass(Class<?> clazz) {
 
         final String className;
         if (clazz.isAnnotationPresent(DatasetClass.class)) {
@@ -77,7 +77,7 @@ public class ClassParser {
         return df.getOWLClass(iri);
     }
 
-    public OWLNamedIndividual GetIndividual(Object inputObject) {
+    public OWLNamedIndividual getIndividual(Object inputObject) {
 
         final Class<?> clazz = inputObject.getClass();
         String identifier = UUID.randomUUID().toString();
@@ -177,8 +177,8 @@ public class ClassParser {
      * @param inputObject - Object to parse
      * @return - Optional List of OWLDataPropertyAssertionAxioms
      */
-    public Optional<List<OWLDataPropertyAssertionAxiom>> GetFacts(Object inputObject) {
-        return GetFacts(inputObject, false);
+    public Optional<List<OWLDataPropertyAssertionAxiom>> getFacts(Object inputObject) {
+        return getFacts(inputObject, false);
     }
 
     /**
@@ -187,11 +187,11 @@ public class ClassParser {
      * @param filterSpatial - Boolean to determine whether or not to filter out the spatial annotations
      * @return - Optional List of OWLDataPropertyAssertionAxioms
      */
-    public Optional<List<OWLDataPropertyAssertionAxiom>> GetFacts(Object inputObject, boolean filterSpatial) {
+    public Optional<List<OWLDataPropertyAssertionAxiom>> getFacts(Object inputObject, boolean filterSpatial) {
         final Class<?> clazz = inputObject.getClass();
         final List<OWLDataPropertyAssertionAxiom> axioms = new ArrayList<>();
 
-        final OWLNamedIndividual owlNamedIndividual = GetIndividual(inputObject);
+        final OWLNamedIndividual owlNamedIndividual = getIndividual(inputObject);
 
 //        Fields:
         for (Field classField : clazz.getDeclaredFields()) {
@@ -320,7 +320,7 @@ public class ClassParser {
      * @return - Optional of OWLDataPropertyAssertionAxiom representing spatial property
      */
     public Optional<OWLDataPropertyAssertionAxiom> GetSpatialFact(Object inputObject) {
-        final OWLNamedIndividual owlNamedIndividual = GetIndividual(inputObject);
+        final OWLNamedIndividual owlNamedIndividual = getIndividual(inputObject);
         final IRI iri = IRI.create(GEOSPARQLPREFIX, "asWKT");
         final OWLDataProperty spatialDataProperty = df.getOWLDataProperty(iri);
 //        Methods first

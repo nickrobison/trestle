@@ -193,7 +193,7 @@ public class TrestleAPITest {
 
         reasoner.getUnderlyingOntology().runInference();
         classObjects.parallelStream().forEach(object -> {
-            final OWLNamedIndividual owlNamedIndividual = tp.classParser.GetIndividual(object);
+            final OWLNamedIndividual owlNamedIndividual = tp.classParser.getIndividual(object);
             final Object returnedObject = reasoner.readAsObject(object.getClass(), owlNamedIndividual.getIRI(), false);
             if (returnedObject instanceof TestClasses.GAULComplexClassTest) {
                 assertEquals(gaulComplexClassTest, returnedObject, "Should have the same object");
@@ -235,7 +235,7 @@ public class TrestleAPITest {
 //        final Geometry geotoolsGeom = JTS.toGeographic(new WKTReader().read("POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))"), DefaultGeographicCRS.WGS84);
 //        JTS.toGeometry()
 //        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest = new TestClasses.GeotoolsPolygonTest(UUID.randomUUID(), (org.opengis.geometry.coordinate.Polygon) geotoolsGeom, LocalDate.now());
-//        final OWLNamedIndividual owlNamedIndividual = classParser.GetIndividual(geotoolsPolygonTest);
+//        final OWLNamedIndividual owlNamedIndividual = classParser.getIndividual(geotoolsPolygonTest);
 //        reasoner.writeTrestleObject(geotoolsPolygonTest);
 //        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest1 = reasoner.readAsObject(geotoolsPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
 //        assertEquals(geotoolsPolygonTest, geotoolsPolygonTest1, "Should be equal");

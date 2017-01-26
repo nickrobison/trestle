@@ -223,7 +223,7 @@ public class TemporalParser {
      */
     public Optional<List<OWLDataProperty>> GetTemporalsAsDataProperties(Class<?> clazz) {
 
-        final OWLNamedIndividual owlNamedIndividual = cp.GetIndividual(clazz);
+        final OWLNamedIndividual owlNamedIndividual = cp.getIndividual(clazz);
         List<OWLDataProperty> temporalProperties = new ArrayList<>();
 
         if (IsDefault(clazz)) {
@@ -320,11 +320,11 @@ public class TemporalParser {
         return Optional.of(temporalProperties);
     }
 
-    public Optional<List<TemporalObject>> GetTemporalObjects(Object inputObject) {
+    public Optional<List<TemporalObject>> getTemporalObjects(Object inputObject) {
 
         final Class<?> clazz = inputObject.getClass();
         List<TemporalObject> temporalObjects = new ArrayList<>();
-        final OWLNamedIndividual owlNamedIndividual = cp.GetIndividual(inputObject);
+        final OWLNamedIndividual owlNamedIndividual = cp.getIndividual(inputObject);
 
 //        Fields
         for (Field classField : clazz.getDeclaredFields()) {
@@ -373,9 +373,9 @@ public class TemporalParser {
                     }
                     case INTERVAL: {
 //                        Find its matching end field
-                        final Optional<TemporalObject> temporalObject1 = parseStartTemporal(annotation, fieldValue, owlNamedIndividual, inputObject, ClassParser.AccessType.FIELD, clazz);
-                        if (temporalObject1.isPresent()) {
-                            temporalObject = temporalObject1.get();
+                        final Optional<TemporalObject> parsedTemporal = parseStartTemporal(annotation, fieldValue, owlNamedIndividual, inputObject, ClassParser.AccessType.FIELD, clazz);
+                        if (parsedTemporal.isPresent()) {
+                            temporalObject = parsedTemporal.get();
                         }
                         break;
                     }

@@ -138,7 +138,7 @@ public class TrestleReasoner {
         builder.inputClasses.forEach(clazz -> {
             try {
                 ClassRegister.ValidateClass(clazz);
-                this.registeredClasses.put(trestleParser.classParser.GetObjectClass(clazz), clazz);
+                this.registeredClasses.put(trestleParser.classParser.getObjectClass(clazz), clazz);
             } catch (TrestleClassException e) {
                 logger.error("Cannot validate class {}", clazz, e);
             }
@@ -221,7 +221,7 @@ public class TrestleReasoner {
     }
 
     public Set<OWLNamedIndividual> getInstances(Class inputClass) {
-        final OWLClass owlClass = trestleParser.classParser.GetObjectClass(inputClass);
+        final OWLClass owlClass = trestleParser.classParser.getObjectClass(inputClass);
         return this.ontology.getInstances(owlClass, true);
     }
 
@@ -280,9 +280,9 @@ public class TrestleReasoner {
 
         final TemporalObject databaseTemporal;
         if (endTemporal == null) {
-            databaseTemporal = TemporalObjectBuilder.valid().from(startTemporal).withRelations(trestleParser.classParser.GetIndividual(inputObject));
+            databaseTemporal = TemporalObjectBuilder.valid().from(startTemporal).withRelations(trestleParser.classParser.getIndividual(inputObject));
         } else {
-            databaseTemporal = TemporalObjectBuilder.valid().from(startTemporal).to(endTemporal).withRelations(trestleParser.classParser.GetIndividual(inputObject));
+            databaseTemporal = TemporalObjectBuilder.valid().from(startTemporal).to(endTemporal).withRelations(trestleParser.classParser.getIndividual(inputObject));
         }
         writeTrestleObject(inputObject, databaseTemporal);
     }
@@ -297,7 +297,7 @@ public class TrestleReasoner {
         final Class aClass = inputObject.getClass();
         checkRegisteredClass(aClass);
 
-        final OWLNamedIndividual owlNamedIndividual = trestleParser.classParser.GetIndividual(inputObject);
+        final OWLNamedIndividual owlNamedIndividual = trestleParser.classParser.getIndividual(inputObject);
 
 //            Create the database time object
         final TemporalObject dTemporal;
@@ -308,20 +308,20 @@ public class TrestleReasoner {
         }
 
 //        Write the class
-        final OWLClass owlClass = trestleParser.classParser.GetObjectClass(inputObject);
+        final OWLClass owlClass = trestleParser.classParser.getObjectClass(inputObject);
         final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(true);
         ontology.associateOWLClass(owlClass, datasetClass);
 //        Write the individual
         ontology.createIndividual(owlNamedIndividual, owlClass);
 //        Write the temporal
-        final Optional<List<TemporalObject>> temporalObjects = trestleParser.temporalParser.GetTemporalObjects(inputObject);
+        final Optional<List<TemporalObject>> temporalObjects = trestleParser.temporalParser.getTemporalObjects(inputObject);
         TemporalObject objectTemporal = temporalObjects.orElseThrow(() -> new RuntimeException(String.format("Cannot parse temporals for %s", owlNamedIndividual))).get(0);
 
 //            Write the database temporal
 //        An object doesn't have a database temporal, just an exists temporal
-//        TODO(nrobison): This shouldn't write an association to the individual itself, just to the facts.
         writeTemporal(dTemporal, null, null, null);
 //        Write the individual temporal
+//        FIXME(nrobison): Figure out how to set the exists temporal, without just relying on what the class definition says
         writeTemporal(objectTemporal, owlNamedIndividual, TemporalScope.EXISTS, existsTimeIRI);
 //        Create a facts temporal and write it, with no association
         TemporalObject factTemporal = objectTemporal.castTo(TemporalScope.VALID);
@@ -329,7 +329,8 @@ public class TrestleReasoner {
 
 
 //        Write the data properties
-        final Optional<List<OWLDataPropertyAssertionAxiom>> dataProperties = trestleParser.classParser.GetFacts(inputObject);
+//        TODO(nrobison): Asyncify
+        final Optional<List<OWLDataPropertyAssertionAxiom>> dataProperties = trestleParser.classParser.getFacts(inputObject);
         dataProperties.ifPresent(owlDataPropertyAssertionAxioms -> writeObjectFact(owlNamedIndividual, owlDataPropertyAssertionAxioms, factTemporal, dTemporal));
 
 //        Write the object properties
@@ -686,7 +687,7 @@ public class TrestleReasoner {
      */
     @SuppressWarnings("unchecked")
     public <T> Optional<List<T>> spatialIntersectObject(@NonNull T inputObject, double buffer, @Nullable Temporal temporalAt) {
-        final OWLNamedIndividual owlNamedIndividual = trestleParser.classParser.GetIndividual(inputObject);
+        final OWLNamedIndividual owlNamedIndividual = trestleParser.classParser.getIndividual(inputObject);
         final Optional<String> wktString = SpatialParser.GetSpatialValue(inputObject);
 
         if (wktString.isPresent()) {
@@ -749,7 +750,7 @@ public class TrestleReasoner {
      */
     private <T> CompletableFuture<Optional<List<T>>> spatialIntersectAsync(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal atTemporal) {
         return CompletableFuture.supplyAsync(() -> {
-            final OWLClass owlClass = trestleParser.classParser.GetObjectClass(clazz);
+            final OWLClass owlClass = trestleParser.classParser.getObjectClass(clazz);
 
             String spatialIntersection = null;
             try {
@@ -812,7 +813,7 @@ public class TrestleReasoner {
     public <T> Optional<Map<@NonNull T, Double>> getRelatedObjects(Class<@NonNull T> clazz, String objectID, double cutoff) {
 
 
-        final OWLClass owlClass = trestleParser.classParser.GetObjectClass(clazz);
+        final OWLClass owlClass = trestleParser.classParser.getObjectClass(clazz);
 
         final String relationQuery = qb.buildRelationQuery(df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX, objectID)), owlClass, cutoff);
         TrestleTransaction transaction = ontology.createandOpenNewTransaction(false);
@@ -882,7 +883,7 @@ public class TrestleReasoner {
     public <T> void removeIndividual(@NonNull T... inputObject) {
         T[] objects = inputObject;
         final List<CompletableFuture<Void>> completableFutures = Arrays.stream(objects)
-                .map(object -> CompletableFuture.supplyAsync(() -> trestleParser.classParser.GetIndividual(object)))
+                .map(object -> CompletableFuture.supplyAsync(() -> trestleParser.classParser.getIndividual(object)))
                 .map(idFuture -> idFuture.thenApply(ontology::getAllObjectPropertiesForIndividual))
                 .map(propertyFutures -> propertyFutures.thenCompose(this::removeRelatedObjects))
                 .map(removedFuture -> removedFuture.thenAccept(ontology::removeIndividual))
@@ -1116,7 +1117,7 @@ public class TrestleReasoner {
         }
 
 
-        final OWLClass datasetClass = trestleParser.classParser.GetObjectClass(clazz);
+        final OWLClass datasetClass = trestleParser.classParser.getObjectClass(clazz);
         final String retrievalStatement = qb.buildConceptObjectRetrieval(datasetClass, parseStringToIRI(REASONER_PREFIX, conceptID));
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
@@ -1180,7 +1181,7 @@ public class TrestleReasoner {
 //        Create the concept relation
         final IRI concept = parseStringToIRI(REASONER_PREFIX, conceptIRI);
         final OWLNamedIndividual conceptIndividual = df.getOWLNamedIndividual(concept);
-        final OWLNamedIndividual individual = this.trestleParser.classParser.GetIndividual(inputObject);
+        final OWLNamedIndividual individual = this.trestleParser.classParser.getIndividual(inputObject);
         final IRI relationIRI = IRI.create(String.format("relation:%s:%s",
                 extractTrestleIndividualName(concept),
                 extractTrestleIndividualName(individual.getIRI())));
@@ -1264,8 +1265,8 @@ public class TrestleReasoner {
      * @param wkt     - String of wkt boundary of spatial overlap
      */
     public void writeSpatialOverlap(Object subject, Object object, String wkt) {
-        final OWLNamedIndividual subjectIndividual = trestleParser.classParser.GetIndividual(subject);
-        final OWLNamedIndividual objectIndividual = trestleParser.classParser.GetIndividual(object);
+        final OWLNamedIndividual subjectIndividual = trestleParser.classParser.getIndividual(subject);
+        final OWLNamedIndividual objectIndividual = trestleParser.classParser.getIndividual(object);
         final OWLNamedIndividual overlapIndividual = df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX,
                 String.format("overlap:%s:%s",
                         subjectIndividual.getIRI().getShortForm(),
@@ -1301,8 +1302,8 @@ public class TrestleReasoner {
 //    TODO(nrobison): Correctly implement this
     public void writeTemporalOverlap(Object subject, Object object, String temporalOverlap) {
         logger.warn("Temporal overlaps not implemented yet, overlap value has no meaning");
-        final OWLNamedIndividual subjectIndividual = trestleParser.classParser.GetIndividual(subject);
-        final OWLNamedIndividual objectIndividual = trestleParser.classParser.GetIndividual(object);
+        final OWLNamedIndividual subjectIndividual = trestleParser.classParser.getIndividual(subject);
+        final OWLNamedIndividual objectIndividual = trestleParser.classParser.getIndividual(object);
         final OWLNamedIndividual overlapIndividual = df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX,
                 String.format("overlap:%s:%s",
                         subjectIndividual.getIRI().getShortForm(),
@@ -1336,7 +1337,7 @@ public class TrestleReasoner {
      * @param property - OWLObjectProperty to assert
      */
     private void writeIndirectObjectProperty(OWLNamedIndividual subject, Object object, OWLObjectProperty property) {
-        final OWLNamedIndividual objectIndividual = trestleParser.classParser.GetIndividual(object);
+        final OWLNamedIndividual objectIndividual = trestleParser.classParser.getIndividual(object);
         final OWLObjectPropertyAssertionAxiom owlObjectPropertyAssertionAxiom = df.getOWLObjectPropertyAssertionAxiom(property, subject, objectIndividual);
         try {
             this.ontology.writeIndividualObjectProperty(owlObjectPropertyAssertionAxiom);
@@ -1359,8 +1360,8 @@ public class TrestleReasoner {
      */
     private void writeObjectProperty(Object subject, Object object, OWLObjectProperty property) {
         logger.debug("Writing relationship {} between {} (subject) and {} (object)", property, subject, object);
-        final OWLNamedIndividual subjectIndividual = trestleParser.classParser.GetIndividual(subject);
-        final OWLNamedIndividual objectIndividual = trestleParser.classParser.GetIndividual(object);
+        final OWLNamedIndividual subjectIndividual = trestleParser.classParser.getIndividual(subject);
+        final OWLNamedIndividual objectIndividual = trestleParser.classParser.getIndividual(object);
         final OWLObjectPropertyAssertionAxiom objectRelationshipAssertion = df.getOWLObjectPropertyAssertionAxiom(property,
                 subjectIndividual,
                 objectIndividual);
@@ -1467,7 +1468,7 @@ public class TrestleReasoner {
 
     public void registerClass(Class inputClass) throws TrestleClassException {
         ClassRegister.ValidateClass(inputClass);
-        this.registeredClasses.put(trestleParser.classParser.GetObjectClass(inputClass), inputClass);
+        this.registeredClasses.put(trestleParser.classParser.getObjectClass(inputClass), inputClass);
     }
 
     /**
@@ -1653,7 +1654,7 @@ public class TrestleReasoner {
         }
         final TSIndividual individual = new TSIndividual(spatialProperty.get().getObject().getLiteral(), shapefileSchema);
 //                    Data properties, filtering out the spatial members
-        final Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = trestleParser.classParser.GetFacts(object, true);
+        final Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = trestleParser.classParser.getFacts(object, true);
         owlDataPropertyAssertionAxioms.ifPresent(owlDataPropertyAssertionAxioms1 -> owlDataPropertyAssertionAxioms1.forEach(property -> {
             final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, object.getClass());
             final Object literal = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
@@ -1661,7 +1662,7 @@ public class TrestleReasoner {
                     literal);
         }));
 //                    Temporals
-        final Optional<List<TemporalObject>> temporalObjects = trestleParser.temporalParser.GetTemporalObjects(object);
+        final Optional<List<TemporalObject>> temporalObjects = trestleParser.temporalParser.getTemporalObjects(object);
         if (temporalObjects.isPresent()) {
             final TemporalObject temporalObject = temporalObjects.get().get(0);
             if (temporalObject.isInterval()) {
