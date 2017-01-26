@@ -15,13 +15,12 @@ public class DatabaseTemporal {
         Builder() {
         }
 
-
-            public PointTemporal.Builder at (T at){
-                return new PointTemporal.Builder<>(SCOPE, at);
-            }
-
-            public IntervalTemporal.Builder from(T from) {
-                return new IntervalTemporal.Builder<>(SCOPE, from);
-            }
+        public PointTemporal.Builder at(T at) {
+            return new PointTemporal.Builder<>(SCOPE, at);
         }
+
+        public IntervalTemporal.Builder from(T from) {
+            return new IntervalTemporal.Builder<>(SCOPE, from);
+        }
+    }
 }

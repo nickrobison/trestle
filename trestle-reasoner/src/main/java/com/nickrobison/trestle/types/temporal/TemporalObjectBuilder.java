@@ -140,11 +140,39 @@ public class TemporalObjectBuilder {
                     .filter(dp -> dp.getProperty().asOWLDataProperty().getIRI().equals(temporalExistsAtIRI))
                     .findFirst();
             if (exists_at.isPresent()) {
-                return Optional.of(TemporalObjectBuilder.valid()
+                return Optional.of(TemporalObjectBuilder.exists()
                         .at(parseToTemporal(exists_at.get().getObject(), temporalType, TemporalParser.GetAtZoneID(clazz)))
                         .withTimeZone(TemporalParser.GetAtZoneID(clazz))
                         .withID(temporalIdentifier)
                         .withRelations(exists_at.get().getSubject().asOWLNamedIndividual()));
+            }
+        }
+
+//        Try for Database
+//        Database has to be an interval type, so we don't need to check for a point temporal
+        final Optional<OWLDataPropertyAssertionAxiom> db_from = properties.stream()
+                .filter(dp -> dp.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseFromIRI))
+                .findFirst();
+
+        if (db_from.isPresent()) {
+//            Try for DB to
+            final Optional<OWLDataPropertyAssertionAxiom> db_to = properties.stream()
+                    .filter(dp -> dp.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseToIRI))
+                    .findFirst();
+            if (db_to.isPresent()) {
+                return Optional.of(
+                        TemporalObjectBuilder.database()
+                        .from(parseToTemporal(db_from.get().getObject(), temporalType, TemporalParser.GetAtZoneID(clazz)))
+                        .withFromTimeZone(TemporalParser.GetAtZoneID(clazz))
+                        .to(parseToTemporal(db_to.get().getObject(), temporalType, TemporalParser.GetAtZoneID(clazz)))
+                        .withToTimeZone(TemporalParser.GetAtZoneID(clazz))
+                        .build());
+            } else {
+                return Optional.of(
+                        TemporalObjectBuilder.database()
+                                .from(parseToTemporal(db_from.get().getObject(), temporalType, TemporalParser.GetAtZoneID(clazz)))
+                                .withFromTimeZone(TemporalParser.GetAtZoneID(clazz))
+                                .build());
             }
         }
 
