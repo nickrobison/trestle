@@ -86,8 +86,20 @@ public class TypeConverter {
                 return javaClass.cast(Long.parseLong(literal.getLiteral()));
             }
 
-            case "java.lang.LocalDateTime": {
+            case "java.time.LocalDateTime": {
                 return javaClass.cast(LocalDateTime.parse(literal.getLiteral()));
+            }
+
+            case "java.time.LocalDate": {
+                return javaClass.cast(LocalDate.parse(literal.getLiteral()));
+            }
+
+            case "java.time.OffsetDateTime": {
+                return javaClass.cast(OffsetDateTime.parse(literal.getLiteral()));
+            }
+
+            case "java.time.ZonedDateTime": {
+                return javaClass.cast(ZonedDateTime.parse(literal.getLiteral()));
             }
 
             case "java.lang.String": {
