@@ -315,21 +315,50 @@ public class TrestleReasoner {
             final Optional<List<OWLDataPropertyAssertionAxiom>> individualFacts = trestleParser.classParser.getFacts(inputObject);
             final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(true);
 //            Get all the currently valid facts
-            final Set<OWLDataPropertyAssertionAxiom> factsForIndividual = ontology.getFactsForIndividual(owlNamedIndividual, null, null);
+//            final Set<OWLDataPropertyAssertionAxiom> factsForIndividual = ontology.getFactsForIndividual(owlNamedIndividual, null, null);
             if (individualFacts.isPresent()) {
-//        Create a facts temporal and write it, with no association
-                writeTemporal(factTemporal, null, null, null);
-                writeTemporal(dTemporal, null, null, null);
-                individualFacts.get().forEach(fact -> {
-//                    If the individual has a fact that is currently valid, update the old temporal and write the new fact
-                    if (factsForIndividual.contains(fact)) {
-                        final OffsetDateTime offsetDateTime = TemporalParser.parseTemporalToOntologyDateTime(factTemporal.asInterval().getFromTime(), TemporalParser.IntervalType.END, ZoneOffset.UTC);
-                        final String temporalUpdateQuery = this.qb.updateUnboundedTemporal(fact.getSubject().asOWLNamedIndividual(), offsetDateTime);
-                        this.ontology.executeUpdateSPARQL(temporalUpdateQuery);
-                    }
-                    writeObjectFacts(owlNamedIndividual, Arrays.asList(fact), factTemporal, dTemporal);
-                });
+                final String individualFactquery = this.qb.buildObjectPropertyRetrievalQuery(null, null, owlNamedIndividual);
+                final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(individualFactquery);
+                resultSet.getResults()
+                        .forEach(result -> {
+
+                            final OWLDataPropertyAssertionAxiom existingFactValue = df.getOWLDataPropertyAssertionAxiom(
+                                    df.getOWLDataProperty(result.getIndividual("property").asOWLNamedIndividual().getIRI()),
+                                    result.getIndividual("individual"),
+                                    result.getLiteral("object"));
+//                            If we don't have this exact fact already asserted, we need to either insert a completely new one, or assert a new value for that fact
+                            if (!individualFacts.get().contains(existingFactValue)) {
+                                individualFacts.get().stream().filter(fact -> fact.getProperty().equals(existingFactValue.getProperty())).findFirst().ifPresent(fact -> {
+                                    try {
+                                        writeTemporal(factTemporal, null, null, null);
+                                        writeTemporal(dTemporal, null, null, null);
+                                    } catch (MissingOntologyEntity e) {
+                                        logger.error("Can't write temporal for merged object {}", owlNamedIndividual, e);
+                                    }
+                                    final OffsetDateTime offsetDateTime = TemporalParser.parseTemporalToOntologyDateTime(factTemporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
+                                    final String temporalUpdateQuery = this.qb.buildUpdateUnboundedTemporal(result.getIndividual("fact").asOWLNamedIndividual(), offsetDateTime);
+                                    this.ontology.executeUpdateSPARQL(temporalUpdateQuery);
+                                    writeObjectFacts(owlNamedIndividual, Arrays.asList(fact), factTemporal, dTemporal);
+                                });
+                            }
+                        });
+
+
             }
+//            if (individualFacts.isPresent()) {
+////        Create a facts temporal and write it, with no association
+//                writeTemporal(factTemporal, null, null, null);
+//                writeTemporal(dTemporal, null, null, null);
+//                individualFacts.get().forEach(fact -> {
+////                    If the individual has a fact that is currently valid, update the old temporal and write the new fact
+//                    if (factsForIndividual.contains(fact)) {
+//                        final OffsetDateTime offsetDateTime = TemporalParser.parseTemporalToOntologyDateTime(factTemporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
+//                        final String temporalUpdateQuery = this.qb.buildUpdateUnboundedTemporal(fact.getSubject().asOWLNamedIndividual(), offsetDateTime);
+//                        this.ontology.executeUpdateSPARQL(temporalUpdateQuery);
+//                    }
+//                    writeObjectFacts(owlNamedIndividual, Arrays.asList(fact), factTemporal, dTemporal);
+//                });
+//            }
             ontology.returnAndCommitTransaction(trestleTransaction);
         } else {
 //        If the object doesn't exist, continue with the simple write

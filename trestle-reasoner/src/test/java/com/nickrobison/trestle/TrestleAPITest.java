@@ -292,7 +292,7 @@ public class TrestleAPITest {
     }
 
     @DatasetClass(name = "VersionTest")
-    private static class FactVersionTest {
+    public static class FactVersionTest {
 
         @IndividualIdentifier
         public final String id;
@@ -316,6 +316,28 @@ public class TrestleAPITest {
         @StartTemporal
         public LocalDate getValidFrom() {
             return this.validFrom;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            FactVersionTest that = (FactVersionTest) o;
+
+            if (!id.equals(that.id)) return false;
+            if (!getValidFrom().equals(that.getValidFrom())) return false;
+            if (!getWkt().equals(that.getWkt())) return false;
+            return testValue.equals(that.testValue);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = id.hashCode();
+            result = 31 * result + getValidFrom().hashCode();
+            result = 31 * result + getWkt().hashCode();
+            result = 31 * result + testValue.hashCode();
+            return result;
         }
     }
 }

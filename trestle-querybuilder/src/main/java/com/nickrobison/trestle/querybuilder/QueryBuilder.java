@@ -475,14 +475,14 @@ public class QueryBuilder {
      * @param temporal - {@link OffsetDateTime} of value to use
      * @return - SPARQL Query String
      */
-    public String updateUnboundedTemporal(OWLNamedIndividual individual, OffsetDateTime temporal) {
+    public String buildUpdateUnboundedTemporal(OWLNamedIndividual individual, OffsetDateTime temporal) {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText(String.format("INSERT {" +
-                "?m trestle:valid_to ?newValue} " +
+                "?m trestle:valid_to ?newValue^^xsd:dateTime} " +
                 " WHERE {" +
                 "OPTIONAL{?m trestle:valid_to ?vt} . " +
                 "?m rdf:type trestle:Interval_Object ." +
-                "FILTER(?m = %s & !bound(?vt))", getFullIRIString(individual)));
+                "FILTER(?m = <%s> && !bound(?vt))}", getFullIRIString(individual)));
 
         ps.setLiteral("newValue", temporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
