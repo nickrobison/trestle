@@ -2,6 +2,10 @@ package com.nickrobison.trestle;
 
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
+import com.nickrobison.trestle.annotations.DatasetClass;
+import com.nickrobison.trestle.annotations.IndividualIdentifier;
+import com.nickrobison.trestle.annotations.Spatial;
+import com.nickrobison.trestle.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.parser.TrestleParser;
@@ -32,10 +36,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -72,7 +73,8 @@ public class TrestleAPITest {
                         TestClasses.ESRIPolygonTest.class,
                         TestClasses.GeotoolsPolygonTest.class,
                         TestClasses.OffsetDateTimeTest.class,
-                        TestClasses.MultiLangTest.class)
+                        TestClasses.MultiLangTest.class,
+                        FactVersionTest.class)
                 .withoutCaching()
                 .initialize()
                 .build();
@@ -243,9 +245,77 @@ public class TrestleAPITest {
 
     }
 
+    @Test
+    public void testFactValidity() throws TrestleClassException, MissingOntologyEntity {
+        final FactVersionTest v1 = new FactVersionTest("test-object",
+                LocalDate.of(1989, 3, 26),
+                "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))",
+                "test value one");
+        final FactVersionTest v2 = new FactVersionTest("test-object",
+                LocalDate.of(1990, 5, 14),
+                "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))",
+                "test value two");
+
+        final FactVersionTest v3 = new FactVersionTest("test-object",
+                LocalDate.of(2017, 3, 11),
+                "POINT(0.71255092695307 -25.572028714467507)",
+                "test value two");
+
+//        Write each, then validate
+        reasoner.writeTrestleObject(v1);
+        reasoner.getUnderlyingOntology().runInference();
+        final FactVersionTest v1Return = reasoner.readAsObject(v1.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
+        assertEquals(v1, v1Return, "Should be equal to V1");
+        reasoner.writeTrestleObject(v2);
+        reasoner.getUnderlyingOntology().runInference();
+        final FactVersionTest v2Return = reasoner.readAsObject(v2.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
+        assertEquals(v2, v2Return, "Should be equal to V2");
+        reasoner.writeTrestleObject(v3);
+        reasoner.getUnderlyingOntology().runInference();
+        final FactVersionTest v3Return = reasoner.readAsObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
+        assertEquals(v3, v3Return, "Should be equal to V3");
+//        Try for specific points in time
+        final FactVersionTest v1ReturnHistorical = reasoner.readAsObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1990, 3, 26), null);
+        assertEquals(v1, v1ReturnHistorical, "Historical query should be equal to V1");
+        final FactVersionTest v2ReturnHistorical = reasoner.readAsObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1999, 3, 26), null);
+        assertEquals(v2, v2ReturnHistorical, "Historical query should be equal to V2");
+        final FactVersionTest v3ReturnHistorical = reasoner.readAsObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(2016, 3, 26), null);
+        assertEquals(v3, v3ReturnHistorical, "Historical query should be equal to V3");
+
+
+    }
+
 
     @AfterEach
     public void close() throws OWLOntologyStorageException {
         reasoner.shutdown(true);
+    }
+
+    @DatasetClass(name = "VersionTest")
+    private static class FactVersionTest {
+
+        @IndividualIdentifier
+        public final String id;
+        private final LocalDate validFrom;
+        private final String wkt;
+        public final String testValue;
+
+
+        public FactVersionTest(String id, LocalDate validFrom, String wkt, String testValue) {
+            this.id = id;
+            this.validFrom = validFrom;
+            this.wkt = wkt;
+            this.testValue = testValue;
+        }
+
+        @Spatial
+        public String getWkt() {
+            return this.wkt;
+        }
+
+        @StartTemporal
+        public LocalDate getValidFrom() {
+            return this.validFrom;
+        }
     }
 }

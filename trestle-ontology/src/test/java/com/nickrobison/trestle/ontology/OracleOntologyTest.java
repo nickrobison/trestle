@@ -158,7 +158,7 @@ public class OracleOntologyTest extends OntologyTest {
 //
 //        //        Now for the sparql query
 //
-//        List<QuerySolution> resultSet = ResultSetFormatter.toList(ontology.executeSPARQL(builtString));
+//        List<QuerySolution> resultSet = ResultSetFormatter.toList(ontology.executeUpdateSPARQL(builtString));
 //        assertEquals(4, resultSet.size(), "Wrong number of relations");
 //
 ////        If we have the right number of relations, let's build a set of individuals and get their validity intervals;

@@ -354,9 +354,15 @@ public interface ITrestleOntology {
     /**
      * Excecute a raw SPARQL query against the ontology
      * @param queryString - String representing SPARQL query
-     * @return - TrestleResultSet for given query
+     * @return - {@link TrestleResultSet} for given query
      */
-    TrestleResultSet executeSPARQLTRS(String queryString);
+    TrestleResultSet executeSPARQLResults(String queryString);
+
+    /**
+     * Execute a writing SPARQL query, without returning a {@link TrestleResultSet}
+     * @param queryString - SPARQL Query String
+     */
+    void executeUpdateSPARQL(String queryString);
 
 //    /**
 //     * Open a transaction and lock it, for lots of bulk action

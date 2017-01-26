@@ -41,10 +41,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.*;
@@ -290,6 +287,7 @@ public class TrestleReasoner {
     /**
      * Writes an object into the ontology using the given temporal scope
      * If a temporal is provided it uses that for the database time interval
+     *
      * @param inputObject      - Object to write to the ontology
      * @param databaseTemporal - Optional TemporalObject to manually set database time
      */
@@ -307,34 +305,60 @@ public class TrestleReasoner {
             dTemporal = databaseTemporal;
         }
 
-//        Write the class
-        final OWLClass owlClass = trestleParser.classParser.getObjectClass(inputObject);
-        final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(true);
-        ontology.associateOWLClass(owlClass, datasetClass);
-//        Write the individual
-        ontology.createIndividual(owlNamedIndividual, owlClass);
-//        Write the temporal
+        //        Get the temporal
         final Optional<List<TemporalObject>> temporalObjects = trestleParser.temporalParser.getTemporalObjects(inputObject);
         TemporalObject objectTemporal = temporalObjects.orElseThrow(() -> new RuntimeException(String.format("Cannot parse temporals for %s", owlNamedIndividual))).get(0);
+        TemporalObject factTemporal = objectTemporal.castTo(TemporalScope.VALID);
+
+//        Merge operation, if the object exists
+        if (checkExists(owlNamedIndividual.getIRI())) {
+            final Optional<List<OWLDataPropertyAssertionAxiom>> individualFacts = trestleParser.classParser.getFacts(inputObject);
+            final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(true);
+//            Get all the currently valid facts
+            final Set<OWLDataPropertyAssertionAxiom> factsForIndividual = ontology.getFactsForIndividual(owlNamedIndividual, null, null);
+            if (individualFacts.isPresent()) {
+//        Create a facts temporal and write it, with no association
+                writeTemporal(factTemporal, null, null, null);
+                writeTemporal(dTemporal, null, null, null);
+                individualFacts.get().forEach(fact -> {
+//                    If the individual has a fact that is currently valid, update the old temporal and write the new fact
+                    if (factsForIndividual.contains(fact)) {
+                        final OffsetDateTime offsetDateTime = TemporalParser.parseTemporalToOntologyDateTime(factTemporal.asInterval().getFromTime(), TemporalParser.IntervalType.END, ZoneOffset.UTC);
+                        final String temporalUpdateQuery = this.qb.updateUnboundedTemporal(fact.getSubject().asOWLNamedIndividual(), offsetDateTime);
+                        this.ontology.executeUpdateSPARQL(temporalUpdateQuery);
+                    }
+                    writeObjectFacts(owlNamedIndividual, Arrays.asList(fact), factTemporal, dTemporal);
+                });
+            }
+            ontology.returnAndCommitTransaction(trestleTransaction);
+        } else {
+//        If the object doesn't exist, continue with the simple write
+
+//        Write the class
+            final OWLClass owlClass = trestleParser.classParser.getObjectClass(inputObject);
+//        Open the transaction
+            final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(true);
+            ontology.associateOWLClass(owlClass, datasetClass);
+//        Write the individual
+            ontology.createIndividual(owlNamedIndividual, owlClass);
 
 //            Write the database temporal
 //        An object doesn't have a database temporal, just an exists temporal
-        writeTemporal(dTemporal, null, null, null);
+            writeTemporal(dTemporal, null, null, null);
 //        Write the individual temporal
 //        FIXME(nrobison): Figure out how to set the exists temporal, without just relying on what the class definition says
-        writeTemporal(objectTemporal, owlNamedIndividual, TemporalScope.EXISTS, existsTimeIRI);
+            writeTemporal(objectTemporal, owlNamedIndividual, TemporalScope.EXISTS, existsTimeIRI);
 //        Create a facts temporal and write it, with no association
-        TemporalObject factTemporal = objectTemporal.castTo(TemporalScope.VALID);
-        writeTemporal(factTemporal, null, null, null);
+            writeTemporal(factTemporal, null, null, null);
 
-
-//        Write the data properties
+//        Write the data facts
 //        TODO(nrobison): Asyncify
-        final Optional<List<OWLDataPropertyAssertionAxiom>> dataProperties = trestleParser.classParser.getFacts(inputObject);
-        dataProperties.ifPresent(owlDataPropertyAssertionAxioms -> writeObjectFact(owlNamedIndividual, owlDataPropertyAssertionAxioms, factTemporal, dTemporal));
+            final Optional<List<OWLDataPropertyAssertionAxiom>> individualFacts = trestleParser.classParser.getFacts(inputObject);
+            individualFacts.ifPresent(owlDataPropertyAssertionAxioms -> writeObjectFacts(owlNamedIndividual, owlDataPropertyAssertionAxioms, factTemporal, dTemporal));
 
 //        Write the object properties
-        ontology.returnAndCommitTransaction(trestleTransaction);
+            ontology.returnAndCommitTransaction(trestleTransaction);
+        }
     }
 
     /**
@@ -345,7 +369,7 @@ public class TrestleReasoner {
      * @param temporal         - Temporal to associate with data property individual
      * @param databaseTemporal - Temporal representing database time
      */
-    private void writeObjectFact(OWLNamedIndividual rootIndividual, List<OWLDataPropertyAssertionAxiom> properties, TemporalObject temporal, TemporalObject databaseTemporal) {
+    private void writeObjectFacts(OWLNamedIndividual rootIndividual, List<OWLDataPropertyAssertionAxiom> properties, TemporalObject temporal, TemporalObject databaseTemporal) {
         final long now = Instant.now().getEpochSecond();
         final OWLClass factClass = df.getOWLClass(factClassIRI);
         properties.forEach(property -> {
@@ -380,9 +404,10 @@ public class TrestleReasoner {
 
     /**
      * Returns an object, from the database, looking up the class definition from the registry
+     *
      * @param datasetClassID - String of class name to retrieve from the class registry
-     * @param objectID - IRI string of individual
-     * @param <T> - Java class to return
+     * @param objectID       - IRI string of individual
+     * @param <T>            - Java class to return
      * @return - Java object of type T
      * @throws MissingOntologyEntity - exception
      * @throws TrestleClassException - exception
@@ -393,11 +418,12 @@ public class TrestleReasoner {
 
     /**
      * Returns an object, from the database, looking up the class definition from the registry
+     *
      * @param datasetClassID - String of class name to retrieve from the class registry
-     * @param objectID - IRI string of individual
-     * @param startTemporal - Temporal to denote the starting database interval
-     * @param endTemporal - Temporal to denote the ending database interval
-     * @param <T> - Java class to return
+     * @param objectID       - IRI string of individual
+     * @param startTemporal  - Temporal to denote the starting database interval
+     * @param endTemporal    - Temporal to denote the ending database interval
+     * @param <T>            - Java class to return
      * @return - Java object of type T
      * @throws MissingOntologyEntity - exception
      * @throws TrestleClassException - exception
@@ -423,9 +449,10 @@ public class TrestleReasoner {
     /**
      * Returns an object, from the database, using the provided class definition.
      * Returns the currently valid facts, at the current database time
-     * @param clazz - Java class definition of return object
+     *
+     * @param clazz    - Java class definition of return object
      * @param objectID - IRI string of individual
-     * @param <T> - Java class to return
+     * @param <T>      - Java class to return
      * @return - Java object of type T
      * @throws TrestleClassException - exception
      * @throws MissingOntologyEntity - exception
@@ -438,11 +465,12 @@ public class TrestleReasoner {
     /**
      * Returns an object, from the database, using the provided class definition.
      * Allows the user to specify a valid/database pair to specified desired object state
-     * @param clazz - Java class definition of return object
-     * @param objectID - IRI string of individual
-     * @param validTemporal - Temporal to denote the ValidAt point
+     *
+     * @param clazz            - Java class definition of return object
+     * @param objectID         - IRI string of individual
+     * @param validTemporal    - Temporal to denote the ValidAt point
      * @param databaseTemporal - Temporal to denote the DatabaseAt point
-     * @param <T> - Java class to return
+     * @param <T>              - Java class to return
      * @return - Java object of type T
      * @throws TrestleClassException - exception
      * @throws MissingOntologyEntity - exception
@@ -468,10 +496,11 @@ public class TrestleReasoner {
     /**
      * ReadAsObject interface, builds the default database temporal, optionally returns the object from the cache
      * Returns the currently valid facts, at the current database time
-     * @param clazz - Java class of type T to return
+     *
+     * @param clazz         - Java class of type T to return
      * @param individualIRI - IRI of individual
-     * @param bypassCache - Bypass cache?
-     * @param <T> - Java class to return
+     * @param bypassCache   - Bypass cache?
+     * @param <T>           - Java class to return
      * @return - Java object of type T
      */
     <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache) {
@@ -481,12 +510,13 @@ public class TrestleReasoner {
     /**
      * ReadAsObject interface, (optionally) building the database temporal and retrieving from the cache
      * Returns the state of the object at the specified valid/database point
-     * @param clazz - Java class of type T to return
+     *
+     * @param clazz         - Java class of type T to return
      * @param individualIRI - IRI of individual to return
-     * @param bypassCache - Bypass cache access?
+     * @param bypassCache   - Bypass cache access?
      * @param startTemporal - Optional ValidAt temporal
-     * @param endTemporal - Optional DatabaseAt temporal
-     * @param <T> - Java class to return
+     * @param endTemporal   - Optional DatabaseAt temporal
+     * @param <T>           - Java class to return
      * @return - Java object of type T
      */
     @SuppressWarnings({"return.type.incompatible", "argument.type.incompatible", "unchecked"})
@@ -525,13 +555,14 @@ public class TrestleReasoner {
     /**
      * Read object implementation, going to straight to the database, completely bypassing the cache
      * Returns the object state for the given valid/database {@link PointTemporal}
-     * @param clazz - Java class of type T to return
-     * @param individualIRI - IRI of individual
+     *
+     * @param clazz            - Java class of type T to return
+     * @param individualIRI    - IRI of individual
      * @param databaseTemporal - Database temporal to filter results with
-     * @param <T> - Java class to return
+     * @param <T>              - Java class to return
      * @return - Java object of type T
      */
-    private <T> Optional<T> readAsObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, @Nullable  PointTemporal<?> validTemporal, @Nullable PointTemporal<?> databaseTemporal) {
+    private <T> Optional<T> readAsObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, @Nullable PointTemporal<?> validTemporal, @Nullable PointTemporal<?> databaseTemporal) {
 
 //        Contains class?
         try {
@@ -769,7 +800,7 @@ public class TrestleReasoner {
 
             logger.debug("Executing spatial query");
             final Instant start = Instant.now();
-            final TrestleResultSet resultSet = this.ontology.executeSPARQLTRS(spatialIntersection);
+            final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(spatialIntersection);
             final Instant end = Instant.now();
             logger.debug("Spatial query returned in {} ms", Duration.between(start, end).toMillis());
             Set<IRI> intersectedIRIs = resultSet.getResults()
@@ -817,7 +848,7 @@ public class TrestleReasoner {
 
         final String relationQuery = qb.buildRelationQuery(df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX, objectID)), owlClass, cutoff);
         TrestleTransaction transaction = ontology.createandOpenNewTransaction(false);
-        final TrestleResultSet resultSet = this.ontology.executeSPARQLTRS(relationQuery);
+        final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(relationQuery);
 
         Set<IRI> relatedIRIs = new HashSet<>();
         Map<@NonNull T, Double> relatedObjects = new HashMap<>();
@@ -863,7 +894,7 @@ public class TrestleReasoner {
                     relationStrength);
         }
         ListMultimap<String, String> conceptIndividuals = ArrayListMultimap.create();
-        final TrestleResultSet resultSet = this.ontology.executeSPARQLTRS(conceptQuery);
+        final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(conceptQuery);
         resultSet.getResults()
                 .forEach(result -> conceptIndividuals.put(result.getIndividual("concept").toStringID(), result.getIndividual("individual").toStringID()));
 
@@ -966,7 +997,7 @@ public class TrestleReasoner {
             owlClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, datasetClass));
         }
         final String query = qb.buildIndividualSearchQuery(individualIRI, owlClass, limit);
-        final TrestleResultSet resultSet = ontology.executeSPARQLTRS(query);
+        final TrestleResultSet resultSet = ontology.executeSPARQLResults(query);
         List<String> individuals = resultSet.getResults()
                 .stream()
                 .map(result -> result.getIndividual("m").toStringID())
@@ -1034,7 +1065,7 @@ public class TrestleReasoner {
         final CompletableFuture<List<TrestleRelation>> relationsFuture = CompletableFuture.supplyAsync(() -> {
             final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
             String query = this.qb.buildIndividualRelationQuery(individual);
-            TrestleResultSet resultSet = ontology.executeSPARQLTRS(query);
+            TrestleResultSet resultSet = ontology.executeSPARQLResults(query);
             this.ontology.returnAndCommitTransaction(tt);
             return resultSet;
         })
@@ -1091,7 +1122,7 @@ public class TrestleReasoner {
 
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        final TrestleResultSet resultSet = this.ontology.executeSPARQLTRS(queryString);
+        final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(queryString);
         final Set<String> intersectedConceptURIs = resultSet.getResults()
                 .stream()
                 .map(result -> result.getIndividual("m").toStringID())
@@ -1121,7 +1152,7 @@ public class TrestleReasoner {
         final String retrievalStatement = qb.buildConceptObjectRetrieval(datasetClass, parseStringToIRI(REASONER_PREFIX, conceptID));
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        Set<String> individualIRIs = this.ontology.executeSPARQLTRS(retrievalStatement)
+        Set<String> individualIRIs = this.ontology.executeSPARQLResults(retrievalStatement)
                 .getResults()
                 .stream()
                 .map(result -> result.getIndividual("m").toStringID())
@@ -1571,7 +1602,7 @@ public class TrestleReasoner {
     public Set<String> getAvailableDatasets() {
 
         final String datasetQuery = qb.buildDatasetQuery();
-        final TrestleResultSet resultSet = ontology.executeSPARQLTRS(datasetQuery);
+        final TrestleResultSet resultSet = ontology.executeSPARQLResults(datasetQuery);
         List<OWLClass> datasetsInOntology = resultSet
                 .getResults()
                 .stream()

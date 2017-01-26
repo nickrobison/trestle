@@ -73,7 +73,7 @@ abstract public class OntologyTest {
                 "?m ?object ?property ." +
                 "FILTER(?property = 'Test String'@fr)}";
 
-        final TrestleResultSet trestleResultSet = ontology.executeSPARQLTRS(queryString);
+        final TrestleResultSet trestleResultSet = ontology.executeSPARQLResults(queryString);
         assertEquals(1, trestleResultSet.getResults().size(), "Should only have the french version");
         assertEquals("Test String", trestleResultSet.getResults().get(0).getLiteral("property").getLiteral(), "Should have the correct string");
         assertEquals("fr", trestleResultSet.getResults().get(0).getLiteral("property").getLang(), "Should be french language");
@@ -170,7 +170,7 @@ abstract public class OntologyTest {
                 "?f :valid_time ?t." +
                 "FILTER(!isURI(?object) && !isBlank(?object) && ?object = 41374) }";
 
-        final TrestleResultSet resultSet = ontology.executeSPARQLTRS(queryString);
+        final TrestleResultSet resultSet = ontology.executeSPARQLResults(queryString);
         assertEquals(1, resultSet.getResults().size(), "Wrong number of relations");
 
 //        Test for spatial/temporal object relations and that they're inferred correctly.
@@ -181,7 +181,7 @@ abstract public class OntologyTest {
                 "SELECT DISTINCT ?m ?p ?o WHERE { ?m rdf:type :GAUL . ?m ?p ?o. ?p rdfs:subPropertyOf :Temporal_Relation . " +
                 "VALUES ?m {<http://nickrobison.com/dissertation/trestle.owl#municipal1:1990:2013>} }";
 
-        final TrestleResultSet trestleResultSet = ontology.executeSPARQLTRS(queryString);
+        final TrestleResultSet trestleResultSet = ontology.executeSPARQLResults(queryString);
         Set<OWLObjectPropertyAssertionAxiom> temporalRelations = trestleResultSet.getResults().stream().map(solution ->
                 df.getOWLObjectPropertyAssertionAxiom(
                         df.getOWLObjectProperty(IRI.create(solution.getIndividual("p").toStringID())),

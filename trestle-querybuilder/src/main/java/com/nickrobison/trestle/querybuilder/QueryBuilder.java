@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.Temporal;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -463,6 +464,27 @@ public class QueryBuilder {
             ps.setLiteral("limit", limit);
         }
 
+
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
+    /**
+     * Update the ending value of an interval, provided the interval in continuing
+     * @param individual - {@link OWLNamedIndividual} of Interval_Object to update
+     * @param temporal - {@link OffsetDateTime} of value to use
+     * @return - SPARQL Query String
+     */
+    public String updateUnboundedTemporal(OWLNamedIndividual individual, OffsetDateTime temporal) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText(String.format("INSERT {" +
+                "?m trestle:valid_to ?newValue} " +
+                " WHERE {" +
+                "OPTIONAL{?m trestle:valid_to ?vt} . " +
+                "?m rdf:type trestle:Interval_Object ." +
+                "FILTER(?m = %s & !bound(?vt))", getFullIRIString(individual)));
+
+        ps.setLiteral("newValue", temporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
         logger.debug(ps.toString());
         return ps.toString();
