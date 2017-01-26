@@ -73,7 +73,7 @@ public class TrestleAPITest {
                         TestClasses.MultiLangTest.class,
                         FactVersionTest.class)
                 .withoutCaching()
-//                .initialize()
+                .initialize()
                 .build();
 
         df = OWLManager.getOWLDataFactory();
@@ -112,16 +112,15 @@ public class TrestleAPITest {
         }
 
 //        Write the objects
-//        Disable the parallel
-//        gaulObjects.parallelStream().forEach(gaul -> {
-//            try {
-//                reasoner.writeTrestleObject(gaul);
-//            } catch (TrestleClassException e) {
-//                throw new RuntimeException(String.format("Problem storing object %s", gaul.adm0_name), e);
-//            } catch (MissingOntologyEntity missingOntologyEntity) {
-//                throw new RuntimeException(String.format("Missing individual %s", missingOntologyEntity.getIndividual()), missingOntologyEntity);
-//            }
-//        });
+        gaulObjects.parallelStream().forEach(gaul -> {
+            try {
+                reasoner.writeTrestleObject(gaul);
+            } catch (TrestleClassException e) {
+                throw new RuntimeException(String.format("Problem storing object %s", gaul.adm0_name), e);
+            } catch (MissingOntologyEntity missingOntologyEntity) {
+                throw new RuntimeException(String.format("Missing individual %s", missingOntologyEntity.getIndividual()), missingOntologyEntity);
+            }
+        });
 
         reasoner.getUnderlyingOntology().runInference();
 
@@ -284,6 +283,10 @@ public class TrestleAPITest {
         final FactVersionTest v3ReturnHistorical = reasoner.readAsObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(2016, 3, 26), null);
         assertEquals(v3, v3ReturnHistorical, "Historical query should be equal to V3");
 
+//        Check to make sure we have all the facts
+        final TrestleIndividual trestleIndividual = reasoner.getTrestleIndividual("test-object");
+        assertEquals(4, trestleIndividual.getFacts().size(), "Should have 4 facts over the lifetime of the object");
+
 //        Test database temporals
 
 
@@ -292,7 +295,7 @@ public class TrestleAPITest {
 
     @AfterEach
     public void close() throws OWLOntologyStorageException {
-        reasoner.shutdown(false);
+        reasoner.shutdown(true);
     }
 
     @DatasetClass(name = "VersionTest")
