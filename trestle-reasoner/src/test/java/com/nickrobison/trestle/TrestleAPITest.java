@@ -326,7 +326,6 @@ public class TrestleAPITest {
             FactVersionTest that = (FactVersionTest) o;
 
             if (!id.equals(that.id)) return false;
-            if (!getValidFrom().equals(that.getValidFrom())) return false;
             if (!getWkt().equals(that.getWkt())) return false;
             return testValue.equals(that.testValue);
         }
@@ -334,7 +333,6 @@ public class TrestleAPITest {
         @Override
         public int hashCode() {
             int result = id.hashCode();
-            result = 31 * result + getValidFrom().hashCode();
             result = 31 * result + getWkt().hashCode();
             result = 31 * result + testValue.hashCode();
             return result;

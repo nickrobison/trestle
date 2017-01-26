@@ -193,7 +193,7 @@ public class QueryBuilder {
                 "OPTIONAL{?d trestle:valid_to ?dt} ." +
                 "?fact trestle:valid_time ?v ." +
                 "OPTIONAL{?v trestle:valid_from ?vf} ." +
-                "OPTIONAL{?v trestle:valid_to ?vf} ." +
+                "OPTIONAL{?v trestle:valid_to ?vt} ." +
                 "OPTIONAL{?v trestle:valid_at ?va} ." +
                 "?fact ?property ?object ." +
                 "VALUES ?individual { %s } ." +
@@ -479,9 +479,10 @@ public class QueryBuilder {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText(String.format("INSERT {" +
                 "?m trestle:valid_to ?newValue^^xsd:dateTime} " +
-                " WHERE {" +
-                "OPTIONAL{?m trestle:valid_to ?vt} . " +
-                "?m rdf:type trestle:Interval_Object ." +
+                " WHERE { " +
+                "?m trestle:valid_time ?t . " +
+                "OPTIONAL{?t trestle:valid_to ?vt} . " +
+                "?t rdf:type trestle:Interval_Object ." +
                 "FILTER(?m = <%s> && !bound(?vt))}", getFullIRIString(individual)));
 
         ps.setLiteral("newValue", temporal.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
