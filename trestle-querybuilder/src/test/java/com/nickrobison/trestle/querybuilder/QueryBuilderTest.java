@@ -147,7 +147,7 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?m WHERE { ?m rdf:type trestle:Trestle_Concept .?m trestle:related_by ?r .?r trestle:relation_of ?object .?object trestle:has_fact ?f .?f trestle:valid_time ?ft .?f ogc:asWKT ?wkt .FILTER(?df <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime && (!bound(?dt) || ?dt > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) .FILTER(((!bound(?tStart) || ?tStart <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) && ogcf:sfIntersects(?wkt, \"POINT (39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }";
+            "SELECT DISTINCT ?m WHERE { ?m rdf:type trestle:Trestle_Concept .?m trestle:related_by ?r .?r trestle:relation_of ?object .?object trestle:has_fact ?f .OPTIONAL {?f trestle:valid_from ?tStart }.OPTIONAL {?f trestle:valid_to ?tEnd }.OPTIONAL {?f trestle:valid_at ?tAt }.?f trestle:database_from ?df .OPTIONAL {?f trestle:database_to ?dt }.?f ogc:asWKT ?wkt .FILTER(?df <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime && (!bound(?dt) || ?dt > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) .FILTER(((!bound(?tStart) || ?tStart <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) && ogcf:sfIntersects(?wkt, \"POINT (39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }";
 
     private static final String individualRelationString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
