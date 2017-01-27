@@ -22,7 +22,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!--<excludeTags>integration</excludeTags>-->
+        <excludeTags></excludeTags>
         <provided.scope>provided</provided.scope>
         <storm.version>1.0.0</storm.version>
         <owl.version>5.0.5</owl.version>

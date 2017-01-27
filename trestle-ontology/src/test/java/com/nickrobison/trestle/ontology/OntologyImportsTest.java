@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.UnloadableImportException;
@@ -13,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 /**
  * Created by nrobison on 1/27/17.
  */
+@Tag("integration")
 public class OntologyImportsTest {
     @Test
     public void testLocalImports()
