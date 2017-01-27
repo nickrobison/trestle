@@ -218,7 +218,7 @@ abstract public class OntologyTest {
             ITrestleOntology testOnt = new OntologyBuilder()
                     .fromInputStream(is)
                     .name("test")
-                    .build();;
+                    .build();
         });
 
         /*

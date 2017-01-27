@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.*;
 import java.util.Optional;
 
@@ -219,6 +221,7 @@ public class OntologyBuilder {
 
             @Override
             public IRI getDocumentIRI(IRI iri) {
+                /*
                 // construct IRI if in mapper
                 IRI documentIRI = null;
                 String fileName = fileMap.get(iri);
@@ -226,6 +229,30 @@ public class OntologyBuilder {
                 if(importOntFile.exists()&&importOntFile.isFile()&&importOntFile.canRead()) {
                     documentIRI = IRI.create(importOntFile);
                 }
+
+                return documentIRI;
+                */
+
+                // construct IRI if in mapper
+                IRI documentIRI = null;
+                String fileName = fileMap.get(iri);
+
+                // OntologyBuilder.this.getClass().getClassLoader().getResource("ontology/imports/"+fileName)
+                URL fileURL = OntologyBuilder.this.getClass().getClassLoader().getResource("ontology/imports/" +fileName);
+                if (fileURL!=null)
+                {
+                    File importOntFile = null;
+                    try {
+                        importOntFile = new File(fileURL.toURI());
+                        //File importOntFile = new File(importsDirPath+fileName);
+                        if(importOntFile.exists()&&importOntFile.isFile()&&importOntFile.canRead()) {
+                            documentIRI = IRI.create(importOntFile);
+                        }
+                    } catch (URISyntaxException e) {
+                        e.printStackTrace();
+                    }
+                }
+
 
                 return documentIRI;
             }
