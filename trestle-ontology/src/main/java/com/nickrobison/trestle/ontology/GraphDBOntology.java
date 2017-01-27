@@ -53,7 +53,7 @@ import static org.eclipse.rdf4j.model.vocabulary.SESAME.WILDCARD;
 public class GraphDBOntology extends SesameOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(GraphDBOntology.class);
-    private static final String DATA_DIRECTORY = "./target/data";
+    private static final String DATA_DIRECTORY = "target/data";
     private static RepositoryManager repositoryManager;
 //    private static RepositoryConnection connection;
 //    private static Repository repository;
@@ -179,7 +179,8 @@ public class GraphDBOntology extends SesameOntology {
             logger.info("Dropping model {} at {}", this.ontologyName, DATA_DIRECTORY);
             if (repositoryManager.isSafeToRemove(this.ontologyName)) {
                 repositoryManager.removeRepository(this.ontologyName);
-                if (config.getBoolean("removeDirectory") && (repositoryManager instanceof LocalRepositoryManager)) {
+                repositoryManager.shutDown();
+                if ((repositoryManager instanceof LocalRepositoryManager) && config.getBoolean("removeDirectory")) {
                     logger.info("Removing base directory {}", DATA_DIRECTORY);
                     try {
                         FileUtils.deleteDirectory(new File(DATA_DIRECTORY));
@@ -190,8 +191,9 @@ public class GraphDBOntology extends SesameOntology {
             } else {
                 logger.error("Cannot remove repository {}", this.ontologyName);
             }
+        } else {
+            repositoryManager.shutDown();
         }
-        repositoryManager.shutDown();
     }
 
     @Override
