@@ -48,7 +48,7 @@ public class TrestleAPITest {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleAPITest.class);
     public static final String OVERRIDE_PREFIX = "http://nickrobison.com/test-owl#";
-    private TrestleReasoner reasoner;
+    private TrestleReasonerImpl reasoner;
     private OWLDataFactory df;
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
     private String datasetClassID;
@@ -57,7 +57,7 @@ public class TrestleAPITest {
     @BeforeEach
     public void setup() {
         final Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
-        reasoner = new TrestleBuilder()
+        reasoner = (TrestleReasonerImpl) new TrestleBuilder()
                 .withDBConnection(config.getString("trestle.ontology.connectionString"),
                         config.getString("trestle.ontology.username"),
                         config.getString("trestle.ontology.password"))
