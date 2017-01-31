@@ -17,6 +17,7 @@
         <module>trestle-querybuilder</module>
         <module>trestle-actor</module>
         <module>trestle-server</module>
+        <module>trestle-iri</module>
     </modules>
     <packaging>pom</packaging>
 

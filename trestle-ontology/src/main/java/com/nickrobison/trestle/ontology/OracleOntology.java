@@ -11,6 +11,7 @@ import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.shared.Lock;
+import org.apache.jena.update.UpdateAction;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
@@ -167,7 +168,7 @@ public class OracleOntology extends JenaOntology {
     }
 
     @Override
-    public TrestleResultSet executeSPARQLTRS(String queryString) {
+    public TrestleResultSet executeSPARQLResults(String queryString) {
         final Query query = QueryFactory.create(queryString);
         final QueryExecution qExec = QueryExecutionFactory.create(query, this.model);
         this.openTransaction(false);

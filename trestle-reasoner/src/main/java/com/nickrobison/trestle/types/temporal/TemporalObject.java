@@ -23,10 +23,12 @@ public abstract class TemporalObject {
         this.temporal_of = relations;
     }
 
+    @Deprecated
     public String getID() {
         return this.id;
     }
 
+    @Deprecated
     public Set<OWLNamedIndividual> getTemporalRelations() {
         if (this.temporal_of.isPresent()) {
             return this.temporal_of.get();
@@ -55,6 +57,8 @@ public abstract class TemporalObject {
 
     public abstract boolean isExists();
 
+    public abstract boolean isDatabase();
+
     /**
      * Get the Base temporal type of the object
      *
@@ -77,8 +81,7 @@ public abstract class TemporalObject {
 
         TemporalObject that = (TemporalObject) o;
 
-        if (!id.equals(that.id)) return false;
-        return temporal_of.equals(that.temporal_of);
+        return id.equals(that.id) && temporal_of.equals(that.temporal_of);
 
     }
 

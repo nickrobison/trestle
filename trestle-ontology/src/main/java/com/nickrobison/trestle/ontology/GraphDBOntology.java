@@ -201,7 +201,15 @@ public class GraphDBOntology extends SesameOntology {
     }
 
     @Override
-    public TrestleResultSet executeSPARQLTRS(String queryString) {
+    public void executeUpdateSPARQL(String queryString) {
+        this.openTransaction(true);
+        final Update update = this.tc.get().prepareUpdate(QueryLanguage.SPARQL, queryString);
+        update.execute();
+        this.commitTransaction(true);
+    }
+
+    @Override
+    public TrestleResultSet executeSPARQLResults(String queryString) {
         final TrestleResultSet results;
         this.openTransaction(false);
         final TupleQuery tupleQuery = this.tc.get().prepareTupleQuery(QueryLanguage.SPARQL, queryString);

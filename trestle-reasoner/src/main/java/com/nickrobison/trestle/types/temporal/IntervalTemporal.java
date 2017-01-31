@@ -62,6 +62,11 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     }
 
     @Override
+    public boolean isDatabase() {
+        return this.scope == TemporalScope.DATABASE;
+    }
+
+    @Override
     public Class<? extends Temporal> getBaseTemporalType() {
         return this.temporalType;
     }
@@ -184,6 +189,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
          * @param temporalID - String of TemporalID
          * @return - Builder
          */
+        @Deprecated
         public Builder withID(String temporalID) {
             this.temporalID = Optional.of(temporalID);
             return this;
@@ -243,9 +249,14 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
          * @param relations - OWLNamedIndividuals associated with this temporal
          * @return - Builder
          */
+        @Deprecated
         public IntervalTemporal withRelations(OWLNamedIndividual... relations) {
             this.relations = Optional.of(new HashSet<>(Arrays.asList(relations)));
             return new IntervalTemporal<>(this);
+        }
+
+        public IntervalTemporal build() {
+            return new IntervalTemporal(this);
         }
 
 

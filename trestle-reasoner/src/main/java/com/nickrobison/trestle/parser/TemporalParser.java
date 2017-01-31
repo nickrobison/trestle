@@ -1,8 +1,8 @@
 package com.nickrobison.trestle.parser;
 
-import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
+import com.nickrobison.trestle.annotations.temporal.DefaultTemporal;
+import com.nickrobison.trestle.annotations.temporal.EndTemporal;
+import com.nickrobison.trestle.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
@@ -50,14 +50,14 @@ public class TemporalParser {
     public static boolean IsDefault(Class<?> clazz) {
 
         final Optional<Method> method = Arrays.stream(clazz.getDeclaredMethods())
-                .filter(m -> m.isAnnotationPresent(DefaultTemporalProperty.class))
+                .filter(m -> m.isAnnotationPresent(DefaultTemporal.class))
                 .findFirst();
         if (method.isPresent()) {
             return true;
         }
 
         final Optional<Field> field = Arrays.stream(clazz.getDeclaredFields())
-                .filter(f -> f.isAnnotationPresent(DefaultTemporalProperty.class))
+                .filter(f -> f.isAnnotationPresent(DefaultTemporal.class))
                 .findFirst();
 
         return field.map(f -> true).orElse(false);
@@ -65,8 +65,9 @@ public class TemporalParser {
     }
 
     /**
-     * Extract the time zone from StartTemporalProperty
+     * Extract the time zone from StartTemporal
      * Returns ZoneOffset.UTC if the time zone isn't defined.
+     *
      * @param clazz - Class to parse
      * @return - ZoneId of either declared timezone, or UTC
      */
@@ -81,20 +82,20 @@ public class TemporalParser {
         }
 
         final Optional<Method> startMethod = Arrays.stream(clazz.getDeclaredMethods())
-                .filter(m -> m.isAnnotationPresent(StartTemporalProperty.class))
+                .filter(m -> m.isAnnotationPresent(StartTemporal.class))
                 .findAny();
 
         if (startMethod.isPresent()) {
-            final StartTemporalProperty startAnnotation = startMethod.get().getAnnotation(StartTemporalProperty.class);
+            final StartTemporal startAnnotation = startMethod.get().getAnnotation(StartTemporal.class);
             return extractZoneIdFromTemporalProperty(startAnnotation.timeZone());
         }
 
         final Optional<Field> startField = Arrays.stream(clazz.getDeclaredFields())
-                .filter(f -> f.isAnnotationPresent(StartTemporalProperty.class))
+                .filter(f -> f.isAnnotationPresent(StartTemporal.class))
                 .findAny();
 
         if (startField.isPresent()) {
-            final StartTemporalProperty startAnnotation = startField.get().getAnnotation(StartTemporalProperty.class);
+            final StartTemporal startAnnotation = startField.get().getAnnotation(StartTemporal.class);
             return extractZoneIdFromTemporalProperty(startAnnotation.timeZone());
         }
 
@@ -102,8 +103,9 @@ public class TemporalParser {
     }
 
     /**
-     * Extract the time zone from EndTemporalProperty
+     * Extract the time zone from EndTemporal
      * Returns ZoneOffset.UTC if the time zone isn't defined.
+     *
      * @param clazz - Class to parse
      * @return - ZoneId of either declared timezone, or UTC
      */
@@ -117,20 +119,20 @@ public class TemporalParser {
         }
 
         final Optional<Method> startMethod = Arrays.stream(clazz.getDeclaredMethods())
-                .filter(m -> m.isAnnotationPresent(EndTemporalProperty.class))
+                .filter(m -> m.isAnnotationPresent(EndTemporal.class))
                 .findAny();
 
         if (startMethod.isPresent()) {
-            final EndTemporalProperty startAnnotation = startMethod.get().getAnnotation(EndTemporalProperty.class);
+            final EndTemporal startAnnotation = startMethod.get().getAnnotation(EndTemporal.class);
             return extractZoneIdFromTemporalProperty(startAnnotation.timeZone());
         }
 
         final Optional<Field> startField = Arrays.stream(clazz.getDeclaredFields())
-                .filter(f -> f.isAnnotationPresent(EndTemporalProperty.class))
+                .filter(f -> f.isAnnotationPresent(EndTemporal.class))
                 .findAny();
 
         if (startField.isPresent()) {
-            final EndTemporalProperty startAnnotation = startField.get().getAnnotation(EndTemporalProperty.class);
+            final EndTemporal startAnnotation = startField.get().getAnnotation(EndTemporal.class);
             return extractZoneIdFromTemporalProperty(startAnnotation.timeZone());
         }
 
@@ -139,6 +141,7 @@ public class TemporalParser {
 
     /**
      * Get the Zone
+     *
      * @param clazz
      * @return
      */
@@ -155,8 +158,9 @@ public class TemporalParser {
     }
 
     /**
-     * Extract the time zone from DefaultTemporalProperty
+     * Extract the time zone from DefaultTemporal
      * Returns ZoneOffset.UTC if the time zone isn't defined.
+     *
      * @param clazz - Class to parse
      * @return - ZoneId of either declared timezone, or UTC
      */
@@ -166,20 +170,20 @@ public class TemporalParser {
         }
 
         final Optional<Method> startMethod = Arrays.stream(clazz.getDeclaredMethods())
-                .filter(m -> m.isAnnotationPresent(DefaultTemporalProperty.class))
+                .filter(m -> m.isAnnotationPresent(DefaultTemporal.class))
                 .findAny();
 
         if (startMethod.isPresent()) {
-            final DefaultTemporalProperty startAnnotation = startMethod.get().getAnnotation(DefaultTemporalProperty.class);
+            final DefaultTemporal startAnnotation = startMethod.get().getAnnotation(DefaultTemporal.class);
             return extractZoneIdFromTemporalProperty(startAnnotation.timeZone());
         }
 
         final Optional<Field> startField = Arrays.stream(clazz.getDeclaredFields())
-                .filter(f -> f.isAnnotationPresent(DefaultTemporalProperty.class))
+                .filter(f -> f.isAnnotationPresent(DefaultTemporal.class))
                 .findAny();
 
         if (startField.isPresent()) {
-            final DefaultTemporalProperty startAnnotation = startField.get().getAnnotation(DefaultTemporalProperty.class);
+            final DefaultTemporal startAnnotation = startField.get().getAnnotation(DefaultTemporal.class);
             return extractZoneIdFromTemporalProperty(startAnnotation.timeZone());
         }
 
@@ -198,7 +202,7 @@ public class TemporalParser {
     public static @Nullable Class<? extends Temporal> GetTemporalType(Class<?> clazz) {
 
         final Optional<Field> first = Arrays.stream(clazz.getDeclaredFields())
-                .filter(f -> (f.isAnnotationPresent(DefaultTemporalProperty.class) | f.isAnnotationPresent(StartTemporalProperty.class) | f.isAnnotationPresent(EndTemporalProperty.class)))
+                .filter(f -> (f.isAnnotationPresent(DefaultTemporal.class) | f.isAnnotationPresent(StartTemporal.class) | f.isAnnotationPresent(EndTemporal.class)))
                 .filter(f -> Temporal.class.isAssignableFrom(f.getType()))
                 .findFirst();
 
@@ -207,7 +211,7 @@ public class TemporalParser {
         }
 
         final Optional<Method> method = Arrays.stream(clazz.getDeclaredMethods())
-                .filter(m -> (m.isAnnotationPresent(DefaultTemporalProperty.class) | m.isAnnotationPresent(StartTemporalProperty.class) | m.isAnnotationPresent(EndTemporalProperty.class)))
+                .filter(m -> (m.isAnnotationPresent(DefaultTemporal.class) | m.isAnnotationPresent(StartTemporal.class) | m.isAnnotationPresent(EndTemporal.class)))
                 .filter(m -> Temporal.class.isAssignableFrom(m.getReturnType()))
                 .findFirst();
 
@@ -218,38 +222,39 @@ public class TemporalParser {
     /**
      * Extract temporal properties as OWLDataProperties from a given Java class
      * Does not return any values, just the property definitions
+     *
      * @param clazz - Input class to parse properties from
      * @return - Optional List of OWLDataProperties
      */
     public Optional<List<OWLDataProperty>> GetTemporalsAsDataProperties(Class<?> clazz) {
 
-        final OWLNamedIndividual owlNamedIndividual = cp.GetIndividual(clazz);
+        final OWLNamedIndividual owlNamedIndividual = cp.getIndividual(clazz);
         List<OWLDataProperty> temporalProperties = new ArrayList<>();
 
         if (IsDefault(clazz)) {
 //            Try to find the default method or field
             final Optional<Method> defaultMethod = Arrays.stream(clazz.getDeclaredMethods())
-                    .filter(m -> m.isAnnotationPresent(DefaultTemporalProperty.class))
+                    .filter(m -> m.isAnnotationPresent(DefaultTemporal.class))
                     .findFirst();
 
             if (defaultMethod.isPresent()) {
                 Method method = defaultMethod.get();
-                if (method.getAnnotation(DefaultTemporalProperty.class).name().equals("")) {
+                if (method.getAnnotation(DefaultTemporal.class).name().equals("")) {
                     temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, filterMethodName(method))));
                 } else {
-                    temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, method.getAnnotation(DefaultTemporalProperty.class).name())));
+                    temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, method.getAnnotation(DefaultTemporal.class).name())));
                 }
             } else {
                 final Optional<Field> defaultField = Arrays.stream(clazz.getDeclaredFields())
-                        .filter(f -> f.isAnnotationPresent(DefaultTemporalProperty.class))
+                        .filter(f -> f.isAnnotationPresent(DefaultTemporal.class))
                         .findFirst();
 
                 if (defaultField.isPresent()) {
                     Field field = defaultField.get();
-                    if (field.getAnnotation(DefaultTemporalProperty.class).name().equals("")) {
+                    if (field.getAnnotation(DefaultTemporal.class).name().equals("")) {
                         temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getName())));
                     } else {
-                        temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getAnnotation(DefaultTemporalProperty.class).name())));
+                        temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getAnnotation(DefaultTemporal.class).name())));
                     }
                 }
             }
@@ -258,28 +263,28 @@ public class TemporalParser {
 
 //            Methods
             final Optional<Method> startMethod = Arrays.stream(clazz.getDeclaredMethods())
-                    .filter(m -> m.isAnnotationPresent(StartTemporalProperty.class))
+                    .filter(m -> m.isAnnotationPresent(StartTemporal.class))
                     .findFirst();
 
             if (startMethod.isPresent()) {
                 Method method = startMethod.get();
-                if (method.getAnnotation(StartTemporalProperty.class).name().equals("")) {
+                if (method.getAnnotation(StartTemporal.class).name().equals("")) {
                     temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, filterMethodName(method))));
                 } else {
-                    temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, method.getAnnotation(StartTemporalProperty.class).name())));
+                    temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, method.getAnnotation(StartTemporal.class).name())));
                 }
             } else {
 //                Fields
                 final Optional<Field> startField = Arrays.stream(clazz.getDeclaredFields())
-                        .filter(f -> f.isAnnotationPresent(StartTemporalProperty.class))
+                        .filter(f -> f.isAnnotationPresent(StartTemporal.class))
                         .findFirst();
 
                 if (startField.isPresent()) {
                     Field field = startField.get();
-                    if (field.getAnnotation(StartTemporalProperty.class).name().equals("")) {
+                    if (field.getAnnotation(StartTemporal.class).name().equals("")) {
                         temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getName())));
                     } else {
-                        temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getAnnotation(StartTemporalProperty.class).name())));
+                        temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getAnnotation(StartTemporal.class).name())));
                     }
                 }
             }
@@ -287,27 +292,27 @@ public class TemporalParser {
 //            End temporal
 
             final Optional<Method> endMethod = Arrays.stream(clazz.getDeclaredMethods())
-                    .filter(m -> m.isAnnotationPresent(EndTemporalProperty.class))
+                    .filter(m -> m.isAnnotationPresent(EndTemporal.class))
                     .findFirst();
 
             if (endMethod.isPresent()) {
                 Method method = endMethod.get();
-                if (method.getAnnotation(EndTemporalProperty.class).name().equals("")) {
+                if (method.getAnnotation(EndTemporal.class).name().equals("")) {
                     temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, filterMethodName(method))));
                 } else {
-                    temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, method.getAnnotation(EndTemporalProperty.class).name())));
+                    temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, method.getAnnotation(EndTemporal.class).name())));
                 }
             } else {
                 final Optional<Field> endField = Arrays.stream(clazz.getDeclaredFields())
-                        .filter(f -> f.isAnnotationPresent(EndTemporalProperty.class))
+                        .filter(f -> f.isAnnotationPresent(EndTemporal.class))
                         .findFirst();
 
                 if (endField.isPresent()) {
                     Field field = endField.get();
-                    if (field.getAnnotation(EndTemporalProperty.class).name().equals("")) {
+                    if (field.getAnnotation(EndTemporal.class).name().equals("")) {
                         temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getName())));
                     } else {
-                        temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getAnnotation(EndTemporalProperty.class).name())));
+                        temporalProperties.add(dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, field.getAnnotation(EndTemporal.class).name())));
                     }
                 }
             }
@@ -320,16 +325,16 @@ public class TemporalParser {
         return Optional.of(temporalProperties);
     }
 
-    public Optional<List<TemporalObject>> GetTemporalObjects(Object inputObject) {
+    public Optional<List<TemporalObject>> getTemporalObjects(Object inputObject) {
 
         final Class<?> clazz = inputObject.getClass();
         List<TemporalObject> temporalObjects = new ArrayList<>();
-        final OWLNamedIndividual owlNamedIndividual = cp.GetIndividual(inputObject);
+        final OWLNamedIndividual owlNamedIndividual = cp.getIndividual(inputObject);
 
 //        Fields
         for (Field classField : clazz.getDeclaredFields()) {
-            if (classField.isAnnotationPresent(DefaultTemporalProperty.class)) {
-                final @NonNull DefaultTemporalProperty annotation = classField.getAnnotation(DefaultTemporalProperty.class);
+            if (classField.isAnnotationPresent(DefaultTemporal.class)) {
+                final @NonNull DefaultTemporal annotation = classField.getAnnotation(DefaultTemporal.class);
 //                Try to get the value
                 Object fieldValue = null;
                 try {
@@ -349,8 +354,8 @@ public class TemporalParser {
 
 //                TODO(nrobison): All of this is gross
                 temporalObject.ifPresent(temporalObjects::add);
-            } else if (classField.isAnnotationPresent(StartTemporalProperty.class)) {
-                final StartTemporalProperty annotation = classField.getAnnotation(StartTemporalProperty.class);
+            } else if (classField.isAnnotationPresent(StartTemporal.class)) {
+                final StartTemporal annotation = classField.getAnnotation(StartTemporal.class);
                 TemporalObject temporalObject = null;
 
                 Object fieldValue = null;
@@ -373,9 +378,9 @@ public class TemporalParser {
                     }
                     case INTERVAL: {
 //                        Find its matching end field
-                        final Optional<TemporalObject> temporalObject1 = parseStartTemporal(annotation, fieldValue, owlNamedIndividual, inputObject, ClassParser.AccessType.FIELD, clazz);
-                        if (temporalObject1.isPresent()) {
-                            temporalObject = temporalObject1.get();
+                        final Optional<TemporalObject> parsedTemporal = parseStartTemporal(annotation, fieldValue, owlNamedIndividual, inputObject, ClassParser.AccessType.FIELD, clazz);
+                        if (parsedTemporal.isPresent()) {
+                            temporalObject = parsedTemporal.get();
                         }
                         break;
                     }
@@ -392,9 +397,9 @@ public class TemporalParser {
 
 //        Methods
         for (Method classMethod : clazz.getDeclaredMethods()) {
-            if (classMethod.isAnnotationPresent(DefaultTemporalProperty.class)) {
+            if (classMethod.isAnnotationPresent(DefaultTemporal.class)) {
 
-                final @NonNull DefaultTemporalProperty annotation = classMethod.getAnnotation(DefaultTemporalProperty.class);
+                final @NonNull DefaultTemporal annotation = classMethod.getAnnotation(DefaultTemporal.class);
                 final Optional<Object> methodValue = ClassParser.accessMethodValue(classMethod, inputObject);
 
                 if (methodValue.isPresent()) {
@@ -407,8 +412,8 @@ public class TemporalParser {
 
                     temporalObject.ifPresent(temporalObjects::add);
                 }
-            } else if (classMethod.isAnnotationPresent(StartTemporalProperty.class)) {
-                final @NonNull StartTemporalProperty annotation = classMethod.getAnnotation(StartTemporalProperty.class);
+            } else if (classMethod.isAnnotationPresent(StartTemporal.class)) {
+                final @NonNull StartTemporal annotation = classMethod.getAnnotation(StartTemporal.class);
                 final Optional<Object> methodValue = ClassParser.accessMethodValue(classMethod, inputObject);
 
                 final Optional<TemporalObject> temporalObject = parseStartTemporal(annotation, methodValue.orElseThrow(RuntimeException::new), owlNamedIndividual, inputObject, ClassParser.AccessType.METHOD, clazz);
@@ -424,8 +429,8 @@ public class TemporalParser {
         return Optional.of(temporalObjects);
     }
 
-//    TODO(nrobison): Get the timezone from the temporal, if it supports it.
-    private static Optional<TemporalObject> parseDefaultTemporal(Object fieldValue, DefaultTemporalProperty annotation, OWLNamedIndividual owlNamedIndividual) {
+    //    TODO(nrobison): Get the timezone from the temporal, if it supports it.
+    private static Optional<TemporalObject> parseDefaultTemporal(Object fieldValue, DefaultTemporal annotation, OWLNamedIndividual owlNamedIndividual) {
 
         final TemporalObject temporalObject;
 
@@ -514,8 +519,8 @@ public class TemporalParser {
         return Optional.of(temporalObject);
     }
 
-//    TODO(nrobison): Extract the time zone from the temporal, if it supports it.
-    private static Optional<TemporalObject> parseStartTemporal(StartTemporalProperty annotation, Object fieldValue, OWLNamedIndividual owlNamedIndividual, Object inputObject, ClassParser.AccessType access, Class clazz) {
+    //    TODO(nrobison): Extract the time zone from the temporal, if it supports it.
+    private static Optional<TemporalObject> parseStartTemporal(StartTemporal annotation, Object fieldValue, OWLNamedIndividual owlNamedIndividual, Object inputObject, ClassParser.AccessType access, Class clazz) {
 //        @Nullable final TemporalObject temporalObject;
         switch (annotation.type()) {
             case POINT: {
@@ -526,26 +531,26 @@ public class TemporalParser {
 //                Find matching end value
 //                Start with methods
                 final Optional<Method> endMethod = Arrays.stream(clazz.getDeclaredMethods())
-                        .filter(m -> m.isAnnotationPresent(EndTemporalProperty.class))
+                        .filter(m -> m.isAnnotationPresent(EndTemporal.class))
                         .findFirst();
 
                 if (endMethod.isPresent()) {
                     final Optional<Object> accessMethodValue = ClassParser.accessMethodValue(endMethod.get(), inputObject);
                     if (accessMethodValue.isPresent()) {
-                        final String timeZone = endMethod.get().getAnnotation(EndTemporalProperty.class).timeZone();
+                        final String timeZone = endMethod.get().getAnnotation(EndTemporal.class).timeZone();
                         return Optional.of(buildIntervalTemporal((Temporal) fieldValue, annotation.timeZone(), (Temporal) accessMethodValue.get(), timeZone, annotation.scope(), owlNamedIndividual));
                     }
                 }
 
 //                Now the fields
                 final Optional<Field> endField = Arrays.stream(clazz.getDeclaredFields())
-                        .filter(f -> f.isAnnotationPresent(EndTemporalProperty.class))
+                        .filter(f -> f.isAnnotationPresent(EndTemporal.class))
                         .findFirst();
 
                 if (endField.isPresent()) {
                     try {
                         final Object endFieldValue = endField.get().get(inputObject);
-                        String endZoneID = endField.get().getAnnotation(EndTemporalProperty.class).timeZone();
+                        String endZoneID = endField.get().getAnnotation(EndTemporal.class).timeZone();
                         return Optional.of(buildIntervalTemporal((Temporal) fieldValue, annotation.timeZone(), (Temporal) endFieldValue, endZoneID, annotation.scope(), owlNamedIndividual));
                     } catch (IllegalAccessException e) {
                         logger.warn("Cannot access field {}", endField.get().getName(), e);
@@ -592,28 +597,21 @@ public class TemporalParser {
      * If we're given a date, we take the offset from either the start or end of the day, depending on the IntervalType parameter
      *
      * @param temporal     - Temporal to parse to ontology storage format
-     * @param intervalType - Whether to extract the time from the date object at the start or end of the day.
      * @param zoneId       - ZoneId of given temporal
      * @return - OffsetDateTime to store in ontology
      */
 //    TODO(nrobison): Is this the best way to handle temporal parsing? Should the zones be different?
 //    TODO(nrobison): Add Joda time support
-    public static OffsetDateTime parseTemporalToOntologyDateTime(Temporal temporal, IntervalType intervalType, ZoneId zoneId) {
+    public static OffsetDateTime parseTemporalToOntologyDateTime(Temporal temporal, ZoneId zoneId) {
 
         if (temporal instanceof LocalDateTime) {
             final LocalDateTime ldt = (LocalDateTime) temporal;
             final ZoneOffset zoneOffset = zoneId.getRules().getOffset(ldt);
             return OffsetDateTime.of(ldt, zoneOffset);
         } else if (temporal instanceof LocalDate) {
-            if (intervalType == IntervalType.START) {
-                final LocalDateTime startOfDay = ((LocalDate) temporal).atStartOfDay();
-                final ZoneOffset zoneOffset = zoneId.getRules().getOffset(startOfDay);
-                return OffsetDateTime.of(startOfDay, zoneOffset);
-            } else {
-                final LocalDateTime endOfDay = ((LocalDate) temporal).atTime(23, 59, 59, 999999999);
-                final ZoneOffset zoneOffset = zoneId.getRules().getOffset(endOfDay);
-                return OffsetDateTime.of(endOfDay, zoneOffset);
-            }
+            final LocalDateTime startOfDay = ((LocalDate) temporal).atStartOfDay();
+            final ZoneOffset zoneOffset = zoneId.getRules().getOffset(startOfDay);
+            return OffsetDateTime.of(startOfDay, zoneOffset);
         } else if (temporal instanceof ZonedDateTime) {
             return ((ZonedDateTime) temporal).toOffsetDateTime();
         } else if (temporal instanceof OffsetDateTime) {
@@ -625,7 +623,8 @@ public class TemporalParser {
 
     /**
      * Parse an OWL Literal to a given Java temporal
-     * @param literal - OWL Literal to parse
+     *
+     * @param literal         - OWL Literal to parse
      * @param destinationType - Java destination temporal type
      * @return - Java temporal
      */
@@ -635,9 +634,10 @@ public class TemporalParser {
 
     /**
      * Parse an OWL Literal to a given Java temporal
-     * @param literal - OWL Literal to parse
+     *
+     * @param literal         - OWL Literal to parse
      * @param destinationType - Java destination temporal type
-     * @param timeZone - Zone ID to adjust temporal to
+     * @param timeZone        - Zone ID to adjust temporal to
      * @return - Java temporal (adjusted to the given timezone
      */
     public static Temporal parseToTemporal(OWLLiteral literal, Class<? extends Temporal> destinationType, ZoneId timeZone) {

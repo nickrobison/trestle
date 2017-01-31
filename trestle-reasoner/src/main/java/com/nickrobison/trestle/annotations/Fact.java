@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD})
-public @interface DataProperty {
+public @interface Fact {
 
     String name();
 //    FIXME(nrobison): This is not the way to handle defaults to ignore. I should probably migrate this to a string or something

@@ -2,8 +2,8 @@ package com.nickrobison.trestle;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.nickrobison.trestle.annotations.*;
-import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
+import com.nickrobison.trestle.annotations.temporal.EndTemporal;
+import com.nickrobison.trestle.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
@@ -84,7 +84,7 @@ public class DataExporterTests {
                 .stream()
                 .forEach(object -> {
                     try {
-                        reasoner.writeAsTrestleObject(object);
+                        reasoner.writeTrestleObject(object);
                     } catch (TrestleClassException | MissingOntologyEntity e) {
                         e.printStackTrace();
                     }
@@ -101,19 +101,19 @@ public class DataExporterTests {
     }
 
 
-    @OWLClassName(className = "gaul-test")
+    @DatasetClass(name = "gaul-test")
     public static class SimpleGAULObject {
         @Ignore
         public UUID objectid;
-        @DataProperty(name = "gaulCode")
+        @Fact(name = "gaulCode")
         public long gaulcode;
-        @DataProperty(name = "objectName")
+        @Fact(name = "objectName")
         public String objectname;
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-        @StartTemporalProperty(name = "startDate")
+        @StartTemporal(name = "startDate")
         public LocalDate startdate;
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-        @EndTemporalProperty(name = "endDate")
+        @EndTemporal(name = "endDate")
         public LocalDate enddate;
         @Spatial(name = "wkt")
         public String geom;
@@ -133,7 +133,7 @@ public class DataExporterTests {
         }
 
         @IndividualIdentifier
-        @DataProperty(name = "id")
+        @Fact(name = "id")
         @NoMultiLanguage
         public String getObjectID() {
             return this.objectid.toString();

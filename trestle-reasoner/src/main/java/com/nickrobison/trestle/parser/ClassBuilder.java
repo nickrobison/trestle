@@ -43,11 +43,11 @@ public class ClassBuilder {
 
         List<OWLDataProperty> classFields = new ArrayList<>();
         Arrays.stream(clazz.getDeclaredFields())
-                .filter(f -> filterDataPropertyField(f, filterSpatial))
+                .filter(f -> filterFactField(f, filterSpatial))
                 .forEach(field -> classFields.add(dfStatic.getOWLDataProperty(SpatialParser.filterDataSpatialName(field))));
 
         Arrays.stream(clazz.getDeclaredMethods())
-                .filter(m -> filterDataPropertyMethod(m, filterSpatial))
+                .filter(m -> filterFactMethod(m, filterSpatial))
                 .forEach(method -> classFields.add(dfStatic.getOWLDataProperty(SpatialParser.filterDataSpatialName(method))));
 
         if (classFields.isEmpty()) {
