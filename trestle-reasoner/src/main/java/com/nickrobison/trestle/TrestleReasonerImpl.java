@@ -665,6 +665,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
     }
 
+    @Override
     public Optional<List<Object>> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
 //        Parse String to Fact IRI
         final Optional<IRI> factIRI = this.trestleParser.classParser.getFactIRI(clazz, factName);
@@ -678,6 +679,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 df.getOWLDataProperty(factIRI.get()), validStart, validEnd, databaseTemporal);
     }
 
+    @Override
     public Optional<List<Object>> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
 
         final Optional<Class<?>> datatypeOptional = this.trestleParser.classParser.getFactDatatype(clazz, factName.getIRI().toString());

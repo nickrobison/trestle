@@ -10,6 +10,7 @@ import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
@@ -124,6 +125,34 @@ public interface TrestleReasoner {
      */
     @SuppressWarnings({"argument.type.incompatible", "dereference.of.nullable"})
     <T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity;
+
+    /**
+     * Retrieve historical states of a given Fact
+     * Returns an optional list of Java Objects that match the datatype of the given Fact
+     * Allows for optional temporal filter to restrict results to only Fact states valid during the provided temporal window
+     * @param clazz - Java class to parse
+     * @param individual - Individual ID
+     * @param factName - Name of Fact
+     * @param validStart - Optional Temporal setting the start of the temporal filter
+     * @param validEnd - Optional Temporal setting the end of the temporal filter
+     * @param databaseTemporal - Optional temporal filtering results to only certain fact versions
+     * @return - Optional list of Java Objects
+     */
+    Optional<List<Object>> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal);
+
+    /**
+     * Retrieve historical states of a given Fact
+     * Returns an optional list of Java Objects that match the datatype of the given Fact
+     * Allows for optional temporal filter to restrict results to only Fact states valid during the provided temporal window
+     * @param clazz - Java class to parse
+     * @param individual - {@link OWLNamedIndividual} of individual ID
+     * @param factName - {@link OWLDataProperty}
+     * @param validStart - Optional Temporal setting the start of the temporal filter
+     * @param validEnd - Optional Temporal setting the end of the temporal filter
+     * @param databaseTemporal - Optional temporal filtering results to only certain fact versions
+     * @return - Optional List of Java Objects
+     */
+    Optional<List<Object>> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal);
 
     /**
      * Spatial Intersect Object with most recent records in the database
