@@ -253,10 +253,6 @@ public class TrestleAPITest {
                 "test value two");
 
 //        TODO(nrobison): Add fail case
-//        final FactVersionTest v3 = new FactVersionTest("test-object",
-//                LocalDate.of(2017, 3, 11),
-//                "POINT(0.71255092695307 -25.572028714467507)",
-//                "test value two");
         final FactVersionTest v3 = new FactVersionTest("test-object",
                 LocalDate.of(2016, 3, 11),
                 "POINT(0.71255092695307 -25.572028714467507)",
@@ -291,6 +287,10 @@ public class TrestleAPITest {
         final Optional<List<Object>> values = reasoner.getFactValues(v3.getClass(), "test-object", "testValue", null, null, null);
         assertAll(() -> assertTrue(values.isPresent(), "Should have fact values"),
                 () -> assertEquals(2, values.get().size(), "Should have 2 fact values"));
+
+        final Optional<List<Object>> wktValues = reasoner.getFactValues(v3.getClass(), "test-object", "wkt", LocalDate.of(1988, 3, 26), LocalDate.of(1995, 3, 26), null);
+        assertAll(() -> assertTrue(wktValues.isPresent(), "Should have wkt values"),
+                () -> assertEquals(1, wktValues.get().size(), "Should only have 1 wkt value"));
 
 //        Test database temporals
 

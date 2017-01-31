@@ -681,7 +681,7 @@ public class ClassParser {
      * @return - Optional Class of return datatype
      */
     public Optional<Class<?>> getFactDatatype(Class<?> clazz, String factName) {
-//        Split String to get the
+//        Split String to get the actual fact name
         final String name;
         final String[] splitName = factName.split("#");
         if (splitName.length < 2) {
@@ -689,19 +689,17 @@ public class ClassParser {
         } else {
             name = splitName[1];
         }
-
-        final boolean hasFact = ClassBuilder.getPropertyMembers(clazz, false, this.ReasonerPrefix).orElseThrow(() -> new RuntimeException(String.format("Unable to get members for individual")))
-                .stream()
-                .map(HasIRI::getIRI)
-                .anyMatch(iri -> iri.toString().equals(factName));
-        if (!hasFact) {
+        final String classMember;
+        try {
+            classMember = ClassParser.matchWithClassMember(clazz, name);
+        } catch (RuntimeException e) {
             return Optional.empty();
         }
 
 //        Try for methods first
         final Optional<Method> matchedMethod = Arrays.stream(clazz.getDeclaredMethods())
                 .filter(method -> ClassParser.filterFactMethod(method, false))
-                .filter(method -> filterMethodName(method).equals(name))
+                .filter(method -> filterMethodName(method).equals(classMember))
                 .findFirst();
 
         if (matchedMethod.isPresent()) {
@@ -710,24 +708,60 @@ public class ClassParser {
 //        Now the fields
         final Optional<Field> matchedField = Arrays.stream(clazz.getDeclaredFields())
                 .filter(field -> ClassParser.filterFactField(field, false))
-                .filter(field -> field.getName().equals(name))
+                .filter(field -> field.getName().equals(classMember))
                 .findFirst();
 
         if (matchedField.isPresent()) {
             return Optional.of(matchedField.get().getType());
         }
         return Optional.empty();
-//        try {
-//            final Method matchingMethod = clazz.getDeclaredMethod(factName);
-//            return Optional.of(matchingMethod.getReturnType());
-//        } catch (NoSuchMethodException e) {
-//            try {
-//                final Field matchingField = clazz.getDeclaredField(factName);
-//                return Optional.of(matchingField.getType());
-//            } catch (NoSuchFieldException e1) {
-//                return Optional.empty();
-//            }
-//        }
+    }
+
+    /**
+     * Get the correct Fact {@link IRI} from a given string
+     * Gets the correct IRI prefix to handle things like Spatial members and user defined types
+     * @param clazz - Java class to parse
+     * @param factName - Name of fact to build IRI for
+     * @return - Optional {@link IRI} of fact
+     */
+    public Optional<IRI> getFactIRI(Class<?> clazz, String factName) {
+//        Split String to get the actual fact name
+        final String name;
+        final String[] splitName = factName.split("#");
+        if (splitName.length < 2) {
+            name = factName;
+        } else {
+            name = splitName[1];
+        }
+        final String classMember;
+        try {
+            classMember = ClassParser.matchWithClassMember(clazz, name);
+        } catch (RuntimeException e) {
+            return Optional.empty();
+        }
+
+//        Try for methods first
+        final Optional<IRI> matchedMethod = Arrays.stream(clazz.getDeclaredMethods())
+                .filter(method -> ClassParser.filterFactMethod(method, false))
+                .filter(method -> filterMethodName(method).equals(classMember))
+                .map(method -> SpatialParser.filterDataSpatialName(method, this.ReasonerPrefix))
+                .findFirst();
+
+        if (matchedMethod.isPresent()) {
+            return Optional.of(matchedMethod.get());
+        }
+//        Now the fields
+        final Optional<IRI> matchedField = Arrays.stream(clazz.getDeclaredFields())
+                .filter(field -> ClassParser.filterFactField(field, false))
+                .filter(field -> field.getName().equals(classMember))
+                .map(field -> SpatialParser.filterDataSpatialName(field, this.ReasonerPrefix))
+                .findFirst();
+
+        if (matchedField.isPresent()) {
+            return Optional.of(matchedField.get());
+        }
+        return Optional.empty();
+
     }
 
     static Optional<Object> accessMethodValue(Method classMethod, Object inputObject) {

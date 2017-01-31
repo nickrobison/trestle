@@ -666,9 +666,16 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     public Optional<List<Object>> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
+//        Parse String to Fact IRI
+        final Optional<IRI> factIRI = this.trestleParser.classParser.getFactIRI(clazz, factName);
+        if (!factIRI.isPresent()) {
+            logger.error("Cannot parse {} for individual {}", individual, factName);
+            return Optional.empty();
+        }
+
         return getFactValues(clazz,
                 df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual)),
-                df.getOWLDataProperty(parseStringToIRI(REASONER_PREFIX, factName)), null, null, null);
+                df.getOWLDataProperty(factIRI.get()), validStart, validEnd, databaseTemporal);
     }
 
     public Optional<List<Object>> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
@@ -679,6 +686,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             logger.warn("Individual {} has no Fact {}", individual, factName);
             return Optional.empty();
         }
+
         Class<?> datatype = datatypeOptional.get();
 //        Parse the temporal to OffsetDateTime, if they're not null
         final OffsetDateTime start, end, db;
