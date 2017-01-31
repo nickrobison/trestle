@@ -667,6 +667,49 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
     }
 
+    public Optional<List<Object>> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
+        return getFactValues(clazz,
+                df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual)),
+                df.getOWLDataProperty(parseStringToIRI(REASONER_PREFIX, factName)), null, null, null);
+    }
+
+    public Optional<List<Object>> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
+
+        final Optional<Class<?>> datatypeOptional = this.trestleParser.classParser.getFactDatatype(clazz, factName.getIRI().toString());
+
+        if (!datatypeOptional.isPresent()) {
+            logger.warn("Individual {} has no Fact {}", individual, factName);
+            return Optional.empty();
+        }
+        Class<?> datatype = datatypeOptional.get();
+//        Parse the temporal to OffsetDateTime, if they're not null
+        final OffsetDateTime start, end, db;
+        if (validStart != null) {
+            start = parseTemporalToOntologyDateTime(validStart, ZoneOffset.UTC);
+        } else {
+            start = null;
+        }
+        if (validEnd != null) {
+            end = parseTemporalToOntologyDateTime(validEnd, ZoneOffset.UTC);
+        } else {
+            end = null;
+        }
+        if (databaseTemporal != null) {
+            db = parseTemporalToOntologyDateTime(databaseTemporal, ZoneOffset.UTC);
+        } else {
+            db = null;
+        }
+
+        final String historyQuery = this.qb.buildFactHistoryQuery(individual, factName, start, end, db);
+        final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(historyQuery);
+        final List<Object> factValues = resultSet.getResults()
+                .stream()
+                .map(result -> result.getLiteral("value"))
+                .map(literal -> TypeConverter.extractOWLLiteral(datatype, literal))
+                .collect(Collectors.toList());
+        return Optional.of(factValues);
+    }
+
     @Override
     @SuppressWarnings("return.type.incompatible")
     public <T> Optional<List<T>> spatialIntersectObject(@NonNull T inputObject, double buffer) {

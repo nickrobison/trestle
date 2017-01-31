@@ -674,6 +674,62 @@ public class ClassParser {
         throw new RuntimeException("Cannot match field or method");
     }
 
+    /**
+     * Get the datatype of the fact represented in the given string
+     * @param clazz - Class to parse
+     * @param factName - String name of fact
+     * @return - Optional Class of return datatype
+     */
+    public Optional<Class<?>> getFactDatatype(Class<?> clazz, String factName) {
+//        Split String to get the
+        final String name;
+        final String[] splitName = factName.split("#");
+        if (splitName.length < 2) {
+            name = factName;
+        } else {
+            name = splitName[1];
+        }
+
+        final boolean hasFact = ClassBuilder.getPropertyMembers(clazz).orElseThrow(() -> new RuntimeException(String.format("Unable to get members for individual")))
+                .stream()
+                .map(HasIRI::getIRI)
+                .anyMatch(iri -> iri.toString().equals(name));
+        if (!hasFact) {
+            return Optional.empty();
+        }
+
+//        Try for methods first
+        final Optional<Method> matchedMethod = Arrays.stream(clazz.getDeclaredMethods())
+                .filter(method -> ClassParser.filterFactMethod(method, false))
+                .filter(method -> filterMethodName(method).equals(name))
+                .findFirst();
+
+        if (matchedMethod.isPresent()) {
+            return Optional.of(matchedMethod.get().getReturnType());
+        }
+//        Now the fields
+        final Optional<Field> matchedField = Arrays.stream(clazz.getDeclaredFields())
+                .filter(field -> ClassParser.filterFactField(field, false))
+                .filter(field -> field.getName().equals(name))
+                .findFirst();
+
+        if (matchedField.isPresent()) {
+            return Optional.of(matchedField.get().getType());
+        }
+        return Optional.empty();
+//        try {
+//            final Method matchingMethod = clazz.getDeclaredMethod(factName);
+//            return Optional.of(matchingMethod.getReturnType());
+//        } catch (NoSuchMethodException e) {
+//            try {
+//                final Field matchingField = clazz.getDeclaredField(factName);
+//                return Optional.of(matchingField.getType());
+//            } catch (NoSuchFieldException e1) {
+//                return Optional.empty();
+//            }
+//        }
+    }
+
     static Optional<Object> accessMethodValue(Method classMethod, Object inputObject) {
         @Nullable Object castReturn = null;
         try {

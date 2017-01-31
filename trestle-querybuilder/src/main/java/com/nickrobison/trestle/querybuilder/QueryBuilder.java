@@ -10,10 +10,7 @@ import com.vividsolutions.jts.precision.GeometryPrecisionReducer;
 import com.vividsolutions.jts.simplify.TopologyPreservingSimplifier;
 import org.apache.jena.query.ParameterizedSparqlString;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLNamedObject;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -261,6 +258,60 @@ public class QueryBuilder {
                 " ?individual ?property ?object" +
                 " VALUES ?individual { %s } ." +
                 " FILTER(!isURI(?object) && !isBlank(?object)) .}", individualValues));
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
+    /**
+     * Retrieve all Fact values for a given individual
+     * If a tmeporal range is provided, the returned values will be valid within that range
+     * If a database temporal value is provided, only db versions beyond that point will be returned
+     * @param individual - OWLNamedIndividual to get facts from
+     * @param property - OWLDataProperty values to retrieve
+     * @param validStart - Optional start of fact value, temporal filter
+     * @param validEnd - Optional end of fact value, temporal filter
+     * @param dbTemporal - Optional database temporal filter
+     * @return
+     */
+    public String buildFactHistoryQuery(OWLNamedIndividual individual, OWLDataProperty property, @Nullable OffsetDateTime validStart, @Nullable OffsetDateTime validEnd, @Nullable OffsetDateTime dbTemporal) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText(String.format("SELECT ?value " +
+                "WHERE { " +
+                "?m trestle:has_fact ?f ." +
+                "{?f trestle:database_from ?df} ." +
+                "OPTIONAL{?f trestle:database_to ?dt} ." +
+                "OPTIONAL{?f trestle:valid_from ?vf } ." +
+                "OPTIONAL{?f trestle:valid_at ?va } ."+
+                "OPTIONAL{?f trestle:valid_to ?vt }. " +
+                "?f %s ?value ." +
+                "VALUES ?m {<%s>} .", getFullIRIString(property), getFullIRIString(individual)));
+        if (validStart != null) {
+            if (validEnd != null) {
+//                If we have both a start and end valid interval, find all the values that are valid between the points
+                ps.append("FILTER ((!bound(?vf) || " +
+                        "?vf >= ?validStart^^xsd:dateTime) && " +
+                        "(!bound(?vt) || " +
+                        "?vt < ?validEnd^^xsd:dateTime) && " +
+                        "(!bound(?va) || " +
+                        "(?va >= ?validStart^^xsd:dateTime && " +
+                        "?va < ?validEnd^^xsd:dateTime))) .");
+                ps.setLiteral("validStart", validStart.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+                ps.setLiteral("validEnd", validEnd.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+            } else {
+                ps.append("FILTER ((!bound(?vf) || " +
+                        "?vf >= ?validStart^^xsd:dateTime) && " +
+                        "(!bound(?va) || " +
+                        "(?va >= ?validStart^^xsd:dateTime && " +
+                        "?va < ?validEnd^^xsd:dateTime))) .");
+                ps.setLiteral("validStart", validStart.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+            }
+        }
+
+        if (dbTemporal != null) {
+            ps.append("FILTER(?df >= ?dbAt^^xsd:dateTime) .");
+            ps.setLiteral("dbAt", dbTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        }
+        ps.append("}");
         logger.debug(ps.toString());
         return ps.toString();
     }
