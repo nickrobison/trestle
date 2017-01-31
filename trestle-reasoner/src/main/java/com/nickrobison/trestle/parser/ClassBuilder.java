@@ -12,6 +12,7 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 import static com.nickrobison.trestle.parser.ClassParser.*;
 
 /**
@@ -24,31 +25,46 @@ public class ClassBuilder {
 
     /**
      * Get a list of data properties from a given class
+     * Returns all Facts (including spatial ones) and sets the prefixes to the default TrestlePrefix
      *
      * @param clazz - Class to parse for data property members
-     * @return - Optional list of OWLDataProperty from given class
+     * @return - Optional list of {@link OWLDataProperty} for given class
      */
     public static Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz) {
-        return getPropertyMembers(clazz, false);
+        return getPropertyMembers(clazz, false, TRESTLE_PREFIX);
+    }
+
+    /**
+     * Get a list of data properties from a given class
+     * Sets the Fact prefixes to the default TrestlePrefix
+     *
+     * @param clazz         - Class to parse for data property members
+     * @param filterSpatial - filter spatial?
+     * @return - Optional list of {@link OWLDataProperty} for given class
+     */
+    public static Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz, boolean filterSpatial) {
+        return getPropertyMembers(clazz, filterSpatial, TRESTLE_PREFIX);
     }
 
     /**
      * Parses out the data properties fof a given input class
      * Only returns the property axioms, not the values themselves
-     * @param clazz - Input class to parse
+     *
+     * @param clazz         - Input class to parse
      * @param filterSpatial - Boolean to filter out the spatial properties
-     * @return - Optional List of OWLDataProperties
+     * @param prefix        - Prefix to use when building the data properties
+     * @return - Optional list of {@link OWLDataProperty} for given class
      */
-    public static Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz, boolean filterSpatial) {
+    public static Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz, boolean filterSpatial, String prefix) {
 
         List<OWLDataProperty> classFields = new ArrayList<>();
         Arrays.stream(clazz.getDeclaredFields())
                 .filter(f -> filterFactField(f, filterSpatial))
-                .forEach(field -> classFields.add(dfStatic.getOWLDataProperty(SpatialParser.filterDataSpatialName(field))));
+                .forEach(field -> classFields.add(dfStatic.getOWLDataProperty(SpatialParser.filterDataSpatialName(field, prefix))));
 
         Arrays.stream(clazz.getDeclaredMethods())
                 .filter(m -> filterFactMethod(m, filterSpatial))
-                .forEach(method -> classFields.add(dfStatic.getOWLDataProperty(SpatialParser.filterDataSpatialName(method))));
+                .forEach(method -> classFields.add(dfStatic.getOWLDataProperty(SpatialParser.filterDataSpatialName(method, prefix))));
 
         if (classFields.isEmpty()) {
             return Optional.empty();
@@ -142,7 +158,8 @@ public class ClassBuilder {
 
     /**
      * Determines if a given argument name/type pair matches the declared TrestleConstructor
-     * @param clazz - Java class to aprse
+     *
+     * @param clazz        - Java class to aprse
      * @param argumentName - Argument name to match
      * @param argumentType - Nullable argument type to match
      * @return - Boolean if name/type pair matches

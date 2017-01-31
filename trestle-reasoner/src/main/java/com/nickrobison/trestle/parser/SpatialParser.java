@@ -140,23 +140,23 @@ public class SpatialParser {
         return Optional.empty();
     }
 
-    static IRI filterDataSpatialName(Field classField) {
+    static IRI filterDataSpatialName(Field classField, String propertyPrefix) {
         if (classField.isAnnotationPresent(Fact.class)) {
-            return IRI.create(TRESTLE_PREFIX, classField.getAnnotation(Fact.class).name());
+            return IRI.create(propertyPrefix, classField.getAnnotation(Fact.class).name());
         } else if (classField.isAnnotationPresent(Spatial.class)) {
             return IRI.create(GEOSPARQLPREFIX, "asWKT");
         } else {
-            return IRI.create(TRESTLE_PREFIX, classField.getName());
+            return IRI.create(propertyPrefix, classField.getName());
         }
     }
 
-    static IRI filterDataSpatialName(Method classMethod) {
+    static IRI filterDataSpatialName(Method classMethod, String propertyPrefix) {
         if (classMethod.isAnnotationPresent(Fact.class)) {
-            return IRI.create(TRESTLE_PREFIX, classMethod.getAnnotation(Fact.class).name());
+            return IRI.create(propertyPrefix, classMethod.getAnnotation(Fact.class).name());
         } else if (classMethod.isAnnotationPresent(Spatial.class)) {
             return IRI.create(GEOSPARQLPREFIX, "asWKT");
         } else {
-            return IRI.create(TRESTLE_PREFIX, filterMethodName(classMethod));
+            return IRI.create(propertyPrefix, filterMethodName(classMethod));
         }
     }
 }

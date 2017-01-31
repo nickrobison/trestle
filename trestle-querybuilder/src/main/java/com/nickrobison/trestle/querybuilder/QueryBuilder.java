@@ -283,7 +283,7 @@ public class QueryBuilder {
                 "OPTIONAL{?f trestle:valid_from ?vf } ." +
                 "OPTIONAL{?f trestle:valid_at ?va } ."+
                 "OPTIONAL{?f trestle:valid_to ?vt }. " +
-                "?f %s ?value ." +
+                "?f <%s>     ?value ." +
                 "VALUES ?m {<%s>} .", getFullIRIString(property), getFullIRIString(individual)));
         if (validStart != null) {
             if (validEnd != null) {

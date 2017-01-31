@@ -690,10 +690,10 @@ public class ClassParser {
             name = splitName[1];
         }
 
-        final boolean hasFact = ClassBuilder.getPropertyMembers(clazz).orElseThrow(() -> new RuntimeException(String.format("Unable to get members for individual")))
+        final boolean hasFact = ClassBuilder.getPropertyMembers(clazz, false, this.ReasonerPrefix).orElseThrow(() -> new RuntimeException(String.format("Unable to get members for individual")))
                 .stream()
                 .map(HasIRI::getIRI)
-                .anyMatch(iri -> iri.toString().equals(name));
+                .anyMatch(iri -> iri.toString().equals(factName));
         if (!hasFact) {
             return Optional.empty();
         }
