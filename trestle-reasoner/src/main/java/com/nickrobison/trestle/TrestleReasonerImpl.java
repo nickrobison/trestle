@@ -23,8 +23,6 @@ import com.nickrobison.trestle.types.*;
 import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.nickrobison.trestle.types.temporal.*;
-import com.nickrobison.trestle.utils.FactPair;
-import com.nickrobison.trestle.utils.TemporalPair;
 import com.nickrobison.trestle.utils.TemporalPropertiesPair;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -410,13 +408,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //    ----------------------------
 
     @Override
-    public <T> @NonNull T readAsObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException {
-        return readAsObject(datasetClassID, objectID, null, null);
+    public <T> @NonNull T readTrestleObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException {
+        return readTrestleObject(datasetClassID, objectID, null, null);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> @NonNull T readAsObject(String datasetClassID, String objectID, @Nullable Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, TrestleClassException {
+    public <T> @NonNull T readTrestleObject(String datasetClassID, String objectID, @Nullable Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, TrestleClassException {
 //        Lookup class
         final OWLClass datasetClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, datasetClassID));
         final Optional<OWLClass> matchingClass = this.registeredClasses
@@ -430,27 +428,27 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
 
         final Class<T> aClass = (Class<T>) this.registeredClasses.get(matchingClass.get());
-        return readAsObject(aClass, objectID, startTemporal, endTemporal);
+        return readTrestleObject(aClass, objectID, startTemporal, endTemporal);
     }
 
     @Override
-    public <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull String objectID) throws TrestleClassException, MissingOntologyEntity {
-        return readAsObject(clazz, objectID, null, null);
+    public <T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull String objectID) throws TrestleClassException, MissingOntologyEntity {
+        return readTrestleObject(clazz, objectID, null, null);
     }
 
 
     @Override
     @SuppressWarnings({"argument.type.incompatible", "dereference.of.nullable"})
-    public <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity {
+    public <T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity {
 
         final IRI individualIRI = parseStringToIRI(REASONER_PREFIX, objectID);
 //        Check cache first
         if (cachingEnabled) {
             logger.debug("Retrieving {} from cache", individualIRI);
-            return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readAsObject(clazz, individualIRI, true))));
+            return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readTrestleObject(clazz, individualIRI, true))));
         } else {
             logger.debug("Bypassing cache and directly retrieving object");
-            return readAsObject(clazz, individualIRI, false, validTemporal, databaseTemporal);
+            return readTrestleObject(clazz, individualIRI, false, validTemporal, databaseTemporal);
         }
     }
 
@@ -468,8 +466,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @param <T>           - Java class to return
      * @return - Java object of type T
      */
-    <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache) {
-        return readAsObject(clazz, individualIRI, bypassCache, null, null);
+    <T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache) {
+        return readTrestleObject(clazz, individualIRI, bypassCache, null, null);
     }
 
     /**
@@ -485,12 +483,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @return - Java object of type T
      */
     @SuppressWarnings({"return.type.incompatible", "argument.type.incompatible", "unchecked"})
-    <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt) {
+    <T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt) {
         logger.debug("Reading {}", individualIRI);
 //        Check for cache hit first, provided caching is enabled and we're not set to bypass the cache
         if (isCachingEnabled() & !bypassCache) {
             logger.debug("Retrieving {} from cache", individualIRI);
-            return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readAsObject(clazz, individualIRI, true))));
+            return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readTrestleObject(clazz, individualIRI, true))));
         } else {
             logger.debug("Bypassing cache and directly retrieving object");
         }
@@ -512,7 +510,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         } else {
             databaseTemporal = TemporalObjectBuilder.database().at(OffsetDateTime.now()).build();
         }
-        final Optional<@NonNull T> constructedObject = readAsObject(clazz, individualIRI, validTemporal, databaseTemporal);
+        final Optional<@NonNull T> constructedObject = readTrestleObject(clazz, individualIRI, validTemporal, databaseTemporal);
         if (constructedObject.isPresent()) {
             logger.debug("Done with {}", individualIRI);
             return constructedObject.get();
@@ -531,7 +529,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @param <T>              - Java class to return
      * @return - Java object of type T
      */
-    private <T> Optional<T> readAsObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, PointTemporal<?> validTemporal, PointTemporal<?> databaseTemporal) {
+    private <T> Optional<T> readTrestleObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, PointTemporal<?> validTemporal, PointTemporal<?> databaseTemporal) {
 
 //        Contains class?
         try {
@@ -812,7 +810,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     .stream()
                     .map(iri -> {
                         try {
-                            return readAsObject(clazz, iri, false, atTemporal, dbTemporal);
+                            return readTrestleObject(clazz, iri, false, atTemporal, dbTemporal);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
@@ -844,7 +842,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
         relatedObjectResults
                 .entrySet().forEach(entry -> {
-            final @NonNull T object = readAsObject(clazz, entry.getKey(), false);
+            final @NonNull T object = readTrestleObject(clazz, entry.getKey(), false);
             relatedObjects.put(object, entry.getValue());
         });
         ontology.returnAndCommitTransaction(transaction);
@@ -1105,7 +1103,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 .map(iri -> CompletableFuture.supplyAsync(() -> {
                     final TrestleTransaction futureTransaction = this.ontology.createandOpenNewTransaction(trestleTransaction);
                     try {
-                        final @NonNull T retrievedObject = this.readAsObject(clazz, iri, temporalIntersection, null);
+                        final @NonNull T retrievedObject = this.readTrestleObject(clazz, iri, temporalIntersection, null);
                         this.ontology.returnAndCommitTransaction(futureTransaction);
                         return retrievedObject;
                     } catch (TrestleClassException e) {
@@ -1693,7 +1691,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 .map(id -> IRIUtils.parseStringToIRI(REASONER_PREFIX, id))
                 .map(id -> CompletableFuture.supplyAsync(() -> {
                     final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-                    final @NonNull T object = readAsObject(inputClass, id, false);
+                    final @NonNull T object = readTrestleObject(inputClass, id, false);
                     this.ontology.returnAndCommitTransaction(tt);
                     return object;
                 }))

@@ -129,8 +129,8 @@ public class TrestleAPITest {
         assertEquals(191, gaulInstances.size(), "Wrong number of GAUL records from instances method");
 
 //        Try to read one out.
-//        final GAULTestClass ancuabe = reasoner.readAsObject(GAULTestClass.class, IRI.create("trestle:", "Ancuabe"));
-        final TestClasses.GAULTestClass ancuabe = reasoner.readAsObject(TestClasses.GAULTestClass.class, IRI.create(OVERRIDE_PREFIX, "Ancuabe"), true, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
+//        final GAULTestClass ancuabe = reasoner.readTrestleObject(GAULTestClass.class, IRI.create("trestle:", "Ancuabe"));
+        final TestClasses.GAULTestClass ancuabe = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, IRI.create(OVERRIDE_PREFIX, "Ancuabe"), true, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
         assertEquals(ancuabe.adm0_name, "Ancuabe", "Wrong name");
 //        Check the temporal to make sure they got parsed correctly
         assertEquals(LocalDate.of(1990, 1, 1).atStartOfDay(), ancuabe.time, "Times should match");
@@ -143,9 +143,9 @@ public class TrestleAPITest {
                 .filter(ds -> ds.equals("GAUL_Test"))
                 .findAny()
                 .get();
-        @NonNull final Object ancuabe1 = reasoner.readAsObject(datasetClassID, "Ancuabe", OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
+        @NonNull final Object ancuabe1 = reasoner.readTrestleObject(datasetClassID, "Ancuabe", OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
         assertEquals(ancuabe, ancuabe1, "Objects should be equal");
-        final Object ancuabe2 = reasoner.readAsObject(reasoner.getDatasetClass(datasetClassID), "Ancuabe", OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
+        final Object ancuabe2 = reasoner.readTrestleObject(reasoner.getDatasetClass(datasetClassID), "Ancuabe", OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
         assertEquals(ancuabe, ancuabe2, "Should be equal");
 
 //        Check the spatial intersection
@@ -192,7 +192,7 @@ public class TrestleAPITest {
         reasoner.getUnderlyingOntology().runInference();
         classObjects.parallelStream().forEach(object -> {
             final OWLNamedIndividual owlNamedIndividual = tp.classParser.getIndividual(object);
-            final Object returnedObject = reasoner.readAsObject(object.getClass(), owlNamedIndividual.getIRI(), false);
+            final Object returnedObject = reasoner.readTrestleObject(object.getClass(), owlNamedIndividual.getIRI(), false);
             if (returnedObject instanceof TestClasses.GAULComplexClassTest) {
                 assertEquals(gaulComplexClassTest, returnedObject, "Should have the same object");
             } else if (returnedObject instanceof TestClasses.JTSGeometryTest) {
@@ -235,7 +235,7 @@ public class TrestleAPITest {
 //        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest = new TestClasses.GeotoolsPolygonTest(UUID.randomUUID(), (org.opengis.geometry.coordinate.Polygon) geotoolsGeom, LocalDate.now());
 //        final OWLNamedIndividual owlNamedIndividual = classParser.getIndividual(geotoolsPolygonTest);
 //        reasoner.writeTrestleObject(geotoolsPolygonTest);
-//        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest1 = reasoner.readAsObject(geotoolsPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
+//        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest1 = reasoner.readTrestleObject(geotoolsPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
 //        assertEquals(geotoolsPolygonTest, geotoolsPolygonTest1, "Should be equal");
 
 
@@ -265,22 +265,22 @@ public class TrestleAPITest {
 //        Write each, then validate
         reasoner.writeTrestleObject(v1);
         reasoner.getUnderlyingOntology().runInference();
-        final FactVersionTest v1Return = reasoner.readAsObject(v1.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
+        final FactVersionTest v1Return = reasoner.readTrestleObject(v1.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
         assertEquals(v1, v1Return, "Should be equal to V1");
         reasoner.writeTrestleObject(v2);
         reasoner.getUnderlyingOntology().runInference();
-        final FactVersionTest v2Return = reasoner.readAsObject(v2.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
+        final FactVersionTest v2Return = reasoner.readTrestleObject(v2.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
         assertEquals(v2, v2Return, "Should be equal to V2");
         reasoner.writeTrestleObject(v3);
         reasoner.getUnderlyingOntology().runInference();
-        final FactVersionTest v3Return = reasoner.readAsObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
+        final FactVersionTest v3Return = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
         assertEquals(v3, v3Return, "Should be equal to V3");
 //        Try for specific points in time
-        final FactVersionTest v1ReturnHistorical = reasoner.readAsObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1990, 3, 26), null);
+        final FactVersionTest v1ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1990, 3, 26), null);
         assertEquals(v1, v1ReturnHistorical, "Historical query should be equal to V1");
-        final FactVersionTest v2ReturnHistorical = reasoner.readAsObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1999, 3, 26), null);
+        final FactVersionTest v2ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1999, 3, 26), null);
         assertEquals(v2, v2ReturnHistorical, "Historical query should be equal to V2");
-        final FactVersionTest v3ReturnHistorical = reasoner.readAsObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(2016, 3, 26), null);
+        final FactVersionTest v3ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(2016, 3, 26), null);
         assertEquals(v3, v3ReturnHistorical, "Historical query should be equal to V3");
 
 //        Check to make sure we have all the facts

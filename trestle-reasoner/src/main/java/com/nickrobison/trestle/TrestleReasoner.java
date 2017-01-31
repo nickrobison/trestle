@@ -79,7 +79,7 @@ public interface TrestleReasoner {
      * @throws MissingOntologyEntity - exception
      * @throws TrestleClassException - exception
      */
-    <T> @NonNull T readAsObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException;
+    <T> @NonNull T readTrestleObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException;
 
     /**
      * Returns an object, from the database, looking up the class definition from the registry
@@ -94,7 +94,7 @@ public interface TrestleReasoner {
      * @throws TrestleClassException - exception
      */
     @SuppressWarnings("unchecked")
-    <T> @NonNull T readAsObject(String datasetClassID, String objectID, @Nullable Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, TrestleClassException;
+    <T> @NonNull T readTrestleObject(String datasetClassID, String objectID, @Nullable Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, TrestleClassException;
 
     /**
      * Returns an object, from the database, using the provided class definition.
@@ -107,7 +107,7 @@ public interface TrestleReasoner {
      * @throws TrestleClassException - exception
      * @throws MissingOntologyEntity - exception
      */
-    <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull String objectID) throws TrestleClassException, MissingOntologyEntity;
+    <T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull String objectID) throws TrestleClassException, MissingOntologyEntity;
 
     /**
      * Returns an object, from the database, using the provided class definition.
@@ -123,7 +123,7 @@ public interface TrestleReasoner {
      * @throws MissingOntologyEntity - exception
      */
     @SuppressWarnings({"argument.type.incompatible", "dereference.of.nullable"})
-    <T> @NonNull T readAsObject(Class<@NonNull T> clazz, @NonNull String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity;
+    <T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity;
 
     /**
      * Spatial Intersect Object with most recent records in the database

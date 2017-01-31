@@ -84,7 +84,7 @@ public class TrestleRemoteActor extends AbstractActor {
                     sender().tell(availableDatasets, self());
                 })
                 .match(ReadObject.class, readObject -> {
-                    final Object object = reasoner.readAsObject(readObject.getClazz(), readObject.getObjectID());
+                    final Object object = reasoner.readTrestleObject(readObject.getClazz(), readObject.getObjectID());
                     if (object != null) {
                         sender().tell(object, self());
                     } else {

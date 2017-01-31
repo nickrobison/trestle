@@ -77,7 +77,7 @@ public class ClassValidationTest {
 //        Try to read it back out
         GAULObject gaulObject = null;
         try {
-            gaulObject = reasoner.readAsObject(GAULObject.class, testObject.getObjectIDAsString());
+            gaulObject = reasoner.readTrestleObject(GAULObject.class, testObject.getObjectIDAsString());
         } catch (TrestleClassException e) {
             e.printStackTrace();
             fail("should not throw");

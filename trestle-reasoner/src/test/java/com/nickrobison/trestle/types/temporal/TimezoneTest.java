@@ -56,7 +56,7 @@ public class TimezoneTest {
         final DefaultTimeZone defaultTimeZone = new DefaultTimeZone(LocalDate.of(1990, 1, 1).atStartOfDay(), "default-timezone");
         reasoner.writeTrestleObject(defaultTimeZone);
         reasoner.getUnderlyingOntology().runInference();
-        @NonNull final DefaultTimeZone returnedDefaultTimeZone = reasoner.readAsObject(DefaultTimeZone.class, "default-timezone", LocalDate.of(1990, 1, 1).atStartOfDay(), null);
+        @NonNull final DefaultTimeZone returnedDefaultTimeZone = reasoner.readTrestleObject(DefaultTimeZone.class, "default-timezone", LocalDate.of(1990, 1, 1).atStartOfDay(), null);
         assertEquals(defaultTimeZone, returnedDefaultTimeZone, "Should be equal");
         assertEquals(defaultTimeZone.defaultTime, returnedDefaultTimeZone.defaultTime, "Times should match");
     }
@@ -66,7 +66,7 @@ public class TimezoneTest {
         final DifferentIntervalTimeZones differentIntervalTimeZones = new DifferentIntervalTimeZones("different-intervals", LocalDate.of(1990, 1, 1).atStartOfDay(), LocalDate.of(1995, 1, 1).atStartOfDay());
         reasoner.writeTrestleObject(differentIntervalTimeZones);
         reasoner.getUnderlyingOntology().runInference();
-        @NonNull final DifferentIntervalTimeZones returnedIntervalTimeZones = reasoner.readAsObject(DifferentIntervalTimeZones.class, "different-intervals", LocalDate.of(1993, 1, 1).atStartOfDay(), null);
+        @NonNull final DifferentIntervalTimeZones returnedIntervalTimeZones = reasoner.readTrestleObject(DifferentIntervalTimeZones.class, "different-intervals", LocalDate.of(1993, 1, 1).atStartOfDay(), null);
         assertEquals(differentIntervalTimeZones, returnedIntervalTimeZones, "Should be equal");
     }
 
