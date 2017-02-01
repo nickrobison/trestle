@@ -283,7 +283,7 @@ public class QueryBuilder {
                 "OPTIONAL{?f trestle:valid_from ?vf } ." +
                 "OPTIONAL{?f trestle:valid_at ?va } ."+
                 "OPTIONAL{?f trestle:valid_to ?vt }. " +
-                "?f <%s>     ?value ." +
+                "?f <%s> ?value ." +
                 "VALUES ?m {<%s>} .", getFullIRIString(property), getFullIRIString(individual)));
         if (validStart != null) {
             if (validEnd != null) {
@@ -536,7 +536,7 @@ public class QueryBuilder {
     }
 
     /**
-     * Update the ending value of an interval, provided the interval in continuing
+     * Update the ending value of an interval, provided the interval is continuing
      * @param individual - {@link OWLNamedIndividual} of Interval_Object to update
      * @param temporal - {@link OffsetDateTime} of value to use
      * @return - SPARQL Query String
@@ -553,6 +553,30 @@ public class QueryBuilder {
 
         ps.setLiteral("newValue", temporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
+    /**
+     * Update fact ending temporal to new value
+     * Provided the currently valid fact has a continuing interval
+     * @param individual - {@link OWLNamedIndividual} of Interval_Object to update
+     * @param property - {@link OWLNamedIndividual} of Fact
+     * @param temporal - {@link OffsetDateTime} of value to use
+     * @return - SPARQL Query String
+     */
+    public String updateUnboundedFact(OWLNamedIndividual individual, OWLDataProperty property, OffsetDateTime temporal) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText(String.format("INSERT {" +
+                "?f trestle:valid_to ?newValue^^xsd:dateTime} " +
+                "WHERE { " +
+                "?m trestle:has_fact ?f ." +
+                "OPTIONAL{?f trestle:valid_to ?vt }. " +
+                "?f rdf:type trestle:Interval_Object ." +
+                "?f <%s> ?value ." +
+                "FILTER(?m = <%s> && !bound(?vt)) }", getFullIRIString(property), getFullIRIString(individual)));
+
+        ps.setLiteral("newValue", temporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         logger.debug(ps.toString());
         return ps.toString();
     }

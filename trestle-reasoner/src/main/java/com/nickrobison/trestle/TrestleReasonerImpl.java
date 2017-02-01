@@ -364,6 +364,42 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
     }
 
+
+    public void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom) {
+//        Build the temporals
+        final TemporalObject validTemporal;
+        final TemporalObject databaseTemporal;
+        if (validTo != null) {
+            validTemporal = TemporalObjectBuilder.valid().from(validFrom).to(validTo).build();
+        } else {
+            validTemporal = TemporalObjectBuilder.valid().from(validFrom).build();
+        }
+        if (databaseFrom != null) {
+            databaseTemporal = TemporalObjectBuilder.database().from(databaseFrom).build();
+        } else {
+            databaseTemporal = TemporalObjectBuilder.database().from(OffsetDateTime.now().atZoneSameInstant(ZoneOffset.UTC)).build();
+        }
+
+        final OWLNamedIndividual owlNamedIndividual = df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual));
+        //        Parse String to Fact IRI
+        final Optional<IRI> factIRI = this.trestleParser.classParser.getFactIRI(clazz, factName);
+        if (!factIRI.isPresent()) {
+            logger.error("Cannot parse {} for individual {}", individual, factName);
+            return;
+        }
+
+        final OWLDataProperty owlDataProperty = df.getOWLDataProperty(factIRI.get());
+        final OWLDatatype datatypeFromJavaClass = TypeConverter.getDatatypeFromJavaClass(value.getClass());
+        final OWLDataPropertyAssertionAxiom propertyAxiom = df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, df.getOWLLiteral(value.toString(), datatypeFromJavaClass));
+
+//        Update the open interval, if it exists
+        final String update = this.qb.updateUnboundedFact(owlNamedIndividual, owlDataProperty, parseTemporalToOntologyDateTime(validTemporal.asInterval().getFromTime(), ZoneOffset.UTC));
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
+        this.ontology.executeUpdateSPARQL(update);
+        writeObjectFacts(owlNamedIndividual, Arrays.asList(propertyAxiom), validTemporal, databaseTemporal);
+        this.ontology.returnAndCommitTransaction(trestleTransaction);
+    }
+
     /**
      * Writes a data property as an asserted fact for an individual TS_Object.
      *

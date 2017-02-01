@@ -320,7 +320,7 @@ public class TypeConverter {
         }
     }
 
-    static @NotNull OWLDatatype getDatatypeFromJavaClass(Class<?> javaTypeClass) {
+    public static @NotNull OWLDatatype getDatatypeFromJavaClass(Class<?> javaTypeClass) {
         OWLDatatype owlDatatype = owlDatatypeMap.get(javaTypeClass);
         if (owlDatatype == null) {
             logger.error("Unsupported Java type {}", javaTypeClass);

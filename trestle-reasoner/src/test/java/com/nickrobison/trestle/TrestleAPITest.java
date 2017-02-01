@@ -281,12 +281,15 @@ public class TrestleAPITest {
 
 //        Check to make sure we have all the facts
         final TrestleIndividual trestleIndividual = reasoner.getTrestleIndividual("test-object");
-        assertEquals(5, trestleIndividual.getFacts().size(), "Should have 4 facts over the lifetime of the object");
+        assertEquals(5, trestleIndividual.getFacts().size(), "Should have 5 facts over the lifetime of the object");
+
+//        Try to manually add a new value
+        reasoner.addFactToTrestleObject(v3.getClass(), "test-object", "testValue", "test value three", LocalDate.of(2007, 3, 26), null, null);
 
 //        Try to get some fact values
         final Optional<List<Object>> values = reasoner.getFactValues(v3.getClass(), "test-object", "testValue", null, null, null);
         assertAll(() -> assertTrue(values.isPresent(), "Should have fact values"),
-                () -> assertEquals(2, values.get().size(), "Should have 2 fact values"));
+                () -> assertEquals(3, values.get().size(), "Should have 3 fact values"));
 
         final Optional<List<Object>> wktValues = reasoner.getFactValues(v3.getClass(), "test-object", "wkt", LocalDate.of(1988, 3, 26), LocalDate.of(1995, 3, 26), null);
         assertAll(() -> assertTrue(wktValues.isPresent(), "Should have wkt values"),
