@@ -289,9 +289,9 @@ public class QueryBuilder {
             if (validEnd != null) {
 //                If we have both a start and end valid interval, find all the values that are valid between the points
                 ps.append("FILTER ((!bound(?vf) || " +
-                        "?vf >= ?validStart^^xsd:dateTime) && " +
+                        "(?vf >= ?validStart^^xsd:dateTime && ?vf < ?validEnd^^xsd:dateTime) && " +
                         "(!bound(?vt) || " +
-                        "?vt < ?validEnd^^xsd:dateTime) && " +
+                        "?vt > ?validEnd^^xsd:dateTime)) && " +
                         "(!bound(?va) || " +
                         "(?va >= ?validStart^^xsd:dateTime && " +
                         "?va < ?validEnd^^xsd:dateTime))) .");
@@ -299,7 +299,7 @@ public class QueryBuilder {
                 ps.setLiteral("validEnd", validEnd.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
             } else {
                 ps.append("FILTER ((!bound(?vf) || " +
-                        "?vf >= ?validStart^^xsd:dateTime) && " +
+                        "(?vf >= ?validStart^^xsd:dateTime && ?vf ?validEnd^^xsd:dateTime)) && " +
                         "(!bound(?va) || " +
                         "(?va >= ?validStart^^xsd:dateTime && " +
                         "?va < ?validEnd^^xsd:dateTime))) .");

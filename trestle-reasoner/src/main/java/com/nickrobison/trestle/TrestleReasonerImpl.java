@@ -10,6 +10,7 @@ import com.nickrobison.trestle.common.exceptions.TrestleMissingFactException;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.exceptions.*;
+import com.nickrobison.trestle.exceptions.InvalidClassException;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.exporter.ShapefileExporter;
 import com.nickrobison.trestle.exporter.ShapefileSchema;
@@ -32,6 +33,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -364,12 +366,55 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
     }
 
+    @Override
+    public void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validAt, @Nullable Temporal databaseFrom) {
+        addFactToTrestleObject(clazz, individual, factName, value, validAt, null, null, databaseFrom);
+    }
 
+    @Override
     public void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom) {
+        addFactToTrestleObject(clazz, individual, factName, value, null, validFrom, validTo, databaseFrom);
+    }
+
+    /**
+     * Manually add a Fact to a TrestleObject, along with a specific validity period
+     * Either a validAt, or the validFrom parameter must be specified
+     * @param clazz - Java class to parse
+     * @param individual - Individual ID
+     * @param factName - Fact name
+     * @param value - Fact value
+     * @param validAt - Optional validAt Temporal
+     * @param validFrom - Optional validFrom Temporal
+     * @param validTo - Optional validTo Temporal
+     * @param databaseFrom - Optional databaseFrom Temporal
+     */
+    private void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, @Nullable Temporal validAt, @Nullable Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom) {
+        final OWLNamedIndividual owlNamedIndividual = df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual));
+//        Parse String to Fact IRI
+        final Optional<IRI> factIRI = this.trestleParser.classParser.getFactIRI(clazz, factName);
+        if (!factIRI.isPresent()) {
+            logger.error("Cannot parse {} for individual {}", factName, individual);
+            throw new TrestleMissingFactException(owlNamedIndividual, parseStringToIRI(REASONER_PREFIX, factName));
+        }
+        final OWLDataProperty owlDataProperty = df.getOWLDataProperty(factIRI.get());
+
+//        Validate that we have the correct type
+        final Optional<Class<?>> factDatatype = this.trestleParser.classParser.getFactDatatype(clazz, factName);
+        if (!factDatatype.isPresent()) {
+            logger.error("Individual {} does not have fact {}", owlNamedIndividual, owlDataProperty);
+            throw new TrestleMissingFactException(owlNamedIndividual, factIRI.get());
+        }
+        if (!value.getClass().equals(factDatatype.get())) {
+            logger.error("Mismatched type. Fact {} has type {}, not {}", factIRI.get(), factDatatype.get(), value.getClass());
+            throw new RuntimeException(String.format("Fact %s has type %s, not %s", factIRI.get(), factDatatype.get(), value.getClass()));
+        }
+
 //        Build the temporals
         final TemporalObject validTemporal;
         final TemporalObject databaseTemporal;
-        if (validTo != null) {
+        if (validAt != null) {
+            validTemporal = TemporalObjectBuilder.valid().at(validAt).build();
+        } else if (validTo != null) {
             validTemporal = TemporalObjectBuilder.valid().from(validFrom).to(validTo).build();
         } else {
             validTemporal = TemporalObjectBuilder.valid().from(validFrom).build();
@@ -380,20 +425,22 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             databaseTemporal = TemporalObjectBuilder.database().from(OffsetDateTime.now().atZoneSameInstant(ZoneOffset.UTC)).build();
         }
 
-        final OWLNamedIndividual owlNamedIndividual = df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual));
-        //        Parse String to Fact IRI
-        final Optional<IRI> factIRI = this.trestleParser.classParser.getFactIRI(clazz, factName);
-        if (!factIRI.isPresent()) {
-            logger.error("Cannot parse {} for individual {}", individual, factName);
-            return;
+//        Ensure we handle spatial properties correctly
+        final OWLDatatype datatypeFromJavaClass;
+        if (owlDataProperty.getIRI().toString().contains(GEOSPARQLPREFIX)) {
+            datatypeFromJavaClass = df.getOWLDatatype(IRI.create(GEOSPARQLPREFIX, "asWKT"));
+        } else {
+            datatypeFromJavaClass = TypeConverter.getDatatypeFromJavaClass(value.getClass());
         }
-
-        final OWLDataProperty owlDataProperty = df.getOWLDataProperty(factIRI.get());
-        final OWLDatatype datatypeFromJavaClass = TypeConverter.getDatatypeFromJavaClass(value.getClass());
         final OWLDataPropertyAssertionAxiom propertyAxiom = df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, df.getOWLLiteral(value.toString(), datatypeFromJavaClass));
 
 //        Update the open interval, if it exists
-        final String update = this.qb.updateUnboundedFact(owlNamedIndividual, owlDataProperty, parseTemporalToOntologyDateTime(validTemporal.asInterval().getFromTime(), ZoneOffset.UTC));
+        final String update;
+        if (validTemporal.isInterval()) {
+            update = this.qb.updateUnboundedFact(owlNamedIndividual, owlDataProperty, parseTemporalToOntologyDateTime(validTemporal.asInterval().getFromTime(), ZoneOffset.UTC));
+        } else {
+            update = this.qb.updateUnboundedFact(owlNamedIndividual, owlDataProperty, parseTemporalToOntologyDateTime(validTemporal.asPoint().getPointTime(), ZoneOffset.UTC));
+        }
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         this.ontology.executeUpdateSPARQL(update);
         writeObjectFacts(owlNamedIndividual, Arrays.asList(propertyAxiom), validTemporal, databaseTemporal);
@@ -412,9 +459,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final long now = Instant.now().getEpochSecond();
         final OWLClass factClass = df.getOWLClass(factClassIRI);
         properties.forEach(property -> {
-
 //            TODO(nrobison): We should change this to lookup any existing records to correctly increment the record number
-//            TODO(nrobison): Should this prefix be the reasoner prefix? Probably, but not sure.
             final OWLNamedIndividual propertyIndividual = df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, String.format("%s:%s:%d", rootIndividual.getIRI().getShortForm(), property.getProperty().asOWLDataProperty().getIRI().getShortForm(), now)));
             ontology.createIndividual(propertyIndividual, factClass);
             try {

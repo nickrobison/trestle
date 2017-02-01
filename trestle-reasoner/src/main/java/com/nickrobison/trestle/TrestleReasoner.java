@@ -71,6 +71,29 @@ public interface TrestleReasoner {
     void writeTrestleObject(Object inputObject, Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, UnregisteredClassException;
 
     /**
+     * Manually add a Fact to a TrestleObject, along with a specified valdity point
+     * @param clazz - Java class to parse
+     * @param individual - Individual ID
+     * @param factName - Fact name
+     * @param value - Fact value
+     * @param validAt - validAt Temporal
+     * @param databaseFrom - Optional databaseFrom Temporal
+     */
+    void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validAt, @Nullable Temporal databaseFrom);
+
+    /**
+     * Manually add a Fact to a TrestleObject, along with a specified validity interval
+     * @param clazz - Java class to parse
+     * @param individual - Individual ID
+     * @param factName - Fact name
+     * @param value - Fact value
+     * @param validFrom - validFrom Temporal
+     * @param validTo - validTo Temporal
+     * @param databaseFrom - Optional databaseFrom Temporal
+     */
+    void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom);
+
+    /**
      * Returns an object, from the database, looking up the class definition from the registry
      *
      * @param datasetClassID - String of class name to retrieve from the class registry
