@@ -11,7 +11,7 @@ logging:
 database:
   driverClass: org.h2.Driver
   user: sa
-  url: jdbc:h2:~/test
+  url: jdbc:h2:./trestle.db
   properties:
     charSet: UTF-8
     hibernate.dialect: org.hibernate.dialect.H2Dialect
