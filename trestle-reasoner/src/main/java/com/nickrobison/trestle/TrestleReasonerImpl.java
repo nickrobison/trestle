@@ -10,7 +10,6 @@ import com.nickrobison.trestle.common.exceptions.TrestleMissingFactException;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.exceptions.*;
-import com.nickrobison.trestle.exceptions.InvalidClassException;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.exporter.ShapefileExporter;
 import com.nickrobison.trestle.exporter.ShapefileSchema;
@@ -23,7 +22,10 @@ import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.*;
 import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
-import com.nickrobison.trestle.types.temporal.*;
+import com.nickrobison.trestle.types.temporal.IntervalTemporal;
+import com.nickrobison.trestle.types.temporal.PointTemporal;
+import com.nickrobison.trestle.types.temporal.TemporalObject;
+import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import com.nickrobison.trestle.utils.TemporalPropertiesPair;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -33,7 +35,6 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +42,10 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.time.*;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.*;
@@ -353,13 +357,14 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     /**
      * Manually add a Fact to a TrestleObject, along with a specific validity period
      * Either a validAt, or the validFrom parameter must be specified
-     * @param clazz - Java class to parse
-     * @param individual - Individual ID
-     * @param factName - Fact name
-     * @param value - Fact value
-     * @param validAt - Optional validAt Temporal
-     * @param validFrom - Optional validFrom Temporal
-     * @param validTo - Optional validTo Temporal
+     *
+     * @param clazz        - Java class to parse
+     * @param individual   - Individual ID
+     * @param factName     - Fact name
+     * @param value        - Fact value
+     * @param validAt      - Optional validAt Temporal
+     * @param validFrom    - Optional validFrom Temporal
+     * @param validTo      - Optional validTo Temporal
      * @param databaseFrom - Optional databaseFrom Temporal
      */
     private void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, @Nullable Temporal validAt, @Nullable Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom) {
@@ -777,89 +782,73 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    @SuppressWarnings("return.type.incompatible")
-    public <T> Optional<List<T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal atTemporal) {
+    public <T> Optional<List<T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal validAt) {
+//        return CompletableFuture.supplyAsync(() -> {
+        final OWLClass owlClass = trestleParser.classParser.getObjectClass(clazz);
 
-        final CompletableFuture<Optional<List<@NonNull T>>> intersectFuture = spatialIntersectAsync(clazz, wkt, buffer, atTemporal);
-        try {
-            return intersectFuture.get();
-        } catch (InterruptedException e) {
-            logger.error("Interrupted", e);
-        } catch (ExecutionException e) {
-            logger.error("Execution exception", e);
+        final OffsetDateTime atTemporal;
+        final OffsetDateTime dbTemporal;
+
+        if (validAt == null) {
+            atTemporal = OffsetDateTime.now();
+        } else {
+            atTemporal = parseTemporalToOntologyDateTime(validAt, ZoneOffset.UTC);
         }
 
-        throw new RuntimeException("Problem intersecting object");
-    }
-
-    /**
-     * Async intersection of given class with WKT boundary
-     *
-     * @param clazz   - Class of object to return
-     * @param wkt     - WKT of spatial boundary to intersect with
-     * @param buffer  - Double buffer to build around WKT
-     * @param validAt - Temporal to filter results to specific valid time point
-     * @param <T>     - Type to specialize Future with
-     * @return - Completable Future of Optional List of T
-     */
-    private <T> CompletableFuture<Optional<List<T>>> spatialIntersectAsync(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal validAt) {
-        return CompletableFuture.supplyAsync(() -> {
-            final OWLClass owlClass = trestleParser.classParser.getObjectClass(clazz);
-
-            final OffsetDateTime atTemporal;
-            final OffsetDateTime dbTemporal;
-
-            if (validAt == null) {
-                atTemporal = OffsetDateTime.now();
-            } else {
-                atTemporal = parseTemporalToOntologyDateTime(validAt, ZoneOffset.UTC);
-            }
-
 //            TODO(nrobison): Implement DB intersection
-            dbTemporal = OffsetDateTime.now();
+        dbTemporal = OffsetDateTime.now();
 
-            String spatialIntersection = null;
-            try {
-                logger.debug("Running spatial intersection at time {}", atTemporal);
-                spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.UNITS.METER, atTemporal, dbTemporal);
+        String spatialIntersection = null;
+        try {
+            logger.debug("Running spatial intersection at time {}", atTemporal);
+            spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.UNITS.METER, atTemporal, dbTemporal);
 //                }
-            } catch (UnsupportedFeatureException e) {
-                logger.error("Database {} doesn't support spatial intersections.", spatialDalect, e);
-                return Optional.empty();
-            }
+        } catch (UnsupportedFeatureException e) {
+            logger.error("Database {} doesn't support spatial intersections.", spatialDalect, e);
+            return Optional.empty();
+        }
+        logger.debug("Executing spatial query");
+        final Instant start = Instant.now();
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+        final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(spatialIntersection);
+        final Instant end = Instant.now();
+        logger.debug("Spatial query returned in {} ms", Duration.between(start, end).toMillis());
+        Set<IRI> intersectedIRIs = resultSet.getResults()
+                .stream()
+                .map(result -> IRI.create(result.getIndividual("m").toStringID()))
+                .collect(Collectors.toSet());
+        logger.debug("Intersected with {} objects", intersectedIRIs.size());
+        if (intersectedIRIs.size() == 0) {
+            logger.info("No intersected results");
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+            return Optional.of(new ArrayList<@NonNull T>());
+        }
 
-            logger.debug("Executing spatial query");
-            final Instant start = Instant.now();
-            final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(spatialIntersection);
-            final Instant end = Instant.now();
-            logger.debug("Spatial query returned in {} ms", Duration.between(start, end).toMillis());
-            Set<IRI> intersectedIRIs = resultSet.getResults()
-                    .stream()
-                    .map(result -> IRI.create(result.getIndividual("m").toStringID()))
-                    .collect(Collectors.toSet());
-            logger.debug("Intersected with {} objects", intersectedIRIs.size());
-            if (intersectedIRIs.size() == 0) {
-                logger.info("No intersected results");
-                return Optional.of(new ArrayList<@NonNull T>());
-            }
+        final List<CompletableFuture<@NonNull T>> objectFuturesList = intersectedIRIs.stream().map(iri -> CompletableFuture.supplyAsync(() -> {
+            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+            final @NonNull T object = readTrestleObject(clazz, iri, false, atTemporal, dbTemporal);
+            this.ontology.returnAndCommitTransaction(tt);
+            return object;
+        }))
+                .collect(Collectors.toList());
+        final CompletableFuture<List<@NonNull T>> objectsFuture = sequenceCompletableFutures(objectFuturesList);
 
-//            I think I need to suppress this warning to deal with generics in streams
-            @SuppressWarnings("argument.type.incompatible") final List<@NonNull T> intersectedObjects = intersectedIRIs
-                    .stream()
-                    .map(iri -> {
-                        try {
-                            return readTrestleObject(clazz, iri, false, atTemporal, dbTemporal);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
-                    .collect(Collectors.toList());
-
+        try {
+            final List<@NonNull T> intersectedObjects = objectsFuture.get();
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
             return Optional.of(intersectedObjects);
-        });
+        } catch (InterruptedException e) {
+            logger.error("Spatial intersection interrupted", e);
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+            return Optional.empty();
+        } catch (ExecutionException e) {
+            logger.error("Spatial intersection execution exception", e);
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+            return Optional.empty();
+        }
     }
 
-    //    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
+//    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
     @Override
     @SuppressWarnings("return.type.incompatible")
     @Deprecated
