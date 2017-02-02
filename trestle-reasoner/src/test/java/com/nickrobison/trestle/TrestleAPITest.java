@@ -82,85 +82,6 @@ public class TrestleAPITest {
     }
 
     @Test
-    public void gaulLoader() throws IOException, TrestleClassException, MissingOntologyEntity, OWLOntologyStorageException {
-//        Parse the CSV
-        List<TestClasses.GAULTestClass> gaulObjects = new ArrayList<>();
-
-        final InputStream is = TrestleAPITest.class.getClassLoader().getResourceAsStream("objects.csv");
-
-        final BufferedReader br = new BufferedReader(new InputStreamReader(is));
-
-        String line;
-
-        while ((line = br.readLine()) != null) {
-
-
-            final String[] splitLine = line.split(";");
-            final int code;
-            try {
-                code = Integer.parseInt(splitLine[0]);
-            } catch (NumberFormatException e) {
-                continue;
-            }
-
-
-            LocalDate date = LocalDate.parse(splitLine[2].replace("\"", ""), formatter);
-//            final Instant instant = Instant.from(date);
-//            final LocalDateTime startTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
-
-//            Need to add a second to get it to format correctly.
-            gaulObjects.add(new TestClasses.GAULTestClass(code, splitLine[1].replace("\"", ""), date.atStartOfDay(), splitLine[4].replace("\"", "")));
-        }
-
-//        Write the objects
-        gaulObjects.parallelStream().forEach(gaul -> {
-            try {
-                reasoner.writeTrestleObject(gaul);
-            } catch (TrestleClassException e) {
-                throw new RuntimeException(String.format("Problem storing object %s", gaul.adm0_name), e);
-            } catch (MissingOntologyEntity missingOntologyEntity) {
-                throw new RuntimeException(String.format("Missing individual %s", missingOntologyEntity.getIndividual()), missingOntologyEntity);
-            }
-        });
-
-        reasoner.getUnderlyingOntology().runInference();
-
-//        Validate Results
-        final Set<OWLNamedIndividual> gaulInstances = reasoner.getInstances(TestClasses.GAULTestClass.class);
-        assertEquals(191, gaulInstances.size(), "Wrong number of GAUL records from instances method");
-
-//        Try to read one out.
-//        final GAULTestClass ancuabe = reasoner.readTrestleObject(GAULTestClass.class, IRI.create("trestle:", "Ancuabe"));
-        final TestClasses.GAULTestClass ancuabe = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, IRI.create(OVERRIDE_PREFIX, "Ancuabe"), true, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
-        assertEquals(ancuabe.adm0_name, "Ancuabe", "Wrong name");
-//        Check the temporal to make sure they got parsed correctly
-        assertEquals(LocalDate.of(1990, 1, 1).atStartOfDay(), ancuabe.time, "Times should match");
-
-//        Try to read out the datasets
-        final Set<String> availableDatasets = reasoner.getAvailableDatasets();
-        assertTrue(availableDatasets.size() > 0, "Should have dataset");
-
-        datasetClassID = availableDatasets.stream()
-                .filter(ds -> ds.equals("GAUL_Test"))
-                .findAny()
-                .get();
-        @NonNull final Object ancuabe1 = reasoner.readTrestleObject(datasetClassID, "Ancuabe", OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
-        assertEquals(ancuabe, ancuabe1, "Objects should be equal");
-        final Object ancuabe2 = reasoner.readTrestleObject(reasoner.getDatasetClass(datasetClassID), "Ancuabe", OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
-        assertEquals(ancuabe, ancuabe2, "Should be equal");
-
-//        Check the spatial intersection
-        Optional<List<@NonNull Object>> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC));
-        assertTrue(intersectedObjects.isPresent(), "Should have objects");
-        assertTrue(intersectedObjects.get().size() > 0, "Should have more than 1 object");
-//
-//        final Class<?> datasetClass = reasoner.getDatasetClass(datasetClassID);
-//        intersectedObjects = reasoner.spatialIntersect(datasetClass, ((TestClasses.GAULTestClass) ancuabe1).wkt, 100.0);
-//        assertTrue(intersectedObjects.isPresent());
-//        assertTrue(intersectedObjects.get().size() > 0, "Should have more than 0 objects");
-    }
-
-    @Test
     public void testClasses() throws TrestleClassException, MissingOntologyEntity, ParseException, TransformException {
 
 //        Spatial/Complex objects
@@ -299,8 +220,85 @@ public class TrestleAPITest {
                 () -> assertEquals(1, wktValues.get().size(), "Should only have 1 wkt value"));
 
 //        Test database temporals
+    }
+
+    @Test
+    public void gaulLoader() throws IOException, TrestleClassException, MissingOntologyEntity, OWLOntologyStorageException {
+//        Parse the CSV
+        List<TestClasses.GAULTestClass> gaulObjects = new ArrayList<>();
+
+        final InputStream is = TrestleAPITest.class.getClassLoader().getResourceAsStream("objects.csv");
+
+        final BufferedReader br = new BufferedReader(new InputStreamReader(is));
+
+        String line;
+
+        while ((line = br.readLine()) != null) {
 
 
+            final String[] splitLine = line.split(";");
+            final int code;
+            try {
+                code = Integer.parseInt(splitLine[0]);
+            } catch (NumberFormatException e) {
+                continue;
+            }
+
+
+            LocalDate date = LocalDate.parse(splitLine[2].replace("\"", ""), formatter);
+//            final Instant instant = Instant.from(date);
+//            final LocalDateTime startTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+
+//            Need to add a second to get it to format correctly.
+            gaulObjects.add(new TestClasses.GAULTestClass(code, splitLine[1].replace("\"", ""), date.atStartOfDay(), splitLine[4].replace("\"", "")));
+        }
+
+//        Write the objects
+        gaulObjects.parallelStream().forEach(gaul -> {
+            try {
+                reasoner.writeTrestleObject(gaul);
+            } catch (TrestleClassException e) {
+                throw new RuntimeException(String.format("Problem storing object %s", gaul.adm0_name), e);
+            } catch (MissingOntologyEntity missingOntologyEntity) {
+                throw new RuntimeException(String.format("Missing individual %s", missingOntologyEntity.getIndividual()), missingOntologyEntity);
+            }
+        });
+
+        reasoner.getUnderlyingOntology().runInference();
+
+//        Validate Results
+        final Set<OWLNamedIndividual> gaulInstances = reasoner.getInstances(TestClasses.GAULTestClass.class);
+        assertEquals(191, gaulInstances.size(), "Wrong number of GAUL records from instances method");
+
+//        Try to read one out.
+//        final GAULTestClass ancuabe = reasoner.readTrestleObject(GAULTestClass.class, IRI.create("trestle:", "Ancuabe"));
+        final TestClasses.GAULTestClass ancuabe = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, IRI.create(OVERRIDE_PREFIX, "Ancuabe"), true, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
+        assertEquals(ancuabe.adm0_name, "Ancuabe", "Wrong name");
+//        Check the temporal to make sure they got parsed correctly
+        assertEquals(LocalDate.of(1990, 1, 1).atStartOfDay(), ancuabe.time, "Times should match");
+
+//        Try to read out the datasets
+        final Set<String> availableDatasets = reasoner.getAvailableDatasets();
+        assertTrue(availableDatasets.size() > 0, "Should have dataset");
+
+        datasetClassID = availableDatasets.stream()
+                .filter(ds -> ds.equals("GAUL_Test"))
+                .findAny()
+                .get();
+        @NonNull final Object ancuabe1 = reasoner.readTrestleObject(datasetClassID, "Ancuabe", OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
+        assertEquals(ancuabe, ancuabe1, "Objects should be equal");
+        final Object ancuabe2 = reasoner.readTrestleObject(reasoner.getDatasetClass(datasetClassID), "Ancuabe", OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
+        assertEquals(ancuabe, ancuabe2, "Should be equal");
+
+//        Check the spatial intersection
+        Optional<List<@NonNull Object>> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC));
+        assertTrue(intersectedObjects.isPresent(), "Should have objects");
+        assertTrue(intersectedObjects.get().size() > 0, "Should have more than 1 object");
+//
+//        final Class<?> datasetClass = reasoner.getDatasetClass(datasetClassID);
+//        intersectedObjects = reasoner.spatialIntersect(datasetClass, ((TestClasses.GAULTestClass) ancuabe1).wkt, 100.0);
+//        assertTrue(intersectedObjects.isPresent());
+//        assertTrue(intersectedObjects.get().size() > 0, "Should have more than 0 objects");
     }
 
 
