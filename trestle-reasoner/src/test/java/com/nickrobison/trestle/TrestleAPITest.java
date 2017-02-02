@@ -179,7 +179,7 @@ public class TrestleAPITest {
         classObjects.add(offsetDateTimeTest);
         classObjects.add(multiLangTest);
 
-        classObjects.stream().forEach(object -> {
+        classObjects.parallelStream().forEach(object -> {
             try {
                 reasoner.writeTrestleObject(object);
             } catch (TrestleClassException | MissingOntologyEntity e) {
@@ -288,6 +288,7 @@ public class TrestleAPITest {
         reasoner.addFactToTrestleObject(v3.getClass(), "test-object", "testValue", "test value three", LocalDate.of(2007, 3, 26), null, null);
         reasoner.addFactToTrestleObject(v3.getClass(), "test-object", "wkt", "POINT(1.71255092695307 -30.572028714467507)", LocalDate.of(2017, 1, 1), null);
 
+        reasoner.getUnderlyingOntology().runInference();
 //        Try to get some fact values
         final Optional<List<Object>> values = reasoner.getFactValues(v3.getClass(), "test-object", "testValue", null, null, null);
         assertAll(() -> assertTrue(values.isPresent(), "Should have fact values"),

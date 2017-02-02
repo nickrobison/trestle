@@ -296,7 +296,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             final Optional<List<OWLDataPropertyAssertionAxiom>> individualFacts = trestleParser.classParser.getFacts(inputObject);
             final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(true);
 //            Get all the currently valid facts
-//            final Set<OWLDataPropertyAssertionAxiom> factsForIndividual = ontology.getFactsForIndividual(owlNamedIndividual, null, null);
             if (individualFacts.isPresent()) {
                 final String individualFactquery = this.qb.buildObjectPropertyRetrievalQuery(OffsetDateTime.now(), OffsetDateTime.now(), true, owlNamedIndividual);
                 final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(individualFactquery);
@@ -320,20 +319,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 
             }
-//            if (individualFacts.isPresent()) {
-////        Create a facts temporal and write it, with no association
-//                writeTemporal(factTemporal, null, null, null);
-//                writeTemporal(dTemporal, null, null, null);
-//                individualFacts.get().forEach(fact -> {
-////                    If the individual has a fact that is currently valid, update the old temporal and write the new fact
-//                    if (factsForIndividual.contains(fact)) {
-//                        final OffsetDateTime offsetDateTime = TemporalParser.parseTemporalToOntologyDateTime(factTemporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
-//                        final String temporalUpdateQuery = this.qb.buildUpdateUnboundedTemporal(fact.getSubject().asOWLNamedIndividual(), offsetDateTime);
-//                        this.ontology.executeUpdateSPARQL(temporalUpdateQuery);
-//                    }
-//                    writeObjectFacts(owlNamedIndividual, Arrays.asList(fact), factTemporal, dTemporal);
-//                });
-//            }
             ontology.returnAndCommitTransaction(trestleTransaction);
         } else {
 //        If the object doesn't exist, continue with the simple write
@@ -347,21 +332,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             ontology.createIndividual(owlNamedIndividual, owlClass);
             writeTemporal(objectTemporal, owlNamedIndividual);
 
-//            Write the database temporal
-//        An object doesn't have a database temporal, just an exists temporal
-//            writeTemporal(dTemporal, null, null, null);
-//        Write the individual temporal
-//        FIXME(nrobison): Figure out how to set the exists temporal, without just relying on what the class definition says
-//            writeTemporal(objectTemporal, owlNamedIndividual, TemporalScope.EXISTS, existsTimeIRI);
-//        Create a facts temporal and write it, with no association
-//            writeTemporal(factTemporal, null, null, null);
-
 //        Write the data facts
-//        TODO(nrobison): Asyncify
             final Optional<List<OWLDataPropertyAssertionAxiom>> individualFacts = trestleParser.classParser.getFacts(inputObject);
             individualFacts.ifPresent(owlDataPropertyAssertionAxioms -> writeObjectFacts(owlNamedIndividual, owlDataPropertyAssertionAxioms, factTemporal, dTemporal));
 
-//        Write the object properties
             ontology.returnAndCommitTransaction(trestleTransaction);
         }
     }
@@ -459,7 +433,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final long now = Instant.now().getEpochSecond();
         final OWLClass factClass = df.getOWLClass(factClassIRI);
         properties.forEach(property -> {
-//            TODO(nrobison): We should change this to lookup any existing records to correctly increment the record number
+            //            TODO(nrobison): We should change this to lookup any existing records to correctly increment the record number
             final OWLNamedIndividual propertyIndividual = df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, String.format("%s:%s:%d", rootIndividual.getIRI().getShortForm(), property.getProperty().asOWLDataProperty().getIRI().getShortForm(), now)));
             ontology.createIndividual(propertyIndividual, factClass);
             try {
@@ -467,12 +441,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 ontology.writeIndividualDataProperty(propertyIndividual, property.getProperty().asOWLDataProperty(), property.getObject());
 //                Write the valid validTemporal
                 writeTemporal(validTemporal, propertyIndividual);
-//                ontology.writeIndividualObjectProperty(propertyIndividual, validTimeIRI, df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX, validTemporal.getID())));
 //                Write the relation back to the root individual
                 ontology.writeIndividualObjectProperty(propertyIndividual, factOfIRI, rootIndividual);
 //                Write the database time
                 writeTemporal(databaseTemporal, propertyIndividual);
-//                ontology.writeIndividualObjectProperty(propertyIndividual, databaseTimeIRI, df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX, databaseTemporal.getID())));
             } catch (MissingOntologyEntity missingOntologyEntity) {
                 logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
             }
@@ -576,11 +548,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
         final PointTemporal validTemporal;
         final PointTemporal databaseTemporal;
-//        if (startTemporal != null && endTemporal != null) {
-//            databaseTemporal = TemporalObjectBuilder.valid().from(startTemporal).to(startTemporal).withRelations(df.getOWLNamedIndividual(individualIRI));
-//        } else if (startTemporal != null) {
-//            databaseTemporal = TemporalObjectBuilder.valid().from(startTemporal).withRelations(df.getOWLNamedIndividual(individualIRI));
-//        }
         if (validAt != null) {
             validTemporal = TemporalObjectBuilder.valid().at(validAt).build();
         } else {
@@ -626,23 +593,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //        If no temporals are provided, perform the intersection at query time.
         final OffsetDateTime dbAtTemporal;
         final OffsetDateTime validAtTemporal;
-//        @Nullable OffsetDateTime startTemporal = null;
-//        @Nullable OffsetDateTime endTemporal = null;
-//        if (databaseTemporal != null) {
         dbAtTemporal = parseTemporalToOntologyDateTime(databaseTemporal.getPointTime(), ZoneOffset.UTC);
-//        } else {
-//            dbAtTemporal = OffsetDateTime.now();
-//        }
-//                startTemporal = parseTemporalToOntologyDateTime(databaseTemporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
-//            } else {
-//                startTemporal = parseTemporalToOntologyDateTime(databaseTemporal.asInterval().getFromTime(), TemporalParser.IntervalType.START, ZoneOffset.UTC);
-//                endTemporal = parseTemporalToOntologyDateTime((Temporal) databaseTemporal.asInterval().getToTime().get(), TemporalParser.IntervalType.END, ZoneOffset.UTC);
-//            }
-//        if (validTemporal != null) {
         validAtTemporal = parseTemporalToOntologyDateTime(validTemporal.getPointTime(), ZoneOffset.UTC);
-//        } else {
-//            validAtTemporal = OffsetDateTime.now();
-//        }
 
 //            Get the temporal objects to figure out the correct return type
         final Class<? extends Temporal> baseTemporalType = TemporalParser.GetTemporalType(clazz);
@@ -868,11 +820,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
             String spatialIntersection = null;
             try {
-//                if (validAt == null) {
-//                    logger.debug("Running generic spatial intersection");
-//                    spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.UNITS.METER, OffsetDateTime.now(), OffsetDateTime.now());
-//                } else {
-//                    final OffsetDateTime atLDTime = parseTemporalToOntologyDateTime(validAt, ZoneOffset.UTC);
                 logger.debug("Running spatial intersection at time {}", atTemporal);
                 spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.UNITS.METER, atTemporal, dbTemporal);
 //                }
