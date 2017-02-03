@@ -1,9 +1,9 @@
 package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.annotations.*;
-import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
+import com.nickrobison.trestle.annotations.temporal.DefaultTemporal;
+import com.nickrobison.trestle.annotations.temporal.EndTemporal;
+import com.nickrobison.trestle.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.exceptions.MissingConstructorException;
 import com.nickrobison.trestle.types.ObjectRestriction;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -59,17 +59,17 @@ public class ClassParser {
         return this.defaultLanguageCode;
     }
 
-    public OWLClass GetObjectClass(Object inputObject) {
+    public OWLClass getObjectClass(Object inputObject) {
         //        Get the class name, from the annotation, if possible;
         final Class<?> clazz = inputObject.getClass();
-        return GetObjectClass(clazz);
+        return getObjectClass(clazz);
     }
 
-    public OWLClass GetObjectClass(Class<?> clazz) {
+    public OWLClass getObjectClass(Class<?> clazz) {
 
         final String className;
-        if (clazz.isAnnotationPresent(OWLClassName.class)) {
-            className = clazz.getDeclaredAnnotation(OWLClassName.class).className();
+        if (clazz.isAnnotationPresent(DatasetClass.class)) {
+            className = clazz.getDeclaredAnnotation(DatasetClass.class).name();
         } else {
             className = clazz.getName();
         }
@@ -77,7 +77,7 @@ public class ClassParser {
         return df.getOWLClass(iri);
     }
 
-    public OWLNamedIndividual GetIndividual(Object inputObject) {
+    public OWLNamedIndividual getIndividual(Object inputObject) {
 
         final Class<?> clazz = inputObject.getClass();
         String identifier = UUID.randomUUID().toString();
@@ -134,13 +134,13 @@ public class ClassParser {
         return Optional.empty();
     }
 
-    static boolean filterDataPropertyField(Field objectMember, boolean filterSpatial) {
+    static boolean filterFactField(Field objectMember, boolean filterSpatial) {
 //        Check first to ignore the field
         return (!objectMember.isAnnotationPresent(Ignore.class)
 //                Only access it if it's public
                 & Modifier.isPublic(objectMember.getModifiers())
                 & (
-                objectMember.isAnnotationPresent(DataProperty.class)
+                objectMember.isAnnotationPresent(Fact.class)
                         | (objectMember.isAnnotationPresent(Spatial.class) && !filterSpatial)
                         | objectMember.isAnnotationPresent(IndividualIdentifier.class)
                         | objectMember.isAnnotationPresent(Language.class)
@@ -150,13 +150,13 @@ public class ClassParser {
                 & !(objectMember.getName().contains("_ebean"));
     }
 
-    static boolean filterDataPropertyMethod(Method objectMember, boolean filterSpatial) {
+    static boolean filterFactMethod(Method objectMember, boolean filterSpatial) {
 //        Check first to ignore the field
         return (!objectMember.isAnnotationPresent(Ignore.class)
 //                Only access it if it's public
                 & Modifier.isPublic(objectMember.getModifiers())
                 & (
-                objectMember.isAnnotationPresent(DataProperty.class)
+                objectMember.isAnnotationPresent(Fact.class)
                         | (objectMember.isAnnotationPresent(Spatial.class) && !filterSpatial)
                         | objectMember.isAnnotationPresent(IndividualIdentifier.class)
                         | objectMember.isAnnotationPresent(Language.class)
@@ -177,8 +177,8 @@ public class ClassParser {
      * @param inputObject - Object to parse
      * @return - Optional List of OWLDataPropertyAssertionAxioms
      */
-    public Optional<List<OWLDataPropertyAssertionAxiom>> GetDataProperties(Object inputObject) {
-        return GetDataProperties(inputObject, false);
+    public Optional<List<OWLDataPropertyAssertionAxiom>> getFacts(Object inputObject) {
+        return getFacts(inputObject, false);
     }
 
     /**
@@ -187,17 +187,17 @@ public class ClassParser {
      * @param filterSpatial - Boolean to determine whether or not to filter out the spatial annotations
      * @return - Optional List of OWLDataPropertyAssertionAxioms
      */
-    public Optional<List<OWLDataPropertyAssertionAxiom>> GetDataProperties(Object inputObject, boolean filterSpatial) {
+    public Optional<List<OWLDataPropertyAssertionAxiom>> getFacts(Object inputObject, boolean filterSpatial) {
         final Class<?> clazz = inputObject.getClass();
         final List<OWLDataPropertyAssertionAxiom> axioms = new ArrayList<>();
 
-        final OWLNamedIndividual owlNamedIndividual = GetIndividual(inputObject);
+        final OWLNamedIndividual owlNamedIndividual = getIndividual(inputObject);
 
 //        Fields:
         for (Field classField : clazz.getDeclaredFields()) {
-            if (filterDataPropertyField(classField, filterSpatial)) {
-                if (classField.isAnnotationPresent(DataProperty.class)) {
-                    final DataProperty annotation = classField.getAnnotation(DataProperty.class);
+            if (filterFactField(classField, filterSpatial)) {
+                if (classField.isAnnotationPresent(Fact.class)) {
+                    final Fact annotation = classField.getAnnotation(Fact.class);
                     final IRI iri = IRI.create(ReasonerPrefix, annotation.name());
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
                     Object fieldValue = null;
@@ -257,9 +257,9 @@ public class ClassParser {
 
 //        Methods
         for (Method classMethod : clazz.getDeclaredMethods()) {
-            if (filterDataPropertyMethod(classMethod, filterSpatial)) {
-                if (classMethod.isAnnotationPresent(DataProperty.class)) {
-                    final DataProperty annotation = classMethod.getAnnotation(DataProperty.class);
+            if (filterFactMethod(classMethod, filterSpatial)) {
+                if (classMethod.isAnnotationPresent(Fact.class)) {
+                    final Fact annotation = classMethod.getAnnotation(Fact.class);
                     final IRI iri = IRI.create(ReasonerPrefix, annotation.name());
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
 
@@ -319,8 +319,8 @@ public class ClassParser {
      * @param inputObject - Object to parse for spatial property
      * @return - Optional of OWLDataPropertyAssertionAxiom representing spatial property
      */
-    public Optional<OWLDataPropertyAssertionAxiom> GetSpatialProperty(Object inputObject) {
-        final OWLNamedIndividual owlNamedIndividual = GetIndividual(inputObject);
+    public Optional<OWLDataPropertyAssertionAxiom> GetSpatialFact(Object inputObject) {
+        final OWLNamedIndividual owlNamedIndividual = getIndividual(inputObject);
         final IRI iri = IRI.create(GEOSPARQLPREFIX, "asWKT");
         final OWLDataProperty spatialDataProperty = df.getOWLDataProperty(iri);
 //        Methods first
@@ -391,8 +391,8 @@ public class ClassParser {
 //        See if we can match right off the language
 //        Methods
         final Optional<String> annotatedMethod = Arrays.stream(clazz.getDeclaredMethods())
-                .filter(m -> m.isAnnotationPresent(DataProperty.class))
-                .filter(m -> m.getAnnotation(DataProperty.class).name().equals(classMember))
+                .filter(m -> m.isAnnotationPresent(Fact.class))
+                .filter(m -> m.getAnnotation(Fact.class).name().equals(classMember))
                 .filter(m -> m.isAnnotationPresent(Language.class))
                 .filter(m -> m.getAnnotation(Language.class).language().toLowerCase().equals(languageTag))
                 .map(m -> {
@@ -405,10 +405,10 @@ public class ClassParser {
                     } catch (MissingConstructorException e) {
                         e.printStackTrace();
                     }
-                    return m.getAnnotation(DataProperty.class).name();
+                    return m.getAnnotation(Fact.class).name();
                 })
 //                .map(ClassParser::filterMethodName)
-//                .map(m -> m.getAnnotation(DataProperty.class).name())
+//                .map(m -> m.getAnnotation(Fact.class).name())
                 .findAny();
 
         if (annotatedMethod.isPresent()) {
@@ -417,8 +417,8 @@ public class ClassParser {
 
 //        Fields
         final Optional<String> annotatedField = Arrays.stream(clazz.getDeclaredFields())
-                .filter(f -> f.isAnnotationPresent(DataProperty.class))
-                .filter(f -> f.getAnnotation(DataProperty.class).name().equals(classMember))
+                .filter(f -> f.isAnnotationPresent(Fact.class))
+                .filter(f -> f.getAnnotation(Fact.class).name().equals(classMember))
                 .filter(f -> f.isAnnotationPresent(Language.class))
                 .filter(f -> f.getAnnotation(Language.class).language().toLowerCase().equals(languageTag))
                 .map(f -> {
@@ -431,10 +431,10 @@ public class ClassParser {
                     } catch (MissingConstructorException e) {
                         e.printStackTrace();
                     }
-                    return f.getAnnotation(DataProperty.class).name();
+                    return f.getAnnotation(Fact.class).name();
                 })
 //                .map(Field::getName)
-//                .map(f -> f.getAnnotation(DataProperty.class).name())
+//                .map(f -> f.getAnnotation(Fact.class).name())
                 .findAny();
 
         if (annotatedField.isPresent()) {
@@ -443,8 +443,8 @@ public class ClassParser {
 
 //        If we can't match on language annotation, try to look for the method/field without a language annotation
         final Optional<String> methodNoLanguage = Arrays.stream(clazz.getDeclaredMethods())
-                .filter(m -> m.isAnnotationPresent(DataProperty.class))
-                .filter(m -> m.getAnnotation(DataProperty.class).name().equals(classMember))
+                .filter(m -> m.isAnnotationPresent(Fact.class))
+                .filter(m -> m.getAnnotation(Fact.class).name().equals(classMember))
                 .filter(m -> !m.isAnnotationPresent(Language.class))
                 .map(m -> {
                     try {
@@ -456,10 +456,10 @@ public class ClassParser {
                     } catch (MissingConstructorException e) {
                         e.printStackTrace();
                     }
-                    return m.getAnnotation(DataProperty.class).name();
+                    return m.getAnnotation(Fact.class).name();
                 })
 //                .map(ClassParser::filterMethodName)
-//                .map(m -> m.getAnnotation(DataProperty.class).name())
+//                .map(m -> m.getAnnotation(Fact.class).name())
                 .findAny();
 
         if (methodNoLanguage.isPresent()) {
@@ -467,8 +467,8 @@ public class ClassParser {
         }
 
         final Optional<String> fieldNoLanguage = Arrays.stream(clazz.getDeclaredFields())
-                .filter(f -> f.isAnnotationPresent(DataProperty.class))
-                .filter(f -> f.getAnnotation(DataProperty.class).name().equals(classMember))
+                .filter(f -> f.isAnnotationPresent(Fact.class))
+                .filter(f -> f.getAnnotation(Fact.class).name().equals(classMember))
                 .filter(f -> !f.isAnnotationPresent(Language.class))
                 .map(f -> {
                     try {
@@ -480,10 +480,10 @@ public class ClassParser {
                     } catch (MissingConstructorException e) {
                         e.printStackTrace();
                     }
-                    return f.getAnnotation(DataProperty.class).name();
+                    return f.getAnnotation(Fact.class).name();
                 })
 //                .map(Field::getName)
-//                .map(f -> f.getAnnotation(DataProperty.class).name())
+//                .map(f -> f.getAnnotation(Fact.class).name())
                 .findAny();
 
 //        If nothing returns, run the default matcher
@@ -516,8 +516,8 @@ public class ClassParser {
 
         if (classField == null) {
             final Optional<Field> dataField = Arrays.stream(clazz.getDeclaredFields())
-                    .filter(f -> f.isAnnotationPresent(DataProperty.class))
-                    .filter(f -> f.getAnnotation(DataProperty.class).name().equals(classMember))
+                    .filter(f -> f.isAnnotationPresent(Fact.class))
+                    .filter(f -> f.getAnnotation(Fact.class).name().equals(classMember))
                     .findFirst();
 
             if (dataField.isPresent()) {
@@ -539,8 +539,8 @@ public class ClassParser {
         }
 
         final Optional<Method> annotatedMethod = Arrays.stream(clazz.getDeclaredMethods())
-                .filter(m -> m.isAnnotationPresent(DataProperty.class))
-                .filter(m -> m.getAnnotation(DataProperty.class).name().equals(classMember))
+                .filter(m -> m.isAnnotationPresent(Fact.class))
+                .filter(m -> m.getAnnotation(Fact.class).name().equals(classMember))
                 .findFirst();
         if (annotatedMethod.isPresent()) {
             return filterMethodName(annotatedMethod.get());
@@ -590,12 +590,12 @@ public class ClassParser {
 //        Default
         if (TemporalParser.IsDefault(clazz)) {
             final Optional<Field> temporalField = Arrays.stream(clazz.getDeclaredFields())
-                    .filter(f -> (f.isAnnotationPresent(DefaultTemporalProperty.class)))
+                    .filter(f -> (f.isAnnotationPresent(DefaultTemporal.class)))
                     .findFirst();
 
             if (temporalField.isPresent()) {
 //                Check to see if we have a given temporal property
-                final String annotationName = temporalField.get().getAnnotation(DefaultTemporalProperty.class).name();
+                final String annotationName = temporalField.get().getAnnotation(DefaultTemporal.class).name();
                 if (annotationName.equals("")) {
                     return temporalField.get().getName();
                 } else {
@@ -604,12 +604,12 @@ public class ClassParser {
             }
 
             final Optional<Method> temporalMethod = Arrays.stream(clazz.getDeclaredMethods())
-                    .filter(f -> (f.isAnnotationPresent(DefaultTemporalProperty.class)))
+                    .filter(f -> (f.isAnnotationPresent(DefaultTemporal.class)))
                     .findFirst();
 
 
             if (temporalMethod.isPresent()) {
-                final String annotationName = temporalMethod.get().getAnnotation(DefaultTemporalProperty.class).name();
+                final String annotationName = temporalMethod.get().getAnnotation(DefaultTemporal.class).name();
                 if (annotationName.equals("")) {
                     return filterMethodName(temporalMethod.get());
                 } else {
@@ -620,11 +620,11 @@ public class ClassParser {
         } else if (classMember.toLowerCase().contains("start")) {
 //            Check for start/end temporal names
             final Optional<Field> temporalField = Arrays.stream(clazz.getDeclaredFields())
-                    .filter(f -> (f.isAnnotationPresent(StartTemporalProperty.class)))
+                    .filter(f -> (f.isAnnotationPresent(StartTemporal.class)))
                     .findFirst();
 
             if (temporalField.isPresent()) {
-                final String annotationName = temporalField.get().getAnnotation(StartTemporalProperty.class).name();
+                final String annotationName = temporalField.get().getAnnotation(StartTemporal.class).name();
                 if (annotationName.equals("")) {
                     return temporalField.get().getName();
                 } else {
@@ -633,10 +633,10 @@ public class ClassParser {
             }
 
             final Optional<Method> temporalMethod = Arrays.stream(clazz.getDeclaredMethods())
-                    .filter(f -> (f.isAnnotationPresent(StartTemporalProperty.class)))
+                    .filter(f -> (f.isAnnotationPresent(StartTemporal.class)))
                     .findFirst();
             if (temporalMethod.isPresent()) {
-                final String annotationName = temporalMethod.get().getAnnotation(StartTemporalProperty.class).name();
+                final String annotationName = temporalMethod.get().getAnnotation(StartTemporal.class).name();
                 if (annotationName.equals("")) {
                     return filterMethodName(temporalMethod.get());
                 } else {
@@ -646,11 +646,11 @@ public class ClassParser {
 
         } else {
             final Optional<Field> temporalField = Arrays.stream(clazz.getDeclaredFields())
-                    .filter(f -> (f.isAnnotationPresent(EndTemporalProperty.class)))
+                    .filter(f -> (f.isAnnotationPresent(EndTemporal.class)))
                     .findFirst();
 
             if (temporalField.isPresent()) {
-                final String annotationName = temporalField.get().getAnnotation(EndTemporalProperty.class).name();
+                final String annotationName = temporalField.get().getAnnotation(EndTemporal.class).name();
                 if (annotationName.equals("")) {
                     return temporalField.get().getName();
                 } else {
@@ -659,10 +659,10 @@ public class ClassParser {
             }
 
             final Optional<Method> temporalMethod = Arrays.stream(clazz.getDeclaredMethods())
-                    .filter(f -> (f.isAnnotationPresent(EndTemporalProperty.class)))
+                    .filter(f -> (f.isAnnotationPresent(EndTemporal.class)))
                     .findFirst();
             if (temporalMethod.isPresent()) {
-                final String annotationName = temporalMethod.get().getAnnotation(EndTemporalProperty.class).name();
+                final String annotationName = temporalMethod.get().getAnnotation(EndTemporal.class).name();
                 if (annotationName.equals("")) {
                     return filterMethodName(temporalMethod.get());
                 } else {
@@ -672,6 +672,96 @@ public class ClassParser {
         }
 
         throw new RuntimeException("Cannot match field or method");
+    }
+
+    /**
+     * Get the datatype of the fact represented in the given string
+     * @param clazz - Class to parse
+     * @param factName - String name of fact
+     * @return - Optional Class of return datatype
+     */
+    public Optional<Class<?>> getFactDatatype(Class<?> clazz, String factName) {
+//        Split String to get the actual fact name
+        final String name;
+        final String[] splitName = factName.split("#");
+        if (splitName.length < 2) {
+            name = factName;
+        } else {
+            name = splitName[1];
+        }
+        final String classMember;
+        try {
+            classMember = ClassParser.matchWithClassMember(clazz, name);
+        } catch (RuntimeException e) {
+            return Optional.empty();
+        }
+
+//        Try for methods first
+        final Optional<Method> matchedMethod = Arrays.stream(clazz.getDeclaredMethods())
+                .filter(method -> ClassParser.filterFactMethod(method, false))
+                .filter(method -> filterMethodName(method).equals(classMember))
+                .findFirst();
+
+        if (matchedMethod.isPresent()) {
+            return Optional.of(matchedMethod.get().getReturnType());
+        }
+//        Now the fields
+        final Optional<Field> matchedField = Arrays.stream(clazz.getDeclaredFields())
+                .filter(field -> ClassParser.filterFactField(field, false))
+                .filter(field -> field.getName().equals(classMember))
+                .findFirst();
+
+        if (matchedField.isPresent()) {
+            return Optional.of(matchedField.get().getType());
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Get the correct Fact {@link IRI} from a given string
+     * Gets the correct IRI prefix to handle things like Spatial members and user defined types
+     * @param clazz - Java class to parse
+     * @param factName - Name of fact to build IRI for
+     * @return - Optional {@link IRI} of fact
+     */
+    public Optional<IRI> getFactIRI(Class<?> clazz, String factName) {
+//        Split String to get the actual fact name
+        final String name;
+        final String[] splitName = factName.split("#");
+        if (splitName.length < 2) {
+            name = factName;
+        } else {
+            name = splitName[1];
+        }
+        final String classMember;
+        try {
+            classMember = ClassParser.matchWithClassMember(clazz, name);
+        } catch (RuntimeException e) {
+            return Optional.empty();
+        }
+
+//        Try for methods first
+        final Optional<IRI> matchedMethod = Arrays.stream(clazz.getDeclaredMethods())
+                .filter(method -> ClassParser.filterFactMethod(method, false))
+                .filter(method -> filterMethodName(method).equals(classMember))
+                .map(method -> SpatialParser.filterDataSpatialName(method, this.ReasonerPrefix))
+                .findFirst();
+
+        if (matchedMethod.isPresent()) {
+            return Optional.of(matchedMethod.get());
+        }
+//        Now the fields
+        final Optional<IRI> matchedField = Arrays.stream(clazz.getDeclaredFields())
+                .filter(field -> ClassParser.filterFactField(field, false))
+                .filter(field -> field.getName().equals(classMember))
+                .map(field -> SpatialParser.filterDataSpatialName(field, this.ReasonerPrefix))
+                .findFirst();
+
+        if (matchedField.isPresent()) {
+            return Optional.of(matchedField.get());
+        }
+        return Optional.empty();
+
     }
 
     static Optional<Object> accessMethodValue(Method classMethod, Object inputObject) {
@@ -705,8 +795,8 @@ public class ClassParser {
     static String getFieldName(Field field) {
 
 //        Iterate through the various annotations and figure out if we need to get an annotated values
-        if (field.isAnnotationPresent(DataProperty.class)) {
-            final String fieldName = field.getAnnotation(DataProperty.class).name();
+        if (field.isAnnotationPresent(Fact.class)) {
+            final String fieldName = field.getAnnotation(Fact.class).name();
             if (fieldName.equals("")) {
                 return field.getName();
             } else {
@@ -719,22 +809,22 @@ public class ClassParser {
             } else {
                 return fieldName;
             }
-        } else if (field.isAnnotationPresent(DefaultTemporalProperty.class)) {
-            final String fieldName = field.getAnnotation(DefaultTemporalProperty.class).name();
+        } else if (field.isAnnotationPresent(DefaultTemporal.class)) {
+            final String fieldName = field.getAnnotation(DefaultTemporal.class).name();
             if (fieldName.equals("")) {
                 return field.getName();
             } else {
                 return fieldName;
             }
-        } else if (field.isAnnotationPresent(StartTemporalProperty.class)) {
-            final String fieldName = field.getAnnotation(StartTemporalProperty.class).name();
+        } else if (field.isAnnotationPresent(StartTemporal.class)) {
+            final String fieldName = field.getAnnotation(StartTemporal.class).name();
             if (fieldName.equals("")) {
                 return field.getName();
             } else {
                 return fieldName;
             }
-        } else if (field.isAnnotationPresent(EndTemporalProperty.class)) {
-            final String fieldName = field.getAnnotation(EndTemporalProperty.class).name();
+        } else if (field.isAnnotationPresent(EndTemporal.class)) {
+            final String fieldName = field.getAnnotation(EndTemporal.class).name();
             if (fieldName.equals("")) {
                 return field.getName();
             } else {
@@ -752,8 +842,8 @@ public class ClassParser {
      */
     static String getMethodName(Method method) {
         //        Iterate through the various annotations and figure out if we need to get an annotated values
-        if (method.isAnnotationPresent(DataProperty.class)) {
-            final String methodName = method.getAnnotation(DataProperty.class).name();
+        if (method.isAnnotationPresent(Fact.class)) {
+            final String methodName = method.getAnnotation(Fact.class).name();
             if (methodName.equals("")) {
                 return filterMethodName(method);
             } else {
@@ -766,22 +856,22 @@ public class ClassParser {
             } else {
                 return methodName;
             }
-        } else if (method.isAnnotationPresent(DefaultTemporalProperty.class)) {
-            final String methodName = method.getAnnotation(DefaultTemporalProperty.class).name();
+        } else if (method.isAnnotationPresent(DefaultTemporal.class)) {
+            final String methodName = method.getAnnotation(DefaultTemporal.class).name();
             if (methodName.equals("")) {
                 return filterMethodName(method);
             } else {
                 return methodName;
             }
-        } else if (method.isAnnotationPresent(StartTemporalProperty.class)) {
-            final String methodName = method.getAnnotation(StartTemporalProperty.class).name();
+        } else if (method.isAnnotationPresent(StartTemporal.class)) {
+            final String methodName = method.getAnnotation(StartTemporal.class).name();
             if (methodName.equals("")) {
                 return filterMethodName(method);
             } else {
                 return methodName;
             }
-        } else if (method.isAnnotationPresent(EndTemporalProperty.class)) {
-            final String methodName = method.getAnnotation(EndTemporalProperty.class).name();
+        } else if (method.isAnnotationPresent(EndTemporal.class)) {
+            final String methodName = method.getAnnotation(EndTemporal.class).name();
             if (methodName.equals("")) {
                 return filterMethodName(method);
             } else {

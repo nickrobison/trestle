@@ -299,21 +299,23 @@ public interface ITrestleOntology {
     Optional<Set<OWLLiteral>> getIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property);
 
     /**
-     * Get all the related facts for an individual, valid at a specific point in database time
+     * Get all the related facts for an individual, valid at a specific valid/database point
      * If no temporals are specified, we retrieve the currently valid facts
      * @param individual - OWLNamedIndividual to get facts for
-     * @param startTemporal - Nullable OffsetDateTime representing starting temporal
-     * @param endTemporal - Nullable OffsetDateTime representing ending temporal
+     * @param validTemporal - Nullable OffsetDateTime representing valid-at temporal
+     * @param databaseTemporal - Nullable OffsetDateTime representing database-at temporal
+     * @param filterTemporals
      * @return
      */
-    Set<OWLDataPropertyAssertionAxiom> GetFactsForIndividual(OWLNamedIndividual individual, @Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal);
+    Set<OWLDataPropertyAssertionAxiom> getFactsForIndividual(OWLNamedIndividual individual, @Nullable OffsetDateTime validTemporal, @Nullable OffsetDateTime databaseTemporal, boolean filterTemporals);
 
     /**
      * Get data properties for temporal from given individuals
      * @param individual - Individual to retrieve temporal properties from
      * @return - Set of OWLDataPropertyAssertionAxioms representing temporal properties
      */
-    Set<OWLDataPropertyAssertionAxiom> GetTemporalsForIndividual(OWLNamedIndividual individual);
+    @Deprecated
+    Set<OWLDataPropertyAssertionAxiom> getTemporalsForIndividual(OWLNamedIndividual individual);
 
     /**
      * Get the full IRI expanded from the DefaultPrefixManager
@@ -354,9 +356,15 @@ public interface ITrestleOntology {
     /**
      * Excecute a raw SPARQL query against the ontology
      * @param queryString - String representing SPARQL query
-     * @return - TrestleResultSet for given query
+     * @return - {@link TrestleResultSet} for given query
      */
-    TrestleResultSet executeSPARQLTRS(String queryString);
+    TrestleResultSet executeSPARQLResults(String queryString);
+
+    /**
+     * Execute a writing SPARQL query, without returning a {@link TrestleResultSet}
+     * @param queryString - SPARQL Query String
+     */
+    void executeUpdateSPARQL(String queryString);
 
 //    /**
 //     * Open a transaction and lock it, for lots of bulk action

@@ -458,16 +458,16 @@ public abstract class SesameOntology extends TransactingOntology {
     }
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> GetFactsForIndividual(OWLNamedIndividual individual, @Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal) {
-        final String objectQuery = qb.buildObjectPropertyRetrievalQuery(startTemporal, endTemporal, individual);
-        final TrestleResultSet resultSet = this.executeSPARQLTRS(objectQuery);
+    public Set<OWLDataPropertyAssertionAxiom> getFactsForIndividual(OWLNamedIndividual individual, OffsetDateTime validTemporal, OffsetDateTime databaseTemporal, boolean filterTemporals) {
+        final String objectQuery = qb.buildObjectPropertyRetrievalQuery(validTemporal, databaseTemporal, true, individual);
+        final TrestleResultSet resultSet = this.executeSPARQLResults(objectQuery);
         return getDataPropertiesFromIndividualFacts(this.df, resultSet);
     }
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> GetTemporalsForIndividual(OWLNamedIndividual individual) {
+    public Set<OWLDataPropertyAssertionAxiom> getTemporalsForIndividual(OWLNamedIndividual individual) {
         final String temporalQuery = this.qb.buildIndividualTemporalQuery(individual);
-        final TrestleResultSet resultSet = this.executeSPARQLTRS(temporalQuery);
+        final TrestleResultSet resultSet = this.executeSPARQLResults(temporalQuery);
         return getDataPropertiesFromIndividualFacts(this.df, resultSet);
     }
 
@@ -498,7 +498,7 @@ public abstract class SesameOntology extends TransactingOntology {
         return getFullIRI(owlNamedObject).toString();
     }
 
-    public abstract TrestleResultSet executeSPARQLTRS(String queryString);
+    public abstract TrestleResultSet executeSPARQLResults(String queryString);
 
     public abstract void openDatasetTransaction(boolean write);
 

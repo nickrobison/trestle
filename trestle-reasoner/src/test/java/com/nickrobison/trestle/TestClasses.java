@@ -2,9 +2,9 @@ package com.nickrobison.trestle;
 
 import com.esri.core.geometry.Polygon;
 import com.nickrobison.trestle.annotations.*;
-import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
+import com.nickrobison.trestle.annotations.temporal.DefaultTemporal;
+import com.nickrobison.trestle.annotations.temporal.EndTemporal;
+import com.nickrobison.trestle.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.types.TemporalType;
 import com.vividsolutions.jts.geom.Geometry;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
@@ -22,14 +22,14 @@ import java.util.UUID;
  */
 public class TestClasses {
 
-    @OWLClassName(className = "odt-test")
+    @DatasetClass(name = "odt-test")
     protected static class OffsetDateTimeTest {
 
         @IndividualIdentifier
         public final Integer adm0_code;
-        @StartTemporalProperty
+        @StartTemporal
         public final OffsetDateTime startTemporal;
-        @EndTemporalProperty
+        @EndTemporal
         public final OffsetDateTime endTemporal;
 
         public OffsetDateTimeTest(Integer adm0_code, OffsetDateTime startTemporal, OffsetDateTime endTemporal) {
@@ -45,22 +45,16 @@ public class TestClasses {
 
             OffsetDateTimeTest that = (OffsetDateTimeTest) o;
 
-            if (!adm0_code.equals(that.adm0_code)) return false;
-            if (!startTemporal.atZoneSameInstant(ZoneOffset.UTC).equals(that.startTemporal.atZoneSameInstant(ZoneOffset.UTC))) return false;
-            return endTemporal.atZoneSameInstant(ZoneOffset.UTC).equals(that.endTemporal.atZoneSameInstant(ZoneOffset.UTC));
-
+            return adm0_code.equals(that.adm0_code);
         }
 
         @Override
         public int hashCode() {
-            int result = adm0_code.hashCode();
-            result = 31 * result + startTemporal.hashCode();
-            result = 31 * result + endTemporal.hashCode();
-            return result;
+            return adm0_code.hashCode();
         }
     }
 
-    @OWLClassName(className = "GAUL_JTS_Test")
+    @DatasetClass(name = "GAUL_JTS_Test")
     protected static class JTSGeometryTest {
 
         private final Integer adm0_code;
@@ -83,7 +77,7 @@ public class TestClasses {
             return this.geom;
         }
 
-        @DefaultTemporalProperty(name = "date", type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        @DefaultTemporal(name = "date", type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
         public LocalDate getDate() {
             return this.date;
         }
@@ -96,21 +90,18 @@ public class TestClasses {
             JTSGeometryTest that = (JTSGeometryTest) o;
 
             if (!getAdm0_code().equals(that.getAdm0_code())) return false;
-            if (!getGeom().equals(that.getGeom())) return false;
-            return getDate().equals(that.getDate());
-
+            return getGeom().equals(that.getGeom());
         }
 
         @Override
         public int hashCode() {
             int result = getAdm0_code().hashCode();
             result = 31 * result + getGeom().hashCode();
-            result = 31 * result + getDate().hashCode();
             return result;
         }
     }
 
-    @OWLClassName(className = "GAUL_ESRI_Test")
+    @DatasetClass(name = "GAUL_ESRI_Test")
     protected static class ESRIPolygonTest {
 
         private final Integer adm0_code;
@@ -129,7 +120,7 @@ public class TestClasses {
             return this.adm0_code;
         }
 
-        @DefaultTemporalProperty(name = "date", type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        @DefaultTemporal(name = "date", type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
         public LocalDate getDate() {
             return this.date;
         }
@@ -141,29 +132,25 @@ public class TestClasses {
 
             ESRIPolygonTest that = (ESRIPolygonTest) o;
 
-//            There are very subtle differences in the way WKTs are stored and managed, so we do a bit of munging to figure out the differences in area
             if (!getAdm0_code().equals(that.getAdm0_code())) return false;
-            if (!(Math.round(geom.calculateArea2D() - that.geom.calculateArea2D()) == 0)) return false;
-            return getDate().equals(that.getDate());
-
+            return geom.equals(that.geom);
         }
 
         @Override
         public int hashCode() {
             int result = getAdm0_code().hashCode();
             result = 31 * result + geom.hashCode();
-            result = 31 * result + getDate().hashCode();
             return result;
         }
     }
 
-    @OWLClassName(className = "GAUL_GeoTools_Test")
+    @DatasetClass(name = "GAUL_GeoTools_Test")
     public static class GeotoolsPolygonTest {
         @IndividualIdentifier
         public final UUID id;
         @Spatial
         public final org.opengis.geometry.coordinate.Polygon geom;
-        @DefaultTemporalProperty(name = "date", type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS, timeZone = "America/Los_Angeles")
+        @DefaultTemporal(name = "date", type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS, timeZone = "America/Los_Angeles")
         public final LocalDate date;
 
         public GeotoolsPolygonTest(UUID id, org.opengis.geometry.coordinate.Polygon geom, LocalDate date) {
@@ -180,24 +167,21 @@ public class TestClasses {
             GeotoolsPolygonTest that = (GeotoolsPolygonTest) o;
 
             if (!id.equals(that.id)) return false;
-            if (!geom.equals(that.geom)) return false;
-            return date != null ? date.equals(that.date) : that.date == null;
-
+            return geom.equals(that.geom);
         }
 
         @Override
         public int hashCode() {
             int result = id.hashCode();
             result = 31 * result + geom.hashCode();
-            result = 31 * result + (date != null ? date.hashCode() : 0);
             return result;
         }
     }
 
-    @OWLClassName(className="GAUL_Test")
+    @DatasetClass(name ="GAUL_Test")
     public static class GAULTestClass {
 
-        @DataProperty(name="ADM0_Code", datatype= OWL2Datatype.XSD_INTEGER)
+        @Fact(name="ADM0_Code", datatype= OWL2Datatype.XSD_INTEGER)
         public int adm0_code;
         public String adm0_name;
         @IndividualIdentifier
@@ -205,7 +189,7 @@ public class TestClasses {
         public String test_name;
         @Spatial
         public String wkt;
-        @DefaultTemporalProperty(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        @DefaultTemporal(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
         public LocalDateTime time;
 
         GAULTestClass() {
@@ -244,9 +228,7 @@ public class TestClasses {
             if (adm0_code != that.adm0_code) return false;
             if (!adm0_name.equals(that.adm0_name)) return false;
             if (!test_name.equals(that.test_name)) return false;
-            if (!wkt.equals(that.wkt)) return false;
-            return time.equals(that.time);
-
+            return wkt.equals(that.wkt);
         }
 
         @Override
@@ -255,12 +237,11 @@ public class TestClasses {
             result = 31 * result + adm0_name.hashCode();
             result = 31 * result + test_name.hashCode();
             result = 31 * result + wkt.hashCode();
-            result = 31 * result + time.hashCode();
             return result;
         }
     }
 
-    @OWLClassName(className = "gaul-complex")
+    @DatasetClass(name = "gaul-complex")
     public static class GAULComplexClassTest {
 
         @IndividualIdentifier
@@ -304,7 +285,7 @@ public class TestClasses {
             return this.wkt;
         }
 
-        @StartTemporalProperty
+        @StartTemporal
         public LocalDate getAtDate() {
             return this.atDate;
         }
@@ -322,8 +303,7 @@ public class TestClasses {
             if (!testBigInt.equals(that.testBigInt)) return false;
             if (!testInteger.equals(that.testInteger)) return false;
             if (!getTestDouble().equals(that.getTestDouble())) return false;
-            if (!getWkt().equals(that.getWkt())) return false;
-            return getAtDate().equals(that.getAtDate());
+            return getWkt().equals(that.getWkt());
         }
 
         @Override
@@ -338,12 +318,11 @@ public class TestClasses {
             temp = Double.doubleToLongBits(testPrimitiveDouble);
             result = 31 * result + (int) (temp ^ (temp >>> 32));
             result = 31 * result + getWkt().hashCode();
-            result = 31 * result + getAtDate().hashCode();
             return result;
         }
     }
 
-    @OWLClassName(className = "GAUL_Test1")
+    @DatasetClass(name = "GAUL_Test1")
     public static class GAULMethodTest {
 
         public int adm0_code;
@@ -354,9 +333,31 @@ public class TestClasses {
         @Ignore
         public LocalDateTime defaultTime;
         private String privateField;
-        //        @DefaultTemporalProperty(type = TemporalType.POINT, scope= TemporalScope.EXISTS, duration = 0, unit = ChronoUnit.YEARS)
+        //        @DefaultTemporal(type = TemporalType.POINT, scope= TemporalScope.EXISTS, duration = 0, unit = ChronoUnit.YEARS)
         private LocalDateTime intervalStart;
         private LocalDateTime intervalEnd;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            GAULMethodTest that = (GAULMethodTest) o;
+
+            if (adm0_code != that.adm0_code) return false;
+            if (!adm0_name.equals(that.adm0_name)) return false;
+            if (!test_name.equals(that.test_name)) return false;
+            return privateField.equals(that.privateField);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = adm0_code;
+            result = 31 * result + adm0_name.hashCode();
+            result = 31 * result + test_name.hashCode();
+            result = 31 * result + privateField.hashCode();
+            return result;
+        }
 
         public GAULMethodTest() {
             this.adm0_code = 4326;
@@ -391,58 +392,30 @@ public class TestClasses {
             return this.adm0_name;
         }
 
-        @DefaultTemporalProperty(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        @DefaultTemporal(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
         public LocalDateTime getTime() {
             return this.defaultTime;
         }
 
-        @StartTemporalProperty(type = TemporalType.INTERVAL)
+        @StartTemporal(type = TemporalType.INTERVAL)
         public LocalDateTime getStart() {
             return this.intervalStart;
         }
 
-        @EndTemporalProperty()
+        @EndTemporal()
         public LocalDateTime getEnd() {
             return this.intervalEnd;
         }
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            GAULMethodTest that = (GAULMethodTest) o;
-
-            if (getAdm0_code1() != that.getAdm0_code1()) return false;
-            if (!adm0_name.equals(that.adm0_name)) return false;
-            if (!test_name.equals(that.test_name)) return false;
-            if (!defaultTime.equals(that.defaultTime)) return false;
-            if (!privateField.equals(that.privateField)) return false;
-            if (!intervalStart.equals(that.intervalStart)) return false;
-            return intervalEnd.equals(that.intervalEnd);
-
-        }
-
-        @Override
-        public int hashCode() {
-            int result = getAdm0_code1();
-            result = 31 * result + adm0_name.hashCode();
-            result = 31 * result + test_name.hashCode();
-            result = 31 * result + defaultTime.hashCode();
-            result = 31 * result + privateField.hashCode();
-            result = 31 * result + intervalStart.hashCode();
-            result = 31 * result + intervalEnd.hashCode();
-            return result;
-        }
     }
 
-    @OWLClassName(className = "multiLang-test")
+    @DatasetClass(name = "multiLang-test")
     public static class MultiLangTest {
 
-        @DataProperty(name = "testString")
+        @Fact(name = "testString")
         @Language(language = "en")
         public final String englishString;
-        @DataProperty(name = "testString")
+        @Fact(name = "testString")
         @Language(language = "heb")
         public final String hebrewString;
         private final String frenchString;
@@ -478,24 +451,24 @@ public class TestClasses {
             this.hebrewString = hebrewString;
         }
 
-        @DataProperty(name = "testString")
+        @Fact(name = "testString")
         @Language(language = "fr")
         public String getFrenchString() {
             return frenchString;
         }
 
-        @DataProperty(name = "testString")
+        @Fact(name = "testString")
         @Language(language = "en-GB")
         public String getEnglishGBString() {
             return englishGBString;
         }
 
-        @DefaultTemporalProperty(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        @DefaultTemporal(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
         public LocalDate getDefaultTime() {
             return defaultTime;
         }
 
-        @DataProperty(name = "testString2")
+        @Fact(name = "testString2")
         @Language(language = "cs")
         public String getTestString2cs() {
             return testString2cs;
@@ -512,7 +485,6 @@ public class TestClasses {
             if (!hebrewString.equals(that.hebrewString)) return false;
             if (!getFrenchString().equals(that.getFrenchString())) return false;
             if (!getEnglishGBString().equals(that.getEnglishGBString())) return false;
-            if (!getDefaultTime().equals(that.getDefaultTime())) return false;
             if (!testString2.equals(that.testString2)) return false;
             if (!getTestString2cs().equals(that.getTestString2cs())) return false;
             return id.equals(that.id);
@@ -524,10 +496,57 @@ public class TestClasses {
             result = 31 * result + hebrewString.hashCode();
             result = 31 * result + getFrenchString().hashCode();
             result = 31 * result + getEnglishGBString().hashCode();
-            result = 31 * result + getDefaultTime().hashCode();
             result = 31 * result + testString2.hashCode();
             result = 31 * result + getTestString2cs().hashCode();
             result = 31 * result + id.hashCode();
+            return result;
+        }
+    }
+
+    @DatasetClass(name = "VersionTest")
+    public static class FactVersionTest {
+
+        @IndividualIdentifier
+        public final String id;
+        private final LocalDate validFrom;
+        private final String wkt;
+        public final String testValue;
+
+
+        public FactVersionTest(String id, LocalDate validFrom, String wkt, String testValue) {
+            this.id = id;
+            this.validFrom = validFrom;
+            this.wkt = wkt;
+            this.testValue = testValue;
+        }
+
+        @Spatial
+        public String getWkt() {
+            return this.wkt;
+        }
+
+        @StartTemporal
+        public LocalDate getValidFrom() {
+            return this.validFrom;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            FactVersionTest that = (FactVersionTest) o;
+
+            if (!id.equals(that.id)) return false;
+            if (!getWkt().equals(that.getWkt())) return false;
+            return testValue.equals(that.testValue);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = id.hashCode();
+            result = 31 * result + getWkt().hashCode();
+            result = 31 * result + testValue.hashCode();
             return result;
         }
     }

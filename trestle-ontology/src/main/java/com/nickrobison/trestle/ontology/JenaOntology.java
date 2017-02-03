@@ -15,6 +15,7 @@ import org.apache.jena.rdf.model.*;
 import org.apache.jena.shared.AddDeniedException;
 import org.apache.jena.shared.Lock;
 import org.apache.jena.tdb.transaction.TDBTransactionException;
+import org.apache.jena.update.UpdateAction;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -595,11 +596,11 @@ public abstract class JenaOntology extends TransactingOntology {
 
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> GetFactsForIndividual(OWLNamedIndividual individual, @Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal) {
-        final String objectQuery = qb.buildObjectPropertyRetrievalQuery(startTemporal, endTemporal, individual);
+    public Set<OWLDataPropertyAssertionAxiom> getFactsForIndividual(OWLNamedIndividual individual, OffsetDateTime validTemporal, OffsetDateTime databaseTemporal, boolean filterTemporals) {
+        final String objectQuery = qb.buildObjectPropertyRetrievalQuery(validTemporal, databaseTemporal, true, individual);
 //        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
-        final TrestleResultSet resultSet = this.executeSPARQLTRS(objectQuery);
-//        final ResultSet resultSet = this.executeSPARQL(objectQuery);
+        final TrestleResultSet resultSet = this.executeSPARQLResults(objectQuery);
+//        final ResultSet resultSet = this.executeUpdateSPARQL(objectQuery);
         Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = SharedOntologyFunctions.getDataPropertiesFromIndividualFacts(df, resultSet);
 
 
@@ -617,12 +618,12 @@ public abstract class JenaOntology extends TransactingOntology {
     }
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> GetTemporalsForIndividual(OWLNamedIndividual individual) {
+    public Set<OWLDataPropertyAssertionAxiom> getTemporalsForIndividual(OWLNamedIndividual individual) {
         final String temporalQuery = qb.buildIndividualTemporalQuery(individual);
 //        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
-        final TrestleResultSet resultSet = this.executeSPARQLTRS(temporalQuery);
+        final TrestleResultSet resultSet = this.executeSPARQLResults(temporalQuery);
         return SharedOntologyFunctions.getDataPropertiesFromIndividualFacts(df, resultSet);
-//        final ResultSet resultSet = this.executeSPARQL(temporalQuery);
+//        final ResultSet resultSet = this.executeUpdateSPARQL(temporalQuery);
 //        while (resultSet.hasNext()) {
 //            final QuerySolution next = resultSet.next();
 //            final Optional<OWLLiteral> owlLiteral = this.jf.createOWLLiteral(next.getLiteral("object"));
@@ -715,5 +716,14 @@ public abstract class JenaOntology extends TransactingOntology {
             trestleResultSet.addResult(results);
         }
         return trestleResultSet;
+    }
+
+    @Override
+    public void executeUpdateSPARQL(String queryString) {
+        this.openTransaction(true);
+        this.model.enterCriticalSection(Lock.WRITE);
+        UpdateAction.parseExecute(queryString, this.model);
+        this.model.leaveCriticalSection();
+        this.commitTransaction(true);
     }
 }

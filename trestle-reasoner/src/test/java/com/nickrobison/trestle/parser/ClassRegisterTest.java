@@ -1,8 +1,8 @@
 package com.nickrobison.trestle.parser;
 
 import com.nickrobison.trestle.annotations.*;
-import com.nickrobison.trestle.annotations.temporal.DefaultTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
+import com.nickrobison.trestle.annotations.temporal.DefaultTemporal;
+import com.nickrobison.trestle.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.exceptions.InvalidClassException;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.TemporalType;
@@ -174,7 +174,7 @@ public class ClassRegisterTest {
             this.endDate = endDate;
         }
 
-        @StartTemporalProperty
+        @StartTemporal
         public LocalDate getStartDate() {
             return this.startDate;
         }
@@ -186,9 +186,9 @@ public class ClassRegisterTest {
 
     private static class FailingTemporalTest {
 
-        @DefaultTemporalProperty(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        @DefaultTemporal(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
         public LocalDateTime startDate;
-        @StartTemporalProperty
+        @StartTemporal
         public LocalDateTime endDate;
 
         FailingTemporalTest(LocalDateTime startDate, LocalDateTime endDate) {
@@ -198,7 +198,7 @@ public class ClassRegisterTest {
     }
 
     private static class TimeZoneParsingTest {
-        @DefaultTemporalProperty(timeZone = "America/Los_Angeles", type = TemporalType.POINT, duration = 0, unit = ChronoUnit.YEARS)
+        @DefaultTemporal(timeZone = "America/Los_Angeles", type = TemporalType.POINT, duration = 0, unit = ChronoUnit.YEARS)
         public LocalDate defaultDate;
 
         TimeZoneParsingTest(LocalDate defaultDate) {
@@ -223,7 +223,7 @@ public class ClassRegisterTest {
         }
     }
 
-    @OWLClassName(className = "ready")
+    @DatasetClass(name = "ready")
     private static class FullTest {
         @IndividualIdentifier
         public String thing;
@@ -290,7 +290,7 @@ public class ClassRegisterTest {
     }
 
     private static class LanguageTest {
-        @DataProperty(name = "testString")
+        @Fact(name = "testString")
         @Language(language = "fr")
         public final String testString;
         private final String testString2;
@@ -300,7 +300,7 @@ public class ClassRegisterTest {
             this.testString2 = "test string";
         }
 
-        @DataProperty(name = "testString")
+        @Fact(name = "testString")
         @Language(language = "en")
         public String getTestString2() {
             return this.testString2;
@@ -308,7 +308,7 @@ public class ClassRegisterTest {
     }
 
     private static class FailingLanguageTest {
-        @DataProperty(name = "testString")
+        @Fact(name = "testString")
         @Language(language = "fr")
         public final String testString;
         private final String testString2;
@@ -318,7 +318,7 @@ public class ClassRegisterTest {
             this.testString2 = "test string";
         }
 
-        @DataProperty(name = "testString")
+        @Fact(name = "testString")
         @Language(language = "en-Nick")
         public String getTestString2() {
             return this.testString2;

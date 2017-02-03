@@ -14,7 +14,8 @@ public @interface Language {
 
     /**
      * Set the language for the multi-language support
-     * @return
+     * Defined as an ISO shortcode
+     * @return - Language string
      */
     String language();
 }

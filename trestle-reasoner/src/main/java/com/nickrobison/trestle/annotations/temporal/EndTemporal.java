@@ -7,19 +7,17 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.time.temporal.ChronoUnit;
+
 
 /**
- * Created by nrobison on 6/28/16.
+ * Created by nrobison on 7/20/16.
  */
-@TemporalProperty
 @Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface DefaultTemporalProperty {
+@TemporalProperty
+public @interface EndTemporal {
     String name() default "";
-    TemporalType type();
+    TemporalType type() default TemporalType.INTERVAL;
     TemporalScope scope() default TemporalScope.EXISTS;
-    int duration();
-    ChronoUnit unit();
     String timeZone() default "";
 }

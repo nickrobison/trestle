@@ -162,7 +162,7 @@ public class TrestleBuilder {
      */
     public TrestleReasoner build() {
         try {
-            return new TrestleReasoner(this);
+            return new TrestleReasonerImpl(this);
         } catch (OWLOntologyCreationException e) {
             logger.error("Cannot build trestle", e);
             throw new RuntimeException("Cannot build trestle", e);

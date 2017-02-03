@@ -146,7 +146,7 @@ public class LocalOntology extends JenaOntology {
 //    }
 
     @Override
-    public TrestleResultSet executeSPARQLTRS(String queryString) {
+    public TrestleResultSet executeSPARQLResults(String queryString) {
         final TrestleResultSet resultSet;
         final Query query = QueryFactory.create(queryString);
         final QueryExecution qExec = QueryExecutionFactory.create(query, luceneDataset);

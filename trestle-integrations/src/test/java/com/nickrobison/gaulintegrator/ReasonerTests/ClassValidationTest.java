@@ -68,7 +68,7 @@ public class ClassValidationTest {
         reasoner.registerClass(GAULObject.class);
 
         try {
-            reasoner.writeAsTrestleObject(testObject);
+            reasoner.writeTrestleObject(testObject);
         } catch (TrestleClassException e) {
             e.printStackTrace();
             fail("Should not throw exception");
@@ -77,7 +77,7 @@ public class ClassValidationTest {
 //        Try to read it back out
         GAULObject gaulObject = null;
         try {
-            gaulObject = reasoner.readAsObject(GAULObject.class, testObject.getObjectIDAsString());
+            gaulObject = reasoner.readTrestleObject(GAULObject.class, testObject.getObjectIDAsString());
         } catch (TrestleClassException e) {
             e.printStackTrace();
             fail("should not throw");

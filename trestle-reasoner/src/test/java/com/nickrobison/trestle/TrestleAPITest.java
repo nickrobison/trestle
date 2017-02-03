@@ -3,6 +3,7 @@ package com.nickrobison.trestle;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.exceptions.NoValidStateException;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.parser.TrestleParser;
 import com.nickrobison.trestle.types.TrestleIndividual;
@@ -27,19 +28,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by nrobison on 7/27/16.
@@ -50,7 +43,7 @@ public class TrestleAPITest {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleAPITest.class);
     public static final String OVERRIDE_PREFIX = "http://nickrobison.com/test-owl#";
-    private TrestleReasoner reasoner;
+    private TrestleReasonerImpl reasoner;
     private OWLDataFactory df;
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
     private String datasetClassID;
@@ -59,7 +52,7 @@ public class TrestleAPITest {
     @BeforeEach
     public void setup() {
         final Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
-        reasoner = new TrestleBuilder()
+        reasoner = (TrestleReasonerImpl) new TrestleBuilder()
                 .withDBConnection(config.getString("trestle.ontology.connectionString"),
                         config.getString("trestle.ontology.username"),
                         config.getString("trestle.ontology.password"))
@@ -72,93 +65,14 @@ public class TrestleAPITest {
                         TestClasses.ESRIPolygonTest.class,
                         TestClasses.GeotoolsPolygonTest.class,
                         TestClasses.OffsetDateTimeTest.class,
-                        TestClasses.MultiLangTest.class)
+                        TestClasses.MultiLangTest.class,
+                        TestClasses.FactVersionTest.class)
                 .withoutCaching()
                 .initialize()
                 .build();
 
         df = OWLManager.getOWLDataFactory();
         tp = new TrestleParser(df, OVERRIDE_PREFIX, false, null);
-    }
-
-    @Test
-    public void gaulLoader() throws IOException, TrestleClassException, MissingOntologyEntity, OWLOntologyStorageException {
-//        Parse the CSV
-        List<TestClasses.GAULTestClass> gaulObjects = new ArrayList<>();
-
-        final InputStream is = TrestleAPITest.class.getClassLoader().getResourceAsStream("objects.csv");
-
-        final BufferedReader br = new BufferedReader(new InputStreamReader(is));
-
-        String line;
-
-        while ((line = br.readLine()) != null) {
-
-
-            final String[] splitLine = line.split(";");
-            final int code;
-            try {
-                code = Integer.parseInt(splitLine[0]);
-            } catch (NumberFormatException e) {
-                continue;
-            }
-
-
-            LocalDate date = LocalDate.parse(splitLine[2].replace("\"", ""), formatter);
-//            final Instant instant = Instant.from(date);
-//            final LocalDateTime startTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
-
-//            Need to add a second to get it to format correctly.
-            gaulObjects.add(new TestClasses.GAULTestClass(code, splitLine[1].replace("\"", ""), date.atStartOfDay(), splitLine[4].replace("\"", "")));
-        }
-
-//        Write the objects
-//        Disable the parallel
-        gaulObjects.parallelStream().forEach(gaul -> {
-            try {
-                reasoner.writeAsTrestleObject(gaul);
-            } catch (TrestleClassException e) {
-                throw new RuntimeException(String.format("Problem storing object %s", gaul.adm0_name), e);
-            } catch (MissingOntologyEntity missingOntologyEntity) {
-                throw new RuntimeException(String.format("Missing individual %s", missingOntologyEntity.getIndividual()), missingOntologyEntity);
-            }
-        });
-
-        reasoner.getUnderlyingOntology().runInference();
-
-//        Validate Results
-        final Set<OWLNamedIndividual> gaulInstances = reasoner.getInstances(TestClasses.GAULTestClass.class);
-        assertEquals(191, gaulInstances.size(), "Wrong number of GAUL records from instances method");
-
-//        Try to read one out.
-//        final GAULTestClass ancuabe = reasoner.readAsObject(GAULTestClass.class, IRI.create("trestle:", "Ancuabe"));
-        final TestClasses.GAULTestClass ancuabe = reasoner.readAsObject(TestClasses.GAULTestClass.class, "Ancuabe");
-        assertEquals(ancuabe.adm0_name, "Ancuabe", "Wrong name");
-//        Check the temporal to make sure they got parsed correctly
-        assertEquals(LocalDate.of(1990, 1, 1).atStartOfDay(), ancuabe.time, "Times should match");
-
-//        Try to read out the datasets
-        final Set<String> availableDatasets = reasoner.getAvailableDatasets();
-        assertTrue(availableDatasets.size() > 0, "Should have dataset");
-
-        datasetClassID = availableDatasets.stream()
-                .filter(ds -> ds.equals("GAUL_Test"))
-                .findAny()
-                .get();
-        @NonNull final Object ancuabe1 = reasoner.readAsObject(datasetClassID, "Ancuabe");
-        assertEquals(ancuabe, ancuabe1, "Objects should be equal");
-        final Object ancuabe2 = reasoner.readAsObject(reasoner.getDatasetClass(datasetClassID), "Ancuabe");
-        assertEquals(ancuabe, ancuabe2, "Should be equal");
-
-//        Check the spatial intersection
-        Optional<List<@NonNull Object>> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0);
-        assertTrue(intersectedObjects.isPresent(), "Should have objects");
-        assertTrue(intersectedObjects.get().size() > 0, "Should have more than 1 object");
-//
-//        final Class<?> datasetClass = reasoner.getDatasetClass(datasetClassID);
-//        intersectedObjects = reasoner.spatialIntersect(datasetClass, ((TestClasses.GAULTestClass) ancuabe1).wkt, 100.0);
-//        assertTrue(intersectedObjects.isPresent());
-//        assertTrue(intersectedObjects.get().size() > 0, "Should have more than 0 objects");
     }
 
     @Test
@@ -180,9 +94,9 @@ public class TrestleAPITest {
         classObjects.add(offsetDateTimeTest);
         classObjects.add(multiLangTest);
 
-        classObjects.stream().forEach(object -> {
+        classObjects.parallelStream().forEach(object -> {
             try {
-                reasoner.writeAsTrestleObject(object);
+                reasoner.writeTrestleObject(object);
             } catch (TrestleClassException | MissingOntologyEntity e) {
                 e.printStackTrace();
             }
@@ -193,8 +107,8 @@ public class TrestleAPITest {
 
         reasoner.getUnderlyingOntology().runInference();
         classObjects.parallelStream().forEach(object -> {
-            final OWLNamedIndividual owlNamedIndividual = tp.classParser.GetIndividual(object);
-            final Object returnedObject = reasoner.readAsObject(object.getClass(), owlNamedIndividual.getIRI(), false);
+            final OWLNamedIndividual owlNamedIndividual = tp.classParser.getIndividual(object);
+            final Object returnedObject = reasoner.readTrestleObject(object.getClass(), owlNamedIndividual.getIRI(), false);
             if (returnedObject instanceof TestClasses.GAULComplexClassTest) {
                 assertEquals(gaulComplexClassTest, returnedObject, "Should have the same object");
             } else if (returnedObject instanceof TestClasses.JTSGeometryTest) {
@@ -235,12 +149,149 @@ public class TrestleAPITest {
 //        final Geometry geotoolsGeom = JTS.toGeographic(new WKTReader().read("POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))"), DefaultGeographicCRS.WGS84);
 //        JTS.toGeometry()
 //        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest = new TestClasses.GeotoolsPolygonTest(UUID.randomUUID(), (org.opengis.geometry.coordinate.Polygon) geotoolsGeom, LocalDate.now());
-//        final OWLNamedIndividual owlNamedIndividual = classParser.GetIndividual(geotoolsPolygonTest);
-//        reasoner.writeAsTrestleObject(geotoolsPolygonTest);
-//        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest1 = reasoner.readAsObject(geotoolsPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
+//        final OWLNamedIndividual owlNamedIndividual = classParser.getIndividual(geotoolsPolygonTest);
+//        reasoner.writeTrestleObject(geotoolsPolygonTest);
+//        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest1 = reasoner.readTrestleObject(geotoolsPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
 //        assertEquals(geotoolsPolygonTest, geotoolsPolygonTest1, "Should be equal");
 
 
+    }
+
+    @Test
+    public void testFactValidity() throws TrestleClassException, MissingOntologyEntity {
+        final TestClasses.FactVersionTest v1 = new TestClasses.FactVersionTest("test-object",
+                LocalDate.of(1989, 3, 26),
+                "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))",
+                "test value one");
+        final TestClasses.FactVersionTest v2 = new TestClasses.FactVersionTest("test-object",
+                LocalDate.of(1990, 5, 14),
+                "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))",
+                "test value two");
+        final TestClasses.FactVersionTest v3 = new TestClasses.FactVersionTest("test-object",
+                LocalDate.of(2016, 3, 11),
+                "POINT(0.71255092695307 -25.572028714467507)",
+                "test value two");
+
+//        Write each, then validate
+        reasoner.writeTrestleObject(v1);
+        reasoner.getUnderlyingOntology().runInference();
+        final TestClasses.FactVersionTest v1Return = reasoner.readTrestleObject(v1.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
+        assertEquals(v1, v1Return, "Should be equal to V1");
+        reasoner.writeTrestleObject(v2);
+        reasoner.getUnderlyingOntology().runInference();
+        final TestClasses.FactVersionTest v2Return = reasoner.readTrestleObject(v2.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
+        assertEquals(v2, v2Return, "Should be equal to V2");
+        reasoner.writeTrestleObject(v3);
+        reasoner.getUnderlyingOntology().runInference();
+        final TestClasses.FactVersionTest v3Return = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
+        assertEquals(v3, v3Return, "Should be equal to V3");
+//        Try for specific points in time
+        final TestClasses.FactVersionTest v1ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1990, 3, 26), null);
+        assertEquals(v1, v1ReturnHistorical, "Historical query should be equal to V1");
+        final TestClasses.FactVersionTest v2ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1999, 3, 26), null);
+        assertEquals(v2, v2ReturnHistorical, "Historical query should be equal to V2");
+        final TestClasses.FactVersionTest v3ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(2016, 3, 26), null);
+        assertEquals(v3, v3ReturnHistorical, "Historical query should be equal to V3");
+        assertThrows(NoValidStateException.class, () -> reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), true, LocalDate.of(1980, 3, 26), null));
+
+//        Check to make sure we have all the facts
+        final TrestleIndividual trestleIndividual = reasoner.getTrestleIndividual("test-object");
+        assertEquals(5, trestleIndividual.getFacts().size(), "Should have 5 facts over the lifetime of the object");
+
+//        Try to manually add a new value
+        reasoner.addFactToTrestleObject(v3.getClass(), "test-object", "testValue", "test value three", LocalDate.of(2007, 3, 26), null, null);
+        reasoner.addFactToTrestleObject(v3.getClass(), "test-object", "wkt", "POINT(1.71255092695307 -30.572028714467507)", LocalDate.of(2017, 1, 1), null);
+
+        reasoner.getUnderlyingOntology().runInference();
+//        Try to get some fact values
+        final Optional<List<Object>> values = reasoner.getFactValues(v3.getClass(), "test-object", "testValue", null, null, null);
+        assertAll(() -> assertTrue(values.isPresent(), "Should have fact values"),
+                () -> assertEquals(3, values.get().size(), "Should have 3 fact values"));
+
+        final Optional<List<Object>> wktValues = reasoner.getFactValues(v3.getClass(), "test-object", "wkt", LocalDate.of(1988, 3, 26), LocalDate.of(1995, 3, 26), null);
+        assertAll(() -> assertTrue(wktValues.isPresent(), "Should have wkt values"),
+                () -> assertEquals(1, wktValues.get().size(), "Should only have 1 wkt value"));
+
+//        Test database temporals
+    }
+
+    @Test
+    public void gaulLoader() throws IOException, TrestleClassException, MissingOntologyEntity, OWLOntologyStorageException {
+//        Parse the CSV
+        List<TestClasses.GAULTestClass> gaulObjects = new ArrayList<>();
+
+        final InputStream is = TrestleAPITest.class.getClassLoader().getResourceAsStream("objects.csv");
+
+        final BufferedReader br = new BufferedReader(new InputStreamReader(is));
+
+        String line;
+
+        while ((line = br.readLine()) != null) {
+
+
+            final String[] splitLine = line.split(";");
+            final int code;
+            try {
+                code = Integer.parseInt(splitLine[0]);
+            } catch (NumberFormatException e) {
+                continue;
+            }
+
+
+            LocalDate date = LocalDate.parse(splitLine[2].replace("\"", ""), formatter);
+//            final Instant instant = Instant.from(date);
+//            final LocalDateTime startTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+
+//            Need to add a second to get it to format correctly.
+            gaulObjects.add(new TestClasses.GAULTestClass(code, splitLine[1].replace("\"", ""), date.atStartOfDay(), splitLine[4].replace("\"", "")));
+        }
+
+//        Write the objects
+        gaulObjects.parallelStream().forEach(gaul -> {
+            try {
+                reasoner.writeTrestleObject(gaul);
+            } catch (TrestleClassException e) {
+                throw new RuntimeException(String.format("Problem storing object %s", gaul.adm0_name), e);
+            } catch (MissingOntologyEntity missingOntologyEntity) {
+                throw new RuntimeException(String.format("Missing individual %s", missingOntologyEntity.getIndividual()), missingOntologyEntity);
+            }
+        });
+
+        reasoner.getUnderlyingOntology().runInference();
+
+//        Validate Results
+        final Set<OWLNamedIndividual> gaulInstances = reasoner.getInstances(TestClasses.GAULTestClass.class);
+        assertEquals(191, gaulInstances.size(), "Wrong number of GAUL records from instances method");
+
+//        Try to read one out.
+//        final GAULTestClass ancuabe = reasoner.readTrestleObject(GAULTestClass.class, IRI.create("trestle:", "Ancuabe"));
+        final TestClasses.GAULTestClass ancuabe = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, IRI.create(OVERRIDE_PREFIX, "Ancuabe"), true, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
+        assertEquals(ancuabe.adm0_name, "Ancuabe", "Wrong name");
+//        Check the temporal to make sure they got parsed correctly
+        assertEquals(LocalDate.of(1990, 1, 1).atStartOfDay(), ancuabe.time, "Times should match");
+
+//        Try to read out the datasets
+        final Set<String> availableDatasets = reasoner.getAvailableDatasets();
+        assertTrue(availableDatasets.size() > 0, "Should have dataset");
+
+        datasetClassID = availableDatasets.stream()
+                .filter(ds -> ds.equals("GAUL_Test"))
+                .findAny()
+                .get();
+        @NonNull final Object ancuabe1 = reasoner.readTrestleObject(datasetClassID, "Ancuabe", OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
+        assertEquals(ancuabe, ancuabe1, "Objects should be equal");
+        final Object ancuabe2 = reasoner.readTrestleObject(reasoner.getDatasetClass(datasetClassID), "Ancuabe", OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
+        assertEquals(ancuabe, ancuabe2, "Should be equal");
+
+//        Check the spatial intersection
+        Optional<List<@NonNull Object>> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC));
+        assertTrue(intersectedObjects.isPresent(), "Should have objects");
+        assertTrue(intersectedObjects.get().size() > 0, "Should have more than 1 object");
+//
+//        final Class<?> datasetClass = reasoner.getDatasetClass(datasetClassID);
+//        intersectedObjects = reasoner.spatialIntersect(datasetClass, ((TestClasses.GAULTestClass) ancuabe1).wkt, 100.0);
+//        assertTrue(intersectedObjects.isPresent());
+//        assertTrue(intersectedObjects.get().size() > 0, "Should have more than 0 objects");
     }
 
 
@@ -248,4 +299,5 @@ public class TrestleAPITest {
     public void close() throws OWLOntologyStorageException {
         reasoner.shutdown(true);
     }
+
 }

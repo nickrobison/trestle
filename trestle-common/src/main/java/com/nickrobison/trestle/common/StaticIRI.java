@@ -21,6 +21,11 @@ public class StaticIRI {
     public static final IRI temporalExistsFromIRI = IRI.create(TRESTLE_PREFIX, "exists_from");
     public static final IRI temporalValidToIRI = IRI.create(TRESTLE_PREFIX, "valid_to");
     public static final IRI temporalValidFromIRI = IRI.create(TRESTLE_PREFIX, "valid_from");
+    public static final IRI temporalDatabaseToIRI = IRI.create(TRESTLE_PREFIX, "database_to");
+    public static final IRI temporalDatabaseFromIRI = IRI.create(TRESTLE_PREFIX, "database_from");
+    public static final IRI temporalStartIRI = IRI.create(TRESTLE_PREFIX, "start_temporal");
+    public static final IRI temporalEndIRI = IRI.create(TRESTLE_PREFIX, "end_temporal");
+    public static final IRI temporalAtIRI = IRI.create(TRESTLE_PREFIX, "at_temporal");
     public static final IRI validTimeIRI = IRI.create(TRESTLE_PREFIX, "valid_time");
     public static final IRI validTimeOfIRI = IRI.create(TRESTLE_PREFIX, "valid_time_of");
     public static final IRI hasRelationIRI = IRI.create(TRESTLE_PREFIX, "has_relation");
@@ -43,6 +48,7 @@ public class StaticIRI {
     public static final IRI datasetClassIRI = IRI.create(TRESTLE_PREFIX, "Dataset");
     public static final IRI factClassIRI = IRI.create(TRESTLE_PREFIX, "Fact");
     public static final IRI temporalClassIRI = IRI.create(TRESTLE_PREFIX, "Temporal_Object");
+    public static final IRI temporalPropertyIRI = IRI.create(TRESTLE_PREFIX, "Temporal_Property");
 //    Properties
     public static final IRI relationStrengthIRI = IRI.create(TRESTLE_PREFIX, "Relation_Strength");
     public static final IRI sOverlapIRI = IRI.create(TRESTLE_PREFIX, "SOverlap");
