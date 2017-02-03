@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  * Created by nrobison on 1/27/17.
  */
 @Tag("integration")
+@Tag("local")
 public class OntologyImportsTest {
     @Test
     public void testLocalImports()
@@ -34,6 +35,7 @@ public class OntologyImportsTest {
         InputStream is = new ByteArrayInputStream( ontString.getBytes() );
         assertThrows(UnloadableImportException.class, () -> {
             ITrestleOntology testOnt = new OntologyBuilder()
+                    .withDBConnection("tdb:local", "", "")
                     .fromInputStream(is)
                     .name("test")
                     .build();
