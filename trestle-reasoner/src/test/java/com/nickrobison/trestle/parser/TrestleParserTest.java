@@ -296,8 +296,8 @@ public class TrestleParserTest {
         assertEquals(inputObjects.size(), constructorArguments.getValues().size(), "Wrong number of Property Values");
 
         final TestClasses.GAULMethodTest expectedClass = new TestClasses.GAULMethodTest();
-//        final GAULMethodTest gaulMethodTest = ClassBuilder.ConstructObject(GAULMethodTest.class, inputClasses, inputObjects);
-        final TestClasses.GAULMethodTest gaulMethodTest = ClassBuilder.ConstructObject(TestClasses.GAULMethodTest.class, constructorArguments);
+//        final GAULMethodTest gaulMethodTest = ClassBuilder.constructObject(GAULMethodTest.class, inputClasses, inputObjects);
+        final TestClasses.GAULMethodTest gaulMethodTest = ClassBuilder.constructObject(TestClasses.GAULMethodTest.class, constructorArguments);
         assertEquals(expectedClass, gaulMethodTest, "Should match");
     }
 

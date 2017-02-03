@@ -3,6 +3,7 @@ package com.nickrobison.trestle;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.exceptions.NoValidStateException;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.parser.TrestleParser;
 import com.nickrobison.trestle.types.TrestleIndividual;
@@ -31,9 +32,7 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by nrobison on 7/27/16.
@@ -195,6 +194,7 @@ public class TrestleAPITest {
         assertEquals(v2, v2ReturnHistorical, "Historical query should be equal to V2");
         final TestClasses.FactVersionTest v3ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(2016, 3, 26), null);
         assertEquals(v3, v3ReturnHistorical, "Historical query should be equal to V3");
+        assertThrows(NoValidStateException.class, () -> reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), true, LocalDate.of(1980, 3, 26), null));
 
 //        Check to make sure we have all the facts
         final TrestleIndividual trestleIndividual = reasoner.getTrestleIndividual("test-object");

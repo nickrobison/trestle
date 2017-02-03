@@ -428,7 +428,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         this.ontology.executeUpdateSPARQL(update);
-        writeObjectFacts(owlNamedIndividual, Arrays.asList(propertyAxiom), validTemporal, databaseTemporal);
+        writeObjectFacts(owlNamedIndividual, Collections.singletonList(propertyAxiom), validTemporal, databaseTemporal);
         this.ontology.returnAndCommitTransaction(trestleTransaction);
     }
 
@@ -444,7 +444,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final long now = Instant.now().getEpochSecond();
         final OWLClass factClass = df.getOWLClass(factClassIRI);
         properties.forEach(property -> {
-            //            TODO(nrobison): We should change this to lookup any existing records to correctly increment the record number
+//            TODO(nrobison): We should change this to lookup any existing records to correctly increment the record number
             final OWLNamedIndividual propertyIndividual = df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, String.format("%s:%s:%d", rootIndividual.getIRI().getShortForm(), property.getProperty().asOWLDataProperty().getIRI().getShortForm(), now)));
             ontology.createIndividual(propertyIndividual, factClass);
             try {
@@ -478,7 +478,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> @NonNull T readTrestleObject(String datasetClassID, String objectID, @Nullable Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, TrestleClassException {
+    public <T> @NonNull T readTrestleObject(String datasetClassID, String objectID, Temporal validTemporal, @Nullable Temporal databaseTemporal) throws MissingOntologyEntity, TrestleClassException {
 //        Lookup class
         final OWLClass datasetClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, datasetClassID));
         final Optional<OWLClass> matchingClass = this.registeredClasses
@@ -492,7 +492,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
 
         final Class<T> aClass = (Class<T>) this.registeredClasses.get(matchingClass.get());
-        return readTrestleObject(aClass, objectID, startTemporal, endTemporal);
+        return readTrestleObject(aClass, objectID, validTemporal, databaseTemporal);
     }
 
     @Override
@@ -503,7 +503,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     @SuppressWarnings({"argument.type.incompatible", "dereference.of.nullable"})
-    public <T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity {
+    public <T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull String objectID, Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity {
 
         final IRI individualIRI = parseStringToIRI(REASONER_PREFIX, objectID);
 //        Check cache first
@@ -574,7 +574,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             logger.debug("Done with {}", individualIRI);
             return constructedObject.get();
         } else {
-            throw new RuntimeException("Problem constructing object");
+            throw new NoValidStateException(individualIRI, validAt, databaseAt);
         }
     }
 
@@ -626,7 +626,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 final Set<OWLDataPropertyAssertionAxiom> objectFacts = ontology.getFactsForIndividual(df.getOWLNamedIndividual(individualIRI), validAtTemporal, dbAtTemporal, true);
                 logger.debug("Retrieved {} facts for {}", objectFacts.size(), individualIRI);
                 if (objectFacts.isEmpty()) {
-                    throw new NoValidState(individualIRI, validAtTemporal, dbAtTemporal);
+                    throw new NoValidStateException(individualIRI, validAtTemporal, dbAtTemporal);
                 }
                 ontology.returnAndCommitTransaction(tt);
                 final Instant individualRetrievalEnd = Instant.now();
@@ -692,13 +692,14 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 ontology.returnAndCommitTransaction(trestleTransaction);
             } catch (InterruptedException e) {
                 logger.error("Read object {} interrupted", individualIRI, e);
-                throw new RuntimeException("Read object interrupted", e);
+                return Optional.empty();
             } catch (ExecutionException e) {
                 logger.error("Execution exception when reading object {}", individualIRI, e);
-                throw new RuntimeException("Execution exception when reading object", e);
+                return Optional.empty();
+//                throw new RuntimeException("Execution exception when reading object", e);
             }
             try {
-                final @NonNull T constructedObject = ClassBuilder.ConstructObject(clazz, constructorArguments);
+                final @NonNull T constructedObject = ClassBuilder.constructObject(clazz, constructorArguments);
                 return Optional.of(constructedObject);
             } catch (MissingConstructorException e) {
                 logger.error("Problem with constructor", e);
