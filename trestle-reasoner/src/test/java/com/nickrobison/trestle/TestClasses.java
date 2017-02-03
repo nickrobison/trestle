@@ -502,4 +502,52 @@ public class TestClasses {
             return result;
         }
     }
+
+    @DatasetClass(name = "VersionTest")
+    public static class FactVersionTest {
+
+        @IndividualIdentifier
+        public final String id;
+        private final LocalDate validFrom;
+        private final String wkt;
+        public final String testValue;
+
+
+        public FactVersionTest(String id, LocalDate validFrom, String wkt, String testValue) {
+            this.id = id;
+            this.validFrom = validFrom;
+            this.wkt = wkt;
+            this.testValue = testValue;
+        }
+
+        @Spatial
+        public String getWkt() {
+            return this.wkt;
+        }
+
+        @StartTemporal
+        public LocalDate getValidFrom() {
+            return this.validFrom;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            FactVersionTest that = (FactVersionTest) o;
+
+            if (!id.equals(that.id)) return false;
+            if (!getWkt().equals(that.getWkt())) return false;
+            return testValue.equals(that.testValue);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = id.hashCode();
+            result = 31 * result + getWkt().hashCode();
+            result = 31 * result + testValue.hashCode();
+            return result;
+        }
+    }
 }

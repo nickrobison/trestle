@@ -2,10 +2,6 @@ package com.nickrobison.trestle;
 
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
-import com.nickrobison.trestle.annotations.DatasetClass;
-import com.nickrobison.trestle.annotations.IndividualIdentifier;
-import com.nickrobison.trestle.annotations.Spatial;
-import com.nickrobison.trestle.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.parser.TrestleParser;
@@ -17,7 +13,6 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.geotools.geometry.jts.JTS;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -72,7 +67,7 @@ public class TrestleAPITest {
                         TestClasses.GeotoolsPolygonTest.class,
                         TestClasses.OffsetDateTimeTest.class,
                         TestClasses.MultiLangTest.class,
-                        FactVersionTest.class)
+                        TestClasses.FactVersionTest.class)
                 .withoutCaching()
                 .initialize()
                 .build();
@@ -165,17 +160,17 @@ public class TrestleAPITest {
 
     @Test
     public void testFactValidity() throws TrestleClassException, MissingOntologyEntity {
-        final FactVersionTest v1 = new FactVersionTest("test-object",
+        final TestClasses.FactVersionTest v1 = new TestClasses.FactVersionTest("test-object",
                 LocalDate.of(1989, 3, 26),
                 "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))",
                 "test value one");
-        final FactVersionTest v2 = new FactVersionTest("test-object",
+        final TestClasses.FactVersionTest v2 = new TestClasses.FactVersionTest("test-object",
                 LocalDate.of(1990, 5, 14),
                 "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))",
                 "test value two");
 
 //        TODO(nrobison): Add fail case
-        final FactVersionTest v3 = new FactVersionTest("test-object",
+        final TestClasses.FactVersionTest v3 = new TestClasses.FactVersionTest("test-object",
                 LocalDate.of(2016, 3, 11),
                 "POINT(0.71255092695307 -25.572028714467507)",
                 "test value two");
@@ -183,22 +178,22 @@ public class TrestleAPITest {
 //        Write each, then validate
         reasoner.writeTrestleObject(v1);
         reasoner.getUnderlyingOntology().runInference();
-        final FactVersionTest v1Return = reasoner.readTrestleObject(v1.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
+        final TestClasses.FactVersionTest v1Return = reasoner.readTrestleObject(v1.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
         assertEquals(v1, v1Return, "Should be equal to V1");
         reasoner.writeTrestleObject(v2);
         reasoner.getUnderlyingOntology().runInference();
-        final FactVersionTest v2Return = reasoner.readTrestleObject(v2.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
+        final TestClasses.FactVersionTest v2Return = reasoner.readTrestleObject(v2.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
         assertEquals(v2, v2Return, "Should be equal to V2");
         reasoner.writeTrestleObject(v3);
         reasoner.getUnderlyingOntology().runInference();
-        final FactVersionTest v3Return = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
+        final TestClasses.FactVersionTest v3Return = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
         assertEquals(v3, v3Return, "Should be equal to V3");
 //        Try for specific points in time
-        final FactVersionTest v1ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1990, 3, 26), null);
+        final TestClasses.FactVersionTest v1ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1990, 3, 26), null);
         assertEquals(v1, v1ReturnHistorical, "Historical query should be equal to V1");
-        final FactVersionTest v2ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1999, 3, 26), null);
+        final TestClasses.FactVersionTest v2ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1999, 3, 26), null);
         assertEquals(v2, v2ReturnHistorical, "Historical query should be equal to V2");
-        final FactVersionTest v3ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(2016, 3, 26), null);
+        final TestClasses.FactVersionTest v3ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(2016, 3, 26), null);
         assertEquals(v3, v3ReturnHistorical, "Historical query should be equal to V3");
 
 //        Check to make sure we have all the facts
@@ -307,51 +302,4 @@ public class TrestleAPITest {
         reasoner.shutdown(true);
     }
 
-    @DatasetClass(name = "VersionTest")
-    public static class FactVersionTest {
-
-        @IndividualIdentifier
-        public final String id;
-        private final LocalDate validFrom;
-        private final String wkt;
-        public final String testValue;
-
-
-        public FactVersionTest(String id, LocalDate validFrom, String wkt, String testValue) {
-            this.id = id;
-            this.validFrom = validFrom;
-            this.wkt = wkt;
-            this.testValue = testValue;
-        }
-
-        @Spatial
-        public String getWkt() {
-            return this.wkt;
-        }
-
-        @StartTemporal
-        public LocalDate getValidFrom() {
-            return this.validFrom;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            FactVersionTest that = (FactVersionTest) o;
-
-            if (!id.equals(that.id)) return false;
-            if (!getWkt().equals(that.getWkt())) return false;
-            return testValue.equals(that.testValue);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = id.hashCode();
-            result = 31 * result + getWkt().hashCode();
-            result = 31 * result + testValue.hashCode();
-            return result;
-        }
-    }
 }

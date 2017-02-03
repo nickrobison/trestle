@@ -196,8 +196,14 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
+    public void shutdown() {
+        logger.info("Shutting down reasoner");
+        this.ontology.close(false);
+    }
+
+    @Override
     public void shutdown(boolean delete) {
-        logger.info("Shutting down ontology");
+        logger.info("Shutting down reasoner, and removing the model");
         this.ontology.close(delete);
     }
 

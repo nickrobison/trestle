@@ -29,6 +29,11 @@ import java.util.function.Function;
  */
 public interface TrestleReasoner {
     /**
+     * Shutdown the reasoner
+     */
+    void shutdown();
+
+    /**
      * Shutdown the ontology and potentially delete
      *
      * @param delete - delete the ontology on shutdown?
