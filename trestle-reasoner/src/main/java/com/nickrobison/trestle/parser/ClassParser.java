@@ -164,9 +164,9 @@ public class ClassParser {
                         | (objectMember.getAnnotations().length == 0)))
 //                We need this to filter out setters and equals/hashcode stuff
                 & ((objectMember.getParameters().length == 0)
-                & !(objectMember.getName() == "hashCode")
-                & !(objectMember.getName() == "equals")
-                & !(objectMember.getName() == "toString")
+                & !(Objects.equals(objectMember.getName(), "hashCode"))
+                & !(Objects.equals(objectMember.getName(), "equals"))
+                & !(Objects.equals(objectMember.getName(), "toString"))
 //                Need to filter out random ebean methods
                 & !(objectMember.getName().contains("_ebean"))
                 & !(objectMember.getReturnType() == void.class));
