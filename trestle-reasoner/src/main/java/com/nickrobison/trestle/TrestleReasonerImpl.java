@@ -691,12 +691,15 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 constructorArguments = argumentsFuture.get();
                 ontology.returnAndCommitTransaction(trestleTransaction);
             } catch (InterruptedException e) {
+//                FIXME(nrobison): Rollback
+                ontology.returnAndCommitTransaction(trestleTransaction);
                 logger.error("Read object {} interrupted", individualIRI, e);
                 return Optional.empty();
             } catch (ExecutionException e) {
+//                FIXME(nrobison): Rollback
+                ontology.returnAndCommitTransaction(trestleTransaction);
                 logger.error("Execution exception when reading object {}", individualIRI, e);
                 return Optional.empty();
-//                throw new RuntimeException("Execution exception when reading object", e);
             }
             try {
                 final @NonNull T constructedObject = ClassBuilder.constructObject(clazz, constructorArguments);
@@ -706,6 +709,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 return Optional.empty();
             }
         } else {
+//                FIXME(nrobison): Rollback
+            ontology.returnAndCommitTransaction(trestleTransaction);
             throw new RuntimeException("No data properties, not even trying");
         }
     }

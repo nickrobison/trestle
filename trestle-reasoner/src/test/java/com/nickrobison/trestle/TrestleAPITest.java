@@ -167,8 +167,6 @@ public class TrestleAPITest {
                 LocalDate.of(1990, 5, 14),
                 "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))",
                 "test value two");
-
-//        TODO(nrobison): Add fail case
         final TestClasses.FactVersionTest v3 = new TestClasses.FactVersionTest("test-object",
                 LocalDate.of(2016, 3, 11),
                 "POINT(0.71255092695307 -25.572028714467507)",
