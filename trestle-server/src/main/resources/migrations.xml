@@ -9,7 +9,8 @@
             <column name="LAST_NAME" type="VARCHAR(50)"/>
             <column name="USERNAME" type="VARCHAR(50)"/>
             <column name="EMAIL" type="VARCHAR(50)"/>
-            <column name="COLUMN_6" type="INT(10)"/>
+            <column name="PASSWORD" type="VARCHAR(255)"/>
+            <column name="PRIVILEGES" type="INT(10)"/>
         </createTable>
     </changeSet>
 </databaseChangeLog>
