@@ -43,6 +43,7 @@ public class UserResource {
     @POST
     @UnitOfWork
     @Consumes(MediaType.APPLICATION_JSON)
+    @AuthRequired({Privilege.ADMIN})
     public long putUser(@NotNull @Valid User user) {
         return userDAO.create(user);
     }
