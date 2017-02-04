@@ -6,12 +6,13 @@ import {DashboardComponent} from "./dashboard/app.dashboard";
 import {NgModule} from "@angular/core";
 import {MaterialModule} from "@angular/material";
 import {AdminComponent} from "./admin.component";
-import {UsersComponent} from "./users/users.component";
+import {UsersComponent, UserAddDialog, MapValuesPipe} from "./users/users.component";
 import {UserService} from "./users/users.service";
 import {CommonModule} from "@angular/common";
 import {LoggedInGuard} from "../LoggedInGuard";
 import {PermissionsGuard} from "../PermissionsGuard";
 import {Privileges} from "../authentication.service";
+import {FormsModule} from "@angular/forms";
 
 interface ITrestleRoute extends Route {
     data?: ITrestleRouteData
@@ -30,13 +31,15 @@ const routes: Array<ITrestleRoute> = [
 ];
 
 @NgModule({
-    declarations: [DashboardComponent, AdminComponent, UsersComponent],
+    declarations: [DashboardComponent, AdminComponent, UsersComponent, UserAddDialog, MapValuesPipe,],
     imports: [
         MaterialModule,
         CommonModule,
-        RouterModule.forChild(routes)
+        RouterModule.forChild(routes),
+        FormsModule
     ],
     providers: [UserService],
+    entryComponents: [UserAddDialog],
     bootstrap: [AdminComponent]
 })
 

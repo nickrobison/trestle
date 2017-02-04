@@ -3,9 +3,8 @@
  */
 import "@angular/platform-browser-dynamic";
 import "@angular/core";
-import "@angular/platform-browser-dynamic";
-import "@angular/core";
 import "@angular/http";
+import "@angular/forms";
 import "hammerjs";
 import "@angular/material";
 import "materialize-css";

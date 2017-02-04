@@ -5,6 +5,7 @@ import {Injectable} from "@angular/core";
 import {Router} from "@angular/router";
 import {Http, URLSearchParams, Response} from "@angular/http";
 import {tokenNotExpired, JwtHelper} from "angular2-jwt";
+import {Observable} from "rxjs";
 
 const _key: string = "id_token";
 
@@ -13,12 +14,6 @@ export enum Privileges {
     ADMIN = 2,
     DBA = 4
 }
-//
-// export interface ITrestleToken {
-//     exp: number;
-//     iat: number;
-//     user: ITrestleUser;
-// }
 
 export class TrestleToken {
 
@@ -34,7 +29,7 @@ export class TrestleToken {
 }
 
 export interface ITrestleUser {
-    id: string;
+    id?: string;
     firstName: string;
     lastName: string;
     username: string;
@@ -52,9 +47,9 @@ export class AuthService {
         this.jwtHelper = new JwtHelper();
     }
 
-    public login(username: string, password: string): void {
-        this.http.post("/auth/login", {username: username, password: password})
-            .subscribe(response => {
+    public login(username: string, password: string): Observable<void> {
+        return this.http.post("/auth/login", {username: username, password: password})
+            .map(response => {
                 console.debug("has token");
                 console.log(response);
                 localStorage.setItem(_key, response.text());
@@ -65,7 +60,7 @@ export class AuthService {
         console.debug("Logging out");
         this.http.post("/auth/logout", null);
         localStorage.removeItem(_key);
-        console.log("Logged out use");
+        console.log("Logged out user");
     }
 
     public loggedIn(): boolean {

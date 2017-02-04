@@ -5,6 +5,7 @@
         <th>Last Name</th>
         <th>Username</th>
         <th>Email</th>
+        <th>Permissions</th>
     </tr>
     </thead>
     <tbody>
@@ -13,6 +14,15 @@
             <td>{{user.lastName}}</td>
             <td>{{user.username}}</td>
             <td>{{user.email}}</td>
+            <td>
+                <md-chip-list>
+                <md-chip color="red" selected="true">DBA</md-chip>
+                <md-chip color="yellow" selected="false">ADMIN</md-chip>
+                </md-chip-list>
+            </td>
         </tr>
     </tbody>
 </table>
+<div>
+<span flex></span><a class="btn-floating btn-large waves-effect waves-light green" (click)="openUserModal()"><i class="material-icons">add</i></a>
+</div>
