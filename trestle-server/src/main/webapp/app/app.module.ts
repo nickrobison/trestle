@@ -9,7 +9,7 @@ import {RouterModule} from "@angular/router";
 import {AppRoutes} from "./app.routes";
 import {LoginComponent} from "./login/app.login";
 import {AppComponent} from "./app.component";
-import {MaterializeDirective} from "angular2-materialize";
+import {MaterializeModule} from "angular2-materialize";
 import {FormsModule} from "@angular/forms";
 import {AuthService} from "./authentication.service";
 import {LoggedInGuard} from "./LoggedInGuard";
@@ -22,9 +22,10 @@ import {PermissionsGuard} from "./PermissionsGuard";
         BrowserModule,
         FormsModule,
         MaterialModule.forRoot(),
-        RouterModule.forRoot(AppRoutes)
+        RouterModule.forRoot(AppRoutes),
+        MaterializeModule
     ],
-    declarations: [AppComponent, LoginComponent, MaterializeDirective],
+    declarations: [AppComponent, LoginComponent],
     providers: [AuthService,
         LoggedInGuard,
         PermissionsGuard,

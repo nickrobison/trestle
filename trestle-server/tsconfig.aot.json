@@ -10,20 +10,21 @@
     "module": "es2015",
     "moduleResolution": "node",
     "sourceMap": true,
-    "target": "es5"
+    "target": "es5",
+    "outDir": "dist/unbundled-aot"
   },
   "files": [
     "src/main/webapp/app/app.module.ts",
-    "src/main/webapp/bootstrap.ts"
+    "src/main/webapp/bootstrap.aot.ts"
   ],
   "exclude": [
     "node_modules"
   ],
-  "compileOnSave": true,
+  "compileOnSave": false,
   "buildOnSave": false,
   "angularCompilerOptions": {
     "genDir": "aot",
-    "skipMetadataEmit" : true,
-    "entryModule": "src/main/webapp/app/app.module#AppModule"
+    "skipMetadataEmit" : true
+//    "entryModule": "src/main/webapp/app/app.module#AppModule"
   }
 }

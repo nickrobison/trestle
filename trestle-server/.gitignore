@@ -3,3 +3,4 @@ binaries/
 **/*.map
 src/main/webapp/**/*.js
 *.db
+aot/
