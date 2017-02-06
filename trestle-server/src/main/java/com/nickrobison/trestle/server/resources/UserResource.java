@@ -19,6 +19,7 @@ import java.util.Optional;
 /**
  * Created by nrobison on 1/18/17.
  */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Path("/users")
 @Produces(MediaType.APPLICATION_JSON)
 public class UserResource {
@@ -42,10 +43,9 @@ public class UserResource {
 
     @POST
     @UnitOfWork
-    @Consumes(MediaType.APPLICATION_JSON)
-    @AuthRequired({Privilege.ADMIN})
-    public long putUser(@NotNull @Valid User user) {
-        return userDAO.create(user);
+//    @Consumes(MediaType.APPLICATION_JSON)
+    public long upsertUser(@AuthRequired({Privilege.ADMIN}) User admin, @NotNull @Valid User user) {
+        return this.userDAO.create(user);
     }
 
     @GET
@@ -54,12 +54,5 @@ public class UserResource {
     @Valid
     public Optional<User> findByID(@AuthRequired({Privilege.ADMIN}) User user, @PathParam("id") LongParam id) {
         return userDAO.findById(id.get());
-    }
-
-
-    @GET
-    @Path("/secure")
-    public Response secured() {
-        return Response.ok().build();
     }
 }

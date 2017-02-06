@@ -51,6 +51,15 @@ public class User {
         this.privileges = Privilege.buildPrivilageMask(privileges);
     }
 
+    public User(String firstName, String lastName, String username, String email, String password, int privileges) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.privileges = privileges;
+    }
+
     public long getId() {
         return id;
     }
@@ -83,6 +92,10 @@ public class User {
         this.username = username;
     }
 
+    public String getPassword() { return this.password; }
+
+    public void setPassword(String password) { this.password = password; }
+
     public String getEmail() {
         return email;
     }
@@ -98,6 +111,8 @@ public class User {
     public void setPrivileges(Set<Privilege> privileges) {
         this.privileges = Privilege.buildPrivilageMask(privileges);
     }
+
+    public void setPrivileges(int privileges) { this.privileges = privileges; }
 
     @Override
     public boolean equals(Object o) {
