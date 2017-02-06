@@ -1,13 +1,9 @@
 package com.nickrobison.trestle.server.models;
 
-import afu.edu.emory.mathcs.backport.java.util.Collections;
 import com.nickrobison.trestle.server.auth.Privilege;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -18,7 +14,8 @@ import java.util.Set;
 @NamedQueries({
         @NamedQuery(name = "com.nickrobison.trestle.server.queries.User.findAll", query = "select u from User u"),
         @NamedQuery(name = "com.nickrobison.trestle.server.queries.User.findByName", query = "select u from User u where u.firstName like :name or u.lastName like :name"),
-        @NamedQuery(name = "com.nickrobison.trestle.server.queries.User.findByUsername", query = "select u from User u where u.username = :username")
+        @NamedQuery(name = "com.nickrobison.trestle.server.queries.User.findByUsername", query = "select u from User u where u.username = :username"),
+        @NamedQuery(name = "com.nickrobison.trestle.server.queries.User.deleteByID", query = "delete from User u where u.id = :id")
 })
 public class User {
 
@@ -104,13 +101,15 @@ public class User {
         this.email = email;
     }
 
-    public Set<Privilege> getPrivileges() {
+    public Set<Privilege> getPrivilegeSet() {
         return Privilege.parsePrivileges(this.privileges);
     }
 
-    public void setPrivileges(Set<Privilege> privileges) {
+    public void setPrivilegeSet(Set<Privilege> privileges) {
         this.privileges = Privilege.buildPrivilageMask(privileges);
     }
+
+    public int getPrivileges() { return this.privileges; }
 
     public void setPrivileges(int privileges) { this.privileges = privileges; }
 
@@ -128,7 +127,7 @@ public class User {
             return false;
         if (!getUsername().equals(user.getUsername())) return false;
         if (!getEmail().equals(user.getEmail())) return false;
-        return getPrivileges().equals(user.getPrivileges());
+        return getPrivilegeSet().equals(user.getPrivilegeSet());
     }
 
     @Override
@@ -138,7 +137,7 @@ public class User {
         result = 31 * result + (getLastName() != null ? getLastName().hashCode() : 0);
         result = 31 * result + getUsername().hashCode();
         result = 31 * result + getEmail().hashCode();
-        result = 31 * result + getPrivileges().hashCode();
+        result = 31 * result + getPrivilegeSet().hashCode();
         return result;
     }
 }

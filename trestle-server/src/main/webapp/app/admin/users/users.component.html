@@ -9,14 +9,14 @@
     </tr>
     </thead>
     <tbody>
-        <tr *ngFor="let user of users">
+        <tr *ngFor="let user of users" (click)="openUserModal(user)">
             <td>{{user.firstName}}</td>
             <td>{{user.lastName}}</td>
             <td>{{user.username}}</td>
             <td>{{user.email}}</td>
             <td>
                 <md-chip-list>
-                <md-chip color="red" selected="true">DBA</md-chip>
+                <md-chip color="red" selected="false">DBA</md-chip>
                 <md-chip color="yellow" selected="false">ADMIN</md-chip>
                 </md-chip-list>
             </td>

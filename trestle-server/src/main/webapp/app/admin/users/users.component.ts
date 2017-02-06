@@ -5,7 +5,7 @@ import {Component, OnInit, ViewContainerRef, Pipe, PipeTransform} from "@angular
 import {UserService} from "./users.service";
 import {ITrestleUser, Privileges} from "../../authentication.service";
 import {MdDialogRef, MdDialog, MdDialogConfig} from "@angular/material";
-import {UserAddDialog} from "./users.add.dialog";
+import {UserAddDialog, IUserDialogResponse, UserDialogResponseType} from "./users.add.dialog";
 
 @Component({
     selector: "admin-users",
@@ -36,17 +36,23 @@ export class UsersComponent implements OnInit {
         config.viewContainerRef = this.viewContainerRef;
         this.dialogRef = this.dialog.open(UserAddDialog, config);
         this.dialogRef.componentInstance.user = user;
-        this.dialogRef.afterClosed().subscribe((result: ITrestleUser) => {
+        this.dialogRef.afterClosed().subscribe((result: IUserDialogResponse) => {
             console.debug("Dialog closed");
+            console.debug("Result:", result);
             if (result != null) {
-                this.userService.modifyUser(result).subscribe((data: any) => {
-                        console.debug("User saved");
-                        this.users.push(result);
-                    },
-                        (err: Error) => console.error(err)
-                );
+                switch(result.type) {
+                    case UserDialogResponseType.ADD:
+                        this.users.push(result.user);
+                        break;
+                    case UserDialogResponseType.DELETE:
+                        let index = this.users.indexOf(result.user);
+                        console.debug("Splicing out user at location:", index);
+                        if (index > -1) {
+                            this.users.splice(index, 1);
+                        }
+                        break;
+                }
             }
-            // console.debug(result);
             this.dialogRef = null;
         })
     }

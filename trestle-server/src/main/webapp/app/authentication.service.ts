@@ -29,7 +29,7 @@ export class TrestleToken {
 }
 
 export interface ITrestleUser {
-    id?: string;
+    id?: number;
     firstName: string;
     lastName: string;
     username: string;

@@ -27,15 +27,18 @@ public class UserDAO extends AbstractDAO<User> {
         return persist(user).getId();
     }
 
+    public void deleteUser(long id) {
+        namedQuery("com.nickrobison.trestle.server.queries.User.deleteByID")
+                .setParameter("id", id).executeUpdate();
+    }
+
     public List<User> findAll() {
         return list(namedQuery("com.nickrobison.trestle.server.queries.User.findAll"));
     }
 
     public List<User> findByName(String name) {
-        StringBuilder builder = new StringBuilder("%");
-        builder.append(name).append("%");
         return list(namedQuery("com.nickrobison.trestle.server.queries.User.findByName")
-        .setParameter("name", builder.toString())
+        .setParameter("name", "%" + name + "%")
         );
     }
 

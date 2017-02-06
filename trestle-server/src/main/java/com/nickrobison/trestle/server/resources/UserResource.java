@@ -43,7 +43,7 @@ public class UserResource {
 
     @POST
     @UnitOfWork
-//    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
     public long upsertUser(@AuthRequired({Privilege.ADMIN}) User admin, @NotNull @Valid User user) {
         return this.userDAO.create(user);
     }
@@ -54,5 +54,12 @@ public class UserResource {
     @Valid
     public Optional<User> findByID(@AuthRequired({Privilege.ADMIN}) User user, @PathParam("id") LongParam id) {
         return userDAO.findById(id.get());
+    }
+
+    @DELETE
+    @Path(("/{id}"))
+    @UnitOfWork
+    public void deleteUser(@AuthRequired({Privilege.ADMIN}) User admin, @PathParam("id") LongParam id) {
+        userDAO.deleteUser(id.get());
     }
 }

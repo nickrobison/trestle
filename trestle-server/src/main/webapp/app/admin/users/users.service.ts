@@ -36,4 +36,14 @@ export class UserService {
             // .map((res: Response) => {})
             .catch((error: Error) => Observable.throw(error || "Error adding user"));
     }
+
+    /**
+     * Delete user from database
+     * @param id - ID of user to delete
+     * @returns {Observable<R>}
+     */
+    deleteUser(id: number): Observable<any> {
+        return this.authHttp.delete("/users/" + id)
+            .catch((error: Error) => Observable.throw(error || "Error deleting user"));
+    }
 }
