@@ -6,9 +6,3 @@ body {
     text-align: center;
     min-height: 100%;
 }
-
-.img-circle {
-    height: 50px;
-    border-radius: 50%;
-    margin: 0 10px;
-}

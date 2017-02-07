@@ -39,7 +39,7 @@ export class AdminComponent implements OnInit {
             let user = this.authService.getUser();
             if (user != null) {
                 let hash = CryptoJS.MD5(user.email.trim().toLowerCase()).toString();
-                this.gravatarURL = "https://www.gravatar.com/avatar/" + hash + "?d=identicon";
+                this.gravatarURL = "https://www.gravatar.com/avatar/" + hash + "?d=identicon" + "&s=50";
                 return this.gravatarURL;
             }
         }

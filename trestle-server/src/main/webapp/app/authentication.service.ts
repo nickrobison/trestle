@@ -61,6 +61,7 @@ export class AuthService {
         this.http.post("/auth/logout", null);
         localStorage.removeItem(_key);
         console.log("Logged out user");
+        this.router.navigate(["/login"]);
     }
 
     public loggedIn(): boolean {
@@ -87,14 +88,18 @@ export class AuthService {
         return null;
     }
 
-    public hasRoles(roles: Array<Privileges>): boolean {
+    /**
+     * Determines if the logged-in user has the necessary roles to perform a certain function
+     * @param roles - Array of required Privileges
+     * @returns {boolean} - has all the required roles
+     */
+    public hasRequiredRoles(roles: Array<Privileges>): boolean {
         let token = new TrestleToken(this.jwtHelper.decodeToken(localStorage.getItem(_key)));
         console.debug("Role token", token);
 
         if (token) {
             return (token.user.privileges & this.buildRoleValue(roles)) > 0;
         }
-
         return false;
     }
 

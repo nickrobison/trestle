@@ -10,3 +10,9 @@
 .top-layout {
     height: 50px;
 }
+
+.img-circle {
+    height: 50px;
+    border-radius: 50%;
+    margin: 0 10px;
+}

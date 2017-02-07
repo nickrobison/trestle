@@ -3,7 +3,7 @@
  */
 import {Component, OnInit, ViewContainerRef, Pipe, PipeTransform} from "@angular/core";
 import {UserService} from "./users.service";
-import {ITrestleUser, Privileges} from "../../authentication.service";
+import {ITrestleUser, AuthService, Privileges} from "../../authentication.service";
 import {MdDialogRef, MdDialog, MdDialogConfig} from "@angular/material";
 import {UserAddDialog, IUserDialogResponse, UserDialogResponseType} from "./users.add.dialog";
 
@@ -17,8 +17,9 @@ export class UsersComponent implements OnInit {
 
     users: Array<ITrestleUser>;
     dialogRef: MdDialogRef<any>;
+    privileges: Privileges;
 
-    constructor(private userService: UserService, public dialog: MdDialog, public viewContainerRef: ViewContainerRef) {
+    constructor(private userService: UserService, public dialog: MdDialog, public viewContainerRef: ViewContainerRef, public authService: AuthService) {
     }
 
     ngOnInit(): void {
@@ -30,6 +31,14 @@ export class UsersComponent implements OnInit {
             .subscribe(users => this.users = users,
                 err => console.error(err))
     };
+
+    public isAdmin(user: ITrestleUser): boolean {
+        return (user.privileges & Privileges.ADMIN) > 0;
+    }
+
+    public isDBA(user: ITrestleUser): boolean {
+        return (user.privileges & Privileges.DBA) > 0;
+    }
 
     public openUserModal(user: ITrestleUser) {
         let config = new MdDialogConfig();

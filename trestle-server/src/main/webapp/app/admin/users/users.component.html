@@ -16,13 +16,13 @@
             <td>{{user.email}}</td>
             <td>
                 <md-chip-list>
-                <md-chip color="red" selected="false">DBA</md-chip>
-                <md-chip color="yellow" selected="false">ADMIN</md-chip>
+                <md-chip color="red" selected="false" *ngIf="isDBA(user)">DBA</md-chip>
+                <md-chip color="primary" selected="false" *ngIf="isAdmin(user)">ADMIN</md-chip>
                 </md-chip-list>
             </td>
         </tr>
     </tbody>
 </table>
 <div>
-<span flex></span><a class="btn-floating btn-large waves-effect waves-light green" (click)="openUserModal()"><i class="material-icons">add</i></a>
+<span flex></span><a class="btn-floating btn-large waves-effect waves-light yellow" (click)="openUserModal()"><i class="material-icons">add</i></a>
 </div>

@@ -15,6 +15,6 @@ export class PermissionsGuard implements CanActivate {
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean>|Promise<boolean>|boolean {
         let roles = route.data["roles"] as Array<Privileges>;
         console.debug("Needs roles", roles);
-        return this.authService.hasRoles(roles);
+        return this.authService.hasRequiredRoles(roles);
     }
 }
