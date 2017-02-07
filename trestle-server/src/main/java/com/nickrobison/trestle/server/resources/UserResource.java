@@ -6,6 +6,7 @@ import com.nickrobison.trestle.server.models.User;
 import com.nickrobison.trestle.server.models.UserDAO;
 import io.dropwizard.hibernate.UnitOfWork;
 import io.dropwizard.jersey.params.LongParam;
+import org.mindrot.BCrypt;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -25,10 +26,12 @@ import java.util.Optional;
 public class UserResource {
 
     private final UserDAO userDAO;
+    private final String salt;
 
     @Inject
     public UserResource(UserDAO userDAO) {
         this.userDAO = userDAO;
+        this.salt = BCrypt.gensalt();
     }
 
     @GET
@@ -44,7 +47,12 @@ public class UserResource {
     @POST
     @UnitOfWork
     @Consumes(MediaType.APPLICATION_JSON)
-    public long upsertUser(@AuthRequired({Privilege.ADMIN}) User admin, @NotNull @Valid User user) {
+    public long createUser(@AuthRequired({Privilege.ADMIN}) User admin, @NotNull @Valid User user) {
+//        If the length is 60, we know that it's an unhashed (and thus modified password
+//        We enforce a maximum length of 59 for the passwords, at the UI level
+        if (user.getPassword().length() != 60) {
+            user.setPassword(BCrypt.hashpw(user.getPassword(), this.salt));
+        }
         return this.userDAO.create(user);
     }
 

@@ -23,8 +23,8 @@ export class TrestleToken {
 
     public constructor(token: any) {
         this.exp = token["exp"];
-       this.iat = token["iat"];
-       this.user = JSON.parse(token["data4j"]);
+        this.iat = token["iat"];
+        this.user = JSON.parse(token["data4j"]);
     }
 }
 
@@ -76,6 +76,15 @@ export class AuthService {
             );
         }
         return tokenNotExpired();
+    }
+
+    public getUser(): ITrestleUser {
+        if (this.loggedIn()) {
+            let token = new TrestleToken(this.jwtHelper.decodeToken(localStorage.getItem(_key)));
+            return token.user;
+        }
+        console.error("User is not logged in");
+        return null;
     }
 
     public hasRoles(roles: Array<Privileges>): boolean {

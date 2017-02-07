@@ -10,3 +10,4 @@ import "@angular/material";
 import "materialize-css";
 import "angular2-materialize";
 import "angular2-jwt"
+import "crypto-js";

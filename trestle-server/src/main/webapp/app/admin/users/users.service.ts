@@ -29,12 +29,15 @@ export class UserService {
      * @returns {Observable<R>}
      */
     modifyUser(user: ITrestleUser): Observable<any> {
-        let headers = new Headers({"Content-Type": "application/json"});
-        let options = new RequestOptions({headers: headers});
-        console.debug("Adding user:", {username: user.username, password: user.password, privileges: user.privileges});
-        return this.authHttp.post("/users", user, options)
+        // If the user ID is null, we know it's a new user, so we create a new one, otherwise, modify the old one
+        // if (user.id == null) {
+            return this.authHttp.post("/users", user)
             // .map((res: Response) => {})
-            .catch((error: Error) => Observable.throw(error || "Error adding user"));
+                .catch((error: Error) => Observable.throw(error || "Error adding user"));
+        // } else {
+        //     return this.authHttp.post("/users/" + user.id, user, options)
+        //         .catch((error: Error) => Observable.throw(error || "Error modifying user"));
+        // }
     }
 
     /**
