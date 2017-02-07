@@ -67,6 +67,11 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     }
 
     @Override
+    public Temporal getIdTemporal() {
+        return this.fromTime;
+    }
+
+    @Override
     public Class<? extends Temporal> getBaseTemporalType() {
         return this.temporalType;
     }

@@ -14,6 +14,10 @@ import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.exporter.ShapefileExporter;
 import com.nickrobison.trestle.exporter.ShapefileSchema;
 import com.nickrobison.trestle.exporter.TSIndividual;
+import com.nickrobison.trestle.iri.IRIBuilder;
+import com.nickrobison.trestle.iri.IRIVersion;
+import com.nickrobison.trestle.iri.TrestleIRI;
+import com.nickrobison.trestle.iri.TrestleIRIV1;
 import com.nickrobison.trestle.ontology.*;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.parser.*;
@@ -444,8 +448,15 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final long now = Instant.now().getEpochSecond();
         final OWLClass factClass = df.getOWLClass(factClassIRI);
         properties.forEach(property -> {
-//            TODO(nrobison): We should change this to lookup any existing records to correctly increment the record number
-            final OWLNamedIndividual propertyIndividual = df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, String.format("%s:%s:%d", rootIndividual.getIRI().getShortForm(), property.getProperty().asOWLDataProperty().getIRI().getShortForm(), now)));
+            final TrestleIRI factIdentifier = IRIBuilder.encodeIRI(IRIVersion.V1,
+                    REASONER_PREFIX,
+                    rootIndividual.toStringID(),
+                    property.getProperty().toString(),
+                    parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC),
+                    parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC));
+
+            final OWLNamedIndividual propertyIndividual = df.getOWLNamedIndividual(factIdentifier);
+//            final OWLNamedIndividual propertyIndividual = df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, String.format("%s:%s:%d", rootIndividual.getIRI().getShortForm(), property.getProperty().asOWLDataProperty().getIRI().getShortForm(), now)));
             ontology.createIndividual(propertyIndividual, factClass);
             try {
 //                Write the property

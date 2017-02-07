@@ -60,6 +60,14 @@ public abstract class TemporalObject {
     public abstract boolean isDatabase();
 
     /**
+     * Returns the temporal used as an identifier
+     * For an {@link IntervalTemporal}, this is the startTemporal
+     * For a {@link PointTemporal}, it is the atTemporal
+     * @return - {@link Temporal} to use for identification
+     */
+    public abstract Temporal getIdTemporal();
+
+    /**
      * Get the Base temporal type of the object
      *
      * @return - Temporal subclass of object

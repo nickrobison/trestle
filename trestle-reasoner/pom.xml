@@ -34,6 +34,11 @@
             <artifactId>trestle-querybuilder</artifactId>
             <version>0.6-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.nickrobison</groupId>
+            <artifactId>trestle-iri</artifactId>
+            <version>0.6-SNAPSHOT</version>
+        </dependency>
         <!--OWL Dependencies-->
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
