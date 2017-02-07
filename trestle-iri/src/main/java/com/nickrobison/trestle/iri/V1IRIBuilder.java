@@ -2,7 +2,6 @@ package com.nickrobison.trestle.iri;
 
 import com.nickrobison.trestle.iri.exceptions.IRIParseException;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.semanticweb.owlapi.model.IRI;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -14,7 +13,7 @@ import java.util.regex.Pattern;
 /**
  * Created by nrobison on 1/23/17.
  */
-class V1IRI {
+class V1IRIBuilder {
 
     private static final Pattern objectIDPattern = Pattern.compile("(?<=:).*?(?=:)");
 
@@ -25,22 +24,23 @@ class V1IRI {
      * @param objectID         - ObjectID
      * @param objectFact       - Optional Fact to identify
      * @param objectTemporal   - Optional temporal to identify object state
-     * @param databaseTemporal - Optional tmeporal to identify object database state
+     * @param databaseTemporal - Optional temporal to identify object database state
      * @return
      */
-    static IRI encodeIRI(String prefix, String objectID, @Nullable String objectFact, @Nullable OffsetDateTime objectTemporal, @Nullable OffsetDateTime databaseTemporal) {
-        StringBuilder trestleIRI = new StringBuilder();
-        trestleIRI.append(String.format("%s:%s", "V1", objectID));
-        if (objectFact != null) {
-            trestleIRI.append(String.format("@%s", objectFact));
-        }
-        if (objectTemporal != null) {
-            trestleIRI.append(String.format(":%s", objectTemporal.toEpochSecond()));
-        }
-        if (databaseTemporal != null) {
-            trestleIRI.append(String.format(":%s", databaseTemporal.toEpochSecond()));
-        }
-        return IRI.create(prefix, trestleIRI.toString());
+    static TrestleIRIV1 encodeIRI(String prefix, String objectID, @Nullable String objectFact, @Nullable OffsetDateTime objectTemporal, @Nullable OffsetDateTime databaseTemporal) {
+        return new TrestleIRIV1(IRIVersion.V1, prefix, objectID, objectFact, objectTemporal, databaseTemporal);
+//        StringBuilder trestleIRI = new StringBuilder();
+//        trestleIRI.append(String.format("%s:%s", "V1", objectID));
+//        if (objectFact != null) {
+//            trestleIRI.append(String.format("@%s", objectFact));
+//        }
+//        if (objectTemporal != null) {
+//            trestleIRI.append(String.format(":%s", objectTemporal.toEpochSecond()));
+//        }
+//        if (databaseTemporal != null) {
+//            trestleIRI.append(String.format(":%s", databaseTemporal.toEpochSecond()));
+//        }
+
     }
 
     static String getObjectID(String iriString) {
@@ -80,16 +80,6 @@ class V1IRI {
         } else {
             return Optional.empty();
         }
-//        final Matcher matcher = objectIDPattern.matcher(iriString);
-//        if (matcher.find()) {
-////            This will also match on the object id/fact, so we the second one, if it exists
-//            if (matcher.groupCount() > 0) {
-//                final long temporalLong = Long.parseLong(matcher.group(1));
-//                return Optional.of(OffsetDateTime.ofInstant(Instant.ofEpochSecond(temporalLong), ZoneOffset.UTC));
-//            }
-//            return Optional.empty();
-//        }
-//        throw new IRIParseException(iriString);
     }
 
     static Optional<OffsetDateTime> getDatabaseTemporal(String iriString) {

@@ -57,6 +57,11 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
     }
 
     @Override
+    public Temporal getIdTemporal() {
+        return this.atTime;
+    }
+
+    @Override
     public Class<? extends Temporal> getBaseTemporalType() {
         return this.temporalType;
     }

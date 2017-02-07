@@ -11,6 +11,8 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.nickrobison.trestle.common.IRIUtils.extractTrestleIndividualName;
+
 /**
  * Created by nrobison on 1/23/17.
  */
@@ -18,10 +20,10 @@ public class IRIBuilder {
 
     private static final Pattern versionPattern = Pattern.compile("^[^:]*");
 
-    public static IRI encodeIRI(IRIVersion version, String prefix, String objectID, @Nullable String objectFact, @Nullable OffsetDateTime objectTemporal, @Nullable OffsetDateTime databaseTemporal) {
+    public static TrestleIRI encodeIRI(IRIVersion version, String prefix, String objectID, @Nullable String objectFact, @Nullable OffsetDateTime objectTemporal, @Nullable OffsetDateTime databaseTemporal) {
         switch (version) {
             case V1:
-                return V1IRI.encodeIRI(prefix, objectID, objectFact, objectTemporal, databaseTemporal);
+                return V1IRIBuilder.encodeIRI(prefix, extractTrestleIndividualName(objectID), extractTrestleIndividualName(objectFact), objectTemporal, databaseTemporal);
             default:
                 throw new IRIVersionException(version);
         }
@@ -33,14 +35,14 @@ public class IRIBuilder {
      * @return - String of ObjectID
      */
     public static String getObjectID(IRI encodedIRI) {
-        final String individualString = IRIUtils.extractTrestleIndividualName(encodedIRI);
+        final String individualString = extractTrestleIndividualName(encodedIRI);
         if (individualString.equals("")) {
             throw new IRIParseException(encodedIRI);
         }
         final IRIVersion version = getIRIVersion(individualString);
         switch (version) {
             case V1:
-                return V1IRI.getObjectID(individualString);
+                return V1IRIBuilder.getObjectID(individualString);
             default:
                 throw new IRIVersionException(version);
         }
@@ -53,14 +55,14 @@ public class IRIBuilder {
      * @return - Optional String of Fact name
      */
     public static Optional<String> getObjectFact(IRI encodedIRI) {
-        final String individualString = IRIUtils.extractTrestleIndividualName(encodedIRI);
+        final String individualString = extractTrestleIndividualName(encodedIRI);
         if (individualString.equals("")) {
             throw new IRIParseException(encodedIRI);
         }
         final IRIVersion version = getIRIVersion(individualString);
         switch (version) {
             case V1:
-                return V1IRI.getObjectFact(individualString);
+                return V1IRIBuilder.getObjectFact(individualString);
             default:
                 throw new IRIVersionException(version);
         }
@@ -74,14 +76,14 @@ public class IRIBuilder {
      * @return - Optional OffsetDateTime of object/fact temporal
      */
     public static Optional<OffsetDateTime> getObjectTemporal(IRI encodedIRI) {
-        final String individualString = IRIUtils.extractTrestleIndividualName(encodedIRI);
+        final String individualString = extractTrestleIndividualName(encodedIRI);
         if (individualString.equals("")) {
             throw new IRIParseException(encodedIRI);
         }
         final IRIVersion version = getIRIVersion(individualString);
         switch (version) {
             case V1:
-                return V1IRI.getObjectTemporal(individualString);
+                return V1IRIBuilder.getObjectTemporal(individualString);
             default:
                 throw new IRIVersionException(version);
         }
@@ -95,14 +97,14 @@ public class IRIBuilder {
      * @return - Optional OffsetDateTime of object/fact database temporal
      */
     public static Optional<OffsetDateTime> getDatabaseTemporal(IRI encodedIRI) {
-        final String individualString = IRIUtils.extractTrestleIndividualName(encodedIRI);
+        final String individualString = extractTrestleIndividualName(encodedIRI);
         if (individualString.equals("")) {
             throw new IRIParseException(encodedIRI);
         }
         final IRIVersion version = getIRIVersion(individualString);
         switch (version) {
             case V1:
-                return V1IRI.getDatabaseTemporal(individualString);
+                return V1IRIBuilder.getDatabaseTemporal(individualString);
             default:
                 throw new IRIVersionException(version);
         }
