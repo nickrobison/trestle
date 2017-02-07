@@ -11,8 +11,11 @@
         <a md-button routerLink="/dashboard" aria-label="dashboard link">DASHBOARD</a>
         <a md-button routerLink="visualize" aria-label="visualizer link">VISUALIZER</a>
         <a md-button routerLink="/users" aria-label="users link">USERS</a>
-        <button md-button class="toolbar-button" routerLink="/login" aria-label="Search">
-            <i class="material-icons">search</i>
+        <button md-button class="toolbar-button" *ngIf="!userLoggedIn" routerLink="/login" aria-label="Login">
+            <i class="material-icons">input</i>
+        </button>
+        <button md-button class="toolbar-button" *ngIf="userLoggedIn" (click)="logout()" aria-label="Logout">
+            <i class="material-icons">system_update_alt</i>
         </button>
         <button md-button class="toolbar-button" aria-label="Notifications">
             <i class="material-icons">notifications</i>
