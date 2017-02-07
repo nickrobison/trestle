@@ -65,7 +65,7 @@ public class AuthDynamicFeature implements DynamicFeature {
             } catch (Exception e) {
                 throw new WebApplicationException(Response.Status.UNAUTHORIZED);
             }
-            if (!user.getPrivileges().containsAll(Arrays.asList(requiredPrivileges))) {
+            if (!user.getPrivilegeSet().containsAll(Arrays.asList(requiredPrivileges))) {
                 throw new WebApplicationException(Response.Status.FORBIDDEN);
             }
             containerRequestContext.setProperty("user", user);

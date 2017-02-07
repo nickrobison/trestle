@@ -5,6 +5,7 @@ import com.nickrobison.trestle.server.models.User;
 import com.nickrobison.trestle.server.models.UserDAO;
 import io.dropwizard.hibernate.UnitOfWork;
 import jwt4j.JWTHandler;
+import org.mindrot.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,11 +48,18 @@ public class AuthenticationResource {
     @Path("/login")
     public Response login(@Context ContainerRequestContext context, @Valid UserCredentials user) {
         final String name = user.getUsername();
-        final Optional<User> dbUser = userDAO.findByUsername(name);
-        if (dbUser.isPresent()) {
-            logger.info("Logging in {}", name);
-            final String jwtToken = jwtHandler.encode(dbUser.get());
-            return ok(jwtToken).build();
+        final Optional<User> userOptional = userDAO.findByUsername(name);
+        if (userOptional.isPresent()) {
+            final User dbUser = userOptional.get();
+//            Validate password
+            if (BCrypt.checkpw(user.getPassword(), dbUser.getPassword())) {
+                logger.info("Logging in {}", name);
+                final String jwtToken = jwtHandler.encode(dbUser);
+                return ok(jwtToken).build();
+            } else {
+                logger.warn("Wrong password for user {}", name);
+                return status(Status.UNAUTHORIZED).build();
+            }
         }
         logger.warn("Unauthorized user {}", name);
         return status(Status.UNAUTHORIZED).build();
