@@ -18,10 +18,10 @@ public class IRIBuilder {
 
     private static final Pattern versionPattern = Pattern.compile("^[^:]*");
 
-    public static IRI encodeIRI(IRIVersion version, String prefix, String objectID, @Nullable String objectFact, @Nullable OffsetDateTime objectTemporal, @Nullable OffsetDateTime databaseTemporal) {
+    public static TrestleIRI encodeIRI(IRIVersion version, String prefix, String objectID, @Nullable String objectFact, @Nullable OffsetDateTime objectTemporal, @Nullable OffsetDateTime databaseTemporal) {
         switch (version) {
             case V1:
-                return V1IRI.encodeIRI(prefix, objectID, objectFact, objectTemporal, databaseTemporal);
+                return V1IRIBuilder.encodeIRI(prefix, objectID, objectFact, objectTemporal, databaseTemporal);
             default:
                 throw new IRIVersionException(version);
         }
@@ -40,7 +40,7 @@ public class IRIBuilder {
         final IRIVersion version = getIRIVersion(individualString);
         switch (version) {
             case V1:
-                return V1IRI.getObjectID(individualString);
+                return V1IRIBuilder.getObjectID(individualString);
             default:
                 throw new IRIVersionException(version);
         }
@@ -60,7 +60,7 @@ public class IRIBuilder {
         final IRIVersion version = getIRIVersion(individualString);
         switch (version) {
             case V1:
-                return V1IRI.getObjectFact(individualString);
+                return V1IRIBuilder.getObjectFact(individualString);
             default:
                 throw new IRIVersionException(version);
         }
@@ -81,7 +81,7 @@ public class IRIBuilder {
         final IRIVersion version = getIRIVersion(individualString);
         switch (version) {
             case V1:
-                return V1IRI.getObjectTemporal(individualString);
+                return V1IRIBuilder.getObjectTemporal(individualString);
             default:
                 throw new IRIVersionException(version);
         }
@@ -102,7 +102,7 @@ public class IRIBuilder {
         final IRIVersion version = getIRIVersion(individualString);
         switch (version) {
             case V1:
-                return V1IRI.getDatabaseTemporal(individualString);
+                return V1IRIBuilder.getDatabaseTemporal(individualString);
             default:
                 throw new IRIVersionException(version);
         }

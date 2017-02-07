@@ -33,4 +33,9 @@ public enum IRIVersion {
                 .filter(value -> value.getName().equals(version))
                 .findAny().orElseThrow(() -> new IRIParseException(version));
     }
+
+    @Override
+    public String toString() {
+        return getName();
+    }
 }
