@@ -65,4 +65,12 @@ public class TrestleIRIV1Test {
         assertAll(() -> assertThrows(IRIVersionException.class, () -> IRIBuilder.encodeIRI(IRIVersion.V2, TEST_PREFIX, OBJECT_ID, null, null, null)),
                 () -> assertThrows(IRIVersionException.class, () -> IRIBuilder.encodeIRI(IRIVersion.V3, TEST_PREFIX, OBJECT_ID, null, null, null)));
     }
+
+    @Test
+    public void testExpandedString() {
+        final TrestleIRI expandedIRITest = IRIBuilder.encodeIRI(IRIVersion.V1, TEST_PREFIX, IRI.create(TEST_PREFIX, OBJECT_ID).getIRIString(), IRI.create(TEST_PREFIX, "testFact").toString(), null, null);
+        assertAll(() -> assertEquals(OBJECT_ID, expandedIRITest.getObjectID(), "Object ID should not be fully expanded"),
+                () -> assertEquals("testFact", expandedIRITest.getObjectFact().get(), "Object Fact should not be fully expanded"));
+
+    }
 }

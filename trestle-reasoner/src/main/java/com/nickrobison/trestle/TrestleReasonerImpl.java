@@ -451,12 +451,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             final TrestleIRI factIdentifier = IRIBuilder.encodeIRI(IRIVersion.V1,
                     REASONER_PREFIX,
                     rootIndividual.toStringID(),
-                    property.getProperty().toString(),
+                    property.getProperty().asOWLDataProperty().getIRI().toString(),
                     parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC),
                     parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC));
 
             final OWLNamedIndividual propertyIndividual = df.getOWLNamedIndividual(factIdentifier);
-//            final OWLNamedIndividual propertyIndividual = df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, String.format("%s:%s:%d", rootIndividual.getIRI().getShortForm(), property.getProperty().asOWLDataProperty().getIRI().getShortForm(), now)));
             ontology.createIndividual(propertyIndividual, factClass);
             try {
 //                Write the property

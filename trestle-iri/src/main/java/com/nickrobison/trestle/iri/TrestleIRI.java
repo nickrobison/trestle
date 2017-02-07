@@ -37,4 +37,9 @@ public abstract class TrestleIRI implements HasIRI {
     public abstract Optional<OffsetDateTime> getObjectTemporal();
 
     public abstract Optional<OffsetDateTime> getDbTemporal();
+
+    @Override
+    public String toString() {
+        return getIRI().toString();
+    }
 }
