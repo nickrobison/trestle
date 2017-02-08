@@ -856,14 +856,14 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             try {
                 objectState = argumentsFuture.get();
             } catch (InterruptedException e) {
+                ontology.returnAndAbortTransaction(trestleTransaction);
                 logger.error("Read object {} interrupted", individualIRI, e);
                 return Optional.empty();
             } catch (ExecutionException e) {
+                ontology.returnAndAbortTransaction(trestleTransaction);
                 logger.error("Execution exception when reading object {}", individualIRI, e);
                 return Optional.empty();
             } finally {
-//                FIXME(nrobison): Rollback
-                ontology.returnAndCommitTransaction(trestleTransaction);
             }
             try {
                 final @NonNull T constructedObject = ClassBuilder.constructObject(clazz, objectState.getArguments());
@@ -873,8 +873,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 return Optional.empty();
             }
         } else {
-//                FIXME(nrobison): Rollback
-            ontology.returnAndCommitTransaction(trestleTransaction);
+            ontology.returnAndAbortTransaction(trestleTransaction);
             throw new RuntimeException("No data properties, not even trying");
         }
     }
@@ -1018,11 +1017,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             return Optional.of(intersectedObjects);
         } catch (InterruptedException e) {
             logger.error("Spatial intersection interrupted", e);
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
         } catch (ExecutionException e) {
             logger.error("Spatial intersection execution exception", e);
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
         }
     }
@@ -1259,7 +1258,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         } catch (InterruptedException | ExecutionException e) {
 //            FIXME(nrobison): Rollback
             logger.error("Interruption exception building Trestle Individual {}", individual, e);
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
             throw new RuntimeException(e);
         }
     }
@@ -1368,10 +1367,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         } catch (InterruptedException e) {
 //            FIXME(nrobison): Rollback
             logger.error("Object retrieval for concept {}, interrupted", conceptID, e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
         } catch (ExecutionException e) {
 //            FIXME(nrobison): Rollback
             logger.error("Unable to retrieve all objects for concept {}", conceptID, e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
@@ -1501,6 +1502,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 //        Write the overlap
         final OWLClassAssertionAxiom overlapClassAssertion = df.getOWLClassAssertionAxiom(df.getOWLClass(trestleOverlapIRI), overlapIndividual);
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         this.ontology.createIndividual(overlapClassAssertion);
 //        Write the overlap intersection
         final OWLDataPropertyAssertionAxiom sOverlapAssertion = df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(tOverlapIRI), overlapIndividual, df.getOWLLiteral(temporalOverlap));
@@ -1516,6 +1518,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 //        Write the object relation
         this.writeIndirectObjectProperty(overlapIndividual, object, overlapProperty);
+        this.ontology.returnAndCommitTransaction(trestleTransaction);
     }
 
     /**
@@ -1641,44 +1644,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     validTemporal.orElseThrow(() -> new TrestleMissingFactException(factIndividual)),
                     dbTemporal.orElseThrow(() -> new TrestleMissingFactException(factIndividual)));
         });
-
-//        final CompletableFuture<FactPair> factFuture = CompletableFuture.supplyAsync(() -> {
-//            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(transactionObject);
-//            Set<OWLDataPropertyAssertionAxiom> allDataPropertiesForIndividual = ontology.getAllDataPropertiesForIndividual(factIndividual);
-//            this.ontology.returnAndCommitTransaction(tt);
-//            return allDataPropertiesForIndividual;
-//        })
-////        There's only one data property per fact, so we can do this.
-//                .thenApply(factProperties -> factProperties
-//                        .stream()
-//                        .filter(property -> !(property.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseFromIRI) |
-//                                property.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseToIRI) |
-//                                property.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseFromIRI) |
-//                                property.getProperty().asOWLDataProperty().getIRI().equals(temporalValidFromIRI) |
-//                                property.getProperty().asOWLDataProperty().getIRI().equals(temporalValidToIRI) |
-//                                property.getProperty().asOWLDataProperty().getIRI().equals(temporalValidAtIRI)))
-//                        .findFirst())
-//                .thenApply(first -> first.orElseThrow(() -> new TrestleMissingFactException(factIndividual)))
-//                .thenApply(factAssertion -> {
-//                    return new FactPair(factAssertion, factAssertion.getObject());
-//                });
-//
-////            Now the temporals
-//        final CompletableFuture<Optional<TemporalObject>> validFuture = getFactTemporal(factIndividual, validTimeIRI, transactionObject);
-//        final CompletableFuture<Optional<TemporalObject>> databaseFuture = getFactTemporal(factIndividual, databaseTimeIRI, transactionObject);
-//
-////        Sequence the temporals in valid/database order
-//        final CompletableFuture<TemporalPair> temporalsFuture = validFuture.thenCombine(databaseFuture, (valid, database) -> new TemporalPair(
-//                valid.orElseThrow(() -> new TrestleMissingFactException(factIndividual, validTimeIRI)),
-//                database.orElseThrow(() -> new TrestleMissingFactException(factIndividual, databaseTimeIRI))));
-//
-//        return temporalsFuture.thenCombine(factFuture, (temporalPair, factPair) ->
-//                new TrestleFact<>(
-//                        factIndividual.getIRI().toString(),
-//                        factPair.getAssertion().getProperty().asOWLDataProperty().getIRI().getShortForm(),
-//                        factPair.extractLiteral(),
-//                        temporalPair.getValid(),
-//                        temporalPair.getDatabase()));
     }
 
     /**
