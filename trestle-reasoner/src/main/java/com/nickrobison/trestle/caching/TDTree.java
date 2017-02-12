@@ -3,15 +3,16 @@ package com.nickrobison.trestle.caching;
 import com.boundary.tuple.FastTuple;
 import com.boundary.tuple.TupleSchema;
 import org.apache.commons.math3.util.FastMath;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.nickrobison.trestle.caching.TriangleHelpers.*;
 
 /**
  * Created by nrobison on 2/9/17.
@@ -62,6 +63,81 @@ public class TDTree {
         }
     }
 
+    @SuppressWarnings("Duplicates")
+    public @Nullable String getValue(String objectID, long atTime) {
+        List<LeafNode> fullyContained = new ArrayList<>();
+        long[] rectApex = {atTime, atTime};
+        int length = 2;
+        int parentDirection = 7;
+        TriangleHelpers.TriangleApex parentApex = new TriangleHelpers.TriangleApex(0, maxValue);
+        final ArrayDeque<LeafNode> populatedLeafs = this.leafs.stream()
+                .filter(leaf -> leaf.getRecordCount() > 0)
+                .collect(Collectors.toCollection(ArrayDeque::new));
+        while (!populatedLeafs.isEmpty()) {
+            final LeafNode first = populatedLeafs.pop();
+            final int firstID = first.getID();
+            int overlappingPrefix = firstID >> (getIDLength(firstID) - length);
+            final TriangleApex childApex = calculateChildApex(length, parentDirection, parentApex.start, parentApex.end);
+            final ChildDirection childDirection = calculateChildDirection(parentDirection);
+//                Are we the lower child?
+            final int intersectionResult;
+            if (overlappingPrefix < getMaximumValue(overlappingPrefix)) {
+                intersectionResult = filterTriangleResults(populatedLeafs, fullyContained, overlappingPrefix, childApex, childDirection.lowerChild, length, rectApex);
+                parentDirection = childDirection.lowerChild;
+            } else {
+                intersectionResult = filterTriangleResults(populatedLeafs, fullyContained, overlappingPrefix, childApex, childDirection.higherChild, length, rectApex);
+                parentDirection = childDirection.higherChild;
+            }
+
+//            If not fully contained or disjoint, check to see if ancestor equals leaf
+            if (!(intersectionResult == 1) & !(intersectionResult == -2)) {
+                if (firstID == overlappingPrefix) {
+                    fullyContained.add(first);
+                } else { // Return the leaf to the queue, and step down another level
+                    populatedLeafs.push(first);
+                    parentApex = childApex;
+                    length++;
+                }
+            } else { // If this leaf is either fully within the rectangle, or completely outside of it. Reset back to the initial state and keep going
+                parentApex = new TriangleHelpers.TriangleApex(0, maxValue);
+                parentDirection = 7;
+                length = 2;
+            }
+        }
+        for (LeafNode node : fullyContained) {
+            @Nullable final String value = node.getValue(objectID, atTime);
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private int filterTriangleResults(ArrayDeque<LeafNode> populatedLeafs, List<LeafNode> fullyContained, int overlappingPrefix, TriangleApex childApex, int childDirection, int length, long[] rectApex) {
+        final int intersectionResult = checkRectangleIntersection(childApex, childDirection, length, rectApex, maxValue);
+        if (intersectionResult == 1) {
+            final int currentSize = populatedLeafs.size();
+            for (int i = 0; i < currentSize; i++) {
+                final LeafNode next = populatedLeafs.pop();
+                if (Integer.bitCount(next.getID() ^ overlappingPrefix) == length) {
+                    fullyContained.add(next);
+                } else {
+                    populatedLeafs.add(next);
+                }
+            }
+        } else if (intersectionResult == -2) {
+            final int currentSize = populatedLeafs.size();
+            for (int i = 0; i < currentSize; i++) {
+                final LeafNode next = populatedLeafs.pop();
+                if (Integer.bitCount(next.getID() ^ overlappingPrefix) < length) {
+                    populatedLeafs.add(next);
+                }
+            }
+        }
+
+        return intersectionResult;
+    }
+
     /**
      * Recursively parse a {@link LeafSplit} to add all the new leaves, with records to the directory
      *
@@ -89,14 +165,14 @@ public class TDTree {
     }
 
     private int getMatchingLeaf(long startTime, long endTime, int leafID, int parentDirection, TriangleHelpers.TriangleApex parentApex) {
-        final int idLength = TriangleHelpers.getIDLength(leafID);
+        final int idLength = getIDLength(leafID);
         if (idLength > this.maxDepth) {
             return leafID;
         }
         final TriangleHelpers.ChildDirection childDirection = TriangleHelpers.calculateChildDirection(parentDirection);
         final TriangleHelpers.TriangleApex childApex = TriangleHelpers.calculateChildApex(idLength + 1, parentDirection, parentApex.start, parentApex.end);
 //                Intersects with low child?
-        if (TriangleHelpers.checkIntersection(childApex, childDirection.lowerChild, idLength + 1, startTime, endTime)) {
+        if (TriangleHelpers.checkPointIntersection(childApex, childDirection.lowerChild, idLength + 1, startTime, endTime)) {
             return getMatchingLeaf(startTime, endTime, leafID << 1, childDirection.lowerChild, childApex);
         }
         return getMatchingLeaf(startTime, endTime, (leafID << 1) | 1, childDirection.higherChild, parentApex);

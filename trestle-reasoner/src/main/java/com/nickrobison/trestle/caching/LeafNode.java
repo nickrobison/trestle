@@ -2,9 +2,9 @@ package com.nickrobison.trestle.caching;
 
 import com.boundary.tuple.FastTuple;
 import com.boundary.tuple.TupleSchema;
+import com.boundary.tuple.codegen.TupleExpressionGenerator;
 import org.apache.commons.lang3.ArrayUtils;
-
-import java.util.Arrays;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import static com.nickrobison.trestle.caching.TDTree.leafSchema;
 import static com.nickrobison.trestle.caching.TriangleHelpers.*;
@@ -43,6 +43,30 @@ class LeafNode {
 
     public int getRecordCount() {
         return this.records;
+    }
+
+
+    /**
+     * Retrieve a value from the Leaf that matches the given ObjectID and is valid at the specified timestamp
+     * Returns null if no matching object is found
+     * @param objectID - ID of object to find
+     * @param atTime - Time which the object must be valid
+     * @return - Nullable String value
+     */
+    @Nullable String getValue(String objectID, long atTime) {
+        final TupleExpressionGenerator.BooleanTupleExpression eval;
+        try {
+            final String queryString = String.format("(tuple.objectID == %sL) & (tuple.start <= %sL) & (tuple.end > %sL)", longHashCode(objectID), atTime, atTime);
+            eval = TupleExpressionGenerator.builder().expression(queryString).schema(leafKeySchema).returnBoolean();
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to build find expression", e);
+        }
+        for (int i = 0; i < this.records; i++) {
+            if (eval.evaluate(keys[i])) {
+                return values[i];
+            }
+        }
+        return null;
     }
 
     LeafSplit insert(String objectID, long startTime, long endTime, String value) {

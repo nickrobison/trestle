@@ -1,12 +1,31 @@
 package com.nickrobison.trestle.caching;
 
 import org.apache.commons.math3.util.FastMath;
+import org.apache.commons.math3.util.Precision;
 
 /**
  * Created by nrobison on 2/10/17.
  */
 public class TriangleHelpers {
-    static boolean checkIntersection(TriangleApex apex, int direction, int leafLength, long startTime, long endTime) {
+
+    /**
+     * Determines if the given triangle is fully contained in the rectangle denoted by the X/Y bottom-right corner
+     * @param apex - {@link TriangleApex}
+     * @param direction - Direction of triangle
+     * @param leafLength - Leaf length
+     * @param rectangleApex - bottom-right X/Y coordinates of rectangle
+     * @return - 1 if the triangle is fully within the rectangle. 0 to -1 if it partially intersects, -2 if fully outside
+     */
+    static int checkRectangleIntersection(TriangleApex apex, int direction, int leafLength, long[] rectangleApex, long maxValue) {
+        final double[] triangleVerticies = getTriangleVerticies(getAdjustedLength(leafLength), direction, apex.start, apex.end);
+        final int apexInside = ((triangleVerticies[0] <= rectangleApex[0]) & (triangleVerticies[0] >= 0)) & ((triangleVerticies[1] >= rectangleApex[1]) & (triangleVerticies[1] <= maxValue)) ? 1 : 0;
+        final int p2Inside = ((triangleVerticies[2] <= rectangleApex[0]) & (triangleVerticies[2] >= 0)) & ((triangleVerticies[3] >= rectangleApex[1]) & (triangleVerticies[3] <= maxValue)) ? 1 : 0;
+        final int p3Inside = ((triangleVerticies[4] <= rectangleApex[0]) & (triangleVerticies[4] >= 0)) & ((triangleVerticies[5] >= rectangleApex[1]) & (triangleVerticies[5] <= maxValue)) ? 1 : 0;
+
+        return apexInside + p2Inside + p3Inside - 2;
+    }
+
+    static boolean checkPointIntersection(TriangleApex apex, int direction, int leafLength, long startTime, long endTime) {
 //        find the apex points
         final double[] verticies = getTriangleVerticies(getAdjustedLength(leafLength), direction, apex.start, apex.end);
         return pointInTriangle(startTime, endTime, verticies);
@@ -14,11 +33,11 @@ public class TriangleHelpers {
 
     /**
      * Determines if a given point in contained within the given triangle
-     * Verticies are passed in as an array (X/Y pairs) in an anti-clockwise orientation
+     * Verticies are passed in as an array (X/Y pairs) in a counter-clockwise orientation
      *
      * @param start             - start (X) coordinate of point
      * @param end               - end (Y) coordinate of point
-     * @param triangleVerticies - Triangle verticies (x/y clockwise points)
+     * @param triangleVerticies - Triangle verticies (x/y counter-clockwise points)
      * @return - point in triangle?
      */
     static boolean pointInTriangle(long start, long end, double[] triangleVerticies) {
@@ -37,7 +56,7 @@ public class TriangleHelpers {
 
     /**
      * Gets the
-     * Returns an anti-clockwise array of double x/y pairs in the form P(n)X, P(n)Y
+     * Returns a counter-clockwise array of double x/y pairs in the form P(n)X, P(n)Y
      *
      * @param adjustedLength - Adjusted length of Triangle side
      * @param direction      - Direction of triangle
@@ -50,53 +69,62 @@ public class TriangleHelpers {
         verticies[0] = triangleStart;
         verticies[1] = triangleEnd;
         if (direction == 0) {
-            final double l2 = (adjustedLength * TDTree.ROOTTWO) * 2;
-            verticies[2] = triangleStart - l2;
-            verticies[3] = triangleEnd - l2;
-            verticies[4] = triangleStart + l2;
-            verticies[5] = triangleEnd + l2;
+            final double l2 = (adjustedLength * TDTree.ROOTTWO) / 2;
+            verticies[2] = normalizeZero(triangleStart - l2);
+            verticies[3] = normalizeZero(triangleEnd - l2);
+            verticies[4] = normalizeZero(triangleStart + l2);
+            verticies[5] = normalizeZero(triangleEnd + l2);
         } else if (direction == 1) {
-            verticies[2] = triangleStart - adjustedLength;
+            verticies[2] = normalizeZero(triangleStart - adjustedLength);
             verticies[3] = triangleEnd;
             verticies[4] = triangleStart;
-            verticies[5] = triangleEnd - adjustedLength;
+            verticies[5] = normalizeZero(triangleEnd - adjustedLength);
         } else if (direction == 2) {
-            final double l2 = (adjustedLength * TDTree.ROOTTWO) * 2;
-            verticies[2] = triangleStart - l2;
-            verticies[3] = triangleEnd + l2;
-            verticies[4] = triangleStart - l2;
-            verticies[5] = triangleEnd - l2;
+            final double l2 = (adjustedLength * TDTree.ROOTTWO) / 2;
+            verticies[2] = normalizeZero(triangleStart - l2);
+            verticies[3] = normalizeZero(triangleEnd + l2);
+            verticies[4] = normalizeZero(triangleStart - l2);
+            verticies[5] = normalizeZero(triangleEnd - l2);
 
         } else if (direction == 3) {
             verticies[2] = triangleStart;
-            verticies[3] = triangleEnd + adjustedLength;
-            verticies[4] = triangleStart - adjustedLength;
+            verticies[3] = normalizeZero(triangleEnd + adjustedLength);
+            verticies[4] = normalizeZero(triangleStart - adjustedLength);
             verticies[5] = triangleEnd;
         } else if (direction == 4) {
-            final double l2 = (adjustedLength * TDTree.ROOTTWO) * 2;
-            verticies[2] = triangleStart + l2;
-            verticies[3] = triangleEnd + l2;
-            verticies[4] = triangleStart - l2;
-            verticies[5] = triangleEnd + l2;
+            final double l2 = (adjustedLength * TDTree.ROOTTWO) / 2;
+            verticies[2] = normalizeZero(triangleStart + l2);
+            verticies[3] = normalizeZero(triangleEnd + l2);
+            verticies[4] = normalizeZero(triangleStart - l2);
+            verticies[5] = normalizeZero(triangleEnd + l2);
         } else if (direction == 5) {
-            verticies[2] = triangleStart + adjustedLength;
+            verticies[2] = normalizeZero(triangleStart + adjustedLength);
             verticies[3] = triangleEnd;
             verticies[4] = triangleStart;
-            verticies[5] = triangleEnd + adjustedLength;
+            verticies[5] = normalizeZero(triangleEnd + adjustedLength);
         } else if (direction == 6) {
-            final double l2 = (adjustedLength * TDTree.ROOTTWO) * 2;
-            verticies[2] = triangleStart + l2;
-            verticies[3] = triangleEnd - l2;
-            verticies[4] = triangleStart + l2;
-            verticies[5] = triangleEnd + l2;
+            final double l2 = (adjustedLength * TDTree.ROOTTWO) / 2;
+            verticies[2] = normalizeZero(triangleStart + l2);
+            verticies[3] = normalizeZero(triangleEnd - l2);
+            verticies[4] = normalizeZero(triangleStart + l2);
+            verticies[5] = normalizeZero(triangleEnd + l2);
         } else {
             verticies[2] = triangleStart;
-            verticies[3] = triangleEnd + adjustedLength;
-            verticies[4] = triangleStart + adjustedLength;
+            verticies[3] = normalizeZero(triangleEnd + adjustedLength);
+            verticies[4] = normalizeZero(triangleStart + adjustedLength);
             verticies[5] = triangleEnd;
         }
 
         return verticies;
+    }
+
+    /**
+     * Rounds values to their 10th decimal place, and gets their abs
+     * Used to deal with near-zero values caused by rounding errors
+     * @return
+     */
+    private static double normalizeZero(double value) {
+        return FastMath.abs(Precision.round(value, 10));
     }
 
     static ChildDirection calculateChildDirection(int parentDirection) {
@@ -151,7 +179,11 @@ public class TriangleHelpers {
      * @return - number of used bits
      */
     static int getIDLength(int leafID) {
-        return (int) FastMath.floor(Math.log10(leafID) / FastMath.log10(2)) + 1;
+        return (int) FastMath.floor(FastMath.log10(leafID) / FastMath.log10(2)) + 1;
+    }
+
+    static int getMaximumValue(int leafID) {
+        return (int) FastMath.pow(getIDLength(leafID), 2) - 1;
     }
 
     /**

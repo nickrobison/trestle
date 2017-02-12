@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.caching;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,6 +26,9 @@ public class TDTreeTest {
         tdTree.insertValue("test-object2", 6, 9, "test-object-string2");
         tdTree.insertValue("test-object3", 6, 9, "test-object-string3");
         tdTree.insertValue("test-object4", 1, 2, "test-object-string4");
+        tdTree.insertValue("test-object", 1, 3, "test-object-string-early");
+        @Nullable final String value = tdTree.getValue("test-object", 2);
+        assertEquals("test-object-string-early", value, "Should have early value");
     }
 
 
