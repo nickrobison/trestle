@@ -56,7 +56,8 @@ class LeafNode {
     @Nullable String getValue(String objectID, long atTime) {
         final TupleExpressionGenerator.BooleanTupleExpression eval;
         try {
-            final String queryString = String.format("(tuple.objectID == %sL) & (tuple.start <= %sL) & (tuple.end > %sL)", longHashCode(objectID), atTime, atTime);
+//            We have to do this really weird equality check because FastTuple doesn't support if statements (for now). So we check for a an interval match, then a point match
+            final String queryString = String.format("(tuple.objectID == %sL) & (((tuple.start <= %sL) & (tuple.end > %sL)) | ((tuple.start == tuple.end)  & (tuple.start == %sL)))", longHashCode(objectID), atTime, atTime, atTime);
             eval = TupleExpressionGenerator.builder().expression(queryString).schema(leafKeySchema).returnBoolean();
         } catch (Exception e) {
             throw new RuntimeException("Unable to build find expression", e);

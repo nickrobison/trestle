@@ -46,6 +46,16 @@ public class TDTree {
     }
 
 
+    /**
+     * Insert a key/value pair with an open interval
+     * @param objectID - String object key
+     * @param startTime - Long temporal of start temporal
+     * @param value - Value
+     */
+    public void insertValue(String objectID, long startTime, String value) {
+        insertValue(objectID, startTime, maxValue, value);
+    }
+
     public void insertValue(String objectID, long startTime, long endTime, String value) {
 //        Find the leaf at maxDepth that would contain the objectID
         final int matchingLeaf = getMatchingLeaf(startTime, endTime);

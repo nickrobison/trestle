@@ -3,6 +3,7 @@ package com.nickrobison.trestle.caching;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -21,14 +22,25 @@ public class TDTreeTest {
         assertEquals(31, matchingLeaf, "Should match leaf 11101");
         tdTree.setMaxDepth(0);
 
-        tdTree.insertValue("test-object", 8, 9, "test-object-string");
-//        tdTree.insertValue("test-object2", 1, 2, "test-object-string2");
-        tdTree.insertValue("test-object2", 6, 9, "test-object-string2");
-        tdTree.insertValue("test-object3", 6, 9, "test-object-string3");
-        tdTree.insertValue("test-object4", 1, 2, "test-object-string4");
-        tdTree.insertValue("test-object", 1, 3, "test-object-string-early");
-        @Nullable final String value = tdTree.getValue("test-object", 2);
-        assertEquals("test-object-string-early", value, "Should have early value");
+//        tdTree.insertValue("test-object", 8, 9, "test-object-string");
+////        tdTree.insertValue("test-object2", 1, 2, "test-object-string2");
+//        tdTree.insertValue("test-object2", 6, 9, "test-object-string2");
+//        tdTree.insertValue("test-object3", 6, 9, "test-object-string3");
+//        tdTree.insertValue("test-object4", 1, 2, "test-object-string4");
+//        tdTree.insertValue("test-object", 1, 3, "test-object-string-early");
+//        @Nullable final String value = tdTree.getValue("test-object", 2);
+//        assertEquals("test-object-string-early", value, "Should have early value");
+
+//        Test correct temporal provisioning
+        final String temporalTestID = "temporal-test";
+        tdTree.insertValue(temporalTestID, 1, 5, "first-value");
+        tdTree.insertValue(temporalTestID, 5, 5, "second-value");
+        tdTree.insertValue(temporalTestID, 6, "third-value");
+        assertAll(() -> assertEquals("first-value", tdTree.getValue(temporalTestID, 4)),
+                () -> assertEquals("second-value", tdTree.getValue(temporalTestID, 5)),
+                () -> assertEquals("third-value", tdTree.getValue(temporalTestID, 9)));
+
+
     }
 
 
