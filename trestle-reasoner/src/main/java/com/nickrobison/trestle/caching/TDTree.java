@@ -17,7 +17,7 @@ import static com.nickrobison.trestle.caching.TriangleHelpers.*;
 /**
  * Created by nrobison on 2/9/17.
  */
-public class TDTree {
+public class TDTree<Value> {
 
     private static final Logger logger = LoggerFactory.getLogger(TDTree.class);
     static long maxValue = LocalDate.of(3000, 1, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
@@ -38,7 +38,7 @@ public class TDTree {
         rootTuple.setDouble(1, 0);
         rootTuple.setDouble(2, maxValue);
         rootTuple.setShort(3, (short) 7);
-        leafs.add(new LeafNode(1, rootTuple, this.blockSize));
+        leafs.add(new LeafNode<Value>(1, rootTuple, this.blockSize));
     }
 
     void setMaxDepth(int depth) {
@@ -53,11 +53,12 @@ public class TDTree {
      * @param startTime - Long temporal of start temporal
      * @param value     - Value
      */
-    public void insertValue(String objectID, long startTime, String value) {
+    public void insertValue(String objectID, long startTime, Value value) {
         insertValue(objectID, startTime, maxValue, value);
     }
 
-    public void insertValue(String objectID, long startTime, long endTime, String value) {
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
+    public void insertValue(String objectID, long startTime, long endTime, Value value) {
 //        Find the leaf at maxDepth that would contain the objectID
         final int matchingLeaf = getMatchingLeaf(startTime, endTime);
 //        Find the region in list with the most number of matching bits
@@ -69,6 +70,7 @@ public class TDTree {
                 .findFirst();
 
 //        We can do this because it will always match on, at least, the root node
+        //noinspection unchecked
         final LeafSplit split = first.get().insert(objectID, startTime, endTime, value);
 //        If we split, we need to add the new leafs to the tree, and remove the old ones
         if (split != null) {
@@ -77,25 +79,8 @@ public class TDTree {
         }
     }
 
-    /**
-     * Determins how many bits match between two numbers
-     * Shifts the numbers so that they're the same length
-     * @param leafID - LeafID to match
-     * @param matchID - matchID to match LeafID against
-     * @return - Number of common bits left->right
-     */
-    private static int idSimilarity(int leafID, int matchID) {
-        final int idLength = getIDLength(leafID);
-        final int matchLength = getIDLength(matchID);
-        if (matchLength > idLength) {
-            return idLength - Integer.bitCount(leafID ^ (matchID >> (matchLength - idLength)));
-        } else {
-            return matchLength - Integer.bitCount(matchID ^ (leafID >> (idLength - matchLength)));
-        }
-    }
-
     @SuppressWarnings("Duplicates")
-    public @Nullable String getValue(String objectID, long atTime) {
+    public @Nullable Value getValue(String objectID, long atTime) {
         List<LeafNode> fullyContained = new ArrayList<>();
         long[] rectApex = {atTime, atTime};
         int length = 1;
@@ -145,7 +130,8 @@ public class TDTree {
             }
         }
         for (LeafNode node : fullyContained) {
-            @Nullable final String value = node.getValue(objectID, atTime);
+            //noinspection unchecked
+            @Nullable final Value value = (Value) node.getValue(objectID, atTime);
             if (value != null) {
                 return value;
             }
@@ -230,6 +216,22 @@ public class TDTree {
         return getMatchingLeaf(startTime, endTime, (leafID << 1) | 1, childDirection.higherChild, parentApex);
     }
 
+    /**
+     * Determines how many bits match between two numbers
+     * Shifts the numbers so that they're the same length
+     * @param leafID - LeafID to match
+     * @param matchID - matchID to match LeafID against
+     * @return - Number of common bits left->right
+     */
+    private static int idSimilarity(int leafID, int matchID) {
+        final int idLength = getIDLength(leafID);
+        final int matchLength = getIDLength(matchID);
+        if (matchLength > idLength) {
+            return idLength - Integer.bitCount(leafID ^ (matchID >> (matchLength - idLength)));
+        } else {
+            return matchLength - Integer.bitCount(matchID ^ (leafID >> (idLength - matchLength)));
+        }
+    }
 
     private static TupleSchema buildLeafSchema() {
         try {

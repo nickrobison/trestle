@@ -6,19 +6,21 @@ import com.boundary.tuple.codegen.TupleExpressionGenerator;
 import org.apache.commons.lang3.ArrayUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.lang.reflect.Array;
+
 import static com.nickrobison.trestle.caching.TDTree.leafSchema;
 import static com.nickrobison.trestle.caching.TriangleHelpers.*;
 
 /**
  * Created by nrobison on 2/9/17.
  */
-class LeafNode {
+class LeafNode<Value> {
     private static final TupleSchema leafKeySchema = buildLeafKeySchema();
     private final int leafID;
     private final FastTuple leafMetadata;
     private int blockSize;
     final FastTuple[] keys;
-    final String[] values;
+    final Value[] values;
     private int records = 0;
 
 
@@ -30,7 +32,8 @@ class LeafNode {
 //            Allocate Key array
         try {
             keys = leafKeySchema.createArray(blockSize);
-            values = new String[blockSize];
+            //noinspection unchecked
+            values = (Value[]) new Object[blockSize];
         } catch (Exception e) {
             throw new RuntimeException("Unable to allocate key/value memory for leaf", e);
         }
@@ -54,7 +57,7 @@ class LeafNode {
      * @param atTime   - Time which the object must be valid
      * @return - Nullable String value
      */
-    @Nullable String getValue(String objectID, long atTime) {
+    @Nullable Value getValue(String objectID, long atTime) {
         final TupleExpressionGenerator.BooleanTupleExpression eval;
         try {
 //            We have to do this really weird equality check because FastTuple doesn't support if statements (for now). So we check for a an interval match, then a point match
@@ -71,7 +74,7 @@ class LeafNode {
         return null;
     }
 
-    LeafSplit insert(String objectID, long startTime, long endTime, String value) {
+    LeafSplit insert(String objectID, long startTime, long endTime, Value value) {
         final FastTuple newKey;
         try {
             newKey = leafKeySchema.createTuple();
@@ -84,7 +87,7 @@ class LeafNode {
         }
     }
 
-    LeafSplit insert(FastTuple newKey, String value) {
+    LeafSplit insert(FastTuple newKey, Value value) {
 //            Check if we have more space, if we do, insert it.
         if (records < blockSize) {
             return insertValueIntoArray(newKey, value);
@@ -174,7 +177,7 @@ class LeafNode {
         }
     }
 
-    private LeafSplit insertValueIntoArray(FastTuple key, String value) {
+    private LeafSplit insertValueIntoArray(FastTuple key, Value value) {
         if (!ArrayUtils.contains(keys, key)) {
             keys[records] = key;
             values[records] = value;

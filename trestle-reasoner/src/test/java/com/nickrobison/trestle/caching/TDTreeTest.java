@@ -14,7 +14,7 @@ public class TDTreeTest {
     @Test
     public void testLeafFind() throws Exception {
         TDTree.maxValue = 10;
-        final TDTree tdTree = new TDTree(3);
+        final TDTree<String> tdTree = new TDTree<>(3);
         int matchingLeaf = tdTree.getMatchingLeaf(8, 8);
         assertEquals(1, matchingLeaf, "Should match root leaf");
         tdTree.setMaxDepth(4);
