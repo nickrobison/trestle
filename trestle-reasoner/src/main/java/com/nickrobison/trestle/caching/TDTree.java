@@ -78,22 +78,20 @@ public class TDTree {
     }
 
     /**
-     * Moves left->right through a binary string to determine how many bits match
+     * Determins how many bits match between two numbers
+     * Shifts the numbers so that they're the same length
      * @param leafID - LeafID to match
      * @param matchID - matchID to match LeafID against
      * @return - Number of common bits left->right
      */
     private static int idSimilarity(int leafID, int matchID) {
-        final int minIDLength = FastMath.min(getIDLength(leafID), getIDLength(matchID));
-        String leafString = Integer.toBinaryString(leafID);
-        String matchString = Integer.toBinaryString(matchID);
-        int match = 0;
-        for (int i = 0; i < minIDLength; i++) {
-            if (leafString.charAt(i) == matchString.charAt(i)) {
-                match++;
-            }
+        final int idLength = getIDLength(leafID);
+        final int matchLength = getIDLength(matchID);
+        if (matchLength > idLength) {
+            return idLength - Integer.bitCount(leafID ^ (matchID >> (matchLength - idLength)));
+        } else {
+            return matchLength - Integer.bitCount(matchID ^ (leafID >> (idLength - matchLength)));
         }
-        return match;
     }
 
     @SuppressWarnings("Duplicates")

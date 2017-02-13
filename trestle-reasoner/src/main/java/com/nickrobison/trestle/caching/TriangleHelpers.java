@@ -129,6 +129,7 @@ public class TriangleHelpers {
      * Used to deal with near-zero values caused by rounding errors
      * @return
      */
+//    FIXME(nrobison): This needs to get a calculated precision
     private static double normalizeZero(double value) {
         return FastMath.abs(Precision.round(value, 3));
     }
