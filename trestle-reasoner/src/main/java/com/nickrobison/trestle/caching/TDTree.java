@@ -240,6 +240,7 @@ public class TDTree<Value> {
                     .addField("start", Double.TYPE)
                     .addField("end", Double.TYPE)
                     .addField("direction", Short.TYPE)
+                    .implementInterface(LeafSchema.class)
                     .heapMemory()
                     .build();
         } catch (Exception e) {

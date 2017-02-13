@@ -193,6 +193,7 @@ class LeafNode<Value> {
                     .addField("objectID", Long.TYPE)
                     .addField("start", Long.TYPE)
                     .addField("end", Long.TYPE)
+                    .implementInterface(LeafKeySchema.class)
                     .heapMemory()
                     .build();
         } catch (Exception e) {
