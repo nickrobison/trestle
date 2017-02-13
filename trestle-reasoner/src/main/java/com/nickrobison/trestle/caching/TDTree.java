@@ -48,9 +48,10 @@ public class TDTree {
 
     /**
      * Insert a key/value pair with an open interval
-     * @param objectID - String object key
+     *
+     * @param objectID  - String object key
      * @param startTime - Long temporal of start temporal
-     * @param value - Value
+     * @param value     - Value
      */
     public void insertValue(String objectID, long startTime, String value) {
         insertValue(objectID, startTime, maxValue, value);
@@ -59,11 +60,14 @@ public class TDTree {
     public void insertValue(String objectID, long startTime, long endTime, String value) {
 //        Find the leaf at maxDepth that would contain the objectID
         final int matchingLeaf = getMatchingLeaf(startTime, endTime);
-//        Find the region in D with the most number of matching bits
+//        Find the region in list with the most number of matching bits
+//        Notice the l2/l1 reordering, otherwise it finds the leaf with the fewest number of matching bits, because why not?
         final Optional<LeafNode> first = leafs
                 .stream()
-                .sorted(Comparator.comparingInt(l -> Integer.bitCount(l.getID() ^ matchingLeaf)))
+//                .sorted(comparator)
+                .sorted((l1, l2) -> Integer.compare(idSimilarity(l2.getID(), matchingLeaf), idSimilarity(l1.getID(), matchingLeaf)))
                 .findFirst();
+
 //        We can do this because it will always match on, at least, the root node
         final LeafSplit split = first.get().insert(objectID, startTime, endTime, value);
 //        If we split, we need to add the new leafs to the tree, and remove the old ones
@@ -73,11 +77,30 @@ public class TDTree {
         }
     }
 
+    /**
+     * Moves left->right through a binary string to determine how many bits match
+     * @param leafID - LeafID to match
+     * @param matchID - matchID to match LeafID against
+     * @return - Number of common bits left->right
+     */
+    private static int idSimilarity(int leafID, int matchID) {
+        final int minIDLength = FastMath.min(getIDLength(leafID), getIDLength(matchID));
+        String leafString = Integer.toBinaryString(leafID);
+        String matchString = Integer.toBinaryString(matchID);
+        int match = 0;
+        for (int i = 0; i < minIDLength; i++) {
+            if (leafString.charAt(i) == matchString.charAt(i)) {
+                match++;
+            }
+        }
+        return match;
+    }
+
     @SuppressWarnings("Duplicates")
     public @Nullable String getValue(String objectID, long atTime) {
         List<LeafNode> fullyContained = new ArrayList<>();
         long[] rectApex = {atTime, atTime};
-        int length = 2;
+        int length = 1;
         int parentDirection = 7;
         TriangleHelpers.TriangleApex parentApex = new TriangleHelpers.TriangleApex(0, maxValue);
         final ArrayDeque<LeafNode> populatedLeafs = this.leafs.stream()
@@ -87,8 +110,15 @@ public class TDTree {
             final LeafNode first = populatedLeafs.pop();
             final int firstID = first.getID();
             int overlappingPrefix = firstID >> (getIDLength(firstID) - length);
-            final TriangleApex childApex = calculateChildApex(length, parentDirection, parentApex.start, parentApex.end);
-            final ChildDirection childDirection = calculateChildDirection(parentDirection);
+            final TriangleApex childApex;
+            final ChildDirection childDirection;
+            if (length == 1) {
+                childApex = new TriangleApex(0, maxValue);
+                childDirection = new ChildDirection(7, 7);
+            } else {
+                childApex = calculateChildApex(length, parentDirection, parentApex.start, parentApex.end);
+                childDirection = calculateChildDirection(parentDirection);
+            }
 //                Are we the lower child?
             final int intersectionResult;
             if (overlappingPrefix < getMaximumValue(overlappingPrefix)) {
@@ -103,6 +133,8 @@ public class TDTree {
             if (!(intersectionResult == 1) & !(intersectionResult == -2)) {
                 if (firstID == overlappingPrefix) {
                     fullyContained.add(first);
+//                    This?
+                    length = 1;
                 } else { // Return the leaf to the queue, and step down another level
                     populatedLeafs.push(first);
                     parentApex = childApex;
@@ -111,7 +143,7 @@ public class TDTree {
             } else { // If this leaf is either fully within the rectangle, or completely outside of it. Reset back to the initial state and keep going
                 parentApex = new TriangleHelpers.TriangleApex(0, maxValue);
                 parentDirection = 7;
-                length = 2;
+                length = 1;
             }
         }
         for (LeafNode node : fullyContained) {
@@ -129,7 +161,7 @@ public class TDTree {
             final int currentSize = populatedLeafs.size();
             for (int i = 0; i < currentSize; i++) {
                 final LeafNode next = populatedLeafs.pop();
-                if (Integer.bitCount(next.getID() ^ overlappingPrefix) == length) {
+                if (idSimilarity(next.getID(), overlappingPrefix) == length) {
                     fullyContained.add(next);
                 } else {
                     populatedLeafs.add(next);
@@ -139,7 +171,7 @@ public class TDTree {
             final int currentSize = populatedLeafs.size();
             for (int i = 0; i < currentSize; i++) {
                 final LeafNode next = populatedLeafs.pop();
-                if (Integer.bitCount(next.getID() ^ overlappingPrefix) < length) {
+                if (!(idSimilarity(next.getID(), overlappingPrefix) == length)) {
                     populatedLeafs.add(next);
                 }
             }
@@ -155,13 +187,25 @@ public class TDTree {
      */
     private void parseSplit(LeafSplit split) {
         if (split.higherSplit == null) {
-            this.leafs.add(split.higherLeaf);
+//        Increment the max depth, if we need to
+            if (this.maxDepth < getIDLength(split.higherLeaf.getID())) {
+                this.maxDepth ++;
+            }
+            if (!this.leafs.contains(split.higherLeaf)) {
+                this.leafs.add(split.higherLeaf);
+            }
         } else {
             parseSplit(split.higherSplit);
         }
 
         if (split.lowerSplit == null) {
-            this.leafs.add(split.lowerLeaf);
+//        Increment the max depth, if we need to
+            if (this.maxDepth < getIDLength(split.lowerLeaf.getID())) {
+                this.maxDepth ++;
+            }
+            if (!this.leafs.contains(split.lowerLeaf)) {
+                this.leafs.add(split.lowerLeaf);
+            }
         } else {
             parseSplit(split.lowerSplit);
         }

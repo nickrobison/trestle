@@ -49,6 +49,12 @@ public class TriangleHelpers {
         return ((b1 == b2) & (b2 == b3));
     }
 
+    static boolean triangleIsPoint(double[] triangleVerticies) {
+        return ((triangleVerticies[0] == triangleVerticies[2]) & (triangleVerticies[1] == triangleVerticies[3])) |
+                ((triangleVerticies[0] == triangleVerticies[4]) & (triangleVerticies[1] == triangleVerticies[5])) |
+                ((triangleVerticies[2] == triangleVerticies[4]) & (triangleVerticies[3] == triangleVerticies[5]));
+    }
+
     //    http://stackoverflow.com/questions/2049582/how-to-determine-if-a-point-is-in-a-2d-triangle
     static double sign(double p1x, double p1y, double p2x, double p2y, double p3x, double p3y) {
         return (p1x - p3x) * (p2y - p3y) - (p2x - p3x) * (p1y - p3y);
@@ -110,7 +116,7 @@ public class TriangleHelpers {
             verticies[5] = normalizeZero(triangleEnd + l2);
         } else {
             verticies[2] = triangleStart;
-            verticies[3] = normalizeZero(triangleEnd + adjustedLength);
+            verticies[3] = normalizeZero(triangleEnd - adjustedLength);
             verticies[4] = normalizeZero(triangleStart + adjustedLength);
             verticies[5] = triangleEnd;
         }
@@ -124,7 +130,7 @@ public class TriangleHelpers {
      * @return
      */
     private static double normalizeZero(double value) {
-        return FastMath.abs(Precision.round(value, 10));
+        return FastMath.abs(Precision.round(value, 3));
     }
 
     static ChildDirection calculateChildDirection(int parentDirection) {
@@ -140,35 +146,35 @@ public class TriangleHelpers {
         if (parentDirection == 0) {
             return new TriangleApex(
                     parentStart,
-                    parentEnd - length);
+                    normalizeZero(parentEnd - length));
         } else if (parentDirection == 1) {
             return new TriangleApex(
-                    parentStart - (length / TDTree.ROOTTWO),
-                    parentEnd - (length / TDTree.ROOTTWO));
+                    normalizeZero(parentStart - (length / TDTree.ROOTTWO)),
+                    normalizeZero(parentEnd - (length / TDTree.ROOTTWO)));
         } else if (parentDirection == 2) {
             return new TriangleApex(
-                    parentStart - length,
+                    normalizeZero(parentStart - length),
                     parentEnd);
         } else if (parentDirection == 3) {
             return new TriangleApex(
-                    parentStart - (length / TDTree.ROOTTWO),
-                    parentEnd + length);
+                    normalizeZero(parentStart - (length / TDTree.ROOTTWO)),
+                    normalizeZero(parentEnd + length));
         } else if (parentDirection == 4) {
             return new TriangleApex(
                     parentStart,
-                    parentEnd + length);
+                    normalizeZero(parentEnd + length));
         } else if (parentDirection == 5) {
             return new TriangleApex(
-                    parentStart + (length / TDTree.ROOTTWO),
-                    parentEnd + (length / TDTree.ROOTTWO));
+                    normalizeZero(parentStart + (length / TDTree.ROOTTWO)),
+                    normalizeZero(parentEnd + (length / TDTree.ROOTTWO)));
         } else if (parentDirection == 6) {
             return new TriangleApex(
-                    parentStart + length,
+                    normalizeZero(parentStart + length),
                     parentEnd);
         } else {
             return new TriangleApex(
-                    parentStart + (length / TDTree.ROOTTWO),
-                    parentEnd - (length / TDTree.ROOTTWO));
+                    normalizeZero(parentStart + (length / TDTree.ROOTTWO)),
+                    normalizeZero(parentEnd - (length / TDTree.ROOTTWO)));
         }
     }
 
@@ -182,8 +188,18 @@ public class TriangleHelpers {
         return (int) FastMath.floor(FastMath.log10(leafID) / FastMath.log10(2)) + 1;
     }
 
+    /**
+     * Gets the maximum value representable by a binary string of the same length as the leafID
+     * @param leafID - leafID to get binary length from
+     * @return - maximum integer value
+     */
     static int getMaximumValue(int leafID) {
-        return (int) FastMath.pow(getIDLength(leafID), 2) - 1;
+        int mask = 1;
+        for (int i = 1; i < getIDLength(leafID); i++) {
+            mask |= mask << 1;
+        }
+        return mask;
+//        return (int) FastMath.pow(getIDLength(leafID), 2) - 1;
     }
 
     /**
