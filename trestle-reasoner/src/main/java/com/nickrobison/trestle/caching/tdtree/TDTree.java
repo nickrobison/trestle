@@ -36,7 +36,7 @@ public class TDTree<Value> {
         rootTuple.setDouble(1, 0);
         rootTuple.setDouble(2, maxValue);
         rootTuple.setShort(3, (short) 7);
-        leafs.add(new LeafNode<Value>(1, rootTuple, this.blockSize));
+        leafs.add(new SplittableNode<Value>(1, rootTuple, this.blockSize));
     }
 
     void setMaxDepth(int depth) {
