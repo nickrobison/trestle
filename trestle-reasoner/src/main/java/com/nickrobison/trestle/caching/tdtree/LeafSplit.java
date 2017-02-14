@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.caching;
+package com.nickrobison.trestle.caching.tdtree;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 

@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.caching;
+package com.nickrobison.trestle.caching.tdtree;
 
 import com.boundary.tuple.FastTuple;
 import com.boundary.tuple.TupleSchema;
@@ -11,8 +11,6 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.nickrobison.trestle.caching.TriangleHelpers.*;
 
 /**
  * Created by nrobison on 2/9/17.
@@ -92,19 +90,19 @@ public class TDTree<Value> {
         while (!populatedLeafs.isEmpty()) {
             final LeafNode first = populatedLeafs.pop();
             final int firstID = first.getID();
-            int overlappingPrefix = firstID >> (getIDLength(firstID) - length);
-            final TriangleApex childApex;
-            final ChildDirection childDirection;
+            int overlappingPrefix = firstID >> (TriangleHelpers.getIDLength(firstID) - length);
+            final TriangleHelpers.TriangleApex childApex;
+            final TriangleHelpers.ChildDirection childDirection;
             if (length == 1) {
-                childApex = new TriangleApex(0, maxValue);
-                childDirection = new ChildDirection(7, 7);
+                childApex = new TriangleHelpers.TriangleApex(0, maxValue);
+                childDirection = new TriangleHelpers.ChildDirection(7, 7);
             } else {
-                childApex = calculateChildApex(length, parentDirection, parentApex.start, parentApex.end);
-                childDirection = calculateChildDirection(parentDirection);
+                childApex = TriangleHelpers.calculateChildApex(length, parentDirection, parentApex.start, parentApex.end);
+                childDirection = TriangleHelpers.calculateChildDirection(parentDirection);
             }
 //                Are we the lower child?
             final int intersectionResult;
-            if (overlappingPrefix < getMaximumValue(overlappingPrefix)) {
+            if (overlappingPrefix < TriangleHelpers.getMaximumValue(overlappingPrefix)) {
                 intersectionResult = filterTriangleResults(populatedLeafs, fullyContained, overlappingPrefix, childApex, childDirection.lowerChild, length, rectApex);
                 parentDirection = childDirection.lowerChild;
             } else {
@@ -139,8 +137,8 @@ public class TDTree<Value> {
         return null;
     }
 
-    private int filterTriangleResults(ArrayDeque<LeafNode> populatedLeafs, List<LeafNode> fullyContained, int overlappingPrefix, TriangleApex childApex, int childDirection, int length, long[] rectApex) {
-        final int intersectionResult = checkRectangleIntersection(childApex, childDirection, length, rectApex, maxValue);
+    private int filterTriangleResults(ArrayDeque<LeafNode> populatedLeafs, List<LeafNode> fullyContained, int overlappingPrefix, TriangleHelpers.TriangleApex childApex, int childDirection, int length, long[] rectApex) {
+        final int intersectionResult = TriangleHelpers.checkRectangleIntersection(childApex, childDirection, length, rectApex, maxValue);
         if (intersectionResult == 1) {
             final int currentSize = populatedLeafs.size();
             for (int i = 0; i < currentSize; i++) {
@@ -172,7 +170,7 @@ public class TDTree<Value> {
     private void parseSplit(LeafSplit split) {
         if (split.higherSplit == null) {
 //        Increment the max depth, if we need to
-            if (this.maxDepth < getIDLength(split.higherLeaf.getID())) {
+            if (this.maxDepth < TriangleHelpers.getIDLength(split.higherLeaf.getID())) {
                 this.maxDepth ++;
             }
             if (!this.leafs.contains(split.higherLeaf)) {
@@ -184,7 +182,7 @@ public class TDTree<Value> {
 
         if (split.lowerSplit == null) {
 //        Increment the max depth, if we need to
-            if (this.maxDepth < getIDLength(split.lowerLeaf.getID())) {
+            if (this.maxDepth < TriangleHelpers.getIDLength(split.lowerLeaf.getID())) {
                 this.maxDepth ++;
             }
             if (!this.leafs.contains(split.lowerLeaf)) {
@@ -203,7 +201,7 @@ public class TDTree<Value> {
     }
 
     private int getMatchingLeaf(long startTime, long endTime, int leafID, int parentDirection, TriangleHelpers.TriangleApex parentApex) {
-        final int idLength = getIDLength(leafID);
+        final int idLength = TriangleHelpers.getIDLength(leafID);
         if (idLength > this.maxDepth) {
             return leafID;
         }
@@ -224,8 +222,8 @@ public class TDTree<Value> {
      * @return - Number of common bits left->right
      */
     private static int idSimilarity(int leafID, int matchID) {
-        final int idLength = getIDLength(leafID);
-        final int matchLength = getIDLength(matchID);
+        final int idLength = TriangleHelpers.getIDLength(leafID);
+        final int matchLength = TriangleHelpers.getIDLength(matchID);
         if (matchLength > idLength) {
             return idLength - Integer.bitCount(leafID ^ (matchID >> (matchLength - idLength)));
         } else {

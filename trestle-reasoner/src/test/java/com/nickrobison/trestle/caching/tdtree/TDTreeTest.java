@@ -1,5 +1,6 @@
-package com.nickrobison.trestle.caching;
+package com.nickrobison.trestle.caching.tdtree;
 
+import com.nickrobison.trestle.caching.tdtree.TDTree;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.Test;
 

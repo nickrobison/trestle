@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.caching;
+package com.nickrobison.trestle.caching.tdtree;
 
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;

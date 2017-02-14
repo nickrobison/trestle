@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.caching;
+package com.nickrobison.trestle.caching.tdtree;
 
 /**
  * Created by nrobison on 2/13/17.
