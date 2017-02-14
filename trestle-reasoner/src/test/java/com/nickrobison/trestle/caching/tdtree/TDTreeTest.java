@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.caching.tdtree;
 
-import com.nickrobison.trestle.caching.tdtree.TDTree;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +14,7 @@ public class TDTreeTest {
     @Test
     public void testLeafFind() throws Exception {
         TDTree.maxValue = 10;
-        final TDTree<String> tdTree = new TDTree<>(3);
+        final TDTree<String> tdTree = new TDTree<>(2);
         int matchingLeaf = tdTree.getMatchingLeaf(8, 8);
         assertEquals(1, matchingLeaf, "Should match root leaf");
         tdTree.setMaxDepth(4);

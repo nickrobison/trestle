@@ -12,6 +12,8 @@ import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.nickrobison.trestle.caching.tdtree.TriangleHelpers.getIDLength;
+
 /**
  * Created by nrobison on 2/9/17.
  */
@@ -64,7 +66,7 @@ public class TDTree<Value> {
         final Optional<LeafNode> first = leafs
                 .stream()
 //                .sorted(comparator)
-                .sorted((l1, l2) -> Integer.compare(idSimilarity(l2.getID(), matchingLeaf), idSimilarity(l1.getID(), matchingLeaf)))
+                .sorted((l1, l2) -> Integer.compare(matchLength(l2.getID(), matchingLeaf), matchLength(l1.getID(), matchingLeaf)))
                 .findFirst();
 
 //        We can do this because it will always match on, at least, the root node
@@ -90,7 +92,7 @@ public class TDTree<Value> {
         while (!populatedLeafs.isEmpty()) {
             final LeafNode first = populatedLeafs.pop();
             final int firstID = first.getID();
-            int overlappingPrefix = firstID >> (TriangleHelpers.getIDLength(firstID) - length);
+            int overlappingPrefix = firstID >> (getIDLength(firstID) - length);
             final TriangleHelpers.TriangleApex childApex;
             final TriangleHelpers.ChildDirection childDirection;
             if (length == 1) {
@@ -111,7 +113,7 @@ public class TDTree<Value> {
             }
 
 //            If not fully contained or disjoint, check to see if ancestor equals leaf
-            if (!(intersectionResult == 1) & !(intersectionResult == -2)) {
+            if (!(intersectionResult == 1) && !(intersectionResult == -2)) {
                 if (firstID == overlappingPrefix) {
                     fullyContained.add(first);
 //                    This?
@@ -170,7 +172,7 @@ public class TDTree<Value> {
     private void parseSplit(LeafSplit split) {
         if (split.higherSplit == null) {
 //        Increment the max depth, if we need to
-            if (this.maxDepth < TriangleHelpers.getIDLength(split.higherLeaf.getID())) {
+            if (this.maxDepth < getIDLength(split.higherLeaf.getID())) {
                 this.maxDepth ++;
             }
             if (!this.leafs.contains(split.higherLeaf)) {
@@ -182,7 +184,7 @@ public class TDTree<Value> {
 
         if (split.lowerSplit == null) {
 //        Increment the max depth, if we need to
-            if (this.maxDepth < TriangleHelpers.getIDLength(split.lowerLeaf.getID())) {
+            if (this.maxDepth < getIDLength(split.lowerLeaf.getID())) {
                 this.maxDepth ++;
             }
             if (!this.leafs.contains(split.lowerLeaf)) {
@@ -201,7 +203,7 @@ public class TDTree<Value> {
     }
 
     private int getMatchingLeaf(long startTime, long endTime, int leafID, int parentDirection, TriangleHelpers.TriangleApex parentApex) {
-        final int idLength = TriangleHelpers.getIDLength(leafID);
+        final int idLength = getIDLength(leafID);
         if (idLength > this.maxDepth) {
             return leafID;
         }
@@ -222,6 +224,9 @@ public class TDTree<Value> {
      * @return - Number of common bits left->right
      */
     private static int idSimilarity(int leafID, int matchID) {
+        if (leafID == 0 | matchID == 0) {
+            return 0;
+        }
         final int idLength = TriangleHelpers.getIDLength(leafID);
         final int matchLength = TriangleHelpers.getIDLength(matchID);
         if (matchLength > idLength) {
@@ -229,6 +234,25 @@ public class TDTree<Value> {
         } else {
             return matchLength - Integer.bitCount(matchID ^ (leafID >> (idLength - matchLength)));
         }
+    }
+
+    /**
+     * Moves left->right through a string representation of two binary numbers, and counts the number of bits in common, until they start to diverge
+     * @param leafID - Leaf ID to match
+     * @param matchID - Match ID to match leaf against
+     * @return - number of bits in common, until they diverge
+     */
+    private static int matchLength(int leafID, int matchID) {
+        final int minIDLength = FastMath.min(getIDLength(leafID), getIDLength(matchID));
+        String leafString = Integer.toBinaryString(leafID);
+        String matchString = Integer.toBinaryString(matchID);
+        int match = 0;
+        while ((match < minIDLength) && (leafString.charAt(match) == matchString.charAt(match))) {
+//        for (int i = 0; i < minIDLength; i++) {
+//            if (leafString.charAt(i) == matchString.charAt(i)) {
+                match++;
+            }
+            return match;
     }
 
     private static TupleSchema buildLeafSchema() {

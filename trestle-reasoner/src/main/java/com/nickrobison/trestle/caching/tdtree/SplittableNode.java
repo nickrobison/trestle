@@ -1,7 +1,6 @@
 package com.nickrobison.trestle.caching.tdtree;
 
 import com.boundary.tuple.FastTuple;
-import com.boundary.tuple.TupleSchema;
 import com.boundary.tuple.codegen.TupleExpressionGenerator;
 import org.apache.commons.lang3.ArrayUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -10,7 +9,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * Created by nrobison on 2/9/17.
  */
 class SplittableNode<Value> extends LeafNode<Value> {
-    private static final TupleSchema leafKeySchema = buildLeafKeySchema();
     private int blockSize;
     final FastTuple[] keys;
     final Value[] values;
@@ -20,10 +18,9 @@ class SplittableNode<Value> extends LeafNode<Value> {
     SplittableNode(int leafID, FastTuple leafMetadata, int blockSize) {
         super(leafID, leafMetadata);
         this.blockSize = blockSize;
-
 //            Allocate Key array
         try {
-            keys = leafKeySchema.createArray(blockSize);
+            keys = splittableKeySchema.createArray(blockSize);
             //noinspection unchecked
             values = (Value[]) new Object[blockSize];
         } catch (Exception e) {
@@ -37,14 +34,18 @@ class SplittableNode<Value> extends LeafNode<Value> {
         return this.records;
     }
 
+    @Override
+    public boolean isSplittable() {
+        return true;
+    }
 
     @Override
     @Nullable Value getValue(String objectID, long atTime) {
         final TupleExpressionGenerator.BooleanTupleExpression eval;
         try {
 //            We have to do this really weird equality check because FastTuple doesn't support if statements (for now). So we check for a an interval match, then a point match
-            final String queryString = String.format("(tuple.objectID == %sL) & (((tuple.start <= %sL) & (tuple.end > %sL)) | ((tuple.start == tuple.end)  & (tuple.start == %sL)))", longHashCode(objectID), atTime, atTime, atTime);
-            eval = TupleExpressionGenerator.builder().expression(queryString).schema(leafKeySchema).returnBoolean();
+            final String queryString = String.format("(tuple.objectID == %sL) && (((tuple.start <= %sL) && (tuple.end > %sL)) | ((tuple.start == tuple.end)  && (tuple.start == %sL)))", longHashCode(objectID), atTime, atTime, atTime);
+            eval = TupleExpressionGenerator.builder().expression(queryString).schema(splittableKeySchema).returnBoolean();
         } catch (Exception e) {
             throw new RuntimeException("Unable to build find expression", e);
         }
@@ -58,16 +59,7 @@ class SplittableNode<Value> extends LeafNode<Value> {
 
     @Override
     LeafSplit insert(String objectID, long startTime, long endTime, Value value) {
-        final FastTuple newKey;
-        try {
-            newKey = leafKeySchema.createTuple();
-            newKey.setLong(1, longHashCode(objectID));
-            newKey.setLong(2, startTime);
-            newKey.setLong(3, endTime);
-            return insert(newKey, value);
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to create new Key tuple", e);
-        }
+        return insert(buildObjectKey(objectID, startTime, endTime), value);
     }
 
     @Override
@@ -75,8 +67,6 @@ class SplittableNode<Value> extends LeafNode<Value> {
 //            Check if we have more space, if we do, insert it.
         if (records < blockSize) {
             return insertValueIntoArray(newKey, value);
-//                Check if we have it, otherwise, add it
-
         } else {
 //                If we don't have any more space, time to split
             final double parentStart = this.leafMetadata.getDouble(1);
@@ -88,30 +78,29 @@ class SplittableNode<Value> extends LeafNode<Value> {
                     parentStart,
                     parentEnd);
             final TriangleHelpers.ChildDirection childDirection = TriangleHelpers.calculateChildDirection(parentDirection);
+            final FastTuple lowerChild;
+            final FastTuple higherChild;
+            final LeafNode<Value> lowerChildLeaf;
+            final LeafNode<Value> higherChildLeaf;
 //            If one of the children is a point, pick the lower, turn it into a point and move on
             if (TriangleHelpers.triangleIsPoint(TriangleHelpers.getTriangleVerticies(TriangleHelpers.getAdjustedLength(idLength + 1 ), childDirection.lowerChild, childApex.start, childApex.end))) {
-//                FIXME(nrobison): This is just a stop-gap, it WILL fail at some point during execution
                 try {
-                    final FastTuple lowerChild = TDTree.leafSchema.createTuple();
+                    lowerChild = TDTree.leafSchema.createTuple();
                     lowerChild.setDouble(1, childApex.start);
                     lowerChild.setDouble(2, childApex.end);
                     lowerChild.setShort(3, (short) childDirection.lowerChild);
-                    final SplittableNode<Value> pointLeaf = new SplittableNode<>(leafID << 1, lowerChild, 10000);
-                    for (int i = 0; i < this.blockSize; i++) {
-                        pointLeaf.insert(this.keys[i], this.values[i]);
-                    }
-//                    Insert the new value and return the split
-                    pointLeaf.insert(newKey, value);
-//                    It's fine if these are duplicated, we'll sort them out later.
-                    return new LeafSplit(this.leafID, pointLeaf, pointLeaf);
+                    higherChild = TDTree.leafSchema.createTuple();
+                    lowerChild.setDouble(1, childApex.start);
+                    lowerChild.setDouble(2, childApex.end);
+                    lowerChild.setShort(3, (short) childDirection.higherChild);
+                    lowerChildLeaf  = new PointNode<>(leafID << 1, lowerChild);
+                    higherChildLeaf = new PointNode<>((leafID << 1) | 1, higherChild);
                 } catch (Exception e) {
                     throw new RuntimeException("Unable to create new key array for point leaf");
                 }
             } else {
 
 //            Create the lower and higher leafs
-                final FastTuple lowerChild;
-                final FastTuple higherChild;
                 try {
                     lowerChild = TDTree.leafSchema.createTuple();
                     lowerChild.setDouble(1, childApex.start);
@@ -125,9 +114,10 @@ class SplittableNode<Value> extends LeafNode<Value> {
                     throw new RuntimeException("Unable to build tuples for child triangles", e);
                 }
 
-                final SplittableNode<Value> lowerChildLeaf = new SplittableNode<>(leafID << 1, lowerChild, this.blockSize);
-                final SplittableNode<Value> higherChildLeaf = new SplittableNode<>((leafID << 1) | 1, higherChild, this.blockSize);
-                final LeafSplit leafSplit = new LeafSplit(this.leafID, lowerChildLeaf, higherChildLeaf);
+                lowerChildLeaf = new SplittableNode<>(leafID << 1, lowerChild, this.blockSize);
+                higherChildLeaf = new SplittableNode<>((leafID << 1) | 1, higherChild, this.blockSize);
+            }
+            final LeafSplit leafSplit = new LeafSplit(this.leafID, lowerChildLeaf, higherChildLeaf);
 //            Divide values into children, by testing to see if they belong to the lower child
                 final double[] lowerChildVerticies = TriangleHelpers.getTriangleVerticies(TriangleHelpers.getAdjustedLength(idLength + 1), childDirection.lowerChild, childApex.start, childApex.end);
                 for (int i = 0; i < this.blockSize; i++) {
@@ -156,7 +146,6 @@ class SplittableNode<Value> extends LeafNode<Value> {
 //            Zero out the records, so we know we've fully split everything
                 this.records = 0;
                 return leafSplit;
-            }
         }
     }
 
@@ -169,19 +158,5 @@ class SplittableNode<Value> extends LeafNode<Value> {
         return null;
     }
 
-
-    private static TupleSchema buildLeafKeySchema() {
-        try {
-            return TupleSchema.builder()
-                    .addField("objectID", Long.TYPE)
-                    .addField("start", Long.TYPE)
-                    .addField("end", Long.TYPE)
-                    .implementInterface(LeafKeySchema.class)
-                    .heapMemory()
-                    .build();
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to build schema for leaf key", e);
-        }
-    }
 
 }
