@@ -258,7 +258,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         if (TriangleHelpers.checkPointIntersection(childApex, childDirection.lowerChild, idLength + 1, startTime, endTime)) {
             return getMatchingLeaf(startTime, endTime, leafID << 1, childDirection.lowerChild, childApex);
         }
-        return getMatchingLeaf(startTime, endTime, (leafID << 1) | 1, childDirection.higherChild, parentApex);
+        return getMatchingLeaf(startTime, endTime, (leafID << 1) | 1, childDirection.higherChild, childApex);
     }
 
     /**
