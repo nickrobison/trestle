@@ -37,6 +37,8 @@ public abstract class LeafNode<Value> {
 
     abstract boolean delete(String objectID, long atTime);
 
+    abstract boolean update(String objectID, long atTime, Value value);
+
     /**
      * Retrieve a value from the Leaf that matches the given ObjectID and is valid at the specified timestamp
      * Returns null if no matching object is found

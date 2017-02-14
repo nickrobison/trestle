@@ -22,4 +22,12 @@ public interface ITrestleIndex<Value> {
     @Nullable Value getValue(String objectID, long atTime);
 
     void deleteValue(String objectID, long atTime);
+
+    void updateValue(String objectID, long atTime, Value value);
+
+    void replaceKeyValue(String objectID, long atTime, long startTime, long endTime, Value value);
+
+    void setKeyTemporals(String objectID, long atTime, long startTime);
+
+    void setKeyTemporals(String objectID, long atTime, long startTime, long endTime);
 }

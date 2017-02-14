@@ -26,7 +26,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     static final TupleSchema leafSchema = buildLeafSchema();
     public static final double ROOTTWO = FastMath.sqrt(2);
     private final int blockSize;
-    private final List<LeafNode> leafs = new ArrayList<>();
+    private final List<LeafNode<Value>> leafs = new ArrayList<>();
     protected int maxDepth;
 
 
@@ -39,7 +39,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         rootTuple.setDouble(1, 0);
         rootTuple.setDouble(2, maxValue);
         rootTuple.setShort(3, (short) 7);
-        leafs.add(new SplittableNode<Value>(1, rootTuple, this.blockSize));
+        leafs.add(new SplittableNode<>(1, rootTuple, this.blockSize));
     }
 
     void setMaxDepth(int depth) {
@@ -59,7 +59,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         final int matchingLeaf = getMatchingLeaf(startTime, endTime);
 //        Find the region in list with the most number of matching bits
 //        Notice the l2/l1 reordering, otherwise it finds the leaf with the fewest number of matching bits, because why not?
-        final Optional<LeafNode> first = leafs
+        final Optional<LeafNode<Value>> first = leafs
                 .stream()
 //                .sorted(comparator)
                 .sorted((l1, l2) -> Integer.compare(matchLength(l2.getID(), matchingLeaf), matchLength(l1.getID(), matchingLeaf)))
@@ -79,7 +79,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     @SuppressWarnings("Duplicates")
     public @Nullable Value getValue(String objectID, long atTime) {
 
-        final List<LeafNode> candidateLeafs = findCandidateLeafs(objectID, atTime);
+        final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
 
         for (LeafNode node : candidateLeafs) {
             //noinspection unchecked
@@ -93,7 +93,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
 
     @Override
     public void deleteValue(String objectID, long atTime) {
-        final List<LeafNode> candidateLeafs = findCandidateLeafs(objectID, atTime);
+        final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
         for (LeafNode node : candidateLeafs) {
             if (node.delete(objectID, atTime)) {
                 return;
@@ -101,17 +101,47 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         }
     }
 
-    private List<LeafNode> findCandidateLeafs(String objectID, long atTime) {
-        List<LeafNode> candidateLeafs = new ArrayList<>();
+    @Override
+    public void updateValue(String objectID, long atTime, Value value) {
+        final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
+        for (LeafNode<Value> node : candidateLeafs) {
+            if (node.update(objectID, atTime, value)) {
+                return;
+            }
+        }
+    }
+
+    @Override
+    public void replaceKeyValue(String objectID, long atTime, long startTime, long endTime, Value value) {
+        deleteValue(objectID, atTime);
+        insertValue(objectID, startTime, endTime, value);
+    }
+
+    @Override
+    public void setKeyTemporals(String objectID, long atTime, long startTime) {
+        setKeyTemporals(objectID, atTime, startTime, maxValue);
+    }
+
+    @Override
+    public void setKeyTemporals(String objectID, long atTime, long startTime, long endTime) {
+        final @Nullable Value value = getValue(objectID, atTime);
+        if (value != null) {
+            deleteValue(objectID, atTime);
+            insertValue(objectID, startTime, endTime, value);
+        }
+    }
+
+    private List<LeafNode<Value>> findCandidateLeafs(long atTime) {
+        List<LeafNode<Value>> candidateLeafs = new ArrayList<>();
         long[] rectApex = {atTime, atTime};
         int length = 1;
         int parentDirection = 7;
         TriangleHelpers.TriangleApex parentApex = new TriangleHelpers.TriangleApex(0, maxValue);
-        final ArrayDeque<LeafNode> populatedLeafs = this.leafs.stream()
+        final ArrayDeque<LeafNode<Value>> populatedLeafs = this.leafs.stream()
                 .filter(leaf -> leaf.getRecordCount() > 0)
                 .collect(Collectors.toCollection(ArrayDeque::new));
         while (!populatedLeafs.isEmpty()) {
-            final LeafNode first = populatedLeafs.pop();
+            final LeafNode<Value> first = populatedLeafs.pop();
             final int firstID = first.getID();
             int overlappingPrefix = firstID >> (getIDLength(firstID) - length);
             final TriangleHelpers.TriangleApex childApex;
@@ -154,12 +184,12 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         return candidateLeafs;
     }
 
-    private int filterTriangleResults(ArrayDeque<LeafNode> populatedLeafs, List<LeafNode> fullyContained, int overlappingPrefix, TriangleHelpers.TriangleApex childApex, int childDirection, int length, long[] rectApex) {
+    private int filterTriangleResults(ArrayDeque<LeafNode<Value>> populatedLeafs, List<LeafNode<Value>> fullyContained, int overlappingPrefix, TriangleHelpers.TriangleApex childApex, int childDirection, int length, long[] rectApex) {
         final int intersectionResult = TriangleHelpers.checkRectangleIntersection(childApex, childDirection, length, rectApex, maxValue);
         if (intersectionResult == 1) {
             final int currentSize = populatedLeafs.size();
             for (int i = 0; i < currentSize; i++) {
-                final LeafNode next = populatedLeafs.pop();
+                final LeafNode<Value> next = populatedLeafs.pop();
                 if (idSimilarity(next.getID(), overlappingPrefix) == length) {
                     fullyContained.add(next);
                 } else {
@@ -169,7 +199,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         } else if (intersectionResult == -2) {
             final int currentSize = populatedLeafs.size();
             for (int i = 0; i < currentSize; i++) {
-                final LeafNode next = populatedLeafs.pop();
+                final LeafNode<Value> next = populatedLeafs.pop();
                 if (!(idSimilarity(next.getID(), overlappingPrefix) == length)) {
                     populatedLeafs.add(next);
                 }

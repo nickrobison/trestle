@@ -48,8 +48,19 @@ public class PointNode<Value> extends LeafNode<Value> {
 
     @Override
     boolean delete(String objectID, long atTime) {
-        if (this.values.containsKey(longHashCode(objectID))) {
-            this.values.remove(objectID);
+        final long longHash = longHashCode(objectID);
+        if (this.values.containsKey(longHash)) {
+            this.values.remove(longHash);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    boolean update(String objectID, long atTime, Value value) {
+        final long longHash = longHashCode(objectID);
+        if (this.values.containsKey(longHash)) {
+            this.values.replace(longHash, value);
             return true;
         }
         return false;

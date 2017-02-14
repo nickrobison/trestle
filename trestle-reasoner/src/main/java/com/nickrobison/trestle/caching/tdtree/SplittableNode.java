@@ -79,7 +79,7 @@ class SplittableNode<Value> extends LeafNode<Value> {
             final LeafNode<Value> lowerChildLeaf;
             final LeafNode<Value> higherChildLeaf;
 //            If one of the children is a point, pick the lower, turn it into a point and move on
-            if (TriangleHelpers.triangleIsPoint(TriangleHelpers.getTriangleVerticies(TriangleHelpers.getAdjustedLength(idLength + 1 ), childDirection.lowerChild, childApex.start, childApex.end))) {
+            if (TriangleHelpers.triangleIsPoint(TriangleHelpers.getTriangleVerticies(TriangleHelpers.getAdjustedLength(idLength + 1), childDirection.lowerChild, childApex.start, childApex.end))) {
                 try {
                     lowerChild = TDTree.leafSchema.createTuple();
                     lowerChild.setDouble(1, childApex.start);
@@ -89,7 +89,7 @@ class SplittableNode<Value> extends LeafNode<Value> {
                     lowerChild.setDouble(1, childApex.start);
                     lowerChild.setDouble(2, childApex.end);
                     lowerChild.setShort(3, (short) childDirection.higherChild);
-                    lowerChildLeaf  = new PointNode<>(leafID << 1, lowerChild);
+                    lowerChildLeaf = new PointNode<>(leafID << 1, lowerChild);
                     higherChildLeaf = new PointNode<>((leafID << 1) | 1, higherChild);
                 } catch (Exception e) {
                     throw new RuntimeException("Unable to create new key array for point leaf");
@@ -115,9 +115,10 @@ class SplittableNode<Value> extends LeafNode<Value> {
             }
             final LeafSplit leafSplit = new LeafSplit(this.leafID, lowerChildLeaf, higherChildLeaf);
 //            Divide values into children, by testing to see if they belong to the lower child
-                final double[] lowerChildVerticies = TriangleHelpers.getTriangleVerticies(TriangleHelpers.getAdjustedLength(idLength + 1), childDirection.lowerChild, childApex.start, childApex.end);
-                for (int i = 0; i < this.blockSize; i++) {
-                    FastTuple key = keys[i];
+            final double[] lowerChildVerticies = TriangleHelpers.getTriangleVerticies(TriangleHelpers.getAdjustedLength(idLength + 1), childDirection.lowerChild, childApex.start, childApex.end);
+            for (int i = 0; i < this.blockSize; i++) {
+                FastTuple key = keys[i];
+                if (key != null) {
                     if (TriangleHelpers.pointInTriangle(key.getLong(2), key.getLong(3), lowerChildVerticies)) {
                         final LeafSplit lowerChildSplit = lowerChildLeaf.insert(key, values[i]);
                         if (lowerChildSplit != null) {
@@ -130,18 +131,19 @@ class SplittableNode<Value> extends LeafNode<Value> {
                         }
                     }
                 }
+            }
 //            Don't forget about the new record we're trying to insert
-                if (TriangleHelpers.pointInTriangle(newKey.getLong(2), newKey.getLong(3), lowerChildVerticies)) {
-                    final LeafSplit lowerChildSplit = lowerChildLeaf.insert(newKey, value);
-                    if (lowerChildSplit != null) {
-                        leafSplit.lowerSplit = lowerChildSplit;
-                    }
-                } else {
-                    leafSplit.higherSplit = higherChildLeaf.insert(newKey, value);
+            if (TriangleHelpers.pointInTriangle(newKey.getLong(2), newKey.getLong(3), lowerChildVerticies)) {
+                final LeafSplit lowerChildSplit = lowerChildLeaf.insert(newKey, value);
+                if (lowerChildSplit != null) {
+                    leafSplit.lowerSplit = lowerChildSplit;
                 }
+            } else {
+                leafSplit.higherSplit = higherChildLeaf.insert(newKey, value);
+            }
 //            Zero out the records, so we know we've fully split everything
-                this.records = 0;
-                return leafSplit;
+            this.records = 0;
+            return leafSplit;
         }
     }
 
@@ -156,6 +158,21 @@ class SplittableNode<Value> extends LeafNode<Value> {
                     values[i] = null;
                     return true;
 //                    Do we need to collapse?
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    boolean update(String objectID, long atTime, Value value) {
+        final TupleExpressionGenerator.BooleanTupleExpression eval = buildFindExpression(objectID, atTime);
+        for (int i = 0; i < this.records; i++) {
+            final FastTuple key = keys[i];
+            if (key != null) {
+                if (eval.evaluate(key)) {
+                    values[i] = value;
+                    return true;
                 }
             }
         }
