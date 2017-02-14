@@ -41,17 +41,13 @@ class SplittableNode<Value> extends LeafNode<Value> {
 
     @Override
     @Nullable Value getValue(String objectID, long atTime) {
-        final TupleExpressionGenerator.BooleanTupleExpression eval;
-        try {
-//            We have to do this really weird equality check because FastTuple doesn't support if statements (for now). So we check for a an interval match, then a point match
-            final String queryString = String.format("(tuple.objectID == %sL) && (((tuple.start <= %sL) && (tuple.end > %sL)) | ((tuple.start == tuple.end)  && (tuple.start == %sL)))", longHashCode(objectID), atTime, atTime, atTime);
-            eval = TupleExpressionGenerator.builder().expression(queryString).schema(splittableKeySchema).returnBoolean();
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to build find expression", e);
-        }
+        final TupleExpressionGenerator.BooleanTupleExpression eval = buildFindExpression(objectID, atTime);
         for (int i = 0; i < this.records; i++) {
-            if (eval.evaluate(keys[i])) {
-                return values[i];
+            final FastTuple key = keys[i];
+            if (key != null) {
+                if (eval.evaluate(key)) {
+                    return values[i];
+                }
             }
         }
         return null;
@@ -147,6 +143,23 @@ class SplittableNode<Value> extends LeafNode<Value> {
                 this.records = 0;
                 return leafSplit;
         }
+    }
+
+    @Override
+    boolean delete(String objectID, long atTime) {
+        final TupleExpressionGenerator.BooleanTupleExpression eval = buildFindExpression(objectID, atTime);
+        for (int i = 0; i < this.records; i++) {
+            final FastTuple key = keys[i];
+            if (key != null) {
+                if (eval.evaluate(key)) {
+                    keys[i] = null;
+                    values[i] = null;
+                    return true;
+//                    Do we need to collapse?
+                }
+            }
+        }
+        return false;
     }
 
     private LeafSplit insertValueIntoArray(FastTuple key, Value value) {

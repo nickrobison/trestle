@@ -2,6 +2,7 @@ package com.nickrobison.trestle.caching.tdtree;
 
 import com.boundary.tuple.FastTuple;
 import com.boundary.tuple.TupleSchema;
+import com.boundary.tuple.codegen.TupleExpressionGenerator;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -33,6 +34,8 @@ public abstract class LeafNode<Value> {
     abstract LeafSplit insert(String objectID, long startTime, long endTime, Value value);
 
     abstract LeafSplit insert(FastTuple newKey, Value value);
+
+    abstract boolean delete(String objectID, long atTime);
 
     /**
      * Retrieve a value from the Leaf that matches the given ObjectID and is valid at the specified timestamp
@@ -72,6 +75,22 @@ public abstract class LeafNode<Value> {
             h = 31 * h + string.charAt(i);
         }
         return h;
+    }
+
+    /**
+     * Build the expression to find the value valid at the given time point
+     * @param objectID - ObjectID to match
+     * @param atTime - Temporal to find valid value
+     * @return - {@link com.boundary.tuple.codegen.TupleExpressionGenerator.BooleanTupleExpression} to evaluate against tuples
+     */
+    protected TupleExpressionGenerator.BooleanTupleExpression buildFindExpression(String objectID, long atTime) {
+        try {
+//            We have to do this really weird equality check because FastTuple doesn't support if statements (for now). So we check for a an interval match, then a point match
+            final String queryString = String.format("(tuple.objectID == %sL) && (((tuple.start <= %sL) && (tuple.end > %sL)) | ((tuple.start == tuple.end)  && (tuple.start == %sL)))", longHashCode(objectID), atTime, atTime, atTime);
+            return TupleExpressionGenerator.builder().expression(queryString).schema(splittableKeySchema).returnBoolean();
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to build find expression", e);
+        }
     }
 
     private static TupleSchema buildSplittableKeySchema() {

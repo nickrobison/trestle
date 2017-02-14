@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Created by nrobison on 2/9/17.
@@ -38,6 +39,11 @@ public class TDTreeTest {
         assertAll(() -> assertEquals("first-value", tdTree.getValue(temporalTestID, 4)),
                 () -> assertEquals("second-value", tdTree.getValue(temporalTestID, 5)),
                 () -> assertEquals("third-value", tdTree.getValue(temporalTestID, 9)));
+
+//        Try for some deletions
+        tdTree.deleteValue("test-object", 2);
+        assertNull(tdTree.getValue("test-object", 2), "Should have null value");
+        assertEquals("test-object-string4", tdTree.getValue("test-object4", 1), "Shouldn't throw an error after deleting a key/value pair");
     }
 
 

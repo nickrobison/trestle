@@ -2,6 +2,7 @@ package com.nickrobison.trestle.caching.tdtree;
 
 import com.boundary.tuple.FastTuple;
 import com.boundary.tuple.TupleSchema;
+import com.nickrobison.trestle.caching.ITrestleIndex;
 import org.apache.commons.math3.util.FastMath;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
@@ -17,7 +18,7 @@ import static com.nickrobison.trestle.caching.tdtree.TriangleHelpers.getIDLength
 /**
  * Created by nrobison on 2/9/17.
  */
-public class TDTree<Value> {
+public class TDTree<Value> implements ITrestleIndex<Value> {
 
     private static final Logger logger = LoggerFactory.getLogger(TDTree.class);
     static long maxValue = LocalDate.of(3000, 1, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
@@ -46,17 +47,12 @@ public class TDTree<Value> {
     }
 
 
-    /**
-     * Insert a key/value pair with an open interval
-     *
-     * @param objectID  - String object key
-     * @param startTime - Long temporal of start temporal
-     * @param value     - Value
-     */
+    @Override
     public void insertValue(String objectID, long startTime, Value value) {
         insertValue(objectID, startTime, maxValue, value);
     }
 
+    @Override
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     public void insertValue(String objectID, long startTime, long endTime, Value value) {
 //        Find the leaf at maxDepth that would contain the objectID
@@ -79,9 +75,34 @@ public class TDTree<Value> {
         }
     }
 
+    @Override
     @SuppressWarnings("Duplicates")
     public @Nullable Value getValue(String objectID, long atTime) {
-        List<LeafNode> fullyContained = new ArrayList<>();
+
+        final List<LeafNode> candidateLeafs = findCandidateLeafs(objectID, atTime);
+
+        for (LeafNode node : candidateLeafs) {
+            //noinspection unchecked
+            @Nullable final Value value = (Value) node.getValue(objectID, atTime);
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void deleteValue(String objectID, long atTime) {
+        final List<LeafNode> candidateLeafs = findCandidateLeafs(objectID, atTime);
+        for (LeafNode node : candidateLeafs) {
+            if (node.delete(objectID, atTime)) {
+                return;
+            }
+        }
+    }
+
+    private List<LeafNode> findCandidateLeafs(String objectID, long atTime) {
+        List<LeafNode> candidateLeafs = new ArrayList<>();
         long[] rectApex = {atTime, atTime};
         int length = 1;
         int parentDirection = 7;
@@ -105,17 +126,17 @@ public class TDTree<Value> {
 //                Are we the lower child?
             final int intersectionResult;
             if (overlappingPrefix < TriangleHelpers.getMaximumValue(overlappingPrefix)) {
-                intersectionResult = filterTriangleResults(populatedLeafs, fullyContained, overlappingPrefix, childApex, childDirection.lowerChild, length, rectApex);
+                intersectionResult = filterTriangleResults(populatedLeafs, candidateLeafs, overlappingPrefix, childApex, childDirection.lowerChild, length, rectApex);
                 parentDirection = childDirection.lowerChild;
             } else {
-                intersectionResult = filterTriangleResults(populatedLeafs, fullyContained, overlappingPrefix, childApex, childDirection.higherChild, length, rectApex);
+                intersectionResult = filterTriangleResults(populatedLeafs, candidateLeafs, overlappingPrefix, childApex, childDirection.higherChild, length, rectApex);
                 parentDirection = childDirection.higherChild;
             }
 
 //            If not fully contained or disjoint, check to see if ancestor equals leaf
             if (!(intersectionResult == 1) && !(intersectionResult == -2)) {
                 if (firstID == overlappingPrefix) {
-                    fullyContained.add(first);
+                    candidateLeafs.add(first);
 //                    This?
                     length = 1;
                 } else { // Return the leaf to the queue, and step down another level
@@ -129,14 +150,8 @@ public class TDTree<Value> {
                 length = 1;
             }
         }
-        for (LeafNode node : fullyContained) {
-            //noinspection unchecked
-            @Nullable final Value value = (Value) node.getValue(objectID, atTime);
-            if (value != null) {
-                return value;
-            }
-        }
-        return null;
+
+        return candidateLeafs;
     }
 
     private int filterTriangleResults(ArrayDeque<LeafNode> populatedLeafs, List<LeafNode> fullyContained, int overlappingPrefix, TriangleHelpers.TriangleApex childApex, int childDirection, int length, long[] rectApex) {
@@ -248,8 +263,6 @@ public class TDTree<Value> {
         String matchString = Integer.toBinaryString(matchID);
         int match = 0;
         while ((match < minIDLength) && (leafString.charAt(match) == matchString.charAt(match))) {
-//        for (int i = 0; i < minIDLength; i++) {
-//            if (leafString.charAt(i) == matchString.charAt(i)) {
                 match++;
             }
             return match;

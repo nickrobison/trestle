@@ -45,4 +45,13 @@ public class PointNode<Value> extends LeafNode<Value> {
         }
         return null;
     }
+
+    @Override
+    boolean delete(String objectID, long atTime) {
+        if (this.values.containsKey(longHashCode(objectID))) {
+            this.values.remove(objectID);
+            return true;
+        }
+        return false;
+    }
 }
