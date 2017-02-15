@@ -14,7 +14,7 @@ public class TriangleHelpers {
      * @param direction - Direction of triangle
      * @param leafLength - Leaf length
      * @param rectangleApex - bottom-right X/Y coordinates of rectangle
-     * @return - 1 if the triangle is fully within the rectangle. 0 to -1 if it partially intersects, -2 if fully outside
+     * @return - <code>1</code> if the triangle is fully within the rectangle. <code>-2</code> if fully outside, and 0 to -1 if it partially intersects.
      */
     static int checkRectangleIntersection(TriangleApex apex, int direction, int leafLength, long[] rectangleApex, long maxValue) {
         final double[] triangleVerticies = getTriangleVerticies(getAdjustedLength(leafLength), direction, apex.start, apex.end);
@@ -131,7 +131,57 @@ public class TriangleHelpers {
      */
 //    FIXME(nrobison): This needs to get a calculated precision
     private static double normalizeZero(double value) {
-        return FastMath.abs(Precision.round(value, 3));
+        final double abs = FastMath.abs(Precision.round(value, 3));
+//        If the value falls outside of the maxValue range, return the maxValue. This adjusts for double rounding issues
+        if (abs > TDTree.maxValue) {
+            return TDTree.maxValue;
+        }
+        return abs;
+    }
+
+    /**
+     * Determine the triangle direction of the given leaf
+     * Usually starts at depth 0 and direction 7, which is the base triangle
+     * @param leafID - Leaf to get direction
+     * @param depth - Starting depth
+     * @param parentDirection - Starting direction
+     * @return - Integer 0-7 of triangle direction
+     */
+    static int calculateTriangleDirection(int leafID, int depth, int parentDirection) {
+
+        if (getIDLength(leafID) - 1 == depth) {
+            return parentDirection;
+        }
+        final ChildDirection childDirection = calculateChildDirection(parentDirection);
+        final int prefix = leafID >> (getIDLength(leafID) - depth - 1) - 1;
+        if ((prefix & 1) == 0) {
+//        if ((prefix < getMaximumValue(prefix))) {
+             return calculateTriangleDirection(leafID, depth + 1, childDirection.lowerChild);
+        }
+        return calculateTriangleDirection(leafID, depth + 1, childDirection.higherChild);
+    }
+
+    /**
+     * Determine the apex of the of the given leaf
+     * Usually starts at depth 0 and direction seven, with start/end of 0.0/maxValue which is the base triangle
+     * @param leafID - Leaf to get apex
+     * @param depth - Starting depth
+     * @param parentDirection - Starting direction
+     * @param parentStart - Starting X coordinate
+     * @param parentEnd - Starting Y coordinate
+     * @return - {@link TriangleApex} of given leaf
+     */
+    static TriangleApex calculateTriangleApex(int leafID, int depth, int parentDirection, double parentStart, double parentEnd) {
+        if (getIDLength(leafID) - 1 == depth) {
+            return new TriangleApex(parentStart, parentEnd);
+        }
+//        Get the current depth
+        final int thisPrefix = leafID >> ((getIDLength(leafID) - depth - 1) - 1);
+//        Get the apex and direction for the triangle at this level
+        final int thisDirection = calculateTriangleDirection(thisPrefix, depth, parentDirection);
+        final TriangleApex thisApex = calculateChildApex(getIDLength(thisPrefix), parentDirection, parentStart, parentEnd);
+        return calculateTriangleApex(leafID, depth + 1, thisDirection, thisApex.start, thisApex.end);
+
     }
 
     static ChildDirection calculateChildDirection(int parentDirection) {

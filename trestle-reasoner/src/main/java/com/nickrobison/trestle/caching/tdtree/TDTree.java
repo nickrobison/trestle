@@ -13,7 +13,7 @@ import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.nickrobison.trestle.caching.tdtree.TriangleHelpers.getIDLength;
+import static com.nickrobison.trestle.caching.tdtree.TriangleHelpers.*;
 
 /**
  * Created by nrobison on 2/9/17.
@@ -146,79 +146,56 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
             int overlappingPrefix = firstID >> (getIDLength(firstID) - length);
             final TriangleHelpers.TriangleApex childApex;
             final TriangleHelpers.ChildDirection childDirection;
-            if (length == 1) {
-                childApex = new TriangleHelpers.TriangleApex(0, maxValue);
-                childDirection = new TriangleHelpers.ChildDirection(7, 7);
-            } else {
-                childApex = TriangleHelpers.calculateChildApex(length, parentDirection, parentApex.start, parentApex.end);
-                childDirection = TriangleHelpers.calculateChildDirection(parentDirection);
-            }
-//                Are we the lower child?
-            final int intersectionResult;
-            if (overlappingPrefix < TriangleHelpers.getMaximumValue(overlappingPrefix)) {
-                intersectionResult = filterTriangleResults(populatedLeafs, candidateLeafs, overlappingPrefix, childApex, childDirection.lowerChild, length, rectApex);
-                parentDirection = childDirection.lowerChild;
-            } else {
-                intersectionResult = filterTriangleResults(populatedLeafs, candidateLeafs, overlappingPrefix, childApex, childDirection.higherChild, length, rectApex);
-                parentDirection = childDirection.higherChild;
-            }
 
-//            If not fully contained or disjoint, check to see if ancestor equals leaf
-            if (!(intersectionResult == 1) && !(intersectionResult == -2)) {
-                if (firstID == overlappingPrefix) {
-                    candidateLeafs.add(first);
-//                    This?
-                    length = 1;
-                } else { // Return the leaf to the queue, and step down another level
-                    populatedLeafs.push(first);
-                    parentApex = childApex;
-                    length++;
+            final TriangleHelpers.TriangleApex triangleApex = calculateTriangleApex(overlappingPrefix, 0, 7, 0., maxValue);
+            final int triangleDirection = calculateTriangleDirection(overlappingPrefix, 0, 7);
+//            Filter the triangle results
+            final int intersection = checkRectangleIntersection(triangleApex, triangleDirection, length, rectApex, maxValue);
+//                If the triangle is fully contained within the rectangle, add all the leafs with the same prefix
+            if (intersection == 1) {
+                final int currentSize = populatedLeafs.size();
+                for (int i = 0; i < currentSize; i++) {
+                    final LeafNode<Value> next = populatedLeafs.pop();
+                    if (idSimilarity(next.getID(), overlappingPrefix) == length) {
+                        candidateLeafs.add(next);
+                    } else {
+                        populatedLeafs.add(next);
+                    }
                 }
-            } else { // If this leaf is either fully within the rectangle, or completely outside of it. Reset back to the initial state and keep going
-                parentApex = new TriangleHelpers.TriangleApex(0, maxValue);
-                parentDirection = 7;
+                candidateLeafs.add(first);
                 length = 1;
+//                If it's fully disjoint from the rectangle, remove all sub-leafs
+            } else if (intersection == -2) {
+                final int currentSize = populatedLeafs.size();
+                for (int i = 0; i < currentSize; i++) {
+                    final LeafNode<Value> next = populatedLeafs.pop();
+                    if (!(idSimilarity(next.getID(), overlappingPrefix) == length)) {
+                        populatedLeafs.add(next);
+                    }
+                }
+                length = 1;
+//                If R matches F, add it to the candidate list
+            } else if (firstID == overlappingPrefix) {
+                candidateLeafs.add(first);
+            } else {
+                populatedLeafs.push(first);
+                length++;
             }
         }
 
         return candidateLeafs;
     }
 
-    private int filterTriangleResults(ArrayDeque<LeafNode<Value>> populatedLeafs, List<LeafNode<Value>> fullyContained, int overlappingPrefix, TriangleHelpers.TriangleApex childApex, int childDirection, int length, long[] rectApex) {
-        final int intersectionResult = TriangleHelpers.checkRectangleIntersection(childApex, childDirection, length, rectApex, maxValue);
-        if (intersectionResult == 1) {
-            final int currentSize = populatedLeafs.size();
-            for (int i = 0; i < currentSize; i++) {
-                final LeafNode<Value> next = populatedLeafs.pop();
-                if (idSimilarity(next.getID(), overlappingPrefix) == length) {
-                    fullyContained.add(next);
-                } else {
-                    populatedLeafs.add(next);
-                }
-            }
-        } else if (intersectionResult == -2) {
-            final int currentSize = populatedLeafs.size();
-            for (int i = 0; i < currentSize; i++) {
-                final LeafNode<Value> next = populatedLeafs.pop();
-                if (!(idSimilarity(next.getID(), overlappingPrefix) == length)) {
-                    populatedLeafs.add(next);
-                }
-            }
-        }
-
-        return intersectionResult;
-    }
-
     /**
      * Recursively parse a {@link LeafSplit} to add all the new leaves, with records to the directory
      *
-     * @param split
+     * @param split {@link LeafSplit}
      */
     private void parseSplit(LeafSplit split) {
         if (split.higherSplit == null) {
 //        Increment the max depth, if we need to
             if (this.maxDepth < getIDLength(split.higherLeaf.getID())) {
-                this.maxDepth ++;
+                this.maxDepth++;
             }
             if (!this.leafs.contains(split.higherLeaf)) {
                 this.leafs.add(split.higherLeaf);
@@ -230,7 +207,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         if (split.lowerSplit == null) {
 //        Increment the max depth, if we need to
             if (this.maxDepth < getIDLength(split.lowerLeaf.getID())) {
-                this.maxDepth ++;
+                this.maxDepth++;
             }
             if (!this.leafs.contains(split.lowerLeaf)) {
                 this.leafs.add(split.lowerLeaf);
@@ -264,7 +241,8 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     /**
      * Determines how many bits match between two numbers
      * Shifts the numbers so that they're the same length
-     * @param leafID - LeafID to match
+     *
+     * @param leafID  - LeafID to match
      * @param matchID - matchID to match LeafID against
      * @return - Number of common bits left->right
      */
@@ -283,7 +261,8 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
 
     /**
      * Moves left->right through a string representation of two binary numbers, and counts the number of bits in common, until they start to diverge
-     * @param leafID - Leaf ID to match
+     *
+     * @param leafID  - Leaf ID to match
      * @param matchID - Match ID to match leaf against
      * @return - number of bits in common, until they diverge
      */
@@ -293,9 +272,9 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         String matchString = Integer.toBinaryString(matchID);
         int match = 0;
         while ((match < minIDLength) && (leafString.charAt(match) == matchString.charAt(match))) {
-                match++;
-            }
-            return match;
+            match++;
+        }
+        return match;
     }
 
     private static TupleSchema buildLeafSchema() {

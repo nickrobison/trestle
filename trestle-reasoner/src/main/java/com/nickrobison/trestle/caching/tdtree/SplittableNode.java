@@ -86,14 +86,26 @@ class SplittableNode<Value> extends LeafNode<Value> {
                     lowerChild.setDouble(2, childApex.end);
                     lowerChild.setShort(3, (short) childDirection.lowerChild);
                     higherChild = TDTree.leafSchema.createTuple();
-                    lowerChild.setDouble(1, childApex.start);
-                    lowerChild.setDouble(2, childApex.end);
-                    lowerChild.setShort(3, (short) childDirection.higherChild);
-                    lowerChildLeaf = new PointNode<>(leafID << 1, lowerChild);
-                    higherChildLeaf = new PointNode<>((leafID << 1) | 1, higherChild);
+                    higherChild.setDouble(1, childApex.start);
+                    higherChild.setDouble(2, childApex.end);
+                    higherChild.setShort(3, (short) childDirection.higherChild);
                 } catch (Exception e) {
                     throw new RuntimeException("Unable to create new key array for point leaf");
                 }
+
+                lowerChildLeaf = new PointNode<>(leafID << 1, lowerChild);
+                higherChildLeaf = new PointNode<>((leafID << 1) | 1, higherChild);
+//                    Convert the leaf to a point leaf and replace the splittable node
+
+                final PointNode<Object> pointNode = new PointNode<>(leafID, leafMetadata);
+//                    Copy in all the keys and values
+                pointNode.copyInitialValues(this.keys, this.values);
+//                    Copy the new value
+                pointNode.insert(newKey, value);
+
+                this.records = 0;
+
+                return new LeafSplit(leafID, pointNode, pointNode);
             } else {
 
 //            Create the lower and higher leafs
