@@ -14,14 +14,8 @@ public class TDTreeTest {
 
     @Test
     public void testLeafFind() throws Exception {
-        TDTree.maxValue = 938574936;
+        TDTree.maxValue = 10;
         final TDTree<String> tdTree = new TDTree<>(2);
-//        int matchingLeaf = tdTree.getMatchingLeaf(8, 8);
-//        assertEquals(1, matchingLeaf, "Should match root leaf");
-//        tdTree.setMaxDepth(4);
-//        matchingLeaf = tdTree.getMatchingLeaf(8, 8);
-//        assertEquals(31, matchingLeaf, "Should match leaf 11101");
-//        tdTree.setMaxDepth(0);
 
         tdTree.insertValue("test-object", 8, 9, "test-object-string");
         tdTree.insertValue("test-object2", 6, 9, "test-object-string2");

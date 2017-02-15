@@ -1,5 +1,9 @@
 package com.nickrobison.trestle.caching.tdtree;
 
+import com.arjuna.ats.txoj.Lock;
+import com.arjuna.ats.txoj.LockManager;
+import com.arjuna.ats.txoj.LockMode;
+import com.arjuna.ats.txoj.LockResult;
 import com.boundary.tuple.FastTuple;
 import com.boundary.tuple.TupleSchema;
 import com.nickrobison.trestle.caching.ITrestleIndex;
@@ -18,16 +22,16 @@ import static com.nickrobison.trestle.caching.tdtree.TriangleHelpers.*;
 /**
  * Created by nrobison on 2/9/17.
  */
-public class TDTree<Value> implements ITrestleIndex<Value> {
+public class TDTree<Value> extends LockManager implements ITrestleIndex<Value> {
 
     private static final Logger logger = LoggerFactory.getLogger(TDTree.class);
     static long maxValue = LocalDate.of(3000, 1, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
     //    static long maxValue = LocalDateTime.MAX.toInstant(ZoneOffset.UTC).toEpochMilli();
     static final TupleSchema leafSchema = buildLeafSchema();
-    public static final double ROOTTWO = FastMath.sqrt(2);
+    static final double ROOTTWO = FastMath.sqrt(2);
     private final int blockSize;
     private final List<LeafNode<Value>> leafs = new ArrayList<>();
-    protected int maxDepth;
+    private int maxDepth;
 
 
     public TDTree(int blockSize) throws Exception {
@@ -42,36 +46,36 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         leafs.add(new SplittableNode<>(1, rootTuple, this.blockSize));
     }
 
-    void setMaxDepth(int depth) {
-        this.maxDepth = depth;
-    }
-
-
     @Override
     public void insertValue(String objectID, long startTime, Value value) {
-        insertValue(objectID, startTime, maxValue, value);
+            insertValue(objectID, startTime, maxValue, value);
     }
 
     @Override
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     public void insertValue(String objectID, long startTime, long endTime, Value value) {
+//        Take the write lock
+        if (setlock(new Lock(LockMode.WRITE), 0) == LockResult.GRANTED) {
 //        Find the leaf at maxDepth that would contain the objectID
-        final int matchingLeaf = getMatchingLeaf(startTime, endTime);
+            final int matchingLeaf = getMatchingLeaf(startTime, endTime);
 //        Find the region in list with the most number of matching bits
 //        Notice the l2/l1 reordering, otherwise it finds the leaf with the fewest number of matching bits, because why not?
-        final Optional<LeafNode<Value>> first = leafs
-                .stream()
+            final Optional<LeafNode<Value>> first = leafs
+                    .stream()
 //                .sorted(comparator)
-                .sorted((l1, l2) -> Integer.compare(matchLength(l2.getID(), matchingLeaf), matchLength(l1.getID(), matchingLeaf)))
-                .findFirst();
+                    .sorted((l1, l2) -> Integer.compare(matchLength(l2.getID(), matchingLeaf), matchLength(l1.getID(), matchingLeaf)))
+                    .findFirst();
 
 //        We can do this because it will always match on, at least, the root node
-        //noinspection unchecked
-        final LeafSplit split = first.get().insert(objectID, startTime, endTime, value);
+            //noinspection unchecked
+            final LeafSplit split = first.get().insert(objectID, startTime, endTime, value);
 //        If we split, we need to add the new leafs to the tree, and remove the old ones
-        if (split != null) {
-            leafs.remove(first.get());
-            parseSplit(split);
+            if (split != null) {
+                leafs.remove(first.get());
+                parseSplit(split);
+            }
+        } else {
+            logger.error("Unable get write lock, rejecting {}, {}-{}, {}", objectID, startTime, endTime, value);
         }
     }
 
@@ -79,42 +83,59 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     @SuppressWarnings("Duplicates")
     public @Nullable Value getValue(String objectID, long atTime) {
 
-        final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
 
-        for (LeafNode node : candidateLeafs) {
-            //noinspection unchecked
-            @Nullable final Value value = (Value) node.getValue(objectID, atTime);
-            if (value != null) {
-                return value;
+        if (setlock(new Lock(LockMode.READ), 0) == LockResult.GRANTED) {
+            final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
+
+            for (LeafNode node : candidateLeafs) {
+                //noinspection unchecked
+                @Nullable final Value value = (Value) node.getValue(objectID, atTime);
+                if (value != null) {
+                    return value;
+                }
             }
+        } else {
+            logger.error("Unable to get read lock");
         }
         return null;
     }
 
     @Override
     public void deleteValue(String objectID, long atTime) {
-        final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
-        for (LeafNode node : candidateLeafs) {
-            if (node.delete(objectID, atTime)) {
-                return;
+        if (setlock(new Lock(LockMode.WRITE), 0) == LockResult.GRANTED) {
+            final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
+            for (LeafNode node : candidateLeafs) {
+                if (node.delete(objectID, atTime)) {
+                    return;
+                }
             }
+        } else {
+            logger.error("Unable to get write lock while deleting {}, {}", objectID, atTime);
         }
     }
 
     @Override
     public void updateValue(String objectID, long atTime, Value value) {
-        final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
-        for (LeafNode<Value> node : candidateLeafs) {
-            if (node.update(objectID, atTime, value)) {
-                return;
+        if (setlock(new Lock(LockMode.WRITE), 0) == LockResult.GRANTED) {
+            final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
+            for (LeafNode<Value> node : candidateLeafs) {
+                if (node.update(objectID, atTime, value)) {
+                    return;
+                }
             }
+        } else {
+            logger.error("Unable to get write lock while updating {}, {}", objectID, atTime);
         }
     }
 
     @Override
     public void replaceKeyValue(String objectID, long atTime, long startTime, long endTime, Value value) {
-        deleteValue(objectID, atTime);
-        insertValue(objectID, startTime, endTime, value);
+        if (setlock(new Lock(LockMode.WRITE), 0) == LockResult.GRANTED) {
+            deleteValue(objectID, atTime);
+            insertValue(objectID, startTime, endTime, value);
+        } else {
+            logger.error("Unable to get write lock while replacing {}, {}", objectID, atTime);
+        }
     }
 
     @Override
@@ -124,10 +145,15 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
 
     @Override
     public void setKeyTemporals(String objectID, long atTime, long startTime, long endTime) {
-        final @Nullable Value value = getValue(objectID, atTime);
-        if (value != null) {
-            deleteValue(objectID, atTime);
-            insertValue(objectID, startTime, endTime, value);
+
+        if (setlock(new Lock(LockMode.WRITE), 0) == LockResult.GRANTED) {
+            final @Nullable Value value = getValue(objectID, atTime);
+            if (value != null) {
+                deleteValue(objectID, atTime);
+                insertValue(objectID, startTime, endTime, value);
+            }
+        } else {
+            logger.error("Unable to get write lock while setting {} temporals", objectID);
         }
     }
 
@@ -217,7 +243,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         }
     }
 
-    int getMatchingLeaf(long startTime, long endTime) {
+    private int getMatchingLeaf(long startTime, long endTime) {
         if (this.maxDepth == 0) {
             return 1;
         }

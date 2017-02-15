@@ -250,7 +250,6 @@ public class TriangleHelpers {
             mask |= mask << 1;
         }
         return mask;
-//        return (int) FastMath.pow(getIDLength(leafID), 2) - 1;
     }
 
     /**
