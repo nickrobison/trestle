@@ -5,6 +5,8 @@ import com.boundary.tuple.codegen.TupleExpressionGenerator;
 import org.apache.commons.lang3.ArrayUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import static com.nickrobison.trestle.caching.tdtree.TriangleHelpers.getIDLength;
+
 /**
  * Created by nrobison on 2/9/17.
  */
@@ -68,7 +70,7 @@ class SplittableNode<Value> extends LeafNode<Value> {
             final double parentStart = this.leafMetadata.getDouble(1);
             final double parentEnd = this.leafMetadata.getDouble(2);
             final short parentDirection = this.leafMetadata.getShort(3);
-            final int idLength = TriangleHelpers.getIDLength(this.leafID);
+            final int idLength = getIDLength(this.leafID);
             final TriangleHelpers.TriangleApex childApex = TriangleHelpers.calculateChildApex(idLength + 1,
                     parentDirection,
                     parentStart,
@@ -79,7 +81,7 @@ class SplittableNode<Value> extends LeafNode<Value> {
             final LeafNode<Value> lowerChildLeaf;
             final LeafNode<Value> higherChildLeaf;
 //            If one of the children is a point, pick the lower, turn it into a point and move on
-            if (TriangleHelpers.triangleIsPoint(TriangleHelpers.getTriangleVerticies(TriangleHelpers.getAdjustedLength(idLength + 1), childDirection.lowerChild, childApex.start, childApex.end))) {
+            if (TriangleHelpers.triangleIsPoint(TriangleHelpers.getTriangleVerticies(TriangleHelpers.getAdjustedLength(idLength + 1), childDirection.lowerChild, childApex.start, childApex.end)) | getIDLength(this.leafID) == getIDLength(Integer.MAX_VALUE)) {
                 try {
                     lowerChild = TDTree.leafSchema.createTuple();
                     lowerChild.setDouble(1, childApex.start);
