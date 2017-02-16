@@ -203,6 +203,7 @@ public class TDTree<Value> extends LockManager implements ITrestleIndex<Value> {
 //                If R matches F, add it to the candidate list
             } else if (firstID == overlappingPrefix) {
                 candidateLeafs.add(first);
+                length = 1;
             } else {
                 populatedLeafs.push(first);
                 length++;

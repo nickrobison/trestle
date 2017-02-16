@@ -81,7 +81,9 @@ class SplittableNode<Value> extends LeafNode<Value> {
             final LeafNode<Value> lowerChildLeaf;
             final LeafNode<Value> higherChildLeaf;
 //            If one of the children is a point, pick the lower, turn it into a point and move on
-            if (TriangleHelpers.triangleIsPoint(TriangleHelpers.getTriangleVerticies(TriangleHelpers.getAdjustedLength(idLength + 1), childDirection.lowerChild, childApex.start, childApex.end)) | getIDLength(this.leafID) == getIDLength(Integer.MAX_VALUE)) {
+//            We also need to make sure we don't recurse too far, so the length of a leafID can't be more than 30
+            if (TriangleHelpers.triangleIsPoint(TriangleHelpers.getTriangleVerticies(TriangleHelpers.getAdjustedLength(idLength + 1), childDirection.lowerChild, childApex.start, childApex.end)) |
+                    getIDLength(this.leafID) == (getIDLength(Integer.MAX_VALUE) - 1)) {
                 try {
                     lowerChild = TDTree.leafSchema.createTuple();
                     lowerChild.setDouble(1, childApex.start);

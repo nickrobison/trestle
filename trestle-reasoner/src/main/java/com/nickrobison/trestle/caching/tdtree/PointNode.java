@@ -7,6 +7,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Created by nrobison on 2/13/17.
@@ -62,9 +63,15 @@ public class PointNode<Value> extends LeafNode<Value> {
 
     @Override
     boolean delete(String objectID, long atTime) {
-        final FastTuple key = buildObjectKey(objectID, atTime, atTime);
-        if (this.values.containsKey(key)) {
-            this.values.remove(key);
+        final TupleExpressionGenerator.BooleanTupleExpression eval = buildFindExpression(objectID, atTime);
+        final Optional<FastTuple> matchingKey = this.values.entrySet()
+                .stream()
+                .filter(entry -> eval.evaluate(entry.getKey()))
+                .map(Map.Entry::getKey)
+                .findAny();
+
+        if (matchingKey.isPresent()) {
+            this.values.remove(matchingKey.get());
             return true;
         }
         return false;

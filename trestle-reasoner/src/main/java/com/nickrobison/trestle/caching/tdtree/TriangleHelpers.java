@@ -148,7 +148,6 @@ public class TriangleHelpers {
      * @return - Integer 0-7 of triangle direction
      */
     static int calculateTriangleDirection(int leafID, int depth, int parentDirection) {
-
         if (getIDLength(leafID) - 1 == depth) {
             return parentDirection;
         }

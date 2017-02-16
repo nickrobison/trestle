@@ -1,21 +1,41 @@
 package com.nickrobison.trestle.caching.tdtree;
 
+import com.arjuna.ats.arjuna.AtomicAction;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import java.util.Arrays;
+import java.util.Random;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by nrobison on 2/9/17.
  */
+@SuppressWarnings("Duplicates")
 public class TDTreeTest {
 
     @Test
-    public void testLeafFind() throws Exception {
-        TDTree.maxValue = 10;
+    public void testSimpleFunction() throws Exception {
+
+        int[] maxValueArray = {10, 93, 100, 174, 1000, 1233, 10000, 12346, 100000, 973456, 1000000, Integer.MAX_VALUE};
+
+        Arrays.stream(maxValueArray)
+                .forEach(value -> {
+                    try {
+                        simpleTest(value);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+    }
+
+    private void simpleTest(int maxValue) throws Exception {
+        TDTree.maxValue = maxValue;
         final TDTree<String> tdTree = new TDTree<>(2);
+        System.out.println(String.format("Running with %d max value", maxValue));
 
         tdTree.insertValue("test-object", 8, 9, "test-object-string");
         tdTree.insertValue("test-object2", 6, 9, "test-object-string2");
@@ -48,7 +68,55 @@ public class TDTreeTest {
         tdTree.replaceKeyValue(temporalTestID, 3, 3, 4, "updated-temporal-value");
         assertAll(() -> assertEquals("updated-temporal-value", tdTree.getValue(temporalTestID, 3)),
                 () -> assertNull(tdTree.getValue(temporalTestID, 1)));
+    }
 
+
+    @Test
+    public void testConcurrency() throws Exception {
+        int maxValue = 20;
+        final Random random = new Random();
+        TDTree.maxValue = maxValue;
+        final TDTree<Long> tree = new TDTree<>(2);
+        final Thread t1 = new Thread(() -> {
+            while (true) {
+                AtomicAction a = new AtomicAction();
+                a.begin();
+                System.out.println("Thread 1 running");
+                final int randomKey = random.nextInt();
+                final int randomStart = random.nextInt(maxValue);
+                final long randomValue = random.nextLong();
+                tree.insertValue(Integer.toString(randomKey), randomStart, randomValue);
+                a.commit();
+//                a = new AtomicAction();
+//                a.begin();
+//                @Nullable final Long value = tree.getValue(Integer.toString(randomKey), randomStart);
+//                a.commit();
+//                assertAll(() -> assertNotNull(value),
+//                        () -> assertEquals(randomValue, (long) value));
+            }
+        });
+        final Thread t2 = new Thread(() -> {
+            while (true) {
+                AtomicAction a = new AtomicAction();
+                System.out.println("Thread 2 running");
+                final int randomKey = random.nextInt();
+                final int randomStart = random.nextInt(maxValue);
+                final long randomValue = random.nextLong();
+                a.begin();
+                tree.insertValue(Integer.toString(randomKey), randomStart, randomValue);
+                a.commit();
+//                a = new AtomicAction();
+//                a.begin();
+//                @Nullable final Long value = tree.getValue(Integer.toString(randomKey), randomStart);
+//                a.commit();
+//                assertAll(() -> assertNotNull(value),
+//                        () -> assertEquals(randomValue, (long) value));
+            }
+        });
+//        Try to read/write from two threads
+        t1.start();
+        t2.start();
+        Thread.sleep(10000);
     }
 
 
