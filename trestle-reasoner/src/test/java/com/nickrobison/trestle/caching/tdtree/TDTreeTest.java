@@ -1,10 +1,7 @@
 package com.nickrobison.trestle.caching.tdtree;
 
-import com.arjuna.ats.arjuna.AtomicAction;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -77,46 +74,42 @@ public class TDTreeTest {
         final Random random = new Random();
         TDTree.maxValue = maxValue;
         final TDTree<Long> tree = new TDTree<>(2);
-        final Thread t1 = new Thread(() -> {
-            while (true) {
-                AtomicAction a = new AtomicAction();
-                a.begin();
-                System.out.println("Thread 1 running");
-                final int randomKey = random.nextInt();
-                final int randomStart = random.nextInt(maxValue);
-                final long randomValue = random.nextLong();
-                tree.insertValue(Integer.toString(randomKey), randomStart, randomValue);
-                a.commit();
-//                a = new AtomicAction();
-//                a.begin();
-//                @Nullable final Long value = tree.getValue(Integer.toString(randomKey), randomStart);
-//                a.commit();
-//                assertAll(() -> assertNotNull(value),
-//                        () -> assertEquals(randomValue, (long) value));
-            }
-        });
-        final Thread t2 = new Thread(() -> {
-            while (true) {
-                AtomicAction a = new AtomicAction();
-                System.out.println("Thread 2 running");
-                final int randomKey = random.nextInt();
-                final int randomStart = random.nextInt(maxValue);
-                final long randomValue = random.nextLong();
-                a.begin();
-                tree.insertValue(Integer.toString(randomKey), randomStart, randomValue);
-                a.commit();
-//                a = new AtomicAction();
-//                a.begin();
-//                @Nullable final Long value = tree.getValue(Integer.toString(randomKey), randomStart);
-//                a.commit();
-//                assertAll(() -> assertNotNull(value),
-//                        () -> assertEquals(randomValue, (long) value));
-            }
-        });
+        final Thread t1 = new Thread(new ThreadTester(1, random, tree));
+        final Thread t2 = new Thread(new ThreadTester(2, random, tree));
+
 //        Try to read/write from two threads
         t1.start();
         t2.start();
         Thread.sleep(10000);
+    }
+
+
+    private static class ThreadTester implements Runnable {
+        private final Random random;
+        private final TDTree<Long> tree;
+        private int ops = 0;
+        private final int threadNumber;
+        private static final int maxValue = 20;
+
+        public ThreadTester(int threadNumber, Random random, TDTree<Long> tree) {
+            this.random = random;
+            this.tree = tree;
+            this.threadNumber = threadNumber;
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                System.out.println(String.format("Thread %s running", threadNumber));
+                final int randomKey = random.nextInt();
+                final int randomStart = random.nextInt(maxValue);
+                final long randomValue = random.nextLong();
+                tree.insertValue(Integer.toString(randomKey), randomStart, randomValue);
+                @Nullable final Long value = tree.getValue(Integer.toString(randomKey), randomStart);
+                System.out.println(String.format("Thread %s Executed ops: %d", threadNumber, ops++));
+//                a.commit();
+            }
+        }
     }
 
 

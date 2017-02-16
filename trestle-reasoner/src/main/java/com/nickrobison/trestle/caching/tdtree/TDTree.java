@@ -1,9 +1,5 @@
 package com.nickrobison.trestle.caching.tdtree;
 
-import com.arjuna.ats.txoj.Lock;
-import com.arjuna.ats.txoj.LockManager;
-import com.arjuna.ats.txoj.LockMode;
-import com.arjuna.ats.txoj.LockResult;
 import com.boundary.tuple.FastTuple;
 import com.boundary.tuple.TupleSchema;
 import com.nickrobison.trestle.caching.ITrestleIndex;
@@ -14,7 +10,12 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.caching.tdtree.TriangleHelpers.*;
@@ -22,9 +23,10 @@ import static com.nickrobison.trestle.caching.tdtree.TriangleHelpers.*;
 /**
  * Created by nrobison on 2/9/17.
  */
-public class TDTree<Value> extends LockManager implements ITrestleIndex<Value> {
+public class TDTree<Value> implements ITrestleIndex<Value> {
 
     private static final Logger logger = LoggerFactory.getLogger(TDTree.class);
+    private ReadWriteLock rwlock = new ReentrantReadWriteLock();
     static long maxValue = LocalDate.of(3000, 1, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
     //    static long maxValue = LocalDateTime.MAX.toInstant(ZoneOffset.UTC).toEpochMilli();
     static final TupleSchema leafSchema = buildLeafSchema();
@@ -48,14 +50,15 @@ public class TDTree<Value> extends LockManager implements ITrestleIndex<Value> {
 
     @Override
     public void insertValue(String objectID, long startTime, Value value) {
-            insertValue(objectID, startTime, maxValue, value);
+        insertValue(objectID, startTime, maxValue, value);
     }
 
     @Override
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     public void insertValue(String objectID, long startTime, long endTime, Value value) {
 //        Take the write lock
-        if (setlock(new Lock(LockMode.WRITE), 0) == LockResult.GRANTED) {
+        rwlock.writeLock().lock();
+        try {
 //        Find the leaf at maxDepth that would contain the objectID
             final int matchingLeaf = getMatchingLeaf(startTime, endTime);
 //        Find the region in list with the most number of matching bits
@@ -74,8 +77,8 @@ public class TDTree<Value> extends LockManager implements ITrestleIndex<Value> {
                 leafs.remove(first.get());
                 parseSplit(split);
             }
-        } else {
-            logger.error("Unable get write lock, rejecting {}, {}-{}, {}", objectID, startTime, endTime, value);
+        } finally {
+            rwlock.writeLock().unlock();
         }
     }
 
@@ -83,8 +86,8 @@ public class TDTree<Value> extends LockManager implements ITrestleIndex<Value> {
     @SuppressWarnings("Duplicates")
     public @Nullable Value getValue(String objectID, long atTime) {
 
-
-        if (setlock(new Lock(LockMode.READ), 0) == LockResult.GRANTED) {
+        rwlock.readLock().lock();
+        try {
             final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
 
             for (LeafNode node : candidateLeafs) {
@@ -94,47 +97,50 @@ public class TDTree<Value> extends LockManager implements ITrestleIndex<Value> {
                     return value;
                 }
             }
-        } else {
-            logger.error("Unable to get read lock");
+        } finally {
+            rwlock.readLock().unlock();
         }
         return null;
     }
 
     @Override
     public void deleteValue(String objectID, long atTime) {
-        if (setlock(new Lock(LockMode.WRITE), 0) == LockResult.GRANTED) {
+        rwlock.writeLock().lock();
+        try {
             final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
             for (LeafNode node : candidateLeafs) {
                 if (node.delete(objectID, atTime)) {
                     return;
                 }
             }
-        } else {
-            logger.error("Unable to get write lock while deleting {}, {}", objectID, atTime);
+        } finally {
+            rwlock.writeLock().unlock();
         }
     }
 
     @Override
     public void updateValue(String objectID, long atTime, Value value) {
-        if (setlock(new Lock(LockMode.WRITE), 0) == LockResult.GRANTED) {
+        rwlock.writeLock().lock();
+        try {
             final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
             for (LeafNode<Value> node : candidateLeafs) {
                 if (node.update(objectID, atTime, value)) {
                     return;
                 }
             }
-        } else {
-            logger.error("Unable to get write lock while updating {}, {}", objectID, atTime);
+        } finally {
+            rwlock.writeLock().unlock();
         }
     }
 
     @Override
     public void replaceKeyValue(String objectID, long atTime, long startTime, long endTime, Value value) {
-        if (setlock(new Lock(LockMode.WRITE), 0) == LockResult.GRANTED) {
+        rwlock.writeLock().lock();
+        try {
             deleteValue(objectID, atTime);
             insertValue(objectID, startTime, endTime, value);
-        } else {
-            logger.error("Unable to get write lock while replacing {}, {}", objectID, atTime);
+        } finally {
+            rwlock.writeLock().unlock();
         }
     }
 
@@ -145,15 +151,15 @@ public class TDTree<Value> extends LockManager implements ITrestleIndex<Value> {
 
     @Override
     public void setKeyTemporals(String objectID, long atTime, long startTime, long endTime) {
-
-        if (setlock(new Lock(LockMode.WRITE), 0) == LockResult.GRANTED) {
+        rwlock.writeLock().lock();
+        try {
             final @Nullable Value value = getValue(objectID, atTime);
             if (value != null) {
                 deleteValue(objectID, atTime);
                 insertValue(objectID, startTime, endTime, value);
             }
-        } else {
-            logger.error("Unable to get write lock while setting {} temporals", objectID);
+        } finally {
+            rwlock.writeLock().unlock();
         }
     }
 
