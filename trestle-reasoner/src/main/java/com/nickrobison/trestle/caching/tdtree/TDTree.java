@@ -209,8 +209,6 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         List<LeafNode<Value>> candidateLeafs = new ArrayList<>();
         long[] rectApex = {atTime, atTime};
         int length = 1;
-        int parentDirection = 7;
-        TDTreeHelpers.TriangleApex parentApex = new TDTreeHelpers.TriangleApex(0, maxValue);
         final ArrayDeque<LeafNode<Value>> populatedLeafs = this.leafs.stream()
                 .filter(leaf -> leaf.getRecordCount() > 0)
                 .collect(Collectors.toCollection(ArrayDeque::new));
@@ -218,8 +216,6 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
             final LeafNode<Value> first = populatedLeafs.pop();
             final int firstID = first.getID();
             int overlappingPrefix = firstID >> (getIDLength(firstID) - length);
-            final TDTreeHelpers.TriangleApex childApex;
-            final TDTreeHelpers.ChildDirection childDirection;
 
             final TDTreeHelpers.TriangleApex triangleApex = calculateTriangleApex(overlappingPrefix, 0, 7, 0., maxValue);
             final int triangleDirection = calculateTriangleDirection(overlappingPrefix, 0, 7);
@@ -266,6 +262,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
      *
      * @param split {@link LeafSplit}
      */
+    @SuppressWarnings("unchecked")
     private void parseSplit(LeafSplit split) {
         if (split.higherSplit == null) {
 //        Increment the max depth, if we need to
