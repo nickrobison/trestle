@@ -8,6 +8,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayDeque;
@@ -18,7 +20,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
-import static com.nickrobison.trestle.caching.tdtree.TriangleHelpers.*;
+import static com.nickrobison.trestle.caching.tdtree.TDTreeHelpers.*;
 
 /**
  * Created by nrobison on 2/9/17.
@@ -32,8 +34,9 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     static final TupleSchema leafSchema = buildLeafSchema();
     static final double ROOTTWO = FastMath.sqrt(2);
     private final int blockSize;
-    private final List<LeafNode<Value>> leafs = new ArrayList<>();
+    private List<LeafNode<Value>> leafs = new ArrayList<>();
     private int maxDepth;
+    private final FastTuple rootTuple;
 
 
     public TDTree(int blockSize) throws Exception {
@@ -41,7 +44,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         this.maxDepth = 0;
 
 //        Init the root node
-        final FastTuple rootTuple = leafSchema.createTuple();
+        rootTuple = leafSchema.createTuple();
         rootTuple.setDouble(1, 0);
         rootTuple.setDouble(2, maxValue);
         rootTuple.setShort(3, (short) 7);
@@ -54,8 +57,11 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     }
 
     @Override
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
     public void insertValue(String objectID, long startTime, long endTime, Value value) {
+        insertValue(longHashCode(objectID), startTime, endTime, value);
+    }
+
+    private void insertValue(long objectID, long startTime, long endTime, Value value) {
 //        Take the write lock
         rwlock.writeLock().lock();
         try {
@@ -71,10 +77,11 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
 
 //        We can do this because it will always match on, at least, the root node
             //noinspection unchecked
-            final LeafSplit split = first.get().insert(objectID, startTime, endTime, value);
+            final LeafNode<Value> firstLeaf = first.orElseThrow(RuntimeException::new);
+            final LeafSplit split = firstLeaf.insert(objectID, startTime, endTime, value);
 //        If we split, we need to add the new leafs to the tree, and remove the old ones
             if (split != null) {
-                leafs.remove(first.get());
+                leafs.remove(firstLeaf);
                 parseSplit(split);
             }
         } finally {
@@ -169,12 +176,41 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         }
     }
 
+    @Override
+    public void rebuildIndex() {
+        logger.info("Rebuilding TD-Tree");
+//        Dump the tree, create a new one, and reinsert all the values
+        final Instant start = Instant.now();
+        rwlock.writeLock().lock();
+        try {
+            final List<LeafNode<Value>> _leafs = new ArrayList<>(this.leafs);
+            this.leafs = new ArrayList<>();
+            this.leafs.add(new SplittableNode<>(1, rootTuple, this.blockSize));
+            _leafs
+                    .stream()
+                    .filter(leaf -> leaf.getRecordCount() > 0)
+                    .map(LeafNode::dumpLeaf)
+                    .forEach(values -> values.entrySet()
+                            .forEach(entry -> {
+                                this.insertValue(entry.getKey().getLong(1),
+                                        entry.getKey().getLong(2),
+                                        entry.getKey().getLong(3),
+                                        entry.getValue());
+                            }));
+
+        } finally {
+            rwlock.writeLock().unlock();
+            final Instant end = Instant.now();
+            logger.info("Rebuilding index took {} ms", Duration.between(start, end).toMillis());
+        }
+    }
+
     private List<LeafNode<Value>> findCandidateLeafs(long atTime) {
         List<LeafNode<Value>> candidateLeafs = new ArrayList<>();
         long[] rectApex = {atTime, atTime};
         int length = 1;
         int parentDirection = 7;
-        TriangleHelpers.TriangleApex parentApex = new TriangleHelpers.TriangleApex(0, maxValue);
+        TDTreeHelpers.TriangleApex parentApex = new TDTreeHelpers.TriangleApex(0, maxValue);
         final ArrayDeque<LeafNode<Value>> populatedLeafs = this.leafs.stream()
                 .filter(leaf -> leaf.getRecordCount() > 0)
                 .collect(Collectors.toCollection(ArrayDeque::new));
@@ -182,10 +218,10 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
             final LeafNode<Value> first = populatedLeafs.pop();
             final int firstID = first.getID();
             int overlappingPrefix = firstID >> (getIDLength(firstID) - length);
-            final TriangleHelpers.TriangleApex childApex;
-            final TriangleHelpers.ChildDirection childDirection;
+            final TDTreeHelpers.TriangleApex childApex;
+            final TDTreeHelpers.ChildDirection childDirection;
 
-            final TriangleHelpers.TriangleApex triangleApex = calculateTriangleApex(overlappingPrefix, 0, 7, 0., maxValue);
+            final TDTreeHelpers.TriangleApex triangleApex = calculateTriangleApex(overlappingPrefix, 0, 7, 0., maxValue);
             final int triangleDirection = calculateTriangleDirection(overlappingPrefix, 0, 7);
 //            Filter the triangle results
             final int intersection = checkRectangleIntersection(triangleApex, triangleDirection, length, rectApex, maxValue);
@@ -260,18 +296,18 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         if (this.maxDepth == 0) {
             return 1;
         }
-        return getMatchingLeaf(startTime, endTime, 1, 7, new TriangleHelpers.TriangleApex(0, maxValue));
+        return getMatchingLeaf(startTime, endTime, 1, 7, new TDTreeHelpers.TriangleApex(0, maxValue));
     }
 
-    private int getMatchingLeaf(long startTime, long endTime, int leafID, int parentDirection, TriangleHelpers.TriangleApex parentApex) {
+    private int getMatchingLeaf(long startTime, long endTime, int leafID, int parentDirection, TDTreeHelpers.TriangleApex parentApex) {
         final int idLength = getIDLength(leafID);
         if (idLength > this.maxDepth) {
             return leafID;
         }
-        final TriangleHelpers.ChildDirection childDirection = TriangleHelpers.calculateChildDirection(parentDirection);
-        final TriangleHelpers.TriangleApex childApex = TriangleHelpers.calculateChildApex(idLength + 1, parentDirection, parentApex.start, parentApex.end);
+        final TDTreeHelpers.ChildDirection childDirection = TDTreeHelpers.calculateChildDirection(parentDirection);
+        final TDTreeHelpers.TriangleApex childApex = TDTreeHelpers.calculateChildApex(idLength + 1, parentDirection, parentApex.start, parentApex.end);
 //                Intersects with low child?
-        if (TriangleHelpers.checkPointIntersection(childApex, childDirection.lowerChild, idLength + 1, startTime, endTime)) {
+        if (TDTreeHelpers.checkPointIntersection(childApex, childDirection.lowerChild, idLength + 1, startTime, endTime)) {
             return getMatchingLeaf(startTime, endTime, leafID << 1, childDirection.lowerChild, childApex);
         }
         return getMatchingLeaf(startTime, endTime, (leafID << 1) | 1, childDirection.higherChild, childApex);
@@ -289,8 +325,8 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         if (leafID == 0 | matchID == 0) {
             return 0;
         }
-        final int idLength = TriangleHelpers.getIDLength(leafID);
-        final int matchLength = TriangleHelpers.getIDLength(matchID);
+        final int idLength = TDTreeHelpers.getIDLength(leafID);
+        final int matchLength = TDTreeHelpers.getIDLength(matchID);
         if (matchLength > idLength) {
             return idLength - Integer.bitCount(leafID ^ (matchID >> (matchLength - idLength)));
         } else {

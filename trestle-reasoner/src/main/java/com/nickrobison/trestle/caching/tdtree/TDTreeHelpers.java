@@ -6,7 +6,9 @@ import org.apache.commons.math3.util.Precision;
 /**
  * Created by nrobison on 2/10/17.
  */
-public class TriangleHelpers {
+public class TDTreeHelpers {
+
+    private static final double LOG_10_2 = FastMath.log10(2);
 
     /**
      * Determines if the given triangle is fully contained in the rectangle denoted by the X/Y bottom-right corner
@@ -235,7 +237,7 @@ public class TriangleHelpers {
      * @return - number of used bits
      */
     static int getIDLength(int leafID) {
-        return (int) FastMath.floor(FastMath.log10(leafID) / FastMath.log10(2)) + 1;
+        return (int) FastMath.floor(FastMath.log10(leafID) / LOG_10_2) + 1;
     }
 
     /**
@@ -259,6 +261,16 @@ public class TriangleHelpers {
      */
     static double getAdjustedLength(int leafLength) {
         return TDTree.maxValue * (FastMath.pow(TDTree.ROOTTWO / 2, leafLength - 1));
+    }
+
+    static long longHashCode(String string) {
+        long h = 1125899906842597L; // prime
+        int len = string.length();
+
+        for (int i = 0; i < len; i++) {
+            h = 31 * h + string.charAt(i);
+        }
+        return h;
     }
 
     static class ChildDirection {

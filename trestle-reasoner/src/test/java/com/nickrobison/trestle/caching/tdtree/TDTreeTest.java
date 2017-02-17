@@ -14,6 +14,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @SuppressWarnings("Duplicates")
 public class TDTreeTest {
 
+    public static final String TEMPORAL_TEST_ID = "temporal-test";
+
     @Test
     public void testSimpleFunction() throws Exception {
 
@@ -22,16 +24,16 @@ public class TDTreeTest {
         Arrays.stream(maxValueArray)
                 .forEach(value -> {
                     try {
-                        simpleTest(value);
+                        TDTree.maxValue = value;
+                        final TDTree<String> tdTree = new TDTree<>(2);
+                        simpleTest(tdTree, value);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 });
     }
 
-    private void simpleTest(int maxValue) throws Exception {
-        TDTree.maxValue = maxValue;
-        final TDTree<String> tdTree = new TDTree<>(2);
+    private void simpleTest(TDTree<String> tdTree, int maxValue) {
         System.out.println(String.format("Running with %d max value", maxValue));
 
         tdTree.insertValue("test-object", 8, 9, "test-object-string");
@@ -43,13 +45,12 @@ public class TDTreeTest {
         assertEquals("test-object-string-early", value, "Should have early value");
 
 //        Test correct temporal provisioning
-        final String temporalTestID = "temporal-test";
-        tdTree.insertValue(temporalTestID, 1, 5, "first-value");
-        tdTree.insertValue(temporalTestID, 5, 5, "second-value");
-        tdTree.insertValue(temporalTestID, 6, "third-value");
-        assertAll(() -> assertEquals("first-value", tdTree.getValue(temporalTestID, 4)),
-                () -> assertEquals("second-value", tdTree.getValue(temporalTestID, 5)),
-                () -> assertEquals("third-value", tdTree.getValue(temporalTestID, 9)));
+        tdTree.insertValue(TEMPORAL_TEST_ID, 1, 5, "first-value");
+        tdTree.insertValue(TEMPORAL_TEST_ID, 5, 5, "second-value");
+        tdTree.insertValue(TEMPORAL_TEST_ID, 6, "third-value");
+        assertAll(() -> assertEquals("first-value", tdTree.getValue(TEMPORAL_TEST_ID, 4)),
+                () -> assertEquals("second-value", tdTree.getValue(TEMPORAL_TEST_ID, 5)),
+                () -> assertEquals("third-value", tdTree.getValue(TEMPORAL_TEST_ID, 9)));
 
 //        Try for some deletions
         tdTree.deleteValue("test-object", 2);
@@ -57,14 +58,14 @@ public class TDTreeTest {
         assertEquals("test-object-string4", tdTree.getValue("test-object4", 1), "Shouldn't throw an error after deleting a key/value pair");
 
 //        Try to update values and temporals
-        tdTree.updateValue(temporalTestID, 5, "new-value");
-        assertEquals("new-value", tdTree.getValue(temporalTestID, 5));
-        tdTree.setKeyTemporals(temporalTestID, 6, 6, 8);
-        assertAll(() -> assertNull(tdTree.getValue(temporalTestID, 10), "Should not have any value valid at time 10"),
-                () -> assertEquals("third-value", tdTree.getValue(temporalTestID, 7)));
-        tdTree.replaceKeyValue(temporalTestID, 3, 3, 4, "updated-temporal-value");
-        assertAll(() -> assertEquals("updated-temporal-value", tdTree.getValue(temporalTestID, 3)),
-                () -> assertNull(tdTree.getValue(temporalTestID, 1)));
+        tdTree.updateValue(TEMPORAL_TEST_ID, 5, "new-value");
+        assertEquals("new-value", tdTree.getValue(TEMPORAL_TEST_ID, 5));
+        tdTree.setKeyTemporals(TEMPORAL_TEST_ID, 6, 6, 8);
+        assertAll(() -> assertNull(tdTree.getValue(TEMPORAL_TEST_ID, 10), "Should not have any value valid at time 10"),
+                () -> assertEquals("third-value", tdTree.getValue(TEMPORAL_TEST_ID, 7)));
+        tdTree.replaceKeyValue(TEMPORAL_TEST_ID, 3, 3, 4, "updated-temporal-value");
+        assertAll(() -> assertEquals("updated-temporal-value", tdTree.getValue(TEMPORAL_TEST_ID, 3)),
+                () -> assertNull(tdTree.getValue(TEMPORAL_TEST_ID, 1)));
     }
 
 
@@ -81,6 +82,19 @@ public class TDTreeTest {
         t1.start();
         t2.start();
         Thread.sleep(10000);
+    }
+
+    @Test
+    public void testRebuild() throws Exception {
+        TDTree.maxValue = 12346;
+        final TDTree<String> tdTree = new TDTree<>(2);
+        simpleTest(tdTree, 12346);
+//        Rebuild
+        tdTree.rebuildIndex();
+//        Do some reads again
+        assertAll(() -> assertEquals("updated-temporal-value", tdTree.getValue(TEMPORAL_TEST_ID, 3)),
+                () -> assertNull(tdTree.getValue(TEMPORAL_TEST_ID, 1)));
+
     }
 
 
@@ -107,10 +121,7 @@ public class TDTreeTest {
                 tree.insertValue(Integer.toString(randomKey), randomStart, randomValue);
                 @Nullable final Long value = tree.getValue(Integer.toString(randomKey), randomStart);
                 System.out.println(String.format("Thread %s Executed ops: %d", threadNumber, ops++));
-//                a.commit();
             }
         }
     }
-
-
 }

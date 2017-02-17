@@ -52,7 +52,7 @@ public class PointNode<Value> extends LeafNode<Value> {
     }
 
     @Override
-    LeafSplit insert(String objectID, long startTime, long endTime, Value value) {
+    LeafSplit insert(long objectID, long startTime, long endTime, Value value) {
         return insert(buildObjectKey(objectID, startTime, endTime), value);
     }
 
@@ -91,5 +91,10 @@ public class PointNode<Value> extends LeafNode<Value> {
         return false;
     }
 
-
+    @Override
+    Map<FastTuple, Value> dumpLeaf() {
+        Map<FastTuple, Value> leafRecords = new HashMap<>();
+        leafRecords.putAll(this.values);
+        return leafRecords;
+    }
 }

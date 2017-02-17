@@ -5,6 +5,10 @@ import com.boundary.tuple.TupleSchema;
 import com.boundary.tuple.codegen.TupleExpressionGenerator;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.util.Map;
+
+import static com.nickrobison.trestle.caching.tdtree.TDTreeHelpers.longHashCode;
+
 /**
  * Created by nrobison on 2/13/17.
  */
@@ -37,7 +41,7 @@ public abstract class LeafNode<Value> {
      */
     public abstract boolean isSplittable();
 
-    abstract LeafSplit insert(String objectID, long startTime, long endTime, Value value);
+    abstract LeafSplit insert(long objectID, long startTime, long endTime, Value value);
 
     abstract LeafSplit insert(FastTuple newKey, Value value);
 
@@ -56,33 +60,33 @@ public abstract class LeafNode<Value> {
     abstract @Nullable Value getValue(String objectID, long atTime);
 
     /**
+     * Dump the key/value pairs for the given leaf
+     * @return Map of {@link FastTuple} and {@link Value} pairs for the node
+     */
+    abstract Map<FastTuple, Value> dumpLeaf();
+
+    static FastTuple buildObjectKey(String objectID, long startTime, long endTime) {
+        return buildObjectKey(longHashCode(objectID), startTime, endTime);
+    }
+
+    /**
      * Build {@link FastTuple} Object key from provided values
      * @param objectID - String objectID
      * @param startTime - Long start time
      * @param endTime - Long end time
      * @return - Object key
      */
-    static FastTuple buildObjectKey(String objectID, long startTime, long endTime) {
+    static FastTuple buildObjectKey(long objectID, long startTime, long endTime) {
         final FastTuple newKey;
         try {
             newKey = splittableKeySchema.createTuple();
-            newKey.setLong(1, longHashCode(objectID));
+            newKey.setLong(1, objectID);
             newKey.setLong(2, startTime);
             newKey.setLong(3, endTime);
             return newKey;
         } catch (Exception e) {
             throw new RuntimeException("Unable to create new Key tuple", e);
         }
-    }
-
-    private static long longHashCode(String string) {
-        long h = 1125899906842597L; // prime
-        int len = string.length();
-
-        for (int i = 0; i < len; i++) {
-            h = 31 * h + string.charAt(i);
-        }
-        return h;
     }
 
     /**

@@ -7,7 +7,10 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.nickrobison.trestle.caching.tdtree.TriangleHelpers.getIDLength;
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.nickrobison.trestle.caching.tdtree.TDTreeHelpers.getIDLength;
 
 /**
  * Created by nrobison on 2/9/17.
@@ -59,7 +62,7 @@ class SplittableNode<Value> extends LeafNode<Value> {
     }
 
     @Override
-    LeafSplit insert(String objectID, long startTime, long endTime, Value value) {
+    LeafSplit insert(long objectID, long startTime, long endTime, Value value) {
         return insert(buildObjectKey(objectID, startTime, endTime), value);
     }
 
@@ -74,7 +77,7 @@ class SplittableNode<Value> extends LeafNode<Value> {
             final double parentEnd = this.leafMetadata.getDouble(2);
             final short parentDirection = this.leafMetadata.getShort(3);
             final int idLength = getIDLength(this.leafID);
-            final TriangleHelpers.TriangleApex childApex = TriangleHelpers.calculateChildApex(idLength + 1,
+            final TDTreeHelpers.TriangleApex childApex = TDTreeHelpers.calculateChildApex(idLength + 1,
                     parentDirection,
                     parentStart,
                     parentEnd);
@@ -82,10 +85,10 @@ class SplittableNode<Value> extends LeafNode<Value> {
             final FastTuple higherChild;
             final LeafNode<Value> lowerChildLeaf;
             final LeafNode<Value> higherChildLeaf;
-            final TriangleHelpers.ChildDirection childDirection = TriangleHelpers.calculateChildDirection(parentDirection);
+            final TDTreeHelpers.ChildDirection childDirection = TDTreeHelpers.calculateChildDirection(parentDirection);
 //            If one of the children is a point, pick the lower, turn it into a point and move on
 //            We also need to make sure we don't recurse too far, so the length of a leafID can't be more than 30
-            if (TriangleHelpers.triangleIsPoint(TriangleHelpers.getTriangleVerticies(TriangleHelpers.getAdjustedLength(idLength + 1), childDirection.lowerChild, childApex.start, childApex.end)) |
+            if (TDTreeHelpers.triangleIsPoint(TDTreeHelpers.getTriangleVerticies(TDTreeHelpers.getAdjustedLength(idLength + 1), childDirection.lowerChild, childApex.start, childApex.end)) |
                     getIDLength(this.leafID) == (getIDLength(Integer.MAX_VALUE) - 1)) {
 //                    Convert the leaf to a point leaf and replace the splittable node
 
@@ -119,11 +122,11 @@ class SplittableNode<Value> extends LeafNode<Value> {
             }
             final LeafSplit leafSplit = new LeafSplit(this.leafID, lowerChildLeaf, higherChildLeaf);
 //            Divide values into children, by testing to see if they belong to the lower child
-            final double[] lowerChildVerticies = TriangleHelpers.getTriangleVerticies(TriangleHelpers.getAdjustedLength(idLength + 1), childDirection.lowerChild, childApex.start, childApex.end);
+            final double[] lowerChildVerticies = TDTreeHelpers.getTriangleVerticies(TDTreeHelpers.getAdjustedLength(idLength + 1), childDirection.lowerChild, childApex.start, childApex.end);
             for (int i = 0; i < this.blockSize; i++) {
                 FastTuple key = keys[i];
                 if (key != null) {
-                    if (TriangleHelpers.pointInTriangle(key.getLong(2), key.getLong(3), lowerChildVerticies)) {
+                    if (TDTreeHelpers.pointInTriangle(key.getLong(2), key.getLong(3), lowerChildVerticies)) {
                         final LeafSplit lowerChildSplit = lowerChildLeaf.insert(key, values[i]);
                         if (lowerChildSplit != null) {
                             leafSplit.lowerSplit = lowerChildSplit;
@@ -137,7 +140,7 @@ class SplittableNode<Value> extends LeafNode<Value> {
                 }
             }
 //            Don't forget about the new record we're trying to insert
-            if (TriangleHelpers.pointInTriangle(newKey.getLong(2), newKey.getLong(3), lowerChildVerticies)) {
+            if (TDTreeHelpers.pointInTriangle(newKey.getLong(2), newKey.getLong(3), lowerChildVerticies)) {
                 final LeafSplit lowerChildSplit = lowerChildLeaf.insert(newKey, value);
                 if (lowerChildSplit != null) {
                     leafSplit.lowerSplit = lowerChildSplit;
@@ -181,6 +184,18 @@ class SplittableNode<Value> extends LeafNode<Value> {
             }
         }
         return false;
+    }
+
+    @Override
+    Map<FastTuple, Value> dumpLeaf() {
+        Map<FastTuple, Value> leafRecords = new HashMap<>();
+        for (int i = 0; i < this.records; i++) {
+            final FastTuple key = keys[i];
+            if (key != null) {
+                leafRecords.put(key, values[i]);
+            }
+        }
+        return leafRecords;
     }
 
     private LeafSplit insertValueIntoArray(FastTuple key, Value value) {

@@ -30,4 +30,6 @@ public interface ITrestleIndex<Value> {
     void setKeyTemporals(String objectID, long atTime, long startTime);
 
     void setKeyTemporals(String objectID, long atTime, long startTime, long endTime);
+
+    void rebuildIndex();
 }
