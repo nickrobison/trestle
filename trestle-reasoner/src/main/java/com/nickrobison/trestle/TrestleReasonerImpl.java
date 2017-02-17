@@ -6,8 +6,6 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.nickrobison.trestle.caching.TrestleCache;
 import com.nickrobison.trestle.common.StaticIRI;
@@ -22,8 +20,6 @@ import com.nickrobison.trestle.exporter.TSIndividual;
 import com.nickrobison.trestle.iri.IRIBuilder;
 import com.nickrobison.trestle.iri.IRIVersion;
 import com.nickrobison.trestle.iri.TrestleIRI;
-import com.nickrobison.metrician.MetricianModule;
-import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.ontology.*;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
@@ -40,7 +36,6 @@ import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import com.nickrobison.trestle.utils.TemporalPropertiesPair;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -67,7 +62,6 @@ import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.IRIUtils.extractTrestleIndividualName;
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
-import static com.nickrobison.trestle.common.LambdaExceptionUtil.rethrowFunction;
 import static com.nickrobison.trestle.common.LambdaUtils.sequenceCompletableFutures;
 import static com.nickrobison.trestle.common.StaticIRI.*;
 import static com.nickrobison.trestle.parser.TemporalParser.parseTemporalToOntologyDateTime;
@@ -96,7 +90,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private boolean cachingEnabled = true;
     private final TrestleParser trestleParser;
     private final Config trestleConfig;
-    private final Metrician metrician;
+    private final TrestleCache trestleCache;
 
     @SuppressWarnings("dereference.of.nullable")
     TrestleReasonerImpl(TrestleBuilder builder) throws OWLOntologyCreationException {
@@ -194,7 +188,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         logger.info("Ontology {} ready", builder.ontologyName.orElse(DEFAULTNAME));
 
 //        Are we a caching reasoner?
-//        TODO(nrobison): Implement this
+        if (cachingEnabled) {
+            trestleCache = injector.getInstance(TrestleCache.class);
+        } else {
+            trestleCache = null;
+        }
 
 //        Setup the query builder
         if (ontology instanceof OracleOntology) {
@@ -635,7 +633,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         } else {
             databaseTemporal = TemporalObjectBuilder.database().at(OffsetDateTime.now()).build();
         }
-        final Optional<@NonNull T> constructedObject = readTrestleObject(clazz, individualIRI, validTemporal, databaseTemporal);
+        final Optional<@NonNull T> constructedObject = readTrestleObjectImpl(clazz, individualIRI, validTemporal, databaseTemporal);
         if (constructedObject.isPresent()) {
             logger.debug("Done with {}", individualIRI);
             return constructedObject.get();

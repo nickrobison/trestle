@@ -56,7 +56,7 @@ public class TrestleAPITest {
                 .withDBConnection(config.getString("trestle.ontology.connectionString"),
                         config.getString("trestle.ontology.username"),
                         config.getString("trestle.ontology.password"))
-                .withName("api_test")
+                .withName("api_test23453")
                 .withOntology(IRI.create(config.getString("trestle.ontology.location")))
                 .withPrefix(OVERRIDE_PREFIX)
                 .withInputClasses(TestClasses.GAULTestClass.class,
