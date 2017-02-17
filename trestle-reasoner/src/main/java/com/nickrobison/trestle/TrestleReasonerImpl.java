@@ -94,7 +94,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final QueryBuilder qb;
     private final QueryBuilder.DIALECT spatialDalect;
     private boolean cachingEnabled = true;
-    private @Nullable TrestleCache trestleCache = null;
     private final TrestleParser trestleParser;
     private final Config trestleConfig;
     private final Metrician metrician;
@@ -195,12 +194,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         logger.info("Ontology {} ready", builder.ontologyName.orElse(DEFAULTNAME));
 
 //        Are we a caching reasoner?
-        if (!builder.caching) {
-            this.cachingEnabled = false;
-        } else {
-            logger.info("Building trestle caches");
-            trestleCache = builder.sharedCache.orElse(new TrestleCache.TrestleCacheBuilder().build());
-        }
+//        TODO(nrobison): Implement this
 
 //        Setup the query builder
         if (ontology instanceof OracleOntology) {
@@ -592,14 +586,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     public <T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull String objectID, Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity {
 
         final IRI individualIRI = parseStringToIRI(REASONER_PREFIX, objectID);
-//        Check cache first
-        if (cachingEnabled) {
-            logger.debug("Retrieving {} from cache", individualIRI);
-            return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readTrestleObject(clazz, individualIRI, true))));
-        } else {
-            logger.debug("Bypassing cache and directly retrieving object");
-            return readTrestleObject(clazz, individualIRI, false, validTemporal, databaseTemporal);
-        }
+        return readTrestleObject(clazz, individualIRI, false, validTemporal, databaseTemporal);
     }
 
 //    ----------------------------
@@ -635,13 +622,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @SuppressWarnings({"return.type.incompatible", "argument.type.incompatible", "unchecked"})
     <T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt) {
         logger.debug("Reading {}", individualIRI);
-//        Check for cache hit first, provided caching is enabled and we're not set to bypass the cache
-        if (isCachingEnabled() & !bypassCache) {
-            logger.debug("Retrieving {} from cache", individualIRI);
-            return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readTrestleObject(clazz, individualIRI, true))));
-        } else {
-            logger.debug("Bypassing cache and directly retrieving object");
-        }
 
         final PointTemporal validTemporal;
         final PointTemporal databaseTemporal;
@@ -1100,9 +1080,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public TrestleIndividual getTrestleIndividual(String individualIRI) {
-        if (cachingEnabled) {
-            return trestleCache.IndividualCache().get(individualIRI, iri -> getTrestleIndividual(df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, iri))));
-        }
         return getTrestleIndividual(df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individualIRI)));
     }
 
@@ -1937,7 +1914,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
             return isRelated.isPresent();
         }
-
         return false;
     }
 
@@ -1955,8 +1931,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
     }
 
-    @EnsuresNonNullIf(expression = "this.trestleCache", result = true)
-    private boolean isCachingEnabled() {
-        return this.trestleCache != null;
-    }
+//    @EnsuresNonNullIf(expression = "this.trestleCache", result = true)
+//    private boolean isCachingEnabled() {
+//        return this.trestleCache != null;
+//    }
 }
