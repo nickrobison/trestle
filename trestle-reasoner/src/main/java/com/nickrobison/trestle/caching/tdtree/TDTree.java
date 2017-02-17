@@ -94,8 +94,10 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
                 //noinspection unchecked
                 @Nullable final Value value = (Value) node.getValue(objectID, atTime);
                 if (value != null) {
+                    logger.debug("Returning value {} for {} @ {} from {}", value, objectID, atTime, node.getBinaryStringID());
                     return value;
                 }
+                logger.debug("Leaf {} does not have {}@{}", node.getBinaryStringID(), objectID, atTime);
             }
         } finally {
             rwlock.readLock().unlock();
@@ -110,8 +112,10 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
             final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
             for (LeafNode node : candidateLeafs) {
                 if (node.delete(objectID, atTime)) {
+                    logger.debug("Deleted {}@{} from {}", objectID, atTime, node.getBinaryStringID());
                     return;
                 }
+                logger.debug("Leaf {} does not have {}@{}", node.getBinaryStringID(), objectID, atTime);
             }
         } finally {
             rwlock.writeLock().unlock();
@@ -125,8 +129,10 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
             final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
             for (LeafNode<Value> node : candidateLeafs) {
                 if (node.update(objectID, atTime, value)) {
+                    logger.debug("Updated {}@{} to {} from {}", objectID, atTime, value, node.getBinaryStringID());
                     return;
                 }
+                logger.debug("Leaf {} does not have {}@{}", node.getBinaryStringID(), objectID, atTime);
             }
         } finally {
             rwlock.writeLock().unlock();

@@ -4,6 +4,8 @@ import com.boundary.tuple.FastTuple;
 import com.boundary.tuple.codegen.TupleExpressionGenerator;
 import org.apache.commons.lang3.ArrayUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.nickrobison.trestle.caching.tdtree.TriangleHelpers.getIDLength;
 
@@ -11,6 +13,7 @@ import static com.nickrobison.trestle.caching.tdtree.TriangleHelpers.getIDLength
  * Created by nrobison on 2/9/17.
  */
 class SplittableNode<Value> extends LeafNode<Value> {
+    private static final Logger logger = LoggerFactory.getLogger(SplittableNode.class);
     private int blockSize;
     final FastTuple[] keys;
     final Value[] values;
@@ -28,7 +31,7 @@ class SplittableNode<Value> extends LeafNode<Value> {
         } catch (Exception e) {
             throw new RuntimeException("Unable to allocate key/value memory for leaf", e);
         }
-
+        logger.debug("Creating splittable leaf {}", this.getBinaryStringID());
     }
 
     @Override
@@ -75,30 +78,15 @@ class SplittableNode<Value> extends LeafNode<Value> {
                     parentDirection,
                     parentStart,
                     parentEnd);
-            final TriangleHelpers.ChildDirection childDirection = TriangleHelpers.calculateChildDirection(parentDirection);
             final FastTuple lowerChild;
             final FastTuple higherChild;
             final LeafNode<Value> lowerChildLeaf;
             final LeafNode<Value> higherChildLeaf;
+            final TriangleHelpers.ChildDirection childDirection = TriangleHelpers.calculateChildDirection(parentDirection);
 //            If one of the children is a point, pick the lower, turn it into a point and move on
 //            We also need to make sure we don't recurse too far, so the length of a leafID can't be more than 30
             if (TriangleHelpers.triangleIsPoint(TriangleHelpers.getTriangleVerticies(TriangleHelpers.getAdjustedLength(idLength + 1), childDirection.lowerChild, childApex.start, childApex.end)) |
                     getIDLength(this.leafID) == (getIDLength(Integer.MAX_VALUE) - 1)) {
-                try {
-                    lowerChild = TDTree.leafSchema.createTuple();
-                    lowerChild.setDouble(1, childApex.start);
-                    lowerChild.setDouble(2, childApex.end);
-                    lowerChild.setShort(3, (short) childDirection.lowerChild);
-                    higherChild = TDTree.leafSchema.createTuple();
-                    higherChild.setDouble(1, childApex.start);
-                    higherChild.setDouble(2, childApex.end);
-                    higherChild.setShort(3, (short) childDirection.higherChild);
-                } catch (Exception e) {
-                    throw new RuntimeException("Unable to create new key array for point leaf");
-                }
-
-                lowerChildLeaf = new PointNode<>(leafID << 1, lowerChild);
-                higherChildLeaf = new PointNode<>((leafID << 1) | 1, higherChild);
 //                    Convert the leaf to a point leaf and replace the splittable node
 
                 final PointNode<Object> pointNode = new PointNode<>(leafID, leafMetadata);
@@ -111,7 +99,6 @@ class SplittableNode<Value> extends LeafNode<Value> {
 
                 return new LeafSplit(leafID, pointNode, pointNode);
             } else {
-
 //            Create the lower and higher leafs
                 try {
                     lowerChild = TDTree.leafSchema.createTuple();
@@ -128,6 +115,7 @@ class SplittableNode<Value> extends LeafNode<Value> {
 
                 lowerChildLeaf = new SplittableNode<>(leafID << 1, lowerChild, this.blockSize);
                 higherChildLeaf = new SplittableNode<>((leafID << 1) | 1, higherChild, this.blockSize);
+                logger.debug("Splitting {} into {} and {}", this.getBinaryStringID(), lowerChildLeaf.getBinaryStringID(), lowerChildLeaf.getBinaryStringID());
             }
             final LeafSplit leafSplit = new LeafSplit(this.leafID, lowerChildLeaf, higherChildLeaf);
 //            Divide values into children, by testing to see if they belong to the lower child
@@ -203,6 +191,4 @@ class SplittableNode<Value> extends LeafNode<Value> {
         }
         return null;
     }
-
-
 }

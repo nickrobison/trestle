@@ -3,21 +3,24 @@ package com.nickrobison.trestle.caching.tdtree;
 import com.boundary.tuple.FastTuple;
 import com.boundary.tuple.codegen.TupleExpressionGenerator;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 /**
  * Created by nrobison on 2/13/17.
  */
 public class PointNode<Value> extends LeafNode<Value> {
+    private static final Logger logger = LoggerFactory.getLogger(PointNode.class);
     private final Map<FastTuple, Value> values = new HashMap<>();
     private int records = 0;
 
     PointNode(int leafID, FastTuple leafMetadata) {
         super(leafID, leafMetadata);
+        logger.debug("Creating Point Node {}", this.getBinaryStringID());
     }
 
     void copyInitialValues(FastTuple[] keys, Value[] vals) {
@@ -26,6 +29,7 @@ public class PointNode<Value> extends LeafNode<Value> {
             this.records++;
         }
     }
+
     @Override
     public int getRecordCount() {
         return this.records;

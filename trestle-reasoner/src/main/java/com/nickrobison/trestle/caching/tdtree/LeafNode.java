@@ -10,17 +10,23 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 public abstract class LeafNode<Value> {
 
-    protected static final TupleSchema splittableKeySchema = buildSplittableKeySchema();
-    protected final int leafID;
-    protected final FastTuple leafMetadata;
+    static final TupleSchema splittableKeySchema = buildSplittableKeySchema();
+    final int leafID;
+    final String binaryID;
+    final FastTuple leafMetadata;
 
     LeafNode(int leafID, FastTuple leafMetadata) {
         this.leafID = leafID;
         this.leafMetadata = leafMetadata;
+        this.binaryID = Integer.toBinaryString(leafID);
     }
 
     public int getID() {
         return this.leafID;
+    }
+
+    public String getBinaryStringID() {
+        return this.binaryID;
     }
 
     public abstract int getRecordCount();
@@ -56,7 +62,7 @@ public abstract class LeafNode<Value> {
      * @param endTime - Long end time
      * @return - Object key
      */
-    protected static FastTuple buildObjectKey(String objectID, long startTime, long endTime) {
+    static FastTuple buildObjectKey(String objectID, long startTime, long endTime) {
         final FastTuple newKey;
         try {
             newKey = splittableKeySchema.createTuple();
@@ -69,7 +75,7 @@ public abstract class LeafNode<Value> {
         }
     }
 
-    protected static long longHashCode(String string) {
+    private static long longHashCode(String string) {
         long h = 1125899906842597L; // prime
         int len = string.length();
 
@@ -85,7 +91,7 @@ public abstract class LeafNode<Value> {
      * @param atTime - Temporal to find valid value
      * @return - {@link com.boundary.tuple.codegen.TupleExpressionGenerator.BooleanTupleExpression} to evaluate against tuples
      */
-    protected TupleExpressionGenerator.BooleanTupleExpression buildFindExpression(String objectID, long atTime) {
+    TupleExpressionGenerator.BooleanTupleExpression buildFindExpression(String objectID, long atTime) {
         try {
 //            We have to do this really weird equality check because FastTuple doesn't support if statements (for now). So we check for a an interval match, then a point match
             final String queryString = String.format("(tuple.objectID == %sL) && (((tuple.start <= %sL) && (tuple.end > %sL)) | ((tuple.start == tuple.end)  && (tuple.start == %sL)))", longHashCode(objectID), atTime, atTime, atTime);
