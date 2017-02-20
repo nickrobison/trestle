@@ -3,6 +3,7 @@ package com.nickrobison.trestle.caching;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.nickrobison.trestle.caching.tdtree.TDTree;
+import com.nickrobison.trestle.iri.TrestleIRI;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
@@ -18,7 +19,7 @@ public class TrestleCacheModule extends AbstractModule {
     }
 
     @Provides
-    public ITrestleIndex<String> provideIndex() {
+    public ITrestleIndex<TrestleIRI> provideIndex() {
         try {
             return new TDTree<>(cacheConfig.getInt("blockSize"));
         } catch (Exception e) {
