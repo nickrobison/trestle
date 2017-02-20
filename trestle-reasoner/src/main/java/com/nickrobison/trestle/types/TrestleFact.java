@@ -44,7 +44,6 @@ public class TrestleFact<T> {
         final Object literalObject = TypeConverter.extractOWLLiteral(factClass, literal);
 //        TODO(nrobison): This feels terrible, what else should I do?
         this.value = (T) literalObject;
-//        this.value = (T) factClass.cast(literalObject);
         if (literal.hasLang()) {
             this.language = literal.getLang();
         } else {

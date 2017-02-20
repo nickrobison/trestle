@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.ontology.types;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLIndividual;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLObject;
@@ -44,8 +43,6 @@ public class TrestleResult {
     public Optional<OWLLiteral> getLiteral(String varName) {
         if (resultValues.containsKey(varName)) {
             final OWLObject owlObject = resultValues.get(varName);
-            if (owlObject != null) {
-                if (owlObject instanceof OWLLiteral) {
                     return Optional.of(OWLLiteral.class.cast(owlObject));
                 }
                 throw new ClassCastException(String.format("OWLObject for variable %s is not an OWLLiteral", varName));
@@ -64,10 +61,7 @@ public class TrestleResult {
     public Optional<OWLIndividual> getIndividual(String varName) {
         if (resultValues.containsKey(varName)) {
             final OWLObject owlObject = resultValues.get(varName);
-            if (owlObject != null) {
-                if (owlObject instanceof OWLIndividual) {
                     return Optional.of(OWLIndividual.class.cast(owlObject));
-                }
             }
             throw new ClassCastException(String.format("OWLObject for variable %s is not an OWLIndividual", varName));
         }

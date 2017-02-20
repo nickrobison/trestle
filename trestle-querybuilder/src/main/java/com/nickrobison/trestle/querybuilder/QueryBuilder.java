@@ -179,7 +179,7 @@ public class QueryBuilder {
 //        Jena won't expand URIs in the FILTER operator, so we need to give it the fully expanded value.
 //        But we can't do it through the normal routes, because then it'll insert superfluous '"' values. Because, of course.
 //        If the start temporal is null, pull the currently valid property
-        ps.setCommandText(String.format("SELECT DISTINCT ?individual ?fact ?property ?object" +
+        ps.setCommandText(String.format("SELECT DISTINCT ?individual ?fact ?property ?object ?df ?dt ?vf ?vt ?va" +
                 " WHERE" +
                 " { ?individual trestle:has_fact ?fact ." +
 //                "?fact trestle:database_time ?d ." +
