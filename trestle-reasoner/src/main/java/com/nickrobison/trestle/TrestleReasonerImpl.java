@@ -648,14 +648,15 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             }
         }
 
-        final Optional<@NonNull T> constructedObject = readTrestleObjectImpl(clazz, individualIRI, validTemporal, databaseTemporal);
+//        final Optional<@NonNull T> constructedObject = readTrestleObjectImpl(clazz, individualIRI, validTemporal, databaseTemporal);
+        final Optional<TrestleObjectResult<@NonNull T>> constructedObject = readTrestleObjectImpl(clazz, individualIRI, validTemporal, databaseTemporal);
         if (constructedObject.isPresent()) {
             logger.debug("Done with {}", individualIRI);
 //            Write back to index
 //            if (cachingEnabled) {
 //                this.trestleCache.writeIndividual(individualIRI, 1, 1, constructedObject.get());
 //            }
-            return constructedObject.get();
+            return constructedObject.get().getObject();
         } else {
             throw new NoValidStateException(individualIRI, validAt, databaseAt);
         }
@@ -751,26 +752,17 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     .thenApply(temporalProperties -> TemporalObjectBuilder.buildTemporalFromProperties(temporalProperties, baseTemporalType, clazz));
 
 
-            final CompletableFuture<ConstructorArguments> argumentsFuture = factsFuture.thenCombine(temporalFuture, (facts, temporals) -> {
+            final CompletableFuture<TrestleObjectState> argumentsFuture = factsFuture.thenCombine(temporalFuture, (facts, temporals) -> {
                 logger.debug("In the arguments future");
                 final ConstructorArguments constructorArguments = new ConstructorArguments();
-                facts.forEach(fact -> {
-//                    @Nullable String languageTag = null;
-//                    if (fact.getObject().hasLang()) {
-//                        languageTag = fact.getObject().getLang();
-//                    }
-//                    final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(fact, clazz);
-//                    final Object literalValue = TypeConverter.extractOWLLiteral(javaClass, fact.getObject());
-                    constructorArguments.addArgument(
-                            ClassParser.matchWithClassMember(clazz, fact.getName(), fact.getLanguage()),
-//                            ClassParser.matchWithClassMember(clazz, fact.getProperty().asOWLDataProperty().getIRI().getShortForm(), fact.getLanguage().orElse(null)),
-                            fact.getJavaClass(),
-                            fact.getValue());
-                });
+                facts.forEach(fact -> constructorArguments.addArgument(
+                        ClassParser.matchWithClassMember(clazz, fact.getName(), fact.getLanguage()),
+                        fact.getJavaClass(),
+                        fact.getValue()));
                 if (!temporals.isPresent()) {
                     throw new RuntimeException(String.format("Cannot restore temporal from ontology for %s", individualIRI));
                 }
-                //            Add the temporal to the constructor args
+//            Add the temporal to the constructor args
                 final TemporalObject temporal = temporals.get();
                 if (temporal.isInterval()) {
                     final IntervalTemporal intervalTemporal = temporal.asInterval();
@@ -790,12 +782,54 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                             temporal.asPoint().getBaseTemporalType(),
                             temporal.asPoint().getPointTime());
                 }
-                return constructorArguments;
+//                Get the temporal ranges
+//                Valid first
+                final Optional<Temporal> validMin = facts
+                        .stream()
+                        .map(TrestleFact::getValidTemporal)
+                        .map(TemporalObject::getIdTemporal)
+                        .min((t1, t2) -> ((Comparable) t1).compareTo((Comparable) t2));
+
+                final Optional<Temporal> validMax = facts
+                        .stream()
+                        .map(TrestleFact::getValidTemporal)
+                        .map(valid -> {
+                            if (valid.isPoint()) {
+                                return valid.asPoint().getPointTime();
+                            } else {
+                                return valid.asInterval().getToTime().orElse(OffsetDateTime.MAX);
+                            }
+                        })
+                        .max((t1, t2) -> ((Comparable) t1).compareTo(((Comparable) t2)))
+                        .map(Temporal.class::cast);
+//                Database temporal, next
+                final Optional<Temporal> dbMin = facts
+                        .stream()
+                        .map(TrestleFact::getDatabaseTemporal)
+                        .map(TemporalObject::getIdTemporal)
+                        .min((t1, t2) -> ((Comparable) t1).compareTo((Comparable) t2))
+                        .map(Temporal.class::cast);
+
+                final Optional<Temporal> dbMax = facts
+                        .stream()
+                        .map(TrestleFact::getDatabaseTemporal)
+                        .map(db -> {
+                            if (db.isPoint()) {
+                                return db.asPoint().getPointTime();
+                            } else {
+                                return db.asInterval().getToTime().orElse(OffsetDateTime.MAX);
+                            }
+                        })
+                        .max((t1, t2) -> ((Comparable) t1).compareTo(((Comparable) t2)))
+                        .map(Temporal.class::cast);
+
+//                return objectState;
+                return new TrestleObjectState(constructorArguments, validMin.get(), validMax.get(), dbMin.get(), dbMax.get());
             });
 
-            final ConstructorArguments constructorArguments;
+            final TrestleObjectState objectState;
             try {
-                constructorArguments = argumentsFuture.get();
+                objectState = argumentsFuture.get();
                 ontology.returnAndCommitTransaction(trestleTransaction);
             } catch (InterruptedException e) {
 //                FIXME(nrobison): Rollback
@@ -809,8 +843,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 return Optional.empty();
             }
             try {
-                final @NonNull T constructedObject = ClassBuilder.constructObject(clazz, constructorArguments);
-                return Optional.of(constructedObject);
+                final @NonNull T constructedObject = ClassBuilder.constructObject(clazz, objectState.getArguments());
+                return Optional.of(new TrestleObjectResult<T>(constructedObject, objectState.getMinValidFrom(), objectState.getMinValidTo(), objectState.getMinDatabaseFrom(), objectState.getMinDatabaseTo()));
             } catch (MissingConstructorException e) {
                 logger.error("Problem with constructor", e);
                 return Optional.empty();
