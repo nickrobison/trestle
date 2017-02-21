@@ -2,13 +2,14 @@ package com.nickrobison.trestle.iri;
 
 import org.semanticweb.owlapi.model.HasIRI;
 
+import java.io.Serializable;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
 /**
  * Created by nrobison on 2/7/17.
  */
-public abstract class TrestleIRI implements HasIRI {
+public abstract class TrestleIRI implements HasIRI, Serializable {
 
     protected final IRIVersion version;
     protected final String prefix;

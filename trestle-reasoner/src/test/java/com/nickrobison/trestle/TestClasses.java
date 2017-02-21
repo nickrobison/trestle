@@ -9,6 +9,7 @@ import com.nickrobison.trestle.types.TemporalType;
 import com.vividsolutions.jts.geom.Geometry;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -23,7 +24,7 @@ import java.util.UUID;
 public class TestClasses {
 
     @DatasetClass(name = "odt-test")
-    protected static class OffsetDateTimeTest {
+    public static class OffsetDateTimeTest implements Serializable {
 
         @IndividualIdentifier
         public final Integer adm0_code;
@@ -55,7 +56,7 @@ public class TestClasses {
     }
 
     @DatasetClass(name = "GAUL_JTS_Test")
-    protected static class JTSGeometryTest {
+    public static class JTSGeometryTest {
 
         private final Integer adm0_code;
         private final Geometry geom;

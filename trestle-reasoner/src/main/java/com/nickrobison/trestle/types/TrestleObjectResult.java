@@ -4,43 +4,55 @@ package com.nickrobison.trestle.types;
  * Created by nrobison on 2/20/17.
  */
 
+import org.semanticweb.owlapi.model.IRI;
+
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
+
+import static com.nickrobison.trestle.parser.TemporalParser.parseTemporalToOntologyDateTime;
 
 /**
  * Return type of the ReadTrestleObject implementation, provides both the object as well as the minimum valid/database state it's valid for
  */
 public class TrestleObjectResult<T> {
+    private final IRI individual;
     private final T object;
-    private final Temporal validFrom;
-    private final Temporal validTo;
-    private final Temporal dbFrom;
-    private final Temporal dbTo;
+    private final OffsetDateTime validFrom;
+    private final OffsetDateTime validTo;
+    private final OffsetDateTime dbFrom;
+    private final OffsetDateTime dbTo;
+
+    public TrestleObjectResult(IRI individual, T object, Temporal validFrom, Temporal validTo, Temporal dbFrom, Temporal dbTo) {
+        this.individual = individual;
+        this.object = object;
+        this.validFrom = parseTemporalToOntologyDateTime(validFrom, ZoneOffset.UTC);
+        this.validTo = parseTemporalToOntologyDateTime(validTo, ZoneOffset.UTC);
+        this.dbFrom = parseTemporalToOntologyDateTime(dbFrom, ZoneOffset.UTC);
+        this.dbTo = parseTemporalToOntologyDateTime(dbTo, ZoneOffset.UTC);
+    }
+
+    public IRI getIndividual() {
+        return this.individual;
+    }
 
     public T getObject() {
         return object;
     }
 
-    public Temporal getValidFrom() {
+    public OffsetDateTime getValidFrom() {
         return validFrom;
     }
 
-    public Temporal getValidTo() {
+    public OffsetDateTime getValidTo() {
         return validTo;
     }
 
-    public Temporal getDbFrom() {
+    public OffsetDateTime getDbFrom() {
         return dbFrom;
     }
 
-    public Temporal getDbTo() {
+    public OffsetDateTime getDbTo() {
         return dbTo;
-    }
-
-    public TrestleObjectResult(T object, Temporal validFrom, Temporal validTo, Temporal dbFrom, Temporal dbTo) {
-        this.object = object;
-        this.validFrom = validFrom;
-        this.validTo = validTo;
-        this.dbFrom = dbFrom;
-        this.dbTo = dbTo;
     }
 }

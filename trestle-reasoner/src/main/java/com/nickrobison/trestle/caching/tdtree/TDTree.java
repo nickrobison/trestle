@@ -40,6 +40,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
 
 
     public TDTree(int blockSize) throws Exception {
+        logger.info("Creating TD-Tree index");
         this.blockSize = blockSize;
         this.maxDepth = 0;
 

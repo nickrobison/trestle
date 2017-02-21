@@ -6,6 +6,9 @@ import com.nickrobison.trestle.iri.TrestleIRI;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.semanticweb.owlapi.model.IRI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
@@ -23,8 +26,10 @@ import java.time.ZoneOffset;
 @Singleton
 public class TrestleCache {
 
+    private static final Logger logger = LoggerFactory.getLogger(TrestleCache.class);
+    public static final String INDIVIDUAL_CACHE = "individual-cache";
     private final CacheManager cacheManager;
-    private final Cache<TrestleIRI, Object> individualCache;
+    private final Cache<IRI, Object> individualCache;
     private final ITrestleIndex<TrestleIRI> validIndex;
     private final ITrestleIndex<TrestleIRI> dbIndex;
 
@@ -35,13 +40,16 @@ public class TrestleCache {
         this.dbIndex = dbIndex;
 
         final Config cacheConfig = ConfigFactory.load().getConfig("trestle.cache");
-        final CachingProvider cachingProvider = Caching.getCachingProvider(cacheConfig.getString("cacheImplementation"));
+        final String cacheImplementation = cacheConfig.getString("cacheImplementation");
+        logger.info("Creating TrestleCache with implementation {}", cacheImplementation);
+        final CachingProvider cachingProvider = Caching.getCachingProvider(cacheImplementation);
         cacheManager = cachingProvider.getCacheManager();
-        final MutableConfiguration<TrestleIRI, Object> individualCacheConfiguration = new MutableConfiguration<>();
+        final MutableConfiguration<IRI, Object> individualCacheConfiguration = new MutableConfiguration<>();
         individualCacheConfiguration
-                .setTypes(TrestleIRI.class, Object.class)
+                .setTypes(IRI.class, Object.class)
                 .setStatisticsEnabled(true);
-        individualCache = cacheManager.createCache("individual-cache", individualCacheConfiguration);
+        logger.debug("Creating cache {}", INDIVIDUAL_CACHE);
+        individualCache = cacheManager.createCache(INDIVIDUAL_CACHE, individualCacheConfiguration);
     }
 
 
@@ -52,15 +60,24 @@ public class TrestleCache {
 //        TODO(nrobison): This shouldn't be Epoch second
         @Nullable final TrestleIRI indexValue = validIndex.getValue(individualID, offsetDateTime.atZoneSameInstant(ZoneOffset.UTC).toEpochSecond());
         if (indexValue != null) {
-            return clazz.cast(individualCache.get(indexValue));
+            return clazz.cast(individualCache.get(indexValue.getIRI()));
         } else {
-            return clazz.cast(individualCache.get(individualIRI));
+            return clazz.cast(individualCache.get(individualIRI.getIRI()));
         }
     }
 
     public void writeIndividual(TrestleIRI individualIRI, long startTemporal, long endTemporal, Object value) {
 //        Write to the cache and the index
-        individualCache.put(individualIRI, value);
+        individualCache.put(individualIRI.getIRI(), value);
         validIndex.insertValue(individualIRI.getObjectID(), startTemporal, endTemporal, individualIRI);
+    }
+
+    public void shutdown(boolean drop) {
+        logger.info("Shutting down TrestleCache");
+        if (drop) {
+            logger.debug("Deleting caches");
+            cacheManager.destroyCache(INDIVIDUAL_CACHE);
+        }
+        cacheManager.close();
     }
 }

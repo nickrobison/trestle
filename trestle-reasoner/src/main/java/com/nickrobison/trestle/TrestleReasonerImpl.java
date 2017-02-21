@@ -223,6 +223,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public void shutdown(boolean delete) {
         logger.info("Shutting down reasoner, and removing the model");
+        if (cachingEnabled) {
+            this.trestleCache.shutdown(delete);
+        }
         this.ontology.close(delete);
         this.metrician.shutdown();
     }
@@ -653,10 +656,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         if (constructedObject.isPresent()) {
             logger.debug("Done with {}", individualIRI);
 //            Write back to index
-//            if (cachingEnabled) {
-//                this.trestleCache.writeIndividual(individualIRI, 1, 1, constructedObject.get());
-//            }
-            return constructedObject.get().getObject();
+            final TrestleObjectResult<@NonNull T> value = constructedObject.get();
+            if (cachingEnabled) {
+                this.trestleCache.writeIndividual(trestleIRI, value.getValidFrom().toEpochSecond(), value.getValidTo().toEpochSecond(), value.getObject());
+            }
+            return value.getObject();
         } else {
             throw new NoValidStateException(individualIRI, validAt, databaseAt);
         }
@@ -784,11 +788,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 }
 //                Get the temporal ranges
 //                Valid first
+                Comparator<Temporal> temporalComparator = (t1, t2) -> ((Comparable) t1).compareTo((Comparable) t2);
                 final Optional<Temporal> validMin = facts
                         .stream()
                         .map(TrestleFact::getValidTemporal)
                         .map(TemporalObject::getIdTemporal)
-                        .min((t1, t2) -> ((Comparable) t1).compareTo((Comparable) t2));
+                        .min(temporalComparator);
 
                 final Optional<Temporal> validMax = facts
                         .stream()
@@ -797,17 +802,17 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                             if (valid.isPoint()) {
                                 return valid.asPoint().getPointTime();
                             } else {
-                                return valid.asInterval().getToTime().orElse(OffsetDateTime.MAX);
+                                return (Temporal) valid.asInterval().getToTime().orElse(OffsetDateTime.MAX);
                             }
                         })
-                        .max((t1, t2) -> ((Comparable) t1).compareTo(((Comparable) t2)))
+                        .max(temporalComparator)
                         .map(Temporal.class::cast);
 //                Database temporal, next
                 final Optional<Temporal> dbMin = facts
                         .stream()
                         .map(TrestleFact::getDatabaseTemporal)
                         .map(TemporalObject::getIdTemporal)
-                        .min((t1, t2) -> ((Comparable) t1).compareTo((Comparable) t2))
+                        .min(temporalComparator)
                         .map(Temporal.class::cast);
 
                 final Optional<Temporal> dbMax = facts
@@ -817,10 +822,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                             if (db.isPoint()) {
                                 return db.asPoint().getPointTime();
                             } else {
-                                return db.asInterval().getToTime().orElse(OffsetDateTime.MAX);
+                                return (Temporal) db.asInterval().getToTime().orElse(OffsetDateTime.MAX);
                             }
                         })
-                        .max((t1, t2) -> ((Comparable) t1).compareTo(((Comparable) t2)))
+                        .max(temporalComparator)
                         .map(Temporal.class::cast);
 
 //                return objectState;
@@ -844,7 +849,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             }
             try {
                 final @NonNull T constructedObject = ClassBuilder.constructObject(clazz, objectState.getArguments());
-                return Optional.of(new TrestleObjectResult<T>(constructedObject, objectState.getMinValidFrom(), objectState.getMinValidTo(), objectState.getMinDatabaseFrom(), objectState.getMinDatabaseTo()));
+                return Optional.of(new TrestleObjectResult<>(individualIRI, constructedObject, objectState.getMinValidFrom(), objectState.getMinValidTo(), objectState.getMinDatabaseFrom(), objectState.getMinDatabaseTo()));
             } catch (MissingConstructorException e) {
                 logger.error("Problem with constructor", e);
                 return Optional.empty();
