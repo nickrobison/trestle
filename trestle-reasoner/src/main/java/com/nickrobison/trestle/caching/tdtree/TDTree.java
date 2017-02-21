@@ -32,7 +32,6 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     static long maxValue = LocalDate.of(3000, 1, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
     //    static long maxValue = LocalDateTime.MAX.toInstant(ZoneOffset.UTC).toEpochMilli();
     static final TupleSchema leafSchema = buildLeafSchema();
-    static final double ROOTTWO = FastMath.sqrt(2);
     private final int blockSize;
     private List<LeafNode<Value>> leafs = new ArrayList<>();
     private int maxDepth;

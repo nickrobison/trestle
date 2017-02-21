@@ -8,22 +8,24 @@ import org.apache.commons.math3.util.Precision;
  */
 public class TDTreeHelpers {
 
+    static final double ROOTTWO = FastMath.sqrt(2);
     private static final double LOG_10_2 = FastMath.log10(2);
     static final double[] adjustedLength;
 
     static {
 //        Initialize the lookup tables
         adjustedLength = new double[getIDLength(Integer.MAX_VALUE) + 1];
-        computeAdjustedLength();
+        computeAdjustedLengths();
     }
 
     /**
      * Pre-compute the AdjustedLength parameter for all values up to the maximum supported leafID, which is the value of Integer MAX_VALUE
      * @return - Array of adjustedLengths for each level
      */
-    static void computeAdjustedLength() {
+    static void computeAdjustedLengths() {
         for (int i = 0; i < adjustedLength.length; i++) {
-            adjustedLength[i] = getAdjustedLength(i);
+            final double adjustedLength = getAdjustedLength(i);
+            TDTreeHelpers.adjustedLength[i] = adjustedLength;
         }
     }
 
@@ -94,7 +96,7 @@ public class TDTreeHelpers {
         verticies[0] = triangleStart;
         verticies[1] = triangleEnd;
         if (direction == 0) {
-            final double l2 = (adjustedLength * TDTree.ROOTTWO) / 2;
+            final double l2 = (adjustedLength * ROOTTWO) / 2;
             verticies[2] = normalizeZero(triangleStart - l2);
             verticies[3] = normalizeZero(triangleEnd - l2);
             verticies[4] = normalizeZero(triangleStart + l2);
@@ -105,7 +107,7 @@ public class TDTreeHelpers {
             verticies[4] = triangleStart;
             verticies[5] = normalizeZero(triangleEnd - adjustedLength);
         } else if (direction == 2) {
-            final double l2 = (adjustedLength * TDTree.ROOTTWO) / 2;
+            final double l2 = (adjustedLength * ROOTTWO) / 2;
             verticies[2] = normalizeZero(triangleStart - l2);
             verticies[3] = normalizeZero(triangleEnd + l2);
             verticies[4] = normalizeZero(triangleStart - l2);
@@ -117,7 +119,7 @@ public class TDTreeHelpers {
             verticies[4] = normalizeZero(triangleStart - adjustedLength);
             verticies[5] = triangleEnd;
         } else if (direction == 4) {
-            final double l2 = (adjustedLength * TDTree.ROOTTWO) / 2;
+            final double l2 = (adjustedLength * ROOTTWO) / 2;
             verticies[2] = normalizeZero(triangleStart + l2);
             verticies[3] = normalizeZero(triangleEnd + l2);
             verticies[4] = normalizeZero(triangleStart - l2);
@@ -128,7 +130,7 @@ public class TDTreeHelpers {
             verticies[4] = triangleStart;
             verticies[5] = normalizeZero(triangleEnd + adjustedLength);
         } else if (direction == 6) {
-            final double l2 = (adjustedLength * TDTree.ROOTTWO) / 2;
+            final double l2 = (adjustedLength * ROOTTWO) / 2;
             verticies[2] = normalizeZero(triangleStart + l2);
             verticies[3] = normalizeZero(triangleEnd - l2);
             verticies[4] = normalizeZero(triangleStart + l2);
@@ -218,15 +220,15 @@ public class TDTreeHelpers {
                     normalizeZero(parentEnd - length));
         } else if (parentDirection == 1) {
             return new TriangleApex(
-                    normalizeZero(parentStart - (length / TDTree.ROOTTWO)),
-                    normalizeZero(parentEnd - (length / TDTree.ROOTTWO)));
+                    normalizeZero(parentStart - (length / ROOTTWO)),
+                    normalizeZero(parentEnd - (length / ROOTTWO)));
         } else if (parentDirection == 2) {
             return new TriangleApex(
                     normalizeZero(parentStart - length),
                     parentEnd);
         } else if (parentDirection == 3) {
             return new TriangleApex(
-                    normalizeZero(parentStart - (length / TDTree.ROOTTWO)),
+                    normalizeZero(parentStart - (length / ROOTTWO)),
                     normalizeZero(parentEnd + length));
         } else if (parentDirection == 4) {
             return new TriangleApex(
@@ -234,16 +236,16 @@ public class TDTreeHelpers {
                     normalizeZero(parentEnd + length));
         } else if (parentDirection == 5) {
             return new TriangleApex(
-                    normalizeZero(parentStart + (length / TDTree.ROOTTWO)),
-                    normalizeZero(parentEnd + (length / TDTree.ROOTTWO)));
+                    normalizeZero(parentStart + (length / ROOTTWO)),
+                    normalizeZero(parentEnd + (length / ROOTTWO)));
         } else if (parentDirection == 6) {
             return new TriangleApex(
                     normalizeZero(parentStart + length),
                     parentEnd);
         } else {
             return new TriangleApex(
-                    normalizeZero(parentStart + (length / TDTree.ROOTTWO)),
-                    normalizeZero(parentEnd - (length / TDTree.ROOTTWO)));
+                    normalizeZero(parentStart + (length / ROOTTWO)),
+                    normalizeZero(parentEnd - (length / ROOTTWO)));
         }
     }
 
@@ -277,7 +279,7 @@ public class TDTreeHelpers {
      * @return - double of adjusted length
      */
     private static double getAdjustedLength(int leafLength) {
-        return TDTree.maxValue * (FastMath.pow(TDTree.ROOTTWO / 2, leafLength - 1));
+        return TDTree.maxValue * (FastMath.pow(ROOTTWO / 2, leafLength - 1));
     }
 
     static long longHashCode(String string) {
