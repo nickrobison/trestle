@@ -8,6 +8,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -16,8 +17,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.caching.tdtree.TDTreeHelpers.*;
@@ -25,10 +24,10 @@ import static com.nickrobison.trestle.caching.tdtree.TDTreeHelpers.*;
 /**
  * Created by nrobison on 2/9/17.
  */
+@NotThreadSafe
 public class TDTree<Value> implements ITrestleIndex<Value> {
 
     private static final Logger logger = LoggerFactory.getLogger(TDTree.class);
-    private ReadWriteLock rwlock = new ReentrantReadWriteLock();
     static long maxValue = LocalDate.of(3000, 1, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
     //    static long maxValue = LocalDateTime.MAX.toInstant(ZoneOffset.UTC).toEpochMilli();
     static final TupleSchema leafSchema = buildLeafSchema();
@@ -62,30 +61,24 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     }
 
     private void insertValue(long objectID, long startTime, long endTime, Value value) {
-//        Take the write lock
-        rwlock.writeLock().lock();
-        try {
 //        Find the leaf at maxDepth that would contain the objectID
-            final int matchingLeaf = getMatchingLeaf(startTime, endTime);
+        final int matchingLeaf = getMatchingLeaf(startTime, endTime);
 //        Find the region in list with the most number of matching bits
 //        Notice the l2/l1 reordering, otherwise it finds the leaf with the fewest number of matching bits, because why not?
-            final Optional<LeafNode<Value>> first = leafs
-                    .stream()
+        final Optional<LeafNode<Value>> first = leafs
+                .stream()
 //                .sorted(comparator)
-                    .sorted((l1, l2) -> Integer.compare(matchLength(l2.getID(), matchingLeaf), matchLength(l1.getID(), matchingLeaf)))
-                    .findFirst();
+                .sorted((l1, l2) -> Integer.compare(matchLength(l2.getID(), matchingLeaf), matchLength(l1.getID(), matchingLeaf)))
+                .findFirst();
 
 //        We can do this because it will always match on, at least, the root node
-            //noinspection unchecked
-            final LeafNode<Value> firstLeaf = first.orElseThrow(RuntimeException::new);
-            final LeafSplit split = firstLeaf.insert(objectID, startTime, endTime, value);
+        //noinspection unchecked
+        final LeafNode<Value> firstLeaf = first.orElseThrow(RuntimeException::new);
+        final LeafSplit split = firstLeaf.insert(objectID, startTime, endTime, value);
 //        If we split, we need to add the new leafs to the tree, and remove the old ones
-            if (split != null) {
-                leafs.remove(firstLeaf);
-                parseSplit(split);
-            }
-        } finally {
-            rwlock.writeLock().unlock();
+        if (split != null) {
+            leafs.remove(firstLeaf);
+            parseSplit(split);
         }
     }
 
@@ -93,68 +86,48 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     @SuppressWarnings("Duplicates")
     public @Nullable Value getValue(String objectID, long atTime) {
 
-        rwlock.readLock().lock();
-        try {
-            final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
+        final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
 
-            for (LeafNode node : candidateLeafs) {
-                //noinspection unchecked
-                @Nullable final Value value = (Value) node.getValue(objectID, atTime);
-                if (value != null) {
-                    logger.debug("Returning value {} for {} @ {} from {}", value, objectID, atTime, node.getBinaryStringID());
-                    return value;
-                }
-                logger.debug("Leaf {} does not have {}@{}", node.getBinaryStringID(), objectID, atTime);
+        for (LeafNode node : candidateLeafs) {
+            //noinspection unchecked
+            @Nullable final Value value = (Value) node.getValue(objectID, atTime);
+            if (value != null) {
+                logger.debug("Returning value {} for {} @ {} from {}", value, objectID, atTime, node.getBinaryStringID());
+                return value;
             }
-        } finally {
-            rwlock.readLock().unlock();
+            logger.debug("Leaf {} does not have {}@{}", node.getBinaryStringID(), objectID, atTime);
         }
         return null;
     }
 
     @Override
     public void deleteValue(String objectID, long atTime) {
-        rwlock.writeLock().lock();
-        try {
-            final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
-            for (LeafNode node : candidateLeafs) {
-                if (node.delete(objectID, atTime)) {
-                    logger.debug("Deleted {}@{} from {}", objectID, atTime, node.getBinaryStringID());
-                    return;
-                }
-                logger.debug("Leaf {} does not have {}@{}", node.getBinaryStringID(), objectID, atTime);
+        final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
+        for (LeafNode node : candidateLeafs) {
+            if (node.delete(objectID, atTime)) {
+                logger.debug("Deleted {}@{} from {}", objectID, atTime, node.getBinaryStringID());
+                return;
             }
-        } finally {
-            rwlock.writeLock().unlock();
+            logger.debug("Leaf {} does not have {}@{}", node.getBinaryStringID(), objectID, atTime);
         }
     }
 
     @Override
     public void updateValue(String objectID, long atTime, Value value) {
-        rwlock.writeLock().lock();
-        try {
-            final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
-            for (LeafNode<Value> node : candidateLeafs) {
-                if (node.update(objectID, atTime, value)) {
-                    logger.debug("Updated {}@{} to {} from {}", objectID, atTime, value, node.getBinaryStringID());
-                    return;
-                }
-                logger.debug("Leaf {} does not have {}@{}", node.getBinaryStringID(), objectID, atTime);
+        final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
+        for (LeafNode<Value> node : candidateLeafs) {
+            if (node.update(objectID, atTime, value)) {
+                logger.debug("Updated {}@{} to {} from {}", objectID, atTime, value, node.getBinaryStringID());
+                return;
             }
-        } finally {
-            rwlock.writeLock().unlock();
+            logger.debug("Leaf {} does not have {}@{}", node.getBinaryStringID(), objectID, atTime);
         }
     }
 
     @Override
     public void replaceKeyValue(String objectID, long atTime, long startTime, long endTime, Value value) {
-        rwlock.writeLock().lock();
-        try {
-            deleteValue(objectID, atTime);
-            insertValue(objectID, startTime, endTime, value);
-        } finally {
-            rwlock.writeLock().unlock();
-        }
+        deleteValue(objectID, atTime);
+        insertValue(objectID, startTime, endTime, value);
     }
 
     @Override
@@ -164,15 +137,10 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
 
     @Override
     public void setKeyTemporals(String objectID, long atTime, long startTime, long endTime) {
-        rwlock.writeLock().lock();
-        try {
-            final @Nullable Value value = getValue(objectID, atTime);
-            if (value != null) {
-                deleteValue(objectID, atTime);
-                insertValue(objectID, startTime, endTime, value);
-            }
-        } finally {
-            rwlock.writeLock().unlock();
+        final @Nullable Value value = getValue(objectID, atTime);
+        if (value != null) {
+            deleteValue(objectID, atTime);
+            insertValue(objectID, startTime, endTime, value);
         }
     }
 
@@ -181,28 +149,23 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         logger.info("Rebuilding TD-Tree");
 //        Dump the tree, create a new one, and reinsert all the values
         final Instant start = Instant.now();
-        rwlock.writeLock().lock();
-        try {
-            final List<LeafNode<Value>> _leafs = new ArrayList<>(this.leafs);
-            this.leafs = new ArrayList<>();
-            this.leafs.add(new SplittableNode<>(1, rootTuple, this.blockSize));
-            _leafs
-                    .stream()
-                    .filter(leaf -> leaf.getRecordCount() > 0)
-                    .map(LeafNode::dumpLeaf)
-                    .forEach(values -> values.entrySet()
-                            .forEach(entry -> {
-                                this.insertValue(entry.getKey().getLong(1),
-                                        entry.getKey().getLong(2),
-                                        entry.getKey().getLong(3),
-                                        entry.getValue());
-                            }));
+        final List<LeafNode<Value>> _leafs = new ArrayList<>(this.leafs);
+        this.leafs = new ArrayList<>();
+        this.leafs.add(new SplittableNode<>(1, rootTuple, this.blockSize));
+        _leafs
+                .stream()
+                .filter(leaf -> leaf.getRecordCount() > 0)
+                .map(LeafNode::dumpLeaf)
+                .forEach(values -> values.entrySet()
+                        .forEach(entry -> {
+                            this.insertValue(entry.getKey().getLong(1),
+                                    entry.getKey().getLong(2),
+                                    entry.getKey().getLong(3),
+                                    entry.getValue());
+                        }));
 
-        } finally {
-            rwlock.writeLock().unlock();
-            final Instant end = Instant.now();
-            logger.info("Rebuilding index took {} ms", Duration.between(start, end).toMillis());
-        }
+        final Instant end = Instant.now();
+        logger.info("Rebuilding index took {} ms", Duration.between(start, end).toMillis());
     }
 
     private List<LeafNode<Value>> findCandidateLeafs(long atTime) {

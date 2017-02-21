@@ -20,7 +20,6 @@ public class TDTreeHelpers {
 
     /**
      * Pre-compute the AdjustedLength parameter for all values up to the maximum supported leafID, which is the value of Integer MAX_VALUE
-     * @return - Array of adjustedLengths for each level
      */
     static void computeAdjustedLengths() {
         for (int i = 0; i < adjustedLength.length; i++) {
