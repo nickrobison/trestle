@@ -9,6 +9,23 @@ import org.apache.commons.math3.util.Precision;
 public class TDTreeHelpers {
 
     private static final double LOG_10_2 = FastMath.log10(2);
+    static final double[] adjustedLength;
+
+    static {
+//        Initialize the lookup tables
+        adjustedLength = new double[getIDLength(Integer.MAX_VALUE) + 1];
+        computeAdjustedLength();
+    }
+
+    /**
+     * Pre-compute the AdjustedLength parameter for all values up to the maximum supported leafID, which is the value of Integer MAX_VALUE
+     * @return - Array of adjustedLengths for each level
+     */
+    static void computeAdjustedLength() {
+        for (int i = 0; i < adjustedLength.length; i++) {
+            adjustedLength[i] = getAdjustedLength(i);
+        }
+    }
 
     /**
      * Determines if the given triangle is fully contained in the rectangle denoted by the X/Y bottom-right corner
@@ -19,7 +36,7 @@ public class TDTreeHelpers {
      * @return - <code>1</code> if the triangle is fully within the rectangle. <code>-2</code> if fully outside, and 0 to -1 if it partially intersects.
      */
     static int checkRectangleIntersection(TriangleApex apex, int direction, int leafLength, long[] rectangleApex, long maxValue) {
-        final double[] triangleVerticies = getTriangleVerticies(getAdjustedLength(leafLength), direction, apex.start, apex.end);
+        final double[] triangleVerticies = getTriangleVerticies(adjustedLength[leafLength], direction, apex.start, apex.end);
         final int apexInside = ((triangleVerticies[0] <= rectangleApex[0]) & (triangleVerticies[0] >= 0)) & ((triangleVerticies[1] >= rectangleApex[1]) & (triangleVerticies[1] <= maxValue)) ? 1 : 0;
         final int p2Inside = ((triangleVerticies[2] <= rectangleApex[0]) & (triangleVerticies[2] >= 0)) & ((triangleVerticies[3] >= rectangleApex[1]) & (triangleVerticies[3] <= maxValue)) ? 1 : 0;
         final int p3Inside = ((triangleVerticies[4] <= rectangleApex[0]) & (triangleVerticies[4] >= 0)) & ((triangleVerticies[5] >= rectangleApex[1]) & (triangleVerticies[5] <= maxValue)) ? 1 : 0;
@@ -29,7 +46,7 @@ public class TDTreeHelpers {
 
     static boolean checkPointIntersection(TriangleApex apex, int direction, int leafLength, long startTime, long endTime) {
 //        find the apex points
-        final double[] verticies = getTriangleVerticies(getAdjustedLength(leafLength), direction, apex.start, apex.end);
+        final double[] verticies = getTriangleVerticies(adjustedLength[leafLength], direction, apex.start, apex.end);
         return pointInTriangle(startTime, endTime, verticies);
     }
 
@@ -194,7 +211,7 @@ public class TDTreeHelpers {
     }
 
     static TriangleApex calculateChildApex(int leafLength, int parentDirection, double parentStart, double parentEnd) {
-        final double length = getAdjustedLength(leafLength);
+        final double length = adjustedLength[leafLength];
         if (parentDirection == 0) {
             return new TriangleApex(
                     parentStart,
@@ -256,10 +273,10 @@ public class TDTreeHelpers {
     /**
      * Get the adjusted length for the given leaf ID length
      *
-     * @param leafLength - length of LeadID
+     * @param leafLength - length of LeafID
      * @return - double of adjusted length
      */
-    static double getAdjustedLength(int leafLength) {
+    private static double getAdjustedLength(int leafLength) {
         return TDTree.maxValue * (FastMath.pow(TDTree.ROOTTWO / 2, leafLength - 1));
     }
 

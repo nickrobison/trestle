@@ -88,7 +88,7 @@ class SplittableNode<Value> extends LeafNode<Value> {
             final TDTreeHelpers.ChildDirection childDirection = TDTreeHelpers.calculateChildDirection(parentDirection);
 //            If one of the children is a point, pick the lower, turn it into a point and move on
 //            We also need to make sure we don't recurse too far, so the length of a leafID can't be more than 30
-            if (TDTreeHelpers.triangleIsPoint(TDTreeHelpers.getTriangleVerticies(TDTreeHelpers.getAdjustedLength(idLength + 1), childDirection.lowerChild, childApex.start, childApex.end)) |
+            if (TDTreeHelpers.triangleIsPoint(TDTreeHelpers.getTriangleVerticies(TDTreeHelpers.adjustedLength[idLength + 1], childDirection.lowerChild, childApex.start, childApex.end)) |
                     getIDLength(this.leafID) == (getIDLength(Integer.MAX_VALUE) - 1)) {
 //                    Convert the leaf to a point leaf and replace the splittable node
 
@@ -122,7 +122,7 @@ class SplittableNode<Value> extends LeafNode<Value> {
             }
             final LeafSplit leafSplit = new LeafSplit(this.leafID, lowerChildLeaf, higherChildLeaf);
 //            Divide values into children, by testing to see if they belong to the lower child
-            final double[] lowerChildVerticies = TDTreeHelpers.getTriangleVerticies(TDTreeHelpers.getAdjustedLength(idLength + 1), childDirection.lowerChild, childApex.start, childApex.end);
+            final double[] lowerChildVerticies = TDTreeHelpers.getTriangleVerticies(TDTreeHelpers.adjustedLength[idLength + 1], childDirection.lowerChild, childApex.start, childApex.end);
             for (int i = 0; i < this.blockSize; i++) {
                 FastTuple key = keys[i];
                 if (key != null) {

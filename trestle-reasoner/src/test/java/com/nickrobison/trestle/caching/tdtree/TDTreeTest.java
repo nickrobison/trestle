@@ -25,6 +25,7 @@ public class TDTreeTest {
                 .forEach(value -> {
                     try {
                         TDTree.maxValue = value;
+                        TDTreeHelpers.computeAdjustedLength();
                         final TDTree<String> tdTree = new TDTree<>(2);
                         simpleTest(tdTree, value);
                     } catch (Exception e) {
@@ -87,6 +88,7 @@ public class TDTreeTest {
     @Test
     public void testRebuild() throws Exception {
         TDTree.maxValue = 12346;
+        TDTreeHelpers.computeAdjustedLength();
         final TDTree<String> tdTree = new TDTree<>(2);
         simpleTest(tdTree, 12346);
 //        Rebuild
