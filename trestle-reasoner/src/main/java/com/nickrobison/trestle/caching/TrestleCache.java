@@ -1,7 +1,6 @@
 package com.nickrobison.trestle.caching;
 
-import com.nickrobison.trestle.caching.tdtree.TDTree;
-import com.nickrobison.trestle.iri.IRIBuilder;
+import com.nickrobison.trestle.common.locking.TrestleUpgradableReadWriteLock;
 import com.nickrobison.trestle.iri.TrestleIRI;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -28,6 +27,7 @@ public class TrestleCache {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleCache.class);
     public static final String INDIVIDUAL_CACHE = "individual-cache";
+    private final TrestleUpgradableReadWriteLock cacheLock = new TrestleUpgradableReadWriteLock();
     private final CacheManager cacheManager;
     private final Cache<IRI, Object> individualCache;
     private final ITrestleIndex<TrestleIRI> validIndex;
@@ -35,6 +35,7 @@ public class TrestleCache {
 
     @Inject
     TrestleCache(ITrestleIndex<TrestleIRI> validIndex, ITrestleIndex<TrestleIRI> dbIndex) {
+//        Create the lock
 //        Create the index
         this.validIndex = validIndex;
         this.dbIndex = dbIndex;
@@ -55,21 +56,36 @@ public class TrestleCache {
 
     public <T> @Nullable T getIndividual(Class<T> clazz, TrestleIRI individualIRI) {
 //        Valid first, then db
-        final String individualID = individualIRI.getObjectID();
-        final OffsetDateTime offsetDateTime = individualIRI.getObjectTemporal().orElse(OffsetDateTime.now());
+        try {
+            cacheLock.lockRead();
+            final String individualID = individualIRI.getObjectID();
+            final OffsetDateTime offsetDateTime = individualIRI.getObjectTemporal().orElse(OffsetDateTime.now());
 //        TODO(nrobison): This shouldn't be Epoch second
-        @Nullable final TrestleIRI indexValue = validIndex.getValue(individualID, offsetDateTime.atZoneSameInstant(ZoneOffset.UTC).toEpochSecond());
-        if (indexValue != null) {
-            return clazz.cast(individualCache.get(indexValue.getIRI()));
-        } else {
-            return clazz.cast(individualCache.get(individualIRI.getIRI()));
+            @Nullable final TrestleIRI indexValue = validIndex.getValue(individualID, offsetDateTime.atZoneSameInstant(ZoneOffset.UTC).toEpochSecond());
+            if (indexValue != null) {
+                return clazz.cast(individualCache.get(indexValue.getIRI()));
+            } else {
+                return clazz.cast(individualCache.get(individualIRI.getIRI()));
+            }
+        } catch (InterruptedException e) {
+            logger.error("Unable to get read lock, returning null for {}", individualIRI.getIRI(), e);
+            return null;
+        } finally {
+            cacheLock.unlockRead();
         }
     }
 
     public void writeIndividual(TrestleIRI individualIRI, long startTemporal, long endTemporal, Object value) {
 //        Write to the cache and the index
-        individualCache.put(individualIRI.getIRI(), value);
-        validIndex.insertValue(individualIRI.getObjectID(), startTemporal, endTemporal, individualIRI);
+        try {
+            cacheLock.lockWrite();
+            individualCache.put(individualIRI.getIRI(), value);
+            validIndex.insertValue(individualIRI.getObjectID(), startTemporal, endTemporal, individualIRI);
+        } catch (InterruptedException e) {
+            logger.error("Unable to get write lock", e);
+        } finally {
+            cacheLock.unlockWrite();
+        }
     }
 
     public void shutdown(boolean drop) {
