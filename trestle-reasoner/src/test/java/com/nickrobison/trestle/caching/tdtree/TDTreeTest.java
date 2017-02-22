@@ -69,22 +69,6 @@ public class TDTreeTest {
                 () -> assertNull(tdTree.getValue(TEMPORAL_TEST_ID, 1)));
     }
 
-
-    @Test
-    public void testConcurrency() throws Exception {
-        int maxValue = 20;
-        final Random random = new Random();
-        TDTree.maxValue = maxValue;
-        final TDTree<Long> tree = new TDTree<>(2);
-        final Thread t1 = new Thread(new ThreadTester(1, random, tree));
-        final Thread t2 = new Thread(new ThreadTester(2, random, tree));
-
-//        Try to read/write from two threads
-        t1.start();
-        t2.start();
-        Thread.sleep(10000);
-    }
-
     @Test
     public void testRebuild() throws Exception {
         TDTree.maxValue = 12346;
@@ -97,33 +81,5 @@ public class TDTreeTest {
         assertAll(() -> assertEquals("updated-temporal-value", tdTree.getValue(TEMPORAL_TEST_ID, 3)),
                 () -> assertNull(tdTree.getValue(TEMPORAL_TEST_ID, 1)));
 
-    }
-
-
-    private static class ThreadTester implements Runnable {
-        private final Random random;
-        private final TDTree<Long> tree;
-        private int ops = 0;
-        private final int threadNumber;
-        private static final int maxValue = 20;
-
-        public ThreadTester(int threadNumber, Random random, TDTree<Long> tree) {
-            this.random = random;
-            this.tree = tree;
-            this.threadNumber = threadNumber;
-        }
-
-        @Override
-        public void run() {
-            while (true) {
-                System.out.println(String.format("Thread %s running", threadNumber));
-                final int randomKey = random.nextInt();
-                final int randomStart = random.nextInt(maxValue);
-                final long randomValue = random.nextLong();
-                tree.insertValue(Integer.toString(randomKey), randomStart, randomValue);
-                @Nullable final Long value = tree.getValue(Integer.toString(randomKey), randomStart);
-                System.out.println(String.format("Thread %s Executed ops: %d", threadNumber, ops++));
-            }
-        }
     }
 }
