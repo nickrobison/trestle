@@ -271,7 +271,7 @@ public class QueryBuilder {
      * @param validStart - Optional start of fact value, temporal filter
      * @param validEnd - Optional end of fact value, temporal filter
      * @param dbTemporal - Optional database temporal filter
-     * @return
+     * @return - SPARQL Query string
      */
     public String buildFactHistoryQuery(OWLNamedIndividual individual, OWLDataProperty property, @Nullable OffsetDateTime validStart, @Nullable OffsetDateTime validEnd, @Nullable OffsetDateTime dbTemporal) {
         final ParameterizedSparqlString ps = buildBaseString();
@@ -364,8 +364,9 @@ public class QueryBuilder {
      * @param atTime   - Temporal to select appropriate, valid fact
      * @param dbAtTime - Temporal to select currently valid version of the fact
      * @return - String of SPARQL query
-     * @throws UnsupportedFeatureException
+     * @throws UnsupportedFeatureException - Throws if we're running on a database that doesn't support all the features
      */
+    // TODO(nrobison): Why does this throw? It'll never need to be caught
     public String buildTemporalSpatialConceptIntersection(String wktValue, double buffer, @Nullable OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m" +

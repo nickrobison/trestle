@@ -16,7 +16,7 @@ import static com.nickrobison.trestle.caching.tdtree.TDTreeHelpers.longHashCode;
 /**
  * Base class of the index leaf-nodes.
  * Both {@link SplittableNode} and {@link PointNode} inherit from this class
- * @param <Value>
+ * @param <Value> - Generic type of Index value
  */
 public abstract class LeafNode<Value> {
 

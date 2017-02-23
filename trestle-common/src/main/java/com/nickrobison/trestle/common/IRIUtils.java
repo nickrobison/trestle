@@ -61,7 +61,7 @@ public class IRIUtils {
     }
 
     /**
-     * Extract the prefix from a given {@link IRI}, everythign up to, and including the #
+     * Extract the prefix from a given {@link IRI}, everything up to, and including the #
      * @param iri - {@link IRI to parse}
      * @return - String of prefix
      */
