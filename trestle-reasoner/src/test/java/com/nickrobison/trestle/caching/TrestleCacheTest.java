@@ -7,7 +7,9 @@ import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
+import com.vividsolutions.jts.io.WKTReader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -44,7 +46,7 @@ public class TrestleCacheTest {
                 .withName("cache_test")
                 .withOntology(IRI.create(config.getString("trestle.ontology.location")))
                 .withPrefix(OVERRIDE_PREFIX)
-                .withInputClasses(TestClasses.OffsetDateTimeTest.class)
+                .withInputClasses(TestClasses.JTSGeometryTest.class)
                 .initialize()
                 .build();
 
@@ -53,23 +55,37 @@ public class TrestleCacheTest {
 
     @Test
     public void testCache() throws TrestleClassException, MissingOntologyEntity, ParseException {
+        final Geometry jtsGeom = new WKTReader().read("POINT(4.0 6.0)");
+        final Geometry jtsGeom2 = new WKTReader().read("POINT(27.0 91.0)");
+        final TestClasses.JTSGeometryTest jtsGeometryTest = new TestClasses.JTSGeometryTest(4326, jtsGeom, LocalDate.of(1989, 3, 16));
 //        Try to load some data then read it back out.
-//        final Geometry jtsGeom = new WKTReader().read("POINT(4.0 6.0)");
-//        final TestClasses.JTSGeometryTest jtsGeometryTest = new TestClasses.JTSGeometryTest(4326, jtsGeom, LocalDate.of(1989, 3, 26));
-        final TestClasses.OffsetDateTimeTest offsetDateTimeTest = new TestClasses.OffsetDateTimeTest(5515, OffsetDateTime.now(), OffsetDateTime.now().plusYears(5));
-        reasoner.writeTrestleObject(offsetDateTimeTest);
+//        final TestClasses.OffsetDateTimeTest offsetDateTimeTest = new TestClasses.OffsetDateTimeTest(5515, OffsetDateTime.now(), OffsetDateTime.now().plusYears(5));
+        reasoner.writeTrestleObject(jtsGeometryTest);
         reasoner.getUnderlyingOntology().runInference();
-        final Instant firstStart = Instant.now();
-        final TestClasses.OffsetDateTimeTest first = reasoner.readTrestleObject(TestClasses.OffsetDateTimeTest.class, offsetDateTimeTest.adm0_code.toString(), LocalDate.of(2017, 7, 1), null);
-        final Instant firstEnd = Instant.now();
-        final Instant secondStart = Instant.now();
+
+        Instant firstStart = Instant.now();
+        TestClasses.JTSGeometryTest first = reasoner.readTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getAdm0_code().toString(), LocalDate.of(1989, 7, 1), null);
+        Instant firstEnd = Instant.now();
+        Instant secondStart = Instant.now();
         logger.info("Reading first object took {} ms", Duration.between(firstStart, firstEnd).toMillis());
-        final TestClasses.OffsetDateTimeTest second = reasoner.readTrestleObject(TestClasses.OffsetDateTimeTest.class, offsetDateTimeTest.adm0_code.toString(), LocalDate.of(2018, 3, 1), null);
-        final Instant secondEnd = Instant.now();
+        TestClasses.JTSGeometryTest second = reasoner.readTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getAdm0_code().toString(), LocalDate.of(1990, 3, 1), null);
+        Instant secondEnd = Instant.now();
         logger.info("Reading second object took {} ms", Duration.between(secondStart, secondEnd).toMillis());
         assertEquals(first, second, "Objects should be equal");
         assertTrue(Duration.between(firstStart, firstEnd).compareTo(Duration.between(secondStart, secondEnd)) > 0, "Cache should have lower latency");
-//        reasoner.addFactToTrestleObject(TestClasses.GAULComplexClassTest.class, jtsGeometryTest.getAdm0_code().toString(), "testInteger", 71, LocalDate.of(2016, 3, 1), null, null);
+
+
+//        Update one of the facts, which should invalidate the cache
+        reasoner.addFactToTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getAdm0_code().toString(), "geom", jtsGeom2, LocalDate.of(1990, 10, 1), null, null);
+        firstStart = Instant.now();
+        first = reasoner.readTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getAdm0_code().toString(), LocalDate.of(1989, 10, 20), null);
+        firstEnd = Instant.now();
+        secondStart = Instant.now();
+        logger.info("Reading second object took {} ms", Duration.between(firstStart, firstEnd).toMillis());
+        second = reasoner.readTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getAdm0_code().toString(), LocalDate.of(1990, 3, 1), null);
+        secondEnd = Instant.now();
+        assertEquals(first, second, "Objects should be equal");
+        assertTrue(Duration.between(firstStart, firstEnd).compareTo(Duration.between(secondStart, secondEnd)) > 0, "Cache should have lower latency");
     }
 
     @AfterEach

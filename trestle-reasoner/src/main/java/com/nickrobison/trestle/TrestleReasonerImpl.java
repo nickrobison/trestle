@@ -428,12 +428,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validAt, @Nullable Temporal databaseFrom) {
-        addFactToTrestleObject(clazz, individual, factName, value, validAt, null, null, databaseFrom);
+        addFactToTrestleObjectImpl(clazz, individual, factName, value, validAt, null, null, databaseFrom);
     }
 
     @Override
     public void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom) {
-        addFactToTrestleObject(clazz, individual, factName, value, null, validFrom, validTo, databaseFrom);
+        addFactToTrestleObjectImpl(clazz, individual, factName, value, null, validFrom, validTo, databaseFrom);
     }
 
     /**
@@ -449,7 +449,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @param validTo      - Optional validTo Temporal
      * @param databaseFrom - Optional databaseFrom Temporal
      */
-    private void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, @Nullable Temporal validAt, @Nullable Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom) {
+    private void addFactToTrestleObjectImpl(Class<?> clazz, String individual, String factName, Object value, @Nullable Temporal validAt, @Nullable Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom) {
         final OWLNamedIndividual owlNamedIndividual = df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual));
 //        Parse String to Fact IRI
         final Optional<IRI> factIRI = this.trestleParser.classParser.getFactIRI(clazz, factName);
@@ -465,9 +465,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             logger.error("Individual {} does not have fact {}", owlNamedIndividual, owlDataProperty);
             throw new TrestleMissingFactException(owlNamedIndividual, factIRI.get());
         }
-        if (!value.getClass().equals(factDatatype.get())) {
+        if (!factDatatype.get().isAssignableFrom(value.getClass())) {
+//        if (!value.getClass().equals(factDatatype.get())) {
             logger.error("Mismatched type. Fact {} has type {}, not {}", factIRI.get(), factDatatype.get(), value.getClass());
-            throw new RuntimeException(String.format("Fact %s has type %s, not %s", factIRI.get(), factDatatype.get(), value.getClass()));
+            throw new TrestleMissingFactException(owlNamedIndividual, factIRI.get(), factDatatype.get(), value.getClass());
+//            throw new RuntimeException(String.format("Fact %s has type %s, not %s", factIRI.get(), factDatatype.get(), value.getClass()));
         }
 
 //        Build the temporals
@@ -504,7 +506,15 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         this.ontology.executeUpdateSPARQL(update);
-        writeObjectFacts(owlNamedIndividual, singletonList(propertyAxiom), validTemporal, databaseTemporal);
+        writeObjectFacts(owlNamedIndividual, Collections.singletonList(propertyAxiom), validTemporal, databaseTemporal);
+//        Update the cache
+//        TODO(nrobison): This should async refresh
+        if (cachingEnabled) {
+            final TrestleIRI individualIRI = IRIBuilder.encodeIRI(V1, REASONER_PREFIX, individual, factName,
+                    parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC),
+                    parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC));
+            trestleCache.deleteIndividual(individualIRI);
+        }
         this.ontology.returnAndCommitTransaction(trestleTransaction);
     }
 

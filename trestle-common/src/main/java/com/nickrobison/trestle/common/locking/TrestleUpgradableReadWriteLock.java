@@ -28,7 +28,7 @@ public class TrestleUpgradableReadWriteLock {
             logger.debug("Thread {} waiting for Read lock", callingThread);
             wait();
         }
-        logger.debug("Thread {} taking the read lock", callingThread);
+        logger.debug("{} taking the read lock", callingThread);
         readingThreads.put(callingThread, (getReadAccessCount(callingThread) + 1));
     }
 
@@ -62,13 +62,13 @@ public class TrestleUpgradableReadWriteLock {
         writeRequests++;
         final Thread callingThread = Thread.currentThread();
         while (!canGrantWriteAccess(callingThread)) {
-            logger.debug("Thread {} waiting for Write lock. {} requests pending", callingThread, writeRequests);
+            logger.debug("{} waiting for Write lock. {} requests pending", callingThread, writeRequests);
             wait();
         }
         writeRequests--;
         writeAccesses++;
         writingThread = callingThread;
-        logger.debug("Thread {} taking the write lock", callingThread);
+        logger.debug("{} taking the write lock", callingThread);
     }
 
     /**

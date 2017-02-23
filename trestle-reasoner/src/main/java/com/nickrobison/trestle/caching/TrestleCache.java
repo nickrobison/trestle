@@ -60,11 +60,14 @@ public class TrestleCache {
             cacheLock.lockRead();
             final String individualID = individualIRI.getObjectID();
             final OffsetDateTime offsetDateTime = individualIRI.getObjectTemporal().orElse(OffsetDateTime.now());
+            logger.debug("Getting {} from cache @{}", individualIRI, offsetDateTime);
 //        TODO(nrobison): This shouldn't be Epoch second
             @Nullable final TrestleIRI indexValue = validIndex.getValue(individualID, offsetDateTime.atZoneSameInstant(ZoneOffset.UTC).toEpochSecond());
             if (indexValue != null) {
+                logger.debug("Index has {} for {} @{}", indexValue, individualIRI, offsetDateTime);
                 return clazz.cast(individualCache.get(indexValue.getIRI()));
             } else {
+                logger.debug("Index does not have {} @{}, going to cache", individualIRI, offsetDateTime);
                 return clazz.cast(individualCache.get(individualIRI.getIRI()));
             }
         } catch (InterruptedException e) {
@@ -79,12 +82,36 @@ public class TrestleCache {
 //        Write to the cache and the index
         try {
             cacheLock.lockWrite();
+            logger.debug("Adding {} to cache from {} to {}", individualIRI, startTemporal, endTemporal);
             individualCache.put(individualIRI.getIRI(), value);
             validIndex.insertValue(individualIRI.getObjectID(), startTemporal, endTemporal, individualIRI);
         } catch (InterruptedException e) {
             logger.error("Unable to get write lock", e);
         } finally {
             cacheLock.unlockWrite();
+        }
+    }
+
+    public void deleteIndividual(TrestleIRI trestleIRI) {
+        final OffsetDateTime objectTemporal = trestleIRI.getDbTemporal().orElse(OffsetDateTime.now());
+        try {
+            cacheLock.lockRead();
+            @Nullable final TrestleIRI value = validIndex.getValue(trestleIRI.getObjectID(), objectTemporal.toEpochSecond());
+            if (value != null) {
+                try {
+                   cacheLock.lockWrite();
+                    logger.debug("Removing {} from index and cache", trestleIRI);
+                    individualCache.remove(value.getIRI());
+                    validIndex.getValue(value.getObjectID(), objectTemporal.toEpochSecond());
+                } finally {
+                    cacheLock.unlockWrite();
+                }
+            }
+            logger.debug("{} does not exist in index and cache", trestleIRI);
+        } catch (InterruptedException e) {
+            logger.error("Unable to get lock", e);
+        } finally {
+            cacheLock.unlockRead();
         }
     }
 

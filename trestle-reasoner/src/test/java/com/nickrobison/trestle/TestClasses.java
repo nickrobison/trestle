@@ -56,7 +56,7 @@ public class TestClasses {
     }
 
     @DatasetClass(name = "GAUL_JTS_Test")
-    public static class JTSGeometryTest {
+    public static class JTSGeometryTest implements Serializable{
 
         private final Integer adm0_code;
         private final Geometry geom;
