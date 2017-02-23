@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.iri;
 
+import com.nickrobison.trestle.iri.exceptions.IRIParseException;
 import com.nickrobison.trestle.iri.exceptions.IRIVersionException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -23,11 +24,15 @@ public class TrestleIRIV1Test {
     public static final OffsetDateTime TEST_DB_TEMPORAL = OffsetDateTime.of(LocalDateTime.of(2016, 3, 26, 0, 0, 0), ZoneOffset.UTC);
     public static IRI objectNoFactIRI;
     public static IRI objectFactIRI;
+    public static IRI malformedIRIVersion;
+    public static IRI malformedIRIStructure;
 
     @BeforeAll
     public static void setupTestStrings() {
         objectNoFactIRI = IRI.create(TEST_PREFIX, String.format("V1:%s:%s:%s", OBJECT_ID, TEST_DATE.toEpochSecond(), TEST_DB_TEMPORAL.toEpochSecond()));
         objectFactIRI = IRI.create(TEST_PREFIX, String.format("V1:%s@%s:%s:%s", OBJECT_ID, OBJECT_FACT, TEST_DATE.toEpochSecond(), TEST_DB_TEMPORAL.toEpochSecond()));
+        malformedIRIVersion = IRI.create(TEST_PREFIX, String.format("V9:%s@%s:%s:%s", OBJECT_ID, OBJECT_FACT, TEST_DATE.toEpochSecond(), TEST_DB_TEMPORAL.toEpochSecond()));
+        malformedIRIStructure = IRI.create(TEST_PREFIX, String.format("V1;%s@%s:%s:%s", OBJECT_ID, OBJECT_FACT, TEST_DATE.toEpochSecond(), TEST_DB_TEMPORAL.toEpochSecond()));
     }
 
     @Test
@@ -72,5 +77,21 @@ public class TrestleIRIV1Test {
         assertAll(() -> assertEquals(OBJECT_ID, expandedIRITest.getObjectID(), "Object ID should not be fully expanded"),
                 () -> assertEquals("testFact", expandedIRITest.getObjectFact().get(), "Object Fact should not be fully expanded"));
 
+    }
+
+    @Test
+    public void testIRIParsing() {
+        final TrestleIRI objectTIRI = IRIBuilder.parseIRIToTrestleIRI(objectFactIRI);
+        assertAll(() -> assertEquals(OBJECT_ID, objectTIRI.getObjectID(), "Parsed IRI should have the same ObjectID"),
+                () -> assertTrue(objectTIRI.getObjectFact().isPresent(), "Parsed IRI should have ObjectFact"),
+                () -> assertEquals(OBJECT_FACT, objectTIRI.getObjectFact().get(), "Parsed IRI should have same ObjectFact"),
+                () -> assertTrue(objectTIRI.getObjectTemporal().isPresent(), "Parsed IRI should have object temporal"),
+                () -> assertEquals(TEST_DATE.toEpochSecond(), objectTIRI.getObjectTemporal().get().toEpochSecond(), "Parsed IRI should have the same Object temporal"),
+                () -> assertTrue(objectTIRI.getDbTemporal().isPresent(), "Parsed IRI should have database temporal"),
+                () -> assertEquals(TEST_DB_TEMPORAL.toEpochSecond(), objectTIRI.getDbTemporal().get().toEpochSecond(), "Parsed IRI should have same DB temporal"));
+
+//        Test malformed IRI
+        assertAll(() -> assertThrows(IRIParseException.class, () -> IRIBuilder.parseIRIToTrestleIRI(malformedIRIVersion)),
+                () -> assertThrows(IRIParseException.class, () -> IRIBuilder.parseIRIToTrestleIRI(malformedIRIStructure)));
     }
 }
