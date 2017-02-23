@@ -3,6 +3,7 @@ package com.nickrobison.trestle.caching.tdtree;
 import com.boundary.tuple.FastTuple;
 import com.boundary.tuple.codegen.TupleExpressionGenerator;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.jena.atlas.lib.tuple.Tuple;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -169,6 +170,16 @@ class SplittableNode<Value> extends LeafNode<Value> {
             }
         }
         return false;
+    }
+
+    @Override
+    void deleteKeysWithValue(Value value) {
+        for (int i = 0; i < this.records; i++) {
+            if (value.equals(values[i])) {
+                keys[i] = null;
+                values[i] = null;
+            }
+        }
     }
 
     @Override

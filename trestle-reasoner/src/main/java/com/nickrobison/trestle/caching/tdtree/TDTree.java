@@ -113,6 +113,14 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     }
 
     @Override
+    public void deleteKeysWithValue(Value value) {
+        this.leafs
+                .stream()
+                .filter(leaf -> leaf.getRecordCount() > 0)
+                .forEach(leaf -> leaf.deleteKeysWithValue(value));
+    }
+
+    @Override
     public void updateValue(String objectID, long atTime, Value value) {
         final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
         for (LeafNode<Value> node : candidateLeafs) {

@@ -67,6 +67,10 @@ public class TDTreeTest {
         tdTree.replaceKeyValue(TEMPORAL_TEST_ID, 3, 3, 4, "updated-temporal-value");
         assertAll(() -> assertEquals("updated-temporal-value", tdTree.getValue(TEMPORAL_TEST_ID, 3)),
                 () -> assertNull(tdTree.getValue(TEMPORAL_TEST_ID, 1)));
+
+//        Try to remove a key and see if it returns a null
+        tdTree.deleteKeysWithValue("test-object-string2");
+        assertNull(tdTree.getValue("test-object2", 7));
     }
 
     @Test

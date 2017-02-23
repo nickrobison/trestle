@@ -7,8 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Created by nrobison on 2/13/17.
@@ -73,12 +75,22 @@ public class PointNode<Value> extends LeafNode<Value> {
                 .filter(entry -> eval.evaluate(entry.getKey()))
                 .map(Map.Entry::getKey)
                 .findAny();
-
         if (matchingKey.isPresent()) {
             this.values.remove(matchingKey.get());
             return true;
         }
         return false;
+    }
+
+    @Override
+    void deleteKeysWithValue(Value value) {
+        final List<FastTuple> list = this.values.entrySet()
+                .stream()
+                .filter(entry -> entry.getValue().equals(value))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        list.forEach(this.values::remove);
     }
 
     @Override
