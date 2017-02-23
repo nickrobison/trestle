@@ -466,10 +466,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             throw new TrestleMissingFactException(owlNamedIndividual, factIRI.get());
         }
         if (!factDatatype.get().isAssignableFrom(value.getClass())) {
-//        if (!value.getClass().equals(factDatatype.get())) {
             logger.error("Mismatched type. Fact {} has type {}, not {}", factIRI.get(), factDatatype.get(), value.getClass());
             throw new TrestleMissingFactException(owlNamedIndividual, factIRI.get(), factDatatype.get(), value.getClass());
-//            throw new RuntimeException(String.format("Fact %s has type %s, not %s", factIRI.get(), factDatatype.get(), value.getClass()));
         }
 
 //        Build the temporals
@@ -510,7 +508,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //        Update the cache
 //        TODO(nrobison): This should async refresh
         if (cachingEnabled) {
-            final TrestleIRI individualIRI = IRIBuilder.encodeIRI(V1, REASONER_PREFIX, individual, factName,
+            final TrestleIRI individualIRI = IRIBuilder.encodeIRI(V1, REASONER_PREFIX, individual, null,
                     parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC),
                     parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC));
             trestleCache.deleteIndividual(individualIRI);

@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -76,7 +75,8 @@ public class TrestleCacheTest {
 
 
 //        Update one of the facts, which should invalidate the cache
-        reasoner.addFactToTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getAdm0_code().toString(), "geom", jtsGeom2, LocalDate.of(1990, 10, 1), null, null);
+        reasoner.addFactToTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getAdm0_code().toString(), "geom", jtsGeom2, LocalDate.of(1989, 10, 1), null, null);
+        reasoner.getUnderlyingOntology().runInference();
         firstStart = Instant.now();
         first = reasoner.readTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getAdm0_code().toString(), LocalDate.of(1989, 10, 20), null);
         firstEnd = Instant.now();
@@ -86,7 +86,11 @@ public class TrestleCacheTest {
         secondEnd = Instant.now();
         assertEquals(first, second, "Objects should be equal");
         assertTrue(Duration.between(firstStart, firstEnd).compareTo(Duration.between(secondStart, secondEnd)) > 0, "Cache should have lower latency");
+
+////        Test for invalidation
+//        mock(TrestleCache.IndividualCacheEntryListener.class);
     }
+
 
     @AfterEach
     public void shutdown() {
