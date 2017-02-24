@@ -80,12 +80,12 @@ public class GAULIntegratorTests {
 //        connectionString = "jdbc:virtuoso://localhost:1111";
 //        userName = "dba";
 //        password = "dba";
-//        connectionString = "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial";
-//        userName = "spatialUser";
-//        password = "spatial1";
-        connectionString = "http://localhost:7200";
-        userName = "";
-        password = "";
+        connectionString = "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial";
+        userName = "spatialUser";
+        password = "spatial1";
+//        connectionString = "http://localhost:7200";
+//        userName = "";
+//        password = "";
         ontologyPath = "file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl";
         ontologyPrefix = "http://nickrobison.com/test/hadoop.owl#";
         ontologyName = "hadoop_gaul_updated";
@@ -98,51 +98,51 @@ public class GAULIntegratorTests {
         conf.set("reasoner.ontology.prefix", ontologyPrefix);
 
 //        Setup reasoner
-        reasoner = new TrestleBuilder()
-                .withDBConnection(connectionString, userName, password)
-                .withInputClasses(GAULObject.class)
-//                .withOntology(IRI.create(ontologyPath))
-                .withPrefix(ontologyPrefix)
-                .initialize()
-                .withName(ontologyName)
-//                FIXME(nrobison): Caching just doesn't work, so we should disable it until we merge TRESTLE-206
-                .withoutCaching()
-                .build();
-
+//        reasoner = new TrestleBuilder()
+//                .withDBConnection(connectionString, userName, password)
+//                .withInputClasses(GAULObject.class)
+////                .withOntology(IRI.create(ontologyPath))
+//                .withPrefix(ontologyPrefix)
+//                .initialize()
+//                .withName(ontologyName)
+////                FIXME(nrobison): Caching just doesn't work, so we should disable it until we merge TRESTLE-206
+//                .withoutCaching()
+//                .build();
+//
 //        File outputFile = new File("/Users/nrobison/Desktop/hadoop.owl");
 //        reasoner.writeOntology(outputFile.toURI(), true);
-        reasoner.shutdown(false);
+//        reasoner.shutdown(false);
     }
 
     @Test
     public void testReducer() throws IOException, ClassNotFoundException, InterruptedException, SQLException, URISyntaxException {
 
-        URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/gates-test/");
-        URL OUT_DIR = GAULIntegratorTests.class.getClassLoader().getResource("out/");
-
-        Path inDir = new Path(IN_DIR.toString());
-        Path outDir = new Path("./target/out/");
-
-        fileSystem.delete(outDir, true);
-
-        Job job = Job.getInstance(conf, "GAUL Integrator");
-        job.setJarByClass(IntegrationRunner.class);
-        job.setMapperClass(GAULMapper.class);
-        job.setMapOutputKeyClass(LongWritable.class);
-        job.setMapOutputValueClass(MapperOutput.class);
-        job.setReducerClass(GAULReducer.class);
-
-//        Add ontology to cache
-        job.addCacheFile(new URI(String.format("%s", ontologyPath)));
-
-        job.setInputFormatClass(PolygonFeatureInputFormat.class);
-        job.setOutputFormatClass(TextOutputFormat.class);
-        FileInputFormat.setInputDirRecursive(job, false);
-        FileInputFormat.setInputPaths(job, inDir);
-        FileOutputFormat.setOutputPath(job, outDir);
-        job.waitForCompletion(true);
-        assertTrue(job.isSuccessful());
-
+//        URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/gates-test/");
+//        URL OUT_DIR = GAULIntegratorTests.class.getClassLoader().getResource("out/");
+//
+//        Path inDir = new Path(IN_DIR.toString());
+//        Path outDir = new Path("./target/out/");
+//
+//        fileSystem.delete(outDir, true);
+//
+//        Job job = Job.getInstance(conf, "GAUL Integrator");
+//        job.setJarByClass(IntegrationRunner.class);
+//        job.setMapperClass(GAULMapper.class);
+//        job.setMapOutputKeyClass(LongWritable.class);
+//        job.setMapOutputValueClass(MapperOutput.class);
+//        job.setReducerClass(GAULReducer.class);
+//
+////        Add ontology to cache
+//        job.addCacheFile(new URI(String.format("%s", ontologyPath)));
+//
+//        job.setInputFormatClass(PolygonFeatureInputFormat.class);
+//        job.setOutputFormatClass(TextOutputFormat.class);
+//        FileInputFormat.setInputDirRecursive(job, false);
+//        FileInputFormat.setInputPaths(job, inDir);
+//        FileOutputFormat.setOutputPath(job, outDir);
+//        job.waitForCompletion(true);
+//        assertTrue(job.isSuccessful());
+//
 //        Try to find some individuals
         reasoner = new TrestleBuilder()
                 .withDBConnection(connectionString, userName, password)

@@ -1207,7 +1207,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
 
 //        Try to retrieve the object members in an async fashion
-//        We need to figure out the exists time of each object, so if the intersection point comes after the exists interval of the object, we grab the latest version of that object. Likewise temporal -> before -> object, grab the earliest
+//        We need to figure out the exists time of each object, so if the intersection point comes after the exists interval of the object, we grab the latest version of that object. Likewise intersection -> before -> object, grab the earliest
         final List<CompletableFuture<T>> completableFutureList = individualIRIs
                 .stream()
                 .map(iri -> CompletableFuture.supplyAsync(() -> {
