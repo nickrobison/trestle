@@ -4,3 +4,4 @@ binaries/
 src/main/webapp/**/*.js
 *.db
 aot/
+yarn-error.log
