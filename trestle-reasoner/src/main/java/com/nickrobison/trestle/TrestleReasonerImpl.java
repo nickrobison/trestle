@@ -10,6 +10,7 @@ import com.google.inject.Injector;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.nickrobison.trestle.caching.TrestleCache;
 import com.nickrobison.trestle.common.StaticIRI;
+import com.nickrobison.trestle.common.TrestlePair;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingFactException;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
@@ -77,7 +78,7 @@ import static com.nickrobison.trestle.utils.ConfigValidator.ValidateConfig;
 @SuppressWarnings({"methodref.inference.unimplemented"})
 public class TrestleReasonerImpl implements TrestleReasoner {
 
-    private static final Logger logger = LoggerFactory.getLogger(TrestleReasoner.class);
+    private static final Logger logger = LoggerFactory.getLogger(TrestleReasonerImpl.class);
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
     public static final String DEFAULTNAME = "trestle";
     public static final String ONTOLOGY_RESOURCE_NAME = "trestle.owl";
@@ -685,7 +686,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 if (objectFacts.isEmpty()) {
                     throw new NoValidStateException(individualIRI, validAtTemporal, dbAtTemporal);
                 }
-                ontology.returnAndCommitTransaction(tt);
                 final Instant individualRetrievalEnd = Instant.now();
                 logger.debug("Retrieving {} facts took {} ms", objectFacts.size(), Duration.between(individualRetrievalStart, individualRetrievalEnd).toMillis());
                 return objectFacts;
@@ -1196,14 +1196,34 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 .map(result -> result.getIndividual("m").toStringID())
                 .collect(Collectors.toSet());
 
+        final OffsetDateTime atTemporal = parseTemporalToOntologyDateTime(temporalIntersection, ZoneOffset.UTC);
+
 //        Try to retrieve the object members in an async fashion
+//        We need to figure out the exists time of each object, so if the intersection point comes after the exists interval of the object, we grab the latest version of that object. Likewise temporal -> before -> object, grab the earliest
         final List<CompletableFuture<T>> completableFutureList = individualIRIs
                 .stream()
-                .map(iri -> CompletableFuture.supplyAsync(() -> {
+        .map(iri -> CompletableFuture.supplyAsync(() -> {
                     final TrestleTransaction futureTransaction = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                    final Set<OWLDataPropertyAssertionAxiom> temporalsForIndividual = this.ontology.getTemporalsForIndividual(df.getOWLNamedIndividual(IRI.create(iri)));
+                    final Optional<TemporalObject> individualExistsTemporal = TemporalObjectBuilder.buildTemporalFromProperties(temporalsForIndividual, null, "blank");
+                    final TemporalObject temporalObject = individualExistsTemporal.orElseThrow(() -> new RuntimeException(String.format("Unable to get exists temporals for %s", iri)));
+                    final int compared = temporalObject.compareTo(atTemporal);
+                    final Temporal adjustedIntersection;
+                    if (compared == 1) { // Intersection is after object existence, get the latest version
+                        if (temporalObject.isInterval()) {
+//                            If the temporals are equal, we need to do a minus one precision unit, because the intervals are exclusive on the end ([))
+//                            FIXME(nrobison): This should only be adjusted if the temporals are equal
+                            adjustedIntersection = (Temporal) temporalObject.asInterval().getAdjustedToTime().get();
+                        } else {
+                            adjustedIntersection = temporalObject.asPoint().getPointTime();
+                        }
+                    } else if (compared == 0) { // Intersection is during existence, continue
+                        adjustedIntersection = atTemporal;
+                    } else { // Intersection is before object existence, get earliest version
+                        adjustedIntersection = temporalObject.getIdTemporal();
+                    }
                     try {
-                        final @NonNull T retrievedObject = this.readTrestleObject(clazz, iri, temporalIntersection, null);
-                        this.ontology.returnAndCommitTransaction(futureTransaction);
+                        final @NonNull T retrievedObject = this.readTrestleObject(clazz, iri, adjustedIntersection, null);
                         return retrievedObject;
                     } catch (TrestleClassException e) {
                         logger.error("Unregistered class", e);
@@ -1211,6 +1231,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     } catch (MissingOntologyEntity e) {
                         logger.error("Cannot find ontology individual {}", e.getIndividual(), e);
                         throw new RuntimeException(e);
+                    } finally {
+                        this.ontology.returnAndCommitTransaction(futureTransaction);
                     }
                 }))
                 .collect(Collectors.toList());

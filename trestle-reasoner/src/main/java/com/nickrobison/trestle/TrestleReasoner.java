@@ -321,7 +321,9 @@ public interface TrestleReasoner {
 
     /**
      * Retrieve all members of a specified concept that match a given class
-     *
+     * If the {@code spatialIntersection} parameter occurs outside of the exists range of the target TrestleObjects, the intersection point is adjusted, in order to return a valid object
+     * If the intersection point occurs before the TrestleObject, the earliest version of that object is returned
+     * If the intersection point occurs after the TrestleObject, the latest version of the object is returned
      * @param <T>                  - Generic type T of returned object
      * @param clazz                - Input class to retrieve from concept
      * @param conceptID            - String ID of concept to retrieve
