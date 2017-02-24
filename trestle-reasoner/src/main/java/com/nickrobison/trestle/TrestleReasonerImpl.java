@@ -362,14 +362,14 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                         .forEach(result -> {
 
                             final OWLDataPropertyAssertionAxiom existingFactValue = df.getOWLDataPropertyAssertionAxiom(
-                                    df.getOWLDataProperty(result.getIndividual("property").asOWLNamedIndividual().getIRI()),
-                                    result.getIndividual("individual"),
-                                    result.getLiteral("object"));
+                                    df.getOWLDataProperty(result.getIndividual("property").orElseThrow(() -> new RuntimeException("property is null")).asOWLNamedIndividual().getIRI()),
+                                    result.getIndividual("individual").orElseThrow(() -> new RuntimeException("individual is null")),
+                                    result.getLiteral("object").orElseThrow(() -> new RuntimeException("object is null")));
 //                            If we don't have this exact fact already asserted, we need to either insert a completely new one, or assert a new value for that fact
                             if (!individualFacts.get().contains(existingFactValue)) {
                                 individualFacts.get().stream().filter(fact -> fact.getProperty().equals(existingFactValue.getProperty())).findFirst().ifPresent(fact -> {
                                     final OffsetDateTime offsetDateTime = TemporalParser.parseTemporalToOntologyDateTime(factTemporal.asInterval().getFromTime(), ZoneOffset.UTC);
-                                    final String temporalUpdateQuery = this.qb.buildUpdateUnboundedTemporal(result.getIndividual("fact").asOWLNamedIndividual(), offsetDateTime);
+                                    final String temporalUpdateQuery = this.qb.buildUpdateUnboundedTemporal(result.getIndividual("fact").orElseThrow(() -> new RuntimeException("fact is null")).asOWLNamedIndividual(), offsetDateTime);
                                     this.ontology.executeUpdateSPARQL(temporalUpdateQuery);
                                     writeObjectFacts(owlNamedIndividual, Arrays.asList(fact), factTemporal, dTemporal);
                                 });
@@ -820,7 +820,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final List<Object> factValues = resultSet.getResults()
                 .stream()
                 .map(result -> result.getLiteral("value"))
-                .map(literal -> TypeConverter.extractOWLLiteral(datatype, literal))
+                .filter(Optional::isPresent)
+                .map(literal -> TypeConverter.extractOWLLiteral(datatype, literal.get()))
                 .collect(Collectors.toList());
         return Optional.of(factValues);
     }
@@ -886,7 +887,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         logger.debug("Spatial query returned in {} ms", Duration.between(start, end).toMillis());
         Set<IRI> intersectedIRIs = resultSet.getResults()
                 .stream()
-                .map(result -> IRI.create(result.getIndividual("m").toStringID()))
+                .map(result -> IRI.create(result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID()))
                 .collect(Collectors.toSet());
         logger.debug("Intersected with {} objects", intersectedIRIs.size());
         if (intersectedIRIs.size() == 0) {
@@ -936,7 +937,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         Map<@NonNull T, Double> relatedObjects = new HashMap<>();
         Map<IRI, Double> relatedObjectResults = new HashMap<>();
         resultSet.getResults()
-                .forEach(result -> relatedObjectResults.put(IRI.create(result.getIndividual("f").toStringID()), result.getLiteral("s").parseDouble()));
+                .forEach(result -> relatedObjectResults.put(IRI.create(result.getIndividual("f").orElseThrow(() -> new RuntimeException("fact is null")).toStringID()), result.getLiteral("s").orElseThrow(() -> new RuntimeException("strength is null")).parseDouble()));
 
         relatedObjectResults
                 .entrySet().forEach(entry -> {
@@ -970,7 +971,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         ListMultimap<String, String> conceptIndividuals = ArrayListMultimap.create();
         final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(conceptQuery);
         resultSet.getResults()
-                .forEach(result -> conceptIndividuals.put(result.getIndividual("concept").toStringID(), result.getIndividual("individual").toStringID()));
+                .forEach(result -> conceptIndividuals.put(result.getIndividual("concept").orElseThrow(() -> new RuntimeException("concept is null")).toStringID(), result.getIndividual("individual").orElseThrow(() -> new RuntimeException("individual is null")).toStringID()));
 
         if (conceptIndividuals.keySet().size() == 0) {
             logger.info("Individual {} has no related concepts");
@@ -1062,7 +1063,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final TrestleResultSet resultSet = ontology.executeSPARQLResults(query);
         List<String> individuals = resultSet.getResults()
                 .stream()
-                .map(result -> result.getIndividual("m").toStringID())
+                .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
                 .collect(Collectors.toList());
         return individuals;
     }
@@ -1118,13 +1119,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     sparqlResults.getResults()
                             .stream()
 //                            We want the subProperties of Temporal/Spatial relations. So we filter them out
-                            .filter(result -> !result.getIndividual("o").asOWLNamedIndividual().getIRI().equals(temporalRelationIRI))
-                            .filter(result -> !result.getIndividual("o").asOWLNamedIndividual().getIRI().equals(spatialRelationIRI))
+                            .filter(result -> !result.getIndividual("o").orElseThrow(() -> new RuntimeException("object is null")).asOWLNamedIndividual().getIRI().equals(temporalRelationIRI))
+                            .filter(result -> !result.getIndividual("o").orElseThrow(() -> new RuntimeException("object is null")).asOWLNamedIndividual().getIRI().equals(spatialRelationIRI))
 //                            Filter out self
-                            .filter(result -> !result.getIndividual("p").asOWLNamedIndividual().equals(individual))
-                            .forEach(result -> relations.add(new TrestleRelation(result.getIndividual("m").toStringID(),
-                                    ObjectRelation.getRelationFromIRI(IRI.create(result.getIndividual("o").toStringID())),
-                                    result.getIndividual("p").toStringID())));
+                            .filter(result -> !result.getIndividual("p").orElseThrow(() -> new RuntimeException("property is null")).asOWLNamedIndividual().equals(individual))
+                            .forEach(result -> relations.add(new TrestleRelation(result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID(),
+                                    ObjectRelation.getRelationFromIRI(IRI.create(result.getIndividual("o").orElseThrow(() -> new RuntimeException("object is null")).toStringID())),
+                                    result.getIndividual("p").orElseThrow(() -> new RuntimeException("property is null")).toStringID())));
                     return relations;
                 });
 
@@ -1175,7 +1176,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(queryString);
         final Set<String> intersectedConceptURIs = resultSet.getResults()
                 .stream()
-                .map(result -> result.getIndividual("m").toStringID())
+                .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
                 .collect(Collectors.toSet());
         this.ontology.returnAndCommitTransaction(trestleTransaction);
 
@@ -1193,7 +1194,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         Set<String> individualIRIs = this.ontology.executeSPARQLResults(retrievalStatement)
                 .getResults()
                 .stream()
-                .map(result -> result.getIndividual("m").toStringID())
+                .map(result -> result.getIndividual("m"))
+                .filter(Optional::isPresent)
+                .map(individual -> individual.get().toStringID())
                 .collect(Collectors.toSet());
 
         final OffsetDateTime atTemporal = parseTemporalToOntologyDateTime(temporalIntersection, ZoneOffset.UTC);
@@ -1770,7 +1773,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         List<OWLClass> datasetsInOntology = resultSet
                 .getResults()
                 .stream()
-                .map(result -> df.getOWLClass(result.getIndividual("dataset").toStringID()))
+                .map(result -> df.getOWLClass(result.getIndividual("dataset").orElseThrow(() -> new RuntimeException("dataset is null")).toStringID()))
                 .collect(Collectors.toList());
 
         return this.registeredClasses

@@ -57,9 +57,9 @@ public class SharedOntologyFunctions {
      */
     public static Set<OWLDataPropertyAssertionAxiom> getDataPropertiesFromIndividualFacts(OWLDataFactory df, TrestleResultSet resultSet) {
         return resultSet.getResults().stream().map(result -> df.getOWLDataPropertyAssertionAxiom(
-                df.getOWLDataProperty(IRI.create(result.getIndividual("property").toStringID())),
-                df.getOWLNamedIndividual(IRI.create(result.getIndividual("individual").toStringID())),
-                result.getLiteral("object")))
+                df.getOWLDataProperty(IRI.create(result.getIndividual("property").orElseThrow(() -> new RuntimeException("Unable to get property")).toStringID())),
+                df.getOWLNamedIndividual(IRI.create(result.getIndividual("individual").orElseThrow(() -> new RuntimeException("Unable to get individual")).toStringID())),
+                result.getLiteral("object").orElseThrow(() -> new RuntimeException("Unable to get object"))))
                 .collect(Collectors.toSet());
     }
 }
