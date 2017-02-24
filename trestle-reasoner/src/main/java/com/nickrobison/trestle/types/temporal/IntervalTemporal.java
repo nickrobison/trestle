@@ -8,10 +8,7 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.temporal.Temporal;
-import java.time.temporal.TemporalQueries;
-import java.time.temporal.TemporalQuery;
-import java.time.temporal.TemporalUnit;
+import java.time.temporal.*;
 import java.util.*;
 
 import static com.nickrobison.trestle.parser.TemporalParser.parseTemporalToOntologyDateTime;
@@ -142,12 +139,17 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
      * Temporal intervals are exclusive of the toTime, this method returns the latest inclusive value of the interval
      * Executes {@link TemporalQueries#precision()} to find the smallest supported value and subtracts 1 unit
      * If the interval is continuing, returns an empty optional
+     * If the precision is finer than {@link ChronoUnit#MICROS}, we return {@link ChronoUnit#MICROS}
      * @return - Optional temporal of type {@link T}
      */
     public Optional<T> getAdjustedToTime() {
         if (isContinuing()) return Optional.empty();
         final T end = this.getToTime().get();
         final TemporalUnit query = end.query(TemporalQueries.precision());
+//        We can't do precisions finer than Microseconds
+        if (((ChronoUnit) query).compareTo(ChronoUnit.MICROS) < 0) {
+            return Optional.of((T) end.minus(1, ChronoUnit.MICROS));
+        }
         return Optional.of((T) end.minus(1, query));
     }
 
