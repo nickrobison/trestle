@@ -23,6 +23,9 @@ import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFWriter;
+import org.eclipse.rdf4j.rio.Rio;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.IRI;
@@ -31,6 +34,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -270,7 +276,20 @@ public abstract class SesameOntology extends TransactingOntology {
 
     @Override
     public void writeOntology(IRI path, boolean validate) throws OWLOntologyStorageException {
-        logger.error("Write ontology not-implemented for Sesame Ontology");
+        final FileOutputStream fso;
+        try {
+            fso = new FileOutputStream(new File(path.toURI()));
+        } catch (FileNotFoundException e) {
+            logger.error("Cannot open file path", e);
+            return;
+        }
+        final RDFWriter writer = Rio.createWriter(RDFFormat.RDFXML, fso);
+        this.openTransaction(false);
+        try {
+            this.tc.get().export(writer);
+        } finally {
+            this.commitTransaction(false);
+        }
     }
 
     protected abstract void closeDatabase(boolean drop);
