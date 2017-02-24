@@ -6,6 +6,11 @@ import java.util.List;
 /**
  * Created by nrobison on 1/10/17.
  */
+
+/**
+ * ResultSet returned from {@link com.nickrobison.trestle.ontology.ITrestleOntology}
+ * Thread-safe and fully expanded, it allows us to
+ */
 public class TrestleResultSet {
 
     private int rows;
@@ -27,8 +32,8 @@ public class TrestleResultSet {
     }
 
     /**
-     * Add TrestleResult to TrestleResultSet
-     * @param result - TrestleResult to add
+     * Add {@link TrestleResult} to {@link TrestleResultSet}
+     * @param result - {@link TrestleResult} to add
      */
     public void addResult(TrestleResult result) {
         this.results.add(result);

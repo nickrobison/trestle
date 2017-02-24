@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.ontology.types;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLIndividual;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
@@ -28,24 +29,30 @@ public class TrestleResult {
         this.resultValues.put(varName, owlObject);
     }
 
-    public OWLLiteral getLiteral(String varName) {
+    public @Nullable OWLLiteral getLiteral(String varName) {
         if (resultValues.containsKey(varName)) {
             final OWLObject owlObject = resultValues.get(varName);
-            if (owlObject instanceof OWLLiteral) {
-                return OWLLiteral.class.cast(owlObject);
+            if (owlObject != null) {
+                if (owlObject instanceof OWLLiteral) {
+                    return OWLLiteral.class.cast(owlObject);
+                }
+                throw new RuntimeException(String.format("OWLObject for variable %s is not an OWLLiteral", varName));
             }
         }
-        throw new RuntimeException(String.format("OWLObject for variable %s is not an OWLLiteral", varName));
+        return null;
     }
 
-    public OWLIndividual getIndividual(String varName) {
+    public @Nullable OWLIndividual getIndividual(String varName) {
         if (resultValues.containsKey(varName)) {
             final OWLObject owlObject = resultValues.get(varName);
-            if (owlObject instanceof OWLIndividual) {
-                return OWLIndividual.class.cast(owlObject);
+            if (owlObject != null) {
+                if (owlObject instanceof OWLIndividual) {
+                    return OWLIndividual.class.cast(owlObject);
+                }
             }
+            throw new RuntimeException(String.format("OWLObject for variable %s is not an OWLIndividual", varName));
         }
-        throw new RuntimeException(String.format("OWLObject for variable %s is not an OWLIndividual", varName));
+        return null;
     }
 
     public Map<String, String> getResultValues() {

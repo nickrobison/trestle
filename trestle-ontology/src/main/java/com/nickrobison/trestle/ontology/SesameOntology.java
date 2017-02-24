@@ -4,7 +4,8 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
-import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.ontology.types.TrestleResult;
+import com.nickrobison.trestle.ontology.types.TrestleResultSet;;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.utils.SesameConnectionManager;
@@ -16,6 +17,9 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
+import org.eclipse.rdf4j.query.Binding;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
@@ -502,6 +506,33 @@ public abstract class SesameOntology extends TransactingOntology {
     }
 
     public abstract TrestleResultSet executeSPARQLResults(String queryString);
+
+    TrestleResultSet buildResultSet(TupleQueryResult resultSet) {
+        final TrestleResultSet trestleResultSet = new TrestleResultSet(0);
+        while (resultSet.hasNext()) {
+            final BindingSet next = resultSet.next();
+            final TrestleResult results = new TrestleResult();
+            final Set<String> varNames = next.getBindingNames();
+            varNames.forEach(varName -> {
+                final Binding binding = next.getBinding(varName);
+//                If the binding is null, value is unbound, so skip over it
+                if (binding != null) {
+                    final Value value = binding.getValue();
+//                FIXME(nrobison): This is broken, figure out how to get the correct subtypes
+                    if (value instanceof Literal) {
+                        final Optional<OWLLiteral> owlLiteral = createOWLLiteral(Literal.class.cast(value));
+                        owlLiteral.ifPresent(owlLiteral1 -> results.addValue(varName, owlLiteral1));
+                    } else {
+                        results.addValue(varName, df.getOWLNamedIndividual(IRI.create(value.stringValue())));
+                    }
+                } else {
+                    results.addValue(varName, null);
+                }
+            });
+            trestleResultSet.addResult(results);
+        }
+        return trestleResultSet;
+    }
 
     public abstract void openDatasetTransaction(boolean write);
 
