@@ -920,7 +920,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
     }
 
-//    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
+    //    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
     @Override
     @SuppressWarnings("return.type.incompatible")
     @Deprecated
@@ -1199,13 +1199,18 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 .map(individual -> individual.get().toStringID())
                 .collect(Collectors.toSet());
 
-        final OffsetDateTime atTemporal = parseTemporalToOntologyDateTime(temporalIntersection, ZoneOffset.UTC);
+        final OffsetDateTime atTemporal;
+        if (temporalIntersection != null) {
+        atTemporal = parseTemporalToOntologyDateTime(temporalIntersection, ZoneOffset.UTC);
+        } else {
+            atTemporal = OffsetDateTime.now();
+        }
 
 //        Try to retrieve the object members in an async fashion
 //        We need to figure out the exists time of each object, so if the intersection point comes after the exists interval of the object, we grab the latest version of that object. Likewise temporal -> before -> object, grab the earliest
         final List<CompletableFuture<T>> completableFutureList = individualIRIs
                 .stream()
-        .map(iri -> CompletableFuture.supplyAsync(() -> {
+                .map(iri -> CompletableFuture.supplyAsync(() -> {
                     final TrestleTransaction futureTransaction = this.ontology.createandOpenNewTransaction(trestleTransaction);
                     final Set<OWLDataPropertyAssertionAxiom> temporalsForIndividual = this.ontology.getTemporalsForIndividual(df.getOWLNamedIndividual(IRI.create(iri)));
                     final Optional<TemporalObject> individualExistsTemporal = TemporalObjectBuilder.buildTemporalFromProperties(temporalsForIndividual, null, "blank");
@@ -1214,8 +1219,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     final Temporal adjustedIntersection;
                     if (compared == 1) { // Intersection is after object existence, get the latest version
                         if (temporalObject.isInterval()) {
-//                            If the temporals are equal, we need to do a minus one precision unit, because the intervals are exclusive on the end ([))
-//                            FIXME(nrobison): This should only be adjusted if the temporals are equal
+//                            we need to do a minus one precision unit, because the intervals are exclusive on the end {[)}
                             adjustedIntersection = (Temporal) temporalObject.asInterval().getAdjustedToTime().get();
                         } else {
                             adjustedIntersection = temporalObject.asPoint().getPointTime();
