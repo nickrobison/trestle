@@ -5,10 +5,16 @@ import com.nickrobison.trestle.types.TemporalType;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
+import java.time.temporal.TemporalQueries;
+import java.time.temporal.TemporalQuery;
+import java.time.temporal.TemporalUnit;
 import java.util.*;
+
+import static com.nickrobison.trestle.parser.TemporalParser.parseTemporalToOntologyDateTime;
 
 /**
  * Created by nrobison on 6/30/16.
@@ -92,6 +98,21 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     }
 
     @Override
+    public int compareTo(OffsetDateTime comparingTemporal) {
+        final OffsetDateTime t1 = parseTemporalToOntologyDateTime(this.fromTime, ZoneOffset.of(this.startTimeZone.getId()));
+        if (this.isContinuing()) {
+            if (t1.compareTo(comparingTemporal) > 0) return -1;
+            return 0;
+        } else {
+            //noinspection OptionalGetWithoutIsPresent
+            final OffsetDateTime t2 = parseTemporalToOntologyDateTime(this.toTime.get(), ZoneOffset.of(this.startTimeZone.getId()));
+            if (t2.compareTo(comparingTemporal) <= 0) return 1;
+            if (t2.compareTo(comparingTemporal) >0 && t1.compareTo(comparingTemporal) <= 0) return 0;
+            return -1;
+        }
+    }
+
+    @Override
     public boolean isPoint() {
         return false;
     }
@@ -117,6 +138,19 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         return this.toTime;
     }
 
+    /**
+     * Temporal intervals are exclusive of the toTime, this method returns the latest inclusive value of the interval
+     * Executes {@link TemporalQueries#precision()} to find the smallest supported value and subtracts 1 unit
+     * If the interval is continuing, returns an empty optional
+     * @return - Optional temporal of type {@link T}
+     */
+    public Optional<T> getAdjustedToTime() {
+        if (isContinuing()) return Optional.empty();
+        final T end = this.getToTime().get();
+        final TemporalUnit query = end.query(TemporalQueries.precision());
+        return Optional.of((T) end.minus(1, query));
+    }
+
     public String getStartName() {
         return this.startName.orElse("intervalStart");
     }
@@ -131,6 +165,11 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
     public ZoneId getEndTimeZone() {
         return this.endTimeZone;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s - %s", this.fromTime, this.toTime.orElse(null));
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -263,7 +302,5 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         public IntervalTemporal build() {
             return new IntervalTemporal(this);
         }
-
-
     }
 }
