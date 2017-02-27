@@ -1,4 +1,6 @@
 @import "~@angular/material/core/theming/all-theme";
+@import "~codemirror/lib/codemirror";
+@import "~codemirror/theme/material";
 
 @include md-core();
 

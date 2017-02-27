@@ -4,6 +4,7 @@ password: "spatial1"
 #connectionString: "http://localhost:7200"
 #username: ""
 #password: ""
+ontology: "hadoop_gaul_updated"
 
 logging:
   level: INFO

@@ -14,6 +14,8 @@ import {PermissionsGuard} from "../PermissionsGuard";
 import {Privileges} from "../authentication.service";
 import {FormsModule} from "@angular/forms";
 import {UserAddDialog} from "./users/users.add.dialog";
+import {QueryComponent} from "./query/query.component";
+import {CodeMirrorComponent} from "./query/codemirror/codemirror.component";
 
 interface ITrestleRoute extends Route {
     data?: ITrestleRouteData
@@ -26,13 +28,14 @@ interface ITrestleRouteData {
 const routes: Array<ITrestleRoute> = [
     {path: "", component: AdminComponent, children: [
         {path: "dashboard", component: DashboardComponent},
+        {path: "query", component: QueryComponent},
         {path: "users", component: UsersComponent, canActivate: [LoggedInGuard, PermissionsGuard], data: {roles: [Privileges.ADMIN]}},
         {path: "", redirectTo: "/dashboard", pathMatch: "full"}
     ]}
 ];
 
 @NgModule({
-    declarations: [DashboardComponent, AdminComponent, UsersComponent, UserAddDialog, MapValuesPipe],
+    declarations: [DashboardComponent, AdminComponent, UsersComponent, CodeMirrorComponent, QueryComponent, UserAddDialog, MapValuesPipe],
     imports: [
         MaterialModule,
         CommonModule,

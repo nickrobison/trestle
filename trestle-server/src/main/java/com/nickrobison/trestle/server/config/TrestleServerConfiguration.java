@@ -19,6 +19,8 @@ public class TrestleServerConfiguration extends Configuration {
     private String username;
     @NotNull
     private String password;
+    @NotEmpty
+    private String ontology;
     @Valid
     @NotNull
     @JsonProperty
@@ -56,6 +58,16 @@ public class TrestleServerConfiguration extends Configuration {
     @JsonProperty
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    @JsonProperty
+    public String getOntology() {
+        return this.ontology;
+    }
+
+    @JsonProperty
+    public void setOntology(String ontology) {
+        this.ontology = ontology;
     }
 
     @JsonProperty("database")
