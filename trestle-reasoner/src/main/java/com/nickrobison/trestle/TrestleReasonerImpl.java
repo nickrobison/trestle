@@ -219,6 +219,19 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
+    public Map<String, String> getReasonerPrefixes() {
+        Map<String, String> prefixes = new HashMap<>();
+        prefixes.put(":", this.REASONER_PREFIX);
+        prefixes.putAll(this.getUnderlyingOntology().getUnderlyingPrefixManager().getPrefixName2PrefixMap());
+        return prefixes;
+    }
+
+    @Override
+    public TrestleResultSet executeSPARQLSelect(String queryString) {
+        return this.ontology.executeSPARQLResults(queryString);
+    }
+
+    @Override
     public Set<OWLNamedIndividual> getInstances(Class inputClass) {
         final OWLClass owlClass = trestleParser.classParser.getObjectClass(inputClass);
         return this.ontology.getInstances(owlClass, true);

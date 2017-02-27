@@ -1,7 +1,10 @@
 /**
  * Created by nrobison on 2/26/17.
  */
-import {Component, AfterViewInit, ViewChild, ElementRef} from "@angular/core";
+import {
+    Component, AfterViewInit, ViewChild, ElementRef, Output, EventEmitter, Input, OnChanges,
+    SimpleChanges, OnInit
+} from "@angular/core";
 import * as CodeMirror from "codemirror";
 
 @Component({
@@ -10,10 +13,13 @@ import * as CodeMirror from "codemirror";
     styleUrls: ["./codemirror.component.css"]
 })
 
-export class CodeMirrorComponent implements AfterViewInit {
+export class CodeMirrorComponent implements AfterViewInit, OnChanges {
+
     private _value = "function myScript(){return 100;}\n";
 
     @ViewChild("code") host: ElementRef;
+    @Input() prefixes: string;
+    @Output() query = new EventEmitter<string>();
     private instance: CodeMirror.Editor;
 
     constructor() {
@@ -23,12 +29,32 @@ export class CodeMirrorComponent implements AfterViewInit {
         this.instance = CodeMirror.fromTextArea(this.host.nativeElement, {
             lineNumbers: true,
             theme: "material",
-            mode: {
-                name: "javascript",
-                globalVars: true
-            }
+            mode: "sparql"
+            // mode: {
+            //     name: "javascript",
+            //     globalVars: true
+            // }
         });
-        this.instance.setValue(this._value);
-        // this.instance.setSize(400, 300);
+        // console.debug("Setting value", this.prefixes);
+        // this.instance.setValue(this.prefixes);
     }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        console.debug("Updating text from:", changes["prefixes"].previousValue, "to:", changes["prefixes"].currentValue, "old:", this.prefixes);
+        // if ((changes["prefixes"].currentValue !== this.prefixes) && (this.instance != null)) {
+        //     console.debug("Updating text", changes["prefixes"]);
+            this.prefixes = changes["prefixes"].currentValue;
+            if (this.instance != null) {
+                console.debug("defined, updating");
+                this.instance.setValue(this.prefixes);
+            }
+            // this.instance.setValue(changes["prefixes"].currentValue);
+        // }
+    }
+
+    submitQuery() {
+        this.query.next(this.instance.getValue());
+    }
+
+
 }

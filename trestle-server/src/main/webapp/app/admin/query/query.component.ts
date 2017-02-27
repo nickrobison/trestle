@@ -2,8 +2,9 @@
  * Created by nrobison on 2/24/17.
  */
 import {
-    Component, ViewEncapsulation
+    Component, ViewEncapsulation, OnInit
 } from "@angular/core";
+import {QueryService, ITrestleResultSet} from "./codemirror/query.service";
 
 @Component({
     selector: "query-engine",
@@ -12,9 +13,40 @@ import {
     encapsulation: ViewEncapsulation.None
 })
 
-export class QueryComponent {
+export class QueryComponent implements OnInit {
 
-    constructor() {
+    prefixes: string = "function myScript(){return 100;}\n";
 
+    constructor(private queryService: QueryService) { }
+
+    executeQuery(queryString: string) {
+        console.debug("Executing query:", queryString);
+        this.queryService.executeQuery(queryString)
+            .subscribe((result: ITrestleResultSet) => {
+            console.debug("Results:", result);
+            }, (error) => {
+            console.error(error);
+            });
+    }
+
+    ngOnInit(): void {
+        this.queryService.getPrefixes()
+            .subscribe(prefixObject => {
+                console.debug("has prefixObject:", prefixObject);
+                let prefixString: Array<string> = [];
+                Object.keys(prefixObject).forEach(key => {
+                    console.debug("Key:", key, "Value:", prefixObject[key]);
+                    prefixString.push("PREFIX ", key, " <", prefixObject[key], ">\n");
+                });
+                console.debug("Built string:", prefixString.join(""));
+                this.prefixes = prefixString.join("");
+                // prefixObject.forEach((key, value) => {
+                //     console.debug("Key:", key, "Value:", value);
+                // });
+                // prefixObject.fo()
+                //     .next(entry => {
+                //         console.debug(entry);
+                //     })
+            });
     }
 }

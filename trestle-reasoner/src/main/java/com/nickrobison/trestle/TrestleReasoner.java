@@ -5,6 +5,7 @@ import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
+import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
@@ -51,6 +52,19 @@ public interface TrestleReasoner {
 
     //    When you get the ontology, the ownership passes away, so then the reasoner can't perform any more queries.
     ITrestleOntology getUnderlyingOntology();
+
+    /**
+     * Get the currently registered prefixes and URIs
+     * @return - {@link Map} of prefixes and their corresponding URIs
+     */
+    Map<String, String> getReasonerPrefixes();
+
+    /**
+     * Execute SPARQL select query
+     * @param queryString - Query String
+     * @return - {@link TrestleResultSet}
+     */
+    TrestleResultSet executeSPARQLSelect(String queryString);
 
     Set<OWLNamedIndividual> getInstances(Class inputClass);
 

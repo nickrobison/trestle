@@ -27,4 +27,8 @@ public class TrestleResultSet {
     public List<TrestleResult> getResults() {
         return this.results;
     }
+
+    public int getRows() {
+        return this.rows;
+    }
 }
