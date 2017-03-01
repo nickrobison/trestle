@@ -228,7 +228,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public TrestleResultSet executeSPARQLSelect(String queryString) {
-        return this.ontology.executeSPARQLResults(queryString);
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+        final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(queryString);
+        this.ontology.returnAndCommitTransaction(trestleTransaction);
+        return resultSet;
     }
 
     @Override
@@ -249,7 +252,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         Instant end = Instant.now();
         logger.info("Writing Ontology took {} ms", Duration.between(start, end).toMillis());
     }
-
 
 //    ----------------------------
 //    Validate Methods

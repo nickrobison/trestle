@@ -698,7 +698,7 @@ public abstract class JenaOntology extends TransactingOntology {
      * @return - TrestleResultSet
      */
     TrestleResultSet buildResultSet(ResultSet resultSet) {
-        final TrestleResultSet trestleResultSet = new TrestleResultSet(resultSet.getRowNumber());
+        final TrestleResultSet trestleResultSet = new TrestleResultSet(resultSet.getRowNumber(), resultSet.getResultVars());
         while (resultSet.hasNext()) {
             final QuerySolution next = resultSet.next();
             final TrestleResult results = new TrestleResult();
@@ -715,6 +715,7 @@ public abstract class JenaOntology extends TransactingOntology {
             }
             trestleResultSet.addResult(results);
         }
+        trestleResultSet.updateRowCount();
         return trestleResultSet;
     }
 

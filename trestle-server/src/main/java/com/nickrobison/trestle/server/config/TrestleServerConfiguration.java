@@ -21,6 +21,8 @@ public class TrestleServerConfiguration extends Configuration {
     private String password;
     @NotEmpty
     private String ontology;
+    @NotEmpty
+    private String prefix;
     @Valid
     @NotNull
     @JsonProperty
@@ -63,6 +65,16 @@ public class TrestleServerConfiguration extends Configuration {
     @JsonProperty
     public String getOntology() {
         return this.ontology;
+    }
+
+    @JsonProperty
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
+    }
+
+    @JsonProperty
+    public String getPrefix() {
+        return this.prefix;
     }
 
     @JsonProperty

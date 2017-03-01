@@ -8,12 +8,22 @@ import java.util.List;
  */
 public class TrestleResultSet {
 
-    private final int rows;
+    private int rows;
+    private final List<String> bindingNames;
     private final List<TrestleResult> results;
 
-    public TrestleResultSet(int rows) {
+    public TrestleResultSet(int rows, List<String> bindingNames) {
         this.rows = rows;
         this.results = new ArrayList<>();
+        this.bindingNames = bindingNames;
+    }
+
+    /**
+     * Get a {@link List} of result bindings
+     * @return - {@link List} of String result bindings
+     */
+    public List<String> getBindingNames() {
+        return this.bindingNames;
     }
 
     /**
@@ -30,5 +40,9 @@ public class TrestleResultSet {
 
     public int getRows() {
         return this.rows;
+    }
+
+    public void updateRowCount() {
+        this.rows = this.results.size();
     }
 }
