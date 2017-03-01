@@ -30,13 +30,7 @@ export class CodeMirrorComponent implements AfterViewInit, OnChanges {
             lineNumbers: true,
             theme: "material",
             mode: "sparql"
-            // mode: {
-            //     name: "javascript",
-            //     globalVars: true
-            // }
         });
-        // console.debug("Setting value", this.prefixes);
-        // this.instance.setValue(this.prefixes);
     }
 
     ngOnChanges(changes: SimpleChanges): void {

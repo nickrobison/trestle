@@ -47,6 +47,9 @@ export class QueryComponent implements OnInit {
                 let prefixString: Array<string> = [];
                 Object.keys(prefixObject).forEach(key => {
                     console.debug("Key:", key, "Value:", prefixObject[key]);
+                    if (key == ":") {
+                        prefixString.push("BASE : ", "<", prefixObject[key], ">\n");
+                    }
                     prefixString.push("PREFIX ", key, " <", prefixObject[key], ">\n");
                 });
                 console.debug("Built string:", prefixString.join(""));
