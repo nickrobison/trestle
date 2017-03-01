@@ -31,8 +31,20 @@ export class QueryService {
     }
 
     executeQuery(queryString: string): Observable<ITrestleResultSet> {
+        console.debug("Query string:", queryString);
         return this.authHttp.post("/query", queryString)
             .map((res: Response) => res.json())
-            .catch((error: Error) => Observable.throw(error || "Server Error"));
+            .catch(this.handleError);
+    }
+
+    private handleError(error: Response | any) {
+        console.error(error);
+        let errMsg: string;
+        if (error instanceof Response) {
+            errMsg = error.text();
+        } else {
+            errMsg = error.message ? error.message : error.toString();
+        }
+        return Observable.throw(errMsg);
     }
 }

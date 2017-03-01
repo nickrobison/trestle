@@ -5,6 +5,7 @@ import {
     Component, ViewEncapsulation, OnInit
 } from "@angular/core";
 import {QueryService, ITrestleResultSet} from "./query.service";
+import {Response} from "@angular/http";
 
 @Component({
     selector: "query-engine",
@@ -17,17 +18,25 @@ export class QueryComponent implements OnInit {
 
     prefixes: string = "";
     results: ITrestleResultSet = null;
+    errorMessage: string = null;
+    loading = false;
 
     constructor(private queryService: QueryService) { }
 
     executeQuery(queryString: string) {
         console.debug("Executing query:", queryString);
+        this.loading = true;
+        this.errorMessage = null;
         this.queryService.executeQuery(queryString)
             .subscribe((result: ITrestleResultSet) => {
             console.debug("Results:", result);
+            this.loading = false;
             this.results = result;
-            }, (error) => {
+            }, (error: Response) => {
             console.error(error);
+            this.loading = false;
+            this.results = null;
+            this.errorMessage = error.toString();
             });
     }
 
@@ -42,13 +51,6 @@ export class QueryComponent implements OnInit {
                 });
                 console.debug("Built string:", prefixString.join(""));
                 this.prefixes = prefixString.join("");
-                // prefixObject.forEach((key, value) => {
-                //     console.debug("Key:", key, "Value:", value);
-                // });
-                // prefixObject.fo()
-                //     .next(entry => {
-                //         console.debug(entry);
-                //     })
             });
     }
 }
