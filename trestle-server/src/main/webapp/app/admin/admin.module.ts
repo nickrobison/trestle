@@ -17,7 +17,7 @@ import {UserAddDialog} from "./users/users.add.dialog";
 import {QueryComponent} from "./query/query.component";
 import {CodeMirrorComponent} from "./query/codemirror/codemirror.component";
 import {QueryService} from "./query/query.service";
-import {QueryViewer, MapKeysPipe} from "./query/query-viewer/query-viewer.component";
+import {QueryViewer} from "./query/query-viewer/query-viewer.component";
 
 interface ITrestleRoute extends Route {
     data?: ITrestleRouteData
@@ -37,7 +37,7 @@ const routes: Array<ITrestleRoute> = [
 ];
 
 @NgModule({
-    declarations: [DashboardComponent, AdminComponent, UsersComponent, CodeMirrorComponent, QueryComponent, QueryViewer, UserAddDialog, MapValuesPipe, MapKeysPipe],
+    declarations: [DashboardComponent, AdminComponent, UsersComponent, CodeMirrorComponent, QueryComponent, QueryViewer, UserAddDialog, MapValuesPipe],
     imports: [
         MaterialModule,
         CommonModule,

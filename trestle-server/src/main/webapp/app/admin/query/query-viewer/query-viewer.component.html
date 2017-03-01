@@ -7,8 +7,7 @@ Query results: {{queryData?.rows}}
     </thead>
     <tbody>
     <tr *ngFor="let result of queryData.results">
-        <td *ngFor="let value of result.resultValues | mapKeys">{{value.value}}</td>
-        <!--<td *ngFor="let item of result | mapValues">{{item}}</td>-->
+        <td *ngFor="let name of queryData.bindingNames">{{result.resultValues[name]}}</td>
     </tr>
     </tbody>
 </table>
