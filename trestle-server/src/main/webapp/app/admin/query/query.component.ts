@@ -4,7 +4,7 @@
 import {
     Component, ViewEncapsulation, OnInit
 } from "@angular/core";
-import {QueryService, ITrestleResultSet} from "./codemirror/query.service";
+import {QueryService, ITrestleResultSet} from "./query.service";
 
 @Component({
     selector: "query-engine",
@@ -15,7 +15,8 @@ import {QueryService, ITrestleResultSet} from "./codemirror/query.service";
 
 export class QueryComponent implements OnInit {
 
-    prefixes: string = "function myScript(){return 100;}\n";
+    prefixes: string = "";
+    results: ITrestleResultSet = null;
 
     constructor(private queryService: QueryService) { }
 
@@ -24,6 +25,7 @@ export class QueryComponent implements OnInit {
         this.queryService.executeQuery(queryString)
             .subscribe((result: ITrestleResultSet) => {
             console.debug("Results:", result);
+            this.results = result;
             }, (error) => {
             console.error(error);
             });

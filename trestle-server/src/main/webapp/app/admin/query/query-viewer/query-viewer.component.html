@@ -1,0 +1,14 @@
+Query results: {{queryData?.rows}}
+<table class="centered highlight responsive-table" *ngIf="queryData">
+    <thead>
+    <tr>
+        <th *ngFor="let name of queryData.bindingNames">{{name}}</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let result of queryData.results">
+        <td *ngFor="let value of result.resultValues | mapKeys">{{value.value}}</td>
+        <!--<td *ngFor="let item of result | mapValues">{{item}}</td>-->
+    </tr>
+    </tbody>
+</table>
