@@ -224,7 +224,7 @@ public class GraphDBOntology extends SesameOntology {
     }
 
     TrestleResultSet buildResultSet(TupleQueryResult resultSet) {
-        final TrestleResultSet trestleResultSet = new TrestleResultSet(0);
+        final TrestleResultSet trestleResultSet = new TrestleResultSet(0, resultSet.getBindingNames());
         while (resultSet.hasNext()) {
             final BindingSet next = resultSet.next();
             final TrestleResult results = new TrestleResult();
@@ -241,6 +241,7 @@ public class GraphDBOntology extends SesameOntology {
             });
             trestleResultSet.addResult(results);
         }
+        trestleResultSet.updateRowCount();
         return trestleResultSet;
     }
 

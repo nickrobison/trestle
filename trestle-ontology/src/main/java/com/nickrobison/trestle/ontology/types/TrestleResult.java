@@ -47,4 +47,14 @@ public class TrestleResult {
         }
         throw new RuntimeException(String.format("OWLObject for variable %s is not an OWLIndividual", varName));
     }
+
+    public Map<String, String> getResultValues() {
+        Map<String, String> stringMap = new HashMap<>();
+        this.resultValues
+                .entrySet()
+                .forEach(entry -> {
+                    stringMap.put(entry.getKey(), entry.getValue().toString());
+                });
+        return stringMap;
+    }
 }

@@ -223,6 +223,22 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
+    public Map<String, String> getReasonerPrefixes() {
+        Map<String, String> prefixes = new HashMap<>();
+        prefixes.put(":", this.REASONER_PREFIX);
+        prefixes.putAll(this.getUnderlyingOntology().getUnderlyingPrefixManager().getPrefixName2PrefixMap());
+        return prefixes;
+    }
+
+    @Override
+    public TrestleResultSet executeSPARQLSelect(String queryString) {
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+        final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(queryString);
+        this.ontology.returnAndCommitTransaction(trestleTransaction);
+        return resultSet;
+    }
+
+    @Override
     public Set<OWLNamedIndividual> getInstances(Class inputClass) {
         final OWLClass owlClass = trestleParser.classParser.getObjectClass(inputClass);
         return this.ontology.getInstances(owlClass, true);
@@ -240,7 +256,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         Instant end = Instant.now();
         logger.info("Writing Ontology took {} ms", Duration.between(start, end).toMillis());
     }
-
 
 //    ----------------------------
 //    Validate Methods

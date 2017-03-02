@@ -1,6 +1,25 @@
-connectionString: "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial"
-username: "spatialUser"
-password: "spatial1"
+#connectionString: "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial"
+#username: "spatialUser"
+#password: "spatial1"
+connectionString: "http://localhost:7200"
+username: ""
+password: ""
+ontology: "hadoop_gaul_updated"
+prefix: "http://nickrobison.com/test/hadoop.owl"
 
 logging:
   level: INFO
+
+database:
+  driverClass: org.h2.Driver
+  user: sa
+  url: jdbc:h2:./trestle.db
+  properties:
+    charSet: UTF-8
+    hibernate.dialect: org.hibernate.dialect.H2Dialect
+
+jwt:
+  authHeader: "Authorization"
+  authSalt: "test-salt"
+logging:
+  level: DEBUG
