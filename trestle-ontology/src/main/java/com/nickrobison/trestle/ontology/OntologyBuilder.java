@@ -201,12 +201,12 @@ public class OntologyBuilder {
     private OWLOntologyIRIMapper getImportsMapper()
     {
         OWLOntologyIRIMapper iriMapper = new OWLOntologyIRIMapper() {
-            private Config importsConfig = config.getConfig("trestle.ontology.imports");
+            private Config importsConfig = ConfigFactory.load().getConfig("trestle.ontology.imports");
             private String importsDirPath = importsConfig.getString("importsDirectory");
             private Map<IRI,String> fileMap;
             {
 
-                fileMap = new HashMap<IRI,String>();
+                fileMap = new HashMap<>();
                 for(ConfigObject mappingObj : importsConfig.getObjectList("importsIRIMappings"))
                 {
                     Config mappingConfig = mappingObj.toConfig();
@@ -241,15 +241,23 @@ public class OntologyBuilder {
                 URL fileURL = OntologyBuilder.this.getClass().getClassLoader().getResource("ontology/imports/" +fileName);
                 if (fileURL!=null)
                 {
-                    File importOntFile = null;
-                    try {
-                        importOntFile = new File(fileURL.toURI());
-                        //File importOntFile = new File(importsDirPath+fileName);
-                        if(importOntFile.exists()&&importOntFile.isFile()&&importOntFile.canRead()) {
-                            documentIRI = IRI.create(importOntFile);
+                    if (!fileURL.getProtocol().equals("jar")) {
+                        File importOntFile = null;
+                        try {
+                            importOntFile = new File(fileURL.toURI());
+                            //File importOntFile = new File(importsDirPath+fileName);
+                            if (importOntFile.exists() && importOntFile.isFile() && importOntFile.canRead()) {
+                                documentIRI = IRI.create(importOntFile);
+                            }
+                        } catch (URISyntaxException e) {
+                            e.printStackTrace();
                         }
-                    } catch (URISyntaxException e) {
-                        e.printStackTrace();
+                    } else {
+                        try {
+                            documentIRI = IRI.create(fileURL.toURI());
+                        } catch (URISyntaxException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
 
