@@ -73,7 +73,7 @@ public class IRIUtils {
     /**
      * Takes an IRI string and returns the individual name from the full string
      * Returns everything after the # character in the IRI, or returns an empty string
-     * @param iri - IRI to extract name from
+     * @param iriString - IRI to extract name from
      * @return - String of individual name
      */
     public static @Nullable String extractTrestleIndividualName(@Nullable String iriString) {
