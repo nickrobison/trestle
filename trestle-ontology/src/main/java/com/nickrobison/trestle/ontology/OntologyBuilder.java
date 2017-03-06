@@ -1,6 +1,8 @@
 package com.nickrobison.trestle.ontology;
 
-import com.typesafe.config.*;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigObject;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.io.IRIDocumentSource;
 import org.semanticweb.owlapi.io.StreamDocumentSource;
@@ -14,7 +16,6 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
-import java.util.Optional;
 
 import static com.nickrobison.trestle.common.StaticIRI.GEOSPARQLPREFIX;
 import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
@@ -241,23 +242,20 @@ public class OntologyBuilder {
                 URL fileURL = OntologyBuilder.this.getClass().getClassLoader().getResource("ontology/imports/" +fileName);
                 if (fileURL!=null)
                 {
+                    File importOntFile = null;
                     if (!fileURL.getProtocol().equals("jar")) {
-                        File importOntFile = null;
+
                         try {
                             importOntFile = new File(fileURL.toURI());
-                            //File importOntFile = new File(importsDirPath+fileName);
-                            if (importOntFile.exists() && importOntFile.isFile() && importOntFile.canRead()) {
-                                documentIRI = IRI.create(importOntFile);
-                            }
                         } catch (URISyntaxException e) {
                             e.printStackTrace();
                         }
                     } else {
-                        try {
-                            documentIRI = IRI.create(fileURL.toURI());
-                        } catch (URISyntaxException e) {
-                            e.printStackTrace();
-                        }
+                            importOntFile = new File(importsDirPath + "/" + fileName);
+
+                    }
+                    if (importOntFile != null && importOntFile.exists() && importOntFile.isFile() && importOntFile.canRead()) {
+                        documentIRI = IRI.create(importOntFile);
                     }
                 }
 
