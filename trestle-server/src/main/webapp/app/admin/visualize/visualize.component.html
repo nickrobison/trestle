@@ -1,0 +1,13 @@
+Visualize!
+<form (ngSubmit)="onSubmit()">
+<md-input-container class="search-field">
+    <input type="text" placeholder="Search for Individual" mdInput [formControl]="individualName" [mdAutocomplete]="auto">
+</md-input-container>
+
+<md-autocomplete class="search-field" #auto="mdAutocomplete">
+    <md-option *ngFor="let option of options | async" [value]="option">
+        {{option}}
+    </md-option>
+</md-autocomplete>
+    <button md-raised-button type="submit">submit</button>
+</form>
