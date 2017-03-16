@@ -89,9 +89,11 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
 
     private setupD3() {
         this.host = select(this.htmlElement);
-        this.margin = {top: 20, right: 90, bottom: 30, left: 90};
+        this.margin = {top: 10, right: 10, bottom: 10, left: 10};
+        console.debug("offsetWidth", this.htmlElement.offsetWidth);
         this.width = this.htmlElement.offsetWidth - this.margin.left - this.margin.right;
         this.height = 500 - this.margin.top - this.margin.bottom;
+        console.debug("Creating D3 graph with width/height", this.width + "/" + this.height);
         this.svg = this.host.html("")
             .append("svg")
             .attr("width", this.width + this.margin.left + this.margin.right)
@@ -100,7 +102,6 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
 
         this.color = scaleOrdinal(schemeCategory20);
-
         console.debug("D3 initialized");
     }
 
@@ -124,6 +125,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         this.nodes = nodeData.enter()
             .append("circle")
             .attr("class", "node")
+            .attr("r", this.width / 500)
             .style("fill", (d) => this.color(d.group.toString(10)));
 
         this.nodes
@@ -139,7 +141,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             .enter()
             .append("g")
             .attr("class", "legend")
-            .attr("transform", (d, i) => "translate(0," + (i * ((this.width / 100) * 2) + 20) + ")");
+            .attr("transform", (d, i) => "translate(0," + (i * ((this.width / 100) * 2) + 50) + ")");
 
         legend.append("circle")
             .attr("cx", this.width - 18)
@@ -149,7 +151,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
 
         legend
             .append("text")
-            .attr("x", this.width - (this.width / 100) * 2 - 10)
+            .attr("x", this.width - (this.width / 100) * 2 - 20)
             .attr("y", this.width / 100)
             .attr("dy", "0.35em")
             .style("text-anchor", "end")

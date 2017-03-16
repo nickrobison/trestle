@@ -1,11 +1,12 @@
 /**
  * Created by nrobison on 3/7/17.
  */
-import {Component, OnInit} from "@angular/core";
-import {VisualizeService, ITrestleIndividual} from "./visualize.service";
+import {Component, OnInit, ViewContainerRef} from "@angular/core";
+import {VisualizeService, ITrestleIndividual, ITrestleFact} from "./visualize.service";
 import {FormControl} from "@angular/forms";
 import {Observable} from "rxjs";
-import {IIndividualConfig} from "./individual-graph.component";
+import {MdDialog, MdDialogConfig, MdDialogRef} from "@angular/material";
+import {IndividualValueDialog} from "./individual-value.dialog";
 
 @Component({
     selector: "visualize",
@@ -17,8 +18,9 @@ export class VisualizeComponent implements OnInit {
     individualName = new FormControl();
     options: Observable<Array<string>>;
     individual: ITrestleIndividual;
+    private dialogRef: MdDialogRef<IndividualValueDialog>;
 
-    constructor(private vs: VisualizeService) {
+    constructor(private vs: VisualizeService, private dialog: MdDialog, private viewContainerRef: ViewContainerRef) {
     }
 
     ngOnInit(): void {
@@ -36,5 +38,14 @@ export class VisualizeComponent implements OnInit {
                 console.debug("has individual", results);
                 this.individual = results;
             });
+    }
+
+    openValueModal(fact: ITrestleFact): void {
+        let config = new MdDialogConfig();
+        config.viewContainerRef = this.viewContainerRef;
+        this.dialogRef = this.dialog.open(IndividualValueDialog, config);
+        this.dialogRef.componentInstance.name = fact.name;
+        this.dialogRef.componentInstance.value = fact.value;
+        this.dialogRef.afterClosed().subscribe(() => this.dialogRef = null);
     }
 }

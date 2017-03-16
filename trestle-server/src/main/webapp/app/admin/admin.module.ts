@@ -21,6 +21,7 @@ import {QueryViewer} from "./query/query-viewer/query-viewer.component";
 import {VisualizeService} from "./visualize/visualize.service";
 import {VisualizeComponent} from "./visualize/visualize.component";
 import {IndividualGraph} from "./visualize/individual-graph.component";
+import {IndividualValueDialog} from "./visualize/individual-value.dialog";
 
 interface ITrestleRoute extends Route {
     data?: ITrestleRouteData
@@ -50,6 +51,7 @@ const routes: Array<ITrestleRoute> = [
         QueryViewer,
         VisualizeComponent,
         IndividualGraph,
+        IndividualValueDialog,
         MapValuesPipe],
     imports: [
         CommonModule,
@@ -59,7 +61,7 @@ const routes: Array<ITrestleRoute> = [
         MaterialModule
     ],
     providers: [UserService, QueryService, VisualizeService],
-    entryComponents: [UserAddDialog],
+    entryComponents: [UserAddDialog, IndividualValueDialog],
     bootstrap: [AdminComponent]
 })
 
