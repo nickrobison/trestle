@@ -50,8 +50,7 @@ public class VisualizationResource {
 
 
     @GET
-    @Path("{name}")
-    public Response getIndividual(@PathParam("name") String individualName) {
+    public Response getIndividual(@NotNull @QueryParam("name") String individualName) {
         final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(individualName);
         return ok(trestleIndividual).build();
     }

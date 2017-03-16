@@ -20,6 +20,7 @@ import {QueryService} from "./query/query.service";
 import {QueryViewer} from "./query/query-viewer/query-viewer.component";
 import {VisualizeService} from "./visualize/visualize.service";
 import {VisualizeComponent} from "./visualize/visualize.component";
+import {IndividualGraph} from "./visualize/individual-graph.component";
 
 interface ITrestleRoute extends Route {
     data?: ITrestleRouteData
@@ -48,6 +49,7 @@ const routes: Array<ITrestleRoute> = [
         QueryComponent,
         QueryViewer,
         VisualizeComponent,
+        IndividualGraph,
         MapValuesPipe],
     imports: [
         CommonModule,

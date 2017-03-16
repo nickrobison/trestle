@@ -6,7 +6,7 @@ import {AuthHttp} from "angular2-jwt";
 import {Observable} from "rxjs";
 import {URLSearchParams, Response} from "@angular/http";
 
-export interface ITrestleAttribute {
+export interface ITrestleFact {
     identifier: string
     name: string;
     value: string;
@@ -18,7 +18,7 @@ export interface ITrestleAttribute {
 export interface ITrestleIndividual {
     individualID: string;
     individualTemporal: ITrestleTemporal;
-    attributes: Array<ITrestleAttribute>;
+    facts: Array<ITrestleFact>;
 
 }
 
@@ -49,7 +49,11 @@ export class VisualizeService {
     }
 
     getIndividualAttributes(name: string): Observable<ITrestleIndividual> {
-        return this.authHttp.get("/visualize/" + name)
+        let params = new URLSearchParams();
+        params.set("name", name);
+        return this.authHttp.get("/visualize/", {
+            search: params
+        })
             .map((res: Response) => {
             return res.json();
             })
