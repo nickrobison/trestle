@@ -133,11 +133,30 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             .text((d: IFactNode) => d.id);
 
     //    Click handler
+        this.nodes.on("click", (d: any) => console.debug("clicked", d));
 
     //    Legend
+        let legend = this.svg.selectAll(".legend")
+            .data(this.color.domain())
+            .enter()
+            .append("g")
+            .attr("class", "legend")
+            .attr("transform", (d, i) => "translate(0," + (i * ((this.width / 100) * 2) + 20) + ")");
 
+        legend.append("circle")
+            .attr("cx", this.width - 18)
+            .attr("r", this.width / 100)
+            .attr("cy", this.width / 100)
+            .style("fill", this.color);
+
+        legend
+            .append("text")
+            .attr("x", this.width - (this.width / 100) * 2 - 10)
+            .attr("y", this.width / 100)
+            .attr("dy", "0.35em")
+            .style("text-anchor", "end")
+            .text((d) => IndividualGraph.parseColorGroup(d));
     // Force setup
-
         this.simulation
             .nodes(data.nodes)
             .on("tick", this.forceTick);
@@ -210,5 +229,20 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
                     target: factDBTemporal,
                 });
         });
+    }
+
+    private static parseColorGroup(group: string): string {
+        switch (parseInt(group, 10)) {
+            case 0:
+                return "Individual";
+            case 1:
+                return "Valid Temporal";
+            case 2:
+                return "Database Temporal";
+            case 3:
+                return "Fact";
+            default:
+                return "unknown";
+        }
     }
 }

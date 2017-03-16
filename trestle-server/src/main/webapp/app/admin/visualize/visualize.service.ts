@@ -51,7 +51,7 @@ export class VisualizeService {
     getIndividualAttributes(name: string): Observable<ITrestleIndividual> {
         let params = new URLSearchParams();
         params.set("name", name);
-        return this.authHttp.get("/visualize/", {
+        return this.authHttp.get("/visualize/retrieve", {
             search: params
         })
             .map((res: Response) => {
