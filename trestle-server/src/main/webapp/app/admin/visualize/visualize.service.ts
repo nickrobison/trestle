@@ -9,6 +9,7 @@ import {URLSearchParams, Response} from "@angular/http";
 export interface ITrestleFact {
     identifier: string
     name: string;
+    type: string;
     value: string;
     databaseTemporal: ITrestleTemporal;
     validTemporal: ITrestleTemporal;

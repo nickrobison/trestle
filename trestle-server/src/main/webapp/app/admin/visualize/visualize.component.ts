@@ -16,7 +16,7 @@ import {IIndividualConfig} from "./individual-graph.component";
 export class VisualizeComponent implements OnInit {
     individualName = new FormControl();
     options: Observable<Array<string>>;
-    individual: IIndividualConfig;
+    individual: ITrestleIndividual;
 
     constructor(private vs: VisualizeService) {
     }
@@ -34,9 +34,7 @@ export class VisualizeComponent implements OnInit {
         this.vs.getIndividualAttributes(this.individualName.value)
             .subscribe((results: ITrestleIndividual) => {
                 console.debug("has individual", results);
-                this.individual = {
-                    data: results
-                };
+                this.individual = results;
             });
     }
 }

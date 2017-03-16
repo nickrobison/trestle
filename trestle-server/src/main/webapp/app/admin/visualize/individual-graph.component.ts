@@ -10,7 +10,7 @@ import {
     forceManyBody,
     forceCenter,
     forceLink,
-    SimulationLinkDatum
+    SimulationLinkDatum, Simulation
 } from "d3-force";
 import {ITrestleIndividual} from "./visualize.service";
 
@@ -64,9 +64,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
     private layout: IGraphLayout;
     private links: Selection<BaseType, SimulationLinkDatum<IFactNode>, any, any>;
     private nodes: Selection<any, IFactNode, any, any>;
-    // private simulation: Simulation<IAttributeNode, any>;
-    // FIXME(nrobison): Garbage
-    private simulation: any;
+    private simulation: Simulation<IFactNode, any>;
 
     constructor() {}
 
@@ -161,7 +159,12 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             .nodes(data.nodes)
             .on("tick", this.forceTick);
 
-        this.simulation.force("link").links(data.links);
+        // For some reason, the links() function doesn't exist on the simulation type, so we do a simple cast to get around it.
+        // Seems to work, and the only other option is to lose all type checking for the simulation object
+        (this.simulation.force("link") as any).links(data.links);
+
+        linkData.exit().remove();
+        nodeData.exit().remove();
     }
 
     private forceTick = (): void => {
