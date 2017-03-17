@@ -18,6 +18,8 @@
         <module>trestle-actor</module>
         <module>trestle-server</module>
         <module>trestle-iri</module>
+        <module>trestle-metrics</module>
+        <module>trestle-annotations</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -32,6 +34,8 @@
         <junit.jupiter.version>5.0.0-M3</junit.jupiter.version>
         <jmh.version>1.17.3</jmh.version>
         <geotools.version>16.1</geotools.version>
+        <metrics.version>3.2.1</metrics.version>
+        <aspectj.version>1.8.10</aspectj.version>
         <!--Checker properties-->
         <checker.version>2.0.1</checker.version>
         <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
@@ -223,6 +227,32 @@
                 <artifactId>xmlparserv2</artifactId>
                 <version>1.0</version>
                 <type>jar</type>
+            </dependency>
+            <!--Metrics dependencies-->
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-core</artifactId>
+                <version>${metrics.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-annotation</artifactId>
+                <version>${metrics.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-healthchecks</artifactId>
+                <version>${metrics.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.aspectj</groupId>
+                <artifactId>aspectjrt</artifactId>
+                <version>${aspectj.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.aspectj</groupId>
+                <artifactId>aspectjtools</artifactId>
+                <version>${aspectj.version}</version>
             </dependency>
             <!--Testing dependencies-->
             <dependency>
