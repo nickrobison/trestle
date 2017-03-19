@@ -16,9 +16,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public aspect MetricAspect extends AbstractMetricAspect {
 
-    declare precedence:MetricStaticAspect, MetricAspect, *;
+    declare precedence: MetricStaticAspect, MetricAspect, *;
 
-    declare parents:(@Metriced *)implements Profiled;
+    declare parents:( @Metriced *) implements Profiled;
 
     final Map<String, AnnotatedMetric<Gauge>> Profiled.gauges = new ConcurrentHashMap<>();
     final Map<String, AnnotatedMetric<Meter>> Profiled.meters = new ConcurrentHashMap<>();
@@ -54,13 +54,10 @@ public aspect MetricAspect extends AbstractMetricAspect {
                     object.gauges.put(method.getName(), gaugeAnnotatedMetric);
                 }
 
-                final AnnotatedMetric<Meter> meter = metricAnnotation(method, Metered.class, new MetricFactory<Meter>() {
-                    @Override
-                    public Meter metric(String name, boolean absolute) {
-                        String finalName = name.isEmpty() ? method.getName() : strategy.resolveMetricName(name);
-                        MetricRegistry registry = strategy.resolveMetricRegistry(type.getAnnotation(Metriced.class).registry());
-                        return registry.meter(absolute ? finalName : MetricRegistry.name(type, finalName));
-                    }
+                final AnnotatedMetric<Meter> meter = metricAnnotation(method, Metered.class, (name, absolute) -> {
+                    String finalName = name.isEmpty() ? method.getName() : strategy.resolveMetricName(name);
+                    MetricRegistry registry = strategy.resolveMetricRegistry(type.getAnnotation(Metriced.class).registry());
+                    return registry.meter(absolute ? finalName : MetricRegistry.name(type, finalName));
                 });
                 if (meter.isPresent()) {
                     object.meters.put(method.getName(), meter);

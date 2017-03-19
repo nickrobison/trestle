@@ -25,23 +25,10 @@
             <artifactId>aspectjrt</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.esotericsoftware</groupId>
-            <artifactId>reflectasm</artifactId>
-            <version>1.11.3</version>
-            <classifier>shaded</classifier>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.ow2.asm</groupId>
-                    <artifactId>asm</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>com.nickrobison</groupId>
             <artifactId>trestle-annotations</artifactId>
             <version>0.6-SNAPSHOT</version>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -57,15 +44,6 @@
                     <includes>
                         <include>**/*.aj</include>
                     </includes>
-                    <!--<aspectDirectory>src/main/aspect</aspectDirectory>-->
-                    <!--<testAspectDirectory>src/test/aspect</testAspectDirectory>-->
-                    <!--<showWeaveInfo>true</showWeaveInfo>-->
-                    <!--<aspectLibraries>-->
-                    <!--<aspectLibrary>-->
-                    <!--<groupId>com.nickrobison.trestle.metrics</groupId>-->
-                    <!--<artifactId>trestle-metrics</artifactId>-->
-                    <!--</aspectLibrary>-->
-                    <!--</aspectLibraries>-->
                 </configuration>
                 <executions>
                     <execution>

@@ -19,7 +19,7 @@ public abstract aspect AbstractMetricAspect {
         T metric(String name, boolean absolute);
     }
 
-    protected <T extends Metric>AnnotatedMetric<T> metricAnnotation(Method method, Class<? extends Annotation> clazz, MetricFactory<T> factory) {
+    protected <T extends Metric> AnnotatedMetric<T> metricAnnotation(Method method, Class<? extends Annotation> clazz, MetricFactory<T> factory) {
         if (method.isAnnotationPresent(clazz)) {
             final Annotation annotation = method.getAnnotation(clazz);
             final T metric = factory.metric(metricAnnotationName(annotation), metricAnnotationAbsolute(annotation));
@@ -58,8 +58,8 @@ public abstract aspect AbstractMetricAspect {
 
     protected static class ForwardingGauge implements com.codahale.metrics.Gauge<Object> {
 
-        final Method method;
-        final Object object;
+        private final Method method;
+        private final Object object;
 
         ForwardingGauge(Method method, Object object) {
             this.method = method;
