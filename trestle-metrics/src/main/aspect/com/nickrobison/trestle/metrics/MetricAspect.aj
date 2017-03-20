@@ -4,6 +4,8 @@ import com.codahale.metrics.*;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.annotation.*;
 import com.codahale.metrics.annotation.Metered;
+import com.nickrobison.trestle.annotations.metrics.CounterDecrement;
+import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 
 import java.lang.reflect.Method;
@@ -23,6 +25,7 @@ public aspect MetricAspect extends AbstractMetricAspect {
     final Map<String, AnnotatedMetric<Gauge>> Profiled.gauges = new ConcurrentHashMap<>();
     final Map<String, AnnotatedMetric<Meter>> Profiled.meters = new ConcurrentHashMap<>();
     final Map<String, AnnotatedMetric<Timer>> Profiled.timers = new ConcurrentHashMap<>();
+    final Map<String, AnnotatedMetric<Counter>> Profiled.counters = new ConcurrentHashMap<>();
 
     pointcut profiled(Profiled object): execution((@Metriced Profiled+).new(..)) && this(object);
 
@@ -36,6 +39,7 @@ public aspect MetricAspect extends AbstractMetricAspect {
                 }
 
                 final Class<?> type = clazz;
+//                Metered
                 final AnnotatedMetric<Meter> exceptionMeter = metricAnnotation(method, ExceptionMetered.class, (name, absolute) -> {
                     final String finalName = name.isEmpty() ? method.getName() + "." + ExceptionMetered.DEFAULT_NAME_SUFFIX : strategy.resolveMetricName(name);
                     final MetricRegistry registry = strategy.resolveMetricRegistry(type.getAnnotation(Metriced.class).registry());
@@ -43,15 +47,6 @@ public aspect MetricAspect extends AbstractMetricAspect {
                 });
                 if (exceptionMeter.isPresent()) {
                     object.meters.put(method.getName(), exceptionMeter);
-                }
-
-                final AnnotatedMetric<Gauge> gaugeAnnotatedMetric = metricAnnotation(method, com.codahale.metrics.annotation.Gauge.class, (name, absolute) -> {
-                    final String finalName = name.isEmpty() ? method.getName() : strategy.resolveMetricName(name);
-                    final MetricRegistry registry = strategy.resolveMetricRegistry(type.getAnnotation(Metriced.class).registry());
-                    return registry.register(absolute ? finalName : MetricRegistry.name(type, finalName), new ForwardingGauge(method, object));
-                });
-                if (gaugeAnnotatedMetric.isPresent()) {
-                    object.gauges.put(method.getName(), gaugeAnnotatedMetric);
                 }
 
                 final AnnotatedMetric<Meter> meter = metricAnnotation(method, Metered.class, (name, absolute) -> {
@@ -63,6 +58,19 @@ public aspect MetricAspect extends AbstractMetricAspect {
                     object.meters.put(method.getName(), meter);
                 }
 
+//                Gauge
+
+                final AnnotatedMetric<Gauge> gaugeAnnotatedMetric = metricAnnotation(method, com.codahale.metrics.annotation.Gauge.class, (name, absolute) -> {
+                    final String finalName = name.isEmpty() ? method.getName() : strategy.resolveMetricName(name);
+                    final MetricRegistry registry = strategy.resolveMetricRegistry(type.getAnnotation(Metriced.class).registry());
+                    return registry.register(absolute ? finalName : MetricRegistry.name(type, finalName), new ForwardingGauge(method, object));
+                });
+                if (gaugeAnnotatedMetric.isPresent()) {
+                    object.gauges.put(method.getName(), gaugeAnnotatedMetric);
+                }
+
+//                Timer
+
                 final AnnotatedMetric<Timer> timer = metricAnnotation(method, Timed.class, (name, absolute) -> {
                     String finalName = name.isEmpty() ? method.getName() : strategy.resolveMetricName(name);
                     MetricRegistry registry = strategy.resolveMetricRegistry(type.getAnnotation(Metriced.class).registry());
@@ -70,6 +78,26 @@ public aspect MetricAspect extends AbstractMetricAspect {
                 });
                 if (timer.isPresent()) {
                     object.timers.put(method.getName(), timer);
+                }
+
+//                Counter
+
+                final AnnotatedMetric<Counter> incrementingCounter = metricAnnotation(method, CounterIncrement.class, (name, absolute) -> {
+                    String finalName = name.isEmpty() ? method.getName() : strategy.resolveMetricName(name);
+                    final MetricRegistry registry = strategy.resolveMetricRegistry(type.getAnnotation(Metriced.class).registry());
+                    return registry.counter(absolute ? finalName : MetricRegistry.name(type, finalName));
+                });
+                if (incrementingCounter.isPresent()) {
+                    object.counters.put(method.getName(), incrementingCounter);
+                }
+
+                final AnnotatedMetric<Counter> decrementingCounter = metricAnnotation(method, CounterDecrement.class, (name, absolute) -> {
+                    String finalName = name.isEmpty() ? method.getName() : strategy.resolveMetricName(name);
+                    final MetricRegistry registry = strategy.resolveMetricRegistry(type.getAnnotation(Metriced.class).registry());
+                    return registry.counter(absolute ? finalName : MetricRegistry.name(type, finalName));
+                });
+                if (decrementingCounter.isPresent()) {
+                    object.counters.put(method.getName(), decrementingCounter);
                 }
             }
             clazz = clazz.getSuperclass();

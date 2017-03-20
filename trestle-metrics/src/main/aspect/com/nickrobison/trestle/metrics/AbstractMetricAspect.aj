@@ -5,6 +5,8 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Gauge;
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
+import com.nickrobison.trestle.annotations.metrics.CounterDecrement;
+import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -38,6 +40,10 @@ public abstract aspect AbstractMetricAspect {
             return ((Metered) annotation).name();
         } else if (Timed.class.isInstance(annotation)) {
             return ((Timed) annotation).name();
+        } else if (CounterIncrement.class.isInstance(annotation)) {
+            return ((CounterIncrement) annotation).name();
+        } else if (CounterDecrement.class.isInstance(annotation)) {
+            return ((CounterDecrement) annotation).name();
         } else {
             throw new IllegalArgumentException("Unsupported Metrics annotation (" + annotation.getClass().getName() + ")");
         }
@@ -52,6 +58,10 @@ public abstract aspect AbstractMetricAspect {
             return ((Metered) annotation).absolute();
         else if (Timed.class.isInstance(annotation))
             return ((Timed) annotation).absolute();
+        else if (CounterIncrement.class.isInstance(annotation))
+            return ((CounterIncrement) annotation).absolute();
+        else if (CounterDecrement.class.isInstance(annotation))
+            return ((CounterDecrement) annotation).absolute();
         else
             throw new IllegalArgumentException("Unsupported Metrics annotation (" + annotation.getClass().getName() + ")");
     }

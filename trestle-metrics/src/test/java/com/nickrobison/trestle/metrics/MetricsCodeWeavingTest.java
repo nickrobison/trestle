@@ -4,6 +4,8 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.annotation.Gauge;
 import com.codahale.metrics.annotation.Metered;
+import com.nickrobison.trestle.annotations.metrics.CounterDecrement;
+import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,18 +48,38 @@ public class MetricsCodeWeavingTest {
         final TestClass testClass = new TestClass();
         assertEquals(1, registry.getGauges().size(), "Should have a single gauge");
         assertEquals(42, registry.gauge("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestClass.gauge-test", null).getValue(), "Gauge should read 1");
+    }
 
-
+    @Test
+    public void counterTest() {
+        assertEquals(0, registry.getCounters().size(), "Should have no counters");
+        final TestClass testClass = new TestClass();
+        assertEquals(1, registry.getCounters().size(), "Should only have a single counter");
+        testClass.testCounterInc();
+        testClass.testCounterInc();
+        testClass.testCounterInc();
+        assertEquals(6, registry.counter("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestClass.test-counter").getCount(), "Count should be 6");
+        testClass.testCounterDec();
+        testClass.testCounterDec();
+        assertEquals(4, registry.counter("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestClass.test-counter").getCount(), "Count should be 4");
     }
 
     @Test
     public void staticTest() {
-        //        Call static method
+//        Meters
         TestStaticClass.testMeter();
         TestStaticClass.testMeter();
         TestStaticClass.testMeter();
         assertAll(() -> assertEquals(3, registry.meter("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestStaticClass.testMeter").getCount(), "Should have 3 static executions"),
-                () -> assertEquals(7, registry.gauge("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestStaticClass.gauge-test-static", null).getValue(), "Should have 7 from static class"));;
+                () -> assertEquals(7, registry.gauge("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestStaticClass.gauge-test-static", null).getValue(), "Should have 7 from static class"));
+
+//        Test counters
+        TestStaticClass.testDec();
+        TestStaticClass.testDec();
+        TestStaticClass.testInc();
+        assertAll(() -> assertEquals(2, registry.getCounters().size(), "Should have 2 static counters"),
+                () -> assertEquals(-20, registry.counter("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestStaticClass.static-test-2").getCount(), "Static decrement should be called twice"),
+                () -> assertEquals(1, registry.counter("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestStaticClass.static-test-1").getCount(), "Static increment should be called once"));
     }
 
 
@@ -73,6 +95,12 @@ public class MetricsCodeWeavingTest {
         int testGauge() {
             return 42;
         }
+
+        @CounterIncrement(name = "test-counter", amount = 2)
+        void testCounterInc() {}
+
+        @CounterDecrement(name = "test-counter")
+        void testCounterDec() {}
     }
 
     @Metriced
@@ -86,5 +114,11 @@ public class MetricsCodeWeavingTest {
         static int testGauge() {
             return 7;
         }
+
+        @CounterIncrement(name = "static-test-1")
+        static void testInc() {};
+        @CounterDecrement(name = "static-test-2", amount = 10)
+        static void testDec() {};
+
     }
 }
