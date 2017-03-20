@@ -3,6 +3,7 @@ package com.nickrobison.trestle.metrics.backends;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.File;
 
@@ -15,8 +16,8 @@ public interface ITrestleMetricsBackend {
 
     void exportData(File file);
 
-    void registerGauge(String name, Gauge<?> gauge);
+    void registerGauge(String name, @Nullable Gauge<?> gauge);
     void removeGauge(String name);
-    void registerCounter(String name, Counter counter);
+    void registerCounter(String name, @Nullable Counter counter);
     void removeCounter(String name);
 }

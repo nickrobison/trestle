@@ -2,14 +2,12 @@ package com.nickrobison.trestle.metrics;
 
 import com.codahale.metrics.*;
 import com.codahale.metrics.Timer;
-import org.agrona.concurrent.AbstractConcurrentArrayQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**

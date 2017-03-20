@@ -4,14 +4,14 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.nickrobison.trestle.metrics.TrestleMetricsReporter;
 import org.agrona.concurrent.AbstractConcurrentArrayQueue;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by nrobison on 3/20/17.
@@ -22,10 +22,12 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
     private final AbstractConcurrentArrayQueue<TrestleMetricsReporter.DataAccumulator> dataQueue;
     private final Thread eventThread;
     private final Connection connection;
+    private final Map<String, Long> metricMap;
 
     public H2MemoryBackend(AbstractConcurrentArrayQueue<TrestleMetricsReporter.DataAccumulator> dataQueue) {
-        this.dataQueue = dataQueue;
         logger.info("Initializing H2 backend");
+        this.dataQueue = dataQueue;
+        metricMap = new HashMap<>();
 //        Connect to database
         try {
             connection = initializeDatabase();
@@ -41,8 +43,12 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
 
     private Connection initializeDatabase() throws SQLException {
         final Connection connection = DriverManager.getConnection("jdbc:h2:mem:trestle-metrics");
-        final CallableStatement tableCreateStatement = connection.prepareCall("CREATE TABLE metrics (Metric VARCHAR(255), Timestamp BIGINT, Value VARCHAR(20))");
-        tableCreateStatement.execute();
+        final CallableStatement createRootTable = connection.prepareCall("CREATE TABLE metrics (MetricID IDENTITY, Metric VARCHAR(150))");
+        final CallableStatement createGaugesTable = connection.prepareCall("CREATE TABLE gauges (MetricID BIGINT, Timestamp BIGINT, Value DOUBLE)");
+        final CallableStatement createCounterTable = connection.prepareCall("CREATE TABLE counters (MetricID BIGINT, Timestamp BIGINT, Value BIGINT)");
+        createRootTable.execute();
+        createCounterTable.execute();
+        createGaugesTable.execute();
         return connection;
     }
 
@@ -78,9 +84,29 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
         logger.info("Export complete");
     }
 
-    @Override
-    public void registerGauge(String name, Gauge<?> gauge) {
+    private Long registerMetric(String metricName) {
+        try {
+            final PreparedStatement preparedStatement = connection.prepareStatement(String.format("INSERT INTO metrics (Metric) VALUES('%s')", metricName), Statement.RETURN_GENERATED_KEYS);
+            preparedStatement.executeUpdate();
+            final ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                final long aLong = generatedKeys.getLong(1);
+                metricMap.put(metricName, aLong);
+                return aLong;
+            } else {
+                logger.warn("No keys returned when registering gauge {}, not inserting into map", metricName);
+            }
+        } catch (SQLException e) {
+            logger.error("Unable to insert metric {} into table", metricName, e);
+        }
+        return null;
+    }
 
+    @Override
+    public void registerGauge(String name, @Nullable Gauge<?> gauge) {
+//        TODO(nrobison): We should register all the sub-gauges at init
+        logger.debug("Registering Gauge {}", name);
+        registerMetric(name);
     }
 
     @Override
@@ -89,8 +115,10 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
     }
 
     @Override
-    public void registerCounter(String name, Counter counter) {
-
+    public void registerCounter(String name, @Nullable Counter counter) {
+        //        TODO(nrobison): We should register all the sub-counters at init
+        logger.debug("Registering counter {}", name);
+        registerMetric(name);
     }
 
     @Override
@@ -116,13 +144,27 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
         private void processEvent(TrestleMetricsReporter.DataAccumulator event) {
             final long timestamp = event.getTimestamp();
             final StringBuilder sqlInsertString = new StringBuilder();
+//            Counters
             event.getCounters().entrySet().forEach(entry -> {
-                logger.debug("Counter {}: {}", entry.getKey(), entry.getValue());
-                sqlInsertString.append(String.format("INSERT INTO metrics VALUES('%s', %s, '%s');\n", entry.getKey(), timestamp, entry.getValue()));
+                final String key = entry.getKey();
+                logger.debug("Counter {}: {}", key, entry.getValue());
+                Long metricKey = metricMap.get(key);
+                if (metricKey == null) {
+                    logger.warn("Got null key for metric {}, registering", key);
+                    metricKey = registerMetric(key);
+                }
+                sqlInsertString.append(String.format("INSERT INTO counters VALUES('%s', %s, '%s');\n", metricKey, timestamp, entry.getValue()));
             });
+//            Gauges
             event.getGauges().entrySet().forEach(entry -> {
-                logger.debug("Gauge {}: {}", entry.getKey(), entry.getValue());
-                sqlInsertString.append(String.format("INSERT INTO metrics VALUES('%s', %s, '%s');\n", entry.getKey(), timestamp, entry.getValue()));
+                final String key = entry.getKey();
+                logger.debug("Gauge {}: {}", key, entry.getValue());
+                Long metricKey = metricMap.get(key);
+                if (metricKey == null) {
+                    logger.warn("Got null key for metric {}, registering", key);
+                    metricKey = registerMetric(key);
+                }
+                sqlInsertString.append(String.format("INSERT INTO gauges VALUES('%s', %s, '%s');\n", metricKey, timestamp, entry.getValue()));
             });
             try {
                 final CallableStatement callableStatement = connection.prepareCall(sqlInsertString.toString());
