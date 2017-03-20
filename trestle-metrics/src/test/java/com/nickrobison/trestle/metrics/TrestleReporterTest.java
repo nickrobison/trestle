@@ -15,10 +15,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class TrestleReporterTest {
 
     private TrestleMetrician trestleMetrician;
+    private TrestleMetricsReporter reporter;
 
     @BeforeEach
     public void setup() {
         trestleMetrician = new TrestleMetrician();
+        reporter = trestleMetrician.getReporter();
     }
 
     @AfterEach
@@ -27,12 +29,19 @@ public class TrestleReporterTest {
     }
 
     @Test
-    public void testSimpleClass() {
+    public void testSimpleClass() throws InterruptedException {
         final TestMetricsClass metricsClass = new TestMetricsClass();
         metricsClass.testIncrement();
         metricsClass.testIncrement();
-        trestleMetrician.getReporter().report();
+        reporter.report();
         assertEquals(2, trestleMetrician.getRegistry().counter("com.nickrobison.trestle.metrics.TrestleReporterTest$TestMetricsClass.test-reporter-counter").getCount(), "Count should be 2");
+        Thread.sleep(500);
+        reporter.report();
+        reporter.report();
+        reporter.report();
+        reporter.report();
+        reporter.report();
+        reporter.report();
     }
 
 

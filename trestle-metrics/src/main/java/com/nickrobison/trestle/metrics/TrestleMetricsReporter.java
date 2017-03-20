@@ -1,15 +1,15 @@
 package com.nickrobison.trestle.metrics;
 
 import com.codahale.metrics.*;
+import com.codahale.metrics.Timer;
+import org.agrona.concurrent.AbstractConcurrentArrayQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.SortedMap;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -23,8 +23,10 @@ public class TrestleMetricsReporter extends ScheduledReporter {
     private final Clock clock;
     private final Optional<String> prefix;
     private final MetricsDecomposer decomposer;
+    private final Queue<DataAccumulator> dataQueue;
 
     TrestleMetricsReporter(MetricRegistry registry,
+                           Queue<DataAccumulator> dataQueue,
                            Optional<String> prefix,
                            MetricsDecomposer decomposer,
                            MetricFilter filter,
@@ -34,6 +36,7 @@ public class TrestleMetricsReporter extends ScheduledReporter {
         clock = Clock.defaultClock();
         this.prefix = prefix;
         this.decomposer = decomposer;
+        this.dataQueue = dataQueue;
         logger.info("Instantiated Trestle Metrics Reporter");
     }
 
@@ -50,13 +53,19 @@ public class TrestleMetricsReporter extends ScheduledReporter {
 
         final long timestamp = clock.getTime();
 
-        final DataAccumulator accumulator = new DataAccumulator();
+        final DataAccumulator accumulator = new DataAccumulator(timestamp, this.prefix);
         processGauges(accumulator, gauges);
         processCounters(accumulator, counters);
         processMeters(accumulator, meters);
         processHistograms(accumulator, histograms);
         processTimers(accumulator, timers);
         logger.debug("Reported metrics {}", accumulator);
+        if (!accumulator.getCounters().isEmpty() || !accumulator.getGauges().isEmpty()) {
+            final boolean offer = this.dataQueue.offer(accumulator);
+            if (!offer) {
+                logger.error("Unable to add data to queue");
+            }
+        }
     }
 
     private static void processGauges(DataAccumulator accumulator, Map<String, Gauge> gauges) {
@@ -92,28 +101,37 @@ public class TrestleMetricsReporter extends ScheduledReporter {
         });
     }
 
-    private class DataAccumulator {
+    public class DataAccumulator {
         private final Map<String, Double> gauges = new HashMap<>();
         private final Map<String, Long> counters = new HashMap<>();
+        private final Optional<String> prefix;
+        private final long timestamp;
 
-        private DataAccumulator() {}
+        private DataAccumulator(long timestamp, Optional<String> prefix) {
+            this.prefix = prefix;
+            this.timestamp = timestamp;
+        }
 
-        private Map<String, Double> getGauges() {
+        public long getTimestamp() {
+            return this.timestamp;
+        }
+
+        public Map<String, Double> getGauges() {
             return gauges;
         }
 
-        private Map<String, Long> getCounters() {
+        public Map<String, Long> getCounters() {
             return counters;
         }
 
         private DataAccumulator addCounter(String name, long value) {
-            final String finalName = prefix.map(p -> p + name).orElse(name);
+            final String finalName = this.prefix.map(p -> p + name).orElse(name);
             counters.put(finalName, value);
             return this;
         }
 
         private DataAccumulator addGauge(String name, Object value) {
-            final String finalName = prefix.map(p -> p + name).orElse(name);
+            final String finalName = this.prefix.map(p -> p + name).orElse(name);
             if (value instanceof BigDecimal) {
                 gauges.put(finalName, ((BigDecimal) value).doubleValue());
             } else if (value instanceof BigInteger) {
@@ -130,14 +148,14 @@ public class TrestleMetricsReporter extends ScheduledReporter {
 
         private <T> DataAccumulator addSubCounter(MetricPart<T, Long> metricPart, Map.Entry<String, ? extends T> counterEntry) {
             final String nameWithSuffix = metricPart.getMetricNameWithSuffix(counterEntry.getKey());
-            final String finalName = prefix.map(p -> p + nameWithSuffix).orElse(nameWithSuffix);
+            final String finalName = this.prefix.map(p -> p + nameWithSuffix).orElse(nameWithSuffix);
             counters.put(finalName, metricPart.getData(counterEntry.getValue()));
             return this;
         }
 
         private <T> DataAccumulator addSubGauge(MetricPart<T, Object> metricPart, Map.Entry<String, ? extends T> gaugeEntry) {
             final String metricNameWithSuffix = metricPart.getMetricNameWithSuffix(gaugeEntry.getKey());
-            final String finalName = prefix.map(p -> p + metricNameWithSuffix).orElse(metricNameWithSuffix);
+            final String finalName = this.prefix.map(p -> p + metricNameWithSuffix).orElse(metricNameWithSuffix);
             final Object value = metricPart.getData(gaugeEntry.getValue());
             if (value instanceof BigDecimal) {
                 gauges.put(finalName, ((BigDecimal) value).doubleValue());
