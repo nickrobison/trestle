@@ -130,8 +130,7 @@
         </dependency>
         <dependency>
             <groupId>org.agrona</groupId>
-            <artifactId>Agrona</artifactId>
-            <version>0.9.1</version>
+            <artifactId>agrona</artifactId>
         </dependency>
     </dependencies>
     <build>
