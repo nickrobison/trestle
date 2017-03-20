@@ -7,6 +7,8 @@ import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.trestle.annotations.metrics.CounterDecrement;
 import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -18,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public aspect MetricStaticAspect extends AbstractMetricAspect {
 
+    private static final Logger logger = LoggerFactory.getLogger(MetricStaticAspect.class);
     static final Map<String, AnnotatedMetric<Gauge>> GAUGES = new ConcurrentHashMap<>();
     static final Map<String, AnnotatedMetric<Meter>> METERS = new ConcurrentHashMap<>();
     static final Map<String, AnnotatedMetric<Timer>> TIMERS = new ConcurrentHashMap<>();
@@ -29,6 +32,7 @@ public aspect MetricStaticAspect extends AbstractMetricAspect {
         final Class<?> clazz = thisJoinPointStaticPart.getSignature().getDeclaringType();
         final DefaultMetricsStrategy strategy = new DefaultMetricsStrategy();
 
+        logger.debug("Resolved class {} as Metriced", clazz.getName());
         for (Method method : clazz.getDeclaredMethods()) {
             if (Modifier.isStatic(method.getModifiers()) && !method.isSynthetic()) {
 
@@ -41,6 +45,7 @@ public aspect MetricStaticAspect extends AbstractMetricAspect {
                 });
                 if (exceptionMeter.isPresent()) {
                     METERS.put(method.getName(), exceptionMeter);
+                    logger.debug("Registered ExceptionMeter on {}", method);
                 }
 
                 final AnnotatedMetric<Meter> meter = metricAnnotation(method, Metered.class, (name, absolute) -> {
@@ -50,6 +55,7 @@ public aspect MetricStaticAspect extends AbstractMetricAspect {
                 });
                 if (meter.isPresent()) {
                     METERS.put(method.getName(), meter);
+                    logger.debug("Registered Meter on {}", method);
                 }
 
 //                Gauges
@@ -61,6 +67,7 @@ public aspect MetricStaticAspect extends AbstractMetricAspect {
                 });
                 if (gaugeAnnotatedMetric.isPresent()) {
                     GAUGES.put(method.getName(), gaugeAnnotatedMetric);
+                    logger.debug("Registered Gauge on {} of type {}", method, gaugeAnnotatedMetric.getMetric().getValue().getClass().getName());
                 }
 
 //                Timers
@@ -72,6 +79,7 @@ public aspect MetricStaticAspect extends AbstractMetricAspect {
                 });
                 if (timer.isPresent()) {
                     TIMERS.put(method.getName(), timer);
+                    logger.debug("Registered Timer on {}", method);
                 }
 
 //                Counters
@@ -83,6 +91,7 @@ public aspect MetricStaticAspect extends AbstractMetricAspect {
                 });
                 if (incrementingCounter.isPresent()) {
                     COUNTERS.put(method.getName(), incrementingCounter);
+                    logger.debug("Registered incrementing Counter {}", method);
                 }
 
                 final AnnotatedMetric<Counter> decrementingCounter = metricAnnotation(method, CounterDecrement.class, (name, absolute) -> {
@@ -92,6 +101,7 @@ public aspect MetricStaticAspect extends AbstractMetricAspect {
                 });
                 if (decrementingCounter.isPresent()) {
                     COUNTERS.put(method.getName(), decrementingCounter);
+                    logger.debug("Registered decrementing Counter on {}", method);
                 }
             }
         }
