@@ -1,14 +1,15 @@
 package com.nickrobison.trestle.metrics;
 
-import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
-import com.nickrobison.trestle.metrics.backends.HSQLDBBackend;
+import com.nickrobison.trestle.metrics.backends.H2MemoryBackend;
+import com.nickrobison.trestle.metrics.backends.ITrestleMetricsBackend;
 import org.agrona.concurrent.ManyToManyConcurrentArrayQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
@@ -25,23 +26,27 @@ public class TrestleMetrician {
     private final MetricRegistry registry;
 //    private final JmxReporter jmxReporter;
     private final TrestleMetricsReporter trestleMetricsReporter;
-    private final HSQLDBBackend hsqldbBackend;
+    private final ITrestleMetricsBackend metricsBackend;
 
     public TrestleMetrician() {
         logger.info("Initializing Trestle Metrician");
         this.dataQueue = new ManyToManyConcurrentArrayQueue<>(100);
         registry = SharedMetricRegistries.getOrCreate("trestle-registry");
         final MetricsDecomposer metricsDecomposer = new MetricsDecomposer(new HashMap<>(), new ArrayList<>());
-        final MetricsTagger metricsTagger = new MetricsTagger(Optional.empty(), new HashMap<>(), new HashMap<>(), new ArrayList<>(), false, metricsDecomposer, registry, MetricFilter.ALL);
+        final MetricsListener metricsListener = new MetricsListener(Optional.empty(), new HashMap<>(), new HashMap<>(), new ArrayList<>(), false, metricsDecomposer, registry, MetricFilter.ALL);
         trestleMetricsReporter = new TrestleMetricsReporter(registry, dataQueue, Optional.empty(), metricsDecomposer, MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
-        hsqldbBackend = new HSQLDBBackend(this.dataQueue);
+        metricsBackend = new H2MemoryBackend(this.dataQueue);
 //        jmxReporter = JmxReporter.forRegistry(registry).build();
 //        jmxReporter.start();
     }
 
     public void shutdown() {
+        shutdown(null);
+    }
+
+    public void shutdown(File exportFile) {
         logger.info("Shutting down Trestle Metrician");
-        hsqldbBackend.shutdown();
+        metricsBackend.shutdown(exportFile);
 //        jmxReporter.close();
     }
 

@@ -9,8 +9,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static com.nickrobison.trestle.metrics.MetricsTagger.METRIC_TYPE_COUNTER;
-import static com.nickrobison.trestle.metrics.MetricsTagger.METRIC_TYPE_GAUGE;
+import static com.nickrobison.trestle.metrics.MetricsListener.METRIC_TYPE_COUNTER;
+import static com.nickrobison.trestle.metrics.MetricsListener.METRIC_TYPE_GAUGE;
 
 /**
  * Created by nrobison on 3/20/17.
