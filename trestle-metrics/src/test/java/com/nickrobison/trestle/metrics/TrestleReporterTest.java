@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.metrics;
 
 import com.codahale.metrics.annotation.Gauge;
+import com.codahale.metrics.annotation.Metered;
 import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import org.junit.jupiter.api.AfterEach;
@@ -44,6 +45,46 @@ public class TrestleReporterTest {
         reporter.report();
         reporter.report();
         reporter.report();
+        Thread.sleep(10000);
+        reporter.report();
+        metricsClass.testMeter();
+        metricsClass.testMeter();
+        metricsClass.testMeter();
+        Thread.sleep(10000);
+        reporter.report();
+        metricsClass.testMeter();
+        metricsClass.testMeter();
+        Thread.sleep(10000);
+        reporter.report();
+        metricsClass.testMeter();
+        metricsClass.testMeter();
+        metricsClass.testMeter();
+        Thread.sleep(10000);
+        reporter.report();
+        Thread.sleep(10000);
+        reporter.report();
+        metricsClass.testMeter();
+        metricsClass.testMeter();
+        metricsClass.testMeter();
+        Thread.sleep(10000);
+        reporter.report();
+        Thread.sleep(10000);
+        reporter.report();
+        metricsClass.testMeter();
+        metricsClass.testMeter();
+        metricsClass.testMeter();
+        Thread.sleep(10000);
+        reporter.report();
+        metricsClass.testMeter();
+        metricsClass.testMeter();
+        metricsClass.testMeter();
+        Thread.sleep(10000);
+        reporter.report();
+        metricsClass.testMeter();
+        metricsClass.testMeter();
+        metricsClass.testMeter();
+        Thread.sleep(10000);
+        reporter.report();
     }
 
 
@@ -60,5 +101,8 @@ public class TrestleReporterTest {
 
         @CounterIncrement(name = "test-reporter-counter")
         void testIncrement() { }
+
+        @Metered
+        void testMeter() { }
     }
 }

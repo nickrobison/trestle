@@ -28,12 +28,13 @@ public class TrestleMetrician {
 
     public TrestleMetrician() {
         logger.info("Initializing Trestle Metrician");
-        this.dataQueue = new ManyToManyConcurrentArrayQueue<>(100);
         registry = SharedMetricRegistries.getOrCreate("trestle-registry");
-        final MetricsDecomposer metricsDecomposer = new MetricsDecomposer(new HashMap<>(), new ArrayList<>());
-        final MetricsListener metricsListener = new MetricsListener(Optional.empty(), new HashMap<>(), new HashMap<>(), new ArrayList<>(), false, metricsDecomposer, registry, MetricFilter.ALL);
-        trestleMetricsReporter = new TrestleMetricsReporter(registry, dataQueue, Optional.empty(), metricsDecomposer, MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
+        this.dataQueue = new ManyToManyConcurrentArrayQueue<>(100);
         metricsBackend = new H2MemoryBackend(this.dataQueue);
+        final MetricsDecomposer metricsDecomposer = new MetricsDecomposer(new HashMap<>(), new ArrayList<>());
+        final MetricsListener metricsListener = new MetricsListener(Optional.empty(), new HashMap<>(), new HashMap<>(), new ArrayList<>(), false, metricsDecomposer, registry, MetricFilter.ALL, this.metricsBackend);
+        trestleMetricsReporter = new TrestleMetricsReporter(registry, dataQueue, Optional.empty(), metricsDecomposer, MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
+
 //        jmxReporter = JmxReporter.forRegistry(registry).build();
 //        jmxReporter.start();
     }
