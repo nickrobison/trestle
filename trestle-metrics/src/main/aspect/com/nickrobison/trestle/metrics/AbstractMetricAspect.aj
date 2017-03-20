@@ -74,6 +74,7 @@ public abstract aspect AbstractMetricAspect {
         ForwardingGauge(Method method, Object object) {
             this.method = method;
             this.object = object;
+            this.method.setAccessible(true);
         }
 
         @Override
