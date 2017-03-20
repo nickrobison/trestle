@@ -19,12 +19,10 @@ import java.util.concurrent.TimeUnit;
  * Created by nrobison on 3/16/17.
  */
 public class TrestleMetrician {
-    private final ManyToManyConcurrentArrayQueue<TrestleMetricsReporter.DataAccumulator> dataQueue;
-
     private static final Logger logger = LoggerFactory.getLogger(TrestleMetrician.class);
 
     private final MetricRegistry registry;
-//    private final JmxReporter jmxReporter;
+    private final ManyToManyConcurrentArrayQueue<TrestleMetricsReporter.DataAccumulator> dataQueue;
     private final TrestleMetricsReporter trestleMetricsReporter;
     private final ITrestleMetricsBackend metricsBackend;
 
@@ -47,7 +45,6 @@ public class TrestleMetrician {
     public void shutdown(File exportFile) {
         logger.info("Shutting down Trestle Metrician");
         metricsBackend.shutdown(exportFile);
-//        jmxReporter.close();
     }
 
     public TrestleMetricsReporter getReporter() {

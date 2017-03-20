@@ -13,6 +13,8 @@ public interface ITrestleMetricsBackend {
 
     void shutdown(File exportFile);
 
+    void exportData(File file);
+
     void registerGauge(String name, Gauge<?> gauge);
     void removeGauge(String name);
     void registerCounter(String name, Counter counter);
