@@ -83,7 +83,11 @@ class MetricsListener implements MetricRegistryListener {
 
     @Override
     public void onHistogramAdded(String name, Histogram histogram) {
-
+        if (metricFilter.matches(name, histogram)) {
+            final MetricsDecomposer.PartsStreamer streamer = decomposer.streamParts(name);
+            streamer.countings().forEach(metricPart -> this.metricsBackend.registerCounter(metricPart.getMetricNameWithSuffix(name), null));
+            streamer.samplings().forEach(metricPart -> this.metricsBackend.registerGauge(metricPart.getMetricNameWithSuffix(name), null));
+        }
     }
 
     @Override
@@ -96,7 +100,6 @@ class MetricsListener implements MetricRegistryListener {
         if (metricFilter.matches(name, meter)) {
             final MetricsDecomposer.PartsStreamer streamer = decomposer.streamParts(name);
             streamer.countings().forEach(metricPart -> this.metricsBackend.registerCounter(metricPart.getMetricNameWithSuffix(name), null));
-            streamer.samplings().forEach(metricPart -> this.metricsBackend.registerGauge(metricPart.getMetricNameWithSuffix(name), null));
             streamer.metered().forEach(metricPart -> this.metricsBackend.registerGauge(metricPart.getMetricNameWithSuffix(name), null));
         }
     }
@@ -108,7 +111,12 @@ class MetricsListener implements MetricRegistryListener {
 
     @Override
     public void onTimerAdded(String name, Timer timer) {
-
+        if (metricFilter.matches(name, timer)) {
+            final MetricsDecomposer.PartsStreamer streamer = decomposer.streamParts(name);
+            streamer.countings().forEach(metricPart -> this.metricsBackend.registerCounter(metricPart.getMetricNameWithSuffix(name), null));
+            streamer.metered().forEach(metricPart -> this.metricsBackend.registerGauge(metricPart.getMetricNameWithSuffix(name), null));
+            streamer.samplings().forEach(metricPart -> this.metricsBackend.registerGauge(metricPart.getMetricNameWithSuffix(name), null));
+        }
     }
 
     @Override
