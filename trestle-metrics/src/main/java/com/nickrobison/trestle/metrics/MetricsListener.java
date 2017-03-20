@@ -10,7 +10,7 @@ import java.util.Optional;
  * Created by nrobison on 3/20/17.
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-class MetricsTagger implements MetricRegistryListener {
+class MetricsListener implements MetricRegistryListener {
 
     static final String METRIC_TYPE_COUNTER = "counters";
     static final String METRIC_TYPE_GAUGE = "gauges";
@@ -23,14 +23,14 @@ class MetricsTagger implements MetricRegistryListener {
     private final MetricFilter metricFilter;
     private final MetricsDecomposer decomposer;
 
-    MetricsTagger(Optional<String> prefix,
-                  Map<String, String> globalTags,
-                  Map<String, Map<String, String>> perMetricTags,
-                  Collection<RegexContainer<Map<String, String>>> regexTags,
-                  boolean enableTagComposition,
-                  MetricsDecomposer decomposer,
-                  MetricRegistry registry,
-                  MetricFilter metricFilter) {
+    MetricsListener(Optional<String> prefix,
+                    Map<String, String> globalTags,
+                    Map<String, Map<String, String>> perMetricTags,
+                    Collection<RegexContainer<Map<String, String>>> regexTags,
+                    boolean enableTagComposition,
+                    MetricsDecomposer decomposer,
+                    MetricRegistry registry,
+                    MetricFilter metricFilter) {
         this.prefix = prefix;
         this.globalTags = globalTags;
         this.perMetricTags = perMetricTags;

@@ -7,6 +7,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -25,7 +27,7 @@ public class TrestleReporterTest {
 
     @AfterEach
     public void teardown() {
-        trestleMetrician.shutdown();
+        trestleMetrician.shutdown(new File("./target/metricsTest.csv"));
     }
 
     @Test
