@@ -1,0 +1,158 @@
+package com.nickrobison.trestle.metrics;
+
+import com.codahale.metrics.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.SortedMap;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * Created by nrobison on 3/20/17.
+ */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+public class TrestleMetricsReporter extends ScheduledReporter {
+
+    private static final Logger logger = LoggerFactory.getLogger(TrestleMetricsReporter.class);
+
+    private final Clock clock;
+    private final Optional<String> prefix;
+    private final MetricsDecomposer decomposer;
+
+    TrestleMetricsReporter(MetricRegistry registry,
+                           Optional<String> prefix,
+                           MetricsDecomposer decomposer,
+                           MetricFilter filter,
+                           TimeUnit rateUnit,
+                           TimeUnit durationUnit) {
+        super(registry, "trestle-reporter", filter, rateUnit, durationUnit);
+        clock = Clock.defaultClock();
+        this.prefix = prefix;
+        this.decomposer = decomposer;
+        logger.info("Instantiated Trestle Metrics Reporter");
+    }
+
+    @Override
+    public void report(SortedMap<String, Gauge> gauges,
+                       SortedMap<String, Counter> counters,
+                       SortedMap<String, Histogram> histograms,
+                       SortedMap<String, Meter> meters,
+                       SortedMap<String, Timer> timers) {
+
+        if (gauges.isEmpty() && counters.isEmpty() && histograms.isEmpty() && meters.isEmpty() && timers.isEmpty()) {
+            return;
+        }
+
+        final long timestamp = clock.getTime();
+
+        final DataAccumulator accumulator = new DataAccumulator();
+        processGauges(accumulator, gauges);
+        processCounters(accumulator, counters);
+        processMeters(accumulator, meters);
+        processHistograms(accumulator, histograms);
+        processTimers(accumulator, timers);
+        logger.debug("Reported metrics {}", accumulator);
+    }
+
+    private static void processGauges(DataAccumulator accumulator, Map<String, Gauge> gauges) {
+        gauges.entrySet().forEach(entry -> accumulator.addGauge(entry.getKey(), entry.getValue().getValue()));
+    }
+
+    private static void processCounters(DataAccumulator accumulator, Map<String, Counter> counters) {
+        counters.entrySet().forEach(entry -> accumulator.addCounter(entry.getKey(), entry.getValue().getCount()));
+    }
+
+    private void processMeters(DataAccumulator accumulator, Map<String, Meter> meters) {
+        meters.entrySet().forEach(entry -> {
+            final MetricsDecomposer.PartsStreamer streamer = decomposer.streamParts(entry.getKey());
+            streamer.countings().forEach(metricPart -> accumulator.addSubCounter(metricPart, entry));
+            streamer.metered().forEach(metricPart -> accumulator.addSubGauge(metricPart, entry));
+        });
+    }
+
+    private void processHistograms(DataAccumulator accumulator, Map<String, Histogram> histograms) {
+        histograms.entrySet().forEach(entry -> {
+            final MetricsDecomposer.PartsStreamer streamer = decomposer.streamParts(entry.getKey());
+            streamer.countings().forEach(metricPart -> accumulator.addSubCounter(metricPart, entry));
+            streamer.samplings().forEach(metricPart -> accumulator.addSubGauge(metricPart, entry));
+        });
+    }
+
+    private void processTimers(DataAccumulator accumulator, Map<String, Timer> timers) {
+        timers.entrySet().forEach(entry -> {
+            final MetricsDecomposer.PartsStreamer streamer = decomposer.streamParts(entry.getKey());
+            streamer.countings().forEach(metricPart -> accumulator.addSubCounter(metricPart, entry));
+            streamer.metered().forEach(metricPart -> accumulator.addSubGauge(metricPart, entry));
+            streamer.samplings().forEach(metricPart -> accumulator.addSubGauge(metricPart, entry));
+        });
+    }
+
+    private class DataAccumulator {
+        private final Map<String, Double> gauges = new HashMap<>();
+        private final Map<String, Long> counters = new HashMap<>();
+
+        private DataAccumulator() {}
+
+        private Map<String, Double> getGauges() {
+            return gauges;
+        }
+
+        private Map<String, Long> getCounters() {
+            return counters;
+        }
+
+        private DataAccumulator addCounter(String name, long value) {
+            final String finalName = prefix.map(p -> p + name).orElse(name);
+            counters.put(finalName, value);
+            return this;
+        }
+
+        private DataAccumulator addGauge(String name, Object value) {
+            final String finalName = prefix.map(p -> p + name).orElse(name);
+            if (value instanceof BigDecimal) {
+                gauges.put(finalName, ((BigDecimal) value).doubleValue());
+            } else if (value instanceof BigInteger) {
+                gauges.put(finalName, ((BigInteger) value).doubleValue());
+            } else if (value != null && value.getClass().isAssignableFrom(Double.class)) {
+                if (!Double.isNaN((Double) value) && Double.isFinite((Double) value)) {
+                    gauges.put(finalName, (Double) value);
+                }
+            } else if (value != null && value instanceof Number) {
+                gauges.put(finalName, ((Number) value).doubleValue());
+            }
+            return this;
+        }
+
+        private <T> DataAccumulator addSubCounter(MetricPart<T, Long> metricPart, Map.Entry<String, ? extends T> counterEntry) {
+            final String nameWithSuffix = metricPart.getMetricNameWithSuffix(counterEntry.getKey());
+            final String finalName = prefix.map(p -> p + nameWithSuffix).orElse(nameWithSuffix);
+            counters.put(finalName, metricPart.getData(counterEntry.getValue()));
+            return this;
+        }
+
+        private <T> DataAccumulator addSubGauge(MetricPart<T, Object> metricPart, Map.Entry<String, ? extends T> gaugeEntry) {
+            final String metricNameWithSuffix = metricPart.getMetricNameWithSuffix(gaugeEntry.getKey());
+            final String finalName = prefix.map(p -> p + metricNameWithSuffix).orElse(metricNameWithSuffix);
+            final Object value = metricPart.getData(gaugeEntry.getValue());
+            if (value instanceof BigDecimal) {
+                gauges.put(finalName, ((BigDecimal) value).doubleValue());
+            } else if (value != null && value.getClass().isAssignableFrom(Double.class) && !Double.isNaN((Double) value) && Double.isFinite((Double) value)) {
+                gauges.put(finalName, (Double) value);
+            }
+            return this;
+        }
+
+        @Override
+        public String toString() {
+            return "DataAccumulator{" +
+                    "gauges=" + gauges +
+                    ", counters=" + counters +
+                    '}';
+        }
+    }
+}
