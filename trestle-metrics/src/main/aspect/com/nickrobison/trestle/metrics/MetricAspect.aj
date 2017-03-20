@@ -7,6 +7,8 @@ import com.codahale.metrics.annotation.Metered;
 import com.nickrobison.trestle.annotations.metrics.CounterDecrement;
 import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -22,6 +24,7 @@ public aspect MetricAspect extends AbstractMetricAspect {
 
     declare parents:( @Metriced *) implements Profiled;
 
+    private static final Logger logger = LoggerFactory.getLogger(MetricAspect.class);
     final Map<String, AnnotatedMetric<Gauge>> Profiled.gauges = new ConcurrentHashMap<>();
     final Map<String, AnnotatedMetric<Meter>> Profiled.meters = new ConcurrentHashMap<>();
     final Map<String, AnnotatedMetric<Timer>> Profiled.timers = new ConcurrentHashMap<>();
@@ -32,12 +35,12 @@ public aspect MetricAspect extends AbstractMetricAspect {
     after(final Profiled object): profiled(object) {
         final DefaultMetricsStrategy strategy = new DefaultMetricsStrategy();
         Class<?> clazz = object.getClass();
+        logger.debug("Resolved class {} as Metriced", clazz.getName());
         do {
             for (final Method method : clazz.getDeclaredMethods()) {
                 if (Modifier.isStatic(method.getModifiers())) {
                     continue;
                 }
-
                 final Class<?> type = clazz;
 //                Metered
                 final AnnotatedMetric<Meter> exceptionMeter = metricAnnotation(method, ExceptionMetered.class, (name, absolute) -> {
@@ -47,6 +50,7 @@ public aspect MetricAspect extends AbstractMetricAspect {
                 });
                 if (exceptionMeter.isPresent()) {
                     object.meters.put(method.getName(), exceptionMeter);
+                    logger.debug("Registered ExceptionMeter on {}", method);
                 }
 
                 final AnnotatedMetric<Meter> meter = metricAnnotation(method, Metered.class, (name, absolute) -> {
@@ -56,6 +60,7 @@ public aspect MetricAspect extends AbstractMetricAspect {
                 });
                 if (meter.isPresent()) {
                     object.meters.put(method.getName(), meter);
+                    logger.debug("Registered Meter on {}", method);
                 }
 
 //                Gauge
@@ -67,6 +72,7 @@ public aspect MetricAspect extends AbstractMetricAspect {
                 });
                 if (gaugeAnnotatedMetric.isPresent()) {
                     object.gauges.put(method.getName(), gaugeAnnotatedMetric);
+                    logger.debug("Registered Gauge on {} of type {}", method, gaugeAnnotatedMetric.getMetric().getValue().getClass().getName());
                 }
 
 //                Timer
@@ -78,6 +84,7 @@ public aspect MetricAspect extends AbstractMetricAspect {
                 });
                 if (timer.isPresent()) {
                     object.timers.put(method.getName(), timer);
+                    logger.debug("Registered Timer on {}", method);
                 }
 
 //                Counter
@@ -89,6 +96,7 @@ public aspect MetricAspect extends AbstractMetricAspect {
                 });
                 if (incrementingCounter.isPresent()) {
                     object.counters.put(method.getName(), incrementingCounter);
+                    logger.debug("Registered incrementing Counter {}", method);
                 }
 
                 final AnnotatedMetric<Counter> decrementingCounter = metricAnnotation(method, CounterDecrement.class, (name, absolute) -> {
