@@ -74,10 +74,15 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
     }
 
     @Override
+    public void shutdown() {
+        shutdown(null);
+    }
+
+    @Override
     public void exportData(File file) {
         logger.info("Exporting metrics to {}", file);
         try {
-//            Get all the metric names
+//            Get all the metrics
             String exportQuery = "SELECT M.METRIC, C.TIMESTAMP, C.VALUE FROM METRICS AS M\n" +
                     "LEFT JOIN (\n" +
                     "    SELECT *\n" +

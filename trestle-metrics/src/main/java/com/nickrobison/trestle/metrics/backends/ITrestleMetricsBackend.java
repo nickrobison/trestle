@@ -20,6 +20,11 @@ public interface ITrestleMetricsBackend {
     void shutdown(@Nullable File exportFile);
 
     /**
+     * Shutdown metrics backend without exporting data
+     */
+    void shutdown();
+
+    /**
      * Exports all metrics into a single CSV file
      * @param file {@link File} to write into
      */
