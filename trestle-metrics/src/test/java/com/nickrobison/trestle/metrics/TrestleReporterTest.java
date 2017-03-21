@@ -2,12 +2,16 @@ package com.nickrobison.trestle.metrics;
 
 import com.codahale.metrics.annotation.Gauge;
 import com.codahale.metrics.annotation.Metered;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import javax.inject.Inject;
 import java.io.File;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,10 +23,17 @@ public class TrestleReporterTest {
 
     private TrestleMetrician trestleMetrician;
     private TrestleMetricsReporter reporter;
+    private static Injector injector;
+
+    @BeforeAll
+    public static void staticInit() {
+        injector = Guice.createInjector(new MetricsModule());
+    }
 
     @BeforeEach
     public void setup() {
-        trestleMetrician = new TrestleMetrician();
+        trestleMetrician = injector.getInstance(TrestleMetrician.class);
+//        trestleMetrician = new TrestleMetrician();
         reporter = trestleMetrician.getReporter();
     }
 
