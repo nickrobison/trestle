@@ -52,10 +52,6 @@ class MetricsListener implements MetricRegistryListener {
 
         registry.addListener(this);
     }
-//
-//    private void tagMetric(String metricType, String baseName) {
-//
-//    }
 
     @Override
     public void onGaugeAdded(String name, Gauge<?> gauge) {

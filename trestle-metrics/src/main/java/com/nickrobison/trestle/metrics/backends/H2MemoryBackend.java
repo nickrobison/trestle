@@ -26,6 +26,7 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
 
     public H2MemoryBackend(AbstractConcurrentArrayQueue<TrestleMetricsReporter.DataAccumulator> dataQueue) {
         logger.info("Initializing H2 backend");
+        logger.warn("Not for production use");
         this.dataQueue = dataQueue;
         metricMap = new HashMap<>();
 //        Connect to database
@@ -76,7 +77,17 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
     public void exportData(File file) {
         logger.info("Exporting metrics to {}", file);
         try {
-            final CallableStatement callableStatement = connection.prepareCall(String.format("CALL CSVWRITE('%s', 'SELECT * FROM metrics')", file.toString()));
+//            Get all the metric names
+            String exportQuery = "SELECT M.METRIC, C.TIMESTAMP, C.VALUE FROM METRICS AS M\n" +
+                    "LEFT JOIN (\n" +
+                    "    SELECT *\n" +
+                    "    FROM GAUGES\n" +
+                    "    UNION ALL\n" +
+                    "    SELECT *\n" +
+                    "    FROM COUNTERS\n" +
+                    "    ) AS C\n" +
+                    "ON C.METRICID = M.METRICID;";
+            final CallableStatement callableStatement = connection.prepareCall(String.format("CALL CSVWRITE('%s', '%s')", file.toString(), exportQuery));
             callableStatement.execute();
         } catch (SQLException e) {
             logger.error("Unable to export results to {}", file, e);
