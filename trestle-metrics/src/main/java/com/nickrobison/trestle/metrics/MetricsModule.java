@@ -4,6 +4,8 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.google.inject.AbstractModule;
 
+import com.google.inject.Exposed;
+import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.nickrobison.trestle.metrics.backends.H2MemoryBackend;
 import com.nickrobison.trestle.metrics.backends.ITrestleMetricsBackend;
@@ -17,7 +19,7 @@ import javax.inject.Singleton;
 /**
  * Created by nrobison on 3/21/17.
  */
-public class MetricsModule extends AbstractModule {
+public class MetricsModule extends PrivateModule {
 
     private Config config;
 
@@ -33,6 +35,8 @@ public class MetricsModule extends AbstractModule {
         } catch (ClassNotFoundException e) {
             throw new RuntimeException("Unable to load metrics backend class", e);
         }
+        bind(TrestleMetrician.class).asEagerSingleton();
+        expose(TrestleMetrician.class);
     }
 
     @Provides
