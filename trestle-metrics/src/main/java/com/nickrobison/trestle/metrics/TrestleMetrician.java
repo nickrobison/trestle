@@ -4,6 +4,8 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.nickrobison.trestle.metrics.backends.ITrestleMetricsBackend;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.agrona.concurrent.AbstractConcurrentArrayQueue;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
@@ -33,6 +35,7 @@ public class TrestleMetrician {
                             AbstractConcurrentArrayQueue<TrestleMetricsReporter.DataAccumulator> dataqueue,
                             ITrestleMetricsBackend backend) {
         logger.info("Initializing Trestle Metrician");
+        final Config config = ConfigFactory.load().getConfig("trestle.metrics");
         this.registry = registry;
         this.dataQueue = dataqueue;
         metricsBackend = backend;
@@ -40,9 +43,14 @@ public class TrestleMetrician {
         final MetricsListener metricsListener = new MetricsListener(Optional.empty(), new HashMap<>(), new HashMap<>(), new ArrayList<>(), false, metricsDecomposer, registry, MetricFilter.ALL, this.metricsBackend);
         trestleMetricsReporter = new TrestleMetricsReporter(registry, dataQueue, Optional.empty(), metricsDecomposer, MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
         this.jvmMetrics = new TrestleJVMMetrics(this.registry);
+
+        logger.debug("Starting metrics reporting");
+        this.trestleMetricsReporter.start(config.getLong("period"), TimeUnit.MILLISECONDS);
     }
 
     public void shutdown() {
+        logger.info("Stopping metrics reporting");
+        this.trestleMetricsReporter.stop();
         shutdown(null);
     }
 
