@@ -1,15 +1,22 @@
 package com.nickrobison.trestle.metrics;
 
+import com.codahale.metrics.Metric;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.MetricSet;
 import com.codahale.metrics.annotation.Gauge;
+import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
+import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.management.*;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.management.RuntimeMXBean;
+import java.util.Map;
 
 /**
  * Created by nrobison on 3/21/17.
@@ -18,13 +25,16 @@ import java.lang.management.RuntimeMXBean;
 public class TrestleJVMMetrics {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleJVMMetrics.class);
-    public static final String JAVA_LANG_TYPE_OPERATING_SYSTEM = "java.lang:type=OperatingSystem";
+    private static final String JAVA_LANG_TYPE_OPERATING_SYSTEM = "java.lang:type=OperatingSystem";
+    private final MetricRegistry registry;
     private final OperatingSystemMXBean operatingSystemMXBean;
     private final RuntimeMXBean runtimeMXBean;
     private final int processors;
     private final MBeanServer platformMBeanServer;
 
-    TrestleJVMMetrics() {
+    @Inject
+    TrestleJVMMetrics(MetricRegistry registry) {
+        this.registry = registry;
 //        Get the Beans
         operatingSystemMXBean = ManagementFactory.getOperatingSystemMXBean();
         runtimeMXBean = ManagementFactory.getRuntimeMXBean();
@@ -33,6 +43,16 @@ public class TrestleJVMMetrics {
         processors = operatingSystemMXBean.getAvailableProcessors();
 
 //        JVM metrics
+        this.registerJVMMetrics();
+    }
+
+    private void registerJVMMetrics() {
+        logger.debug("Registering JVM Memory Gauges");
+        this.registry.registerAll(new MemoryUsageGaugeSet());
+        logger.debug("Registering JVM Thread gauges");
+        this.registry.registerAll(new ThreadStatesGaugeSet());
+        logger.debug("Registering JVM Garbage Collector Gauges");
+        this.registry.registerAll(new GarbageCollectorMetricSet());
     }
 
     //    Public Methods
