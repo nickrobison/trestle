@@ -6,6 +6,7 @@ import com.codahale.metrics.SharedMetricRegistries;
 import com.nickrobison.trestle.metrics.backends.H2MemoryBackend;
 import com.nickrobison.trestle.metrics.backends.ITrestleMetricsBackend;
 import org.agrona.concurrent.ManyToManyConcurrentArrayQueue;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +44,7 @@ public class TrestleMetrician {
         shutdown(null);
     }
 
-    public void shutdown(File exportFile) {
+    public void shutdown(@Nullable File exportFile) {
         logger.info("Shutting down Trestle Metrician");
         metricsBackend.shutdown(exportFile);
     }
