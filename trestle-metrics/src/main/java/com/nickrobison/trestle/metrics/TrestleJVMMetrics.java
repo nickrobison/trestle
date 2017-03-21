@@ -76,7 +76,7 @@ public class TrestleJVMMetrics {
 
 //    Protected metrics
 
-    @Gauge(name = "jvm-cpu-usage")
+    @Gauge(name = "jvm-cpu-usage", absolute = true)
     double getCPUUsage() {
         final AttributeList list;
         try {

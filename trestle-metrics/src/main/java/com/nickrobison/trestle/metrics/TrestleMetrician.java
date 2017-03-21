@@ -31,8 +31,7 @@ public class TrestleMetrician {
     @Inject
     public TrestleMetrician(MetricRegistry registry,
                             AbstractConcurrentArrayQueue<TrestleMetricsReporter.DataAccumulator> dataqueue,
-                            ITrestleMetricsBackend backend,
-                            TrestleJVMMetrics jvmMetrics) {
+                            ITrestleMetricsBackend backend) {
         logger.info("Initializing Trestle Metrician");
         this.registry = registry;
         this.dataQueue = dataqueue;
@@ -40,7 +39,7 @@ public class TrestleMetrician {
         final MetricsDecomposer metricsDecomposer = new MetricsDecomposer(new HashMap<>(), new ArrayList<>());
         final MetricsListener metricsListener = new MetricsListener(Optional.empty(), new HashMap<>(), new HashMap<>(), new ArrayList<>(), false, metricsDecomposer, registry, MetricFilter.ALL, this.metricsBackend);
         trestleMetricsReporter = new TrestleMetricsReporter(registry, dataQueue, Optional.empty(), metricsDecomposer, MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
-        this.jvmMetrics = jvmMetrics;
+        this.jvmMetrics = new TrestleJVMMetrics();
     }
 
     public void shutdown() {
