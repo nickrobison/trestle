@@ -8,6 +8,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.File;
 import java.sql.*;
 import java.util.HashMap;
@@ -24,7 +25,8 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
     private final Connection connection;
     private final Map<String, Long> metricMap;
 
-    public H2MemoryBackend(AbstractConcurrentArrayQueue<TrestleMetricsReporter.DataAccumulator> dataQueue) {
+    @Inject
+    H2MemoryBackend(AbstractConcurrentArrayQueue<TrestleMetricsReporter.DataAccumulator> dataQueue) {
         logger.info("Initializing H2 backend");
         logger.warn("Not for production use");
         this.dataQueue = dataQueue;

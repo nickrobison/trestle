@@ -13,6 +13,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.nickrobison</groupId>
+            <artifactId>trestle-annotations</artifactId>
+            <version>0.6-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>io.dropwizard.metrics</groupId>
             <artifactId>metrics-core</artifactId>
         </dependency>
@@ -30,17 +35,16 @@
             <artifactId>aspectjrt</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.nickrobison</groupId>
-            <artifactId>trestle-annotations</artifactId>
-            <version>0.6-SNAPSHOT</version>
-        </dependency>
-        <dependency>
             <groupId>org.agrona</groupId>
             <artifactId>agrona</artifactId>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
         </dependency>
     </dependencies>
 
