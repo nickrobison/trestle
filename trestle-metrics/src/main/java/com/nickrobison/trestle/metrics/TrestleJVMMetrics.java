@@ -1,12 +1,18 @@
 package com.nickrobison.trestle.metrics;
 
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.annotation.Gauge;
+import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
+import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.*;
+import javax.management.Attribute;
+import javax.management.AttributeList;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.management.RuntimeMXBean;
@@ -18,13 +24,16 @@ import java.lang.management.RuntimeMXBean;
 public class TrestleJVMMetrics {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleJVMMetrics.class);
-    public static final String JAVA_LANG_TYPE_OPERATING_SYSTEM = "java.lang:type=OperatingSystem";
+    private static final String JAVA_LANG_TYPE_OPERATING_SYSTEM = "java.lang:type=OperatingSystem";
+    private final MetricRegistry registry;
     private final OperatingSystemMXBean operatingSystemMXBean;
     private final RuntimeMXBean runtimeMXBean;
     private final int processors;
     private final MBeanServer platformMBeanServer;
 
-    TrestleJVMMetrics() {
+
+    TrestleJVMMetrics(MetricRegistry registry) {
+        this.registry = registry;
 //        Get the Beans
         operatingSystemMXBean = ManagementFactory.getOperatingSystemMXBean();
         runtimeMXBean = ManagementFactory.getRuntimeMXBean();
@@ -33,6 +42,17 @@ public class TrestleJVMMetrics {
         processors = operatingSystemMXBean.getAvailableProcessors();
 
 //        JVM metrics
+        this.registerJVMMetrics();
+    }
+
+    private void registerJVMMetrics() {
+        this.getCPUUsage();
+        logger.debug("Registering JVM Memory Gauges");
+        this.registry.registerAll(new MemoryUsageGaugeSet());
+        logger.debug("Registering JVM Thread gauges");
+        this.registry.registerAll(new ThreadStatesGaugeSet());
+        logger.debug("Registering JVM Garbage Collector Gauges");
+        this.registry.registerAll(new GarbageCollectorMetricSet());
     }
 
     //    Public Methods
@@ -56,7 +76,7 @@ public class TrestleJVMMetrics {
 
 //    Protected metrics
 
-    @Gauge(name = "jvm-cpu-usage")
+    @Gauge(name = "jvm-cpu-usage", absolute = true)
     double getCPUUsage() {
         final AttributeList list;
         try {
