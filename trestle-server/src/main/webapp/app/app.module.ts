@@ -10,7 +10,7 @@ import {AppRoutes} from "./app.routes";
 import {LoginComponent} from "./login/app.login";
 import {AppComponent} from "./app.component";
 import {MaterializeModule} from "angular2-materialize";
-import {FormsModule} from "@angular/forms";
+import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {AuthService} from "./authentication.service";
 import {LoggedInGuard} from "./LoggedInGuard";
 import {AuthHttp, AuthConfig} from "angular2-jwt";
@@ -21,6 +21,7 @@ import {PermissionsGuard} from "./PermissionsGuard";
         HttpModule,
         BrowserModule,
         FormsModule,
+        ReactiveFormsModule,
         MaterialModule.forRoot(),
         RouterModule.forRoot(AppRoutes),
         MaterializeModule

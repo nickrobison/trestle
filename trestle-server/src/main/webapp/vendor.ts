@@ -14,5 +14,6 @@ import "crypto-js";
 import "codemirror";
 import "codemirror/mode/javascript/javascript.js";
 import "codemirror/mode/sparql/sparql.js";
-// import "codemirror/lib/codemirror.css";
-// import "codemirror/theme/material.css";
+import "d3-selection";
+import "d3-scale";
+import "d3-force";

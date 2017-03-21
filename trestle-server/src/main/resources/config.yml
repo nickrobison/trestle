@@ -5,7 +5,7 @@ connectionString: "http://localhost:7200"
 username: ""
 password: ""
 ontology: "hadoop_gaul_updated"
-prefix: "http://nickrobison.com/test/hadoop.owl"
+prefix: "http://nickrobison.com/test/hadoop.owl#"
 
 logging:
   level: INFO

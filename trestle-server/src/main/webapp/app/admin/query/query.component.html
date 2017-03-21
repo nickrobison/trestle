@@ -1,4 +1,5 @@
 <div class="section">
+<h4>SPARQL Editor</h4>
 <codemirror [prefixes]="prefixes" (query)="executeQuery($event)"></codemirror>
 </div>
 <md-progress-bar [color]="'primary'" [mode]="'indeterminate'" *ngIf="loading"></md-progress-bar>
