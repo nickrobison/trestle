@@ -1,7 +1,7 @@
 /**
  * Created by nrobison on 3/7/17.
  */
-import {Component, OnInit, ViewContainerRef} from "@angular/core";
+import {Component, OnInit, ViewContainerRef, ViewEncapsulation} from "@angular/core";
 import {VisualizeService, ITrestleIndividual, ITrestleFact} from "./visualize.service";
 import {FormControl} from "@angular/forms";
 import {Observable} from "rxjs";
@@ -11,7 +11,8 @@ import {IndividualValueDialog} from "./individual-value.dialog";
 @Component({
     selector: "visualize",
     templateUrl: "./visualize.component.html",
-    styleUrls: ["./visualize.component.css"]
+    styleUrls: ["./visualize.component.css"],
+    encapsulation: ViewEncapsulation.None
 })
 
 export class VisualizeComponent implements OnInit {
@@ -47,5 +48,10 @@ export class VisualizeComponent implements OnInit {
         this.dialogRef.componentInstance.name = fact.name;
         this.dialogRef.componentInstance.value = fact.value;
         this.dialogRef.afterClosed().subscribe(() => this.dialogRef = null);
+    }
+
+    displayFn(individualName: string): string {
+        let strings = individualName.split("#");
+        return strings[1];
     }
 }

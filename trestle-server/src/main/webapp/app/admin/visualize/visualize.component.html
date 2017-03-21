@@ -1,6 +1,6 @@
 <div class="section">
     <h4>Search for Individual</h4>
-    <form (ngSubmit)="onSubmit()">
+    <form (ngSubmit)="onSubmit()" class="search-form">
         <md-input-container class="search-field">
             <input type="text" placeholder="Search for Individual" mdInput [formControl]="individualName"
                    [mdAutocomplete]="auto">
@@ -8,7 +8,7 @@
 
         <md-autocomplete class="search-field" #auto="mdAutocomplete">
             <md-option *ngFor="let option of options | async" [value]="option">
-                {{option}}
+                {{displayFn(option)}}
             </md-option>
         </md-autocomplete>
         <button md-raised-button type="submit">submit</button>

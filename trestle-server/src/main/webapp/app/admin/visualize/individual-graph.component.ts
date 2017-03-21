@@ -66,7 +66,8 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
     private nodes: Selection<any, IFactNode, any, any>;
     private simulation: Simulation<IFactNode, any>;
 
-    constructor() {}
+    constructor() {
+    }
 
     ngAfterViewInit(): void {
         console.debug("graph view-init");
@@ -83,6 +84,10 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         if (!configChange.isFirstChange() && (configChange.currentValue !== configChange.previousValue)) {
             console.debug("Config changed", configChange);
             this.buildGraph(configChange.currentValue.data);
+            this.update({
+                nodes: [],
+                links: [],
+            });
             this.update(this.layout);
         }
     }
@@ -107,9 +112,11 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
 
     private update(data: IGraphLayout): void {
         console.debug("Data in update function", data);
+        let force = forceManyBody();
+        force.strength(-200);
         this.simulation = forceSimulation<IFactNode>()
             .force("link", forceLink().id((d: IFactNode) => d.id))
-            .force("charge", forceManyBody())
+            .force("charge", force)
             .force("center", forceCenter(this.width / 2, this.height / 2));
 
         let linkData = this.svg.selectAll(".link")
@@ -125,23 +132,22 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         this.nodes = nodeData.enter()
             .append("circle")
             .attr("class", "node")
-            .attr("r", this.width / 500)
             .style("fill", (d) => this.color(d.group.toString(10)));
 
         this.nodes
             .append("title")
             .text((d: IFactNode) => d.id);
 
-    //    Click handler
+        //    Click handler
         this.nodes.on("click", (d: any) => console.debug("clicked", d));
 
-    //    Legend
+        //    Legend
         let legend = this.svg.selectAll(".legend")
             .data(this.color.domain())
             .enter()
             .append("g")
             .attr("class", "legend")
-            .attr("transform", (d, i) => "translate(0," + (i * ((this.width / 100) * 2) + 50) + ")");
+            .attr("transform", (d, i) => "translate(0," + (i * ((this.width / 100) * 2) + 10) + ")");
 
         legend.append("circle")
             .attr("cx", this.width - 18)
@@ -156,7 +162,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             .attr("dy", "0.35em")
             .style("text-anchor", "end")
             .text((d) => IndividualGraph.parseColorGroup(d));
-    // Force setup
+        // Force setup
         this.simulation
             .nodes(data.nodes)
             .on("tick", this.forceTick);
@@ -187,7 +193,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             links: []
         };
 
-    //    Add the individual as node 0
+        //    Add the individual as node 0
         let individualNode = {
             id: individual.individualID,
             group: NodeType.INDIVIDUAL
@@ -222,9 +228,9 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             };
             this.layout.nodes.push(factNode, factTemporal, factDBTemporal);
             this.layout.links.push({
-                source: individualNode,
-                target: factNode
-            },
+                    source: individualNode,
+                    target: factNode
+                },
                 {
                     source: factNode,
                     target: factTemporal,
