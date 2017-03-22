@@ -40,7 +40,7 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
         }
 
         final ProcessEvents processEvents = new ProcessEvents();
-        eventThread = new Thread(processEvents, "hsqldb-event-thread");
+        eventThread = new Thread(processEvents, "h2memory-event-thread");
         eventThread.start();
     }
 
@@ -69,6 +69,8 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
             exportData(exportFile);
         }
         try {
+            final CallableStatement dropEverything = connection.prepareCall("DROP ALL OBJECTS DELETE FILES ");
+            dropEverything.execute();
             connection.close();
         } catch (SQLException e) {
             logger.error("Unable to close H2 in-memory database", e);
