@@ -59,6 +59,11 @@ public class TrestleMetrician {
         metricsBackend.shutdown(exportFile);
     }
 
+    public void exportData(File exportFile) {
+        logger.info("Exporting metrics data to {}", exportFile);
+        metricsBackend.exportData(exportFile);
+    }
+
     public TrestleMetricsReporter getReporter() {
         return this.trestleMetricsReporter;
     }

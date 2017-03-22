@@ -4,6 +4,7 @@ import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
+import com.nickrobison.trestle.metrics.TrestleMetrician;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.types.TrestleIndividual;
@@ -53,11 +54,11 @@ public interface TrestleReasoner {
     //    When you get the ontology, the ownership passes away, so then the reasoner can't perform any more queries.
     ITrestleOntology getUnderlyingOntology();
 
-//    /**
-//     * Get the underlying metrics engine
-//     * @return - {@link TrestleMetrician} metrics engine
-//     */
-//    TrestleMetrician getMetricsEngine();
+    /**
+     * Get the underlying metrics engine
+     * @return - {@link TrestleMetrician} metrics engine
+     */
+    TrestleMetrician getMetricsEngine();
 
     /**
      * Get the currently registered prefixes and URIs

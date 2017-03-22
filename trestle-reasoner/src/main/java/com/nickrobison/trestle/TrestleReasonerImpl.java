@@ -234,10 +234,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         return this.ontology;
     }
 
-//    @Override
-//    public TrestleMetrician getMetricsEngine() {
-//        return this.trestleMetrician;
-//    }
+    @Override
+    public TrestleMetrician getMetricsEngine() {
+        return this.trestleMetrician;
+    }
 
     @Override
     public Map<String, String> getReasonerPrefixes() {

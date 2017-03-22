@@ -154,7 +154,7 @@ public class TrestleAPITest {
 //        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest1 = reasoner.readTrestleObject(geotoolsPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
 //        assertEquals(geotoolsPolygonTest, geotoolsPolygonTest1, "Should be equal");
 
-
+        reasoner.getMetricsEngine().exportData(new File("./target/api-test-metrics.csv"));
     }
 
     @Test
@@ -213,6 +213,7 @@ public class TrestleAPITest {
                 () -> assertEquals(1, wktValues.get().size(), "Should only have 1 wkt value"));
 
 //        Test database temporals
+        reasoner.getMetricsEngine().exportData(new File("./target/api-test-fact-validity-metrics.csv"));
     }
 
     @Test
@@ -292,6 +293,7 @@ public class TrestleAPITest {
 //        intersectedObjects = reasoner.spatialIntersect(datasetClass, ((TestClasses.GAULTestClass) ancuabe1).wkt, 100.0);
 //        assertTrue(intersectedObjects.isPresent());
 //        assertTrue(intersectedObjects.get().size() > 0, "Should have more than 0 objects");
+        reasoner.getMetricsEngine().exportData(new File("./target/api-test-gaul-loader-metrics.csv"));
     }
 
 
