@@ -44,6 +44,7 @@ public class TrestleMetrician {
         final MetricsListener metricsListener = new MetricsListener(Optional.empty(), new HashMap<>(), new HashMap<>(), new ArrayList<>(), false, metricsDecomposer, registry, MetricFilter.ALL, this.metricsBackend);
         trestleMetricsReporter = new TrestleMetricsReporter(registry, dataQueue, Optional.empty(), metricsDecomposer, MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
         this.jvmMetrics = jvmMetrics;
+        this.trestleMetricsReporter.start(config.getLong("period"), TimeUnit.MILLISECONDS);
     }
 
     public void shutdown() {
@@ -54,6 +55,7 @@ public class TrestleMetrician {
 
     public void shutdown(@Nullable File exportFile) {
         logger.info("Shutting down Trestle Metrician");
+        SharedMetricRegistries.clear();
         metricsBackend.shutdown(exportFile);
     }
 

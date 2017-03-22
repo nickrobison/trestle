@@ -53,6 +53,12 @@ public interface TrestleReasoner {
     //    When you get the ontology, the ownership passes away, so then the reasoner can't perform any more queries.
     ITrestleOntology getUnderlyingOntology();
 
+//    /**
+//     * Get the underlying metrics engine
+//     * @return - {@link TrestleMetrician} metrics engine
+//     */
+//    TrestleMetrician getMetricsEngine();
+
     /**
      * Get the currently registered prefixes and URIs
      * @return - {@link Map} of prefixes and their corresponding URIs

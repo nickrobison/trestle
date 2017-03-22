@@ -32,7 +32,7 @@ public interface ITrestleMetricsBackend {
 
     /**
      * Register {@link Gauge} with backend
-     * The Gauge may be null, especially if the method is being called from the {@link com.nickrobison.trestle.metrics.MetricsListener}
+     * The Gauge may be null, especially if the method is being called from the MetricsListener
      * @param name - Name of gauge to register
      * @param gauge - Nullable {@link Gauge} to register
      */
@@ -46,7 +46,7 @@ public interface ITrestleMetricsBackend {
 
     /**
      * Register {@link Counter} with backend
-     * The Counter may be null, especially if the method is being called from the {@link com.nickrobison.trestle.metrics.MetricsListener}
+     * The Counter may be null, especially if the method is being called from the MetricsListener
      * @param name - Name of counter to register
      * @param counter - Nullable {@link Counter} to register
      */

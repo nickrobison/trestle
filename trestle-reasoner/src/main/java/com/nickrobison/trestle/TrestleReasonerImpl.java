@@ -3,6 +3,8 @@ package com.nickrobison.trestle;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.nickrobison.trestle.caching.TrestleCache;
 import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.common.StaticIRI;
@@ -18,6 +20,8 @@ import com.nickrobison.trestle.iri.IRIBuilder;
 import com.nickrobison.trestle.iri.IRIVersion;
 import com.nickrobison.trestle.iri.TrestleIRI;
 import com.nickrobison.trestle.iri.TrestleIRIV1;
+import com.nickrobison.trestle.metrics.MetricsModule;
+import com.nickrobison.trestle.metrics.TrestleMetrician;
 import com.nickrobison.trestle.ontology.*;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.parser.*;
@@ -88,6 +92,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private @Nullable TrestleCache trestleCache = null;
     private final TrestleParser trestleParser;
     private final Config trestleConfig;
+    private final TrestleMetrician trestleMetrician;
 
     @SuppressWarnings("dereference.of.nullable")
     TrestleReasonerImpl(TrestleBuilder builder) throws OWLOntologyCreationException {
@@ -95,6 +100,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //        Read in the trestleConfig file and validate it
         trestleConfig = ConfigFactory.load().getConfig("trestle");
         ValidateConfig(trestleConfig);
+
+        final Injector injector = Guice.createInjector(new MetricsModule());
+
+//        Setup metrics engine
+        trestleMetrician = injector.getInstance(TrestleMetrician.class);
 
 //        Setup the reasoner prefix
 //        If not specified, use the default Trestle prefix
@@ -203,12 +213,14 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     public void shutdown() {
         logger.info("Shutting down reasoner");
         this.ontology.close(false);
+        this.trestleMetrician.shutdown();
     }
 
     @Override
     public void shutdown(boolean delete) {
         logger.info("Shutting down reasoner, and removing the model");
         this.ontology.close(delete);
+        this.trestleMetrician.shutdown();
     }
 
     @Override
@@ -221,6 +233,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     public ITrestleOntology getUnderlyingOntology() {
         return this.ontology;
     }
+
+//    @Override
+//    public TrestleMetrician getMetricsEngine() {
+//        return this.trestleMetrician;
+//    }
 
     @Override
     public Map<String, String> getReasonerPrefixes() {
@@ -952,21 +969,21 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @param <T>         - Type of individual to remove
      */
     public <T> void removeIndividual(@NonNull T... inputObject) {
-        T[] objects = inputObject;
-        final List<CompletableFuture<Void>> completableFutures = Arrays.stream(objects)
-                .map(object -> CompletableFuture.supplyAsync(() -> trestleParser.classParser.getIndividual(object)))
-                .map(idFuture -> idFuture.thenApply(ontology::getAllObjectPropertiesForIndividual))
-                .map(propertyFutures -> propertyFutures.thenCompose(this::removeRelatedObjects))
-                .map(removedFuture -> removedFuture.thenAccept(ontology::removeIndividual))
-                .collect(Collectors.toList());
-        final CompletableFuture<List<Void>> listCompletableFuture = sequenceCompletableFutures(completableFutures);
-        try {
-            listCompletableFuture.get();
-        } catch (InterruptedException e) {
-            logger.error("Delete interrupted", e);
-        } catch (ExecutionException e) {
-            logger.error("Execution error", e);
-        }
+//        T[] objects = inputObject;
+//        final List<CompletableFuture<Void>> completableFutures = Arrays.stream(objects)
+//                .map(object -> CompletableFuture.supplyAsync(() -> trestleParser.classParser.getIndividual(object)))
+//                .map(idFuture -> idFuture.thenApply(ontology::getAllObjectPropertiesForIndividual))
+//                .map(propertyFutures -> propertyFutures.thenCompose(this::removeRelatedObjects))
+//                .map(removedFuture -> removedFuture.thenAccept(ontology::removeIndividual))
+//                .collect(Collectors.toList());
+//        final CompletableFuture<List<Void>> listCompletableFuture = sequenceCompletableFutures(completableFutures);
+//        try {
+//            listCompletableFuture.get();
+//        } catch (InterruptedException e) {
+//            logger.error("Delete interrupted", e);
+//        } catch (ExecutionException e) {
+//            logger.error("Execution error", e);
+//        }
     }
 
     /**
@@ -1736,51 +1753,52 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, ITrestleExporter.DataType exportType) throws IOException {
-
-//        Build shapefile schema
-//        TODO(nrobison): Extract type from wkt
-//        FIXME(nrobison): Shapefile schema doesn't support multiple languages. Need to figure out how to flatten
-        final ShapefileSchema shapefileSchema = new ShapefileSchema(MultiPolygon.class);
-        final Optional<List<OWLDataProperty>> propertyMembers = ClassBuilder.getPropertyMembers(inputClass, true);
-        propertyMembers.ifPresent(owlDataProperties -> owlDataProperties.forEach(property -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, property.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property))));
-
-//        Now the temporals
-        final Optional<List<OWLDataProperty>> temporalProperties = trestleParser.temporalParser.GetTemporalsAsDataProperties(inputClass);
-        temporalProperties.ifPresent(owlDataProperties -> owlDataProperties.forEach(temporal -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, temporal.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, temporal))));
-
-
-        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        final List<CompletableFuture<Optional<TSIndividual>>> completableFutures = objectID
-                .stream()
-                .map(id -> IRIUtils.parseStringToIRI(REASONER_PREFIX, id))
-                .map(id -> CompletableFuture.supplyAsync(() -> {
-                    final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-                    final @NonNull T object = readTrestleObject(inputClass, id, false);
-                    this.ontology.returnAndCommitTransaction(tt);
-                    return object;
-                }))
-                .map(objectFuture -> objectFuture.thenApply(object -> parseIndividualToShapefile(object, shapefileSchema)))
-                .collect(Collectors.toList());
-
-        final CompletableFuture<List<Optional<TSIndividual>>> sequencedFutures = sequenceCompletableFutures(completableFutures);
-
-        final ShapefileExporter shapeFileExporter = new ShapefileExporter.Builder<>(shapefileSchema.getGeomName(), shapefileSchema.getGeomType(), shapefileSchema).build();
-        try {
-            final List<TSIndividual> individuals = sequencedFutures
-                    .get()
-                    .stream()
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(Collectors.toList());
-
-            return shapeFileExporter.writePropertiesToByteBuffer(individuals, null);
-
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-
-//        Build the shapefile exporter
-        throw new RuntimeException("Problem constructing object");
+        return null;
+//
+////        Build shapefile schema
+////        TODO(nrobison): Extract type from wkt
+////        FIXME(nrobison): Shapefile schema doesn't support multiple languages. Need to figure out how to flatten
+//        final ShapefileSchema shapefileSchema = new ShapefileSchema(MultiPolygon.class);
+//        final Optional<List<OWLDataProperty>> propertyMembers = ClassBuilder.getPropertyMembers(inputClass, true);
+//        propertyMembers.ifPresent(owlDataProperties -> owlDataProperties.forEach(property -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, property.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property))));
+//
+////        Now the temporals
+//        final Optional<List<OWLDataProperty>> temporalProperties = trestleParser.temporalParser.GetTemporalsAsDataProperties(inputClass);
+//        temporalProperties.ifPresent(owlDataProperties -> owlDataProperties.forEach(temporal -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, temporal.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, temporal))));
+//
+//
+//        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+//        final List<CompletableFuture<Optional<TSIndividual>>> completableFutures = objectID
+//                .stream()
+//                .map(id -> IRIUtils.parseStringToIRI(REASONER_PREFIX, id))
+//                .map(id -> CompletableFuture.supplyAsync(() -> {
+//                    final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+//                    final @NonNull T object = readTrestleObject(inputClass, id, false);
+//                    this.ontology.returnAndCommitTransaction(tt);
+//                    return object;
+//                }))
+//                .map(objectFuture -> objectFuture.thenApply(object -> parseIndividualToShapefile(object, shapefileSchema)))
+//                .collect(Collectors.toList());
+//
+//        final CompletableFuture<List<Optional<TSIndividual>>> sequencedFutures = sequenceCompletableFutures(completableFutures);
+//
+//        final ShapefileExporter shapeFileExporter = new ShapefileExporter.Builder<>(shapefileSchema.getGeomName(), shapefileSchema.getGeomType(), shapefileSchema).build();
+//        try {
+//            final List<TSIndividual> individuals = sequencedFutures
+//                    .get()
+//                    .stream()
+//                    .filter(Optional::isPresent)
+//                    .map(Optional::get)
+//                    .collect(Collectors.toList());
+//
+//            return shapeFileExporter.writePropertiesToByteBuffer(individuals, null);
+//
+//        } catch (InterruptedException | ExecutionException e) {
+//            e.printStackTrace();
+//        }
+//
+////        Build the shapefile exporter
+//        throw new RuntimeException("Problem constructing object");
     }
 
     private <T> Optional<TSIndividual> parseIndividualToShapefile(T object, ShapefileSchema shapefileSchema) {
