@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.lang.management.ManagementFactory;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -52,7 +51,6 @@ public class TrestleAPITest {
 
     @BeforeEach
     public void setup() {
-        logger.debug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString());
         final Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
         reasoner = (TrestleReasonerImpl) new TrestleBuilder()
                 .withDBConnection(config.getString("trestle.ontology.connectionString"),
