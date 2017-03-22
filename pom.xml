@@ -502,6 +502,7 @@
                 <version>2.10</version>
                 <executions>
                     <execution>
+                        <id>getClasspathFilenames</id>
                         <goals>
                             <goal>properties</goal>
                         </goals>

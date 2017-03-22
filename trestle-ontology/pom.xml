@@ -26,6 +26,11 @@
             <version>0.6-SNAPSHOT</version>
         </dependency>
         <dependency>
+            <groupId>com.nickrobison</groupId>
+            <artifactId>trestle-annotations</artifactId>
+            <version>0.6-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>

@@ -1,5 +1,7 @@
 package com.nickrobison.trestle.utils;
 
+import com.codahale.metrics.annotation.Gauge;
+import com.nickrobison.trestle.annotations.metrics.Metriced;
 import org.agrona.concurrent.ManyToManyConcurrentArrayQueue;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -9,6 +11,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by nrobison on 1/16/17.
  */
+@Metriced
 public class SesameConnectionManager {
 
     private static final Logger logger = LoggerFactory.getLogger(SesameConnectionManager.class);
@@ -82,6 +85,7 @@ public class SesameConnectionManager {
      * Get the number of currently available connections
      * @return - int of connections available in the pool
      */
+    @Gauge(name = "sesame-connection-pool-available", absolute = true)
     private int getConnectionCount() {
         return this.connectionQueue.size();
     }

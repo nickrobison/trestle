@@ -153,7 +153,6 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
             while (!Thread.interrupted()) {
                 final TrestleMetricsReporter.DataAccumulator event = dataQueue.poll();
                 if (event != null) {
-                    logger.debug("Backend has event");
                     processEvent(event);
                 }
             }
@@ -167,7 +166,7 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
 //            Counters
             event.getCounters().entrySet().forEach(entry -> {
                 final String key = entry.getKey();
-                logger.debug("Counter {}: {}", key, entry.getValue());
+                logger.trace("Counter {}: {}", key, entry.getValue());
                 Long metricKey = metricMap.get(key);
                 if (metricKey == null) {
                     logger.warn("Got null key for metric {}, registering", key);
@@ -178,7 +177,7 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
 //            Gauges
             event.getGauges().entrySet().forEach(entry -> {
                 final String key = entry.getKey();
-                logger.debug("Gauge {}: {}", key, entry.getValue());
+                logger.trace("Gauge {}: {}", key, entry.getValue());
                 Long metricKey = metricMap.get(key);
                 if (metricKey == null) {
                     logger.warn("Got null key for metric {}, registering", key);

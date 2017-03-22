@@ -1,10 +1,13 @@
 package com.nickrobison.trestle;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
+import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.nickrobison.trestle.caching.TrestleCache;
 import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.common.StaticIRI;
@@ -74,6 +77,7 @@ import static com.nickrobison.trestle.utils.ConfigValidator.ValidateConfig;
 /**
  * Created by nrobison on 5/17/16.
  */
+@Metriced
 @SuppressWarnings({"methodref.inference.unimplemented"})
 public class TrestleReasonerImpl implements TrestleReasoner {
 
@@ -284,6 +288,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
     }
 
+    @Timed
     private boolean checkExists(IRI individualIRI) {
         return ontology.containsResource(individualIRI);
     }
@@ -318,6 +323,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @param inputObject      - Object to write to the ontology
      * @param databaseTemporal - Optional TemporalObject to manually set database time
      */
+    @Timed
+    @CounterIncrement(name = "trestle-object-write", absolute = true)
     private void writeTrestleObject(Object inputObject, @Nullable TemporalObject databaseTemporal) throws UnregisteredClassException, MissingOntologyEntity {
         final Class aClass = inputObject.getClass();
         checkRegisteredClass(aClass);
@@ -476,6 +483,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @param validTemporal    - Temporal to associate with data property individual
      * @param databaseTemporal - Temporal representing database time
      */
+    @Timed
     private void writeObjectFacts(OWLNamedIndividual rootIndividual, List<OWLDataPropertyAssertionAxiom> properties, TemporalObject validTemporal, TemporalObject databaseTemporal) {
         final long now = Instant.now().getEpochSecond();
         final OWLClass factClass = df.getOWLClass(factClassIRI);
@@ -630,6 +638,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @param <T>              - Java class to return
      * @return - Java object of type T
      */
+    @Timed
+    @CounterIncrement(name = "read-trestle-object", absolute = true)
     private <T> Optional<T> readTrestleObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, PointTemporal<?> validTemporal, PointTemporal<?> databaseTemporal) {
 
 //        Contains class?

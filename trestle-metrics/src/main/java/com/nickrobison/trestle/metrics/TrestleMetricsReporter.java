@@ -58,7 +58,7 @@ public class TrestleMetricsReporter extends ScheduledReporter {
         processMeters(accumulator, meters);
         processHistograms(accumulator, histograms);
         processTimers(accumulator, timers);
-        logger.debug("Reported metrics {}", accumulator);
+        logger.trace("Reported metrics {}", accumulator);
         if (!accumulator.getCounters().isEmpty() || !accumulator.getGauges().isEmpty()) {
             final boolean offer = this.dataQueue.offer(accumulator);
             if (!offer) {
