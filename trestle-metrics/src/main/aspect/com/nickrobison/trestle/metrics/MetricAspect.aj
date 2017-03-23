@@ -22,7 +22,7 @@ public aspect MetricAspect extends AbstractMetricAspect {
 
     declare precedence: MetricStaticAspect, MetricAspect, *;
 
-    declare parents:( @Metriced *) implements Profiled;
+    declare parents:(@Metriced *) implements Profiled;
 
     private static final Logger logger = LoggerFactory.getLogger(MetricAspect.class);
     final Map<String, AnnotatedMetric<Gauge>> Profiled.gauges = new ConcurrentHashMap<>();
@@ -30,7 +30,7 @@ public aspect MetricAspect extends AbstractMetricAspect {
     final Map<String, AnnotatedMetric<Timer>> Profiled.timers = new ConcurrentHashMap<>();
     final Map<String, AnnotatedMetric<Counter>> Profiled.counters = new ConcurrentHashMap<>();
 
-    pointcut profiled(Profiled object): execution((@Metriced Profiled+).new(..)) && this(object);
+    pointcut profiled(Profiled object): (execution((@Metriced Profiled+).new(..))) && this(object);
 
     after(final Profiled object): profiled(object) {
         final DefaultMetricsStrategy strategy = new DefaultMetricsStrategy();
@@ -41,6 +41,7 @@ public aspect MetricAspect extends AbstractMetricAspect {
                 if (Modifier.isStatic(method.getModifiers())) {
                     continue;
                 }
+//                FIXME(nrobison): Finish implementing duplicate checks
                 final Class<?> type = clazz;
 //                Metered
                 final AnnotatedMetric<Meter> exceptionMeter = metricAnnotation(method, ExceptionMetered.class, (name, absolute) -> {
@@ -65,10 +66,18 @@ public aspect MetricAspect extends AbstractMetricAspect {
 
 //                Gauge
 
-                final AnnotatedMetric<Gauge> gaugeAnnotatedMetric = metricAnnotation(method, com.codahale.metrics.annotation.Gauge.class, (name, absolute) -> {
+                final AnnotatedMetric<Gauge> gaugeAnnotatedMetric;
+                gaugeAnnotatedMetric = metricAnnotation(method, com.codahale.metrics.annotation.Gauge.class, (name, absolute) -> {
                     final String finalName = name.isEmpty() ? method.getName() : strategy.resolveMetricName(name);
                     final MetricRegistry registry = strategy.resolveMetricRegistry(type.getAnnotation(Metriced.class).registry());
-                    return registry.register(absolute ? finalName : MetricRegistry.name(type, finalName), new ForwardingGauge(method, object));
+                    final String registerName = absolute ? finalName : MetricRegistry.name(type, finalName);
+                    try {
+                        final ForwardingGauge gauge = registry.register(registerName, new ForwardingGauge(method, object));
+                        return gauge;
+                    } catch(IllegalArgumentException e) {
+                        logger.debug("Gauge {} already registered", registerName);
+                        return null;
+                    }
                 });
                 if (gaugeAnnotatedMetric.isPresent()) {
                     object.gauges.put(method.getName(), gaugeAnnotatedMetric);

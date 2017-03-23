@@ -51,6 +51,7 @@ public abstract class JenaOntology extends TransactingOntology {
     protected final JenaLiteralFactory jf;
 
     JenaOntology(String ontologyName, Model model, OWLOntology ontology, DefaultPrefixManager pm) {
+        super(ontologyName);
         this.ontologyName = ontologyName;
         this.model = model;
         this.graph = this.model.getGraph();

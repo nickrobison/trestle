@@ -25,6 +25,11 @@ abstract class TransactingOntology implements ITrestleOntology {
     protected final AtomicLong openedTransactions = new AtomicLong();
     protected final AtomicLong committedTransactions = new AtomicLong();
     protected static boolean singleWriterOntology = false;
+    private final String ontologyName;
+
+    TransactingOntology(String ontologyName) {
+        this.ontologyName = ontologyName;
+    }
 
 //    Thread locals
     private ThreadLocal<Boolean> threadLocked = ThreadLocal.withInitial(() -> false);
@@ -293,12 +298,12 @@ abstract class TransactingOntology implements ITrestleOntology {
     }
 
     @Gauge(name = "trestle-open-read-transactions", absolute = true)
-    private int getOpenReadTransactions() {
+    public int getOpenReadTransactions() {
         return this.openReadTransactions.get();
     }
 
     @Gauge(name = "trestle-open-write-transactions", absolute = true)
-    private int getOpenWriteTransactions() {
+    public int getOpenWriteTransactions() {
         return this.openWriteTransactions.get();
     }
 

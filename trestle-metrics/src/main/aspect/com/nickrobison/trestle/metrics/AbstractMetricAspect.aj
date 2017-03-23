@@ -25,7 +25,11 @@ public abstract aspect AbstractMetricAspect {
         if (method.isAnnotationPresent(clazz)) {
             final Annotation annotation = method.getAnnotation(clazz);
             final T metric = factory.metric(metricAnnotationName(annotation), metricAnnotationAbsolute(annotation));
-            return new AnnotatedMetric.IsPresent<>(metric, annotation);
+            if (metric != null) {
+                return new AnnotatedMetric.IsPresent<>(metric, annotation);
+            } else {
+                return new AnnotatedMetric.IsNotPresent<>();
+            }
         } else {
             return new AnnotatedMetric.IsNotPresent<>();
         }
