@@ -36,6 +36,7 @@
         <geotools.version>16.1</geotools.version>
         <metrics.version>3.2.1</metrics.version>
         <aspectj.version>1.8.10</aspectj.version>
+        <httpcomponents.version>4.5.3</httpcomponents.version>
         <!--Checker properties-->
         <checker.version>2.0.1</checker.version>
         <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
@@ -237,6 +238,27 @@
                 <artifactId>xmlparserv2</artifactId>
                 <version>1.0</version>
                 <type>jar</type>
+            </dependency>
+            <!--GraphDB dependencies-->
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpcomponents.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient-cache</artifactId>
+                <version>${httpcomponents.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpmime</artifactId>
+                <version>${httpcomponents.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpcore</artifactId>
+                <version>4.4.6</version>
             </dependency>
             <!--Metrics dependencies-->
             <dependency>

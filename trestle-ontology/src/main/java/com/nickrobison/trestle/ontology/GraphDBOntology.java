@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.Set;
 
@@ -65,7 +66,7 @@ public class GraphDBOntology extends SesameOntology {
     }
 
     private static Repository constructRepository(String ontologyName, @Nullable String connectionString, String username, String password) {
-
+        logger.debug("Constructing GraphDB ontology with connection string {}", connectionString);
         if (connectionString == null) {
 //            Connect to local repository
             repositoryManager = new LocalRepositoryManager(new File(DATA_DIRECTORY));
@@ -84,11 +85,19 @@ public class GraphDBOntology extends SesameOntology {
     }
 
     private static Repository setupNewRepository(String ontologyName) {
-        logger.info("Creating new Local Repository {}", ontologyName);
+        logger.info("Creating new Repository {}", ontologyName);
         final TreeModel graph = new TreeModel();
 
 //        Read configuration file
-        final InputStream is = GraphDBOntology.class.getClassLoader().getResourceAsStream(config.getString("defaults-file"));
+        final ClassLoader classLoader = GraphDBOntology.class.getClassLoader();
+        logger.debug("Classloader: {}", classLoader);
+        final String defaultsFileString = config.getString("defaults-file");
+        logger.debug("Defaults File: {}", defaultsFileString);
+        final InputStream is = classLoader.getResourceAsStream(defaultsFileString);
+        logger.debug("GraphDB defaults file: {}", is);
+        if (is == null) {
+            throw new MissingResourceException("Unable to load GraphDB defaults", GraphDBOntology.class.getName(), defaultsFileString);
+        }
         final RDFParser parser = Rio.createParser(RDFFormat.TURTLE);
         parser.setRDFHandler(new StatementCollector(graph));
         try {

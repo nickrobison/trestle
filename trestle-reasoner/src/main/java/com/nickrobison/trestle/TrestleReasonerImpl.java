@@ -84,6 +84,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private static final Logger logger = LoggerFactory.getLogger(TrestleReasoner.class);
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
     public static final String DEFAULTNAME = "trestle";
+    public static final String ONTOLOGY_RESOURCE_NAME = "trestle.owl";
 
     private final String REASONER_PREFIX;
     private final ITrestleOntology ontology;
@@ -131,13 +132,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             }
         } else {
 //            Load with the class loader
-            ontologyResource = TrestleReasoner.class.getClassLoader().getResource("trestle.owl");
-            ontologyIS = TrestleReasoner.class.getClassLoader().getResourceAsStream("trestle.owl");
+            ontologyResource = TrestleReasoner.class.getClassLoader().getResource(ONTOLOGY_RESOURCE_NAME);
+            ontologyIS = TrestleReasoner.class.getClassLoader().getResourceAsStream(ONTOLOGY_RESOURCE_NAME);
         }
 
         if (ontologyIS == null) {
             logger.error("Cannot load trestle ontology from resources");
-            throw new RuntimeException("Cannot load ontology");
+            throw new MissingResourceException("Cannot load ontology file", this.getClass().getName(), ONTOLOGY_RESOURCE_NAME);
         }
         logger.info("Loading ontology from {}", ontologyResource);
 
@@ -151,7 +152,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 //        Setup the Parser
         trestleParser = new TrestleParser(df, REASONER_PREFIX, trestleConfig.getBoolean("enableMultiLanguage"), trestleConfig.getString("defaultLanguage"));
-        logger.info("Ontology {} ready", builder.ontologyName.orElse(DEFAULTNAME));
 
 //            validate the classes
         builder.inputClasses.forEach(clazz -> {
@@ -167,6 +167,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         TypeConverter.registerTypeConstructor(UUID.class, df.getOWLDatatype(UUIDDatatypeIRI), (uuidString) -> UUID.fromString(uuidString.toString()));
 
         logger.info("Connecting to ontology {} at {}", builder.ontologyName.orElse(DEFAULTNAME), builder.connectionString.orElse("localhost"));
+        logger.debug("IS: {}", ontologyIS);
+        logger.debug("Resource: {}", ontologyResource);
         OntologyBuilder ontologyBuilder = new OntologyBuilder()
 //                .fromIRI(IRI.create(ontologyResource))
                 .fromInputStream(ontologyIS)
@@ -188,6 +190,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             logger.info("Updating inference model");
             ontology.runInference();
         }
+        logger.info("Ontology {} ready", builder.ontologyName.orElse(DEFAULTNAME));
 
 //        Are we a caching reasoner?
         if (!builder.caching) {
@@ -211,6 +214,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
         logger.debug("Using SPARQL dialect {}", spatialDalect);
         qb = new QueryBuilder(spatialDalect, ontology.getUnderlyingPrefixManager());
+
+        logger.info("Trestle Reasoner ready");
     }
 
     @Override
@@ -979,21 +984,21 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @param <T>         - Type of individual to remove
      */
     public <T> void removeIndividual(@NonNull T... inputObject) {
-//        T[] objects = inputObject;
-//        final List<CompletableFuture<Void>> completableFutures = Arrays.stream(objects)
-//                .map(object -> CompletableFuture.supplyAsync(() -> trestleParser.classParser.getIndividual(object)))
-//                .map(idFuture -> idFuture.thenApply(ontology::getAllObjectPropertiesForIndividual))
-//                .map(propertyFutures -> propertyFutures.thenCompose(this::removeRelatedObjects))
-//                .map(removedFuture -> removedFuture.thenAccept(ontology::removeIndividual))
-//                .collect(Collectors.toList());
-//        final CompletableFuture<List<Void>> listCompletableFuture = sequenceCompletableFutures(completableFutures);
-//        try {
-//            listCompletableFuture.get();
-//        } catch (InterruptedException e) {
-//            logger.error("Delete interrupted", e);
-//        } catch (ExecutionException e) {
-//            logger.error("Execution error", e);
-//        }
+        T[] objects = inputObject;
+        final List<CompletableFuture<Void>> completableFutures = Arrays.stream(objects)
+                .map(object -> CompletableFuture.supplyAsync(() -> trestleParser.classParser.getIndividual(object)))
+                .map(idFuture -> idFuture.thenApply(ontology::getAllObjectPropertiesForIndividual))
+                .map(propertyFutures -> propertyFutures.thenCompose(this::removeRelatedObjects))
+                .map(removedFuture -> removedFuture.thenAccept(ontology::removeIndividual))
+                .collect(Collectors.toList());
+        final CompletableFuture<List<Void>> listCompletableFuture = sequenceCompletableFutures(completableFutures);
+        try {
+            listCompletableFuture.get();
+        } catch (InterruptedException e) {
+            logger.error("Delete interrupted", e);
+        } catch (ExecutionException e) {
+            logger.error("Execution error", e);
+        }
     }
 
     /**

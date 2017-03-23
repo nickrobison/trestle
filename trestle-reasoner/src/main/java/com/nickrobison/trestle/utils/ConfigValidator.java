@@ -2,11 +2,17 @@ package com.nickrobison.trestle.utils;
 
 import com.nickrobison.trestle.common.LanguageUtils;
 import com.typesafe.config.Config;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * Created by nrobison on 12/8/16.
  */
 public class ConfigValidator {
+
+    private static final Logger logger = LoggerFactory.getLogger(ConfigValidator.class);
 
     /**
      * Run the various validators to ensure that the specified config file is valid
@@ -14,7 +20,12 @@ public class ConfigValidator {
      * @param config - Config file to validate
      */
     public static void ValidateConfig(Config config) {
+        logConfigSettings(config);
         validateDefaultLanguage(config.getString("defaultLanguage"));
+    }
+
+    private static void logConfigSettings(Config config) {
+        logger.debug("Running with config settings: {}", config.toString());
     }
 
     /**
