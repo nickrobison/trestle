@@ -32,27 +32,69 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
         this.dataQueue = dataQueue;
         metricMap = new HashMap<>();
 //        Connect to database
-        try {
-            connection = initializeDatabase();
-        } catch (SQLException e) {
-            logger.error("Unable to initialize H2 in-memory database", e);
-            throw new RuntimeException(e.getCause());
-        }
+        connection = initializeDatabase();
 
         final ProcessEvents processEvents = new ProcessEvents();
         eventThread = new Thread(processEvents, "h2memory-event-thread");
         eventThread.start();
     }
 
-    private Connection initializeDatabase() throws SQLException {
-        final Connection connection = DriverManager.getConnection("jdbc:h2:mem:trestle-metrics");
-        final CallableStatement createRootTable = connection.prepareCall("CREATE TABLE metrics (MetricID IDENTITY, Metric VARCHAR(150))");
-        final CallableStatement createGaugesTable = connection.prepareCall("CREATE TABLE gauges (MetricID BIGINT, Timestamp BIGINT, Value DOUBLE)");
-        final CallableStatement createCounterTable = connection.prepareCall("CREATE TABLE counters (MetricID BIGINT, Timestamp BIGINT, Value BIGINT)");
-        createRootTable.execute();
-        createCounterTable.execute();
-        createGaugesTable.execute();
+    private Connection initializeDatabase() {
+        logger.debug("Creating tables");
+        final Connection connection;
+        try {
+            connection = DriverManager.getConnection("jdbc:h2:mem:");
+        } catch (SQLException e) {
+            throw new RuntimeException(e.getCause());
+        }
+        try {
+            final CallableStatement metricsCreate = connection.prepareCall("CREATE TABLE metrics (MetricID IDENTITY, Metric VARCHAR(150))");
+            metricsCreate.execute();
+            logger.debug("Table METRICS created");
+        } catch (SQLException e) {
+            logger.warn("Table METRICS already exists, truncating");
+            try {
+                final CallableStatement metricsTruncate = connection.prepareCall("TRUNCATE TABLE metrics");
+                metricsTruncate.execute();
+                logger.debug("Table METRICS truncated");
+            } catch (SQLException e1) {
+                throw new RuntimeException(e1.getCause());
+            }
+        }
+        try {
+            final CallableStatement gaugesCreate = connection.prepareCall("CREATE TABLE gauges (MetricID BIGINT, Timestamp BIGINT, Value DOUBLE)");
+            gaugesCreate.execute();
+            logger.debug("Table GAUGES created");
+        } catch (SQLException e) {
+            logger.warn("Table GAUGES already exists, truncating");
+            try {
+                final CallableStatement gaugesTruncate = connection.prepareCall("TRUNCATE TABLE gauges");
+                gaugesTruncate.execute();
+                logger.debug("Table GAUGES truncated");
+            } catch (SQLException e1) {
+                throw new RuntimeException(e1.getCause());
+            }
+        }
+        try {
+            final CallableStatement countersCreate = connection.prepareCall("CREATE TABLE counters (MetricID BIGINT, Timestamp BIGINT, Value BIGINT)");
+            countersCreate.execute();
+            logger.debug("Table COUNTERS created");
+        } catch (SQLException e) {
+            logger.warn("Table COUNTERS already exists, truncating");
+            try {
+                final CallableStatement countersTruncate = connection.prepareCall("TRUNCATE TABLE counters");
+                countersTruncate.execute();
+                logger.debug("Table COUNTERS truncated");
+            } catch (SQLException e1) {
+                throw new RuntimeException(e1.getCause());
+            }
+        }
         return connection;
+    }
+
+    @Override
+    public void shutdown() {
+        shutdown(null);
     }
 
     @Override
@@ -68,6 +110,7 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
         if (exportFile != null) {
             exportData(exportFile);
         }
+        logger.debug("Queue drained, terminating Backend");
         try {
             final CallableStatement dropEverything = connection.prepareCall("DROP ALL OBJECTS DELETE FILES ");
             dropEverything.execute();
@@ -75,11 +118,6 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
         } catch (SQLException e) {
             logger.error("Unable to close H2 in-memory database", e);
         }
-    }
-
-    @Override
-    public void shutdown() {
-        shutdown(null);
     }
 
     @Override

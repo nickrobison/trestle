@@ -13,16 +13,16 @@ import java.io.File;
 public interface ITrestleMetricsBackend {
 
     /**
+     * Shutdown metrics backend without exporting data
+     */
+    void shutdown();
+
+    /**
      * Shutdown connection to database
      * If a {@link File} is provided, the metrics will be exported, in CSV format, before closing the connection
      * @param exportFile - Optional {@link File} to export metrics into (CSV format)
      */
     void shutdown(@Nullable File exportFile);
-
-    /**
-     * Shutdown metrics backend without exporting data
-     */
-    void shutdown();
 
     /**
      * Exports all metrics into a single CSV file

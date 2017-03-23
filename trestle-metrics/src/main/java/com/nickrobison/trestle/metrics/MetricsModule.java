@@ -31,7 +31,7 @@ public class MetricsModule extends PrivateModule {
         try {
             final Class<? extends ITrestleMetricsBackend> backend = Class.forName(backendClass).asSubclass(ITrestleMetricsBackend.class);
 
-            bind(ITrestleMetricsBackend.class).to(backend);
+            bind(ITrestleMetricsBackend.class).to(backend).asEagerSingleton();
         } catch (ClassNotFoundException e) {
             throw new RuntimeException("Unable to load metrics backend class", e);
         }
