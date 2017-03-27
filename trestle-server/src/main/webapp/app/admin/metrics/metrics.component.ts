@@ -26,7 +26,10 @@ export class MetricsComponent implements OnInit {
                 Object.keys(metricsResponse.meters).forEach(key => {
                     this.meters.push(key);
                 });
-                this.upTime = duration(metricsResponse.uptime);
+                console.debug("Uptime", metricsResponse.upTime);
+                let test = duration(metricsResponse.upTime);
+                console.debug("Duration", test);
+                this.upTime = test;
                 this.startTime = utc().subtract(this.upTime);
             }, (error: Error) => {
                 console.error(error);

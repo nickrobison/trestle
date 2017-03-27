@@ -7,7 +7,7 @@ import {Observable} from "rxjs";
 import {Response} from "@angular/http";
 
 export interface ITrestleMetricsHeader {
-    uptime: number;
+    upTime: number;
     meters: Map<string, string>;
 }
 
@@ -20,7 +20,6 @@ export class MetricsService {
         return this.authHttp.get("/metrics")
             .map((res: Response) => {
             console.debug("Metrics header:", res.json());
-            let test  = res.json;
             return res.json();
             })
             .catch((error: Error) => Observable.throw(error || "Server Error"));
