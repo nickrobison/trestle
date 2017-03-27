@@ -3,7 +3,6 @@ package com.nickrobison.trestle.metrics.backends;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.nickrobison.trestle.metrics.TrestleMetricsReporter;
-import org.agrona.concurrent.AbstractConcurrentArrayQueue;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,8 +10,10 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.io.File;
 import java.sql.*;
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * Created by nrobison on 3/20/17.
@@ -20,13 +21,13 @@ import java.util.Map;
 public class H2MemoryBackend implements ITrestleMetricsBackend {
     private static final Logger logger = LoggerFactory.getLogger(H2MemoryBackend.class);
     private static final int THREAD_WAIT_MS = 10000;
-    private final AbstractConcurrentArrayQueue<TrestleMetricsReporter.DataAccumulator> dataQueue;
+    private final BlockingQueue<TrestleMetricsReporter.DataAccumulator> dataQueue;
     private final Thread eventThread;
     private final Connection connection;
     private final Map<String, Long> metricMap;
 
     @Inject
-    H2MemoryBackend(AbstractConcurrentArrayQueue<TrestleMetricsReporter.DataAccumulator> dataQueue) {
+    H2MemoryBackend(BlockingQueue<TrestleMetricsReporter.DataAccumulator> dataQueue) {
         logger.info("Initializing H2 backend");
         logger.warn("Not for production use");
         this.dataQueue = dataQueue;
@@ -188,14 +189,20 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
 
         @Override
         public void run() {
-            while (!Thread.interrupted()) {
-                final TrestleMetricsReporter.DataAccumulator event = dataQueue.poll();
-                if (event != null) {
+            while (true) {
+                final TrestleMetricsReporter.DataAccumulator event;
+                try {
+                    event = dataQueue.take();
                     processEvent(event);
+                } catch (InterruptedException e) {
+                    logger.debug("Thread interrupted, draining queue");
+                    ArrayDeque<TrestleMetricsReporter.DataAccumulator> remainingEvents = new ArrayDeque<>();
+                    dataQueue.drainTo(remainingEvents);
+                    remainingEvents.forEach(this::processEvent);
+                    logger.debug("Finished draining events");
+                    return;
                 }
             }
-            logger.debug("Thread interrupted, draining queue");
-            dataQueue.drain(this::processEvent);
         }
 
         private void processEvent(TrestleMetricsReporter.DataAccumulator event) {

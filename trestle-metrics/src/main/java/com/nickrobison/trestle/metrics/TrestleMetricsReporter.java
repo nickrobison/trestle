@@ -5,10 +5,10 @@ import com.codahale.metrics.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -25,7 +25,7 @@ public class TrestleMetricsReporter extends ScheduledReporter {
     private final Queue<DataAccumulator> dataQueue;
 
     TrestleMetricsReporter(MetricRegistry registry,
-                           Queue<DataAccumulator> dataQueue,
+                           BlockingQueue<DataAccumulator> dataQueue,
                            Optional<String> prefix,
                            MetricsDecomposer decomposer,
                            MetricFilter filter,

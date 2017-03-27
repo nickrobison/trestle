@@ -2,6 +2,7 @@ package com.nickrobison.trestle.utils;
 
 import com.nickrobison.trestle.common.LanguageUtils;
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +25,7 @@ public class ConfigValidator {
         validateDefaultLanguage(config.getString("defaultLanguage"));
     }
 
+//    TODO(nrobison): Pretty-print config
     private static void logConfigSettings(Config config) {
         logger.debug("Running with config settings: {}", config.toString());
     }

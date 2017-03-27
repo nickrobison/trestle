@@ -2,19 +2,15 @@ package com.nickrobison.trestle.metrics;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
-import com.google.inject.AbstractModule;
-
-import com.google.inject.Exposed;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
-import com.nickrobison.trestle.metrics.backends.H2MemoryBackend;
 import com.nickrobison.trestle.metrics.backends.ITrestleMetricsBackend;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.agrona.concurrent.AbstractConcurrentArrayQueue;
-import org.agrona.concurrent.ManyToManyConcurrentArrayQueue;
 
 import javax.inject.Singleton;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * Created by nrobison on 3/21/17.
@@ -46,7 +42,7 @@ public class MetricsModule extends PrivateModule {
 
     @Provides
     @Singleton
-    AbstractConcurrentArrayQueue<TrestleMetricsReporter.DataAccumulator> provideDataQueue() {
-        return new ManyToManyConcurrentArrayQueue<>(config.getInt("queueSize"));
+    BlockingQueue<TrestleMetricsReporter.DataAccumulator> provideDataQueue() {
+        return new ArrayBlockingQueue<>(this.config.getInt("queueSize"));
     }
 }

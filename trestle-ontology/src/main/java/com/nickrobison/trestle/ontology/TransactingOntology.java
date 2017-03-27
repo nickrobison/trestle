@@ -298,12 +298,12 @@ abstract class TransactingOntology implements ITrestleOntology {
     }
 
     @Gauge(name = "trestle-open-read-transactions", absolute = true)
-    public int getOpenReadTransactions() {
+    protected int getOpenReadTransactions() {
         return this.openReadTransactions.get();
     }
 
     @Gauge(name = "trestle-open-write-transactions", absolute = true)
-    public int getOpenWriteTransactions() {
+    protected int getOpenWriteTransactions() {
         return this.openWriteTransactions.get();
     }
 
