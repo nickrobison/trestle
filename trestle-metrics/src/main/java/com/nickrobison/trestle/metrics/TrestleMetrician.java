@@ -75,4 +75,8 @@ public class TrestleMetrician {
     public TrestleJVMMetrics getJvmMetrics() {
         return this.jvmMetrics;
     }
+
+    public TrestleMetricsHeader getMetricsHeader() {
+        return new TrestleMetricsHeader(getJvmMetrics().currentUptime(), this.registry.getMetrics());
+    }
 }

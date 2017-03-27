@@ -22,6 +22,8 @@ import {VisualizeService} from "./visualize/visualize.service";
 import {VisualizeComponent} from "./visualize/visualize.component";
 import {IndividualGraph} from "./visualize/individual-graph.component";
 import {IndividualValueDialog} from "./visualize/individual-value.dialog";
+import {MetricsComponent} from "./metrics/metrics.component";
+import {MetricsService} from "./metrics/metrics.service";
 
 interface ITrestleRoute extends Route {
     data?: ITrestleRouteData
@@ -37,6 +39,7 @@ const routes: Array<ITrestleRoute> = [
         {path: "query", component: QueryComponent, canActivate: [LoggedInGuard]},
         {path: "visualize", component: VisualizeComponent, canActivate: [LoggedInGuard]},
         {path: "users", component: UsersComponent, canActivate: [LoggedInGuard, PermissionsGuard], data: {roles: [Privileges.ADMIN]}},
+        {path: "metrics", component: MetricsComponent, canActivate: [LoggedInGuard, PermissionsGuard], data: {roles: [Privileges.ADMIN]}},
         {path: "", redirectTo: "/dashboard", pathMatch: "full"}
     ]}
 ];
@@ -52,6 +55,7 @@ const routes: Array<ITrestleRoute> = [
         VisualizeComponent,
         IndividualGraph,
         IndividualValueDialog,
+        MetricsComponent,
         MapValuesPipe],
     imports: [
         CommonModule,
@@ -60,7 +64,7 @@ const routes: Array<ITrestleRoute> = [
         RouterModule.forChild(routes),
         MaterialModule
     ],
-    providers: [UserService, QueryService, VisualizeService],
+    providers: [UserService, QueryService, VisualizeService, MetricsService],
     entryComponents: [UserAddDialog, IndividualValueDialog],
     bootstrap: [AdminComponent]
 })
