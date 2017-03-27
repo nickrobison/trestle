@@ -2,8 +2,8 @@
  * Created by nrobison on 3/24/17.
  */
 import {Component, OnInit} from "@angular/core";
-import {ITrestleMetricsHeader, MetricsService} from "./metrics.service";
-import {Moment, unix, duration, Duration} from "moment";
+import {MetricsService} from "./metrics.service";
+import {Moment, unix, now, utc, duration, Duration} from "moment";
 
 @Component({
     selector: "metrics-root",
@@ -13,7 +13,8 @@ import {Moment, unix, duration, Duration} from "moment";
 
 export class MetricsComponent implements OnInit {
     meters: Array<string> = [];
-    startTime: Duration;
+    startTime: Moment;
+    upTime: Duration;
     selectedValue: string;
 
     constructor(private ms: MetricsService) {}
@@ -25,7 +26,8 @@ export class MetricsComponent implements OnInit {
                 Object.keys(metricsResponse.meters).forEach(key => {
                     this.meters.push(key);
                 });
-                this.startTime = duration(metricsResponse.uptime);
+                this.upTime = duration(metricsResponse.uptime);
+                this.startTime = utc().subtract(this.upTime);
             }, (error: Error) => {
                 console.error(error);
             })

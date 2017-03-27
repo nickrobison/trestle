@@ -1,8 +1,10 @@
-I'm metricing
-<div *ngIf="startTime">
-    Running: {{startTime.humanize()}}
+<div class="metrics-header">
+    I'm metricing
+    <span class="page-spacer"></span>
+    <div *ngIf="startTime">
+        Running since: {{startTime.format()}} ({{upTime.humanize()}})
+    </div>
 </div>
-<div></div>
 <form>
     <md-select placeholder="Metrics" name="metrics" [(ngModel)]="selectedValue">
         <md-option *ngFor="let meter of meters" [value]="meter">

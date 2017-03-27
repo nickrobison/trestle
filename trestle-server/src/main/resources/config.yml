@@ -9,6 +9,8 @@ prefix: "http://nickrobison.com/test/hadoop.owl#"
 
 logging:
   level: INFO
+  loggers:
+    "com.nickrobison.trestle.metrics": TRACE
 
 database:
   driverClass: org.h2.Driver
@@ -21,5 +23,3 @@ database:
 jwt:
   authHeader: "Authorization"
   authSalt: "test-salt"
-logging:
-  level: DEBUG

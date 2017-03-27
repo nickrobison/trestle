@@ -1,0 +1,6 @@
+.metrics-header {
+    display: flex;
+}
+.page-spacer {
+    flex: 1 1 auto;
+}
