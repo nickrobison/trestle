@@ -11,6 +11,9 @@
     <category name="org.semanticweb.owlapi">
         <priority value="OFF"/>
     </category>
+    <category name="oracle.spatial">
+        <priority value="OFF"/>
+    </category>
     <category name="org.apache.http">
         <priority value="OFF"/>
     </category>
