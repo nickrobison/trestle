@@ -2,6 +2,7 @@ package com.nickrobison.trestle.metrics;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Gauge;
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
@@ -17,8 +18,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.MissingResourceException;
+
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Created by nrobison on 3/17/17.
@@ -53,13 +57,22 @@ public class MetricsCodeWeavingTest {
         testClass.testMeter();
         assertAll(() -> assertEquals(1, registry.getMeters().size(), "Should have 1 meter"),
                 () -> assertEquals(2, registry.meter("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestClass.testMeter").getCount(), "Should be executed twice"));
+
+//        Exception meters
+        assertAll(() -> assertThrows(RuntimeException.class, testClass::throwRuntimeException),
+                () -> assertEquals(1, registry.meter("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestClass.throwRuntimeException.exceptions").getCount(), "Should have one caught Runtime Exception"));
+
+        assertAll(() -> assertThrows(RuntimeException.class, testClass::throwInheritedException),
+                () -> assertEquals(1, registry.meter("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestClass.inherit-exception").getCount(), "Should have one caught Runtime Exception"));
+        assertAll(() -> assertThrows(RuntimeException.class, testClass::throwResourceException),
+                () -> assertEquals(0, registry.meter("inherit-illegal").getCount(), "Should have no marked exceptions"));
+
     }
 
     @Test
     public void testGauge() {
         assertEquals(0, registry.getGauges().size(), "Should have no gauges");
         final TestClass testClass = new TestClass();
-//        testClass.testGauge();
         assertEquals(1, registry.getGauges().size(), "Should have a single gauge");
         assertEquals(42, registry.gauge("gauge-test", null).getValue(), "Gauge should read 42");
     }
@@ -82,11 +95,9 @@ public class MetricsCodeWeavingTest {
         testClass.testCounterInc();
         assertEquals(1, registry.getCounters().size(), "Should only have a single counter");
         assertEquals(6, registry.counter("test-counter").getCount(), "Count should be 6");
-//        assertEquals(6, registry.counter("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestClass.test-counter").getCount(), "Count should be 6");
         testClass.testCounterDec();
         testClass.testCounterDec();
         assertEquals(4, registry.counter("test-counter").getCount(), "Count should be 4");
-//        assertEquals(4, registry.counter("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestClass.test-counter").getCount(), "Count should be 4");
     }
 
     @Test
@@ -124,16 +135,6 @@ public class MetricsCodeWeavingTest {
     @Metriced
     class TestClass {
 
-        private final int i;
-
-        TestClass() {
-            i = 0;
-        }
-
-        TestClass(int i) {
-            this.i = i;
-        }
-
         @Metered
         public void testMeter() {
         }
@@ -157,6 +158,21 @@ public class MetricsCodeWeavingTest {
                 e.printStackTrace();
             }
         }
+
+        @ExceptionMetered(cause = RuntimeException.class)
+        void throwRuntimeException() {
+            throw new RuntimeException("Test exception");
+        }
+
+        @ExceptionMetered(name = "inherit-exception", cause = RuntimeException.class)
+        void throwInheritedException() {
+            throw new IllegalArgumentException("Test argument exception");
+        }
+
+        @ExceptionMetered(name = "inherit-illegal", absolute = true, cause = IllegalArgumentException.class)
+        void throwResourceException() {
+            throw new MissingResourceException("Test missing resource", "test", "test");
+        }
     }
 
     class TestSubClass extends TestClass {
@@ -165,9 +181,8 @@ public class MetricsCodeWeavingTest {
         int testSubClassGauge() {
             return 7;
         }
+
     }
-
-
 
     @Metriced
     private static class TestStaticClass {

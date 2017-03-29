@@ -1,10 +1,7 @@
 package com.nickrobison.trestle.metrics;
 
 import com.nickrobison.trestle.annotations.metrics.Metriced;
-import com.nickrobison.trestle.metrics.transformer.CounterTransformer;
-import com.nickrobison.trestle.metrics.transformer.GaugeTransformer;
-import com.nickrobison.trestle.metrics.transformer.MeterTransformer;
-import com.nickrobison.trestle.metrics.transformer.TimerTransformer;
+import com.nickrobison.trestle.metrics.transformer.*;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.matcher.ElementMatchers;
 
@@ -23,6 +20,7 @@ public class MetricianAgentBuilder {
                 .transform(new TimerTransformer().getTransformer())
                 .transform(new MeterTransformer().getTransformer())
                 .transform(new CounterTransformer().getTransformer())
+                .transform(new ExceptionMeterTransformer().getTransformer())
                 .installOnByteBuddyAgent();
 
     }
