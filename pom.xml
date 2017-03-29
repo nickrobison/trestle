@@ -549,6 +549,7 @@
                         <excludeTags>${excludeTags}</excludeTags>
                     </properties>
                     <parallel>classes</parallel>
+                    <reuseForks>false</reuseForks>
                     <useUnlimitedThreads>true</useUnlimitedThreads>
                     <forkCount>3</forkCount>
                 </configuration>

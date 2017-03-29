@@ -22,7 +22,7 @@ public class MetricianInventory {
         reset();
     }
 
-    static void reset() {
+    public static void reset() {
         strategy = new DefaultMetricsStrategy();
         registry = strategy.resolveMetricRegistry("trestle-registry");
         gauges = new ConcurrentHashMap<>();

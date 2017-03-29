@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.metrics.instrumentation;
 
 import com.nickrobison.trestle.annotations.metrics.Metriced;
+import com.nickrobison.trestle.metrics.instrumentation.transformers.*;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.matcher.ElementMatchers;
 
@@ -15,10 +16,10 @@ public class MetricianAgentBuilder {
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .type(ElementMatchers.inheritsAnnotation(Metriced.class))
-                .transform(new com.nickrobison.trestle.metrics.transformer.GaugeTransformer().getTransformer())
-                .transform(new com.nickrobison.trestle.metrics.transformer.TimerTransformer().getTransformer())
-                .transform(new com.nickrobison.trestle.metrics.transformer.MeterTransformer().getTransformer())
-                .transform(new com.nickrobison.trestle.metrics.transformer.CounterTransformer().getTransformer())
-                .transform(new com.nickrobison.trestle.metrics.transformer.ExceptionMeterTransformer().getTransformer());
+                .transform(new GaugeTransformer().getTransformer())
+                .transform(new TimerTransformer().getTransformer())
+                .transform(new MeterTransformer().getTransformer())
+                .transform(new CounterTransformer().getTransformer())
+                .transform(new ExceptionMeterTransformer().getTransformer());
     }
 }

@@ -1,12 +1,13 @@
 package com.nickrobison.trestle.metrics;
 
+import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.annotation.Gauge;
 import com.codahale.metrics.annotation.Metered;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
-import net.bytebuddy.agent.ByteBuddyAgent;
+import com.nickrobison.trestle.metrics.instrumentation.MetricianInventory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;

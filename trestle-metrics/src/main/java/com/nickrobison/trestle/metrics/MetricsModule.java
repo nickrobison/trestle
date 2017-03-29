@@ -6,11 +6,13 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.nickrobison.trestle.metrics.backends.ITrestleMetricsBackend;
 import com.nickrobison.trestle.metrics.instrumentation.MetricianAgentBuilder;
+import com.nickrobison.trestle.metrics.instrumentation.MetricianInventory;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import net.bytebuddy.agent.ByteBuddyAgent;
 
 import javax.inject.Singleton;
+import java.lang.instrument.Instrumentation;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -21,11 +23,23 @@ public class MetricsModule extends PrivateModule {
 
     private Config config;
 
+    MetricsModule() {
+//        Setup/Reset bytebuddy
+        SharedMetricRegistries.clear();
+        MetricianInventory.reset();
+//        Try to attach, unless already attached
+//        We do this in order to be able to run our test suite correctly, simply installing ByteBuddy will result in duplicate Transformers on the classpath, so this helps avoid that.
+//        This should have no effect when running normally.
+        try {
+            ByteBuddyAgent.getInstrumentation();
+        } catch (IllegalStateException e) {
+            ByteBuddyAgent.install();
+            MetricianAgentBuilder.BuildAgent().installOnByteBuddyAgent();
+        }
+    }
+
     @Override
     protected void configure() {
-//        Setup bytebuddy
-        ByteBuddyAgent.install();
-        MetricianAgentBuilder.BuildAgent().installOnByteBuddyAgent();
 
         config = ConfigFactory.load().getConfig("trestle.metrics");
         final String backendClass = config.getString("backend");
