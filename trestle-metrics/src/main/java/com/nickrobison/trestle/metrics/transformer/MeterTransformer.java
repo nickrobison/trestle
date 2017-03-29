@@ -49,7 +49,6 @@ public class MeterTransformer extends AbstractMetricianTransformer {
         if (annotatedMetric == null) {
             final AnnotatedMetric<Meter> meter = metricAnnotation(method, Metered.class, (name, absolute) -> {
                 String finalName = name.isEmpty() ? method.getName() : strategy.resolveMetricName(name);
-//                MetricRegistry registry = strategy.resolveMetricRegistry(metriced.registry());
                 return registry.meter(absolute ? finalName : MetricRegistry.name(method.getDeclaringClass(), finalName));
             });
             meters.put(method.getName(), meter);

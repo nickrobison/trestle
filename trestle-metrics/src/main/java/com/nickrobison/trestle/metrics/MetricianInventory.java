@@ -10,10 +10,23 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class MetricianInventory {
 
-    public static final DefaultMetricsStrategy strategy = new DefaultMetricsStrategy();
-    public static final MetricRegistry registry = strategy.resolveMetricRegistry("trestle-registry");
-    public static final Map<String, AnnotatedMetric<Gauge>> gauges = new ConcurrentHashMap<>();
-    public static final Map<String, AnnotatedMetric<Meter>> meters = new ConcurrentHashMap<>();
-    public static final Map<String, AnnotatedMetric<Timer>> timers = new ConcurrentHashMap<>();
-    public static final Map<String, AnnotatedMetric<Counter>> counters = new ConcurrentHashMap<>();
+    public static DefaultMetricsStrategy strategy;
+    public static MetricRegistry registry;
+    public static Map<String, AnnotatedMetric<Gauge>> gauges;
+    public static Map<String, AnnotatedMetric<Meter>> meters;
+    public static Map<String, AnnotatedMetric<Timer>> timers;
+    public static Map<String, AnnotatedMetric<Counter>> counters;
+
+    static {
+        reset();
+    }
+
+    static void reset() {
+        strategy = new DefaultMetricsStrategy();
+        registry = strategy.resolveMetricRegistry("trestle-registry");
+        gauges = new ConcurrentHashMap<>();
+        meters = new ConcurrentHashMap<>();
+        timers = new ConcurrentHashMap<>();
+        counters = new ConcurrentHashMap<>();
+    }
 }

@@ -1,7 +1,10 @@
 package com.nickrobison.trestle.metrics.transformer;
 
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.annotation.Gauge;
+import com.codahale.metrics.annotation.Metered;
+import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.nickrobison.trestle.metrics.AnnotatedMetric;
 import com.nickrobison.trestle.metrics.MetricianInventory;
 import net.bytebuddy.agent.builder.AgentBuilder;
@@ -15,8 +18,10 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
-import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
+import static com.nickrobison.trestle.metrics.MetricianInventory.gauges;
+import static com.nickrobison.trestle.metrics.MetricianInventory.registry;
+import static com.nickrobison.trestle.metrics.MetricianInventory.strategy;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * Created by nrobison on 3/28/17.
@@ -32,7 +37,7 @@ public class GaugeTransformer extends AbstractMetricianTransformer {
 
     @Override
     protected ElementMatcher.Junction<TypeDescription> getNarrowTypesMatcher() {
-        return isAnnotatedWith(Gauge.class);
+        return isAnnotatedWith(com.codahale.metrics.annotation.Gauge.class);
     }
 
     @Override
@@ -42,28 +47,41 @@ public class GaugeTransformer extends AbstractMetricianTransformer {
 
     @Advice.OnMethodExit
     public static void exit(@Advice.This Object thiz) {
-        System.out.println("In gauge advice");
         setupGauge(thiz);
     }
 
     public static void setupGauge(Object object) {
-        for (final Method method : object.getClass().getDeclaredMethods()) {
-            if (!MetricianInventory.gauges.containsKey(method.getName())) {
-                final Gauge annotation = method.getAnnotation(Gauge.class);
-                if (annotation != null && isNoParamsAndNonVoid(method)) {
-                    final String finalName = annotation.name().isEmpty() ? method.getName() : annotation.name();
-                    final MetricRegistry registry = MetricianInventory.registry;
-                    try {
-                        final ForwardingGauge gauge = new ForwardingGauge(method, object);
-                        registry.register(finalName, gauge);
-                        final AnnotatedMetric<com.codahale.metrics.Gauge> isPresent = new AnnotatedMetric.IsPresent<>(gauge, annotation);
-                        MetricianInventory.gauges.put(method.getName(), isPresent);
-                    } catch (IllegalArgumentException e) {
+//        Try to step through the entire heirarchy, in order to find gauges that are declared on superclasses of the instantiated object
+        Class<?> clazz = object.getClass();
+        while (clazz != Object.class) {
+            for (final Method method : clazz.getDeclaredMethods()) {
+                if (!gauges.containsKey(method.getName())) {
+                    final com.codahale.metrics.annotation.Gauge annotation = method.getAnnotation(com.codahale.metrics.annotation.Gauge.class);
+                    if (annotation != null && isNoParamsAndNonVoid(method)) {
+
+                        AnnotatedMetric<Gauge> gaugeAnnotatedMetric = metricAnnotation(method, com.codahale.metrics.annotation.Gauge.class, (name, absolute) -> {
+                            final String finalName = name.isEmpty() ? method.getName() : strategy.resolveMetricName(name);
+                            final String registerName = absolute ? finalName : MetricRegistry.name(method.getDeclaringClass(), finalName);
+                            try {
+                                final ForwardingGauge gauge = registry.register(registerName, new ForwardingGauge(method, object));
+                                return gauge;
+                            } catch (IllegalArgumentException e) {
+                                logger.debug("Gauge {} already registered", registerName);
+                                return null;
+                            }
+                        });
+                        if (gaugeAnnotatedMetric.isPresent()) {
+                            gauges.put(method.getName(), gaugeAnnotatedMetric);
+                            logger.debug("Registered Gauge {} method {}", gaugeAnnotatedMetric.getMetric().getValue().getClass().getName(), method.getName());
+                        } else {
+                            logger.debug("Missing Gauge for method {}", method.getName());
+                        }
                     }
+                } else {
+                    logger.debug("Gauge already registered for {}", method.getName());
                 }
-            } else {
-                logger.warn("Metric already registered");
             }
+            clazz = clazz.getSuperclass();
         }
     }
 

@@ -30,24 +30,19 @@ public class MetricsCodeWeavingTest {
     @BeforeAll
     public static void setupBB() {
         ByteBuddyAgent.install();
+        MetricianAgentBuilder.BuildAgent();
     }
 
     @BeforeEach
     public void setup() {
         registry = SharedMetricRegistries.getOrCreate("trestle-registry");
-        MetricianAgentBuilder.BuildAgent();
-//        new AgentBuilder.Default()
-//                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-//                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
-//                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-//                .type(ElementMatchers.isAnnotatedWith(Metriced.class))
-//                .transform(new MetricianTransformer())
-//                .installOnByteBuddyAgent();
     }
 
     @AfterEach
     public void reset() {
+//        Need to clear the registry before resetting it.
         SharedMetricRegistries.clear();
+        MetricianInventory.reset();
     }
 
     @Test
@@ -86,10 +81,26 @@ public class MetricsCodeWeavingTest {
         testClass.testCounterInc();
         testClass.testCounterInc();
         assertEquals(1, registry.getCounters().size(), "Should only have a single counter");
-        assertEquals(6, registry.counter("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestClass.test-counter").getCount(), "Count should be 6");
+        assertEquals(6, registry.counter("test-counter").getCount(), "Count should be 6");
+//        assertEquals(6, registry.counter("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestClass.test-counter").getCount(), "Count should be 6");
         testClass.testCounterDec();
         testClass.testCounterDec();
-        assertEquals(4, registry.counter("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestClass.test-counter").getCount(), "Count should be 4");
+        assertEquals(4, registry.counter("test-counter").getCount(), "Count should be 4");
+//        assertEquals(4, registry.counter("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestClass.test-counter").getCount(), "Count should be 4");
+    }
+
+    @Test
+    public void subClassTest() {
+        final TestClass testClass = new TestSubClass();
+        testClass.testMeter();
+        testClass.testMeter();
+        assertAll(() -> assertEquals(1, registry.getMeters().size(), "Should have 1 meter"),
+                () -> assertEquals(2, registry.meter("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestClass.testMeter").getCount(), "Should be executed twice"));
+
+//        Gauges
+        assertAll(() -> assertEquals(2, registry.getGauges().size(), "Should have both gauges"),
+                () -> assertEquals(42, registry.gauge("gauge-test", null).getValue(), "Gauge should read 42"),
+                () -> assertEquals(7, registry.gauge("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestSubClass.testSubClassGauge", null).getValue(), "Subclass Gauge should read 7"));
     }
 
     @Test
@@ -98,8 +109,7 @@ public class MetricsCodeWeavingTest {
         TestStaticClass.testMeter();
         TestStaticClass.testMeter();
         TestStaticClass.testMeter();
-        assertAll(() -> assertEquals(3, registry.meter("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestStaticClass.testMeter").getCount(), "Should have 3 static executions"),
-                () -> assertEquals(7, registry.gauge("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestStaticClass.gauge-test-static", null).getValue(), "Should have 7 from static class"));
+        assertEquals(3, registry.meter("com.nickrobison.trestle.metrics.MetricsCodeWeavingTest$TestStaticClass.testMeter").getCount(), "Should have 3 static executions");
 
 //        Test counters
         TestStaticClass.testDec();
@@ -114,20 +124,29 @@ public class MetricsCodeWeavingTest {
     @Metriced
     class TestClass {
 
+        private final int i;
+
+        TestClass() {
+            i = 0;
+        }
+
+        TestClass(int i) {
+            this.i = i;
+        }
 
         @Metered
         public void testMeter() {
         }
 
-        @Gauge(name = "gauge-test")
+        @Gauge(name = "gauge-test", absolute = true)
         int testGauge() {
             return 42;
         }
 
-        @CounterIncrement(name = "test-counter", amount = 2)
+        @CounterIncrement(name = "test-counter", amount = 2, absolute = true)
         void testCounterInc() {}
 
-        @CounterDecrement(name = "test-counter")
+        @CounterDecrement(name = "test-counter", absolute = true)
         void testCounterDec() {}
 
         @Timed
@@ -139,6 +158,16 @@ public class MetricsCodeWeavingTest {
             }
         }
     }
+
+    class TestSubClass extends TestClass {
+
+        @Gauge
+        int testSubClassGauge() {
+            return 7;
+        }
+    }
+
+
 
     @Metriced
     private static class TestStaticClass {

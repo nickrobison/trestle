@@ -18,7 +18,7 @@ public class MetricianAgentBuilder {
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-                .type(ElementMatchers.isAnnotatedWith(Metriced.class))
+                .type(ElementMatchers.inheritsAnnotation(Metriced.class))
                 .transform(new GaugeTransformer().getTransformer())
                 .transform(new TimerTransformer().getTransformer())
                 .transform(new MeterTransformer().getTransformer())
