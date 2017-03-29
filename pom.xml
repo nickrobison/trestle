@@ -276,16 +276,6 @@
                 <artifactId>metrics-healthchecks</artifactId>
                 <version>${metrics.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.aspectj</groupId>
-                <artifactId>aspectjrt</artifactId>
-                <version>${aspectj.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.aspectj</groupId>
-                <artifactId>aspectjtools</artifactId>
-                <version>${aspectj.version}</version>
-            </dependency>
             <!--Testing dependencies-->
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
@@ -487,11 +477,6 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>3.0.2</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>aspectj-maven-plugin</artifactId>
-                    <version>1.10</version>
                 </plugin>
             </plugins>
         </pluginManagement>
