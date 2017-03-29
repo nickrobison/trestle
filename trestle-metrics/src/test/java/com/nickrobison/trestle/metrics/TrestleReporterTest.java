@@ -6,6 +6,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
+import net.bytebuddy.agent.ByteBuddyAgent;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -32,7 +34,6 @@ public class TrestleReporterTest {
     @BeforeEach
     public void setup() {
         trestleMetrician = injector.getInstance(TrestleMetrician.class);
-//        trestleMetrician = new TrestleMetrician();
         reporter = trestleMetrician.getReporter();
     }
 
@@ -47,7 +48,11 @@ public class TrestleReporterTest {
         metricsClass.testIncrement();
         metricsClass.testIncrement();
         reporter.report();
-        assertEquals(2, trestleMetrician.getRegistry().counter("com.nickrobison.trestle.metrics.TrestleReporterTest$TestMetricsClass.test-reporter-counter").getCount(), "Count should be 2");
+        metricsClass.testMeter();
+        assertAll(() -> assertEquals(63, trestleMetrician.getRegistry().getGauges().size(), "Should have gauges"),
+                () -> assertEquals(1, trestleMetrician.getRegistry().getMeters().size(), "Should have meters"),
+                () -> assertEquals(1, trestleMetrician.getRegistry().getCounters().size(), "Should have timers"),
+                () -> assertEquals(2, trestleMetrician.getRegistry().counter("com.nickrobison.trestle.metrics.TrestleReporterTest$TestMetricsClass.test-reporter-counter").getCount(), "Count should be 2"));
         Thread.sleep(500);
         reporter.report();
         reporter.report();
@@ -55,53 +60,70 @@ public class TrestleReporterTest {
         reporter.report();
         reporter.report();
         reporter.report();
+        metricsClass.testIncrement();
         Thread.sleep(10000);
         reporter.report();
         metricsClass.testMeter();
+        metricsClass.testIncrement();
         metricsClass.testMeter();
-        metricsClass.testMeter();
-        Thread.sleep(10000);
-        reporter.report();
-        metricsClass.testMeter();
+        metricsClass.testIncrement();
         metricsClass.testMeter();
         Thread.sleep(10000);
         reporter.report();
         metricsClass.testMeter();
-        metricsClass.testMeter();
-        metricsClass.testMeter();
-        Thread.sleep(10000);
-        reporter.report();
-        Thread.sleep(10000);
-        reporter.report();
-        metricsClass.testMeter();
-        metricsClass.testMeter();
-        metricsClass.testMeter();
-        Thread.sleep(10000);
-        reporter.report();
-        Thread.sleep(10000);
-        reporter.report();
-        metricsClass.testMeter();
-        metricsClass.testMeter();
+        metricsClass.testIncrement();
         metricsClass.testMeter();
         Thread.sleep(10000);
         reporter.report();
         metricsClass.testMeter();
         metricsClass.testMeter();
+        metricsClass.testIncrement();
+        metricsClass.testMeter();
+        Thread.sleep(10000);
+        reporter.report();
+        metricsClass.testIncrement();
+        Thread.sleep(10000);
+        reporter.report();
+        metricsClass.testMeter();
+        metricsClass.testMeter();
+        metricsClass.testIncrement();
+        metricsClass.testMeter();
+        Thread.sleep(10000);
+        reporter.report();
+        Thread.sleep(10000);
+        reporter.report();
+        metricsClass.testMeter();
+        metricsClass.testIncrement();
+        metricsClass.testIncrement();
+        metricsClass.testMeter();
         metricsClass.testMeter();
         Thread.sleep(10000);
         reporter.report();
         metricsClass.testMeter();
         metricsClass.testMeter();
+        metricsClass.testIncrement();
+        metricsClass.testIncrement();
+        metricsClass.testIncrement();
         metricsClass.testMeter();
+        metricsClass.testIncrement();
         Thread.sleep(10000);
         reporter.report();
+        metricsClass.testMeter();
+        metricsClass.testIncrement();
+        metricsClass.testMeter();
+        metricsClass.testMeter();
+        metricsClass.testIncrement();
+        Thread.sleep(10000);
+        reporter.report();
+        assertEquals(17, trestleMetrician.getRegistry().counter("com.nickrobison.trestle.metrics.TrestleReporterTest$TestMetricsClass.test-reporter-counter").getCount(), "Should be incremented correctly");
     }
 
 
     @Metriced
     private class TestMetricsClass {
 
-        TestMetricsClass() {}
+        TestMetricsClass() {
+        }
 
 
         @Gauge
@@ -110,9 +132,11 @@ public class TrestleReporterTest {
         }
 
         @CounterIncrement(name = "test-reporter-counter")
-        void testIncrement() { }
+        void testIncrement() {
+        }
 
         @Metered
-        void testMeter() { }
+        void testMeter() {
+        }
     }
 }

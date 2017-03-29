@@ -7,6 +7,7 @@ import com.google.inject.Provides;
 import com.nickrobison.trestle.metrics.backends.ITrestleMetricsBackend;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import net.bytebuddy.agent.ByteBuddyAgent;
 
 import javax.inject.Singleton;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -21,6 +22,9 @@ public class MetricsModule extends PrivateModule {
 
     @Override
     protected void configure() {
+//        Setup bytebuddy
+        ByteBuddyAgent.install();
+        MetricianAgentBuilder.BuildAgent().installOnByteBuddyAgent();
 
         config = ConfigFactory.load().getConfig("trestle.metrics");
         final String backendClass = config.getString("backend");

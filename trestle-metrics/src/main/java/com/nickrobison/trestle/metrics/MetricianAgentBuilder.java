@@ -10,8 +10,8 @@ import net.bytebuddy.matcher.ElementMatchers;
  */
 public class MetricianAgentBuilder {
 
-    public static void BuildAgent() {
-        new AgentBuilder.Default()
+    public static AgentBuilder.Identified.Extendable BuildAgent() {
+        return new AgentBuilder.Default()
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
@@ -20,8 +20,6 @@ public class MetricianAgentBuilder {
                 .transform(new TimerTransformer().getTransformer())
                 .transform(new MeterTransformer().getTransformer())
                 .transform(new CounterTransformer().getTransformer())
-                .transform(new ExceptionMeterTransformer().getTransformer())
-                .installOnByteBuddyAgent();
-
+                .transform(new ExceptionMeterTransformer().getTransformer());
     }
 }
