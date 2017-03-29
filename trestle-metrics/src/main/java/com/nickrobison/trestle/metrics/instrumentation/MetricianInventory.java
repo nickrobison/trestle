@@ -1,6 +1,7 @@
-package com.nickrobison.trestle.metrics;
+package com.nickrobison.trestle.metrics.instrumentation;
 
 import com.codahale.metrics.*;
+import com.nickrobison.trestle.metrics.AnnotatedMetric;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

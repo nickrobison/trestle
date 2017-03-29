@@ -1,9 +1,7 @@
-package com.nickrobison.trestle.metrics.transformer;
+package com.nickrobison.trestle.metrics.instrumentation.transformers;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.annotation.Metered;
 import com.nickrobison.trestle.annotations.metrics.CounterDecrement;
 import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.metrics.AnnotatedMetric;
@@ -14,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 
-import static com.nickrobison.trestle.metrics.MetricianInventory.*;
+import static com.nickrobison.trestle.metrics.instrumentation.MetricianInventory.*;
 import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 
 /**

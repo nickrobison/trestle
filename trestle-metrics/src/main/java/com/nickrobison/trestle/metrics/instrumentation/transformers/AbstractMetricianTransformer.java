@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.metrics.transformer;
+package com.nickrobison.trestle.metrics.instrumentation.transformers;
 
 import afu.edu.emory.mathcs.backport.java.util.Collections;
 import com.codahale.metrics.Metric;
