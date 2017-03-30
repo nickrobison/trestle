@@ -21,9 +21,10 @@ import java.util.concurrent.BlockingQueue;
  */
 public class MetricsModule extends PrivateModule {
 
-    private Config config;
+    private final Config config;
 
     MetricsModule() {
+        config = ConfigFactory.load().getConfig("trestle.metrics");
 //        Setup/Reset bytebuddy
         SharedMetricRegistries.clear();
         MetricianInventory.reset();
@@ -33,15 +34,17 @@ public class MetricsModule extends PrivateModule {
         try {
             ByteBuddyAgent.getInstrumentation();
         } catch (IllegalStateException e) {
-            ByteBuddyAgent.install();
+            try {
+                ByteBuddyAgent.install();
+            } catch (IllegalStateException es) {
+                throw new IllegalStateException("Unable to attach Metrics Agent, possibly not running on JDK?", es);
+            }
             MetricianAgentBuilder.BuildAgent().installOnByteBuddyAgent();
         }
     }
 
     @Override
     protected void configure() {
-
-        config = ConfigFactory.load().getConfig("trestle.metrics");
         final String backendClass = config.getString("backend");
         try {
             final Class<? extends ITrestleMetricsBackend> backend = Class.forName(backendClass).asSubclass(ITrestleMetricsBackend.class);
