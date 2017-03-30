@@ -1,7 +1,8 @@
-package com.nickrobison.trestle.metrics;
+package com.nickrobison.trestle.metrics.instrumentation;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
+import com.nickrobison.trestle.metrics.MetricsRegistry;
 
 /**
  * Created by nrobison on 3/17/17.
