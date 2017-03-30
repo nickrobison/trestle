@@ -23,7 +23,7 @@ public class MetricsModule extends PrivateModule {
 
     private final Config config;
 
-    MetricsModule() {
+    public MetricsModule() {
         config = ConfigFactory.load().getConfig("trestle.metrics");
 //        Setup/Reset bytebuddy
         SharedMetricRegistries.clear();
