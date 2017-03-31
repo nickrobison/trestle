@@ -9,7 +9,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.trestle.annotations.metrics.CounterDecrement;
 import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
-import com.nickrobison.trestle.metrics.instrumentation.MetricianAgentBuilder;
+import com.nickrobison.trestle.metrics.agent.MetricianAgentBuilder;
 import com.nickrobison.trestle.metrics.instrumentation.MetricianInventory;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import org.junit.jupiter.api.AfterEach;
@@ -32,8 +32,8 @@ public class MetricsCodeWeavingTest {
 
     @BeforeAll
     public static void setupBB() {
-        ByteBuddyAgent.install();
-        MetricianAgentBuilder.BuildAgent().installOnByteBuddyAgent();
+//        ByteBuddyAgent.install();
+//        MetricianAgentBuilder.BuildAgent().installOnByteBuddyAgent();
     }
 
     @BeforeEach

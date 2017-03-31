@@ -35,8 +35,6 @@ public class TimerTransformer extends AbstractMetricianTransformer {
 
     @Advice.OnMethodEnter
     public static Timer.Context enter(@Advice.Origin Method method) {
-        final String name = method.getName();
-        System.out.println(String.format("Starting %s timer", name));
         return handleTimer(method);
     }
 
@@ -46,7 +44,6 @@ public class TimerTransformer extends AbstractMetricianTransformer {
         if (annotatedMetric == null) {
             final AnnotatedMetric<Timer> timer = metricAnnotation(method, Timed.class, (name, absolute) -> {
                 String finalName = name.isEmpty() ? method.getName() : strategy.resolveMetricName(name);
-//                MetricRegistry registry = strategy.resolveMetricRegistry(metriced.registry());
                 return registry.timer(absolute ? finalName : MetricRegistry.name(method.getDeclaringClass(), finalName));
             });
             timers.put(method.getName(), timer);
@@ -59,7 +56,6 @@ public class TimerTransformer extends AbstractMetricianTransformer {
 
     @Advice.OnMethodExit(onThrowable = Throwable.class)
     public static void exit(@Advice.Enter Timer.Context context) {
-        System.out.println("Stopping timer");
         context.stop();
     }
 }

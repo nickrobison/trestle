@@ -5,14 +5,13 @@ import com.codahale.metrics.SharedMetricRegistries;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.nickrobison.trestle.metrics.backends.ITrestleMetricsBackend;
-import com.nickrobison.trestle.metrics.instrumentation.MetricianAgentBuilder;
+import com.nickrobison.trestle.metrics.agent.MetricianAgentBuilder;
 import com.nickrobison.trestle.metrics.instrumentation.MetricianInventory;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import net.bytebuddy.agent.ByteBuddyAgent;
 
 import javax.inject.Singleton;
-import java.lang.instrument.Instrumentation;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
