@@ -1,5 +1,6 @@
 package com.nickrobison.trestle;
 
+import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
@@ -329,7 +330,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @param databaseTemporal - Optional TemporalObject to manually set database time
      */
     @Timed
-    @CounterIncrement(name = "trestle-object-write", absolute = true)
+    @Metered(name = "trestle-object-write", absolute = true)
     private void writeTrestleObject(Object inputObject, @Nullable TemporalObject databaseTemporal) throws UnregisteredClassException, MissingOntologyEntity {
         final Class aClass = inputObject.getClass();
         checkRegisteredClass(aClass);
@@ -644,7 +645,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @return - Java object of type T
      */
     @Timed
-    @CounterIncrement(name = "read-trestle-object", absolute = true)
+    @Metered(name = "read-trestle-object", absolute = true)
     private <T> Optional<T> readTrestleObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, PointTemporal<?> validTemporal, PointTemporal<?> databaseTemporal) {
 
 //        Contains class?
@@ -851,6 +852,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
+    @Timed
+    @Metered
     public <T> Optional<List<T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal validAt) {
 //        return CompletableFuture.supplyAsync(() -> {
         final OWLClass owlClass = trestleParser.classParser.getObjectClass(clazz);
@@ -1079,6 +1082,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @param individual - OWLNamedIndividual to retrieve facts for
      * @return - TrestleIndividual
      */
+    @Timed
     private TrestleIndividual getTrestleIndividual(OWLNamedIndividual individual) {
 
         logger.debug("Building trestle individual {}", individual);

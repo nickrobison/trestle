@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.utils;
 
 import com.codahale.metrics.annotation.Gauge;
+import com.codahale.metrics.annotation.Metered;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import org.agrona.concurrent.ManyToManyConcurrentArrayQueue;
 import org.eclipse.rdf4j.repository.Repository;
@@ -45,6 +46,7 @@ public class SesameConnectionManager {
      * If no connections are available, a new one is created
      * @return - {@link RepositoryConnection}
      */
+    @Metered(name = "sesame-connection-pool-get", absolute = true)
     public RepositoryConnection getConnection() {
         final RepositoryConnection connection = this.connectionQueue.poll();
         if (connection != null) {
@@ -59,6 +61,7 @@ public class SesameConnectionManager {
      * Create  new {@link RepositoryConnection}
      * @return - Newly created {@link RepositoryConnection}
      */
+    @Metered(name = "sesame-connection-pool-create", absolute = true)
     private RepositoryConnection createNewConnection() {
         logger.debug("Creating new connection to repository");
         return this.repository.getConnection();
@@ -70,6 +73,7 @@ public class SesameConnectionManager {
      * If the connection is still in a transaction, an error is thrown
      * @param connection - {@link RepositoryConnection} to return to queue
      */
+    @Metered(name = "sesame-connection-pool-return", absolute = true)
     public void returnConnection(RepositoryConnection connection) {
         if (connection.isActive()) {
             logger.error("Connection still has live transaction");
