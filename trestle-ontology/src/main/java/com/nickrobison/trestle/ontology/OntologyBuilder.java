@@ -32,7 +32,8 @@ import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 @SuppressWarnings({"nullness", "OptionalUsedAsFieldOrParameterType"})
 public class OntologyBuilder {
     private static final Logger logger = LoggerFactory.getLogger(OntologyBuilder.class);
-    private static Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
+    //private static Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
+    private static Config config = ConfigFactory.load(ConfigFactory.parseResources("reference.conf"));
 
     private Optional<IRI> iri = Optional.empty();
     private Optional<InputStream> is = Optional.empty();
@@ -114,19 +115,19 @@ public class OntologyBuilder {
         mappers.add(mapper);
         owlOntologyManager.setIRIMappers(mappers);
 
-        OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration();
-        config.setMissingImportHandlingStrategy(MissingImportHandlingStrategy.THROW_EXCEPTION);
+        OWLOntologyLoaderConfiguration loaderConfig = new OWLOntologyLoaderConfiguration();
+        loaderConfig.setMissingImportHandlingStrategy(MissingImportHandlingStrategy.THROW_EXCEPTION);
 
         try {
             if (this.iri.isPresent()) {
                 logger.debug("Loading ontology from: {}", this.iri.get());
-                owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument((new IRIDocumentSource(this.iri.get())),config);
+                owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument((new IRIDocumentSource(this.iri.get())),loaderConfig);
                 logger.info("Loaded version {} of ontology {}",
                         owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
                         owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
             } else if (this.is.isPresent()){
                 logger.debug("Loading ontology from input stream");
-                owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument((new StreamDocumentSource(this.is.get())),config);
+                owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument((new StreamDocumentSource(this.is.get())),loaderConfig);
                 logger.info("Loaded version {} of ontology {}",
                         owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
                         owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
@@ -209,7 +210,6 @@ public class OntologyBuilder {
             private Config importsConfig = config.getConfig("trestle.ontology.imports");
             private String importsDirPath = importsConfig.getString("importsDirectory");
             private Map<IRI, String> fileMap;
-
             {
 
                 fileMap = new HashMap<IRI, String>();
@@ -222,6 +222,7 @@ public class OntologyBuilder {
                         fileMap.put(iri, fileString);
                     }
                 }
+                System.err.println("mapping = "+fileMap);
             }
 
             @Override
