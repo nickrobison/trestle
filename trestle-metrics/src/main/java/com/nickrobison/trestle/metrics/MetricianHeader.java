@@ -11,14 +11,16 @@ import java.util.stream.Collectors;
  * Created by nrobison on 3/24/17.
  */
 @SuppressWarnings("WeakerAccess")
-public class TrestleMetricsHeader implements Serializable {
+public class MetricianHeader implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public final Long upTime;
+    public final Long period;
     public final Map<String, String> meters;
 
-    TrestleMetricsHeader(long upTime, Map<String, Metric> meters) {
+    MetricianHeader(long upTime, long period, Map<String, Metric> meters) {
         this.upTime = upTime;
+        this.period = period;
         this.meters = meters.entrySet()
                 .stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getClass().getName()));

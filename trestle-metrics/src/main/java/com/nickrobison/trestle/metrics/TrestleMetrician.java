@@ -3,6 +3,7 @@ package com.nickrobison.trestle.metrics;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.annotation.Gauge;
 import com.nickrobison.trestle.metrics.backends.ITrestleMetricsBackend;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -29,6 +30,8 @@ public class TrestleMetrician {
     private final TrestleMetricsReporter trestleMetricsReporter;
     private final ITrestleMetricsBackend metricsBackend;
     private final TrestleJVMMetrics jvmMetrics;
+    private final Config config;
+    private final long updatePeriod;
 
     @Inject
     public TrestleMetrician(MetricRegistry registry,
@@ -36,8 +39,8 @@ public class TrestleMetrician {
                             ITrestleMetricsBackend backend,
                             TrestleJVMMetrics jvmMetrics) {
         logger.info("Initializing Trestle Metrician");
-        final Config config = ConfigFactory.load().getConfig("trestle.metrics");
-        final long updatePeriod = config.getLong("period");
+        config = ConfigFactory.load().getConfig("trestle.metrics");
+        updatePeriod = config.getLong("period");
         logger.info("Updating registry every {} ms.", updatePeriod);
         this.registry = registry;
         this.dataQueue = dataqueue;
@@ -78,7 +81,12 @@ public class TrestleMetrician {
         return this.jvmMetrics;
     }
 
-    public TrestleMetricsHeader getMetricsHeader() {
-        return new TrestleMetricsHeader(getJvmMetrics().currentUptime(), this.registry.getMetrics());
+    public MetricianHeader getMetricsHeader() {
+        return new MetricianHeader(getJvmMetrics().currentUptime(), this.updatePeriod, this.registry.getMetrics());
+    }
+
+    @Gauge(name = "data-queue-length")
+    private int getDataQueueLength() {
+        return this.dataQueue.size();
     }
 }
