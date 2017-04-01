@@ -44,7 +44,7 @@ public class MetricsModule extends PrivateModule {
 
     @Override
     protected void configure() {
-        final String backendClass = config.getString("backend");
+        final String backendClass = config.getString("backend.class");
         try {
             final Class<? extends ITrestleMetricsBackend> backend = Class.forName(backendClass).asSubclass(ITrestleMetricsBackend.class);
 

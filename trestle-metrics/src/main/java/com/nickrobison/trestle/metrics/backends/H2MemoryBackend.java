@@ -20,7 +20,6 @@ import java.util.concurrent.BlockingQueue;
  */
 public class H2MemoryBackend implements ITrestleMetricsBackend {
     private static final Logger logger = LoggerFactory.getLogger(H2MemoryBackend.class);
-    private static final int THREAD_WAIT_MS = 10000;
     private final BlockingQueue<TrestleMetricsReporter.DataAccumulator> dataQueue;
     private final Thread eventThread;
     private final Connection connection;
