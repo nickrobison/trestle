@@ -12,8 +12,6 @@ import java.io.File;
  */
 public interface ITrestleMetricsBackend {
 
-    int THREAD_WAIT_MS = 10000;
-
     /**
      * Shutdown metrics backend without exporting data
      */

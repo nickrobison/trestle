@@ -1,42 +1,28 @@
 package com.nickrobison.trestle.metrics.backends;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Gauge;
 import com.nickrobison.trestle.metrics.TrestleMetricsReporter;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.sql.*;
-import java.util.ArrayDeque;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 /**
  * Created by nrobison on 3/20/17.
  */
-public class H2MemoryBackend implements ITrestleMetricsBackend {
+public class H2MemoryBackend extends RDBMSBackend {
     private static final Logger logger = LoggerFactory.getLogger(H2MemoryBackend.class);
-    private final BlockingQueue<TrestleMetricsReporter.DataAccumulator> dataQueue;
-    private final Thread eventThread;
-    private final Connection connection;
-    private final Map<String, Long> metricMap;
 
     @Inject
     H2MemoryBackend(BlockingQueue<TrestleMetricsReporter.DataAccumulator> dataQueue) {
+        super(dataQueue);
         logger.info("Initializing H2 backend");
         logger.warn("Not for production use");
-        this.dataQueue = dataQueue;
-        metricMap = new HashMap<>();
 //        Connect to database
         connection = initializeDatabase();
-
-        final ProcessEvents processEvents = new ProcessEvents();
-        eventThread = new Thread(processEvents, "h2memory-event-thread");
-        eventThread.start();
     }
 
     private Connection initializeDatabase() {
@@ -93,17 +79,12 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
     }
 
     @Override
-    public void shutdown() {
-        shutdown(null);
-    }
-
-    @Override
     public void shutdown(File exportFile) {
         logger.info("Shutting down H2 backend");
         eventThread.interrupt();
         try {
-            logger.debug("Waiting {} ms for queue to drain", THREAD_WAIT_MS);
-            eventThread.join(THREAD_WAIT_MS);
+            logger.debug("Waiting {} ms for queue to drain", this.thread_wait);
+            eventThread.join(this.thread_wait);
         } catch (InterruptedException e) {
             logger.error("Error while waiting for event thread to finish", e);
         }
@@ -142,7 +123,8 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
         logger.info("Export complete");
     }
 
-    private Long registerMetric(String metricName) {
+    @Override
+    Long registerMetric(String metricName) {
         try {
             final PreparedStatement preparedStatement = connection.prepareStatement(String.format("INSERT INTO metrics (Metric) VALUES('%s')", metricName), Statement.RETURN_GENERATED_KEYS);
             preparedStatement.executeUpdate();
@@ -161,80 +143,26 @@ public class H2MemoryBackend implements ITrestleMetricsBackend {
     }
 
     @Override
-    public void registerGauge(String name, @Nullable Gauge<?> gauge) {
-//        TODO(nrobison): We should register all the sub-gauges at init
-        logger.debug("Registering Gauge {}", name);
-        registerMetric(name);
-    }
-
-    @Override
-    public void removeGauge(String name) {
-
-    }
-
-    @Override
-    public void registerCounter(String name, @Nullable Counter counter) {
-        //        TODO(nrobison): We should register all the sub-counters at init
-        logger.debug("Registering counter {}", name);
-        registerMetric(name);
-    }
-
-    @Override
-    public void removeCounter(String name) {
-
-    }
-
-    private class ProcessEvents implements Runnable {
-
-        @Override
-        public void run() {
-            while (true) {
-                final TrestleMetricsReporter.DataAccumulator event;
-                try {
-                    event = dataQueue.take();
-                    processEvent(event);
-                } catch (InterruptedException e) {
-                    logger.debug("Thread interrupted, draining queue");
-                    ArrayDeque<TrestleMetricsReporter.DataAccumulator> remainingEvents = new ArrayDeque<>();
-                    dataQueue.drainTo(remainingEvents);
-                    remainingEvents.forEach(this::processEvent);
-                    logger.debug("Finished draining events");
-                    return;
-                }
+    void insertValues(List<MetricianMetricValue> events) {
+        final StringBuilder sqlInsertString = new StringBuilder();
+        events.forEach(event -> {
+            switch (event.getType()) {
+                case COUNTER:
+                    sqlInsertString.append(String.format("INSERT INTO counters VALUES('%s', %s, '%s');\n", event.getKey(), event.getTimestamp(), event.getValue()));
+                    break;
+                case GAUGE:
+                    sqlInsertString.append(String.format("INSERT INTO gauges VALUES('%s', %s, '%s');\n", event.getKey(), event.getTimestamp(), event.getValue()));
+                    break;
+                default:
+                    logger.error("Unable to determine metric type {}, skipping", event.getType());
+                    break;
             }
-        }
-
-        private void processEvent(TrestleMetricsReporter.DataAccumulator event) {
-            final long timestamp = event.getTimestamp();
-            final StringBuilder sqlInsertString = new StringBuilder();
-//            Counters
-            event.getCounters().entrySet().forEach(entry -> {
-                final String key = entry.getKey();
-                logger.trace("Counter {}: {}", key, entry.getValue());
-                Long metricKey = metricMap.get(key);
-                if (metricKey == null) {
-                    logger.warn("Got null key for metric {}, registering", key);
-                    metricKey = registerMetric(key);
-                }
-                sqlInsertString.append(String.format("INSERT INTO counters VALUES('%s', %s, '%s');\n", metricKey, timestamp, entry.getValue()));
-            });
-//            Gauges
-            event.getGauges().entrySet().forEach(entry -> {
-                final String key = entry.getKey();
-                logger.trace("Gauge {}: {}", key, entry.getValue());
-                Long metricKey = metricMap.get(key);
-                if (metricKey == null) {
-                    logger.warn("Got null key for metric {}, registering", key);
-                    metricKey = registerMetric(key);
-                }
-                sqlInsertString.append(String.format("INSERT INTO gauges VALUES('%s', %s, '%s');\n", metricKey, timestamp, entry.getValue()));
-            });
-            try {
-                final CallableStatement callableStatement = connection.prepareCall(sqlInsertString.toString());
-                callableStatement.execute();
-            } catch (SQLException e) {
-                logger.error("Unable to insert event into H2 in-memory database", e);
-            }
+        });
+        try {
+            final PreparedStatement insertStatement = connection.prepareStatement(sqlInsertString.toString());
+            insertStatement.execute();
+        } catch (SQLException e) {
+            logger.error("Unable to insert event into Postgres database", e);
         }
     }
 }
