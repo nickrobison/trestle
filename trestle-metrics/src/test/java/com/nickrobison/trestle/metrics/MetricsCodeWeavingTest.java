@@ -32,8 +32,8 @@ public class MetricsCodeWeavingTest {
 
     @BeforeAll
     public static void setupBB() {
-//        ByteBuddyAgent.install();
-//        MetricianAgentBuilder.BuildAgent().installOnByteBuddyAgent();
+        ByteBuddyAgent.install();
+        MetricianAgentBuilder.BuildAgent().installOnByteBuddyAgent();
     }
 
     @BeforeEach

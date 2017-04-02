@@ -50,74 +50,6 @@ public class PostgresBackend implements ITrestleMetricsBackend {
         } catch (SQLException e) {
             throw new RuntimeException(e.getCause());
         }
-//        Check for tables
-//        try {
-////            final PreparedStatement tableCheck = connection.prepareStatement("SELECT EXISTS (\n" +
-////                    "   SELECT 1\n" +
-////                    "   FROM   information_schema.tables \n" +
-////                    "   WHERE  table_schema = '?'\n" +
-////                    "   AND    table_name = '?'\n);");
-//            final PreparedStatement tableCheck = connection.prepareStatement("SELECT to_regclass('?')");
-////            Metrics
-//            tableCheck.setString(1, config.getString("schema") + ".METRICS");
-//            if (tableCheck.executeQuery().getInt(1) != 1) {
-//                logger.error("Table METRICS does not exist");
-//            }
-////            Gauges
-//            tableCheck.setString(2, "GAUGES");
-//            if (tableCheck.executeQuery().getInt(1) != 1) {
-//                logger.error("Table GAUGES does not exist");
-//            }
-////            Counters
-//            tableCheck.setString(2, "COUNTERS");
-//            if (tableCheck.executeQuery().getInt(1) != 1) {
-//                logger.error("Table COUNTERS does not exist");
-//            }
-//        } catch (SQLException e) {
-//            throw new RuntimeException(e.getCause());
-//        }
-//        try {
-//            final CallableStatement metricsCreate = connection.prepareCall("CREATE TABLE metrics (MetricID IDENTITY, Metric VARCHAR(150))");
-//            metricsCreate.execute();
-//            logger.debug("Table METRICS created");
-//        } catch (SQLException e) {
-//            logger.warn("Table METRICS already exists, truncating");
-//            try {
-//                final CallableStatement metricsTruncate = connection.prepareCall("TRUNCATE TABLE metrics");
-//                metricsTruncate.execute();
-//                logger.debug("Table METRICS truncated");
-//            } catch (SQLException e1) {
-//                throw new RuntimeException(e1.getCause());
-//            }
-//        }
-//        try {
-//            final CallableStatement gaugesCreate = connection.prepareCall("CREATE TABLE gauges (MetricID BIGINT, Timestamp BIGINT, Value DOUBLE)");
-//            gaugesCreate.execute();
-//            logger.debug("Table GAUGES created");
-//        } catch (SQLException e) {
-//            logger.warn("Table GAUGES already exists, truncating");
-//            try {
-//                final CallableStatement gaugesTruncate = connection.prepareCall("TRUNCATE TABLE gauges");
-//                gaugesTruncate.execute();
-//                logger.debug("Table GAUGES truncated");
-//            } catch (SQLException e1) {
-//                throw new RuntimeException(e1.getCause());
-//            }
-//        }
-//        try {
-//            final CallableStatement countersCreate = connection.prepareCall("CREATE TABLE counters (MetricID BIGINT, Timestamp BIGINT, Value BIGINT)");
-//            countersCreate.execute();
-//            logger.debug("Table COUNTERS created");
-//        } catch (SQLException e) {
-//            logger.warn("Table COUNTERS already exists, truncating");
-//            try {
-//                final CallableStatement countersTruncate = connection.prepareCall("TRUNCATE TABLE counters");
-//                countersTruncate.execute();
-//                logger.debug("Table COUNTERS truncated");
-//            } catch (SQLException e1) {
-//                throw new RuntimeException(e1.getCause());
-//            }
-//        }
         return connection;
     }
 
@@ -160,11 +92,7 @@ public class PostgresBackend implements ITrestleMetricsBackend {
                     "    SELECT *\n" +
                     "    FROM COUNTERS\n" +
                     "    ) AS C\n" +
-                    "ON C.METRICID = M.METRICID) TO %s (format CSV);", file.toString());
-//            final PreparedStatement exportStatement = connection.prepareStatement("COPY ('?') TO '?' (format CSV)");
-//            exportStatement.setString(1, exportQuery);
-//            exportStatement.setString(2, file.toString());
-//            final CallableStatement exportStatement = connection.prepareCall(String.format("CALL CSVWRITE('%s', '%s')", file.toString(), exportQuery));
+                    "ON C.METRICID = M.METRICID) TO '%s' (format CSV);", file.getAbsolutePath());
             final PreparedStatement preparedStatement = connection.prepareStatement(exportQuery);
             preparedStatement.execute();
         } catch (SQLException e) {
