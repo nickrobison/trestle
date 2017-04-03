@@ -68,7 +68,7 @@
                             <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
                         </manifest>
                         <manifestEntries>
-                            <Premain-Class>com.nickrobison.trestle.metrics.agent.MetricianAgent</Premain-Class>
+                            <Premain-Class>com.nickrobison.metrician.agent.MetricianAgent</Premain-Class>
                             <Can-Redefine-Classes>false</Can-Redefine-Classes>
                             <Can-Retransform-Classes>true</Can-Retransform-Classes>
                         </manifestEntries>

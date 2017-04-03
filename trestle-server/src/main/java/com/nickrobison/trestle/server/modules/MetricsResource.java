@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.server.modules;
 
-import com.nickrobison.trestle.metrics.TrestleMetrician;
+import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
 import org.hibernate.validator.constraints.NotEmpty;
@@ -23,7 +23,7 @@ import javax.ws.rs.core.Response;
 @Produces(MediaType.APPLICATION_JSON)
 public class MetricsResource {
     private static final Logger logger = LoggerFactory.getLogger(MetricsResource.class);
-    private final TrestleMetrician metrician;
+    private final Metrician metrician;
 
     @Inject
     public MetricsResource(ReasonerModule reasonerModule) {

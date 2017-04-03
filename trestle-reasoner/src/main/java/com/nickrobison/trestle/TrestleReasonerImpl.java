@@ -7,25 +7,21 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.nickrobison.trestle.caching.TrestleCache;
-import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingFactException;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.exceptions.*;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
-import com.nickrobison.trestle.exporter.ShapefileExporter;
 import com.nickrobison.trestle.exporter.ShapefileSchema;
 import com.nickrobison.trestle.exporter.TSIndividual;
 import com.nickrobison.trestle.iri.IRIBuilder;
 import com.nickrobison.trestle.iri.IRIVersion;
 import com.nickrobison.trestle.iri.TrestleIRI;
-import com.nickrobison.trestle.iri.TrestleIRIV1;
-import com.nickrobison.trestle.metrics.MetricsModule;
-import com.nickrobison.trestle.metrics.TrestleMetrician;
+import com.nickrobison.metrician.MetricsModule;
+import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.ontology.*;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.parser.*;
@@ -41,7 +37,6 @@ import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import com.nickrobison.trestle.utils.TemporalPropertiesPair;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import com.vividsolutions.jts.geom.MultiPolygon;
 import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -98,7 +93,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private @Nullable TrestleCache trestleCache = null;
     private final TrestleParser trestleParser;
     private final Config trestleConfig;
-    private final TrestleMetrician trestleMetrician;
+    private final Metrician metrician;
 
     @SuppressWarnings("dereference.of.nullable")
     TrestleReasonerImpl(TrestleBuilder builder) throws OWLOntologyCreationException {
@@ -110,7 +105,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final Injector injector = Guice.createInjector(new MetricsModule());
 
 //        Setup metrics engine
-        trestleMetrician = injector.getInstance(TrestleMetrician.class);
+        metrician = injector.getInstance(Metrician.class);
 
 //        Setup the reasoner prefix
 //        If not specified, use the default Trestle prefix
@@ -223,14 +218,14 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     public void shutdown() {
         logger.info("Shutting down reasoner");
         this.ontology.close(false);
-        this.trestleMetrician.shutdown();
+        this.metrician.shutdown();
     }
 
     @Override
     public void shutdown(boolean delete) {
         logger.info("Shutting down reasoner, and removing the model");
         this.ontology.close(delete);
-        this.trestleMetrician.shutdown();
+        this.metrician.shutdown();
     }
 
     @Override
@@ -245,8 +240,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public TrestleMetrician getMetricsEngine() {
-        return this.trestleMetrician;
+    public Metrician getMetricsEngine() {
+        return this.metrician;
     }
 
     @Override

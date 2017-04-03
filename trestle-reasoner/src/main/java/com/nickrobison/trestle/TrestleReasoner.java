@@ -4,7 +4,7 @@ import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
-import com.nickrobison.trestle.metrics.TrestleMetrician;
+import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.types.TrestleIndividual;
@@ -56,9 +56,9 @@ public interface TrestleReasoner {
 
     /**
      * Get the underlying metrics engine
-     * @return - {@link TrestleMetrician} metrics engine
+     * @return - {@link Metrician} metrics engine
      */
-    TrestleMetrician getMetricsEngine();
+    Metrician getMetricsEngine();
 
     /**
      * Get the currently registered prefixes and URIs
