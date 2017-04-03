@@ -1,6 +1,6 @@
 package com.nickrobison.metrician.backends;
 
-import com.nickrobison.metrician.TrestleMetricsReporter;
+import com.nickrobison.metrician.MetricianReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +21,7 @@ public class H2MemoryBackend extends RDBMSBackend {
     private static final Logger logger = LoggerFactory.getLogger(H2MemoryBackend.class);
 
     @Inject
-    H2MemoryBackend(BlockingQueue<TrestleMetricsReporter.DataAccumulator> dataQueue) {
+    H2MemoryBackend(BlockingQueue<MetricianReporter.DataAccumulator> dataQueue) {
         super(dataQueue, "h2-event-thread");
         logger.info("Initializing H2 backend");
         logger.warn("Not for production use");

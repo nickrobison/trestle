@@ -23,9 +23,9 @@ import java.lang.management.RuntimeMXBean;
  * Default class which registers various JVM/JMX metrics with the {@link MetricRegistry}
  */
 @Metriced
-public class TrestleJVMMetrics {
+public class JVMMetrics {
 
-    private static final Logger logger = LoggerFactory.getLogger(TrestleJVMMetrics.class);
+    private static final Logger logger = LoggerFactory.getLogger(JVMMetrics.class);
     private static final String JAVA_LANG_TYPE_OPERATING_SYSTEM = "java.lang:type=OperatingSystem";
     private final MetricRegistry registry;
     private final OperatingSystemMXBean operatingSystemMXBean;
@@ -34,7 +34,7 @@ public class TrestleJVMMetrics {
     private final MBeanServer platformMBeanServer;
 
     @Inject
-    TrestleJVMMetrics(MetricRegistry registry) {
+    JVMMetrics(MetricRegistry registry) {
         this.registry = registry;
 //        Get the Beans
         operatingSystemMXBean = ManagementFactory.getOperatingSystemMXBean();

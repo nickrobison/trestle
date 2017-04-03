@@ -19,22 +19,22 @@ import java.util.concurrent.TimeUnit;
  * Scheduled class which parses {@link MetricRegistry} {@link Metric}s at the specified interval and sends them to the {@link com.nickrobison.trestle.metrics.backends.ITrestleMetricsBackend}
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class TrestleMetricsReporter extends ScheduledReporter {
+public class MetricianReporter extends ScheduledReporter {
 
-    private static final Logger logger = LoggerFactory.getLogger(TrestleMetricsReporter.class);
+    private static final Logger logger = LoggerFactory.getLogger(MetricianReporter.class);
 
     private final Clock clock;
     private final Optional<String> prefix;
     private final MetricsDecomposer decomposer;
     private final Queue<DataAccumulator> dataQueue;
 
-    TrestleMetricsReporter(MetricRegistry registry,
-                           BlockingQueue<DataAccumulator> dataQueue,
-                           Optional<String> prefix,
-                           MetricsDecomposer decomposer,
-                           MetricFilter filter,
-                           TimeUnit rateUnit,
-                           TimeUnit durationUnit) {
+    MetricianReporter(MetricRegistry registry,
+                      BlockingQueue<DataAccumulator> dataQueue,
+                      Optional<String> prefix,
+                      MetricsDecomposer decomposer,
+                      MetricFilter filter,
+                      TimeUnit rateUnit,
+                      TimeUnit durationUnit) {
         super(registry, "trestle-reporter", filter, rateUnit, durationUnit);
         clock = Clock.defaultClock();
         this.prefix = prefix;

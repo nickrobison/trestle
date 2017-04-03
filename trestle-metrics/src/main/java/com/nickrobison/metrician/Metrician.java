@@ -5,6 +5,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.annotation.Gauge;
 import com.nickrobison.metrician.backends.ITrestleMetricsBackend;
+import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -22,22 +23,23 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by nrobison on 3/16/17.
  */
+@Metriced
 public class Metrician {
     private static final Logger logger = LoggerFactory.getLogger(Metrician.class);
 
     private final MetricRegistry registry;
-    private final BlockingQueue<TrestleMetricsReporter.DataAccumulator> dataQueue;
-    private final TrestleMetricsReporter trestleMetricsReporter;
+    private final BlockingQueue<MetricianReporter.DataAccumulator> dataQueue;
+    private final MetricianReporter metricianReporter;
     private final ITrestleMetricsBackend metricsBackend;
-    private final TrestleJVMMetrics jvmMetrics;
+    private final JVMMetrics jvmMetrics;
     private final Config config;
     private final long updatePeriod;
 
     @Inject
     public Metrician(MetricRegistry registry,
-                     BlockingQueue<TrestleMetricsReporter.DataAccumulator> dataqueue,
+                     BlockingQueue<MetricianReporter.DataAccumulator> dataqueue,
                      ITrestleMetricsBackend backend,
-                     TrestleJVMMetrics jvmMetrics) {
+                     JVMMetrics jvmMetrics) {
         logger.info("Initializing Trestle Metrician");
         config = ConfigFactory.load().getConfig("trestle.metrics");
         updatePeriod = config.getLong("period");
@@ -47,14 +49,14 @@ public class Metrician {
         metricsBackend = backend;
         final MetricsDecomposer metricsDecomposer = new MetricsDecomposer(new HashMap<>(), new ArrayList<>());
         final MetricsListener metricsListener = new MetricsListener(Optional.empty(), new HashMap<>(), new HashMap<>(), new ArrayList<>(), false, metricsDecomposer, registry, MetricFilter.ALL, this.metricsBackend);
-        trestleMetricsReporter = new TrestleMetricsReporter(registry, dataQueue, Optional.empty(), metricsDecomposer, MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
+        metricianReporter = new MetricianReporter(registry, dataQueue, Optional.empty(), metricsDecomposer, MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
         this.jvmMetrics = jvmMetrics;
-        this.trestleMetricsReporter.start(updatePeriod, TimeUnit.MILLISECONDS);
+        this.metricianReporter.start(updatePeriod, TimeUnit.MILLISECONDS);
     }
 
     public void shutdown() {
         logger.info("Stopping metrics reporting");
-        this.trestleMetricsReporter.stop();
+        this.metricianReporter.stop();
         shutdown(null);
     }
 
@@ -69,15 +71,15 @@ public class Metrician {
         metricsBackend.exportData(exportFile);
     }
 
-    public TrestleMetricsReporter getReporter() {
-        return this.trestleMetricsReporter;
+    public MetricianReporter getReporter() {
+        return this.metricianReporter;
     }
 
     public MetricRegistry getRegistry() {
         return this.registry;
     }
 
-    public TrestleJVMMetrics getJvmMetrics() {
+    public JVMMetrics getJvmMetrics() {
         return this.jvmMetrics;
     }
 

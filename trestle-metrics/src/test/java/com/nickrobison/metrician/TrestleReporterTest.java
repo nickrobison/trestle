@@ -4,9 +4,6 @@ import com.codahale.metrics.annotation.Gauge;
 import com.codahale.metrics.annotation.Metered;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.nickrobison.metrician.Metrician;
-import com.nickrobison.metrician.MetricsModule;
-import com.nickrobison.metrician.TrestleMetricsReporter;
 import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.typesafe.config.ConfigFactory;
@@ -26,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class TrestleReporterTest {
 
     private Metrician metrician;
-    private TrestleMetricsReporter reporter;
+    private MetricianReporter reporter;
     private static Injector injector;
 
     @BeforeAll

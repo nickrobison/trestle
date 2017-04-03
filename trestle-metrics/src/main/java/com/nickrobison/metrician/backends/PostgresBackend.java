@@ -1,6 +1,6 @@
 package com.nickrobison.metrician.backends;
 
-import com.nickrobison.metrician.TrestleMetricsReporter;
+import com.nickrobison.metrician.MetricianReporter;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +22,7 @@ public class PostgresBackend extends RDBMSBackend {
     private static final Logger logger = LoggerFactory.getLogger(PostgresBackend.class);
 
     @Inject
-    PostgresBackend(BlockingQueue<TrestleMetricsReporter.DataAccumulator> dataQueue) {
+    PostgresBackend(BlockingQueue<MetricianReporter.DataAccumulator> dataQueue) {
         super(dataQueue, "postgres-event-thread");
         logger.info("Initializing Postgres Backend");
         connection = initializeDatabase();

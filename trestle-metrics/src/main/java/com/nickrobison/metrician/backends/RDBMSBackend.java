@@ -2,7 +2,7 @@ package com.nickrobison.metrician.backends;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
-import com.nickrobison.metrician.TrestleMetricsReporter;
+import com.nickrobison.metrician.MetricianReporter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -30,10 +30,10 @@ public abstract class RDBMSBackend implements ITrestleMetricsBackend {
     final Thread eventThread;
     final String threadName;
 
-    final BlockingQueue<TrestleMetricsReporter.DataAccumulator> dataQueue;
+    final BlockingQueue<MetricianReporter.DataAccumulator> dataQueue;
     protected Connection connection;
 
-    RDBMSBackend(BlockingQueue<TrestleMetricsReporter.DataAccumulator> dataQueue, String threadName) {
+    RDBMSBackend(BlockingQueue<MetricianReporter.DataAccumulator> dataQueue, String threadName) {
         this.threadName = threadName;
         this.dataQueue = dataQueue;
         this.config = ConfigFactory.load().getConfig("trestle.metrics.backend");
@@ -84,13 +84,13 @@ public abstract class RDBMSBackend implements ITrestleMetricsBackend {
         @Override
         public void run() {
             while (true) {
-                final TrestleMetricsReporter.DataAccumulator event;
+                final MetricianReporter.DataAccumulator event;
                 try {
                     event = dataQueue.take();
                     processEvent(event);
                 } catch (InterruptedException e) {
                     logger.debug("Thread interrupted, draining queue");
-                    ArrayDeque<TrestleMetricsReporter.DataAccumulator> remainingEvents = new ArrayDeque<>();
+                    ArrayDeque<MetricianReporter.DataAccumulator> remainingEvents = new ArrayDeque<>();
                     dataQueue.drainTo(remainingEvents);
                     remainingEvents.forEach(this::processEvent);
                     logger.debug("Finished draining events");
@@ -99,7 +99,7 @@ public abstract class RDBMSBackend implements ITrestleMetricsBackend {
             }
         }
 
-        private void processEvent(TrestleMetricsReporter.DataAccumulator event) {
+        private void processEvent(MetricianReporter.DataAccumulator event) {
             final long timestamp = event.getTimestamp();
             List<MetricianMetricValue> events = new ArrayList<>();
 //            Counters

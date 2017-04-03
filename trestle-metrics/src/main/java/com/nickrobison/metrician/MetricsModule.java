@@ -67,7 +67,7 @@ public class MetricsModule extends PrivateModule {
 
     @Provides
     @Singleton
-    BlockingQueue<TrestleMetricsReporter.DataAccumulator> provideDataQueue() {
+    BlockingQueue<MetricianReporter.DataAccumulator> provideDataQueue() {
         return new ArrayBlockingQueue<>(this.config.getInt("queueSize"));
     }
 }
