@@ -24,6 +24,10 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 /**
  * Created by nrobison on 3/27/17.
  */
+
+/**
+ * Abstract class that implements byte-code transformation of the various {@link Metric}s
+ */
 public abstract class AbstractMetricianTransformer {
 
     public abstract AgentBuilder.Transformer getTransformer();

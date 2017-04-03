@@ -9,6 +9,10 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by nrobison on 3/27/17.
  */
+
+/**
+ * Shared data class which provides {@link Map} implementation for the various {@link Metric}s registered on the Java classes
+ */
 public class MetricianInventory {
 
     public static DefaultMetricsStrategy strategy;

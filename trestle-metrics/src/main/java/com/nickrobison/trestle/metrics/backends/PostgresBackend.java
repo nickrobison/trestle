@@ -14,12 +14,16 @@ import java.util.concurrent.BlockingQueue;
 /**
  * Created by nrobison on 3/31/17.
  */
+
+/**
+ * Postgres backend for Metrician Metrics
+ */
 public class PostgresBackend extends RDBMSBackend {
     private static final Logger logger = LoggerFactory.getLogger(PostgresBackend.class);
 
     @Inject
     PostgresBackend(BlockingQueue<TrestleMetricsReporter.DataAccumulator> dataQueue) {
-        super(dataQueue);
+        super(dataQueue, "postgres-event-thread");
         logger.info("Initializing Postgres Backend");
         connection = initializeDatabase();
     }

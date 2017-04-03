@@ -14,6 +14,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by nrobison on 3/20/17.
  */
+
+/**
+ * Scheduled class which parses {@link MetricRegistry} {@link Metric}s at the specified interval and sends them to the {@link com.nickrobison.trestle.metrics.backends.ITrestleMetricsBackend}
+ */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class TrestleMetricsReporter extends ScheduledReporter {
 
@@ -68,11 +72,11 @@ public class TrestleMetricsReporter extends ScheduledReporter {
     }
 
     private static void processGauges(DataAccumulator accumulator, Map<String, Gauge> gauges) {
-        gauges.entrySet().forEach(entry -> accumulator.addGauge(entry.getKey(), entry.getValue().getValue()));
+        gauges.forEach((key, value) -> accumulator.addGauge(key, value.getValue()));
     }
 
     private static void processCounters(DataAccumulator accumulator, Map<String, Counter> counters) {
-        counters.entrySet().forEach(entry -> accumulator.addCounter(entry.getKey(), entry.getValue().getCount()));
+        counters.forEach((key, value) -> accumulator.addCounter(key, value.getCount()));
     }
 
     private void processMeters(DataAccumulator accumulator, Map<String, Meter> meters) {

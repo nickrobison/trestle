@@ -10,6 +10,10 @@ import java.util.Optional;
 /**
  * Created by nrobison on 3/20/17.
  */
+
+/**
+ * Component which listens to events from the {@link MetricRegistry}, and registers/unregisters them with the {@link ITrestleMetricsBackend}
+ */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 class MetricsListener implements MetricRegistryListener {
 

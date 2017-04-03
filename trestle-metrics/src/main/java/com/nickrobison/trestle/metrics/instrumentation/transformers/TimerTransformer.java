@@ -19,6 +19,10 @@ import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 /**
  * Created by nrobison on 3/28/17.
  */
+
+/**
+ * Byte-code transformation class to implement the {@link Timed} annotation
+ */
 public class TimerTransformer extends AbstractMetricianTransformer {
 
     private static final Logger logger = LoggerFactory.getLogger(TimerTransformer.class);

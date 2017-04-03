@@ -10,6 +10,10 @@ import java.io.File;
 /**
  * Created by nrobison on 3/20/17.
  */
+
+/**
+ * Interface for custom Metrician backend
+ */
 public interface ITrestleMetricsBackend {
 
     /**

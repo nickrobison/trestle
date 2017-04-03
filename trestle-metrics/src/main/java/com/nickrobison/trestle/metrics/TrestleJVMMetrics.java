@@ -21,6 +21,10 @@ import java.util.Map;
 /**
  * Created by nrobison on 3/21/17.
  */
+
+/**
+ * Default class which registers various JVM/JMX metrics with the {@link MetricRegistry}
+ */
 @Metriced
 public class TrestleJVMMetrics {
 
@@ -76,6 +80,10 @@ public class TrestleJVMMetrics {
 
 //    Protected metrics
 
+    /**
+     * Get current CPU usage
+     * @return - double of current CPU usage
+     */
     @Gauge(name = "jvm-cpu-usage", absolute = true)
     double getCPUUsage() {
         final AttributeList list;

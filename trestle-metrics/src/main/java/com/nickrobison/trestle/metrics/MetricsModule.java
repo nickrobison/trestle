@@ -18,6 +18,10 @@ import java.util.concurrent.BlockingQueue;
 /**
  * Created by nrobison on 3/21/17.
  */
+
+/**
+ * DI Module which sets up the {@link ByteBuddyAgent} to handle the class transformaion and provides the various service injectors
+ */
 public class MetricsModule extends PrivateModule {
 
     private final Config config;

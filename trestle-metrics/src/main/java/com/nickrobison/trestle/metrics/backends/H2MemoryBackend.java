@@ -13,12 +13,16 @@ import java.util.concurrent.BlockingQueue;
 /**
  * Created by nrobison on 3/20/17.
  */
+
+/**
+ * Default in-memory implementation metrics backend using the H2 database
+ */
 public class H2MemoryBackend extends RDBMSBackend {
     private static final Logger logger = LoggerFactory.getLogger(H2MemoryBackend.class);
 
     @Inject
     H2MemoryBackend(BlockingQueue<TrestleMetricsReporter.DataAccumulator> dataQueue) {
-        super(dataQueue);
+        super(dataQueue, "h2-event-thread");
         logger.info("Initializing H2 backend");
         logger.warn("Not for production use");
 //        Connect to database

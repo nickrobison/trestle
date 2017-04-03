@@ -2,10 +2,14 @@ package com.nickrobison.trestle.metrics.instrumentation;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
-import com.nickrobison.trestle.metrics.MetricsRegistry;
 
 /**
  * Created by nrobison on 3/17/17.
+ */
+
+/**
+ * Default implementation of {@link MetricsRegistry}
+ * Used to retrieve the correct {@link MetricRegistry}
  */
 public class DefaultMetricsStrategy implements MetricsRegistry {
     @Override

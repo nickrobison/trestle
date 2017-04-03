@@ -21,6 +21,11 @@ import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 /**
  * Created by nrobison on 3/28/17.
  */
+
+/**
+ * Byte-code transformation class to implement the {@link Gauge} annotation
+ * Currently set to excecute when the class constructor is called.
+ */
 public class GaugeTransformer extends AbstractMetricianTransformer {
 
     private static final Logger logger = LoggerFactory.getLogger(GaugeTransformer.class);

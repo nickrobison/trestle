@@ -7,6 +7,12 @@ import java.lang.annotation.Annotation;
 /**
  * Created by nrobison on 3/17/17.
  */
+
+/**
+ * Simple class for wrapping a Metric in an optional-like interface with some additional metadata.
+ * Used during the reflection process to extra Metrics from classes.
+ * @param <T> - Generic subclass of {@link Metric}
+ */
 public interface AnnotatedMetric<T extends Metric> {
 
     boolean isPresent();

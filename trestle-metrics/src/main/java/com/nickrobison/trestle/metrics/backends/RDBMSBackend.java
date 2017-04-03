@@ -17,6 +17,10 @@ import java.util.concurrent.BlockingQueue;
 /**
  * Created by nrobison on 4/2/17.
  */
+
+/**
+ * Abstract class for shipping metrics to relational database backend
+ */
 public abstract class RDBMSBackend implements ITrestleMetricsBackend {
 
     private static final Logger logger = LoggerFactory.getLogger(RDBMSBackend.class);
@@ -24,18 +28,20 @@ public abstract class RDBMSBackend implements ITrestleMetricsBackend {
     final Config config;
     final Map<String, Long> metricMap;
     final Thread eventThread;
+    final String threadName;
 
     final BlockingQueue<TrestleMetricsReporter.DataAccumulator> dataQueue;
     protected Connection connection;
 
-    RDBMSBackend(BlockingQueue<TrestleMetricsReporter.DataAccumulator> dataQueue) {
+    RDBMSBackend(BlockingQueue<TrestleMetricsReporter.DataAccumulator> dataQueue, String threadName) {
+        this.threadName = threadName;
         this.dataQueue = dataQueue;
         this.config = ConfigFactory.load().getConfig("trestle.metrics.backend");
         this.thread_wait = this.config.getInt("threadWait");
         this.metricMap = new HashMap<>();
 
         final ProcessEvents processEvents = new ProcessEvents();
-        eventThread = new Thread(processEvents, "postgres-event-thread");
+        eventThread = new Thread(processEvents, this.threadName);
         eventThread.start();
     }
 

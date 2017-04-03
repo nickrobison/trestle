@@ -18,6 +18,10 @@ import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 /**
  * Created by nrobison on 3/28/17.
  */
+
+/**
+ * Byte-code transformation to implemented the {@link CounterIncrement} and {@link CounterDecrement} annotations
+ */
 public class CounterTransformer extends AbstractMetricianTransformer {
     private static final Logger logger = LoggerFactory.getLogger(CounterTransformer.class);
     @Override

@@ -10,6 +10,10 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by nrobison on 3/28/17.
  */
+
+/**
+ * Simple builder class for {@link net.bytebuddy.agent.ByteBuddyAgent}
+ */
 public class MetricianAgentBuilder {
     private static final Logger logger = LoggerFactory.getLogger(MetricianAgentBuilder.class);
 

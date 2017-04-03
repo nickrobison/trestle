@@ -17,6 +17,10 @@ import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 /**
  * Created by nrobison on 3/29/17.
  */
+
+/**
+ * Byte-code transformer class to implemented the {@link ExceptionMetered} annotation
+ */
 public class ExceptionMeterTransformer extends AbstractMetricianTransformer {
     private static final Logger logger = LoggerFactory.getLogger(ExceptionMeterTransformer.class);
 
