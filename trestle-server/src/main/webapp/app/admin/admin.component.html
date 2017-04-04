@@ -10,6 +10,7 @@
         <span class="toolbar-spacer"></span>
         <a md-button routerLink="/dashboard" aria-label="dashboard link">DASHBOARD</a>
         <div *ngIf="userLoggedIn | async">
+            <a md-button routerLink="/metrics" aria-label="metrics link">METRICS</a>
             <a md-button routerLink="/visualize" aria-label="visualizer link">VISUALIZER</a>
             <a md-button routerLink="/query" aria-label="query link">QUERY</a>
             <a md-button routerLink="/users" aria-label="users link">USERS</a>

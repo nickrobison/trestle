@@ -1,5 +1,8 @@
 package com.nickrobison.trestle.ontology;
 
+import com.codahale.metrics.annotation.Gauge;
+import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
+import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -12,6 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Created by nrobison on 9/7/16.
  */
+@Metriced
 abstract class TransactingOntology implements ITrestleOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(TransactingOntology.class);
@@ -21,6 +25,11 @@ abstract class TransactingOntology implements ITrestleOntology {
     protected final AtomicLong openedTransactions = new AtomicLong();
     protected final AtomicLong committedTransactions = new AtomicLong();
     protected static boolean singleWriterOntology = false;
+    private final String ontologyName;
+
+    TransactingOntology(String ontologyName) {
+        this.ontologyName = ontologyName;
+    }
 
 //    Thread locals
     private ThreadLocal<Boolean> threadLocked = ThreadLocal.withInitial(() -> false);
@@ -288,6 +297,16 @@ abstract class TransactingOntology implements ITrestleOntology {
         }
     }
 
+    @Gauge(name = "trestle-open-read-transactions", absolute = true)
+    protected int getOpenReadTransactions() {
+        return this.openReadTransactions.get();
+    }
+
+    @Gauge(name = "trestle-open-write-transactions", absolute = true)
+    protected int getOpenWriteTransactions() {
+        return this.openWriteTransactions.get();
+    }
+
     /**
      * Get the current number of opened transactions, for the lifetime of the application
      * @return - long of opened transactions
@@ -313,8 +332,10 @@ abstract class TransactingOntology implements ITrestleOntology {
     }
 
 
+    @CounterIncrement(name = "trestle-opened-dataset-transactions", absolute = true)
     public abstract void openDatasetTransaction(boolean write);
 
+    @CounterIncrement(name = "trestle-committed-dataset-transactions", absolute = true)
     public abstract void commitDatasetTransaction(boolean write);
 
     /**

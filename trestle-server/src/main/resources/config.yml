@@ -1,14 +1,16 @@
-#connectionString: "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial"
-#username: "spatialUser"
-#password: "spatial1"
-connectionString: "http://localhost:7200"
-username: ""
-password: ""
+connectionString: "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial"
+username: "spatialUser"
+password: "spatial1"
+#connectionString: "http://localhost:7200"
+#username: ""
+#password: ""
 ontology: "hadoop_gaul_updated"
 prefix: "http://nickrobison.com/test/hadoop.owl#"
 
 logging:
   level: INFO
+  loggers:
+    "com.nickrobison.trestle.metrics": TRACE
 
 database:
   driverClass: org.h2.Driver
@@ -21,5 +23,3 @@ database:
 jwt:
   authHeader: "Authorization"
   authSalt: "test-salt"
-logging:
-  level: DEBUG
