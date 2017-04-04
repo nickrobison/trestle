@@ -35,7 +35,6 @@
         <jmh.version>1.17.3</jmh.version>
         <geotools.version>16.1</geotools.version>
         <metrics.version>3.2.1</metrics.version>
-        <aspectj.version>1.8.10</aspectj.version>
         <httpcomponents.version>4.5.3</httpcomponents.version>
         <!--Checker properties-->
         <checker.version>2.0.1</checker.version>
