@@ -29,7 +29,7 @@ public class TrestleReporterTest {
     @BeforeAll
     public static void staticInit() {
         ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
-        injector = Guice.createInjector(new MetricsModule());
+        injector = Guice.createInjector(new MetricianModule());
     }
 
     @BeforeEach

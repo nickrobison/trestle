@@ -14,7 +14,7 @@ import java.io.File;
 /**
  * Interface for custom Metrician backend
  */
-public interface ITrestleMetricsBackend {
+public interface IMetricianBackend {
 
     /**
      * Shutdown metrics backend without exporting data

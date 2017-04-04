@@ -4,7 +4,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
-import com.nickrobison.metrician.backends.ITrestleMetricsBackend;
+import com.nickrobison.metrician.backends.IMetricianBackend;
 import com.nickrobison.metrician.agent.MetricianAgentBuilder;
 import com.nickrobison.metrician.instrumentation.MetricianInventory;
 import com.typesafe.config.Config;
@@ -22,11 +22,11 @@ import java.util.concurrent.BlockingQueue;
 /**
  * DI Module which sets up the {@link ByteBuddyAgent} to handle the class transformaion and provides the various service injectors
  */
-public class MetricsModule extends PrivateModule {
+public class MetricianModule extends PrivateModule {
 
     private final Config config;
 
-    public MetricsModule() {
+    public MetricianModule() {
         config = ConfigFactory.load().getConfig("trestle.metrics");
 //        Setup/Reset bytebuddy
         SharedMetricRegistries.clear();
@@ -50,9 +50,9 @@ public class MetricsModule extends PrivateModule {
     protected void configure() {
         final String backendClass = config.getString("backend.class");
         try {
-            final Class<? extends ITrestleMetricsBackend> backend = Class.forName(backendClass).asSubclass(ITrestleMetricsBackend.class);
+            final Class<? extends IMetricianBackend> backend = Class.forName(backendClass).asSubclass(IMetricianBackend.class);
 
-            bind(ITrestleMetricsBackend.class).to(backend).asEagerSingleton();
+            bind(IMetricianBackend.class).to(backend).asEagerSingleton();
         } catch (ClassNotFoundException e) {
             throw new RuntimeException("Unable to load metrics backend class", e);
         }

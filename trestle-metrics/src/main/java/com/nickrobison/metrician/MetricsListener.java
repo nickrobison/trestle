@@ -1,7 +1,7 @@
 package com.nickrobison.metrician;
 
 import com.codahale.metrics.*;
-import com.nickrobison.metrician.backends.ITrestleMetricsBackend;
+import com.nickrobison.metrician.backends.IMetricianBackend;
 
 import java.util.Collection;
 import java.util.Map;
@@ -12,7 +12,7 @@ import java.util.Optional;
  */
 
 /**
- * Component which listens to events from the {@link MetricRegistry}, and registers/unregisters them with the {@link ITrestleMetricsBackend}
+ * Component which listens to events from the {@link MetricRegistry}, and registers/unregisters them with the {@link IMetricianBackend}
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 class MetricsListener implements MetricRegistryListener {
@@ -27,7 +27,7 @@ class MetricsListener implements MetricRegistryListener {
     private final boolean enableTagComposition;
     private final MetricFilter metricFilter;
     private final MetricsDecomposer decomposer;
-    private final ITrestleMetricsBackend metricsBackend;
+    private final IMetricianBackend metricsBackend;
 
     MetricsListener(Optional<String> prefix,
                     Map<String, String> globalTags,
@@ -37,7 +37,7 @@ class MetricsListener implements MetricRegistryListener {
                     MetricsDecomposer decomposer,
                     MetricRegistry registry,
                     MetricFilter metricFilter,
-                    ITrestleMetricsBackend metricsBackend) {
+                    IMetricianBackend metricsBackend) {
         this.prefix = prefix;
         this.globalTags = globalTags;
         this.perMetricTags = perMetricTags;

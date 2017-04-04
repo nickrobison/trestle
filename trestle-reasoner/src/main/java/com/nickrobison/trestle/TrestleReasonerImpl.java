@@ -20,7 +20,7 @@ import com.nickrobison.trestle.exporter.TSIndividual;
 import com.nickrobison.trestle.iri.IRIBuilder;
 import com.nickrobison.trestle.iri.IRIVersion;
 import com.nickrobison.trestle.iri.TrestleIRI;
-import com.nickrobison.metrician.MetricsModule;
+import com.nickrobison.metrician.MetricianModule;
 import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.ontology.*;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
@@ -102,7 +102,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         trestleConfig = ConfigFactory.load().getConfig("trestle");
         ValidateConfig(trestleConfig);
 
-        final Injector injector = Guice.createInjector(new MetricsModule());
+        final Injector injector = Guice.createInjector(new MetricianModule());
 
 //        Setup metrics engine
         metrician = injector.getInstance(Metrician.class);

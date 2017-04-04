@@ -4,7 +4,7 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.annotation.Gauge;
-import com.nickrobison.metrician.backends.ITrestleMetricsBackend;
+import com.nickrobison.metrician.backends.IMetricianBackend;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -30,7 +30,7 @@ public class Metrician {
     private final MetricRegistry registry;
     private final BlockingQueue<MetricianReporter.DataAccumulator> dataQueue;
     private final MetricianReporter metricianReporter;
-    private final ITrestleMetricsBackend metricsBackend;
+    private final IMetricianBackend metricsBackend;
     private final JVMMetrics jvmMetrics;
     private final Config config;
     private final long updatePeriod;
@@ -38,7 +38,7 @@ public class Metrician {
     @Inject
     public Metrician(MetricRegistry registry,
                      BlockingQueue<MetricianReporter.DataAccumulator> dataqueue,
-                     ITrestleMetricsBackend backend,
+                     IMetricianBackend backend,
                      JVMMetrics jvmMetrics) {
         logger.info("Initializing Trestle Metrician");
         config = ConfigFactory.load().getConfig("trestle.metrics");

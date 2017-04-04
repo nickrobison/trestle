@@ -21,7 +21,7 @@ import java.util.concurrent.BlockingQueue;
 /**
  * Abstract class for shipping metrics to relational database backend
  */
-public abstract class RDBMSBackend implements ITrestleMetricsBackend {
+public abstract class RDBMSBackend implements IMetricianBackend {
 
     private static final Logger logger = LoggerFactory.getLogger(RDBMSBackend.class);
     final int thread_wait;
