@@ -47,11 +47,18 @@ public class MeterTransformer extends AbstractMetricianTransformer {
         if (annotatedMetric == null) {
             final AnnotatedMetric<Meter> meter = metricAnnotation(method, Metered.class, (name, absolute) -> {
                 String finalName = name.isEmpty() ? method.getName() : strategy.resolveMetricName(name);
-                return registry.meter(absolute ? finalName : MetricRegistry.name(method.getDeclaringClass(), finalName));
+                try {
+                    return registry.meter(absolute ? finalName : MetricRegistry.name(method.getDeclaringClass(), finalName));
+                } catch (IllegalArgumentException e) {
+                    logger.error("Unable to register meter.", e);
+                    return null;
+                }
             });
-            meters.put(method.getName(), meter);
-            logger.debug("Registered Meter on {}", method);
-            meter.getMetric().mark();
+            if (meter.isPresent()) {
+                meters.put(method.getName(), meter);
+                logger.debug("Registered Meter on {}", method);
+                meter.getMetric().mark();
+            }
         } else {
             annotatedMetric.getMetric().mark();
         }
