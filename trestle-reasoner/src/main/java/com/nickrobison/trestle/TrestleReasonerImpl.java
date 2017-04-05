@@ -847,8 +847,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    @Timed
-    @Metered
+    @Timed(name = "spatial-intesect-timer")
+    @Metered(name = "spatial-intersect-meter")
     public <T> Optional<List<T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal validAt) {
 //        return CompletableFuture.supplyAsync(() -> {
         final OWLClass owlClass = trestleParser.classParser.getObjectClass(clazz);
