@@ -39,7 +39,12 @@ public class CounterTransformer extends AbstractMetricianTransformer {
         if (counterAnnotatedMetric == null) {
             final AnnotatedMetric<Counter> incrementingCounter = metricAnnotation(method, CounterIncrement.class, (name, absolute) -> {
                 String finalName = name.isEmpty() ? method.getName() : strategy.resolveMetricName(name);
-                return registry.counter(absolute ? finalName : MetricRegistry.name(method.getDeclaringClass(), finalName));
+                try {
+                    return registry.counter(absolute ? finalName : MetricRegistry.name(method.getDeclaringClass(), finalName));
+                } catch (IllegalArgumentException e) {
+                    logger.error("Unable to register Incrementing Counter", e);
+                    return null;
+                }
             });
             if (incrementingCounter.isPresent()) {
                 final CounterIncrement annotation = method.getAnnotation(CounterIncrement.class);
@@ -49,7 +54,12 @@ public class CounterTransformer extends AbstractMetricianTransformer {
             } else {
                 final AnnotatedMetric<Counter> decrementingCounter = metricAnnotation(method, CounterDecrement.class, (name, absolute) -> {
                     String finalName = name.isEmpty() ? method.getName() : strategy.resolveMetricName(name);
-                    return registry.counter(absolute ? finalName : MetricRegistry.name(method.getDeclaringClass(), finalName));
+                    try {
+                        return registry.counter(absolute ? finalName : MetricRegistry.name(method.getDeclaringClass(), finalName));
+                    } catch (IllegalArgumentException e) {
+                        logger.error("Unable to register Decrementing Counter", e);
+                        return null;
+                    }
                 });
                 if (decrementingCounter.isPresent()) {
                     final CounterDecrement annotation = method.getAnnotation(CounterDecrement.class);

@@ -8,6 +8,7 @@ import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,11 +49,20 @@ public class TimerTransformer extends AbstractMetricianTransformer {
         if (annotatedMetric == null) {
             final AnnotatedMetric<Timer> timer = metricAnnotation(method, Timed.class, (name, absolute) -> {
                 String finalName = name.isEmpty() ? method.getName() : strategy.resolveMetricName(name);
-                return registry.timer(absolute ? finalName : MetricRegistry.name(method.getDeclaringClass(), finalName));
+                try {
+                    return registry.timer(absolute ? finalName : MetricRegistry.name(method.getDeclaringClass(), finalName));
+                } catch (IllegalArgumentException e) {
+                    logger.error("Unable to register timer.", e);
+                    return null;
+                }
             });
-            timers.put(method.getName(), timer);
-            logger.debug("Registered Timer on {}", method);
-            return timer.getMetric().time();
+            if (timer.isPresent()) {
+                timers.put(method.getName(), timer);
+                logger.debug("Registered Timer on {}", method);
+                return timer.getMetric().time();
+            } else {
+                return null;
+            }
         } else {
             return annotatedMetric.getMetric().time();
         }
@@ -60,6 +70,8 @@ public class TimerTransformer extends AbstractMetricianTransformer {
 
     @Advice.OnMethodExit(onThrowable = Throwable.class)
     public static void exit(@Advice.Enter Timer.Context context) {
-        context.stop();
+        if (context != null) {
+            context.stop();
+        }
     }
 }

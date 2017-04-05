@@ -66,7 +66,7 @@ public class GaugeTransformer extends AbstractMetricianTransformer {
                                 final ForwardingGauge gauge = registry.register(registerName, new ForwardingGauge(method, object));
                                 return gauge;
                             } catch (IllegalArgumentException e) {
-                                logger.debug("Gauge {} already registered", registerName);
+                                logger.debug("Unable to register Gauge", e);
                                 return null;
                             }
                         });
