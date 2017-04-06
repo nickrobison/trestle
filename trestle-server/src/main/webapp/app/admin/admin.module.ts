@@ -24,6 +24,7 @@ import {IndividualGraph} from "./visualize/individual-graph.component";
 import {IndividualValueDialog} from "./visualize/individual-value.dialog";
 import {MetricsComponent} from "./metrics/metrics.component";
 import {MetricsService} from "./metrics/metrics.service";
+import {MetricsGraph} from "./metrics/metrics-graph.component";
 
 interface ITrestleRoute extends Route {
     data?: ITrestleRouteData
@@ -56,6 +57,7 @@ const routes: Array<ITrestleRoute> = [
         IndividualGraph,
         IndividualValueDialog,
         MetricsComponent,
+        MetricsGraph,
         MapValuesPipe],
     imports: [
         CommonModule,

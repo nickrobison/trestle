@@ -1,0 +1,8 @@
+:host >>> .line {
+    fill: none;
+    stroke: steelblue;
+    stroke-width: 1.5px;
+}
+
+:host >>> .legend {
+    margin-bottom: 50px;

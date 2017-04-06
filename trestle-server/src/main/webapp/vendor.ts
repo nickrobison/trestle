@@ -17,5 +17,8 @@ import "codemirror/mode/sparql/sparql.js";
 import "d3-selection";
 import "d3-scale";
 import "d3-force";
+import "d3-shape";
+import "d3-array";
+import "d3-axis";
 import "moment";
 import "moment-timezone";

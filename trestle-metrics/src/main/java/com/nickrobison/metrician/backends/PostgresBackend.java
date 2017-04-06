@@ -9,6 +9,7 @@ import javax.inject.Inject;
 import java.io.File;
 import java.sql.*;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -82,6 +83,11 @@ public class PostgresBackend extends RDBMSBackend {
             logger.error("Unable to export results to {}", file, e);
         }
         logger.info("Export complete");
+    }
+
+    @Override
+    public Map<Long, Object> getMetricsValues(String metricID, long limit) {
+        return null;
     }
 
     @Override

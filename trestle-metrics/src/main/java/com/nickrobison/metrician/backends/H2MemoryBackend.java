@@ -7,7 +7,9 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.io.File;
 import java.sql.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -125,6 +127,48 @@ public class H2MemoryBackend extends RDBMSBackend {
             logger.error("Unable to export results to {}", file, e);
         }
         logger.info("Export complete");
+    }
+
+    @Override
+    public Map<Long, Object> getMetricsValues(String metricID, long limit) {
+        Map<Long, Object> results = new HashMap<>();
+        final Long registeredMetricID = this.metricMap.get(metricID);
+        String exportQuery = "SELECT C.TIMESTAMP, C.VALUE FROM METRICS AS M\n" +
+                "LEFT JOIN (\n" +
+                "    SELECT *\n" +
+                "    FROM GAUGES\n" +
+                "    UNION ALL\n" +
+                "    SELECT *\n" +
+                "    FROM COUNTERS\n" +
+                "    ) AS C\n" +
+                "ON C.METRICID = M.METRICID AND C.METRICID = ? ORDER BY C.TIMESTAMP ASC;";
+
+        final ResultSet resultSet;
+        try {
+            final CallableStatement statement = connection.prepareCall(exportQuery);
+            statement.setLong(1, registeredMetricID);
+            resultSet = statement.executeQuery();
+        } catch (SQLException e) {
+            logger.error("Unable to build metric retrieval query", e);
+            return results;
+        }
+
+        try {
+            while (resultSet.next()) {
+                final long timestamp = resultSet.getLong(1);
+                final double value = resultSet.getDouble(2);
+                results.put(timestamp, value);
+            }
+        } catch (SQLException e) {
+            logger.error("Error retrieving metrics for {}", metricID, e);
+        } finally {
+            try {
+                resultSet.close();
+            } catch (SQLException e) {
+                logger.error("Unable to close resultset", e);
+            }
+        }
+        return results;
     }
 
     @Override

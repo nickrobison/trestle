@@ -6,6 +6,7 @@ import com.codahale.metrics.Gauge;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * Created by nrobison on 3/20/17.
@@ -61,4 +62,12 @@ public interface IMetricianBackend {
      * @param name - Name of counter ot remove
      */
     void removeCounter(String name);
+
+    /**
+     * Returns the given timestamp,value pairs for a specified Metric ID, from the specified timestamp onwards
+     * @param metricID - String MetricID
+     * @param limit - Timestamp of first value
+     * @return - Map of Timestamp,Value pairs
+     */
+    Map<Long, Object> getMetricsValues(String metricID, long limit);
 }

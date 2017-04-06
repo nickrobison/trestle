@@ -16,6 +16,7 @@ import javax.inject.Inject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -85,6 +86,10 @@ public class Metrician {
 
     public MetricianHeader getMetricsHeader() {
         return new MetricianHeader(getJvmMetrics().currentUptime(), this.updatePeriod, this.registry.getMetrics());
+    }
+
+    public Map<Long, Object> getMetricValues(String metricID, long limit) {
+        return this.metricsBackend.getMetricsValues(metricID, limit);
     }
 
     @Gauge(name = "data-queue-length")
