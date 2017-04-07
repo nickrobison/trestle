@@ -346,7 +346,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         TemporalObject factTemporal = objectTemporal.castTo(TemporalScope.VALID);
 
 //        Merge operation, if the object exists
-        if (checkExists(owlNamedIndividual.getIRI())) {
+        // temporal merging occurs by default but may be disabled in the configuration
+        boolean performMerge = true;
+        if(trestleConfig.hasPath("mergeOnLoad"))
+            performMerge = trestleConfig.getBoolean("mergeOnLoad");
+        if (performMerge && checkExists(owlNamedIndividual.getIRI())) {
             final Optional<List<OWLDataPropertyAssertionAxiom>> individualFacts = trestleParser.classParser.getFacts(inputObject);
             final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(true);
 //            Get all the currently valid facts
