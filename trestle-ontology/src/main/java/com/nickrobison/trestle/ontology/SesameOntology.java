@@ -249,18 +249,19 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
         this.openTransaction(false);
         try {
-            final RepositoryResult<Statement> statements = this.tc.get().getStatements(individualIRI, null, null);
-            if (statements.hasNext()) {
-                statements.close();
+            if(this.tc.get().hasStatement(individualIRI, null, null,false))
+            {
+                //this.tc.get().close();
                 return true;
-            } else {
-                statements.close();
+            }
+            else
+            {
+                //this.tc.get().close();
                 return false;
             }
         } finally {
             this.commitTransaction(false);
         }
-
     }
 
     @Override
