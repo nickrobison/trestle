@@ -66,8 +66,9 @@ public interface IMetricianBackend {
     /**
      * Returns the given timestamp,value pairs for a specified Metric ID, from the specified timestamp onwards
      * @param metricID - String MetricID
-     * @param limit - Timestamp of first value
+     * @param start - Timestamp of first value
+     * @param end
      * @return - Map of Timestamp,Value pairs
      */
-    Map<Long, Object> getMetricsValues(String metricID, long limit);
+    Map<Long, Object> getMetricsValues(String metricID, Long start, @Nullable Long end);
 }

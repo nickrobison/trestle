@@ -20,5 +20,6 @@ import "d3-force";
 import "d3-shape";
 import "d3-array";
 import "d3-axis";
+import "d3-transition";
 import "moment";
 import "moment-timezone";

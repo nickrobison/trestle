@@ -85,11 +85,11 @@ public class Metrician {
     }
 
     public MetricianHeader getMetricsHeader() {
-        return new MetricianHeader(getJvmMetrics().currentUptime(), this.updatePeriod, this.registry.getMetrics());
+        return new MetricianHeader(getJvmMetrics().currentUptime(), getJvmMetrics().startTime(), this.updatePeriod, this.registry.getMetrics());
     }
 
-    public Map<Long, Object> getMetricValues(String metricID, long limit) {
-        return this.metricsBackend.getMetricsValues(metricID, limit);
+    public Map<Long, Object> getMetricValues(String metricID, Long start, @Nullable Long end) {
+        return this.metricsBackend.getMetricsValues(metricID, start, end);
     }
 
     @Gauge(name = "data-queue-length")

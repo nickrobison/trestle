@@ -8,6 +8,7 @@ import {Response, URLSearchParams} from "@angular/http";
 
 export interface ITrestleMetricsHeader {
     upTime: number;
+    startTime: number;
     meters: Map<string, string>;
 }
 
@@ -36,11 +37,14 @@ export class MetricsService {
             .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
 
-    public getMetricValues(metricID: string, limit: number): Observable<IMetricsData> {
-        console.debug("Retrieving values for metric: " + metricID + " from: " + limit);
+    public getMetricValues(metricID: string, start: number, end: number): Observable<IMetricsData> {
+        console.debug("Retrieving values for metric: " + metricID + " from: " + start + " to: " + end);
         let params = new URLSearchParams();
-        params.append("limit", limit.toString());
-        return this.authHttp.get("/metrics/metric/" + metricID, params)
+        params.append("start", start.toString());
+        params.append("end", end.toString());
+        return this.authHttp.get("/metrics/metric/" + metricID, {
+            search: params
+        })
             .map((res: Response) => {
                 let json = res.json();
                 console.debug("Metric values:", json);
@@ -55,7 +59,7 @@ export class MetricsService {
                     }
                 });
                 return {
-                    metric: metricID,
+                    metric: metricID.replace(/\./g, "-"),
                     values: metricValues.sort((a, b) => {
                         if (a.timestamp == b.timestamp) {
                             return 0;

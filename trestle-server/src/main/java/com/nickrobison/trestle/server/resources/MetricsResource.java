@@ -4,7 +4,6 @@ import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
-import io.dropwizard.jersey.params.LongParam;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,9 +37,9 @@ public class MetricsResource {
 
     @GET
     @Path("/metric/{metricID}")
-    public Response getMetricValues(@NotEmpty @PathParam("metricID") String metricID, @NotNull @QueryParam("limit") long timeLimit ) {
-        logger.debug("Values for {}, from {}", metricID, timeLimit);
-        final Map<Long, Object> metricValues = this.metrician.getMetricValues(metricID, timeLimit);
+    public Response getMetricValues(@NotEmpty @PathParam("metricID") String metricID, @NotNull @QueryParam("start") Long startTemporal, @QueryParam("end") Long endTemporal) {
+        logger.debug("Values for {}, from {}, to {}", metricID, startTemporal, endTemporal);
+        final Map<Long, Object> metricValues = this.metrician.getMetricValues(metricID, startTemporal, endTemporal);
         return Response.ok(metricValues).build();
     }
 }

@@ -86,7 +86,8 @@ public class PostgresBackend extends RDBMSBackend {
     }
 
     @Override
-    public Map<Long, Object> getMetricsValues(String metricID, long limit) {
+    public Map<Long, Object> getMetricsValues(String metricID, Long start, @Nullable Long end) {
+        logger.error("Not implemented yet");
         return null;
     }
 

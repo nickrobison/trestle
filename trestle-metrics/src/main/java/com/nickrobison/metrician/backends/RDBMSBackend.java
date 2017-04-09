@@ -2,7 +2,9 @@ package com.nickrobison.metrician.backends;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
+import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.metrician.MetricianReporter;
+import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -21,6 +23,7 @@ import java.util.concurrent.BlockingQueue;
 /**
  * Abstract class for shipping metrics to relational database backend
  */
+@Metriced
 public abstract class RDBMSBackend implements IMetricianBackend {
 
     private static final Logger logger = LoggerFactory.getLogger(RDBMSBackend.class);
@@ -77,6 +80,7 @@ public abstract class RDBMSBackend implements IMetricianBackend {
 
     }
 
+    @Timed
     abstract void insertValues(List<MetricianMetricValue> events);
 
     protected class ProcessEvents implements Runnable {

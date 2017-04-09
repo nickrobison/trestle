@@ -6,9 +6,9 @@ import {
     ViewChild
 } from "@angular/core";
 import {Selection, select} from "d3-selection";
-import {scaleLinear, scaleOrdinal, scaleTime, schemeCategory10} from "d3-scale";
+import {scaleLinear, scaleOrdinal, scaleTime, ScaleTime, schemeCategory10} from "d3-scale";
 import {curveBasis, line} from "d3-shape";
-import {extent, max, min} from "d3-array";
+import {max, min} from "d3-array";
 import {axisBottom, axisLeft} from "d3-axis";
 import {IMetricsData, IMetricsValue} from "./metrics.service";
 
@@ -28,6 +28,8 @@ interface ID3Margin {
 export class MetricsGraph implements AfterViewInit, OnChanges {
     @ViewChild("container") element: ElementRef;
     @Input() data: IMetricsData;
+    @Input() minTime: Date;
+    @Input() maxTime: Date;
     private graphData: Array<IMetricsData> = [];
     private htmlElement: HTMLElement;
     private host: Selection<any, any, any, any>;
@@ -35,6 +37,8 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
     private width: number;
     private height: number;
     private margin: ID3Margin;
+    private x: ScaleTime<number, number>;
+    private visible: Map<string, boolean> = new Map();
 
     construct() {
     }
@@ -48,16 +52,19 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
 
     ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
         let dataChange = changes["data"];
-        if (!dataChange.isFirstChange() && (dataChange.currentValue !== dataChange.previousValue)) {
+        if (dataChange != null && !dataChange.isFirstChange() && (dataChange.currentValue !== dataChange.previousValue)) {
             console.debug("Updated, plotting");
-            this.graphData.push(changes["data"].currentValue);
+            let currentValue: IMetricsData = changes["data"].currentValue;
+            this.graphData.push(currentValue);
+            console.debug("Adding as visible:", currentValue.metric);
+            this.visible.set(currentValue.metric, true);
             this.plotData();
         }
     }
 
     private setupD3(): void {
         this.host = select(this.htmlElement);
-        this.margin = {top: 20, right: 70, bottom: 20, left: 70};
+        this.margin = {top: 20, right: 150, bottom: 20, left: 70};
         this.width = this.htmlElement.offsetWidth - this.margin.left - this.margin.right;
         this.height = 500 - this.margin.top - this.margin.bottom;
         console.debug("Creating D3 graph with width/height", this.width + "/" + this.height);
@@ -67,25 +74,31 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
             .attr("height", this.height + this.margin.top + this.margin.bottom)
             .append("g")
             .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
+
+        // Setup the x axis
+        this.x = scaleTime().range([0, this.width]);
+        this.x.domain([this.minTime, this.maxTime]);
+        this.svg
+            .append("g")
+            .attr("class", "axis axis-x")
+            .attr("transform", "translate(0," + this.height + ")")
+            .call(axisBottom(this.x));
+        // this.x.domain(extent(this.graphData[0].values, (d: IMetricsValue)=> d.timestamp));
         console.debug("D3 initialized");
 
     }
 
     private plotData(): void {
-        let x = scaleTime().range([0, this.width]);
+
         let y = scaleLinear().range([this.height, 0]);
         let z = scaleOrdinal(schemeCategory10);
 
         let metricsLine = line()
             .curve(curveBasis)
-            .x((d: any) => x(d.timestamp))
+            .x((d: any) => this.x(d.timestamp))
             .y((d: any) => y(d.value));
 
         //Build domain values
-        // FIXME(nrobison): This should take the highest, lowest values from somewhere else, maybe input variables?
-        x.domain(extent(this.graphData[0].values, (d: IMetricsValue)=> d.timestamp));
-
-
         y.domain([
             min(this.graphData, (d: IMetricsData) => min(d.values, (d: IMetricsValue) => d.value)),
             max(this.graphData, (d: IMetricsData) => max(d.values, (d: IMetricsValue) => d.value))
@@ -93,12 +106,6 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
 
         z.domain(this.graphData.map((d) => d.metric));
         console.debug("Z-domain", z.domain());
-
-        this.svg
-            .append("g")
-            .attr("class", "axis axis--x")
-            .attr("transform", "translate(0," + this.height + ")")
-            .call(axisBottom(x));
 
         this.svg
             .append("g")
@@ -119,8 +126,9 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
         metric
             .append("path")
             .attr("class", "line")
+            .attr("id", (d) => d.metric)
             .attr("d", (d: any) => metricsLine(d.values))
-            .attr("data-legend", (d) => d.metric)
+            // .attr("data-legend", (d) => d.metric)
             .style("stroke", (d) => z(d.metric));
 
     //    Add the legend
@@ -129,7 +137,9 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
             .enter()
             .append("g")
             .attr("class", "legend")
-            .attr("transform", (d, i) => "translate(0," + (i * ((this.width / 100) * 2) + 15) + ")");
+            .attr("id", (d) => "legend-" + d)
+            .attr("transform", (d, i) => "translate(" + (this.width) + "," + (i * ((this.width / 100) * 2) + 15) + ")")
+            .on("click", this.legendClickHandler);
 
         legend
             .append("circle")
@@ -144,10 +154,56 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
             .attr("y", 30)
             .attr("dy", "0.35em")
             .style("text-anchor", "start")
-            .text(d => {
-                console.log("text", d);
-                return d;
-            });
+            .text(d => d);
 
+    }
+
+    private legendClickHandler = (d: string): void => {
+        console.debug("Clicked", d);
+        console.debug("Visible", this.visible);
+        let isVisible = this.visible.get(d);
+        console.debug("Metric: " + d + " is visible?", isVisible);
+        if (isVisible) {
+            console.debug("Going out");
+            this.svg.selectAll("#" + d)
+                .transition()
+                .duration(1000)
+                .style("opacity", 0);
+
+            // Fade the legend
+            this.svg.select("#legend-" + d)
+                .transition()
+                .duration(1000)
+                .style("opacity", .2);
+
+            // Fade the y-axis
+            this.svg.select("#y-" + d)
+                .transition()
+                .duration(1000)
+                .style("opacity", .2);
+
+            this.visible.set(d, false);
+        } else {
+            console.debug("Coming back");
+            this.svg.selectAll("#" + d)
+                // .style("display", "block")
+                .transition()
+                .duration(1000)
+                .style("opacity", 1);
+
+            // Fade the legend
+            this.svg.select("#legend-" + d)
+                .transition()
+                .duration(1000)
+                .style("opacity", 1);
+
+            // Fade the y-axis
+            this.svg.select("#y-" + d)
+                .transition()
+                .duration(1000)
+                .style("opacity", 1);
+
+            this.visible.set(d, true);
+        }
     }
 }

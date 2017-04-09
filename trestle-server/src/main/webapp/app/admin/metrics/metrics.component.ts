@@ -15,6 +15,7 @@ import moment = require("moment");
 export class MetricsComponent implements OnInit, DoCheck {
     meters: Array<string> = [];
     startTime: Moment;
+    nowTime: Moment;
     upTime: Duration;
     selectedValue: string;
     oldValue = "";
@@ -30,10 +31,12 @@ export class MetricsComponent implements OnInit, DoCheck {
                     this.meters.push(key);
                 });
                 console.debug("Uptime", metricsResponse.upTime);
-                let test = duration(metricsResponse.upTime);
-                console.debug("Duration", test);
-                this.upTime = test;
-                this.startTime = utc().subtract(this.upTime);
+                console.debug("Startime", metricsResponse.startTime);
+                let upDuration = duration(metricsResponse.upTime);
+                console.debug("Duration", upDuration);
+                this.upTime = upDuration;
+                this.startTime = moment(metricsResponse.startTime);
+                this.nowTime = moment();
             }, (error: Error) => {
                 console.error(error);
             })
@@ -51,7 +54,7 @@ export class MetricsComponent implements OnInit, DoCheck {
 
     addData(metric: string): void {
         console.debug("Adding data:", metric);
-        this.ms.getMetricValues(metric, this.startTime.unix())
+        this.ms.getMetricValues(metric, this.startTime.valueOf(), this.nowTime.valueOf())
             .subscribe(metricValues => {
                 console.debug("Have metric values:", metricValues);
                 this.selectedData = metricValues;
