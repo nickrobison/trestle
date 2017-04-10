@@ -1,5 +1,6 @@
 package com.nickrobison.metrician.backends;
 
+import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.metrician.MetricianReporter;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
@@ -131,9 +132,7 @@ public class H2MemoryBackend extends RDBMSBackend {
     }
 
     @Override
-    public Map<Long, Object> getMetricsValues(String metricID, Long start, @Nullable Long end) {
-        Map<Long, Object> results = new HashMap<>();
-        final Long registeredMetricID = this.metricMap.get(metricID);
+    ResultSet getMetricValueResultSet(Long metricID, Long start, @Nullable Long end) throws SQLException {
         String exportQuery = "SELECT C.TIMESTAMP, C.VALUE FROM \n" +
                 "(\n" +
                 "    SELECT *\n" +
@@ -144,38 +143,15 @@ public class H2MemoryBackend extends RDBMSBackend {
                 "    ) AS C\n" +
                 "WHERE C.METRICID = ? AND C.TIMESTAMP >= ? AND C.TIMESTAMP <= ? ORDER BY C.TIMESTAMP ASC;";
 
-        final ResultSet resultSet;
-        try {
-            final CallableStatement statement = connection.prepareCall(exportQuery);
-            statement.setLong(1, registeredMetricID);
-            statement.setLong(2, start);
-            if (end != null) {
-                statement.setLong(3, end);
-            } else {
-                statement.setLong(3, Long.MAX_VALUE);
-            }
-            resultSet = statement.executeQuery();
-        } catch (SQLException e) {
-            logger.error("Unable to build metric retrieval query", e);
-            return results;
+        final CallableStatement statement = connection.prepareCall(exportQuery);
+        statement.setLong(1, metricID);
+        statement.setLong(2, start);
+        if (end != null) {
+            statement.setLong(3, end);
+        } else {
+            statement.setLong(3, Long.MAX_VALUE);
         }
-
-        try {
-            while (resultSet.next()) {
-                final long timestamp = resultSet.getLong(1);
-                final double value = resultSet.getDouble(2);
-                results.put(timestamp, value);
-            }
-        } catch (SQLException e) {
-            logger.error("Error retrieving metrics for {}", metricID, e);
-        } finally {
-            try {
-                resultSet.close();
-            } catch (SQLException e) {
-                logger.error("Unable to close resultset", e);
-            }
-        }
-        return results;
+        return statement.executeQuery();
     }
 
     @Override
@@ -198,6 +174,7 @@ public class H2MemoryBackend extends RDBMSBackend {
     }
 
     @Override
+    @Timed
     void insertValues(List<MetricianMetricValue> events) {
         final StringBuilder sqlInsertString = new StringBuilder();
         events.forEach(event -> {
@@ -217,7 +194,7 @@ public class H2MemoryBackend extends RDBMSBackend {
             final PreparedStatement insertStatement = connection.prepareStatement(sqlInsertString.toString());
             insertStatement.execute();
         } catch (SQLException e) {
-            logger.error("Unable to insert event into Postgres database", e);
+            logger.error("Unable to insert event into H2 database", e);
         }
     }
 }

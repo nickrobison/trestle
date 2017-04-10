@@ -30,7 +30,7 @@ public class MetricianHeader implements Serializable {
      * @param period - Update period (in ms)
      * @param meters - {@link Map} of {@link Metric} along with their registry keys
      */
-    MetricianHeader(long upTime, long startTime, long period, Map<String, Metric> meters) {
+    MetricianHeader(long upTime, long startTime, long period, Map<String, Long> meters) {
         this.upTime = upTime;
         this.startTime = startTime;
         this.period = period;

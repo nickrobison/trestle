@@ -12,7 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
@@ -53,6 +56,29 @@ public abstract class RDBMSBackend implements IMetricianBackend {
         shutdown(null);
     }
 
+    abstract ResultSet getMetricValueResultSet(Long metricID, Long start, @Nullable Long end) throws SQLException;
+
+    @Override
+    public Map<Long, Object> getMetricsValues(String metricID, Long start, @Nullable Long end) {
+        Map<Long, Object> results = new HashMap<>();
+        final Long registeredMetricID = this.metricMap.get(metricID);
+
+        try {
+            final ResultSet resultSet = getMetricValueResultSet(registeredMetricID, start, end);
+            try {
+                while(resultSet.next()) {
+                    results.put(resultSet.getLong(1), resultSet.getObject(2));
+                }
+            }
+            finally {
+                resultSet.close();
+            }
+        } catch (SQLException e) {
+            logger.error("Error retrieving metrics for {}", metricID, e);
+        }
+        return results;
+    }
+
     abstract Long registerMetric(String metricName);
 
     @Override
@@ -80,7 +106,11 @@ public abstract class RDBMSBackend implements IMetricianBackend {
 
     }
 
-    @Timed
+    @Override
+    public Map<String, Long> getDecomposedMetrics() {
+        return this.metricMap;
+    }
+
     abstract void insertValues(List<MetricianMetricValue> events);
 
     protected class ProcessEvents implements Runnable {
@@ -114,9 +144,9 @@ public abstract class RDBMSBackend implements IMetricianBackend {
                 if (metricKey == null) {
                     logger.warn("Got null key for metric {}, registering", key);
                     metricKey = registerMetric(key);
+
                 }
                 events.add(new MetricianMetricValue<>(MetricianMetricValue.ValueType.COUNTER, metricKey, timestamp, entry.getValue()));
-//                sqlInsertString.append(String.format("INSERT INTO metrics.counters VALUES('%s', %s, '%s');\n", metricKey, timestamp, entry.getValue()));
             });
 //            Gauges
             event.getGauges().entrySet().forEach(entry -> {
@@ -128,7 +158,6 @@ public abstract class RDBMSBackend implements IMetricianBackend {
                     metricKey = registerMetric(key);
                 }
                 events.add(new MetricianMetricValue<>(MetricianMetricValue.ValueType.GAUGE, metricKey, timestamp, entry.getValue()));
-//                sqlInsertString.append(String.format("INSERT INTO metrics.gauges VALUES('%s', %s, '%s');\n", metricKey, timestamp, entry.getValue()));
             });
             insertValues(events);
         }

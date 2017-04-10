@@ -85,7 +85,7 @@ public class Metrician {
     }
 
     public MetricianHeader getMetricsHeader() {
-        return new MetricianHeader(getJvmMetrics().currentUptime(), getJvmMetrics().startTime(), this.updatePeriod, this.registry.getMetrics());
+        return new MetricianHeader(getJvmMetrics().currentUptime(), getJvmMetrics().startTime(), this.updatePeriod, this.metricsBackend.getDecomposedMetrics());
     }
 
     public Map<Long, Object> getMetricValues(String metricID, Long start, @Nullable Long end) {

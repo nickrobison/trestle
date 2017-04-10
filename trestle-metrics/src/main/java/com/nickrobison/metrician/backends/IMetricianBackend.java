@@ -64,6 +64,12 @@ public interface IMetricianBackend {
     void removeCounter(String name);
 
     /**
+     * Get a list of decomposed metrics that are currently registered with the backend
+     * @return
+     */
+    Map<String, Long> getDecomposedMetrics();
+
+    /**
      * Returns the given timestamp,value pairs for a specified Metric ID, from the specified timestamp onwards
      * @param metricID - String MetricID
      * @param start - Timestamp of first value

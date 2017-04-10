@@ -1,5 +1,6 @@
 package com.nickrobison.metrician.backends;
 
+import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.metrician.MetricianReporter;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
@@ -86,12 +87,30 @@ public class PostgresBackend extends RDBMSBackend {
     }
 
     @Override
-    public Map<Long, Object> getMetricsValues(String metricID, Long start, @Nullable Long end) {
-        logger.error("Not implemented yet");
-        return null;
+    ResultSet getMetricValueResultSet(Long metricID, Long start, @Nullable Long end) throws SQLException {
+        String exportQuery = "SELECT C.TIMESTAMP, C.VALUE FROM \n" +
+                "(\n" +
+                "    SELECT *\n" +
+                "    FROM GAUGES\n" +
+                "    UNION ALL\n" +
+                "    SELECT *\n" +
+                "    FROM COUNTERS\n" +
+                "    ) AS C\n" +
+                "WHERE C.METRICID = ? AND C.TIMESTAMP >= ? AND C.TIMESTAMP <= ? ORDER BY C.TIMESTAMP ASC;";
+
+        final CallableStatement statement = connection.prepareCall(exportQuery);
+        statement.setLong(1, metricID);
+        statement.setLong(2, start);
+        if (end != null) {
+            statement.setLong(3, end);
+        } else {
+            statement.setLong(3, Long.MAX_VALUE);
+        }
+        return statement.executeQuery();
     }
 
     @Override
+    @Timed
     void insertValues(List<MetricianMetricValue> events) {
         final StringBuilder sqlInsertString = new StringBuilder();
         events.forEach(event -> {
@@ -106,28 +125,43 @@ public class PostgresBackend extends RDBMSBackend {
                     logger.error("Unable to determine metric type {}, skipping", event.getType());
                     break;
             }
-
-            try {
-                final PreparedStatement insertStatement = connection.prepareStatement(sqlInsertString.toString());
-                insertStatement.execute();
-            } catch (SQLException e) {
-                logger.error("Unable to insert event into Postgres database", e);
-            }
         });
+        try {
+            final PreparedStatement insertStatement = connection.prepareStatement(sqlInsertString.toString());
+            insertStatement.execute();
+        } catch (SQLException e) {
+            logger.error("Unable to insert event into Postgres database", e);
+        }
     }
 
     @Override
     Long registerMetric(String metricName) {
         try {
+//            See if the metric is already registered
+            final PreparedStatement lookupQuery = connection.prepareStatement("SELECT metricid FROM metrics.METRICS WHERE metric = ?");
+            lookupQuery.setString(1, metricName);
+            final ResultSet foundResults = lookupQuery.executeQuery();
+            if (foundResults.next()) {
+                final long metricID = foundResults.getLong(1);
+                logger.debug("Metric {} already registered with ID {}", metricName, metricID);
+                metricMap.put(metricName, metricID);
+                foundResults.close();
+                return metricID;
+            }
+            foundResults.close();
+//            If not, register it
             final PreparedStatement preparedStatement = connection.prepareStatement(String.format("INSERT INTO metrics.METRICS (Metric) VALUES('%s')", metricName), Statement.RETURN_GENERATED_KEYS);
             preparedStatement.executeUpdate();
             final ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
             if (generatedKeys.next()) {
-                final long aLong = generatedKeys.getLong(1);
-                metricMap.put(metricName, aLong);
-                return aLong;
+                final long metricID = generatedKeys.getLong(1);
+                logger.debug("Registering {} with key {}", metricName, metricID);
+                metricMap.put(metricName, metricID);
+                generatedKeys.close();
+                return metricID;
             } else {
                 logger.warn("No keys returned when registering gauge {}, not inserting into map", metricName);
+                generatedKeys.close();
             }
         } catch (SQLException e) {
             logger.error("Unable to insert metric {} into table", metricName, e);
