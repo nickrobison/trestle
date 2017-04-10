@@ -6,3 +6,8 @@
 
 :host >>> .legend {
     margin-bottom: 50px;
+}
+
+.container {
+    max-width: 100%;
+}

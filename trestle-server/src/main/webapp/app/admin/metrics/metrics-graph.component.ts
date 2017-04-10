@@ -64,7 +64,7 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
 
     private setupD3(): void {
         this.host = select(this.htmlElement);
-        this.margin = {top: 20, right: 150, bottom: 20, left: 70};
+        this.margin = {top: 20, right: 200, bottom: 20, left: 70};
         this.width = this.htmlElement.offsetWidth - this.margin.left - this.margin.right;
         this.height = 500 - this.margin.top - this.margin.bottom;
         console.debug("Creating D3 graph with width/height", this.width + "/" + this.height);
@@ -145,14 +145,14 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
             .append("circle")
             .attr("cx", 30)
             .attr("cy", 30)
-            .attr("r", this.width / 100)
+            .attr("r", this.width / 150)
             .style("fill", z);
 
         legend
             .append("text")
             .attr("x", 40)
             .attr("y", 30)
-            .attr("dy", "0.35em")
+            .attr("dy", "0.25em")
             .style("text-anchor", "start")
             .text(d => d);
 

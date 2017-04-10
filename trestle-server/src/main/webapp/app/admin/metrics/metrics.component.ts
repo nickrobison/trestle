@@ -20,8 +20,10 @@ export class MetricsComponent implements OnInit, DoCheck {
     selectedValue: string;
     oldValue = "";
     selectedData: IMetricsData;
+    loadingData: boolean;
 
-    constructor(private ms: MetricsService) {}
+    constructor(private ms: MetricsService) {
+    }
 
     ngOnInit(): void {
         this.ms.getMetrics()
@@ -54,10 +56,16 @@ export class MetricsComponent implements OnInit, DoCheck {
 
     addData(metric: string): void {
         console.debug("Adding data:", metric);
+        this.loadingData = true;
         this.ms.getMetricValues(metric, this.startTime.valueOf(), this.nowTime.valueOf())
+            .finally(() => this.loadingData = false)
             .subscribe(metricValues => {
                 console.debug("Have metric values:", metricValues);
                 this.selectedData = metricValues;
             })
+    }
+
+    exportAllMetrics = (): void => {
+        console.debug("Exporting all metrics");
     }
 }
