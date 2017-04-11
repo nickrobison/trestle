@@ -133,9 +133,30 @@ public class H2MemoryBackend extends RDBMSBackend {
     }
 
     @Override
-    public List<MetricianExportedValue> exportMetrics(@Nullable List<String> metrics, Long start, @Nullable Long end) {
-        logger.error("Not implemented yet!");
-        return new ArrayList<>();
+    PreparedStatement getExportPreparedStatement(@Nullable List<String> metrics) throws SQLException {
+        final String queryString;
+        if (metrics != null && !metrics.isEmpty()) {
+            queryString = String.format("SELECT M.METRIC, C.TIMESTAMP, C.VALUE FROM METRICS AS M\n" +
+                    "LEFT JOIN (\n" +
+                    "    SELECT *\n" +
+                    "    FROM GAUGES\n" +
+                    "    UNION ALL\n" +
+                    "    SELECT *\n" +
+                    "    FROM COUNTERS\n" +
+                    "    ) AS C\n" +
+                    "ON C.METRICID = M.METRICID WHERE M.METRIC IN %s AND C.TIMESTAMP >= ? AND C.TIMESTAMP <= ? ORDER BY M.METRIC, C.TIMESTAMP ASC;", buildMetricsInStatement(metrics));
+        } else {
+            queryString = "SELECT M.METRIC, C.TIMESTAMP, C.VALUE FROM METRICS AS M\n" +
+                    "LEFT JOIN (\n" +
+                    "    SELECT *\n" +
+                    "    FROM GAUGES\n" +
+                    "    UNION ALL\n" +
+                    "    SELECT *\n" +
+                    "    FROM COUNTERS\n" +
+                    "    ) AS C\n" +
+                    "ON C.METRICID = M.METRICID WHERE C.TIMESTAMP >= ? AND C.TIMESTAMP <= ? ORDER BY M.METRIC, C.TIMESTAMP ASC;";
+        }
+        return connection.prepareStatement(queryString);
     }
 
     @Override

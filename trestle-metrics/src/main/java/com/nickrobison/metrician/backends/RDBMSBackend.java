@@ -12,10 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
@@ -54,6 +51,47 @@ public abstract class RDBMSBackend implements IMetricianBackend {
     @Override
     public void shutdown() {
         shutdown(null);
+    }
+
+    abstract PreparedStatement getExportPreparedStatement(@Nullable List<String> metrics) throws SQLException;
+
+    @Override
+    public List<MetricianExportedValue> exportMetrics(@Nullable List<String> metrics, Long start, @Nullable Long end) {
+        logger.debug("Exporting values for Metrics {} from {} to {}", metrics, start, end);
+        final List<MetricianExportedValue> values = new ArrayList<>();
+        try {
+            final PreparedStatement exportStatement = getExportPreparedStatement(metrics);
+            exportStatement.setLong(1, start);
+            if (end != null) {
+                exportStatement.setLong(2, end);
+            } else {
+                exportStatement.setLong(2, Long.MAX_VALUE);
+            }
+
+            try (ResultSet resultSet = exportStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    while (resultSet.next()) {
+                        values.add(new MetricianExportedValue(resultSet.getString(1), resultSet.getLong(2), resultSet.getObject(3)));
+                    }
+                }
+            }
+        } catch (SQLException e1) {
+            logger.error("Unable to build Postgres export Statement", e1);
+        }
+        logger.info("Export complete");
+        return values;
+    }
+
+    static String buildMetricsInStatement(@Nullable List<String> metrics) {
+        final StringBuilder joinedMetrics = new StringBuilder();
+        joinedMetrics.append("('");
+        joinedMetrics.append(metrics.get(0));
+        for (int i = 1; i < metrics.size(); i++) {
+            joinedMetrics.append("', '");
+            joinedMetrics.append(metrics.get(i));
+        }
+        joinedMetrics.append("')");
+        return joinedMetrics.toString();
     }
 
     abstract ResultSet getMetricValueResultSet(Long metricID, Long start, @Nullable Long end) throws SQLException;

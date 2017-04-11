@@ -1,6 +1,5 @@
 package com.nickrobison.metrician.backends;
 
-import afu.org.apache.commons.lang3.StringUtils;
 import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.metrician.MetricianReporter;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -10,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.io.File;
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
@@ -88,21 +86,9 @@ public class PostgresBackend extends RDBMSBackend {
     }
 
     @Override
-    public List<MetricianExportedValue> exportMetrics(@Nullable List<String> metrics, Long start, @Nullable Long end) {
-        logger.debug("Exporting values for Metrics {} from {} to {}", metrics, start, end);
-//        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-//        final BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(bos));
-        final List<MetricianExportedValue> values = new ArrayList<>();
+    PreparedStatement getExportPreparedStatement(@Nullable List<String> metrics) throws SQLException {
         final String queryString;
-        final StringBuilder joinedMetrics = new StringBuilder();
-        joinedMetrics.append("('");
         if (metrics != null && !metrics.isEmpty()) {
-            joinedMetrics.append(metrics.get(0));
-            for (int i = 1; i < metrics.size(); i++) {
-             joinedMetrics.append("', '");
-             joinedMetrics.append(metrics.get(i));
-            }
-            joinedMetrics.append("')");
             queryString = String.format("SELECT M.METRIC, C.TIMESTAMP, C.VALUE FROM METRICS AS M\n" +
                     "LEFT JOIN (\n" +
                     "    SELECT *\n" +
@@ -111,7 +97,7 @@ public class PostgresBackend extends RDBMSBackend {
                     "    SELECT *\n" +
                     "    FROM COUNTERS\n" +
                     "    ) AS C\n" +
-                    "ON C.METRICID = M.METRICID WHERE M.METRIC IN %s AND C.TIMESTAMP >= ? AND C.TIMESTAMP <= ? ORDER BY M.METRIC, C.TIMESTAMP ASC;",joinedMetrics.toString());
+                    "ON C.METRICID = M.METRICID WHERE M.METRIC IN %s AND C.TIMESTAMP >= ? AND C.TIMESTAMP <= ? ORDER BY M.METRIC, C.TIMESTAMP ASC;", buildMetricsInStatement(metrics));
         } else {
             queryString = "SELECT M.METRIC, C.TIMESTAMP, C.VALUE FROM METRICS AS M\n" +
                     "LEFT JOIN (\n" +
@@ -123,29 +109,7 @@ public class PostgresBackend extends RDBMSBackend {
                     "    ) AS C\n" +
                     "ON C.METRICID = M.METRICID WHERE C.TIMESTAMP >= ? AND C.TIMESTAMP <= ? ORDER BY M.METRIC, C.TIMESTAMP ASC;";
         }
-        try {
-//            Get all the metrics
-            final PreparedStatement exportStatement = connection.prepareStatement(queryString);
-            exportStatement.setLong(1, start);
-            if (end != null) {
-                exportStatement.setLong(2, end);
-            } else {
-                exportStatement.setLong(2, Long.MAX_VALUE);
-            }
-            final ResultSet resultSet = exportStatement.executeQuery();
-            try {
-                while (resultSet.next()) {
-                    values.add(new MetricianExportedValue(resultSet.getString(1), resultSet.getLong(2), resultSet.getObject(3)));
-                }
-            } finally {
-                resultSet.close();
-            }
-        } catch (SQLException e) {
-            logger.error("Unable to export results", e);
-        }
-        logger.info("Export complete");
-
-        return values;
+        return connection.prepareStatement(queryString);
     }
 
     @Override
