@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.io.File;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -129,6 +130,12 @@ public class H2MemoryBackend extends RDBMSBackend {
             logger.error("Unable to export results to {}", file, e);
         }
         logger.info("Export complete");
+    }
+
+    @Override
+    public List<MetricianExportedValue> exportMetrics(@Nullable List<String> metrics, Long start, @Nullable Long end) {
+        logger.error("Not implemented yet!");
+        return new ArrayList<>();
     }
 
     @Override

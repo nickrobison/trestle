@@ -29,5 +29,6 @@
     <div class="section" *ngIf="nowTime">
         <metrics-graph [data]="selectedData" [minTime]="startTime.toDate()"
                        [maxTime]="nowTime.toDate()"></metrics-graph>
+        <button md-raised-button (click)="exportVisibleMetrics()">Export Visible Metrics</button>
     </div>
 </div>

@@ -1,10 +1,12 @@
 /**
  * Created by nrobison on 3/24/17.
  */
-import {Component, DoCheck, OnInit} from "@angular/core";
+import {Component, DoCheck, OnInit, ViewChild} from "@angular/core";
 import {IMetricsData, MetricsService} from "./metrics.service";
 import {Moment, utc, duration, Duration} from "moment";
 import moment = require("moment");
+import {saveAs} from "file-saver";
+import {MetricsGraph} from "./metrics-graph.component";
 
 @Component({
     selector: "metrics-root",
@@ -21,6 +23,7 @@ export class MetricsComponent implements OnInit, DoCheck {
     oldValue = "";
     selectedData: IMetricsData;
     loadingData: boolean;
+    @ViewChild(MetricsGraph) private graph: MetricsGraph;
 
     constructor(private ms: MetricsService) {
     }
@@ -67,5 +70,18 @@ export class MetricsComponent implements OnInit, DoCheck {
 
     exportAllMetrics = (): void => {
         console.debug("Exporting all metrics");
+        this.exportMetrics(null, this.startTime.valueOf(), this.nowTime.valueOf());
+    };
+
+    exportVisibleMetrics(): void {
+        this.exportMetrics(this.graph.getVisibleMetrics(), this.startTime.valueOf(), this.nowTime.valueOf());
+    }
+
+    private exportMetrics(metrics: null | Array<string>, start: number, end: number): void {
+        this.ms.exportMetricValues(metrics, start, end)
+            .subscribe((exportedBlob) => {
+                console.debug("Has blob of size: ", exportedBlob.size);
+                saveAs(exportedBlob, "test.csv");
+            });
     }
 }

@@ -6,6 +6,7 @@ import com.codahale.metrics.Gauge;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -34,6 +35,8 @@ public interface IMetricianBackend {
      * @param file {@link File} to write into
      */
     void exportData(File file);
+
+    List<MetricianExportedValue> exportMetrics(@Nullable List<String> metrics, Long start, @Nullable Long end);
 
     /**
      * Register {@link Gauge} with backend

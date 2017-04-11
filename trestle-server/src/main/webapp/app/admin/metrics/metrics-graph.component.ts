@@ -62,6 +62,16 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
         }
     }
 
+    getVisibleMetrics(): Array<string> {
+        let metrics = Array<string>();
+        this.visible.forEach((value, key, map) => {
+            if (value) {
+                metrics.push(key);
+            }
+        });
+        return metrics;
+    }
+
     private setupD3(): void {
         this.host = select(this.htmlElement);
         this.margin = {top: 20, right: 200, bottom: 20, left: 70};
@@ -126,7 +136,7 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
         metric
             .append("path")
             .attr("class", "line")
-            .attr("id", (d) => d.metric)
+            .attr("id", (d) => d.metric.replace(/\./g, "-"))
             .attr("d", (d: any) => metricsLine(d.values))
             // .attr("data-legend", (d) => d.metric)
             .style("stroke", (d) => z(d.metric));
@@ -137,7 +147,7 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
             .enter()
             .append("g")
             .attr("class", "legend")
-            .attr("id", (d) => "legend-" + d)
+            .attr("id", (d) => "legend-" + d.replace(/\./g, "-"))
             .attr("transform", (d, i) => "translate(" + (this.width) + "," + (i * ((this.width / 100) * 2) + 15) + ")")
             .on("click", this.legendClickHandler);
 
@@ -165,19 +175,19 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
         console.debug("Metric: " + d + " is visible?", isVisible);
         if (isVisible) {
             console.debug("Going out");
-            this.svg.selectAll("#" + d)
+            this.svg.selectAll("#" + d.replace(/\./g, "-"))
                 .transition()
                 .duration(1000)
                 .style("opacity", 0);
 
             // Fade the legend
-            this.svg.select("#legend-" + d)
+            this.svg.select("#legend-" + d.replace(/\./g, "-"))
                 .transition()
                 .duration(1000)
                 .style("opacity", .2);
 
             // Fade the y-axis
-            this.svg.select("#y-" + d)
+            this.svg.select("#y-" + d.replace(/\./g, "-"))
                 .transition()
                 .duration(1000)
                 .style("opacity", .2);
@@ -185,20 +195,20 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
             this.visible.set(d, false);
         } else {
             console.debug("Coming back");
-            this.svg.selectAll("#" + d)
+            this.svg.selectAll("#" + d.replace(/\./g, "-"))
                 // .style("display", "block")
                 .transition()
                 .duration(1000)
                 .style("opacity", 1);
 
             // Fade the legend
-            this.svg.select("#legend-" + d)
+            this.svg.select("#legend-" + d.replace(/\./g, "-"))
                 .transition()
                 .duration(1000)
                 .style("opacity", 1);
 
             // Fade the y-axis
-            this.svg.select("#y-" + d)
+            this.svg.select("#y-" + d.replace(/\./g, "-"))
                 .transition()
                 .duration(1000)
                 .style("opacity", 1);

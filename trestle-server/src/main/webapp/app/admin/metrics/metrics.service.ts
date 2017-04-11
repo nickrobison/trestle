@@ -4,7 +4,7 @@
 import {Injectable} from "@angular/core";
 import {AuthHttp} from "angular2-jwt";
 import {Observable} from "rxjs";
-import {Response, URLSearchParams} from "@angular/http";
+import {Response, ResponseContentType, URLSearchParams} from "@angular/http";
 
 export interface ITrestleMetricsHeader {
     upTime: number;
@@ -59,7 +59,7 @@ export class MetricsService {
                     }
                 });
                 return {
-                    metric: metricID.replace(/\./g, "-"),
+                    metric: metricID,
                     values: metricValues.sort((a, b) => {
                         if (a.timestamp == b.timestamp) {
                             return 0;
@@ -75,5 +75,20 @@ export class MetricsService {
                 }
             })
             .catch((error: Error) => Observable.throw(error || "Sever Error"));
+    }
+
+    public exportMetricValues(metrics: null | Array<string>, start: number, end?: number): Observable<Blob> {
+        return this.authHttp.post("/metrics/export", {
+                metrics: metrics,
+                start: start,
+                end: end
+            },
+            {
+                responseType: ResponseContentType.Blob
+            })
+            .map((res: Response) => {
+                return res.blob();
+            })
+            .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
 }

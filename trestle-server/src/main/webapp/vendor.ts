@@ -23,3 +23,4 @@ import "d3-axis";
 import "d3-transition";
 import "moment";
 import "moment-timezone";
+import "file-saver";
