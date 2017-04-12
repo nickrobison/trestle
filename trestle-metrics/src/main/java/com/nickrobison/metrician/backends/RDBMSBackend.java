@@ -53,6 +53,12 @@ public abstract class RDBMSBackend implements IMetricianBackend {
         shutdown(null);
     }
 
+    /**
+     * Database implementation dependent call to build export query
+     * @param metrics - Nullable list of metric names
+     * @return - {@link PreparedStatement} to execute
+     * @throws SQLException
+     */
     abstract PreparedStatement getExportPreparedStatement(@Nullable List<String> metrics) throws SQLException;
 
     @Override
@@ -82,6 +88,11 @@ public abstract class RDBMSBackend implements IMetricianBackend {
         return values;
     }
 
+    /**
+     * Given a {@link List} of metrics names, combine them into a String usable in an SQL "IN" clause
+     * @param metrics
+     * @return
+     */
     static String buildMetricsInStatement(@Nullable List<String> metrics) {
         final StringBuilder joinedMetrics = new StringBuilder();
         joinedMetrics.append("('");

@@ -36,6 +36,15 @@ public interface IMetricianBackend {
      */
     void exportData(File file);
 
+    /**
+     * Export Metrics for a given temporal interval
+     * If no metrics are provided, returns all registered metrics
+     * If ending temporal isn't provided, uses {@link Long#MAX_VALUE}
+     * @param metrics - Nullable List of metric names
+     * @param start - Unix timestamp (in ms) of start interval (inclusive)
+     * @param end - Nullable Unix timestamp (in ms) of end interval.
+     * @return
+     */
     List<MetricianExportedValue> exportMetrics(@Nullable List<String> metrics, Long start, @Nullable Long end);
 
     /**
@@ -75,8 +84,8 @@ public interface IMetricianBackend {
     /**
      * Returns the given timestamp,value pairs for a specified Metric ID, from the specified timestamp onwards
      * @param metricID - String MetricID
-     * @param start - Timestamp of first value
-     * @param end
+     * @param start - Timestamp of first value (Unix ms)
+     * @param end - Nullable timestamp of ending interval (Unix ms)
      * @return - Map of Timestamp,Value pairs
      */
     Map<Long, Object> getMetricsValues(String metricID, Long start, @Nullable Long end);

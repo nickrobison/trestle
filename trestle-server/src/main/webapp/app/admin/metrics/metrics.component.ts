@@ -81,7 +81,8 @@ export class MetricsComponent implements OnInit, DoCheck {
         this.ms.exportMetricValues(metrics, start, end)
             .subscribe((exportedBlob) => {
                 console.debug("Has blob of size: ", exportedBlob.size);
-                saveAs(exportedBlob, "test.csv");
+                let fileName = "trestle-metrics-" + start + "-" + (end || "current") + ".csv";
+                saveAs(exportedBlob, fileName);
             });
     }
 }
