@@ -118,7 +118,7 @@ public class TrestleAPITest {
                 assertEquals(offsetDateTimeTest, returnedObject, "Should have the same object");
             } else if (returnedObject instanceof TestClasses.MultiLangTest) {
                 assertEquals(multiLangTest, returnedObject, "Should have the same object");
-            } else{
+            } else {
                 assertEquals(esriPolygonTest, returnedObject, "Should be equal");
             }
         });

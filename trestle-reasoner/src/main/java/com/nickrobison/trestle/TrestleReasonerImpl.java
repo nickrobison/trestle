@@ -195,9 +195,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         logger.info("Ontology {} ready", builder.ontologyName.orElse(DEFAULTNAME));
 
 //        Are we a caching reasoner?
-        if (cachingEnabled) {
+        if (builder.caching) {
+            this.cachingEnabled = true;
+            logger.info("Creating Trestle Cache");
             trestleCache = injector.getInstance(TrestleCache.class);
         } else {
+            logger.info("Caching disabled");
+            this.cachingEnabled = false;
             trestleCache = null;
         }
 
@@ -849,17 +853,15 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             final TrestleObjectState objectState;
             try {
                 objectState = argumentsFuture.get();
-                ontology.returnAndCommitTransaction(trestleTransaction);
             } catch (InterruptedException e) {
-//                FIXME(nrobison): Rollback
-                ontology.returnAndCommitTransaction(trestleTransaction);
                 logger.error("Read object {} interrupted", individualIRI, e);
                 return Optional.empty();
             } catch (ExecutionException e) {
-//                FIXME(nrobison): Rollback
-                ontology.returnAndCommitTransaction(trestleTransaction);
                 logger.error("Execution exception when reading object {}", individualIRI, e);
                 return Optional.empty();
+            } finally {
+//                FIXME(nrobison): Rollback
+                ontology.returnAndCommitTransaction(trestleTransaction);
             }
             try {
                 final @NonNull T constructedObject = ClassBuilder.constructObject(clazz, objectState.getArguments());
