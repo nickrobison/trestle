@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.management.*;
+import java.lang.management.CompilationMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.management.RuntimeMXBean;
@@ -29,6 +30,7 @@ public class JVMMetrics {
     private static final String JAVA_LANG_TYPE_OPERATING_SYSTEM = "java.lang:type=OperatingSystem";
     private final MetricRegistry registry;
     private final OperatingSystemMXBean operatingSystemMXBean;
+    private final CompilationMXBean compilationMXBean;
     private final RuntimeMXBean runtimeMXBean;
     private final int processors;
     private final MBeanServer platformMBeanServer;
@@ -42,6 +44,7 @@ public class JVMMetrics {
         platformMBeanServer = ManagementFactory.getPlatformMBeanServer();
 //        Get the total number of processors
         processors = operatingSystemMXBean.getAvailableProcessors();
+        compilationMXBean = ManagementFactory.getCompilationMXBean();
 
 //        JVM metrics
         this.registerJVMMetrics();
@@ -64,6 +67,15 @@ public class JVMMetrics {
      */
     public long currentUptime() {
         return this.runtimeMXBean.getUptime();
+    }
+
+    public long startTime() {
+        return this.runtimeMXBean.getStartTime();
+    }
+
+    @Gauge(name = "compilation.time", absolute = true)
+    public long getCompilationTime() {
+        return this.compilationMXBean.getTotalCompilationTime();
     }
 
     /**

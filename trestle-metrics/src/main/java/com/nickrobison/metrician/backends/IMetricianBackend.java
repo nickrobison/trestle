@@ -6,6 +6,8 @@ import com.codahale.metrics.Gauge;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.File;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by nrobison on 3/20/17.
@@ -35,6 +37,17 @@ public interface IMetricianBackend {
     void exportData(File file);
 
     /**
+     * Export Metrics for a given temporal interval
+     * If no metrics are provided, returns all registered metrics
+     * If ending temporal isn't provided, uses {@link Long#MAX_VALUE}
+     * @param metrics - Nullable List of metric names
+     * @param start - Unix timestamp (in ms) of start interval (inclusive)
+     * @param end - Nullable Unix timestamp (in ms) of end interval.
+     * @return
+     */
+    List<MetricianExportedValue> exportMetrics(@Nullable List<String> metrics, Long start, @Nullable Long end);
+
+    /**
      * Register {@link Gauge} with backend
      * The Gauge may be null, especially if the method is being called from the MetricsListener
      * @param name - Name of gauge to register
@@ -61,4 +74,19 @@ public interface IMetricianBackend {
      * @param name - Name of counter ot remove
      */
     void removeCounter(String name);
+
+    /**
+     * Get a list of decomposed metrics that are currently registered with the backend
+     * @return
+     */
+    Map<String, Long> getDecomposedMetrics();
+
+    /**
+     * Returns the given timestamp,value pairs for a specified Metric ID, from the specified timestamp onwards
+     * @param metricID - String MetricID
+     * @param start - Timestamp of first value (Unix ms)
+     * @param end - Nullable timestamp of ending interval (Unix ms)
+     * @return - Map of Timestamp,Value pairs
+     */
+    Map<Long, Object> getMetricsValues(String metricID, Long start, @Nullable Long end);
 }

@@ -5,6 +5,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.annotation.Gauge;
 import com.nickrobison.metrician.backends.IMetricianBackend;
+import com.nickrobison.metrician.backends.MetricianExportedValue;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -14,9 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -71,6 +70,10 @@ public class Metrician {
         metricsBackend.exportData(exportFile);
     }
 
+    public List<MetricianExportedValue> exportMetrics(@Nullable List<String> metrics, Long start, @Nullable Long end) {
+        return this.metricsBackend.exportMetrics(metrics, start, end);
+    }
+
     public MetricianReporter getReporter() {
         return this.metricianReporter;
     }
@@ -84,7 +87,11 @@ public class Metrician {
     }
 
     public MetricianHeader getMetricsHeader() {
-        return new MetricianHeader(getJvmMetrics().currentUptime(), this.updatePeriod, this.registry.getMetrics());
+        return new MetricianHeader(getJvmMetrics().currentUptime(), getJvmMetrics().startTime(), this.updatePeriod, this.metricsBackend.getDecomposedMetrics());
+    }
+
+    public Map<Long, Object> getMetricValues(String metricID, Long start, @Nullable Long end) {
+        return this.metricsBackend.getMetricsValues(metricID, start, end);
     }
 
     @Gauge(name = "data-queue-length")

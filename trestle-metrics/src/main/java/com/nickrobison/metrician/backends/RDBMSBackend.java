@@ -2,7 +2,9 @@ package com.nickrobison.metrician.backends;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
+import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.metrician.MetricianReporter;
+import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -10,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.sql.Connection;
+import java.sql.*;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
@@ -21,6 +23,7 @@ import java.util.concurrent.BlockingQueue;
 /**
  * Abstract class for shipping metrics to relational database backend
  */
+@Metriced
 public abstract class RDBMSBackend implements IMetricianBackend {
 
     private static final Logger logger = LoggerFactory.getLogger(RDBMSBackend.class);
@@ -50,6 +53,81 @@ public abstract class RDBMSBackend implements IMetricianBackend {
         shutdown(null);
     }
 
+    /**
+     * Database implementation dependent call to build export query
+     * @param metrics - Nullable list of metric names
+     * @return - {@link PreparedStatement} to execute
+     * @throws SQLException
+     */
+    abstract PreparedStatement getExportPreparedStatement(@Nullable List<String> metrics) throws SQLException;
+
+    @Override
+    public List<MetricianExportedValue> exportMetrics(@Nullable List<String> metrics, Long start, @Nullable Long end) {
+        logger.debug("Exporting values for Metrics {} from {} to {}", metrics, start, end);
+        final List<MetricianExportedValue> values = new ArrayList<>();
+        try {
+            final PreparedStatement exportStatement = getExportPreparedStatement(metrics);
+            exportStatement.setLong(1, start);
+            if (end != null) {
+                exportStatement.setLong(2, end);
+            } else {
+                exportStatement.setLong(2, Long.MAX_VALUE);
+            }
+
+            try (ResultSet resultSet = exportStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    while (resultSet.next()) {
+                        values.add(new MetricianExportedValue(resultSet.getString(1), resultSet.getLong(2), resultSet.getObject(3)));
+                    }
+                }
+            }
+        } catch (SQLException e1) {
+            logger.error("Unable to build Postgres export Statement", e1);
+        }
+        logger.info("Export complete");
+        return values;
+    }
+
+    /**
+     * Given a {@link List} of metrics names, combine them into a String usable in an SQL "IN" clause
+     * @param metrics
+     * @return
+     */
+    static String buildMetricsInStatement(@Nullable List<String> metrics) {
+        final StringBuilder joinedMetrics = new StringBuilder();
+        joinedMetrics.append("('");
+        joinedMetrics.append(metrics.get(0));
+        for (int i = 1; i < metrics.size(); i++) {
+            joinedMetrics.append("', '");
+            joinedMetrics.append(metrics.get(i));
+        }
+        joinedMetrics.append("')");
+        return joinedMetrics.toString();
+    }
+
+    abstract ResultSet getMetricValueResultSet(Long metricID, Long start, @Nullable Long end) throws SQLException;
+
+    @Override
+    public Map<Long, Object> getMetricsValues(String metricID, Long start, @Nullable Long end) {
+        Map<Long, Object> results = new HashMap<>();
+        final Long registeredMetricID = this.metricMap.get(metricID);
+
+        try {
+            final ResultSet resultSet = getMetricValueResultSet(registeredMetricID, start, end);
+            try {
+                while(resultSet.next()) {
+                    results.put(resultSet.getLong(1), resultSet.getObject(2));
+                }
+            }
+            finally {
+                resultSet.close();
+            }
+        } catch (SQLException e) {
+            logger.error("Error retrieving metrics for {}", metricID, e);
+        }
+        return results;
+    }
+
     abstract Long registerMetric(String metricName);
 
     @Override
@@ -75,6 +153,11 @@ public abstract class RDBMSBackend implements IMetricianBackend {
     @Override
     public void removeCounter(String name) {
 
+    }
+
+    @Override
+    public Map<String, Long> getDecomposedMetrics() {
+        return this.metricMap;
     }
 
     abstract void insertValues(List<MetricianMetricValue> events);
@@ -110,9 +193,9 @@ public abstract class RDBMSBackend implements IMetricianBackend {
                 if (metricKey == null) {
                     logger.warn("Got null key for metric {}, registering", key);
                     metricKey = registerMetric(key);
+
                 }
                 events.add(new MetricianMetricValue<>(MetricianMetricValue.ValueType.COUNTER, metricKey, timestamp, entry.getValue()));
-//                sqlInsertString.append(String.format("INSERT INTO metrics.counters VALUES('%s', %s, '%s');\n", metricKey, timestamp, entry.getValue()));
             });
 //            Gauges
             event.getGauges().entrySet().forEach(entry -> {
@@ -124,7 +207,6 @@ public abstract class RDBMSBackend implements IMetricianBackend {
                     metricKey = registerMetric(key);
                 }
                 events.add(new MetricianMetricValue<>(MetricianMetricValue.ValueType.GAUGE, metricKey, timestamp, entry.getValue()));
-//                sqlInsertString.append(String.format("INSERT INTO metrics.gauges VALUES('%s', %s, '%s');\n", metricKey, timestamp, entry.getValue()));
             });
             insertValues(events);
         }

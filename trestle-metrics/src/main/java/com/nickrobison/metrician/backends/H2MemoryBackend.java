@@ -1,13 +1,18 @@
 package com.nickrobison.metrician.backends;
 
+import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.metrician.MetricianReporter;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -52,7 +57,7 @@ public class H2MemoryBackend extends RDBMSBackend {
             }
         }
         try {
-            final CallableStatement gaugesCreate = connection.prepareCall("CREATE TABLE gauges (MetricID BIGINT, Timestamp BIGINT, Value DOUBLE)");
+            final CallableStatement gaugesCreate = connection.prepareCall("CREATE TABLE gauges (MetricID BIGINT, Timestamp BIGINT, Value DOUBLE, PRIMARY KEY (MetricID, Timestamp));");
             gaugesCreate.execute();
             logger.debug("Table GAUGES created");
         } catch (SQLException e) {
@@ -66,7 +71,7 @@ public class H2MemoryBackend extends RDBMSBackend {
             }
         }
         try {
-            final CallableStatement countersCreate = connection.prepareCall("CREATE TABLE counters (MetricID BIGINT, Timestamp BIGINT, Value BIGINT)");
+            final CallableStatement countersCreate = connection.prepareCall("CREATE TABLE counters (MetricID BIGINT, Timestamp BIGINT, Value BIGINT, PRIMARY KEY(MetricID, Timestamp));");
             countersCreate.execute();
             logger.debug("Table COUNTERS created");
         } catch (SQLException e) {
@@ -128,6 +133,56 @@ public class H2MemoryBackend extends RDBMSBackend {
     }
 
     @Override
+    PreparedStatement getExportPreparedStatement(@Nullable List<String> metrics) throws SQLException {
+        final String queryString;
+        if (metrics != null && !metrics.isEmpty()) {
+            queryString = String.format("SELECT M.METRIC, C.TIMESTAMP, C.VALUE FROM METRICS AS M\n" +
+                    "LEFT JOIN (\n" +
+                    "    SELECT *\n" +
+                    "    FROM GAUGES\n" +
+                    "    UNION ALL\n" +
+                    "    SELECT *\n" +
+                    "    FROM COUNTERS\n" +
+                    "    ) AS C\n" +
+                    "ON C.METRICID = M.METRICID WHERE M.METRIC IN %s AND C.TIMESTAMP >= ? AND C.TIMESTAMP <= ? ORDER BY M.METRIC, C.TIMESTAMP ASC;", buildMetricsInStatement(metrics));
+        } else {
+            queryString = "SELECT M.METRIC, C.TIMESTAMP, C.VALUE FROM METRICS AS M\n" +
+                    "LEFT JOIN (\n" +
+                    "    SELECT *\n" +
+                    "    FROM GAUGES\n" +
+                    "    UNION ALL\n" +
+                    "    SELECT *\n" +
+                    "    FROM COUNTERS\n" +
+                    "    ) AS C\n" +
+                    "ON C.METRICID = M.METRICID WHERE C.TIMESTAMP >= ? AND C.TIMESTAMP <= ? ORDER BY M.METRIC, C.TIMESTAMP ASC;";
+        }
+        return connection.prepareStatement(queryString);
+    }
+
+    @Override
+    ResultSet getMetricValueResultSet(Long metricID, Long start, @Nullable Long end) throws SQLException {
+        String exportQuery = "SELECT C.TIMESTAMP, C.VALUE FROM \n" +
+                "(\n" +
+                "    SELECT *\n" +
+                "    FROM GAUGES\n" +
+                "    UNION ALL\n" +
+                "    SELECT *\n" +
+                "    FROM COUNTERS\n" +
+                "    ) AS C\n" +
+                "WHERE C.METRICID = ? AND C.TIMESTAMP >= ? AND C.TIMESTAMP <= ? ORDER BY C.TIMESTAMP ASC;";
+
+        final CallableStatement statement = connection.prepareCall(exportQuery);
+        statement.setLong(1, metricID);
+        statement.setLong(2, start);
+        if (end != null) {
+            statement.setLong(3, end);
+        } else {
+            statement.setLong(3, Long.MAX_VALUE);
+        }
+        return statement.executeQuery();
+    }
+
+    @Override
     Long registerMetric(String metricName) {
         try {
             final PreparedStatement preparedStatement = connection.prepareStatement(String.format("INSERT INTO metrics (Metric) VALUES('%s')", metricName), Statement.RETURN_GENERATED_KEYS);
@@ -147,6 +202,7 @@ public class H2MemoryBackend extends RDBMSBackend {
     }
 
     @Override
+    @Timed
     void insertValues(List<MetricianMetricValue> events) {
         final StringBuilder sqlInsertString = new StringBuilder();
         events.forEach(event -> {
@@ -166,7 +222,7 @@ public class H2MemoryBackend extends RDBMSBackend {
             final PreparedStatement insertStatement = connection.prepareStatement(sqlInsertString.toString());
             insertStatement.execute();
         } catch (SQLException e) {
-            logger.error("Unable to insert event into Postgres database", e);
+            logger.error("Unable to insert event into H2 database", e);
         }
     }
 }

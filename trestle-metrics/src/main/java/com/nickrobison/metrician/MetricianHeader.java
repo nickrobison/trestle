@@ -20,6 +20,7 @@ public class MetricianHeader implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public final Long upTime;
+    public final Long startTime;
     public final Long period;
     public final Map<String, String> meters;
 
@@ -29,8 +30,9 @@ public class MetricianHeader implements Serializable {
      * @param period - Update period (in ms)
      * @param meters - {@link Map} of {@link Metric} along with their registry keys
      */
-    MetricianHeader(long upTime, long period, Map<String, Metric> meters) {
+    MetricianHeader(long upTime, long startTime, long period, Map<String, Long> meters) {
         this.upTime = upTime;
+        this.startTime = startTime;
         this.period = period;
         this.meters = meters.entrySet()
                 .stream()

@@ -10,7 +10,7 @@ prefix: "http://nickrobison.com/test/hadoop.owl#"
 logging:
   level: INFO
   loggers:
-    "com.nickrobison.trestle.metrics": TRACE
+    "com.nickrobison.metrician": DEBUG
 
 database:
   driverClass: org.h2.Driver

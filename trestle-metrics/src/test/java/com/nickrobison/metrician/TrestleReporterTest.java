@@ -50,7 +50,7 @@ public class TrestleReporterTest {
         metricsClass.testIncrement();
         reporter.report();
         metricsClass.testMeter();
-        assertAll(() -> assertEquals(64, metrician.getRegistry().getGauges().size(), "Should have gauges"),
+        assertAll(() -> assertEquals(65, metrician.getRegistry().getGauges().size(), "Should have gauges"),
                 () -> assertEquals(1, metrician.getRegistry().getMeters().size(), "Should have meters"),
                 () -> assertEquals(1, metrician.getRegistry().getCounters().size(), "Should have timers"),
                 () -> assertEquals(2, metrician.getRegistry().counter("com.nickrobison.metrician.TrestleReporterTest$TestMetricsClass.test-reporter-counter").getCount(), "Count should be 2"));
