@@ -6,8 +6,13 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.nickrobison.metrician.Metrician;
+import com.nickrobison.metrician.MetricianModule;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.nickrobison.trestle.caching.TrestleCache;
+import com.nickrobison.trestle.caching.TrestleCacheModule;
 import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.common.TrestlePair;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingFactException;
@@ -92,6 +97,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final TrestleParser trestleParser;
     private final Config trestleConfig;
     private final TrestleCache trestleCache;
+    private final Metrician metrician;
+    private final Injector injector;
 
     @SuppressWarnings("dereference.of.nullable")
     TrestleReasonerImpl(TrestleBuilder builder) throws OWLOntologyCreationException {
@@ -105,7 +112,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //        Setup metrics engine
 //        metrician = null;
         metrician = injector.getInstance(Metrician.class);
-
 
 //        Setup the reasoner prefix
 //        If not specified, use the default Trestle prefix
@@ -686,7 +692,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      */
     @Timed
     @Metered(name = "read-trestle-object", absolute = true)
-    private <T> Optional<T> readTrestleObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, PointTemporal<?> validTemporal, PointTemporal<?> databaseTemporal) {
+    private <@NonNull T> Optional<TrestleObjectResult<@NonNull T>> readTrestleObjectImpl(Class<@NonNull T> clazz, @NonNull IRI individualIRI, PointTemporal<?> validTemporal, PointTemporal<?> databaseTemporal) {
 
 //        Contains class?
         try {
