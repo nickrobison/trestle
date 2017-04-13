@@ -56,7 +56,7 @@ public class GraphDBOntology extends SesameOntology {
     private static final Logger logger = LoggerFactory.getLogger(GraphDBOntology.class);
     private static final String DATA_DIRECTORY = "target/data";
     private static RepositoryManager repositoryManager;
-//    private static RepositoryConnection connection;
+    //    private static RepositoryConnection connection;
 //    private static Repository repository;
     private static final Config config = ConfigFactory.load().getConfig("trestle.ontology.graphdb");
 
@@ -239,13 +239,16 @@ public class GraphDBOntology extends SesameOntology {
             final TrestleResult results = new TrestleResult();
             final Set<String> varNames = next.getBindingNames();
             varNames.forEach(varName -> {
-                final Value value = next.getBinding(varName).getValue();
+                final Binding binding = next.getBinding(varName);
+                if (binding != null) {
+                    final Value value = binding.getValue();
 //                FIXME(nrobison): This is broken, figure out how to get the correct subtypes
-                if (value instanceof Literal) {
-                    final Optional<OWLLiteral> owlLiteral = createOWLLiteral(Literal.class.cast(value));
-                    owlLiteral.ifPresent(owlLiteral1 -> results.addValue(varName, owlLiteral1));
-                } else {
-                    results.addValue(varName, df.getOWLNamedIndividual(IRI.create(value.stringValue())));
+                    if (value instanceof Literal) {
+                        final Optional<OWLLiteral> owlLiteral = createOWLLiteral(Literal.class.cast(value));
+                        owlLiteral.ifPresent(owlLiteral1 -> results.addValue(varName, owlLiteral1));
+                    } else {
+                        results.addValue(varName, df.getOWLNamedIndividual(IRI.create(value.stringValue())));
+                    }
                 }
             });
             trestleResultSet.addResult(results);
