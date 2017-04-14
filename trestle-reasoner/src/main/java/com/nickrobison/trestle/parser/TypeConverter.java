@@ -338,6 +338,9 @@ public class TypeConverter {
                 case "int": {
                     return Integer.class;
                 }
+                case "float": {
+                    return Float.class;
+                }
                 case "double": {
                     return Double.class;
                 }
