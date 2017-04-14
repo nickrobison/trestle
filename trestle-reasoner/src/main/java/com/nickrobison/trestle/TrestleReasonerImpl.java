@@ -103,10 +103,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         trestleConfig = ConfigFactory.load().getConfig("trestle");
         ValidateConfig(trestleConfig);
 
-        final Injector injector = Guice.createInjector(new MetricianModule());
+        final Injector injector = Guice.createInjector(new MetricianModule(trestleConfig.getBoolean("metrics.enabled")));
 
 //        Setup metrics engine
+//        metrician = null;
         metrician = injector.getInstance(Metrician.class);
+
 
 //        Setup the reasoner prefix
 //        If not specified, use the default Trestle prefix
@@ -360,7 +362,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(individualFactquery);
                 resultSet.getResults()
                         .forEach(result -> {
-
                             final OWLDataPropertyAssertionAxiom existingFactValue = df.getOWLDataPropertyAssertionAxiom(
                                     df.getOWLDataProperty(result.getIndividual("property").orElseThrow(() -> new RuntimeException("property is null")).asOWLNamedIndividual().getIRI()),
                                     result.getIndividual("individual").orElseThrow(() -> new RuntimeException("individual is null")),
