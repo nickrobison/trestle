@@ -37,7 +37,7 @@ public class DataExporterTests {
 
     @BeforeAll
     public static void setup() throws IOException {
-        final Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf")).getConfig("trestle.ontology");
+        final Config config = ConfigFactory.load(ConfigFactory.parseResources("application.conf")).getConfig("trestle.ontology");
         reasoner = new TrestleBuilder()
                 .withDBConnection(config.getString("connectionString"),
                         config.getString("username"),

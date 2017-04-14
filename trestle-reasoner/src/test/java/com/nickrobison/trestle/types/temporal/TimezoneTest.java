@@ -37,7 +37,7 @@ public class TimezoneTest {
 
     @BeforeAll
     public static void setup() {
-        final Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
+        final Config config = ConfigFactory.load(ConfigFactory.parseResources("application.conf"));
         reasoner = new TrestleBuilder()
                 .withDBConnection(config.getString("trestle.ontology.connectionString"),
                         config.getString("trestle.ontology.username"),
