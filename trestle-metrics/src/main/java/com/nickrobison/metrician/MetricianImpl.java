@@ -1,8 +1,7 @@
 package com.nickrobison.metrician;
 
-import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.*;
+import com.codahale.metrics.Timer;
 import com.codahale.metrics.annotation.Gauge;
 import com.nickrobison.metrician.backends.IMetricianBackend;
 import com.nickrobison.metrician.backends.MetricianExportedValue;
@@ -101,6 +100,21 @@ public class MetricianImpl implements Metrician {
     @Override
     public Map<Long, Object> getMetricValues(String metricID, Long start, @Nullable Long end) {
         return this.metricsBackend.getMetricsValues(metricID, start, end);
+    }
+
+    @Override
+    public Timer registerTimer(String name) {
+        return this.registry.timer(name);
+    }
+
+    @Override
+    public Counter registerCounter(String name) {
+        return this.registry.counter(name);
+    }
+
+    @Override
+    public Histogram registerHistogram(String name) {
+        return this.registry.histogram(name);
     }
 
     @Gauge(name = "data-queue-length")
