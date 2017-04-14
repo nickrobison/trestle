@@ -7,7 +7,6 @@ import com.google.inject.Provides;
 import com.nickrobison.metrician.backends.IMetricianBackend;
 import com.nickrobison.metrician.agent.MetricianAgentBuilder;
 import com.nickrobison.metrician.instrumentation.MetricianInventory;
-import com.nickrobison.metrician.instrumentation.MetricianNoop;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import net.bytebuddy.agent.ByteBuddyAgent;

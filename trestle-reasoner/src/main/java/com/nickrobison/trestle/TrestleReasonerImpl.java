@@ -1,5 +1,7 @@
 package com.nickrobison.trestle;
 
+import com.codahale.metrics.*;
+import com.codahale.metrics.Timer;
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.ArrayListMultimap;
@@ -354,6 +356,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         if(trestleConfig.hasPath("mergeOnLoad"))
             performMerge = trestleConfig.getBoolean("mergeOnLoad");
         if (performMerge && checkExists(owlNamedIndividual.getIRI())) {
+            final Timer.Context mergeTimer = this.metrician.registerTimer("trestle-merge-timer").time();
             final Optional<List<OWLDataPropertyAssertionAxiom>> individualFacts = trestleParser.classParser.getFacts(inputObject);
             final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(true);
 //            Get all the currently valid facts
@@ -380,6 +383,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
             }
             ontology.returnAndCommitTransaction(trestleTransaction);
+            mergeTimer.stop();
         } else {
 //        If the object doesn't exist, continue with the simple write
 
