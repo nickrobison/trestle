@@ -26,6 +26,7 @@ public class TrestleBuilder {
     Optional<String> reasonerPrefix = Optional.empty();
     boolean initialize = false;
     boolean caching = true;
+    boolean metrics = true;
     final TrestlePrefixManager pm;
 
     /**
@@ -119,6 +120,15 @@ public class TrestleBuilder {
      */
     public TrestleBuilder withoutCaching() {
         caching = false;
+        return this;
+    }
+
+    /**
+     * Disable runtime metrics
+     * @return - TrestleBuilder
+     */
+    public TrestleBuilder withoutMetrics() {
+        metrics = false;
         return this;
     }
 
