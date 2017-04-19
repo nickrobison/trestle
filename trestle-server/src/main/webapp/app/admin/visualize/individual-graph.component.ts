@@ -216,28 +216,10 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
                 id: fact.identifier,
                 group: NodeType.FACT
             };
-
-            let factTemporal = {
-                id: fact.validTemporal.validID,
-                group: NodeType.VTEMPORAL
-            };
-
-            let factDBTemporal = {
-                id: fact.databaseTemporal.validID,
-                group: NodeType.DTEMPORAL
-            };
-            this.layout.nodes.push(factNode, factTemporal, factDBTemporal);
+            this.layout.nodes.push(factNode);
             this.layout.links.push({
                     source: individualNode,
                     target: factNode
-                },
-                {
-                    source: factNode,
-                    target: factTemporal,
-                },
-                {
-                    source: factNode,
-                    target: factDBTemporal,
                 });
         });
     }
