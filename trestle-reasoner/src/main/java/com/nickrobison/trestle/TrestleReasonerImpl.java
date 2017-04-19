@@ -407,31 +407,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 final Timer.Context factsTimer = this.metrician.registerTimer("trestle-merge-facts-timer").time();
                 writeObjectFacts(owlNamedIndividual, divergingFacts, factTemporal, dTemporal);
                 factsTimer.stop();
-
-//                resultSet.getResults()
-//                        .forEach(result -> {
-//                            final OWLDataPropertyAssertionAxiom existingFactValue = df.getOWLDataPropertyAssertionAxiom(
-//                                    df.getOWLDataProperty(result.getIndividual("property").asOWLNamedIndividual().getIRI()),
-//                                    result.getIndividual("individual"),
-//                                    result.getLiteral("object"));
-////                            If we don't have this exact fact already asserted, we need to either insert a completely new one, or assert a new value for that fact
-////                            Find all the
-//
-//                            final boolean contains = individualFacts.get().contains(existingFactValue);
-//
-//                            if (!contains) {
-//                                individualFacts.get().stream().filter(fact -> fact.getProperty().equals(existingFactValue.getProperty())).findFirst().ifPresent(fact -> {
-//                                    final OffsetDateTime offsetDateTime = TemporalParser.parseTemporalToOntologyDateTime(factTemporal.asInterval().getFromTime(), ZoneOffset.UTC);
-//                                    final String temporalUpdateQuery = this.qb.buildUpdateUnboundedTemporal(offsetDateTime, result.getIndividual("fact").asOWLNamedIndividual());
-//                                    final Timer.Context temporalTimer = this.metrician.registerTimer("trestle-merge-temporal-timer").time();
-//                                    this.ontology.executeUpdateSPARQL(temporalUpdateQuery);
-//                                    temporalTimer.stop();
-//                                    final Timer.Context factsTimer = this.metrician.registerTimer("trestle-merge-facts-timer").time();
-//                                    writeObjectFacts(owlNamedIndividual, singletonList(fact), factTemporal, dTemporal);
-//                                    factsTimer.stop();
-//                                });
-//                            }
-//                        });
             }
             ontology.returnAndCommitTransaction(trestleTransaction);
             mergeTimer.stop();
