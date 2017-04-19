@@ -39,6 +39,7 @@ public class H2MemoryBackend extends RDBMSBackend {
         final Connection connection;
         try {
             connection = DriverManager.getConnection("jdbc:h2:mem:");
+            connection.setAutoCommit(true);
         } catch (SQLException e) {
             throw new RuntimeException(e.getCause());
         }
