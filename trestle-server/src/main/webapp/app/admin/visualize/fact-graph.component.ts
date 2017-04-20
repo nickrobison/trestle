@@ -25,8 +25,8 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
     @ViewChild("graph") element: ElementRef;
     @Input() data: ITrestleIndividual;
     @Input() graphHeight: number;
-    @Input() minTime: Moment;
-    @Input() maxTime: Moment;
+    @Input() minTime: Date;
+    @Input() maxTime: Date;
     private htmlElement: HTMLElement;
     private host: Selection<HTMLElement, any, any, any>;
     private svg: Selection<any, any, any, any>;
@@ -162,7 +162,7 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
 
         //    TODO(nrobison): Move this to the updateFunction
         this.x = scaleTime().range([0, this.width]);
-        this.x.domain([this.minTime.startOf("year").toDate(), this.maxTime.endOf("year").toDate()]);
+        this.x.domain([this.minTime, this.maxTime]);
         console.debug("X range", this.x.range());
         console.debug("X domain", this.x.domain());
         this.svg

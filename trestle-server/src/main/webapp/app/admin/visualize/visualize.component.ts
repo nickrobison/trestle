@@ -29,8 +29,8 @@ export class VisualizeComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.minTime = moment().year(2011);
-        this.maxTime = moment().year(2016);
+        this.minTime = moment().year(2011).startOf("year");
+        this.maxTime = moment().year(2016).endOf("year");
         this.options = this.individualName
             .valueChanges
             .debounceTime(400)
