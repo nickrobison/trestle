@@ -7,6 +7,8 @@ import {FormControl} from "@angular/forms";
 import {Observable} from "rxjs";
 import {MdDialog, MdDialogConfig, MdDialogRef} from "@angular/material";
 import {IndividualValueDialog} from "./individual-value.dialog";
+import {Moment} from "moment";
+import moment = require("moment");
 
 @Component({
     selector: "visualize",
@@ -19,12 +21,16 @@ export class VisualizeComponent implements OnInit {
     individualName = new FormControl();
     options: Observable<Array<string>>;
     individual: ITrestleIndividual;
+    minTime: Moment;
+    maxTime: Moment;
     private dialogRef: MdDialogRef<IndividualValueDialog>;
 
     constructor(private vs: VisualizeService, private dialog: MdDialog, private viewContainerRef: ViewContainerRef) {
     }
 
     ngOnInit(): void {
+        this.minTime = moment().year(2011);
+        this.maxTime = moment().year(2016);
         this.options = this.individualName
             .valueChanges
             .debounceTime(400)
