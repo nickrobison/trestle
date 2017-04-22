@@ -85,7 +85,9 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
 
         //    Add the data
         let mainItems = this.svg.selectAll(".fact")
-            .data(this.data.facts, (d: ITrestleFact) => d.identifier)
+            .data(this.data.facts, (d: ITrestleFact) => d.identifier);
+
+        mainItems
             .enter()
             .append("rect")
             .attr("class", "fact")
@@ -102,11 +104,14 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
             })
             .attr("height", (d) => y.bandwidth())
             .style("fill", (d: ITrestleFact) => z(d.name))
-            .style("fill-opacity", 0.7);
+            .style("fill-opacity", 0.7)
+            .merge(mainItems);
 
         // Labels
         let mainLabels = this.svg.selectAll(".mainLabels")
-            .data(this.data.facts, (d: ITrestleFact) => d.identifier)
+            .data(this.data.facts, (d: ITrestleFact) => d.identifier);
+
+        mainLabels
             .enter()
             .append("text")
             .text((d: ITrestleFact) => this.parseValue(d.value))
@@ -119,7 +124,8 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
             })
             .attr("y", (d: ITrestleFact) => y(d.name) + y.bandwidth() - 5)
             .attr("text-anchor", "middle")
-            .attr("dy", ".1ex");
+            .attr("dy", ".1ex")
+            .merge(mainLabels);
             // .attr("fill", "transparent");
 
         mainItems.exit().remove();
@@ -132,7 +138,7 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
             return date;
         }
         if (date == "") {
-            return this.maxTime.toDate();
+            return this.maxTime;
         }
         return new Date(date);
     }
