@@ -13,16 +13,6 @@ import javax.validation.constraints.NotNull;
  */
 public class TrestleServerConfiguration extends Configuration {
 
-    @NotEmpty
-    private String connectionString;
-    @NotNull
-    private String username;
-    @NotNull
-    private String password;
-    @NotEmpty
-    private String ontology;
-    @NotEmpty
-    private String prefix;
     @Valid
     @NotNull
     @JsonProperty
@@ -31,56 +21,10 @@ public class TrestleServerConfiguration extends Configuration {
     @NotNull
     @JsonProperty
     private JWTConfig jwt;
-
+    @Valid
+    @NotNull
     @JsonProperty
-    public String getConnectionString() {
-        return connectionString;
-    }
-
-    @JsonProperty
-    public void setConnectionString(String connectionString) {
-        this.connectionString = connectionString;
-    }
-
-    @JsonProperty
-    public String getUsername() {
-        return username;
-    }
-
-    @JsonProperty
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    @JsonProperty
-    public String getPassword() {
-        return password;
-    }
-
-    @JsonProperty
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    @JsonProperty
-    public String getOntology() {
-        return this.ontology;
-    }
-
-    @JsonProperty
-    public void setPrefix(String prefix) {
-        this.prefix = prefix;
-    }
-
-    @JsonProperty
-    public String getPrefix() {
-        return this.prefix;
-    }
-
-    @JsonProperty
-    public void setOntology(String ontology) {
-        this.ontology = ontology;
-    }
+    private TrestleReasonerConfiguration reasoner;
 
     @JsonProperty("database")
     public DataSourceFactory getDataSourceFactory() {
@@ -90,5 +34,10 @@ public class TrestleServerConfiguration extends Configuration {
     @JsonProperty("jwt")
     public JWTConfig getJwtConfig() {
         return this.jwt;
+    }
+
+    @JsonProperty("reasoner")
+    public TrestleReasonerConfiguration getReasonerConfig() {
+        return this.reasoner;
     }
 }

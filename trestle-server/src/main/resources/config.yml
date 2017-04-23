@@ -1,11 +1,15 @@
-connectionString: "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial"
-username: "spatialUser"
-password: "spatial1"
-#connectionString: "http://localhost:7200"
-#username: ""
-#password: ""
-ontology: "hadoop_gaul_updated"
-prefix: "http://nickrobison.com/test/hadoop.owl#"
+reasoner:
+  #connectionString: "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial"
+  #username: "spatialUser"
+  #password: "spatial1"
+  connectionString: "http://localhost:7200"
+  username: ""
+  password: ""
+#  ontology: "hadoop_gaul_rewrite"
+#  prefix: "http://nickrobison.com/test/hadoop.owl#"
+  ontology: "tigercounties3"
+  prefix: "http://nickrobison.com/demonstration/tigercounty#"
+  location: "file:////Users/nrobison/Developer/git/dissertation/trestle/ontology/trestle.owl"
 
 logging:
   level: INFO

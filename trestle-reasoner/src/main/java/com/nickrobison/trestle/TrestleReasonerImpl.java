@@ -1173,7 +1173,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
             return trestleIndividual;
         } catch (InterruptedException | ExecutionException e) {
+//            FIXME(nrobison): Rollback
             logger.error("Interruption exception building Trestle Individual {}", individual, e);
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
             throw new RuntimeException(e);
         }
     }
