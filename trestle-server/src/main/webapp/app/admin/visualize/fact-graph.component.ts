@@ -48,14 +48,11 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
     ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
         let dataChange = changes["data"];
         if (dataChange != null && !dataChange.isFirstChange()) {
-            console.debug("Updating history");
             this.plotData();
         }
     }
 
     private plotData(): void {
-        let laneLength = this.data.facts.length;
-
         //    Build the domain values
         let factNames = this.data.facts.map((d) => d.name);
         let y = scaleBand()
@@ -77,7 +74,7 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
             .attr("x2", this.width)
             .attr("y2", (d) => y(d));
 
-        // //    Build the Y-Axis
+        //    Build the Y-Axis
         let yAxis = this.svg
             .append("g")
             .attr("class", "axis axis-y")
@@ -91,17 +88,9 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
             .enter()
             .append("rect")
             .attr("class", "fact")
-            .attr("x", (d: ITrestleFact) => {
-                console.debug("D:", d);
-                console.debug("D start", d.validTemporal.validFrom);
-                console.debug("X", this.x(new Date(d.validTemporal.validFrom)));
-                return this.x(new Date(d.validTemporal.validFrom));
-            })
+            .attr("x", (d: ITrestleFact) => this.x(new Date(d.validTemporal.validFrom)))
             .attr("y", (d: ITrestleFact) => y(d.name))
-            .attr("width", (d: ITrestleFact) => {
-
-                return this.x(this.maybeDate(d.validTemporal.validTo)) - this.x(this.maybeDate(d.validTemporal.validFrom))
-            })
+            .attr("width", (d: ITrestleFact) => this.x(this.maybeDate(d.validTemporal.validTo)) - this.x(this.maybeDate(d.validTemporal.validFrom)))
             .attr("height", (d) => y.bandwidth())
             .style("fill", (d: ITrestleFact) => z(d.name))
             .style("fill-opacity", 0.7)
