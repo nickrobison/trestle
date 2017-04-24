@@ -4,6 +4,7 @@ import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
+import java.time.OffsetDateTime;
 import java.time.temporal.Temporal;
 import java.util.HashSet;
 import java.util.Optional;
@@ -81,6 +82,13 @@ public abstract class TemporalObject {
      * @return - new TemporalObject
      */
     public abstract TemporalObject castTo(TemporalScope castScope);
+
+    /**
+     * Compares a temporal with the TemporalObject to determine if the given Temporal is before, during, or after the {@link TemporalObject}
+     * @param comparingTemporal - {@link OffsetDateTime} to compare against the temporal object
+     * @return - {@code -1} if the {@link OffsetDateTime} comes before the {@link TemporalObject}, {@code 0} is it occurs during (or at), {@code 1} if it comes after
+     */
+    public abstract int compareTo(OffsetDateTime comparingTemporal);
 
     @Override
     public boolean equals(Object o) {

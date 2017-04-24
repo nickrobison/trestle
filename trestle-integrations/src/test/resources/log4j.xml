@@ -16,6 +16,15 @@
     <category name="org.apache.http">
         <priority value="OFF"/>
     </category>
+    <category name="org.eclipse.rdf4j">
+        <priority value="OFF"/>
+    </category>
+    <category name="com.nickrobison.trestle">
+        <priority value="INFO"/>
+    </category>
+    <category name="com.nickrobison.trestle.ontology">
+        <priority value="OFF"/>
+    </category>
 
     <root>
         <priority value="DEBUG"/>

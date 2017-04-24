@@ -119,7 +119,7 @@ public abstract class JenaOntology extends TransactingOntology {
 
 //        TODO(nrobison): This should be more optimistic, don't check, just write.
         this.openAndLock(true);
-        logger.debug("Trying to create the individual");
+        logger.debug("Trying to create individual {}", owlClassAssertionAxiom.getIndividual());
         this.model.enterCriticalSection(Lock.WRITE);
         try {
             final Resource modelResource = model.getResource(getFullIRIString(owlClassAssertionAxiom.getIndividual().asOWLNamedIndividual()));
@@ -694,9 +694,9 @@ public abstract class JenaOntology extends TransactingOntology {
     }
 
     /**
-     * Build TrestleResultSet from Jena ResultSet
-     * @param resultSet - Jena ResultSet to parse
-     * @return - TrestleResultSet
+     * Build {@link TrestleResultSet} from Jena {@link ResultSet}
+     * @param resultSet - Jena {@link ResultSet} to parse
+     * @return - {@link TrestleResultSet}
      */
     TrestleResultSet buildResultSet(ResultSet resultSet) {
         final TrestleResultSet trestleResultSet = new TrestleResultSet(resultSet.getRowNumber(), resultSet.getResultVars());
@@ -707,11 +707,15 @@ public abstract class JenaOntology extends TransactingOntology {
             while (varNames.hasNext()) {
                 final String varName = varNames.next();
                 final RDFNode rdfNode = next.get(varName);
-                if (rdfNode.isResource()) {
-                    results.addValue(varName, df.getOWLNamedIndividual(IRI.create(rdfNode.asResource().getURI())));
+                if (rdfNode != null) {
+                    if (rdfNode.isResource()) {
+                        results.addValue(varName, df.getOWLNamedIndividual(IRI.create(rdfNode.asResource().getURI())));
+                    } else {
+                        final Optional<OWLLiteral> literal = this.jf.createOWLLiteral(rdfNode.asLiteral());
+                        literal.ifPresent(literalValue -> results.addValue(varName, literalValue));
+                    }
                 } else {
-                    final Optional<OWLLiteral> literal = this.jf.createOWLLiteral(rdfNode.asLiteral());
-                    literal.ifPresent(literalValue -> results.addValue(varName, literalValue));
+                    results.addValue(varName, null);
                 }
             }
             trestleResultSet.addResult(results);

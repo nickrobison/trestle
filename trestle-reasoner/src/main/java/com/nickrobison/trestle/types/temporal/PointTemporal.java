@@ -4,10 +4,13 @@ import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
 import java.util.*;
+
+import static com.nickrobison.trestle.parser.TemporalParser.parseTemporalToOntologyDateTime;
 
 /**
  * Created by nrobison on 6/30/16.
@@ -72,6 +75,14 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
             return TemporalObjectBuilder.valid().at(this.atTime).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
         }
         return TemporalObjectBuilder.exists().at(this.atTime).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
+    }
+
+    @Override
+    public int compareTo(OffsetDateTime comparingTemporal) {
+        final OffsetDateTime t1 = parseTemporalToOntologyDateTime(this.atTime, ZoneOffset.of(this.timeZone.getId()));
+        if (t1.compareTo(comparingTemporal) > 0) return 1;
+        if (t1.compareTo(comparingTemporal) == 0) return 0;
+        return -1;
     }
 
     @Override

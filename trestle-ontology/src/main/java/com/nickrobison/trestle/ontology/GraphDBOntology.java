@@ -1,23 +1,22 @@
 package com.nickrobison.trestle.ontology;
 
 import afu.org.apache.commons.io.FileUtils;
-import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.ontotext.trree.config.OWLIMSailSchema;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.eclipse.rdf4j.IsolationLevels;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.TreeModel;
 import org.eclipse.rdf4j.model.util.Models;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
-import org.eclipse.rdf4j.query.*;
+import org.eclipse.rdf4j.query.QueryLanguage;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.query.Update;
 import org.eclipse.rdf4j.repository.Repository;
-import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.config.RepositoryConfig;
 import org.eclipse.rdf4j.repository.config.RepositoryConfigSchema;
 import org.eclipse.rdf4j.repository.manager.LocalRepositoryManager;
@@ -28,8 +27,6 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
@@ -40,10 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.MissingResourceException;
-import java.util.Optional;
-import java.util.Set;
 
-import static com.nickrobison.trestle.utils.RDF4JLiteralFactory.createOWLLiteral;
 import static com.nickrobison.trestle.utils.SharedOntologyFunctions.ontologytoIS;
 import static org.eclipse.rdf4j.model.vocabulary.SESAME.WILDCARD;
 
@@ -230,31 +224,6 @@ public class GraphDBOntology extends SesameOntology {
             this.commitTransaction(false);
         }
         return results;
-    }
-
-    TrestleResultSet buildResultSet(TupleQueryResult resultSet) {
-        final TrestleResultSet trestleResultSet = new TrestleResultSet(0, resultSet.getBindingNames());
-        while (resultSet.hasNext()) {
-            final BindingSet next = resultSet.next();
-            final TrestleResult results = new TrestleResult();
-            final Set<String> varNames = next.getBindingNames();
-            varNames.forEach(varName -> {
-                final Binding binding = next.getBinding(varName);
-                if (binding != null) {
-                    final Value value = binding.getValue();
-//                FIXME(nrobison): This is broken, figure out how to get the correct subtypes
-                    if (value instanceof Literal) {
-                        final Optional<OWLLiteral> owlLiteral = createOWLLiteral(Literal.class.cast(value));
-                        owlLiteral.ifPresent(owlLiteral1 -> results.addValue(varName, owlLiteral1));
-                    } else {
-                        results.addValue(varName, df.getOWLNamedIndividual(IRI.create(value.stringValue())));
-                    }
-                }
-            });
-            trestleResultSet.addResult(results);
-        }
-        trestleResultSet.updateRowCount();
-        return trestleResultSet;
     }
 
     @Override

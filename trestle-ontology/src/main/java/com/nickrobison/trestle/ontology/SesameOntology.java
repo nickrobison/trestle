@@ -2,8 +2,8 @@ package com.nickrobison.trestle.ontology;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
@@ -11,22 +11,32 @@ import com.nickrobison.trestle.utils.SesameConnectionManager;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.eclipse.rdf4j.model.*;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
+import org.eclipse.rdf4j.query.Binding;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFWriter;
+import org.eclipse.rdf4j.rio.Rio;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -34,6 +44,8 @@ import static com.nickrobison.trestle.utils.RDF4JLiteralFactory.createLiteral;
 import static com.nickrobison.trestle.utils.RDF4JLiteralFactory.createOWLLiteral;
 import static com.nickrobison.trestle.utils.SharedOntologyFunctions.filterIndividualDataProperties;
 import static com.nickrobison.trestle.utils.SharedOntologyFunctions.getDataPropertiesFromIndividualFacts;
+
+;
 
 @NotThreadSafe
 public abstract class SesameOntology extends TransactingOntology {
@@ -249,13 +261,10 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
         this.openTransaction(false);
         try {
-            if(this.tc.get().hasStatement(individualIRI, null, null,false))
-            {
+            if (this.tc.get().hasStatement(individualIRI, null, null, false)) {
                 //this.tc.get().close();
                 return true;
-            }
-            else
-            {
+            } else {
                 //this.tc.get().close();
                 return false;
             }
@@ -266,10 +275,24 @@ public abstract class SesameOntology extends TransactingOntology {
 
     @Override
     public void writeOntology(IRI path, boolean validate) throws OWLOntologyStorageException {
-        logger.error("Write ontology not-implemented for Sesame Ontology");
+        final FileOutputStream fso;
+        try {
+            fso = new FileOutputStream(new File(path.toURI()));
+        } catch (FileNotFoundException e) {
+            logger.error("Cannot open file path", e);
+            return;
+        }
+        final RDFWriter writer = Rio.createWriter(RDFFormat.RDFXML, fso);
+        this.openTransaction(false);
+        try {
+            this.tc.get().export(writer);
+        } finally {
+            this.commitTransaction(false);
+        }
     }
 
     protected abstract void closeDatabase(boolean drop);
+
     @Override
     public void close(boolean drop) {
         this.adminConnection.close();
@@ -502,6 +525,33 @@ public abstract class SesameOntology extends TransactingOntology {
     }
 
     public abstract TrestleResultSet executeSPARQLResults(String queryString);
+
+    TrestleResultSet buildResultSet(TupleQueryResult resultSet) {
+        final TrestleResultSet trestleResultSet = new TrestleResultSet(0, resultSet.getBindingNames());
+        while (resultSet.hasNext()) {
+            final BindingSet next = resultSet.next();
+            final TrestleResult results = new TrestleResult();
+            final Set<String> varNames = next.getBindingNames();
+            varNames.forEach(varName -> {
+                final Binding binding = next.getBinding(varName);
+//                If the binding is null, value is unbound, so skip over it
+                if (binding != null) {
+                    final Value value = binding.getValue();
+//                FIXME(nrobison): This is broken, figure out how to get the correct subtypes
+                    if (value instanceof Literal) {
+                        final Optional<OWLLiteral> owlLiteral = createOWLLiteral(Literal.class.cast(value));
+                        owlLiteral.ifPresent(owlLiteral1 -> results.addValue(varName, owlLiteral1));
+                    } else {
+                        results.addValue(varName, df.getOWLNamedIndividual(IRI.create(value.stringValue())));
+                    }
+                } else {
+                    results.addValue(varName, null);
+                }
+            });
+            trestleResultSet.addResult(results);
+        }
+        return trestleResultSet;
+    }
 
     public abstract void openDatasetTransaction(boolean write);
 

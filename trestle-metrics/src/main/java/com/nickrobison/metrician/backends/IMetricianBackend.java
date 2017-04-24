@@ -43,7 +43,7 @@ public interface IMetricianBackend {
      * @param metrics - Nullable List of metric names
      * @param start - Unix timestamp (in ms) of start interval (inclusive)
      * @param end - Nullable Unix timestamp (in ms) of end interval.
-     * @return
+     * @return - List of {@link MetricianExportedValue}s
      */
     List<MetricianExportedValue> exportMetrics(@Nullable List<String> metrics, Long start, @Nullable Long end);
 
@@ -77,7 +77,7 @@ public interface IMetricianBackend {
 
     /**
      * Get a list of decomposed metrics that are currently registered with the backend
-     * @return
+     * @return - {@link Map} of MetricID Strings to backend identifiers
      */
     Map<String, Long> getDecomposedMetrics();
 

@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Created by nrobison on 12/1/16.
  */
+@SuppressWarnings("OptionalGetWithoutIsPresent")
 @Tag("integration")
 abstract public class OntologyTest {
 
@@ -75,8 +76,8 @@ abstract public class OntologyTest {
 
         final TrestleResultSet trestleResultSet = ontology.executeSPARQLResults(queryString);
         assertEquals(1, trestleResultSet.getResults().size(), "Should only have the french version");
-        assertEquals("Test String", trestleResultSet.getResults().get(0).getLiteral("property").getLiteral(), "Should have the correct string");
-        assertEquals("fr", trestleResultSet.getResults().get(0).getLiteral("property").getLang(), "Should be french language");
+        assertEquals("Test String", trestleResultSet.getResults().get(0).getLiteral("property").get().getLiteral(), "Should have the correct string");
+        assertEquals("fr", trestleResultSet.getResults().get(0).getLiteral("property").get().getLang(), "Should be french language");
 
     }
 
@@ -183,9 +184,9 @@ abstract public class OntologyTest {
         final TrestleResultSet trestleResultSet = ontology.executeSPARQLResults(queryString);
         Set<OWLObjectPropertyAssertionAxiom> temporalRelations = trestleResultSet.getResults().stream().map(solution ->
                 df.getOWLObjectPropertyAssertionAxiom(
-                        df.getOWLObjectProperty(IRI.create(solution.getIndividual("p").toStringID())),
-                        df.getOWLNamedIndividual(IRI.create(solution.getIndividual("m").toStringID())),
-                        df.getOWLNamedIndividual(IRI.create(solution.getIndividual("o").toStringID()))))
+                        df.getOWLObjectProperty(IRI.create(solution.getIndividual("p").orElseThrow(() -> new RuntimeException("property is null")).toStringID())),
+                        df.getOWLNamedIndividual(IRI.create(solution.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())),
+                        df.getOWLNamedIndividual(IRI.create(solution.getIndividual("o").orElseThrow(() -> new RuntimeException("object is null")).toStringID()))))
                 .collect(Collectors.toSet());
         assertAll(() -> assertEquals(12, temporalRelations.size(), "Wrong number of temporal relations for municipal1"),
                 () -> assertTrue(temporalRelations
