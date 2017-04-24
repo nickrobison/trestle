@@ -28,8 +28,10 @@ public enum ObjectRelation {
     TEMPORAL_OVERLAPS   ("temporal_overlaps");
 
     private final IRI relationIRI;
+    private final String relationShortName;
 
     ObjectRelation(String relationString) {
+        this.relationShortName = relationString;
         this.relationIRI = IRI.create(TRESTLE_PREFIX, relationString);
     }
 
@@ -60,6 +62,5 @@ public enum ObjectRelation {
                 .filter(object -> object.getIRI().equals(relationIRI))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException(String.format("Cannot find ObjectRelation for IRI %s", relationIRI.getIRIString())));
-
     }
 }

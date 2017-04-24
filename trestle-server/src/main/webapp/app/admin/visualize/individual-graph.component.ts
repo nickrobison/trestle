@@ -22,7 +22,8 @@ const enum NodeType {
     INDIVIDUAL,
     VTEMPORAL,
     DTEMPORAL,
-    FACT
+    FACT,
+    RELATION
 }
 
 interface ID3Margin {
@@ -222,6 +223,19 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
                     target: factNode
                 });
         });
+
+    //    Relations
+        individual.relations.forEach(relation => {
+            let relationNode = {
+                id: relation.object,
+                group: NodeType.RELATION
+            };
+            this.layout.nodes.push(relationNode);
+            this.layout.links.push({
+                source: individualNode,
+                target: relationNode
+            });
+        });
     }
 
     private static parseColorGroup(group: string): string {
@@ -234,6 +248,8 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
                 return "Database Temporal";
             case 3:
                 return "Fact";
+            case 4:
+                return "Relation";
             default:
                 return "unknown";
         }

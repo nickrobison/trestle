@@ -5,10 +5,10 @@ reasoner:
   connectionString: "http://localhost:7200"
   username: ""
   password: ""
-#  ontology: "hadoop_gaul_rewrite"
-#  prefix: "http://nickrobison.com/test/hadoop.owl#"
-  ontology: "tigercounties3"
-  prefix: "http://nickrobison.com/demonstration/tigercounty#"
+  ontology: "hadoop_gaul_updated"
+  prefix: "http://nickrobison.com/test/hadoop.owl#"
+#  ontology: "tigercounties3"
+#  prefix: "http://nickrobison.com/demonstration/tigercounty#"
   location: "file:////Users/nrobison/Developer/git/dissertation/trestle/ontology/trestle.owl"
 
 logging:
