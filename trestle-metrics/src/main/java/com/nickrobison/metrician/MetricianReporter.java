@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
  */
 
 /**
- * Scheduled class which parses {@link MetricRegistry} {@link Metric}s at the specified interval and sends them to the {@link com.nickrobison.trestle.metrics.backends.ITrestleMetricsBackend}
+ * Scheduled class which parses {@link MetricRegistry} {@link Metric}s at the specified interval and sends them to the {@link com.nickrobison.metrician.backends.IMetricianBackend}
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class MetricianReporter extends ScheduledReporter {
