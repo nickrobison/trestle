@@ -375,9 +375,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                                 .stream()
                                 .noneMatch(result -> {
                                     final OWLDataPropertyAssertionAxiom resultFact = df.getOWLDataPropertyAssertionAxiom(
-                                            df.getOWLDataProperty(result.getIndividual("property").asOWLNamedIndividual().getIRI()),
-                                            result.getIndividual("individual"),
-                                            result.getLiteral("object"));
+                                            df.getOWLDataProperty(result.getIndividual("property").orElseThrow(() -> new RuntimeException("Property is null")).asOWLNamedIndividual().getIRI()),
+                                            result.getIndividual("individual").orElseThrow(() -> new RuntimeException("Individual is null")),
+                                            result.getLiteral("object").orElseThrow(() -> new RuntimeException("Object is null")));
                                     return resultFact.equals(fact);
                                 }))
                         .collect(Collectors.toList());
@@ -394,7 +394,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                                     .map(OWLPropertyAssertionAxiom::getProperty)
                                     .anyMatch(property -> property.equals(existingFactValue.getProperty()));
                         })
-                        .map(result -> result.getIndividual("fact").asOWLNamedIndividual())
+                        .map(result -> result.getIndividual("fact").orElseThrow(() -> new RuntimeException("Fact is null")).asOWLNamedIndividual())
                         .collect(Collectors.toList());
                 compareTimer.stop();
 
