@@ -1233,9 +1233,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                         final @NonNull T retrievedObject = this.readTrestleObject(clazz, iri, adjustedIntersection, null);
                         return retrievedObject;
                     } catch (TrestleClassException e) {
+//            FIXME(nrobison): Rollback
                         logger.error("Unregistered class", e);
                         throw new RuntimeException(e);
                     } catch (MissingOntologyEntity e) {
+//            FIXME(nrobison): Rollback
                         logger.error("Cannot find ontology individual {}", e.getIndividual(), e);
                         throw new RuntimeException(e);
                     } finally {
@@ -1246,14 +1248,17 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final CompletableFuture<List<T>> conceptObjectsFuture = sequenceCompletableFutures(completableFutureList);
         try {
             List<T> objects = conceptObjectsFuture.get();
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
             return Optional.of(objects);
         } catch (InterruptedException e) {
+//            FIXME(nrobison): Rollback
             logger.error("Object retrieval for concept {}, interrupted", conceptID, e);
             return Optional.empty();
         } catch (ExecutionException e) {
+//            FIXME(nrobison): Rollback
             logger.error("Unable to retrieve all objects for concept {}", conceptID, e);
             return Optional.empty();
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
     }
 

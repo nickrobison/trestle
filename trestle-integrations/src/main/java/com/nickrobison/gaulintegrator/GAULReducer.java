@@ -83,6 +83,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                     .withPrefix(conf.get("reasoner.ontology.prefix"))
                     .withName(conf.get("reasoner.ontology.name"))
                     .withoutCaching()
+                    .withoutMetrics()
                     .build();
         }
 
@@ -196,7 +197,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 hasConcept = true;
                 conceptIRIs.get().forEach(concept -> {
                     final Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, concept, null, newGAULObject.getStartDate());
-                    conceptMembers.ifPresent(members -> members.forEach(matchedObjects::add));
+                    conceptMembers.ifPresent(matchedObjects::addAll);
 //                Now add the concept relations
 //                    TODO(nrobison): This feels bad.
                     reasoner.addObjectToConcept(concept, newGAULObject, ConceptRelationType.TEMPORAL, 1.0);
@@ -204,7 +205,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
             } else {
 //            If no, find objects to intersect
                 reasoner.spatialIntersectObject(newGAULObject, 0)
-                        .ifPresent(objects -> objects.forEach(matchedObjects::add));
+                        .ifPresent(matchedObjects::addAll);
 
 //                Go ahead the create the new concept
                 reasoner.addObjectToConcept(String.format("%s:concept", newGAULObject.getObjectName()), newGAULObject, ConceptRelationType.TEMPORAL, 1.0);
