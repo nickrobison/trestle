@@ -2,17 +2,18 @@ package com.nickrobison.trestle.ontology;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
-import com.nickrobison.trestle.ontology.types.TrestleResultSet;;
+import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.utils.SesameConnectionManager;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.eclipse.rdf4j.model.*;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -28,7 +29,6 @@ import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +44,8 @@ import static com.nickrobison.trestle.utils.RDF4JLiteralFactory.createLiteral;
 import static com.nickrobison.trestle.utils.RDF4JLiteralFactory.createOWLLiteral;
 import static com.nickrobison.trestle.utils.SharedOntologyFunctions.filterIndividualDataProperties;
 import static com.nickrobison.trestle.utils.SharedOntologyFunctions.getDataPropertiesFromIndividualFacts;
+
+;
 
 @NotThreadSafe
 public abstract class SesameOntology extends TransactingOntology {
@@ -259,13 +261,10 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
         this.openTransaction(false);
         try {
-            if(this.tc.get().hasStatement(individualIRI, null, null,false))
-            {
+            if (this.tc.get().hasStatement(individualIRI, null, null, false)) {
                 //this.tc.get().close();
                 return true;
-            }
-            else
-            {
+            } else {
                 //this.tc.get().close();
                 return false;
             }
@@ -293,6 +292,7 @@ public abstract class SesameOntology extends TransactingOntology {
     }
 
     protected abstract void closeDatabase(boolean drop);
+
     @Override
     public void close(boolean drop) {
         this.adminConnection.close();
@@ -527,7 +527,7 @@ public abstract class SesameOntology extends TransactingOntology {
     public abstract TrestleResultSet executeSPARQLResults(String queryString);
 
     TrestleResultSet buildResultSet(TupleQueryResult resultSet) {
-        final TrestleResultSet trestleResultSet = new TrestleResultSet(0);
+        final TrestleResultSet trestleResultSet = new TrestleResultSet(0, resultSet.getBindingNames());
         while (resultSet.hasNext()) {
             final BindingSet next = resultSet.next();
             final TrestleResult results = new TrestleResult();

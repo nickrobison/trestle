@@ -83,7 +83,6 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                     .withPrefix(conf.get("reasoner.ontology.prefix"))
                     .withName(conf.get("reasoner.ontology.name"))
                     .withoutCaching()
-                    .withoutMetrics()
                     .build();
         }
 

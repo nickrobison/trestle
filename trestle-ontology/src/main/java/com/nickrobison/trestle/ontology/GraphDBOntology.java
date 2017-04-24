@@ -37,8 +37,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.MissingResourceException;
-import java.util.Optional;
-import java.util.Set;
 
 import static com.nickrobison.trestle.utils.SharedOntologyFunctions.ontologytoIS;
 import static org.eclipse.rdf4j.model.vocabulary.SESAME.WILDCARD;
@@ -226,31 +224,6 @@ public class GraphDBOntology extends SesameOntology {
             this.commitTransaction(false);
         }
         return results;
-    }
-
-    TrestleResultSet buildResultSet(TupleQueryResult resultSet) {
-        final TrestleResultSet trestleResultSet = new TrestleResultSet(0, resultSet.getBindingNames());
-        while (resultSet.hasNext()) {
-            final BindingSet next = resultSet.next();
-            final TrestleResult results = new TrestleResult();
-            final Set<String> varNames = next.getBindingNames();
-            varNames.forEach(varName -> {
-                final Binding binding = next.getBinding(varName);
-                if (binding != null) {
-                    final Value value = binding.getValue();
-//                FIXME(nrobison): This is broken, figure out how to get the correct subtypes
-                    if (value instanceof Literal) {
-                        final Optional<OWLLiteral> owlLiteral = createOWLLiteral(Literal.class.cast(value));
-                        owlLiteral.ifPresent(owlLiteral1 -> results.addValue(varName, owlLiteral1));
-                    } else {
-                        results.addValue(varName, df.getOWLNamedIndividual(IRI.create(value.stringValue())));
-                    }
-                }
-            });
-            trestleResultSet.addResult(results);
-        }
-        trestleResultSet.updateRowCount();
-        return trestleResultSet;
     }
 
     @Override
