@@ -2,7 +2,7 @@
  * Created by nrobison on 3/16/17.
  */
 import {Component, AfterViewInit, ElementRef, ViewChild, Input, OnChanges, SimpleChange} from "@angular/core";
-import {Selection, select, BaseType} from "d3-selection";
+import {Selection, select, event, BaseType} from "d3-selection";
 import {ScaleOrdinal, schemeCategory20, scaleOrdinal} from "d3-scale";
 import {
     SimulationNodeDatum,
@@ -66,6 +66,8 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
     private links: Selection<BaseType, SimulationLinkDatum<IFactNode>, any, any>;
     private nodes: Selection<any, IFactNode, any, any>;
     private simulation: Simulation<IFactNode, any>;
+    private nodeSize: number;
+    private nodeSizeLarge: number;
 
     constructor() {
     }
@@ -80,7 +82,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         }
     }
 
-    ngOnChanges(changes: {[propKey: string]: SimpleChange}): void {
+    ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
         let configChange = changes["config"];
         if (!configChange.isFirstChange() && (configChange.currentValue !== configChange.previousValue)) {
             console.debug("Config changed", configChange);
@@ -99,6 +101,8 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         console.debug("offsetWidth", this.htmlElement.offsetWidth);
         this.width = this.htmlElement.offsetWidth - this.margin.left - this.margin.right;
         this.height = 500 - this.margin.top - this.margin.bottom;
+        this.nodeSize = this.width / 100;
+        this.nodeSizeLarge = this.width / 50;
         console.debug("Creating D3 graph with width/height", this.width + "/" + this.height);
         this.svg = this.host.html("")
             .append("svg")
@@ -114,7 +118,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
     private update(data: IGraphLayout): void {
         console.debug("Data in update function", data);
         let force = forceManyBody();
-        force.strength(-200);
+        force.strength(-500);
         this.simulation = forceSimulation<IFactNode>()
             .force("link", forceLink().id((d: IFactNode) => d.id))
             .force("charge", force)
@@ -127,20 +131,38 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             .append("line")
             .attr("class", "link");
 
-        let nodeData = this.svg.selectAll(".node")
-            .data(data.nodes, (d: IFactNode) => d.id);
-
-        this.nodes = nodeData.enter()
-            .append("circle")
+        // let nodeData = this.svg.selectAll(".node")
+        this.nodes = this.svg.selectAll(".node")
+            .data(data.nodes, (d: IFactNode) => d.id)
+            .enter()
+            .append("g")
             .attr("class", "node")
-            .style("fill", (d) => this.color(d.group.toString(10)));
+            .on("click", this.nodeClick)
+            .on("mouseover", this.nodeMouseOver)
+            .on("mouseout", this.nodeMouseOut);
+            // .merge(this.nodes);
+        // .on("click", (d: any) => console.debug("clicked", d));
 
         this.nodes
-            .append("title")
-            .text((d: IFactNode) => d.id);
+            .append("circle")
+            .attr("r", this.nodeSize)
+            .style("fill", (d) => this.color(d.group.toString(10)));
 
-        //    Click handler
-        this.nodes.on("click", (d: any) => console.debug("clicked", d));
+        // this.nodes
+        //     .enter()
+        // this.nodes
+        this.nodes
+            .append("text")
+            .attr("x", 12)
+            .attr("dy", ".35em")
+            .text((d: IFactNode) => {
+                // Pull out the name from the ID string
+                let test = d.id.match(/@(.*?):/g);
+                if (test !== null) {
+                    return test[0].replace("@", "").replace(":", "");
+                }
+                return "";
+            });
 
         //    Legend
         let legend = this.svg.selectAll(".legend")
@@ -152,14 +174,14 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
 
         legend.append("circle")
             .attr("cx", this.width - 18)
-            .attr("r", this.width / 100)
-            .attr("cy", this.width / 100)
+            .attr("r", this.nodeSize)
+            .attr("cy", this.nodeSize)
             .style("fill", this.color);
 
         legend
             .append("text")
-            .attr("x", this.width - (this.width / 100) * 2 - 20)
-            .attr("y", this.width / 100)
+            .attr("x", this.width - (this.nodeSize) * 2 - 20)
+            .attr("y", this.nodeSize)
             .attr("dy", "0.35em")
             .style("text-anchor", "end")
             .text((d) => IndividualGraph.parseColorGroup(d));
@@ -173,13 +195,35 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         (this.simulation.force("link") as any).links(data.links);
 
         linkData.exit().remove();
-        nodeData.exit().remove();
+        this.nodes.exit().remove();
     }
 
+    private nodeClick = (d: IFactNode): void => {
+        console.debug("Clicked", d);
+    };
+
+    private nodeMouseOver = (): void => {
+        select(event.currentTarget).select("circle")
+            .transition()
+            .duration(750)
+            .attr("r", this.nodeSizeLarge);
+    };
+
+    private nodeMouseOut = (): void => {
+        select(event.currentTarget)
+            .select("circle")
+            .transition()
+            .duration(750)
+            .attr("r", this.nodeSize);
+    };
+
     private forceTick = (): void => {
-        this.nodes.attr("r", this.width / 75)
-            .attr("cx", (d) => d.x)
-            .attr("cy", (d) => d.y);
+        this.nodes
+        // .attr("r", this.nodeSize)
+        // .attr("cx", (d) => d.x)
+        // .attr("cy", (d) => d.y)
+            .attr("transform", (d) => "translate(" + d.x + "," + d.y + ")");
+
 
         this.links
             .attr("x1", (d: any) => d.source.x)
@@ -219,12 +263,12 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             };
             this.layout.nodes.push(factNode);
             this.layout.links.push({
-                    source: individualNode,
-                    target: factNode
-                });
+                source: individualNode,
+                target: factNode
+            });
         });
 
-    //    Relations
+        //    Relations
         individual.relations.forEach(relation => {
             let relationNode = {
                 id: relation.object,
