@@ -101,7 +101,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         console.debug("offsetWidth", this.htmlElement.offsetWidth);
         this.width = this.htmlElement.offsetWidth - this.margin.left - this.margin.right;
         this.height = 500 - this.margin.top - this.margin.bottom;
-        this.nodeSize = this.width / 100;
+        this.nodeSize = this.width / 75;
         this.nodeSizeLarge = this.width / 50;
         console.debug("Creating D3 graph with width/height", this.width + "/" + this.height);
         this.svg = this.host.html("")
@@ -118,7 +118,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
     private update(data: IGraphLayout): void {
         console.debug("Data in update function", data);
         let force = forceManyBody();
-        force.strength(-500);
+        force.strength(-1000);
         this.simulation = forceSimulation<IFactNode>()
             .force("link", forceLink().id((d: IFactNode) => d.id))
             .force("charge", force)
@@ -131,16 +131,18 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             .append("line")
             .attr("class", "link");
 
-        // let nodeData = this.svg.selectAll(".node")
-        this.nodes = this.svg.selectAll(".node")
-            .data(data.nodes, (d: IFactNode) => d.id)
+        // this.nodes = this.svg.selectAll(".node")
+        let nodeData = this.svg.selectAll(".node")
+            .data(data.nodes, (d: IFactNode) => d.id);
+
+        this.nodes = nodeData
             .enter()
             .append("g")
             .attr("class", "node")
             .on("click", this.nodeClick)
             .on("mouseover", this.nodeMouseOver)
             .on("mouseout", this.nodeMouseOut);
-            // .merge(this.nodes);
+        // .merge(this.nodes);
         // .on("click", (d: any) => console.debug("clicked", d));
 
         this.nodes
@@ -153,7 +155,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         // this.nodes
         this.nodes
             .append("text")
-            .attr("x", 12)
+            .attr("x", 16)
             .attr("dy", ".35em")
             .text((d: IFactNode) => {
                 // Pull out the name from the ID string
@@ -170,7 +172,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             .enter()
             .append("g")
             .attr("class", "legend")
-            .attr("transform", (d, i) => "translate(0," + (i * ((this.width / 100) * 2) + 10) + ")");
+            .attr("transform", (d, i) => "translate(0," + (i * ((this.nodeSize) * 2) + 20) + ")");
 
         legend.append("circle")
             .attr("cx", this.width - 18)
@@ -180,7 +182,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
 
         legend
             .append("text")
-            .attr("x", this.width - (this.nodeSize) * 2 - 20)
+            .attr("x", this.width - (this.nodeSize) * 2 - 12)
             .attr("y", this.nodeSize)
             .attr("dy", "0.35em")
             .style("text-anchor", "end")
@@ -195,7 +197,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         (this.simulation.force("link") as any).links(data.links);
 
         linkData.exit().remove();
-        this.nodes.exit().remove();
+        nodeData.exit().remove();
     }
 
     private nodeClick = (d: IFactNode): void => {
