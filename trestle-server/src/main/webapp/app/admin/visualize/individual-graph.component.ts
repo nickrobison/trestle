@@ -40,6 +40,8 @@ interface IGraphLayout {
 
 interface IFactNode extends SimulationNodeDatum {
     id: string;
+    name: string;
+    valid: boolean;
     group: number;
 }
 
@@ -131,7 +133,6 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             .append("line")
             .attr("class", "link");
 
-        // this.nodes = this.svg.selectAll(".node")
         let nodeData = this.svg.selectAll(".node")
             .data(data.nodes, (d: IFactNode) => d.id);
 
@@ -142,29 +143,26 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             .on("click", this.nodeClick)
             .on("mouseover", this.nodeMouseOver)
             .on("mouseout", this.nodeMouseOut);
-        // .merge(this.nodes);
-        // .on("click", (d: any) => console.debug("clicked", d));
 
         this.nodes
             .append("circle")
             .attr("r", this.nodeSize)
-            .style("fill", (d) => this.color(d.group.toString(10)));
+            .style("fill", (d) => this.color(d.group.toString(10)))
+            .style("opacity", (d) => d.valid ? 1.0 : 0.5);
 
-        // this.nodes
-        //     .enter()
-        // this.nodes
         this.nodes
             .append("text")
             .attr("x", 16)
             .attr("dy", ".35em")
-            .text((d: IFactNode) => {
-                // Pull out the name from the ID string
-                let test = d.id.match(/@(.*?):/g);
-                if (test !== null) {
-                    return test[0].replace("@", "").replace(":", "");
-                }
-                return "";
-            });
+            .text(d => d.name);
+            // .text((d: IFactNode) => {
+            //     // Pull out the name from the ID string
+            //     let test = d.id.match(/@(.*?):/g);
+            //     if (test !== null) {
+            //         return test[0].replace("@", "").replace(":", "");
+            //     }
+            //     return "";
+            // });
 
         //    Legend
         let legend = this.svg.selectAll(".legend")
@@ -221,9 +219,6 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
 
     private forceTick = (): void => {
         this.nodes
-        // .attr("r", this.nodeSize)
-        // .attr("cx", (d) => d.x)
-        // .attr("cy", (d) => d.y)
             .attr("transform", (d) => "translate(" + d.x + "," + d.y + ")");
 
 
@@ -243,11 +238,15 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         //    Add the individual as node 0
         let individualNode = {
             id: individual.individualID,
+            name: IndividualGraph.parseIndividualID(individual.individualID),
+            valid: true,
             group: NodeType.INDIVIDUAL
         };
 
         let individualTemporal = {
             id: individual.individualTemporal.validID,
+            name: "individual-temporal",
+            valid: true,
             group: NodeType.VTEMPORAL
         };
 
@@ -261,6 +260,8 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         individual.facts.forEach(fact => {
             let factNode = {
                 id: fact.identifier,
+                name: fact.name,
+                valid: fact.validTemporal.validTo.toString() == "" && fact.databaseTemporal.validTo.toString() == "",
                 group: NodeType.FACT
             };
             this.layout.nodes.push(factNode);
@@ -274,6 +275,8 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         individual.relations.forEach(relation => {
             let relationNode = {
                 id: relation.object,
+                name: relation.type.toString(),
+                valid: true,
                 group: NodeType.RELATION
             };
             this.layout.nodes.push(relationNode);
@@ -299,5 +302,13 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             default:
                 return "unknown";
         }
+    }
+
+    private static parseIndividualID(id: string): string {
+        let matches = id.match(/(#)(.*)/g);
+        if (matches) {
+            return matches[0].replace("#", "");
+        }
+        return id;
     }
 }

@@ -82,7 +82,7 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
 
         //    Add the data
         let mainItems = this.svg.selectAll(".fact")
-            .data(this.data.facts, (d: ITrestleFact) => d.identifier);
+            .data(this.data.facts.filter((f: ITrestleFact) => f.databaseTemporal.validTo.toString() == ""), (d: ITrestleFact) => d.identifier);
 
         mainItems
             .enter()
@@ -98,7 +98,7 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
 
         // Labels
         let mainLabels = this.svg.selectAll(".mainLabels")
-            .data(this.data.facts, (d: ITrestleFact) => d.identifier);
+            .data(this.data.facts.filter((f) => f.databaseTemporal.validTo.toString() == ""), (d: ITrestleFact) => d.identifier);
 
         mainLabels
             .enter()
