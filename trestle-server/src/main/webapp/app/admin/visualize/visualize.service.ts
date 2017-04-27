@@ -31,7 +31,7 @@ export interface ITrestleTemporal {
 export interface ITrestleRelation {
     subject: string;
     object: string;
-    type: TrestleRelationType;
+    relation: TrestleRelationType;
 }
 
 export enum TrestleRelationType {

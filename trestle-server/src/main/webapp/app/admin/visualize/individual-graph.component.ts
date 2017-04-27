@@ -275,7 +275,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         individual.relations.forEach(relation => {
             let relationNode = {
                 id: relation.object,
-                name: relation.type.toString(),
+                name: relation.relation.toString(),
                 valid: true,
                 group: NodeType.RELATION
             };
