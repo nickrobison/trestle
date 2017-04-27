@@ -5,6 +5,7 @@ import "@angular/platform-browser-dynamic";
 import "@angular/core";
 import "@angular/http";
 import "@angular/forms";
+import "@angular/animations";
 import "hammerjs";
 import "@angular/material";
 import "materialize-css";

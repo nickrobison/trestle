@@ -23,19 +23,10 @@ var options = {
                 test: /\.html$/,
                 loader: "html-loader"
             },
-            // {
-            //   test: /\.(png|jpe?g)$/,
-            //     loader: "url-loader"
-            // },
             {
                 test: /\.(png|jpe?g|gif|svg|woff|woff2|ttf|eot|ico)$/,
                 loader: "file-loader?name=assets/[name].[hash].[ext]"
             },
-            // {
-            //     test: /\.css$/,
-            //     exclude: helper.root("src/main/webapp/", "app"),
-            //     loader: ExtractTextPlugin.extract(["style-loader", "css-loader?sourceMap"])
-            // },
             {
                 test: /\.css$/,
                 loader: "raw-loader",
