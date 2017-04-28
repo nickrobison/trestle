@@ -10,8 +10,6 @@ public class NoOpHistogram extends Histogram {
 
     /**
      * Creates a new {@link Histogram} with the given reservoir.
-     *
-     * @param reservoir the reservoir to create a histogram from
      */
     public NoOpHistogram() {
         super(new NoOpReservoir());
