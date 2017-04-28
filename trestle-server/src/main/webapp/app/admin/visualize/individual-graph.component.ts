@@ -13,6 +13,7 @@ import {
     SimulationLinkDatum, Simulation
 } from "d3-force";
 import {ITrestleIndividual} from "./visualize.service";
+import {MdSlideToggleChange} from "@angular/material";
 
 export interface IIndividualConfig {
     data: ITrestleIndividual;
@@ -21,7 +22,6 @@ export interface IIndividualConfig {
 const enum NodeType {
     INDIVIDUAL,
     VTEMPORAL,
-    DTEMPORAL,
     FACT,
     RELATION
 }
@@ -55,6 +55,11 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
 
     @ViewChild("container") element: ElementRef;
     @Input() config: IIndividualConfig;
+
+    factToggleName = "fact-toggle";
+    relationToggleName = "relation-toggle";
+    graphFacts = true;
+    graphRelations = true;
 
 
     private htmlElement: HTMLElement;
@@ -155,14 +160,6 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             .attr("x", 16)
             .attr("dy", ".35em")
             .text(d => d.name);
-            // .text((d: IFactNode) => {
-            //     // Pull out the name from the ID string
-            //     let test = d.id.match(/@(.*?):/g);
-            //     if (test !== null) {
-            //         return test[0].replace("@", "").replace(":", "");
-            //     }
-            //     return "";
-            // });
 
         //    Legend
         let legend = this.svg.selectAll(".legend")
@@ -257,34 +254,60 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             target: individualTemporal
         });
 
-        individual.facts.forEach(fact => {
-            let factNode = {
-                id: fact.identifier,
-                name: fact.name,
-                valid: fact.validTemporal.validTo.toString() == "" && fact.databaseTemporal.validTo.toString() == "",
-                group: NodeType.FACT
-            };
-            this.layout.nodes.push(factNode);
-            this.layout.links.push({
-                source: individualNode,
-                target: factNode
+        if (this.graphFacts) {
+            individual.facts.forEach(fact => {
+                let factNode = {
+                    id: fact.identifier,
+                    name: fact.name,
+                    valid: fact.validTemporal.validTo.toString() == "" && fact.databaseTemporal.validTo.toString() == "",
+                    group: NodeType.FACT
+                };
+                this.layout.nodes.push(factNode);
+                this.layout.links.push({
+                    source: individualNode,
+                    target: factNode
+                });
             });
-        });
+        }
 
         //    Relations
-        individual.relations.forEach(relation => {
-            let relationNode = {
-                id: relation.object,
-                name: relation.relation.toString(),
-                valid: true,
-                group: NodeType.RELATION
-            };
-            this.layout.nodes.push(relationNode);
-            this.layout.links.push({
-                source: individualNode,
-                target: relationNode
+        if (this.graphRelations) {
+            individual.relations.forEach(relation => {
+                let relationNode = {
+                    id: relation.object,
+                    name: relation.relation.toString(),
+                    valid: true,
+                    group: NodeType.RELATION
+                };
+                this.layout.nodes.push(relationNode);
+                this.layout.links.push({
+                    source: individualNode,
+                    target: relationNode
+                });
             });
-        });
+        }
+    }
+
+    private changeGraphMembers(event: MdSlideToggleChange): void {
+        if (event.source.id == this.factToggleName) {
+            console.debug("Graph facts?", event.checked);
+            this.graphFacts = event.checked;
+            this.buildGraph(this.config.data);
+            this.update({
+                nodes: [],
+                links: [],
+            });
+            this.update(this.layout);
+        } else if (event.source.id = this.relationToggleName) {
+            console.debug("Graph relations?", event.checked);
+            this.graphRelations = event.checked;
+            this.buildGraph(this.config.data);
+            this.update({
+                nodes: [],
+                links: [],
+            });
+            this.update(this.layout);
+        }
     }
 
     private static parseColorGroup(group: string): string {
@@ -294,10 +317,8 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             case 1:
                 return "Valid Temporal";
             case 2:
-                return "Database Temporal";
-            case 3:
                 return "Fact";
-            case 4:
+            case 3:
                 return "Relation";
             default:
                 return "unknown";
