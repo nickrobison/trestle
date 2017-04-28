@@ -71,11 +71,21 @@ public class TrestleBuilder {
     /**
      * Setup Trestle with specific ontology
      * If no ontology is specified, it loads the vendored ontology
-     * @param iri - IRI of ontology to load
+     * @param iri - {@link IRI} of ontology to load
      * @return - TrestleBuilder
      */
     public TrestleBuilder withOntology(IRI iri) {
         this.ontologyIRI = Optional.of(iri);
+        return this;
+    }
+
+    /**
+     * Setup Trestle with the specified ontology
+     * @param iriString - String location of ontology to load
+     * @return - TrestleBuilder
+     */
+    public TrestleBuilder withOntology(String iriString) {
+        this.ontologyIRI = Optional.of(IRI.create(iriString));
         return this;
     }
 

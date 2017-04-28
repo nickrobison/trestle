@@ -3,10 +3,10 @@
         <button md-raised-button class="top-layout">TRESTLE</button>
     </md-sidenav>
     <md-toolbar color="primary" class="top-layout z-depth-2">
-        <button md-button hide-gt-sm (click)="sidenav.toggle()">
+        <button md-button hide-gt-sm>
+        <!--<button md-button hide-gt-sm (click)="sidenav.toggle()">-->
             <i class="material-icons app-toolbar-menu">menu</i>
         </button>
-        <!--<button md-raised-button>Trestle</button>-->
         <span class="toolbar-spacer"></span>
         <a md-button routerLink="/dashboard" aria-label="dashboard link">DASHBOARD</a>
         <div *ngIf="userLoggedIn | async">
@@ -19,10 +19,6 @@
             </button>
         </div>
         <img class="img-circle" *ngIf="userLoggedIn | async" [src]="getGravatarURL()">
-        <button md-button class="toolbar-button" aria-label="Notifications">
-            <i class="material-icons">notifications</i>
-            <!--<span class="notifications-label">0</span>-->
-        </button>
         <button md-button class="toolbar-button" *ngIf="!(userLoggedIn | async)" routerLink="/login" aria-label="Login">
             <i class="material-icons">input</i>
         </button>

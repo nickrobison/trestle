@@ -7,7 +7,8 @@ import {Http, URLSearchParams, Response} from "@angular/http";
 import {tokenNotExpired, JwtHelper} from "angular2-jwt";
 import {Observable} from "rxjs";
 
-const _key: string = "id_token";
+// const _key: string = "id_token";
+const _key: string = "token";
 
 export enum Privileges {
     USER = 1,
@@ -57,11 +58,13 @@ export class AuthService {
     }
 
     public logout(): void {
-        console.debug("Logging out");
-        this.http.post("/auth/logout", null);
-        localStorage.removeItem(_key);
-        console.log("Logged out user");
-        this.router.navigate(["/login"]);
+        if (this.loggedIn()) {
+            console.debug("Logging out");
+            this.http.post("/auth/logout", null);
+            localStorage.removeItem(_key);
+            console.log("Logged out user");
+            this.router.navigate(["/login"]);
+        }
     }
 
     public loggedIn(): boolean {

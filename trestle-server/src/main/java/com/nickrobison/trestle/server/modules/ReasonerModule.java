@@ -2,6 +2,7 @@ package com.nickrobison.trestle.server.modules;
 
 import com.nickrobison.trestle.TrestleBuilder;
 import com.nickrobison.trestle.TrestleReasoner;
+import com.nickrobison.trestle.server.config.TrestleReasonerConfiguration;
 import com.nickrobison.trestle.server.config.TrestleServerConfiguration;
 import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
@@ -19,11 +20,11 @@ public class ReasonerModule implements Managed {
     private static final Logger logger = LoggerFactory.getLogger(ReasonerModule.class);
 
     private TrestleReasoner reasoner;
-    private final TrestleServerConfiguration configuration;
+    private final TrestleReasonerConfiguration configuration;
 
     @Inject
     public ReasonerModule(TrestleServerConfiguration configuration) {
-        this.configuration = configuration;
+        this.configuration = configuration.getReasonerConfig();
     }
 
     @Inject
@@ -40,6 +41,7 @@ public class ReasonerModule implements Managed {
                         configuration.getPassword())
                 .withName(configuration.getOntology())
                 .withPrefix(configuration.getPrefix())
+                .withOntology(configuration.getLocation())
                 .withoutCaching()
                 .build();
 

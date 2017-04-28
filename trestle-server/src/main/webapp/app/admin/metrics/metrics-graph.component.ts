@@ -40,7 +40,7 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
     private x: ScaleTime<number, number>;
     private visible: Map<string, boolean> = new Map();
 
-    construct() {
+    constructor() {
     }
 
     ngAfterViewInit(): void {

@@ -1,43 +1,55 @@
-<div class="section">
-    <h4>Search for Individual</h4>
-    <form (ngSubmit)="onSubmit()" class="search-form">
-        <md-input-container class="search-field">
-            <input type="text" placeholder="Search for Individual" mdInput [formControl]="individualName"
-                   [mdAutocomplete]="auto">
-        </md-input-container>
+<div class="container">
+    <div class="section">
+        <h4>Search for Individual</h4>
+        <form (ngSubmit)="onSubmit()" class="search-form">
+            <md-input-container class="search-field">
+                <input type="text" placeholder="Search for Individual" mdInput [formControl]="individualName"
+                       [mdAutocomplete]="auto">
+            </md-input-container>
 
-        <md-autocomplete class="search-field" #auto="mdAutocomplete">
-            <md-option *ngFor="let option of options | async" [value]="option">
-                {{displayFn(option)}}
-            </md-option>
-        </md-autocomplete>
-        <button md-raised-button type="submit">submit</button>
-    </form>
-</div>
-<div class="section" style="width: 100%">
-    <individual-graph [config]="{data: individual}"></individual-graph>
-</div>
-<div class="section" *ngIf="individual">
-    <h4>Individual: {{individual.individualID}}</h4>
-    <table class="responsive-table highlight">
-        <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Value</th>
-            <th>From</th>
-            <th>To</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let fact of individual.facts">
-            <td>{{fact.name}}</td>
-            <td>{{fact.type}}</td>
-            <td class="red lighten-2" *ngIf="fact.value.length >= 200" (click)="openValueModal(fact)">...</td>
-            <td *ngIf="fact.value.length < 200">{{fact.value}}</td>
-            <td>{{fact.validTemporal.validFrom}}</td>
-            <td>{{fact.validTemporal.validTo}}</td>
-        </tr>
-        </tbody>
-    </table>
+            <md-autocomplete class="search-field" #auto="mdAutocomplete">
+                <md-option *ngFor="let option of options | async" [value]="option">
+                    {{displayFn(option)}}
+                </md-option>
+            </md-autocomplete>
+            <button md-raised-button type="submit">submit</button>
+        </form>
+    </div>
+    <div class="section" style="width: 100%">
+        <individual-graph [config]="{data: individual}"></individual-graph>
+    </div>
+    <div class="section">
+        <md-tab-group>
+            <md-tab label="Fact History">
+                <fact-history [data]="individual" [minTime]="minTime" [maxTime]="maxTime" [graphHeight]="600"></fact-history>
+            </md-tab>
+            <md-tab label="Object History">
+                Objects go here
+            </md-tab>
+        </md-tab-group>
+    </div>
+    <div class="section" *ngIf="individual">
+        <h4>Individual: {{individual.individualID}}</h4>
+        <table class="responsive-table highlight">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Value</th>
+                <th>From</th>
+                <th>To</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let fact of individual.facts">
+                <td>{{fact.name}}</td>
+                <td>{{fact.type}}</td>
+                <td class="red lighten-2" *ngIf="fact.value.length >= 200" (click)="openValueModal(fact)">...</td>
+                <td *ngIf="fact.value.length < 200">{{fact.value}}</td>
+                <td>{{fact.validTemporal.validFrom}}</td>
+                <td>{{fact.validTemporal.validTo}}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
 </div>

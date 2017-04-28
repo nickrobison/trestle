@@ -6,6 +6,13 @@ import {AuthHttp} from "angular2-jwt";
 import {Observable} from "rxjs";
 import {URLSearchParams, Response} from "@angular/http";
 
+export interface ITrestleIndividual {
+    individualID: string;
+    individualTemporal: ITrestleTemporal;
+    facts: Array<ITrestleFact>;
+    relations: Array<ITrestleRelation>;
+}
+
 export interface ITrestleFact {
     identifier: string
     name: string;
@@ -13,20 +20,36 @@ export interface ITrestleFact {
     value: string;
     databaseTemporal: ITrestleTemporal;
     validTemporal: ITrestleTemporal;
-
-}
-
-export interface ITrestleIndividual {
-    individualID: string;
-    individualTemporal: ITrestleTemporal;
-    facts: Array<ITrestleFact>;
-
 }
 
 export interface ITrestleTemporal {
     validID: string;
     validFrom: Date;
     validTo?: Date;
+}
+
+export interface ITrestleRelation {
+    subject: string;
+    object: string;
+    relation: TrestleRelationType;
+}
+
+export enum TrestleRelationType {
+    // Spatial
+    CONTAINS,
+    COVERS,
+    DISJOINT,
+    EQUALS,
+    INSIDE,
+    MEETS,
+    SPATIAL_OVERLAPS,
+    // Temporal
+    AFTER,
+    BEFORE,
+    BEGINS,
+    DURING,
+    ENDS,
+    TEMPORAL_OVERLAPS
 }
 
 @Injectable()
