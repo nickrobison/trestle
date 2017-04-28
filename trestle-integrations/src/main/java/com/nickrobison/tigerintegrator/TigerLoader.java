@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.Temporal;
@@ -87,10 +88,14 @@ public class TigerLoader {
             for(int count=0; count<tigerObjs.size(); count++)
             {
                 if(count%1000==0)
-                    System.err.println("About to write object number "+count);
+                    logger.info("Writing trestle object {}", +count);
+//                    System.err.println("About to write object number "+count);
                 TigerCountyObject tigerObj = tigerObjs.get(count);
                 try {
+                    final Instant start = Instant.now();
                     reasoner.writeTrestleObject(tigerObj,startTemporal,null);
+                    final Instant end = Instant.now();
+                    logger.info("Writing object {} took {} ms", count, Duration.between(start, end).toMillis());
                 } catch (TrestleClassException e) {
                     e.printStackTrace();
                     System.exit(-1);

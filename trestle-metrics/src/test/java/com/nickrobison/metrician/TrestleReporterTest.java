@@ -1,5 +1,7 @@
 package com.nickrobison.metrician;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Timer;
 import com.codahale.metrics.annotation.Gauge;
 import com.codahale.metrics.annotation.Metered;
 import com.google.inject.Guice;
@@ -117,6 +119,24 @@ public class TrestleReporterTest {
         Thread.sleep(2000);
         reporter.report();
         assertEquals(17, metrician.getRegistry().counter("com.nickrobison.metrician.TrestleReporterTest$TestMetricsClass.test-reporter-counter").getCount(), "Should be incremented correctly");
+    }
+
+    @Test
+    public void testNoOp() throws InterruptedException {
+        final Metrician noop = new MetricianNoop();
+        final Counter counter = noop.registerCounter("test-counter");
+        counter.inc();
+        counter.inc();
+        counter.inc(5);
+        counter.dec(2);
+        assertEquals(0, counter.getCount(), "Should have not increments");
+        final Timer timer = noop.registerTimer("noop-timer");
+        final Timer.Context time = timer.time();
+        Thread.sleep(100);
+        time.stop();
+        assertAll(() -> assertEquals(0, timer.getCount(), "Should never be called"),
+                () -> assertEquals(0, timer.getSnapshot().get75thPercentile(), "Should have 0 snapshot"));
+
     }
 
 

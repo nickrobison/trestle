@@ -1,101 +1,56 @@
 package com.nickrobison.metrician;
 
-import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SharedMetricRegistries;
-import com.codahale.metrics.annotation.Gauge;
-import com.nickrobison.metrician.backends.IMetricianBackend;
+import com.codahale.metrics.Timer;
 import com.nickrobison.metrician.backends.MetricianExportedValue;
-import com.nickrobison.trestle.annotations.metrics.Metriced;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.io.File;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Created by nrobison on 3/16/17.
+ * Created by nrobison on 4/14/17.
  */
-@Metriced
-public class Metrician {
-    private static final Logger logger = LoggerFactory.getLogger(Metrician.class);
+public interface Metrician {
+    void shutdown();
 
-    private final MetricRegistry registry;
-    private final BlockingQueue<MetricianReporter.DataAccumulator> dataQueue;
-    private final MetricianReporter metricianReporter;
-    private final IMetricianBackend metricsBackend;
-    private final JVMMetrics jvmMetrics;
-    private final Config config;
-    private final long updatePeriod;
+    void shutdown(@Nullable File exportFile);
 
-    @Inject
-    public Metrician(MetricRegistry registry,
-                     BlockingQueue<MetricianReporter.DataAccumulator> dataqueue,
-                     IMetricianBackend backend,
-                     JVMMetrics jvmMetrics) {
-        logger.info("Initializing Trestle Metrician");
-        config = ConfigFactory.load().getConfig("trestle.metrics");
-        updatePeriod = config.getLong("period");
-        logger.info("Updating registry every {} ms.", updatePeriod);
-        this.registry = registry;
-        this.dataQueue = dataqueue;
-        metricsBackend = backend;
-        final MetricsDecomposer metricsDecomposer = new MetricsDecomposer(new HashMap<>(), new ArrayList<>());
-        final MetricsListener metricsListener = new MetricsListener(Optional.empty(), new HashMap<>(), new HashMap<>(), new ArrayList<>(), false, metricsDecomposer, registry, MetricFilter.ALL, this.metricsBackend);
-        metricianReporter = new MetricianReporter(registry, dataQueue, Optional.empty(), metricsDecomposer, MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
-        this.jvmMetrics = jvmMetrics;
-        this.metricianReporter.start(updatePeriod, TimeUnit.MILLISECONDS);
-    }
+    void exportData(File exportFile);
 
-    public void shutdown() {
-        logger.info("Stopping metrics reporting");
-        this.metricianReporter.stop();
-        shutdown(null);
-    }
+    List<MetricianExportedValue> exportMetrics(@Nullable List<String> metrics, Long start, @Nullable Long end);
 
-    public void shutdown(@Nullable File exportFile) {
-        logger.info("Shutting down Trestle Metrician");
-        SharedMetricRegistries.clear();
-        metricsBackend.shutdown(exportFile);
-    }
+    MetricianReporter getReporter();
 
-    public void exportData(File exportFile) {
-        logger.info("Exporting metrics data to {}", exportFile);
-        metricsBackend.exportData(exportFile);
-    }
+    MetricRegistry getRegistry();
 
-    public List<MetricianExportedValue> exportMetrics(@Nullable List<String> metrics, Long start, @Nullable Long end) {
-        return this.metricsBackend.exportMetrics(metrics, start, end);
-    }
+    JVMMetrics getJvmMetrics();
 
-    public MetricianReporter getReporter() {
-        return this.metricianReporter;
-    }
+    MetricianHeader getMetricsHeader();
 
-    public MetricRegistry getRegistry() {
-        return this.registry;
-    }
+    Map<Long, Object> getMetricValues(String metricID, Long start, @Nullable Long end);
 
-    public JVMMetrics getJvmMetrics() {
-        return this.jvmMetrics;
-    }
+    /**
+     * Register a {@link Counter} with the provided absolute name
+     * @param name - Absolute name to use for Counter
+     * @return - {@link Counter}
+     */
+    Timer registerTimer(String name);
 
-    public MetricianHeader getMetricsHeader() {
-        return new MetricianHeader(getJvmMetrics().currentUptime(), getJvmMetrics().startTime(), this.updatePeriod, this.metricsBackend.getDecomposedMetrics());
-    }
+    /**
+     * Register a {@link Counter} with the provided absolute name
+     * @param name - Absolute name to use for counter
+     * @return - {@link Counter}
+     */
+    Counter registerCounter(String name);
 
-    public Map<Long, Object> getMetricValues(String metricID, Long start, @Nullable Long end) {
-        return this.metricsBackend.getMetricsValues(metricID, start, end);
-    }
-
-    @Gauge(name = "data-queue-length")
-    private int getDataQueueLength() {
-        return this.dataQueue.size();
-    }
+    /**
+     * Register a {@link Histogram} with the provided absolute name
+     * @param name - Absolute name to use for Histogram
+     * @return - {@link Histogram}
+     */
+    Histogram registerHistogram(String name);
 }

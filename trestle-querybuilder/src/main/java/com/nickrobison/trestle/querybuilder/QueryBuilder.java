@@ -537,11 +537,16 @@ public class QueryBuilder {
 
     /**
      * Update the ending value of an interval, provided the interval is continuing
-     * @param individual - {@link OWLNamedIndividual} of Interval_Object to update
      * @param temporal - {@link OffsetDateTime} of value to use
+     * @param individual - {@link OWLNamedIndividual} of Interval_Object to update
      * @return - SPARQL Query String
      */
-    public String buildUpdateUnboundedTemporal(OWLNamedIndividual individual, OffsetDateTime temporal) {
+    public String buildUpdateUnboundedTemporal(OffsetDateTime temporal, OWLNamedIndividual... individual) {
+        final String individualValues = Arrays.stream(individual)
+                .map(this::getFullIRIString)
+                .map(ind -> String.format("<%s>", ind))
+                .collect(Collectors.joining(" "));
+
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText(String.format("INSERT {" +
                 "?m trestle:valid_to ?newValue^^xsd:dateTime} " +
@@ -549,7 +554,8 @@ public class QueryBuilder {
 //                "?m trestle:valid_time ?t . " +
                 "OPTIONAL{?m trestle:valid_to ?vt} . " +
                 "?m rdf:type trestle:Interval_Object ." +
-                "FILTER(?m = <%s> && !bound(?vt))}", getFullIRIString(individual)));
+                "VALUES ?m {%s} . " +
+                "FILTER(!bound(?vt))}", individualValues));
 
         ps.setLiteral("newValue", temporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 

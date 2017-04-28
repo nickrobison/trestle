@@ -70,6 +70,7 @@ public class VisualizationResource {
 //        Build a simplified JSON implementation
         final ObjectNode individualNode = mapper.createObjectNode();
         final ArrayNode factArrayNode = mapper.createArrayNode();
+        final ArrayNode relationArrayNode = mapper.createArrayNode();
         individualNode.put("individualID", trestleIndividual.getIndividualID());
         trestleIndividual.getFacts()
                 .forEach(fact -> {
@@ -107,6 +108,15 @@ public class VisualizationResource {
                 });
 
         individualNode.set("facts", factArrayNode);
+//        Relationships
+        trestleIndividual.getRelations().forEach(relation -> {
+           ObjectNode relationNode = mapper.createObjectNode();
+           relationNode.put("subject", relation.getSubject());
+           relationNode.put("object", relation.getObject());
+           relationNode.put("relation", relation.getType());
+           relationArrayNode.add(relationNode);
+        });
+        individualNode.set("relations", relationArrayNode);
 //        Now the individual temporal
         final ObjectNode individualTemporal = mapper.createObjectNode();
         final TemporalObject individualTemporalObject = trestleIndividual.getExistsTemporal();

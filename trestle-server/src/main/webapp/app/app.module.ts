@@ -15,6 +15,7 @@ import {AuthService} from "./authentication.service";
 import {LoggedInGuard} from "./LoggedInGuard";
 import {AuthHttp, AuthConfig} from "angular2-jwt";
 import {PermissionsGuard} from "./PermissionsGuard";
+import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 
 @NgModule({
     imports: [
@@ -22,7 +23,8 @@ import {PermissionsGuard} from "./PermissionsGuard";
         BrowserModule,
         FormsModule,
         ReactiveFormsModule,
-        MaterialModule.forRoot(),
+        BrowserAnimationsModule,
+        MaterialModule,
         RouterModule.forRoot(AppRoutes),
         MaterializeModule
     ],

@@ -18,7 +18,7 @@ import {Observable, BehaviorSubject, Subject} from "rxjs";
 export class AdminComponent implements OnInit {
 
     public sideNavOpen: boolean;
-    private userLoggedIn: Subject<boolean> = new BehaviorSubject<boolean>(false);
+    userLoggedIn: Subject<boolean> = new BehaviorSubject<boolean>(false);
     private gravatarURL: string;
     constructor(private authService: AuthService, private router: Router) {}
 

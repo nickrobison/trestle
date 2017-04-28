@@ -106,6 +106,14 @@ public class TypeConverter {
                 return javaClass.cast(literal.getLiteral());
             }
 
+            case "float": {
+                return (@NonNull T) (Object) Float.parseFloat(literal.getLiteral());
+            }
+
+            case "java.lang.Float": {
+                return javaClass.cast(literal.parseFloat());
+            }
+
             case "double": {
                 return (@NonNull T) (Object) Double.parseDouble(literal.getLiteral());
             }
@@ -120,12 +128,10 @@ public class TypeConverter {
 
             case "java.math.BigInteger": {
                 return (@NonNull T) new BigInteger(literal.getLiteral());
-//                return javaClass.cast(literal.getLiteral());
             }
 
             case "java.math.BigDecimal": {
                 return (@NonNull T) new BigDecimal(literal.getLiteral());
-//                return javaClass.cast(literal.getLiteral());
             }
 
             default: {

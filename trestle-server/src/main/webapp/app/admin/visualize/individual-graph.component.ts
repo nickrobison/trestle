@@ -2,7 +2,7 @@
  * Created by nrobison on 3/16/17.
  */
 import {Component, AfterViewInit, ElementRef, ViewChild, Input, OnChanges, SimpleChange} from "@angular/core";
-import {Selection, select, BaseType} from "d3-selection";
+import {Selection, select, event, BaseType} from "d3-selection";
 import {ScaleOrdinal, schemeCategory20, scaleOrdinal} from "d3-scale";
 import {
     SimulationNodeDatum,
@@ -13,6 +13,7 @@ import {
     SimulationLinkDatum, Simulation
 } from "d3-force";
 import {ITrestleIndividual} from "./visualize.service";
+import {MdSlideToggleChange} from "@angular/material";
 
 export interface IIndividualConfig {
     data: ITrestleIndividual;
@@ -21,8 +22,8 @@ export interface IIndividualConfig {
 const enum NodeType {
     INDIVIDUAL,
     VTEMPORAL,
-    DTEMPORAL,
-    FACT
+    FACT,
+    RELATION
 }
 
 interface ID3Margin {
@@ -39,6 +40,8 @@ interface IGraphLayout {
 
 interface IFactNode extends SimulationNodeDatum {
     id: string;
+    name: string;
+    valid: boolean;
     group: number;
 }
 
@@ -53,6 +56,11 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
     @ViewChild("container") element: ElementRef;
     @Input() config: IIndividualConfig;
 
+    factToggleName = "fact-toggle";
+    relationToggleName = "relation-toggle";
+    graphFacts = true;
+    graphRelations = true;
+
 
     private htmlElement: HTMLElement;
     private host: Selection<any, any, any, any>;
@@ -65,6 +73,8 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
     private links: Selection<BaseType, SimulationLinkDatum<IFactNode>, any, any>;
     private nodes: Selection<any, IFactNode, any, any>;
     private simulation: Simulation<IFactNode, any>;
+    private nodeSize: number;
+    private nodeSizeLarge: number;
 
     constructor() {
     }
@@ -79,7 +89,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         }
     }
 
-    ngOnChanges(changes: {[propKey: string]: SimpleChange}): void {
+    ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
         let configChange = changes["config"];
         if (!configChange.isFirstChange() && (configChange.currentValue !== configChange.previousValue)) {
             console.debug("Config changed", configChange);
@@ -98,6 +108,8 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         console.debug("offsetWidth", this.htmlElement.offsetWidth);
         this.width = this.htmlElement.offsetWidth - this.margin.left - this.margin.right;
         this.height = 500 - this.margin.top - this.margin.bottom;
+        this.nodeSize = this.width / 75;
+        this.nodeSizeLarge = this.width / 50;
         console.debug("Creating D3 graph with width/height", this.width + "/" + this.height);
         this.svg = this.host.html("")
             .append("svg")
@@ -113,7 +125,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
     private update(data: IGraphLayout): void {
         console.debug("Data in update function", data);
         let force = forceManyBody();
-        force.strength(-200);
+        force.strength(-1000);
         this.simulation = forceSimulation<IFactNode>()
             .force("link", forceLink().id((d: IFactNode) => d.id))
             .force("charge", force)
@@ -129,17 +141,25 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         let nodeData = this.svg.selectAll(".node")
             .data(data.nodes, (d: IFactNode) => d.id);
 
-        this.nodes = nodeData.enter()
-            .append("circle")
+        this.nodes = nodeData
+            .enter()
+            .append("g")
             .attr("class", "node")
-            .style("fill", (d) => this.color(d.group.toString(10)));
+            .on("click", this.nodeClick)
+            .on("mouseover", this.nodeMouseOver)
+            .on("mouseout", this.nodeMouseOut);
 
         this.nodes
-            .append("title")
-            .text((d: IFactNode) => d.id);
+            .append("circle")
+            .attr("r", this.nodeSize)
+            .style("fill", (d) => this.color(d.group.toString(10)))
+            .style("opacity", (d) => d.valid ? 1.0 : 0.5);
 
-        //    Click handler
-        this.nodes.on("click", (d: any) => console.debug("clicked", d));
+        this.nodes
+            .append("text")
+            .attr("x", 16)
+            .attr("dy", ".35em")
+            .text(d => d.name);
 
         //    Legend
         let legend = this.svg.selectAll(".legend")
@@ -147,18 +167,18 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             .enter()
             .append("g")
             .attr("class", "legend")
-            .attr("transform", (d, i) => "translate(0," + (i * ((this.width / 100) * 2) + 10) + ")");
+            .attr("transform", (d, i) => "translate(0," + (i * ((this.nodeSize) * 2) + 20) + ")");
 
         legend.append("circle")
             .attr("cx", this.width - 18)
-            .attr("r", this.width / 100)
-            .attr("cy", this.width / 100)
+            .attr("r", this.nodeSize)
+            .attr("cy", this.nodeSize)
             .style("fill", this.color);
 
         legend
             .append("text")
-            .attr("x", this.width - (this.width / 100) * 2 - 20)
-            .attr("y", this.width / 100)
+            .attr("x", this.width - (this.nodeSize) * 2 - 12)
+            .attr("y", this.nodeSize)
             .attr("dy", "0.35em")
             .style("text-anchor", "end")
             .text((d) => IndividualGraph.parseColorGroup(d));
@@ -175,10 +195,29 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         nodeData.exit().remove();
     }
 
+    private nodeClick = (d: IFactNode): void => {
+        console.debug("Clicked", d);
+    };
+
+    private nodeMouseOver = (): void => {
+        select(event.currentTarget).select("circle")
+            .transition()
+            .duration(750)
+            .attr("r", this.nodeSizeLarge);
+    };
+
+    private nodeMouseOut = (): void => {
+        select(event.currentTarget)
+            .select("circle")
+            .transition()
+            .duration(750)
+            .attr("r", this.nodeSize);
+    };
+
     private forceTick = (): void => {
-        this.nodes.attr("r", this.width / 75)
-            .attr("cx", (d) => d.x)
-            .attr("cy", (d) => d.y);
+        this.nodes
+            .attr("transform", (d) => "translate(" + d.x + "," + d.y + ")");
+
 
         this.links
             .attr("x1", (d: any) => d.source.x)
@@ -196,11 +235,15 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         //    Add the individual as node 0
         let individualNode = {
             id: individual.individualID,
+            name: IndividualGraph.parseIndividualID(individual.individualID),
+            valid: true,
             group: NodeType.INDIVIDUAL
         };
 
         let individualTemporal = {
             id: individual.individualTemporal.validID,
+            name: "individual-temporal",
+            valid: true,
             group: NodeType.VTEMPORAL
         };
 
@@ -211,35 +254,60 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             target: individualTemporal
         });
 
-        individual.facts.forEach(fact => {
-            let factNode = {
-                id: fact.identifier,
-                group: NodeType.FACT
-            };
-
-            let factTemporal = {
-                id: fact.validTemporal.validID,
-                group: NodeType.VTEMPORAL
-            };
-
-            let factDBTemporal = {
-                id: fact.databaseTemporal.validID,
-                group: NodeType.DTEMPORAL
-            };
-            this.layout.nodes.push(factNode, factTemporal, factDBTemporal);
-            this.layout.links.push({
+        if (this.graphFacts) {
+            individual.facts.forEach(fact => {
+                let factNode = {
+                    id: fact.identifier,
+                    name: fact.name,
+                    valid: fact.validTemporal.validTo.toString() == "" && fact.databaseTemporal.validTo.toString() == "",
+                    group: NodeType.FACT
+                };
+                this.layout.nodes.push(factNode);
+                this.layout.links.push({
                     source: individualNode,
                     target: factNode
-                },
-                {
-                    source: factNode,
-                    target: factTemporal,
-                },
-                {
-                    source: factNode,
-                    target: factDBTemporal,
                 });
-        });
+            });
+        }
+
+        //    Relations
+        if (this.graphRelations) {
+            individual.relations.forEach(relation => {
+                let relationNode = {
+                    id: relation.object,
+                    name: relation.relation.toString(),
+                    valid: true,
+                    group: NodeType.RELATION
+                };
+                this.layout.nodes.push(relationNode);
+                this.layout.links.push({
+                    source: individualNode,
+                    target: relationNode
+                });
+            });
+        }
+    }
+
+    private changeGraphMembers(event: MdSlideToggleChange): void {
+        if (event.source.id == this.factToggleName) {
+            console.debug("Graph facts?", event.checked);
+            this.graphFacts = event.checked;
+            this.buildGraph(this.config.data);
+            this.update({
+                nodes: [],
+                links: [],
+            });
+            this.update(this.layout);
+        } else if (event.source.id = this.relationToggleName) {
+            console.debug("Graph relations?", event.checked);
+            this.graphRelations = event.checked;
+            this.buildGraph(this.config.data);
+            this.update({
+                nodes: [],
+                links: [],
+            });
+            this.update(this.layout);
+        }
     }
 
     private static parseColorGroup(group: string): string {
@@ -249,11 +317,19 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             case 1:
                 return "Valid Temporal";
             case 2:
-                return "Database Temporal";
-            case 3:
                 return "Fact";
+            case 3:
+                return "Relation";
             default:
                 return "unknown";
         }
+    }
+
+    private static parseIndividualID(id: string): string {
+        let matches = id.match(/(#)(.*)/g);
+        if (matches) {
+            return matches[0].replace("#", "");
+        }
+        return id;
     }
 }

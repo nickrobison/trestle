@@ -25,9 +25,25 @@ import java.util.concurrent.BlockingQueue;
 public class MetricianModule extends PrivateModule {
 
     private final Config config;
+    private final boolean enabled;
 
     public MetricianModule() {
         config = ConfigFactory.load().getConfig("trestle.metrics");
+        this.enabled = true;
+        setupMetrician();
+    }
+
+    public MetricianModule(boolean enabled) {
+        config = ConfigFactory.load().getConfig("trestle.metrics");
+        if (enabled) {
+            setupMetrician();
+            this.enabled = true;
+        } else {
+            this.enabled = false;
+        }
+    }
+
+    private void setupMetrician() {
 //        Setup/Reset bytebuddy
         SharedMetricRegistries.clear();
         MetricianInventory.reset();
@@ -48,16 +64,21 @@ public class MetricianModule extends PrivateModule {
 
     @Override
     protected void configure() {
-        final String backendClass = config.getString("backend.class");
-        try {
-            final Class<? extends IMetricianBackend> backend = Class.forName(backendClass).asSubclass(IMetricianBackend.class);
+        if (enabled) {
+            final String backendClass = config.getString("backend.class");
+            try {
+                final Class<? extends IMetricianBackend> backend = Class.forName(backendClass).asSubclass(IMetricianBackend.class);
 
-            bind(IMetricianBackend.class).to(backend).asEagerSingleton();
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException("Unable to load metrics backend class", e);
+                bind(IMetricianBackend.class).to(backend).asEagerSingleton();
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException("Unable to load metrics backend class", e);
+            }
+            bind(Metrician.class).to(MetricianImpl.class).asEagerSingleton();
+            expose(Metrician.class);
+        } else {
+         bind(Metrician.class).to(MetricianNoop.class).asEagerSingleton();
+         expose(Metrician.class);
         }
-        bind(Metrician.class).asEagerSingleton();
-        expose(Metrician.class);
     }
 
     @Provides

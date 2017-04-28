@@ -36,6 +36,7 @@ public class PostgresBackend extends RDBMSBackend {
             final String connectionString = config.getString("connectionString");
             logger.debug("Connecting to {}", connectionString);
             connection = DriverManager.getConnection(connectionString, config.getString("username"), config.getString("password"));
+            connection.setAutoCommit(true);
         } catch (SQLException e) {
             throw new RuntimeException(e.getCause());
         }

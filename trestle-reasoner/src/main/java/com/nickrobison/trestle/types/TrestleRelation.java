@@ -26,4 +26,25 @@ public class TrestleRelation {
         this.type = type;
         this.object = object;
     }
+
+    /**
+     * @return - Subject IRI string
+     */
+    public String getSubject() {
+        return subject;
+    }
+
+    /**
+     * @return - Object IRI string
+     */
+    public String getObject() {
+        return object;
+    }
+
+    /**
+     * @return - Relation type string
+     */
+    public String getType() {
+        return type.toString();
+    }
 }
