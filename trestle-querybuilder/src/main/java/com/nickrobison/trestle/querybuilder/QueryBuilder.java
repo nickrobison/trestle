@@ -551,10 +551,9 @@ public class QueryBuilder {
         ps.setCommandText(String.format("INSERT {" +
                 "?m trestle:valid_to ?newValue^^xsd:dateTime} " +
                 " WHERE { " +
-//                "?m trestle:valid_time ?t . " +
+                "VALUES ?m {%s} . " +
                 "OPTIONAL{?m trestle:valid_to ?vt} . " +
                 "?m rdf:type trestle:Interval_Object ." +
-                "VALUES ?m {%s} . " +
                 "FILTER(!bound(?vt))}", individualValues));
 
         ps.setLiteral("newValue", temporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
