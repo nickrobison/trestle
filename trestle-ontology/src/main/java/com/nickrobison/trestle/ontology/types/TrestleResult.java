@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.ontology.types;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLIndividual;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLObject;
@@ -26,7 +27,8 @@ public class TrestleResult {
 
     /**
      * Add var/object pair to TrestleResult
-     * @param varName - String variable name
+     *
+     * @param varName   - String variable name
      * @param owlObject - Nullable {@link OWLObject} of result variable
      */
     public void addValue(String varName, @Nullable OWLObject owlObject) {
@@ -37,12 +39,15 @@ public class TrestleResult {
      * Get the variable as an {@link OWLLiteral}
      * Returns an empty optional if the result is null, meaning the variable is unbound
      * Throws an {@link ClassCastException} if the result is not an {@link OWLLiteral}
+     *
      * @param varName - Variable name to access
      * @return - Optional {@link OWLLiteral}
      */
     public Optional<OWLLiteral> getLiteral(String varName) {
         if (resultValues.containsKey(varName)) {
             final OWLObject owlObject = resultValues.get(varName);
+            if (owlObject != null) {
+                if (owlObject instanceof OWLLiteral) {
                     return Optional.of(OWLLiteral.class.cast(owlObject));
                 }
                 throw new ClassCastException(String.format("OWLObject for variable %s is not an OWLLiteral", varName));
@@ -55,13 +60,17 @@ public class TrestleResult {
      * Get the variable as an {@link OWLIndividual}
      * Returns an empty optional if the result is null, meaning the variable is unbound
      * Throws an {@link ClassCastException} if the result is not an {@link OWLIndividual}
+     *
      * @param varName - Variable name to access
      * @return - Optional {@link OWLIndividual}
      */
     public Optional<OWLIndividual> getIndividual(String varName) {
         if (resultValues.containsKey(varName)) {
             final OWLObject owlObject = resultValues.get(varName);
+            if (owlObject != null) {
+                if (owlObject instanceof OWLIndividual) {
                     return Optional.of(OWLIndividual.class.cast(owlObject));
+                }
             }
             throw new ClassCastException(String.format("OWLObject for variable %s is not an OWLIndividual", varName));
         }

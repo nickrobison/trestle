@@ -98,7 +98,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final Config trestleConfig;
     private final TrestleCache trestleCache;
     private final Metrician metrician;
-    private final Injector injector;
 
     @SuppressWarnings("dereference.of.nullable")
     TrestleReasonerImpl(TrestleBuilder builder) throws OWLOntologyCreationException {
@@ -750,9 +749,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                                 .stream()
                                 .map(result -> {
                                     final OWLDataPropertyAssertionAxiom assertion = df.getOWLDataPropertyAssertionAxiom(
-                                            df.getOWLDataProperty(result.getIndividual("property").toStringID()),
-                                            result.getIndividual("individual"),
-                                            result.getLiteral("object"));
+                                            df.getOWLDataProperty(result.getIndividual("property").orElseThrow(() -> new RuntimeException("Unable to get individual")).toStringID()),
+                                            result.getIndividual("individual").orElseThrow(() -> new RuntimeException("Unable to get individual")),
+                                            result.getLiteral("object").orElseThrow(() -> new RuntimeException("Unable to get individual")));
                                     //noinspection unchecked
                                     return new TrestleFact<>(
                                             clazz,
