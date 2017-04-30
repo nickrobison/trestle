@@ -106,7 +106,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         trestleConfig = ConfigFactory.load().getConfig("trestle");
         ValidateConfig(trestleConfig);
 
-        final Injector injector = Guice.createInjector(new MetricianModule(builder.metrics));
+        final Injector injector = Guice.createInjector(new TrestleModule(builder.metrics, builder.caching));
 
 //        Setup metrics engine
 //        metrician = null;

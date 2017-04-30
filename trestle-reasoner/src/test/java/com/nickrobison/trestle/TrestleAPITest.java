@@ -68,7 +68,7 @@ public class TrestleAPITest {
                         TestClasses.MultiLangTest.class,
                         TestClasses.FactVersionTest.class)
                 .withoutCaching()
-                .withoutMetrics()
+//                .withoutMetrics()
                 .initialize()
                 .build();
 
@@ -170,7 +170,10 @@ public class TrestleAPITest {
         final TestClasses.OffsetDateTimeTest second = reasoner.readTrestleObject(TestClasses.OffsetDateTimeTest.class, offsetDateTimeTest.adm0_code.toString(), LocalDate.of(2018, 3, 1), null);
         final Instant secondEnd = Instant.now();
         assertEquals(first, second, "Objects should be equal");
-        assertTrue(Duration.between(firstStart, firstEnd).compareTo(Duration.between(secondStart, secondEnd)) > 0, "Cache should have lower latency");
+        final Duration firstDuration = Duration.between(firstStart, firstEnd);
+        final Duration secondDuration = Duration.between(secondStart, secondEnd);
+        logger.info("Took {} ms to read first object, {} ms to read it again", firstDuration.toMillis(), secondDuration.toMillis());
+        assertTrue(firstDuration.compareTo(secondDuration) > 0, "Cache should have lower latency");
     }
 
     @Test
