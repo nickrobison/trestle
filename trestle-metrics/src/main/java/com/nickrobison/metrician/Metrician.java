@@ -1,9 +1,6 @@
 package com.nickrobison.metrician;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
+import com.codahale.metrics.*;
 import com.nickrobison.metrician.backends.MetricianExportedValue;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -32,6 +29,12 @@ public interface Metrician {
     MetricianHeader getMetricsHeader();
 
     Map<Long, Object> getMetricValues(String metricID, Long start, @Nullable Long end);
+
+    /**
+     * Register a {@link MetricSet} with Metrician
+     * @param metricSet - {@link MetricSet} to register
+     */
+    void registerMetricSet(MetricSet metricSet);
 
     /**
      * Register a {@link Counter} with the provided absolute name

@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.caching;
 
+import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.locking.TrestleUpgradableReadWriteLock;
 import com.nickrobison.trestle.iri.TrestleIRI;
 import com.typesafe.config.Config;
@@ -40,7 +41,8 @@ public class TrestleCache {
     TrestleCache(@Named("valid") ITrestleIndex<TrestleIRI> validIndex,
                  @Named("database") ITrestleIndex<TrestleIRI> dbIndex,
                  @Named("cacheLock") TrestleUpgradableReadWriteLock lock,
-                 IndividualCacheEntryListener listener) {
+                 IndividualCacheEntryListener listener,
+                 Metrician metrician) {
 //        Create the index
         this.validIndex = validIndex;
         this.dbIndex = dbIndex;
@@ -59,6 +61,9 @@ public class TrestleCache {
                 .setStatisticsEnabled(true);
         logger.debug("Creating cache {}", INDIVIDUAL_CACHE);
         individualCache = cacheManager.createCache(INDIVIDUAL_CACHE, individualCacheConfiguration);
+
+//        Enable metrics
+        metrician.registerMetricSet(new TrestleCacheMetrics());
     }
 
 
