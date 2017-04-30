@@ -62,51 +62,54 @@ public class TigerLoader {
             .put(9, "Pacific")
             .build();
 
-    Config config = ConfigFactory.load("reference.conf");
+    private Config config = ConfigFactory.load("reference.conf");
+    private String connectStr = config.getString("trestle.graphdb.connection_string");
+    private String username = config.getString("trestle.graphdb.username");
+    private String password = config.getString("trestle.graphdb.password");
+    private String reponame = config.getString("trestle.graphdb.repo_name");
+    private String ontLocation = config.getString("trestle.ontology.location");
+    private List<TigerCountyObject> tigerObjs;
 
-    public void run()
+    TigerLoader() throws SQLException
     {
-        String connectStr = config.getString("trestle.graphdb.connection_string");
-        String username = config.getString("trestle.graphdb.username");
-        String password = config.getString("trestle.graphdb.password");
-        String ontLocation = config.getString("trestle.ontology.location");
-        TrestleReasoner reasoner = new TrestleBuilder()
-            .withDBConnection(connectStr, username, password)
-            .withName("tigercounties3")
-            .withOntology(IRI.create(ontLocation))
-            .withPrefix("http://nickrobison.com/demonstration/tigercounty#")
-            .withInputClasses(TigerCountyObject.class)
-            .withoutCaching()
-            .initialize()
-            .build();
+        tigerObjs = buildObjects();
+    }
 
+    public void loadObjects()
+    {
+        TrestleReasoner reasoner = new TrestleBuilder()
+                .withDBConnection(connectStr, username, password)
+                .withName(reponame)
+                .withOntology(IRI.create(ontLocation))
+                .withPrefix("http://nickrobison.com/demonstration/tigercounty#")
+                .withInputClasses(TigerCountyObject.class)
+                .withoutCaching()
+                .initialize()
+                .build();
 
         // for testing
         Temporal startTemporal = LocalDate.of(2017,1,1);
-        try {
-            List<TigerCountyObject> tigerObjs = buildObjects();
-            for(int count=0; count<tigerObjs.size(); count++)
-            {
-                if(count%1000==0)
-                    logger.info("Writing trestle object {}", +count);
-//                    System.err.println("About to write object number "+count);
-                TigerCountyObject tigerObj = tigerObjs.get(count);
-                try {
-                    final Instant start = Instant.now();
-                    reasoner.writeTrestleObject(tigerObj,startTemporal,null);
-                    final Instant end = Instant.now();
-                    logger.info("Writing object {} took {} ms", count, Duration.between(start, end).toMillis());
-                } catch (TrestleClassException e) {
-                    e.printStackTrace();
-                    System.exit(-1);
-                } catch (MissingOntologyEntity missingOntologyEntity) {
-                    missingOntologyEntity.printStackTrace();
-                    System.exit(-1);
-                }
+
+        for(int count=0; count<tigerObjs.size(); count++)
+        {
+            if(count%1000==0)
+                logger.info("Writing trestle object {}", +count);
+
+            TigerCountyObject tigerObj = tigerObjs.get(count);
+            try {
+                final Instant start = Instant.now();
+                reasoner.writeTrestleObject(tigerObj,startTemporal,null);
+                final Instant end = Instant.now();
+                logger.info("Writing object {} took {} ms", count, Duration.between(start, end).toMillis());
+            } catch (TrestleClassException e) {
+                e.printStackTrace();
+                System.exit(-1);
+            } catch (MissingOntologyEntity e) {
+                e.printStackTrace();
+                System.exit(-1);
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
+
 
         reasoner.shutdown();
     }
@@ -154,16 +157,8 @@ public class TigerLoader {
                     String geom = rs.getString("geotext");
                     if(geom==null)
                         continue; // all entries must have spatial data
-                    //Polygon geom = (Polygon)GeometryEngine.geometryFromWkt(wktString, 0, Geometry.Type.Polygon);
 
-                    String geoidStr = rs.getString("geoid");
-                    int geoid;
-                    try {
-                        geoid = Integer.valueOf(geoidStr);
-                    } catch (NumberFormatException e) {
-                        e.printStackTrace();
-                        continue; // all entries must have a unique identifier
-                    }
+                    String geoid = rs.getString("geoid");
 
                     // convert region code to region name
                     int regionCode = rs.getInt("REGION");
@@ -188,12 +183,12 @@ public class TigerLoader {
                     float rate_death = rs.getFloat("RDEATH"+year);
                     float rate_natural_increase = rs.getFloat("RNATURALINC"+year);
                     LocalDate record_start_date = LocalDate.of(year,7,1);
-                    LocalDate record_end_date = LocalDate.of(year+1,7,1);
+                    //LocalDate record_end_date = LocalDate.of(year+1,7,1);
 
                     // construct Trestle object
                     TigerCountyObject tcObj = new TigerCountyObject(geoid,geom,region,division,state,county,
                             pop_estimate,births,deaths,natural_increase,international_migration,domestic_migration,
-                            rate_birth,rate_death,rate_natural_increase,record_start_date,record_end_date);
+                            rate_birth,rate_death,rate_natural_increase,record_start_date);
                     objects.add(tcObj);
 
                 }
@@ -209,11 +204,50 @@ public class TigerLoader {
         return objects;
     }
 
+    public boolean verifyObjects() throws TrestleClassException, MissingOntologyEntity {
+        TrestleReasoner reasoner = new TrestleBuilder()
+                .withDBConnection(connectStr, username, password)
+                .withName(reponame)
+                .withOntology(IRI.create(ontLocation))
+                .withPrefix("http://nickrobison.com/demonstration/tigercounty#")
+                .withInputClasses(TigerCountyObject.class)
+                .withoutCaching()
+                .build();
+
+        boolean allEquivalent = true;
+        for(int count=0; count<tigerObjs.size(); count++)
+        {
+            TigerCountyObject tigerObj = tigerObjs.get(count);
+            String id = tigerObj.getGeoid();
+            LocalDate startDate = tigerObj.getRecord_start_date().plusMonths(1);
+            TigerCountyObject outObj = reasoner.readTrestleObject(TigerCountyObject.class, id, startDate, null);
+
+            if(!tigerObj.equals(outObj))
+            {
+                logger.error("Error, Trestle input object and output object not equivalent; in:"+tigerObj.getGeoid()+", out:"+outObj.getGeoid());
+                allEquivalent = false;
+            }
+        }
+
+        reasoner.shutdown();
+
+        return allEquivalent;
+    }
+
     public static void main(String[] args)
     {
         System.out.println("start time: "+Instant.now());
-        TigerLoader loader = new TigerLoader();
-        loader.run();
+        try {
+            TigerLoader loader = new TigerLoader();
+            loader.loadObjects();
+            loader.verifyObjects();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (MissingOntologyEntity e) {
+            e.printStackTrace();
+        } catch (TrestleClassException e) {
+            e.printStackTrace();
+        }
         System.out.println("end time: "+Instant.now());
     }
 }

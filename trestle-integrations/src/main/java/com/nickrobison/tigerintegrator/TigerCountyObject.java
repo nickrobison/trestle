@@ -5,6 +5,8 @@ import com.nickrobison.trestle.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.annotations.Spatial;
 import com.nickrobison.trestle.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.annotations.temporal.StartTemporal;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.time.LocalDate;
 
@@ -48,7 +50,7 @@ public class TigerCountyObject {
     // object attributes
     //private final UUID id;
     private final String geom;
-    private final int geoid;
+    private final String geoid;
     private final String region;
     private final String division;
     private final String state;
@@ -65,11 +67,11 @@ public class TigerCountyObject {
     private final LocalDate record_start_date;
     private LocalDate record_end_date;
 
-    public TigerCountyObject(int geoid, String geom, String region, String division,
+    public TigerCountyObject(String geoid, String geom, String region, String division,
                              String state, String county, int pop_estimate, int births,
                              int deaths, int natural_increase, int international_migration,
                              int domestic_migration, float rate_birth, float rate_death,
-                             float rate_natural_increase, LocalDate start_date, LocalDate end_date) {
+                             float rate_natural_increase, LocalDate start_date) {
         this.geoid = geoid;
         this.geom = geom;
         this.region = region;
@@ -86,7 +88,6 @@ public class TigerCountyObject {
         this.rate_death = rate_death;
         this.rate_natural_increase = rate_natural_increase;
         this.record_start_date = start_date;
-        this.record_end_date = end_date;
     }
 
     @Spatial
@@ -95,9 +96,7 @@ public class TigerCountyObject {
     }
 
     @IndividualIdentifier
-    public String getID() {
-        return "geo"+geoid;
-    }
+    public String getGeoid() { return geoid; }
 
     public String getRegion() {
         return region;
@@ -156,8 +155,51 @@ public class TigerCountyObject {
         return record_start_date;
     }
 
-    @EndTemporal(name = "end_date")
-    public LocalDate getRecord_end_date() {
-        return record_end_date;
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 31). // two randomly chosen prime numbersappend(geom).
+                append(geoid).
+                append(region).
+                append(division).
+                append(state).
+                append(county).
+                append(pop_estimate).
+                append(births).
+                append(deaths).
+                append(natural_increase).
+                append(international_migration).
+                append(domestic_migration).
+                append(rate_birth).
+                append(rate_death).
+                append(rate_natural_increase).
+                toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof TigerCountyObject))
+            return false;
+        if (obj == this)
+            return true;
+
+        TigerCountyObject rhs = (TigerCountyObject) obj;
+        return new EqualsBuilder().
+                //append(name, rhs.name).
+                        append(geoid, rhs.geoid).
+                        append(region, rhs.region).
+                        append(division, rhs.division).
+                        append(state, rhs.state).
+                        append(county, rhs.county).
+                        append(pop_estimate, rhs.pop_estimate).
+                        append(births, rhs.births).
+                        append(deaths, rhs.deaths).
+                        append(natural_increase, rhs.natural_increase).
+                        append(international_migration, rhs.international_migration).
+                        append(domestic_migration, rhs.domestic_migration).
+                        append(rate_birth, rhs.rate_birth).
+                        append(rate_death, rhs.rate_death).
+                        append(rate_natural_increase, rhs.rate_natural_increase).
+                        isEquals();
     }
 }
