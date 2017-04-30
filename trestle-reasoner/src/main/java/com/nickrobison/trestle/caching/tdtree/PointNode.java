@@ -83,7 +83,7 @@ public class PointNode<Value> extends LeafNode<Value> {
     }
 
     @Override
-    void deleteKeysWithValue(Value value) {
+    long deleteKeysWithValue(Value value) {
         final List<FastTuple> list = this.values.entrySet()
                 .stream()
                 .filter(entry -> entry.getValue().equals(value))
@@ -91,6 +91,7 @@ public class PointNode<Value> extends LeafNode<Value> {
                 .collect(Collectors.toList());
 
         list.forEach(this.values::remove);
+        return list.size();
     }
 
     @Override

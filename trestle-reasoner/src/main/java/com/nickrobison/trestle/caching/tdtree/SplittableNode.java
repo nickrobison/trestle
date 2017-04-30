@@ -173,13 +173,16 @@ class SplittableNode<Value> extends LeafNode<Value> {
     }
 
     @Override
-    void deleteKeysWithValue(Value value) {
+    long deleteKeysWithValue(Value value) {
+        long deletedKeys = 0;
         for (int i = 0; i < this.records; i++) {
             if (value.equals(values[i])) {
                 keys[i] = null;
                 values[i] = null;
+                deletedKeys++;
             }
         }
+        return deletedKeys;
     }
 
     @Override

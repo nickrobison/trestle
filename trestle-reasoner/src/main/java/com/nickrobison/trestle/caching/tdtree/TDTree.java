@@ -2,6 +2,10 @@ package com.nickrobison.trestle.caching.tdtree;
 
 import com.boundary.tuple.FastTuple;
 import com.boundary.tuple.TupleSchema;
+import com.codahale.metrics.annotation.Gauge;
+import com.codahale.metrics.annotation.Timed;
+import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
+import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.nickrobison.trestle.caching.ITrestleIndex;
 import org.apache.commons.math3.util.FastMath;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -17,6 +21,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.caching.tdtree.TDTreeHelpers.*;
@@ -25,6 +30,7 @@ import static com.nickrobison.trestle.caching.tdtree.TDTreeHelpers.*;
  * Created by nrobison on 2/9/17.
  */
 @NotThreadSafe
+@Metriced
 public class TDTree<Value> implements ITrestleIndex<Value> {
 
     private static final Logger logger = LoggerFactory.getLogger(TDTree.class);
@@ -35,6 +41,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     private List<LeafNode<Value>> leafs = new ArrayList<>();
     private int maxDepth;
     private final FastTuple rootTuple;
+    private final AtomicLong cacheSize = new AtomicLong();
 
 
     public TDTree(int blockSize) throws Exception {
@@ -60,6 +67,8 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         insertValue(longHashCode(objectID), startTime, endTime, value);
     }
 
+    @Timed(name = "td-tree.insert-timer", absolute = true)
+    @CounterIncrement(name = "td-tree.insert-counter", absolute = true)
     private void insertValue(long objectID, long startTime, long endTime, Value value) {
 //        Find the leaf at maxDepth that would contain the objectID
         final int matchingLeaf = getMatchingLeaf(startTime, endTime);
@@ -80,9 +89,11 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
             leafs.remove(firstLeaf);
             parseSplit(split);
         }
+        this.cacheSize.incrementAndGet();
     }
 
     @Override
+    @Timed(name = "td-tree.get-timer", absolute = true)
     @SuppressWarnings("Duplicates")
     public @Nullable Value getValue(String objectID, long atTime) {
 
@@ -101,11 +112,13 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     }
 
     @Override
+    @Timed(name = "td-tree.delete-timer", absolute = true)
     public void deleteValue(String objectID, long atTime) {
         final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
         for (LeafNode node : candidateLeafs) {
             if (node.delete(objectID, atTime)) {
                 logger.debug("Deleted {}@{} from {}", objectID, atTime, node.getBinaryStringID());
+                this.cacheSize.decrementAndGet();
                 return;
             }
             logger.debug("Leaf {} does not have {}@{}", node.getBinaryStringID(), objectID, atTime);
@@ -117,7 +130,12 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         this.leafs
                 .stream()
                 .filter(leaf -> leaf.getRecordCount() > 0)
-                .forEach(leaf -> leaf.deleteKeysWithValue(value));
+                .forEach(leaf -> {
+                    final long deletedKeys = leaf.deleteKeysWithValue(value);
+                    if (deletedKeys > 0) {
+                        this.cacheSize.addAndGet(deletedKeys * -1);
+                    }
+                });
     }
 
     @Override
@@ -174,6 +192,11 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
 
         final Instant end = Instant.now();
         logger.info("Rebuilding index took {} ms", Duration.between(start, end).toMillis());
+    }
+
+    @Gauge(name = "td-tree.cache-size", absolute = true)
+    public long getCacheSize() {
+        return cacheSize.get();
     }
 
     private List<LeafNode<Value>> findCandidateLeafs(long atTime) {
