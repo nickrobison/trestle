@@ -187,15 +187,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         logger.info("Ontology {} ready", builder.ontologyName.orElse(DEFAULTNAME));
 
 //        Are we a caching reasoner?
-        if (builder.caching) {
-            this.cachingEnabled = true;
-            logger.info("Creating Trestle Cache");
-            trestleCache = injector.getInstance(TrestleCache.class);
-        } else {
-            logger.info("Caching disabled");
-            this.cachingEnabled = false;
-            trestleCache = null;
-        }
+        logger.info("Instantiating Trestle Cache");
+        trestleCache = injector.getInstance(TrestleCache.class);
 
 //        Setup the query builder
         if (ontology instanceof OracleOntology) {
@@ -225,9 +218,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public void shutdown(boolean delete) {
         logger.info("Shutting down reasoner, and removing the model");
-        if (cachingEnabled) {
-            this.trestleCache.shutdown(delete);
-        }
+        this.trestleCache.shutdown(delete);
         this.ontology.close(delete);
         this.metrician.shutdown();
     }
@@ -428,13 +419,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
 
 //        Invalidate the cache
-        if (cachingEnabled) {
-            final TrestleIRI individualIRI = IRIBuilder.encodeIRI(V1, REASONER_PREFIX, owlNamedIndividual.toStringID(), null,
-                    parseTemporalToOntologyDateTime(factTemporal.getIdTemporal(), ZoneOffset.UTC),
-                    parseTemporalToOntologyDateTime(dTemporal.getIdTemporal(), ZoneOffset.UTC));
-            logger.debug("Purging {} from the cache", individualIRI);
-            trestleCache.deleteIndividual(individualIRI);
-        }
+        final TrestleIRI individualIRI = IRIBuilder.encodeIRI(V1, REASONER_PREFIX, owlNamedIndividual.toStringID(), null,
+                parseTemporalToOntologyDateTime(factTemporal.getIdTemporal(), ZoneOffset.UTC),
+                parseTemporalToOntologyDateTime(dTemporal.getIdTemporal(), ZoneOffset.UTC));
+        logger.debug("Purging {} from the cache", individualIRI);
+        trestleCache.deleteTrestleObject(individualIRI);
     }
 
     @Override
@@ -518,12 +507,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         writeObjectFacts(owlNamedIndividual, Collections.singletonList(propertyAxiom), validTemporal, databaseTemporal);
 //        Update the cache
 //        TODO(nrobison): This should async refresh
-        if (cachingEnabled) {
-            final TrestleIRI individualIRI = IRIBuilder.encodeIRI(V1, REASONER_PREFIX, individual, null,
-                    parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC),
-                    parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC));
-            trestleCache.deleteIndividual(individualIRI);
-        }
+        final TrestleIRI individualIRI = IRIBuilder.encodeIRI(V1, REASONER_PREFIX, individual, null,
+                parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC),
+                parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC));
+        trestleCache.deleteTrestleObject(individualIRI);
         this.ontology.returnAndCommitTransaction(trestleTransaction);
     }
 
@@ -663,11 +650,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC));
 
 //        Try from cache first
-        if (cachingEnabled) {
-            final @NonNull @Nullable T individual = this.trestleCache.getIndividual(clazz, trestleIRI);
-            if (individual != null) {
-                return individual;
-            }
+        final @NonNull @Nullable T individual = this.trestleCache.getTrestleObject(clazz, trestleIRI);
+        if (individual != null) {
+            return individual;
         }
 
 //        final Optional<@NonNull T> constructedObject = readTrestleObjectImpl(clazz, individualIRI, validTemporal, databaseTemporal);
@@ -676,9 +661,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             logger.debug("Done with {}", individualIRI);
 //            Write back to index
             final TrestleObjectResult<@NonNull T> value = constructedObject.get();
-            if (cachingEnabled) {
-                this.trestleCache.writeIndividual(trestleIRI, value.getValidFrom().toInstant().toEpochMilli(), value.getValidTo().toInstant().toEpochMilli(), value.getObject());
-            }
+            this.trestleCache.writeTrestleObject(trestleIRI, value.getValidFrom().toInstant().toEpochMilli(), value.getValidTo().toInstant().toEpochMilli(), value.getObject());
             return value.getObject();
         } else {
             throw new NoValidStateException(individualIRI, validAt, databaseAt);

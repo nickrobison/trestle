@@ -1,12 +1,15 @@
 package com.nickrobison.trestle.caching;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.nickrobison.trestle.caching.tdtree.TDTree;
 import com.nickrobison.trestle.common.locking.TrestleUpgradableReadWriteLock;
 import com.nickrobison.trestle.iri.TrestleIRI;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -14,12 +17,23 @@ import javax.inject.Singleton;
 /**
  * Created by nrobison on 2/17/17.
  */
-public class TrestleCacheModule extends AbstractModule {
-    private Config cacheConfig;
+public class TrestleCacheModule extends PrivateModule {
+    private final Config cacheConfig;
+    private final boolean cacheEnabled;
+
+    public TrestleCacheModule(boolean cacheEnabled) {
+        this.cacheConfig = ConfigFactory.load().getConfig("trestle.cache");
+        this.cacheEnabled = cacheEnabled;
+    }
 
     @Override
     protected void configure() {
-        cacheConfig = ConfigFactory.load().getConfig("trestle.cache");
+        if (cacheEnabled) {
+            bind(TrestleCache.class).to(TrestleCacheImpl.class);
+        } else {
+            bind(TrestleCache.class).to(TrestleCacheNoop.class);
+        }
+        expose(TrestleCache.class);
     }
 
     @Provides
@@ -43,6 +57,7 @@ public class TrestleCacheModule extends AbstractModule {
             throw new RuntimeException("Unable to build TD-Tree index");
         }
     }
+
     @Provides
     @Singleton
     @Named("cacheLock")

@@ -23,7 +23,7 @@ public class TrestleModule extends AbstractModule {
         this.cachingEnabled = cachingEnabled;
     }
 
-//    TrestleModule() {
+    //    TrestleModule() {
 ////        Setup the ByteBuddy agent, for class path retransformation
 //        try {
 //            ByteBuddyAgent.getInstrumentation();
@@ -39,9 +39,6 @@ public class TrestleModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new MetricianModule(metricsEnabled));
-        if (cachingEnabled) {
-            logger.debug("Installing Trestle Cache Module");
-            install(new TrestleCacheModule());
-        }
+        install(new TrestleCacheModule(cachingEnabled));
     }
 }
