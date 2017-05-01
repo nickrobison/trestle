@@ -44,7 +44,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
 
 
     public TDTree(int blockSize) throws Exception {
-        logger.info("Creating TD-Tree index");
+        logger.debug("Creating TD-Tree index");
         this.blockSize = blockSize;
         this.maxDepth = 0;
 
@@ -102,10 +102,10 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
             //noinspection unchecked
             @Nullable final Value value = (Value) node.getValue(objectID, atTime);
             if (value != null) {
-                logger.debug("Returning value {} for {} @ {} from {}", value, objectID, atTime, node.getBinaryStringID());
+                logger.trace("Returning value {} for {} @ {} from {}", value, objectID, atTime, node.getBinaryStringID());
                 return value;
             }
-            logger.debug("Leaf {} does not have {}@{}", node.getBinaryStringID(), objectID, atTime);
+            logger.trace("Leaf {} does not have {}@{}", node.getBinaryStringID(), objectID, atTime);
         }
         return null;
     }
@@ -116,11 +116,11 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
         for (LeafNode node : candidateLeafs) {
             if (node.delete(objectID, atTime)) {
-                logger.debug("Deleted {}@{} from {}", objectID, atTime, node.getBinaryStringID());
+                logger.trace("Deleted {}@{} from {}", objectID, atTime, node.getBinaryStringID());
                 this.cacheSize.decrementAndGet();
                 return;
             }
-            logger.debug("Leaf {} does not have {}@{}", node.getBinaryStringID(), objectID, atTime);
+            logger.trace("Leaf {} does not have {}@{}", node.getBinaryStringID(), objectID, atTime);
         }
     }
 
@@ -142,10 +142,10 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
         for (LeafNode<Value> node : candidateLeafs) {
             if (node.update(objectID, atTime, value)) {
-                logger.debug("Updated {}@{} to {} from {}", objectID, atTime, value, node.getBinaryStringID());
+                logger.trace("Updated {}@{} to {} from {}", objectID, atTime, value, node.getBinaryStringID());
                 return;
             }
-            logger.debug("Leaf {} does not have {}@{}", node.getBinaryStringID(), objectID, atTime);
+            logger.trace("Leaf {} does not have {}@{}", node.getBinaryStringID(), objectID, atTime);
         }
     }
 

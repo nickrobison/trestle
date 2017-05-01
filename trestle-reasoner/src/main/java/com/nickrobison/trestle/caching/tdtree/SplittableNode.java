@@ -35,7 +35,7 @@ class SplittableNode<Value> extends LeafNode<Value> {
         } catch (Exception e) {
             throw new RuntimeException("Unable to allocate key/value memory for leaf", e);
         }
-        logger.debug("Creating splittable leaf {}", this.getBinaryStringID());
+        logger.trace("Creating splittable leaf {}", this.getBinaryStringID());
     }
 
     @Override
@@ -119,7 +119,7 @@ class SplittableNode<Value> extends LeafNode<Value> {
 
                 lowerChildLeaf = new SplittableNode<>(leafID << 1, lowerChild, this.blockSize);
                 higherChildLeaf = new SplittableNode<>((leafID << 1) | 1, higherChild, this.blockSize);
-                logger.debug("Splitting {} into {} and {}", this.getBinaryStringID(), lowerChildLeaf.getBinaryStringID(), lowerChildLeaf.getBinaryStringID());
+                logger.trace("Splitting {} into {} and {}", this.getBinaryStringID(), lowerChildLeaf.getBinaryStringID(), lowerChildLeaf.getBinaryStringID());
             }
             final LeafSplit leafSplit = new LeafSplit(this.leafID, lowerChildLeaf, higherChildLeaf);
 //            Divide values into children, by testing to see if they belong to the lower child

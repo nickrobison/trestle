@@ -22,7 +22,7 @@ public class PointNode<Value> extends LeafNode<Value> {
 
     PointNode(int leafID, FastTuple leafMetadata) {
         super(leafID, leafMetadata);
-        logger.debug("Creating Point Node {}", this.getBinaryStringID());
+        logger.trace("Creating Point Node {}", this.getBinaryStringID());
     }
 
     void copyInitialValues(FastTuple[] keys, Value[] vals) {
