@@ -110,4 +110,9 @@ public class PointNode<Value> extends LeafNode<Value> {
         leafRecords.putAll(this.values);
         return leafRecords;
     }
+
+    @Override
+    double calculateFragmentation() {
+        return 0;
+    }
 }

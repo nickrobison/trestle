@@ -150,7 +150,7 @@ public class TrestleAPITest {
 //        final Geometry geotoolsGeom = JTS.toGeographic(new WKTReader().read("POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))"), DefaultGeographicCRS.WGS84);
 //        JTS.toGeometry()
 //        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest = new TestClasses.GeotoolsPolygonTest(UUID.randomUUID(), (org.opengis.geometry.coordinate.Polygon) geotoolsGeom, LocalDate.now());
-//        final OWLNamedIndividual owlNamedIndividual = classParser.getIndividual(geotoolsPolygonTest);
+//        final OWLNamedIndividual owlNamedIndividual = classParser.getTrestleObject(geotoolsPolygonTest);
 //        reasoner.writeTrestleObject(geotoolsPolygonTest);
 //        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest1 = reasoner.readTrestleObject(geotoolsPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
 //        assertEquals(geotoolsPolygonTest, geotoolsPolygonTest1, "Should be equal");
@@ -174,6 +174,7 @@ public class TrestleAPITest {
         final Duration secondDuration = Duration.between(secondStart, secondEnd);
         logger.info("Took {} ms to read first object, {} ms to read it again", firstDuration.toMillis(), secondDuration.toMillis());
         assertTrue(firstDuration.compareTo(secondDuration) > 0, "Cache should have lower latency");
+        reasoner.getMetricsEngine().exportData(new File("./target/api-test-cache-test-metrics.csv"));
     }
 
     @Test

@@ -18,16 +18,16 @@ import java.io.Serializable;
 /**
  * Created by nrobison on 2/22/17.
  */
-class IndividualCacheEntryListener implements
+class TrestleObjectCacheEntryListener implements
         CacheEntryExpiredListener<IRI, Object>,
         CacheEntryRemovedListener<IRI, Object>, Serializable {
 
-    private static final Logger logger = LoggerFactory.getLogger(IndividualCacheEntryListener.class);
+    private static final Logger logger = LoggerFactory.getLogger(TrestleObjectCacheEntryListener.class);
     private final ITrestleIndex<TrestleIRI> validIndex;
     private final TrestleUpgradableReadWriteLock cacheLock;
 
     @Inject
-    IndividualCacheEntryListener(@Named("valid") ITrestleIndex<TrestleIRI> validIndex, @Named("cacheLock") TrestleUpgradableReadWriteLock cacheLock) {
+    TrestleObjectCacheEntryListener(@Named("valid") ITrestleIndex<TrestleIRI> validIndex, @Named("cacheLock") TrestleUpgradableReadWriteLock cacheLock) {
         this.validIndex = validIndex;
         this.cacheLock = cacheLock;
         logger.debug("Registering cache listener, waiting for expired events");

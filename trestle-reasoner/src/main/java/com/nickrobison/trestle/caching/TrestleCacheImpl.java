@@ -34,7 +34,7 @@ public class TrestleCacheImpl implements TrestleCache {
     public static final String TRESTLE_OBJECT_CACHE = "trestle-object-cache";
     private final TrestleUpgradableReadWriteLock cacheLock;
     private final CacheManager cacheManager;
-    private final Cache<IRI, Object> individualCache;
+    private final Cache<IRI, Object> trestleObjectCache;
     private final ITrestleIndex<TrestleIRI> validIndex;
     private final ITrestleIndex<TrestleIRI> dbIndex;
 
@@ -42,7 +42,7 @@ public class TrestleCacheImpl implements TrestleCache {
     TrestleCacheImpl(@Named("valid") ITrestleIndex<TrestleIRI> validIndex,
                  @Named("database") ITrestleIndex<TrestleIRI> dbIndex,
                  @Named("cacheLock") TrestleUpgradableReadWriteLock lock,
-                 IndividualCacheEntryListener listener,
+                 TrestleObjectCacheEntryListener listener,
                  Metrician metrician) {
 //        Create the index
         this.validIndex = validIndex;
@@ -62,7 +62,7 @@ public class TrestleCacheImpl implements TrestleCache {
                 .addCacheEntryListenerConfiguration(new MutableCacheEntryListenerConfiguration<>(FactoryBuilder.factoryOf(listener), null, false, cacheConfig.getBoolean("synchronous")))
                 .setStatisticsEnabled(true);
         logger.debug("Creating cache {}", TRESTLE_OBJECT_CACHE);
-        individualCache = cacheManager.createCache(TRESTLE_OBJECT_CACHE, trestleObjectCacheConfiguration);
+        trestleObjectCache = cacheManager.createCache(TRESTLE_OBJECT_CACHE, trestleObjectCacheConfiguration);
 
 //        Enable metrics
         metrician.registerMetricSet(new TrestleCacheMetrics());
@@ -80,10 +80,10 @@ public class TrestleCacheImpl implements TrestleCache {
             @Nullable final TrestleIRI indexValue = validIndex.getValue(individualID, offsetDateTime.atZoneSameInstant(ZoneOffset.UTC).toInstant().toEpochMilli());
             if (indexValue != null) {
                 logger.debug("Index has {} for {} @{}", indexValue, individualIRI, offsetDateTime);
-                return clazz.cast(individualCache.get(indexValue.getIRI()));
+                return clazz.cast(trestleObjectCache.get(indexValue.getIRI()));
             } else {
                 logger.debug("Index does not have {} @{}, going to cache", individualIRI, offsetDateTime);
-                return clazz.cast(individualCache.get(individualIRI.getIRI()));
+                return clazz.cast(trestleObjectCache.get(individualIRI.getIRI()));
             }
         } catch (InterruptedException e) {
             logger.error("Unable to get read lock, returning null for {}", individualIRI.getIRI(), e);
@@ -99,7 +99,7 @@ public class TrestleCacheImpl implements TrestleCache {
         try {
             cacheLock.lockWrite();
             logger.debug("Adding {} to cache from {} to {}", individualIRI, startTemporal, endTemporal);
-            individualCache.put(individualIRI.getIRI(), value);
+            trestleObjectCache.put(individualIRI.getIRI(), value);
             validIndex.insertValue(individualIRI.getObjectID(), startTemporal, endTemporal, individualIRI);
         } catch (InterruptedException e) {
             logger.error("Unable to get write lock", e);
@@ -118,7 +118,7 @@ public class TrestleCacheImpl implements TrestleCache {
                 try {
                    cacheLock.lockWrite();
                     logger.debug("Removing {} from index and cache", trestleIRI);
-                    individualCache.remove(value.getIRI());
+                    trestleObjectCache.remove(value.getIRI());
                     validIndex.deleteValue(value.getObjectID(), objectTemporal.toInstant().toEpochMilli());
                 } finally {
                     cacheLock.unlockWrite();
@@ -130,6 +130,18 @@ public class TrestleCacheImpl implements TrestleCache {
         } finally {
             cacheLock.unlockRead();
         }
+    }
+
+    /**
+     * Get statistics for the underlying caches
+     * @return - {@link TrestleCacheStatistics}
+     */
+    public TrestleCacheStatistics getCacheStatistics() {
+        return new TrestleCacheStatistics(
+                this.validIndex.getCacheSize(),
+                this.validIndex.calculateFragmentation(),
+                this.dbIndex.getCacheSize(),
+                this.dbIndex.calculateFragmentation());
     }
 
     @Override

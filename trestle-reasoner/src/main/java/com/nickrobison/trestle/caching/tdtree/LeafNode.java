@@ -112,6 +112,12 @@ public abstract class LeafNode<Value> {
      */
     abstract Map<FastTuple, Value> dumpLeaf();
 
+    /**
+     * Calculates the fragmentation of the leaf-node, which is the number of null records in the storage array with indexes less than the record count
+     * @return - Percent fragmentation
+     */
+    abstract double calculateFragmentation();
+
     static FastTuple buildObjectKey(String objectID, long startTime, long endTime) {
         return buildObjectKey(longHashCode(objectID), startTime, endTime);
     }

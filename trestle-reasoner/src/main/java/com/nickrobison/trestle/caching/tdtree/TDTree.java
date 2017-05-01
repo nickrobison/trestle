@@ -35,7 +35,6 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
 
     private static final Logger logger = LoggerFactory.getLogger(TDTree.class);
     static long maxValue = LocalDate.of(3000, 1, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
-    //    static long maxValue = LocalDateTime.MAX.toInstant(ZoneOffset.UTC).toEpochMilli();
     static final TupleSchema leafSchema = buildLeafSchema();
     private final int blockSize;
     private List<LeafNode<Value>> leafs = new ArrayList<>();
@@ -171,6 +170,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     }
 
     @Override
+    @Timed(name = "td-tree.rebuild.timer", absolute = true)
     public void rebuildIndex() {
         logger.info("Rebuilding TD-Tree");
 //        Dump the tree, create a new one, and reinsert all the values
@@ -182,18 +182,26 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
                 .stream()
                 .filter(leaf -> leaf.getRecordCount() > 0)
                 .map(LeafNode::dumpLeaf)
-                .forEach(values -> values.entrySet()
-                        .forEach(entry -> {
-                            this.insertValue(entry.getKey().getLong(1),
-                                    entry.getKey().getLong(2),
-                                    entry.getKey().getLong(3),
-                                    entry.getValue());
-                        }));
+                .forEach(values -> values.forEach((key, value) -> this.insertValue(key.getLong(1),
+                        key.getLong(2),
+                        key.getLong(3),
+                        value)));
 
         final Instant end = Instant.now();
         logger.info("Rebuilding index took {} ms", Duration.between(start, end).toMillis());
     }
 
+    @Override
+    public double calculateFragmentation() {
+        return this.leafs
+                .stream()
+                .filter(leaf -> leaf.getRecordCount() > 0)
+                .mapToDouble(LeafNode::calculateFragmentation)
+                .average()
+                .orElse(0.0);
+    }
+
+    @Override
     @Gauge(name = "td-tree.cache-size", absolute = true)
     public long getCacheSize() {
         return cacheSize.get();

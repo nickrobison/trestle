@@ -212,6 +212,17 @@ class SplittableNode<Value> extends LeafNode<Value> {
         return leafRecords;
     }
 
+    @Override
+    double calculateFragmentation() {
+        double nullRecords = 0;
+        for (int i = 0; i < this.records; i++) {
+            if (keys[i] == null) {
+                nullRecords++;
+            }
+        }
+        return nullRecords / (double) this.records;
+    }
+
     private LeafSplit insertValueIntoArray(FastTuple key, Value value) {
         if (!ArrayUtils.contains(keys, key)) {
             keys[records] = key;

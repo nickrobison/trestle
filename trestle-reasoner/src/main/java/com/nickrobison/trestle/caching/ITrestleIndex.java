@@ -1,6 +1,10 @@
 package com.nickrobison.trestle.caching;
 
+import com.codahale.metrics.annotation.Gauge;
+import com.nickrobison.trestle.caching.tdtree.LeafNode;
 import org.checkerframework.checker.nullness.qual.Nullable;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by nrobison on 2/13/17.
@@ -88,4 +92,17 @@ public interface ITrestleIndex<Value> {
      * Rebuild the Index, re-balancing all the nodes and compacting excess space
      */
     void rebuildIndex();
+
+    /**
+     * Calculate percent fragmentation of all {@link LeafNode}s
+     * @return - Percent fragmentation
+     */
+    double calculateFragmentation();
+
+    /**
+     * Calculate estimated cache size
+     * Each write/delete modifies a {@link AtomicLong}, so it's just an estimated count, but quick to get
+     */
+    @Gauge(name = "td-tree.cache-size", absolute = true)
+    long getCacheSize();
 }
