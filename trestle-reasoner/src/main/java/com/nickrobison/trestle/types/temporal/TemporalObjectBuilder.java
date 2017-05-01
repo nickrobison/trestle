@@ -1,10 +1,13 @@
 package com.nickrobison.trestle.types.temporal;
 
 import com.nickrobison.trestle.parser.TemporalParser;
+import com.nickrobison.trestle.types.TemporalScope;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLLiteral;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.temporal.Temporal;
 import java.util.Optional;
 import java.util.Set;
@@ -34,6 +37,48 @@ public class TemporalObjectBuilder {
 
     public static DatabaseTemporal.Builder database() {
         return new DatabaseTemporal.Builder();
+    }
+
+    public static Optional<TemporalObject> buildTemporalFromResults(TemporalScope scope, Optional<OWLLiteral> atAssertion, Optional<OWLLiteral> fromAssertion, Optional<OWLLiteral> toAssertion) {
+        switch (scope) {
+            case VALID:
+                if (atAssertion.isPresent()) {
+                    return Optional.of(TemporalObjectBuilder.valid().at(parseToTemporal(atAssertion.get(), OffsetDateTime.class)).build());
+                }
+                if (fromAssertion.isPresent()) {
+                    final IntervalTemporal.Builder intervalTemporal = TemporalObjectBuilder.valid().from(parseToTemporal(fromAssertion.get(), OffsetDateTime.class));
+                    if (toAssertion.isPresent()) {
+                        return Optional.of(intervalTemporal.to(parseToTemporal(toAssertion.get(), OffsetDateTime.class)).build());
+                    }
+                    return Optional.of(intervalTemporal.build());
+                }
+                return Optional.empty();
+            case EXISTS:
+                if (atAssertion.isPresent()) {
+                    return Optional.of(TemporalObjectBuilder.exists().at(parseToTemporal(atAssertion.get(), OffsetDateTime.class)).build());
+                }
+                if (fromAssertion.isPresent()) {
+                    final IntervalTemporal.Builder intervalTemporal = TemporalObjectBuilder.exists().from(parseToTemporal(fromAssertion.get(), OffsetDateTime.class));
+                    if (toAssertion.isPresent()) {
+                        return Optional.of(intervalTemporal.to(parseToTemporal(toAssertion.get(), OffsetDateTime.class)).build());
+                    }
+                    return Optional.of(intervalTemporal.build());
+                }
+                return Optional.empty();
+            case DATABASE:
+                if (atAssertion.isPresent()) {
+                    return Optional.of(TemporalObjectBuilder.database().at(parseToTemporal(atAssertion.get(), OffsetDateTime.class)).build());
+                }
+                if (fromAssertion.isPresent()) {
+                    final IntervalTemporal.Builder intervalTemporal = TemporalObjectBuilder.database().from(parseToTemporal(fromAssertion.get(), OffsetDateTime.class));
+                    if (toAssertion.isPresent()) {
+                        return Optional.of(intervalTemporal.to(parseToTemporal(toAssertion.get(), OffsetDateTime.class)).build());
+                    }
+                    return Optional.of(intervalTemporal.build());
+                }
+                return Optional.empty();
+        }
+        return Optional.empty();
     }
 
     public static Optional<TemporalObject> buildTemporalFromProperties(Set<OWLDataPropertyAssertionAxiom> properties, @Nullable Class<? extends Temporal> temporalType, String temporalID) {

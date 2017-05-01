@@ -31,6 +31,7 @@ public class TrestleCache {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleCache.class);
     public static final String INDIVIDUAL_CACHE = "individual-cache";
+    public static final String TRESTLE_OBJECT_CACHE = "trestle-object-cache";
     private final TrestleUpgradableReadWriteLock cacheLock;
     private final CacheManager cacheManager;
     private final Cache<IRI, Object> individualCache;
@@ -54,13 +55,14 @@ public class TrestleCache {
         logger.info("Creating TrestleCache with implementation {}", cacheImplementation);
         final CachingProvider cachingProvider = Caching.getCachingProvider(cacheImplementation);
         cacheManager = cachingProvider.getCacheManager();
-        final MutableConfiguration<IRI, Object> individualCacheConfiguration = new MutableConfiguration<>();
-        individualCacheConfiguration
+//        Create trestle object cache
+        final MutableConfiguration<IRI, Object> trestleObjectCacheConfiguration = new MutableConfiguration<>();
+        trestleObjectCacheConfiguration
                 .setTypes(IRI.class, Object.class)
                 .addCacheEntryListenerConfiguration(new MutableCacheEntryListenerConfiguration<>(FactoryBuilder.factoryOf(listener), null, false, cacheConfig.getBoolean("synchronous")))
                 .setStatisticsEnabled(true);
-        logger.debug("Creating cache {}", INDIVIDUAL_CACHE);
-        individualCache = cacheManager.createCache(INDIVIDUAL_CACHE, individualCacheConfiguration);
+        logger.debug("Creating cache {}", TRESTLE_OBJECT_CACHE);
+        individualCache = cacheManager.createCache(TRESTLE_OBJECT_CACHE, trestleObjectCacheConfiguration);
 
 //        Enable metrics
         metrician.registerMetricSet(new TrestleCacheMetrics());
@@ -74,8 +76,7 @@ public class TrestleCache {
             final String individualID = individualIRI.getObjectID();
             final OffsetDateTime offsetDateTime = individualIRI.getObjectTemporal().orElse(OffsetDateTime.now());
             logger.debug("Getting {} from cache @{}", individualIRI, offsetDateTime);
-//        TODO(nrobison): This shouldn't be Epoch second
-            @Nullable final TrestleIRI indexValue = validIndex.getValue(individualID, offsetDateTime.atZoneSameInstant(ZoneOffset.UTC).toEpochSecond());
+            @Nullable final TrestleIRI indexValue = validIndex.getValue(individualID, offsetDateTime.atZoneSameInstant(ZoneOffset.UTC).toInstant().toEpochMilli());
             if (indexValue != null) {
                 logger.debug("Index has {} for {} @{}", indexValue, individualIRI, offsetDateTime);
                 return clazz.cast(individualCache.get(indexValue.getIRI()));
@@ -109,13 +110,13 @@ public class TrestleCache {
         final OffsetDateTime objectTemporal = trestleIRI.getObjectTemporal().orElse(OffsetDateTime.now());
         try {
             cacheLock.lockRead();
-            @Nullable final TrestleIRI value = validIndex.getValue(trestleIRI.getObjectID(), objectTemporal.toEpochSecond());
+            @Nullable final TrestleIRI value = validIndex.getValue(trestleIRI.getObjectID(), objectTemporal.toInstant().toEpochMilli());
             if (value != null) {
                 try {
                    cacheLock.lockWrite();
                     logger.debug("Removing {} from index and cache", trestleIRI);
                     individualCache.remove(value.getIRI());
-                    validIndex.getValue(value.getObjectID(), objectTemporal.toEpochSecond());
+                    validIndex.deleteValue(value.getObjectID(), objectTemporal.toInstant().toEpochMilli());
                 } finally {
                     cacheLock.unlockWrite();
                 }
