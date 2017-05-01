@@ -151,7 +151,7 @@ public class TDTreeHelpers {
      */
 //    FIXME(nrobison): This needs to get a calculated precision
     private static double normalizeZero(double value) {
-        final double abs = FastMath.abs(Precision.round(value, 3));
+        final double abs = FastMath.abs(Precision.round(value, 10));
 //        If the value falls outside of the maxValue range, return the maxValue. This adjusts for double rounding issues
         if (abs > TDTree.maxValue) {
             return TDTree.maxValue;
