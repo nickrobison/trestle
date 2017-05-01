@@ -426,6 +426,15 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
             ontology.returnAndCommitTransaction(trestleTransaction);
         }
+
+//        Invalidate the cache
+        if (cachingEnabled) {
+            final TrestleIRI individualIRI = IRIBuilder.encodeIRI(V1, REASONER_PREFIX, owlNamedIndividual.toStringID(), null,
+                    parseTemporalToOntologyDateTime(factTemporal.getIdTemporal(), ZoneOffset.UTC),
+                    parseTemporalToOntologyDateTime(dTemporal.getIdTemporal(), ZoneOffset.UTC));
+            logger.debug("Purging {} from the cache", individualIRI);
+            trestleCache.deleteIndividual(individualIRI);
+        }
     }
 
     @Override
