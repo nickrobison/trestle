@@ -9,12 +9,14 @@ import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLIndividual;
 import org.semanticweb.owlapi.model.OWLLiteral;
 
+import java.io.Serializable;
 import java.util.Optional;
 
 /**
  * Created by nrobison on 10/16/16.
  */
-public class TrestleFact<T> {
+public class TrestleFact<T> implements Serializable {
+    private static final long serialVersionUID = 42L;
 
     private final String identifier;
     private final String name;

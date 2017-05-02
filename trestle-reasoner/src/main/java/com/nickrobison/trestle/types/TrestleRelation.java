@@ -2,6 +2,8 @@ package com.nickrobison.trestle.types;
 
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 
+import java.io.Serializable;
+
 /**
  * Created by nrobison on 1/9/17.
  */
@@ -9,7 +11,8 @@ import com.nickrobison.trestle.types.relations.ObjectRelation;
 /**
  * Relation class that defines a subject/object relation and its type.
  */
-public class TrestleRelation {
+public class TrestleRelation implements Serializable {
+    private static final long serialVersionUID = 42L;
 
     private final String subject;
     private final String object;

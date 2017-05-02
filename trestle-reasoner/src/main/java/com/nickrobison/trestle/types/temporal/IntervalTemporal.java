@@ -23,10 +23,13 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     private static final TemporalType TYPE = TemporalType.INTERVAL;
     private final TemporalScope scope;
     private final T fromTime;
-    private final Optional<T> toTime;
+//    private final Optional<T> toTime;
+    private final @Nullable T toTime;
     private final boolean isDefault;
-    private final Optional<String> startName;
-    private final Optional<String> endName;
+    private final @Nullable String startName;
+    private final @Nullable String endName;
+//    private final Optional<String> startName;
+//    private final Optional<String> endName;
     private final Class<T> temporalType;
     private final ZoneId startTimeZone;
     private final ZoneId endTimeZone;
@@ -35,10 +38,10 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         super(builder.temporalID.orElse(UUID.randomUUID().toString()), builder.relations);
         this.scope = builder.scope;
         this.fromTime = builder.fromTime;
-        this.toTime = builder.toTime;
+        this.toTime = builder.toTime.orElse(null);
         this.isDefault = builder.isDefault;
-        this.startName = builder.startName;
-        this.endName = builder.endName;
+        this.startName = builder.startName.orElse(null);
+        this.endName = builder.endName.orElse(null);
         this.temporalType = (Class<T>) builder.fromTime.getClass();
         this.startTimeZone = builder.fromTimeZone.orElse(ZoneOffset.UTC);
         this.endTimeZone = builder.toTimeZone.orElse(builder.fromTimeZone.orElse(ZoneOffset.UTC));
@@ -85,12 +88,12 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
             if (isContinuing()) {
                 return TemporalObjectBuilder.valid().from(this.fromTime).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
             }
-            return TemporalObjectBuilder.valid().from(this.fromTime).to(this.toTime.get()).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
+            return TemporalObjectBuilder.valid().from(this.fromTime).to(this.toTime).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
         } else {
             if (isContinuing()) {
                 return TemporalObjectBuilder.exists().from(this.fromTime).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
             }
-            return TemporalObjectBuilder.exists().from(this.fromTime).to(this.toTime.get()).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
+            return TemporalObjectBuilder.exists().from(this.fromTime).to(this.toTime).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
         }
     }
 
@@ -102,7 +105,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
             return 0;
         } else {
             //noinspection OptionalGetWithoutIsPresent
-            final OffsetDateTime t2 = parseTemporalToOntologyDateTime(this.toTime.get(), ZoneOffset.of(this.startTimeZone.getId()));
+            final OffsetDateTime t2 = parseTemporalToOntologyDateTime(this.toTime, ZoneOffset.of(this.startTimeZone.getId()));
             if (t2.compareTo(comparingTemporal) <= 0) return 1;
             if (t2.compareTo(comparingTemporal) >0 && t1.compareTo(comparingTemporal) <= 0) return 0;
             return -1;
@@ -120,7 +123,8 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     }
 
     public boolean isContinuing() {
-        return !toTime.isPresent();
+        return toTime == null;
+//        return !toTime.isPresent();
     }
 
     public boolean isDefault() {
@@ -132,7 +136,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     }
 
     public Optional<T> getToTime() {
-        return this.toTime;
+        return Optional.ofNullable(this.toTime);
     }
 
     /**
@@ -154,11 +158,19 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     }
 
     public String getStartName() {
-        return this.startName.orElse("intervalStart");
+//        return this.startName.orElse("intervalStart");
+        if (this.startName == null) {
+            return "intervalStart";
+        }
+        return this.startName;
     }
 
     public String getEndName() {
-        return this.endName.orElse("intervalEnd");
+//        return this.endName.orElse("intervalEnd");
+        if (this.endName == null) {
+            return "intervalEnd";
+        }
+        return this.endName;
     }
 
     public ZoneId getStartTimeZone() {
@@ -171,7 +183,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
     @Override
     public String toString() {
-        return String.format("%s - %s", this.fromTime, this.toTime.orElse(null));
+        return String.format("%s - %s", this.fromTime, this.toTime);
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -210,8 +222,8 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
          * @param to - Temporal of type T to use for to temporal
          * @return - Builder
          */
-        public Builder to(T to) {
-            this.toTime = Optional.of(to);
+        public Builder to(@Nullable T to) {
+            this.toTime = Optional.ofNullable(to);
             return this;
         }
 
