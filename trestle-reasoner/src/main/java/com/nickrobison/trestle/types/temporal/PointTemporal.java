@@ -17,13 +17,12 @@ import static com.nickrobison.trestle.parser.TemporalParser.parseTemporalToOntol
  * Created by nrobison on 6/30/16.
  */
 // I can suppress both of these warnings because I know for sure they are correct
-@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unchecked", "return.type.incompatible", "Duplicates"})
+@SuppressWarnings({"unchecked", "return.type.incompatible", "Duplicates"})
 public class PointTemporal<T extends Temporal> extends TemporalObject {
 
     private static final TemporalType TYPE = TemporalType.POINT;
     private final TemporalScope scope;
     private final T atTime;
-//    private final Optional<String> parameterName;
     private final @Nullable String parameterName;
     private final Class<T> temporalType;
     private ZoneId timeZone;
@@ -102,7 +101,6 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
     }
 
     public String getParameterName() {
-//        return this.parameterName.orElse("pointTime");
         if (parameterName == null) {
             return "pointTime";
         }

@@ -17,19 +17,16 @@ import static com.nickrobison.trestle.parser.TemporalParser.parseTemporalToOntol
  * Created by nrobison on 6/30/16.
  */
 // I can suppress both of these warnings because I know for sure they are correct
-@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unchecked", "return.type.incompatible", "Duplicates"})
+@SuppressWarnings({"unchecked", "return.type.incompatible", "Duplicates"})
 public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
     private static final TemporalType TYPE = TemporalType.INTERVAL;
     private final TemporalScope scope;
     private final T fromTime;
-//    private final Optional<T> toTime;
     private final @Nullable T toTime;
     private final boolean isDefault;
     private final @Nullable String startName;
     private final @Nullable String endName;
-//    private final Optional<String> startName;
-//    private final Optional<String> endName;
     private final Class<T> temporalType;
     private final ZoneId startTimeZone;
     private final ZoneId endTimeZone;
@@ -124,7 +121,6 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
     public boolean isContinuing() {
         return toTime == null;
-//        return !toTime.isPresent();
     }
 
     public boolean isDefault() {
@@ -158,7 +154,6 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     }
 
     public String getStartName() {
-//        return this.startName.orElse("intervalStart");
         if (this.startName == null) {
             return "intervalStart";
         }
@@ -166,7 +161,6 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     }
 
     public String getEndName() {
-//        return this.endName.orElse("intervalEnd");
         if (this.endName == null) {
             return "intervalEnd";
         }
