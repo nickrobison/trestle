@@ -86,7 +86,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private static final OWLClass datasetClass = OWLManager.getOWLDataFactory().getOWLClass(datasetClassIRI);
     private final QueryBuilder qb;
     private final QueryBuilder.DIALECT spatialDalect;
-    private boolean cachingEnabled = true;
     private final TrestleParser trestleParser;
     private final Config trestleConfig;
     private final TrestleCache trestleCache;
@@ -1176,6 +1175,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private TrestleIndividual getTrestleIndividual(OWLNamedIndividual individual) {
 
         logger.debug("Building trestle individual {}", individual);
+        @Nullable final TrestleIndividual cacheIndividual = this.trestleCache.getTrestleIndividual(individual);
+        if (cacheIndividual != null) {
+            logger.debug("Retrieved {} from cache");
+            return cacheIndividual;
+        }
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
 
@@ -1231,6 +1235,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         try {
             TrestleIndividual trestleIndividual = individualFuture.get();
             this.ontology.returnAndCommitTransaction(trestleTransaction);
+            this.trestleCache.writeTrestleIndividual(individual, trestleIndividual);
             return trestleIndividual;
         } catch (InterruptedException | ExecutionException e) {
 //            FIXME(nrobison): Rollback
@@ -2013,9 +2018,4 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             throw new InvalidOntologyName(ontologyName.length());
         }
     }
-
-//    @EnsuresNonNullIf(expression = "this.trestleCache", result = true)
-//    private boolean isCachingEnabled() {
-//        return this.trestleCache != null;
-//    }
 }

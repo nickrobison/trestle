@@ -1,12 +1,16 @@
 package com.nickrobison.trestle.caching;
 
 import com.nickrobison.metrician.Metrician;
+import com.nickrobison.trestle.caching.listeners.TrestleObjectCacheEntryListener;
 import com.nickrobison.trestle.common.locking.TrestleUpgradableReadWriteLock;
 import com.nickrobison.trestle.iri.TrestleIRI;
+import com.nickrobison.trestle.types.TrestleIndividual;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.apache.jena.vocabulary.OWL;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,20 +34,21 @@ import java.time.ZoneOffset;
 public class TrestleCacheImpl implements TrestleCache {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleCache.class);
-    public static final String INDIVIDUAL_CACHE = "individual-cache";
     public static final String TRESTLE_OBJECT_CACHE = "trestle-object-cache";
+    public static final String TRESTLE_INDIVIDUAL_CACHE = "trestle-individual-cache";
     private final TrestleUpgradableReadWriteLock cacheLock;
     private final CacheManager cacheManager;
     private final Cache<IRI, Object> trestleObjectCache;
+    private final Cache<IRI, TrestleIndividual> trestleIndividualCache;
     private final ITrestleIndex<TrestleIRI> validIndex;
     private final ITrestleIndex<TrestleIRI> dbIndex;
 
     @Inject
     TrestleCacheImpl(@Named("valid") ITrestleIndex<TrestleIRI> validIndex,
-                 @Named("database") ITrestleIndex<TrestleIRI> dbIndex,
-                 @Named("cacheLock") TrestleUpgradableReadWriteLock lock,
-                 TrestleObjectCacheEntryListener listener,
-                 Metrician metrician) {
+                     @Named("database") ITrestleIndex<TrestleIRI> dbIndex,
+                     @Named("cacheLock") TrestleUpgradableReadWriteLock lock,
+                     TrestleObjectCacheEntryListener listener,
+                     Metrician metrician) {
 //        Create the index
         this.validIndex = validIndex;
         this.dbIndex = dbIndex;
@@ -64,9 +69,19 @@ public class TrestleCacheImpl implements TrestleCache {
         logger.debug("Creating cache {}", TRESTLE_OBJECT_CACHE);
         trestleObjectCache = cacheManager.createCache(TRESTLE_OBJECT_CACHE, trestleObjectCacheConfiguration);
 
+//        Create the trestle individual cache
+        final MutableConfiguration<IRI, TrestleIndividual> trestleIndividualCacheConfiguration = new MutableConfiguration<>();
+        trestleIndividualCacheConfiguration
+                .setTypes(IRI.class, TrestleIndividual.class)
+                .setStatisticsEnabled(true);
+        logger.debug("Creating cache {}", TRESTLE_INDIVIDUAL_CACHE);
+        this.trestleIndividualCache = cacheManager.createCache(TRESTLE_INDIVIDUAL_CACHE, trestleIndividualCacheConfiguration);
+
 //        Enable metrics
         metrician.registerMetricSet(new TrestleCacheMetrics());
     }
+
+//    TrestleObject methods
 
 
     @Override
@@ -116,7 +131,7 @@ public class TrestleCacheImpl implements TrestleCache {
             @Nullable final TrestleIRI value = validIndex.getValue(trestleIRI.getObjectID(), objectTemporal.toInstant().toEpochMilli());
             if (value != null) {
                 try {
-                   cacheLock.lockWrite();
+                    cacheLock.lockWrite();
                     logger.debug("Removing {} from index and cache", trestleIRI);
                     trestleObjectCache.remove(value.getIRI());
                     validIndex.deleteValue(value.getObjectID(), objectTemporal.toInstant().toEpochMilli());
@@ -132,16 +147,47 @@ public class TrestleCacheImpl implements TrestleCache {
         }
     }
 
+//    Trestle Individual methods
+
+    @Override
+    public @Nullable TrestleIndividual getTrestleIndividual(OWLNamedIndividual individual) {
+        return this.trestleIndividualCache.get(individual.getIRI());
+    }
+
+    @Override
+    public void writeTrestleIndividual(OWLNamedIndividual key, TrestleIndividual value) {
+        this.trestleIndividualCache.put(key.getIRI(), value);
+    }
+
+    @Override
+    public void deleteTrestleIndividual(OWLNamedIndividual individual) {
+        final boolean remove = this.trestleIndividualCache.remove(individual.getIRI());
+        if (remove) {
+            logger.debug("Removed {} from the cache", individual);
+        } else {
+            logger.debug("Cache does not have {}", individual);
+        }
+    }
+
     /**
      * Get statistics for the underlying caches
+     *
      * @return - {@link TrestleCacheStatistics}
      */
-    public TrestleCacheStatistics getCacheStatistics() {
-        return new TrestleCacheStatistics(
-                this.validIndex.getCacheSize(),
-                this.validIndex.calculateFragmentation(),
-                this.dbIndex.getCacheSize(),
-                this.dbIndex.calculateFragmentation());
+    public @Nullable TrestleCacheStatistics getCacheStatistics() {
+        try {
+            cacheLock.lockRead();
+            return new TrestleCacheStatistics(
+                    this.validIndex.getCacheSize(),
+                    this.validIndex.calculateFragmentation(),
+                    this.dbIndex.getCacheSize(),
+                    this.dbIndex.calculateFragmentation());
+        } catch (InterruptedException e) {
+            logger.error("Cannot get read lock", e);
+            return null;
+        } finally {
+            cacheLock.unlockRead();
+        }
     }
 
     @Override
@@ -149,7 +195,8 @@ public class TrestleCacheImpl implements TrestleCache {
         logger.info("Shutting down TrestleCache");
         if (drop) {
             logger.debug("Deleting caches");
-            cacheManager.destroyCache(INDIVIDUAL_CACHE);
+            cacheManager.destroyCache(TRESTLE_OBJECT_CACHE);
+            cacheManager.destroyCache(TRESTLE_INDIVIDUAL_CACHE);
         }
         cacheManager.close();
     }

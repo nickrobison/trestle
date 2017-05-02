@@ -1,7 +1,9 @@
 package com.nickrobison.trestle.caching;
 
 import com.nickrobison.trestle.iri.TrestleIRI;
+import com.nickrobison.trestle.types.TrestleIndividual;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 /**
  * Created by nrobison on 5/1/17.
@@ -30,6 +32,26 @@ public interface TrestleCache {
      * @param trestleIRI - {@link TrestleIRI} to remove from index and cache
      */
     void deleteTrestleObject(TrestleIRI trestleIRI);
+
+    /**
+     * Get {@link TrestleIndividual} from cache
+     * @param individual - {@link org.semanticweb.owlapi.model.OWLNamedIndividual} key to retrieve
+     * @return - {@link TrestleIndividual}, if it exists
+     */
+    @Nullable TrestleIndividual getTrestleIndividual(OWLNamedIndividual individual);
+
+    /**
+     * Write {@link TrestleIndividual} into cache
+     * @param key - {@link OWLNamedIndividual} to use as key
+     * @param value - {@link TrestleIndividual} value
+     */
+    void writeTrestleIndividual(OWLNamedIndividual key, TrestleIndividual value);
+
+    /**
+     * Delete {@link TrestleIndividual} from cache
+     * @param individual - {@link OWLNamedIndividual} key to delete
+     */
+    void deleteTrestleIndividual(OWLNamedIndividual individual);
 
     void shutdown(boolean drop);
 }

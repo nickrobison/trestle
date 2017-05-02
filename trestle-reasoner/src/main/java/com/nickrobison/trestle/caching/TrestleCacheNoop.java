@@ -1,7 +1,9 @@
 package com.nickrobison.trestle.caching;
 
 import com.nickrobison.trestle.iri.TrestleIRI;
+import com.nickrobison.trestle.types.TrestleIndividual;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +28,21 @@ public class TrestleCacheNoop implements TrestleCache {
 
     @Override
     public void deleteTrestleObject(TrestleIRI trestleIRI) {
+
+    }
+
+    @Override
+    public @Nullable TrestleIndividual getTrestleIndividual(OWLNamedIndividual individual) {
+        return null;
+    }
+
+    @Override
+    public void writeTrestleIndividual(OWLNamedIndividual key, TrestleIndividual value) {
+
+    }
+
+    @Override
+    public void deleteTrestleIndividual(OWLNamedIndividual individual) {
 
     }
 

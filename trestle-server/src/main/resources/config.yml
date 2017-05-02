@@ -15,6 +15,7 @@ logging:
   level: INFO
   loggers:
     "com.nickrobison.metrician": DEBUG
+    "com.nickrobison.trestle": DEBUG
 
 database:
   driverClass: org.h2.Driver
