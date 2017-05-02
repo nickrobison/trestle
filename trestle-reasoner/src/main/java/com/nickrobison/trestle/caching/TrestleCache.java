@@ -2,6 +2,7 @@ package com.nickrobison.trestle.caching;
 
 import com.nickrobison.trestle.iri.TrestleIRI;
 import com.nickrobison.trestle.types.TrestleIndividual;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
@@ -11,30 +12,35 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 public interface TrestleCache {
     /**
      * Read, from cache, an available record that is valid for the specific temporal value encoded in the {@link TrestleIRI}
-     * @param clazz - Generic class of to cast result to
+     *
+     * @param clazz         - Generic class of to cast result to
      * @param individualIRI - {@link TrestleIRI} to retrieve
-     * @param <T> - Generic return type
+     * @param <T>           - Generic return type
      * @return - Cast object
      */
     <T> @Nullable T getTrestleObject(Class<T> clazz, TrestleIRI individualIRI);
 
     /**
      * Write TrestleObject
+     *
      * @param individualIRI - {@link TrestleIRI} to add as key index/cache at a specific temporal interval
      * @param startTemporal - Start temporal in Unix epic (ms)
-     * @param endTemporal - End temporal in Unix epic (ms)
-     * @param value - Value to write to cache
+     * @param endTemporal   - End temporal in Unix epic (ms)
+     * @param value         - Value to write to cache
+     * @throws java.io.NotSerializableException if the value class isn't serializable (even if using a local cache)
      */
-    void writeTrestleObject(TrestleIRI individualIRI, long startTemporal, long endTemporal, Object value);
+    void writeTrestleObject(TrestleIRI individualIRI, long startTemporal, long endTemporal, @NonNull Object value);
 
     /**
      * Delete TrestleObject from cache
+     *
      * @param trestleIRI - {@link TrestleIRI} to remove from index and cache
      */
     void deleteTrestleObject(TrestleIRI trestleIRI);
 
     /**
      * Get {@link TrestleIndividual} from cache
+     *
      * @param individual - {@link org.semanticweb.owlapi.model.OWLNamedIndividual} key to retrieve
      * @return - {@link TrestleIndividual}, if it exists
      */
@@ -42,13 +48,15 @@ public interface TrestleCache {
 
     /**
      * Write {@link TrestleIndividual} into cache
-     * @param key - {@link OWLNamedIndividual} to use as key
+     *
+     * @param key   - {@link OWLNamedIndividual} to use as key
      * @param value - {@link TrestleIndividual} value
      */
     void writeTrestleIndividual(OWLNamedIndividual key, TrestleIndividual value);
 
     /**
      * Delete {@link TrestleIndividual} from cache
+     *
      * @param individual - {@link OWLNamedIndividual} key to delete
      */
     void deleteTrestleIndividual(OWLNamedIndividual individual);

@@ -660,7 +660,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             logger.debug("Done with {}", individualIRI);
 //            Write back to index
             final TrestleObjectResult<@NonNull T> value = constructedObject.get();
-            this.trestleCache.writeTrestleObject(trestleIRI, value.getValidFrom().toInstant().toEpochMilli(), value.getValidTo().toInstant().toEpochMilli(), value.getObject());
+            try {
+                this.trestleCache.writeTrestleObject(trestleIRI, value.getValidFrom().toInstant().toEpochMilli(), value.getValidTo().toInstant().toEpochMilli(), value.getObject());
+            } catch (Exception e) {
+                logger.error("Unable to write Trestle Object {} to cache", individualIRI, e);
+            }
             return value.getObject();
         } else {
             throw new NoValidStateException(individualIRI, validAt, databaseAt);
@@ -1235,7 +1239,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         try {
             TrestleIndividual trestleIndividual = individualFuture.get();
             this.ontology.returnAndCommitTransaction(trestleTransaction);
-            this.trestleCache.writeTrestleIndividual(individual, trestleIndividual);
+            try {
+                this.trestleCache.writeTrestleIndividual(individual, trestleIndividual);
+            } catch (Exception e) {
+                logger.error("Unable to write Trestle Individual {} to cache", individual, e);
+            }
             return trestleIndividual;
         } catch (InterruptedException | ExecutionException e) {
 //            FIXME(nrobison): Rollback

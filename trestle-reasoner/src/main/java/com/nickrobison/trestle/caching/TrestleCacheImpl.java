@@ -7,7 +7,7 @@ import com.nickrobison.trestle.iri.TrestleIRI;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.apache.jena.vocabulary.OWL;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
@@ -24,6 +24,7 @@ import javax.cache.spi.CachingProvider;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import java.io.NotSerializableException;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
@@ -109,7 +110,7 @@ public class TrestleCacheImpl implements TrestleCache {
     }
 
     @Override
-    public void writeTrestleObject(TrestleIRI individualIRI, long startTemporal, long endTemporal, Object value) {
+    public void writeTrestleObject(TrestleIRI individualIRI, long startTemporal, long endTemporal, @NonNull Object value) {
 //        Write to the cache and the index
         try {
             cacheLock.lockWrite();
