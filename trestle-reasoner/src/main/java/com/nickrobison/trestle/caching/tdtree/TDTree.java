@@ -207,6 +207,10 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         return cacheSize.get();
     }
 
+    int getLeafCount() {
+        return this.leafs.size();
+    }
+
     private List<LeafNode<Value>> findCandidateLeafs(long atTime) {
         List<LeafNode<Value>> candidateLeafs = new ArrayList<>();
         long[] rectApex = {atTime, atTime};
