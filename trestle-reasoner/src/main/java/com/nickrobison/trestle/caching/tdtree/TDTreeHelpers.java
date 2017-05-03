@@ -3,6 +3,9 @@ package com.nickrobison.trestle.caching.tdtree;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by nrobison on 2/10/17.
  */
@@ -11,6 +14,7 @@ public class TDTreeHelpers {
     static final double ROOTTWO = FastMath.sqrt(2);
     private static final double LOG_10_2 = FastMath.log10(2);
     static final double[] adjustedLength;
+    private static final Map<Integer, Integer> computedIDLengths = new HashMap<>();
 
     static {
 //        Initialize the lookup tables
@@ -23,16 +27,17 @@ public class TDTreeHelpers {
      */
     static void computeAdjustedLengths() {
         for (int i = 0; i < adjustedLength.length; i++) {
-            final double adjustedLength = getAdjustedLength(i);
+            final double adjustedLength = computeAdjustedLength(i);
             TDTreeHelpers.adjustedLength[i] = adjustedLength;
         }
     }
 
     /**
      * Determines if the given triangle is fully contained in the rectangle denoted by the X/Y bottom-right corner
-     * @param apex - {@link TriangleApex}
-     * @param direction - Direction of triangle
-     * @param leafLength - Leaf length
+     *
+     * @param apex          - {@link TriangleApex}
+     * @param direction     - Direction of triangle
+     * @param leafLength    - Leaf length
      * @param rectangleApex - bottom-right X/Y coordinates of rectangle
      * @return - <code>1</code> if the triangle is fully within the rectangle. <code>-2</code> if fully outside, and 0 to -1 if it partially intersects.
      */
@@ -147,6 +152,7 @@ public class TDTreeHelpers {
     /**
      * Rounds values to their 10th decimal place, and gets their abs
      * Used to deal with near-zero values caused by rounding errors
+     *
      * @return
      */
 //    FIXME(nrobison): This needs to get a calculated precision
@@ -162,8 +168,9 @@ public class TDTreeHelpers {
     /**
      * Determine the triangle direction of the given leaf
      * Usually starts at depth 0 and direction 7, which is the base triangle
-     * @param leafID - Leaf to get direction
-     * @param depth - Starting depth
+     *
+     * @param leafID          - Leaf to get direction
+     * @param depth           - Starting depth
      * @param parentDirection - Starting direction
      * @return - Integer 0-7 of triangle direction
      */
@@ -175,7 +182,7 @@ public class TDTreeHelpers {
         final int prefix = leafID >> (getIDLength(leafID) - depth - 1) - 1;
         if ((prefix & 1) == 0) {
 //        if ((prefix < getMaximumValue(prefix))) {
-             return calculateTriangleDirection(leafID, depth + 1, childDirection.lowerChild);
+            return calculateTriangleDirection(leafID, depth + 1, childDirection.lowerChild);
         }
         return calculateTriangleDirection(leafID, depth + 1, childDirection.higherChild);
     }
@@ -183,11 +190,12 @@ public class TDTreeHelpers {
     /**
      * Determine the apex of the of the given leaf
      * Usually starts at depth 0 and direction seven, with start/end of 0.0/maxValue which is the base triangle
-     * @param leafID - Leaf to get apex
-     * @param depth - Starting depth
+     *
+     * @param leafID          - Leaf to get apex
+     * @param depth           - Starting depth
      * @param parentDirection - Starting direction
-     * @param parentStart - Starting X coordinate
-     * @param parentEnd - Starting Y coordinate
+     * @param parentStart     - Starting X coordinate
+     * @param parentEnd       - Starting Y coordinate
      * @return - {@link TriangleApex} of given leaf
      */
     static TriangleApex calculateTriangleApex(int leafID, int depth, int parentDirection, double parentStart, double parentEnd) {
@@ -250,16 +258,30 @@ public class TDTreeHelpers {
 
     /**
      * Gets the number of bits used for the integer value
+     * If the value has been previously computed, it will be used
      *
      * @param leafID - Integer of leaf ID
      * @return - number of used bits
      */
     static int getIDLength(int leafID) {
+        return computedIDLengths.computeIfAbsent(leafID, TDTreeHelpers::computeIDLength);
+//        return idLength[leafID];
+//        return computeIDLength(leafID);
+    }
+
+    /**
+     * Computes the number of bits used for the integer value
+     *
+     * @param leafID - Integer of leaf ID
+     * @return - number of used bits
+     */
+    static int computeIDLength(int leafID) {
         return (int) FastMath.floor(FastMath.log10(leafID) / LOG_10_2) + 1;
     }
 
     /**
      * Gets the maximum value representable by a binary string of the same length as the leafID
+     *
      * @param leafID - leafID to get binary length from
      * @return - maximum integer value
      */
@@ -272,12 +294,12 @@ public class TDTreeHelpers {
     }
 
     /**
-     * Get the adjusted length for the given leaf ID length
+     * Computee the adjusted length for the given leaf ID length
      *
      * @param leafLength - length of LeafID
      * @return - double of adjusted length
      */
-    private static double getAdjustedLength(int leafLength) {
+    private static double computeAdjustedLength(int leafLength) {
         return TDTree.maxValue * (FastMath.pow(ROOTTWO / 2, leafLength - 1));
     }
 

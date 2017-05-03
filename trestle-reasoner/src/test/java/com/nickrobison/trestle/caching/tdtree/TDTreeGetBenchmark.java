@@ -23,7 +23,7 @@ public class TDTreeGetBenchmark {
     private TDTree<IndexValues> index;
     private IndexValues[] values;
 
-    @Param({"100", "1000", "10000", "100000"})
+    @Param({"100", "1000", "10000"})
     public int limit;
 
 
