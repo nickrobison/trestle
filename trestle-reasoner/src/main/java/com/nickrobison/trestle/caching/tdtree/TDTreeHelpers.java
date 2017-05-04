@@ -1,10 +1,16 @@
 package com.nickrobison.trestle.caching.tdtree;
 
+import it.unimi.dsi.fastutil.doubles.Double2DoubleOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import org.agrona.collections.Int2IntHashMap;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 /**
  * Created by nrobison on 2/10/17.
@@ -14,12 +20,18 @@ public class TDTreeHelpers {
     static final double ROOTTWO = FastMath.sqrt(2);
     private static final double LOG_10_2 = FastMath.log10(2);
     static final double[] adjustedLength;
-    private static final Map<Integer, Integer> computedIDLengths = new HashMap<>();
+    static final Map<Integer, Integer> computedIDLengths = new Int2IntOpenHashMap(2000, .7f);
+    static final Map<Double, Double> normalizedZeroes = new Double2DoubleOpenHashMap(2000, 0.7f);
 
     static {
 //        Initialize the lookup tables
         adjustedLength = new double[getIDLength(Integer.MAX_VALUE) + 1];
         computeAdjustedLengths();
+    }
+
+    static void resetCaches() {
+        TDTreeHelpers.computedIDLengths.clear();
+        TDTreeHelpers.normalizedZeroes.clear();
     }
 
     /**
@@ -150,14 +162,24 @@ public class TDTreeHelpers {
     }
 
     /**
-     * Rounds values to their 10th decimal place, and gets their abs
+     * Rounds values to their 6th decimal place, and gets their abs
      * Used to deal with near-zero values caused by rounding errors
      *
-     * @return
+     * @return - normalized Zero Value
      */
 //    FIXME(nrobison): This needs to get a calculated precision
     private static double normalizeZero(double value) {
-        final double abs = FastMath.abs(Precision.round(value, 10));
+        return normalizedZeroes.computeIfAbsent(value, TDTreeHelpers::computeNormalizedZero);
+//        final double abs = FastMath.abs(Precision.round(value, 6));
+////        If the value falls outside of the maxValue range, return the maxValue. This adjusts for double rounding issues
+//        if (abs > TDTree.maxValue) {
+//            return TDTree.maxValue;
+//        }
+//        return abs;
+    }
+
+    private static double computeNormalizedZero(double value) {
+        final double abs = FastMath.abs(Precision.round(value, 6));
 //        If the value falls outside of the maxValue range, return the maxValue. This adjusts for double rounding issues
         if (abs > TDTree.maxValue) {
             return TDTree.maxValue;

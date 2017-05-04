@@ -2,6 +2,7 @@ package com.nickrobison.trestle.caching.tdtree;
 
 import com.boundary.tuple.FastTuple;
 import com.boundary.tuple.codegen.TupleExpressionGenerator;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +18,7 @@ import java.util.stream.Collectors;
  */
 public class PointNode<Value> extends LeafNode<Value> {
     private static final Logger logger = LoggerFactory.getLogger(PointNode.class);
-    private final Map<FastTuple, Value> values = new HashMap<>();
+    private final Map<FastTuple, Value> values = new Object2ObjectOpenHashMap<>(100, .7f);
     private int records = 0;
 
     PointNode(int leafID, FastTuple leafMetadata) {

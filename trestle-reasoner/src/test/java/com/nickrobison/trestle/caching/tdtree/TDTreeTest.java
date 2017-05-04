@@ -26,6 +26,7 @@ public class TDTreeTest {
                     try {
                         TDTree.maxValue = value;
                         TDTreeHelpers.computeAdjustedLengths();
+                        TDTreeHelpers.resetCaches();
                         final TDTree<String> tdTree = new TDTree<>(2);
                         simpleTest(tdTree, value);
                     } catch (Exception e) {
