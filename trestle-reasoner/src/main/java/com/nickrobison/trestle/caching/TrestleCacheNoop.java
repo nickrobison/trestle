@@ -2,6 +2,7 @@ package com.nickrobison.trestle.caching;
 
 import com.nickrobison.trestle.iri.TrestleIRI;
 import com.nickrobison.trestle.types.TrestleIndividual;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.slf4j.Logger;
@@ -24,6 +25,10 @@ public class TrestleCacheNoop implements TrestleCache {
 
     @Override
     public void writeTrestleObject(TrestleIRI individualIRI, long startTemporal, long endTemporal, Object value) {
+    }
+
+    @Override
+    public void writeTrestleObject(TrestleIRI individualIRI, long atTemporal, @NonNull Object value) {
     }
 
     @Override

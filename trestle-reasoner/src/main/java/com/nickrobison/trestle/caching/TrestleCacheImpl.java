@@ -125,6 +125,21 @@ public class TrestleCacheImpl implements TrestleCache {
     }
 
     @Override
+    public void writeTrestleObject(TrestleIRI individualIRI, long atTemporal, @NonNull Object value) {
+        //        Write to the cache and the index
+        try {
+            cacheLock.lockWrite();
+            logger.debug("Adding {} to cache at {}", individualIRI, atTemporal);
+            trestleObjectCache.put(individualIRI.getIRI(), value);
+            validIndex.insertValue(individualIRI.getObjectID(), atTemporal, individualIRI);
+        } catch (InterruptedException e) {
+            logger.error("Unable to get write lock", e);
+        } finally {
+            cacheLock.unlockWrite();
+        }
+    }
+
+    @Override
     public void deleteTrestleObject(TrestleIRI trestleIRI) {
         final OffsetDateTime objectTemporal = trestleIRI.getObjectTemporal().orElse(OffsetDateTime.now());
         try {

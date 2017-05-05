@@ -24,12 +24,21 @@ public interface TrestleCache {
      * Write TrestleObject
      *
      * @param individualIRI - {@link TrestleIRI} to add as key index/cache at a specific temporal interval
-     * @param startTemporal - Start temporal in Unix epic (ms)
-     * @param endTemporal   - End temporal in Unix epic (ms)
+     * @param startTemporal - Start temporal from Unix epoch (ms)
+     * @param endTemporal   - End temporal from Unix epoch (ms)
      * @param value         - Value to write to cache
      * @throws java.io.NotSerializableException if the value class isn't serializable (even if using a local cache)
      */
     void writeTrestleObject(TrestleIRI individualIRI, long startTemporal, long endTemporal, @NonNull Object value);
+
+    /**
+     * Write TrestleObject
+     *
+     * @param individualIRI - {@link TrestleIRI} to add as key index/cache at a specific temporal interval
+     * @param atTemporal - At temporal from Unix epoch (ms)
+     * @param value - Value to write to the cache
+     */
+    void writeTrestleObject(TrestleIRI individualIRI, long atTemporal, @NonNull Object value);
 
     /**
      * Delete TrestleObject from cache
