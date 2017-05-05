@@ -10,6 +10,7 @@ import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.IRI;
 
@@ -22,16 +23,17 @@ import static org.junit.jupiter.api.Assertions.fail;
 /**
  * Created by detwiler on 5/5/17.
  */
+@Tag("integration")
 public class ConstructorTemporalDependencyTest {
-    private Config config = ConfigFactory.load("application.conf");
-    private String connectStr = config.getString("trestle.graphdb.connection_string");
-    private String username = config.getString("trestle.graphdb.username");
-    private String password = config.getString("trestle.graphdb.password");
+    final Config config = ConfigFactory.load(ConfigFactory.parseResources("application.conf"));
+    private String connectStr = config.getString("trestle.ontology.connectionString");
+    private String username = config.getString("trestle.ontology.username");
+    private String password = config.getString("trestle.ontology.password");
     private String reponame = "constructor_test";
     private String ontLocation = config.getString("trestle.ontology.location");
 
     @Test
-    public void TestNonTemporalConstructor() {
+    public void testNonTemporalConstructor() {
         TrestleReasoner reasoner = new TrestleBuilder()
                 .withDBConnection(connectStr, username, password)
                 .withName(reponame)
