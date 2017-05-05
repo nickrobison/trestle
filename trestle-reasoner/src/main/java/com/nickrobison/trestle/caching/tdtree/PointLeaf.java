@@ -17,12 +17,12 @@ import java.util.stream.Collectors;
 /**
  * Created by nrobison on 2/13/17.
  */
-public class PointNode<Value> extends LeafNode<Value> {
-    private static final Logger logger = LoggerFactory.getLogger(PointNode.class);
+public class PointLeaf<Value> extends LeafNode<Value> {
+    private static final Logger logger = LoggerFactory.getLogger(PointLeaf.class);
     private final Map<FastTuple, Value> values = new Object2ObjectOpenHashMap<>(100, .7f);
     private int records = 0;
 
-    PointNode(int leafID, FastTuple leafMetadata) {
+    PointLeaf(int leafID, FastTuple leafMetadata) {
         super(leafID, leafMetadata);
         logger.trace("Creating Point Node {}", this.getBinaryStringID());
     }

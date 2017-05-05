@@ -55,7 +55,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         rootTuple.setDouble(1, 0);
         rootTuple.setDouble(2, maxValue);
         rootTuple.setShort(3, (short) 7);
-        leafs.add(new SplittableNode<>(1, rootTuple, this.blockSize));
+        leafs.add(new SplittableLeaf<>(1, rootTuple, this.blockSize));
     }
 
     @Override
@@ -190,7 +190,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         final Instant start = Instant.now();
         final List<LeafNode<Value>> _leafs = new ArrayList<>(this.leafs);
         this.leafs = new ArrayList<>();
-        this.leafs.add(new SplittableNode<>(1, rootTuple, this.blockSize));
+        this.leafs.add(new SplittableLeaf<>(1, rootTuple, this.blockSize));
         _leafs
                 .stream()
                 .filter(leaf -> leaf.getRecordCount() > 0)

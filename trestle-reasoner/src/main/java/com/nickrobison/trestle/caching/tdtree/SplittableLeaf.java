@@ -3,7 +3,6 @@ package com.nickrobison.trestle.caching.tdtree;
 import com.boundary.tuple.FastTuple;
 import com.boundary.tuple.codegen.TupleExpressionGenerator;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.jena.atlas.lib.tuple.Tuple;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
@@ -17,15 +16,15 @@ import static com.nickrobison.trestle.caching.tdtree.TDTreeHelpers.getIDLength;
 /**
  * Created by nrobison on 2/9/17.
  */
-class SplittableNode<Value> extends LeafNode<Value> {
-    private static final Logger logger = LoggerFactory.getLogger(SplittableNode.class);
+class SplittableLeaf<Value> extends LeafNode<Value> {
+    private static final Logger logger = LoggerFactory.getLogger(SplittableLeaf.class);
     private int blockSize;
     final FastTuple[] keys;
     final Value[] values;
     private int records = 0;
 
 
-    SplittableNode(int leafID, FastTuple leafMetadata, int blockSize) {
+    SplittableLeaf(int leafID, FastTuple leafMetadata, int blockSize) {
         super(leafID, leafMetadata);
         this.blockSize = blockSize;
 //            Allocate Key array
@@ -99,15 +98,15 @@ class SplittableNode<Value> extends LeafNode<Value> {
                     getIDLength(this.leafID) == (getIDLength(Integer.MAX_VALUE) - 1)) {
 //                    Convert the leaf to a point leaf and replace the splittable node
 
-                final PointNode<Object> pointNode = new PointNode<>(leafID, leafMetadata);
+                final PointLeaf<Object> pointLeaf = new PointLeaf<>(leafID, leafMetadata);
 //                    Copy in all the keys and values
-                pointNode.copyInitialValues(this.keys, this.values);
+                pointLeaf.copyInitialValues(this.keys, this.values);
 //                    Copy the new value
-                pointNode.insert(newKey, value);
+                pointLeaf.insert(newKey, value);
 
                 this.records = 0;
 
-                return new LeafSplit(leafID, pointNode, pointNode);
+                return new LeafSplit(leafID, pointLeaf, pointLeaf);
             } else {
 //            Create the lower and higher leafs
                 try {
@@ -123,8 +122,8 @@ class SplittableNode<Value> extends LeafNode<Value> {
                     throw new RuntimeException("Unable to build tuples for child triangles", e);
                 }
 
-                lowerChildLeaf = new SplittableNode<>(leafID << 1, lowerChild, this.blockSize);
-                higherChildLeaf = new SplittableNode<>((leafID << 1) | 1, higherChild, this.blockSize);
+                lowerChildLeaf = new SplittableLeaf<>(leafID << 1, lowerChild, this.blockSize);
+                higherChildLeaf = new SplittableLeaf<>((leafID << 1) | 1, higherChild, this.blockSize);
                 logger.trace("Splitting {} into {} and {}", this.getBinaryStringID(), lowerChildLeaf.getBinaryStringID(), lowerChildLeaf.getBinaryStringID());
             }
             final LeafSplit leafSplit = new LeafSplit(this.leafID, lowerChildLeaf, higherChildLeaf);

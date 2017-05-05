@@ -16,7 +16,7 @@ import static com.nickrobison.trestle.caching.tdtree.TDTreeHelpers.longHashCode;
 
 /**
  * Base class of the index leaf-nodes.
- * Both {@link SplittableNode} and {@link PointNode} inherit from this class
+ * Both {@link SplittableLeaf} and {@link PointLeaf} inherit from this class
  *
  * @param <Value> - Generic type of Index value
  */
@@ -53,7 +53,7 @@ public abstract class LeafNode<Value> {
     /**
      * Is this a splittable node?
      *
-     * @return - <code>true</code> if {@link SplittableNode}. <code>false</code> if {@link PointNode}.
+     * @return - <code>true</code> if {@link SplittableLeaf}. <code>false</code> if {@link PointLeaf}.
      */
     public abstract boolean isSplittable();
 
