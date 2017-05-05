@@ -3,6 +3,7 @@ package com.nickrobison.trestle.caching.tdtree;
 import com.boundary.tuple.FastTuple;
 import com.boundary.tuple.codegen.TupleExpressionGenerator;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,21 +47,26 @@ public class PointNode<Value> extends LeafNode<Value> {
     @Override
     @Nullable Value getValue(String objectID, long atTime) {
         final TupleExpressionGenerator.BooleanTupleExpression eval = buildFindExpression(objectID, atTime);
+        return getValue(eval);
+    }
+
+    @Override
+    Value getValue(TupleExpressionGenerator.BooleanTupleExpression expression) {
         final Optional<Value> value = this.values.entrySet()
                 .stream()
-                .filter(entry -> eval.evaluate(entry.getKey()))
+                .filter(entry -> expression.evaluate(entry.getKey()))
                 .map(Map.Entry::getValue)
                 .findAny();
         return value.orElse(null);
     }
 
     @Override
-    LeafSplit insert(long objectID, long startTime, long endTime, Value value) {
+    LeafSplit insert(long objectID, long startTime, long endTime, @NonNull Value value) {
         return insert(buildObjectKey(objectID, startTime, endTime), value);
     }
 
     @Override
-    LeafSplit insert(FastTuple newKey, Value value) {
+    LeafSplit insert(FastTuple newKey, @NonNull Value value) {
         if (!this.values.containsKey(newKey)) {
             this.values.put(newKey, value);
             this.records++;
@@ -71,9 +77,14 @@ public class PointNode<Value> extends LeafNode<Value> {
     @Override
     boolean delete(String objectID, long atTime) {
         final TupleExpressionGenerator.BooleanTupleExpression eval = buildFindExpression(objectID, atTime);
+        return delete(eval);
+    }
+
+    @Override
+    boolean delete(TupleExpressionGenerator.BooleanTupleExpression expression) {
         final Optional<FastTuple> matchingKey = this.values.entrySet()
                 .stream()
-                .filter(entry -> eval.evaluate(entry.getKey()))
+                .filter(entry -> expression.evaluate(entry.getKey()))
                 .map(Map.Entry::getKey)
                 .findAny();
         if (matchingKey.isPresent()) {
@@ -84,7 +95,7 @@ public class PointNode<Value> extends LeafNode<Value> {
     }
 
     @Override
-    long deleteKeysWithValue(Value value) {
+    long deleteKeysWithValue(@NonNull Value value) {
         final List<FastTuple> list = this.values.entrySet()
                 .stream()
                 .filter(entry -> entry.getValue().equals(value))
@@ -96,7 +107,7 @@ public class PointNode<Value> extends LeafNode<Value> {
     }
 
     @Override
-    boolean update(String objectID, long atTime, Value value) {
+    boolean update(String objectID, long atTime, @NonNull Value value) {
         final FastTuple key = buildObjectKey(objectID, atTime, atTime);
         if (this.values.containsKey(key)) {
             this.values.replace(key, value);
@@ -104,7 +115,6 @@ public class PointNode<Value> extends LeafNode<Value> {
         }
         return false;
     }
-
     @Override
     Map<FastTuple, Value> dumpLeaf() {
         Map<FastTuple, Value> leafRecords = new HashMap<>();

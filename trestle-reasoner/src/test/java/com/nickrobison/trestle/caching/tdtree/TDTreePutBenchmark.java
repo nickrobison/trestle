@@ -18,7 +18,6 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @BenchmarkMode({Mode.SingleShotTime})
 public class TDTreePutBenchmark {
-    private Random r;
     private TDTree<IndexValues> index;
     private IndexValues[] values;
 

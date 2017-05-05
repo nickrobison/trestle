@@ -2,12 +2,14 @@ package com.nickrobison.trestle.caching.tdtree;
 
 import com.boundary.tuple.FastTuple;
 import com.boundary.tuple.TupleSchema;
+import com.boundary.tuple.codegen.TupleExpressionGenerator;
 import com.codahale.metrics.annotation.Gauge;
 import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.nickrobison.trestle.caching.ITrestleIndex;
 import org.apache.commons.math3.util.FastMath;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,18 +59,18 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     }
 
     @Override
-    public void insertValue(String objectID, long startTime, Value value) {
+    public void insertValue(String objectID, long startTime, @NonNull Value value) {
         insertValue(objectID, startTime, maxValue, value);
     }
 
     @Override
-    public void insertValue(String objectID, long startTime, long endTime, Value value) {
+    public void insertValue(String objectID, long startTime, long endTime, @NonNull Value value) {
         insertValue(longHashCode(objectID), startTime, endTime, value);
     }
 
     @Timed(name = "td-tree.insert-timer", absolute = true)
     @CounterIncrement(name = "td-tree.insert-counter", absolute = true)
-    private void insertValue(long objectID, long startTime, long endTime, Value value) {
+    private void insertValue(long objectID, long startTime, long endTime, @NonNull Value value) {
 //        Find the leaf at maxDepth that would contain the objectID
         final int matchingLeaf = getMatchingLeaf(startTime, endTime);
 //        Find the region in list with the most number of matching bits
@@ -97,10 +99,15 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     public @Nullable Value getValue(String objectID, long atTime) {
 
         final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
+        if (candidateLeafs.isEmpty()) {
+            return null;
+        }
 
+//        Build the find expression
+        final TupleExpressionGenerator.BooleanTupleExpression findExpression = LeafNode.buildFindExpression(objectID, atTime);
         for (LeafNode node : candidateLeafs) {
             //noinspection unchecked
-            @Nullable final Value value = (Value) node.getValue(objectID, atTime);
+            @Nullable final Value value = (Value) node.getValue(findExpression);
             if (value != null) {
                 logger.trace("Returning value {} for {} @ {} from {}", value, objectID, atTime, node.getBinaryStringID());
                 return value;
@@ -114,8 +121,13 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     @Timed(name = "td-tree.delete-timer", absolute = true)
     public void deleteValue(String objectID, long atTime) {
         final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
+        if (candidateLeafs.isEmpty()) {
+            return;
+        }
+        final TupleExpressionGenerator.BooleanTupleExpression expression = LeafNode.buildFindExpression(objectID, atTime);
         for (LeafNode node : candidateLeafs) {
-            if (node.delete(objectID, atTime)) {
+//            if (node.delete(objectID, atTime)) {
+            if (node.delete(expression)) {
                 logger.trace("Deleted {}@{} from {}", objectID, atTime, node.getBinaryStringID());
                 this.cacheSize.decrementAndGet();
                 return;
@@ -125,7 +137,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     }
 
     @Override
-    public void deleteKeysWithValue(Value value) {
+    public void deleteKeysWithValue(@NonNull Value value) {
         this.leafs
                 .stream()
                 .filter(leaf -> leaf.getRecordCount() > 0)
@@ -138,8 +150,9 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     }
 
     @Override
-    public void updateValue(String objectID, long atTime, Value value) {
+    public void updateValue(String objectID, long atTime, @NonNull Value value) {
         final List<LeafNode<Value>> candidateLeafs = findCandidateLeafs(atTime);
+
         for (LeafNode<Value> node : candidateLeafs) {
             if (node.update(objectID, atTime, value)) {
                 logger.trace("Updated {}@{} to {} from {}", objectID, atTime, value, node.getBinaryStringID());
@@ -150,7 +163,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     }
 
     @Override
-    public void replaceKeyValue(String objectID, long atTime, long startTime, long endTime, Value value) {
+    public void replaceKeyValue(String objectID, long atTime, long startTime, long endTime, @NonNull Value value) {
         deleteValue(objectID, atTime);
         insertValue(objectID, startTime, endTime, value);
     }

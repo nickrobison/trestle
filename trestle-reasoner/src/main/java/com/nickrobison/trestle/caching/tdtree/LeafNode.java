@@ -3,6 +3,7 @@ package com.nickrobison.trestle.caching.tdtree;
 import com.boundary.tuple.FastTuple;
 import com.boundary.tuple.TupleSchema;
 import com.boundary.tuple.codegen.TupleExpressionGenerator;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Map;
@@ -86,12 +87,19 @@ public abstract class LeafNode<Value> {
     abstract boolean delete(String objectID, long atTime);
 
     /**
+     * Delete key/value pair from leaf
+     * @param expression - Pre-compiled {@link com.boundary.tuple.codegen.TupleExpressionGenerator.BooleanTupleExpression} to evaluate
+     * @return - <code>true</code> matching key was deleted in this leaf. <code>false</code> no keys were removed
+     */
+    abstract boolean delete(TupleExpressionGenerator.BooleanTupleExpression expression);
+
+    /**
      * Delete all keys that point to the given value
      *
      * @param value - {@link Value} to purge from Leaf
      * @return - number of keys deleted
      */
-    abstract long deleteKeysWithValue(Value value);
+    abstract long deleteKeysWithValue(@NonNull Value value);
 
     abstract boolean update(String objectID, long atTime, Value value);
 
@@ -104,6 +112,14 @@ public abstract class LeafNode<Value> {
      * @return - Nullable String value
      */
     abstract @Nullable Value getValue(String objectID, long atTime);
+
+    /**
+     * Retrieve a value from the Leaf that matches the given ObjectID and is valid at the specified timestamp
+     * Returns null if no matching object is found
+     * @param expression - Pre-compiled {@link com.boundary.tuple.codegen.TupleExpressionGenerator.BooleanTupleExpression} to evaluate
+     * @return - Nullable {@link Value}
+     */
+    abstract @Nullable Value getValue(TupleExpressionGenerator.BooleanTupleExpression expression);
 
     /**
      * Dump the key/value pairs for the given leaf
@@ -150,7 +166,7 @@ public abstract class LeafNode<Value> {
      * @param atTime   - Temporal to find valid value
      * @return - {@link com.boundary.tuple.codegen.TupleExpressionGenerator.BooleanTupleExpression} to evaluate against tuples
      */
-    TupleExpressionGenerator.BooleanTupleExpression buildFindExpression(String objectID, long atTime) {
+    static TupleExpressionGenerator.BooleanTupleExpression buildFindExpression(String objectID, long atTime) {
         try {
 //            We have to do this really weird equality check because FastTuple doesn't support if statements (for now). So we check for a an interval match, then a point match
             final String queryString = String.format("(tuple.objectID == %sL) && (((tuple.start <= %sL) && (tuple.end > %sL)) | ((tuple.start == tuple.end)  && (tuple.start == %sL)))", longHashCode(objectID), atTime, atTime, atTime);

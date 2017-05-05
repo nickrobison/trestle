@@ -4,6 +4,7 @@ import com.boundary.tuple.FastTuple;
 import com.boundary.tuple.codegen.TupleExpressionGenerator;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.jena.atlas.lib.tuple.Tuple;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,10 +52,15 @@ class SplittableNode<Value> extends LeafNode<Value> {
     @Override
     @Nullable Value getValue(String objectID, long atTime) {
         final TupleExpressionGenerator.BooleanTupleExpression eval = buildFindExpression(objectID, atTime);
+        return getValue(eval);
+    }
+
+    @Override
+    Value getValue(TupleExpressionGenerator.BooleanTupleExpression expression) {
         for (int i = 0; i < this.records; i++) {
             final FastTuple key = keys[i];
             if (key != null) {
-                if (eval.evaluate(key)) {
+                if (expression.evaluate(key)) {
                     return values[i];
                 }
             }
@@ -63,12 +69,12 @@ class SplittableNode<Value> extends LeafNode<Value> {
     }
 
     @Override
-    LeafSplit insert(long objectID, long startTime, long endTime, Value value) {
+    LeafSplit insert(long objectID, long startTime, long endTime, @NonNull Value value) {
         return insert(buildObjectKey(objectID, startTime, endTime), value);
     }
 
     @Override
-    LeafSplit insert(FastTuple newKey, Value value) {
+    LeafSplit insert(FastTuple newKey, @NonNull Value value) {
 //            Check if we have more space, if we do, insert it.
         if (records < blockSize) {
             return insertValueIntoArray(newKey, value);
@@ -158,10 +164,15 @@ class SplittableNode<Value> extends LeafNode<Value> {
     @Override
     boolean delete(String objectID, long atTime) {
         final TupleExpressionGenerator.BooleanTupleExpression eval = buildFindExpression(objectID, atTime);
+        return delete(eval);
+    }
+
+    @Override
+    boolean delete(TupleExpressionGenerator.BooleanTupleExpression expression) {
         for (int i = 0; i < this.records; i++) {
             final FastTuple key = keys[i];
             if (key != null) {
-                if (eval.evaluate(key)) {
+                if (expression.evaluate(key)) {
                     keys[i] = null;
                     values[i] = null;
                     return true;
@@ -173,7 +184,7 @@ class SplittableNode<Value> extends LeafNode<Value> {
     }
 
     @Override
-    long deleteKeysWithValue(Value value) {
+    long deleteKeysWithValue(@NonNull Value value) {
         long deletedKeys = 0;
         for (int i = 0; i < this.records; i++) {
             if (value.equals(values[i])) {
@@ -186,7 +197,7 @@ class SplittableNode<Value> extends LeafNode<Value> {
     }
 
     @Override
-    boolean update(String objectID, long atTime, Value value) {
+    boolean update(String objectID, long atTime, @NonNull Value value) {
         final TupleExpressionGenerator.BooleanTupleExpression eval = buildFindExpression(objectID, atTime);
         for (int i = 0; i < this.records; i++) {
             final FastTuple key = keys[i];

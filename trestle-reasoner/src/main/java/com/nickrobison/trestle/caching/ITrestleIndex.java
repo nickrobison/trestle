@@ -2,6 +2,7 @@ package com.nickrobison.trestle.caching;
 
 import com.codahale.metrics.annotation.Gauge;
 import com.nickrobison.trestle.caching.tdtree.LeafNode;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -17,7 +18,7 @@ public interface ITrestleIndex<Value> {
      * @param startTime - Long temporal of start temporal
      * @param value     - Value
      */
-    void insertValue(String objectID, long startTime, Value value);
+    void insertValue(String objectID, long startTime, @NonNull Value value);
 
     /**
      * Insert a key/value pair valid over a specific interval (or single point
@@ -27,7 +28,7 @@ public interface ITrestleIndex<Value> {
      * @param value - {@link Value} to insert
      */
     @SuppressWarnings("OptionalGetWithoutIsPresent")
-    void insertValue(String objectID, long startTime, long endTime, Value value);
+    void insertValue(String objectID, long startTime, long endTime, @NonNull Value value);
 
     /**
      * Get the index value valid for the given key at the specific point in time
@@ -49,7 +50,7 @@ public interface ITrestleIndex<Value> {
      * Deletes all keys that contain the specified value
      * @param value - {@link Value} to purge from cache
      */
-    void deleteKeysWithValue(Value value);
+    void deleteKeysWithValue(@NonNull Value value);
 
     /**
      * Update the value associated with the key valid at the specified temporal
@@ -57,7 +58,7 @@ public interface ITrestleIndex<Value> {
      * @param atTime - Long temporal of validAt temporal
      * @param value {@link Value} to update key with
      */
-    void updateValue(String objectID, long atTime, Value value);
+    void updateValue(String objectID, long atTime, @NonNull Value value);
 
     /**
      * Replaces a key/value pair valid at the specified point, with a new key/value pair and an updated temporal interval
@@ -68,7 +69,7 @@ public interface ITrestleIndex<Value> {
      * @param endTime - Long temporal of new validTo temporal
      * @param value - {@link Value} new value to insert
      */
-    void replaceKeyValue(String objectID, long atTime, long startTime, long endTime, Value value);
+    void replaceKeyValue(String objectID, long atTime, long startTime, long endTime, @NonNull Value value);
 
     /**
      * Update the temporal interval of a given key to a new open interval
