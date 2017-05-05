@@ -171,7 +171,7 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "INSERT {?m trestle:valid_to \"2017-03-11T00:00:00Z\"^^xsd:dateTime}  WHERE { OPTIONAL{?m trestle:valid_to ?vt} . ?m rdf:type trestle:Interval_Object .VALUES ?m {<http://nickrobison.com/dissertation/trestle.owl#test_muni4>} . FILTER(!bound(?vt))}";
+            "INSERT {?m trestle:valid_to \"2017-03-11T00:00:00Z\"^^xsd:dateTime}  WHERE { VALUES ?m {<http://nickrobison.com/dissertation/trestle.owl#test_muni4>} . OPTIONAL{?m trestle:valid_to ?vt} . ?m rdf:type trestle:Interval_Object .FILTER(!bound(?vt))}";
 
     @BeforeAll
     public static void createPrefixes() {
