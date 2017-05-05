@@ -53,7 +53,7 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
             directory.mkdirs();
         }
         this.directory = directory;
-        this.prefix = (String) builder.prefix.orElse("");
+        this.prefix = (String) builder.prefix.orElse("Trestle");
 
 
         this.type = builder.type;
@@ -153,8 +153,6 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
                     String.format("%s.shx", new File(this.directory, exportName).toString()));
             zos.close();
             fos.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
