@@ -50,7 +50,7 @@ public class ClassRegister {
         checkForSpatial(clazz);
 
 //        Check for temporals
-        checkForTemporals(clazz);
+//        checkForTemporals(clazz);
 
 //        Check for language
         checkForLanguage(clazz);
