@@ -46,6 +46,7 @@ public class DataExporterTests {
                 .withOntology(IRI.create(config.getString("trestle.ontology.location")))
                 .withoutMetrics()
                 .withoutCaching()
+                .withoutMetrics()
                 .initialize()
                 .build();
 
@@ -72,9 +73,8 @@ public class DataExporterTests {
 
 
             LocalDate date = LocalDate.parse(splitLine[2].replace("\"", ""), formatter);
-            final String id = UUID.randomUUID().toString();
-            gaulObjects.add(new SimpleGAULObject(id, code, splitLine[1].replace("\"", ""), date, date.plusYears(5), splitLine[4].replace("\"", "")));
-            ids.add(id);
+            gaulObjects.add(new SimpleGAULObject(code, splitLine[1].replace("\"", ""), date, date.plusYears(5), splitLine[4].replace("\"", "")));
+            ids.add(Long.toString(code));
         }
     }
 
@@ -92,20 +92,18 @@ public class DataExporterTests {
                 });
 
         reasoner.getUnderlyingOntology().runInference();
-        final File file = reasoner.exportDataSetObjects(SimpleGAULObject.class, ids, ITrestleExporter.DataType.SHAPEFILE);
+        final File file = reasoner.exportDataSetObjects(SimpleGAULObject.class, ids, LocalDate.of(1993, 1, 1), null, ITrestleExporter.DataType.SHAPEFILE);
         assertTrue(file.length() > 0, "Should have non-zero length");
     }
 
     @AfterAll
     public static void shutdown() {
-        reasoner.shutdown(true);
+        reasoner.shutdown(false);
     }
 
 
     @DatasetClass(name = "gaul-test")
     public static class SimpleGAULObject {
-        @Ignore
-        public UUID objectid;
         @Fact(name = "gaulCode")
         public long gaulcode;
         @Fact(name = "objectName")
@@ -123,8 +121,7 @@ public class DataExporterTests {
 
 
         @TrestleCreator
-        public SimpleGAULObject(String id, long gaulCode, String objectname, LocalDate startDate, LocalDate endDate, String wkt) {
-            this.objectid = UUID.fromString(id);
+        public SimpleGAULObject(long gaulCode, String objectname, LocalDate startDate, LocalDate endDate, String wkt) {
             this.gaulcode = gaulCode;
             this.objectname = objectname;
             this.startdate = startDate;
@@ -134,10 +131,9 @@ public class DataExporterTests {
         }
 
         @IndividualIdentifier
-        @Fact(name = "id")
-        @NoMultiLanguage
+        @Ignore
         public String getObjectID() {
-            return this.objectid.toString();
+            return Long.toString(this.gaulcode);
         }
     }
 }

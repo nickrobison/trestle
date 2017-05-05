@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
  * Created by nrobison on 9/15/16.
  */
 @SuppressWarnings("unchecked")
-@Disabled
 @Tag("integration")
 // FIXME(nrobison): Need to load some gaul records and then export them.
 public class TestGAULExport {
