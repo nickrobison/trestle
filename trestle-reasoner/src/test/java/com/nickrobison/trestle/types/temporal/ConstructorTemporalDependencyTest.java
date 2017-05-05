@@ -58,6 +58,9 @@ public class ConstructorTemporalDependencyTest {
             e.printStackTrace();
             fail(e.getMessage());
         }
+
+        //reasoner.
+        reasoner.shutdown(true);
     }
 
     @DatasetClass(name = "objectconstructor-test")
