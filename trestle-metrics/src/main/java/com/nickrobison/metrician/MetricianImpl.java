@@ -103,6 +103,11 @@ public class MetricianImpl implements Metrician {
     }
 
     @Override
+    public void registerMetricSet(MetricSet metricSet) {
+        this.registry.registerAll(metricSet);
+    }
+
+    @Override
     public Timer registerTimer(String name) {
         return this.registry.timer(name);
     }

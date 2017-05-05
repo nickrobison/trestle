@@ -1,9 +1,6 @@
 package com.nickrobison.metrician;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
+import com.codahale.metrics.*;
 import com.nickrobison.metrician.backends.MetricianExportedValue;
 import com.nickrobison.metrician.instrumentation.NoOpMetrics.NoOpCounter;
 import com.nickrobison.metrician.instrumentation.NoOpMetrics.NoOpHistogram;
@@ -88,5 +85,10 @@ public class MetricianNoop implements Metrician {
     public Histogram registerHistogram(String name) {
         logger.warn("Metrician disabled, returning No-Op Metric");
         return new NoOpHistogram();
+    }
+
+    @Override
+    public void registerMetricSet(MetricSet metricSet) {
+        logger.warn("Metrician disabled, not registering MetricSet");
     }
 }

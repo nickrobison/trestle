@@ -67,8 +67,8 @@ public class TrestleAPITest {
                         TestClasses.OffsetDateTimeTest.class,
                         TestClasses.MultiLangTest.class,
                         TestClasses.FactVersionTest.class)
-                .withoutCaching()
-                .withoutMetrics()
+//                .withoutCaching()
+//                .withoutMetrics()
                 .initialize()
                 .build();
 
@@ -118,7 +118,7 @@ public class TrestleAPITest {
                 assertEquals(offsetDateTimeTest, returnedObject, "Should have the same object");
             } else if (returnedObject instanceof TestClasses.MultiLangTest) {
                 assertEquals(multiLangTest, returnedObject, "Should have the same object");
-            } else{
+            } else {
                 assertEquals(esriPolygonTest, returnedObject, "Should be equal");
             }
         });
@@ -150,12 +150,31 @@ public class TrestleAPITest {
 //        final Geometry geotoolsGeom = JTS.toGeographic(new WKTReader().read("POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))"), DefaultGeographicCRS.WGS84);
 //        JTS.toGeometry()
 //        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest = new TestClasses.GeotoolsPolygonTest(UUID.randomUUID(), (org.opengis.geometry.coordinate.Polygon) geotoolsGeom, LocalDate.now());
-//        final OWLNamedIndividual owlNamedIndividual = classParser.getIndividual(geotoolsPolygonTest);
+//        final OWLNamedIndividual owlNamedIndividual = classParser.getTrestleObject(geotoolsPolygonTest);
 //        reasoner.writeTrestleObject(geotoolsPolygonTest);
 //        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest1 = reasoner.readTrestleObject(geotoolsPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
 //        assertEquals(geotoolsPolygonTest, geotoolsPolygonTest1, "Should be equal");
 
         reasoner.getMetricsEngine().exportData(new File("./target/api-test-metrics.csv"));
+    }
+
+    @Test
+    public void testCache() throws TrestleClassException, MissingOntologyEntity {
+        final TestClasses.OffsetDateTimeTest offsetDateTimeTest = new TestClasses.OffsetDateTimeTest(5515, OffsetDateTime.now(), OffsetDateTime.now().plusYears(5));
+        reasoner.writeTrestleObject(offsetDateTimeTest);
+        reasoner.getUnderlyingOntology().runInference();
+        final Instant firstStart = Instant.now();
+        final TestClasses.OffsetDateTimeTest first = reasoner.readTrestleObject(TestClasses.OffsetDateTimeTest.class, offsetDateTimeTest.adm0_code.toString(), LocalDate.of(2017, 7, 1), null);
+        final Instant firstEnd = Instant.now();
+        final Instant secondStart = Instant.now();
+        final TestClasses.OffsetDateTimeTest second = reasoner.readTrestleObject(TestClasses.OffsetDateTimeTest.class, offsetDateTimeTest.adm0_code.toString(), LocalDate.of(2018, 3, 1), null);
+        final Instant secondEnd = Instant.now();
+        assertEquals(first, second, "Objects should be equal");
+        final Duration firstDuration = Duration.between(firstStart, firstEnd);
+        final Duration secondDuration = Duration.between(secondStart, secondEnd);
+        logger.info("Took {} ms to read first object, {} ms to read it again", firstDuration.toMillis(), secondDuration.toMillis());
+        assertTrue(firstDuration.compareTo(secondDuration) > 0, "Cache should have lower latency");
+        reasoner.getMetricsEngine().exportData(new File("./target/api-test-cache-test-metrics.csv"));
     }
 
     @Test
@@ -296,7 +315,6 @@ public class TrestleAPITest {
 //        assertTrue(intersectedObjects.get().size() > 0, "Should have more than 0 objects");
         reasoner.getMetricsEngine().exportData(new File("./target/api-test-gaul-loader-metrics.csv"));
     }
-
 
     @AfterEach
     public void close() throws OWLOntologyStorageException {

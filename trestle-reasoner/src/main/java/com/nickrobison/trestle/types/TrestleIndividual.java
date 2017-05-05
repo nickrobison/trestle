@@ -2,6 +2,7 @@ package com.nickrobison.trestle.types;
 
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -10,7 +11,9 @@ import java.util.stream.Collectors;
 /**
  * Created by nrobison on 10/16/16.
  */
-public class TrestleIndividual {
+public class TrestleIndividual implements Serializable {
+
+    private static final long serialVersionUID = 42L;
 
     private final String individualID;
     private final List<TrestleFact> facts;

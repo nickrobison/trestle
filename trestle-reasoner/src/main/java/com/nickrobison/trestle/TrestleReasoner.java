@@ -82,6 +82,7 @@ public interface TrestleReasoner {
      *
      * @param inputObject - Input object to write as fact
      * @throws TrestleClassException - Throws an exception if the class doesn't exist or is invalid
+     * @throws MissingOntologyEntity - Throws if the individual doesn't exist in the ontology
      */
     void writeTrestleObject(Object inputObject) throws TrestleClassException, MissingOntologyEntity;
 
@@ -90,14 +91,16 @@ public interface TrestleReasoner {
      * Use the provided temporals to setup the database time
      *
      * @param inputObject   - Object to write into the ontology
-     * @param startTemporal - Start of database time interval
-     * @param endTemporal   - @Nullable Temporal of ending interval time
+     * @param startTemporal - Start {@link Temporal} of database time interval
+     * @param endTemporal   - Nullable {@link Temporal} of ending interval time
+     * @throws MissingOntologyEntity      - Throws if the individual doesn't exist in the ontology
+     * @throws UnregisteredClassException - Throws if the object class isn't registered with the reasoner
      */
     @SuppressWarnings("unchecked")
     void writeTrestleObject(Object inputObject, Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, UnregisteredClassException;
 
     /**
-     * Manually add a Fact to a TrestleObject, along with a specified valdity point
+     * Manually add a Fact to a TrestleObject, along with a specified validity point
      *
      * @param clazz        - Java class to parse
      * @param individual   - Individual ID
@@ -279,7 +282,7 @@ public interface TrestleReasoner {
      * @param individual       - String of individual IRI to return relations for
      * @param conceptID        - Nullable String of concept IRI to filter members of
      * @param relationStrength - Cutoff value of minimum relation strength
-     * @return
+     * @return - {@link Optional} {@link Map} of String IRI representations of related concepts
      */
     Optional<Map<String, List<String>>> getRelatedConcepts(String individual, @Nullable String conceptID, double relationStrength);
 
@@ -312,9 +315,11 @@ public interface TrestleReasoner {
 
     /**
      * Return a set of Trestle_Concepts that intersect with the given WKT
-     *
-     * @param wkt    - String of WKT to intersect with
-     * @param buffer - double buffer to draw around WKT
+     * The temporal parameters allow for additional specificity on the spatio-temporal intersection
+     * @param wkt     - String of WKT to intersect with
+     * @param buffer  - double buffer to draw around WKT
+     * @param validAt - {@link Temporal} of validAt time
+     * @param dbAt    - Optional {@link Temporal} of dbAt time
      * @return - Optional Set of String URIs for intersected concepts
      */
     Optional<Set<String>> STIntersectConcept(String wkt, double buffer, Temporal validAt, @Nullable Temporal dbAt);

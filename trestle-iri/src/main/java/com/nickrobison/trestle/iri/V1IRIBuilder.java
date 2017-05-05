@@ -1,7 +1,9 @@
 package com.nickrobison.trestle.iri;
 
+import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.iri.exceptions.IRIParseException;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.semanticweb.owlapi.model.IRI;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -9,6 +11,8 @@ import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.nickrobison.trestle.common.IRIUtils.extractTrestleIndividualName;
 
 /**
  * Created by nrobison on 1/23/17.
@@ -18,29 +22,32 @@ class V1IRIBuilder {
     private static final Pattern objectIDPattern = Pattern.compile("(?<=:).*?(?=:)");
 
     /**
-     * Encode IRI using V1 specification
+     * Encode IRI using {@link IRIVersion#V1} specification
      *
      * @param prefix           - IRI Prefix
      * @param objectID         - ObjectID
      * @param objectFact       - Optional Fact to identify
      * @param objectTemporal   - Optional temporal to identify object state
      * @param databaseTemporal - Optional temporal to identify object database state
-     * @return
+     * @return - {@link TrestleIRIV1}
      */
     static TrestleIRIV1 encodeIRI(String prefix, String objectID, @Nullable String objectFact, @Nullable OffsetDateTime objectTemporal, @Nullable OffsetDateTime databaseTemporal) {
         return new TrestleIRIV1(IRIVersion.V1, prefix, objectID, objectFact, objectTemporal, databaseTemporal);
-//        StringBuilder trestleIRI = new StringBuilder();
-//        trestleIRI.append(String.format("%s:%s", "V1", objectID));
-//        if (objectFact != null) {
-//            trestleIRI.append(String.format("@%s", objectFact));
-//        }
-//        if (objectTemporal != null) {
-//            trestleIRI.append(String.format(":%s", objectTemporal.toEpochSecond()));
-//        }
-//        if (databaseTemporal != null) {
-//            trestleIRI.append(String.format(":%s", databaseTemporal.toEpochSecond()));
-//        }
+    }
 
+    /**
+     * Parse a given {@link IRI} and return the {@link IRIVersion#V1} - {@link TrestleIRI}
+     * @param encodedIRI - {@link IRI} to parse
+     * @return - {@link TrestleIRIV1}
+     */
+    static TrestleIRIV1 extractFromIRI(IRI encodedIRI) {
+        final String iriString = extractTrestleIndividualName(encodedIRI);
+        final String prefix = IRIUtils.extractPrefix(encodedIRI);
+        final String objectID = getObjectID(iriString);
+        final Optional<String> objectFact = getObjectFact(iriString);
+        final Optional<OffsetDateTime> objectTemporal = getObjectTemporal(iriString);
+        final Optional<OffsetDateTime> databaseTemporal = getDatabaseTemporal(iriString);
+        return new TrestleIRIV1(IRIVersion.V1, prefix, objectID, objectFact.orElse(null), objectTemporal.orElse(null), databaseTemporal.orElse(null));
     }
 
     static String getObjectID(String iriString) {

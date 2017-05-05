@@ -14,8 +14,11 @@ public class TrestleParser {
 
     /**
      * Create the Trestle Parser class
-     * @param df - OWLDataFactory to use for generating the IRIs
-     * @param ReasonerPrefix - Prefix of the Trestle Reasoner
+     *
+     * @param df                  - {@link OWLDataFactory} to use for generating the IRIs
+     * @param ReasonerPrefix      - Prefix of the Trestle Reasoner
+     * @param multiLangEnabled    - {@code true} multi-language support is enabled and needs to be handled
+     * @param defaultLanguageCode - Default language code to use in the absence of one provided by an {@link org.semanticweb.owlapi.model.OWLLiteral}
      */
     public TrestleParser(OWLDataFactory df, String ReasonerPrefix, boolean multiLangEnabled, String defaultLanguageCode) {
         this.df = df;

@@ -140,10 +140,10 @@ public class TemporalParser {
     }
 
     /**
-     * Get the Zone
-     *
-     * @param clazz
-     * @return
+     * Get the timezone of the temporal from the provided class definition
+     * If no class is specified, return the default timezone {@link ZoneOffset#UTC}
+     * @param clazz - Class to parse
+     * @return - {@link ZoneId} of the specified class
      */
     public static ZoneId GetAtZoneID(@Nullable Class<?> clazz) {
         if (clazz == null) {
@@ -159,10 +159,10 @@ public class TemporalParser {
 
     /**
      * Extract the time zone from DefaultTemporal
-     * Returns ZoneOffset.UTC if the time zone isn't defined.
+     * Returns {@link ZoneOffset#UTC} if the time zone isn't defined.
      *
      * @param clazz - Class to parse
-     * @return - ZoneId of either declared timezone, or UTC
+     * @return - {@link ZoneId} of either declared timezone, or {@link ZoneOffset#UTC}
      */
     public static ZoneId GetDefaultZoneID(@Nullable Class<?> clazz) {
         if (clazz == null) {

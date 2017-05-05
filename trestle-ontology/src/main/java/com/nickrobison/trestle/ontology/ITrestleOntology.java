@@ -301,11 +301,11 @@ public interface ITrestleOntology {
     /**
      * Get all the related facts for an individual, valid at a specific valid/database point
      * If no temporals are specified, we retrieve the currently valid facts
-     * @param individual - OWLNamedIndividual to get facts for
-     * @param validTemporal - Nullable OffsetDateTime representing valid-at temporal
-     * @param databaseTemporal - Nullable OffsetDateTime representing database-at temporal
-     * @param filterTemporals
-     * @return
+     * @param individual - {@link OWLNamedIndividual} to get facts for
+     * @param validTemporal - Nullable {@link OffsetDateTime} representing valid-at temporal
+     * @param databaseTemporal - Nullable {@link OffsetDateTime} representing database-at temporal
+     * @param filterTemporals - {@code true} remove temporals from the result set
+     * @return - {@link Set} of {@link OWLDataPropertyAssertionAxiom} which represent all asserted Facts on the individual
      */
     Set<OWLDataPropertyAssertionAxiom> getFactsForIndividual(OWLNamedIndividual individual, @Nullable OffsetDateTime validTemporal, @Nullable OffsetDateTime databaseTemporal, boolean filterTemporals);
 

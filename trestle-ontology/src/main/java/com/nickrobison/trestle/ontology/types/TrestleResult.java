@@ -27,7 +27,8 @@ public class TrestleResult {
 
     /**
      * Add var/object pair to TrestleResult
-     * @param varName - String variable name
+     *
+     * @param varName   - String variable name
      * @param owlObject - Nullable {@link OWLObject} of result variable
      */
     public void addValue(String varName, @Nullable OWLObject owlObject) {
@@ -38,6 +39,7 @@ public class TrestleResult {
      * Get the variable as an {@link OWLLiteral}
      * Returns an empty optional if the result is null, meaning the variable is unbound
      * Throws an {@link ClassCastException} if the result is not an {@link OWLLiteral}
+     *
      * @param varName - Variable name to access
      * @return - Optional {@link OWLLiteral}
      */
@@ -58,6 +60,7 @@ public class TrestleResult {
      * Get the variable as an {@link OWLIndividual}
      * Returns an empty optional if the result is null, meaning the variable is unbound
      * Throws an {@link ClassCastException} if the result is not an {@link OWLIndividual}
+     *
      * @param varName - Variable name to access
      * @return - Optional {@link OWLIndividual}
      */

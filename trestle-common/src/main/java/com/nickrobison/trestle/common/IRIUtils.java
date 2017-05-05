@@ -61,6 +61,15 @@ public class IRIUtils {
     }
 
     /**
+     * Extract the prefix from a given {@link IRI}, everything up to, and including the #
+     * @param iri - {@link IRI to parse}
+     * @return - String of prefix
+     */
+    public static String extractPrefix(IRI iri) {
+        return iri.toString().split("#")[0] + "#";
+    }
+
+    /**
      * Takes an {@link IRI} and returns the individual name from the full string
      * Returns everything after the # character in the IRI, or returns an empty string
      * @param iri - {@link IRI} to extract name from

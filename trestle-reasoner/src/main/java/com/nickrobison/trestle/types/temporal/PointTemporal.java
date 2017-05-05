@@ -2,6 +2,7 @@ package com.nickrobison.trestle.types.temporal;
 
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.time.OffsetDateTime;
@@ -16,13 +17,13 @@ import static com.nickrobison.trestle.parser.TemporalParser.parseTemporalToOntol
  * Created by nrobison on 6/30/16.
  */
 // I can suppress both of these warnings because I know for sure they are correct
-@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unchecked", "return.type.incompatible", "Duplicates"})
+@SuppressWarnings({"unchecked", "return.type.incompatible", "Duplicates"})
 public class PointTemporal<T extends Temporal> extends TemporalObject {
 
     private static final TemporalType TYPE = TemporalType.POINT;
     private final TemporalScope scope;
     private final T atTime;
-    private final Optional<String> parameterName;
+    private final @Nullable String parameterName;
     private final Class<T> temporalType;
     private ZoneId timeZone;
 
@@ -30,7 +31,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
         super(builder.temporalID.orElse(UUID.randomUUID().toString()), builder.relations);
         this.scope = builder.scope;
         this.atTime = builder.atTime;
-        this.parameterName = builder.parameterName;
+        this.parameterName = builder.parameterName.orElse(null);
         this.temporalType = (Class<T>) builder.atTime.getClass();
         this.timeZone = builder.explicitTimeZone.orElse(ZoneOffset.UTC);
     }
@@ -100,7 +101,10 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
     }
 
     public String getParameterName() {
-        return this.parameterName.orElse("pointTime");
+        if (parameterName == null) {
+            return "pointTime";
+        }
+        return this.parameterName;
     }
 
     /**

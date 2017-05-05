@@ -8,10 +8,10 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.nickrobison.trestle.caching.TrestleCache;
 import com.nickrobison.trestle.common.StaticIRI;
-import com.nickrobison.trestle.common.TrestlePair;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingFactException;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
@@ -20,10 +20,7 @@ import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.exporter.ShapefileSchema;
 import com.nickrobison.trestle.exporter.TSIndividual;
 import com.nickrobison.trestle.iri.IRIBuilder;
-import com.nickrobison.trestle.iri.IRIVersion;
 import com.nickrobison.trestle.iri.TrestleIRI;
-import com.nickrobison.metrician.MetricianModule;
-import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.ontology.*;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
@@ -40,7 +37,6 @@ import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import com.nickrobison.trestle.utils.TemporalPropertiesPair;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -52,10 +48,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.*;
@@ -67,12 +60,11 @@ import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.IRIUtils.extractTrestleIndividualName;
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
-import static com.nickrobison.trestle.common.LambdaExceptionUtil.rethrowFunction;
 import static com.nickrobison.trestle.common.LambdaUtils.sequenceCompletableFutures;
 import static com.nickrobison.trestle.common.StaticIRI.*;
+import static com.nickrobison.trestle.iri.IRIVersion.V1;
 import static com.nickrobison.trestle.parser.TemporalParser.parseTemporalToOntologyDateTime;
 import static com.nickrobison.trestle.utils.ConfigValidator.ValidateConfig;
-import static java.util.Collections.singletonList;
 
 /**
  * Created by nrobison on 5/17/16.
@@ -85,6 +77,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
     public static final String DEFAULTNAME = "trestle";
     public static final String ONTOLOGY_RESOURCE_NAME = "trestle.owl";
+    private static final OffsetDateTime TEMPORAL_MAX_VALUE = LocalDate.of(3000, 1, 1).atStartOfDay().atOffset(ZoneOffset.UTC);
 
     private final String REASONER_PREFIX;
     private final ITrestleOntology ontology;
@@ -93,10 +86,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private static final OWLClass datasetClass = OWLManager.getOWLDataFactory().getOWLClass(datasetClassIRI);
     private final QueryBuilder qb;
     private final QueryBuilder.DIALECT spatialDalect;
-    private boolean cachingEnabled = true;
-    private @Nullable TrestleCache trestleCache = null;
     private final TrestleParser trestleParser;
     private final Config trestleConfig;
+    private final TrestleCache trestleCache;
     private final Metrician metrician;
 
     @SuppressWarnings("dereference.of.nullable")
@@ -106,12 +98,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         trestleConfig = ConfigFactory.load().getConfig("trestle");
         ValidateConfig(trestleConfig);
 
-        final Injector injector = Guice.createInjector(new MetricianModule(builder.metrics));
+        final Injector injector = Guice.createInjector(new TrestleModule(builder.metrics, builder.caching));
 
 //        Setup metrics engine
 //        metrician = null;
         metrician = injector.getInstance(Metrician.class);
-
 
 //        Setup the reasoner prefix
 //        If not specified, use the default Trestle prefix
@@ -195,12 +186,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         logger.info("Ontology {} ready", builder.ontologyName.orElse(DEFAULTNAME));
 
 //        Are we a caching reasoner?
-        if (!builder.caching) {
-            this.cachingEnabled = false;
-        } else {
-            logger.info("Building trestle caches");
-            trestleCache = builder.sharedCache.orElse(new TrestleCache.TrestleCacheBuilder().build());
-        }
+        logger.info("Instantiating Trestle Cache");
+        trestleCache = injector.getInstance(TrestleCache.class);
 
 //        Setup the query builder
         if (ontology instanceof OracleOntology) {
@@ -230,6 +217,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public void shutdown(boolean delete) {
         logger.info("Shutting down reasoner, and removing the model");
+        this.trestleCache.shutdown(delete);
         this.ontology.close(delete);
         this.metrician.shutdown();
     }
@@ -428,16 +416,23 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
             ontology.returnAndCommitTransaction(trestleTransaction);
         }
+
+//        Invalidate the cache
+        final TrestleIRI individualIRI = IRIBuilder.encodeIRI(V1, REASONER_PREFIX, owlNamedIndividual.toStringID(), null,
+                parseTemporalToOntologyDateTime(factTemporal.getIdTemporal(), ZoneOffset.UTC),
+                parseTemporalToOntologyDateTime(dTemporal.getIdTemporal(), ZoneOffset.UTC));
+        logger.debug("Purging {} from the cache", individualIRI);
+        trestleCache.deleteTrestleObject(individualIRI);
     }
 
     @Override
     public void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validAt, @Nullable Temporal databaseFrom) {
-        addFactToTrestleObject(clazz, individual, factName, value, validAt, null, null, databaseFrom);
+        addFactToTrestleObjectImpl(clazz, individual, factName, value, validAt, null, null, databaseFrom);
     }
 
     @Override
     public void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom) {
-        addFactToTrestleObject(clazz, individual, factName, value, null, validFrom, validTo, databaseFrom);
+        addFactToTrestleObjectImpl(clazz, individual, factName, value, null, validFrom, validTo, databaseFrom);
     }
 
     /**
@@ -453,7 +448,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @param validTo      - Optional validTo Temporal
      * @param databaseFrom - Optional databaseFrom Temporal
      */
-    private void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, @Nullable Temporal validAt, @Nullable Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom) {
+    private void addFactToTrestleObjectImpl(Class<?> clazz, String individual, String factName, Object value, @Nullable Temporal validAt, @Nullable Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom) {
         final OWLNamedIndividual owlNamedIndividual = df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual));
 //        Parse String to Fact IRI
         final Optional<IRI> factIRI = this.trestleParser.classParser.getFactIRI(clazz, factName);
@@ -469,9 +464,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             logger.error("Individual {} does not have fact {}", owlNamedIndividual, owlDataProperty);
             throw new TrestleMissingFactException(owlNamedIndividual, factIRI.get());
         }
-        if (!value.getClass().equals(factDatatype.get())) {
+        if (!factDatatype.get().isAssignableFrom(value.getClass())) {
             logger.error("Mismatched type. Fact {} has type {}, not {}", factIRI.get(), factDatatype.get(), value.getClass());
-            throw new RuntimeException(String.format("Fact %s has type %s, not %s", factIRI.get(), factDatatype.get(), value.getClass()));
+            throw new TrestleMissingFactException(owlNamedIndividual, factIRI.get(), factDatatype.get(), value.getClass());
         }
 
 //        Build the temporals
@@ -508,7 +503,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         this.ontology.executeUpdateSPARQL(update);
-        writeObjectFacts(owlNamedIndividual, singletonList(propertyAxiom), validTemporal, databaseTemporal);
+        writeObjectFacts(owlNamedIndividual, Collections.singletonList(propertyAxiom), validTemporal, databaseTemporal);
+//        Update the cache
+//        TODO(nrobison): This should async refresh
+        final TrestleIRI individualIRI = IRIBuilder.encodeIRI(V1, REASONER_PREFIX, individual, null,
+                parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC),
+                parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC));
+        trestleCache.deleteTrestleObject(individualIRI);
         this.ontology.returnAndCommitTransaction(trestleTransaction);
     }
 
@@ -524,7 +525,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private void writeObjectFacts(OWLNamedIndividual rootIndividual, List<OWLDataPropertyAssertionAxiom> properties, TemporalObject validTemporal, TemporalObject databaseTemporal) {
         final OWLClass factClass = df.getOWLClass(factClassIRI);
         properties.forEach(property -> {
-            final TrestleIRI factIdentifier = IRIBuilder.encodeIRI(IRIVersion.V1,
+            final TrestleIRI factIdentifier = IRIBuilder.encodeIRI(V1,
                     REASONER_PREFIX,
                     rootIndividual.toStringID(),
                     property.getProperty().asOWLDataProperty().getIRI().toString(),
@@ -592,14 +593,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     public <T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull String objectID, Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity {
 
         final IRI individualIRI = parseStringToIRI(REASONER_PREFIX, objectID);
-//        Check cache first
-        if (cachingEnabled) {
-            logger.debug("Retrieving {} from cache", individualIRI);
-            return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readTrestleObject(clazz, individualIRI, true))));
-        } else {
-            logger.debug("Bypassing cache and directly retrieving object");
-            return readTrestleObject(clazz, individualIRI, false, validTemporal, databaseTemporal);
-        }
+        return readTrestleObject(clazz, individualIRI, false, validTemporal, databaseTemporal);
     }
 
 //    ----------------------------
@@ -635,13 +629,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @SuppressWarnings({"return.type.incompatible", "argument.type.incompatible", "unchecked"})
     <T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt) {
         logger.debug("Reading {}", individualIRI);
-//        Check for cache hit first, provided caching is enabled and we're not set to bypass the cache
-        if (isCachingEnabled() & !bypassCache) {
-            logger.debug("Retrieving {} from cache", individualIRI);
-            return clazz.cast(trestleCache.ObjectCache().get(individualIRI, rethrowFunction(iri -> readTrestleObject(clazz, individualIRI, true))));
-        } else {
-            logger.debug("Bypassing cache and directly retrieving object");
-        }
 
         final PointTemporal validTemporal;
         final PointTemporal databaseTemporal;
@@ -655,10 +642,30 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         } else {
             databaseTemporal = TemporalObjectBuilder.database().at(OffsetDateTime.now()).build();
         }
-        final Optional<@NonNull T> constructedObject = readTrestleObject(clazz, individualIRI, validTemporal, databaseTemporal);
+
+//        Build the TrestleIRI
+        final TrestleIRI trestleIRI = IRIBuilder.encodeIRI(V1, REASONER_PREFIX, individualIRI.getIRIString(), null,
+                parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC),
+                parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC));
+
+//        Try from cache first
+        final @NonNull @Nullable T individual = this.trestleCache.getTrestleObject(clazz, trestleIRI);
+        if (individual != null) {
+            return individual;
+        }
+
+//        final Optional<@NonNull T> constructedObject = readTrestleObjectImpl(clazz, individualIRI, validTemporal, databaseTemporal);
+        final Optional<TrestleObjectResult<@NonNull T>> constructedObject = readTrestleObjectImpl(clazz, individualIRI, validTemporal, databaseTemporal);
         if (constructedObject.isPresent()) {
             logger.debug("Done with {}", individualIRI);
-            return constructedObject.get();
+//            Write back to index
+            final TrestleObjectResult<@NonNull T> value = constructedObject.get();
+            try {
+                this.trestleCache.writeTrestleObject(trestleIRI, value.getValidFrom().toInstant().toEpochMilli(), value.getValidTo().toInstant().toEpochMilli(), value.getObject());
+            } catch (Exception e) {
+                logger.error("Unable to write Trestle Object {} to cache", individualIRI, e);
+            }
+            return value.getObject();
         } else {
             throw new NoValidStateException(individualIRI, validAt, databaseAt);
         }
@@ -676,7 +683,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      */
     @Timed
     @Metered(name = "read-trestle-object", absolute = true)
-    private <T> Optional<T> readTrestleObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, PointTemporal<?> validTemporal, PointTemporal<?> databaseTemporal) {
+    private <@NonNull T> Optional<TrestleObjectResult<@NonNull T>> readTrestleObjectImpl(Class<@NonNull T> clazz, @NonNull IRI individualIRI, PointTemporal<?> validTemporal, PointTemporal<?> databaseTemporal) {
 
 //        Contains class?
         try {
@@ -698,6 +705,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //            Get the temporal objects to figure out the correct return type
         final Class<? extends Temporal> baseTemporalType = TemporalParser.GetTemporalType(clazz);
 
+//        Build the fact query
+        final String factQuery = qb.buildObjectPropertyRetrievalQuery(validAtTemporal, dbAtTemporal, true, df.getOWLNamedIndividual(individualIRI));
+
         final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(false);
 
 //        Figure out its name
@@ -708,18 +718,41 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
         if (dataProperties.isPresent()) {
 
-            final CompletableFuture<Set<OWLDataPropertyAssertionAxiom>> factsFuture = CompletableFuture.supplyAsync(() -> {
+            final CompletableFuture<List<TrestleFact>> factsFuture = CompletableFuture.supplyAsync(() -> {
                 final Instant individualRetrievalStart = Instant.now();
                 final TrestleTransaction tt = ontology.createandOpenNewTransaction(trestleTransaction);
-                final Set<OWLDataPropertyAssertionAxiom> objectFacts = ontology.getFactsForIndividual(df.getOWLNamedIndividual(individualIRI), validAtTemporal, dbAtTemporal, true);
-                logger.debug("Retrieved {} facts for {}", objectFacts.size(), individualIRI);
-                if (objectFacts.isEmpty()) {
+                TrestleResultSet resultSet = ontology.executeSPARQLResults(factQuery);
+//                final Set<OWLDataPropertyAssertionAxiom> objectFacts = ontology.getFactsForIndividual(df.getOWLNamedIndividual(individualIRI), validAtTemporal, dbAtTemporal, true);
+//                logger.debug("Retrieved {} facts for {}", resultSet.getResults().size(), individualIRI);
+                if (resultSet.getResults().isEmpty()) {
                     throw new NoValidStateException(individualIRI, validAtTemporal, dbAtTemporal);
                 }
                 final Instant individualRetrievalEnd = Instant.now();
-                logger.debug("Retrieving {} facts took {} ms", objectFacts.size(), Duration.between(individualRetrievalStart, individualRetrievalEnd).toMillis());
-                return objectFacts;
-            });
+                logger.debug("Retrieving {} facts took {} ms", resultSet.getResults().size(), Duration.between(individualRetrievalStart, individualRetrievalEnd).toMillis());
+                return resultSet;
+            })
+                    .thenApply(resultSet -> {
+//                        From the resultSet, build the Facts
+                        return resultSet.getResults()
+                                .stream()
+                                .map(result -> {
+                                    final OWLDataPropertyAssertionAxiom assertion = df.getOWLDataPropertyAssertionAxiom(
+                                            df.getOWLDataProperty(result.getIndividual("property").orElseThrow(() -> new RuntimeException("Unable to get individual")).toStringID()),
+                                            result.getIndividual("individual").orElseThrow(() -> new RuntimeException("Unable to get individual")),
+                                            result.getLiteral("object").orElseThrow(() -> new RuntimeException("Unable to get individual")));
+//                                    Get valid temporal
+                                    final Optional<TemporalObject> factValidTemporal = TemporalObjectBuilder.buildTemporalFromResults(TemporalScope.VALID, result.getLiteral("va"), result.getLiteral("vf"), result.getLiteral("vt"));
+//                                    Get database temporal
+                                    final Optional<TemporalObject> factDatabaseTemporal = TemporalObjectBuilder.buildTemporalFromResults(TemporalScope.DATABASE, Optional.empty(), result.getLiteral("df"), result.getLiteral("dt"));
+                                    //noinspection unchecked
+                                    return new TrestleFact<>(
+                                            clazz,
+                                            assertion,
+                                            factValidTemporal.orElseThrow(() -> new RuntimeException("Unable to build fact valid temporal")),
+                                            factDatabaseTemporal.orElseThrow(() -> new RuntimeException("Unable to build fact database temporal")));
+                                })
+                                .collect(Collectors.toList());
+                    });
 //            TODO(nrobison): This should be collapsed into a single async call. We can do both of them at the same time, since all the properties are on the same individual
 //            Get the temporals
             final CompletableFuture<Optional<TemporalObject>> temporalFuture = CompletableFuture.supplyAsync(() -> {
@@ -732,25 +765,17 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     .thenApply(temporalProperties -> TemporalObjectBuilder.buildTemporalFromProperties(temporalProperties, baseTemporalType, clazz));
 
 
-            final CompletableFuture<ConstructorArguments> argumentsFuture = factsFuture.thenCombine(temporalFuture, (facts, temporals) -> {
+            final CompletableFuture<TrestleObjectState> argumentsFuture = factsFuture.thenCombine(temporalFuture, (facts, temporals) -> {
                 logger.debug("In the arguments future");
                 final ConstructorArguments constructorArguments = new ConstructorArguments();
-                facts.forEach(property -> {
-                    @Nullable String languageTag = null;
-                    if (property.getObject().hasLang()) {
-                        languageTag = property.getObject().getLang();
-                    }
-                    final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, clazz);
-                    final Object literalValue = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
-                    constructorArguments.addArgument(
-                            ClassParser.matchWithClassMember(clazz, property.getProperty().asOWLDataProperty().getIRI().getShortForm(), languageTag),
-                            javaClass,
-                            literalValue);
-                });
+                facts.forEach(fact -> constructorArguments.addArgument(
+                        ClassParser.matchWithClassMember(clazz, fact.getName(), fact.getLanguage()),
+                        fact.getJavaClass(),
+                        fact.getValue()));
                 if (!temporals.isPresent()) {
                     throw new RuntimeException(String.format("Cannot restore temporal from ontology for %s", individualIRI));
                 }
-                //            Add the temporal to the constructor args
+//            Add the temporal to the constructor args
                 final TemporalObject temporal = temporals.get();
                 if (temporal.isInterval()) {
                     final IntervalTemporal intervalTemporal = temporal.asInterval();
@@ -770,27 +795,68 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                             temporal.asPoint().getBaseTemporalType(),
                             temporal.asPoint().getPointTime());
                 }
-                return constructorArguments;
+//                Get the temporal ranges
+//                Valid first
+                Comparator<Temporal> temporalComparator = (t1, t2) -> ((Comparable) t1).compareTo((Comparable) t2);
+                final Optional<Temporal> validMin = facts
+                        .stream()
+                        .map(TrestleFact::getValidTemporal)
+                        .map(TemporalObject::getIdTemporal)
+                        .min(temporalComparator);
+
+                final Optional<Temporal> validMax = facts
+                        .stream()
+                        .map(TrestleFact::getValidTemporal)
+                        .map(valid -> {
+                            if (valid.isPoint()) {
+                                return valid.asPoint().getPointTime();
+                            } else {
+                                return (Temporal) valid.asInterval().getToTime().orElse(TEMPORAL_MAX_VALUE);
+                            }
+                        })
+                        .max(temporalComparator)
+                        .map(Temporal.class::cast);
+//                Database temporal, next
+                final Optional<Temporal> dbMin = facts
+                        .stream()
+                        .map(TrestleFact::getDatabaseTemporal)
+                        .map(TemporalObject::getIdTemporal)
+                        .min(temporalComparator)
+                        .map(Temporal.class::cast);
+
+                final Optional<Temporal> dbMax = facts
+                        .stream()
+                        .map(TrestleFact::getDatabaseTemporal)
+                        .map(db -> {
+                            if (db.isPoint()) {
+                                return db.asPoint().getPointTime();
+                            } else {
+                                return (Temporal) db.asInterval().getToTime().orElse(TEMPORAL_MAX_VALUE);
+                            }
+                        })
+                        .max(temporalComparator)
+                        .map(Temporal.class::cast);
+
+//                return objectState;
+                return new TrestleObjectState(constructorArguments, validMin.get(), validMax.get(), dbMin.get(), dbMax.get());
             });
 
-            final ConstructorArguments constructorArguments;
+            final TrestleObjectState objectState;
             try {
-                constructorArguments = argumentsFuture.get();
-                ontology.returnAndCommitTransaction(trestleTransaction);
+                objectState = argumentsFuture.get();
             } catch (InterruptedException e) {
-//                FIXME(nrobison): Rollback
-                ontology.returnAndCommitTransaction(trestleTransaction);
                 logger.error("Read object {} interrupted", individualIRI, e);
                 return Optional.empty();
             } catch (ExecutionException e) {
-//                FIXME(nrobison): Rollback
-                ontology.returnAndCommitTransaction(trestleTransaction);
                 logger.error("Execution exception when reading object {}", individualIRI, e);
                 return Optional.empty();
+            } finally {
+//                FIXME(nrobison): Rollback
+                ontology.returnAndCommitTransaction(trestleTransaction);
             }
             try {
-                final @NonNull T constructedObject = ClassBuilder.constructObject(clazz, constructorArguments);
-                return Optional.of(constructedObject);
+                final @NonNull T constructedObject = ClassBuilder.constructObject(clazz, objectState.getArguments());
+                return Optional.of(new TrestleObjectResult<>(individualIRI, constructedObject, objectState.getMinValidFrom(), objectState.getMinValidTo(), objectState.getMinDatabaseFrom(), objectState.getMinDatabaseTo()));
             } catch (MissingConstructorException e) {
                 logger.error("Problem with constructor", e);
                 return Optional.empty();
@@ -1100,9 +1166,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public TrestleIndividual getTrestleIndividual(String individualIRI) {
-        if (cachingEnabled) {
-            return trestleCache.IndividualCache().get(individualIRI, iri -> getTrestleIndividual(df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, iri))));
-        }
         return getTrestleIndividual(df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individualIRI)));
     }
 
@@ -1116,6 +1179,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private TrestleIndividual getTrestleIndividual(OWLNamedIndividual individual) {
 
         logger.debug("Building trestle individual {}", individual);
+        @Nullable final TrestleIndividual cacheIndividual = this.trestleCache.getTrestleIndividual(individual);
+        if (cacheIndividual != null) {
+            logger.debug("Retrieved {} from cache");
+            return cacheIndividual;
+        }
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
 
@@ -1171,6 +1239,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         try {
             TrestleIndividual trestleIndividual = individualFuture.get();
             this.ontology.returnAndCommitTransaction(trestleTransaction);
+            try {
+                this.trestleCache.writeTrestleIndividual(individual, trestleIndividual);
+            } catch (Exception e) {
+                logger.error("Unable to write Trestle Individual {} to cache", individual, e);
+            }
             return trestleIndividual;
         } catch (InterruptedException | ExecutionException e) {
 //            FIXME(nrobison): Rollback
@@ -1233,7 +1306,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
         final OffsetDateTime atTemporal;
         if (temporalIntersection != null) {
-        atTemporal = parseTemporalToOntologyDateTime(temporalIntersection, ZoneOffset.UTC);
+            atTemporal = parseTemporalToOntologyDateTime(temporalIntersection, ZoneOffset.UTC);
         } else {
             atTemporal = OffsetDateTime.now();
         }
@@ -1937,7 +2010,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
             return isRelated.isPresent();
         }
-
         return false;
     }
 
@@ -1953,10 +2025,5 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         } else if (ontologyName.length() > 90) {
             throw new InvalidOntologyName(ontologyName.length());
         }
-    }
-
-    @EnsuresNonNullIf(expression = "this.trestleCache", result = true)
-    private boolean isCachingEnabled() {
-        return this.trestleCache != null;
     }
 }

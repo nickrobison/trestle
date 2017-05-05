@@ -32,7 +32,7 @@
         <jena.version>3.1.0</jena.version>
         <slf4j.version>1.7.22</slf4j.version>
         <junit.jupiter.version>5.0.0-M3</junit.jupiter.version>
-        <jmh.version>1.17.3</jmh.version>
+        <jmh.version>1.18</jmh.version>
         <geotools.version>16.1</geotools.version>
         <metrics.version>3.2.1</metrics.version>
         <httpcomponents.version>4.5.3</httpcomponents.version>

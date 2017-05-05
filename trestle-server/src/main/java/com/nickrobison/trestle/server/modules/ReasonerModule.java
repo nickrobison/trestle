@@ -42,7 +42,6 @@ public class ReasonerModule implements Managed {
                 .withName(configuration.getOntology())
                 .withPrefix(configuration.getPrefix())
                 .withOntology(configuration.getLocation())
-                .withoutCaching()
                 .build();
 
         logger.info("Reasoner started");

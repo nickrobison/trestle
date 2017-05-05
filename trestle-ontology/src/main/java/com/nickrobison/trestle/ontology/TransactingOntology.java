@@ -46,8 +46,8 @@ abstract class TransactingOntology implements ITrestleOntology {
      * Set the current thread transaction state, using the information inherited from the TrestleTransaction object
      *
      * @param transactionObject - Transaction Object to take ownership of thread transaction
-     * @param write - Writable transaction?
-     * @return
+     * @param write - {@code true} Writable transaction
+     * @return - {@link TrestleTransaction}
      */
     @Override
     public TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject, boolean write) {
@@ -72,9 +72,9 @@ abstract class TransactingOntology implements ITrestleOntology {
 
     /**
      * Create and open a new transaction.
-     * If the thread is already in an open transaction, we return an empty TrestleTransaction object
-     * @param write - Is this a write transaction?
-     * @return
+     * If the thread is already in an open transaction, we return an empty {@link TrestleTransaction} object
+     * @param write - {@code true} this a write transaction
+     * @return - {@link TrestleTransaction}
      */
     @Override
     public TrestleTransaction createandOpenNewTransaction(boolean write) {
