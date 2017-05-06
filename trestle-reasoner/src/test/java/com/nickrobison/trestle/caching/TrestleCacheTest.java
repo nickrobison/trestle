@@ -10,10 +10,7 @@ import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.semanticweb.owlapi.model.IRI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Created by nrobison on 2/17/17.
  */
 @Tag("integration")
+@Disabled
 public class TrestleCacheTest {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleCacheTest.class);
@@ -37,7 +35,7 @@ public class TrestleCacheTest {
 
     @BeforeEach
     public void setup() {
-        final Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
+        final Config config = ConfigFactory.load(ConfigFactory.parseResources("application.conf"));
         reasoner = new TrestleBuilder()
                 .withDBConnection(config.getString("trestle.ontology.connectionString"),
                         config.getString("trestle.ontology.username"),
@@ -46,6 +44,7 @@ public class TrestleCacheTest {
                 .withOntology(IRI.create(config.getString("trestle.ontology.location")))
                 .withPrefix(OVERRIDE_PREFIX)
                 .withInputClasses(TestClasses.JTSGeometryTest.class)
+                .withoutMetrics()
                 .initialize()
                 .build();
 
@@ -75,6 +74,7 @@ public class TrestleCacheTest {
 
 
 //        Update one of the facts, which should invalidate the cache
+        logger.info("Updating one of the facts");
         reasoner.addFactToTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getAdm0_code().toString(), "geom", jtsGeom2, LocalDate.of(1989, 10, 1), null, null);
         reasoner.getUnderlyingOntology().runInference();
         firstStart = Instant.now();

@@ -27,7 +27,6 @@ public interface TrestleCache {
      * @param startTemporal - Start temporal from Unix epoch (ms)
      * @param endTemporal   - End temporal from Unix epoch (ms)
      * @param value         - Value to write to cache
-     * @throws java.io.NotSerializableException if the value class isn't serializable (even if using a local cache)
      */
     void writeTrestleObject(TrestleIRI individualIRI, long startTemporal, long endTemporal, @NonNull Object value);
 

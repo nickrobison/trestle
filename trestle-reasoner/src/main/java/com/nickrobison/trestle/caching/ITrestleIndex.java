@@ -103,6 +103,7 @@ public interface ITrestleIndex<Value> {
     /**
      * Calculate estimated cache size
      * Each write/delete modifies a {@link AtomicLong}, so it's just an estimated count, but quick to get
+     * @return - long of cache size
      */
     @Gauge(name = "td-tree.cache-size", absolute = true)
     long getCacheSize();

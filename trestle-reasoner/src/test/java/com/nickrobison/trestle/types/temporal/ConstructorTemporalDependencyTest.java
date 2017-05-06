@@ -41,6 +41,7 @@ public class ConstructorTemporalDependencyTest {
                 .withPrefix("http://nickrobison.com/demonstration/test#")
                 .withInputClasses(TestObject.class)
                 .withoutCaching()
+                .withoutMetrics()
                 .initialize()
                 .build();
 

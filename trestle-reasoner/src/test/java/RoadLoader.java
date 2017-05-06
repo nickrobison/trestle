@@ -18,6 +18,7 @@ import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.opengis.feature.simple.SimpleFeature;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -35,6 +36,7 @@ import java.util.Map;
 /**
  * Created by nrobison on 9/19/16.
  */
+@Disabled
 public class RoadLoader {
 
 

@@ -133,6 +133,14 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             logger.error("Cannot load trestle ontology from resources");
             throw new MissingResourceException("Cannot load ontology file", this.getClass().getName(), ONTOLOGY_RESOURCE_NAME);
         }
+        try {
+            final int available = ontologyIS.available();
+            if (available == 0) {
+                throw new RuntimeException("Ontology InputStream does not seem to be available");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Ontology InputStream does not seem to be available");
+        }
         logger.info("Loading ontology from {}", ontologyResource);
 
 //        Validate ontology name
@@ -158,7 +166,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 //        Register some constructor functions
         TypeConverter.registerTypeConstructor(UUID.class, df.getOWLDatatype(UUIDDatatypeIRI), (uuidString) -> UUID.fromString(uuidString.toString()));
-
         logger.info("Connecting to ontology {} at {}", builder.ontologyName.orElse(DEFAULTNAME), builder.connectionString.orElse("localhost"));
         logger.debug("IS: {}", ontologyIS);
         logger.debug("Resource: {}", ontologyResource);
@@ -504,13 +511,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         this.ontology.executeUpdateSPARQL(update);
         writeObjectFacts(owlNamedIndividual, Collections.singletonList(propertyAxiom), validTemporal, databaseTemporal);
+        this.ontology.returnAndCommitTransaction(trestleTransaction);
 //        Update the cache
-//        TODO(nrobison): This should async refresh
         final TrestleIRI individualIRI = IRIBuilder.encodeIRI(V1, REASONER_PREFIX, individual, null,
                 parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC),
                 parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC));
         trestleCache.deleteTrestleObject(individualIRI);
-        this.ontology.returnAndCommitTransaction(trestleTransaction);
     }
 
     /**
@@ -718,6 +724,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
         if (dataProperties.isPresent()) {
 
+//            Facts
             final CompletableFuture<List<TrestleFact>> factsFuture = CompletableFuture.supplyAsync(() -> {
                 final Instant individualRetrievalStart = Instant.now();
                 final TrestleTransaction tt = ontology.createandOpenNewTransaction(trestleTransaction);
@@ -765,6 +772,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     .thenApply(temporalProperties -> TemporalObjectBuilder.buildTemporalFromProperties(temporalProperties, baseTemporalType, clazz));
 
 
+//            Constructor arguments
             final CompletableFuture<TrestleObjectState> argumentsFuture = factsFuture.thenCombine(temporalFuture, (facts, temporals) -> {
                 logger.debug("In the arguments future");
                 final ConstructorArguments constructorArguments = new ConstructorArguments();

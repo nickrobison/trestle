@@ -9,10 +9,8 @@ import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.semanticweb.owlapi.model.IRI;
 
 import java.io.*;
 import java.time.LocalDate;
@@ -28,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @SuppressWarnings("Duplicates")
 @Tag("integration")
+@Disabled
 public class DataExporterTests {
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
@@ -44,6 +43,8 @@ public class DataExporterTests {
                         config.getString("password"))
                 .withName("hadoop_gaul_exporter")
                 .withInputClasses(SimpleGAULObject.class)
+                .withOntology(IRI.create(config.getString("trestle.ontology.location")))
+                .withoutMetrics()
                 .withoutCaching()
                 .initialize()
                 .build();

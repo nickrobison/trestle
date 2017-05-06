@@ -12,6 +12,7 @@ import java.util.Map;
 public class TrestleUpgradableReadWriteLock {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleUpgradableReadWriteLock.class);
+    private static final int waitTimeout = 10000;
     private final Map<Thread, Integer> readingThreads = new HashMap<>();
     private int writeAccesses = 0;
     private int writeRequests = 0;
@@ -20,13 +21,18 @@ public class TrestleUpgradableReadWriteLock {
     /**
      * Take the Read lock
      * If the calling thread already owns the lock, an internal counter is incremented and the thread continues
+     *
      * @throws InterruptedException
      */
     public synchronized void lockRead() throws InterruptedException {
         final Thread callingThread = Thread.currentThread();
         while (!canGrantReadAccess(callingThread)) {
-            logger.debug("Thread {} waiting for Read lock", callingThread);
-            wait();
+            logger.debug("Thread {} waiting {} ms for Read lock", waitTimeout, callingThread);
+            long start = System.nanoTime();
+            wait(waitTimeout);
+            if (System.nanoTime() - start > (waitTimeout * 1000)) {
+                throw new InterruptedException("Unable to get read lock");
+            }
         }
         logger.debug("{} taking the read lock", callingThread);
         readingThreads.put(callingThread, (getReadAccessCount(callingThread) + 1));
@@ -43,7 +49,7 @@ public class TrestleUpgradableReadWriteLock {
         }
         final int readAccessCount = getReadAccessCount(callingThread);
         if (readAccessCount == 1) {
-            logger.debug("Unlocking {}", callingThread);
+            logger.debug("Read Unlocking {}", callingThread);
             readingThreads.remove(callingThread);
         } else {
             logger.debug("Decrementing read count for {}. {} read accesses remaining", callingThread, readAccessCount - 1);
@@ -56,14 +62,20 @@ public class TrestleUpgradableReadWriteLock {
      * Take a write lock
      * Only a single thread is permitted to hold the write lock
      * If the calling thread holds a read lock, it is permitted to upgrade its lock to a Write lock, provided there are no other threads waiting for a write lock
+     *
      * @throws InterruptedException - Throws an exception if the thread is interrupted while trying to take the lock
      */
     public synchronized void lockWrite() throws InterruptedException {
         writeRequests++;
         final Thread callingThread = Thread.currentThread();
         while (!canGrantWriteAccess(callingThread)) {
-            logger.debug("{} waiting for Write lock. {} requests pending", callingThread, writeRequests);
-            wait();
+            logger.debug("{} waiting {} ms for Write lock. {} write requests pending", waitTimeout, callingThread, writeRequests);
+            long start = System.nanoTime();
+            wait(waitTimeout);
+            if (System.nanoTime() - start > (waitTimeout * 1000)) {
+                throw new InterruptedException("Unable to get write lock");
+            }
+
         }
         writeRequests--;
         writeAccesses++;
@@ -99,8 +111,8 @@ public class TrestleUpgradableReadWriteLock {
 
     private boolean canGrantWriteAccess(Thread callingThread) {
         if (isOnlyReader(callingThread)) return true;
-        if(hasReaders()) return false;
-        if(writingThread == null) return true;
+        if (hasReaders()) return false;
+        if (writingThread == null) return true;
         return isWriter(callingThread);
     }
 
@@ -113,6 +125,7 @@ public class TrestleUpgradableReadWriteLock {
     private boolean hasReaders() {
         return readingThreads.size() > 0;
     }
+
     private boolean isReader(Thread callingThread) {
         return readingThreads.get(callingThread) != null;
     }
@@ -130,7 +143,7 @@ public class TrestleUpgradableReadWriteLock {
     }
 
     private boolean hasWriteRequests() {
-            return this.writeRequests > 0;
+        return this.writeRequests > 0;
     }
 
 }

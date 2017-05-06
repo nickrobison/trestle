@@ -82,7 +82,7 @@ public class ClassBuilder {
             constructor = clazz.getConstructor(inputClasses);
         } catch (NoSuchMethodException e) {
             logger.error("Cannot get constructor matching params: {}", inputClasses, e);
-            throw new MissingConstructorException(String.format("Can't get constructor for %s", clazz.getClass().getName()));
+            throw new MissingConstructorException(String.format("Can't get constructor for %s", clazz.getName()));
         }
 
         try {

@@ -18,6 +18,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 
 import java.time.LocalDate;
@@ -44,6 +45,8 @@ public class TimezoneTest {
                         config.getString("trestle.ontology.password"))
                 .withName("timezone_tests")
                 .withInputClasses(DefaultTimeZone.class, DifferentIntervalTimeZones.class)
+                .withOntology(IRI.create(config.getString("trestle.ontology.location")))
+                .withoutMetrics()
                 .withoutCaching()
                 .initialize()
                 .build();
