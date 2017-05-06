@@ -514,8 +514,7 @@ public class TestClasses {
     }
 
     @DatasetClass(name = "VersionTest")
-    public static class FactVersionTest implements Serializable {
-        private static final long serialVersionUID = 42L;
+    public static class FactVersionTest {
 
         @IndividualIdentifier
         public final String id;
