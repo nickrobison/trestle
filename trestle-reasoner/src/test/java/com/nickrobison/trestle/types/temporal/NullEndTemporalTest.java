@@ -11,6 +11,8 @@ import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.exceptions.TrestleClassException;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.IRI;
@@ -30,10 +32,11 @@ public class NullEndTemporalTest {
     private String password = config.getString("trestle.ontology.password");
     private String reponame = "null_enddate_test";
     private String ontLocation = config.getString("trestle.ontology.location");
+    private TrestleReasoner reasoner;
 
-    @Test
-    public void nullEndDateTest() {
-        TrestleReasoner reasoner = new TrestleBuilder()
+    @BeforeEach
+    public void setup() {
+        reasoner = new TrestleBuilder()
                 .withDBConnection(connectStr, username, password)
                 .withName(reponame)
                 .withOntology(IRI.create(ontLocation))
@@ -43,6 +46,16 @@ public class NullEndTemporalTest {
                 .withoutMetrics()
                 .initialize()
                 .build();
+    }
+
+    @AfterEach
+    public void shutdown() {
+        reasoner.shutdown(true);
+    }
+
+    @Test
+    public void nullEndDateTest() {
+
 
         LocalDate startDate = LocalDate.of(2016,1,1);
         String id = "TEST0001";
@@ -70,9 +83,6 @@ public class NullEndTemporalTest {
             e.printStackTrace();
             fail(e.getMessage());
         }
-
-        //reasoner.
-        reasoner.shutdown(true);
     }
 
     @DatasetClass(name = "objectconstructor-test")

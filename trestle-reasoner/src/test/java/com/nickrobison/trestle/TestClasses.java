@@ -25,6 +25,7 @@ public class TestClasses {
 
     @DatasetClass(name = "odt-test")
     public static class OffsetDateTimeTest implements Serializable {
+        private static final long serialVersionUID = 42L;
 
         @IndividualIdentifier
         public final Integer adm0_code;
@@ -104,7 +105,8 @@ public class TestClasses {
     }
 
     @DatasetClass(name = "GAUL_ESRI_Test")
-    protected static class ESRIPolygonTest {
+    protected static class ESRIPolygonTest implements Serializable {
+        private static final long serialVersionUID = 42L;
 
         private final Integer adm0_code;
         @Spatial
@@ -147,7 +149,9 @@ public class TestClasses {
     }
 
     @DatasetClass(name = "GAUL_GeoTools_Test")
-    public static class GeotoolsPolygonTest {
+    public static class GeotoolsPolygonTest implements Serializable {
+        private static final long serialVersionUID = 42L;
+
         @IndividualIdentifier
         public final UUID id;
         @Spatial
@@ -181,7 +185,8 @@ public class TestClasses {
     }
 
     @DatasetClass(name ="GAUL_Test")
-    public static class GAULTestClass {
+    public static class GAULTestClass implements Serializable {
+        private static final long serialVersionUID = 42L;
 
         @Fact(name="ADM0_Code", datatype= OWL2Datatype.XSD_INTEGER)
         public int adm0_code;
@@ -244,7 +249,8 @@ public class TestClasses {
     }
 
     @DatasetClass(name = "gaul-complex")
-    public static class GAULComplexClassTest {
+    public static class GAULComplexClassTest implements Serializable {
+        private static final long serialVersionUID = 42L;
 
         @IndividualIdentifier
         public UUID id;
@@ -325,7 +331,8 @@ public class TestClasses {
     }
 
     @DatasetClass(name = "GAUL_Test1")
-    public static class GAULMethodTest {
+    public static class GAULMethodTest implements Serializable {
+        private static final long serialVersionUID = 42L;
 
         public int adm0_code;
         private String adm0_name;
@@ -412,7 +419,8 @@ public class TestClasses {
     }
 
     @DatasetClass(name = "multiLang-test")
-    public static class MultiLangTest {
+    public static class MultiLangTest implements Serializable {
+        private static final long serialVersionUID = 42L;
 
         @Fact(name = "testString")
         @Language(language = "en")
@@ -506,7 +514,8 @@ public class TestClasses {
     }
 
     @DatasetClass(name = "VersionTest")
-    public static class FactVersionTest {
+    public static class FactVersionTest implements Serializable {
+        private static final long serialVersionUID = 42L;
 
         @IndividualIdentifier
         public final String id;

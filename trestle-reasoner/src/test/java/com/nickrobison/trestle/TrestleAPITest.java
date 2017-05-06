@@ -159,25 +159,6 @@ public class TrestleAPITest {
     }
 
     @Test
-    public void testCache() throws TrestleClassException, MissingOntologyEntity {
-        final TestClasses.OffsetDateTimeTest offsetDateTimeTest = new TestClasses.OffsetDateTimeTest(5515, OffsetDateTime.now(), OffsetDateTime.now().plusYears(5));
-        reasoner.writeTrestleObject(offsetDateTimeTest);
-        reasoner.getUnderlyingOntology().runInference();
-        final Instant firstStart = Instant.now();
-        final TestClasses.OffsetDateTimeTest first = reasoner.readTrestleObject(TestClasses.OffsetDateTimeTest.class, offsetDateTimeTest.adm0_code.toString(), LocalDate.of(2017, 7, 1), null);
-        final Instant firstEnd = Instant.now();
-        final Instant secondStart = Instant.now();
-        final TestClasses.OffsetDateTimeTest second = reasoner.readTrestleObject(TestClasses.OffsetDateTimeTest.class, offsetDateTimeTest.adm0_code.toString(), LocalDate.of(2018, 3, 1), null);
-        final Instant secondEnd = Instant.now();
-        assertEquals(first, second, "Objects should be equal");
-        final Duration firstDuration = Duration.between(firstStart, firstEnd);
-        final Duration secondDuration = Duration.between(secondStart, secondEnd);
-        logger.info("Took {} ms to read first object, {} ms to read it again", firstDuration.toMillis(), secondDuration.toMillis());
-        assertTrue(firstDuration.compareTo(secondDuration) > 0, "Cache should have lower latency");
-        reasoner.getMetricsEngine().exportData(new File("./target/api-test-cache-test-metrics.csv"));
-    }
-
-    @Test
     public void testFactValidity() throws TrestleClassException, MissingOntologyEntity {
         final TestClasses.FactVersionTest v1 = new TestClasses.FactVersionTest("test-object",
                 LocalDate.of(1989, 3, 26),

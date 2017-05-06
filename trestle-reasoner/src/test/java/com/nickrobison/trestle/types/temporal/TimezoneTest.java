@@ -21,6 +21,7 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -81,7 +82,9 @@ public class TimezoneTest {
 
 
     @DatasetClass(name = "defaulttimezone-test")
-    public static class DefaultTimeZone {
+    public static class DefaultTimeZone implements Serializable {
+        private static long serialVersionUID = 42L;
+
         @IndividualIdentifier
         public String id;
         @DefaultTemporal(type = TemporalType.POINT, duration = 1, unit = ChronoUnit.YEARS, timeZone = "America/Los_Angeles")

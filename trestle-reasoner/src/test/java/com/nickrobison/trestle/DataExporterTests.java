@@ -103,7 +103,9 @@ public class DataExporterTests {
 
 
     @DatasetClass(name = "gaul-test")
-    public static class SimpleGAULObject {
+    public static class SimpleGAULObject implements Serializable {
+        private static final long serialVersionUID = 42L;
+
         @Fact(name = "gaulCode")
         public long gaulcode;
         @Fact(name = "objectName")

@@ -12,7 +12,7 @@ import java.util.Map;
 public class TrestleUpgradableReadWriteLock {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleUpgradableReadWriteLock.class);
-    private static final int waitTimeout = 10000;
+    private static final int waitTimeout = 50000;
     private final Map<Thread, Integer> readingThreads = new HashMap<>();
     private int writeAccesses = 0;
     private int writeRequests = 0;
