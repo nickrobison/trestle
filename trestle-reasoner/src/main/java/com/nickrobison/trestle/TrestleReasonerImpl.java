@@ -11,12 +11,14 @@ import com.google.inject.Injector;
 import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.nickrobison.trestle.caching.TrestleCache;
+import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingFactException;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.exceptions.*;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
+import com.nickrobison.trestle.exporter.ShapefileExporter;
 import com.nickrobison.trestle.exporter.ShapefileSchema;
 import com.nickrobison.trestle.exporter.TSIndividual;
 import com.nickrobison.trestle.iri.IRIBuilder;
@@ -37,6 +39,7 @@ import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import com.nickrobison.trestle.utils.TemporalPropertiesPair;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.vividsolutions.jts.geom.MultiPolygon;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -1918,55 +1921,68 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, ITrestleExporter.DataType exportType) throws IOException {
-        return null;
-//
-////        Build shapefile schema
-////        TODO(nrobison): Extract type from wkt
-////        FIXME(nrobison): Shapefile schema doesn't support multiple languages. Need to figure out how to flatten
-//        final ShapefileSchema shapefileSchema = new ShapefileSchema(MultiPolygon.class);
-//        final Optional<List<OWLDataProperty>> propertyMembers = ClassBuilder.getPropertyMembers(inputClass, true);
-//        propertyMembers.ifPresent(owlDataProperties -> owlDataProperties.forEach(property -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, property.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property))));
-//
-////        Now the temporals
-//        final Optional<List<OWLDataProperty>> temporalProperties = trestleParser.temporalParser.GetTemporalsAsDataProperties(inputClass);
-//        temporalProperties.ifPresent(owlDataProperties -> owlDataProperties.forEach(temporal -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, temporal.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, temporal))));
-//
-//
-//        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-//        final List<CompletableFuture<Optional<TSIndividual>>> completableFutures = objectID
-//                .stream()
-//                .map(id -> IRIUtils.parseStringToIRI(REASONER_PREFIX, id))
-//                .map(id -> CompletableFuture.supplyAsync(() -> {
-//                    final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-//                    final @NonNull T object = readTrestleObject(inputClass, id, false);
-//                    this.ontology.returnAndCommitTransaction(tt);
-//                    return object;
-//                }))
-//                .map(objectFuture -> objectFuture.thenApply(object -> parseIndividualToShapefile(object, shapefileSchema)))
-//                .collect(Collectors.toList());
-//
-//        final CompletableFuture<List<Optional<TSIndividual>>> sequencedFutures = sequenceCompletableFutures(completableFutures);
-//
-//        final ShapefileExporter shapeFileExporter = new ShapefileExporter.Builder<>(shapefileSchema.getGeomName(), shapefileSchema.getGeomType(), shapefileSchema).build();
-//        try {
-//            final List<TSIndividual> individuals = sequencedFutures
-//                    .get()
-//                    .stream()
-//                    .filter(Optional::isPresent)
-//                    .map(Optional::get)
-//                    .collect(Collectors.toList());
-//
-//            return shapeFileExporter.writePropertiesToByteBuffer(individuals, null);
-//
-//        } catch (InterruptedException | ExecutionException e) {
-//            e.printStackTrace();
-//        }
-//
-////        Build the shapefile exporter
-//        throw new RuntimeException("Problem constructing object");
+        return exportDataSetObjects(inputClass, objectID, null, null, exportType);
     }
 
-    private <T> Optional<TSIndividual> parseIndividualToShapefile(T object, ShapefileSchema shapefileSchema) {
+    @Override
+    public <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, @Nullable Temporal validAt, @Nullable Temporal databaseAt, ITrestleExporter.DataType exportType) throws IOException {
+
+//        Build shapefile schema
+//        TODO(nrobison): Extract type from wkt
+//        FIXME(nrobison): Shapefile schema doesn't support multiple languages. Need to figure out how to flatten
+        final ShapefileSchema shapefileSchema = new ShapefileSchema(MultiPolygon.class);
+        final Optional<List<OWLDataProperty>> propertyMembers = ClassBuilder.getPropertyMembers(inputClass, true);
+        propertyMembers.ifPresent(owlDataProperties -> owlDataProperties.forEach(property -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, property.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property))));
+
+//        Now the temporals
+        final Optional<List<OWLDataProperty>> temporalProperties = trestleParser.temporalParser.GetTemporalsAsDataProperties(inputClass);
+        temporalProperties.ifPresent(owlDataProperties -> owlDataProperties.forEach(temporal -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, temporal.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, temporal))));
+
+
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+        final List<CompletableFuture<Optional<TSIndividual>>> completableFutures = objectID
+                .stream()
+                .map(id -> IRIUtils.parseStringToIRI(REASONER_PREFIX, id))
+                .map(id -> CompletableFuture.supplyAsync(() -> {
+                    final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                    try {
+                        final @NonNull T object = readTrestleObject(inputClass, id, false, validAt, databaseAt);
+                        return object;
+                    } catch (NoValidStateException e) {
+                        return null;
+                    } finally {
+//                        FIXME(nrobison): Rollback
+                        this.ontology.returnAndCommitTransaction(tt);
+                    }
+                }))
+                .map(objectFuture -> objectFuture.thenApply(object -> parseIndividualToShapefile(object, shapefileSchema)))
+                .collect(Collectors.toList());
+
+        final CompletableFuture<List<Optional<TSIndividual>>> sequencedFutures = sequenceCompletableFutures(completableFutures);
+
+        final ShapefileExporter shapeFileExporter = new ShapefileExporter.Builder<>(shapefileSchema.getGeomName(), shapefileSchema.getGeomType(), shapefileSchema).build();
+        try {
+            final List<TSIndividual> individuals = sequencedFutures
+                    .get()
+                    .stream()
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toList());
+
+            return shapeFileExporter.writePropertiesToByteBuffer(individuals, null);
+
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Problem constructing object");
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+        }
+    }
+
+    private <T> Optional<TSIndividual> parseIndividualToShapefile(@Nullable T object, ShapefileSchema shapefileSchema) {
+        if (object == null) {
+            return Optional.empty();
+        }
 //        if (objectOptional.isPresent()) {
 //            final T object = objectOptional.get();
         final Class<?> inputClass = object.getClass();
