@@ -1,10 +1,10 @@
 package com.nickrobison.trestle.ontology;
 
-import afu.org.apache.commons.io.FileUtils;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.ontotext.trree.config.OWLIMSailSchema;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.apache.commons.io.FileUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;

@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Created by nrobison on 9/7/16.
  */
+@SuppressWarnings({"type.argument.type.incompatible"})
 @Metriced
 abstract class TransactingOntology implements ITrestleOntology {
 
@@ -41,7 +42,7 @@ abstract class TransactingOntology implements ITrestleOntology {
 
     private ThreadLocal<Boolean> threadTransactionInherited = ThreadLocal.withInitial(() -> false);
 
-    private ThreadLocal<TrestleTransaction> threadTransactionObject = new ThreadLocal<>();
+    private ThreadLocal<@Nullable TrestleTransaction> threadTransactionObject = new ThreadLocal<>();
 
     /**
      * Set the current thread transaction state, using the information inherited from the TrestleTransaction object
@@ -432,7 +433,7 @@ abstract class TransactingOntology implements ITrestleOntology {
      */
     public abstract @Nullable RepositoryConnection getOntologyConnection();
 
-    protected TrestleTransaction getThreadTransactionObject() {
+    protected @Nullable TrestleTransaction getThreadTransactionObject() {
         return this.threadTransactionObject.get();
     }
 
