@@ -12,6 +12,7 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -148,6 +149,41 @@ abstract public class OntologyTest {
 //                missing_individual);
 //
 //        ontology.writeIndividualObjectProperty(missingObjectProperty);
+    }
+
+    @Test
+    public void testAbortHandling() throws MissingOntologyEntity {
+        final OWLNamedIndividual test_individual = df.getOWLNamedIndividual(IRI.create("trestle:", "test_individual"));
+        final OWLClass owlClass = df.getOWLClass(IRI.create("trestle:", "GAUL"));
+        final OWLClassAssertionAxiom owlClassAssertionAxiom = df.getOWLClassAssertionAxiom(owlClass, test_individual);
+        final OWLDataProperty trestle_property = df.getOWLDataProperty(IRI.create("trestle:", "ADM0_Code"));
+        final OWLDataPropertyAssertionAxiom owlDataPropertyAssertionAxiom = df.getOWLDataPropertyAssertionAxiom(trestle_property, test_individual, 42);
+
+        final OWLDataProperty test_new_property = df.getOWLDataProperty(IRI.create("trestle:", "test_new_property"));
+        final OWLLiteral owlLiteral = df.getOWLLiteral("hello world", OWL2Datatype.XSD_STRING);
+        final OWLDataPropertyAssertionAxiom owlDataPropertyAssertionAxiom1 = df.getOWLDataPropertyAssertionAxiom(test_new_property, test_individual, owlLiteral);
+
+//        Try to write an individual and a single data property
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
+        ontology.createIndividual(owlClassAssertionAxiom);
+        ontology.writeIndividualDataProperty(owlDataPropertyAssertionAxiom);
+        this.ontology.returnAndCommitTransaction(trestleTransaction);
+        Set<OWLDataPropertyAssertionAxiom> dataProperties = ontology.getAllDataPropertiesForIndividual(test_individual);
+//        assertEquals(1, dataProperties.get().size(), "Should only have based data properties after aborting previous transaction");
+
+
+        TrestleTransaction t2 = this.ontology.createandOpenNewTransaction(true);
+        ontology.writeIndividualDataProperty(owlDataPropertyAssertionAxiom1);
+        this.ontology.returnAndAbortTransaction(t2);
+        this.ontology.returnAndCommitTransaction(t2);
+        final Set<OWLDataPropertyAssertionAxiom> abortedProperties = ontology.getAllDataPropertiesForIndividual(test_individual);
+        assertEquals(dataProperties.size(), abortedProperties.size(), "Should only have based data properties after aborting previous transaction");
+
+        t2 = this.ontology.createandOpenNewTransaction(true);
+        ontology.writeIndividualDataProperty(owlDataPropertyAssertionAxiom1);
+        this.ontology.returnAndCommitTransaction(t2);
+        final Set<OWLDataPropertyAssertionAxiom> committedProperties = ontology.getAllDataPropertiesForIndividual(test_individual);
+        assertTrue(committedProperties.size() > dataProperties.size(), "Should only have based data properties after aborting previous transaction");
     }
 
     @Test

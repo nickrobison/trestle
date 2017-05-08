@@ -32,6 +32,7 @@ public class OracleOntology extends JenaOntology {
     private final static Logger logger = LoggerFactory.getLogger(OracleOntology.class);
     private static GraphOracleSem graph;
     private static Oracle oracle;
+    private static boolean updateOnCommit;
     private boolean locked = false;
 
     OracleOntology(String name, OWLOntology ont, DefaultPrefixManager pm, String connectionString, String username, String password) {
@@ -41,17 +42,15 @@ public class OracleOntology extends JenaOntology {
     private static Model createOracleModel(String ontologyName, String connectionString, String username, String password) {
 //        Read in the settings file
         final Config config = ConfigFactory.load().getConfig("trestle.ontology.oracle");
-        final InferenceMaintenanceMode mode;
-        if (config.getBoolean("updateOnCommit")) {
-            logger.info("Initializing Oracle: Updating inference on commit");
-            mode = InferenceMaintenanceMode.UPDATE_WHEN_COMMIT;
+        updateOnCommit = config.getBoolean("updateOnCommit");
+        if (updateOnCommit) {
+            logger.info("Initializing Oracle: Updating inference on write commit");
         } else {
             logger.info("Initializing Oracle: Manually updating inference");
-            mode = InferenceMaintenanceMode.NO_UPDATE;
         }
         final Attachment reasonerAttachment = Attachment.createInstance(
                 new String[]{}, "OWL2RL",
-                mode, QueryOptions.DEFAULT);
+                InferenceMaintenanceMode.NO_UPDATE, QueryOptions.DEFAULT);
         reasonerAttachment.setInferenceOption(String.format("INC=T,RAW8=T,DOP=%s", config.getInt("parallelism")));
         oracle = new Oracle(connectionString, username, password);
         try {
@@ -116,10 +115,7 @@ public class OracleOntology extends JenaOntology {
      * The inference engine is only run manually, via this method.
      */
     public void runInference() {
-
-        logger.info("Analyzing graph and performing inference");
         try {
-            graph.analyze();
             graph.performInference();
         } catch (SQLException e) {
             logger.error("Cannot run inference on Oracle ontology", e);
@@ -149,10 +145,15 @@ public class OracleOntology extends JenaOntology {
 
     @Override
     public void commitDatasetTransaction(boolean write) {
+        this.model.leaveCriticalSection();
         this.model.commit();
         if (write) {
             try {
                 graph.commitTransaction();
+                if (updateOnCommit) {
+                    logger.debug("Committed write transaction, updating inference");
+                    runInference();
+                }
             } catch (SQLException e) {
                 logger.error("Cannot commit graph transaction", e);
             }
@@ -163,8 +164,22 @@ public class OracleOntology extends JenaOntology {
     @Override
     public void openDatasetTransaction(boolean write) {
         this.model.begin();
-//        this.model.enterCriticalSection(getJenaLock(write));
+        this.model.enterCriticalSection(getJenaLock(write));
         logger.debug("Transaction opened and critical section entered");
+    }
+
+    @Override
+    public void abortDatasetTransaction(boolean write) {
+        this.model.leaveCriticalSection();
+        this.model.abort();
+        if (write) {
+            try {
+                this.graph.rollbackTransaction();
+            } catch (SQLException e) {
+                logger.error("Cannot rollback graph transaction", e);
+            }
+        }
+        logger.debug("Transaction aborted");
     }
 
     @Override

@@ -242,4 +242,11 @@ public class GraphDBOntology extends SesameOntology {
         this.resetThreadConnection();
         logger.debug("GraphDB model transaction committed");
     }
+
+    @Override
+    public void abortDatasetTransaction(boolean write) {
+        this.tc.get().rollback();
+        this.resetThreadConnection();
+        logger.debug("GraphDB model transaction aborted");
+    }
 }

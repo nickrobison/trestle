@@ -124,6 +124,11 @@ public class VirtuosoOntology extends JenaOntology {
         logger.debug("Virtuoso model transaction committed");
     }
 
+    @Override
+    public void abortDatasetTransaction(boolean write) {
+        virtModel.abort();
+    }
+
     protected static ByteArrayInputStream ontologytoIS(OWLOntology ontology) throws OWLOntologyStorageException {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         ontology.saveOntology(new RDFXMLDocumentFormat(), out);

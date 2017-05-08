@@ -397,6 +397,13 @@ public interface ITrestleOntology {
     void returnAndCommitTransaction(TrestleTransaction transaction);
 
     /**
+     * Return a TrestleTransaction object and attempt to abort the current Transaction
+     * If the TrestleTransaction object does not own the current transaction, we continue without aborting
+     * @param transaction - Transaction object to try to abort current transaction with
+     */
+    void returnAndAbortTransaction(TrestleTransaction transaction);
+
+    /**
      * Open a transaction and lock it
      *
      * @param write - Open writable transaction?

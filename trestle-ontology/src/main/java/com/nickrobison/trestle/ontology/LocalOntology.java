@@ -203,4 +203,8 @@ public class LocalOntology extends JenaOntology {
 //        this.model.leaveCriticalSection();
     }
 
+    @Override
+    public void abortDatasetTransaction(boolean write) {
+        luceneDataset.abort();
+    }
 }

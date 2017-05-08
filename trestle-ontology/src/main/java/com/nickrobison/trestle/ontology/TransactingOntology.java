@@ -24,6 +24,7 @@ abstract class TransactingOntology implements ITrestleOntology {
     protected final AtomicInteger openReadTransactions = new AtomicInteger();
     protected final AtomicLong openedTransactions = new AtomicLong();
     protected final AtomicLong committedTransactions = new AtomicLong();
+    protected final AtomicLong abortedTransactions = new AtomicLong();
     protected static boolean singleWriterOntology = false;
     private final String ontologyName;
 
@@ -105,17 +106,38 @@ abstract class TransactingOntology implements ITrestleOntology {
             final TrestleTransaction trestleTransaction = threadTransactionObject.get();
             if (trestleTransaction != null) {
                 if (trestleTransaction.equals(transaction)) {
-                    logger.debug("Owns transaction, committing");
+                    logger.trace("Owns transaction, committing");
                     this.unlockAndCommit(transaction.isWriteTransaction(), true);
                     threadTransactionObject.set(null);
                 } else {
-                    logger.debug("Doesn't own transaction, continuing");
+                    logger.trace("Doesn't own transaction, continuing");
                 }
             } else {
                 logger.warn("Null transaction object, how did that happen?");
             }
         } else {
-            logger.debug("Transaction state is inherited, continuing");
+            logger.trace("Transaction state is inherited, continuing");
+        }
+    }
+
+    @Override
+    public void returnAndAbortTransaction(TrestleTransaction transaction) {
+        //        If the transaction state is inherited, don't rollback
+        if (!threadTransactionInherited.get()) {
+            final TrestleTransaction trestleTransaction = threadTransactionObject.get();
+            if (trestleTransaction != null) {
+                if (trestleTransaction.equals(transaction)) {
+                    logger.trace("Owns transaction, aborting");
+                    this.unlockAndAbort(transaction.isWriteTransaction(), true);
+                    threadTransactionObject.set(null);
+                } else {
+                    logger.trace("Doesn't own transaction, continuing");
+                }
+            } else {
+                logger.warn("Null transaction object, how did that happen?");
+            }
+        } else {
+            logger.trace("Transaction state is inherited, continuing");
         }
     }
 
@@ -203,6 +225,37 @@ abstract class TransactingOntology implements ITrestleOntology {
     }
 
     /**
+     * Unlock the transaction and abort it
+     * @param write - Is this a write transaction?
+     */
+    public void unlockAndAbort(boolean write) {
+        this.unlockAndAbort(write, false);
+    }
+
+    /**
+     * Unlock the transaction and abort it
+     * Optionally, for the transaction to unlock, even if there's an existing transaction object
+     * Used to rollback the transaction when the transaction object is returned with an error
+     * @param write - Writable transaction?
+     * @param force - Force transaction to rollback?
+     */
+    private void unlockAndAbort(boolean write, boolean force) {
+        if (force) {
+            logger.trace("Forcing rollback of transaction");
+        }
+//        If there's no exisiting transaction object, or the transaction is being forced closed
+        if (threadTransactionObject.get() == null || force) {
+            logger.trace("Unlocking and rolling-back");
+            unlock();
+            logger.trace("Trying to rollback transaction");
+            abortTransaction(write, force);
+            logger.trace("Rolled-back transaction");
+        } else {
+            logger.trace("Thread owned by transaction object, not unlocking or rolling-back");
+        }
+    }
+
+    /**
      * Open transaction
      * @param write - Open a writable transaction
      */
@@ -229,8 +282,7 @@ abstract class TransactingOntology implements ITrestleOntology {
                     logger.trace("Trying to open transaction");
                     logger.trace("Thread {} taking the lock", Thread.currentThread().getName());
                     this.openDatasetTransaction(write);
-                    logger.debug("Opened transaction");
-
+                    logger.trace("Opened transaction");
                     this.threadInTransaction.set(true);
                     this.openedTransactions.incrementAndGet();
 //                Track read/write transactions
@@ -297,14 +349,34 @@ abstract class TransactingOntology implements ITrestleOntology {
         }
     }
 
-    @Gauge(name = "trestle-open-read-transactions", absolute = true)
-    protected int getOpenReadTransactions() {
-        return this.openReadTransactions.get();
-    }
-
-    @Gauge(name = "trestle-open-write-transactions", absolute = true)
-    protected int getOpenWriteTransactions() {
-        return this.openWriteTransactions.get();
+    private void abortTransaction(boolean write, boolean force) {
+        if (force) {
+            logger.trace("Forcing rollback of transaction");
+        }
+        if (threadTransactionObject.get() == null || force) {
+            if (!this.threadLocked.get() || force) {
+                if (this.threadInTransaction.get()) {
+                    logger.trace("Trying to rollback transaction");
+                    this.abortDatasetTransaction(write);
+                    logger.trace("Rolled-back dataset transaction");
+                    this.threadInTransaction.set(false);
+                    this.threadTransactionInherited.set(false);
+                    this.abortedTransactions.incrementAndGet();
+                    if (write) {
+                        this.openWriteTransactions.decrementAndGet();
+                    } else {
+                        this.openReadTransactions.decrementAndGet();
+                    }
+                    logger.debug("{}/{} open read/write transactions", this.openReadTransactions.get(), this.openWriteTransactions.get());
+                } else {
+                    logger.trace("Thread unlocked, but not in transaction");
+                }
+            } else {
+                logger.trace("Thread locked, not rolling-back");
+            }
+        } else {
+            logger.trace("Thread owned by transaction object, not rolling-back");
+        }
     }
 
     /**
@@ -323,6 +395,14 @@ abstract class TransactingOntology implements ITrestleOntology {
         return this.committedTransactions.get();
     }
 
+    /**
+     * Get the current number of aborted transactions, for the lifetime of the application
+     * @return - long of aborted transactions
+     */
+    public long getAbortedTransactionCount() {
+        return this.abortedTransactions.get();
+    }
+
 
     private static class OntologySecurityManager extends SecurityManager {
 
@@ -337,6 +417,9 @@ abstract class TransactingOntology implements ITrestleOntology {
 
     @CounterIncrement(name = "trestle-committed-dataset-transactions", absolute = true)
     public abstract void commitDatasetTransaction(boolean write);
+
+    @CounterIncrement(name = "trestle-aborted-dataset-transactions", absolute = true)
+    public abstract void abortDatasetTransaction(boolean write);
 
     /**
      * Set the thread repository connection from the TrestleTransaction object

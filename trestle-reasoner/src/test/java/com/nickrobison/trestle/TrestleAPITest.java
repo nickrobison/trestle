@@ -67,8 +67,8 @@ public class TrestleAPITest {
                         TestClasses.OffsetDateTimeTest.class,
                         TestClasses.MultiLangTest.class,
                         TestClasses.FactVersionTest.class)
-//                .withoutCaching()
-//                .withoutMetrics()
+                .withoutCaching()
+                .withoutMetrics()
                 .initialize()
                 .build();
 
@@ -106,7 +106,6 @@ public class TrestleAPITest {
         reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(0), ObjectRelation.MEETS);
         reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(3), ObjectRelation.DURING);
 
-        reasoner.getUnderlyingOntology().runInference();
         classObjects.parallelStream().forEach(object -> {
             final OWLNamedIndividual owlNamedIndividual = tp.classParser.getIndividual(object);
             final Object returnedObject = reasoner.readTrestleObject(object.getClass(), owlNamedIndividual.getIRI(), false);
@@ -175,15 +174,12 @@ public class TrestleAPITest {
 
 //        Write each, then validate
         reasoner.writeTrestleObject(v1);
-        reasoner.getUnderlyingOntology().runInference();
         final TestClasses.FactVersionTest v1Return = reasoner.readTrestleObject(v1.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
         assertEquals(v1, v1Return, "Should be equal to V1");
         reasoner.writeTrestleObject(v2);
-        reasoner.getUnderlyingOntology().runInference();
         final TestClasses.FactVersionTest v2Return = reasoner.readTrestleObject(v2.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
         assertEquals(v2, v2Return, "Should be equal to V2");
         reasoner.writeTrestleObject(v3);
-        reasoner.getUnderlyingOntology().runInference();
         final TestClasses.FactVersionTest v3Return = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
         assertEquals(v3, v3Return, "Should be equal to V3");
 //        Try for specific points in time
@@ -203,7 +199,6 @@ public class TrestleAPITest {
         reasoner.addFactToTrestleObject(v3.getClass(), "test-object", "testValue", "test value three", LocalDate.of(2007, 3, 26), null, null);
         reasoner.addFactToTrestleObject(v3.getClass(), "test-object", "wkt", "POINT(1.71255092695307 -30.572028714467507)", LocalDate.of(2017, 1, 1), null);
 
-        reasoner.getUnderlyingOntology().runInference();
 //        Try to get some fact values
         final Optional<List<Object>> values = reasoner.getFactValues(v3.getClass(), "test-object", "testValue", null, null, null);
         assertAll(() -> assertTrue(values.isPresent(), "Should have fact values"),
@@ -258,8 +253,6 @@ public class TrestleAPITest {
                 throw new RuntimeException(String.format("Missing individual %s", missingOntologyEntity.getIndividual()), missingOntologyEntity);
             }
         });
-
-        reasoner.getUnderlyingOntology().runInference();
 
 //        Validate Results
         final Set<OWLNamedIndividual> gaulInstances = reasoner.getInstances(TestClasses.GAULTestClass.class);
