@@ -732,6 +732,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 final Instant individualRetrievalStart = Instant.now();
                 final TrestleTransaction tt = ontology.createandOpenNewTransaction(trestleTransaction);
                 TrestleResultSet resultSet = ontology.executeSPARQLResults(factQuery);
+                ontology.returnAndCommitTransaction(tt);
 //                final Set<OWLDataPropertyAssertionAxiom> objectFacts = ontology.getFactsForIndividual(df.getOWLNamedIndividual(individualIRI), validAtTemporal, dbAtTemporal, true);
 //                logger.debug("Retrieved {} facts for {}", resultSet.getResults().size(), individualIRI);
                 if (resultSet.getResults().isEmpty()) {
@@ -864,6 +865,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 logger.error("Execution exception when reading object {}", individualIRI, e);
                 return Optional.empty();
             } finally {
+                ontology.returnAndCommitTransaction(trestleTransaction);
             }
             try {
                 final @NonNull T constructedObject = ClassBuilder.constructObject(clazz, objectState.getArguments());
@@ -1013,7 +1015,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
         try {
             final List<@NonNull T> intersectedObjects = objectsFuture.get();
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
             return Optional.of(intersectedObjects);
         } catch (InterruptedException e) {
             logger.error("Spatial intersection interrupted", e);
@@ -1023,6 +1024,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             logger.error("Spatial intersection execution exception", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
     }
 
@@ -1248,7 +1251,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
         try {
             TrestleIndividual trestleIndividual = individualFuture.get();
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
             try {
                 this.trestleCache.writeTrestleIndividual(individual, trestleIndividual);
             } catch (Exception e) {
@@ -1256,10 +1258,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             }
             return trestleIndividual;
         } catch (InterruptedException | ExecutionException e) {
-//            FIXME(nrobison): Rollback
             logger.error("Interruption exception building Trestle Individual {}", individual, e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             throw new RuntimeException(e);
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
     }
 
@@ -1346,17 +1349,16 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     }
                     try {
                         final @NonNull T retrievedObject = this.readTrestleObject(clazz, iri, adjustedIntersection, null);
+                        this.ontology.returnAndCommitTransaction(futureTransaction);
                         return retrievedObject;
                     } catch (TrestleClassException e) {
-//            FIXME(nrobison): Rollback
                         logger.error("Unregistered class", e);
+                        this.ontology.returnAndCommitTransaction(futureTransaction);
                         throw new RuntimeException(e);
                     } catch (MissingOntologyEntity e) {
-//            FIXME(nrobison): Rollback
                         logger.error("Cannot find ontology individual {}", e.getIndividual(), e);
-                        throw new RuntimeException(e);
-                    } finally {
                         this.ontology.returnAndCommitTransaction(futureTransaction);
+                        throw new RuntimeException(e);
                     }
                 }))
                 .collect(Collectors.toList());
@@ -1365,12 +1367,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             List<T> objects = conceptObjectsFuture.get();
             return Optional.of(objects);
         } catch (InterruptedException e) {
-//            FIXME(nrobison): Rollback
             logger.error("Object retrieval for concept {}, interrupted", conceptID, e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
         } catch (ExecutionException e) {
-//            FIXME(nrobison): Rollback
             logger.error("Unable to retrieve all objects for concept {}", conceptID, e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
@@ -1914,9 +1914,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                         final @NonNull T object = readTrestleObject(inputClass, id, false, validAt, databaseAt);
                         return object;
                     } catch (NoValidStateException e) {
+                        this.ontology.returnAndAbortTransaction(tt);
                         return null;
                     } finally {
-//                        FIXME(nrobison): Rollback
                         this.ontology.returnAndCommitTransaction(tt);
                     }
                 }))

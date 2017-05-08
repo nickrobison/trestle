@@ -419,6 +419,7 @@ abstract class TransactingOntology implements ITrestleOntology {
     @CounterIncrement(name = "trestle-committed-dataset-transactions", absolute = true)
     public abstract void commitDatasetTransaction(boolean write);
 
+    @CounterIncrement(name = "trestle-aborted-dataset-transactions", absolute = true)
     public abstract void abortDatasetTransaction(boolean write);
 
     /**

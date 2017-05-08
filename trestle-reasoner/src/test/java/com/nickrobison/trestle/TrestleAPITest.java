@@ -67,8 +67,8 @@ public class TrestleAPITest {
                         TestClasses.OffsetDateTimeTest.class,
                         TestClasses.MultiLangTest.class,
                         TestClasses.FactVersionTest.class)
-//                .withoutCaching()
-//                .withoutMetrics()
+                .withoutCaching()
+                .withoutMetrics()
                 .initialize()
                 .build();
 

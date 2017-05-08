@@ -19,7 +19,7 @@
     </category>
 
     <root>
-        <priority value="INFO"/>
+        <priority value="DEBUG"/>
         <appender-ref ref="CA"/>
     </root>
 
