@@ -84,14 +84,14 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     public TemporalObject castTo(TemporalScope castTemporal) {
         if (castTemporal == TemporalScope.VALID) {
             if (isContinuing()) {
-                return TemporalObjectBuilder.valid().from(this.fromTime).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
+                return TemporalObjectBuilder.valid().from(this.fromTime).build(); //.withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
             }
-            return TemporalObjectBuilder.valid().from(this.fromTime).to(this.toTime).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
+            return TemporalObjectBuilder.valid().from(this.fromTime).to(this.toTime).build(); //.withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
         } else {
             if (isContinuing()) {
-                return TemporalObjectBuilder.exists().from(this.fromTime).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
+                return TemporalObjectBuilder.exists().from(this.fromTime).build(); //.withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
             }
-            return TemporalObjectBuilder.exists().from(this.fromTime).to(this.toTime).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
+            return TemporalObjectBuilder.exists().from(this.fromTime).to(this.toTime).build(); //.withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
         }
     }
 
@@ -243,7 +243,6 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
          * @param temporalID - String of TemporalID
          * @return - Builder
          */
-        @Deprecated
         public Builder withID(String temporalID) {
             this.temporalID = Optional.of(temporalID);
             return this;

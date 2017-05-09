@@ -29,7 +29,6 @@ public abstract class TemporalObject implements Serializable {
         this.temporal_of = relations.orElse(new HashSet<>());
     }
 
-    @Deprecated
     public String getID() {
         return this.id;
     }

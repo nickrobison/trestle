@@ -314,7 +314,6 @@ public interface ITrestleOntology {
      * @param individual - Individual to retrieve temporal properties from
      * @return - Set of OWLDataPropertyAssertionAxioms representing temporal properties
      */
-    @Deprecated
     Set<OWLDataPropertyAssertionAxiom> getTemporalsForIndividual(OWLNamedIndividual individual);
 
     /**
