@@ -56,8 +56,8 @@ public class TrestleParserTest {
         df = OWLManager.getOWLDataFactory();
         LocalDateTime dt = LocalDateTime.of(1989, 3, 26, 0, 0);
         LocalDate ld = LocalDate.of(1989, 3, 26);
-        temporal = TemporalObjectBuilder.exists().from(dt).to(dt.plusYears(1)).withRelations();
-        temporalPoint = TemporalObjectBuilder.exists().at(ld).withRelations();
+        temporal = TemporalObjectBuilder.exists().from(dt).to(dt.plusYears(1)).build(); //.withRelations();
+        temporalPoint = TemporalObjectBuilder.exists().at(ld).build(); // .withRelations();
         tp = new TrestleParser(df, TRESTLE_PREFIX, true, "");
     }
 
@@ -148,8 +148,8 @@ public class TrestleParserTest {
 //        Check for the same type and scope for interval
         assertEquals(temporal.getType(), temporalObjects.get().get(0).getType(), "Wrong temporal type");
         assertEquals(temporal.getScope(), temporalObjects.get().get(0).getScope(), "Wrong temporal scope");
-        assertEquals(1, temporalObjects.get().get(0).getTemporalRelations().size(), "Wrong # of temporal relations");
-        assertEquals(gaul_test, temporalObjects.get().get(0).getTemporalRelations().stream().findFirst().get(), "Wrong temporal relation");
+//        assertEquals(1, temporalObjects.get().get(0).getTemporalRelations().size(), "Wrong # of temporal relations");
+//        assertEquals(gaul_test, temporalObjects.get().get(0).getTemporalRelations().stream().findFirst().get(), "Wrong temporal relation");
 //        Check for the correct values on the built temporal objects
         //        Interval
         assertTrue(temporalObjects.get().get(2).isInterval(), "Should have build an interval object");
@@ -162,8 +162,8 @@ public class TrestleParserTest {
 //        Check geo point
         assertEquals(temporalPoint.getType(), temporalObjects.get().get(1).getType(), "Wrong temporal type");
         assertEquals(temporalPoint.getScope(), temporalObjects.get().get(1).getScope(), "Wrong temporal scope");
-        assertEquals(1, temporalObjects.get().get(1).getTemporalRelations().size(), "Wrong # of temporal relations");
-        assertEquals(gaul_test, temporalObjects.get().get(1).getTemporalRelations().stream().findFirst().get(), "Wrong temporal relation");
+//        assertEquals(1, temporalObjects.get().get(1).getTemporalRelations().size(), "Wrong # of temporal relations");
+//        assertEquals(gaul_test, temporalObjects.get().get(1).getTemporalRelations().stream().findFirst().get(), "Wrong temporal relation");
 
 //        Check methods
 //        Individual
@@ -226,7 +226,8 @@ public class TrestleParserTest {
                 .to(LocalDateTime.of(1998, 3, 26, 0, 0).plusYears(1))
                 .isDefault(true)
                 .withParameterNames("defaultTime", null)
-                .withRelations(owlNamedIndividual);
+                .build();
+//                .withRelations(owlNamedIndividual);
         testTemporals.add(defaultTemporal);
 
 
@@ -235,7 +236,8 @@ public class TrestleParserTest {
                 .from(LocalDateTime.of(1989, 3, 26, 0, 0))
                 .to(LocalDateTime.of(1989, 3, 26, 0, 0).plusYears(5))
                 .withParameterNames("intervalStart", "intervalEnd")
-                .withRelations(owlNamedIndividual);
+                .build();
+//                .withRelations(owlNamedIndividual);
         testTemporals.add(intervalTemporal);
 
 //        Build the inputs and test the constructor

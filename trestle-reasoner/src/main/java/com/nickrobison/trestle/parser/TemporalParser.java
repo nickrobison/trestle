@@ -453,14 +453,16 @@ public class TemporalParser {
                         temporalObject = TemporalObjectBuilder.valid()
                                 .at((Temporal) fieldValue)
                                 .withTimeZone(annotation.timeZone())
-                                .withRelations(owlNamedIndividual);
+                                .build();
+//                                .withRelations(owlNamedIndividual);
                         break;
                     }
                     case EXISTS: {
                         temporalObject = TemporalObjectBuilder.exists()
                                 .at((Temporal) fieldValue)
                                 .withTimeZone(annotation.timeZone())
-                                .withRelations(owlNamedIndividual);
+                                .build();
+//                                .withRelations(owlNamedIndividual);
                         break;
                     }
 
@@ -485,13 +487,15 @@ public class TemporalParser {
                                     .to(to)
                                     .withFromTimeZone(annotation.timeZone())
                                     .isDefault(true)
-                                    .withRelations(owlNamedIndividual);
+                                    .build();
+//                                    .withRelations(owlNamedIndividual);
                         } else {
                             temporalObject = TemporalObjectBuilder.valid()
                                     .from(from)
                                     .withFromTimeZone(annotation.timeZone())
                                     .isDefault(true)
-                                    .withRelations(owlNamedIndividual);
+                                    .build();
+//                                    .withRelations(owlNamedIndividual);
                         }
                         break;
                     }
@@ -503,13 +507,15 @@ public class TemporalParser {
                                     .to(to)
                                     .isDefault(true)
                                     .withFromTimeZone(annotation.timeZone())
-                                    .withRelations(owlNamedIndividual);
+                                    .build();
+//                                    .withRelations(owlNamedIndividual);
                         } else {
                             temporalObject = TemporalObjectBuilder.exists()
                                     .from(from)
                                     .isDefault(true)
                                     .withFromTimeZone(annotation.timeZone())
-                                    .withRelations(owlNamedIndividual);
+                                    .build();
+//                                    .withRelations(owlNamedIndividual);
                         }
                         break;
                     }
@@ -593,18 +599,18 @@ public class TemporalParser {
             final IntervalTemporal.Builder validBuilder = TemporalObjectBuilder.valid().from(start).withFromTimeZone(startZoneID);
             if (end != null && endZoneID != null) {
 //                final LocalDateTime to = parseTemporalToOntologyDateTime(end);
-                return validBuilder.to(end).withToTimeZone(endZoneID).withRelations(relations);
+                return validBuilder.to(end).withToTimeZone(endZoneID).build(); // .withRelations(relations);
             }
 
-            return validBuilder.withRelations(relations);
+            return validBuilder.build(); //.withRelations(relations);
         } else {
             final IntervalTemporal.Builder existsBuilder = TemporalObjectBuilder.exists().from(start).withFromTimeZone(startZoneID);
             if (end != null && endZoneID != null) {
 //                final LocalDateTime to = parseTemporalToOntologyDateTime(end);
-                return existsBuilder.to(end).withToTimeZone(endZoneID).withRelations(relations);
+                return existsBuilder.to(end).withToTimeZone(endZoneID).build(); //.withRelations(relations);
             }
 
-            return existsBuilder.withRelations(relations);
+            return existsBuilder.build(); //.withRelations(relations);
         }
     }
 
@@ -683,9 +689,9 @@ public class TemporalParser {
 //        final LocalDateTime at = parseTemporalToOntologyDateTime(pointTemporal);
 
         if (scope == TemporalScope.VALID) {
-            return TemporalObjectBuilder.valid().at(pointTemporal).withTimeZone(zoneID).withRelations(relations);
+            return TemporalObjectBuilder.valid().at(pointTemporal).withTimeZone(zoneID).build(); //.withRelations(relations);
         } else {
-            return TemporalObjectBuilder.exists().at(pointTemporal).withTimeZone(zoneID).withRelations(relations);
+            return TemporalObjectBuilder.exists().at(pointTemporal).withTimeZone(zoneID).build(); //.withRelations(relations);
         }
     }
 }

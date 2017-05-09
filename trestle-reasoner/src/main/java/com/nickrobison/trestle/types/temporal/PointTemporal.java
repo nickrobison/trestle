@@ -73,9 +73,9 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
     @Override
     public TemporalObject castTo(TemporalScope castScope) {
         if (castScope == TemporalScope.VALID) {
-            return TemporalObjectBuilder.valid().at(this.atTime).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
+            return TemporalObjectBuilder.valid().at(this.atTime).build(); //.withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
         }
-        return TemporalObjectBuilder.exists().at(this.atTime).withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
+        return TemporalObjectBuilder.exists().at(this.atTime).build(); //.withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
     }
 
     @Override
@@ -144,7 +144,6 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
          * @param temporalID - String of TemporalID
          * @return - Builder
          */
-        @Deprecated
         public Builder withID(String temporalID) {
             this.temporalID = Optional.of(temporalID);
             return this;

@@ -27,18 +27,6 @@ public class QueryBuilderTest {
     private static OWLDataFactory df;
     private QueryBuilder qb;
 
-    private static final String relationString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
-            "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
-            "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
-            "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
-            "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
-            "PREFIX xml: <http://www.w3.org/XML/1998/namespace>\n" +
-            "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
-            "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
-            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
-            "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT ?f ?s WHERE { ?m rdf:type trestle:GAUL . ?m trestle:has_relation ?r . ?r rdf:type trestle:Concept_Relation . ?r trestle:Relation_Strength ?s . ?r trestle:relation_of ?f . ?f rdf:type trestle:GAUL . VALUES ?m {<http://nickrobison.com/dissertation/trestle.owl#test_muni4>}FILTER(?s >= \"0.6\"^^xsd:double)}";
-
     private static final String conceptQueryNoFilter = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
             "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
@@ -195,10 +183,6 @@ public class QueryBuilderTest {
         final OWLClass gaulClass = df.getOWLClass(IRI.create("trestle:", "GAUL"));
 
         assertAll(() -> {
-                    final String relationQuery = qb.buildRelationQuery(test_muni4, gaulClass, 0.6);
-                    assertEquals(relationString, relationQuery, "Relation string query");
-                },
-                () -> {
                     final String nullConceptQuery = qb.buildConceptRetrievalQuery(test_muni4, null, 0.6);
                     assertEquals(conceptQueryNoFilter, nullConceptQuery, "Concept query, no filter");
                 },

@@ -45,7 +45,8 @@ public class TemporalBuilderTest {
         final IntervalTemporal intervalTemporal = TemporalObjectBuilder.valid()
                 .from(valid_from_dt)
                 .to(valid_to_dt)
-                .withRelations(test_individual);
+                .build();
+//                .withRelations(test_individual);
         assertEquals(valid_from_dt, intervalTemporal.getFromTime(), "Wrong from time");
         assertEquals(valid_to_dt, intervalTemporal.getToTime().get(), "Wrong to time");
         assertTrue(intervalTemporal.getFromTime() instanceof LocalDateTime, "Should be LDT");
@@ -54,7 +55,8 @@ public class TemporalBuilderTest {
         final PointTemporal pointTemporal = TemporalObjectBuilder
                 .exists()
                 .at(exists_at_dt)
-                .withRelations(test_individual);
+                .build();
+//                .withRelations(test_individual);
         assertEquals(exists_at_dt, pointTemporal.getPointTime(), "Wrong at time");
         assertEquals(TemporalScope.EXISTS, pointTemporal.getScope(), "Wrong temporal scope");
     }
@@ -64,7 +66,8 @@ public class TemporalBuilderTest {
         final IntervalTemporal intervalTemporal = TemporalObjectBuilder.valid()
                 .from(valid_from_d)
                 .to(valid_to_d)
-                .withRelations(test_individual);
+                .build();
+//                .withRelations(test_individual);
         assertEquals(valid_from_d, intervalTemporal.getFromTime(), "Wrong from time");
         assertEquals(valid_to_d, intervalTemporal.getToTime().get(), "Wrong to time");
         assertTrue(intervalTemporal.getFromTime() instanceof LocalDate, "Should be LDT");
@@ -73,7 +76,8 @@ public class TemporalBuilderTest {
         final PointTemporal pointTemporal = TemporalObjectBuilder
                 .exists()
                 .at(exists_at_d)
-                .withRelations(test_individual);
+                .build();
+//                .withRelations(test_individual);
         assertEquals(exists_at_d, pointTemporal.getPointTime(), "Wrong at time");
         assertEquals(TemporalScope.EXISTS, pointTemporal.getScope(), "Wrong temporal scope");
     }

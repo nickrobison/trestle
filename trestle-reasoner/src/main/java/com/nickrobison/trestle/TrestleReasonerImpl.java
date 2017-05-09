@@ -1048,32 +1048,34 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @SuppressWarnings("return.type.incompatible")
     @Deprecated
     public <T> Optional<Map<@NonNull T, Double>> getRelatedObjects(Class<@NonNull T> clazz, String objectID, double cutoff) {
-
-
-        final OWLClass owlClass = trestleParser.classParser.getObjectClass(clazz);
-
-        final String relationQuery = qb.buildRelationQuery(df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX, objectID)), owlClass, cutoff);
-        TrestleTransaction transaction = ontology.createandOpenNewTransaction(false);
-        final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(relationQuery);
-
-        Set<IRI> relatedIRIs = new HashSet<>();
-        Map<@NonNull T, Double> relatedObjects = new HashMap<>();
-        Map<IRI, Double> relatedObjectResults = new HashMap<>();
-        resultSet.getResults()
-                .forEach(result -> relatedObjectResults.put(IRI.create(result.getIndividual("f").orElseThrow(() -> new RuntimeException("fact is null")).toStringID()), result.getLiteral("s").orElseThrow(() -> new RuntimeException("strength is null")).parseDouble()));
-
-        relatedObjectResults
-                .entrySet().forEach(entry -> {
-            final @NonNull T object = readTrestleObject(clazz, entry.getKey(), false);
-            relatedObjects.put(object, entry.getValue());
-        });
-        ontology.returnAndCommitTransaction(transaction);
-
-        if (relatedObjects.size() == 0) {
-            return Optional.empty();
-        }
-
-        return Optional.of(relatedObjects);
+//
+//
+//        final OWLClass owlClass = trestleParser.classParser.getObjectClass(clazz);
+//
+//        final String relationQuery = qb.buildRelationQuery(df.getOWLNamedIndividual(IRI.create(REASONER_PREFIX, objectID)), owlClass, cutoff);
+//        TrestleTransaction transaction = ontology.createandOpenNewTransaction(false);
+//        final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(relationQuery);
+//
+//        Set<IRI> relatedIRIs = new HashSet<>();
+//        Map<@NonNull T, Double> relatedObjects = new HashMap<>();
+//        Map<IRI, Double> relatedObjectResults = new HashMap<>();
+//        resultSet.getResults()
+//                .forEach(result -> relatedObjectResults.put(IRI.create(result.getIndividual("f").orElseThrow(() -> new RuntimeException("fact is null")).toStringID()), result.getLiteral("s").orElseThrow(() -> new RuntimeException("strength is null")).parseDouble()));
+//
+//        relatedObjectResults
+//                .entrySet().forEach(entry -> {
+//            final @NonNull T object = readTrestleObject(clazz, entry.getKey(), false);
+//            relatedObjects.put(object, entry.getValue());
+//        });
+//        ontology.returnAndCommitTransaction(transaction);
+//
+//        if (relatedObjects.size() == 0) {
+//            return Optional.empty();
+//        }
+//
+//        return Optional.of(relatedObjects);
+        logger.warn("Deprecated");
+        return Optional.empty();
     }
 
     @Override
