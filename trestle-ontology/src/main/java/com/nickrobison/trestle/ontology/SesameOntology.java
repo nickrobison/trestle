@@ -562,7 +562,7 @@ public abstract class SesameOntology extends TransactingOntology {
      * However, Checker can't seem to see through the call stack to notice that we've called that function, so we use this instead.
      * @return - {@link RepositoryConnection} associated with the given transaction
      */
-    private RepositoryConnection getThreadConnection() {
+    RepositoryConnection getThreadConnection() {
         @Nullable final RepositoryConnection repositoryConnection = this.tc.get();
         if (repositoryConnection == null) {
             throw new RuntimeException("Thread has null repository connection, did a transaction not get opened?");

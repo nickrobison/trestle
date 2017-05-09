@@ -72,7 +72,9 @@ public class TrestleTransaction {
     }
 
     @Override
-    public boolean equals(Object o) {
+//    Apparently checker hates how IntelliJ sets up equals methods.
+    @SuppressWarnings({"all"})
+    public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
@@ -85,6 +87,8 @@ public class TrestleTransaction {
     }
 
     @Override
+    //    Apparently checker hates how IntelliJ sets up hashcode methods.
+    @SuppressWarnings({"all"})
     public int hashCode() {
         int result = getTransactionID() != null ? getTransactionID().hashCode() : 0;
         result = 31 * result + writeTransaction.hashCode();

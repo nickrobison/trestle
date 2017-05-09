@@ -79,6 +79,7 @@ public class VirtuosoOntology extends JenaOntology {
     }
 
     @Override
+    @SuppressWarnings({"return.type.incompatible"})
     public TrestleResultSet executeSPARQLResults(String queryString) {
 //        ResultSet resultSet;
         final TrestleResultSet resultSet;

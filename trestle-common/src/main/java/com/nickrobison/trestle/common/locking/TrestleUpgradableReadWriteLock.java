@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.common.locking;
 
+import org.checkerframework.checker.lock.qual.EnsuresLockHeld;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,7 @@ public class TrestleUpgradableReadWriteLock {
      *
      * @throws InterruptedException
      */
+    @EnsuresLockHeld("this")
     public synchronized void lockRead() throws InterruptedException {
         final Thread callingThread = Thread.currentThread();
         while (!canGrantReadAccess(callingThread)) {
@@ -66,6 +68,7 @@ public class TrestleUpgradableReadWriteLock {
      *
      * @throws InterruptedException - Throws an exception if the thread is interrupted while trying to take the lock
      */
+    @EnsuresLockHeld("this")
     public synchronized void lockWrite() throws InterruptedException {
         writeRequests++;
         final Thread callingThread = Thread.currentThread();

@@ -440,6 +440,7 @@
                                 </annotationProcessor>
                                 <annotationProcessor>org.checkerframework.checker.interning.InterningChecker
                                 </annotationProcessor>
+                                <!--<annotationProcessor>org.checkerframework.checker.lock.LockChecker</annotationProcessor>-->
                             </annotationProcessors>
                             <compilerArgs>
                                 <arg>${compiler.default.args}</arg>

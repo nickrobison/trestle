@@ -7,6 +7,7 @@ import com.nickrobison.trestle.iri.TrestleIRI;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.checkerframework.checker.lock.qual.GuardedBy;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
@@ -40,9 +41,9 @@ public class TrestleCacheImpl implements TrestleCache {
     private final TrestleUpgradableReadWriteLock cacheLock;
     private final CacheManager cacheManager;
     private final Cache<IRI, Object> trestleObjectCache;
-    private final Cache<IRI, TrestleIndividual> trestleIndividualCache;
-    private final ITrestleIndex<TrestleIRI> validIndex;
-    private final ITrestleIndex<TrestleIRI> dbIndex;
+    private final @GuardedBy("cacheLock") Cache<IRI, TrestleIndividual> trestleIndividualCache;
+    private final @GuardedBy("cacheLock") ITrestleIndex<TrestleIRI> validIndex;
+    private final @GuardedBy("cacheLock") ITrestleIndex<TrestleIRI> dbIndex;
 
     @Inject
     @SuppressWarnings({"argument.type.incompatible"})

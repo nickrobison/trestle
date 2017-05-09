@@ -146,6 +146,7 @@ public class LocalOntology extends JenaOntology {
 //    }
 
     @Override
+    @SuppressWarnings({"return.type.incompatible"})
     public TrestleResultSet executeSPARQLResults(String queryString) {
         final TrestleResultSet resultSet;
         final Query query = QueryFactory.create(queryString);

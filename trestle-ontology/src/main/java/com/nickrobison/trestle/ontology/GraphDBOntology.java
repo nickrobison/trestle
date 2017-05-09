@@ -45,6 +45,7 @@ import static org.eclipse.rdf4j.model.vocabulary.SESAME.WILDCARD;
  * Created by nrobison on 1/10/17.
  */
 
+@SuppressWarnings({"initialization.fields.uninitialized"})
 public class GraphDBOntology extends SesameOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(GraphDBOntology.class);
@@ -60,7 +61,7 @@ public class GraphDBOntology extends SesameOntology {
     }
 
     private static Repository constructRepository(String ontologyName, @Nullable String connectionString, String username, String password) {
-        logger.debug("Constructing GraphDB ontology with connection string {}", connectionString);
+        logger.debug("Constructing GraphDB ontology with connection string {}", connectionString != null ? connectionString : "Null");
         if (connectionString == null) {
 //            Connect to local repository
             repositoryManager = new LocalRepositoryManager(new File(DATA_DIRECTORY));
@@ -78,20 +79,24 @@ public class GraphDBOntology extends SesameOntology {
         return repository;
     }
 
+    @SuppressWarnings({"argument.type.incompatible"})
     private static Repository setupNewRepository(String ontologyName) {
         logger.info("Creating new Repository {}", ontologyName);
         final TreeModel graph = new TreeModel();
 
 //        Read configuration file
         final ClassLoader classLoader = GraphDBOntology.class.getClassLoader();
+        if (classLoader == null) {
+            throw new RuntimeException("Unable to get classloader for GraphDB Ontology");
+        }
         logger.debug("Classloader: {}", classLoader);
         final String defaultsFileString = config.getString("defaults-file");
         logger.debug("Defaults File: {}", defaultsFileString);
         final InputStream is = classLoader.getResourceAsStream(defaultsFileString);
-        logger.debug("GraphDB defaults file: {}", is);
         if (is == null) {
             throw new MissingResourceException("Unable to load GraphDB defaults", GraphDBOntology.class.getName(), defaultsFileString);
         }
+        logger.debug("GraphDB defaults file: {}", is);
         final RDFParser parser = Rio.createParser(RDFFormat.TURTLE);
         parser.setRDFHandler(new StatementCollector(graph));
         try {
@@ -206,16 +211,17 @@ public class GraphDBOntology extends SesameOntology {
     @Override
     public void executeUpdateSPARQL(String queryString) {
         this.openTransaction(true);
-        final Update update = this.tc.get().prepareUpdate(QueryLanguage.SPARQL, queryString);
+        final Update update = this.getThreadConnection().prepareUpdate(QueryLanguage.SPARQL, queryString);
         update.execute();
         this.commitTransaction(true);
     }
 
     @Override
+    @SuppressWarnings({"return.type.incompatible"})
     public TrestleResultSet executeSPARQLResults(String queryString) {
         final TrestleResultSet results;
         this.openTransaction(false);
-        final TupleQuery tupleQuery = this.tc.get().prepareTupleQuery(QueryLanguage.SPARQL, queryString);
+        final TupleQuery tupleQuery = this.getThreadConnection().prepareTupleQuery(QueryLanguage.SPARQL, queryString);
         final TupleQueryResult resultSet = tupleQuery.evaluate();
         try {
             results = buildResultSet(resultSet);
@@ -232,20 +238,20 @@ public class GraphDBOntology extends SesameOntology {
             logger.warn("Thread has no open connection, creating a new one");
             this.setOntologyConnection();
         }
-        this.tc.get().begin();
+        this.getThreadConnection().begin();
         logger.debug("Opened GraphDB transaction");
     }
 
     @Override
     public void commitDatasetTransaction(boolean write) {
-        this.tc.get().commit();
+        this.getThreadConnection().commit();
         this.resetThreadConnection();
         logger.debug("GraphDB model transaction committed");
     }
 
     @Override
     public void abortDatasetTransaction(boolean write) {
-        this.tc.get().rollback();
+        this.getThreadConnection().rollback();
         this.resetThreadConnection();
         logger.debug("GraphDB model transaction aborted");
     }

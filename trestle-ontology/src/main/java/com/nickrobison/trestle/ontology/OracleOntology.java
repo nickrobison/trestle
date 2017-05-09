@@ -181,6 +181,7 @@ public class OracleOntology extends JenaOntology {
     }
 
     @Override
+    @SuppressWarnings({"return.type.incompatible"})
     public TrestleResultSet executeSPARQLResults(String queryString) {
         final Query query = QueryFactory.create(queryString);
         final QueryExecution qExec = QueryExecutionFactory.create(query, this.model);
