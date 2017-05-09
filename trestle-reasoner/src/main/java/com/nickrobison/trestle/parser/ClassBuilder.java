@@ -166,7 +166,7 @@ public class ClassBuilder {
                 .filter(p -> p.getName().equals(argumentName))
                 .findFirst();
 
-        return matchingParam.map(parameter -> argumentType == null || parameter.getType().equals(argumentType)).orElse(false);
+        return matchingParam.map(parameter -> argumentType == null || parameter.getType() == argumentType).orElse(false);
     }
 
 

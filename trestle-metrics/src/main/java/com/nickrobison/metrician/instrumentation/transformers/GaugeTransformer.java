@@ -8,6 +8,7 @@ import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +27,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
  * Byte-code transformation class to implement the {@link Gauge} annotation
  * Currently set to excecute when the class constructor is called.
  */
+@SuppressWarnings({"dreference.of.nullable"})
 public class GaugeTransformer extends AbstractMetricianTransformer {
 
     private static final Logger logger = LoggerFactory.getLogger(GaugeTransformer.class);
@@ -53,7 +55,7 @@ public class GaugeTransformer extends AbstractMetricianTransformer {
     public static void setupGauge(Object object) {
 //        Try to step through the entire heirarchy, in order to find gauges that are declared on superclasses of the instantiated object
         Class<?> clazz = object.getClass();
-        while (clazz != Object.class) {
+        while (clazz != Object.class && clazz != null) {
             for (final Method method : clazz.getDeclaredMethods()) {
                 if (!gauges.containsKey(method.getName())) {
                     final com.codahale.metrics.annotation.Gauge annotation = method.getAnnotation(com.codahale.metrics.annotation.Gauge.class);
@@ -103,7 +105,11 @@ public class GaugeTransformer extends AbstractMetricianTransformer {
         @Override
         public Object getValue() {
             try {
-                return this.method.invoke(this.object);
+                final Object invoke = this.method.invoke(this.object);
+                if (invoke == null) {
+                    throw new IllegalStateException("Error while calling method (" + method + ")");
+                }
+                return invoke;
             } catch (IllegalAccessException | InvocationTargetException e) {
                 throw new IllegalStateException("Error while calling method (" + method + ")", e);
             }

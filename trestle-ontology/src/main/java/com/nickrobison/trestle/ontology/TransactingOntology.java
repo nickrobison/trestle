@@ -4,6 +4,7 @@ import com.codahale.metrics.annotation.Gauge;
 import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
+import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.slf4j.Logger;
@@ -431,7 +432,7 @@ abstract class TransactingOntology implements ITrestleOntology {
      * Get the thread repository connection to use with the TrestleTransaction object
      * @return - RepositoryConnection for transaction
      */
-    public abstract @Nullable RepositoryConnection getOntologyConnection();
+    public abstract RepositoryConnection getOntologyConnection();
 
     protected @Nullable TrestleTransaction getThreadTransactionObject() {
         return this.threadTransactionObject.get();

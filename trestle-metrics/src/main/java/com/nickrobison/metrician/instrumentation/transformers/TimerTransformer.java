@@ -24,6 +24,8 @@ import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 /**
  * Byte-code transformation class to implement the {@link Timed} annotation
  */
+// If you can't annotate a static member field, then how can it ever return null?
+@SuppressWarnings({"return.type.incompatible"})
 public class TimerTransformer extends AbstractMetricianTransformer {
 
     private static final Logger logger = LoggerFactory.getLogger(TimerTransformer.class);

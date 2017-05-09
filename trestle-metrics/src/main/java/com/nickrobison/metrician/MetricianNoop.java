@@ -18,6 +18,7 @@ import java.util.Map;
 /**
  * Created by nrobison on 4/14/17.
  */
+@SuppressWarnings({"return.type.incompatible"})
 public class MetricianNoop implements Metrician {
     private static final Logger logger = LoggerFactory.getLogger(MetricianNoop.class);
 

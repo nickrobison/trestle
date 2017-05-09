@@ -2,6 +2,8 @@ package com.nickrobison.metrician.backends;
 
 import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.metrician.MetricianReporter;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
+import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +31,7 @@ public class PostgresBackend extends RDBMSBackend {
         connection = initializeDatabase();
     }
 
-    private Connection initializeDatabase() {
+    private Connection initializeDatabase(@UnderInitialization(PostgresBackend.class) PostgresBackend this) {
         logger.debug("Checking for tables, creating if non-existent");
         final Connection connection;
         try {
@@ -162,7 +164,7 @@ public class PostgresBackend extends RDBMSBackend {
     }
 
     @Override
-    Long registerMetric(String metricName) {
+    @Nullable Long registerMetric(String metricName) {
         try {
 //            See if the metric is already registered
             final PreparedStatement lookupQuery = connection.prepareStatement("SELECT metricid FROM metrics.METRICS WHERE metric = ?");

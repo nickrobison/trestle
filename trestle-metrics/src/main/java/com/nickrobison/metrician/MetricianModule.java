@@ -10,6 +10,8 @@ import com.nickrobison.metrician.instrumentation.MetricianInventory;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import net.bytebuddy.agent.ByteBuddyAgent;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
+import org.checkerframework.checker.signature.qual.ClassGetName;
 
 import javax.inject.Singleton;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -43,7 +45,7 @@ public class MetricianModule extends PrivateModule {
         }
     }
 
-    private void setupMetrician() {
+    private void setupMetrician(@UnderInitialization(MetricianModule.class) MetricianModule this) {
 //        Setup/Reset bytebuddy
         SharedMetricRegistries.clear();
         MetricianInventory.reset();
@@ -63,6 +65,7 @@ public class MetricianModule extends PrivateModule {
     }
 
     @Override
+    @SuppressWarnings({"argument.type.incompatible"})
     protected void configure() {
         if (enabled) {
             final String backendClass = config.getString("backend.class");

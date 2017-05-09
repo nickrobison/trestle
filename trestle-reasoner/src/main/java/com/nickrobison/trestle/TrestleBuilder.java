@@ -95,6 +95,7 @@ public class TrestleBuilder {
      * @param iri - String representing prefix to use for Reasoner
      * @return - TrestleBuilder
      */
+    @SuppressWarnings({"method.invocation.invalid"})
     public TrestleBuilder withPrefix(String iri) {
         this.reasonerPrefix = Optional.of(iri);
         this.pm.setDefaultPrefix(iri);

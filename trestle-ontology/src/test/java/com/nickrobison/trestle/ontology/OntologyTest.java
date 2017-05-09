@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Created by nrobison on 12/1/16.
  */
-@SuppressWarnings("OptionalGetWithoutIsPresent")
+@SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization.fields.uninitialized"})
 @Tag("integration")
 abstract public class OntologyTest {
 

@@ -2,6 +2,7 @@ package com.nickrobison.metrician.instrumentation;
 
 import com.codahale.metrics.*;
 import com.nickrobison.metrician.AnnotatedMetric;
+import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,6 +27,7 @@ public class MetricianInventory {
         reset();
     }
 
+    @EnsuresNonNull(value = {"strategy", "registry", "gauges", "meters", "timers", "counters"})
     public static void reset() {
         strategy = new DefaultMetricsStrategy();
         registry = strategy.resolveMetricRegistry("trestle-registry");

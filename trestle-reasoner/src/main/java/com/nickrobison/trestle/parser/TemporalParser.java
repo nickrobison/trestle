@@ -71,6 +71,8 @@ public class TemporalParser {
      * @param clazz - Class to parse
      * @return - ZoneId of either declared timezone, or UTC
      */
+    //    We can suppress this for default annotation properties
+    @SuppressWarnings({"dereference.of.nullable"})
     public static ZoneId GetStartZoneID(@Nullable Class<?> clazz) {
 
         if (clazz == null) {
@@ -109,6 +111,8 @@ public class TemporalParser {
      * @param clazz - Class to parse
      * @return - ZoneId of either declared timezone, or UTC
      */
+    //    We can suppress this for default annotation properties
+    @SuppressWarnings({"dereference.of.nullable"})
     public static ZoneId GetEndZoneID(@Nullable Class<?> clazz) {
         if (clazz == null) {
             return ZoneOffset.UTC;
@@ -164,6 +168,8 @@ public class TemporalParser {
      * @param clazz - Class to parse
      * @return - {@link ZoneId} of either declared timezone, or {@link ZoneOffset#UTC}
      */
+    //    We can suppress this for default annotation properties
+    @SuppressWarnings({"dereference.of.nullable"})
     public static ZoneId GetDefaultZoneID(@Nullable Class<?> clazz) {
         if (clazz == null) {
             return ZoneOffset.UTC;
@@ -226,6 +232,8 @@ public class TemporalParser {
      * @param clazz - Input class to parse properties from
      * @return - Optional List of OWLDataProperties
      */
+    //    We can suppress this for default annotation properties
+    @SuppressWarnings({"dereference.of.nullable"})
     public Optional<List<OWLDataProperty>> GetTemporalsAsDataProperties(Class<?> clazz) {
 
         final OWLNamedIndividual owlNamedIndividual = cp.getIndividual(clazz);
@@ -325,6 +333,8 @@ public class TemporalParser {
         return Optional.of(temporalProperties);
     }
 
+    //    We can suppress this for default annotation properties
+    @SuppressWarnings({"dereference.of.nullable"})
     public Optional<List<TemporalObject>> getTemporalObjects(Object inputObject) {
 
         final Class<?> clazz = inputObject.getClass();
@@ -334,7 +344,7 @@ public class TemporalParser {
 //        Fields
         for (Field classField : clazz.getDeclaredFields()) {
             if (classField.isAnnotationPresent(DefaultTemporal.class)) {
-                final @NonNull DefaultTemporal annotation = classField.getAnnotation(DefaultTemporal.class);
+                final DefaultTemporal annotation = classField.getAnnotation(DefaultTemporal.class);
 //                Try to get the value
                 Object fieldValue = null;
                 try {
@@ -399,7 +409,7 @@ public class TemporalParser {
         for (Method classMethod : clazz.getDeclaredMethods()) {
             if (classMethod.isAnnotationPresent(DefaultTemporal.class)) {
 
-                final @NonNull DefaultTemporal annotation = classMethod.getAnnotation(DefaultTemporal.class);
+                final DefaultTemporal annotation = classMethod.getAnnotation(DefaultTemporal.class);
                 final Optional<Object> methodValue = ClassParser.accessMethodValue(classMethod, inputObject);
 
                 if (methodValue.isPresent()) {
@@ -413,7 +423,7 @@ public class TemporalParser {
                     temporalObject.ifPresent(temporalObjects::add);
                 }
             } else if (classMethod.isAnnotationPresent(StartTemporal.class)) {
-                final @NonNull StartTemporal annotation = classMethod.getAnnotation(StartTemporal.class);
+                final StartTemporal annotation = classMethod.getAnnotation(StartTemporal.class);
                 final Optional<Object> methodValue = ClassParser.accessMethodValue(classMethod, inputObject);
 
                 final Optional<TemporalObject> temporalObject = parseStartTemporal(annotation, methodValue.orElseThrow(RuntimeException::new), owlNamedIndividual, inputObject, ClassParser.AccessType.METHOD, clazz);
@@ -430,8 +440,10 @@ public class TemporalParser {
     }
 
     //    TODO(nrobison): Get the timezone from the temporal, if it supports it.
-    private static Optional<TemporalObject> parseDefaultTemporal(Object fieldValue, DefaultTemporal annotation, OWLNamedIndividual owlNamedIndividual) {
-
+    private static Optional<TemporalObject> parseDefaultTemporal(Object fieldValue, @Nullable DefaultTemporal annotation, OWLNamedIndividual owlNamedIndividual) {
+        if (annotation == null) {
+            throw new RuntimeException("Missing default temporal annotation");
+        }
         final TemporalObject temporalObject;
 
         switch (annotation.type()) {
@@ -520,7 +532,12 @@ public class TemporalParser {
     }
 
     //    TODO(nrobison): Extract the time zone from the temporal, if it supports it.
-    private static Optional<TemporalObject> parseStartTemporal(StartTemporal annotation, Object fieldValue, OWLNamedIndividual owlNamedIndividual, Object inputObject, ClassParser.AccessType access, Class clazz) {
+    //    We can suppress this for default annotation properties
+    @SuppressWarnings({"dereference.of.nullable"})
+    private static Optional<TemporalObject> parseStartTemporal(@Nullable StartTemporal annotation, Object fieldValue, OWLNamedIndividual owlNamedIndividual, Object inputObject, ClassParser.AccessType access, Class clazz) {
+        if (annotation == null) {
+            throw new RuntimeException("Missing StartTemporal annotation");
+        }
 //        @Nullable final TemporalObject temporalObject;
         switch (annotation.type()) {
             case POINT: {

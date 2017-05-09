@@ -19,11 +19,12 @@ import static com.nickrobison.trestle.caching.tdtree.TDTreeHelpers.getIDLength;
 class SplittableLeaf<Value> extends LeafNode<Value> {
     private static final Logger logger = LoggerFactory.getLogger(SplittableLeaf.class);
     private int blockSize;
-    final FastTuple[] keys;
-    final Value[] values;
+    final @Nullable FastTuple[] keys;
+    final @Nullable Value[] values;
     private int records = 0;
 
 
+    @SuppressWarnings({"method.invocation.invalid"})
     SplittableLeaf(int leafID, FastTuple leafMetadata, int blockSize) {
         super(leafID, leafMetadata);
         this.blockSize = blockSize;
@@ -55,7 +56,7 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
     }
 
     @Override
-    Value getValue(TupleExpressionGenerator.BooleanTupleExpression expression) {
+    @Nullable Value getValue(TupleExpressionGenerator.BooleanTupleExpression expression) {
         for (int i = 0; i < this.records; i++) {
             final FastTuple key = keys[i];
             if (key != null) {
@@ -68,12 +69,14 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
     }
 
     @Override
-    LeafSplit insert(long objectID, long startTime, long endTime, @NonNull Value value) {
+    @Nullable LeafSplit insert(long objectID, long startTime, long endTime, @NonNull Value value) {
         return insert(buildObjectKey(objectID, startTime, endTime), value);
     }
 
     @Override
-    LeafSplit insert(FastTuple newKey, @NonNull Value value) {
+//    If a key is non-null, then the value is non-null
+    @SuppressWarnings({"argument.type.incompatible"})
+    @Nullable LeafSplit insert(FastTuple newKey, @NonNull Value value) {
 //            Check if we have more space, if we do, insert it.
         if (records < blockSize) {
             return insertValueIntoArray(newKey, value);
@@ -211,12 +214,14 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
     }
 
     @Override
-    Map<FastTuple, Value> dumpLeaf() {
-        Map<FastTuple, Value> leafRecords = new HashMap<>();
+    Map<FastTuple, @NonNull Value> dumpLeaf() {
+        Map<FastTuple, @NonNull Value> leafRecords = new HashMap<>();
         for (int i = 0; i < this.records; i++) {
             final FastTuple key = keys[i];
             if (key != null) {
-                leafRecords.put(key, values[i]);
+                if (values[i] != null) {
+                    leafRecords.put(key, values[i]);
+                }
             }
         }
         return leafRecords;
@@ -233,7 +238,8 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
         return nullRecords / (double) this.records;
     }
 
-    private LeafSplit insertValueIntoArray(FastTuple key, Value value) {
+    @SuppressWarnings({"argument.type.incompatible"})
+    private @Nullable LeafSplit insertValueIntoArray(FastTuple key, Value value) {
         if (!ArrayUtils.contains(keys, key)) {
             keys[records] = key;
             values[records] = value;

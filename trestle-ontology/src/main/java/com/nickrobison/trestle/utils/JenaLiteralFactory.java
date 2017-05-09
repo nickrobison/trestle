@@ -84,7 +84,7 @@ public class JenaLiteralFactory {
 //                    owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_LONG.getIRI());
 //                }
 //            }
-        } else if (literal.getDatatype() == RDF.dtLangString) {
+        } else if (literal.getDatatype().equals(RDF.dtLangString)) {
             return Optional.of(df.getOWLLiteral(literal.getLexicalForm(), literal.getLanguage()));
         } else {
             owlDatatype = df.getOWLDatatype(IRI.create(literal.getDatatypeURI()));
