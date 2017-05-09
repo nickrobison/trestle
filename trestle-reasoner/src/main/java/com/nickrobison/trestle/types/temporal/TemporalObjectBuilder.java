@@ -89,7 +89,7 @@ public class TemporalObjectBuilder {
         return buildTemporalFromProperties(properties, temporalType, clazz, null);
     }
 
-    public static Optional<TemporalObject> buildTemporalFromProperties(Set<OWLDataPropertyAssertionAxiom> properties, @Nullable Class<? extends Temporal> temporalType, Class<?> clazz, @Nullable String temporalID) {
+    public static Optional<TemporalObject> buildTemporalFromProperties(Set<OWLDataPropertyAssertionAxiom> properties, @Nullable Class<? extends Temporal> temporalType, @Nullable Class<?> clazz, @Nullable String temporalID) {
         if (temporalType == null) {
             temporalType = LocalDateTime.class;
         }

@@ -2,6 +2,7 @@ package com.nickrobison.trestle.types.temporal;
 
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
+import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
@@ -119,6 +120,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         return true;
     }
 
+    @EnsuresNonNullIf(expression = "this.toTime", result = false)
     public boolean isContinuing() {
         return toTime == null;
     }

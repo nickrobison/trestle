@@ -9,9 +9,9 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
  */
 public class TrestleTransaction {
 
-    private final Long transactionID;
+    private final @Nullable Long transactionID;
     private final Boolean writeTransaction;
-    private @MonotonicNonNull RepositoryConnection connection;
+    private @Nullable RepositoryConnection connection;
 
     /**
      * Create a new TrestleTransaction with the current timestamp, indicating the tread owns the current transaction
@@ -67,7 +67,7 @@ public class TrestleTransaction {
         return connection;
     }
 
-    public void setConnection(RepositoryConnection connection) {
+    public void setConnection(@Nullable RepositoryConnection connection) {
         this.connection = connection;
     }
 
@@ -80,14 +80,15 @@ public class TrestleTransaction {
 
         if (getTransactionID() != null ? !getTransactionID().equals(that.getTransactionID()) : that.getTransactionID() != null)
             return false;
-        return isWriteTransaction() != null ? isWriteTransaction().equals(that.isWriteTransaction()) : that.isWriteTransaction() == null;
-
+        if (!writeTransaction.equals(that.writeTransaction)) return false;
+        return getConnection() != null ? getConnection().equals(that.getConnection()) : that.getConnection() == null;
     }
 
     @Override
     public int hashCode() {
         int result = getTransactionID() != null ? getTransactionID().hashCode() : 0;
-        result = 31 * result + (isWriteTransaction() != null ? isWriteTransaction().hashCode() : 0);
+        result = 31 * result + writeTransaction.hashCode();
+        result = 31 * result + (getConnection() != null ? getConnection().hashCode() : 0);
         return result;
     }
 }

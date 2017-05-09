@@ -4,6 +4,8 @@ import com.codahale.metrics.annotation.Gauge;
 import com.codahale.metrics.annotation.Metered;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import org.agrona.concurrent.ManyToManyConcurrentArrayQueue;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.slf4j.Logger;
@@ -13,6 +15,7 @@ import org.slf4j.LoggerFactory;
  * Created by nrobison on 1/16/17.
  */
 @Metriced
+@SuppressWarnings({"method.invocation.invalid"})
 public class SesameConnectionManager {
 
     private static final Logger logger = LoggerFactory.getLogger(SesameConnectionManager.class);
@@ -74,15 +77,17 @@ public class SesameConnectionManager {
      * @param connection - {@link RepositoryConnection} to return to queue
      */
     @Metered(name = "sesame-connection-pool-return", absolute = true)
-    public void returnConnection(RepositoryConnection connection) {
-        if (connection.isActive()) {
-            logger.error("Connection still has live transaction");
+    public void returnConnection(@Nullable RepositoryConnection connection) {
+        if (connection != null) {
+            if (connection.isActive()) {
+                logger.error("Connection still has live transaction");
+            }
+            if (!this.connectionQueue.offer(connection)) {
+                logger.debug("Queue full, closing connection");
+                connection.close();
+            }
+            logger.debug("Returned connection to pool, {} available", getConnectionCount());
         }
-        if (!this.connectionQueue.offer(connection)) {
-            logger.debug("Queue full, closing connection");
-            connection.close();
-        }
-        logger.debug("Returned connection to pool, {} available", getConnectionCount());
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.nickrobison.trestle;
 
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
@@ -31,7 +32,7 @@ public class TrestlePrefixManager {
         setDefaultPrefix(defaultIRI);
     }
 
-    private void setupDefaultPrefixes() {
+    private void setupDefaultPrefixes(@UnderInitialization(TrestlePrefixManager.class) TrestlePrefixManager this) {
         pm.setPrefix("rdf:", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
         pm.setPrefix("rdfs:", "http://www.w3.org/2000/01/rdf-schema#");
         pm.setPrefix("owl:", "http://www.w3.org/2002/07/owl#");
@@ -49,7 +50,7 @@ public class TrestlePrefixManager {
      * Set the default prefix of the prefix manager
      * @param defaultIRI - String of default IRI
      */
-    public void setDefaultPrefix(String defaultIRI) {
+    public void setDefaultPrefix(@UnderInitialization(TrestlePrefixManager.class) TrestlePrefixManager this, String defaultIRI) {
         pm.setDefaultPrefix(defaultIRI);
     }
 

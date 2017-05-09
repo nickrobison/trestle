@@ -40,6 +40,7 @@ import com.nickrobison.trestle.utils.TemporalPropertiesPair;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
+import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -73,7 +74,8 @@ import static com.nickrobison.trestle.utils.ConfigValidator.ValidateConfig;
  * Created by nrobison on 5/17/16.
  */
 @Metriced
-@SuppressWarnings({"methodref.inference.unimplemented"})
+// I'm tired of dealing with all these random @NoNull T cast issues.
+@SuppressWarnings({"methodref.inference.unimplemented", "argument.type.incompatible", "assignment.type.incompatible", "return.type.incompatible"})
 public class TrestleReasonerImpl implements TrestleReasoner {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleReasonerImpl.class);
@@ -144,7 +146,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         } catch (IOException e) {
             throw new RuntimeException("Ontology InputStream does not seem to be available");
         }
-        logger.info("Loading ontology from {}", ontologyResource);
+        logger.info("Loading ontology from {}", ontologyResource == null ? "Null resource" : ontologyResource);
 
 //        Validate ontology name
         try {
@@ -171,7 +173,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         TypeConverter.registerTypeConstructor(UUID.class, df.getOWLDatatype(UUIDDatatypeIRI), (uuidString) -> UUID.fromString(uuidString.toString()));
         logger.info("Connecting to ontology {} at {}", builder.ontologyName.orElse(DEFAULTNAME), builder.connectionString.orElse("localhost"));
         logger.debug("IS: {}", ontologyIS);
-        logger.debug("Resource: {}", ontologyResource);
+        logger.debug("Resource: {}", ontologyResource == null ? "Null resource" : ontologyResource);
         OntologyBuilder ontologyBuilder = new OntologyBuilder()
 //                .fromIRI(IRI.create(ontologyResource))
                 .fromInputStream(ontologyIS)
@@ -458,6 +460,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @param validTo      - Optional validTo Temporal
      * @param databaseFrom - Optional databaseFrom Temporal
      */
+    @SuppressWarnings({"argument.type.incompatible"})
     private void addFactToTrestleObjectImpl(Class<?> clazz, String individual, String factName, Object value, @Nullable Temporal validAt, @Nullable Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom) {
         final OWLNamedIndividual owlNamedIndividual = df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual));
 //        Parse String to Fact IRI
@@ -479,9 +482,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             throw new TrestleMissingFactException(owlNamedIndividual, factIRI.get(), factDatatype.get(), value.getClass());
         }
 
+
 //        Build the temporals
         final TemporalObject validTemporal;
         final TemporalObject databaseTemporal;
+        if (validFrom == null && validAt == null) {
+            throw new IllegalArgumentException("Both validFrom and ValidAt cannot null at the same time");
+        }
         if (validAt != null) {
             validTemporal = TemporalObjectBuilder.valid().at(validAt).build();
         } else if (validTo != null) {
@@ -574,10 +581,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> @NonNull T readTrestleObject(String datasetClassID, String objectID, Temporal validTemporal, @Nullable Temporal databaseTemporal) throws MissingOntologyEntity, TrestleClassException {
+    public <T> @NonNull T readTrestleObject(String datasetClassID, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws MissingOntologyEntity, TrestleClassException {
 //        Lookup class
         final OWLClass datasetClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, datasetClassID));
-        final Optional<OWLClass> matchingClass = this.registeredClasses
+        final Optional<@KeyFor("this.registeredClasses") OWLClass> matchingClass = this.registeredClasses
                 .keySet()
                 .stream()
                 .filter(owlclass -> owlclass.equals(datasetClass))
@@ -587,7 +594,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             throw new MissingOntologyEntity("Cannot find matching class for: ", datasetClass);
         }
 
-        final Class<T> aClass = (Class<T>) this.registeredClasses.get(matchingClass.get());
+        final Class<@NonNull T> aClass = (Class<@NonNull T>) this.registeredClasses.get(matchingClass.get());
         return readTrestleObject(aClass, objectID, validTemporal, databaseTemporal);
     }
 
@@ -599,7 +606,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     @SuppressWarnings({"argument.type.incompatible", "dereference.of.nullable"})
-    public <T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull String objectID, Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity {
+    public <@NonNull T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity {
 
         final IRI individualIRI = parseStringToIRI(REASONER_PREFIX, objectID);
         return readTrestleObject(clazz, individualIRI, false, validTemporal, databaseTemporal);
@@ -636,7 +643,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @return - Java object of type T
      */
     @SuppressWarnings({"return.type.incompatible", "argument.type.incompatible", "unchecked"})
-    <T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt) {
+    <@NonNull T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt) {
         logger.debug("Reading {}", individualIRI);
 
         final PointTemporal validTemporal;
@@ -692,6 +699,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      */
     @Timed
     @Metered(name = "read-trestle-object", absolute = true)
+    @SuppressWarnings({"method.invocation.invalid"})
     private <@NonNull T> Optional<TrestleObjectResult<@NonNull T>> readTrestleObjectImpl(Class<@NonNull T> clazz, @NonNull IRI individualIRI, PointTemporal<?> validTemporal, PointTemporal<?> databaseTemporal) {
 
 //        Contains class?
@@ -867,6 +875,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             } finally {
                 ontology.returnAndCommitTransaction(trestleTransaction);
             }
+            if (objectState == null) {
+                logger.error("Object state is null, error must have occured");
+                return Optional.empty();
+            }
             try {
                 final @NonNull T constructedObject = ClassBuilder.constructObject(clazz, objectState.getArguments());
                 return Optional.of(new TrestleObjectResult<>(individualIRI, constructedObject, objectState.getMinValidFrom(), objectState.getMinValidTo(), objectState.getMinDatabaseFrom(), objectState.getMinDatabaseTo()));
@@ -897,14 +909,14 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public Optional<List<Object>> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
 
-        final Optional<Class<?>> datatypeOptional = this.trestleParser.classParser.getFactDatatype(clazz, factName.getIRI().toString());
+        final Optional<Class<@NonNull ?>> datatypeOptional = this.trestleParser.classParser.getFactDatatype(clazz, factName.getIRI().toString());
 
         if (!datatypeOptional.isPresent()) {
             logger.warn("Individual {} has no Fact {}", individual, factName);
             return Optional.empty();
         }
 
-        Class<?> datatype = datatypeOptional.get();
+        Class<@NonNull ?> datatype = datatypeOptional.get();
 //        Parse the temporal to OffsetDateTime, if they're not null
         final OffsetDateTime start, end, db;
         if (validStart != null) {
@@ -942,12 +954,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> Optional<List<T>> spatialIntersectObject(@NonNull T inputObject, double buffer, @Nullable Temporal temporalAt) {
+    public <@NonNull T> Optional<List<T>> spatialIntersectObject(@NonNull T inputObject, double buffer, @Nullable Temporal temporalAt) {
         final OWLNamedIndividual owlNamedIndividual = trestleParser.classParser.getIndividual(inputObject);
         final Optional<String> wktString = SpatialParser.GetSpatialValue(inputObject);
 
         if (wktString.isPresent()) {
-            return spatialIntersect((Class<T>) inputObject.getClass(), wktString.get(), buffer, temporalAt);
+            return spatialIntersect((Class<@NonNull T>) inputObject.getClass(), wktString.get(), buffer, temporalAt);
         }
 
         logger.info("{} doesn't have a spatial component", owlNamedIndividual);
@@ -955,14 +967,16 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <T> Optional<List<T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer) {
+    @SuppressWarnings({"override.return.invalid"})
+    public <@NonNull T> Optional<List<@NonNull T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer) {
         return spatialIntersect(clazz, wkt, buffer, null);
     }
 
     @Override
     @Timed(name = "spatial-intesect-timer")
     @Metered(name = "spatial-intersect-meter")
-    public <T> Optional<List<T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal validAt) {
+    @SuppressWarnings({"override.return.invalid"})
+    public <@NonNull T> Optional<List<@NonNull T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal validAt) {
 //        return CompletableFuture.supplyAsync(() -> {
         final OWLClass owlClass = trestleParser.classParser.getObjectClass(clazz);
 
@@ -1096,8 +1110,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @param <T>         - Type of individual to remove
      */
     public <T> void removeIndividual(@NonNull T... inputObject) {
-        T[] objects = inputObject;
-        final List<CompletableFuture<Void>> completableFutures = Arrays.stream(objects)
+        final List<CompletableFuture<Void>> completableFutures = Arrays.stream(inputObject)
                 .map(object -> CompletableFuture.supplyAsync(() -> trestleParser.classParser.getIndividual(object)))
                 .map(idFuture -> idFuture.thenApply(ontology::getAllObjectPropertiesForIndividual))
                 .map(propertyFutures -> propertyFutures.thenCompose(this::removeRelatedObjects))
@@ -1770,7 +1783,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
     }
 
-    private void writeTemporal(TemporalObject temporal, @Nullable OWLNamedIndividual individual) throws MissingOntologyEntity {
+    private void writeTemporal(TemporalObject temporal, OWLNamedIndividual individual) throws MissingOntologyEntity {
 //        Write the object
 //        final IRI temporalIRI = IRI.create(REASONER_PREFIX, temporal.getID());
 //        ontology.createIndividual(temporalIRI, temporalClassIRI);
@@ -1912,10 +1925,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                     try {
                         final @NonNull T object = readTrestleObject(inputClass, id, false, validAt, databaseAt);
-                        return object;
+                        return Optional.of(object);
                     } catch (NoValidStateException e) {
                         this.ontology.returnAndAbortTransaction(tt);
-                        return null;
+                        return Optional.empty();
                     } finally {
                         this.ontology.returnAndCommitTransaction(tt);
                     }
@@ -1944,10 +1957,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
     }
 
-    private <T> Optional<TSIndividual> parseIndividualToShapefile(@Nullable T object, ShapefileSchema shapefileSchema) {
-        if (object == null) {
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private <T> Optional<TSIndividual> parseIndividualToShapefile(Optional<@NonNull T> objectOptional, ShapefileSchema shapefileSchema) {
+        if (!objectOptional.isPresent()) {
             return Optional.empty();
         }
+        final @NonNull T object = objectOptional.get();
 //        if (objectOptional.isPresent()) {
 //            final T object = objectOptional.get();
         final Class<?> inputClass = object.getClass();
@@ -1960,7 +1975,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //                    Data properties, filtering out the spatial members
         final Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = trestleParser.classParser.getFacts(object, true);
         owlDataPropertyAssertionAxioms.ifPresent(owlDataPropertyAssertionAxioms1 -> owlDataPropertyAssertionAxioms1.forEach(property -> {
-            final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, object.getClass());
+            final Class<@NonNull ?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, object.getClass());
             final Object literal = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
             individual.addProperty(ClassParser.matchWithClassMember(inputClass, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
                     literal);

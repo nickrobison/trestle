@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Created by nrobison on 1/23/17.
  */
+@SuppressWarnings({"initialization.fields.uninitialized"})
 public class TrestleIRIV1Test {
 
     public static final String OBJECT_ID = "test-object";

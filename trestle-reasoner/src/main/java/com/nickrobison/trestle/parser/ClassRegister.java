@@ -122,6 +122,9 @@ public class ClassRegister {
         }
     }
 
+
+    //    We can suppress this for default annotation properties
+    @SuppressWarnings({"dereference.of.nullable"})
     static void checkForSpatial(Class<?> aClass) throws TrestleClassException {
 
 //        Check fields
@@ -178,6 +181,8 @@ public class ClassRegister {
     }
 
     //    TODO(nrobison): Make sure the spatial annotations have matching constructor arguments
+    //    We can suppress this for default annotation properties
+    @SuppressWarnings({"dereference.of.nullable"})
     static void checkForTemporals(Class<?> aClass) throws TrestleClassException {
         int temporalCount = 0;
         final List<Method> methods = Arrays.asList(aClass.getDeclaredMethods());
@@ -327,12 +332,14 @@ public class ClassRegister {
 
     }
 
+    //    We can suppress this for default annotation properties
+    @SuppressWarnings({"dereference.of.nullable"})
     static void checkForLanguage(Class<?> aClass) throws TrestleClassException {
 //        Start with methods
         for (Method method : aClass.getDeclaredMethods()) {
             if (method.isAnnotationPresent(Language.class)) {
 //                Ensure the return type is a string
-                if (!method.getReturnType().equals(String.class)) {
+                if (method.getReturnType() != (String.class)) {
                     throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, method.getName());
                 }
 
@@ -352,7 +359,7 @@ public class ClassRegister {
         for (Field field : aClass.getDeclaredFields()) {
             if (field.isAnnotationPresent(Language.class)) {
 //                Ensure the return type is a string
-                if (!field.getType().equals(String.class)) {
+                if (field.getType() != String.class) {
                     throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, field.getName());
                 }
 
@@ -373,7 +380,7 @@ public class ClassRegister {
     private static void checkForDisabledMultiLanguage(Class<?> aClass) throws TrestleClassException {
         for (Method method: aClass.getDeclaredMethods()) {
             if (method.isAnnotationPresent(NoMultiLanguage.class)) {
-                if (!method.getReturnType().equals(String.class)) {
+                if (method.getReturnType() != String.class) {
                     throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, method.getName());
                 }
             }
@@ -381,7 +388,7 @@ public class ClassRegister {
 
         for (Field field: aClass.getDeclaredFields()) {
             if (field.isAnnotationPresent(NoMultiLanguage.class)) {
-                if (!field.getType().equals(String.class)) {
+                if (field.getType() != String.class) {
                     throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, field.getName());
                 }
             }

@@ -9,6 +9,7 @@ import com.vividsolutions.jts.io.WKTWriter;
 import com.vividsolutions.jts.precision.GeometryPrecisionReducer;
 import com.vividsolutions.jts.simplify.TopologyPreservingSimplifier;
 import org.apache.jena.query.ParameterizedSparqlString;
+import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
@@ -61,7 +62,7 @@ public class QueryBuilder {
         this.dialect = dialect;
         trimmedPrefixMap = new HashMap<>();
         StringBuilder builder = new StringBuilder();
-        final Set<Map.Entry<String, String>> entries = pm.getPrefixName2PrefixMap().entrySet();
+        final Set<Map.Entry<@KeyFor("pm.getPrefixName2PrefixMap()") String, String>> entries = pm.getPrefixName2PrefixMap().entrySet();
 //        From the given prefix manager, extract the prefixes and build the prefix String
         for (Map.Entry<String, String> entry : entries) {
             if (entry.getKey().equals(":")) {

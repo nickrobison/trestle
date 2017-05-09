@@ -1,6 +1,5 @@
 package com.nickrobison.metrician.instrumentation.transformers;
 
-import afu.edu.emory.mathcs.backport.java.util.Collections;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Gauge;
@@ -14,9 +13,11 @@ import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -28,6 +29,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 /**
  * Abstract class that implements byte-code transformation of the various {@link Metric}s
  */
+@SuppressWarnings({"type.argument.type.incompatible"})
 public abstract class AbstractMetricianTransformer {
 
     public abstract AgentBuilder.Transformer getTransformer();
@@ -101,13 +103,15 @@ public abstract class AbstractMetricianTransformer {
 //    Other garbage
 
     protected interface MetricFactory<T extends Metric> {
-        T metric(String name, boolean absolute);
+        @Nullable T metric(String name, boolean absolute);
     }
 
+//    Because if .isPresent() returns true, .getAnnotation is obviously null. Obviously
+    @SuppressWarnings({"argument.type.incompatible"})
     protected static <T extends Metric> AnnotatedMetric<T> metricAnnotation(Method method, Class<? extends Annotation> clazz, MetricFactory<T> factory) {
         if (method.isAnnotationPresent(clazz)) {
             final Annotation annotation = method.getAnnotation(clazz);
-            final T metric = factory.metric(metricAnnotationName(annotation), metricAnnotationAbsolute(annotation));
+            final @Nullable T metric = factory.metric(metricAnnotationName(annotation), metricAnnotationAbsolute(annotation));
             if (metric != null) {
                 return new AnnotatedMetric.IsPresent<>(metric, annotation);
             }

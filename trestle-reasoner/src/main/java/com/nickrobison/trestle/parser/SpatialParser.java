@@ -103,6 +103,8 @@ public class SpatialParser {
 
     }
 
+    //    We can suppress this for default annotation properties
+    @SuppressWarnings({"dereference.of.nullable"})
     public static Optional<String> GetSpatialValue(Object inputObject) {
         final Class<?> clazz = inputObject.getClass();
 
@@ -140,6 +142,8 @@ public class SpatialParser {
         return Optional.empty();
     }
 
+//    We can suppress this for default annotation properties
+    @SuppressWarnings({"dereference.of.nullable"})
     static IRI filterDataSpatialName(Field classField, String propertyPrefix) {
         if (classField.isAnnotationPresent(Fact.class)) {
             return IRI.create(propertyPrefix, classField.getAnnotation(Fact.class).name());
@@ -150,6 +154,8 @@ public class SpatialParser {
         }
     }
 
+    //    We can suppress this for default annotation properties
+    @SuppressWarnings({"dereference.of.nullable"})
     static IRI filterDataSpatialName(Method classMethod, String propertyPrefix) {
         if (classMethod.isAnnotationPresent(Fact.class)) {
             return IRI.create(propertyPrefix, classMethod.getAnnotation(Fact.class).name());

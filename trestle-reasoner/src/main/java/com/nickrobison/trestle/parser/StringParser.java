@@ -53,6 +53,8 @@ public class StringParser {
         return dfStatic.getOWLLiteral(inputString, languageTag);
     }
 
+    //    We can suppress this for default annotation properties
+    @SuppressWarnings({"dereference.of.nullable"})
     static Optional<OWLLiteral> fieldValueToMultiLangString(@NonNull Object fieldValue, Field field, boolean multiLangMode, @Nullable String defaultLanguageTag) {
 //        If it's not a string, return an empty optional and move on
         if (!(fieldValue instanceof String)) {
@@ -83,7 +85,14 @@ public class StringParser {
 
         @Nullable String languageTag = null;
         if (method.isAnnotationPresent(Language.class)) {
-            languageTag = method.getAnnotation(Language.class).language();
+            final Language languageAnnotation = method.getAnnotation(Language.class);
+            if (languageAnnotation != null) {
+                final String language = languageAnnotation.language();
+                languageTag = language;
+            }
+
+
+
         }
 
         return Optional.of(parseMultiLangString(((String) methodValue), languageTag, multiLangMode, defaultLanguageTag));

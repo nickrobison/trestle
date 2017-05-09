@@ -22,15 +22,18 @@ public class PointLeaf<Value> extends LeafNode<Value> {
     private final Map<FastTuple, Value> values = new Object2ObjectOpenHashMap<>(100, .7f);
     private int records = 0;
 
+    @SuppressWarnings({"method.invocation.invalid"})
     PointLeaf(int leafID, FastTuple leafMetadata) {
         super(leafID, leafMetadata);
         logger.trace("Creating Point Node {}", this.getBinaryStringID());
     }
 
-    void copyInitialValues(FastTuple[] keys, Value[] vals) {
+    void copyInitialValues(@Nullable FastTuple[] keys, @Nullable Value[] vals) {
         for (int i = 0; i < keys.length; i++) {
-            this.values.put(keys[i], vals[i]);
-            this.records++;
+            if (keys[i] != null && vals[i] != null) {
+                this.values.put(keys[i], vals[i]);
+                this.records++;
+            }
         }
     }
 
@@ -51,8 +54,9 @@ public class PointLeaf<Value> extends LeafNode<Value> {
     }
 
     @Override
-    Value getValue(TupleExpressionGenerator.BooleanTupleExpression expression) {
-        final Optional<Value> value = this.values.entrySet()
+    @SuppressWarnings({"type.argument.incompatible", "assignment.type.incompatible"})
+    @Nullable Value getValue(TupleExpressionGenerator.BooleanTupleExpression expression) {
+        final Optional<@Nullable Value> value = this.values.entrySet()
                 .stream()
                 .filter(entry -> expression.evaluate(entry.getKey()))
                 .map(Map.Entry::getValue)
@@ -61,12 +65,12 @@ public class PointLeaf<Value> extends LeafNode<Value> {
     }
 
     @Override
-    LeafSplit insert(long objectID, long startTime, long endTime, @NonNull Value value) {
+    @Nullable LeafSplit insert(long objectID, long startTime, long endTime, @NonNull Value value) {
         return insert(buildObjectKey(objectID, startTime, endTime), value);
     }
 
     @Override
-    LeafSplit insert(FastTuple newKey, @NonNull Value value) {
+    @Nullable LeafSplit insert(FastTuple newKey, @NonNull Value value) {
         if (!this.values.containsKey(newKey)) {
             this.values.put(newKey, value);
             this.records++;
@@ -98,7 +102,7 @@ public class PointLeaf<Value> extends LeafNode<Value> {
     long deleteKeysWithValue(@NonNull Value value) {
         final List<FastTuple> list = this.values.entrySet()
                 .stream()
-                .filter(entry -> entry.getValue().equals(value))
+                .filter(entry -> value.equals(entry.getValue()))
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
 
@@ -116,8 +120,8 @@ public class PointLeaf<Value> extends LeafNode<Value> {
         return false;
     }
     @Override
-    Map<FastTuple, Value> dumpLeaf() {
-        Map<FastTuple, Value> leafRecords = new HashMap<>();
+    Map<FastTuple, @NonNull Value> dumpLeaf() {
+        Map<FastTuple, @NonNull Value> leafRecords = new HashMap<>();
         leafRecords.putAll(this.values);
         return leafRecords;
     }

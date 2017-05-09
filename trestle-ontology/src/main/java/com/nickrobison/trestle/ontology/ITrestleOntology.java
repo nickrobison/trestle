@@ -307,7 +307,7 @@ public interface ITrestleOntology {
      * @param filterTemporals - {@code true} remove temporals from the result set
      * @return - {@link Set} of {@link OWLDataPropertyAssertionAxiom} which represent all asserted Facts on the individual
      */
-    Set<OWLDataPropertyAssertionAxiom> getFactsForIndividual(OWLNamedIndividual individual, @Nullable OffsetDateTime validTemporal, @Nullable OffsetDateTime databaseTemporal, boolean filterTemporals);
+    Set<OWLDataPropertyAssertionAxiom> getFactsForIndividual(OWLNamedIndividual individual, OffsetDateTime validTemporal, OffsetDateTime databaseTemporal, boolean filterTemporals);
 
     /**
      * Get data properties for temporal from given individuals

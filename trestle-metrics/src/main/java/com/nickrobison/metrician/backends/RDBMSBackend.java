@@ -24,6 +24,7 @@ import java.util.concurrent.BlockingQueue;
  * Abstract class for shipping metrics to relational database backend
  */
 @Metriced
+@SuppressWarnings({"argument.type.incompatible", "initialization.fields.uninitialized"})
 public abstract class RDBMSBackend implements IMetricianBackend {
 
     private static final Logger logger = LoggerFactory.getLogger(RDBMSBackend.class);
@@ -63,7 +64,7 @@ public abstract class RDBMSBackend implements IMetricianBackend {
 
     @Override
     public List<MetricianExportedValue> exportMetrics(@Nullable List<String> metrics, Long start, @Nullable Long end) {
-        logger.debug("Exporting values for Metrics {} from {} to {}", metrics, start, end);
+        logger.debug("Exporting values for Metrics {} from {} to {}", metrics, start, end == null ? Long.MAX_VALUE : end);
         final List<MetricianExportedValue> values = new ArrayList<>();
         try {
             final PreparedStatement exportStatement = getExportPreparedStatement(metrics);
@@ -93,7 +94,7 @@ public abstract class RDBMSBackend implements IMetricianBackend {
      * @param metrics
      * @return
      */
-    static String buildMetricsInStatement(@Nullable List<String> metrics) {
+    static String buildMetricsInStatement(List<String> metrics) {
         final StringBuilder joinedMetrics = new StringBuilder();
         joinedMetrics.append("('");
         joinedMetrics.append(metrics.get(0));
@@ -128,7 +129,7 @@ public abstract class RDBMSBackend implements IMetricianBackend {
         return results;
     }
 
-    abstract Long registerMetric(String metricName);
+    abstract @Nullable Long registerMetric(String metricName);
 
     @Override
     public abstract void exportData(File file);

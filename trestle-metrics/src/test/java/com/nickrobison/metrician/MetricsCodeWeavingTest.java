@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 /**
  * Created by nrobison on 3/17/17.
  */
+@SuppressWarnings({"initialization.fields.uninitialized", "argument.type.incompatible"})
 public class MetricsCodeWeavingTest {
 
     private MetricRegistry registry;

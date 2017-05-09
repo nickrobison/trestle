@@ -2,6 +2,8 @@ package com.nickrobison.metrician.backends;
 
 import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.metrician.MetricianReporter;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
+import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +36,7 @@ public class H2MemoryBackend extends RDBMSBackend {
         connection = initializeDatabase();
     }
 
-    private Connection initializeDatabase() {
+    private Connection initializeDatabase(@UnderInitialization(H2MemoryBackend.class) H2MemoryBackend this) {
         logger.debug("Creating tables");
         final Connection connection;
         try {
@@ -89,7 +91,7 @@ public class H2MemoryBackend extends RDBMSBackend {
     }
 
     @Override
-    public void shutdown(File exportFile) {
+    public void shutdown(@Nullable File exportFile) {
         logger.info("Shutting down H2 backend");
         eventThread.interrupt();
         try {
@@ -184,7 +186,7 @@ public class H2MemoryBackend extends RDBMSBackend {
     }
 
     @Override
-    Long registerMetric(String metricName) {
+    @Nullable Long registerMetric(String metricName) {
         try {
             final PreparedStatement preparedStatement = connection.prepareStatement(String.format("INSERT INTO metrics (Metric) VALUES('%s')", metricName), Statement.RETURN_GENERATED_KEYS);
             preparedStatement.executeUpdate();

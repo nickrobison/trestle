@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 /**
  * Created by nrobison on 4/14/17.
  */
+@SuppressWarnings({"return.type.incompatible"})
 public class NoOpTimer extends Timer {
 
     private final Timer timer;

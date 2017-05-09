@@ -184,6 +184,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
 
     @Override
     @Timed(name = "td-tree.rebuild.timer", absolute = true)
+    @SuppressWarnings({"argument.type.incompatible"})
     public void rebuildIndex() {
         logger.info("Rebuilding TD-Tree");
 //        Dump the tree, create a new one, and reinsert all the values

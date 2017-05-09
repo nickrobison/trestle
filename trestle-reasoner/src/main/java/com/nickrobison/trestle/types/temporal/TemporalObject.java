@@ -92,20 +92,20 @@ public abstract class TemporalObject implements Serializable {
     public abstract int compareTo(OffsetDateTime comparingTemporal);
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
         TemporalObject that = (TemporalObject) o;
 
-        return id.equals(that.id) && temporal_of.equals(that.temporal_of);
-
+        if (id != null ? !id.equals(that.id) : that.id != null) return false;
+        return temporal_of != null ? temporal_of.equals(that.temporal_of) : that.temporal_of == null;
     }
 
     @Override
     public int hashCode() {
-        int result = id.hashCode();
-        result = 31 * result + temporal_of.hashCode();
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (temporal_of != null ? temporal_of.hashCode() : 0);
         return result;
     }
 }

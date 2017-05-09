@@ -45,6 +45,7 @@ public class TrestleCacheImpl implements TrestleCache {
     private final ITrestleIndex<TrestleIRI> dbIndex;
 
     @Inject
+    @SuppressWarnings({"argument.type.incompatible"})
     TrestleCacheImpl(@Named("valid") ITrestleIndex<TrestleIRI> validIndex,
                      @Named("database") ITrestleIndex<TrestleIRI> dbIndex,
                      @Named("cacheLock") TrestleUpgradableReadWriteLock lock,

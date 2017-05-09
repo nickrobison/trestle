@@ -4,6 +4,7 @@ import com.codahale.metrics.annotation.Gauge;
 import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
+import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.slf4j.Logger;
@@ -15,6 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Created by nrobison on 9/7/16.
  */
+@SuppressWarnings({"type.argument.type.incompatible"})
 @Metriced
 abstract class TransactingOntology implements ITrestleOntology {
 
@@ -41,7 +43,7 @@ abstract class TransactingOntology implements ITrestleOntology {
 
     private ThreadLocal<Boolean> threadTransactionInherited = ThreadLocal.withInitial(() -> false);
 
-    private ThreadLocal<TrestleTransaction> threadTransactionObject = new ThreadLocal<>();
+    private ThreadLocal<@Nullable TrestleTransaction> threadTransactionObject = new ThreadLocal<>();
 
     /**
      * Set the current thread transaction state, using the information inherited from the TrestleTransaction object
@@ -430,9 +432,9 @@ abstract class TransactingOntology implements ITrestleOntology {
      * Get the thread repository connection to use with the TrestleTransaction object
      * @return - RepositoryConnection for transaction
      */
-    public abstract @Nullable RepositoryConnection getOntologyConnection();
+    public abstract RepositoryConnection getOntologyConnection();
 
-    protected TrestleTransaction getThreadTransactionObject() {
+    protected @Nullable TrestleTransaction getThreadTransactionObject() {
         return this.threadTransactionObject.get();
     }
 

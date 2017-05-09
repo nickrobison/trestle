@@ -22,6 +22,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 /**
  * Byte-code transformation to implemented the {@link CounterIncrement} and {@link CounterDecrement} annotations
  */
+@SuppressWarnings({"argument.type.incompatible"})
 public class CounterTransformer extends AbstractMetricianTransformer {
     private static final Logger logger = LoggerFactory.getLogger(CounterTransformer.class);
     @Override
@@ -48,6 +49,10 @@ public class CounterTransformer extends AbstractMetricianTransformer {
             });
             if (incrementingCounter.isPresent()) {
                 final CounterIncrement annotation = method.getAnnotation(CounterIncrement.class);
+                if (annotation == null) {
+                    logger.error("Missing annotation, not incrementing");
+                    return;
+                }
                 counters.put(method.getName(), incrementingCounter);
                 logger.debug("Registered Incrementing Counter on {}", method);
                 incrementingCounter.getMetric().inc(annotation.amount());
@@ -63,6 +68,10 @@ public class CounterTransformer extends AbstractMetricianTransformer {
                 });
                 if (decrementingCounter.isPresent()) {
                     final CounterDecrement annotation = method.getAnnotation(CounterDecrement.class);
+                    if (annotation == null) {
+                        logger.error("Missing annotation, not decrementing");
+                        return;
+                    }
                     counters.put(method.getName(), decrementingCounter);
                     logger.debug("Registered Decrementing Counter on {}", method);
                     decrementingCounter.getMetric().dec(annotation.amount());
@@ -71,9 +80,17 @@ public class CounterTransformer extends AbstractMetricianTransformer {
         } else {
             if (method.isAnnotationPresent(CounterIncrement.class)) {
                 final CounterIncrement annotation = method.getAnnotation(CounterIncrement.class);
+                if (annotation == null) {
+                    logger.error("Missing annotation, not incrementing");
+                    return;
+                }
                 counterAnnotatedMetric.getMetric().inc(annotation.amount());
             } else {
                 final CounterDecrement annotation = method.getAnnotation(CounterDecrement.class);
+                if (annotation == null) {
+                    logger.error("Missing annotation, not decrementing");
+                    return;
+                }
                 counterAnnotatedMetric.getMetric().dec(annotation.amount());
             }
         }

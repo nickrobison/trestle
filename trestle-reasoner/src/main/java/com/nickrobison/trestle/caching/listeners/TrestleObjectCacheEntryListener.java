@@ -19,6 +19,7 @@ import java.io.Serializable;
 /**
  * Created by nrobison on 2/22/17.
  */
+@SuppressWarnings({"override.param.invalid"})
 public class TrestleObjectCacheEntryListener implements
         CacheEntryExpiredListener<IRI, Object>,
         CacheEntryRemovedListener<IRI, Object>, Serializable {

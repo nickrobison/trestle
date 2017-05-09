@@ -6,6 +6,7 @@ import com.nickrobison.trestle.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.exceptions.MissingConstructorException;
 import com.nickrobison.trestle.types.ObjectRestriction;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
@@ -680,7 +681,7 @@ public class ClassParser {
      * @param factName - String name of fact
      * @return - Optional Class of return datatype
      */
-    public Optional<Class<?>> getFactDatatype(Class<?> clazz, String factName) {
+    public Optional<Class<@NonNull ?>> getFactDatatype(Class<?> clazz, String factName) {
 //        Split String to get the actual fact name
         final String name;
         final String[] splitName = factName.split("#");

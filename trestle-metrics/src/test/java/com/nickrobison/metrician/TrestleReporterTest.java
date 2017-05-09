@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * Created by nrobison on 3/20/17.
  */
+@SuppressWarnings({"initialization.fields.uninitialized"})
 public class TrestleReporterTest {
 
     private Metrician metrician;

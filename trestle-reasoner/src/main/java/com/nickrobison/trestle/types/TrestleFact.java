@@ -3,6 +3,7 @@ package com.nickrobison.trestle.types;
 import com.nickrobison.trestle.parser.TypeConverter;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
@@ -26,6 +27,7 @@ public class TrestleFact<T> implements Serializable {
     private final @Nullable String language;
     private final Class<?> javaClass;
 
+    @SuppressWarnings({"dereference.of.nullable"})
     public TrestleFact(String identifier, String name, T value, TemporalObject validTemporal, TemporalObject databaseTemporal) {
         this.identifier = identifier;
         this.name = name;
@@ -41,7 +43,7 @@ public class TrestleFact<T> implements Serializable {
         this.databaseTemporal = databaseTemporal;
         this.identifier = propertyAxiom.getSubject().toStringID();
         this.name = propertyAxiom.getProperty().asOWLDataProperty().getIRI().getShortForm();
-        final Class<?> factClass = TypeConverter.lookupJavaClassFromOWLDatatype(propertyAxiom, clazz);
+        final Class<@NonNull ?> factClass = TypeConverter.lookupJavaClassFromOWLDatatype(propertyAxiom, clazz);
         final OWLLiteral literal = propertyAxiom.getObject();
         final Object literalObject = TypeConverter.extractOWLLiteral(factClass, literal);
 //        TODO(nrobison): This feels terrible, what else should I do?

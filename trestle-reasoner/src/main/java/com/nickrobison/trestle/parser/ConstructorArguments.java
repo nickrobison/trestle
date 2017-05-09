@@ -1,5 +1,7 @@
 package com.nickrobison.trestle.parser;
 
+import org.checkerframework.checker.nullness.qual.KeyFor;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -22,7 +24,7 @@ public class ConstructorArguments {
         this.arguments.put(name, new Argument(type, value));
     }
 
-    public Set<String> getNames() {
+    public Set<@KeyFor("this.arguments") String> getNames() {
         return this.arguments.keySet();
     }
 

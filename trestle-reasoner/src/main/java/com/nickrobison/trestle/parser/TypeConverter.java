@@ -34,6 +34,7 @@ import static com.nickrobison.trestle.parser.ClassParser.getMethodName;
 /**
  * Created by nrobison on 8/24/16.
  */
+@SuppressWarnings({"argument.type.incompatible"})
 public class TypeConverter {
 
     private static final Logger logger = LoggerFactory.getLogger(TypeConverter.class);
@@ -41,8 +42,8 @@ public class TypeConverter {
     private static final Map<Class<?>, OWLDatatype> owlDatatypeMap = buildClassMap();
     private static final Map<String, Function> javaClassConstructors = new HashMap<>();
 
-    public static void registerTypeConstructor(Class<?> clazz, @Nullable OWLDatatype datatype, Function constructorFunc) {
-        logger.debug("Registering java class {} with OWLDatatype {}", clazz.getName(), datatype.getIRI());
+    public static void registerTypeConstructor(Class<?> clazz, OWLDatatype datatype, Function constructorFunc) {
+            logger.debug("Registering java class {} with OWLDatatype {}", clazz.getName(), datatype.getIRI());
         datatypeMap.put(datatype, clazz);
         owlDatatypeMap.put(clazz, datatype);
         javaClassConstructors.put(clazz.getTypeName(), constructorFunc);
@@ -57,8 +58,8 @@ public class TypeConverter {
      * @return Java type of type T
      */
     //    I need the unchecked casts in order to get the correct primitives for the constructor generation
-    @SuppressWarnings({"unchecked"})
-    public static <T> @NonNull T extractOWLLiteral(Class<@NonNull T> javaClass, OWLLiteral literal) {
+    @SuppressWarnings({"unchecked", "return.type.incompatible"})
+    public static <@NonNull T> @NonNull T extractOWLLiteral(Class<@NonNull T> javaClass, OWLLiteral literal) {
 
         switch (javaClass.getTypeName()) {
 
@@ -159,8 +160,8 @@ public class TypeConverter {
      * @param classToVerify - @Nullable Class to cross-check with to ensure we're parsing the correct boxed/unboxed type.
      * @return - Java Class corresponding to OWL Datatype and required Class constructor argument
      */
-    @SuppressWarnings("dereference.of.nullable")
-    public static Class<?> lookupJavaClassFromOWLDatatype(OWLDataPropertyAssertionAxiom dataproperty, @Nullable Class<?> classToVerify) {
+    @SuppressWarnings({"dereference.of.nullable", "return.type.incompatible"})
+    public static Class<@NonNull ?> lookupJavaClassFromOWLDatatype(OWLDataPropertyAssertionAxiom dataproperty, @Nullable Class<?> classToVerify) {
         Class<?> javaClass;
         final OWLDatatype datatype = dataproperty.getObject().getDatatype();
         if (datatype.isBuiltIn()) {
@@ -319,7 +320,7 @@ public class TypeConverter {
 
     static OWLDatatype getDatatypeFromAnnotation(Fact annotation, Class<?> objectClass) {
 //        I don't think this will ever be true
-        if (annotation.datatype().toString().equals("") || annotation.datatype().equals(OWL2Datatype.XSD_NMTOKEN)) {
+        if (annotation.datatype().toString().equals("") || annotation.datatype() == OWL2Datatype.XSD_NMTOKEN) {
             return getDatatypeFromJavaClass(objectClass);
         } else {
             return annotation.datatype().getDatatype(dfStatic);

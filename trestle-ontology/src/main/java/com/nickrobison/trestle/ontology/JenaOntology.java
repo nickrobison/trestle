@@ -609,6 +609,7 @@ public abstract class JenaOntology extends TransactingOntology {
     public void setOntologyConnection() { }
 
     @Override
+    @SuppressWarnings({"override.return.invalid"})
     public @Nullable RepositoryConnection getOntologyConnection() {
         return null;
     }

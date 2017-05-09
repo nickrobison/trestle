@@ -10,6 +10,8 @@ import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.utils.SesameConnectionManager;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Statement;
@@ -45,9 +47,10 @@ import static com.nickrobison.trestle.utils.RDF4JLiteralFactory.createOWLLiteral
 import static com.nickrobison.trestle.utils.SharedOntologyFunctions.filterIndividualDataProperties;
 import static com.nickrobison.trestle.utils.SharedOntologyFunctions.getDataPropertiesFromIndividualFacts;
 
-;
-
 @NotThreadSafe
+// We have to suppress these warnings because Checker is garbage and won't allow us to mark a method has ensuring non-null. Because why would it?
+// FIXME(nrobison): This has to go away!
+@SuppressWarnings({"argument.type.incompatible"})
 public abstract class SesameOntology extends TransactingOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(SesameOntology.class);
@@ -99,7 +102,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(property));
         this.openTransaction(false);
         try {
-            final RepositoryResult<Statement> statements = this.tc.get().getStatements(individualIRI, propertyIRI, null);
+            final RepositoryResult<Statement> statements = getThreadConnection().getStatements(individualIRI, propertyIRI, null);
             try {
                 while (statements.hasNext()) {
                     final Statement statement = statements.next();
@@ -132,7 +135,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(owlClassAssertionAxiom.getIndividual().asOWLNamedIndividual()));
         final org.eclipse.rdf4j.model.IRI classIRI = vf.createIRI(getFullIRIString(owlClassAssertionAxiom.getClassExpression().asOWLClass()));
         try {
-            this.tc.get().add(individualIRI, RDF.TYPE, classIRI);
+            getThreadConnection().add(individualIRI, RDF.TYPE, classIRI);
         } finally {
             this.commitTransaction(true);
         }
@@ -162,7 +165,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI superClassIRI = vf.createIRI(getFullIRIString(subClassOfAxiom.getSuperClass().asOWLClass()));
         this.openTransaction(true);
         try {
-            this.tc.get().add(subClassIRI, RDFS.SUBCLASSOF, superClassIRI);
+            getThreadConnection().add(subClassIRI, RDFS.SUBCLASSOF, superClassIRI);
         } finally {
             this.commitTransaction(true);
         }
@@ -174,9 +177,9 @@ public abstract class SesameOntology extends TransactingOntology {
         this.openTransaction(true);
         try {
             if (property.isOWLDataProperty()) {
-                this.tc.get().add(propertyIRI, RDF.TYPE, OWL.DATATYPEPROPERTY);
+                getThreadConnection().add(propertyIRI, RDF.TYPE, OWL.DATATYPEPROPERTY);
             } else if (property.isOWLObjectProperty()) {
-                this.tc.get().add(propertyIRI, RDF.TYPE, OWL.OBJECTPROPERTY);
+                getThreadConnection().add(propertyIRI, RDF.TYPE, OWL.OBJECTPROPERTY);
             }
         } finally {
             this.commitTransaction(true);
@@ -206,7 +209,7 @@ public abstract class SesameOntology extends TransactingOntology {
 
         this.openTransaction(true);
         try {
-            this.tc.get().add(subjectIRI, propertyIRI, createLiteral(dataProperty.getObject()));
+            getThreadConnection().add(subjectIRI, propertyIRI, createLiteral(dataProperty.getObject()));
         } finally {
             this.commitTransaction(true);
         }
@@ -235,7 +238,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(property.getProperty().asOWLObjectProperty()));
         this.openTransaction(true);
         try {
-            this.tc.get().add(subjectIRI, propertyIRI, objectIRI);
+            getThreadConnection().add(subjectIRI, propertyIRI, objectIRI);
         } finally {
             this.commitTransaction(true);
         }
@@ -246,7 +249,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
         this.openTransaction(true);
         try {
-            this.tc.get().remove(individualIRI, null, null);
+            getThreadConnection().remove(individualIRI, null, null);
         } finally {
             this.commitTransaction(true);
         }
@@ -262,7 +265,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
         this.openTransaction(false);
         try {
-            if (this.tc.get().hasStatement(individualIRI, null, null, false)) {
+            if (getThreadConnection().hasStatement(individualIRI, null, null, false)) {
                 //this.tc.get().close();
                 return true;
             } else {
@@ -286,7 +289,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final RDFWriter writer = Rio.createWriter(RDFFormat.RDFXML, fso);
         this.openTransaction(false);
         try {
-            this.tc.get().export(writer);
+            getThreadConnection().export(writer);
         } finally {
             this.commitTransaction(false);
         }
@@ -321,7 +324,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI classIRI = vf.createIRI(getFullIRIString(owlClass));
         this.openTransaction(false);
         try {
-            final RepositoryResult<Statement> statements = this.tc.get().getStatements(null, RDF.TYPE, classIRI);
+            final RepositoryResult<Statement> statements = getThreadConnection().getStatements(null, RDF.TYPE, classIRI);
             try {
                 while (statements.hasNext()) {
                     final Statement next = statements.next();
@@ -362,7 +365,7 @@ public abstract class SesameOntology extends TransactingOntology {
 
         this.openTransaction(false);
         try {
-            final RepositoryResult<Statement> statements = this.tc.get().getStatements(individualIRI, null, null);
+            final RepositoryResult<Statement> statements = getThreadConnection().getStatements(individualIRI, null, null);
             try {
 
                 while (statements.hasNext()) {
@@ -410,7 +413,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
         this.openTransaction(false);
         try {
-            final RepositoryResult<Statement> statements = this.tc.get().getStatements(individualIRI, null, null);
+            final RepositoryResult<Statement> statements = getThreadConnection().getStatements(individualIRI, null, null);
             try {
                 while (statements.hasNext()) {
                     final Statement statement = statements.next();
@@ -460,7 +463,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(property));
         this.openTransaction(false);
         try {
-            final RepositoryResult<Statement> statements = this.tc.get().getStatements(individualIRI, propertyIRI, null);
+            final RepositoryResult<Statement> statements = getThreadConnection().getStatements(individualIRI, propertyIRI, null);
             try {
                 while (statements.hasNext()) {
                     final Statement next = statements.next();
@@ -554,6 +557,20 @@ public abstract class SesameOntology extends TransactingOntology {
         return trestleResultSet;
     }
 
+    /**
+     * This is mostly here so that Checker will be quiet.
+     * If we call {@link SesameOntology#setOntologyConnection()}, then the thread connection can never be null.
+     * However, Checker can't seem to see through the call stack to notice that we've called that function, so we use this instead.
+     * @return - {@link RepositoryConnection} associated with the given transaction
+     */
+    private RepositoryConnection getThreadConnection() {
+        @Nullable final RepositoryConnection repositoryConnection = this.tc.get();
+        if (repositoryConnection == null) {
+            throw new RuntimeException("Thread has null repository connection, did a transaction not get opened?");
+        }
+        return repositoryConnection;
+    }
+
     public abstract void openDatasetTransaction(boolean write);
 
     public abstract void commitDatasetTransaction(boolean write);
@@ -566,7 +583,13 @@ public abstract class SesameOntology extends TransactingOntology {
             this.tc.set(this.cm.getConnection());
         } else {
             logger.debug("Setting thread connection from transaction object");
-            this.tc.set(threadTransactionObject.getConnection());
+            @Nullable final RepositoryConnection connection = threadTransactionObject.getConnection();
+            if (connection != null) {
+                this.tc.set(connection);
+            } else {
+                logger.warn("Transaction object has null connection, creating new one");
+                this.tc.set(this.cm.getConnection());
+            }
         }
     }
 
@@ -574,13 +597,13 @@ public abstract class SesameOntology extends TransactingOntology {
      * Reset thread connection to null and return the connection to the {@link SesameConnectionManager}
      */
     protected void resetThreadConnection() {
-        @Nullable final RepositoryConnection connection = this.tc.get();
+        @Nullable final RepositoryConnection connection = getThreadConnection();
         this.tc.set(null);
         this.cm.returnConnection(connection);
     }
 
     @Override
-    public @Nullable RepositoryConnection getOntologyConnection() {
+    public @NonNull RepositoryConnection getOntologyConnection() {
         return this.cm.getConnection();
     }
 }

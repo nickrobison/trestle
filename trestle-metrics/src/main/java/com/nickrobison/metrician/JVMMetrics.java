@@ -6,6 +6,7 @@ import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
 import com.nickrobison.trestle.annotations.metrics.Metriced;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +51,7 @@ public class JVMMetrics {
         this.registerJVMMetrics();
     }
 
-    private void registerJVMMetrics() {
+    private void registerJVMMetrics(@UnderInitialization(JVMMetrics.class) JVMMetrics this) {
         logger.debug("Registering JVM Memory Gauges");
         this.registry.registerAll(new MemoryUsageGaugeSet());
         logger.debug("Registering JVM Thread gauges");

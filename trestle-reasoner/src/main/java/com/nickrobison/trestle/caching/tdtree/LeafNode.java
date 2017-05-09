@@ -66,7 +66,7 @@ public abstract class LeafNode<Value> {
      * @param value     - {@link Value} to insert
      * @return - {@link LeafSplit} if the insert forced the leaf to split. Null value if not
      */
-    abstract LeafSplit insert(long objectID, long startTime, long endTime, Value value);
+    abstract @Nullable LeafSplit insert(long objectID, long startTime, long endTime, @NonNull Value value);
 
     /**
      * Insert a {@link FastTuple} key/value pair into the leaf
@@ -75,7 +75,7 @@ public abstract class LeafNode<Value> {
      * @param value  - {@link Value} to insert
      * @return - {@link LeafSplit} if the insert forced the leaf to split. Null value if not
      */
-    abstract LeafSplit insert(FastTuple newKey, Value value);
+    abstract @Nullable LeafSplit insert(FastTuple newKey, @NonNull Value value);
 
     /**
      * Delete key/value pair from leaf
@@ -101,7 +101,7 @@ public abstract class LeafNode<Value> {
      */
     abstract long deleteKeysWithValue(@NonNull Value value);
 
-    abstract boolean update(String objectID, long atTime, Value value);
+    abstract boolean update(String objectID, long atTime, @NonNull Value value);
 
     /**
      * Retrieve a value from the Leaf that matches the given ObjectID and is valid at the specified timestamp
@@ -126,7 +126,7 @@ public abstract class LeafNode<Value> {
      *
      * @return Map of {@link FastTuple} and {@link Value} pairs for the node
      */
-    abstract Map<FastTuple, Value> dumpLeaf();
+    abstract Map<FastTuple, @NonNull Value> dumpLeaf();
 
     /**
      * Calculates the fragmentation of the leaf-node, which is the number of null records in the storage array with indexes less than the record count

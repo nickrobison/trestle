@@ -2,6 +2,7 @@ package com.nickrobison.metrician;
 
 import com.codahale.metrics.*;
 import com.nickrobison.metrician.backends.IMetricianBackend;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
 
 import java.util.Collection;
 import java.util.Map;
@@ -47,7 +48,12 @@ class MetricsListener implements MetricRegistryListener {
         this.decomposer = decomposer;
         this.metricsBackend = metricsBackend;
 
-//        Initialize
+        initializeMetrics(registry);
+    }
+
+    @SuppressWarnings({"methodref.receiver.bound.invalid", "argument.type.incompatible"})
+    private void initializeMetrics(@UnderInitialization(MetricsListener.class) MetricsListener this, MetricRegistry registry) {
+        //        Initialize
         registry.getGauges().forEach(this::onGaugeAdded);
         registry.getCounters().forEach(this::onCounterAdded);
         registry.getHistograms().forEach(this::onHistogramAdded);

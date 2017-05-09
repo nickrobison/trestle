@@ -19,7 +19,7 @@ import java.util.Optional;
  */
 public class TrestleResult {
 
-    private final Map<String, OWLObject> resultValues;
+    private final Map<String, @Nullable OWLObject> resultValues;
 
     public TrestleResult() {
         this.resultValues = new HashMap<>();
@@ -77,6 +77,7 @@ public class TrestleResult {
         return Optional.empty();
     }
 
+    @SuppressWarnings({"lambda.param.type.incompatible"})
     public Map<String, String> getResultValues() {
         Map<String, String> stringMap = new HashMap<>();
         this.resultValues

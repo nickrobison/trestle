@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.common.locking;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +17,7 @@ public class TrestleUpgradableReadWriteLock {
     private final Map<Thread, Integer> readingThreads = new HashMap<>();
     private int writeAccesses = 0;
     private int writeRequests = 0;
-    private Thread writingThread = null;
+    private @Nullable Thread writingThread = null;
 
     /**
      * Take the Read lock
@@ -139,7 +140,7 @@ public class TrestleUpgradableReadWriteLock {
     }
 
     private boolean isWriter(Thread callingThread) {
-        return writingThread == callingThread;
+        return callingThread.equals(writingThread);
     }
 
     private boolean hasWriteRequests() {
