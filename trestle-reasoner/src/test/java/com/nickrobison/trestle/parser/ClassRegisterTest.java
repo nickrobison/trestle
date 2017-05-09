@@ -18,8 +18,6 @@ import java.time.temporal.ChronoUnit;
 import static com.nickrobison.trestle.exceptions.InvalidClassException.State.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-;
-
 /**
  * Created by nrobison on 7/26/16.
  */
@@ -75,10 +73,10 @@ public class ClassRegisterTest {
             fail("Should not throw exception");
         }
 
-        InvalidClassException invalidClassException = expectThrows(InvalidClassException.class, () -> ClassRegister.checkIndividualIdentifier(eClass));
+        InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> ClassRegister.checkIndividualIdentifier(eClass));
         assertEquals(MISSING, invalidClassException.getProblemState(), "Wrong problem state");
 
-        invalidClassException = expectThrows(InvalidClassException.class, () -> ClassRegister.checkIndividualIdentifier(xClass));
+        invalidClassException = assertThrows(InvalidClassException.class, () -> ClassRegister.checkIndividualIdentifier(xClass));
         assertEquals(EXCESS, invalidClassException.getProblemState(), "Wrong problem state");
     }
 
@@ -91,7 +89,7 @@ public class ClassRegisterTest {
             fail("Should not throw exception");
         }
 
-        final InvalidClassException invalidClassException = expectThrows(InvalidClassException.class, () -> ClassRegister.checkForClassName(eClass));
+        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> ClassRegister.checkForClassName(eClass));
         assertEquals(MISSING, invalidClassException.getProblemState(), "Wrong problem state");
     }
 
@@ -104,7 +102,7 @@ public class ClassRegisterTest {
             fail("Should not throw exception");
         }
 
-        final InvalidClassException invalidClassException = expectThrows(InvalidClassException.class, () -> ClassRegister.checkForConstructor(eClass));
+        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> ClassRegister.checkForConstructor(eClass));
         assertEquals(EXCESS, invalidClassException.getProblemState(), "Wrong problem state");
 
         try {
@@ -124,10 +122,10 @@ public class ClassRegisterTest {
             fail("Should not throw exception");
         }
 
-        InvalidClassException invalidClassException = expectThrows(InvalidClassException.class, () -> ClassRegister.checkForSpatial(xClass));
+        InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> ClassRegister.checkForSpatial(xClass));
         assertEquals(EXCESS, invalidClassException.getProblemState(), "Should have EXCESS problem state");
 
-        invalidClassException = expectThrows(InvalidClassException.class, () -> ClassRegister.checkForSpatial(sClass));
+        invalidClassException = assertThrows(InvalidClassException.class, () -> ClassRegister.checkForSpatial(sClass));
         assertEquals(MISSING, invalidClassException.getProblemState(), "Should be missing the spatial argument in the constructor");
     }
 
@@ -140,7 +138,7 @@ public class ClassRegisterTest {
             fail("Should not throw exception");
         }
 
-        final InvalidClassException invalidClassException = expectThrows(InvalidClassException.class, () -> ClassRegister.checkForTemporals(ftClass));
+        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> ClassRegister.checkForTemporals(ftClass));
         assertEquals(EXCESS, invalidClassException.getProblemState(), "Should have excess problem state");
 
         try {
@@ -160,7 +158,7 @@ public class ClassRegisterTest {
             fail("Should not throw exception");
         }
 
-        final InvalidClassException invalidClassException = expectThrows(InvalidClassException.class, () -> ClassRegister.checkForLanguage(flClass));
+        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> ClassRegister.checkForLanguage(flClass));
         assertEquals(INVALID, invalidClassException.getProblemState());
     }
 
