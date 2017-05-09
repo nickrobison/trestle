@@ -145,7 +145,6 @@ public class OracleOntology extends JenaOntology {
 
     @Override
     public void commitDatasetTransaction(boolean write) {
-        this.model.leaveCriticalSection();
         this.model.commit();
         if (write) {
             try {
@@ -164,13 +163,12 @@ public class OracleOntology extends JenaOntology {
     @Override
     public void openDatasetTransaction(boolean write) {
         this.model.begin();
-        this.model.enterCriticalSection(getJenaLock(write));
+//        this.model.enterCriticalSection(getJenaLock(write));
         logger.debug("Transaction opened and critical section entered");
     }
 
     @Override
     public void abortDatasetTransaction(boolean write) {
-        this.model.leaveCriticalSection();
         this.model.abort();
         if (write) {
             try {

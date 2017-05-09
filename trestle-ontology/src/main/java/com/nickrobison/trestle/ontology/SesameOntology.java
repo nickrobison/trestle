@@ -78,7 +78,6 @@ public abstract class SesameOntology extends TransactingOntology {
         this.df = OWLManager.getOWLDataFactory();
         this.qb = new QueryBuilder(QueryBuilder.DIALECT.SESAME, this.pm);
         this.cm = new SesameConnectionManager(this.repository, config.getInt("connectionPool.maxSize"), config.getInt("connectionPool.initialConnections"));
-        logger.info("Sesame Ontology initialized and ready");
     }
 
 
