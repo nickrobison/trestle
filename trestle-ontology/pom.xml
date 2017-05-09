@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>trestle</artifactId>
-        <groupId>com.nickrobison</groupId>
+        <groupId>com.nickrobison.trestle</groupId>
         <version>0.6-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -16,17 +16,17 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.nickrobison</groupId>
+            <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-querybuilder</artifactId>
             <version>0.6-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.nickrobison</groupId>
+            <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-common</artifactId>
             <version>0.6-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.nickrobison</groupId>
+            <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-annotations</artifactId>
             <version>0.6-SNAPSHOT</version>
         </dependency>
