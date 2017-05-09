@@ -2,9 +2,8 @@ package com.nickrobison.metrician.backends;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
-import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.metrician.MetricianReporter;
-import com.nickrobison.trestle.annotations.metrics.Metriced;
+import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;

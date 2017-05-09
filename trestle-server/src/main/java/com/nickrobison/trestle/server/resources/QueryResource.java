@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.server.resources;
 
-import com.nickrobison.trestle.TrestleReasoner;
+import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;

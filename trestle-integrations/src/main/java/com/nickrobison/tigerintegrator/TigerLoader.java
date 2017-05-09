@@ -1,10 +1,10 @@
 package com.nickrobison.tigerintegrator;
 
 import com.google.common.collect.ImmutableMap;
-import com.nickrobison.trestle.TrestleBuilder;
-import com.nickrobison.trestle.TrestleReasoner;
-import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
-import com.nickrobison.trestle.exceptions.TrestleClassException;
+import com.nickrobison.trestle.reasoner.TrestleBuilder;
+import com.nickrobison.trestle.reasoner.TrestleReasoner;
+import com.nickrobison.trestle.reasoner.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.semanticweb.owlapi.model.IRI;

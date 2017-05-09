@@ -2,8 +2,8 @@ package com.nickrobison.metrician.instrumentation.transformers;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
-import com.nickrobison.trestle.annotations.metrics.CounterDecrement;
-import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
+import com.nickrobison.trestle.reasoner.annotations.metrics.CounterDecrement;
+import com.nickrobison.trestle.reasoner.annotations.metrics.CounterIncrement;
 import com.nickrobison.metrician.AnnotatedMetric;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.Advice;

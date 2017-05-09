@@ -1,10 +1,8 @@
 package com.nickrobison.trestle.ontology;
 
-import com.codahale.metrics.annotation.Gauge;
-import com.nickrobison.trestle.annotations.metrics.CounterIncrement;
-import com.nickrobison.trestle.annotations.metrics.Metriced;
+import com.nickrobison.trestle.reasoner.annotations.metrics.CounterIncrement;
+import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
-import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.slf4j.Logger;

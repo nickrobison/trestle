@@ -1,6 +1,6 @@
 package com.nickrobison.metrician.agent;
 
-import com.nickrobison.trestle.annotations.metrics.Metriced;
+import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.metrician.instrumentation.transformers.*;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.matcher.ElementMatchers;

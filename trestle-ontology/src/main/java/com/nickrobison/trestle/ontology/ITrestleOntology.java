@@ -2,8 +2,7 @@ package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
-import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import com.nickrobison.trestle.reasoner.exceptions.MissingOntologyEntity;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 

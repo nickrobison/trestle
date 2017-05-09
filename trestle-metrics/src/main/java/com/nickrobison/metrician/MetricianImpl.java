@@ -5,7 +5,7 @@ import com.codahale.metrics.Timer;
 import com.codahale.metrics.annotation.Gauge;
 import com.nickrobison.metrician.backends.IMetricianBackend;
 import com.nickrobison.metrician.backends.MetricianExportedValue;
-import com.nickrobison.trestle.annotations.metrics.Metriced;
+import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;

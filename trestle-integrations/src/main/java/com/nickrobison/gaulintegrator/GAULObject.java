@@ -3,9 +3,9 @@ package com.nickrobison.gaulintegrator;
 import com.esri.core.geometry.*;
 import com.nickrobison.gaulintegrator.common.ObjectID;
 import com.nickrobison.gaulintegrator.common.Utils;
-import com.nickrobison.trestle.annotations.*;
-import com.nickrobison.trestle.annotations.temporal.EndTemporal;
-import com.nickrobison.trestle.annotations.temporal.StartTemporal;
+import com.nickrobison.trestle.reasoner.annotations.*;
+import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
+import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 
 import java.sql.Date;
 import java.time.LocalDate;

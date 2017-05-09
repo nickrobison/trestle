@@ -2,15 +2,14 @@ package com.nickrobison.trestle.ontology;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.reasoner.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
-import com.nickrobison.trestle.utils.SesameConnectionManager;
+import com.nickrobison.trestle.reasoner.utils.SesameConnectionManager;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.model.Literal;
@@ -42,10 +41,10 @@ import java.io.FileOutputStream;
 import java.time.OffsetDateTime;
 import java.util.*;
 
-import static com.nickrobison.trestle.utils.RDF4JLiteralFactory.createLiteral;
-import static com.nickrobison.trestle.utils.RDF4JLiteralFactory.createOWLLiteral;
-import static com.nickrobison.trestle.utils.SharedOntologyFunctions.filterIndividualDataProperties;
-import static com.nickrobison.trestle.utils.SharedOntologyFunctions.getDataPropertiesFromIndividualFacts;
+import static com.nickrobison.trestle.reasoner.utils.RDF4JLiteralFactory.createLiteral;
+import static com.nickrobison.trestle.reasoner.utils.RDF4JLiteralFactory.createOWLLiteral;
+import static com.nickrobison.trestle.reasoner.utils.SharedOntologyFunctions.filterIndividualDataProperties;
+import static com.nickrobison.trestle.reasoner.utils.SharedOntologyFunctions.getDataPropertiesFromIndividualFacts;
 
 @NotThreadSafe
 // We have to suppress these warnings because Checker is garbage and won't allow us to mark a method has ensuring non-null. Because why would it?

@@ -1,6 +1,6 @@
 //package com.nickrobison.trestle.ontology;
 //
-//import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+//import com.nickrobison.trestle.reasoner.exceptions.MissingOntologyEntity;
 //import org.junit.jupiter.api.AfterEach;
 //import org.junit.jupiter.api.BeforeEach;
 //import org.junit.jupiter.api.Disabled;

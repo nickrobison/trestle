@@ -1,10 +1,9 @@
 package com.nickrobison.tigerintegrator;
 
-import com.nickrobison.trestle.annotations.DatasetClass;
-import com.nickrobison.trestle.annotations.IndividualIdentifier;
-import com.nickrobison.trestle.annotations.Spatial;
-import com.nickrobison.trestle.annotations.temporal.EndTemporal;
-import com.nickrobison.trestle.annotations.temporal.StartTemporal;
+import com.nickrobison.trestle.reasoner.annotations.DatasetClass;
+import com.nickrobison.trestle.reasoner.annotations.IndividualIdentifier;
+import com.nickrobison.trestle.reasoner.annotations.Spatial;
+import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 

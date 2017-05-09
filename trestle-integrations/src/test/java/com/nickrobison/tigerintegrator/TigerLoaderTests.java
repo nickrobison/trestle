@@ -1,8 +1,7 @@
 package com.nickrobison.tigerintegrator;
 
-import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
-import com.nickrobison.trestle.exceptions.TrestleClassException;
-import org.junit.jupiter.api.Disabled;
+import com.nickrobison.trestle.reasoner.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;

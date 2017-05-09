@@ -2,8 +2,8 @@ package com.nickrobison.gaulintegrator.HadoopTests;
 
 import com.esri.mapreduce.PolygonFeatureInputFormat;
 import com.nickrobison.gaulintegrator.*;
-import com.nickrobison.trestle.TrestleBuilder;
-import com.nickrobison.trestle.TrestleReasoner;
+import com.nickrobison.trestle.reasoner.TrestleBuilder;
+import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;

@@ -5,7 +5,7 @@ import com.codahale.metrics.annotation.Gauge;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
-import com.nickrobison.trestle.annotations.metrics.Metriced;
+import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

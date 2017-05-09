@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
-import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.reasoner.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.typesafe.config.Config;
@@ -12,7 +12,6 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;

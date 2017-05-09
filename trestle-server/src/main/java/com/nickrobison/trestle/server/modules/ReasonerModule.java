@@ -1,7 +1,7 @@
 package com.nickrobison.trestle.server.modules;
 
-import com.nickrobison.trestle.TrestleBuilder;
-import com.nickrobison.trestle.TrestleReasoner;
+import com.nickrobison.trestle.reasoner.TrestleBuilder;
+import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.server.config.TrestleReasonerConfiguration;
 import com.nickrobison.trestle.server.config.TrestleServerConfiguration;
 import io.dropwizard.lifecycle.Managed;

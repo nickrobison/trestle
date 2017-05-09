@@ -1,7 +1,7 @@
 package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
-import com.nickrobison.trestle.utils.SharedOntologyFunctions;
+import com.nickrobison.trestle.reasoner.utils.SharedOntologyFunctions;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.query.*;
 import org.apache.jena.query.spatial.*;

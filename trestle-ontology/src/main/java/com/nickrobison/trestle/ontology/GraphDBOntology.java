@@ -38,7 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.MissingResourceException;
 
-import static com.nickrobison.trestle.utils.SharedOntologyFunctions.ontologytoIS;
+import static com.nickrobison.trestle.reasoner.utils.SharedOntologyFunctions.ontologytoIS;
 import static org.eclipse.rdf4j.model.vocabulary.SESAME.WILDCARD;
 
 /**
