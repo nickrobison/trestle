@@ -1,7 +1,7 @@
 package com.nickrobison.trestle.server.tasks;
 
 import com.google.common.collect.ImmutableMultimap;
-import com.nickrobison.trestle.TrestleReasoner;
+import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
 import io.dropwizard.servlets.tasks.Task;
 import org.slf4j.Logger;

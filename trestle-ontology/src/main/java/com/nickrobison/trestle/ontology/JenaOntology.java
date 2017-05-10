@@ -2,12 +2,12 @@ package com.nickrobison.trestle.ontology;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
-import com.nickrobison.trestle.utils.JenaLiteralFactory;
-import com.nickrobison.trestle.utils.SharedOntologyFunctions;
+import com.nickrobison.trestle.ontology.utils.JenaLiteralFactory;
+import com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
@@ -15,10 +15,12 @@ import org.apache.jena.rdf.model.*;
 import org.apache.jena.shared.AddDeniedException;
 import org.apache.jena.shared.Lock;
 import org.apache.jena.tdb.transaction.TDBTransactionException;
+import org.apache.jena.update.UpdateAction;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
@@ -49,6 +51,7 @@ public abstract class JenaOntology extends TransactingOntology {
     protected final JenaLiteralFactory jf;
 
     JenaOntology(String ontologyName, Model model, OWLOntology ontology, DefaultPrefixManager pm) {
+        super(ontologyName);
         this.ontologyName = ontologyName;
         this.model = model;
         this.graph = this.model.getGraph();
@@ -116,7 +119,7 @@ public abstract class JenaOntology extends TransactingOntology {
 
 //        TODO(nrobison): This should be more optimistic, don't check, just write.
         this.openAndLock(true);
-        logger.debug("Trying to create the individual");
+        logger.debug("Trying to create individual {}", owlClassAssertionAxiom.getIndividual());
         this.model.enterCriticalSection(Lock.WRITE);
         try {
             final Resource modelResource = model.getResource(getFullIRIString(owlClassAssertionAxiom.getIndividual().asOWLNamedIndividual()));
@@ -594,11 +597,11 @@ public abstract class JenaOntology extends TransactingOntology {
 
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> GetFactsForIndividual(OWLNamedIndividual individual, @Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal) {
-        final String objectQuery = qb.buildObjectPropertyRetrievalQuery(startTemporal, endTemporal, individual);
+    public Set<OWLDataPropertyAssertionAxiom> getFactsForIndividual(OWLNamedIndividual individual, OffsetDateTime validTemporal, OffsetDateTime databaseTemporal, boolean filterTemporals) {
+        final String objectQuery = qb.buildObjectPropertyRetrievalQuery(validTemporal, databaseTemporal, true, individual);
 //        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
-        final TrestleResultSet resultSet = this.executeSPARQLTRS(objectQuery);
-//        final ResultSet resultSet = this.executeSPARQL(objectQuery);
+        final TrestleResultSet resultSet = this.executeSPARQLResults(objectQuery);
+//        final ResultSet resultSet = this.executeUpdateSPARQL(objectQuery);
         Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = SharedOntologyFunctions.getDataPropertiesFromIndividualFacts(df, resultSet);
 
 
@@ -616,12 +619,12 @@ public abstract class JenaOntology extends TransactingOntology {
     }
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> GetTemporalsForIndividual(OWLNamedIndividual individual) {
+    public Set<OWLDataPropertyAssertionAxiom> getTemporalsForIndividual(OWLNamedIndividual individual) {
         final String temporalQuery = qb.buildIndividualTemporalQuery(individual);
 //        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
-        final TrestleResultSet resultSet = this.executeSPARQLTRS(temporalQuery);
+        final TrestleResultSet resultSet = this.executeSPARQLResults(temporalQuery);
         return SharedOntologyFunctions.getDataPropertiesFromIndividualFacts(df, resultSet);
-//        final ResultSet resultSet = this.executeSPARQL(temporalQuery);
+//        final ResultSet resultSet = this.executeUpdateSPARQL(temporalQuery);
 //        while (resultSet.hasNext()) {
 //            final QuerySolution next = resultSet.next();
 //            final Optional<OWLLiteral> owlLiteral = this.jf.createOWLLiteral(next.getLiteral("object"));
@@ -682,13 +685,22 @@ public abstract class JenaOntology extends TransactingOntology {
         return Lock.READ;
     }
 
+    @Override
+    public void setOntologyConnection() { }
+
+    @Override
+    @SuppressWarnings({"override.return.invalid"})
+    public @Nullable RepositoryConnection getOntologyConnection() {
+        return null;
+    }
+
     /**
-     * Build TrestleResultSet from Jena ResultSet
-     * @param resultSet - Jena ResultSet to parse
-     * @return - TrestleResultSet
+     * Build {@link TrestleResultSet} from Jena {@link ResultSet}
+     * @param resultSet - Jena {@link ResultSet} to parse
+     * @return - {@link TrestleResultSet}
      */
     TrestleResultSet buildResultSet(ResultSet resultSet) {
-        final TrestleResultSet trestleResultSet = new TrestleResultSet(resultSet.getRowNumber());
+        final TrestleResultSet trestleResultSet = new TrestleResultSet(resultSet.getRowNumber(), resultSet.getResultVars());
         while (resultSet.hasNext()) {
             final QuerySolution next = resultSet.next();
             final TrestleResult results = new TrestleResult();
@@ -696,15 +708,29 @@ public abstract class JenaOntology extends TransactingOntology {
             while (varNames.hasNext()) {
                 final String varName = varNames.next();
                 final RDFNode rdfNode = next.get(varName);
-                if (rdfNode.isResource()) {
-                    results.addValue(varName, df.getOWLNamedIndividual(IRI.create(rdfNode.asResource().getURI())));
+                if (rdfNode != null) {
+                    if (rdfNode.isResource()) {
+                        results.addValue(varName, df.getOWLNamedIndividual(IRI.create(rdfNode.asResource().getURI())));
+                    } else {
+                        final Optional<OWLLiteral> literal = this.jf.createOWLLiteral(rdfNode.asLiteral());
+                        literal.ifPresent(literalValue -> results.addValue(varName, literalValue));
+                    }
                 } else {
-                    final Optional<OWLLiteral> literal = this.jf.createOWLLiteral(rdfNode.asLiteral());
-                    literal.ifPresent(literalValue -> results.addValue(varName, literalValue));
+                    results.addValue(varName, null);
                 }
             }
             trestleResultSet.addResult(results);
         }
+        trestleResultSet.updateRowCount();
         return trestleResultSet;
+    }
+
+    @Override
+    public void executeUpdateSPARQL(String queryString) {
+        this.openTransaction(true);
+        this.model.enterCriticalSection(Lock.WRITE);
+        UpdateAction.parseExecute(queryString, this.model);
+        this.model.leaveCriticalSection();
+        this.commitTransaction(true);
     }
 }

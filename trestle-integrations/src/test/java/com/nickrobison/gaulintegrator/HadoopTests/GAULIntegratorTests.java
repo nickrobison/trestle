@@ -2,8 +2,8 @@ package com.nickrobison.gaulintegrator.HadoopTests;
 
 import com.esri.mapreduce.PolygonFeatureInputFormat;
 import com.nickrobison.gaulintegrator.*;
-import com.nickrobison.trestle.TrestleBuilder;
-import com.nickrobison.trestle.TrestleReasoner;
+import com.nickrobison.trestle.reasoner.TrestleBuilder;
+import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
@@ -88,7 +88,7 @@ public class GAULIntegratorTests {
         password = "";
         ontologyPath = "file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl";
         ontologyPrefix = "http://nickrobison.com/test/hadoop.owl#";
-        ontologyName = "hadoop_gaul_rewrite";
+        ontologyName = "hadoop_gaul_updated";
         conf.set("reasoner.db.connection", connectionString);
         conf.set("reasoner.db.username", userName);
         conf.set("reasoner.db.password", password);
@@ -105,10 +105,12 @@ public class GAULIntegratorTests {
                 .withPrefix(ontologyPrefix)
                 .initialize()
                 .withName(ontologyName)
+//                FIXME(nrobison): Caching just doesn't work, so we should disable it until we merge TRESTLE-206
+                .withoutCaching()
                 .build();
 
-//        File outputFile = new File("/Users/nrobison/Desktop/hadoop.owl");
-//        reasoner.writeOntology(outputFile.toURI(), true);
+        File outputFile = new File("/Users/nrobison/Desktop/hadoop.owl");
+        reasoner.writeOntology(outputFile.toURI(), true);
         reasoner.shutdown(false);
     }
 
@@ -140,7 +142,7 @@ public class GAULIntegratorTests {
         FileOutputFormat.setOutputPath(job, outDir);
         job.waitForCompletion(true);
         assertTrue(job.isSuccessful());
-
+//
 //        Try to find some individuals
         reasoner = new TrestleBuilder()
                 .withDBConnection(connectionString, userName, password)
@@ -148,11 +150,18 @@ public class GAULIntegratorTests {
                 .withOntology(IRI.create(ontologyPath))
                 .withPrefix(ontologyPrefix)
                 .withName(ontologyName)
+//                FIXME(nrobison): Caching just doesn't work, so we should disable it until we merge TRESTLE-206
+                .withoutCaching()
                 .build();
 
-        Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, "Manhica:concept", null, null);
-        assertAll(() -> assertTrue(conceptMembers.isPresent(), "Should have Manhica concept members"),
-                () -> assertEquals(3, conceptMembers.get().size(), "Wrong number of members for Manhica"));
+        final Optional<List<GAULObject>> manhicaMembers = reasoner.getConceptMembers(GAULObject.class, "Manhica:concept", null, null);
+        assertAll(() -> assertTrue(manhicaMembers.isPresent(), "Should have Manhica concept members"),
+                () -> assertEquals(3, manhicaMembers.get().size(), "Wrong number of members for Manhica"));
+
+//        Try for Cidade
+        final Optional<List<GAULObject>> cidadeMembers = reasoner.getConceptMembers(GAULObject.class, "Cidade_de_Maputo:concept", null, null);
+        assertAll(() -> assertTrue(manhicaMembers.isPresent(), "Should have Cidade concept members"),
+                () -> assertEquals(7, cidadeMembers.get().size(), "Wrong number of members for Cidade"));
 
     }
 
@@ -160,8 +169,8 @@ public class GAULIntegratorTests {
     public static void close() throws IOException {
         cluster.shutdown();
 
-//        File outputFile = new File("/Users/nrobison/Desktop/hadoop.owl");
-//        reasoner.writeOntology(outputFile.toURI(), true);
+        File outputFile = new File("/Users/nrobison/Desktop/hadoop-new.owl");
+        reasoner.writeOntology(outputFile.toURI(), true);
         reasoner.shutdown(false);
     }
 }

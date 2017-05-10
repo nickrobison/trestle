@@ -2,53 +2,81 @@ package com.nickrobison.trestle.ontology;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
-import com.nickrobison.trestle.ontology.types.TrestleResultSet;;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.ontology.types.TrestleResult;
+import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
+import com.nickrobison.trestle.transactions.TrestleTransaction;
+import com.nickrobison.trestle.ontology.utils.SesameConnectionManager;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.eclipse.rdf4j.model.*;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
+import org.eclipse.rdf4j.query.Binding;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFWriter;
+import org.eclipse.rdf4j.rio.Rio;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.time.OffsetDateTime;
 import java.util.*;
 
-import static com.nickrobison.trestle.utils.RDF4JLiteralFactory.createLiteral;
-import static com.nickrobison.trestle.utils.RDF4JLiteralFactory.createOWLLiteral;
-import static com.nickrobison.trestle.utils.SharedOntologyFunctions.filterIndividualDataProperties;
-import static com.nickrobison.trestle.utils.SharedOntologyFunctions.getDataPropertiesFromIndividualFacts;
+import static com.nickrobison.trestle.ontology.utils.RDF4JLiteralFactory.createLiteral;
+import static com.nickrobison.trestle.ontology.utils.RDF4JLiteralFactory.createOWLLiteral;
+import static com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions.filterIndividualDataProperties;
+import static com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions.getDataPropertiesFromIndividualFacts;
 
 @NotThreadSafe
+// We have to suppress these warnings because Checker is garbage and won't allow us to mark a method has ensuring non-null. Because why would it?
+// FIXME(nrobison): This has to go away!
+@SuppressWarnings({"argument.type.incompatible"})
 public abstract class SesameOntology extends TransactingOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(SesameOntology.class);
     protected static final SimpleValueFactory vf = SimpleValueFactory.getInstance();
     protected final String ontologyName;
-    protected final RepositoryConnection connection;
+    protected final RepositoryConnection adminConnection;
+    protected final Repository repository;
     protected final OWLOntology ontology;
     protected final DefaultPrefixManager pm;
     protected final OWLDataFactory df;
     protected final QueryBuilder qb;
+    private final SesameConnectionManager cm;
+
+    protected ThreadLocal<@Nullable RepositoryConnection> tc = ThreadLocal.withInitial(() -> null);
 
 
-    SesameOntology(String ontologyName, RepositoryConnection connection, OWLOntology ontology, DefaultPrefixManager pm) {
+    SesameOntology(String ontologyName, Repository repository, OWLOntology ontology, DefaultPrefixManager pm) {
+        super(ontologyName);
+        final Config config = ConfigFactory.load().getConfig("trestle.ontology.sesame");
         this.ontologyName = ontologyName;
-        this.connection = connection;
+        this.repository = repository;
+        this.adminConnection = repository.getConnection();
         this.ontology = ontology;
         this.pm = pm;
         this.df = OWLManager.getOWLDataFactory();
         this.qb = new QueryBuilder(QueryBuilder.DIALECT.SESAME, this.pm);
+        this.cm = new SesameConnectionManager(this.repository, config.getInt("connectionPool.maxSize"), config.getInt("connectionPool.initialConnections"));
     }
 
 
@@ -72,7 +100,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(property));
         this.openTransaction(false);
         try {
-            final RepositoryResult<Statement> statements = connection.getStatements(individualIRI, propertyIRI, null);
+            final RepositoryResult<Statement> statements = getThreadConnection().getStatements(individualIRI, propertyIRI, null);
             try {
                 while (statements.hasNext()) {
                     final Statement statement = statements.next();
@@ -105,7 +133,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(owlClassAssertionAxiom.getIndividual().asOWLNamedIndividual()));
         final org.eclipse.rdf4j.model.IRI classIRI = vf.createIRI(getFullIRIString(owlClassAssertionAxiom.getClassExpression().asOWLClass()));
         try {
-            connection.add(individualIRI, RDF.TYPE, classIRI);
+            getThreadConnection().add(individualIRI, RDF.TYPE, classIRI);
         } finally {
             this.commitTransaction(true);
         }
@@ -135,7 +163,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI superClassIRI = vf.createIRI(getFullIRIString(subClassOfAxiom.getSuperClass().asOWLClass()));
         this.openTransaction(true);
         try {
-            connection.add(subClassIRI, RDFS.SUBCLASSOF, superClassIRI);
+            getThreadConnection().add(subClassIRI, RDFS.SUBCLASSOF, superClassIRI);
         } finally {
             this.commitTransaction(true);
         }
@@ -147,9 +175,9 @@ public abstract class SesameOntology extends TransactingOntology {
         this.openTransaction(true);
         try {
             if (property.isOWLDataProperty()) {
-                connection.add(propertyIRI, RDF.TYPE, OWL.DATATYPEPROPERTY);
+                getThreadConnection().add(propertyIRI, RDF.TYPE, OWL.DATATYPEPROPERTY);
             } else if (property.isOWLObjectProperty()) {
-                connection.add(propertyIRI, RDF.TYPE, OWL.OBJECTPROPERTY);
+                getThreadConnection().add(propertyIRI, RDF.TYPE, OWL.OBJECTPROPERTY);
             }
         } finally {
             this.commitTransaction(true);
@@ -179,7 +207,7 @@ public abstract class SesameOntology extends TransactingOntology {
 
         this.openTransaction(true);
         try {
-            connection.add(subjectIRI, propertyIRI, createLiteral(dataProperty.getObject()));
+            getThreadConnection().add(subjectIRI, propertyIRI, createLiteral(dataProperty.getObject()));
         } finally {
             this.commitTransaction(true);
         }
@@ -208,7 +236,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(property.getProperty().asOWLObjectProperty()));
         this.openTransaction(true);
         try {
-            connection.add(subjectIRI, propertyIRI, objectIRI);
+            getThreadConnection().add(subjectIRI, propertyIRI, objectIRI);
         } finally {
             this.commitTransaction(true);
         }
@@ -219,7 +247,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
         this.openTransaction(true);
         try {
-            connection.remove(individualIRI, null, null);
+            getThreadConnection().remove(individualIRI, null, null);
         } finally {
             this.commitTransaction(true);
         }
@@ -235,26 +263,46 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
         this.openTransaction(false);
         try {
-            final RepositoryResult<Statement> statements = connection.getStatements(individualIRI, null, null);
-            if (statements.hasNext()) {
-                statements.close();
+            if (getThreadConnection().hasStatement(individualIRI, null, null, false)) {
+                //this.tc.get().close();
                 return true;
             } else {
-                statements.close();
+                //this.tc.get().close();
                 return false;
             }
         } finally {
             this.commitTransaction(false);
         }
-
     }
 
     @Override
     public void writeOntology(IRI path, boolean validate) throws OWLOntologyStorageException {
-        logger.error("Write ontology not-implemented for Sesame Ontology");
+        final FileOutputStream fso;
+        try {
+            fso = new FileOutputStream(new File(path.toURI()));
+        } catch (FileNotFoundException e) {
+            logger.error("Cannot open file path", e);
+            return;
+        }
+        final RDFWriter writer = Rio.createWriter(RDFFormat.RDFXML, fso);
+        this.openTransaction(false);
+        try {
+            getThreadConnection().export(writer);
+        } finally {
+            this.commitTransaction(false);
+        }
     }
 
-    public abstract void close(boolean drop);
+    protected abstract void closeDatabase(boolean drop);
+
+    @Override
+    public void close(boolean drop) {
+        this.adminConnection.close();
+        repository.shutDown();
+        this.cm.shutdownPool();
+        this.closeDatabase(drop);
+        logger.debug("Opened {} transactions, committed {}", this.openedTransactions.get(), this.committedTransactions.get());
+    }
 
     @Override
     public OWLOntology getUnderlyingOntology() {
@@ -274,7 +322,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI classIRI = vf.createIRI(getFullIRIString(owlClass));
         this.openTransaction(false);
         try {
-            final RepositoryResult<Statement> statements = connection.getStatements(null, RDF.TYPE, classIRI);
+            final RepositoryResult<Statement> statements = getThreadConnection().getStatements(null, RDF.TYPE, classIRI);
             try {
                 while (statements.hasNext()) {
                     final Statement next = statements.next();
@@ -315,7 +363,7 @@ public abstract class SesameOntology extends TransactingOntology {
 
         this.openTransaction(false);
         try {
-            final RepositoryResult<Statement> statements = connection.getStatements(individualIRI, null, null);
+            final RepositoryResult<Statement> statements = getThreadConnection().getStatements(individualIRI, null, null);
             try {
 
                 while (statements.hasNext()) {
@@ -363,7 +411,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
         this.openTransaction(false);
         try {
-            final RepositoryResult<Statement> statements = connection.getStatements(individualIRI, null, null);
+            final RepositoryResult<Statement> statements = getThreadConnection().getStatements(individualIRI, null, null);
             try {
                 while (statements.hasNext()) {
                     final Statement statement = statements.next();
@@ -413,7 +461,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(property));
         this.openTransaction(false);
         try {
-            final RepositoryResult<Statement> statements = connection.getStatements(individualIRI, propertyIRI, null);
+            final RepositoryResult<Statement> statements = getThreadConnection().getStatements(individualIRI, propertyIRI, null);
             try {
                 while (statements.hasNext()) {
                     final Statement next = statements.next();
@@ -438,16 +486,16 @@ public abstract class SesameOntology extends TransactingOntology {
     }
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> GetFactsForIndividual(OWLNamedIndividual individual, @Nullable OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal) {
-        final String objectQuery = qb.buildObjectPropertyRetrievalQuery(startTemporal, endTemporal, individual);
-        final TrestleResultSet resultSet = this.executeSPARQLTRS(objectQuery);
+    public Set<OWLDataPropertyAssertionAxiom> getFactsForIndividual(OWLNamedIndividual individual, OffsetDateTime validTemporal, OffsetDateTime databaseTemporal, boolean filterTemporals) {
+        final String objectQuery = qb.buildObjectPropertyRetrievalQuery(validTemporal, databaseTemporal, true, individual);
+        final TrestleResultSet resultSet = this.executeSPARQLResults(objectQuery);
         return getDataPropertiesFromIndividualFacts(this.df, resultSet);
     }
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> GetTemporalsForIndividual(OWLNamedIndividual individual) {
+    public Set<OWLDataPropertyAssertionAxiom> getTemporalsForIndividual(OWLNamedIndividual individual) {
         final String temporalQuery = this.qb.buildIndividualTemporalQuery(individual);
-        final TrestleResultSet resultSet = this.executeSPARQLTRS(temporalQuery);
+        final TrestleResultSet resultSet = this.executeSPARQLResults(temporalQuery);
         return getDataPropertiesFromIndividualFacts(this.df, resultSet);
     }
 
@@ -478,9 +526,82 @@ public abstract class SesameOntology extends TransactingOntology {
         return getFullIRI(owlNamedObject).toString();
     }
 
-    public abstract TrestleResultSet executeSPARQLTRS(String queryString);
+    public abstract TrestleResultSet executeSPARQLResults(String queryString);
+
+    TrestleResultSet buildResultSet(TupleQueryResult resultSet) {
+        final TrestleResultSet trestleResultSet = new TrestleResultSet(0, resultSet.getBindingNames());
+        while (resultSet.hasNext()) {
+            final BindingSet next = resultSet.next();
+            final TrestleResult results = new TrestleResult();
+            final Set<String> varNames = next.getBindingNames();
+            varNames.forEach(varName -> {
+                final Binding binding = next.getBinding(varName);
+//                If the binding is null, value is unbound, so skip over it
+                if (binding != null) {
+                    final Value value = binding.getValue();
+//                FIXME(nrobison): This is broken, figure out how to get the correct subtypes
+                    if (value instanceof Literal) {
+                        final Optional<OWLLiteral> owlLiteral = createOWLLiteral(Literal.class.cast(value));
+                        owlLiteral.ifPresent(owlLiteral1 -> results.addValue(varName, owlLiteral1));
+                    } else {
+                        results.addValue(varName, df.getOWLNamedIndividual(IRI.create(value.stringValue())));
+                    }
+                } else {
+                    results.addValue(varName, null);
+                }
+            });
+            trestleResultSet.addResult(results);
+        }
+        return trestleResultSet;
+    }
+
+    /**
+     * This is mostly here so that Checker will be quiet.
+     * If we call {@link SesameOntology#setOntologyConnection()}, then the thread connection can never be null.
+     * However, Checker can't seem to see through the call stack to notice that we've called that function, so we use this instead.
+     * @return - {@link RepositoryConnection} associated with the given transaction
+     */
+    RepositoryConnection getThreadConnection() {
+        @Nullable final RepositoryConnection repositoryConnection = this.tc.get();
+        if (repositoryConnection == null) {
+            throw new RuntimeException("Thread has null repository connection, did a transaction not get opened?");
+        }
+        return repositoryConnection;
+    }
 
     public abstract void openDatasetTransaction(boolean write);
 
     public abstract void commitDatasetTransaction(boolean write);
+
+    @Override
+    public void setOntologyConnection() {
+        final TrestleTransaction threadTransactionObject = this.getThreadTransactionObject();
+        if (threadTransactionObject == null) {
+            logger.warn("Thread has no transaction object, getting connection from the pool");
+            this.tc.set(this.cm.getConnection());
+        } else {
+            logger.debug("Setting thread connection from transaction object");
+            @Nullable final RepositoryConnection connection = threadTransactionObject.getConnection();
+            if (connection != null) {
+                this.tc.set(connection);
+            } else {
+                logger.warn("Transaction object has null connection, creating new one");
+                this.tc.set(this.cm.getConnection());
+            }
+        }
+    }
+
+    /**
+     * Reset thread connection to null and return the connection to the {@link SesameConnectionManager}
+     */
+    protected void resetThreadConnection() {
+        @Nullable final RepositoryConnection connection = getThreadConnection();
+        this.tc.set(null);
+        this.cm.returnConnection(connection);
+    }
+
+    @Override
+    public @NonNull RepositoryConnection getOntologyConnection() {
+        return this.cm.getConnection();
+    }
 }

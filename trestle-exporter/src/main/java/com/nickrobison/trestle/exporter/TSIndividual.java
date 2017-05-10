@@ -34,6 +34,7 @@ public class TSIndividual {
      * Since DBFs don't support primitives, we need to manually box them.
      * @return - Map of property names and values
      */
+    @SuppressWarnings({"argument.type.incompatible"})
     public Map<String, Object> getProperties() {
         if (this.schema.isPresent()) {
             Map<String, Object> sortedProperties = new LinkedHashMap<>();

@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
-import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.typesafe.config.Config;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -10,7 +10,6 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import java.util.Optional;
 import java.util.Set;
 
-import static com.nickrobison.trestle.common.StaticIRI.conceptOfIRI;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -158,7 +157,7 @@ public class OracleOntologyTest extends OntologyTest {
 //
 //        //        Now for the sparql query
 //
-//        List<QuerySolution> resultSet = ResultSetFormatter.toList(ontology.executeSPARQL(builtString));
+//        List<QuerySolution> resultSet = ResultSetFormatter.toList(ontology.executeUpdateSPARQL(builtString));
 //        assertEquals(4, resultSet.size(), "Wrong number of relations");
 //
 ////        If we have the right number of relations, let's build a set of individuals and get their validity intervals;

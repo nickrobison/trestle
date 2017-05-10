@@ -3,6 +3,7 @@ package com.nickrobison.trestle.exporter;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.io.ParseException;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.geotools.data.DefaultTransaction;
 import org.geotools.data.Transaction;
 import org.geotools.data.shapefile.ShapefileDataStore;
@@ -53,7 +54,7 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
             directory.mkdirs();
         }
         this.directory = directory;
-        this.prefix = (String) builder.prefix.orElse("");
+        this.prefix = (String) builder.prefix.orElse("Trestle");
 
 
         this.type = builder.type;
@@ -80,7 +81,8 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
     }
 
     @Override
-    public File writePropertiesToByteBuffer(List<TSIndividual> individuals, String fileName) throws IOException {
+    @SuppressWarnings({"argument.type.incompatible"})
+    public File writePropertiesToByteBuffer(List<TSIndividual> individuals, @Nullable String fileName) throws IOException {
         individuals.forEach(individual -> {
 
 //            Build the geometry
@@ -153,8 +155,6 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
                     String.format("%s.shx", new File(this.directory, exportName).toString()));
             zos.close();
             fos.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }

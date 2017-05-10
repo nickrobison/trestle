@@ -1,0 +1,13 @@
+<h4>Query results: {{queryData?.rows}}</h4>
+<table class="centered highlight responsive-table" *ngIf="queryData">
+    <thead>
+    <tr>
+        <th *ngFor="let name of queryData.bindingNames">{{name}}</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let result of queryData.results">
+        <td *ngFor="let name of queryData.bindingNames">{{result.resultValues[name]}}</td>
+    </tr>
+    </tbody>
+</table>

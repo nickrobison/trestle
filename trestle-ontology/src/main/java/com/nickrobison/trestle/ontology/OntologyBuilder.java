@@ -1,16 +1,26 @@
 package com.nickrobison.trestle.ontology;
 
-import com.typesafe.config.*;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigObject;
+import org.apache.commons.io.FileUtils;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.io.IRIDocumentSource;
+import org.semanticweb.owlapi.io.StreamDocumentSource;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.JarURLConnection;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
-import java.util.Optional;
 
 import static com.nickrobison.trestle.common.StaticIRI.GEOSPARQLPREFIX;
 import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
@@ -22,7 +32,8 @@ import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 @SuppressWarnings({"nullness", "OptionalUsedAsFieldOrParameterType"})
 public class OntologyBuilder {
     private static final Logger logger = LoggerFactory.getLogger(OntologyBuilder.class);
-    private static Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
+    //private static Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
+    private static Config config = ConfigFactory.load(ConfigFactory.parseResources("reference.conf"));
 
     private Optional<IRI> iri = Optional.empty();
     private Optional<InputStream> is = Optional.empty();
@@ -96,7 +107,7 @@ public class OntologyBuilder {
      */
     public ITrestleOntology build() throws OWLOntologyCreationException {
         final OWLOntologyManager owlOntologyManager = OWLManager.createOWLOntologyManager();
-        OWLOntology owlOntology;
+        OWLOntology owlOntology = null;
 
         // load ontology mapper (favors local files if present)
         Set<OWLOntologyIRIMapper> mappers = new HashSet<>();
@@ -104,25 +115,32 @@ public class OntologyBuilder {
         mappers.add(mapper);
         owlOntologyManager.setIRIMappers(mappers);
 
-        if (this.iri.isPresent()) {
-            logger.debug("Loading ontology from: {}", this.iri.get());
-            owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument(this.iri.get());
-            logger.info("Loaded version {} of ontology {}",
-                    owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
-                    owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
-        } else if (this.is.isPresent()){
-            logger.debug("Loading ontology from input stream");
-            owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument(this.is.get());
-            logger.info("Loaded version {} of ontology {}",
-                    owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
-                    owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
-        }
-        else {
-            owlOntology = owlOntologyManager.createOntology();
+        OWLOntologyLoaderConfiguration loaderConfig = new OWLOntologyLoaderConfiguration();
+        loaderConfig.setMissingImportHandlingStrategy(MissingImportHandlingStrategy.THROW_EXCEPTION);
+
+        try {
+            if (this.iri.isPresent()) {
+                logger.debug("Loading ontology from: {}", this.iri.get());
+                owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument((new IRIDocumentSource(this.iri.get())),loaderConfig);
+                logger.info("Loaded version {} of ontology {}",
+                        owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
+                        owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
+            } else if (this.is.isPresent()){
+                logger.debug("Loading ontology from input stream");
+                owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument((new StreamDocumentSource(this.is.get())),loaderConfig);
+                logger.info("Loaded version {} of ontology {}",
+                        owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
+                        owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
+            }
+            else {
+                owlOntology = owlOntologyManager.createOntology();
+            }
+        } catch (OWLOntologyCreationException e) {
+            e.printStackTrace();
         }
 
 //            If there's a connection string, then we need to return a database Ontology
-        if (connectionString.isPresent() && connectionString.get().contains("oracle")) {
+        if (connectionString.isPresent() && connectionString.get().contains("oracle")&&owlOntology!=null) {
             logger.info("Connecting to Oracle database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
             return new OracleOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
@@ -187,35 +205,65 @@ public class OntologyBuilder {
         }
     }
 
-    private OWLOntologyIRIMapper getImportsMapper()
-    {
+    private OWLOntologyIRIMapper getImportsMapper() {
         OWLOntologyIRIMapper iriMapper = new OWLOntologyIRIMapper() {
             private Config importsConfig = config.getConfig("trestle.ontology.imports");
             private String importsDirPath = importsConfig.getString("importsDirectory");
-            private Map<IRI,String> fileMap;
+            private Map<IRI, String> fileMap;
             {
 
-                fileMap = new HashMap<IRI,String>();
-                for(ConfigObject mappingObj : importsConfig.getObjectList("importsIRIMappings"))
-                {
+                fileMap = new HashMap<IRI, String>();
+                for (ConfigObject mappingObj : importsConfig.getObjectList("importsIRIMappings")) {
                     Config mappingConfig = mappingObj.toConfig();
-                    if(mappingObj.containsKey("iri")&&mappingObj.containsKey("file")) {
+                    if (mappingObj.containsKey("iri") && mappingObj.containsKey("file")) {
                         String iriString = mappingConfig.getString("iri");
                         IRI iri = IRI.create(iriString);
                         String fileString = mappingConfig.getString("file");
                         fileMap.put(iri, fileString);
                     }
                 }
+                System.err.println("mapping = "+fileMap);
             }
 
             @Override
             public IRI getDocumentIRI(IRI iri) {
+
                 // construct IRI if in mapper
                 IRI documentIRI = null;
                 String fileName = fileMap.get(iri);
-                File importOntFile = new File(importsDirPath+fileName);
-                if(importOntFile.exists()&&importOntFile.isFile()&&importOntFile.canRead()) {
-                    documentIRI = IRI.create(importOntFile);
+
+                URL fileURL = this.getClass().getClassLoader().getResource(importsDirPath + fileName);
+                if (fileURL != null) {
+                    if (fileURL.getProtocol().equals("jar")) {
+                        // externalize file from jar for owlapi
+                        try {
+                            final JarURLConnection connection =
+                                    (JarURLConnection) fileURL.openConnection();
+                            final URL url = connection.getJarFileURL();
+                            Path p = Paths.get(url.toURI());
+                            Path folder = p.getParent();
+                            String externalFileName = folder + "/ontology/imports/" + fileName;
+                            File externalFile = new File(externalFileName);
+
+                            FileUtils.copyURLToFile(fileURL, externalFile);
+                            documentIRI = IRI.create(externalFile);
+                            logger.info("creating external ontology file " + documentIRI);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } catch (URISyntaxException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        File importOntFile = null;
+                        try {
+                            importOntFile = new File(fileURL.toURI());
+                            if (importOntFile.exists() && importOntFile.isFile() && importOntFile.canRead()) {
+                                documentIRI = IRI.create(importOntFile);
+                            }
+                        } catch (URISyntaxException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
 
                 return documentIRI;

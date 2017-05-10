@@ -79,7 +79,8 @@ public class VirtuosoOntology extends JenaOntology {
     }
 
     @Override
-    public TrestleResultSet executeSPARQLTRS(String queryString) {
+    @SuppressWarnings({"return.type.incompatible"})
+    public TrestleResultSet executeSPARQLResults(String queryString) {
 //        ResultSet resultSet;
         final TrestleResultSet resultSet;
         final QueryExecution queryExecution = VirtuosoQueryExecutionFactory.create(queryString, (VirtGraph) virtModel.getGraph());
@@ -122,6 +123,11 @@ public class VirtuosoOntology extends JenaOntology {
     public void commitDatasetTransaction(boolean write) {
         virtModel.commit();
         logger.debug("Virtuoso model transaction committed");
+    }
+
+    @Override
+    public void abortDatasetTransaction(boolean write) {
+        virtModel.abort();
     }
 
     protected static ByteArrayInputStream ontologytoIS(OWLOntology ontology) throws OWLOntologyStorageException {

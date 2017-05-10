@@ -2,12 +2,12 @@ package com.nickrobison.gaulintegrator;
 
 import com.esri.core.geometry.*;
 import com.nickrobison.gaulintegrator.common.ObjectID;
-import com.nickrobison.trestle.TrestleBuilder;
-import com.nickrobison.trestle.TrestleReasoner;
-import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
-import com.nickrobison.trestle.exceptions.TrestleClassException;
-import com.nickrobison.trestle.types.relations.ConceptRelationType;
-import com.nickrobison.trestle.types.relations.ObjectRelation;
+import com.nickrobison.trestle.reasoner.TrestleBuilder;
+import com.nickrobison.trestle.reasoner.TrestleReasoner;
+import com.nickrobison.trestle.reasoner.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import com.nickrobison.trestle.reasoner.types.relations.ConceptRelationType;
+import com.nickrobison.trestle.reasoner.types.relations.ObjectRelation;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -143,7 +143,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 //            Store the object
             try {
 //                reasoner.writeObjectAsConcept(newObject);
-                reasoner.writeAsTrestleObject(newObject);
+                reasoner.writeTrestleObject(newObject);
             } catch (TrestleClassException e) {
                 logger.error("Cannot write object to trestle", e);
             } catch (MissingOntologyEntity missingOntologyEntity) {
@@ -188,15 +188,15 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 
 //            See if there's a concept that spatially intersects the object
-            final Optional<Set<String>> conceptIRIs = reasoner.STIntersectConcept(newGAULObject.getPolygonAsWKT(), 0);
+            final Optional<Set<String>> conceptIRIs = reasoner.STIntersectConcept(newGAULObject.getPolygonAsWKT(), 0, null, null);
 
 
 //            If true, get all the concept members
             if (conceptIRIs.orElse(new HashSet<>()).size() > 0) {
                 hasConcept = true;
                 conceptIRIs.get().forEach(concept -> {
-                    final Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, concept, null, null);
-                    conceptMembers.ifPresent(members -> members.forEach(matchedObjects::add));
+                    final Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, concept, null, newGAULObject.getStartDate());
+                    conceptMembers.ifPresent(matchedObjects::addAll);
 //                Now add the concept relations
 //                    TODO(nrobison): This feels bad.
                     reasoner.addObjectToConcept(concept, newGAULObject, ConceptRelationType.TEMPORAL, 1.0);
@@ -204,7 +204,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
             } else {
 //            If no, find objects to intersect
                 reasoner.spatialIntersectObject(newGAULObject, 0)
-                        .ifPresent(objects -> objects.forEach(matchedObjects::add));
+                        .ifPresent(matchedObjects::addAll);
 
 //                Go ahead the create the new concept
                 reasoner.addObjectToConcept(String.format("%s:concept", newGAULObject.getObjectName()), newGAULObject, ConceptRelationType.TEMPORAL, 1.0);
@@ -319,7 +319,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //            Now, we insert the new itself record into the database
             try {
-                reasoner.writeAsTrestleObject(newGAULObject);
+                reasoner.writeTrestleObject(newGAULObject);
             } catch (TrestleClassException e) {
                 logger.error("Cannot write {}", newGAULObject.getObjectName(), e);
             } catch (MissingOntologyEntity missingOntologyEntity) {

@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
-import afu.org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
@@ -37,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Tag("integration")
 @Tag("GraphDB")
 @Disabled
+@SuppressWarnings({"initialization.fields.uninitialized", "dereference.of.nullable", "argument.type.incompatible"})
 public class SesameTest {
 
     private static final Logger logger = LoggerFactory.getLogger(SesameTest.class);

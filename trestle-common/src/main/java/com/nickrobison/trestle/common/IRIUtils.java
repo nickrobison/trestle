@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.common;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
 
 import java.util.regex.Matcher;
@@ -60,13 +61,35 @@ public class IRIUtils {
     }
 
     /**
-     * Takes an OWL IRI and returns the individual name from the full string
+     * Extract the prefix from a given {@link IRI}, everything up to, and including the #
+     * @param iri - {@link IRI to parse}
+     * @return - String of prefix
+     */
+    public static String extractPrefix(IRI iri) {
+        return iri.toString().split("#")[0] + "#";
+    }
+
+    /**
+     * Takes an {@link IRI} and returns the individual name from the full string
      * Returns everything after the # character in the IRI, or returns an empty string
-     * @param iri - IRI to extract name from
+     * @param iri - {@link IRI} to extract name from
      * @return - String of individual name
      */
-    public static String extractTrestleIndividualName(IRI iri) {
-        final Matcher matcher = remainderRegex.matcher(iri.toString());
+    public static @Nullable String extractTrestleIndividualName(IRI iri) {
+        return extractTrestleIndividualName(iri.getIRIString());
+    }
+
+    /**
+     * Takes an IRI string and returns the individual name from the full string
+     * Returns everything after the # character in the IRI, or returns an empty string
+     * @param iriString - IRI to extract name from
+     * @return - String of individual name
+     */
+    public static @Nullable String extractTrestleIndividualName(@Nullable String iriString) {
+        if (iriString == null) {
+            return null;
+        }
+        final Matcher matcher = remainderRegex.matcher(iriString);
         if (matcher.find()) {
             return matcher.group();
         } else {

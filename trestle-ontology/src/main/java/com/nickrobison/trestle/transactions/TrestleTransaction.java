@@ -1,14 +1,17 @@
 package com.nickrobison.trestle.transactions;
 
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 
 /**
  * Created by nrobison on 10/3/16.
  */
 public class TrestleTransaction {
 
-    private final Long transactionID;
+    private final @Nullable Long transactionID;
     private final Boolean writeTransaction;
+    private @Nullable RepositoryConnection connection;
 
     /**
      * Create a new TrestleTransaction with the current timestamp, indicating the tread owns the current transaction
@@ -55,8 +58,23 @@ public class TrestleTransaction {
         return transactionID != null;
     }
 
+    /**
+     * Get the ontology RepositoryConnection to use for the remainder of the transaction
+     * For a {@link com.nickrobison.trestle.ontology.JenaOntology}, the connection will always be null
+     * @return - RepositoryConnection for current transaction
+     */
+    public @Nullable RepositoryConnection getConnection() {
+        return connection;
+    }
+
+    public void setConnection(@Nullable RepositoryConnection connection) {
+        this.connection = connection;
+    }
+
     @Override
-    public boolean equals(Object o) {
+//    Apparently checker hates how IntelliJ sets up equals methods.
+    @SuppressWarnings({"all"})
+    public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
@@ -64,14 +82,17 @@ public class TrestleTransaction {
 
         if (getTransactionID() != null ? !getTransactionID().equals(that.getTransactionID()) : that.getTransactionID() != null)
             return false;
-        return isWriteTransaction() != null ? isWriteTransaction().equals(that.isWriteTransaction()) : that.isWriteTransaction() == null;
-
+        if (!writeTransaction.equals(that.writeTransaction)) return false;
+        return getConnection() != null ? getConnection().equals(that.getConnection()) : that.getConnection() == null;
     }
 
     @Override
+    //    Apparently checker hates how IntelliJ sets up hashcode methods.
+    @SuppressWarnings({"all"})
     public int hashCode() {
         int result = getTransactionID() != null ? getTransactionID().hashCode() : 0;
-        result = 31 * result + (isWriteTransaction() != null ? isWriteTransaction().hashCode() : 0);
+        result = 31 * result + writeTransaction.hashCode();
+        result = 31 * result + (getConnection() != null ? getConnection().hashCode() : 0);
         return result;
     }
 }

@@ -1,6 +1,6 @@
 //package com.nickrobison.trestle.ontology;
 //
-//import com.nickrobison.trestle.exceptions.MissingOntologyEntity;
+//import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 //import org.apache.jena.query.ResultSet;
 //import org.junit.jupiter.api.AfterEach;
 //import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +50,7 @@
 //                "SELECT * WHERE {?m rdf:type ?type . ?type rdfs:subClassOf ?class}";
 ////        String queryString = " SELECT ?subject ?prop ?object WHERE { ?subject ?prop ?object } ";
 //
-////        final ResultSet resultSet = ontology.executeSPARQL(queryString);
+////        final ResultSet resultSet = ontology.executeUpdateSPARQL(queryString);
 ////        assertEquals(29, resultSet.getRowNumber(), "Wrong number of classes");
 //
 ////        final long tripleCount = ontology.getTripleCount();
@@ -168,7 +168,7 @@
 //                "?f rdf:type :GAUL\n" +
 //                "FILTER(?c = 65257 && ?s >= .3) }";
 //
-//        final ResultSet resultSet = ontology.executeSPARQL(queryString);
+//        final ResultSet resultSet = ontology.executeUpdateSPARQL(queryString);
 //        assertEquals(4, resultSet.getRowNumber(), "Wrong number of relations");
 //    }
 //

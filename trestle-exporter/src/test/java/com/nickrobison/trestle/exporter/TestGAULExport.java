@@ -13,13 +13,13 @@ import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.MissingResourceException;
 import java.util.stream.Collectors;
 
 /**
  * Created by nrobison on 9/15/16.
  */
-@SuppressWarnings("unchecked")
-@Disabled
+@SuppressWarnings({"unchecked", "initialization.fields.uninitialized", "dereference.of.nullable"})
 @Tag("integration")
 // FIXME(nrobison): Need to load some gaul records and then export them.
 public class TestGAULExport {
@@ -48,6 +48,9 @@ public class TestGAULExport {
 
     private static List<TSIndividual> readCSV() {
         final InputStream is = TestGAULExport.class.getClassLoader().getResourceAsStream("objects.csv");
+        if (is == null) {
+            throw new RuntimeException("Can't load objects");
+        }
         final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is));
 
         return bufferedReader.lines()

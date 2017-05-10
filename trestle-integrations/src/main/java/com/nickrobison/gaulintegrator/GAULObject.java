@@ -3,9 +3,9 @@ package com.nickrobison.gaulintegrator;
 import com.esri.core.geometry.*;
 import com.nickrobison.gaulintegrator.common.ObjectID;
 import com.nickrobison.gaulintegrator.common.Utils;
-import com.nickrobison.trestle.annotations.*;
-import com.nickrobison.trestle.annotations.temporal.EndTemporalProperty;
-import com.nickrobison.trestle.annotations.temporal.StartTemporalProperty;
+import com.nickrobison.trestle.reasoner.annotations.*;
+import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
+import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 
 import java.sql.Date;
 import java.time.LocalDate;
@@ -13,7 +13,7 @@ import java.time.LocalDate;
 /**
  * Created by nrobison on 5/6/16.
  */
-@OWLClassName(className = "gaul-test")
+@DatasetClass(name = "gaul-test")
 public class GAULObject {
 
     private static final int DATESIZE = 16;
@@ -65,7 +65,7 @@ public class GAULObject {
         return objectID;
     }
 
-    @DataProperty(name = "id")
+    @Fact(name = "id")
     public String getObjectIDAsString() {
         return this.objectID.toString();
     }
@@ -84,7 +84,7 @@ public class GAULObject {
         return shapePolygon;
     }
 
-    @DataProperty(name = "gaulCode")
+    @Fact(name = "gaulCode")
     public long getGaulCode() {
         return gaulCode;
     }
@@ -98,12 +98,12 @@ public class GAULObject {
         return GeometryEngine.geometryToWkt(shapePolygon, 0);
     }
 
-    @StartTemporalProperty
+    @StartTemporal
     public LocalDate getStartDate() {
         return Utils.ReadStartDate(this.validRange);
     }
 
-    @EndTemporalProperty
+    @EndTemporal
     public LocalDate getEndDate() {
         return Utils.ReadExpirationDate(this.validRange);
     }

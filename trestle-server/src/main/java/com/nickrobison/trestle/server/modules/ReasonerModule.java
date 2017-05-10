@@ -1,8 +1,9 @@
 package com.nickrobison.trestle.server.modules;
 
-import com.nickrobison.trestle.TrestleBuilder;
-import com.nickrobison.trestle.TrestleReasoner;
-import com.nickrobison.trestle.server.TrestleServerConfiguration;
+import com.nickrobison.trestle.reasoner.TrestleBuilder;
+import com.nickrobison.trestle.reasoner.TrestleReasoner;
+import com.nickrobison.trestle.server.config.TrestleReasonerConfiguration;
+import com.nickrobison.trestle.server.config.TrestleServerConfiguration;
 import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,11 +20,11 @@ public class ReasonerModule implements Managed {
     private static final Logger logger = LoggerFactory.getLogger(ReasonerModule.class);
 
     private TrestleReasoner reasoner;
-    private final TrestleServerConfiguration configuration;
+    private final TrestleReasonerConfiguration configuration;
 
     @Inject
     public ReasonerModule(TrestleServerConfiguration configuration) {
-        this.configuration = configuration;
+        this.configuration = configuration.getReasonerConfig();
     }
 
     @Inject
@@ -38,9 +39,9 @@ public class ReasonerModule implements Managed {
                 .withDBConnection(configuration.getConnectionString(),
                         configuration.getUsername(),
                         configuration.getPassword())
-                .withName("api_test")
-                .withoutCaching()
-                .initialize()
+                .withName(configuration.getOntology())
+                .withPrefix(configuration.getPrefix())
+                .withOntology(configuration.getLocation())
                 .build();
 
         logger.info("Reasoner started");

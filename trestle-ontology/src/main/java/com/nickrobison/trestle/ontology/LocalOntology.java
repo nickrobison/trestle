@@ -1,7 +1,7 @@
 package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
-import com.nickrobison.trestle.utils.SharedOntologyFunctions;
+import com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.query.*;
 import org.apache.jena.query.spatial.*;
@@ -146,7 +146,8 @@ public class LocalOntology extends JenaOntology {
 //    }
 
     @Override
-    public TrestleResultSet executeSPARQLTRS(String queryString) {
+    @SuppressWarnings({"return.type.incompatible"})
+    public TrestleResultSet executeSPARQLResults(String queryString) {
         final TrestleResultSet resultSet;
         final Query query = QueryFactory.create(queryString);
         final QueryExecution qExec = QueryExecutionFactory.create(query, luceneDataset);
@@ -203,4 +204,8 @@ public class LocalOntology extends JenaOntology {
 //        this.model.leaveCriticalSection();
     }
 
+    @Override
+    public void abortDatasetTransaction(boolean write) {
+        luceneDataset.abort();
+    }
 }
