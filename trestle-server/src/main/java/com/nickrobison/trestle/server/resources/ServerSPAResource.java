@@ -11,7 +11,7 @@ import java.util.Optional;
 /**
  * Created by nrobison on 11/28/16.
  */
-@Path("/admin/{seg: .*}")
+@Path("/workspace/{seg: .*}")
 @Produces(MediaType.TEXT_HTML)
 public class ServerSPAResource {
     private static final String ASSETS_INDEX_HTML = "build/index.html";
