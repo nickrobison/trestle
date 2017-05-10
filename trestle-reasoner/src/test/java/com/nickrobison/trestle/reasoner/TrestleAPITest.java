@@ -2,7 +2,7 @@ package com.nickrobison.trestle.reasoner;
 
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
-import com.nickrobison.trestle.reasoner.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.NoValidStateException;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;

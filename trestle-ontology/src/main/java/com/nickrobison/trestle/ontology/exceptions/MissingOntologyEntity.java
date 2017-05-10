@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.reasoner.exceptions;
+package com.nickrobison.trestle.ontology.exceptions;
 
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLObject;

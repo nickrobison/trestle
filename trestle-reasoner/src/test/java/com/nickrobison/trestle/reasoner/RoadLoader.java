@@ -1,12 +1,10 @@
 package com.nickrobison.trestle.reasoner;
 
-import com.nickrobison.trestle.reasoner.TrestleBuilder;
-import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.reasoner.annotations.DatasetClass;
 import com.nickrobison.trestle.reasoner.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.reasoner.annotations.TrestleCreator;
 import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
-import com.nickrobison.trestle.reasoner.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.types.TemporalType;
 import com.typesafe.config.Config;

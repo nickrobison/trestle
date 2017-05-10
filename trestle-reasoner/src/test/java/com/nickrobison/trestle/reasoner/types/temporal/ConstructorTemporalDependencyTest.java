@@ -6,7 +6,7 @@ import com.nickrobison.trestle.reasoner.annotations.DatasetClass;
 import com.nickrobison.trestle.reasoner.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.reasoner.annotations.TrestleCreator;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
-import com.nickrobison.trestle.reasoner.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;

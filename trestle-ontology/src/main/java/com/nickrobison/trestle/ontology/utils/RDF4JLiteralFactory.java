@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.reasoner.utils;
+package com.nickrobison.trestle.ontology.utils;
 
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
@@ -12,8 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
-
-import static com.nickrobison.trestle.reasoner.utils.SharedLiteralUtils.parseNumericDatatype;
 
 /**
  * Created by nrobison on 1/11/17.
@@ -43,7 +41,7 @@ public class RDF4JLiteralFactory {
             owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_STRING.getIRI());
         } else if (literal.getDatatype().toString().equals(OWL2Datatype.XSD_DECIMAL.getIRI().toString())) {
             final String numericString = literal.stringValue();
-            owlDatatype = parseNumericDatatype(numericString);
+            owlDatatype = SharedLiteralUtils.parseNumericDatatype(numericString);
         } else if (literal.getLanguage().isPresent()) {
             return Optional.of(df.getOWLLiteral(literal.stringValue(), literal.getLanguage().get()));
         } else {

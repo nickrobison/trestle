@@ -2,12 +2,12 @@ package com.nickrobison.trestle.ontology;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.nickrobison.trestle.reasoner.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
-import com.nickrobison.trestle.reasoner.utils.JenaLiteralFactory;
-import com.nickrobison.trestle.reasoner.utils.SharedOntologyFunctions;
+import com.nickrobison.trestle.ontology.utils.JenaLiteralFactory;
+import com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;

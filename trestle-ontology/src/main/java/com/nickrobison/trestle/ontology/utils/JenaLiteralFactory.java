@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.reasoner.utils;
+package com.nickrobison.trestle.ontology.utils;
 
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
@@ -16,8 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Optional;
-
-import static com.nickrobison.trestle.reasoner.utils.SharedLiteralUtils.parseNumericDatatype;
 
 /**
  * Created by nrobison on 12/4/16.
@@ -68,7 +66,7 @@ public class JenaLiteralFactory {
         } else if (literal.getDatatypeURI().equals(OWL2Datatype.XSD_DECIMAL.getIRI().toString())) {
 //                Work around Oracle bug by trying to parse an Int and see if it works
             final String numericString = literal.getLexicalForm();
-            owlDatatype = parseNumericDatatype(numericString);
+            owlDatatype = SharedLiteralUtils.parseNumericDatatype(numericString);
 
 ////            If it has a period in the string, it's a decimal
 //            if (numericString.contains(".")) {

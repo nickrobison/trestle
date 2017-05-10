@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.reasoner.utils;
+package com.nickrobison.trestle.ontology.utils;
 
 import com.codahale.metrics.annotation.Gauge;
 import com.codahale.metrics.annotation.Metered;

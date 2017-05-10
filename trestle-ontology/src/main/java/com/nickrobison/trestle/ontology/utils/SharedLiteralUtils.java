@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.reasoner.utils;
+package com.nickrobison.trestle.ontology.utils;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLDataFactory;

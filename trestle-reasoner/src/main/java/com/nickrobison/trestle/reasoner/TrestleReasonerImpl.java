@@ -9,6 +9,7 @@ import com.google.common.collect.Multimaps;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.nickrobison.metrician.Metrician;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
 import com.nickrobison.trestle.common.IRIUtils;

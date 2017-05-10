@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.reasoner.utils;
+package com.nickrobison.trestle.ontology.utils;
 
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
