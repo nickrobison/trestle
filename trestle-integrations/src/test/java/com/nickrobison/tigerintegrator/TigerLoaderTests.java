@@ -1,6 +1,6 @@
 package com.nickrobison.tigerintegrator;
 
-import com.nickrobison.trestle.reasoner.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import org.junit.jupiter.api.Test;
 
