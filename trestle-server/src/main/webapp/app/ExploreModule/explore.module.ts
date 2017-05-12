@@ -11,6 +11,10 @@ import {VisualizeService} from "./visualize/visualize.service";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {MaterialModule} from "@angular/material";
 import {CommonModule} from "@angular/common";
+import {QueryViewer} from "./query/query-viewer/query-viewer.component";
+import {QueryComponent} from "./query/query.component";
+import {CodeMirrorComponent} from "./query/codemirror/codemirror.component";
+import {QueryService} from "./query/query.service";
 
 @NgModule({
     imports: [
@@ -24,9 +28,12 @@ import {CommonModule} from "@angular/common";
         VisualizeComponent,
         IndividualGraph,
         FactHistoryGraph,
-        IndividualValueDialog
+        IndividualValueDialog,
+        CodeMirrorComponent,
+        QueryComponent,
+        QueryViewer,
     ],
-    providers: [VisualizeService],
+    providers: [VisualizeService, QueryService],
     entryComponents: [IndividualValueDialog]
 })
 export class ExploreModule {}

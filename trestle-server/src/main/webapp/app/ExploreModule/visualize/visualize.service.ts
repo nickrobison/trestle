@@ -2,7 +2,6 @@
  * Created by nrobison on 3/7/17.
  */
 import {Injectable} from "@angular/core";
-import {AuthHttp} from "angular2-jwt";
 import {Observable} from "rxjs";
 import {URLSearchParams, Response} from "@angular/http";
 import {TrestleHttp} from "../../UserModule/trestle-http.provider";

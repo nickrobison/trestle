@@ -10,10 +10,6 @@ import {UsersComponent, MapValuesPipe} from "./users/users.component";
 import {CommonModule} from "@angular/common";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {UserAddDialog} from "./users/users.add.dialog";
-import {QueryComponent} from "./query/query.component";
-import {CodeMirrorComponent} from "./query/codemirror/codemirror.component";
-import {QueryService} from "./query/query.service";
-import {QueryViewer} from "./query/query-viewer/query-viewer.component";
 import {MetricsComponent} from "./metrics/metrics.component";
 import {MetricsService} from "./metrics/metrics.service";
 import {MetricsGraph} from "./metrics/metrics-graph.component";
@@ -33,7 +29,7 @@ interface ITrestleRouteData {
 const routes: Array<ITrestleRoute> = [
     {path: "", component: AdminComponent, children: [
         {path: "dashboard", component: DashboardComponent},
-        {path: "query", component: QueryComponent, canActivate: [LoggedInGuard]},
+        // {path: "query", component: QueryComponent, canActivate: [LoggedInGuard]},
         // {path: "visualize", component: VisualizeComponent, canActivate: [LoggedInGuard]},
         {path: "users", component: UsersComponent, canActivate: [LoggedInGuard, PermissionsGuard], data: {roles: [Privileges.ADMIN]}},
         {path: "metrics", component: MetricsComponent, canActivate: [LoggedInGuard, PermissionsGuard], data: {roles: [Privileges.ADMIN]}},
@@ -46,9 +42,6 @@ const routes: Array<ITrestleRoute> = [
         AdminComponent,
         UsersComponent,
         UserAddDialog,
-        CodeMirrorComponent,
-        QueryComponent,
-        QueryViewer,
         MetricsComponent,
         MetricsGraph,
         MapValuesPipe],
@@ -60,7 +53,7 @@ const routes: Array<ITrestleRoute> = [
         MaterialModule,
         UserModule
     ],
-    providers: [QueryService, MetricsService],
+    providers: [MetricsService],
     entryComponents: [UserAddDialog],
     bootstrap: [AdminComponent]
 })

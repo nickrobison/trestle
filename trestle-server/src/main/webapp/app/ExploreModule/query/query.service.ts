@@ -1,10 +1,10 @@
 /**
  * Created by nrobison on 2/27/17.
  */
-import {Injectable} from "@angular/core";   
-import {AuthHttp} from "angular2-jwt";
+import {Injectable} from "@angular/core";
 import {Observable} from "rxjs";
 import {Response} from "@angular/http";
+import {TrestleHttp} from "../../UserModule/trestle-http.provider";
 
 export interface ITrestleResultSet {
     rows: number;
@@ -19,10 +19,10 @@ export interface ITrestleResult {
 @Injectable()
 export class QueryService {
 
-    constructor(private authHttp: AuthHttp) {}
+    constructor(private trestleHttp: TrestleHttp) {}
 
     getPrefixes(): Observable<any> {
-        return this.authHttp.get("/query")
+        return this.trestleHttp.get("/query")
             .map((res: Response) => {
             console.debug("Prefix response:", res.json());
             return res.json();
@@ -32,7 +32,7 @@ export class QueryService {
 
     executeQuery(queryString: string): Observable<ITrestleResultSet> {
         console.debug("Query string:", queryString);
-        return this.authHttp.post("/query", queryString)
+        return this.trestleHttp.post("/query", queryString)
             .map((res: Response) => res.json())
             .catch(this.handleError);
     }
