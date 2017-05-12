@@ -2,8 +2,8 @@
  * Created by nrobison on 1/19/17.
  */
 import {Component, OnInit} from "@angular/core";
-import {AuthService} from "../authentication.service";
 import {ActivatedRoute, Router} from "@angular/router";
+import {AuthService} from "../../UserModule/authentication.service";
 
 @Component({
     selector: "login",

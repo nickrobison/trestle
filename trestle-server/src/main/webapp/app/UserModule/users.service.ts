@@ -5,7 +5,7 @@ import {Injectable} from "@angular/core";
 import {Response, Headers, RequestOptions} from "@angular/http";
 import {Observable} from "rxjs";
 import {AuthHttp} from "angular2-jwt";
-import {ITrestleUser} from "../../authentication.service";
+import {ITrestleUser} from "./authentication.service";
 
 @Injectable()
 export class UserService {

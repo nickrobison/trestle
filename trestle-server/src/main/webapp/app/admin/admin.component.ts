@@ -2,10 +2,10 @@
  * Created by nrobison on 1/18/17.
  */
 import {Component, OnInit} from "@angular/core";
-import {AuthService} from "../authentication.service";
 import {Router} from "@angular/router";
 import * as CryptoJS from "crypto-js";
 import {Observable, BehaviorSubject, Subject} from "rxjs";
+import {AuthService} from "../UserModule/authentication.service";
 
 @Component({
     selector: "admin-root",

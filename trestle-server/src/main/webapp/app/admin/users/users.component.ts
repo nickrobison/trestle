@@ -2,10 +2,10 @@
  * Created by nrobison on 1/19/17.
  */
 import {Component, OnInit, ViewContainerRef, Pipe, PipeTransform} from "@angular/core";
-import {UserService} from "./users.service";
-import {ITrestleUser, AuthService, Privileges} from "../../authentication.service";
 import {MdDialogRef, MdDialog, MdDialogConfig} from "@angular/material";
 import {UserAddDialog, IUserDialogResponse, UserDialogResponseType} from "./users.add.dialog";
+import {AuthService, ITrestleUser, Privileges} from "../../UserModule/authentication.service";
+import {UserService} from "../../UserModule/users.service";
 
 @Component({
     selector: "admin-users",
@@ -28,8 +28,8 @@ export class UsersComponent implements OnInit {
 
     public loadUsers() {
         this.userService.getUsers()
-            .subscribe(users => this.users = users,
-                err => console.error(err))
+            .subscribe((users: Array<ITrestleUser>) => this.users = users,
+                (err: any) => console.error(err))
     };
 
     public isAdmin(user: ITrestleUser): boolean {

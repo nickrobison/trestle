@@ -2,10 +2,10 @@
  * Created by nrobison on 2/6/17.
  */
 import {Component, OnInit} from "@angular/core";
-import {ITrestleUser, Privileges} from "../../authentication.service";
 import {MdDialogRef} from "@angular/material";
-import {UserService} from "./users.service";
 import {Response} from "@angular/http";
+import {ITrestleUser, Privileges} from "../../UserModule/authentication.service";
+import {UserService} from "../../UserModule/users.service";
 
 
 export enum UserDialogResponseType {

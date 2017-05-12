@@ -7,11 +7,7 @@ import {NgModule} from "@angular/core";
 import {MaterialModule} from "@angular/material";
 import {AdminComponent} from "./admin.component";
 import {UsersComponent, MapValuesPipe} from "./users/users.component";
-import {UserService} from "./users/users.service";
 import {CommonModule} from "@angular/common";
-import {LoggedInGuard} from "../LoggedInGuard";
-import {PermissionsGuard} from "../PermissionsGuard";
-import {Privileges} from "../authentication.service";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {UserAddDialog} from "./users/users.add.dialog";
 import {QueryComponent} from "./query/query.component";
@@ -26,6 +22,10 @@ import {MetricsComponent} from "./metrics/metrics.component";
 import {MetricsService} from "./metrics/metrics.service";
 import {MetricsGraph} from "./metrics/metrics-graph.component";
 import {FactHistoryGraph} from "./visualize/fact-graph.component";
+import {UserModule} from "../UserModule/user.module";
+import {Privileges} from "../UserModule/authentication.service";
+import {LoggedInGuard} from "../UserModule/LoggedInGuard";
+import {PermissionsGuard} from "../UserModule/PermissionsGuard";
 
 interface ITrestleRoute extends Route {
     data?: ITrestleRouteData
@@ -66,9 +66,10 @@ const routes: Array<ITrestleRoute> = [
         FormsModule,
         ReactiveFormsModule,
         RouterModule.forChild(routes),
-        MaterialModule
+        MaterialModule,
+        UserModule
     ],
-    providers: [UserService, QueryService, VisualizeService, MetricsService],
+    providers: [QueryService, VisualizeService, MetricsService],
     entryComponents: [UserAddDialog, IndividualValueDialog],
     bootstrap: [AdminComponent]
 })
