@@ -21,6 +21,7 @@ import static com.nickrobison.trestle.actor.TrestleActor.startupRemoteActor;
  * Created by nrobison on 10/26/16.
  */
 @Tag("integration")
+@Tag("oracle")
 public class RemoteTest {
 
     Timeout timeout = Timeout.apply(120, TimeUnit.SECONDS);

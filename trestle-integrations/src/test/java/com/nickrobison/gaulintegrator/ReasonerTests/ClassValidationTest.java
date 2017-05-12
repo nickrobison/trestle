@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  */
 @SuppressWarnings({"argument.type.incompatible", "initialization.fields.uninitialized"})
 @Tag("integration")
+@Tag("oracle")
 public class ClassValidationTest {
 
     static TrestleReasoner reasoner;
