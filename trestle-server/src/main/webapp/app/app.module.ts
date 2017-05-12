@@ -12,6 +12,7 @@ import {MaterializeModule} from "angular2-materialize";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {NavigationModule} from "./NavigationModule/navigation.module";
+import {ExploreModule} from "./ExploreModule/explore.module";
 
 @NgModule({
     imports: [
@@ -21,7 +22,8 @@ import {NavigationModule} from "./NavigationModule/navigation.module";
         MaterialModule,
         RouterModule.forRoot(AppRoutes),
         MaterializeModule,
-        NavigationModule
+        NavigationModule,
+        ExploreModule
     ],
     declarations: [AppComponent],
     // providers: [AuthService,
@@ -36,9 +38,3 @@ import {NavigationModule} from "./NavigationModule/navigation.module";
 
 })
 export class AppModule {}
-
-// export function authHttpServiceFactory(http: Http, options: RequestOptions) {
-//     return new AuthHttp(new AuthConfig({
-//         noTokenScheme: true
-//     }), http, options);
-// }

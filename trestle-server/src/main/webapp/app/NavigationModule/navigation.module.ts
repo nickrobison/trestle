@@ -8,7 +8,7 @@ import {MaterialModule} from "@angular/material";
 import {UserModule} from "../UserModule/user.module";
 import {CommonModule} from "@angular/common";
 import {LoginComponent} from "./login/app.login";
-import {FormsModule, ReactiveFormsModule} from "@angular/forms";
+import {FormsModule, ReactiveFormsModule} from "@angular/forms"
 
 const routes: Array<Route> = [
     {path: "", component: NavigationComponent}

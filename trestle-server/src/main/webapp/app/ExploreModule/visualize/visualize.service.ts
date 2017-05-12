@@ -5,6 +5,7 @@ import {Injectable} from "@angular/core";
 import {AuthHttp} from "angular2-jwt";
 import {Observable} from "rxjs";
 import {URLSearchParams, Response} from "@angular/http";
+import {TrestleHttp} from "../../UserModule/trestle-http.provider";
 
 export interface ITrestleIndividual {
     individualID: string;
@@ -55,14 +56,14 @@ export enum TrestleRelationType {
 @Injectable()
 export class VisualizeService {
 
-    constructor(private authHttp: AuthHttp) {}
+    constructor(private trestleHttp: TrestleHttp) {}
 
     searchForIndividual(name: string, dataset = "", limit = 10): Observable<Array<string>> {
         let params = new URLSearchParams();
         params.set("name", name);
         params.set("dataset", dataset);
         params.set("limit", limit.toString());
-        return this.authHttp.get("/visualize/search", {
+        return this.trestleHttp.get("/visualize/search", {
             search: params
         })
             .map((res: Response) => {
@@ -75,7 +76,7 @@ export class VisualizeService {
     getIndividualAttributes(name: string): Observable<ITrestleIndividual> {
         let params = new URLSearchParams();
         params.set("name", name);
-        return this.authHttp.get("/visualize/retrieve", {
+        return this.trestleHttp.get("/visualize/retrieve", {
             search: params
         })
             .map((res: Response) => {

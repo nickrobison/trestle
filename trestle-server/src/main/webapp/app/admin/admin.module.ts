@@ -14,14 +14,9 @@ import {QueryComponent} from "./query/query.component";
 import {CodeMirrorComponent} from "./query/codemirror/codemirror.component";
 import {QueryService} from "./query/query.service";
 import {QueryViewer} from "./query/query-viewer/query-viewer.component";
-import {VisualizeService} from "./visualize/visualize.service";
-import {VisualizeComponent} from "./visualize/visualize.component";
-import {IndividualGraph} from "./visualize/individual-graph.component";
-import {IndividualValueDialog} from "./visualize/individual-value.dialog";
 import {MetricsComponent} from "./metrics/metrics.component";
 import {MetricsService} from "./metrics/metrics.service";
 import {MetricsGraph} from "./metrics/metrics-graph.component";
-import {FactHistoryGraph} from "./visualize/fact-graph.component";
 import {UserModule} from "../UserModule/user.module";
 import {Privileges} from "../UserModule/authentication.service";
 import {LoggedInGuard} from "../UserModule/LoggedInGuard";
@@ -39,7 +34,7 @@ const routes: Array<ITrestleRoute> = [
     {path: "", component: AdminComponent, children: [
         {path: "dashboard", component: DashboardComponent},
         {path: "query", component: QueryComponent, canActivate: [LoggedInGuard]},
-        {path: "visualize", component: VisualizeComponent, canActivate: [LoggedInGuard]},
+        // {path: "visualize", component: VisualizeComponent, canActivate: [LoggedInGuard]},
         {path: "users", component: UsersComponent, canActivate: [LoggedInGuard, PermissionsGuard], data: {roles: [Privileges.ADMIN]}},
         {path: "metrics", component: MetricsComponent, canActivate: [LoggedInGuard, PermissionsGuard], data: {roles: [Privileges.ADMIN]}},
         {path: "", redirectTo: "/dashboard", pathMatch: "full"}
@@ -54,10 +49,6 @@ const routes: Array<ITrestleRoute> = [
         CodeMirrorComponent,
         QueryComponent,
         QueryViewer,
-        VisualizeComponent,
-        IndividualGraph,
-        FactHistoryGraph,
-        IndividualValueDialog,
         MetricsComponent,
         MetricsGraph,
         MapValuesPipe],
@@ -69,8 +60,8 @@ const routes: Array<ITrestleRoute> = [
         MaterialModule,
         UserModule
     ],
-    providers: [QueryService, VisualizeService, MetricsService],
-    entryComponents: [UserAddDialog, IndividualValueDialog],
+    providers: [QueryService, MetricsService],
+    entryComponents: [UserAddDialog],
     bootstrap: [AdminComponent]
 })
 
