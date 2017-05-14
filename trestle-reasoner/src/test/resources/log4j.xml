@@ -17,9 +17,12 @@
     <category name="org.apache.http">
         <priority value="OFF"/>
     </category>
+    <category name="com.nickrobison.trestle.ontology.TransactingOntology">
+        <priority value="TRACE"/>
+    </category>
 
     <root>
-        <priority value="DEBUG"/>
+        <priority value="INFO"/>
         <appender-ref ref="CA"/>
     </root>
 

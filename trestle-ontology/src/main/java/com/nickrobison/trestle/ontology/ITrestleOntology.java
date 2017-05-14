@@ -440,6 +440,12 @@ public interface ITrestleOntology {
     long getAbortedTransactionCount();
 
     /**
+     * Get the number of currently open read/write transactions
+     * @return - {@link AtomicInteger} int of open read/write transactions
+     */
+    int getCurrentlyOpenTransactions();
+
+    /**
      * Get the number of currently open write transactions
      * @return - {@link AtomicInteger} int of open write transactions
      */

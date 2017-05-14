@@ -10,6 +10,8 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.function.Consumer;
+
 /**
  * Created by nrobison on 1/16/17.
  */
@@ -104,7 +106,15 @@ public class SesameConnectionManager {
      */
     public void shutdownPool() {
         logger.info("Draining connection pool");
-        this.connectionQueue.drain(RepositoryConnection::close);
+        this.connectionQueue.drain(drainConnections);
         logger.info("Connection pool shutdown");
     }
+
+    private static Consumer<RepositoryConnection> drainConnections = connection -> {
+            if (connection.isActive()) {
+                logger.error("Connection still has live transaction, rolling-back");
+                connection.rollback();
+            }
+            connection.close();
+    };
 }
