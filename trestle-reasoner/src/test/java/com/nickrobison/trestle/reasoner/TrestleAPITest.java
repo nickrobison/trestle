@@ -292,6 +292,7 @@ public class TrestleAPITest {
 
     @AfterEach
     public void close() throws OWLOntologyStorageException {
+        assertEquals(reasoner.getUnderlyingOntology().getCommittedTransactionCount(), reasoner.getUnderlyingOntology().getOpenedTransactionCount(), "Should have symmetric closed/opened transactions");
         reasoner.shutdown(true);
     }
 

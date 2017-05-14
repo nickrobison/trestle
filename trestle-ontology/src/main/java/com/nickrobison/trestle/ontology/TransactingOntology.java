@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
+import com.codahale.metrics.annotation.Gauge;
 import com.nickrobison.trestle.reasoner.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
@@ -380,28 +381,40 @@ abstract class TransactingOntology implements ITrestleOntology {
         }
     }
 
-    /**
-     * Get the current number of opened transactions, for the lifetime of the application
-     * @return - long of opened transactions
-     */
+    @Override
     public long getOpenedTransactionCount() {
         return this.openedTransactions.get();
     }
 
-    /**
-     * Get the current number of committed transactions, for the lifetime of the application
-     * @return - long of committed transactions
-     */
+    @Override
     public long getCommittedTransactionCount() {
         return this.committedTransactions.get();
     }
 
-    /**
-     * Get the current number of aborted transactions, for the lifetime of the application
-     * @return - long of aborted transactions
-     */
+    @Override
     public long getAbortedTransactionCount() {
         return this.abortedTransactions.get();
+    }
+
+
+    /**
+     * Get the number of currently open read/write transactions
+     * @return - {@link AtomicInteger} int of open read/write transactions
+     */
+    public int getOpenTransactions() {
+        return this.openReadTransactions.get() + this.openWriteTransactions.get();
+    }
+
+    @Override
+    @Gauge(name = "trestle-open-write-transactions", absolute = true)
+    public int getOpenWriteTransactions() {
+        return this.openWriteTransactions.get();
+    }
+
+    @Override
+    @Gauge(name = "trestle-open-read-transactions", absolute = true)
+    public int getOpenReadTransactions() {
+        return this.openReadTransactions.get();
     }
 
 

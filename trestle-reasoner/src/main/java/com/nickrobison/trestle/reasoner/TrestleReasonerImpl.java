@@ -222,14 +222,21 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public void shutdown() {
-        logger.info("Shutting down reasoner");
-        this.ontology.close(false);
-        this.metrician.shutdown();
+        this.shutdown(false);
     }
 
     @Override
     public void shutdown(boolean delete) {
-        logger.info("Shutting down reasoner, and removing the model");
+        if (delete) {
+            logger.info("Shutting down reasoner, and removing the model");
+        } else {
+            logger.info("Shutting down reasoner");
+        }
+//        Check to make sure we don't have any open transactions
+        final long openedTransactionCount = this.ontology.getOpenedTransactionCount();
+        if (openedTransactionCount > 0) {
+            logger.error("{} currently open read/write transactions!", openedTransactionCount);
+        }
         this.trestleCache.shutdown(delete);
         this.ontology.close(delete);
         this.metrician.shutdown();

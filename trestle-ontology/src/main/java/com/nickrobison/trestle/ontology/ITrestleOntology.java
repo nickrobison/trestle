@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
+import com.codahale.metrics.annotation.Gauge;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
@@ -10,6 +11,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by nrobison on 5/23/16.
@@ -418,4 +420,36 @@ public interface ITrestleOntology {
      * @param write - Is this a write transaction?
      */
     void unlockAndCommit(boolean write);
+
+    /**
+     * Get the current number of opened transactions, for the lifetime of the application
+     * @return - long of opened transactions
+     */
+    long getOpenedTransactionCount();
+
+    /**
+     * Get the current number of committed transactions, for the lifetime of the application
+     * @return - long of committed transactions
+     */
+    long getCommittedTransactionCount();
+
+    /**
+     * Get the current number of aborted transactions, for the lifetime of the application
+     * @return - long of aborted transactions
+     */
+    long getAbortedTransactionCount();
+
+    /**
+     * Get the number of currently open write transactions
+     * @return - {@link AtomicInteger} int of open write transactions
+     */
+    @Gauge(name = "trestle-open-write-transactions", absolute = true)
+    int getOpenWriteTransactions();
+
+    /**
+     * Get the number of currently open read transactions
+     * @return - {@link AtomicInteger} int of open read transactions
+     */
+    @Gauge(name = "trestle-open-read-transactions", absolute = true)
+    int getOpenReadTransactions();
 }
