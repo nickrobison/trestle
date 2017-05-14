@@ -1012,7 +1012,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final Instant start = Instant.now();
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
-            final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(spatialIntersection);
+            final TrestleResultSet resultSet;
+            try {
+                resultSet = this.ontology.executeSPARQLResults(spatialIntersection);
+            } catch(Exception e) {
+                logger.error("Problem executing Spatial Intersect query", e);
+                return Optional.empty();
+            }
             final Instant end = Instant.now();
             logger.debug("Spatial query returned in {} ms", Duration.between(start, end).toMillis());
             Set<IRI> intersectedIRIs = resultSet.getResults()

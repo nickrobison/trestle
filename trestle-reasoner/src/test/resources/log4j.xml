@@ -20,6 +20,9 @@
     <category name="com.nickrobison.trestle.ontology.TransactingOntology">
         <priority value="TRACE"/>
     </category>
+    <category name="com.nickrobison.trestle.ontology.utils.SesameConnectionManager">
+        <priority value="TRACE"/>
+    </category>
 
     <root>
         <priority value="INFO"/>

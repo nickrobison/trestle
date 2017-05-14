@@ -79,6 +79,7 @@ public class SesameConnectionManager {
      */
     @Metered(name = "sesame-connection-pool-return", absolute = true)
     public void returnConnection(@Nullable RepositoryConnection connection) {
+        logger.debug("Returning connection");
         if (connection != null) {
             if (connection.isActive()) {
                 logger.error("Connection still has live transaction");
