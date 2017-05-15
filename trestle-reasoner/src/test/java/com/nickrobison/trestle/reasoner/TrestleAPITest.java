@@ -68,7 +68,7 @@ public class TrestleAPITest {
                         TestClasses.MultiLangTest.class,
                         TestClasses.FactVersionTest.class)
                 .withoutCaching()
-                .withoutMetrics()
+//                .withoutMetrics()
                 .initialize()
                 .build();
 

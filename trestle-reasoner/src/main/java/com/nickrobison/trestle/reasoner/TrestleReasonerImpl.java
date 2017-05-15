@@ -6,6 +6,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.nickrobison.metrician.Metrician;
@@ -57,9 +58,7 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -96,6 +95,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final Config trestleConfig;
     private final TrestleCache trestleCache;
     private final Metrician metrician;
+    private final ExecutorService defaultThreadPool;
 
     @SuppressWarnings("dereference.of.nullable")
     TrestleReasonerImpl(TrestleBuilder builder) throws OWLOntologyCreationException {
@@ -103,6 +103,16 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //        Read in the trestleConfig file and validate it
         trestleConfig = ConfigFactory.load().getConfig("trestle");
         ValidateConfig(trestleConfig);
+
+//        Create our own thread pool to help isolate processes
+        final int threadPoolSize = trestleConfig.getInt("threadPoolSize");
+        logger.debug("Creating thread-pool with {} threads", threadPoolSize);
+        final ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat(String.format("Trestle-%s-%%d", builder.ontologyName.orElse("default")))
+                .setDaemon(false)
+                .build();
+        defaultThreadPool = Executors.newFixedThreadPool(threadPoolSize, threadFactory);
+
 
         final Injector injector = Guice.createInjector(new TrestleModule(builder.metrics, builder.caching));
 
@@ -231,6 +241,16 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             logger.info("Shutting down reasoner, and removing the model");
         } else {
             logger.info("Shutting down reasoner");
+        }
+        this.defaultThreadPool.shutdown();
+        logger.debug("Waiting 10 Seconds for thread-pool to terminate");
+        try {
+            final boolean awaitTermination = this.defaultThreadPool.awaitTermination(10, TimeUnit.SECONDS);
+            if (!awaitTermination) {
+                logger.error("thread-pool terminated with processes in flight");
+            }
+        } catch (InterruptedException e) {
+            logger.error("Unable to shutdown thread-pool", e);
         }
 //        Check to make sure we don't have any open transactions
         final long openTransactionCount = this.ontology.getCurrentlyOpenTransactions();
@@ -757,7 +777,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 final Instant individualRetrievalEnd = Instant.now();
                 logger.debug("Retrieving {} facts took {} ms", resultSet.getResults().size(), Duration.between(individualRetrievalStart, individualRetrievalEnd).toMillis());
                 return resultSet;
-            })
+            }, defaultThreadPool)
                     .thenApply(resultSet -> {
 //                        From the resultSet, build the Facts
                         return resultSet.getResults()
@@ -788,7 +808,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 final Set<OWLDataPropertyAssertionAxiom> properties = ontology.getTemporalsForIndividual(df.getOWLNamedIndividual(individualIRI));
                 ontology.returnAndCommitTransaction(tt);
                 return properties;
-            })
+            }, defaultThreadPool)
                     .thenApply(temporalProperties -> TemporalObjectBuilder.buildTemporalFromProperties(temporalProperties, baseTemporalType, clazz));
 
 
@@ -1039,7 +1059,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 } finally {
                     this.ontology.returnAndCommitTransaction(tt);
                 }
-            }))
+            }, defaultThreadPool))
                     .collect(Collectors.toList());
             final CompletableFuture<List<@NonNull T>> objectsFuture = sequenceCompletableFutures(objectFuturesList);
 
@@ -1130,7 +1150,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      */
     public <T> void removeIndividual(@NonNull T... inputObject) {
         final List<CompletableFuture<Void>> completableFutures = Arrays.stream(inputObject)
-                .map(object -> CompletableFuture.supplyAsync(() -> trestleParser.classParser.getIndividual(object)))
+                .map(object -> CompletableFuture.supplyAsync(() -> trestleParser.classParser.getIndividual(object), defaultThreadPool))
                 .map(idFuture -> idFuture.thenApply(ontology::getAllObjectPropertiesForIndividual))
                 .map(propertyFutures -> propertyFutures.thenCompose(this::removeRelatedObjects))
                 .map(removedFuture -> removedFuture.thenAccept(ontology::removeIndividual))
@@ -1185,7 +1205,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
             this.ontology.returnAndCommitTransaction(trestleTransaction);
             return objectProperties.stream().findAny().orElseThrow(RuntimeException::new).getSubject().asOWLNamedIndividual();
-        });
+        }, defaultThreadPool);
 
     }
 
@@ -1256,7 +1276,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             TrestleResultSet resultSet = ontology.executeSPARQLResults(query);
             this.ontology.returnAndCommitTransaction(tt);
             return resultSet;
-        })
+        }, defaultThreadPool)
                 .thenApply(sparqlResults -> {
                     List<TrestleRelation> relations = new ArrayList<>();
                     sparqlResults.getResults()
@@ -1392,7 +1412,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                         this.ontology.returnAndCommitTransaction(futureTransaction);
                         throw new RuntimeException(e);
                     }
-                }))
+                }, defaultThreadPool))
                 .collect(Collectors.toList());
         final CompletableFuture<List<T>> conceptObjectsFuture = sequenceCompletableFutures(completableFutureList);
         try {
@@ -1675,7 +1695,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     literalObject,
                     validTemporal.orElseThrow(() -> new TrestleMissingFactException(factIndividual)),
                     dbTemporal.orElseThrow(() -> new TrestleMissingFactException(factIndividual)));
-        });
+        }, defaultThreadPool);
     }
 
     /**
@@ -1692,7 +1712,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             final Optional<List<OWLObjectPropertyAssertionAxiom>> temporalIndividual = ontology.getIndividualObjectProperty(individual, temporalIRI);
             this.ontology.returnAndCommitTransaction(tt);
             return temporalIndividual;
-        })
+        }, defaultThreadPool)
                 .thenApply(temporalProperties -> temporalProperties.orElseThrow(() -> new TrestleMissingFactException(individual, temporalIRI)).stream().findFirst())
                 .thenApply(temporalProperty -> {
                     final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(transactionObject);
@@ -1951,7 +1971,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     } finally {
                         this.ontology.returnAndCommitTransaction(tt);
                     }
-                }))
+                }, defaultThreadPool))
                 .map(objectFuture -> objectFuture.thenApply(object -> parseIndividualToShapefile(object, shapefileSchema)))
                 .collect(Collectors.toList());
 
