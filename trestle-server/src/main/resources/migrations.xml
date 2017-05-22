@@ -1,5 +1,8 @@
-<?xml version="1.1" encoding="UTF-8" standalone="no"?>
-<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+<!--<?xml version="1.1" encoding="UTF-8" standalone="no"?>-->
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
     <changeSet author="nrobison (generated)" id="1484942448470-1" objectQuotingStrategy="QUOTE_ALL_OBJECTS">
         <createTable catalogName="TEST" remarks="User table" schemaName="PUBLIC" tableName="USERS">
             <column autoIncrement="true" name="ID" type="BIGINT(19)">
@@ -12,5 +15,15 @@
             <column name="PASSWORD" type="VARCHAR(255)"/>
             <column name="PRIVILEGES" type="INT(10)"/>
         </createTable>
+    </changeSet>
+    <changeSet author="nrobison" id="insert-dba" objectQuotingStrategy="QUOTE_ALL_OBJECTS">
+        <insert catalogName="TEST" schemaName="PUBLIC" tableName="USERS">
+            <column name="FIRST_NAME" value="Database"/>
+            <column name="LAST_NAME" value="Administrator"/>
+            <column name="USERNAME" value="dba"/>
+            <column name="EMAIL" value="dba@test.com"/>
+            <column name="PASSWORD" value="$2a$10$x8s46RPuyAzOQTS2IN0K1..RoAulbtvBpMsqAJ642Hd/KznBAOcL6"/>
+            <column name="PRIVILEGES" value="7"/>
+        </insert>
     </changeSet>
 </databaseChangeLog>
