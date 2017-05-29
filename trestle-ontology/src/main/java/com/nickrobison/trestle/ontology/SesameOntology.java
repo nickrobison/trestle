@@ -575,13 +575,14 @@ public abstract class SesameOntology extends TransactingOntology {
 
     @Override
     public void setOntologyConnection() {
+        logger.trace("Attempting to set thread connection");
         final TrestleTransaction threadTransactionObject = this.getThreadTransactionObject();
         if (threadTransactionObject == null) {
             logger.warn("Thread has no transaction object, getting connection from the pool");
             this.tc.set(this.cm.getConnection());
         } else {
-            logger.debug("Setting thread connection from transaction object");
             @Nullable final RepositoryConnection connection = threadTransactionObject.getConnection();
+            logger.trace("Setting thread connection from transaction object {}, which is active? {}", connection, connection.isActive());
             if (connection != null) {
                 this.tc.set(connection);
             } else {
@@ -595,6 +596,7 @@ public abstract class SesameOntology extends TransactingOntology {
      * Reset thread connection to null and return the connection to the {@link SesameConnectionManager}
      */
     protected void resetThreadConnection() {
+        logger.trace("Resetting thread connection");
         @Nullable final RepositoryConnection connection = getThreadConnection();
         this.tc.set(null);
         this.cm.returnConnection(connection);
@@ -602,6 +604,8 @@ public abstract class SesameOntology extends TransactingOntology {
 
     @Override
     public @NonNull RepositoryConnection getOntologyConnection() {
-        return this.cm.getConnection();
+        final RepositoryConnection connection = this.cm.getConnection();
+        logger.trace("Got ontology connection {}", connection);
+        return connection;
     }
 }

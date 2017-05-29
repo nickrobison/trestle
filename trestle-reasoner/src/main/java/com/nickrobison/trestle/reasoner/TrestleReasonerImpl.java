@@ -1029,12 +1029,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             logger.error("Database {} doesn't support spatial intersections.", spatialDalect, e);
             return Optional.empty();
         }
-        logger.debug("Executing async spatial query");
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        final String finalSpatialIntersection = spatialIntersection;
         try {
+            final String finalSpatialIntersection = spatialIntersection;
             final CompletableFuture<List<@NonNull T>> objectsFuture = CompletableFuture.supplyAsync(() -> {
+                logger.debug("Executing async spatial query");
                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                logger.debug("Transaction opened");
                 try {
                     return this.ontology.executeSPARQLResults(finalSpatialIntersection);
                 } finally {
