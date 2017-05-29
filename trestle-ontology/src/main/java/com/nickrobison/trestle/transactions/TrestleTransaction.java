@@ -11,7 +11,7 @@ public class TrestleTransaction {
 
     private final @Nullable Long transactionID;
     private final Boolean writeTransaction;
-    private @Nullable RepositoryConnection connection;
+    private volatile @Nullable RepositoryConnection connection;
 
     /**
      * Create a new TrestleTransaction with the current timestamp, indicating the tread owns the current transaction
