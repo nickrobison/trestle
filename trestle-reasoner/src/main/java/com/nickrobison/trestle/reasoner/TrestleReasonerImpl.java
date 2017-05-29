@@ -10,6 +10,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.nickrobison.metrician.Metrician;
+import com.nickrobison.trestle.common.LambdaUtils;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
@@ -1019,7 +1020,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //            TODO(nrobison): Implement DB intersection
         dbTemporal = OffsetDateTime.now();
 
-        String spatialIntersection = null;
+        String spatialIntersection;
         try {
             logger.debug("Running spatial intersection at time {}", atTemporal);
             spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.UNITS.METER, atTemporal, dbTemporal);
@@ -1028,51 +1029,45 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             logger.error("Database {} doesn't support spatial intersections.", spatialDalect, e);
             return Optional.empty();
         }
-        logger.debug("Executing spatial query");
-        final Instant start = Instant.now();
+        logger.debug("Executing async spatial query");
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+        final String finalSpatialIntersection = spatialIntersection;
         try {
-            final TrestleResultSet resultSet;
-            try {
-                resultSet = this.ontology.executeSPARQLResults(spatialIntersection);
-            } catch(Exception e) {
-                logger.error("Problem executing Spatial Intersect query", e);
-                return Optional.empty();
-            }
-            final Instant end = Instant.now();
-            logger.debug("Spatial query returned in {} ms", Duration.between(start, end).toMillis());
-            Set<IRI> intersectedIRIs = resultSet.getResults()
-                    .stream()
-                    .map(result -> IRI.create(result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID()))
-                    .collect(Collectors.toSet());
-            logger.debug("Intersected with {} objects", intersectedIRIs.size());
-            if (intersectedIRIs.size() == 0) {
-                logger.info("No intersected results");
-
-                return Optional.of(new ArrayList<@NonNull T>());
-            }
-
-            final List<CompletableFuture<@NonNull T>> objectFuturesList = intersectedIRIs.stream().map(iri -> CompletableFuture.supplyAsync(() -> {
+            final CompletableFuture<List<@NonNull T>> objectsFuture = CompletableFuture.supplyAsync(() -> {
                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                 try {
-                    return readTrestleObject(clazz, iri, false, atTemporal, dbTemporal);
+                    return this.ontology.executeSPARQLResults(finalSpatialIntersection);
                 } finally {
                     this.ontology.returnAndCommitTransaction(tt);
                 }
-            }, defaultThreadPool))
-                    .collect(Collectors.toList());
-            final CompletableFuture<List<@NonNull T>> objectsFuture = sequenceCompletableFutures(objectFuturesList);
+            }, defaultThreadPool)
+                    .thenApply(resultSet -> resultSet.getResults()
+                            .stream()
+                            .map(result -> IRI.create(result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID()))
+                            .collect(Collectors.toSet()))
+                    .thenApply(intersectedIRIs -> intersectedIRIs
+                            .stream()
+                            .map(iri -> CompletableFuture.supplyAsync(() -> {
+                                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                                try {
+                                    return readTrestleObject(clazz, iri, false, atTemporal, dbTemporal);
+                                } finally {
+                                    this.ontology.returnAndCommitTransaction(tt);
+                                }
+                            }, defaultThreadPool))
+                            .collect(Collectors.toList()))
+                    .thenCompose(LambdaUtils::sequenceCompletableFutures);
 
             try {
                 final List<@NonNull T> intersectedObjects = objectsFuture.get();
                 return Optional.of(intersectedObjects);
             } catch (InterruptedException e) {
                 logger.error("Spatial intersection interrupted", e);
-//                this.ontology.returnAndAbortTransaction(trestleTransaction);
+                this.ontology.returnAndAbortTransaction(trestleTransaction);
                 return Optional.empty();
             } catch (ExecutionException e) {
                 logger.error("Spatial intersection execution exception", e);
-//                this.ontology.returnAndAbortTransaction(trestleTransaction);
+                this.ontology.returnAndAbortTransaction(trestleTransaction);
                 return Optional.empty();
             }
         } finally {
