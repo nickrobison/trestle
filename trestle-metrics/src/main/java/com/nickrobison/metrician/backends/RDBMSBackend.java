@@ -50,6 +50,7 @@ public abstract class RDBMSBackend implements IMetricianBackend {
 
     @Override
     public void shutdown() {
+        eventThread.interrupt();
         shutdown(null);
     }
 
@@ -166,20 +167,18 @@ public abstract class RDBMSBackend implements IMetricianBackend {
 
         @Override
         public void run() {
-            while (true) {
-                final MetricianReporter.DataAccumulator event;
-                try {
-                    event = dataQueue.take();
+            try {
+                while (!Thread.currentThread().isInterrupted()) {
+                    final MetricianReporter.DataAccumulator event = dataQueue.take();
                     processEvent(event);
-                } catch (InterruptedException e) {
-                    logger.debug("Thread interrupted, draining queue");
-                    ArrayDeque<MetricianReporter.DataAccumulator> remainingEvents = new ArrayDeque<>();
-                    dataQueue.drainTo(remainingEvents);
-                    remainingEvents.forEach(this::processEvent);
-                    logger.debug("Finished draining events");
-                    return;
                 }
+            } catch (InterruptedException e) {
             }
+            logger.debug("Thread interrupted, draining queue");
+            ArrayDeque<MetricianReporter.DataAccumulator> remainingEvents = new ArrayDeque<>();
+            dataQueue.drainTo(remainingEvents);
+            remainingEvents.forEach(this::processEvent);
+            logger.debug("Finished draining events");
         }
 
         private void processEvent(MetricianReporter.DataAccumulator event) {
@@ -198,15 +197,14 @@ public abstract class RDBMSBackend implements IMetricianBackend {
                 events.add(new MetricianMetricValue<>(MetricianMetricValue.ValueType.COUNTER, metricKey, timestamp, entry.getValue()));
             });
 //            Gauges
-            event.getGauges().entrySet().forEach(entry -> {
-                final String key = entry.getKey();
-                logger.trace("Gauge {}: {}", key, entry.getValue());
+            event.getGauges().forEach((key, value) -> {
+                logger.trace("Gauge {}: {}", key, value);
                 Long metricKey = metricMap.get(key);
                 if (metricKey == null) {
                     logger.warn("Got null key for metric {}, registering", key);
                     metricKey = registerMetric(key);
                 }
-                events.add(new MetricianMetricValue<>(MetricianMetricValue.ValueType.GAUGE, metricKey, timestamp, entry.getValue()));
+                events.add(new MetricianMetricValue<>(MetricianMetricValue.ValueType.GAUGE, metricKey, timestamp, value));
             });
             insertValues(events);
         }
