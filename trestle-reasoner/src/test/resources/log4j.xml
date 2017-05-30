@@ -4,7 +4,7 @@
 
     <appender name="CA" class="org.apache.log4j.ConsoleAppender">
         <layout class="org.apache.log4j.PatternLayout">
-            <param name="ConversionPattern" value="%-4r [%t] %-5p %c:%L - %m%n"/>
+            <param name="ConversionPattern" value="[%-5p | %t] %d %c:%L - %m%n"/>
         </layout>
     </appender>
 
@@ -17,9 +17,18 @@
     <category name="org.apache.http">
         <priority value="OFF"/>
     </category>
+    <category name="com.nickrobison.trestle.reasoner.TrestleReasonerImpl">
+        <priority value="TRACE"/>
+    </category>
+    <category name="com.nickrobison.trestle.ontology">
+        <priority value="TRACE"/>
+    </category>
+    <category name="com.nickrobison.trestle.ontology.utils.SesameConnectionManager">
+        <priority value="TRACE"/>
+    </category>
 
     <root>
-        <priority value="DEBUG"/>
+        <priority value="INFO"/>
         <appender-ref ref="CA"/>
     </root>
 
