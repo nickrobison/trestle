@@ -9,10 +9,8 @@ import {RouterModule} from "@angular/router";
 import {AppRoutes} from "./app.routes";
 import {AppComponent} from "./app.component";
 import {MaterializeModule} from "angular2-materialize";
-import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {NavigationModule} from "./NavigationModule/navigation.module";
-import {ExploreModule} from "./ExploreModule/explore.module";
 
 @NgModule({
     imports: [
@@ -22,8 +20,7 @@ import {ExploreModule} from "./ExploreModule/explore.module";
         MaterialModule,
         RouterModule.forRoot(AppRoutes),
         MaterializeModule,
-        NavigationModule,
-        ExploreModule
+        NavigationModule
     ],
     declarations: [AppComponent],
     // providers: [AuthService,

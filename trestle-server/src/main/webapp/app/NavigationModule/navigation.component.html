@@ -13,7 +13,7 @@
     <md-sidenav #sidenav class="mat-elevation-z3" mode="side" opened="true" color="accent">
         <md-nav-list>
             <h4 md-list-subheader>Explore</h4>
-            <a md-list-item routerLink="/visualize" aria-label="visualizer link">VISUALIZER</a>
+            <a md-list-item [routerLink]="['/visualize']" aria-label="visualizer link">VISUALIZER</a>
             <a md-list-item routerLink="/query" aria-label="query link">QUERY</a>
             <!--<div *ngIf="userLoggedIn | async">-->
             <div>
