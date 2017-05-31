@@ -63,7 +63,7 @@ export class AuthService {
             this.http.post("/auth/logout", null);
             localStorage.removeItem(_key);
             console.log("Logged out user");
-            this.router.navigate(["/login"]);
+            this.router.navigate(["/"]);
         }
     }
 
@@ -84,7 +84,7 @@ export class AuthService {
 
     public getUser(): ITrestleUser {
         if (this.loggedIn()) {
-            let token = new TrestleToken(this.jwtHelper.decodeToken(localStorage.getItem(_key)));
+            let token = this.getToken();
             return token.user;
         }
         console.error("User is not logged in");
@@ -97,10 +97,15 @@ export class AuthService {
      * @returns {boolean} - has all the required roles
      */
     public hasRequiredRoles(roles: Array<Privileges>): boolean {
-        let token = new TrestleToken(this.jwtHelper.decodeToken(localStorage.getItem(_key)));
+        console.log("Required roles?", roles);
+        let token = this.getToken();
+        if (token == null) {
+            return false;
+        }
         console.debug("Role token", token);
 
         if (token) {
+            console.log("User privs:", token.user.privileges);
             return (token.user.privileges & this.buildRoleValue(roles)) > 0;
         }
         return false;
@@ -114,6 +119,14 @@ export class AuthService {
         });
         console.debug("Role value", roleValue);
         return roleValue;
+    }
+
+    private getToken(): TrestleToken {
+        let jwtToken = localStorage.getItem(_key);
+        if (jwtToken == null) {
+            return null;
+        }
+        return new TrestleToken(this.jwtHelper.decodeToken(jwtToken));
     }
 
 

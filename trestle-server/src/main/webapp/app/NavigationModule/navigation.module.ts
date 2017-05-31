@@ -12,12 +12,29 @@ import {FormsModule, ReactiveFormsModule} from "@angular/forms"
 import {VisualizeComponent} from "../ExploreModule/visualize/visualize.component";
 import {QueryComponent} from "../ExploreModule/query/query.component";
 import {ExploreModule} from "../ExploreModule/explore.module";
+import {AdminModule} from "../AdminModule/admin.module";
+import {LoggedInGuard} from "../UserModule/LoggedInGuard";
+import {MetricsComponent} from "../AdminModule/metrics/metrics.component";
+import {Privileges} from "../UserModule/authentication.service";
+import {PermissionsGuard} from "../UserModule/PermissionsGuard";
+import {UsersComponent} from "../AdminModule/users/users.component";
 
-const routes: Array<Route> = [
+interface ITrestleRoute extends Route {
+    data?: ITrestleRouteData
+}
+
+interface ITrestleRouteData {
+    roles: Array<Privileges>;
+}
+
+const routes: Array<ITrestleRoute> = [
     {path: "", component: NavigationComponent,
         children: [
-            {path: "visualize", component: VisualizeComponent},
-            {path: "query", component: QueryComponent}]
+            {path: "visualize", component: VisualizeComponent, canActivate: [LoggedInGuard]},
+            {path: "query", component: QueryComponent, canActivate: [LoggedInGuard]},
+            {path: "metrics", component: MetricsComponent, canActivate: [LoggedInGuard, PermissionsGuard], data: {roles: [Privileges.ADMIN]}},
+            {path: "users", component: UsersComponent, canActivate: [LoggedInGuard, PermissionsGuard], data: {roles: [Privileges.ADMIN]}},
+            ]
     // children: [{path: "explore", loadChildren: "../ExploreModule/explore.module#ExploreModule"}]
     }
 ];
@@ -34,7 +51,8 @@ const routes: Array<Route> = [
         CommonModule,
         FormsModule,
         ReactiveFormsModule,
-        ExploreModule
+        ExploreModule,
+        AdminModule
     ],
     bootstrap: [NavigationComponent]
 })

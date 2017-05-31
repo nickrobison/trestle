@@ -9,6 +9,7 @@ import {PermissionsGuard} from "./PermissionsGuard";
 import {Router} from "@angular/router";
 import {TrestleHttp} from "./trestle-http.provider";
 import {CommonModule} from "@angular/common";
+import {UserService} from "./users.service";
 
 @NgModule({
     imports: [
@@ -19,11 +20,7 @@ import {CommonModule} from "@angular/common";
         AuthService,
         LoggedInGuard,
         PermissionsGuard,
-        // {
-        //     provide: AuthHttp,
-        //     useFactory: authHttpServiceFactory,
-        //     deps: [Http, RequestOptions]
-        // },
+        UserService,
         {
             provide: TrestleHttp,
             useFactory: (backend: Http, defaultOptions: RequestOptions, router: Router) => new TrestleHttp(backend, defaultOptions, router),
