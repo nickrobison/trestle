@@ -2,9 +2,9 @@
  * Created by nrobison on 3/24/17.
  */
 import {Injectable} from "@angular/core";
-import {AuthHttp} from "angular2-jwt";
 import {Observable} from "rxjs";
 import {Response, ResponseContentType, URLSearchParams} from "@angular/http";
+import {TrestleHttp} from "../../UserModule/trestle-http.provider";
 
 export interface ITrestleMetricsHeader {
     upTime: number;
@@ -25,7 +25,7 @@ export interface IMetricsValue {
 @Injectable()
 export class MetricsService {
 
-    constructor(private authHttp: AuthHttp) {
+    constructor(private authHttp: TrestleHttp) {
     }
 
     public getMetrics(): Observable<ITrestleMetricsHeader> {

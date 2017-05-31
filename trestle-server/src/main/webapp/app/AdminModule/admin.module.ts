@@ -49,7 +49,7 @@ const routes: Array<ITrestleRoute> = [
         CommonModule,
         FormsModule,
         ReactiveFormsModule,
-        RouterModule.forChild(routes),
+        // RouterModule.forChild(routes),
         MaterialModule,
         UserModule
     ],
