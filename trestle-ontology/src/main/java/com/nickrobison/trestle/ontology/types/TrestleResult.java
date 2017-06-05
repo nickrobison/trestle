@@ -87,4 +87,11 @@ public class TrestleResult {
                 });
         return stringMap;
     }
+
+    @Override
+    public String toString() {
+        return "TrestleResult{" +
+                "resultValues=" + resultValues +
+                '}';
+    }
 }

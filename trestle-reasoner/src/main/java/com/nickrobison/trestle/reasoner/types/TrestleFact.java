@@ -4,6 +4,8 @@ import com.nickrobison.trestle.reasoner.parser.TypeConverter;
 import com.nickrobison.trestle.reasoner.types.temporal.TemporalObject;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLLiteral;
 
@@ -34,7 +36,7 @@ public class TrestleFact<T> implements Serializable {
         this.javaClass = value.getClass();
     }
 
-    public TrestleFact(Class<?> clazz, OWLDataPropertyAssertionAxiom propertyAxiom, TemporalObject validTemporal, TemporalObject databaseTemporal) {
+    public TrestleFact(@Nullable Class<?> clazz, OWLDataPropertyAssertionAxiom propertyAxiom, TemporalObject validTemporal, TemporalObject databaseTemporal) {
         this.validTemporal = validTemporal;
         this.databaseTemporal = databaseTemporal;
         this.identifier = propertyAxiom.getSubject().toStringID();
@@ -81,4 +83,5 @@ public class TrestleFact<T> implements Serializable {
     public TemporalObject getDatabaseTemporal() {
         return databaseTemporal;
     }
+
 }
