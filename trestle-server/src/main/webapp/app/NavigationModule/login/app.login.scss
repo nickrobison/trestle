@@ -1,7 +1,18 @@
+@mixin vertical-align($position: relative) {
+    position: $position;
+    top: 50%;
+    -webkit-transform: translateY(-50%) perspective(1px);
+    -ms-transform: translateY(-50%) perspective(1px);
+    transform: translateY(-50%) perspective(1px);
+}
+
 .login-input {
     margin-left: auto;
     margin-right: auto;
     width: 500px;
+    top: 30%;
+    position: relative;
+    //@include vertical-align();
 }
 
 .input-full-width {
@@ -10,5 +21,10 @@
 
 .login {
     background-color: darkslategrey;
-    height: 100%;
+    height: 100vh;
+    text-align: center;
+}
+.mat-card-footer {
+    height: 20px;
+    background-color: red;
 }

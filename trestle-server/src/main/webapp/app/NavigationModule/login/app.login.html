@@ -1,7 +1,7 @@
 <div class="login">
     <md-card class="login-input">
         <md-card-header>
-            <md-card-title>Login to Trestle</md-card-title>
+            <md-card-title><h4>Login to Trestle</h4></md-card-title>
         </md-card-header>
         <form [formGroup]="loginForm" (ngSubmit)="login(loginForm.value)">
             <md-card-content>
@@ -22,8 +22,9 @@
                 </table>
             </md-card-content>
             <md-card-actions>
-                <button md-button type="submit" [disabled]="!loginForm.valid">Login</button>
+                <button md-raised-button type="submit" [disabled]="!loginForm.valid">Login</button>
             </md-card-actions>
+            <md-card-footer [@errorMessage]="errorState">{{errorMessage}}</md-card-footer>
         </form>
     </md-card>
 </div>
