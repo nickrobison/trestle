@@ -38,9 +38,11 @@
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/@angular/language-service/-/language-service-4.1.0.tgz#d45e085101205e0c7c2ac8d1ccf0b5fcfb4f8699"
 
-"@angular/material@2.0.0-beta.3":
-  version "2.0.0-beta.3"
-  resolved "https://registry.yarnpkg.com/@angular/material/-/material-2.0.0-beta.3.tgz#ec31dee61d7300ece28fee476852db236ded1e13"
+"@angular/material@2.0.0-beta.6":
+  version "2.0.0-beta.6"
+  resolved "https://registry.yarnpkg.com/@angular/material/-/material-2.0.0-beta.6.tgz#83bfdf00f540a8c7db900a1e7b8ed2cff49df821"
+  dependencies:
+    tslib "^1.7.1"
 
 "@angular/platform-browser-dynamic@4.1.0", "@angular/platform-browser-dynamic@^4.0.2":
   version "4.1.0"
@@ -3762,6 +3764,10 @@ tsickle@^0.21.0:
     mkdirp "^0.5.1"
     source-map "^0.5.6"
     source-map-support "^0.4.2"
+
+tslib@^1.7.1:
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.7.1.tgz#bc8004164691923a79fe8378bbeb3da2017538ec"
 
 tty-browserify@0.0.0:
   version "0.0.0"
