@@ -1,5 +1,6 @@
-package com.nickrobison.trestle.reasoner.types.temporal;
+package com.nickrobison.trestle.reasoner.types;
 
+import com.nickrobison.trestle.reasoner.types.temporal.TemporalObject;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
 
 /**
