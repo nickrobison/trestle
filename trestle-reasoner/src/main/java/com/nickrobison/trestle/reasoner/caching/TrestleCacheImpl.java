@@ -155,8 +155,9 @@ public class TrestleCacheImpl implements TrestleCache {
                 } finally {
                     cacheLock.unlockWrite();
                 }
+            } else {
+                logger.debug("{} does not exist in index and cache", trestleIRI);
             }
-            logger.debug("{} does not exist in index and cache", trestleIRI);
         } catch (InterruptedException e) {
             logger.error("Unable to get lock", e);
         } finally {

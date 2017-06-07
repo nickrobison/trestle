@@ -559,7 +559,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //        Ensure we handle spatial properties correctly
         final OWLDatatype datatypeFromJavaClass;
         if (owlDataProperty.getIRI().toString().contains(GEOSPARQLPREFIX)) {
-            datatypeFromJavaClass = df.getOWLDatatype(IRI.create(GEOSPARQLPREFIX, "asWKT"));
+            datatypeFromJavaClass = df.getOWLDatatype(WKTDatatypeIRI);
         } else {
             datatypeFromJavaClass = TypeConverter.getDatatypeFromJavaClass(value.getClass());
         }
@@ -946,7 +946,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                         .max(temporalComparator)
                         .map(Temporal.class::cast);
 
-//                return objectState;
                 return new TrestleObjectState(constructorArguments, validMin.get(), validMax.get(), dbMin.get(), dbMax.get());
             }, trestleThreadPool);
 

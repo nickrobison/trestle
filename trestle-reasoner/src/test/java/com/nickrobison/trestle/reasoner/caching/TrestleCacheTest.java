@@ -26,7 +26,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Created by nrobison on 2/17/17.
  */
 @Tag("integration")
-@Disabled
 public class TrestleCacheTest {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleCacheTest.class);

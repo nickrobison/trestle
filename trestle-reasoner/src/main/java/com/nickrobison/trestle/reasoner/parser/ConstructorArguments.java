@@ -106,5 +106,20 @@ public class ConstructorArguments {
         Object getArgumentValue() {
             return this.argumentObject;
         }
+
+        @Override
+        public String toString() {
+            return "Argument{" +
+                    "argumentType=" + argumentType +
+                    ", argumentObject=" + argumentObject +
+                    '}';
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "ConstructorArguments{" +
+                "arguments=" + arguments +
+                '}';
     }
 }
