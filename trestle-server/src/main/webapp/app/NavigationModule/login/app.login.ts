@@ -31,6 +31,7 @@ interface IUserLogin {
 })
 
 export class LoginComponent implements OnInit {
+    backgroundImage: any = require("../../../public/images/trestle-logo.jpg");
     loginForm: FormGroup;
     errorMessage: string;
     errorState: string;
