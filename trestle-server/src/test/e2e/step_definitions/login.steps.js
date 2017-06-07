@@ -34,6 +34,13 @@ var LoginSteps = (function () {
     LoginSteps.prototype.clickButton = function (button) {
         return this.dashboard.clickButton(button);
     };
+    LoginSteps.prototype.loginUser = function (username, password) {
+        return this.login.loginUser(username, password);
+    };
+    LoginSteps.prototype.formIsValid = function (valid) {
+        var isValid = valid === 'true';
+        return expect(this.login.isValid()).to.become(isValid);
+    };
     return LoginSteps;
 }());
 __decorate([
@@ -60,8 +67,20 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], LoginSteps.prototype, "clickButton", null);
+__decorate([
+    cucumber_tsflow_1.given(/^I login with (.*) and (.*)$/),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], LoginSteps.prototype, "loginUser", null);
+__decorate([
+    cucumber_tsflow_1.then(/^The login form is validated (.*)$/),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], LoginSteps.prototype, "formIsValid", null);
 LoginSteps = __decorate([
     cucumber_tsflow_1.binding()
 ], LoginSteps);
-exports.LoginSteps = LoginSteps;
+module.exports = LoginSteps;
 //# sourceMappingURL=login.steps.js.map

@@ -41,7 +41,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var protractor_1 = require("protractor");
 var LoginPageObject = (function () {
     function LoginPageObject() {
+        protractor_1.by.addLocator("formControlLocator", LoginPageObject.fromControlName);
         this.header = protractor_1.element(protractor_1.by.css("md-card-header"));
+        this.usernameField = protractor_1.element(protractor_1.by.css('input[ng-reflect-name="username"]'));
+        // this.passwordField = element(by.formControlLocator("password"));
+        this.passwordField = protractor_1.element(protractor_1.by.css("input[formControl='password']"));
+        this.formValid = protractor_1.element(protractor_1.by.css(".ng-valid"));
     }
     LoginPageObject.prototype.pageIsValid = function () {
         return __awaiter(this, void 0, void 0, function () {
@@ -56,6 +61,26 @@ var LoginPageObject = (function () {
                 return [2 /*return*/, this.header.getText()];
             });
         });
+    };
+    LoginPageObject.prototype.loginUser = function (username, password) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                this.usernameField.sendKeys(username);
+                this.passwordField.sendKeys(password);
+                return [2 /*return*/];
+            });
+        });
+    };
+    LoginPageObject.prototype.isValid = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/, this.formValid.isPresent()];
+            });
+        });
+    };
+    LoginPageObject.fromControlName = function (value, opt_parentElement, opt_rootSelector) {
+        var using = opt_parentElement || document;
+        return using.querySelectorAll("[formControlName=" + value + "]");
     };
     return LoginPageObject;
 }());
