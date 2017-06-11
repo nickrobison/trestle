@@ -104,7 +104,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
 
     private setupD3() {
         this.host = select(this.htmlElement);
-        this.margin = {top: 10, right: 10, bottom: 10, left: 10};
+        this.margin = {top: 10, right: 20, bottom: 10, left: 10};
         console.debug("offsetWidth", this.htmlElement.offsetWidth);
         this.width = this.htmlElement.offsetWidth - this.margin.left - this.margin.right;
         this.height = 500 - this.margin.top - this.margin.bottom;

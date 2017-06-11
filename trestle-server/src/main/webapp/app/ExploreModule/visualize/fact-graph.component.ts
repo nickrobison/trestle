@@ -144,7 +144,7 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
 
     private setupD3(): void {
         this.host = select(this.htmlElement);
-        this.margin = {top: 20, right: 20, bottom: 20, left: 150};
+        this.margin = {top: 20, right: 30, bottom: 20, left: 150};
         this.width = this.htmlElement.offsetWidth - this.margin.left - this.margin.right;
         this.height = this.graphHeight - this.margin.top - this.margin.bottom;
 
