@@ -38,7 +38,8 @@ var LoginSteps = (function () {
         return this.login.loginUser(username, password);
     };
     LoginSteps.prototype.formIsValid = function (valid) {
-        var isValid = valid === 'true';
+        var isValid = valid === "true";
+        console.log("Form should be valid?", isValid);
         return expect(this.login.isValid()).to.become(isValid);
     };
     return LoginSteps;

@@ -5,9 +5,9 @@ import {browser, element, by} from "protractor";
 
 export class DashboardPageObject {
 
-    private pages = {
-        "home": "/workspace/",
-        "login": "/login/"
+    private pages: {[key: string]: string} = {
+        "dashboard": "",
+        "login": "login/"
     };
 
     constructor() {
@@ -19,7 +19,8 @@ export class DashboardPageObject {
     }
 
     async navigateToPage(page: string) {
-        return browser.get(`${this.pages["home"]}`);
+        browser.get(`${this.pages[page]}`);
+        return browser.sleep(3000);
     }
 
     async clickButton(button: string) {

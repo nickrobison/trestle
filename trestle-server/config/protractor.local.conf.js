@@ -9,17 +9,19 @@ exports.config = {
     capabilities: {
         "browserName": "chrome"
     },
+    useAllAngular2AppRoots: true,
+    allScriptsTimeout: 110000,
     noGlobals: true,
     SELENIUM_PROMISE_MANAGER: false,
     framework: 'custom',
     frameworkPath: require.resolve('protractor-cucumber-framework'),
-    // specs: ["src/test/e2e/**/*.feature"],
     specs: [
         helper.root('src/test/e2e/**/*.feature')
     ],
     cucumberOpts: {
         require: [
-            helper.root('src/test/e2e/**/*.steps.ts')
+            helper.root('src/test/e2e/**/*.steps.ts'),
+            helper.root('config/env.js')
         ],
         format: 'pretty'
     }

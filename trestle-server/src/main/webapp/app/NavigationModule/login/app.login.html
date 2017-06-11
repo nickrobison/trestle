@@ -4,7 +4,7 @@
         <md-card-header>
             <md-card-title><h4>Login to Trestle</h4></md-card-title>
         </md-card-header>
-        <form [formGroup]="loginForm" (ngSubmit)="login(loginForm.value)">
+        <form id="login-form" [formGroup]="loginForm" (ngSubmit)="login(loginForm.value)">
             <md-card-content>
                 <table class="input-full-width" cellspacing="0">
                     <tr>

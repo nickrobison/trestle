@@ -42,8 +42,8 @@ var protractor_1 = require("protractor");
 var DashboardPageObject = (function () {
     function DashboardPageObject() {
         this.pages = {
-            "home": "/workspace/",
-            "login": "/login/"
+            "dashboard": "",
+            "login": "login/"
         };
     }
     DashboardPageObject.prototype.goToLoginPage = function () {
@@ -56,7 +56,8 @@ var DashboardPageObject = (function () {
     DashboardPageObject.prototype.navigateToPage = function (page) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                return [2 /*return*/, protractor_1.browser.get("" + this.pages["home"])];
+                protractor_1.browser.get("" + this.pages[page]);
+                return [2 /*return*/, protractor_1.browser.sleep(3000)];
             });
         });
     };

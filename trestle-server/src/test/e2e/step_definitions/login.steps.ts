@@ -11,6 +11,7 @@ let expect = chai.expect;
 @binding()
 class LoginSteps {
 
+
     private dashboard = new DashboardPageObject();
     private login = new LoginPageObject();
 
@@ -41,7 +42,8 @@ class LoginSteps {
 
     @then(/^The login form is validated (.*)$/)
     private formIsValid(valid: string) {
-        let isValid = valid === 'true';
+        let isValid = valid === "true";
+        console.log("Form should be valid?", isValid);
         return expect(this.login.isValid()).to.become(isValid);
     }
 }
