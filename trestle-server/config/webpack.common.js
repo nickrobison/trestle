@@ -24,16 +24,30 @@ var options = {
                 loader: "html-loader"
             },
             {
-                test: /\.(jpe?g|png|gif|svg)$/i,
+                test: /\.(jpe?g|png|gif)$/i,
                 loaders: [
                     "file-loader?hash=sha512&digest=hex&name=[hash].[ext]",
-                    "image-webpack-loader?bypassOnDebug&optimizationLevel=7&interlaced=false"
+                    {
+                        loader: "image-webpack-loader",
+                        query: {
+                            bypassOnDebug: true,
+                            progressive: true,
+                            optimizationLevel: 7,
+                            optipng: {
+                                optimizationLevel: 7
+                            }
+                        }
+                    }
                 ]
             },
-            // {
-            //     test: /\.(png|jpe?g|gif|svg|woff|woff2|ttf|eot|ico)$/,
-            //     loader: "file-loader?name=assets/[name].[hash].[ext]"
-            // },
+            {
+                test: /\.(woff|woff2|ttf|eot|ico)$/,
+                loader: "url-loader",
+                options: {
+                    limit: 50000,
+                    name: "fonts/[name].[hash].[ext]"
+                }
+            },
             {
                 test: /\.css$/,
                 loader: "raw-loader",

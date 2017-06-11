@@ -15,6 +15,7 @@ import {QueryViewer} from "./query/query-viewer/query-viewer.component";
 import {QueryComponent} from "./query/query.component";
 import {CodeMirrorComponent} from "./query/codemirror/codemirror.component";
 import {QueryService} from "./query/query.service";
+import {UIModule} from "../UIModule/ui.module";
 
 @NgModule({
     imports: [
@@ -22,7 +23,8 @@ import {QueryService} from "./query/query.service";
         FormsModule,
         ReactiveFormsModule,
         MaterialModule,
-        CommonModule
+        CommonModule,
+        UIModule
     ],
     declarations: [
         VisualizeComponent,
@@ -31,7 +33,7 @@ import {QueryService} from "./query/query.service";
         IndividualValueDialog,
         CodeMirrorComponent,
         QueryComponent,
-        QueryViewer,
+        QueryViewer
     ],
     providers: [VisualizeService, QueryService],
     entryComponents: [IndividualValueDialog]
