@@ -12,11 +12,11 @@ import {
     forceLink,
     SimulationLinkDatum, Simulation
 } from "d3-force";
-import {ITrestleIndividual} from "./visualize.service";
+import {TrestleIndividual} from "./visualize.service";
 import {MdSlideToggleChange} from "@angular/material";
 
 export interface IIndividualConfig {
-    data: ITrestleIndividual;
+    data: TrestleIndividual;
 }
 
 const enum NodeType {
@@ -226,7 +226,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             .attr("y2", (d: any) => d.target.y);
     };
 
-    private buildGraph(individual: ITrestleIndividual): void {
+    private buildGraph(individual: TrestleIndividual): void {
         this.layout = {
             nodes: [],
             links: []
@@ -234,14 +234,14 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
 
         //    Add the individual as node 0
         let individualNode = {
-            id: individual.individualID,
-            name: IndividualGraph.parseIndividualID(individual.individualID),
+            id: individual.getID(),
+            name: IndividualGraph.parseIndividualID(individual.getID()),
             valid: true,
             group: NodeType.INDIVIDUAL
         };
 
         let individualTemporal = {
-            id: individual.individualTemporal.validID,
+            id: individual.getTemporal().getID(),
             name: "individual-temporal",
             valid: true,
             group: NodeType.VTEMPORAL
@@ -255,11 +255,11 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         });
 
         if (this.graphFacts) {
-            individual.facts.forEach(fact => {
+            individual.getFacts().forEach(fact => {
                 let factNode = {
-                    id: fact.identifier,
-                    name: fact.name,
-                    valid: fact.validTemporal.validTo.toString() == "" && fact.databaseTemporal.validTo.toString() == "",
+                    id: fact.getID(),
+                    name: fact.getName(),
+                    valid: fact.getValidTemporal().getTo().toString() == "" && fact.getDatabaseTemporal().getTo().toString() == "",
                     group: NodeType.FACT
                 };
                 this.layout.nodes.push(factNode);
@@ -272,10 +272,10 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
 
         //    Relations
         if (this.graphRelations) {
-            individual.relations.forEach(relation => {
+            individual.getRelations().forEach(relation => {
                 let relationNode = {
-                    id: relation.object,
-                    name: relation.relation.toString() + ": " + IndividualGraph.parseIndividualID(relation.object),
+                    id: relation.getObject(),
+                    name: relation.getType().toString() + ": " + IndividualGraph.parseIndividualID(relation.getObject()),
                     valid: true,
                     group: NodeType.RELATION
                 };

@@ -97,15 +97,12 @@ export class AuthService {
      * @returns {boolean} - has all the required roles
      */
     public hasRequiredRoles(roles: Array<Privileges>): boolean {
-        console.log("Required roles?", roles);
         let token = this.getToken();
         if (token == null) {
             return false;
         }
-        console.debug("Role token", token);
 
         if (token) {
-            console.log("User privs:", token.user.privileges);
             return (token.user.privileges & this.buildRoleValue(roles)) > 0;
         }
         return false;
@@ -114,10 +111,8 @@ export class AuthService {
     private buildRoleValue(roles: Array<Privileges>): number {
         let roleValue = 0;
         roles.forEach((role) => {
-            console.log(Privileges[role]);
             roleValue = roleValue | role;
         });
-        console.debug("Role value", roleValue);
         return roleValue;
     }
 

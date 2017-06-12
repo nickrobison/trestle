@@ -2,13 +2,14 @@
  * Created by nrobison on 3/7/17.
  */
 import {Component, OnInit, ViewContainerRef, ViewEncapsulation} from "@angular/core";
-import {VisualizeService, ITrestleIndividual, ITrestleFact} from "./visualize.service";
+import {VisualizeService, ITrestleFact, TrestleIndividual, TrestleFact} from "./visualize.service";
 import {FormControl} from "@angular/forms";
 import {Observable} from "rxjs";
 import {MdDialog, MdDialogConfig, MdDialogRef} from "@angular/material";
 import {IndividualValueDialog} from "./individual-value.dialog";
 import {Moment} from "moment";
 import moment = require("moment");
+import {ITrestleMapSource} from "../../UIModule/map/trestle-map.component";
 
 @Component({
     selector: "visualize",
@@ -20,7 +21,8 @@ import moment = require("moment");
 export class VisualizeComponent implements OnInit {
     individualName = new FormControl();
     options: Observable<Array<string>>;
-    individual: ITrestleIndividual;
+    individual: TrestleIndividual;
+    mapIndividual: ITrestleMapSource;
     minTime: Moment;
     maxTime: Moment;
     private dialogRef: MdDialogRef<IndividualValueDialog>;
@@ -41,18 +43,22 @@ export class VisualizeComponent implements OnInit {
     onSubmit() {
         console.debug("Submitted", this.individualName.value);
         this.vs.getIndividualAttributes(this.individualName.value)
-            .subscribe((results: ITrestleIndividual) => {
+            .subscribe((results: TrestleIndividual) => {
                 console.debug("has individual", results);
                 this.individual = results;
+                this.mapIndividual = {
+                    id: results.getID(),
+                    data: results.getSpatialValue()
+                }
             });
     }
 
-    openValueModal(fact: ITrestleFact): void {
+    openValueModal(fact: TrestleFact): void {
         let config = new MdDialogConfig();
         config.viewContainerRef = this.viewContainerRef;
         this.dialogRef = this.dialog.open(IndividualValueDialog, config);
-        this.dialogRef.componentInstance.name = fact.name;
-        this.dialogRef.componentInstance.value = fact.value;
+        this.dialogRef.componentInstance.name = fact.getName();
+        this.dialogRef.componentInstance.value = fact.getValue();
         this.dialogRef.afterClosed().subscribe(() => this.dialogRef = null);
     }
 

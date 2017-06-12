@@ -18,7 +18,7 @@
     <div class="section">
         <div class="row">
             <div class="col s12 l7">
-                <trestle-map></trestle-map>
+                <trestle-map [individual]="mapIndividual"></trestle-map>
             </div>
             <div class="col s12 l5">
                 <individual-graph [config]="{data: individual}"></individual-graph>
@@ -37,7 +37,7 @@
         </md-tab-group>
     </div>
     <div class="section" *ngIf="individual">
-        <h4>Individual: {{individual.individualID}}</h4>
+        <h4>Individual: {{individual.getID()}}</h4>
         <table class="responsive-table highlight">
             <thead>
             <tr>
@@ -49,13 +49,13 @@
             </tr>
             </thead>
             <tbody>
-            <tr *ngFor="let fact of individual.facts">
-                <td>{{fact.name}}</td>
-                <td>{{fact.type}}</td>
-                <td class="red lighten-2" *ngIf="fact.value.length >= 200" (click)="openValueModal(fact)">...</td>
-                <td *ngIf="fact.value.length < 200">{{fact.value}}</td>
-                <td>{{fact.validTemporal.validFrom}}</td>
-                <td>{{fact.validTemporal.validTo}}</td>
+            <tr *ngFor="let fact of individual.getFacts()">
+                <td>{{fact.getName()}}</td>
+                <td>{{fact.getType()}}</td>
+                <td class="red lighten-2" *ngIf="fact.getValue().length >= 200" (click)="openValueModal(fact)">...</td>
+                <td *ngIf="fact.getValue().length < 200">{{fact.getValue()}}</td>
+                <td>{{fact.getValidTemporal().getFrom()}}</td>
+                <td>{{fact.getValidTemporal().getTo()}}</td>
             </tr>
             </tbody>
         </table>

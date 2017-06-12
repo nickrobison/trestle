@@ -6,7 +6,7 @@ import {Selection, select} from "d3-selection";
 import {Moment} from "moment";
 import {scaleBand, scaleOrdinal, ScaleTime, scaleTime, schemeCategory20} from "d3-scale";
 import {axisBottom, axisLeft} from "d3-axis";
-import {ITrestleFact, ITrestleIndividual} from "./visualize.service";
+import {ITrestleFact, ITrestleIndividual, TrestleFact, TrestleIndividual} from "./visualize.service";
 
 interface ID3Margin {
     top: number;
@@ -23,7 +23,8 @@ interface ID3Margin {
 
 export class FactHistoryGraph implements AfterViewInit, OnChanges {
     @ViewChild("graph") element: ElementRef;
-    @Input() data: ITrestleIndividual;
+    // @Input("data") dataInput: TrestleIndividual;
+    @Input() data: TrestleIndividual;
     @Input() graphHeight: number;
     @Input() minTime: Date;
     @Input() maxTime: Date;
@@ -54,7 +55,8 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
 
     private plotData(): void {
         //    Build the domain values
-        let factNames = this.data.facts.map((d) => d.name);
+        console.debug("Building with data:", this.data);
+        let factNames = this.data.getFacts().map((d) => d.getName());
         let y = scaleBand()
             .range([this.height, 0])
             .domain(factNames);
@@ -66,7 +68,7 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
 
         // Build the lane lines
         let laneLines = this.svg.selectAll(".laneLine")
-            .data(this.data.facts.map(fact => fact.name))
+            .data(this.data.getFacts().map(fact => fact.getName()))
             .enter().append("line")
             .attr("class", "laneLine")
             .attr("x1", 0)
@@ -82,36 +84,36 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
 
         //    Add the data
         let mainItems = this.svg.selectAll(".fact")
-            .data(this.data.facts.filter((f: ITrestleFact) => f.databaseTemporal.validTo.toString() == ""), (d: ITrestleFact) => d.identifier);
+            .data(this.data.getFacts().filter((f: TrestleFact) => f.getDatabaseTemporal().isContinuing()), (d: TrestleFact) => d.getID());
 
         mainItems
             .enter()
             .append("rect")
             .attr("class", "fact")
-            .attr("x", (d: ITrestleFact) => this.x(new Date(d.validTemporal.validFrom)))
-            .attr("y", (d: ITrestleFact) => y(d.name))
-            .attr("width", (d: ITrestleFact) => this.x(this.maybeDate(d.validTemporal.validTo)) - this.x(this.maybeDate(d.validTemporal.validFrom)))
+            .attr("x", (d: TrestleFact) => this.x(d.getValidTemporal().getFrom().toDate()))
+            .attr("y", (d: TrestleFact) => y(d.getName()))
+            .attr("width", (d: TrestleFact) => this.x(this.maybeDate(d.getValidTemporal().getTo().toDate())) - this.x(this.maybeDate(d.getValidTemporal().getFrom().toDate())))
             .attr("height", (d) => y.bandwidth())
-            .style("fill", (d: ITrestleFact) => z(d.name))
+            .style("fill", (d: TrestleFact) => z(d.getName()))
             .style("fill-opacity", 0.7)
             .merge(mainItems);
 
         // Labels
         let mainLabels = this.svg.selectAll(".mainLabels")
-            .data(this.data.facts.filter((f) => f.databaseTemporal.validTo.toString() == ""), (d: ITrestleFact) => d.identifier);
+            .data(this.data.getFacts().filter((f) => f.getDatabaseTemporal().isContinuing()), (d: TrestleFact) => d.getID());
 
         mainLabels
             .enter()
             .append("text")
-            .text((d: ITrestleFact) => this.parseValue(d.value))
+            .text((d: TrestleFact) => this.parseValue(d.getValue()))
             .attr("class", "mainLabels")
-            .attr("x", (d: ITrestleFact) => {
-                let end = this.maybeDate(d.validTemporal.validTo);
-                let start = this.maybeDate(d.validTemporal.validFrom);
+            .attr("x", (d: TrestleFact) => {
+                let end = this.maybeDate(d.getValidTemporal().getTo().toDate());
+                let start = this.maybeDate(d.getValidTemporal().getFrom().toDate());
                 let width = this.x(end) - this.x(start);
                 return this.x(start) + width / 2;
             })
-            .attr("y", (d: ITrestleFact) => y(d.name) + y.bandwidth() - 5)
+            .attr("y", (d: TrestleFact) => y(d.getName()) + y.bandwidth() - 5)
             .attr("text-anchor", "middle")
             .attr("dy", ".1ex")
             .merge(mainLabels);

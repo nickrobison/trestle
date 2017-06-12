@@ -2,7 +2,7 @@
  * Created by nrobison on 6/11/17.
  */
 import {NgModule} from "@angular/core";
-import {TrestleMapComponent} from "./map/map.component";
+import {TrestleMapComponent} from "./map/trestle-map.component";
 
 @NgModule({
     declarations: [

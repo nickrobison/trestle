@@ -26,3 +26,4 @@ import "moment";
 import "moment-timezone";
 import "file-saver";
 import "mapbox-gl";
+import "wellknown";
