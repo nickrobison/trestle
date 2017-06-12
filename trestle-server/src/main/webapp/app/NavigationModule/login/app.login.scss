@@ -7,7 +7,7 @@
 }
 
 .login-input {
-    margin-left: 50%;
+    margin-left: 35%;
     margin-right: 50%;
     width: 500px;
     top: 30%;
@@ -19,7 +19,8 @@
 }
 
 .login {
-    background-color: darkslategrey;
+    background-size: cover;
+    background: url("../../../public/images/trestle-logo.jpg") no-repeat;
     height: 100vh;
     text-align: center;
     position: relative;

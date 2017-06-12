@@ -50,7 +50,7 @@ var options = {
             },
             {
                 test: /\.css$/,
-                loader: "raw-loader",
+                loaders: ["to-string-loader", "css-loader"],
                 exclude: /\.async\.(html|css)$/
             },
             {
@@ -59,7 +59,7 @@ var options = {
             },
             {
                 test: /\.scss$/,
-                loaders: ["raw-loader", "sass-loader"]
+                loaders: ["to-string-loader", "css-loader", "resolve-url-loader", "sass-loader?sourceMap"]
             }
         ]
     },
