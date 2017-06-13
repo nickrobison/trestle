@@ -754,15 +754,16 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC));
 
 //        Try from cache first
-        final @NonNull @Nullable T individual = this.trestleCache.getTrestleObject(clazz, trestleIRI);
+        final @Nullable T individual = this.trestleCache.getTrestleObject(clazz, trestleIRI);
         if (individual != null) {
             return individual;
         }
+        logger.debug("Individual is null, continuing");
 
 //        final Optional<@NonNull T> constructedObject = readTrestleObjectImpl(clazz, individualIRI, validTemporal, databaseTemporal);
         final Optional<TrestleObjectResult<@NonNull T>> constructedObject = readTrestleObjectImpl(clazz, individualIRI, validTemporal, databaseTemporal);
         if (constructedObject.isPresent()) {
-            logger.debug("Done with {}", individualIRI);
+            logger.debug("Finished reading {}", individualIRI);
 //            Write back to index
             final TrestleObjectResult<@NonNull T> value = constructedObject.get();
             try {

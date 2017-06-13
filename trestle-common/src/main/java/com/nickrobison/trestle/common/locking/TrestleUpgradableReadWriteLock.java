@@ -14,7 +14,7 @@ import java.util.Map;
 public class TrestleUpgradableReadWriteLock {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleUpgradableReadWriteLock.class);
-    private static final int waitTimeout = 50000;
+    private static final long waitTimeout = 50000;
     private final Map<Thread, Integer> readingThreads = new HashMap<>();
     private int writeAccesses = 0;
     private int writeRequests = 0;
@@ -30,11 +30,11 @@ public class TrestleUpgradableReadWriteLock {
     public synchronized void lockRead() throws InterruptedException {
         final Thread callingThread = Thread.currentThread();
         while (!canGrantReadAccess(callingThread)) {
-            logger.debug("Thread {} waiting {} ms for Read lock", waitTimeout, callingThread);
-            long start = System.nanoTime();
+            logger.debug("Thread {} waiting {} ms for Read lock", callingThread, waitTimeout);
+            long start = System.currentTimeMillis();
             wait(waitTimeout);
-            if (System.nanoTime() - start > (waitTimeout * 1000)) {
-                throw new InterruptedException("Unable to get read lock");
+            if ((System.currentTimeMillis() - start) > waitTimeout) {
+                throw new InterruptedException("Unable to get read lock, timed-out");
             }
         }
         logger.debug("{} taking the read lock", callingThread);
@@ -52,10 +52,10 @@ public class TrestleUpgradableReadWriteLock {
         }
         final int readAccessCount = getReadAccessCount(callingThread);
         if (readAccessCount == 1) {
-            logger.debug("Read Unlocking {}", callingThread);
+            logger.debug("Read Unlocking {}", callingThread.getName());
             readingThreads.remove(callingThread);
         } else {
-            logger.debug("Decrementing read count for {}. {} read accesses remaining", callingThread, readAccessCount - 1);
+            logger.debug("Decrementing read count for {}. {} read accesses remaining", callingThread.getName(), readAccessCount - 1);
             readingThreads.put(callingThread, (readAccessCount - 1));
         }
         notifyAll();
@@ -73,18 +73,20 @@ public class TrestleUpgradableReadWriteLock {
         writeRequests++;
         final Thread callingThread = Thread.currentThread();
         while (!canGrantWriteAccess(callingThread)) {
-            logger.debug("{} waiting {} ms for Write lock. {} write requests pending", waitTimeout, callingThread, writeRequests);
-            long start = System.nanoTime();
+            logger.debug("{} waiting {} ms for Write lock. {} write requests pending", callingThread.getName(), waitTimeout, writeRequests);
+            logger.trace("Tread {} holding write lock", this.writingThread.getName());
+            long start = System.currentTimeMillis();
             wait(waitTimeout);
-            if (System.nanoTime() - start > (waitTimeout * 1000)) {
-                throw new InterruptedException("Unable to get write lock");
+            if ((System.currentTimeMillis() - start) > waitTimeout) {
+                writeRequests--;
+                throw new InterruptedException("Unable to get write lock, timed-out");
             }
 
         }
         writeRequests--;
         writeAccesses++;
         writingThread = callingThread;
-        logger.debug("{} taking the write lock", callingThread);
+        logger.debug("{} taking the write lock", callingThread.getName());
     }
 
     /**
@@ -95,12 +97,12 @@ public class TrestleUpgradableReadWriteLock {
     public synchronized void unlockWrite() {
         final Thread callingThread = Thread.currentThread();
         if (!isWriter(callingThread)) {
-            throw new IllegalMonitorStateException(String.format("Calling thread %s does not hold a write lock on this ReadWriteLock", callingThread));
+            throw new IllegalMonitorStateException(String.format("Calling thread %s does not hold a write lock on this ReadWriteLock", callingThread.getName()));
         }
         writeAccesses--;
-        logger.debug("Decrementing write count for {}. {} write accesses remaining", callingThread, writeAccesses);
+        logger.debug("Decrementing write count for {}. {} write accesses remaining", callingThread.getName(), writeAccesses);
         if (writeAccesses == 0) {
-            logger.debug("Write unlocking {}", callingThread);
+            logger.debug("Write unlocking {}", callingThread.getName());
             writingThread = null;
         }
         notifyAll();
