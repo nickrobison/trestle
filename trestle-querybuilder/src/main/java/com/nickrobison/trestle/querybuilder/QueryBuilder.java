@@ -169,6 +169,14 @@ public class QueryBuilder {
         return ps.toString();
     }
 
+    /**
+     * Retrieve fact axioms for
+     * @param validTemporal - {@link OffsetDateTime} of valid time, to filter results on
+     * @param databaseTemporal - {@link OffsetDateTime} of database time, to filter results on
+     * @param filterTemporals - filter temporal assertions from the resultset?
+     * @param individual - {@link OWLNamedIndividual} to retrieve results for
+     * @return - SPARQL query string
+     */
     public String buildObjectPropertyRetrievalQuery(OffsetDateTime validTemporal, OffsetDateTime databaseTemporal, boolean filterTemporals, OWLNamedIndividual... individual) {
         final ParameterizedSparqlString ps = buildBaseString();
 
@@ -263,9 +271,37 @@ public class QueryBuilder {
         return ps.toString();
     }
 
+    public String buildCurrentlyValidFactQuery(OWLNamedIndividual individual, OWLDataProperty property, OffsetDateTime validAt, OffsetDateTime dbAt) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText(String.format("SELECT ?value " +
+                "WHERE { " +
+                "?m trestle:has_fact ?f ." +
+                "{?f trestle:database_from ?df} ." +
+                "OPTIONAL{?f trestle:database_to ?dt} ." +
+                "OPTIONAL{?f trestle:valid_from ?vf } ." +
+                "OPTIONAL{?f trestle:valid_at ?va } ."+
+                "OPTIONAL{?f trestle:valid_to ?vt }. " +
+                "?f <%s> ?value ." +
+                "VALUES ?m {<%s>} .", getFullIRIString(property), getFullIRIString(individual)));
+        ps.append("FILTER ((!bound(?vf) || " +
+                "(?vf <= ?validAt^^xsd:dateTime) && " +
+                "(!bound(?vt) || " +
+                "?vt > ?validAt^^xsd:dateTime)) && " +
+                "(!bound(?va) || " +
+                "(?va >= ?validAt^^xsd:dateTime && " +
+                "?va < ?validAt^^xsd:dateTime))) .");
+        ps.setLiteral("validAt", validAt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        ps.append("FILTER(?df >= ?dbAt^^xsd:dateTime) .");
+        ps.setLiteral("dbAt", dbAt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+
+        ps.append("}");
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
     /**
      * Retrieve all Fact values for a given individual
-     * If a tmeporal range is provided, the returned values will be valid within that range
+     * If a temporal range is provided, the returned values will be valid within that range
      * If a database temporal value is provided, only db versions beyond that point will be returned
      * @param individual - OWLNamedIndividual to get facts from
      * @param property - OWLDataProperty values to retrieve
@@ -538,7 +574,7 @@ public class QueryBuilder {
     }
 
     /**
-     * Update the ending value of an interval, provided the interval is continuing
+     * Update the ending value of a database interval, provided the interval is continuing
      * @param temporal - {@link OffsetDateTime} of value to use
      * @param individual - {@link OWLNamedIndividual} of Interval_Object to update
      * @return - SPARQL Query String
@@ -551,12 +587,12 @@ public class QueryBuilder {
 
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText(String.format("INSERT {" +
-                "?m trestle:valid_to ?newValue^^xsd:dateTime} " +
+                "?m trestle:database_to ?newValue^^xsd:dateTime} " +
                 " WHERE { " +
                 "VALUES ?m {%s} . " +
-                "OPTIONAL{?m trestle:valid_to ?vt} . " +
+                "OPTIONAL{?m trestle:database_to ?dt} . " +
                 "?m rdf:type trestle:Interval_Object ." +
-                "FILTER(!bound(?vt))}", individualValues));
+                "FILTER(!bound(?dt))}", individualValues));
 
         ps.setLiteral("newValue", temporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 

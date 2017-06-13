@@ -68,7 +68,7 @@ public class TrestleAPITest {
                         TestClasses.MultiLangTest.class,
                         TestClasses.FactVersionTest.class)
                 .withoutCaching()
-//                .withoutMetrics()
+                .withoutMetrics()
                 .initialize()
                 .build();
 
@@ -190,23 +190,23 @@ public class TrestleAPITest {
         final TestClasses.FactVersionTest v3ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(2016, 3, 26), null);
         assertEquals(v3, v3ReturnHistorical, "Historical query should be equal to V3");
         assertThrows(NoValidStateException.class, () -> reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), true, LocalDate.of(1980, 3, 26), null));
-//
-////        Check to make sure we have all the facts
-//        final TrestleIndividual trestleIndividual = reasoner.getTrestleIndividual("test-object");
-//        assertEquals(5, trestleIndividual.getFacts().size(), "Should have 5 facts over the lifetime of the object");
-//
-////        Try to manually add a new value
-//        reasoner.addFactToTrestleObject(v3.getClass(), "test-object", "testValue", "test value three", LocalDate.of(2007, 3, 26), null, null);
-//        reasoner.addFactToTrestleObject(v3.getClass(), "test-object", "wkt", "POINT(1.71255092695307 -30.572028714467507)", LocalDate.of(2017, 1, 1), null);
-//
-////        Try to get some fact values
-//        final Optional<List<Object>> values = reasoner.getFactValues(v3.getClass(), "test-object", "testValue", null, null, null);
-//        assertAll(() -> assertTrue(values.isPresent(), "Should have fact values"),
-//                () -> assertEquals(3, values.get().size(), "Should have 3 fact values"));
-//
-//        final Optional<List<Object>> wktValues = reasoner.getFactValues(v3.getClass(), "test-object", "wkt", LocalDate.of(1988, 3, 26), LocalDate.of(1995, 3, 26), null);
-//        assertAll(() -> assertTrue(wktValues.isPresent(), "Should have wkt values"),
-//                () -> assertEquals(1, wktValues.get().size(), "Should only have 1 wkt value"));
+
+//        Check to make sure we have all the facts
+        final TrestleIndividual trestleIndividual = reasoner.getTrestleIndividual("test-object");
+        assertEquals(7, trestleIndividual.getFacts().size(), "Should have 5 facts over the lifetime of the object");
+
+//        Try to manually add a new value
+        reasoner.addFactToTrestleObject(v3.getClass(), "test-object", "testValue", "test value three", LocalDate.of(2007, 3, 26), null, null);
+        reasoner.addFactToTrestleObject(v3.getClass(), "test-object", "wkt", "POINT(1.71255092695307 -30.572028714467507)", LocalDate.of(2017, 1, 1), null);
+
+//        Try to get some fact values
+        final Optional<List<Object>> values = reasoner.getFactValues(v3.getClass(), "test-object", "testValue", null, null, null);
+        assertAll(() -> assertTrue(values.isPresent(), "Should have fact values"),
+                () -> assertEquals(4, values.get().size(), "Should have 4 fact values"));
+
+        final Optional<List<Object>> wktValues = reasoner.getFactValues(v3.getClass(), "test-object", "wkt", LocalDate.of(1988, 3, 26), LocalDate.of(1995, 3, 26), null);
+        assertAll(() -> assertTrue(wktValues.isPresent(), "Should have wkt values"),
+                () -> assertEquals(2, wktValues.get().size(), "Should only have 2 wkt values"));
 //
 ////        Test database temporals
 //        reasoner.getMetricsEngine().exportData(new File("./target/api-test-fact-validity-metrics.csv"));
