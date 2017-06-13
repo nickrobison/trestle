@@ -388,13 +388,19 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(true);
 //            Get all the currently valid facts
             if (individualFactsOptional.isPresent()) {
-                final String individualFactquery = this.qb.buildObjectPropertyRetrievalQuery(OffsetDateTime.now(), OffsetDateTime.now(), true, owlNamedIndividual);
+                final List<OWLDataPropertyAssertionAxiom> individualFacts = individualFactsOptional.get();
+                final List<OWLDataProperty> filteredFacts = individualFacts
+                        .stream()
+                        .map(fact -> fact.getProperty().asOWLDataProperty())
+                        .collect(Collectors.toList());
+
+                final String individualFactquery = this.qb.buildObjectFactRetrievalQuery(OffsetDateTime.now(), OffsetDateTime.now(), true, filteredFacts, owlNamedIndividual);
                 final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(individualFactquery);
 
 //                Get all the currently valid facts, compare them with the ones present on the object, and update the different ones.
                 final Timer.Context compareTimer = this.metrician.registerTimer("trestle-merge-comparison-timer").time();
                 final List<TrestleResult> currentFacts = resultSet.getResults();
-                final List<OWLDataPropertyAssertionAxiom> individualFacts = individualFactsOptional.get();
+
 
                 final List<OWLDataPropertyAssertionAxiom> divergingFacts = individualFacts
                         .stream()
@@ -813,7 +819,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final Class<? extends Temporal> baseTemporalType = TemporalParser.GetTemporalType(clazz);
 
 //        Build the fact query
-        final String factQuery = qb.buildObjectPropertyRetrievalQuery(validAtTemporal, dbAtTemporal, true, df.getOWLNamedIndividual(individualIRI));
+        final String factQuery = qb.buildObjectFactRetrievalQuery(validAtTemporal, dbAtTemporal, true, null, df.getOWLNamedIndividual(individualIRI));
 
         final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(false);
 

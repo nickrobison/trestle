@@ -18,10 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
@@ -170,14 +167,15 @@ public class QueryBuilder {
     }
 
     /**
-     * Retrieve fact axioms for
+     * Retrieve fact axioms for a given set of {@link OWLNamedIndividual}.
+     * Optionally, can provide a list of {@link OWLDataProperty} to return, as a subset of all available facts
      * @param validTemporal - {@link OffsetDateTime} of valid time, to filter results on
      * @param databaseTemporal - {@link OffsetDateTime} of database time, to filter results on
      * @param filterTemporals - filter temporal assertions from the resultset?
-     * @param individual - {@link OWLNamedIndividual} to retrieve results for
-     * @return - SPARQL query string
+     * @param filteredFactProperties - Optional filtered list of {@link OWLDataProperty} facts to return
+     *@param individual - {@link OWLNamedIndividual} to retrieve results for  @return - SPARQL query string
      */
-    public String buildObjectPropertyRetrievalQuery(OffsetDateTime validTemporal, OffsetDateTime databaseTemporal, boolean filterTemporals, OWLNamedIndividual... individual) {
+    public String buildObjectFactRetrievalQuery(OffsetDateTime validTemporal, OffsetDateTime databaseTemporal, boolean filterTemporals, @Nullable List<OWLDataProperty> filteredFactProperties, OWLNamedIndividual... individual) {
         final ParameterizedSparqlString ps = buildBaseString();
 
         final String individualValues = Arrays.stream(individual)
@@ -203,20 +201,20 @@ public class QueryBuilder {
 //                Oracle doesn't support isLiteral() on CLOB types, so we have to do this gross inverse filter.
                 "FILTER(!isURI(?object) && !isBlank(?object)) ." +
                 "FILTER(!bound(?tEnd)) .", individualValues));
+        if (filteredFactProperties != null && !filteredFactProperties.isEmpty()) {
+            final String factValues = filteredFactProperties
+                    .stream()
+                    .map(fact -> fact.getIRI().toString())
+                    .map(iriSTring -> String.format("<%s>", iriSTring))
+                    .collect(Collectors.joining(" "));
+            ps.append(String.format("VALUES ?property { %s } .", factValues));
+        }
 //        If the temporals are specified, constrain with them. Otherwise, find the facts with the unbound ending temporals
-//        if (validTemporal != null) {
             ps.append("FILTER((!bound(?vf) || ?vf <= ?validVariable^^xsd:dateTime) && (!bound(?vt) || ?vt > ?validVariable^^xsd:dateTime)) .");
             ps.append("FILTER(!bound(?va) || ?va = ?validVariable^^xsd:dateTime) .");
             ps.setLiteral("validVariable", validTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-//        } else {
-//            ps.append("FILTER(!bound(?vt))");
-//        }
-//        if (databaseTemporal != null) {
             ps.append("FILTER((!bound(?df) || ?df <= ?databaseVariable^^xsd:dateTime) && (!bound(?dt) || ?dt > ?databaseVariable^^xsd:dateTime)) .");
             ps.setLiteral("databaseVariable", databaseTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-//        } else {
-//            ps.append("FILTER(!bound(?dt))");
-//        }
         if (filterTemporals) {
             ps.append(" FILTER NOT EXISTS {?property rdfs:subPropertyOf trestle:Temporal_Property}");
         } else {
