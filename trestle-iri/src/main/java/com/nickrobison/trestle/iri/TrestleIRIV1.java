@@ -5,6 +5,7 @@ import org.semanticweb.owlapi.model.HasIRI;
 import org.semanticweb.owlapi.model.IRI;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Optional;
 
 /**
@@ -45,8 +46,12 @@ public class TrestleIRIV1 extends TrestleIRI {
         final StringBuilder trestleIRI = new StringBuilder();
         trestleIRI.append(String.format("%s:%s", getVersion(), getObjectID()));
         getObjectFact().ifPresent(fact -> trestleIRI.append(String.format("@%s", fact)));
-        getObjectTemporal().ifPresent(temporal -> trestleIRI.append(String.format(":%s", temporal.toEpochSecond())));
-        getDbTemporal().ifPresent(temporal -> trestleIRI.append(String.format(":%s", temporal.toEpochSecond())));
+        getObjectTemporal().ifPresent(temporal -> trestleIRI.append(String.format(":%s", parseToEpochMilli(temporal))));
+        getDbTemporal().ifPresent(temporal -> trestleIRI.append(String.format(":%s", parseToEpochMilli(temporal))));
         return IRI.create(this.prefix, trestleIRI.toString());
+    }
+
+    private static long parseToEpochMilli(OffsetDateTime temporal) {
+        return temporal.atZoneSameInstant(ZoneOffset.UTC).toInstant().toEpochMilli();
     }
 }

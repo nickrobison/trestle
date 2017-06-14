@@ -462,7 +462,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 //                Update all the unbounded DB temporals for the diverging facts
 //                final OffsetDateTime offsetDateTime = TemporalParser.parseTemporalToOntologyDateTime(factTemporal.asInterval().getFromTime(), ZoneOffset.UTC);
-                final String temporalUpdateQuery = this.qb.buildUpdateUnboundedTemporal(TemporalParser.parseTemporalToOntologyDateTime(dTemporal.getIdTemporal(), ZoneOffset.UTC), mergeScript.getFactsToVersion().toArray(new OWLNamedIndividual[mergeScript.getFactsToVersion().size()]));
+                logger.trace("Setting DBTo: {} for {}", dTemporal.getIdTemporal(), mergeScript.getFactsToVersion());
+                final String temporalUpdateQuery = this.qb.buildUpdateUnboundedTemporal(TemporalParser.parseTemporalToOntologyDateTime(dTemporal.getIdTemporal(), ZoneOffset.UTC), mergeScript.getFactsToVersionAsArray());
                 final Timer.Context temporalTimer = this.metrician.registerTimer("trestle-merge-temporal-timer").time();
                 this.ontology.executeUpdateSPARQL(temporalUpdateQuery);
                 temporalTimer.stop();
@@ -649,6 +650,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             ontology.createIndividual(propertyIndividual, factClass);
             try {
 //                Write the property
+                logger.trace("Writing fact {} with value {} valid: {}, database: {}", factIdentifier, property.getObject(), validTemporal, databaseTemporal);
                 ontology.writeIndividualDataProperty(propertyIndividual, property.getProperty().asOWLDataProperty(), property.getObject());
 //                Write the valid validTemporal
                 writeTemporal(validTemporal, propertyIndividual);
@@ -781,7 +783,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             }
             return value.getObject();
         } else {
-            throw new NoValidStateException(individualIRI, validAt, databaseAt);
+            throw new NoValidStateException(individualIRI, validTemporal.getIdTemporal(), databaseTemporal.getIdTemporal());
         }
     }
 

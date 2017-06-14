@@ -192,4 +192,9 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
         }
 
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s@%s type:%s", this.scope, this.atTime, this.temporalType);
+    }
 }

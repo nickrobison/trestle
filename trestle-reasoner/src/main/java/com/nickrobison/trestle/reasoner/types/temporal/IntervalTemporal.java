@@ -179,7 +179,10 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
     @Override
     public String toString() {
-        return String.format("%s - %s", this.fromTime, this.toTime);
+        if (isContinuing()) {
+            return String.format("%sFrom:%s type:%s", this.scope, this.fromTime, this.temporalType);
+        }
+        return String.format("%sFrom:%s To:%s type:%s", this.scope, this.fromTime, this.toTime, this.temporalType);
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
