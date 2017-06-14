@@ -61,6 +61,11 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
     }
 
     @Override
+    public boolean isContinuing() {
+        return false;
+    }
+
+    @Override
     public Temporal getIdTemporal() {
         return this.atTime;
     }
