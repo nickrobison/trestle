@@ -30,11 +30,17 @@ public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
     private static final Logger logger = LoggerFactory.getLogger(MergeEngineImpl.class);
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
     private final Config config;
-    private final MergeStrategy defaultStrategy;
+    private MergeStrategy defaultStrategy;
 
     public MergeEngineImpl() {
         config = ConfigFactory.load().getConfig("trestle.merge");
         defaultStrategy = MergeStrategy.valueOf(config.getString("defaultStrategy"));
+    }
+
+    @Override
+    public void changeDefaultMergeStrategy(MergeStrategy strategy) {
+        logger.info("Changin default merge strategy from {} to {}", this.defaultStrategy, strategy);
+        this.defaultStrategy = strategy;
     }
 
     @Override
@@ -47,7 +53,7 @@ public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
         if (strategy.equals(MergeStrategy.Default)) {
             strategy = defaultStrategy;
         }
-        logger.debug("Merging facts using the {} strategy", defaultStrategy);
+        logger.debug("Merging facts using the {} strategy", strategy);
         switch (strategy) {
             case ContinuingFacts:
                 return mergeContinuing(newFacts, existingFacts);

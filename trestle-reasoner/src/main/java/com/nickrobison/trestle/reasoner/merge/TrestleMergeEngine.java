@@ -9,6 +9,12 @@ import java.util.List;
  * Created by nrobison on 6/13/17.
  */
 public interface TrestleMergeEngine {
+    /**
+     * Change to default {@link MergeStrategy}
+     * @param strategy - new {@link MergeStrategy} to use for objects and facts
+     */
+    void changeDefaultMergeStrategy(MergeStrategy strategy);
+
     MergeScript mergeFacts(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts);
 
     /**
