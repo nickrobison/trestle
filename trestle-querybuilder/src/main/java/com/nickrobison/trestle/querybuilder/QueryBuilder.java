@@ -289,7 +289,9 @@ public class QueryBuilder {
                 "(?va >= ?validAt^^xsd:dateTime && " +
                 "?va < ?validAt^^xsd:dateTime))) .");
         ps.setLiteral("validAt", validAt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        ps.append("FILTER(?df >= ?dbAt^^xsd:dateTime) .");
+        ps.append("FILTER (?df <= ?dbAt^^xsd:dateTime && " +
+                "((!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime))).");
+//        ps.append("FILTER(?df >= ?dbAt^^xsd:dateTime) .");
         ps.setLiteral("dbAt", dbAt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
         ps.append("}");

@@ -83,6 +83,7 @@ public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
                 .collect(Collectors.toList());
 
 //                Do it the other way to find existing facts that will need to get a version increment
+//        TODO(nrobison): We need to update the validTo temporals, otherwise we'll get conflicting facts
         final List<TrestleOWLFact> factsToVersion = currentFacts
                 .stream()
                 .map(result -> {
