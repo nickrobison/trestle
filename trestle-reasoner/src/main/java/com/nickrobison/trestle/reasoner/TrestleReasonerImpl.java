@@ -42,6 +42,7 @@ import com.nickrobison.trestle.reasoner.utils.TemporalPropertiesPair;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
+import org.apache.commons.lang3.ClassUtils;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -545,14 +546,24 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final OWLDataProperty owlDataProperty = df.getOWLDataProperty(factIRI.get());
 
 //        Validate that we have the correct type
-        final Optional<Class<?>> factDatatype = this.trestleParser.classParser.getFactDatatype(clazz, factName);
-        if (!factDatatype.isPresent()) {
+        final Optional<Class<?>> factDatatypeOptional = this.trestleParser.classParser.getFactDatatype(clazz, factName);
+        if (!factDatatypeOptional.isPresent()) {
             logger.error("Individual {} does not have fact {}", owlNamedIndividual, owlDataProperty);
             throw new TrestleMissingFactException(owlNamedIndividual, factIRI.get());
         }
-        if (!factDatatype.get().isAssignableFrom(value.getClass())) {
-            logger.error("Mismatched type. Fact {} has type {}, not {}", factIRI.get(), factDatatype.get(), value.getClass());
-            throw new TrestleMissingFactException(owlNamedIndividual, factIRI.get(), factDatatype.get(), value.getClass());
+
+//        If the fact datatype is a primitive, then we need to determine if the value class is a primitive, because it'll be boxed by the JVM
+        final Class<?> factDatatype = factDatatypeOptional.get();
+        Class<?> valueClass = value.getClass();
+        if (factDatatype.isPrimitive()) {
+            final Class<?> primitiveClass = ClassUtils.wrapperToPrimitive(valueClass);
+            if (primitiveClass != null) {
+                valueClass = primitiveClass;
+            }
+        }
+        if (!factDatatype.isAssignableFrom(valueClass)) {
+            logger.error("Mismatched type. Fact {} has type {}, not {}", factIRI.get(), factDatatype, valueClass);
+            throw new TrestleMissingFactException(owlNamedIndividual, factIRI.get(), factDatatype, valueClass);
         }
 
 
@@ -580,7 +591,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         if (owlDataProperty.getIRI().toString().contains(GEOSPARQLPREFIX)) {
             datatypeFromJavaClass = df.getOWLDatatype(WKTDatatypeIRI);
         } else {
-            datatypeFromJavaClass = TypeConverter.getDatatypeFromJavaClass(value.getClass());
+            datatypeFromJavaClass = TypeConverter.getDatatypeFromJavaClass(valueClass);
         }
         final OWLDataPropertyAssertionAxiom newFactAxiom = df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, df.getOWLLiteral(value.toString(), datatypeFromJavaClass));
 
