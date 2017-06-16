@@ -41,4 +41,16 @@ public interface TrestleMergeEngine {
      * @param strategy         - {@link MergeStrategy} to use when merging facts  @return - {@link MergeScript}
      */
     MergeScript mergeFacts(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, Temporal databaseTemporal, MergeStrategy strategy);
+
+    /**
+     * Determine if the {@link TrestleMergeEngine} is enabled or not.
+     * @return - {@code true} Merge is enabled and engine is a {@link MergeEngineImpl}. {@code false} Merge is disabled and engine is a {@link MergeEngineNoOp}
+     */
+    boolean mergeEnabled();
+
+    /**
+     * Merge on load?
+     * @return - {@code true} merge objects on merge. {@code false} merge only facts
+     */
+    boolean mergeOnLoad();
 }

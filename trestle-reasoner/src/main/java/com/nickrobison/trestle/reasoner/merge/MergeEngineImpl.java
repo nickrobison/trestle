@@ -30,15 +30,17 @@ public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
     private final Config config;
     private MergeStrategy defaultStrategy;
+    private final boolean onLoad;
 
     public MergeEngineImpl() {
         config = ConfigFactory.load().getConfig("trestle.merge");
         defaultStrategy = MergeStrategy.valueOf(config.getString("defaultStrategy"));
+        this.onLoad = config.getBoolean("onLoad");
     }
 
     @Override
     public void changeDefaultMergeStrategy(MergeStrategy strategy) {
-        logger.info("Changin default merge strategy from {} to {}", this.defaultStrategy, strategy);
+        logger.info("Changing default merge strategy from {} to {}", this.defaultStrategy, strategy);
         this.defaultStrategy = strategy;
     }
 
@@ -64,6 +66,16 @@ public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
 //                    Do default stuff
                 throw new RuntimeException("Can't execute default merge, should use strategy from config");
         }
+    }
+
+    @Override
+    public boolean mergeEnabled() {
+        return true;
+    }
+
+    @Override
+    public boolean mergeOnLoad() {
+        return this.onLoad;
     }
 
     private static MergeScript mergeLogic(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> currentFacts, Temporal eventTemporal, Temporal databaseTemporal, boolean continuingOnly) {

@@ -116,7 +116,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         trestleThreadPool = Executors.newFixedThreadPool(threadPoolSize, threadFactory);
 
 
-        final Injector injector = Guice.createInjector(new TrestleModule(builder.metrics, builder.caching));
+        final Injector injector = Guice.createInjector(new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled")));
 
 //        Setup metrics engine
 //        metrician = null;
@@ -391,10 +391,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 //        Merge operation, if the object exists
         // temporal merging occurs by default but may be disabled in the configuration
-        boolean performMerge = true;
-        if (trestleConfig.hasPath("merge.enabled"))
-            performMerge = trestleConfig.getBoolean("merge.enabled");
-        if (performMerge && checkExists(owlNamedIndividual.getIRI())) {
+        if (this.mergeEngine.mergeOnLoad() && checkExists(owlNamedIndividual.getIRI())) {
             final Timer.Context mergeTimer = this.metrician.registerTimer("trestle-merge-timer").time();
             final Optional<List<OWLDataPropertyAssertionAxiom>> individualFactsOptional = trestleParser.classParser.getFacts(inputObject);
             final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(true);
