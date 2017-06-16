@@ -16,7 +16,7 @@ public interface TrestleMergeEngine {
      */
     void changeDefaultMergeStrategy(MergeStrategy strategy);
 
-    MergeScript mergeFacts(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal);
+    MergeScript mergeFacts(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, Temporal databaseTemporal);
 
     /**
      * Perform merge calculation using provided {@link MergeStrategy}
@@ -24,7 +24,8 @@ public interface TrestleMergeEngine {
      * @param newFacts - List of {@link OWLDataPropertyAssertionAxiom} to merge with existing facts
      * @param existingFacts - List of {@link TrestleResult} representing existing, currently valid facts
      * @param eventTemporal
+     * @param databaseTemporal
      * @param strategy - {@link MergeStrategy} to use when merging facts  @return - {@link MergeScript}
      */
-    MergeScript mergeFacts(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, MergeStrategy strategy);
+    MergeScript mergeFacts(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, Temporal databaseTemporal, MergeStrategy strategy);
 }

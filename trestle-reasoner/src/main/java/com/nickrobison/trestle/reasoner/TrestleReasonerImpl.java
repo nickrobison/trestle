@@ -414,7 +414,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //                Get all the currently valid facts, compare them with the ones present on the object, and update the different ones.
                     final Timer.Context compareTimer = this.metrician.registerTimer("trestle-merge-comparison-timer").time();
                     final List<TrestleResult> currentFacts = resultSet.getResults();
-                    final MergeScript mergeScript = this.mergeEngine.mergeFacts(individualFacts, currentFacts, factTemporal.getIdTemporal());
+                    final MergeScript mergeScript = this.mergeEngine.mergeFacts(individualFacts, currentFacts, factTemporal.getIdTemporal(), dTemporal.getIdTemporal());
                     compareTimer.stop();
 
 //                Update all the unbounded DB temporals for the diverging facts
@@ -557,7 +557,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         try {
             final TrestleResultSet validFactResultSet = this.ontology.executeSPARQLResults(validFactQuery);
-            final MergeScript newFactMergeScript = this.mergeEngine.mergeFacts(Collections.singletonList(newFactAxiom), validFactResultSet.getResults(), validTemporal.getIdTemporal());
+            final MergeScript newFactMergeScript = this.mergeEngine.mergeFacts(Collections.singletonList(newFactAxiom), validFactResultSet.getResults(), validTemporal.getIdTemporal(), databaseTemporal.getIdTemporal());
             final String update = this.qb.buildUpdateUnboundedTemporal(parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC), newFactMergeScript.getFactsToVersionAsArray());
             this.ontology.executeUpdateSPARQL(update);
 

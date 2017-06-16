@@ -44,21 +44,21 @@ public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
     }
 
     @Override
-    public MergeScript mergeFacts(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal) {
-        return mergeFacts(newFacts, existingFacts, eventTemporal, MergeStrategy.Default);
+    public MergeScript mergeFacts(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, Temporal databaseTemporal) {
+        return mergeFacts(newFacts, existingFacts, eventTemporal, databaseTemporal, MergeStrategy.Default);
     }
 
     @Override
-    public MergeScript mergeFacts(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, MergeStrategy strategy) {
+    public MergeScript mergeFacts(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, Temporal databaseTemporal, MergeStrategy strategy) {
         if (strategy.equals(MergeStrategy.Default)) {
             strategy = defaultStrategy;
         }
         logger.debug("Merging facts using the {} strategy", strategy);
         switch (strategy) {
             case ContinuingFacts:
-                return mergeLogic(newFacts, existingFacts, eventTemporal, true);
+                return mergeLogic(newFacts, existingFacts, eventTemporal, databaseTemporal, true);
             case ExistingFacts:
-                return mergeLogic(newFacts, existingFacts, eventTemporal, false);
+                return mergeLogic(newFacts, existingFacts, eventTemporal, databaseTemporal, false);
             case NoMerge:
                 return noMerge(newFacts, existingFacts);
             default:
@@ -67,7 +67,7 @@ public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
         }
     }
 
-    private static MergeScript mergeLogic(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> currentFacts, Temporal eventTemporal, boolean continuingOnly) {
+    private static MergeScript mergeLogic(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> currentFacts, Temporal eventTemporal, Temporal databaseTemporal, boolean continuingOnly) {
 //        Determine if any of the currently valid facts diverge (have different values) from the newFacts we're attempting to write
         final List<OWLDataPropertyAssertionAxiom> divergingFacts = newFacts
                 .stream()
@@ -102,9 +102,12 @@ public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
                         throw new TrestleMergeConflict("Not all interval facts are continuing");
                     }
                     TemporalObject overriddenTemporal = overrideTemporal(validTemporal1, eventTemporal);
-
+//                    And the database temporal as well
+                    final TemporalObject dbTemporal1 = dbTemporal.orElseThrow(() -> new RuntimeException("Fact db temporal is null"));
+//                    final TemporalObject overriddenDBTemporal = overrideTemporal(dbTemporal1, databaseTemporal);
+                    final TemporalObject newDbTemporal = TemporalObjectBuilder.database().from(databaseTemporal).build();
 //                            Build the Fact
-                    return new TrestleOWLFact(factProperty, overriddenTemporal, dbTemporal.orElseThrow(() -> new RuntimeException("Fact db temporal is null")));
+                    return new TrestleOWLFact(factProperty, overriddenTemporal, newDbTemporal);
                 })
                 .filter(fact -> divergingFacts
                         .stream()

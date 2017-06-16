@@ -204,7 +204,7 @@ public class TrestleAPITest {
 //        Try to get some fact values
         final Optional<List<Object>> values = reasoner.getFactValues(v3.getClass(), "test-object", "testValue", null, null, null);
         assertAll(() -> assertTrue(values.isPresent(), "Should have fact values"),
-                () -> assertEquals(4, values.get().size(), "Should have 4 fact values"));
+                () -> assertEquals(5, values.get().size(), "Should have 5 fact values"));
 
         final Optional<List<Object>> wktValues = reasoner.getFactValues(v3.getClass(), "test-object", "wkt", LocalDate.of(1988, 3, 26), LocalDate.of(1995, 3, 26), null);
         assertAll(() -> assertTrue(wktValues.isPresent(), "Should have wkt values"),
