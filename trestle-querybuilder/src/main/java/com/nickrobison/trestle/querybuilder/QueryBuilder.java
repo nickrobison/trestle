@@ -269,37 +269,6 @@ public class QueryBuilder {
         return ps.toString();
     }
 
-    @Deprecated
-    public String buildCurrentlyValidFactQuery(OWLNamedIndividual individual, OWLDataProperty property, OffsetDateTime validAt, OffsetDateTime dbAt) {
-        final ParameterizedSparqlString ps = buildBaseString();
-        ps.setCommandText(String.format("SELECT ?value " +
-                "WHERE { " +
-                "?m trestle:has_fact ?f ." +
-                "{?f trestle:database_from ?df} ." +
-                "OPTIONAL{?f trestle:database_to ?dt} ." +
-                "OPTIONAL{?f trestle:valid_from ?vf } ." +
-                "OPTIONAL{?f trestle:valid_at ?va } ."+
-                "OPTIONAL{?f trestle:valid_to ?vt }. " +
-                "?f <%s> ?value ." +
-                "VALUES ?m {<%s>} .", getFullIRIString(property), getFullIRIString(individual)));
-        ps.append("FILTER ((!bound(?vf) || " +
-                "(?vf <= ?validAt^^xsd:dateTime) && " +
-                "(!bound(?vt) || " +
-                "?vt > ?validAt^^xsd:dateTime)) && " +
-                "(!bound(?va) || " +
-                "(?va >= ?validAt^^xsd:dateTime && " +
-                "?va < ?validAt^^xsd:dateTime))) .");
-        ps.setLiteral("validAt", validAt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        ps.append("FILTER (?df <= ?dbAt^^xsd:dateTime && " +
-                "((!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime))).");
-//        ps.append("FILTER(?df >= ?dbAt^^xsd:dateTime) .");
-        ps.setLiteral("dbAt", dbAt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-
-        ps.append("}");
-        logger.debug(ps.toString());
-        return ps.toString();
-    }
-
     /**
      * Retrieve all Fact values for a given individual
      * If a temporal range is provided, the returned values will be valid within that range
