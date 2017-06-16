@@ -269,6 +269,7 @@ public class QueryBuilder {
         return ps.toString();
     }
 
+    @Deprecated
     public String buildCurrentlyValidFactQuery(OWLNamedIndividual individual, OWLDataProperty property, OffsetDateTime validAt, OffsetDateTime dbAt) {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText(String.format("SELECT ?value " +

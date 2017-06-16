@@ -214,7 +214,7 @@ public class TrestleAPITest {
         final TestClasses.GAULTestClass overlappingFactTest = new TestClasses.GAULTestClass(4115, "test-fact-object", LocalDate.of(1989, 3, 26).atStartOfDay(), "POINT(0.71255092695307 -25.572028714467507)");
         reasoner.writeTrestleObject(overlappingFactTest);
 //        Should throw an exception with both methods
-        final TestClasses.GAULTestClass updatedFactClass = new TestClasses.GAULTestClass(9944, "test-fact-object", LocalDate.of(1989, 5, 15).atStartOfDay(), "POINT(0.71255092695307 -25.572028714467507)");
+        final TestClasses.GAULTestClass updatedFactClass = new TestClasses.GAULTestClass(9944, "test-fact-object", LocalDate.of(1989, 5, 14).atStartOfDay(), "POINT(0.71255092695307 -25.572028714467507)");
         assertThrows(TrestleMergeConflict.class, () -> reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "adm0_code", 9944, LocalDate.of(1989, 5, 14).atStartOfDay(), null));
         assertThrows(TrestleMergeConflict.class, () -> reasoner.writeTrestleObject(updatedFactClass));
 //        Read out the same object
@@ -224,10 +224,12 @@ public class TrestleAPITest {
 //        Change method and try again
         this.reasoner.getMergeEngine().changeDefaultMergeStrategy(MergeStrategy.ExistingFacts);
         reasoner.writeTrestleObject(updatedFactClass);
-        assertEquals(updatedFactClass, reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 15), null));
-        reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "4115", "wkt", "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", LocalDate.of(1989, 5,14), null);
+        final TestClasses.@NonNull GAULTestClass updatedObject = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 15), null);
+        assertEquals(updatedFactClass, updatedObject);
+        reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "wkt", "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", LocalDate.of(1989, 5,14), null, null);
         final TestClasses.GAULTestClass newWKT = new TestClasses.GAULTestClass(9944, "test-fact-object", LocalDate.of(1989, 03, 26).atStartOfDay(), "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))");
-        assertEquals(newWKT, reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 15), null));
+        final TestClasses.@NonNull GAULTestClass updatedWKT = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 15), null);
+        assertEquals(newWKT, updatedWKT);
 
 
 //
