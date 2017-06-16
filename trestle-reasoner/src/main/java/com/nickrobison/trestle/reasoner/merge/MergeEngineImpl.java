@@ -8,18 +8,17 @@ import com.nickrobison.trestle.reasoner.types.temporal.TemporalObjectBuilder;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLPropertyAssertionAxiom;
+import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.time.temporal.Temporal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by nrobison on 6/13/17.
@@ -63,7 +62,7 @@ public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
                 return noMerge(newFacts, existingFacts);
             default:
 //                    Do default stuff
-                return null;
+                throw new RuntimeException("Can't execute default merge, should use strategy from config");
         }
     }
 
@@ -134,7 +133,24 @@ public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
     }
 
     private static MergeScript noMerge(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts) {
-        return null;
+        final List<OWLDataProperty> newProperties = newFacts
+                .stream()
+                .map(fact -> fact.getProperty().asOWLDataProperty())
+                .collect(Collectors.toList());
+        final List<OWLDataProperty> existingProperties = existingFacts
+                .stream()
+                .map(fact -> fact.getIndividual("property"))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(property -> df.getOWLDataProperty(property.asOWLNamedIndividual().getIRI()))
+                .collect(Collectors.toList());
+        final boolean overlappingFacts = newProperties
+                .stream()
+                .anyMatch(existingProperties::contains);
+        if (overlappingFacts) {
+            throw new TrestleMergeConflict("Overlapping facts");
+        }
+        return new MergeScript(Collections.emptyList(), Collections.emptyList(), newFacts);
     }
 
     private static TemporalObject overrideTemporal(TemporalObject temporal, Temporal eventTemporal) {

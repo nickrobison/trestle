@@ -28,6 +28,7 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.jvm.hotspot.gc_implementation.g1.G1Allocator;
 
 import java.io.*;
 import java.time.*;
@@ -39,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Created by nrobison on 7/27/16.
  */
-@SuppressWarnings({"Duplicates", "initialization"})
+@SuppressWarnings({"Duplicates", "initialization", "ConstantConditions"})
 @Tag("integration")
 public class TrestleAPITest {
 
@@ -231,8 +232,15 @@ public class TrestleAPITest {
         final TestClasses.@NonNull GAULTestClass updatedWKT = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 15), null);
         assertEquals(newWKT, updatedWKT);
 
+//        Try for no merge.
+        this.reasoner.getMergeEngine().changeDefaultMergeStrategy(MergeStrategy.NoMerge);
+        assertThrows(TrestleMergeConflict.class, () -> reasoner.writeTrestleObject(updatedFactClass));
+        assertThrows(TrestleMergeConflict.class, () -> reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "wkt", "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", LocalDate.of(1989, 5,14), null, null));
+//        Try to add facts in the future.
+        this.reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "adm0_code", 1234, LocalDate.of(1990, 5, 14).atStartOfDay(), null, null);
+        final Optional<List<Object>> factValues = reasoner.getFactValues(TestClasses.GAULTestClass.class, "test-fact-object", "adm0_code", null, null, null);
+        assertEquals(4, factValues.get().size(), "Should have 4 values for ADM0_Code");
 
-//
 ////        Test database temporals
 //        reasoner.getMetricsEngine().exportData(new File("./target/api-test-fact-validity-metrics.csv"));
     }
