@@ -4,6 +4,7 @@
 import mapboxgl = require("mapbox-gl");
 import {Component, Input, OnChanges, OnInit, SimpleChange} from "@angular/core";
 import {GeometryObject} from "geojson";
+import {MapMouseEvent} from "mapbox-gl";
 
 export interface ITrestleMapSource {
     id: string;
@@ -28,10 +29,14 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     ngOnInit(): void {
         this.map = new mapboxgl.Map({
             container: "map",
-            style: "mapbox://styles/mapbox/dark-v9",
-            center: [-74.50, 40], // starting position
-            zoom: 9 // starting zoom
-        })
+            style: "mapbox://styles/mapbox/light-v9",
+            center: new mapboxgl.LngLat(32.3558991, -25.6854313),
+            // center: [-74.50, 40], // starting position
+            zoom: 8 // starting zoom
+        });
+        this.map.on("click", this.layerClick);
+        this.map.on("mouseover", this.mouseOver);
+        this.map.on("mouseleave", this.mouseOut);
     }
 
     ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
@@ -52,6 +57,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         //     properties: null,
         //     geometry: inputLayer.data
         // });
+        console.debug("Adding source data:", inputLayer.data);
         this.map.addSource(inputLayer.id, {
             type: "geojson",
             data: {
@@ -59,13 +65,41 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                 geometry: inputLayer.data
             }
         });
+        this.map.addLayer({
+            id: inputLayer.id + "-fill",
+            type: "fill",
+            source: inputLayer.id,
+            paint: {
+                "fill-color": "#627BC1",
+                "fill-opacity": 0.7,
+            }
+        });
+        this.map.addLayer({
+            id: inputLayer.id + "-line",
+            type: "line",
+            source: inputLayer.id,
+            paint: {
+                "line-color": "white",
+                "line-width": 2
+            }
+        })
     }
 
     private removeSource(sourceID: string): void {
+        this.map.removeLayer(sourceID + "-fill");
+        this.map.removeLayer(sourceID + "-line");
         this.map.removeSource(sourceID);
+    };
+
+    private layerClick = (e: MapMouseEvent): void => {
+        console.debug("Clicked:", e);
+    };
+
+    private mouseOver = (e: MapMouseEvent): void => {
+        console.debug("Moused over:", e);
+    };
+
+    private mouseOut = (e: MapMouseEvent): void => {
+        console.debug("Mouse out:", e);
     }
-
-
-
-
 }
