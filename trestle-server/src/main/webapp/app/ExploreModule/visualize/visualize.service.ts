@@ -63,6 +63,14 @@ export class TrestleIndividual {
         return facts;
     }
 
+    public getFactValues(): {[name: string]: any} {
+        let values: {[name: string]: any} = {};
+        this.facts.forEach(value => {
+            values[value.getName()] = value.getValue();
+        })
+        return values;
+    }
+
     public getRelations(): Array<TrestleRelation> {
         return this.relations;
     }
