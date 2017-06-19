@@ -28,7 +28,6 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.jvm.hotspot.gc_implementation.g1.G1Allocator;
 
 import java.io.*;
 import java.time.*;
