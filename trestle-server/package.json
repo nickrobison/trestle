@@ -15,7 +15,6 @@
     "@angular/platform-browser-dynamic": "4.1.0",
     "@angular/router": "4.1.0",
     "@types/geojson": "^1.0.2",
-    "@types/mapbox-gl": "^0.35.2",
     "angular2-jwt": "^0.2.3",
     "angular2-materialize": "^9.0.1",
     "codemirror": "^5.24.2",
