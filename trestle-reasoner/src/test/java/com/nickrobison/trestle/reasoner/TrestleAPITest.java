@@ -5,6 +5,8 @@ import com.esri.core.geometry.Polygon;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.NoValidStateException;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import com.nickrobison.trestle.reasoner.merge.MergeStrategy;
+import com.nickrobison.trestle.reasoner.merge.TrestleMergeConflict;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.reasoner.types.TrestleIndividual;
 import com.nickrobison.trestle.reasoner.types.relations.ObjectRelation;
@@ -37,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Created by nrobison on 7/27/16.
  */
-@SuppressWarnings({"Duplicates", "initialization"})
+@SuppressWarnings({"Duplicates", "initialization", "ConstantConditions"})
 @Tag("integration")
 public class TrestleAPITest {
 
@@ -202,12 +204,42 @@ public class TrestleAPITest {
 //        Try to get some fact values
         final Optional<List<Object>> values = reasoner.getFactValues(v3.getClass(), "test-object", "testValue", null, null, null);
         assertAll(() -> assertTrue(values.isPresent(), "Should have fact values"),
-                () -> assertEquals(4, values.get().size(), "Should have 4 fact values"));
+                () -> assertEquals(5, values.get().size(), "Should have 5 fact values"));
 
         final Optional<List<Object>> wktValues = reasoner.getFactValues(v3.getClass(), "test-object", "wkt", LocalDate.of(1988, 3, 26), LocalDate.of(1995, 3, 26), null);
         assertAll(() -> assertTrue(wktValues.isPresent(), "Should have wkt values"),
                 () -> assertEquals(2, wktValues.get().size(), "Should only have 2 wkt values"));
-//
+
+//        Test merging with overlapping (non-continuing facts)
+        final TestClasses.GAULTestClass overlappingFactTest = new TestClasses.GAULTestClass(4115, "test-fact-object", LocalDate.of(1989, 3, 26).atStartOfDay(), "POINT(0.71255092695307 -25.572028714467507)");
+        reasoner.writeTrestleObject(overlappingFactTest);
+//        Should throw an exception with both methods
+        final TestClasses.GAULTestClass updatedFactClass = new TestClasses.GAULTestClass(9944, "test-fact-object", LocalDate.of(1989, 5, 14).atStartOfDay(), "POINT(0.71255092695307 -25.572028714467507)");
+        assertThrows(TrestleMergeConflict.class, () -> reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "adm0_code", 9944, LocalDate.of(1989, 5, 14).atStartOfDay(), null));
+        assertThrows(TrestleMergeConflict.class, () -> reasoner.writeTrestleObject(updatedFactClass));
+//        Read out the same object
+        final TestClasses.@NonNull GAULTestClass originalObject = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 14), null);
+        assertEquals(overlappingFactTest, originalObject, "Should match the original object");
+
+//        Change method and try again
+        this.reasoner.getMergeEngine().changeDefaultMergeStrategy(MergeStrategy.ExistingFacts);
+        reasoner.writeTrestleObject(updatedFactClass);
+        final TestClasses.@NonNull GAULTestClass updatedObject = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 15), null);
+        assertEquals(updatedFactClass, updatedObject);
+        reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "wkt", "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", LocalDate.of(1989, 5,14), null, null);
+        final TestClasses.GAULTestClass newWKT = new TestClasses.GAULTestClass(9944, "test-fact-object", LocalDate.of(1989, 03, 26).atStartOfDay(), "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))");
+        final TestClasses.@NonNull GAULTestClass updatedWKT = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 15), null);
+        assertEquals(newWKT, updatedWKT);
+
+//        Try for no merge.
+        this.reasoner.getMergeEngine().changeDefaultMergeStrategy(MergeStrategy.NoMerge);
+        assertThrows(TrestleMergeConflict.class, () -> reasoner.writeTrestleObject(updatedFactClass));
+        assertThrows(TrestleMergeConflict.class, () -> reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "wkt", "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", LocalDate.of(1989, 5,14), null, null));
+//        Try to add facts in the future.
+        this.reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "adm0_code", 1234, LocalDate.of(1990, 5, 14).atStartOfDay(), null, null);
+        final Optional<List<Object>> factValues = reasoner.getFactValues(TestClasses.GAULTestClass.class, "test-fact-object", "adm0_code", null, null, null);
+        assertEquals(4, factValues.get().size(), "Should have 4 values for ADM0_Code");
+
 ////        Test database temporals
 //        reasoner.getMetricsEngine().exportData(new File("./target/api-test-fact-validity-metrics.csv"));
     }

@@ -7,6 +7,7 @@ import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.reasoner.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.reasoner.types.TrestleIndividual;
 import com.nickrobison.trestle.reasoner.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.reasoner.types.relations.ObjectRelation;
@@ -59,6 +60,12 @@ public interface TrestleReasoner {
      * @return - {@link Metrician} metrics engine
      */
     Metrician getMetricsEngine();
+
+    /**
+     * Get the underlying {@link TrestleMergeEngine}
+     * @return - Get {@link TrestleMergeEngine}
+     */
+    TrestleMergeEngine getMergeEngine();
 
     /**
      * Get the currently registered prefixes and URIs

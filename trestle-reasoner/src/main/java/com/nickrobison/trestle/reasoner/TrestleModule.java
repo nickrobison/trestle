@@ -4,6 +4,9 @@ import com.google.inject.AbstractModule;
 import com.nickrobison.metrician.MetricianModule;
 
 import com.nickrobison.trestle.reasoner.caching.TrestleCacheModule;
+import com.nickrobison.trestle.reasoner.merge.MergeEngineImpl;
+import com.nickrobison.trestle.reasoner.merge.MergeEngineNoOp;
+import com.nickrobison.trestle.reasoner.merge.TrestleMergeEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,11 +18,14 @@ public class TrestleModule extends AbstractModule {
     private static final Logger logger = LoggerFactory.getLogger(TrestleModule.class);
     private final boolean metricsEnabled;
     private final boolean cachingEnabled;
+    private final boolean mergeEnabled;
 
-    TrestleModule(boolean metricsEnabled, boolean cachingEnabled) {
+    TrestleModule(boolean metricsEnabled, boolean cachingEnabled, boolean mergeEnabled) {
         logger.debug("Building Trestle Module");
         this.metricsEnabled = metricsEnabled;
         this.cachingEnabled = cachingEnabled;
+        this.mergeEnabled = mergeEnabled;
+
     }
 
     //    TrestleModule() {
@@ -39,5 +45,11 @@ public class TrestleModule extends AbstractModule {
     protected void configure() {
         install(new MetricianModule(metricsEnabled));
         install(new TrestleCacheModule(cachingEnabled));
+        if (mergeEnabled) {
+            bind(TrestleMergeEngine.class).to(MergeEngineImpl.class);
+        } else {
+            bind(TrestleMergeEngine.class).to(MergeEngineNoOp.class);
+        }
+
     }
 }

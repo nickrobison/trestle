@@ -83,7 +83,7 @@ class V1IRIBuilder {
         final String[] splitGroups = iriString.split(":");
         if (splitGroups.length >= 3) {
             final long temporalLong = Long.parseLong(splitGroups[2]);
-            return Optional.of(OffsetDateTime.ofInstant(Instant.ofEpochSecond(temporalLong), ZoneOffset.UTC));
+            return Optional.of(OffsetDateTime.ofInstant(Instant.ofEpochMilli(temporalLong), ZoneOffset.UTC));
         } else {
             return Optional.empty();
         }
@@ -94,7 +94,7 @@ class V1IRIBuilder {
         if (objectTemporal.isPresent()) {
             final int i = iriString.lastIndexOf(":");
             final long temporalLong = Long.parseLong(iriString.substring(i + 1, iriString.length()));
-            return Optional.of(OffsetDateTime.ofInstant(Instant.ofEpochSecond(temporalLong), ZoneOffset.UTC));
+            return Optional.of(OffsetDateTime.ofInstant(Instant.ofEpochMilli(temporalLong), ZoneOffset.UTC));
         }
         return Optional.empty();
     }

@@ -1,14 +1,12 @@
 package com.nickrobison.trestle.querybuilder;
 
+import com.google.common.collect.ImmutableList;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 import java.time.LocalDate;
@@ -75,6 +73,17 @@ public class QueryBuilderTest {
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
             "SELECT DISTINCT ?individual ?fact ?property ?object ?df ?dt ?vf ?vt ?va WHERE { ?individual trestle:has_fact ?fact .{?fact trestle:database_from ?df} .OPTIONAL{?fact trestle:database_to ?dt} .OPTIONAL{?fact trestle:valid_from ?vf} .OPTIONAL{?fact trestle:valid_to ?vt} .OPTIONAL{?fact trestle:valid_at ?va} .?fact ?property ?object .VALUES ?individual { <http://nickrobison.com/dissertation/trestle.owl#test_muni4> } .FILTER(!isURI(?object) && !isBlank(?object)) .FILTER(!bound(?tEnd)) .FILTER((!bound(?vf) || ?vf <= \"1989-03-26T00:00:00Z\"^^xsd:dateTime) && (!bound(?vt) || ?vt > \"1989-03-26T00:00:00Z\"^^xsd:dateTime)) .FILTER(!bound(?va) || ?va = \"1989-03-26T00:00:00Z\"^^xsd:dateTime) .FILTER((!bound(?df) || ?df <= \"2012-01-01T00:00:00Z\"^^xsd:dateTime) && (!bound(?dt) || ?dt > \"2012-01-01T00:00:00Z\"^^xsd:dateTime)) . FILTER NOT EXISTS {?property rdfs:subPropertyOf trestle:Temporal_Property}}";
+    private static final String objectPropertyFilteredFactString ="BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+            "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
+            "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+            "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
+            "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+            "PREFIX xml: <http://www.w3.org/XML/1998/namespace>\n" +
+            "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
+            "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+            "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
+            "SELECT DISTINCT ?individual ?fact ?property ?object ?df ?dt ?vf ?vt ?va WHERE { ?individual trestle:has_fact ?fact .{?fact trestle:database_from ?df} .OPTIONAL{?fact trestle:database_to ?dt} .OPTIONAL{?fact trestle:valid_from ?vf} .OPTIONAL{?fact trestle:valid_to ?vt} .OPTIONAL{?fact trestle:valid_at ?va} .?fact ?property ?object .VALUES ?individual { <http://nickrobison.com/dissertation/trestle.owl#test_muni4> } .FILTER(!isURI(?object) && !isBlank(?object)) .FILTER(!bound(?tEnd)) .VALUES ?property { <trestle:test_property_1> <trestle:test_property_2> } .FILTER((!bound(?vf) || ?vf <= \"1989-03-26T00:00:00Z\"^^xsd:dateTime) && (!bound(?vt) || ?vt > \"1989-03-26T00:00:00Z\"^^xsd:dateTime)) .FILTER(!bound(?va) || ?va = \"1989-03-26T00:00:00Z\"^^xsd:dateTime) .FILTER((!bound(?df) || ?df <= \"2012-01-01T00:00:00Z\"^^xsd:dateTime) && (!bound(?dt) || ?dt > \"2012-01-01T00:00:00Z\"^^xsd:dateTime)) . FILTER NOT EXISTS {?property rdfs:subPropertyOf trestle:Temporal_Property}}";
 
     private static final String objectPropertyMultiIRIString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
@@ -216,14 +225,21 @@ public class QueryBuilderTest {
 
     @Test
     public void testObjectProperty() {
+        final ImmutableList<OWLDataProperty> propertyList = ImmutableList.of(
+                df.getOWLDataProperty(IRI.create("trestle:", "test_property_1")),
+                df.getOWLDataProperty(IRI.create("trestle:", "test_property_2")));
 
         final OWLNamedIndividual test_muni4 = df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni4"));
         assertAll(() -> {
-                    final String generatedObjectStartInterval = qb.buildObjectPropertyRetrievalQuery(OffsetDateTime.of(LocalDate.of(1989, 3, 26).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2012, 1, 1).atStartOfDay(), ZoneOffset.UTC), true, test_muni4);
+                    final String generatedObjectStartInterval = qb.buildObjectFactRetrievalQuery(OffsetDateTime.of(LocalDate.of(1989, 3, 26).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2012, 1, 1).atStartOfDay(), ZoneOffset.UTC), true, null, test_muni4);
                     assertEquals(objectPropertyStartIntervalString, generatedObjectStartInterval, "Start interval query should be equal");
                 },
                 () -> {
-                    final String generatedMultiIRI = qb.buildObjectPropertyRetrievalQuery(OffsetDateTime.of(LocalDate.of(1989, 3, 26).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2012, 1, 1).atStartOfDay(), ZoneOffset.UTC), true, test_muni4, df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni2")), df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni5")));
+                    final String generatedObjectFactFilteredQuery = qb.buildObjectFactRetrievalQuery(OffsetDateTime.of(LocalDate.of(1989, 3, 26).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2012, 1, 1).atStartOfDay(), ZoneOffset.UTC), true, propertyList, test_muni4);
+                    assertEquals(generatedObjectFactFilteredQuery, generatedObjectFactFilteredQuery, "Should have filtered data properties");
+                },
+                () -> {
+                    final String generatedMultiIRI = qb.buildObjectFactRetrievalQuery(OffsetDateTime.of(LocalDate.of(1989, 3, 26).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2012, 1, 1).atStartOfDay(), ZoneOffset.UTC), true, null, test_muni4, df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni2")), df.getOWLNamedIndividual(IRI.create("trestle:", "test_muni5")));
                     assertEquals(objectPropertyMultiIRIString, generatedMultiIRI, "Multi IRI property query Should be equal");
                 },
                 () -> {

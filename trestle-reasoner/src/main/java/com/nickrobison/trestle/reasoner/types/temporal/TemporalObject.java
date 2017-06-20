@@ -60,6 +60,13 @@ public abstract class TemporalObject implements Serializable {
     public abstract boolean isDatabase();
 
     /**
+     * Determines whether the temporal object represents a continuing (unbounded) interval.
+     * For {@link PointTemporal} this will always return false
+     * @return - <code>true</code> temporal is continuing. <code>false</code> is not continuing
+     */
+    public abstract boolean isContinuing();
+
+    /**
      * Returns the temporal used as an identifier
      * For an {@link IntervalTemporal}, this is the startTemporal
      * For a {@link PointTemporal}, it is the atTemporal

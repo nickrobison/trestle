@@ -30,10 +30,10 @@ public class TrestleIRIV1Test {
 
     @BeforeAll
     public static void setupTestStrings() {
-        objectNoFactIRI = IRI.create(TEST_PREFIX, String.format("V1:%s:%s:%s", OBJECT_ID, TEST_DATE.toEpochSecond(), TEST_DB_TEMPORAL.toEpochSecond()));
-        objectFactIRI = IRI.create(TEST_PREFIX, String.format("V1:%s@%s:%s:%s", OBJECT_ID, OBJECT_FACT, TEST_DATE.toEpochSecond(), TEST_DB_TEMPORAL.toEpochSecond()));
-        malformedIRIVersion = IRI.create(TEST_PREFIX, String.format("V9:%s@%s:%s:%s", OBJECT_ID, OBJECT_FACT, TEST_DATE.toEpochSecond(), TEST_DB_TEMPORAL.toEpochSecond()));
-        malformedIRIStructure = IRI.create(TEST_PREFIX, String.format("V1;%s@%s:%s:%s", OBJECT_ID, OBJECT_FACT, TEST_DATE.toEpochSecond(), TEST_DB_TEMPORAL.toEpochSecond()));
+        objectNoFactIRI = IRI.create(TEST_PREFIX, String.format("V1:%s:%s:%s", OBJECT_ID, TEST_DATE.toInstant().toEpochMilli(), TEST_DB_TEMPORAL.toInstant().toEpochMilli()));
+        objectFactIRI = IRI.create(TEST_PREFIX, String.format("V1:%s@%s:%s:%s", OBJECT_ID, OBJECT_FACT, TEST_DATE.toInstant().toEpochMilli(), TEST_DB_TEMPORAL.toInstant().toEpochMilli()));
+        malformedIRIVersion = IRI.create(TEST_PREFIX, String.format("V9:%s@%s:%s:%s", OBJECT_ID, OBJECT_FACT, TEST_DATE.toInstant().toEpochMilli(), TEST_DB_TEMPORAL.toInstant().toEpochMilli()));
+        malformedIRIStructure = IRI.create(TEST_PREFIX, String.format("V1;%s@%s:%s:%s", OBJECT_ID, OBJECT_FACT, TEST_DATE.toInstant().toEpochMilli(), TEST_DB_TEMPORAL.toInstant().toEpochMilli()));
     }
 
     @Test
@@ -67,6 +67,13 @@ public class TrestleIRIV1Test {
     }
 
     @Test
+    public void testTimestampConflicts() {
+        final OffsetDateTime PDTTime = OffsetDateTime.of(LocalDateTime.of(1989, 3, 26, 8, 15, 15, 5000), ZoneOffset.ofHours(-8));
+        final OffsetDateTime everestTime = OffsetDateTime.of(LocalDateTime.of(1989, 3, 26, 8, 15, 15, 50000), ZoneOffset.ofHoursMinutes(5, 45));
+        assertNotEquals(IRIBuilder.encodeIRI(IRIVersion.V1, TEST_PREFIX, OBJECT_ID, null, PDTTime, null), IRIBuilder.encodeIRI(IRIVersion.V1, TEST_PREFIX, OBJECT_ID, null, everestTime, null), "sub-second precision should not have equal results");
+    }
+
+    @Test
     public void testOtherVersions() {
         assertAll(() -> assertThrows(IRIVersionException.class, () -> IRIBuilder.encodeIRI(IRIVersion.V2, TEST_PREFIX, OBJECT_ID, null, null, null)),
                 () -> assertThrows(IRIVersionException.class, () -> IRIBuilder.encodeIRI(IRIVersion.V3, TEST_PREFIX, OBJECT_ID, null, null, null)));
@@ -87,9 +94,9 @@ public class TrestleIRIV1Test {
                 () -> assertTrue(objectTIRI.getObjectFact().isPresent(), "Parsed IRI should have ObjectFact"),
                 () -> assertEquals(OBJECT_FACT, objectTIRI.getObjectFact().get(), "Parsed IRI should have same ObjectFact"),
                 () -> assertTrue(objectTIRI.getObjectTemporal().isPresent(), "Parsed IRI should have object temporal"),
-                () -> assertEquals(TEST_DATE.toEpochSecond(), objectTIRI.getObjectTemporal().get().toEpochSecond(), "Parsed IRI should have the same Object temporal"),
+                () -> assertEquals(TEST_DATE.toInstant().toEpochMilli(), objectTIRI.getObjectTemporal().get().toInstant().toEpochMilli(), "Parsed IRI should have the same Object temporal"),
                 () -> assertTrue(objectTIRI.getDbTemporal().isPresent(), "Parsed IRI should have database temporal"),
-                () -> assertEquals(TEST_DB_TEMPORAL.toEpochSecond(), objectTIRI.getDbTemporal().get().toEpochSecond(), "Parsed IRI should have same DB temporal"));
+                () -> assertEquals(TEST_DB_TEMPORAL.toInstant().toEpochMilli(), objectTIRI.getDbTemporal().get().toInstant().toEpochMilli(), "Parsed IRI should have same DB temporal"));
 
 //        Test malformed IRI
         assertAll(() -> assertThrows(IRIParseException.class, () -> IRIBuilder.parseIRIToTrestleIRI(malformedIRIVersion)),

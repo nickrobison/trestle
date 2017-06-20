@@ -5,6 +5,7 @@ import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import com.nickrobison.trestle.reasoner.merge.MergeStrategy;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.Geometry;
@@ -26,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Created by nrobison on 2/17/17.
  */
 @Tag("integration")
+@Disabled
 public class TrestleCacheTest {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleCacheTest.class);
@@ -46,6 +48,7 @@ public class TrestleCacheTest {
                 .withoutMetrics()
                 .initialize()
                 .build();
+        reasoner.getMergeEngine().changeDefaultMergeStrategy(MergeStrategy.ExistingFacts);
 
 //        df = OWLManager.getOWLDataFactory();
     }
