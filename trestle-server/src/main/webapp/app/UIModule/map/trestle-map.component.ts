@@ -3,8 +3,12 @@
  */
 import mapboxgl = require("mapbox-gl");
 import {Component, Input, OnChanges, OnInit, SimpleChange} from "@angular/core";
-import {FeatureCollection, GeometryObject} from "geojson";
-import {MapMouseEvent} from "mapbox-gl";
+import {
+    FeatureCollection, GeometryObject, LineString, MultiLineString, MultiPoint, MultiPolygon,
+    Point, Polygon
+} from "geojson";
+import {MapMouseEvent, LngLatBounds} from "mapbox-gl";
+var extent = require("@mapbox/geojson-extent");
 
 export interface ITrestleMapSource {
     id: string;
@@ -101,12 +105,14 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             filter: ["==", "name", ""]
         });
         this.mapSources.push(inputLayer.id);
+        //    Center map
+        this.getBoundingBox(inputLayer.data);
     }
 
     private layerClick = (e: MapMouseEvent): void => {
         console.debug("Clicked:", e);
         let features = this.map.queryRenderedFeatures(e.point, {
-           layers: this.mapSources.map(val => val + "-fill")
+            layers: this.mapSources.map(val => val + "-fill")
         });
 
         // If we don't filter on anything, deselect it all
@@ -139,5 +145,37 @@ export class TrestleMapComponent implements OnInit, OnChanges {
 
     private mouseOut = (e: MapMouseEvent): void => {
         console.debug("Mouse out:", e);
+    };
+
+    private static extractGeometryPoints(geom: GeometryObject): number[][] {
+        switch (geom.type) {
+            case "Point": {
+                return [(<Point>geom).coordinates];
+            }
+            case "MultiPoint":
+                return (<MultiPoint>geom).coordinates;
+            case "LineString":
+                return (<LineString>geom).coordinates;
+            case "MultiLineString":
+                return (<MultiLineString>geom).coordinates[0];
+            case "Polygon":
+                return (<Polygon>geom).coordinates[0];
+            case "MultiPolygon":
+                return (<MultiPolygon>geom).coordinates[0][0];
+            default:
+                console.error("Unable to get coordinates for object of type:", geom.type);
+                return null;
+        }
+    }
+
+    private getBoundingBox(geom: FeatureCollection<GeometryObject>): void {
+        if (geom.bbox) {
+            this.map.fitBounds(LngLatBounds.convert(geom.bbox));
+        } else {
+            let bbox = extent(geom);
+            if (bbox) {
+                this.map.fitBounds(LngLatBounds.convert(bbox));
+            }
+        }
     }
 }

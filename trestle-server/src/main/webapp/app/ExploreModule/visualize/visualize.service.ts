@@ -44,7 +44,7 @@ export class TrestleIndividual {
         this.facts.forEach((fact) => {
             if (fact.isSpatial()) {
                 let geojson = parse(fact.getValue());
-                if (geojson !== null) {
+                if (geojson != null) {
                     returnValue = geojson;
                 } else {
                     console.error("Failed to parse:", fact.getValue());

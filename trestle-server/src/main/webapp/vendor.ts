@@ -27,3 +27,4 @@ import "moment-timezone";
 import "file-saver";
 import "mapbox-gl";
 import "wellknown";
+import "@mapbox/geojson-extent";
