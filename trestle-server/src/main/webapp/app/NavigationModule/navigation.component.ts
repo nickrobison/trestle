@@ -41,7 +41,7 @@ export class NavigationComponent implements OnInit {
             let user = this.authService.getUser();
             if (user != null) {
                 let hash = CryptoJS.MD5(user.email.trim().toLowerCase()).toString();
-                this.gravatarURL = "https://www.gravatar.com/avatar/" + hash + "?d=identicon" + "&s=50";
+                this.gravatarURL = "https://www.gravatar.com/avatar/" + hash + "?d=identicon" + "&s=36";
                 return this.gravatarURL;
             }
         }
