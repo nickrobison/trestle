@@ -1,7 +1,7 @@
 /**
  * Created by nrobison on 1/19/17.
  */
-import {Route, RouterModule} from "@angular/router";
+import {RouterModule} from "@angular/router";
 import {DashboardComponent} from "./dashboard/app.dashboard";
 import {NgModule} from "@angular/core";
 import {MaterialModule} from "@angular/material";
@@ -14,28 +14,9 @@ import {MetricsComponent} from "./metrics/metrics.component";
 import {MetricsService} from "./metrics/metrics.service";
 import {MetricsGraph} from "./metrics/metrics-graph.component";
 import {UserModule} from "../UserModule/user.module";
-import {Privileges} from "../UserModule/authentication.service";
-import {LoggedInGuard} from "../UserModule/LoggedInGuard";
-import {PermissionsGuard} from "../UserModule/PermissionsGuard";
+import {AdminRoutes} from "../admin.routing";
 
-interface ITrestleRoute extends Route {
-    data?: ITrestleRouteData
-}
 
-interface ITrestleRouteData {
-    roles: Array<Privileges>;
-}
-
-const routes: Array<ITrestleRoute> = [
-    {path: "", component: AdminComponent, children: [
-        {path: "dashboard", component: DashboardComponent},
-        // {path: "query", component: QueryComponent, canActivate: [LoggedInGuard]},
-        // {path: "visualize", component: VisualizeComponent, canActivate: [LoggedInGuard]},
-        {path: "users", component: UsersComponent, canActivate: [LoggedInGuard, PermissionsGuard], data: {roles: [Privileges.ADMIN]}},
-        {path: "metrics", component: MetricsComponent, canActivate: [LoggedInGuard, PermissionsGuard], data: {roles: [Privileges.ADMIN]}},
-        {path: "", redirectTo: "/dashboard", pathMatch: "full"}
-    ]}
-];
 
 @NgModule({
     declarations: [DashboardComponent,
@@ -49,7 +30,7 @@ const routes: Array<ITrestleRoute> = [
         CommonModule,
         FormsModule,
         ReactiveFormsModule,
-        // RouterModule.forChild(routes),
+        RouterModule.forChild(AdminRoutes),
         MaterialModule,
         UserModule
     ],
@@ -58,4 +39,5 @@ const routes: Array<ITrestleRoute> = [
     bootstrap: [AdminComponent]
 })
 
-export class AdminModule {}
+export class AdminModule {
+}

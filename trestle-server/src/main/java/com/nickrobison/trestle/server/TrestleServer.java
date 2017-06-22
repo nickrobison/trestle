@@ -16,13 +16,25 @@ import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import liquibase.Liquibase;
+import liquibase.database.Database;
+import liquibase.database.DatabaseFactory;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.resource.ClassLoaderResourceAccessor;
+import org.eclipse.jetty.servlet.FilterHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.servlet.DispatcherType;
+import java.sql.Connection;
+import java.util.EnumSet;
 import java.util.stream.Stream;
 
 /**
  * Created by nrobison on 11/28/16.
  */
 public class TrestleServer extends Application<TrestleServerConfiguration> {
+    private static final Logger logger = LoggerFactory.getLogger(TrestleServer.class);
 
     private final MigrationsBundle<TrestleServerConfiguration> migrations = new MigrationsBundle<TrestleServerConfiguration>() {
         @Override
@@ -42,7 +54,7 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
 
     @Override
     public void initialize(Bootstrap<TrestleServerConfiguration> bootstrap) {
-        bootstrap.addBundle(new FileAssetsBundle("src/main/resources/build/", "/static", "index.html"));
+//        bootstrap.addBundle(new FileAssetsBundle("src/main/resources/build/", "/static", "index.html"));
 //        bootstrap.addBundle(hibernate);
         bootstrap.addBundle(migrations);
 
@@ -68,6 +80,9 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
         Stream.of(
                 new AuthDynamicFeature(),
                 new AuthValueFactoryProvider.Binder()).forEach(jersey::register);
+
+//        URL Rewriting
+//        environment.getApplicationContext().addFilter(new FilterHolder(new URLRewriter()), "/workspace/*", EnumSet.allOf(DispatcherType.class));
 
         //    database migration?
 //        final ManagedDataSource migrationDataSource = createMigrationDataSource(trestleServerConfiguration, environment);

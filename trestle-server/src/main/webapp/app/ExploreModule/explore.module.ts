@@ -16,6 +16,8 @@ import {QueryComponent} from "./query/query.component";
 import {CodeMirrorComponent} from "./query/codemirror/codemirror.component";
 import {QueryService} from "./query/query.service";
 import {UIModule} from "../UIModule/ui.module";
+import {RouterModule} from "@angular/router";
+import {ExploreRoutes} from "./explore.routing";
 
 @NgModule({
     imports: [
@@ -24,7 +26,8 @@ import {UIModule} from "../UIModule/ui.module";
         ReactiveFormsModule,
         MaterialModule,
         CommonModule,
-        UIModule
+        UIModule,
+        RouterModule.forChild(ExploreRoutes)
     ],
     declarations: [
         VisualizeComponent,

@@ -10,6 +10,7 @@ import {Router} from "@angular/router";
 import {TrestleHttp} from "./trestle-http.provider";
 import {CommonModule} from "@angular/common";
 import {UserService} from "./users.service";
+import {DefaultRouteGuard} from "./DefaultRouteGuard";
 
 @NgModule({
     imports: [
@@ -20,6 +21,7 @@ import {UserService} from "./users.service";
         AuthService,
         LoggedInGuard,
         PermissionsGuard,
+        DefaultRouteGuard,
         UserService,
         {
             provide: TrestleHttp,
@@ -31,9 +33,3 @@ import {UserService} from "./users.service";
 })
 
 export class UserModule {}
-
-// export function authHttpServiceFactory(http: Http, options: RequestOptions) {
-//     return new AuthHttp(new AuthConfig({
-//         noTokenScheme: true
-//     }), http, options);
-// }

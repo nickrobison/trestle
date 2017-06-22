@@ -82,6 +82,14 @@ export class AuthService {
         return tokenNotExpired();
     }
 
+    public isAdmin(): boolean {
+        if (this.loggedIn()) {
+            let token = this.getToken();
+            return (token.user.privileges & Privileges.ADMIN) > 0
+        }
+        return false;
+    }
+
     public getUser(): ITrestleUser {
         if (this.loggedIn()) {
             let token = this.getToken();

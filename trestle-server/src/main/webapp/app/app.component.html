@@ -1,1 +1,35 @@
-<router-outlet></router-outlet>
+<md-toolbar color="primary" class="top-layout mat-elevation-z6">
+    <h4>TRESTLE</h4>
+    <span class="toolbar-spacer"></span>
+    <!--User login specific functions-->
+    <div class="action-buttons" *ngIf="userLoggedIn | async">
+        <img class="img-circle" [src]="getGravatarURL()">
+        <button id="logout" md-button class="toolbar-button" (click)="logout()" aria-label="Logout">
+            <i class="material-icons">system_update_alt</i>
+        </button>
+    </div>
+    <button id="login" md-button class="toolbar-button" *ngIf="!(userLoggedIn | async)" routerLink="/login" aria-label="Login">
+        <i class="material-icons">input</i>
+    </button>
+</md-toolbar>
+<md-sidenav-container>
+    <md-sidenav #sidenav class="mat-elevation-z3" mode="side" opened="true" color="accent">
+        <md-nav-list>
+            <h4 md-list-subheader>Explore</h4>
+            <a id="visualize" md-list-item [routerLink]="['explore/visualize']" aria-label="visualizer link">VISUALIZER</a>
+            <a id="query" md-list-item [routerLink]="['explore/query']" aria-label="query link">QUERY</a>
+            <div *ngIf="userHasRequiredPermissions([Privileges.ADMIN])">
+            <!--<div>-->
+                <md-divider></md-divider>
+                <h4 md-list-subheader>Admin</h4>
+                <a id="dashboard" md-list-item [routerLink]="['admin/dashboard']" aria-label="dashboard link">DASHBOARD</a>
+                <a id="metrics" md-list-item [routerLink]="['admin/metrics']" aria-label="metrics link">METRICS</a>
+                <a id="users" md-list-item [routerLink]="['admin/users']" aria-label="users link">USERS</a>
+            </div>
+            <md-divider></md-divider>
+        </md-nav-list>
+    </md-sidenav>
+    <div class="app-content">
+        <router-outlet></router-outlet>
+    </div>
+</md-sidenav-container>

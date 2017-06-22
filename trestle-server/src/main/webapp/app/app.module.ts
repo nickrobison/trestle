@@ -10,6 +10,7 @@ import {AppRoutes} from "./app.routes";
 import {AppComponent} from "./app.component";
 import {MaterializeModule} from "angular2-materialize";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
+import {UserModule} from "./UserModule/user.module";
 import {NavigationModule} from "./NavigationModule/navigation.module";
 
 @NgModule({
@@ -20,17 +21,10 @@ import {NavigationModule} from "./NavigationModule/navigation.module";
         MaterialModule,
         RouterModule.forRoot(AppRoutes),
         MaterializeModule,
+        UserModule,
         NavigationModule
     ],
     declarations: [AppComponent],
-    // providers: [AuthService,
-    //     LoggedInGuard,
-    //     PermissionsGuard,
-    //     {
-    //         provide: AuthHttp,
-    //         useFactory: authHttpServiceFactory,
-    //         deps: [Http, RequestOptions]
-    //     }],
     bootstrap: [AppComponent]
 
 })
