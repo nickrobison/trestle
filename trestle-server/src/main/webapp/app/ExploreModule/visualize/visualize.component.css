@@ -14,3 +14,7 @@
 .search-form {
     width: 100%;
 }
+
+.ui-row {
+    height: 530px;
+}

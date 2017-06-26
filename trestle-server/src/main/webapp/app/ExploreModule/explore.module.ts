@@ -18,6 +18,8 @@ import {QueryService} from "./query/query.service";
 import {UIModule} from "../UIModule/ui.module";
 import {RouterModule} from "@angular/router";
 import {ExploreRoutes} from "./explore.routing";
+import { DatsetViewerComponent } from "./viewer/viewer.component";
+import { MapService } from "./viewer/map.service";
 
 @NgModule({
     imports: [
@@ -36,9 +38,10 @@ import {ExploreRoutes} from "./explore.routing";
         IndividualValueDialog,
         CodeMirrorComponent,
         QueryComponent,
-        QueryViewer
+        QueryViewer,
+        DatsetViewerComponent
     ],
-    providers: [VisualizeService, QueryService],
+    providers: [VisualizeService, QueryService, MapService],
     entryComponents: [IndividualValueDialog]
 })
 export class ExploreModule {}

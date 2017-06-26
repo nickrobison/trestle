@@ -13,14 +13,18 @@ export class DefaultRouteGuard implements CanActivate {
 
     }
 
-    canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> | Promise<boolean> | boolean {
+    public canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> | Promise<boolean> | boolean {
         if (this.authService.isAdmin()) {
-            return this.router.navigate(["/admin"]);
+            console.debug("Is Admin, routing to dashboard");
+            this.router.navigate(["admin/dashboard"]);
+            return false;
             // Navigate to admin dashboard
             // return this.router.navigate(["/"])
         } else if (this.authService.loggedIn()) {
         //    Navigate to dataset page
-            return this.router.navigate(["/"]);
+            console.debug("Logged in, routing to explore");
+            this.router.navigate(["explore/viewer"]);
+            return false;
         }
         // Just continue
         return true;

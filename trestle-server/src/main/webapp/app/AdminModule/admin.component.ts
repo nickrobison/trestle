@@ -11,8 +11,6 @@ import {AuthService} from "../UserModule/authentication.service";
     selector: "admin-root",
     templateUrl: "./admin.component.html",
     styleUrls: ["./admin.component.css"],
-    // styleUrls: ["../../theme.scss", "./admin.component.css"],
-    // encapsulation: ViewEncapsulation.None
 })
 
 export class AdminComponent implements OnInit {

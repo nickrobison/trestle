@@ -27,6 +27,7 @@ import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static javax.ws.rs.core.Response.ok;
 
@@ -129,6 +130,14 @@ public class VisualizationResource {
         }
         individualNode.set("individualTemporal", individualTemporal);
         return ok(individualNode).build();
+    }
+
+
+    @GET
+    @Path("/datasets")
+    public Response getDatasets() {
+        final Set<String> availableDatasets = this.reasoner.getAvailableDatasets();
+        return ok(availableDatasets).build();
     }
 
 }

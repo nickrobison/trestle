@@ -23,12 +23,12 @@ export class TrestleIndividual {
         this.id = individual.individualID;
         this.existsTemporal = new TrestleTemporal(individual.individualTemporal);
         individual.facts.forEach((fact) => {
-            let factClass = new TrestleFact(fact);
+            const factClass = new TrestleFact(fact);
             this.facts.set(factClass.getName(), factClass);
         });
         individual.relations.forEach((relation) => {
             this.relations.push(new TrestleRelation(relation));
-        })
+        });
     }
 
     public getID(): string {
@@ -43,7 +43,7 @@ export class TrestleIndividual {
         let returnValue = null;
         this.facts.forEach((fact) => {
             if (fact.isSpatial()) {
-                let geojson = parse(fact.getValue());
+                const geojson = parse(fact.getValue());
                 if (geojson != null) {
                     returnValue = geojson;
                 } else {
@@ -55,7 +55,7 @@ export class TrestleIndividual {
     }
 
     public getFacts(): Array<TrestleFact> {
-        let facts: Array<TrestleFact> = [];
+        const facts: TrestleFact[] = [];
         this.facts.forEach((value, key) => {
             facts.push(value);
         });
@@ -64,14 +64,14 @@ export class TrestleIndividual {
     }
 
     public getFactValues(): {[name: string]: any} {
-        let values: {[name: string]: any} = {};
-        this.facts.forEach(value => {
+        const values: {[name: string]: any} = {};
+        this.facts.forEach((value) => {
             values[value.getName()] = value.getValue();
-        })
+        });
         return values;
     }
 
-    public getRelations(): Array<TrestleRelation> {
+    public getRelations(): TrestleRelation[] {
         return this.relations;
     }
 
@@ -276,7 +276,7 @@ export class VisualizeService {
     constructor(private trestleHttp: TrestleHttp) {
     }
 
-    searchForIndividual(name: string, dataset = "", limit = 10): Observable<Array<string>> {
+    public searchForIndividual(name: string, dataset = "", limit = 10): Observable<string[]> {
         let params = new URLSearchParams();
         params.set("name", name);
         params.set("dataset", dataset);
@@ -291,14 +291,14 @@ export class VisualizeService {
             .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
 
-    getIndividualAttributes(name: string): Observable<TrestleIndividual> {
+    public getIndividualAttributes(name: string): Observable<TrestleIndividual> {
         let params = new URLSearchParams();
         params.set("name", name);
         return this.trestleHttp.get("/visualize/retrieve", {
             search: params
         })
             .map((res: Response) => {
-                let response = res.json();
+                const response = res.json();
                 console.debug("Has response, building object", response);
                 return new TrestleIndividual(response);
             })

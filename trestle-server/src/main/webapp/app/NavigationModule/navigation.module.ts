@@ -9,6 +9,7 @@ import {CommonModule} from "@angular/common";
 import {LoginComponent} from "./login/app.login";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms"
 import {Privileges} from "../UserModule/authentication.service";
+import { NavComponent } from "./nav.component";
 
 export interface ITrestleRoute extends Route {
     data?: ITrestleRouteData
@@ -20,7 +21,8 @@ export interface ITrestleRouteData {
 
 @NgModule({
     declarations: [
-        LoginComponent
+        LoginComponent,
+        NavComponent
     ],
     imports: [
         MaterialModule,
@@ -29,7 +31,7 @@ export interface ITrestleRouteData {
         FormsModule,
         ReactiveFormsModule,
     ],
-    exports: [LoginComponent]
+    exports: [LoginComponent, NavComponent]
 })
 
 export class NavigationModule {}

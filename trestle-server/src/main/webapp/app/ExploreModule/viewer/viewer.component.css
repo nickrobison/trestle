@@ -1,0 +1,11 @@
+.dataset-container {
+    height: inherit;
+    padding: 0;
+}
+.map-container {
+    height: 300px;
+}
+.map-container #map {
+    height: 400px;
+}
+

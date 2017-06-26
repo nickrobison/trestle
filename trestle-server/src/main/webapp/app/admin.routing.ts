@@ -9,7 +9,7 @@ import {Privileges} from "./UserModule/authentication.service";
 import {UsersComponent} from "./AdminModule/users/users.component";
 import {MetricsComponent} from "./AdminModule/metrics/metrics.component";
 
-export const AdminRoutes: Array<ITrestleRoute> = [
+export const AdminRoutes: ITrestleRoute[] = [
     {path: "", redirectTo: "dashboard", pathMatch: "full"},
     {
         path: "dashboard",
