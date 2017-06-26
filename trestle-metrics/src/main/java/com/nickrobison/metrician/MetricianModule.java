@@ -73,7 +73,7 @@ public class MetricianModule extends PrivateModule {
 
                 bind(IMetricianBackend.class).to(backend).asEagerSingleton();
             } catch (ClassNotFoundException e) {
-                throw new RuntimeException("Unable to load metrics backend class", e);
+                throw new IllegalStateException(e.getCause());
             }
             bind(Metrician.class).to(MetricianImpl.class).asEagerSingleton();
             expose(Metrician.class);

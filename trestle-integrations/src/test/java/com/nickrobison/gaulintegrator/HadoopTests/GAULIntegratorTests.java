@@ -107,6 +107,7 @@ public class GAULIntegratorTests {
                 .withName(ontologyName)
 //                FIXME(nrobison): Caching just doesn't work, so we should disable it until we merge TRESTLE-206
                 .withoutCaching()
+//                .withoutMetrics()
                 .build();
 
         File outputFile = new File("/Users/nrobison/Desktop/hadoop.owl");
