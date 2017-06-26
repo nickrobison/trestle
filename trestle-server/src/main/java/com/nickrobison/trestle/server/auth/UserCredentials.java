@@ -1,7 +1,5 @@
 package com.nickrobison.trestle.server.auth;
 
-import com.nickrobison.trestle.server.models.User;
-
 import javax.validation.constraints.NotNull;
 
 /**
@@ -14,9 +12,10 @@ public class UserCredentials {
     @NotNull
     private String password;
 
-    public UserCredentials() {}
+    public UserCredentials() {
+    }
 
-    public UserCredentials(String user, String password) {
+    public UserCredentials(String username, String password) {
         this.username = username;
         this.password = password;
     }

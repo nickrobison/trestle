@@ -84,14 +84,14 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     public TemporalObject castTo(TemporalScope castTemporal) {
         if (castTemporal == TemporalScope.VALID) {
             if (isContinuing()) {
-                return TemporalObjectBuilder.valid().from(this.fromTime).build(); //.withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
+                return TemporalObjectBuilder.valid().from(this.fromTime).build();
             }
-            return TemporalObjectBuilder.valid().from(this.fromTime).to(this.toTime).build(); //.withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
+            return TemporalObjectBuilder.valid().from(this.fromTime).to(this.toTime).build();
         } else {
             if (isContinuing()) {
-                return TemporalObjectBuilder.exists().from(this.fromTime).build(); //.withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
+                return TemporalObjectBuilder.exists().from(this.fromTime).build();
             }
-            return TemporalObjectBuilder.exists().from(this.fromTime).to(this.toTime).build(); //.withRelations(this.getTemporalRelations().toArray(new OWLNamedIndividual[this.getTemporalRelations().size()]));
+            return TemporalObjectBuilder.exists().from(this.fromTime).to(this.toTime).build();
         }
     }
 
@@ -121,6 +121,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     }
 
     @EnsuresNonNullIf(expression = "this.toTime", result = false)
+    @Override
     public boolean isContinuing() {
         return toTime == null;
     }
@@ -301,6 +302,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Set the Individuals this temporal relates to
+         * @deprecated  - We don't use this anymore
          *
          * @param relations - OWLNamedIndividuals associated with this temporal
          * @return - Builder

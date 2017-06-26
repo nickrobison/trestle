@@ -139,7 +139,7 @@ public class TemporalParser {
             return extractZoneIdFromTemporalProperty(startAnnotation.timeZone());
         }
 
-        throw new RuntimeException(String.format("Unable to extract temporal from %s", clazz.getClass().getSimpleName()));
+        throw new RuntimeException(String.format("Unable to extract temporal from %s", clazz.getSimpleName()));
     }
 
     /**
@@ -192,7 +192,7 @@ public class TemporalParser {
             return extractZoneIdFromTemporalProperty(startAnnotation.timeZone());
         }
 
-        throw new RuntimeException(String.format("Unable to extract temporal from %s", clazz.getClass().getSimpleName()));
+        throw new RuntimeException(String.format("Unable to extract temporal from %s", clazz.getSimpleName()));
     }
 
     private static ZoneId extractZoneIdFromTemporalProperty(String timeZone) {
@@ -207,7 +207,7 @@ public class TemporalParser {
     public static @Nullable Class<? extends Temporal> GetTemporalType(Class<?> clazz) {
 
         final Optional<Field> first = Arrays.stream(clazz.getDeclaredFields())
-                .filter(f -> (f.isAnnotationPresent(DefaultTemporal.class) | f.isAnnotationPresent(StartTemporal.class) | f.isAnnotationPresent(EndTemporal.class)))
+                .filter(f -> (f.isAnnotationPresent(DefaultTemporal.class) || f.isAnnotationPresent(StartTemporal.class) || f.isAnnotationPresent(EndTemporal.class)))
                 .filter(f -> Temporal.class.isAssignableFrom(f.getType()))
                 .findFirst();
 
@@ -216,7 +216,7 @@ public class TemporalParser {
         }
 
         final Optional<Method> method = Arrays.stream(clazz.getDeclaredMethods())
-                .filter(m -> (m.isAnnotationPresent(DefaultTemporal.class) | m.isAnnotationPresent(StartTemporal.class) | m.isAnnotationPresent(EndTemporal.class)))
+                .filter(m -> (m.isAnnotationPresent(DefaultTemporal.class) || m.isAnnotationPresent(StartTemporal.class) || m.isAnnotationPresent(EndTemporal.class)))
                 .filter(m -> Temporal.class.isAssignableFrom(m.getReturnType()))
                 .findFirst();
 
@@ -235,7 +235,6 @@ public class TemporalParser {
     @SuppressWarnings({"dereference.of.nullable"})
     public Optional<List<OWLDataProperty>> GetTemporalsAsDataProperties(Class<?> clazz) {
 
-        final OWLNamedIndividual owlNamedIndividual = cp.getIndividual(clazz);
         List<OWLDataProperty> temporalProperties = new ArrayList<>();
 
         if (IsDefault(clazz)) {
@@ -461,7 +460,6 @@ public class TemporalParser {
                                 .at((Temporal) fieldValue)
                                 .withTimeZone(annotation.timeZone())
                                 .build();
-//                                .withRelations(owlNamedIndividual);
                         break;
                     }
 
@@ -472,7 +470,6 @@ public class TemporalParser {
             }
 
             case INTERVAL: {
-//                final LocalDateTime from = LocalDateTime.from((Temporal) fieldValue);
                 final Temporal from = (Temporal) fieldValue;
                 @Nullable Temporal to = null;
                 if (annotation.duration() > 0) {
@@ -487,14 +484,12 @@ public class TemporalParser {
                                     .withFromTimeZone(annotation.timeZone())
                                     .isDefault(true)
                                     .build();
-//                                    .withRelations(owlNamedIndividual);
                         } else {
                             temporalObject = TemporalObjectBuilder.valid()
                                     .from(from)
                                     .withFromTimeZone(annotation.timeZone())
                                     .isDefault(true)
                                     .build();
-//                                    .withRelations(owlNamedIndividual);
                         }
                         break;
                     }
@@ -507,14 +502,12 @@ public class TemporalParser {
                                     .isDefault(true)
                                     .withFromTimeZone(annotation.timeZone())
                                     .build();
-//                                    .withRelations(owlNamedIndividual);
                         } else {
                             temporalObject = TemporalObjectBuilder.exists()
                                     .from(from)
                                     .isDefault(true)
                                     .withFromTimeZone(annotation.timeZone())
                                     .build();
-//                                    .withRelations(owlNamedIndividual);
                         }
                         break;
                     }
@@ -543,7 +536,6 @@ public class TemporalParser {
         if (annotation == null) {
             throw new RuntimeException("Missing StartTemporal annotation");
         }
-//        @Nullable final TemporalObject temporalObject;
         switch (annotation.type()) {
             case POINT: {
                 return Optional.of(buildPointTemporal((Temporal) fieldValue, annotation.scope(), annotation.timeZone(), owlNamedIndividual));

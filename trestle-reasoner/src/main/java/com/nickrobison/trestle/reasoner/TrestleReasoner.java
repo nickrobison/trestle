@@ -271,6 +271,7 @@ public interface TrestleReasoner {
     /**
      * Get a map of related objects and their relative strengths
      *
+     * @deprecated This is an old method, we don't use it anymore
      * @param clazz    - Java class of object to serialize to
      * @param objectID - Object ID to retrieve related objects
      * @param cutoff   - Double of relation strength cutoff

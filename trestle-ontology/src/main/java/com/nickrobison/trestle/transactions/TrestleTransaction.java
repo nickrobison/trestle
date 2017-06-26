@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.transactions;
 
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 

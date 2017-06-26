@@ -1,7 +1,6 @@
 package com.nickrobison.trestle.iri;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.semanticweb.owlapi.model.HasIRI;
 import org.semanticweb.owlapi.model.IRI;
 
 import java.time.OffsetDateTime;

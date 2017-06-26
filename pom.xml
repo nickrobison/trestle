@@ -433,6 +433,7 @@
                                 <arg>-Xep:ShortCircuitBoolean:ERROR</arg>
                                 <arg>-Xep:MissingOverride:ERROR</arg>
                                 <arg>-Xep:ClassCanBeStatic:ERROR</arg>
+                                <arg>-Xep:DefaultCharset:ERROR</arg>
                                 <!--TODO(nrobison): We should use this, but I'm not sure how-->
                                 <!--<arg>-Xep:TypeParameterUnusedInFormals:ERROR</arg>-->
                             </compilerArgs>

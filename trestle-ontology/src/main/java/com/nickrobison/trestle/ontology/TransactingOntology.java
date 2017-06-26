@@ -20,14 +20,13 @@ import java.util.concurrent.atomic.AtomicLong;
 abstract class TransactingOntology implements ITrestleOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(TransactingOntology.class);
-    private static final OntologySecurityManager securityManager = new OntologySecurityManager();
+    private final String ontologyName;
     protected final AtomicInteger openWriteTransactions = new AtomicInteger();
     protected final AtomicInteger openReadTransactions = new AtomicInteger();
     protected final AtomicLong openedTransactions = new AtomicLong();
     protected final AtomicLong committedTransactions = new AtomicLong();
     protected final AtomicLong abortedTransactions = new AtomicLong();
     protected static boolean singleWriterOntology = false;
-    private final String ontologyName;
 
     TransactingOntology(String ontologyName) {
         this.ontologyName = ontologyName;
@@ -162,6 +161,7 @@ abstract class TransactingOntology implements ITrestleOntology {
      *
      * @param write - Open writable transaction?
      */
+    @Override
     public void openAndLock(boolean write) {
         this.openAndLock(write, false);
     }
@@ -199,6 +199,7 @@ abstract class TransactingOntology implements ITrestleOntology {
      *
      * @param write - Is this a write transaction?
      */
+    @Override
     public void unlockAndCommit(boolean write) {
         this.unlockAndCommit(write, false);
     }
@@ -261,6 +262,7 @@ abstract class TransactingOntology implements ITrestleOntology {
      * Open transaction
      * @param write - Open a writable transaction
      */
+    @Override
     public void openTransaction(boolean write) {
         this.openTransaction(write, false);
     }
@@ -313,6 +315,7 @@ abstract class TransactingOntology implements ITrestleOntology {
      * Commit transaction
      * @param write - Is this a write transaction?
      */
+    @Override
     public void commitTransaction(boolean write) {
         this.commitTransaction(write, false);
     }
@@ -413,14 +416,6 @@ abstract class TransactingOntology implements ITrestleOntology {
     @Gauge(name = "trestle-open-read-transactions", absolute = true)
     public int getOpenReadTransactions() {
         return this.openReadTransactions.get();
-    }
-
-
-    private static class OntologySecurityManager extends SecurityManager {
-
-        public String getCallerClassName(int callstackDepth) {
-            return getClassContext()[callstackDepth].getName();
-        }
     }
 
 

@@ -5,7 +5,6 @@ import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.reasoner.exceptions.MissingConstructorException;
-import com.nickrobison.trestle.reasoner.types.ObjectRestriction;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -13,10 +12,13 @@ import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.*;
 
-import static com.nickrobison.trestle.common.StaticIRI.*;
+import static com.nickrobison.trestle.common.StaticIRI.GEOSPARQLPREFIX;
 import static com.nickrobison.trestle.reasoner.parser.SpatialParser.parseWKTFromGeom;
 import static com.nickrobison.trestle.reasoner.parser.StringParser.fieldValueToMultiLangString;
 import static com.nickrobison.trestle.reasoner.parser.StringParser.methodValueToMultiLangString;
@@ -115,62 +117,62 @@ public class ClassParser {
     }
 
     //    TODO(nrobison): Implement this
-    static Optional<List<OWLObjectProperty>> GetObjectProperties(Object inputObject) {
-        final Class<?> clazz = inputObject.getClass();
-
-        if (clazz.isAnnotationPresent(ObjectProperty.class)) {
-            for (Field classField : clazz.getDeclaredFields()) {
-                if (classField.isAnnotationPresent(ObjectProperty.class)) {
-                    final ObjectProperty fieldAnnotation = classField.getAnnotation(ObjectProperty.class);
-                    final ObjectRestriction restriction = fieldAnnotation.restriction();
-                    switch (restriction) {
-                        case SOME: {
-
-                        }
-                    }
-                }
-            }
-        }
-
-        return Optional.empty();
-    }
+//    static Optional<List<OWLObjectProperty>> GetObjectProperties(Object inputObject) {
+//        final Class<?> clazz = inputObject.getClass();
+//
+//        if (clazz.isAnnotationPresent(ObjectProperty.class)) {
+//            for (Field classField : clazz.getDeclaredFields()) {
+//                if (classField.isAnnotationPresent(ObjectProperty.class)) {
+//                    final ObjectProperty fieldAnnotation = classField.getAnnotation(ObjectProperty.class);
+//                    final ObjectRestriction restriction = fieldAnnotation.restriction();
+//                    switch (restriction) {
+//                        case SOME: {
+//
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//        return Optional.empty();
+//    }
 
     static boolean filterFactField(Field objectMember, boolean filterSpatial) {
 //        Check first to ignore the field
         return (!objectMember.isAnnotationPresent(Ignore.class)
 //                Only access it if it's public
-                & Modifier.isPublic(objectMember.getModifiers())
-                & (
+                && Modifier.isPublic(objectMember.getModifiers())
+                && (
                 objectMember.isAnnotationPresent(Fact.class)
-                        | (objectMember.isAnnotationPresent(Spatial.class) && !filterSpatial)
-                        | objectMember.isAnnotationPresent(IndividualIdentifier.class)
-                        | objectMember.isAnnotationPresent(Language.class)
-                        | objectMember.isAnnotationPresent(NoMultiLanguage.class)
-                        | (objectMember.getAnnotations().length == 0)))
+                        || (objectMember.isAnnotationPresent(Spatial.class) && !filterSpatial)
+                        || objectMember.isAnnotationPresent(IndividualIdentifier.class)
+                        || objectMember.isAnnotationPresent(Language.class)
+                        || objectMember.isAnnotationPresent(NoMultiLanguage.class)
+                        || (objectMember.getAnnotations().length == 0)))
 //                Need to filter out the ebean stuff
-                & !(objectMember.getName().contains("_ebean"));
+                && !(objectMember.getName().contains("_ebean"));
     }
 
     static boolean filterFactMethod(Method objectMember, boolean filterSpatial) {
 //        Check first to ignore the field
         return (!objectMember.isAnnotationPresent(Ignore.class)
 //                Only access it if it's public
-                & Modifier.isPublic(objectMember.getModifiers())
-                & (
+                && Modifier.isPublic(objectMember.getModifiers())
+                && (
                 objectMember.isAnnotationPresent(Fact.class)
-                        | (objectMember.isAnnotationPresent(Spatial.class) && !filterSpatial)
-                        | objectMember.isAnnotationPresent(IndividualIdentifier.class)
-                        | objectMember.isAnnotationPresent(Language.class)
-                        | objectMember.isAnnotationPresent(NoMultiLanguage.class)
-                        | (objectMember.getAnnotations().length == 0)))
+                        || (objectMember.isAnnotationPresent(Spatial.class) && !filterSpatial)
+                        || objectMember.isAnnotationPresent(IndividualIdentifier.class)
+                        || objectMember.isAnnotationPresent(Language.class)
+                        || objectMember.isAnnotationPresent(NoMultiLanguage.class)
+                        || (objectMember.getAnnotations().length == 0)))
 //                We need this to filter out setters and equals/hashcode stuff
-                & ((objectMember.getParameters().length == 0)
-                & !(Objects.equals(objectMember.getName(), "hashCode"))
-                & !(Objects.equals(objectMember.getName(), "equals"))
-                & !(Objects.equals(objectMember.getName(), "toString"))
+                && ((objectMember.getParameters().length == 0)
+                && !(Objects.equals(objectMember.getName(), "hashCode"))
+                && !(Objects.equals(objectMember.getName(), "equals"))
+                && !(Objects.equals(objectMember.getName(), "toString"))
 //                Need to filter out random ebean methods
-                & !(objectMember.getName().contains("_ebean"))
-                & !(objectMember.getReturnType() == void.class));
+                && !(objectMember.getName().contains("_ebean"))
+                && !(objectMember.getReturnType() == void.class));
     }
 
     /**

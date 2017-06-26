@@ -96,6 +96,7 @@ public class VirtuosoOntology extends JenaOntology {
         return resultSet;
     }
 
+    @Override
     public void runInference() {
     }
 

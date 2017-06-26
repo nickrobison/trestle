@@ -2,7 +2,6 @@ package com.nickrobison.trestle.exporter;
 
 import com.vividsolutions.jts.geom.MultiPolygon;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +12,6 @@ import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.MissingResourceException;
 import java.util.stream.Collectors;
 
 /**

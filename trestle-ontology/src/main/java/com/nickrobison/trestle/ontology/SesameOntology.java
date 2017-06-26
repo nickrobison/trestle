@@ -80,6 +80,7 @@ public abstract class SesameOntology extends TransactingOntology {
     }
 
 
+    @Override
     public abstract boolean isConsistent();
 
     @Override
@@ -263,13 +264,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
         this.openTransaction(false);
         try {
-            if (getThreadConnection().hasStatement(individualIRI, null, null, false)) {
-                //this.tc.get().close();
-                return true;
-            } else {
-                //this.tc.get().close();
-                return false;
-            }
+            return getThreadConnection().hasStatement(individualIRI, null, null, false);
         } finally {
             this.commitTransaction(false);
         }
@@ -314,6 +309,7 @@ public abstract class SesameOntology extends TransactingOntology {
         return this.pm;
     }
 
+    @Override
     public abstract void runInference();
 
     @Override
@@ -514,6 +510,7 @@ public abstract class SesameOntology extends TransactingOntology {
         return getFullIRI(IRI.create(prefix, suffix));
     }
 
+    @Override
     public abstract void initializeOntology();
 
     @Override
@@ -526,6 +523,7 @@ public abstract class SesameOntology extends TransactingOntology {
         return getFullIRI(owlNamedObject).toString();
     }
 
+    @Override
     public abstract TrestleResultSet executeSPARQLResults(String queryString);
 
     TrestleResultSet buildResultSet(TupleQueryResult resultSet) {
@@ -569,8 +567,10 @@ public abstract class SesameOntology extends TransactingOntology {
         return repositoryConnection;
     }
 
+    @Override
     public abstract void openDatasetTransaction(boolean write);
 
+    @Override
     public abstract void commitDatasetTransaction(boolean write);
 
     @Override
@@ -583,12 +583,7 @@ public abstract class SesameOntology extends TransactingOntology {
         } else {
             @Nullable final RepositoryConnection connection = threadTransactionObject.getConnection();
             logger.trace("Setting thread connection from transaction object {}, which is active? {}", connection, connection.isActive());
-            if (connection != null) {
-                this.tc.set(connection);
-            } else {
-                logger.warn("Transaction object has null connection, creating new one");
-                this.tc.set(this.cm.getConnection());
-            }
+            this.tc.set(connection);
         }
     }
 

@@ -164,6 +164,7 @@ public class LocalOntology extends JenaOntology {
         return resultSet;
     }
 
+    @Override
     public void runInference() {
 
     }

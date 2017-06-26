@@ -857,7 +857,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                             ClassParser.matchWithClassMember(clazz, intervalTemporal.getStartName()),
                             intervalTemporal.getBaseTemporalType(),
                             intervalTemporal.getFromTime());
-                    if (!intervalTemporal.isDefault() & intervalTemporal.getToTime().isPresent()) {
+                    if (!intervalTemporal.isDefault() && intervalTemporal.getToTime().isPresent()) {
                         constructorArguments.addArgument(
                                 ClassParser.matchWithClassMember(clazz, intervalTemporal.getEndName()),
                                 intervalTemporal.getBaseTemporalType(),
@@ -1679,15 +1679,15 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //            Build fact pair
             final Optional<OWLDataPropertyAssertionAxiom> dataPropertyAssertion = dataProperties
                     .stream()
-                    .filter(property -> !(property.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseFromIRI) |
-                            property.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseToIRI) |
-                            property.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseFromIRI) |
-                            property.getProperty().asOWLDataProperty().getIRI().equals(temporalValidFromIRI) |
-                            property.getProperty().asOWLDataProperty().getIRI().equals(temporalValidToIRI) |
-                            property.getProperty().asOWLDataProperty().getIRI().equals(temporalValidAtIRI) |
-                            property.getProperty().asOWLDataProperty().getIRI().equals(temporalStartIRI) |
-                            property.getProperty().asOWLDataProperty().getIRI().equals(temporalEndIRI) |
-                            property.getProperty().asOWLDataProperty().getIRI().equals(temporalAtIRI) |
+                    .filter(property -> !(property.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseFromIRI) ||
+                            property.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseToIRI) ||
+                            property.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseFromIRI) ||
+                            property.getProperty().asOWLDataProperty().getIRI().equals(temporalValidFromIRI) ||
+                            property.getProperty().asOWLDataProperty().getIRI().equals(temporalValidToIRI) ||
+                            property.getProperty().asOWLDataProperty().getIRI().equals(temporalValidAtIRI) ||
+                            property.getProperty().asOWLDataProperty().getIRI().equals(temporalStartIRI) ||
+                            property.getProperty().asOWLDataProperty().getIRI().equals(temporalEndIRI) ||
+                            property.getProperty().asOWLDataProperty().getIRI().equals(temporalAtIRI) ||
                             property.getProperty().asOWLDataProperty().getIRI().equals(temporalPropertyIRI)))
                     .findFirst();
 
@@ -1697,15 +1697,15 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //            Get valid time
             final Set<OWLDataPropertyAssertionAxiom> validTemporals = dataProperties
                     .stream()
-                    .filter(property -> property.getProperty().asOWLDataProperty().getIRI().equals(temporalValidFromIRI) |
-                            property.getProperty().asOWLDataProperty().getIRI().equals(temporalValidToIRI) |
+                    .filter(property -> property.getProperty().asOWLDataProperty().getIRI().equals(temporalValidFromIRI) ||
+                            property.getProperty().asOWLDataProperty().getIRI().equals(temporalValidToIRI) ||
                             property.getProperty().asOWLDataProperty().getIRI().equals(temporalValidAtIRI))
                     .collect(Collectors.toSet());
             final Optional<TemporalObject> validTemporal = TemporalObjectBuilder.buildTemporalFromProperties(validTemporals, null, "blank");
 //            Database time
             final Set<OWLDataPropertyAssertionAxiom> dbTemporals = dataProperties
                     .stream()
-                    .filter(property -> property.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseFromIRI) |
+                    .filter(property -> property.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseFromIRI) ||
                             property.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseToIRI))
                     .collect(Collectors.toSet());
             final Optional<TemporalObject> dbTemporal = TemporalObjectBuilder.buildTemporalFromProperties(dbTemporals, null, "blank");
@@ -2009,7 +2009,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             return shapeFileExporter.writePropertiesToByteBuffer(individuals, null);
 
         } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
+            logger.error("Error constructing object", e);
             throw new RuntimeException("Problem constructing object");
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);

@@ -16,22 +16,13 @@ import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import liquibase.Liquibase;
-import liquibase.database.Database;
-import liquibase.database.DatabaseFactory;
-import liquibase.database.jvm.JdbcConnection;
-import liquibase.resource.ClassLoaderResourceAccessor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
 import java.util.stream.Stream;
 
 /**
  * Created by nrobison on 11/28/16.
  */
 public class TrestleServer extends Application<TrestleServerConfiguration> {
-    private static final Logger logger = LoggerFactory.getLogger(TrestleServer.class);
 
     private final MigrationsBundle<TrestleServerConfiguration> migrations = new MigrationsBundle<TrestleServerConfiguration>() {
         @Override
