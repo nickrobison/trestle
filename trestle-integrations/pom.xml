@@ -8,6 +8,9 @@
         <version>0.7-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
+    <properties>
+        <hadoop.version>2.8.1</hadoop.version>
+    </properties>
 
     <artifactId>trestle-integrations</artifactId>
 
@@ -15,6 +18,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
+            <!--We need to lock this version of Guava, otherwise we get a NoSuchMethodException when building the Hadoop cluster-->
             <version>19.0</version>
         </dependency>
         <dependency>
@@ -28,6 +32,7 @@
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
+            <version>${hadoop.version}</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -46,22 +51,20 @@
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-minicluster</artifactId>
+            <version>${hadoop.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.checkerframework</groupId>
-            <artifactId>checker</artifactId>
-            <version>${checker.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.checkerframework</groupId>
-            <artifactId>checker-qual</artifactId>
-            <version>${checker.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.checkerframework</groupId>
-            <artifactId>jdk8</artifactId>
-            <version>${checker.version}</version>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-auth</artifactId>
+            <version>${hadoop.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

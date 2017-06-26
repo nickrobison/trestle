@@ -45,18 +45,6 @@
     </properties>
     <dependencyManagement>
         <dependencies>
-            <!--Hadoop dependencies-->
-            <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-client</artifactId>
-                <version>${hadoop.version}</version>
-                <scope>${provided.scope}</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-common</artifactId>
-                <version>${hadoop.version}</version>
-            </dependency>
             <!--Common dependencies-->
             <dependency>
                 <groupId>commons-io</groupId>
@@ -278,24 +266,6 @@
             </dependency>
             <!--Testing dependencies-->
             <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-minicluster</artifactId>
-                <version>${hadoop.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-log4j12</artifactId>
-                    </exclusion>
-                </exclusions>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-auth</artifactId>
-                <version>${hadoop.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.openjdk.jmh</groupId>
                 <artifactId>jmh-core</artifactId>
                 <version>${jmh.version}</version>
@@ -406,14 +376,6 @@
             <name>Open Source Geospatial Foundation Repository</name>
             <url>http://download.osgeo.org/webdav/geotools/</url>
         </repository>
-        <repository>
-            <id>hortonworks</id>
-            <url>http://repo.hortonworks.com/content/repositories/releases/</url>
-        </repository>
-        <repository>
-            <id>cloudera</id>
-            <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-        </repository>
         <!-- Repository for oracle ojdbc7 -->
         <repository>
             <id>codelds</id>
@@ -421,27 +383,6 @@
         </repository>
     </repositories>
     <profiles>
-        <profile>
-            <id>cdh5</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <hadoop.version>2.6.0-cdh5.5.4</hadoop.version>
-            </properties>
-        </profile>
-        <profile>
-            <id>hdp</id>
-            <properties>
-                <hadoop.version>2.7.1.2.3.5.0-81</hadoop.version>
-            </properties>
-        </profile>
-        <profile>
-            <id>intellij</id>
-            <properties>
-                <provided.scope>compile</provided.scope>
-            </properties>
-        </profile>
         <profile>
             <id>enable-checker</id>
             <build>
@@ -503,28 +444,6 @@
             </plugins>
         </pluginManagement>
         <plugins>
-            <!--<plugin>-->
-            <!--<groupId>org.apache.maven.plugins</groupId>-->
-            <!--<artifactId>maven-assembly-plugin</artifactId>-->
-            <!--<version>2.6</version>-->
-            <!--<configuration>-->
-            <!--<descriptor>src/main/assembly/job.xml</descriptor>-->
-            <!--<archive>-->
-            <!--<manifest>-->
-            <!--<mainClass>com.nickrobison.gaulintegrator.IntegrationRunner</mainClass>-->
-            <!--</manifest>-->
-            <!--</archive>-->
-            <!--</configuration>-->
-            <!--<executions>-->
-            <!--<execution>-->
-            <!--<id>make-assembly</id>-->
-            <!--<phase>package</phase>-->
-            <!--<goals>-->
-            <!--<goal>single</goal>-->
-            <!--</goals>-->
-            <!--</execution>-->
-            <!--</executions>-->
-            <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
