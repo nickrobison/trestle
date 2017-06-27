@@ -20,12 +20,6 @@
     <category name="com.nickrobison.trestle.reasoner.TrestleReasonerImpl">
         <priority value="TRACE"/>
     </category>
-    <category name="com.nickrobison.trestle.ontology">
-        <priority value="TRACE"/>
-    </category>
-    <category name="com.nickrobison.trestle.ontology.utils.SesameConnectionManager">
-        <priority value="TRACE"/>
-    </category>
 
     <root>
         <priority value="INFO"/>
