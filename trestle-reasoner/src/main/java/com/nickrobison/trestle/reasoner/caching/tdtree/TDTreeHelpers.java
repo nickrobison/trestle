@@ -10,6 +10,7 @@ import java.util.Map;
 /**
  * Created by nrobison on 2/10/17.
  */
+@SuppressWarnings({"squid:S1244"})
 public class TDTreeHelpers {
 
     static final double ROOTTWO = FastMath.sqrt(2);

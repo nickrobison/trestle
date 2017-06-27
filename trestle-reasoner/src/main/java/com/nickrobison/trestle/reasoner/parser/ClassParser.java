@@ -172,7 +172,7 @@ public class ClassParser {
                 && !(Objects.equals(objectMember.getName(), "toString"))
 //                Need to filter out random ebean methods
                 && !(objectMember.getName().contains("_ebean"))
-                && !(objectMember.getReturnType() == void.class));
+                && (objectMember.getReturnType() != void.class));
     }
 
     /**

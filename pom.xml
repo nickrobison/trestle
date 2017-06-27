@@ -43,8 +43,7 @@
         <compiler.default.args>-parameters</compiler.default.args>
         <java.version>1.8</java.version>
         <!--Sonar-->
-        <!--<sonar.jacoco.reportPath>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPath>-->
-        <sonar.jacoco.reportPath>${maven.multiModuleProjectDirectory}/target/jacoco_analysis/jacoco.exec</sonar.jacoco.reportPath>
+        <sonar.jacoco.reportPaths>${maven.multiModuleProjectDirectory}/target/jacoco_analysis/jacoco.exec</sonar.jacoco.reportPaths>
     </properties>
 
     <dependencyManagement>
@@ -470,7 +469,7 @@
                         <version>0.7.9</version>
                         <configuration>
                             <append>true</append>
-                            <destFile>${sonar.jacoco.reportPath}</destFile>
+                            <destFile>${sonar.jacoco.reportPaths}</destFile>
                         </configuration>
                         <executions>
                             <execution>
@@ -576,7 +575,6 @@
                     <reuseForks>false</reuseForks>
                     <useUnlimitedThreads>true</useUnlimitedThreads>
                     <forkCount>3</forkCount>
-                    <!--<argLine>${surefireArgLine}</argLine>-->
                 </configuration>
             </plugin>
             <plugin>

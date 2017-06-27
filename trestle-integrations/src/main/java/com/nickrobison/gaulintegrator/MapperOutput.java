@@ -1,7 +1,6 @@
 package com.nickrobison.gaulintegrator;
 
 import com.esri.io.PolygonFeatureWritable;
-import com.nickrobison.gaulintegrator.common.ObjectID;
 import com.nickrobison.gaulintegrator.common.Utils;
 import org.apache.hadoop.io.*;
 

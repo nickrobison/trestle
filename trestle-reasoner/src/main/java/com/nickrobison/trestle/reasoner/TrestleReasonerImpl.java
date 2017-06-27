@@ -1681,7 +1681,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     .stream()
                     .filter(property -> !(property.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseFromIRI) ||
                             property.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseToIRI) ||
-                            property.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseFromIRI) ||
                             property.getProperty().asOWLDataProperty().getIRI().equals(temporalValidFromIRI) ||
                             property.getProperty().asOWLDataProperty().getIRI().equals(temporalValidToIRI) ||
                             property.getProperty().asOWLDataProperty().getIRI().equals(temporalValidAtIRI) ||
