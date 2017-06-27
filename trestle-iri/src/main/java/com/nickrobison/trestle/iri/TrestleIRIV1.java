@@ -17,9 +17,13 @@ public class TrestleIRIV1 extends TrestleIRI {
     private final Optional<OffsetDateTime> objectTemporal;
     private final Optional<OffsetDateTime> dbTemporal;
 
-    public TrestleIRIV1(IRIVersion version, String prefix, String objectID, @Nullable String objectFact, @Nullable OffsetDateTime objectTemporal, @Nullable OffsetDateTime databaseTemporal) {
+    public TrestleIRIV1(IRIVersion version, String prefix, String objectID, String objectFact, @Nullable OffsetDateTime objectTemporal, @Nullable OffsetDateTime databaseTemporal) {
         super(version, prefix, objectID);
-        this.objectFact = Optional.ofNullable(objectFact);
+        if (objectFact.equals("")) {
+            this.objectFact = Optional.empty();
+        } else {
+            this.objectFact = Optional.of(objectFact);
+        }
         this.objectTemporal = Optional.ofNullable(objectTemporal);
         this.dbTemporal = Optional.ofNullable(databaseTemporal);
 

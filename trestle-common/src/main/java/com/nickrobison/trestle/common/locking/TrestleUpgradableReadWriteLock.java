@@ -14,7 +14,7 @@ import java.util.Map;
 public class TrestleUpgradableReadWriteLock {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleUpgradableReadWriteLock.class);
-    private static final long waitTimeout = 50000;
+    private static final long WAIT_TIMEOUT = 50000;
     private final Map<Thread, Integer> readingThreads = new HashMap<>();
     private int writeAccesses = 0;
     private int writeRequests = 0;
@@ -30,10 +30,10 @@ public class TrestleUpgradableReadWriteLock {
     public synchronized void lockRead() throws InterruptedException {
         final Thread callingThread = Thread.currentThread();
         while (!canGrantReadAccess(callingThread)) {
-            logger.debug("Thread {} waiting {} ms for Read lock", callingThread, waitTimeout);
+            logger.debug("Thread {} waiting {} ms for Read lock", callingThread, WAIT_TIMEOUT);
             long start = System.currentTimeMillis();
-            wait(waitTimeout);
-            if ((System.currentTimeMillis() - start) > waitTimeout) {
+            wait(WAIT_TIMEOUT);
+            if ((System.currentTimeMillis() - start) > WAIT_TIMEOUT) {
                 throw new InterruptedException("Unable to get read lock, timed-out");
             }
         }
@@ -73,11 +73,11 @@ public class TrestleUpgradableReadWriteLock {
         writeRequests++;
         final Thread callingThread = Thread.currentThread();
         while (!canGrantWriteAccess(callingThread)) {
-            logger.debug("{} waiting {} ms for Write lock. {} write requests pending", callingThread.getName(), waitTimeout, writeRequests);
-            logger.trace("Tread {} holding write lock", this.writingThread.getName());
+            logger.debug("{} waiting {} ms for Write lock. {} write requests pending", callingThread.getName(), WAIT_TIMEOUT, writeRequests);
+            logger.trace("Tread {} holding write lock", this.writingThread == null ? "" :this.writingThread.getName());
             long start = System.currentTimeMillis();
-            wait(waitTimeout);
-            if ((System.currentTimeMillis() - start) > waitTimeout) {
+            wait(WAIT_TIMEOUT);
+            if ((System.currentTimeMillis() - start) > WAIT_TIMEOUT) {
                 writeRequests--;
                 throw new InterruptedException("Unable to get write lock, timed-out");
             }
@@ -145,7 +145,7 @@ public class TrestleUpgradableReadWriteLock {
     }
 
     private boolean isWriter(Thread callingThread) {
-        return callingThread.equals(writingThread);
+        return (writingThread != null) && callingThread.equals(writingThread);
     }
 
     private boolean hasWriteRequests() {

@@ -582,7 +582,7 @@ public abstract class SesameOntology extends TransactingOntology {
             this.tc.set(this.cm.getConnection());
         } else {
             @Nullable final RepositoryConnection connection = threadTransactionObject.getConnection();
-            logger.trace("Setting thread connection from transaction object {}, which is active? {}", connection, connection.isActive());
+            logger.trace("Setting thread connection from transaction object {}", connection);
             this.tc.set(connection);
         }
     }

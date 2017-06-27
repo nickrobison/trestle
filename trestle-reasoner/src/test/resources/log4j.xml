@@ -17,9 +17,6 @@
     <category name="org.apache.http">
         <priority value="OFF"/>
     </category>
-    <category name="com.nickrobison.trestle.reasoner.TrestleReasonerImpl">
-        <priority value="TRACE"/>
-    </category>
 
     <root>
         <priority value="INFO"/>

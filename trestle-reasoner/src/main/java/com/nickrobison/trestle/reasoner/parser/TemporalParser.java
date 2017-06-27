@@ -439,7 +439,6 @@ public class TemporalParser {
     }
 
     //    TODO(nrobison): Get the timezone from the temporal, if it supports it.
-//    FIXME(nrobison): annotation argument should not be null, apparently.
     private static Optional<TemporalObject> parseDefaultTemporal(Object fieldValue, @Nullable DefaultTemporal annotation, OWLNamedIndividual owlNamedIndividual) {
         if (annotation == null) {
             throw new IllegalArgumentException("Missing default temporal annotation");
@@ -533,12 +532,12 @@ public class TemporalParser {
 
     //    TODO(nrobison): Extract the time zone from the temporal, if it supports it.
     //    We can suppress this for default annotation properties
-//    FIXME(nrobison): annotation should not be null?
     @SuppressWarnings({"dereference.of.nullable"})
     private static Optional<TemporalObject> parseStartTemporal(@Nullable StartTemporal annotation, Object fieldValue, OWLNamedIndividual owlNamedIndividual, Object inputObject, ClassParser.AccessType access, Class clazz) {
         if (annotation == null) {
             throw new IllegalArgumentException("Missing StartTemporal annotation");
         }
+
         switch (annotation.type()) {
             case POINT: {
                 return Optional.of(buildPointTemporal((Temporal) fieldValue, annotation.scope(), annotation.timeZone(), owlNamedIndividual));

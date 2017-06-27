@@ -61,7 +61,7 @@ public class QueryBuilder {
         StringBuilder builder = new StringBuilder();
         final Set<Map.Entry<@KeyFor("pm.getPrefixName2PrefixMap()") String, String>> entries = pm.getPrefixName2PrefixMap().entrySet();
 //        From the given prefix manager, extract the prefixes and build the prefix String
-        for (Map.Entry<String, String> entry : entries) {
+        for (Map.Entry<@KeyFor("pm.getPrefixName2PrefixMap()") String, String> entry : entries) {
             if (entry.getKey().equals(":")) {
 //                continue;
                 trimmedPrefixMap.put("", entry.getValue());
