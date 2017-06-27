@@ -88,7 +88,7 @@ public class GAULIntegratorTests {
         password = "";
         ontologyPath = "file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl";
         ontologyPrefix = "http://nickrobison.com/test/hadoop.owl#";
-        ontologyName = "hadoop_gaul_updated";
+        ontologyName = "hadoop_gaul_expanded";
         conf.set("reasoner.db.connection", connectionString);
         conf.set("reasoner.db.username", userName);
         conf.set("reasoner.db.password", password);
@@ -107,7 +107,6 @@ public class GAULIntegratorTests {
                 .withName(ontologyName)
 //                FIXME(nrobison): Caching just doesn't work, so we should disable it until we merge TRESTLE-206
                 .withoutCaching()
-//                .withoutMetrics()
                 .build();
 
         File outputFile = new File("/Users/nrobison/Desktop/hadoop.owl");

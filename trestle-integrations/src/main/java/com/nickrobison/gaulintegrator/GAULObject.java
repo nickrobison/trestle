@@ -9,6 +9,7 @@ import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.Arrays;
 
 /**
  * Created by nrobison on 5/6/16.
@@ -16,58 +17,67 @@ import java.time.LocalDate;
 @DatasetClass(name = "gaul-test")
 public class GAULObject {
 
-    private static final int DATESIZE = 16;
     private static final int ESRID = 4326;
 
-    private final ObjectID objectID;
+//    private final ObjectID objectID;
+    private final String objectID;
     private final long gaulCode;
     private final String objectName;
     private final byte[] validRange;
     private final Polygon shapePolygon;
-
-
-    private GAULObject() {
-        this.objectID = new ObjectID();
-        this.objectName = "";
-        this.validRange = new byte[DATESIZE];
-        this.shapePolygon = new Polygon();
-        gaulCode = 0;
-    }
+    private final long adm1Code;
+    private final String adm1Name;
+    private final String status;
+    private final boolean dispArea;
+    private final long adm0Code;
+    private final String adm0Name;
 
     /**
      * Creates fully initialized GAUL Object Record
-     * @param id ObjectID - ID of GAUL Object
+     * @param id String - ID of GAUL Object
      * @param gaulCode long - GAUL code of underlying object
      * @param objectName String - Object Name
      * @param startDate LocalDate - Start of object valid interval
      * @param endDate LocalDate - End of object valid interval
      * @param polygon Polygon - Object boundary
      */
-    public GAULObject(ObjectID id, long gaulCode, String objectName, LocalDate startDate, LocalDate endDate, Polygon polygon) {
+    public GAULObject(String id, long gaulCode, String objectName, LocalDate startDate, LocalDate endDate, Polygon polygon, long adm1Code, String adm1Name, String status, boolean dispArea, long adm0Code, String adm0Name) {
         this.objectID = id;
         this.objectName = objectName;
         this.validRange = Utils.WriteDateField(startDate, endDate);
         this.shapePolygon = polygon;
         this.gaulCode = gaulCode;
+        this.adm1Code = adm1Code;
+        this.adm1Name = adm1Name;
+        this.adm0Code = adm0Code;
+        this.adm0Name = adm0Name;
+        this.status = status;
+        this.dispArea = dispArea;
     }
 
     @TrestleCreator
-    public GAULObject(String id, long gaulCode, String objectName, LocalDate startDate, LocalDate endDate, String wkt) {
-        this.objectID = new ObjectID(id, 1);
+    public GAULObject(String id, long gaulCode, String objectName, LocalDate startDate, LocalDate endDate, String wkt, long adm1Code, String adm1Name, String status, boolean dispArea, long adm0Code, String adm0Name) {
+        this.objectID = id;
         this.gaulCode = gaulCode;
         this.objectName = objectName;
         this.validRange = Utils.WriteDateField(startDate, endDate);
         this.shapePolygon = (Polygon) GeometryEngine.geometryFromWkt(wkt, 0, Geometry.Type.Polygon);
+        this.adm0Code = adm0Code;
+        this.adm0Name = adm0Name;
+        this.adm1Code = adm1Code;
+        this.adm1Name = adm1Name;
+        this.status = status;
+        this.dispArea = dispArea;
     }
 
     @Ignore
-    public ObjectID getObjectID() {
+    public String getObjectID() {
         return objectID;
     }
 
     @Fact(name = "id")
     public String getObjectIDAsString() {
-        return this.objectID.toString();
+        return this.objectID;
     }
 
     @IndividualIdentifier
@@ -108,16 +118,48 @@ public class GAULObject {
         return Utils.ReadExpirationDate(this.validRange);
     }
 
+    @Fact(name = "adm1_code")
+    public long getAdm1Code() {
+        return adm1Code;
+    }
+
+    @Fact(name = "adm1_name")
+    public String getAdm1Name() {
+        return adm1Name;
+    }
+
+    @Fact(name = "status")
+    public String getStatus() {
+        return status;
+    }
+
+    @Fact(name = "disp_area")
+    public boolean isDispArea() {
+        return dispArea;
+    }
+
+    @Fact(name = "adm0_code")
+    public long getAdm0Code() {
+        return adm0Code;
+    }
+
+    @Fact(name = "adm0_name")
+    public String getAdm0Name() {
+        return adm0Name;
+    }
+
     /**
      * Generate the required SQL Statement to insert the object into the datastore
+     * @deprecated - We don't use Postgres anymore, so you shouldn't call this.
      * @return String - SQL Insert statement
      */
     @Ignore
+    @Deprecated
     public String generateSQLInsertStatement() {
         final StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("INSERT INTO Objects (ObjectID, GAULCode, ObjectName, StartDate, EndDate, Geom) ");
         stringBuilder.append("VALUES(uuid('");
-        stringBuilder.append(getObjectID().getID());
+        stringBuilder.append(getObjectID());
         stringBuilder.append("'), '");
         stringBuilder.append(getGaulCode());
         stringBuilder.append("', '");
@@ -135,15 +177,22 @@ public class GAULObject {
         return stringBuilder.toString();
     }
 
-//    TODO(nrobison): Clean this up, I don't really like the output style.
     @Override
     public String toString() {
         return "GAULObject{" +
                 "objectID=" + objectID +
                 ", gaulCode=" + gaulCode +
-                ", objectName='" + objectName +
+                ", objectName='" + objectName + '\'' +
+//                ", validRange=" + Arrays.toString(validRange) +
                 ", startDate=" + getStartDate() +
-                ", endDate=" + getEndDate() + '\'' +
+                ", endDate=" + getEndDate() +
+                ", shapePolygon=" + shapePolygon +
+                ", adm1Code=" + adm1Code +
+                ", adm1Name='" + adm1Name + '\'' +
+                ", status='" + status + '\'' +
+                ", dispArea=" + dispArea +
+                ", adm0Code=" + adm0Code +
+                ", adm0Name='" + adm0Name + '\'' +
                 '}';
     }
 
@@ -154,15 +203,32 @@ public class GAULObject {
 
         GAULObject that = (GAULObject) o;
 
+        if (getGaulCode() != that.getGaulCode()) return false;
+        if (getAdm1Code() != that.getAdm1Code()) return false;
+        if (isDispArea() != that.isDispArea()) return false;
+        if (getAdm0Code() != that.getAdm0Code()) return false;
         if (!getObjectID().equals(that.getObjectID())) return false;
-        return getObjectName().equals(that.getObjectName());
-
+        if (!getObjectName().equals(that.getObjectName())) return false;
+        if (!Arrays.equals(validRange, that.validRange)) return false;
+        if (!getShapePolygon().equals(that.getShapePolygon())) return false;
+        if (!getAdm1Name().equals(that.getAdm1Name())) return false;
+        if (!getStatus().equals(that.getStatus())) return false;
+        return getAdm0Name().equals(that.getAdm0Name());
     }
 
     @Override
     public int hashCode() {
         int result = getObjectID().hashCode();
+        result = 31 * result + (int) (getGaulCode() ^ (getGaulCode() >>> 32));
         result = 31 * result + getObjectName().hashCode();
+        result = 31 * result + Arrays.hashCode(validRange);
+        result = 31 * result + getShapePolygon().hashCode();
+        result = 31 * result + (int) (getAdm1Code() ^ (getAdm1Code() >>> 32));
+        result = 31 * result + getAdm1Name().hashCode();
+        result = 31 * result + getStatus().hashCode();
+        result = 31 * result + (isDispArea() ? 1 : 0);
+        result = 31 * result + (int) (getAdm0Code() ^ (getAdm0Code() >>> 32));
+        result = 31 * result + getAdm0Name().hashCode();
         return result;
     }
 }
