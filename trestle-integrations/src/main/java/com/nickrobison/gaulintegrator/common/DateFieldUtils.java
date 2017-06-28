@@ -14,12 +14,16 @@ import java.util.regex.Pattern;
 /**
  * Created by nrobison on 5/9/16.
  */
-public class Utils {
+public class DateFieldUtils {
 
-    private static final Logger logger = LoggerFactory.getLogger(Utils.class);
-    private static final String regexString = "(?<=\\_).*?(?=\\_)";
-    private static final Pattern regexPattern = Pattern.compile(regexString);
+    private static final Logger logger = LoggerFactory.getLogger(DateFieldUtils.class);
+    private static final String REGEX_STRING = "(?<=\\_).*?(?=\\_)";
+    private static final Pattern regexPattern = Pattern.compile(REGEX_STRING);
     public static final int TIMEDATASIZE = 2 * Long.BYTES;
+
+    private DateFieldUtils() {
+
+    }
 
     /**
      * Extracts the year from input filename
@@ -27,7 +31,7 @@ public class Utils {
      * @param inputSplit split currently being processed
      * @return IntWritable - year being processed
      */
-    public static IntWritable ExtractSplitYear(InputSplit inputSplit) {
+    public static IntWritable extractSplitYear(InputSplit inputSplit) {
         int year = 9999;
         StringBuilder inputString = new StringBuilder(((FileSplit) inputSplit).getPath().getName());
         Matcher matcher = regexPattern.matcher(inputString);
@@ -47,7 +51,7 @@ public class Utils {
      * @param end LocalDate - End date
      * @return byte[] - Byte array of start/end long pair
      */
-    public static byte[] WriteDateField(LocalDate start, LocalDate end) {
+    public static byte[] writeDateField(LocalDate start, LocalDate end) {
         ByteBuffer bb = ByteBuffer.wrap(new byte[TIMEDATASIZE]);
         bb.putLong(start.toEpochDay());
         bb.putLong(end.toEpochDay());
@@ -60,7 +64,7 @@ public class Utils {
      * @param dateField byte[] - Start/end long pair
      * @return LocalDate - Start date from byte[]
      */
-    public static LocalDate ReadStartDate(byte[] dateField) {
+    public static LocalDate readStartDate(byte[] dateField) {
         ByteBuffer bb = ByteBuffer.wrap(dateField);
         return LocalDate.ofEpochDay(bb.getLong());
     }
@@ -70,7 +74,7 @@ public class Utils {
      * @param dateField byte[] - Start/end long pair
      * @return LocalDate - End date from byte[]
      */
-    public static LocalDate ReadExpirationDate(byte[] dateField) {
+    public static LocalDate readExpirationDate(byte[] dateField) {
         ByteBuffer bb = ByteBuffer.wrap(dateField);
         return LocalDate.ofEpochDay(bb.getLong(Long.BYTES));
     }
