@@ -12,6 +12,7 @@ import {MaterializeModule} from "angular2-materialize";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {UserModule} from "./UserModule/user.module";
 import {NavigationModule} from "./NavigationModule/navigation.module";
+import { UIModule } from "./UIModule/ui.module";
 
 @NgModule({
     imports: [
@@ -22,7 +23,8 @@ import {NavigationModule} from "./NavigationModule/navigation.module";
         RouterModule.forRoot(AppRoutes),
         MaterializeModule,
         UserModule,
-        NavigationModule
+        NavigationModule,
+        UIModule
     ],
     declarations: [AppComponent],
     bootstrap: [AppComponent]

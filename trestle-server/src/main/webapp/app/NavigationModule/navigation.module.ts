@@ -10,6 +10,7 @@ import {LoginComponent} from "./login/app.login";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms"
 import {Privileges} from "../UserModule/authentication.service";
 import { NavComponent } from "./nav.component";
+import { UIModule } from "../UIModule/ui.module";
 
 export interface ITrestleRoute extends Route {
     data?: ITrestleRouteData
@@ -30,6 +31,7 @@ export interface ITrestleRouteData {
         CommonModule,
         FormsModule,
         ReactiveFormsModule,
+        UIModule
     ],
     exports: [LoginComponent, NavComponent]
 })

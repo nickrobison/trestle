@@ -76,4 +76,8 @@ export class VisualizeComponent implements OnInit {
         let strings = individualName.split("#");
         return strings[1];
     }
+    
+    selectedOption(value: any) {
+        console.debug("Clicked", value);
+    }
 }
