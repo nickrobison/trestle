@@ -18,7 +18,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Created by nrobison on 6/13/17.
@@ -99,8 +98,6 @@ public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
                 .map(result -> {
 //                            Valid temporal
                     final Optional<TemporalObject> validTemporal = TemporalObjectBuilder.buildTemporalFromResults(TemporalScope.VALID, result.getLiteral("va"), result.getLiteral("vf"), result.getLiteral("vt"));
-//                            DB Temporal
-                    final Optional<TemporalObject> dbTemporal = TemporalObjectBuilder.buildTemporalFromResults(TemporalScope.DATABASE, Optional.empty(), result.getLiteral("df"), result.getLiteral("dt"));
 //                            Parse the literal
                     final OWLDataPropertyAssertionAxiom factProperty = df.getOWLDataPropertyAssertionAxiom(
                             df.getOWLDataProperty(result.getIndividual("property").orElseThrow(() -> new RuntimeException("Property is null")).asOWLNamedIndividual().getIRI()),
@@ -114,8 +111,6 @@ public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
                     }
                     TemporalObject overriddenTemporal = overrideTemporal(validTemporal1, eventTemporal);
 //                    And the database temporal as well
-                    final TemporalObject dbTemporal1 = dbTemporal.orElseThrow(() -> new RuntimeException("Fact db temporal is null"));
-//                    final TemporalObject overriddenDBTemporal = overrideTemporal(dbTemporal1, databaseTemporal);
                     final TemporalObject newDbTemporal = TemporalObjectBuilder.database().from(databaseTemporal).build();
 //                            Build the Fact
                     return new TrestleOWLFact(factProperty, overriddenTemporal, newDbTemporal);

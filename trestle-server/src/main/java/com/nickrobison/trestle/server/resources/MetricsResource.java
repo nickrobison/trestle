@@ -17,9 +17,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
@@ -58,7 +57,7 @@ public class MetricsResource {
     public Response exportMetricValues(@Valid MetricsQueryRequest metrics) {
         final List<MetricianExportedValue> exportedMetrics = this.metrician.exportMetrics(metrics.getMetrics(), metrics.getStart(), metrics.getEnd());
         final StreamingOutput metricsOutput = output -> {
-            final BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(output));
+            final BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(output, Charset.defaultCharset()));
             for (final MetricianExportedValue metric : exportedMetrics) {
                 final StringBuilder resultRow = new StringBuilder();
                 resultRow.append(metric.getMetric());

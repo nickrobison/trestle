@@ -8,12 +8,11 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.Arrays;
 
 /**
  * Created by nrobison on 5/5/16.
  */
-//FIXME(nrobison): Fix weird duplicate warning
-@SuppressWarnings("Duplicates")
 public class MapperOutput implements WritableComparable<MapperOutput> {
 
     private final LongWritable regionID;
@@ -22,6 +21,12 @@ public class MapperOutput implements WritableComparable<MapperOutput> {
     private final PolygonFeatureWritable polygonData;
     //    StartDate - ExpirationDate
     private final byte[] dateField;
+    private final LongWritable adm0Code;
+    private final Text adm0Name;
+    private final LongWritable adm1Code;
+    private final Text adm1Name;
+    private final BooleanWritable dispArea;
+    private final Text status;
 
     public MapperOutput() {
         this.regionID = new LongWritable();
@@ -29,6 +34,12 @@ public class MapperOutput implements WritableComparable<MapperOutput> {
         this.datasetYear = new IntWritable();
         this.polygonData = new PolygonFeatureWritable();
         dateField = new byte[Utils.TIMEDATASIZE];
+        this.adm0Code = new LongWritable();
+        this.adm0Name = new Text();
+        this.adm1Code = new LongWritable();
+        this.adm1Name = new Text();
+        this.dispArea = new BooleanWritable();
+        this.status = new Text();
     }
 
     public MapperOutput(LongWritable regionID,
@@ -36,13 +47,24 @@ public class MapperOutput implements WritableComparable<MapperOutput> {
                         IntWritable polygonYear,
                         PolygonFeatureWritable polygonData,
                         LocalDate startDate,
-                        LocalDate expirationDate) {
+                        LocalDate expirationDate,
+                        LongWritable adm0Code,
+                        Text adm0Name,
+                        LongWritable adm1Code,
+                        Text adm1Name,
+                        BooleanWritable dispArea,
+                        Text status) {
         this.regionID = regionID;
         this.regionName = polygonName;
         this.datasetYear = polygonYear;
         this.polygonData = polygonData;
         this.dateField = Utils.WriteDateField(startDate, expirationDate);
-
+        this.adm0Code = adm0Code;
+        this.adm0Name = adm0Name;
+        this.adm1Code = adm1Code;
+        this.adm1Name = adm1Name;
+        this.dispArea = dispArea;
+        this.status = status;
     }
 
 
@@ -53,6 +75,12 @@ public class MapperOutput implements WritableComparable<MapperOutput> {
         datasetYear.write(out);
         polygonData.write(out);
         out.write(dateField);
+        adm1Code.write(out);
+        adm1Name.write(out);
+        adm0Code.write(out);
+        adm0Name.write(out);
+        dispArea.write(out);
+        status.write(out);
     }
 
     @Override
@@ -62,13 +90,18 @@ public class MapperOutput implements WritableComparable<MapperOutput> {
         datasetYear.readFields(in);
         polygonData.readFields(in);
         in.readFully(this.dateField);
+        adm0Code.readFields(in);
+        adm0Name.readFields(in);
+        adm1Code.readFields(in);
+        adm1Name.readFields(in);
+        dispArea.readFields(in);
+        status.readFields(in);
     }
 
 
     @Override
     public int compareTo(MapperOutput o) {
         if (regionID.compareTo(o.regionID) == 0) {
-//            return regionName.compareTo(o.regionName);
             return datasetYear.compareTo(o.datasetYear);
         } else {
 //            TODO(nrobison): There should be another step, to check validity dates and finally area.
@@ -82,14 +115,25 @@ public class MapperOutput implements WritableComparable<MapperOutput> {
             MapperOutput other = (MapperOutput) o;
 //            FIXME(nrobison): This isn't right, an object can have the same ID, and a different name.
             return regionID.equals(other.regionID) && datasetYear.equals(other.datasetYear);
-//            return regionID.equals(other.regionID) && regionName.equals(((MapperOutput) o).regionName);
         }
         return false;
     }
 
     @Override
     public String toString() {
-        return regionID.toString() + " - " + regionName.toString() + ": " + datasetYear.toString();
+        return "MapperOutput{" +
+                "regionID=" + regionID +
+                ", regionName=" + regionName +
+                ", datasetYear=" + datasetYear +
+                ", polygonData=" + polygonData +
+                ", dateField=" + Arrays.toString(dateField) +
+                ", adm0Code=" + adm0Code +
+                ", adm0Name=" + adm0Name +
+                ", adm1Code=" + adm1Code +
+                ", adm1Name=" + adm1Name +
+                ", dispArea=" + dispArea +
+                ", status=" + status +
+                '}';
     }
 
     public LongWritable getRegionID() {
@@ -170,5 +214,25 @@ public class MapperOutput implements WritableComparable<MapperOutput> {
         result = 31 * result + (regionName != null ? regionName.hashCode() : 0);
         result = 31 * result + (datasetYear != null ? datasetYear.hashCode() : 0);
         return result;
+    }
+
+    public GAULObject toObject(LocalDate minDate, LocalDate maxDate) {
+        return new GAULObject(
+                regionID.get() + "-" + regionName.toString(),
+                regionID.get(),
+                regionName.toString(),
+                minDate,
+                maxDate,
+                polygonData.polygon,
+                adm1Code.get(),
+                adm1Name.toString(),
+                status.toString(),
+                dispArea.get(),
+                adm0Code.get(),
+                adm0Name.toString());
+    }
+
+    public GAULObject toObject() {
+        return toObject(getStartDate(), getExpirationDate());
     }
 }

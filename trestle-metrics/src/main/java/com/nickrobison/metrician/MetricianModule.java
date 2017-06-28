@@ -4,14 +4,13 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
-import com.nickrobison.metrician.backends.IMetricianBackend;
 import com.nickrobison.metrician.agent.MetricianAgentBuilder;
+import com.nickrobison.metrician.backends.IMetricianBackend;
 import com.nickrobison.metrician.instrumentation.MetricianInventory;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
-import org.checkerframework.checker.signature.qual.ClassGetName;
 
 import javax.inject.Singleton;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -74,7 +73,7 @@ public class MetricianModule extends PrivateModule {
 
                 bind(IMetricianBackend.class).to(backend).asEagerSingleton();
             } catch (ClassNotFoundException e) {
-                throw new RuntimeException("Unable to load metrics backend class", e);
+                throw new IllegalStateException(e.getCause());
             }
             bind(Metrician.class).to(MetricianImpl.class).asEagerSingleton();
             expose(Metrician.class);

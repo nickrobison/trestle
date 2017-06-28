@@ -9,6 +9,7 @@ import jwt4j.JWTHandler;
 import jwt4j.JWTHandlerBuilder;
 
 import javax.inject.Singleton;
+import java.nio.charset.Charset;
 
 /**
  * Created by nrobison on 1/20/17.
@@ -20,6 +21,7 @@ public class JWTModule extends AbstractModule {
 
     @Override
     protected void configure() {
+//        We don't need this right now.
     }
 
     @Provides
@@ -37,7 +39,7 @@ public class JWTModule extends AbstractModule {
 
     private JWTHandler<User> getJWTHandler(JWTConfig jwtConfig) {
         return new JWTHandlerBuilder<User>()
-                .withSecret(jwtConfig.getAuthSalt().getBytes())
+                .withSecret(jwtConfig.getAuthSalt().getBytes(Charset.defaultCharset()))
                 .withDataClass(User.class)
                 .withIssuedAtEnabled(true)
                 .withExpirationSeconds(600)

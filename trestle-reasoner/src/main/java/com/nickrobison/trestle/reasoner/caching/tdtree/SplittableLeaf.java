@@ -59,10 +59,8 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
     @Nullable Value getValue(TupleExpressionGenerator.BooleanTupleExpression expression) {
         for (int i = 0; i < this.records; i++) {
             final FastTuple key = keys[i];
-            if (key != null) {
-                if (expression.evaluate(key)) {
-                    return values[i];
-                }
+            if (key != null && expression.evaluate(key)) {
+                return values[i];
             }
         }
         return null;
@@ -97,7 +95,7 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
             final TDTreeHelpers.ChildDirection childDirection = TDTreeHelpers.calculateChildDirection(parentDirection);
 //            If one of the children is a point, pick the lower, turn it into a point and move on
 //            We also need to make sure we don't recurse too far, so the length of a leafID can't be more than 30
-            if (TDTreeHelpers.triangleIsPoint(TDTreeHelpers.getTriangleVerticies(TDTreeHelpers.adjustedLength[idLength + 1], childDirection.lowerChild, childApex.start, childApex.end)) |
+            if (TDTreeHelpers.triangleIsPoint(TDTreeHelpers.getTriangleVerticies(TDTreeHelpers.adjustedLength[idLength + 1], childDirection.lowerChild, childApex.start, childApex.end)) ||
                     getIDLength(this.leafID) == (getIDLength(Integer.MAX_VALUE) - 1)) {
 //                    Convert the leaf to a point leaf and replace the splittable node
 
@@ -173,13 +171,11 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
     boolean delete(TupleExpressionGenerator.BooleanTupleExpression expression) {
         for (int i = 0; i < this.records; i++) {
             final FastTuple key = keys[i];
-            if (key != null) {
-                if (expression.evaluate(key)) {
-                    keys[i] = null;
-                    values[i] = null;
-                    return true;
+            if (key != null && expression.evaluate(key)) {
+                keys[i] = null;
+                values[i] = null;
+                return true;
 //                    Do we need to collapse?
-                }
             }
         }
         return false;
@@ -203,11 +199,9 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
         final TupleExpressionGenerator.BooleanTupleExpression eval = buildFindExpression(objectID, atTime);
         for (int i = 0; i < this.records; i++) {
             final FastTuple key = keys[i];
-            if (key != null) {
-                if (eval.evaluate(key)) {
-                    values[i] = value;
-                    return true;
-                }
+            if (key != null && eval.evaluate(key)) {
+                values[i] = value;
+                return true;
             }
         }
         return false;
@@ -218,10 +212,8 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
         Map<FastTuple, @NonNull Value> leafRecords = new HashMap<>();
         for (int i = 0; i < this.records; i++) {
             final FastTuple key = keys[i];
-            if (key != null) {
-                if (values[i] != null) {
-                    leafRecords.put(key, values[i]);
-                }
+            if (key != null && values[i] != null) {
+                leafRecords.put(key, values[i]);
             }
         }
         return leafRecords;

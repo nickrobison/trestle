@@ -1,6 +1,5 @@
 package com.nickrobison.metrician;
 
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 
 import java.io.Serializable;

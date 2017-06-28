@@ -42,21 +42,12 @@
         <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
         <compiler.default.args>-parameters</compiler.default.args>
         <java.version>1.8</java.version>
+        <!--Sonar-->
+        <sonar.jacoco.reportPaths>${maven.multiModuleProjectDirectory}/target/jacoco_analysis/jacoco.exec</sonar.jacoco.reportPaths>
     </properties>
+
     <dependencyManagement>
         <dependencies>
-            <!--Hadoop dependencies-->
-            <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-client</artifactId>
-                <version>${hadoop.version}</version>
-                <scope>${provided.scope}</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-common</artifactId>
-                <version>${hadoop.version}</version>
-            </dependency>
             <!--Common dependencies-->
             <dependency>
                 <groupId>commons-io</groupId>
@@ -278,24 +269,6 @@
             </dependency>
             <!--Testing dependencies-->
             <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-minicluster</artifactId>
-                <version>${hadoop.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-log4j12</artifactId>
-                    </exclusion>
-                </exclusions>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-auth</artifactId>
-                <version>${hadoop.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.openjdk.jmh</groupId>
                 <artifactId>jmh-core</artifactId>
                 <version>${jmh.version}</version>
@@ -406,14 +379,6 @@
             <name>Open Source Geospatial Foundation Repository</name>
             <url>http://download.osgeo.org/webdav/geotools/</url>
         </repository>
-        <repository>
-            <id>hortonworks</id>
-            <url>http://repo.hortonworks.com/content/repositories/releases/</url>
-        </repository>
-        <repository>
-            <id>cloudera</id>
-            <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-        </repository>
         <!-- Repository for oracle ojdbc7 -->
         <repository>
             <id>codelds</id>
@@ -422,35 +387,14 @@
     </repositories>
     <profiles>
         <profile>
-            <id>cdh5</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <hadoop.version>2.6.0-cdh5.5.4</hadoop.version>
-            </properties>
-        </profile>
-        <profile>
-            <id>hdp</id>
-            <properties>
-                <hadoop.version>2.7.1.2.3.5.0-81</hadoop.version>
-            </properties>
-        </profile>
-        <profile>
-            <id>intellij</id>
-            <properties>
-                <provided.scope>compile</provided.scope>
-            </properties>
-        </profile>
-        <profile>
-            <id>enable-checker</id>
+            <id>checker</id>
             <build>
                 <plugins>
                     <plugin>
                         <artifactId>maven-compiler-plugin</artifactId>
                         <configuration combine.self="override">
-                            <source>1.8</source>
-                            <target>1.8</target>
+                            <source>${java.version}</source>
+                            <target>${java.version}</target>
                             <fork>true</fork>
                             <annotationProcessors>
                                 <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker
@@ -468,6 +412,86 @@
                                 <arg>-Xbootclasspath/p:${annotatedJdk}</arg>
                             </compilerArgs>
                         </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>errorprone</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <compilerId>javac-with-errorprone</compilerId>
+                            <source>${java.version}</source>
+                            <target>${java.version}</target>
+                            <fork>true</fork>
+                            <useIncrementalCompilation>false</useIncrementalCompilation>
+                            <forceJavacCompilerUse>true</forceJavacCompilerUse>
+                            <showWarnings>true</showWarnings>
+                            <compilerArgs>
+                                <arg>${compiler.default.args}</arg>
+                                <arg>-Xep:RemoveUnusedImports:ERROR</arg>
+                                <arg>-Xep:ShortCircuitBoolean:ERROR</arg>
+                                <arg>-Xep:MissingOverride:ERROR</arg>
+                                <arg>-Xep:ClassCanBeStatic:ERROR</arg>
+                                <arg>-Xep:DefaultCharset:ERROR</arg>
+                                <!--TODO(nrobison): We should use this, but I'm not sure how-->
+                                <!--<arg>-Xep:TypeParameterUnusedInFormals:ERROR</arg>-->
+                            </compilerArgs>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.codehaus.plexus</groupId>
+                                <artifactId>plexus-compiler-javac-errorprone</artifactId>
+                                <version>2.8.2</version>
+                            </dependency>
+                            <!-- override plexus-compiler-javac-errorprone's dependency on
+                                 Error Prone with the latest version -->
+                            <dependency>
+                                <groupId>com.google.errorprone</groupId>
+                                <artifactId>error_prone_core</artifactId>
+                                <version>2.0.19</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>coverage</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>0.7.9</version>
+                        <configuration>
+                            <append>true</append>
+                            <destFile>${sonar.jacoco.reportPaths}</destFile>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>pre-unit-test</id>
+                                <goals>
+                                    <goal>prepare-agent</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>pre-integration-test</id>
+                                <goals>
+                                    <goal>prepare-agent-integration</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>build-reports</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>report</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
@@ -503,28 +527,6 @@
             </plugins>
         </pluginManagement>
         <plugins>
-            <!--<plugin>-->
-            <!--<groupId>org.apache.maven.plugins</groupId>-->
-            <!--<artifactId>maven-assembly-plugin</artifactId>-->
-            <!--<version>2.6</version>-->
-            <!--<configuration>-->
-            <!--<descriptor>src/main/assembly/job.xml</descriptor>-->
-            <!--<archive>-->
-            <!--<manifest>-->
-            <!--<mainClass>com.nickrobison.gaulintegrator.IntegrationRunner</mainClass>-->
-            <!--</manifest>-->
-            <!--</archive>-->
-            <!--</configuration>-->
-            <!--<executions>-->
-            <!--<execution>-->
-            <!--<id>make-assembly</id>-->
-            <!--<phase>package</phase>-->
-            <!--<goals>-->
-            <!--<goal>single</goal>-->
-            <!--</goals>-->
-            <!--</execution>-->
-            <!--</executions>-->
-            <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>

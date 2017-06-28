@@ -126,7 +126,6 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         }
         final TupleExpressionGenerator.BooleanTupleExpression expression = LeafNode.buildFindExpression(objectID, atTime);
         for (LeafNode node : candidateLeafs) {
-//            if (node.delete(objectID, atTime)) {
             if (node.delete(expression)) {
                 logger.trace("Deleted {}@{} from {}", objectID, atTime, node.getBinaryStringID());
                 this.cacheSize.decrementAndGet();
@@ -259,7 +258,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
                 final int currentSize = populatedLeafs.size();
                 for (int i = 0; i < currentSize; i++) {
                     final LeafNode<Value> next = populatedLeafs.pop();
-                    if (!(idSimilarity(next.getID(), overlappingPrefix) == length)) {
+                    if ((idSimilarity(next.getID(), overlappingPrefix) != length)) {
                         populatedLeafs.add(next);
                     }
                 }
@@ -339,7 +338,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
      * @return - Number of common bits left->right
      */
     private static int idSimilarity(int leafID, int matchID) {
-        if (leafID == 0 | matchID == 0) {
+        if (leafID == 0 || matchID == 0) {
             return 0;
         }
         final int idLength = TDTreeHelpers.getIDLength(leafID);

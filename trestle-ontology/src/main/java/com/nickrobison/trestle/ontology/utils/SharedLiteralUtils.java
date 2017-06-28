@@ -15,6 +15,10 @@ public class SharedLiteralUtils {
     private static final Logger logger = LoggerFactory.getLogger(SharedLiteralUtils.class);
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
 
+    private SharedLiteralUtils() {
+
+    }
+
     /**
      * Parse a Literal string, representing a numeric value, to determine its correct datatype
      * This works around some 'optimizations' in various triple-stores that wil change datatypes to ints or decimals
@@ -30,7 +34,7 @@ public class SharedLiteralUtils {
         } else {
             long l = Long.parseLong(numericString);
             l = l >> (Integer.SIZE);
-            if (l == 0 | l == -1) {
+            if (l == 0 || l == -1) {
                 logger.trace("Decimal seems to be an Int");
                 owlDatatype = df.getOWLDatatype(OWL2Datatype.XSD_INTEGER.getIRI());
             } else {

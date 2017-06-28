@@ -3,7 +3,6 @@ package com.nickrobison.metrician.backends;
 import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.metrician.MetricianReporter;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
-import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,10 +10,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.io.File;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
 /**

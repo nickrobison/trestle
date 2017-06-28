@@ -59,5 +59,6 @@ SELECT *
 
 SELECT * FROM mdsys.sem_model$;
 BEGIN
-sem_apis.drop_sem_model('hadoop_test');
+sem_apis.drop_sem_model('api_test');
 END;
+DROP TABLE api_test_tpl;
