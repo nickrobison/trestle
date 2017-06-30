@@ -2,13 +2,16 @@
  * Created by nrobison on 6/11/17.
  */
 import mapboxgl = require("mapbox-gl");
-import {Component, Input, OnChanges, OnInit, SimpleChange} from "@angular/core";
+import {
+    Component, EventEmitter, Input, OnChanges, OnInit, Output,
+    SimpleChange
+} from "@angular/core";
 import {
     FeatureCollection, GeometryObject, LineString, MultiLineString, MultiPoint, MultiPolygon,
     Point, Polygon
 } from "geojson";
-import {MapMouseEvent, LngLatBounds} from "mapbox-gl";
-var extent = require("@mapbox/geojson-extent");
+import { MapMouseEvent, LngLatBounds } from "mapbox-gl";
+const extent = require("@mapbox/geojson-extent");
 
 export interface ITrestleMapSource {
     id: string;
@@ -23,11 +26,12 @@ export interface ITrestleMapSource {
 
 export class TrestleMapComponent implements OnInit, OnChanges {
 
-    @Input() individual: ITrestleMapSource;
-    @Input() single: boolean;
-    @Input() multiSelect: boolean;
+    @Input() public individual: ITrestleMapSource;
+    @Input() public single: boolean;
+    @Input() public multiSelect: boolean;
+    @Output() public mapBounds: EventEmitter<LngLatBounds> = new EventEmitter();
     private map: mapboxgl.Map;
-    private mapSources: Array<string>;
+    private mapSources: string[];
 
     constructor() {
         mapboxgl.accessToken = "pk.eyJ1IjoibnJvYmlzb24iLCJhIjoiY2ozdDd5dmd2MDA3bTMxcW1kdHZrZ3ppMCJ9.YcJMRphQAfmZ0H8X9HnoKA";
@@ -46,11 +50,15 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         this.map.on("click", this.layerClick);
         this.map.on("mouseover", this.mouseOver);
         this.map.on("mouseleave", this.mouseOut);
+        this.map.on("moveend", this.moveHandler);
+        this.mapBounds.emit(this.map.getBounds());
     }
 
-    ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
-        let inputChanges = changes["individual"];
-        if (inputChanges != null && !inputChanges.isFirstChange() && (inputChanges.currentValue !== inputChanges.previousValue)) {
+    public ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
+        const inputChanges = changes["individual"];
+        if (inputChanges != null
+            && !inputChanges.isFirstChange()
+            && (inputChanges.currentValue !== inputChanges.previousValue)) {
             console.debug("New change, updating", inputChanges);
             if (inputChanges.previousValue != null && this.single) {
                 this.removeSource(inputChanges.previousValue);
@@ -64,7 +72,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         this.map.removeLayer(removeSource.id + "-line");
         this.map.removeLayer(removeSource.id + "-hover");
         this.map.removeSource(removeSource.id);
-        let idx = this.mapSources.indexOf(removeSource.id);
+        const idx = this.mapSources.indexOf(removeSource.id);
         if (idx >= 0) {
             this.mapSources.splice(idx, 1);
         }
@@ -111,7 +119,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
 
     private layerClick = (e: MapMouseEvent): void => {
         console.debug("Clicked:", e);
-        let features = this.map.queryRenderedFeatures(e.point, {
+        const features = this.map.queryRenderedFeatures(e.point, {
             layers: this.mapSources.map(val => val + "-fill")
         });
 
@@ -124,7 +132,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             return;
         }
         console.debug("Filtered features", features);
-        let feature: any = features[0];
+        const feature: any = features[0];
         let layerID = features[0].layer.id;
         layerID = layerID.replace("-fill", "");
         this.map.setFilter(layerID + "-hover", ["==", "id", feature.properties.id]);
@@ -147,35 +155,40 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         console.debug("Mouse out:", e);
     };
 
-    private static extractGeometryPoints(geom: GeometryObject): number[][] {
-        switch (geom.type) {
-            case "Point": {
-                return [(<Point>geom).coordinates];
-            }
-            case "MultiPoint":
-                return (<MultiPoint>geom).coordinates;
-            case "LineString":
-                return (<LineString>geom).coordinates;
-            case "MultiLineString":
-                return (<MultiLineString>geom).coordinates[0];
-            case "Polygon":
-                return (<Polygon>geom).coordinates[0];
-            case "MultiPolygon":
-                return (<MultiPolygon>geom).coordinates[0][0];
-            default:
-                console.error("Unable to get coordinates for object of type:", geom.type);
-                return null;
-        }
-    }
+    private moveHandler = () => {
+        console.debug("New bounds", this.map.getBounds());
+        this.mapBounds.emit(this.map.getBounds());
+    };
 
     private getBoundingBox(geom: FeatureCollection<GeometryObject>): void {
         if (geom.bbox) {
             this.map.fitBounds(LngLatBounds.convert(geom.bbox));
         } else {
-            let bbox = extent(geom);
+            const bbox = extent(geom);
             if (bbox) {
                 this.map.fitBounds(LngLatBounds.convert(bbox));
             }
         }
     }
+
+    private static extractGeometryPoints(geom: GeometryObject): number[][] {
+        switch (geom.type) {
+            case "Point": {
+                return [(geom as Point).coordinates];
+            }
+            case "MultiPoint":
+                return (geom as MultiPoint).coordinates;
+            case "LineString":
+                return (geom as LineString).coordinates;
+            case "MultiLineString":
+                return (geom as MultiLineString).coordinates[0];
+            case "Polygon":
+                return (geom as Polygon).coordinates[0];
+            case "MultiPolygon":
+                return (geom as MultiPolygon).coordinates[0][0];
+            default:
+                console.error("Unable to get coordinates for object of type:", geom.type);
+                return null;
+        }
+    };
 }

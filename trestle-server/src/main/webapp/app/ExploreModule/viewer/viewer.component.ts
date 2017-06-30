@@ -3,6 +3,7 @@
  */
 import { Component, OnInit } from "@angular/core";
 import { MapService } from "./map.service";
+import LngLatBounds = mapboxgl.LngLatBounds;
 
 
 @Component({
@@ -12,6 +13,7 @@ import { MapService } from "./map.service";
 })
 export class DatsetViewerComponent implements OnInit {
     public availableDatasets: string[] = [];
+    private mapBounds: LngLatBounds;
 
     constructor(private mapService: MapService) {}
 
@@ -19,6 +21,15 @@ export class DatsetViewerComponent implements OnInit {
         this.mapService.getAvailableDatasets()
             .subscribe((results: string[]) => {
             this.availableDatasets = results;
-            })
+            });
+    }
+
+    public loadDataset(dataset: string): void {
+        console.debug("Loading:", dataset);
+        this.mapService.tsIntersect(dataset, this.mapBounds, new Date("1990-01-01"));
+    }
+
+    public updateBounds(bounds: LngLatBounds): void {
+        this.mapBounds = bounds;
     }
 }

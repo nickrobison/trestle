@@ -5,21 +5,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
+import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
+import com.nickrobison.trestle.reasoner.types.TrestleIndividual;
+import com.nickrobison.trestle.reasoner.types.temporal.TemporalObject;
 import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
+import com.nickrobison.trestle.server.models.IntersectRequest;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
-import com.nickrobison.trestle.types.TrestleIndividual;
-import com.nickrobison.trestle.types.temporal.TemporalObject;
+import com.vividsolutions.jts.geom.Geometry;
 import io.dropwizard.jersey.params.NonEmptyStringParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wololo.jts2geojson.GeoJSONReader;
 
 import javax.inject.Inject;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.time.format.DateTimeFormatter;
@@ -42,6 +44,7 @@ public class VisualizationResource {
 
     private static final Logger logger = LoggerFactory.getLogger(VisualizationResource.class);
     private static final DateTimeFormatter LocalDateTimeToJavascriptFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    private static final GeoJSONReader reader = new GeoJSONReader();
     private final TrestleReasoner reasoner;
     private final ObjectMapper mapper;
 
@@ -138,6 +141,22 @@ public class VisualizationResource {
     public Response getDatasets() {
         final Set<String> availableDatasets = this.reasoner.getAvailableDatasets();
         return ok(availableDatasets).build();
+    }
+
+    @POST
+    @Path("/intersect")
+    public Response intersect(@NotNull @Valid IntersectRequest request) {
+        final Class<?> datasetClass;
+        try {
+             datasetClass = this.reasoner.getDatasetClass(request.getDataset());
+        } catch (UnregisteredClassException e) {
+            logger.error("Requested missing class", e);
+            return Response.status(Response.Status.BAD_REQUEST).entity("Class does not exist").build();
+        }
+
+        final Geometry geom = reader.read(request.getBbox());
+        final Optional<? extends List<?>> intersectedObjects = this.reasoner.spatialIntersect(datasetClass, geom.toString(), 0.0, request.getValidAt());
+        return Response.ok().build();
     }
 
 }
