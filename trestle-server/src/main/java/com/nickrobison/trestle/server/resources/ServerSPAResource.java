@@ -6,7 +6,6 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Created by nrobison on 11/28/16.
@@ -24,7 +23,7 @@ public class ServerSPAResource {
         final InputStream webpage = ServerSPAResource.class.getClassLoader().getResourceAsStream(ASSETS_INDEX_HTML);
         if (webpage == null) {
             final String errorMessage = String.format("Unable to load webpage from %s", ASSETS_INDEX_HTML);
-            throw new WebApplicationException(errorMessage, Response.Status.NOT_FOUND);
+            throw new WebApplicationException(new Throwable(errorMessage), Response.Status.NOT_FOUND);
         }
 
         return Response.ok(webpage).build();

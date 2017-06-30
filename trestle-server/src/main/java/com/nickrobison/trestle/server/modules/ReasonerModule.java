@@ -43,6 +43,7 @@ public class ReasonerModule implements Managed {
                 .withName(configuration.getOntology())
                 .withPrefix(configuration.getPrefix())
                 .withOntology(configuration.getLocation())
+                .withInputClasses(GAULTestObject.class)
                 .build();
 
         logger.info("Reasoner started");
