@@ -1,8 +1,7 @@
 package com.nickrobison.gaulintegrator;
 
 import com.esri.core.geometry.*;
-import com.nickrobison.gaulintegrator.common.ObjectID;
-import com.nickrobison.gaulintegrator.common.Utils;
+import com.nickrobison.gaulintegrator.common.DateFieldUtils;
 import com.nickrobison.trestle.reasoner.annotations.*;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
@@ -44,7 +43,7 @@ public class GAULObject {
     public GAULObject(String id, long gaulCode, String objectName, LocalDate startDate, LocalDate endDate, Polygon polygon, long adm1Code, String adm1Name, String status, boolean dispArea, long adm0Code, String adm0Name) {
         this.objectID = id;
         this.objectName = objectName;
-        this.validRange = Utils.WriteDateField(startDate, endDate);
+        this.validRange = DateFieldUtils.writeDateField(startDate, endDate);
         this.shapePolygon = polygon;
         this.gaulCode = gaulCode;
         this.adm1Code = adm1Code;
@@ -60,7 +59,7 @@ public class GAULObject {
         this.objectID = id;
         this.gaulCode = gaulCode;
         this.objectName = objectName;
-        this.validRange = Utils.WriteDateField(startDate, endDate);
+        this.validRange = DateFieldUtils.writeDateField(startDate, endDate);
         this.shapePolygon = (Polygon) GeometryEngine.geometryFromWkt(wkt, 0, Geometry.Type.Polygon);
         this.adm0Code = adm0Code;
         this.adm0Name = adm0Name;
@@ -81,6 +80,7 @@ public class GAULObject {
     }
 
     @IndividualIdentifier
+    @Ignore
     public String getID() {
         return String.format("%s:%s:%s:%s", this.gaulCode, this.objectName.replace(" ", "-"), this.getStartDate().getYear(), this.getEndDate().getYear());
     }
@@ -110,12 +110,12 @@ public class GAULObject {
 
     @StartTemporal
     public LocalDate getStartDate() {
-        return Utils.ReadStartDate(this.validRange);
+        return DateFieldUtils.readStartDate(this.validRange);
     }
 
     @EndTemporal
     public LocalDate getEndDate() {
-        return Utils.ReadExpirationDate(this.validRange);
+        return DateFieldUtils.readExpirationDate(this.validRange);
     }
 
     @Fact(name = "adm1_code")
@@ -134,7 +134,7 @@ public class GAULObject {
     }
 
     @Fact(name = "disp_area")
-    public boolean isDispArea() {
+    public boolean getDispArea() {
         return dispArea;
     }
 
@@ -190,7 +190,7 @@ public class GAULObject {
                 ", adm1Code=" + adm1Code +
                 ", adm1Name='" + adm1Name + '\'' +
                 ", status='" + status + '\'' +
-                ", dispArea=" + dispArea +
+                ", getDispArea=" + dispArea +
                 ", adm0Code=" + adm0Code +
                 ", adm0Name='" + adm0Name + '\'' +
                 '}';
@@ -205,7 +205,7 @@ public class GAULObject {
 
         if (getGaulCode() != that.getGaulCode()) return false;
         if (getAdm1Code() != that.getAdm1Code()) return false;
-        if (isDispArea() != that.isDispArea()) return false;
+        if (getDispArea() != that.getDispArea()) return false;
         if (getAdm0Code() != that.getAdm0Code()) return false;
         if (!getObjectID().equals(that.getObjectID())) return false;
         if (!getObjectName().equals(that.getObjectName())) return false;
@@ -226,7 +226,7 @@ public class GAULObject {
         result = 31 * result + (int) (getAdm1Code() ^ (getAdm1Code() >>> 32));
         result = 31 * result + getAdm1Name().hashCode();
         result = 31 * result + getStatus().hashCode();
-        result = 31 * result + (isDispArea() ? 1 : 0);
+        result = 31 * result + (getDispArea() ? 1 : 0);
         result = 31 * result + (int) (getAdm0Code() ^ (getAdm0Code() >>> 32));
         result = 31 * result + getAdm0Name().hashCode();
         return result;

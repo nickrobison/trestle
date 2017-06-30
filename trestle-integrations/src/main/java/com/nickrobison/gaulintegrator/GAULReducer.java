@@ -1,11 +1,11 @@
 package com.nickrobison.gaulintegrator;
 
 import com.esri.core.geometry.*;
-import com.nickrobison.gaulintegrator.common.ObjectID;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
-import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.reasoner.types.relations.ObjectRelation;
 import org.apache.hadoop.conf.Configuration;
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 /**
  * Created by nrobison on 5/5/16.
  */
-@SuppressWarnings({"argument.type.incompatible", "initialization.fields.uninitialized"})
+@SuppressWarnings({"argument.type.incompatible", "initialization.fields.uninitialized", "squid:S2068"})
 public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritable, Text> {
 
     private static final Logger logger = LoggerFactory.getLogger(GAULReducer.class);
@@ -69,10 +69,12 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
             if (username == null) {
                 username = "";
             }
+
             String password = conf.get("reasoner.db.password");
             if (password == null) {
                 password = "";
             }
+
             reasoner = new TrestleBuilder()
                     .withDBConnection(conf.get("reasoner.db.connection"),
                             username,
@@ -82,6 +84,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                     .withPrefix(conf.get("reasoner.ontology.prefix"))
                     .withName(conf.get("reasoner.ontology.name"))
                     .withoutCaching()
+                    .withoutMetrics()
                     .build();
         }
 
@@ -95,7 +98,6 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 //        This is a bit of a disaster, but since the set is relatively bounded, it should be ok.
         List<MapperOutput> inputRecords = new ArrayList<>();
         for (MapperOutput record : values) {
-            logger.debug("Added record: {}", record);
             inputRecords.add(WritableUtils.clone(record, configuration));
         }
 
@@ -119,28 +121,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //            final LocalDate configStartDate = LocalDate.of(minDate, Month.JANUARY, 1).with(TemporalAdjusters.firstDayOfYear());
 //            final LocalDate configEndDate = LocalDate.of(maxDate, 1, 1).plusYears(1).with(TemporalAdjusters.firstDayOfYear());
-
-//            Are all object properties the same?
-//            TODO(nrobison): We know that some properties change over time, so we may need to figure out a better way to handle writing these objects
-            Set<GAULObject> objectRecords = inputRecords
-                    .stream()
-                    .map(MapperOutput::toObject)
-                    .collect(Collectors.toSet());
-
-            logger.debug("There are: {} unique variations of this object", objectRecords.size());
-
-//            Create the new GAUL Object
-            final GAULObject newObject = objectRecords.iterator().next();
-
-//            Store into database
-//            Store the object
-            try {
-                reasoner.writeTrestleObject(newObject);
-            } catch (TrestleClassException e) {
-                logger.error("Cannot write object to trestle", e);
-            } catch (MissingOntologyEntity missingOntologyEntity) {
-                logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
-            }
+            this.writeFullRecordSet(inputRecords);
 
         } else {
 //            If we have records that don't cover the entirety of the input space, then we need to integrate them
@@ -334,5 +315,37 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
     @Override
     public void cleanup(Context context) {
         reasoner.shutdown(false);
+    }
+
+    /**
+     * If we have all the records (if an object spans the entire set space), write/merge them into Trestle
+     *
+     * @param records - {@link List} of {@link MapperOutput}
+     */
+    private void writeFullRecordSet(List<MapperOutput> records) {
+        final ArrayDeque<MapperOutput> sortedRecords = records
+                .stream()
+                .sorted()
+                .collect(Collectors.toCollection(ArrayDeque::new));
+
+        MapperOutput latestRecord = sortedRecords.pop();
+        try {
+            final LocalDate recordStart = LocalDate.of(latestRecord.getDatasetYear(), 1, 1);
+            reasoner.writeTrestleObject(latestRecord.toObject(), recordStart, latestRecord.getExpirationDate());
+        } catch (MissingOntologyEntity | UnregisteredClassException e) {
+            logger.error("Unable to write objects", e);
+        }
+
+        for (MapperOutput record : sortedRecords) {
+            if (record.hashCode() != latestRecord.hashCode()) {
+                latestRecord = record;
+                final LocalDate recordStart = LocalDate.of(record.getDatasetYear(), 1, 1);
+                try {
+                    reasoner.writeTrestleObject(record.toObject(), recordStart, record.getExpirationDate());
+                } catch (MissingOntologyEntity | UnregisteredClassException e) {
+                    logger.error("Unable to write objects", e);
+                }
+            }
+        }
     }
 }

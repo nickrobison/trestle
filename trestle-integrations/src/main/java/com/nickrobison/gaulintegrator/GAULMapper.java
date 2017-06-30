@@ -1,7 +1,7 @@
 package com.nickrobison.gaulintegrator;
 
 import com.esri.io.PolygonFeatureWritable;
-import com.nickrobison.gaulintegrator.common.Utils;
+import com.nickrobison.gaulintegrator.common.DateFieldUtils;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -47,7 +47,7 @@ public class GAULMapper extends Mapper<LongWritable, PolygonFeatureWritable, Lon
                     final Context context) throws IOException, InterruptedException {
 
 //        Get the data table year
-        final IntWritable inputYear = Utils.ExtractSplitYear(context.getInputSplit());
+        final IntWritable inputYear = DateFieldUtils.extractSplitYear(context.getInputSplit());
 
         final LongWritable polygonID = (LongWritable) inputRecord.attributes.get(CODE);
         final LongWritable startYear = (LongWritable) inputRecord.attributes.get(STRYEAR);

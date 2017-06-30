@@ -82,4 +82,16 @@ public class TrestleFact<T> implements Serializable {
         return databaseTemporal;
     }
 
+    @Override
+    public String toString() {
+        return "TrestleFact{" +
+                "identifier='" + identifier + '\'' +
+                ", name='" + name + '\'' +
+                ", value=" + value +
+                ", validTemporal=" + validTemporal +
+                ", databaseTemporal=" + databaseTemporal +
+                ", language='" + language + '\'' +
+                ", javaClass=" + javaClass +
+                '}';
+    }
 }

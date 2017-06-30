@@ -1,7 +1,7 @@
 package com.nickrobison.gaulintegrator;
 
 import com.esri.io.PolygonFeatureWritable;
-import com.nickrobison.gaulintegrator.common.Utils;
+import com.nickrobison.gaulintegrator.common.DateFieldUtils;
 import org.apache.hadoop.io.*;
 
 import java.io.DataInput;
@@ -33,7 +33,7 @@ public class MapperOutput implements WritableComparable<MapperOutput> {
         this.regionName = new Text();
         this.datasetYear = new IntWritable();
         this.polygonData = new PolygonFeatureWritable();
-        dateField = new byte[Utils.TIMEDATASIZE];
+        dateField = new byte[DateFieldUtils.TIMEDATASIZE];
         this.adm0Code = new LongWritable();
         this.adm0Name = new Text();
         this.adm1Code = new LongWritable();
@@ -58,7 +58,7 @@ public class MapperOutput implements WritableComparable<MapperOutput> {
         this.regionName = polygonName;
         this.datasetYear = polygonYear;
         this.polygonData = polygonData;
-        this.dateField = Utils.WriteDateField(startDate, expirationDate);
+        this.dateField = DateFieldUtils.writeDateField(startDate, expirationDate);
         this.adm0Code = adm0Code;
         this.adm0Name = adm0Name;
         this.adm1Code = adm1Code;
@@ -111,12 +111,36 @@ public class MapperOutput implements WritableComparable<MapperOutput> {
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof MapperOutput) {
-            MapperOutput other = (MapperOutput) o;
-//            FIXME(nrobison): This isn't right, an object can have the same ID, and a different name.
-            return regionID.equals(other.regionID) && datasetYear.equals(other.datasetYear);
-        }
-        return false;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        MapperOutput that = (MapperOutput) o;
+
+        if (!getRegionID().equals(that.getRegionID())) return false;
+        if (!getRegionName().equals(that.getRegionName())) return false;
+        if (!getPolygonData().polygon.equals(that.getPolygonData().polygon)) return false;
+        if (!Arrays.equals(getDateField(), that.getDateField())) return false;
+        if (!adm0Code.equals(that.adm0Code)) return false;
+        if (!adm0Name.equals(that.adm0Name)) return false;
+        if (!adm1Code.equals(that.adm1Code)) return false;
+        if (!adm1Name.equals(that.adm1Name)) return false;
+        if (!dispArea.equals(that.dispArea)) return false;
+        return status.equals(that.status);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = getRegionID().hashCode();
+        result = 31 * result + getRegionName().hashCode();
+        result = 31 * result + getPolygonData().polygon.hashCode();
+        result = 31 * result + Arrays.hashCode(getDateField());
+        result = 31 * result + adm0Code.hashCode();
+        result = 31 * result + adm0Name.hashCode();
+        result = 31 * result + adm1Code.hashCode();
+        result = 31 * result + adm1Name.hashCode();
+        result = 31 * result + dispArea.hashCode();
+        result = 31 * result + status.hashCode();
+        return result;
     }
 
     @Override
@@ -125,13 +149,13 @@ public class MapperOutput implements WritableComparable<MapperOutput> {
                 "regionID=" + regionID +
                 ", regionName=" + regionName +
                 ", datasetYear=" + datasetYear +
-                ", polygonData=" + polygonData +
-                ", dateField=" + Arrays.toString(dateField) +
+                ", polygonData=" + polygonData.polygon +
+                ", dateField=" + DateFieldUtils.readStartDate(this.dateField) + " - " + DateFieldUtils.readExpirationDate(this.dateField) +
                 ", adm0Code=" + adm0Code +
                 ", adm0Name=" + adm0Name +
                 ", adm1Code=" + adm1Code +
                 ", adm1Name=" + adm1Name +
-                ", dispArea=" + dispArea +
+                ", getDispArea=" + dispArea +
                 ", status=" + status +
                 '}';
     }
@@ -153,11 +177,11 @@ public class MapperOutput implements WritableComparable<MapperOutput> {
     }
 
     public LocalDate getStartDate() {
-        return Utils.ReadStartDate(this.dateField);
+        return DateFieldUtils.readStartDate(this.dateField);
     }
 
     public LocalDate getExpirationDate() {
-        return Utils.ReadExpirationDate(this.dateField);
+        return DateFieldUtils.readExpirationDate(this.dateField);
     }
 
     public byte[] getDateField() {
@@ -170,7 +194,6 @@ public class MapperOutput implements WritableComparable<MapperOutput> {
      * @param validAtDate Time instant to check object validity.
      * @return Object is valid
      */
-//    TODO(nrobison): Refactor into standalone helper class
     public boolean isValidNow(LocalDate validAtDate) {
         if (validAtDate.isEqual(getStartDate())) {
             return true;
@@ -188,7 +211,6 @@ public class MapperOutput implements WritableComparable<MapperOutput> {
      * @param validAtDate Time instant to check relation to object validity
      * @return occurs before, during, or after object's valid time range.
      */
-//    TODO(nrobison): Refactor into standalone helper class
     public int compareDate(LocalDate validAtDate) {
 
         final LocalDate startDate = getStartDate();
@@ -206,14 +228,6 @@ public class MapperOutput implements WritableComparable<MapperOutput> {
                 return -1;
             }
         }
-    }
-
-    @Override
-    public int hashCode() {
-        int result = regionID.hashCode();
-        result = 31 * result + (regionName != null ? regionName.hashCode() : 0);
-        result = 31 * result + (datasetYear != null ? datasetYear.hashCode() : 0);
-        return result;
     }
 
     public GAULObject toObject(LocalDate minDate, LocalDate maxDate) {
