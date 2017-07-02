@@ -1,7 +1,8 @@
 package com.nickrobison.gaulintegrator;
 
 import com.esri.io.PolygonFeatureWritable;
-import com.nickrobison.gaulintegrator.common.DateFieldUtils;
+import com.nickrobison.trestle.common.DateFieldUtils;
+import com.nickrobison.trestle.datasets.GAULObject;
 import org.apache.hadoop.io.*;
 
 import java.io.DataInput;

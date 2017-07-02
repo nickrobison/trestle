@@ -20,6 +20,7 @@
         <module>trestle-iri</module>
         <module>trestle-metrics</module>
         <module>trestle-annotations</module>
+        <module>trestle-datasets</module>
     </modules>
     <packaging>pom</packaging>
 

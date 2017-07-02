@@ -66,5 +66,10 @@
             <version>${hadoop.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.nickrobison.trestle</groupId>
+            <artifactId>trestle-datasets</artifactId>
+            <version>0.7-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 </project>

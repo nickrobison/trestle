@@ -1,10 +1,10 @@
 package com.nickrobison.trestle.reasoner.merge;
 
 import com.nickrobison.trestle.ontology.types.TrestleResult;
-import com.nickrobison.trestle.reasoner.types.TemporalScope;
-import com.nickrobison.trestle.reasoner.types.TrestleOWLFact;
-import com.nickrobison.trestle.reasoner.types.temporal.TemporalObject;
-import com.nickrobison.trestle.reasoner.types.temporal.TemporalObjectBuilder;
+import com.nickrobison.trestle.types.TemporalScope;
+import com.nickrobison.trestle.types.TrestleOWLFact;
+import com.nickrobison.trestle.types.temporal.TemporalObject;
+import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
