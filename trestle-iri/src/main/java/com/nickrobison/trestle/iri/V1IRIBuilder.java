@@ -92,9 +92,13 @@ class V1IRIBuilder {
     static Optional<OffsetDateTime> getDatabaseTemporal(String iriString) {
         final Optional<OffsetDateTime> objectTemporal = getObjectTemporal(iriString);
         if (objectTemporal.isPresent()) {
-            final int i = iriString.lastIndexOf(":");
-            final long temporalLong = Long.parseLong(iriString.substring(i + 1, iriString.length()));
-            return Optional.of(OffsetDateTime.ofInstant(Instant.ofEpochMilli(temporalLong), ZoneOffset.UTC));
+            final String[] splitGroups = iriString.split(":");
+            if (splitGroups.length >= 4) {
+//                final int i = iriString.lastIndexOf(":");
+//                final long temporalLong = Long.parseLong(iriString.substring(i + 1, iriString.length()));
+                final long temporalLong = Long.parseLong(splitGroups[3]);
+                return Optional.of(OffsetDateTime.ofInstant(Instant.ofEpochMilli(temporalLong), ZoneOffset.UTC));
+            }
         }
         return Optional.empty();
     }
