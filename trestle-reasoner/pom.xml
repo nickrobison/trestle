@@ -10,7 +10,6 @@
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <trestle.location>file:///Users/nrobison/Developer/git/dissertation/trestle-ontology</trestle.location>
-        <caffeine.version>2.5.5</caffeine.version>
     </properties>
 
     <artifactId>trestle-reasoner</artifactId>

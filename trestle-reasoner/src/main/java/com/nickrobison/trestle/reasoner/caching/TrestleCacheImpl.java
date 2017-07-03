@@ -31,6 +31,7 @@ import java.time.ZoneOffset;
 /**
  * Created by nrobison on 8/18/16.
  */
+@SuppressWarnings({"squid:S2142"})
 @Singleton
 public class TrestleCacheImpl implements TrestleCache {
 
@@ -43,6 +44,7 @@ public class TrestleCacheImpl implements TrestleCache {
     private final @GuardedBy("cacheLock") Cache<IRI, TrestleIndividual> trestleIndividualCache;
     private final @GuardedBy("cacheLock") ITrestleIndex<TrestleIRI> validIndex;
     private final @GuardedBy("cacheLock") ITrestleIndex<TrestleIRI> dbIndex;
+    private final CachingProvider cachingProvider;
 
     @Inject
     @SuppressWarnings({"argument.type.incompatible"})
@@ -60,7 +62,7 @@ public class TrestleCacheImpl implements TrestleCache {
         final Config cacheConfig = ConfigFactory.load().getConfig("trestle.cache");
         final String cacheImplementation = cacheConfig.getString("cacheImplementation");
         logger.info("Creating TrestleCache with implementation {}", cacheImplementation);
-        final CachingProvider cachingProvider = Caching.getCachingProvider(cacheImplementation);
+        cachingProvider = Caching.getCachingProvider(cacheImplementation);
         cacheManager = cachingProvider.getCacheManager();
 //        Create trestle object cache
         final MutableConfiguration<IRI, Object> trestleObjectCacheConfiguration = new MutableConfiguration<>();
@@ -213,6 +215,7 @@ public class TrestleCacheImpl implements TrestleCache {
             cacheManager.destroyCache(TRESTLE_OBJECT_CACHE);
             cacheManager.destroyCache(TRESTLE_INDIVIDUAL_CACHE);
         }
+        this.cachingProvider.close();
         cacheManager.close();
     }
 
