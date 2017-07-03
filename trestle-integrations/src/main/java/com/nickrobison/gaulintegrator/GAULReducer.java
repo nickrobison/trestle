@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 /**
  * Created by nrobison on 5/5/16.
  */
-@SuppressWarnings({"argument.type.incompatible", "initialization.fields.uninitialized", "squid:S2068"})
+@SuppressWarnings({"argument.type.incompatible", "initialization.fields.uninitialized", "squid:S2068", "pmd:LawOfDemeter", "pmd:DataflowAnomalyAnalysis "})
 public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritable, Text> {
 
     private static final Logger logger = LoggerFactory.getLogger(GAULReducer.class);

@@ -14,6 +14,7 @@ import java.util.Arrays;
 /**
  * Created by nrobison on 5/6/16.
  */
+@SuppressWarnings({"pmd:LawOfDemeter", "pmd:BooleanGetMethodName"})
 @DatasetClass(name = "gaul-test")
 public class GAULObject {
 

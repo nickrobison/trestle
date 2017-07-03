@@ -14,6 +14,7 @@ import java.util.Arrays;
 /**
  * Created by nrobison on 5/5/16.
  */
+@SuppressWarnings({"pmd:LawOfDemeter"})
 public class MapperOutput implements WritableComparable<MapperOutput> {
 
     private final LongWritable regionID;
