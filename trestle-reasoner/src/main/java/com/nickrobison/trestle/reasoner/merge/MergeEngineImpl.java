@@ -1,10 +1,10 @@
 package com.nickrobison.trestle.reasoner.merge;
 
 import com.nickrobison.trestle.ontology.types.TrestleResult;
-import com.nickrobison.trestle.reasoner.types.TemporalScope;
-import com.nickrobison.trestle.reasoner.types.TrestleOWLFact;
-import com.nickrobison.trestle.reasoner.types.temporal.TemporalObject;
-import com.nickrobison.trestle.reasoner.types.temporal.TemporalObjectBuilder;
+import com.nickrobison.trestle.types.TemporalScope;
+import com.nickrobison.trestle.types.TrestleOWLFact;
+import com.nickrobison.trestle.types.temporal.TemporalObject;
+import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -12,7 +12,6 @@ import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Serializable;
 import java.time.temporal.Temporal;
 import java.util.Collections;
 import java.util.List;
@@ -22,11 +21,13 @@ import java.util.stream.Collectors;
 /**
  * Created by nrobison on 6/13/17.
  */
-public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
+public class MergeEngineImpl implements TrestleMergeEngine {
 
-    private static final long serialVersionUID = 42L;
     private static final Logger logger = LoggerFactory.getLogger(MergeEngineImpl.class);
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
+    public static final String PROPERTY = "property";
+    public static final String INDIVIDUAL = "individual";
+    public static final String OBJECT = "object";
     private final Config config;
     private MergeStrategy defaultStrategy;
     private final boolean onLoad;
@@ -63,7 +64,7 @@ public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
                 return noMerge(newFacts, existingFacts);
             default:
 //                    Do default stuff
-                throw new RuntimeException("Can't execute default merge, should use strategy from config");
+                throw new TrestleMergeException("Can't execute default merge, should use strategy from config");
         }
     }
 
@@ -85,9 +86,9 @@ public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
                         .stream()
                         .noneMatch(result -> {
                             final OWLDataPropertyAssertionAxiom resultFact = df.getOWLDataPropertyAssertionAxiom(
-                                    df.getOWLDataProperty(result.getIndividual("property").orElseThrow(() -> new RuntimeException("Property is null")).asOWLNamedIndividual().getIRI()),
-                                    result.getIndividual("individual").orElseThrow(() -> new RuntimeException("Individual is null")),
-                                    result.getLiteral("object").orElseThrow(() -> new RuntimeException("Object is null")));
+                                    df.getOWLDataProperty(result.getIndividual(PROPERTY).orElseThrow(() -> new RuntimeException("Property is null")).asOWLNamedIndividual().getIRI()),
+                                    result.getIndividual(INDIVIDUAL).orElseThrow(() -> new RuntimeException("Individual is null")),
+                                    result.getLiteral(OBJECT).orElseThrow(() -> new RuntimeException("Object is null")));
                             return resultFact.equals(fact);
                         }))
                 .collect(Collectors.toList());
@@ -100,9 +101,9 @@ public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
                     final Optional<TemporalObject> validTemporal = TemporalObjectBuilder.buildTemporalFromResults(TemporalScope.VALID, result.getLiteral("va"), result.getLiteral("vf"), result.getLiteral("vt"));
 //                            Parse the literal
                     final OWLDataPropertyAssertionAxiom factProperty = df.getOWLDataPropertyAssertionAxiom(
-                            df.getOWLDataProperty(result.getIndividual("property").orElseThrow(() -> new RuntimeException("Property is null")).asOWLNamedIndividual().getIRI()),
-                            result.getIndividual("individual").orElseThrow(() -> new RuntimeException("Individual is null")),
-                            result.getLiteral("object").orElseThrow(() -> new RuntimeException("Object is null")));
+                            df.getOWLDataProperty(result.getIndividual(PROPERTY).orElseThrow(() -> new RuntimeException("Property is null")).asOWLNamedIndividual().getIRI()),
+                            result.getIndividual(INDIVIDUAL).orElseThrow(() -> new RuntimeException("Individual is null")),
+                            result.getLiteral(OBJECT).orElseThrow(() -> new RuntimeException("Object is null")));
 
 //                    Override the valid temporal with the new ending date
                     final TemporalObject validTemporal1 = validTemporal.orElseThrow(() -> new RuntimeException("Fact valid temporal is null"));
@@ -125,9 +126,9 @@ public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
                 .stream()
                 .filter(result -> {
                     final OWLDataPropertyAssertionAxiom existingFactValue = df.getOWLDataPropertyAssertionAxiom(
-                            df.getOWLDataProperty(result.getIndividual("property").orElseThrow(() -> new RuntimeException("property is null")).asOWLNamedIndividual().getIRI()),
-                            result.getIndividual("individual").orElseThrow(() -> new RuntimeException("individual is null")),
-                            result.getLiteral("object").orElseThrow(() -> new RuntimeException("object is null")));
+                            df.getOWLDataProperty(result.getIndividual(PROPERTY).orElseThrow(() -> new RuntimeException("property is null")).asOWLNamedIndividual().getIRI()),
+                            result.getIndividual(INDIVIDUAL).orElseThrow(() -> new RuntimeException("individual is null")),
+                            result.getLiteral(OBJECT).orElseThrow(() -> new RuntimeException("object is null")));
                     return divergingFacts
                             .stream()
                             .map(OWLPropertyAssertionAxiom::getProperty)
@@ -146,7 +147,7 @@ public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
                 .collect(Collectors.toList());
         final List<OWLDataProperty> existingProperties = existingFacts
                 .stream()
-                .map(fact -> fact.getIndividual("property"))
+                .map(fact -> fact.getIndividual(PROPERTY))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .map(property -> df.getOWLDataProperty(property.asOWLNamedIndividual().getIRI()))
@@ -184,7 +185,7 @@ public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
                 }
             }
             default:
-                throw new RuntimeException("Wrong temporal type");
+                throw new IllegalArgumentException("Wrong temporal type");
         }
     }
 
@@ -197,7 +198,7 @@ public class MergeEngineImpl implements TrestleMergeEngine, Serializable {
             case DATABASE:
                 return TemporalObjectBuilder.database().from(temporal.asInterval().getFromTime()).to(eventTemporal).build();
             default:
-                throw new RuntimeException("Wrong temporal type");
+                throw new IllegalArgumentException("Wrong temporal type");
         }
     }
 }

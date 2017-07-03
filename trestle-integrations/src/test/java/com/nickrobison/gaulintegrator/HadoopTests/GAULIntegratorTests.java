@@ -1,7 +1,11 @@
 package com.nickrobison.gaulintegrator.HadoopTests;
 
 import com.esri.mapreduce.PolygonFeatureInputFormat;
-import com.nickrobison.gaulintegrator.*;
+import com.nickrobison.gaulintegrator.GAULMapper;
+import com.nickrobison.gaulintegrator.GAULReducer;
+import com.nickrobison.gaulintegrator.IntegrationRunner;
+import com.nickrobison.gaulintegrator.MapperOutput;
+import com.nickrobison.trestle.datasets.GAULObject;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import org.apache.hadoop.fs.FileSystem;
@@ -15,10 +19,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.semanticweb.owlapi.model.IRI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Created by nrobison on 5/5/16.
  */
 @SuppressWarnings({"argument.type.incompatible", "initialization.fields.uninitialized", "OptionalGetWithoutIsPresent"})
-@Tag("integration")
+@Tags({@Tag("integration"), @Tag("load")})
 public class GAULIntegratorTests {
 
     private static FileSystem fileSystem;
@@ -107,6 +108,7 @@ public class GAULIntegratorTests {
                 .withName(ontologyName)
 //                FIXME(nrobison): Caching just doesn't work, so we should disable it until we merge TRESTLE-206
                 .withoutCaching()
+                .withoutMetrics()
                 .build();
 
         File outputFile = new File("/Users/nrobison/Desktop/hadoop.owl");
@@ -152,6 +154,7 @@ public class GAULIntegratorTests {
                 .withName(ontologyName)
 //                FIXME(nrobison): Caching just doesn't work, so we should disable it until we merge TRESTLE-206
                 .withoutCaching()
+                .withoutMetrics()
                 .build();
 
         final Optional<List<GAULObject>> manhicaMembers = reasoner.getConceptMembers(GAULObject.class, "Manhica:concept", null, null);

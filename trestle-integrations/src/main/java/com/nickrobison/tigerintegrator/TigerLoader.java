@@ -1,6 +1,7 @@
 package com.nickrobison.tigerintegrator;
 
 import com.google.common.collect.ImmutableMap;
+import com.nickrobison.trestle.datasets.TigerCountyObject;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;

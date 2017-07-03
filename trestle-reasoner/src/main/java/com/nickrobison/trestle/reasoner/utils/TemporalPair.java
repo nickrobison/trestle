@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.reasoner.utils;
 
-import com.nickrobison.trestle.reasoner.types.temporal.TemporalObject;
+import com.nickrobison.trestle.types.temporal.TemporalObject;
 
 /**
  * Created by nrobison on 1/9/17.

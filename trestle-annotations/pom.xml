@@ -16,6 +16,11 @@
             <groupId>io.dropwizard.metrics</groupId>
             <artifactId>metrics-annotation</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.nickrobison.trestle</groupId>
+            <artifactId>trestle-common</artifactId>
+            <version>0.7-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
 

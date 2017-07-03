@@ -1,7 +1,7 @@
 package com.nickrobison.trestle.reasoner.caching;
 
 import com.nickrobison.trestle.iri.TrestleIRI;
-import com.nickrobison.trestle.reasoner.types.TrestleIndividual;
+import com.nickrobison.trestle.types.TrestleIndividual;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;

@@ -2,7 +2,6 @@ package com.nickrobison.zicta;
 
 import com.esri.core.geometry.Polygon;
 import com.esri.io.PolygonFeatureWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.jetbrains.annotations.NotNull;

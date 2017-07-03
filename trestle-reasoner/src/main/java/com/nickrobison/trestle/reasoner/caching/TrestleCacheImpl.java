@@ -4,7 +4,7 @@ import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.reasoner.caching.listeners.TrestleObjectCacheEntryListener;
 import com.nickrobison.trestle.common.locking.TrestleUpgradableReadWriteLock;
 import com.nickrobison.trestle.iri.TrestleIRI;
-import com.nickrobison.trestle.reasoner.types.TrestleIndividual;
+import com.nickrobison.trestle.types.TrestleIndividual;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.lock.qual.GuardedBy;

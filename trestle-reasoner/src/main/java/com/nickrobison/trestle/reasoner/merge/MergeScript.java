@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.reasoner.merge;
 
-import com.nickrobison.trestle.reasoner.types.TrestleOWLFact;
+import com.nickrobison.trestle.types.TrestleOWLFact;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
