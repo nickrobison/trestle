@@ -1,9 +1,9 @@
 package com.nickrobison.trestle.reasoner.caching;
 
 import com.nickrobison.metrician.Metrician;
-import com.nickrobison.trestle.reasoner.caching.listeners.TrestleObjectCacheEntryListener;
 import com.nickrobison.trestle.common.locking.TrestleUpgradableReadWriteLock;
 import com.nickrobison.trestle.iri.TrestleIRI;
+import com.nickrobison.trestle.reasoner.caching.listeners.TrestleObjectCacheEntryListener;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -17,11 +17,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
-import javax.cache.Caching;
 import javax.cache.configuration.FactoryBuilder;
 import javax.cache.configuration.MutableCacheEntryListenerConfiguration;
 import javax.cache.configuration.MutableConfiguration;
-import javax.cache.spi.CachingProvider;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -44,7 +42,6 @@ public class TrestleCacheImpl implements TrestleCache {
     private final @GuardedBy("cacheLock") Cache<IRI, TrestleIndividual> trestleIndividualCache;
     private final @GuardedBy("cacheLock") ITrestleIndex<TrestleIRI> validIndex;
     private final @GuardedBy("cacheLock") ITrestleIndex<TrestleIRI> dbIndex;
-    private final CachingProvider cachingProvider;
 
     @Inject
     @SuppressWarnings({"argument.type.incompatible"})
@@ -52,18 +49,16 @@ public class TrestleCacheImpl implements TrestleCache {
                      @Named("database") ITrestleIndex<TrestleIRI> dbIndex,
                      @Named("cacheLock") TrestleUpgradableReadWriteLock lock,
                      TrestleObjectCacheEntryListener listener,
-                     Metrician metrician) {
-//        Create the index
+                     Metrician metrician,
+                     CacheManager manager) {
+//        Setup the indexes
         this.validIndex = validIndex;
         this.dbIndex = dbIndex;
 //        Create the lock
         this.cacheLock = lock;
-
+//        Setup the cache manager
+        this.cacheManager = manager;
         final Config cacheConfig = ConfigFactory.load().getConfig("trestle.cache");
-        final String cacheImplementation = cacheConfig.getString("cacheImplementation");
-        logger.info("Creating TrestleCache with implementation {}", cacheImplementation);
-        cachingProvider = Caching.getCachingProvider(cacheImplementation);
-        cacheManager = cachingProvider.getCacheManager();
 //        Create trestle object cache
         final MutableConfiguration<IRI, Object> trestleObjectCacheConfiguration = new MutableConfiguration<>();
         trestleObjectCacheConfiguration
@@ -215,7 +210,7 @@ public class TrestleCacheImpl implements TrestleCache {
             cacheManager.destroyCache(TRESTLE_OBJECT_CACHE);
             cacheManager.destroyCache(TRESTLE_INDIVIDUAL_CACHE);
         }
-        this.cachingProvider.close();
+//        this.cachingProvider.close();
         cacheManager.close();
     }
 
