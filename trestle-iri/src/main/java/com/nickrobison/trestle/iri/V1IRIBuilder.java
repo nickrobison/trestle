@@ -47,7 +47,7 @@ class V1IRIBuilder {
         final Optional<String> objectFact = getObjectFact(iriString);
         final Optional<OffsetDateTime> objectTemporal = getObjectTemporal(iriString);
         final Optional<OffsetDateTime> databaseTemporal = getDatabaseTemporal(iriString);
-        return new TrestleIRIV1(IRIVersion.V1, prefix, objectID, objectFact.orElse(null), objectTemporal.orElse(null), databaseTemporal.orElse(null));
+        return new TrestleIRIV1(IRIVersion.V1, prefix, objectID, objectFact.orElse(""), objectTemporal.orElse(null), databaseTemporal.orElse(null));
     }
 
     static String getObjectID(String iriString) {
