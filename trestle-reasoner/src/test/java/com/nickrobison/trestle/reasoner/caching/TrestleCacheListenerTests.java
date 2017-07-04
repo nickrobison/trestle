@@ -53,7 +53,11 @@ public class TrestleCacheListenerTests {
         final CacheTestObject cacheTestObject = new CacheTestObject("cache test", 1);
         trestleCache.writeTrestleObject(TEST_IRI, LocalDate.of(2017, 1, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli(), cacheTestObject);
         trestleCache.writeTrestleObject(TEST_IRI, LocalDate.of(2017, 2, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli(), cacheTestObject);
-        trestleCache.writeTrestleObject(TEST_IRI, LocalDate.of(2017, 3, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli(), cacheTestObject);
+        trestleCache.writeTrestleObject(TEST_IRI, LocalDate.of(2017, 3, 26).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli(), cacheTestObject);
+        trestleCache.getTrestleObject(CacheTestObject.class, TEST_IRI);
+        trestleCache.getTrestleObject(CacheTestObject.class, TEST_IRI);
+        trestleCache.getTrestleObject(CacheTestObject.class, TEST_IRI);
+        trestleCache.getTrestleObject(CacheTestObject.class, TEST_IRI);
         verify(listener, times(1)).onRemoved(any());
         verify(listener, never()).onRemoved(any());
     }
