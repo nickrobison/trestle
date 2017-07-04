@@ -838,7 +838,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //            Write back to index
             final TrestleObjectResult<@NonNull T> value = constructedObject.get();
             try {
-                this.trestleCache.writeTrestleObject(trestleIRI, value.getValidFrom().toInstant().toEpochMilli(), value.getValidTo().toInstant().toEpochMilli(), value.getObject());
+                this.trestleCache.writeTrestleObject(trestleIRI, value.getValidFrom(), value.getValidTo(), value.getDbFrom(), value.getDbTo(), value.getObject());
             } catch (Exception e) {
                 logger.error("Unable to write Trestle Object {} to cache", individualIRI, e);
             }

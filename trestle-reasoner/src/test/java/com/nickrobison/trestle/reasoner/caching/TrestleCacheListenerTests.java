@@ -17,6 +17,7 @@ import org.mockito.MockitoAnnotations;
 import javax.cache.CacheManager;
 import javax.cache.Caching;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.ZoneOffset;
 
@@ -29,6 +30,11 @@ import static org.mockito.Mockito.*;
 public class TrestleCacheListenerTests {
     private static final String PREFIX = "http://nickrobison.com/test#";
     private static final TrestleIRI TEST_IRI = IRIBuilder.encodeIRI(IRIVersion.V1, PREFIX, "test-object", null, LocalDate.of(2000, 3, 26).atTime(OffsetTime.MIN), LocalDate.of(2017, 6, 1).atTime(OffsetTime.MIN));
+    private static final OffsetDateTime JAN_TEST_DATE = LocalDate.of(2017, 1, 1).atStartOfDay().atOffset(ZoneOffset.UTC);
+    private static final OffsetDateTime FEB_TEST_DATE = LocalDate.of(2017, 2, 1).atStartOfDay().atOffset(ZoneOffset.UTC);
+    private static final OffsetDateTime MAR_TEST_DATE = LocalDate.of(2017, 3, 26).atStartOfDay().atOffset(ZoneOffset.UTC);
+    private static final OffsetDateTime JUN_TEST_DATE = LocalDate.of(2017, 6, 1).atStartOfDay().atOffset(ZoneOffset.UTC);
+    private static final OffsetDateTime JUL_TEST_DATE = LocalDate.of(2017, 7, 1).atStartOfDay().atOffset(ZoneOffset.UTC);
 
     @Mock
     TrestleObjectCacheEntryListener listener;
@@ -51,9 +57,9 @@ public class TrestleCacheListenerTests {
     @Disabled
     public void testEviction() {
         final CacheTestObject cacheTestObject = new CacheTestObject("cache test", 1);
-        trestleCache.writeTrestleObject(TEST_IRI, LocalDate.of(2017, 1, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli(), cacheTestObject);
-        trestleCache.writeTrestleObject(TEST_IRI, LocalDate.of(2017, 2, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli(), cacheTestObject);
-        trestleCache.writeTrestleObject(TEST_IRI, LocalDate.of(2017, 3, 26).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli(), cacheTestObject);
+        trestleCache.writeTrestleObject(TEST_IRI, JAN_TEST_DATE, JUN_TEST_DATE, JUL_TEST_DATE, cacheTestObject);
+        trestleCache.writeTrestleObject(TEST_IRI, FEB_TEST_DATE, JUN_TEST_DATE, JUL_TEST_DATE, cacheTestObject);
+        trestleCache.writeTrestleObject(TEST_IRI, MAR_TEST_DATE, JUN_TEST_DATE, JUL_TEST_DATE, cacheTestObject);
         trestleCache.getTrestleObject(CacheTestObject.class, TEST_IRI);
         trestleCache.getTrestleObject(CacheTestObject.class, TEST_IRI);
         trestleCache.getTrestleObject(CacheTestObject.class, TEST_IRI);
@@ -66,8 +72,10 @@ public class TrestleCacheListenerTests {
     public void testRemoval() {
         final CacheTestObject cacheTestObject = new CacheTestObject("cache test", 1);
         trestleCache.writeTrestleObject(TEST_IRI,
-                LocalDate.of(2000, 1, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli(),
-                LocalDate.of(2000, 5, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli(),
+                LocalDate.of(2000, 1, 1).atStartOfDay().atOffset(ZoneOffset.UTC),
+                LocalDate.of(2000, 5, 1).atStartOfDay().atOffset(ZoneOffset.UTC),
+                JUN_TEST_DATE,
+                JUL_TEST_DATE,
                 cacheTestObject);
         trestleCache.deleteTrestleObject(TEST_IRI);
         verify(listener, times(1)).onRemoved(any());
