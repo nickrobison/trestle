@@ -29,7 +29,7 @@ public class TrestleObjectCacheEntryListener implements
     private final transient TrestleUpgradableReadWriteLock cacheLock;
 
     @Inject
-    TrestleObjectCacheEntryListener(@Named("valid") ITrestleIndex<TrestleIRI> validIndex, @Named("cacheLock") TrestleUpgradableReadWriteLock cacheLock) {
+    public TrestleObjectCacheEntryListener(@Named("valid") ITrestleIndex<TrestleIRI> validIndex, @Named("cacheLock") TrestleUpgradableReadWriteLock cacheLock) {
         this.validIndex = validIndex;
         this.cacheLock = cacheLock;
         logger.debug("Registering cache listener, waiting for expired or removed events");

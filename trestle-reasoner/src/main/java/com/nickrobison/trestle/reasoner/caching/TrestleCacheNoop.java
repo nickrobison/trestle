@@ -35,8 +35,17 @@ public class TrestleCacheNoop implements TrestleCache {
 //        Not implemented
     }
 
+    @Override
+    public void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal, Object value) {
+//        Not implemented
+    }
 
-//    @Override
+    @Override
+    public void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime atTemporal, Object value) {
+//        Not implemented
+    }
+
+    //    @Override
 //    public void writeTrestleObject(TrestleIRI individualIRI, long startTemporal, long endTemporal, Object value) {
 //    }
 

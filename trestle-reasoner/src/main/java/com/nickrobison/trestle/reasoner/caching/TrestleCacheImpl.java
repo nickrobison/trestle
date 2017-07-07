@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
+import javax.cache.configuration.Factory;
 import javax.cache.configuration.FactoryBuilder;
 import javax.cache.configuration.MutableCacheEntryListenerConfiguration;
 import javax.cache.configuration.MutableConfiguration;
@@ -63,18 +64,25 @@ public class TrestleCacheImpl implements TrestleCache {
         final MutableConfiguration<IRI, Object> trestleObjectCacheConfiguration = new MutableConfiguration<>();
         trestleObjectCacheConfiguration
                 .setTypes(IRI.class, Object.class)
-                .addCacheEntryListenerConfiguration(new MutableCacheEntryListenerConfiguration<>(FactoryBuilder.factoryOf(listener), null, false, cacheConfig.getBoolean("synchronous")))
+//                .addCacheEntryListenerConfiguration()
                 .setStatisticsEnabled(true);
+//        final MutableCacheEntryListenerConfiguration<IRI, Object> list = ;
         logger.debug("Creating cache {}", TRESTLE_OBJECT_CACHE);
-        trestleObjectCache = cacheManager.createCache(TRESTLE_OBJECT_CACHE, trestleObjectCacheConfiguration);
+        this.trestleObjectCache = cacheManager.getCache(TRESTLE_OBJECT_CACHE, IRI.class, Object.class);
+
+//        trestleObjectCache = cacheManager.createCache(TRESTLE_OBJECT_CACHE, trestleObjectCacheConfiguration);
+        final MutableCacheEntryListenerConfiguration<IRI, Object> config = new MutableCacheEntryListenerConfiguration<>(FactoryBuilder.factoryOf(listener), null, false, cacheConfig.getBoolean("synchronous"));
+        trestleObjectCache.registerCacheEntryListener(config);
 
 //        Create the trestle individual cache
-        final MutableConfiguration<IRI, TrestleIndividual> trestleIndividualCacheConfiguration = new MutableConfiguration<>();
-        trestleIndividualCacheConfiguration
-                .setTypes(IRI.class, TrestleIndividual.class)
-                .setStatisticsEnabled(true);
+//        final MutableConfiguration<IRI, TrestleIndividual> trestleIndividualCacheConfiguration = new MutableConfiguration<>();
+//        trestleIndividualCacheConfiguration
+//                .setTypes(IRI.class, TrestleIndividual.class)
+//                .setStatisticsEnabled(true);
         logger.debug("Creating cache {}", TRESTLE_INDIVIDUAL_CACHE);
-        this.trestleIndividualCache = cacheManager.createCache(TRESTLE_INDIVIDUAL_CACHE, trestleIndividualCacheConfiguration);
+        this.trestleIndividualCache = cacheManager.getCache(TRESTLE_INDIVIDUAL_CACHE, IRI.class, TrestleIndividual.class);
+
+//        this.trestleIndividualCache = cacheManager.createCache(TRESTLE_INDIVIDUAL_CACHE, trestleIndividualCacheConfiguration);
 
 //        Enable metrics
         metrician.registerMetricSet(new TrestleCacheMetrics());
@@ -99,7 +107,7 @@ public class TrestleCacheImpl implements TrestleCache {
                 if (dbTemporal.isPresent()) {
                     dbIndexValue = dbIndex.getValue(validIndexValue.toString(), dbTemporal.get().toInstant().toEpochMilli());
                 } else {
-                    dbIndexValue = dbIndex.getValue(validIndexValue.toString(), OffsetDateTime.now().toInstant().toEpochMilli());
+                    dbIndexValue = dbIndex.getValue(validIndexValue.toString(), OffsetDateTime.now(ZoneOffset.UTC).toInstant().toEpochMilli());
                 }
                 if (dbIndexValue != null) {
                     logger.debug("DB Index has {} for {} @{}", dbIndexValue, individualIRI, offsetDateTime);
@@ -134,23 +142,41 @@ public class TrestleCacheImpl implements TrestleCache {
 //        }
 //    }
 
+
     @Override
-    public void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime startTemporal, OffsetDateTime endTemporal, OffsetDateTime dbStartTemporal, OffsetDateTime dbEndTemporal, Object value) {
+    public void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal, Object value) {
+        writeTrestleObject(individualIRI, startTemporal, endTemporal, OffsetDateTime.now(ZoneOffset.UTC), null, value);
+    }
+
+    @Override
+    public void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal, OffsetDateTime dbStartTemporal, @Nullable OffsetDateTime dbEndTemporal, Object value) {
         //        Write to the cache and the index
         try {
             cacheLock.lockWrite();
             logger.debug("Adding {} to cache from {} to {}", individualIRI, startTemporal, endTemporal);
             trestleObjectCache.put(individualIRI.getIRI(), value);
             logger.debug("Added to cache");
+            final long endTemporalMillis;
+            final long dbEndTemporalMillis;
+            if (endTemporal == null) {
+                endTemporalMillis = validIndex.getMaxValue();
+            } else {
+                endTemporalMillis = endTemporal.toInstant().toEpochMilli();
+            }
+            if (dbEndTemporal == null) {
+                dbEndTemporalMillis = dbIndex.getMaxValue();
+            } else {
+                dbEndTemporalMillis = dbEndTemporal.toInstant().toEpochMilli();
+            }
             final TrestleIRI withoutDatabase = individualIRI.withoutDatabase();
             validIndex.insertValue(individualIRI.getObjectID(),
                     startTemporal.toInstant().toEpochMilli(),
-                    endTemporal.toInstant().toEpochMilli(),
+                    endTemporalMillis,
                     withoutDatabase);
             logger.debug("Added {} to valid index", withoutDatabase);
             dbIndex.insertValue(withoutDatabase.toString(),
                     dbStartTemporal.toInstant().toEpochMilli(),
-                    dbEndTemporal.toInstant().toEpochMilli(),
+                    dbEndTemporalMillis,
                     individualIRI);
             logger.debug("Added {} to db index", individualIRI);
         } catch (InterruptedException e) {
@@ -178,7 +204,12 @@ public class TrestleCacheImpl implements TrestleCache {
 
 
     @Override
-    public void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime atTemporal, OffsetDateTime dbStartTemporal, OffsetDateTime dbEndTemporal, Object value) {
+    public void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime atTemporal, Object value) {
+        writeTrestleObject(individualIRI, atTemporal, OffsetDateTime.now(ZoneOffset.UTC), null, value);
+    }
+
+    @Override
+    public void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime atTemporal, OffsetDateTime dbStartTemporal, @Nullable OffsetDateTime dbEndTemporal, Object value) {
         //        Write to the cache and the index
         try {
             cacheLock.lockWrite();
@@ -189,10 +220,16 @@ public class TrestleCacheImpl implements TrestleCache {
                     atTemporal.toInstant().toEpochMilli(),
                     individualIRI.withoutDatabase());
             logger.debug("Added {} to valid index", withoutDatabase);
+            final long dbEndTemporalMillis;
+            if (dbEndTemporal == null) {
+                dbEndTemporalMillis = dbIndex.getMaxValue();
+            } else {
+                dbEndTemporalMillis = dbEndTemporal.toInstant().toEpochMilli();
+            }
             dbIndex.insertValue(
                     withoutDatabase.toString(),
                     dbStartTemporal.toInstant().toEpochMilli(),
-                    dbEndTemporal.toInstant().toEpochMilli(),
+                    dbEndTemporalMillis,
                     individualIRI
             );
         } catch (InterruptedException e) {
