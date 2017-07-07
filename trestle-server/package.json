@@ -10,12 +10,11 @@
     "@angular/core": "4.1.0",
     "@angular/forms": "4.1.0",
     "@angular/http": "4.1.0",
-    "@angular/material": "2.0.0-beta.7",
+    "@angular/material": "2.0.0-beta.8",
     "@angular/platform-browser": "4.1.0",
     "@angular/platform-browser-dynamic": "4.1.0",
     "@angular/router": "4.1.0",
     "@mapbox/geojson-extent": "^0.3.2",
-    "@types/geojson": "^1.0.2",
     "angular2-jwt": "^0.2.3",
     "angular2-materialize": "^9.0.1",
     "codemirror": "^5.24.2",
@@ -43,6 +42,7 @@
     "@types/cucumber": "^2.0.1",
     "@types/d3": "^4.8.0",
     "@types/file-saver": "^0.0.0",
+    "@types/geojson": "^1.0.2",
     "@types/hammerjs": "^2.0.34",
     "@types/node": "^7.0.0",
     "@types/protractor": "^4.0.0",
@@ -74,6 +74,9 @@
     "url-loader": "^0.5.8",
     "webpack": "^2.4.1",
     "webpack-merge": "^4.1.0"
+  },
+  "peerDependencies": {
+    "@angular/cdk": "2.0.0-beta.8"
   },
   "scripts": {
     "watch": "webpack --colors --progress --watch",
