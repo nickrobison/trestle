@@ -56,4 +56,20 @@ public interface Metrician {
      * @return - {@link Histogram}
      */
     Histogram registerHistogram(String name);
+
+
+    /**
+     * Register a {@link Meter} with the provided absolute name
+     * @param name - Absolute name to use for Meter
+     * @return - {@link Meter}
+     */
+    Meter registerMeter(String name);
+
+    /**
+     * Register a {@link Gauge} with the provided absolute name
+     * @param name - Absolute name to use for Gauge
+     * @param gauge - {@link Gauge}
+     * @param <T> - Type of {@link Gauge}
+     */
+    <T> void registerGauge(String name, Gauge<T> gauge);
 }

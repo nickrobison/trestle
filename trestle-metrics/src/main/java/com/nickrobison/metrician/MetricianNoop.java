@@ -4,6 +4,7 @@ import com.codahale.metrics.*;
 import com.nickrobison.metrician.backends.MetricianExportedValue;
 import com.nickrobison.metrician.instrumentation.NoOpMetrics.NoOpCounter;
 import com.nickrobison.metrician.instrumentation.NoOpMetrics.NoOpHistogram;
+import com.nickrobison.metrician.instrumentation.NoOpMetrics.NoOpMeter;
 import com.nickrobison.metrician.instrumentation.NoOpMetrics.NoOpTimer;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
@@ -21,23 +22,24 @@ import java.util.Map;
 @SuppressWarnings({"return.type.incompatible"})
 public class MetricianNoop implements Metrician {
     private static final Logger logger = LoggerFactory.getLogger(MetricianNoop.class);
+    public static final String METRICIAN_DISABLED_RETURNING_NO_OP_METRIC = "Metrician disabled, returning No-Op Metric";
 
     MetricianNoop() {
         logger.warn("Running with Metrician disabled, all calls will be No-Ops");
     }
     @Override
     public void shutdown() {
-
+//        Not Implemented
     }
 
     @Override
     public void shutdown(@Nullable File exportFile) {
-
+//        Not Implemented
     }
 
     @Override
     public void exportData(File exportFile) {
-
+//        Not Implemented
     }
 
     @Override
@@ -72,20 +74,30 @@ public class MetricianNoop implements Metrician {
 
     @Override
     public Timer registerTimer(String name) {
-        logger.warn("Metrician disabled, returning No-Op Metric");
+        logger.warn(METRICIAN_DISABLED_RETURNING_NO_OP_METRIC);
         return new NoOpTimer();
     }
 
     @Override
     public Counter registerCounter(String name) {
-        logger.warn("Metrician disabled, returning No-Op Metric");
+        logger.warn(METRICIAN_DISABLED_RETURNING_NO_OP_METRIC);
         return new NoOpCounter();
     }
 
     @Override
     public Histogram registerHistogram(String name) {
-        logger.warn("Metrician disabled, returning No-Op Metric");
+        logger.warn(METRICIAN_DISABLED_RETURNING_NO_OP_METRIC);
         return new NoOpHistogram();
+    }
+
+    @Override
+    public Meter registerMeter(String name) {
+        return new NoOpMeter();
+    }
+
+    @Override
+    public <T> void registerGauge(String name, Gauge<T> gauge) {
+        logger.warn(METRICIAN_DISABLED_RETURNING_NO_OP_METRIC);
     }
 
     @Override
