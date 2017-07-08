@@ -755,6 +755,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Metered(name = "read-trestle-object", absolute = true)
     @SuppressWarnings({"method.invocation.invalid"})
     private <@NonNull T> Optional<TrestleObjectResult<@NonNull T>> readTrestleObjectImpl(Class<@NonNull T> clazz, @NonNull IRI individualIRI, PointTemporal<?> validTemporal, PointTemporal<?> databaseTemporal) {
+        logger.trace("Reading individual {} at {}/{}", individualIRI, validTemporal, databaseTemporal);
 
 //        Contains class?
         try {
@@ -1072,16 +1073,24 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                             .collect(Collectors.toSet()))
                     .thenApply(intersectedIRIs -> intersectedIRIs
                             .stream()
-                            .map(iri -> CompletableFuture.supplyAsync(() -> {
+                            .map(iri -> {
                                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                                 try {
                                     return readTrestleObject(clazz, iri, false, atTemporal, dbTemporal);
                                 } finally {
                                     this.ontology.returnAndCommitTransaction(tt);
                                 }
-                            }, trestleThreadPool))
-                            .collect(Collectors.toList()))
-                    .thenCompose(LambdaUtils::sequenceCompletableFutures);
+                            })
+//                            .map(iri -> CompletableFuture.supplyAsync(() -> {
+//                                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+//                                try {
+//                                    return readTrestleObject(clazz, iri, false, atTemporal, dbTemporal);
+//                                } finally {
+//                                    this.ontology.returnAndCommitTransaction(tt);
+//                                }
+//                            }, trestleThreadPool))
+                            .collect(Collectors.toList()));
+//                    .thenCompose(LambdaUtils::sequenceCompletableFutures);
 
             try {
                 final List<@NonNull T> intersectedObjects = objectsFuture.get();
