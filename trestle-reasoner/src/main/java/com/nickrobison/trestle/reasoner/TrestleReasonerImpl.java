@@ -6,15 +6,11 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.nickrobison.metrician.Metrician;
-import com.nickrobison.trestle.common.LambdaUtils;
-import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
-import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
-import com.nickrobison.trestle.reasoner.caching.TrestleCache;
 import com.nickrobison.trestle.common.IRIUtils;
+import com.nickrobison.trestle.common.LambdaUtils;
 import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingFactException;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
@@ -26,19 +22,26 @@ import com.nickrobison.trestle.exporter.TSIndividual;
 import com.nickrobison.trestle.iri.IRIBuilder;
 import com.nickrobison.trestle.iri.TrestleIRI;
 import com.nickrobison.trestle.ontology.*;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
+import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
+import com.nickrobison.trestle.reasoner.caching.TrestleCache;
 import com.nickrobison.trestle.reasoner.exceptions.*;
 import com.nickrobison.trestle.reasoner.merge.MergeScript;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.reasoner.parser.*;
-import com.nickrobison.trestle.types.*;
-import com.nickrobison.trestle.types.temporal.*;
+import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
+import com.nickrobison.trestle.reasoner.utils.TemporalPropertiesPair;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
+import com.nickrobison.trestle.types.*;
 import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
-import com.nickrobison.trestle.reasoner.utils.TemporalPropertiesPair;
+import com.nickrobison.trestle.types.temporal.IntervalTemporal;
+import com.nickrobison.trestle.types.temporal.PointTemporal;
+import com.nickrobison.trestle.types.temporal.TemporalObject;
+import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
@@ -98,6 +101,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final TrestleCache trestleCache;
     private final Metrician metrician;
     private final ExecutorService trestleThreadPool;
+    private final TrestleExecutorService objectThreadPool;
 
     @SuppressWarnings("dereference.of.nullable")
     TrestleReasonerImpl(TrestleBuilder builder) throws OWLOntologyCreationException {
@@ -106,21 +110,18 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         trestleConfig = ConfigFactory.load().getConfig("trestle");
         ValidateConfig(trestleConfig);
 
-//        Create our own thread pool to help isolate processes
-        final int threadPoolSize = trestleConfig.getInt("threadPoolSize");
-        logger.debug("Creating thread-pool with {} threads", threadPoolSize);
-        final ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setNameFormat(String.format("Trestle-%s-%%d", builder.ontologyName.orElse("default")))
-                .setDaemon(false)
-                .build();
-        trestleThreadPool = Executors.newFixedThreadPool(threadPoolSize, threadFactory);
-
-
         final Injector injector = Guice.createInjector(new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled")));
 
 //        Setup metrics engine
 //        metrician = null;
         metrician = injector.getInstance(Metrician.class);
+
+//        Create our own thread pools to help isolate processes
+        final int threadPoolSize = trestleConfig.getInt("threadPoolSize");
+        logger.debug("Creating thread-pool with {} threads", threadPoolSize);
+        trestleThreadPool = TrestleExecutorService.executorFactory(builder.ontologyName.orElse("default"), threadPoolSize, this.metrician);
+        objectThreadPool = TrestleExecutorService.executorFactory("object-pool", threadPoolSize, this.metrician);
+
 
 //        Setup the reasoner prefix
 //        If not specified, use the default Trestle prefix
@@ -429,7 +430,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     writeObjectFacts(owlNamedIndividual, mergeScript.getNewFacts(), factTemporal, dTemporal);
                     factsTimer.stop();
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
                 ontology.returnAndAbortTransaction(trestleTransaction);
                 logger.error("Error while writing object {}", owlNamedIndividual, e);
                 throw e;
@@ -804,7 +805,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 final Instant individualRetrievalEnd = Instant.now();
                 logger.debug("Retrieving {} facts took {} ms", resultSet.getResults().size(), Duration.between(individualRetrievalStart, individualRetrievalEnd).toMillis());
                 return resultSet;
-            }, trestleThreadPool)
+            }, objectThreadPool)
                     .thenApply(resultSet -> {
 //                        From the resultSet, build the Facts
                         return resultSet.getResults()
@@ -835,7 +836,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 final Set<OWLDataPropertyAssertionAxiom> properties = ontology.getTemporalsForIndividual(df.getOWLNamedIndividual(individualIRI));
                 ontology.returnAndCommitTransaction(tt);
                 return properties;
-            }, trestleThreadPool)
+            }, objectThreadPool)
                     .thenApply(temporalProperties -> TemporalObjectBuilder.buildTemporalFromProperties(temporalProperties, baseTemporalType, clazz));
 
 
@@ -913,7 +914,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                         .map(Temporal.class::cast);
 
                 return new TrestleObjectState(constructorArguments, validMin.get(), validMax.get(), dbMin.get(), dbMax.get());
-            }, trestleThreadPool);
+            }, objectThreadPool);
 
             final TrestleObjectState objectState;
             try {
@@ -1073,24 +1074,16 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                             .collect(Collectors.toSet()))
                     .thenApply(intersectedIRIs -> intersectedIRIs
                             .stream()
-                            .map(iri -> {
+                            .map(iri -> CompletableFuture.supplyAsync(() -> {
                                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                                 try {
                                     return readTrestleObject(clazz, iri, false, atTemporal, dbTemporal);
                                 } finally {
                                     this.ontology.returnAndCommitTransaction(tt);
                                 }
-                            })
-//                            .map(iri -> CompletableFuture.supplyAsync(() -> {
-//                                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-//                                try {
-//                                    return readTrestleObject(clazz, iri, false, atTemporal, dbTemporal);
-//                                } finally {
-//                                    this.ontology.returnAndCommitTransaction(tt);
-//                                }
-//                            }, trestleThreadPool))
-                            .collect(Collectors.toList()));
-//                    .thenCompose(LambdaUtils::sequenceCompletableFutures);
+                            }, trestleThreadPool))
+                            .collect(Collectors.toList()))
+                    .thenCompose(LambdaUtils::sequenceCompletableFutures);
 
             try {
                 final List<@NonNull T> intersectedObjects = objectsFuture.get();
