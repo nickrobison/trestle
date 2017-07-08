@@ -24,7 +24,7 @@ public class ConfigValidator {
 
 //    TODO(nrobison): Pretty-print config
     private static void logConfigSettings(Config config) {
-        logger.debug("Running with config settings: {}", config.toString());
+        logger.debug("Running with config settings: {}", config.root().render());
     }
 
     /**
