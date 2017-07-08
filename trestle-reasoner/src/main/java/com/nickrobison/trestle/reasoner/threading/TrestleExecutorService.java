@@ -18,16 +18,15 @@ import java.util.stream.Collectors;
 /**
  * Created by nrobison on 7/7/17.
  */
+@SuppressWarnings({"pmd:DoNotUseThreads", "pmd:LawOfDemeter"})
 public class TrestleExecutorService implements ExecutorService {
     private static final Logger logger = LoggerFactory.getLogger(TrestleExecutorService.class);
     private static final String THIS_CALL_IS_NOT_WRAPPED_BY_STACK_CLEANER_OR_TIMER = "This call is not wrapped by stack cleaner or timer";
 
     private final ExecutorService target;
-    private final Metrician metrician;
     private final Timer queueTimer;
     private final Timer executionTimer;
     private final Meter executionCount;
-    private final LinkedBlockingQueue<Runnable> backingQueue;
 
     private TrestleExecutorService(String executorName, int executorSize, Metrician metrician) {
 //        Setup the thread pool
@@ -35,7 +34,7 @@ public class TrestleExecutorService implements ExecutorService {
                 .setNameFormat(String.format("Trestle-%s-%%d", executorName))
                 .setDaemon(false)
                 .build();
-        backingQueue = new LinkedBlockingQueue<>();
+        final LinkedBlockingQueue<Runnable> backingQueue = new LinkedBlockingQueue<>();
         logger.debug("Creating thread-pool {} with size {}", executorName, executorSize);
         this.target = new ThreadPoolExecutor(executorSize,
                 executorSize,
@@ -43,7 +42,7 @@ public class TrestleExecutorService implements ExecutorService {
                 TimeUnit.MILLISECONDS,
                 backingQueue,
                 threadFactory);
-        this.metrician = metrician;
+        final Metrician metrician1 = metrician;
 
 //        Setup Metrician Timers
         queueTimer = metrician.registerTimer(String.format("%s-queue-time", executorName));
@@ -160,7 +159,8 @@ public class TrestleExecutorService implements ExecutorService {
     /**
      * Returns a {@link TrestleExecutorService} with the specified parameters
      *
-     * @param executorName - Name of Executor (will be propagated down to the individual threads)
+     * @param executorName - Name of Executor
+     *                     (will be propagated down to the individual threads)
      * @param executorSize - Number of threads to spawn
      * @param metrician    - {@link Metrician} instance to metric Executor performance
      * @return - {@link TrestleExecutorService}
