@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.reasoner.threading;
 
-import com.codahale.metrics.Counter;
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.nickrobison.metrician.Metrician;
@@ -26,16 +26,30 @@ public class TrestleExecutorService implements ExecutorService {
     private final Metrician metrician;
     private final Timer queueTimer;
     private final Timer executionTimer;
-    private final Counter executionCount;
+    private final Meter executionCount;
+    private final LinkedBlockingQueue<Runnable> backingQueue;
 
-    private TrestleExecutorService(String poolName, ExecutorService target, Metrician metrician) {
+    private TrestleExecutorService(String executorName, int executorSize, Metrician metrician) {
+//        Setup the thread pool
+        final ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat(String.format("Trestle-%s-%%d", executorName))
+                .setDaemon(false)
+                .build();
+        backingQueue = new LinkedBlockingQueue<>();
+        logger.debug("Creating thread-pool {} with size {}", executorName, executorSize);
+        this.target = new ThreadPoolExecutor(executorSize,
+                executorSize,
+                0L,
+                TimeUnit.MILLISECONDS,
+                backingQueue,
+                threadFactory);
         this.metrician = metrician;
-        this.target = target;
 
 //        Setup Metrician Timers
-        queueTimer = metrician.registerTimer(String.format("%s-queue-time", poolName));
-        executionTimer = metrician.registerTimer(String.format("%s-execution-time", poolName));
-        executionCount = metrician.registerCounter(String.format("%s-execution-count", poolName));
+        queueTimer = metrician.registerTimer(String.format("%s-queue-time", executorName));
+        executionTimer = metrician.registerTimer(String.format("%s-execution-time", executorName));
+        executionCount = metrician.registerMeter(String.format("%s-execution-count", executorName));
+        metrician.registerGauge(String.format("%s-queue-length", executorName), backingQueue::size);
     }
 
 
@@ -72,9 +86,8 @@ public class TrestleExecutorService implements ExecutorService {
         final Timer.Context time = this.queueTimer.time();
         return this.target.submit(() -> {
             time.stop();
-            final Instant taskStart = Instant.now();
-            logger.trace("Task took {} ms to start", Duration.between(taskStart, taskSubmit).toMillis());
-            this.executionCount.inc();
+            logger.trace("Task took {} ms to start", Duration.between(Instant.now(), taskSubmit).toMillis());
+            this.executionCount.mark();
             final Timer.Context execTimer = executionTimer.time();
             try {
                 return task.call();
@@ -139,12 +152,6 @@ public class TrestleExecutorService implements ExecutorService {
         });
     }
 
-//    private <T> Callable<T> wrap(final Callable<T> task, final Exception clientStack, String clientThreadName) {
-//        return () -> {
-//
-//        };
-//    }
-
     private Exception clientTrace() {
         return new Exception("Client stack trace");
     }
@@ -154,15 +161,11 @@ public class TrestleExecutorService implements ExecutorService {
      * Returns a {@link TrestleExecutorService} with the specified parameters
      *
      * @param executorName - Name of Executor (will be propagated down to the individual threads)
-     * @param poolSize     - Number of threads to spawn
+     * @param executorSize - Number of threads to spawn
      * @param metrician    - {@link Metrician} instance to metric Executor performance
      * @return - {@link TrestleExecutorService}
      */
-    public static TrestleExecutorService executorFactory(String executorName, int poolSize, Metrician metrician) {
-        final ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setNameFormat(String.format("Trestle-%s-%%d", executorName))
-                .setDaemon(false)
-                .build();
-        return new TrestleExecutorService(executorName, Executors.newFixedThreadPool(poolSize, threadFactory), metrician);
+    public static TrestleExecutorService executorFactory(String executorName, int executorSize, Metrician metrician) {
+        return new TrestleExecutorService(executorName, executorSize, metrician);
     }
 }

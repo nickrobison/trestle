@@ -117,10 +117,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         metrician = injector.getInstance(Metrician.class);
 
 //        Create our own thread pools to help isolate processes
-        final int threadPoolSize = trestleConfig.getInt("threadPoolSize");
-        logger.debug("Creating thread-pool with {} threads", threadPoolSize);
-        trestleThreadPool = TrestleExecutorService.executorFactory(builder.ontologyName.orElse("default"), threadPoolSize, this.metrician);
-        objectThreadPool = TrestleExecutorService.executorFactory("object-pool", threadPoolSize, this.metrician);
+        trestleThreadPool = TrestleExecutorService.executorFactory(builder.ontologyName.orElse("default"), trestleConfig.getInt("threading.default-pool.size"), this.metrician);
+        objectThreadPool = TrestleExecutorService.executorFactory("object-pool", trestleConfig.getInt("threading.object-pool.size"), this.metrician);
 
 
 //        Setup the reasoner prefix
