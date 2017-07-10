@@ -54,6 +54,22 @@
       "allow-pascal-case",
       "ban-keywords",
       "check-format"
+    ],
+    "member-ordering": [
+      true,
+      {
+        "order": [
+          "public-static-field",
+          "private-static-field",
+          "public-instance-field",
+          "private-instance-field",
+          "public-constructor",
+          "public-instance-method",
+          "private-instance-method",
+          "public-static-method",
+          "private-static-method"
+        ]
+      }
     ]
   }
 }

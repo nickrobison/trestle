@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "@angular/animations": "4.1.0",
+    "@angular/cdk": "2.0.0-beta.8",
     "@angular/common": "4.1.0",
     "@angular/compiler": "4.1.0",
     "@angular/core": "4.1.0",
@@ -70,13 +71,10 @@
     "to-string-loader": "^1.1.5",
     "ts-node": "^3.0.4",
     "tslint": "^5.4.3",
-    "typescript": "^2.3.1",
+    "typescript": "2.3.4",
     "url-loader": "^0.5.8",
     "webpack": "^2.4.1",
     "webpack-merge": "^4.1.0"
-  },
-  "peerDependencies": {
-    "@angular/cdk": "2.0.0-beta.8"
   },
   "scripts": {
     "watch": "webpack --colors --progress --watch",
