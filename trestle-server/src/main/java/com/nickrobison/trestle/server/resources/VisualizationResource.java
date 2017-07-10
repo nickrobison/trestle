@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.server.resources;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -14,12 +15,13 @@ import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.vividsolutions.jts.geom.Geometry;
 import io.dropwizard.jersey.params.NonEmptyStringParam;
+import org.geojson.Polygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wololo.jts2geojson.GeoJSONReader;
+import org.wololo.jts2geojson.GeoJSONWriter;
 
 import javax.inject.Inject;
-import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -45,13 +47,14 @@ public class VisualizationResource {
     private static final Logger logger = LoggerFactory.getLogger(VisualizationResource.class);
     private static final DateTimeFormatter LocalDateTimeToJavascriptFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
     private static final GeoJSONReader reader = new GeoJSONReader();
+    private static final ObjectMapper mapper = new ObjectMapper();
     private final TrestleReasoner reasoner;
-    private final ObjectMapper mapper;
+//    private final ObjectMapper mapper;
 
     @Inject
     public VisualizationResource(ReasonerModule reasonerModule) {
         this.reasoner = reasonerModule.getReasoner();
-        mapper = new ObjectMapper();
+//        mapper = new ObjectMapper();
         mapper.registerModule(new JtsModule());
     }
 
@@ -145,7 +148,7 @@ public class VisualizationResource {
 
     @POST
     @Path("/intersect")
-    public Response intersect(@NotNull @Valid IntersectRequest request) {
+    public Response intersect(@NotNull IntersectRequest request) {
         final Class<?> datasetClass;
         try {
              datasetClass = this.reasoner.getDatasetClass(request.getDataset());
@@ -154,9 +157,23 @@ public class VisualizationResource {
             return Response.status(Response.Status.BAD_REQUEST).entity("Class does not exist").build();
         }
 
-        final Geometry geom = reader.read(request.getBbox());
-        final Optional<? extends List<?>> intersectedObjects = this.reasoner.spatialIntersect(datasetClass, geom.toString(), 0.0, request.getValidAt());
-        return Response.ok().build();
+//        try {
+//            new GeoJSONWriter().write();
+//            reader.read()
+//        reader.read(request.getBbox());
+//        } catch(Exception e) {
+//            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+//        }
+        final Geometry read;
+        try {
+            read = reader.read(mapper.writeValueAsString(request.getBbox()));
+        } catch (JsonProcessingException e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e).build();
+        }
+
+//        final String s = ((Polygon) request.getBbox()).getCoordinates().toString();
+        final Optional<? extends List<?>> intersectedObjects = this.reasoner.spatialIntersect(datasetClass, read.toString(), 0.0, request.getValidAt());
+        return intersectedObjects.map(list -> Response.ok(list).build()).orElseGet(() -> Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Empty reponse from server, something went wrong").build());
     }
 
 }

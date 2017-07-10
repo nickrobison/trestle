@@ -46,6 +46,7 @@ public class ReasonerModule implements Managed {
                 .withOntology(configuration.getLocation())
                 .withInputClasses(GAULObject.class)
                 .withoutCaching()
+                .withoutMetrics()
                 .build();
 
         logger.info("Reasoner started");

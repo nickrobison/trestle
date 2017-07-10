@@ -1,6 +1,8 @@
 package com.nickrobison.trestle.server.models;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import org.geojson.GeoJsonObject;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import java.time.OffsetDateTime;
@@ -9,6 +11,7 @@ import java.time.OffsetDateTime;
  * Created by nrobison on 6/30/17.
  */
 public class IntersectRequest {
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     @NotEmpty
     private String dataset;
@@ -16,12 +19,11 @@ public class IntersectRequest {
     private OffsetDateTime validAt;
     @NotEmpty
     private OffsetDateTime databaseAt;
-    @NonNull
-    private String bbox;
+    private GeoJsonObject bbox;
 
     public IntersectRequest() {}
 
-    public IntersectRequest(String dataset, String validAt, String databaseAt, String bbox) {
+    public IntersectRequest(String dataset, String validAt, String databaseAt, GeoJsonObject bbox) {
         this.dataset = dataset;
         this.validAt = OffsetDateTime.parse(validAt);
         this.databaseAt = OffsetDateTime.parse(databaseAt);
@@ -52,11 +54,12 @@ public class IntersectRequest {
         this.databaseAt = OffsetDateTime.parse(databaseAt);
     }
 
-    public String getBbox() {
+    public GeoJsonObject getBbox() {
         return bbox;
     }
 
-    public void setBbox(String bbox) {
+    public void setBbox(GeoJsonObject bbox) {
         this.bbox = bbox;
+//        this.bbox = mapper.convertValue(bbox, GeoJsonObject.class);
     }
 }

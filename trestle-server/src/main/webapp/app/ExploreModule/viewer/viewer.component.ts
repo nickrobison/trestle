@@ -4,7 +4,7 @@
 import { Component, OnInit } from "@angular/core";
 import { MapService } from "./map.service";
 import LngLatBounds = mapboxgl.LngLatBounds;
-
+import { ITrestleMapSource } from "../../UIModule/map/trestle-map.component";
 
 @Component({
     selector: "dataset-viewer",
@@ -13,20 +13,29 @@ import LngLatBounds = mapboxgl.LngLatBounds;
 })
 export class DatsetViewerComponent implements OnInit {
     public availableDatasets: string[] = [];
+    public loadedDataset: ITrestleMapSource;
     private mapBounds: LngLatBounds;
 
-    constructor(private mapService: MapService) {}
+    constructor(private mapService: MapService) {
+    }
 
     public ngOnInit(): void {
         this.mapService.getAvailableDatasets()
             .subscribe((results: string[]) => {
-            this.availableDatasets = results;
+                this.availableDatasets = results;
             });
     }
 
     public loadDataset(dataset: string): void {
         console.debug("Loading:", dataset);
-        this.mapService.tsIntersect(dataset, this.mapBounds, new Date("1990-01-01"));
+        this.mapService.stIntersect(dataset, this.mapBounds, new Date("1990-01-01"))
+            .subscribe((data) => {
+                console.debug("Data:", data);
+                this.loadedDataset = {
+                    id: "intersection-query",
+                    data: data
+                }
+            });
     }
 
     public updateBounds(bounds: LngLatBounds): void {
