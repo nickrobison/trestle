@@ -7,6 +7,7 @@ import { Response } from "@angular/http";
 import { Observable } from "rxjs/Observable";
 import { LngLatBounds } from "mapbox-gl";
 import { Feature, FeatureCollection, GeometryObject, Polygon } from "geojson";
+import { Moment } from "moment";
 var parse = require("wellknown");
 
 type wktType = "POINT" |
@@ -34,13 +35,13 @@ export class MapService {
 
     public stIntersect(dataset: string,
                        bounds: LngLatBounds,
-                       validTime: Date,
-                       dbTime?: Date): Observable<FeatureCollection<GeometryObject>> {
-        console.debug("Intersecting at:", bounds, validTime);
+                       validTime: Moment,
+                       dbTime?: Moment): Observable<FeatureCollection<GeometryObject>> {
+        console.debug("Intersecting at:", bounds, validTime.toISOString());
 
         const postBody = {
             dataset,
-            validAt: validTime,
+            validAt: validTime.toISOString(),
             databaseAt: new Date().toISOString(),
             bbox: MapService.boundsToGeoJSON(bounds)
         };

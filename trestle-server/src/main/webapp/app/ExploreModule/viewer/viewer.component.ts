@@ -4,8 +4,10 @@
 import { Component, OnInit } from "@angular/core";
 import { MapService } from "./map.service";
 import { ITrestleMapSource } from "../../UIModule/map/trestle-map.component";
+import { animate, style, transition, trigger } from "@angular/animations";
+import { MdSliderChange } from "@angular/material";
+import * as Moment from "moment";
 import LngLatBounds = mapboxgl.LngLatBounds;
-import { animate, state, style, transition, trigger } from "@angular/animations";
 
 enum DatasetState {
     UNLOADED,
@@ -48,6 +50,7 @@ export class DatsetViewerComponent implements OnInit {
     public availableDatasets: IDatasetState[] = [];
     public DatasetState = DatasetState;
     public loadedDataset: ITrestleMapSource;
+    public sliderValue = 2013;
     private mapBounds: LngLatBounds;
 
     constructor(private mapService: MapService) {
@@ -66,12 +69,9 @@ export class DatsetViewerComponent implements OnInit {
     }
 
     public loadDataset(dataset: IDatasetState): void {
-        if (dataset.state !== DatasetState.UNLOADED) {
-            return;
-        }
         console.debug("Loading:", dataset.name);
         dataset.state = DatasetState.LOADING;
-        this.mapService.stIntersect(dataset.name, this.mapBounds, new Date("1990-01-01"))
+        this.mapService.stIntersect(dataset.name, this.mapBounds, Moment().year(this.sliderValue).startOf("year"))
             .subscribe((data) => {
                 dataset.state = DatasetState.LOADED;
                 console.debug("Data:", data);
@@ -85,5 +85,14 @@ export class DatsetViewerComponent implements OnInit {
 
     public updateBounds(bounds: LngLatBounds): void {
         this.mapBounds = bounds;
+    }
+
+    public sliderChanged = (event: MdSliderChange): void => {
+        console.debug("Value changed to:", event);
+        this.sliderValue = event.value;
+    //    Reload all the currently loaded datasets
+        this.availableDatasets
+            .filter((ds) => ds.state === DatasetState.LOADED)
+            .forEach((ds) => this.loadDataset(ds));
     }
 }
