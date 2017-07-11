@@ -8,12 +8,14 @@
         <div class="col s2 z-depth-2 dataset-container">
             <h6>Available Datasets</h6>
             <ul class="collection">
-                <li class="collection-item" *ngFor="let ds of datasetStates | mapValues" (click)="loadDataset(ds.key)">
-                    <!--<span>-->
-                    <!--<i class="material-icons selected" *ngIf="ds.value == DatasetState.LOADED">check_circle</i>-->
-                    <!--<md-spinner class="loading-spinner" *ngIf="ds.value == DatasetState.UNLOADED"></md-spinner>-->
-                    {{ds.key}}
-                        <!--</span>-->
+                <li class="collection-item" *ngFor="let ds of availableDatasets" (click)="loadDataset(ds)">
+                    <!--<md-icon *ngIf="(ds.state == DatasetState.UNLOADED)">folder</md-icon>-->
+                    <md-icon *ngIf="(ds.state == DatasetState.UNLOADED)" [@fadeInOut]>check_circle</md-icon>
+                    <md-spinner class="loading-spinner" *ngIf="ds.state == DatasetState.LOADING" [@fadeInOut]></md-spinner>
+                    <md-icon *ngIf="(ds.state == DatasetState.LOADED)" class="selected" [@fadeInOut]>check_circle</md-icon>
+                    <!--<i class="material-icons selected" *ngIf="ds.state == DatasetState.UNLOADED">check_circle</i>-->
+
+                    {{ds.name}}
                 </li>
             </ul>
         </div>
