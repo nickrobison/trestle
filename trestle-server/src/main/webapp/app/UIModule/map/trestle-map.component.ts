@@ -38,7 +38,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         mapboxgl.accessToken = "pk.eyJ1IjoibnJvYmlzb24iLCJhIjoiY2ozdDd5dmd2MDA3bTMxcW1kdHZrZ3ppMCJ9.YcJMRphQAfmZ0H8X9HnoKA";
     }
 
-    ngOnInit(): void {
+    public ngOnInit(): void {
         console.debug("Creating map, singleSelect?", this.single, "mulitSelect?", this.multiSelect);
         this.mapSources = [];
         this.map = new mapboxgl.Map({

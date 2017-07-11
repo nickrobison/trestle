@@ -9,3 +9,11 @@
     height: 400px;
 }
 
+.material-icons.orange600 { color: #FB8C00; }
+
+.material-icons.selected { color: green; }
+
+.loading-spinner {
+    height: 20px;
+    width: 20px;
+}
