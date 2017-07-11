@@ -70,6 +70,7 @@
           "private-static-method"
         ]
       }
-    ]
+    ],
+    "triple-equals": [true, "allow-undefined-check", "allow-null-check"]
   }
 }

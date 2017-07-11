@@ -9,7 +9,12 @@ import { LngLatBounds } from "mapbox-gl";
 import { Feature, FeatureCollection, GeometryObject, Polygon } from "geojson";
 var parse = require("wellknown");
 
-type wktType = "MULTIPOLYGON" | "POINT" | "POLYGON";
+type wktType = "POINT" |
+    "MULTIPOINT" |
+    "LINESTRING" |
+    "MULTILINESTRING" |
+    "POLYGON" |
+    "MULTIPOLYGON";
 
 @Injectable()
 export class MapService {
@@ -34,7 +39,7 @@ export class MapService {
         console.debug("Intersecting at:", bounds, validTime);
 
         const postBody = {
-            dataset: dataset,
+            dataset,
             validAt: validTime,
             databaseAt: new Date().toISOString(),
             bbox: MapService.boundsToGeoJSON(bounds)
@@ -57,8 +62,9 @@ export class MapService {
                 if (MapService.isSpatial(value)) {
                     geometry = parse(value);
                 } else if (typeof value === "string") {
-                    if (key === "id") {
+                    if (MapService.isID(value)) {
                         id = value;
+                        properties["id"] = value;
                     } else {
                         properties[key] = value;
                     }
@@ -69,15 +75,15 @@ export class MapService {
             });
             features.push({
                 type: "Feature",
-                id: id,
-                geometry: geometry,
-                properties: properties
+                id,
+                geometry,
+                properties
             });
         });
 
         return {
             type: "FeatureCollection",
-            features: features
+            features
         };
     }
 
@@ -94,15 +100,37 @@ export class MapService {
         };
     }
 
+    /**
+     * Crummy regex function to determine if a provided value is a WKT literal
+     * @param x - any object at all
+     * @returns {boolean} is wkt
+     */
     private static isSpatial(x: any): x is wktType {
         if (typeof x === "string") {
             const matches = x.match(/^([\w\-]+)/);
             if (matches != null &&
                 (matches[0] === "MULTIPOLYGON" ||
                 matches[0] === "POLYGON" ||
-                matches[0] === "POINT")) {
+                matches[0] === "POINT" ||
+                matches[0] === "MULTIPOINT" ||
+                matches[0] === "LINESTRING" ||
+                matches[0] === "MULTILINESTRING")) {
                 return true;
             }
+        }
+        return false;
+    }
+
+    /**
+     * Determines if a given {string} property name represents the object ID
+     * It does so by peaking at the last 2 characters to see if their lowercase representation equals 'id'
+     * @param x - Property name
+     * @returns {boolean} is id
+     */
+    private static isID(x: string): boolean {
+        if (x.length >= 2) {
+            const sub = x.substring(x.length - 3, x.length - 1);
+            return sub.toLowerCase() === "id";
         }
         return false;
     }

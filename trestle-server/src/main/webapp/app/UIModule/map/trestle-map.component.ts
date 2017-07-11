@@ -15,6 +15,7 @@ const extent = require("@mapbox/geojson-extent");
 
 export interface ITrestleMapSource {
     id: string;
+    idField?: string;
     data: FeatureCollection<GeometryObject>;
 }
 
@@ -120,14 +121,17 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     private layerClick = (e: MapMouseEvent): void => {
         console.debug("Clicked:", e);
         const features = this.map.queryRenderedFeatures(e.point, {
-            layers: this.mapSources.map(val => val + "-fill")
+            layers: this.mapSources.map((val) => val + "-fill")
         });
+        // Set the hover filter using either the provided id field, or a default property
+        const idField = this.individual.idField == null ? "id" : this.individual.idField;
+        console.debug("Accessing ID field:", idField);
 
         // If we don't filter on anything, deselect it all
         if (!this.multiSelect && !(features.length > 0)) {
             console.debug("Deselecting", this.mapSources);
-            this.mapSources.forEach(source => {
-                this.map.setFilter(source + "-hover", ["==", "id", ""]);
+            this.mapSources.forEach((source) => {
+                this.map.setFilter(source + "-hover", ["==", idField, ""]);
             });
             return;
         }
@@ -135,12 +139,12 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         const feature: any = features[0];
         let layerID = features[0].layer.id;
         layerID = layerID.replace("-fill", "");
-        this.map.setFilter(layerID + "-hover", ["==", "id", feature.properties.id]);
+        this.map.setFilter(layerID + "-hover", ["==", idField, feature.properties[idField]]);
         // If multi-select is not enabled, deselect everything else
         if (!this.multiSelect) {
-            this.mapSources.forEach(layer => {
+            this.mapSources.forEach((layer) => {
                 if (layer !== layerID) {
-                    this.map.setFilter(layer + "-hover", ["==", "id", ""])
+                    this.map.setFilter(layer + "-hover", ["==", idField, ""]);
                 }
             });
         }

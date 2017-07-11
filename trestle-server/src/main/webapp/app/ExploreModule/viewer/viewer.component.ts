@@ -33,8 +33,9 @@ export class DatsetViewerComponent implements OnInit {
                 console.debug("Data:", data);
                 this.loadedDataset = {
                     id: "intersection-query",
-                    data: data
-                }
+                    idField: "id",
+                    data
+                };
             });
     }
 
