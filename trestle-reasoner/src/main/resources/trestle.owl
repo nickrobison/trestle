@@ -6,8 +6,8 @@
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
      ontologyIRI="http://nickrobison.com/dissertation/trestle.owl"
-     versionIRI="http://nickrobison.com/dissertation/trestle.owl/0.9">
-    <Prefix name="" IRI="http://nickrobison.com/dissertation/trestle.owl#"/>
+     versionIRI="http://nickrobison.com/dissertation/trestle.owl/0.9.1">
+    <Prefix name="" IRI="http://nickrobison.com/dissertation/trestle.owl"/>
     <Prefix name="owl" IRI="http://www.w3.org/2002/07/owl#"/>
     <Prefix name="rdf" IRI="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
     <Prefix name="xml" IRI="http://www.w3.org/XML/1998/namespace"/>
@@ -16,7 +16,8 @@
     <Import>http://www.opengis.net/ont/geosparql</Import>
     <Annotation>
         <AnnotationProperty abbreviatedIRI="owl:versionInfo"/>
-        <Literal xml:lang="en" datatypeIRI="http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral">0.9 - Major refactor of entity relationships. Serious breaking changes.
+        <Literal xml:lang="en" datatypeIRI="http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral">0.9.1 - Fixed reasoner inconsistency issues.
+0.9 - Major refactor of entity relationships. Serious breaking changes.
 0.4 - Added Concept_Relation and relevant axioms.
 0.3 - Renamed to TS_Concept
 0.2 - Concepts and facts are now logically consistent.
@@ -29,16 +30,13 @@
         <DataProperty IRI="#Temporal_Property"/>
     </Declaration>
     <Declaration>
-        <ObjectProperty IRI="#valid_time"/>
-    </Declaration>
-    <Declaration>
         <ObjectProperty IRI="#temporal_of"/>
     </Declaration>
     <Declaration>
-        <Class IRI="#Trestle_Overlap"/>
+        <DataProperty IRI="#ADM2_Code"/>
     </Declaration>
     <Declaration>
-        <DataProperty IRI="#ADM2_Code"/>
+        <Class IRI="#Trestle_Overlap"/>
     </Declaration>
     <Declaration>
         <NamedIndividual IRI="#overlaps:1980:1995"/>
@@ -65,13 +63,13 @@
         <ObjectProperty IRI="#has_overlap"/>
     </Declaration>
     <Declaration>
-        <ObjectProperty IRI="#during"/>
+        <NamedIndividual IRI="#Cidade_de_maputo_concept"/>
     </Declaration>
     <Declaration>
         <Class IRI="#Interval_Object"/>
     </Declaration>
     <Declaration>
-        <NamedIndividual IRI="#Cidade_de_maputo_concept"/>
+        <ObjectProperty IRI="#during"/>
     </Declaration>
     <Declaration>
         <Class IRI="#Spatial_Overlap"/>
@@ -92,16 +90,10 @@
         <ObjectProperty IRI="#has_facet"/>
     </Declaration>
     <Declaration>
-        <ObjectProperty IRI="#exists_time_of"/>
+        <DataProperty IRI="#GAUL_Properties"/>
     </Declaration>
     <Declaration>
         <DataProperty IRI="#ADM0_Code"/>
-    </Declaration>
-    <Declaration>
-        <ObjectProperty IRI="#valid_time_of"/>
-    </Declaration>
-    <Declaration>
-        <DataProperty IRI="#GAUL_Properties"/>
     </Declaration>
     <Declaration>
         <Class IRI="#Dataset"/>
@@ -131,13 +123,7 @@
         <DataProperty IRI="#Dataset_Properties"/>
     </Declaration>
     <Declaration>
-        <ObjectProperty IRI="#exists_time"/>
-    </Declaration>
-    <Declaration>
         <DataProperty IRI="#exists_to"/>
-    </Declaration>
-    <Declaration>
-        <ObjectProperty IRI="#database_time_of"/>
     </Declaration>
     <Declaration>
         <DataProperty IRI="#database_at"/>
@@ -152,19 +138,10 @@
         <NamedIndividual IRI="#maputo_split_adm2_code_1"/>
     </Declaration>
     <Declaration>
-        <NamedIndividual IRI="#maputo_split_bounding_box_temporal_1"/>
-    </Declaration>
-    <Declaration>
         <DataProperty IRI="#ADM1_Code"/>
     </Declaration>
     <Declaration>
-        <NamedIndividual IRI="#1990_temporal_object"/>
-    </Declaration>
-    <Declaration>
         <Class IRI="#AttributeFact"/>
-    </Declaration>
-    <Declaration>
-        <ObjectProperty IRI="#has_temporal"/>
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="#before"/>
@@ -173,10 +150,10 @@
         <ObjectProperty IRI="#covered_by"/>
     </Declaration>
     <Declaration>
-        <DataProperty IRI="#rasterPointer"/>
+        <DataProperty IRI="#DISP_Area"/>
     </Declaration>
     <Declaration>
-        <DataProperty IRI="#DISP_Area"/>
+        <DataProperty IRI="#rasterPointer"/>
     </Declaration>
     <Declaration>
         <Class IRI="#Trestle_Concept"/>
@@ -188,10 +165,10 @@
         <DataProperty IRI="#Relation_Strength"/>
     </Declaration>
     <Declaration>
-        <Class IRI="#SpatialFact"/>
+        <DataProperty IRI="#valid_from"/>
     </Declaration>
     <Declaration>
-        <DataProperty IRI="#valid_from"/>
+        <Class IRI="#SpatialFact"/>
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="#has_fact"/>
@@ -206,10 +183,10 @@
         <ObjectProperty IRI="#relation_of"/>
     </Declaration>
     <Declaration>
-        <DataProperty IRI="#TOverlap"/>
+        <NamedIndividual IRI="#maputo:2013:3000"/>
     </Declaration>
     <Declaration>
-        <NamedIndividual IRI="#maputo:2013:3000"/>
+        <DataProperty IRI="#TOverlap"/>
     </Declaration>
     <Declaration>
         <NamedIndividual IRI="#municipal_1_disp_1"/>
@@ -233,10 +210,10 @@
         <NamedIndividual IRI="#municipal_1_adm2_code_1"/>
     </Declaration>
     <Declaration>
-        <NamedIndividual IRI="#municipal2:1990:2013"/>
+        <DataProperty IRI="#start_temporal"/>
     </Declaration>
     <Declaration>
-        <DataProperty IRI="#start_temporal"/>
+        <NamedIndividual IRI="#municipal2:1990:2013"/>
     </Declaration>
     <Declaration>
         <DataProperty IRI="#valid_at"/>
@@ -260,10 +237,10 @@
         <DataProperty IRI="#at_temporal"/>
     </Declaration>
     <Declaration>
-        <ObjectProperty IRI="#after"/>
+        <DataProperty IRI="#exists_at"/>
     </Declaration>
     <Declaration>
-        <DataProperty IRI="#exists_at"/>
+        <ObjectProperty IRI="#after"/>
     </Declaration>
     <Declaration>
         <NamedIndividual IRI="#begin:1980:1990"/>
@@ -278,10 +255,10 @@
         <NamedIndividual IRI="#test_overlap"/>
     </Declaration>
     <Declaration>
-        <NamedIndividual IRI="#aero_split_adm2_code_1"/>
+        <NamedIndividual IRI="#municipal_1_adm2_name_1"/>
     </Declaration>
     <Declaration>
-        <NamedIndividual IRI="#municipal_1_adm2_name_1"/>
+        <NamedIndividual IRI="#aero_split_adm2_code_1"/>
     </Declaration>
     <Declaration>
         <NamedIndividual IRI="#aero_split_bounding_box_1"/>
@@ -326,9 +303,6 @@
         <NamedIndividual IRI="#municipal_1_bounding_box_1"/>
     </Declaration>
     <Declaration>
-        <NamedIndividual IRI="#maputo_object_temporal"/>
-    </Declaration>
-    <Declaration>
         <DataProperty IRI="#STR2_Year"/>
     </Declaration>
     <Declaration>
@@ -336,9 +310,6 @@
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="#concept_of"/>
-    </Declaration>
-    <Declaration>
-        <ObjectProperty IRI="#database_time"/>
     </Declaration>
     <Declaration>
         <Class IRI="#Valid_Object"/>
@@ -365,10 +336,10 @@
         <ObjectProperty IRI="#has_relation"/>
     </Declaration>
     <Declaration>
-        <ObjectProperty IRI="#inside"/>
+        <DataProperty IRI="#exists_from"/>
     </Declaration>
     <Declaration>
-        <DataProperty IRI="#exists_from"/>
+        <ObjectProperty IRI="#inside"/>
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="#equal"/>
@@ -383,13 +354,10 @@
         <ObjectProperty IRI="#fact_of"/>
     </Declaration>
     <Declaration>
-        <DataProperty IRI="#ADM0_Name"/>
-    </Declaration>
-    <Declaration>
         <NamedIndividual IRI="#maputo_split_disp_area_1"/>
     </Declaration>
     <Declaration>
-        <NamedIndividual IRI="#2013_temporal_object"/>
+        <DataProperty IRI="#ADM0_Name"/>
     </Declaration>
     <SubClassOf>
         <Class IRI="#AttributeFact"/>
@@ -402,20 +370,6 @@
     <SubClassOf>
         <Class IRI="#Exists_Object"/>
         <Class IRI="#Temporal_Object"/>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="#Fact"/>
-        <ObjectExactCardinality cardinality="1">
-            <ObjectProperty IRI="#database_time"/>
-            <Class IRI="#Trestle_Relation"/>
-        </ObjectExactCardinality>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="#Fact"/>
-        <ObjectExactCardinality cardinality="1">
-            <ObjectProperty IRI="#valid_time"/>
-            <Class IRI="#Trestle_Relation"/>
-        </ObjectExactCardinality>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="#GAUL"/>
@@ -460,13 +414,6 @@
         </ObjectSomeValuesFrom>
     </SubClassOf>
     <SubClassOf>
-        <Class IRI="#Trestle_Object"/>
-        <ObjectSomeValuesFrom>
-            <ObjectProperty IRI="#has_temporal"/>
-            <Class IRI="#Exists_Object"/>
-        </ObjectSomeValuesFrom>
-    </SubClassOf>
-    <SubClassOf>
         <Class IRI="#Valid_Object"/>
         <Class IRI="#Temporal_Object"/>
     </SubClassOf>
@@ -479,17 +426,8 @@
         <Class IRI="#SpatialFact"/>
     </DisjointClasses>
     <DisjointClasses>
-        <Class IRI="#Database_Object"/>
         <Class IRI="#Exists_Object"/>
         <Class IRI="#Valid_Object"/>
-    </DisjointClasses>
-    <DisjointClasses>
-        <Class IRI="#Exists_Object"/>
-        <Class IRI="#Valid_Object"/>
-    </DisjointClasses>
-    <DisjointClasses>
-        <Class IRI="#Interval_Object"/>
-        <Class IRI="#Point_Object"/>
     </DisjointClasses>
     <DisjointUnion>
         <Class IRI="#SpatialFact"/>
@@ -583,66 +521,6 @@
         <NamedIndividual IRI="#maputo:2013:3000"/>
     </ObjectPropertyAssertion>
     <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#database_time_of"/>
-        <NamedIndividual IRI="#maputo_database_temporal"/>
-        <NamedIndividual IRI="#aero_split_adm2_code_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#database_time_of"/>
-        <NamedIndividual IRI="#maputo_database_temporal"/>
-        <NamedIndividual IRI="#aero_split_adm2_name_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#database_time_of"/>
-        <NamedIndividual IRI="#maputo_database_temporal"/>
-        <NamedIndividual IRI="#aero_split_bounding_box_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#database_time_of"/>
-        <NamedIndividual IRI="#maputo_database_temporal"/>
-        <NamedIndividual IRI="#maputo_split_adm2_code_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#database_time_of"/>
-        <NamedIndividual IRI="#maputo_database_temporal"/>
-        <NamedIndividual IRI="#maputo_split_adm2_name_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#database_time_of"/>
-        <NamedIndividual IRI="#maputo_database_temporal"/>
-        <NamedIndividual IRI="#maputo_split_bounding_box_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#database_time_of"/>
-        <NamedIndividual IRI="#maputo_database_temporal"/>
-        <NamedIndividual IRI="#maputo_split_disp_area_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#database_time_of"/>
-        <NamedIndividual IRI="#maputo_database_temporal"/>
-        <NamedIndividual IRI="#municipal_1_adm2_code_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#database_time_of"/>
-        <NamedIndividual IRI="#maputo_database_temporal"/>
-        <NamedIndividual IRI="#municipal_1_adm2_name_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#database_time_of"/>
-        <NamedIndividual IRI="#maputo_database_temporal"/>
-        <NamedIndividual IRI="#municipal_1_bounding_box_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#database_time_of"/>
-        <NamedIndividual IRI="#maputo_database_temporal"/>
-        <NamedIndividual IRI="#municipal_1_disp_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#exists_time_of"/>
-        <NamedIndividual IRI="#maputo_object_temporal"/>
-        <NamedIndividual IRI="#maputo:2013:3000"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
         <ObjectProperty IRI="#fact_of"/>
         <NamedIndividual IRI="#maputo_split_adm2_code_1"/>
         <NamedIndividual IRI="#maputo:2013:3000"/>
@@ -656,11 +534,6 @@
         <ObjectProperty IRI="#fact_of"/>
         <NamedIndividual IRI="#maputo_split_bounding_box_1"/>
         <NamedIndividual IRI="#maputo:2013:3000"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#valid_time_of"/>
-        <NamedIndividual IRI="#maputo_split_bounding_box_temporal_1"/>
-        <NamedIndividual IRI="#maputo_split_bounding_box_1"/>
     </ObjectPropertyAssertion>
     <ObjectPropertyAssertion>
         <ObjectProperty IRI="#fact_of"/>
@@ -696,61 +569,6 @@
         <ObjectProperty IRI="#overlaps"/>
         <NamedIndividual IRI="#test_overlap"/>
         <NamedIndividual IRI="#overlaps:1980:1995"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#valid_time_of"/>
-        <NamedIndividual IRI="#1990_temporal_object"/>
-        <NamedIndividual IRI="#aero_split_adm2_code_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#valid_time_of"/>
-        <NamedIndividual IRI="#1990_temporal_object"/>
-        <NamedIndividual IRI="#aero_split_adm2_name_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#valid_time_of"/>
-        <NamedIndividual IRI="#1990_temporal_object"/>
-        <NamedIndividual IRI="#aero_split_bounding_box_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#valid_time_of"/>
-        <NamedIndividual IRI="#1990_temporal_object"/>
-        <NamedIndividual IRI="#aero_split_disp_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#valid_time_of"/>
-        <NamedIndividual IRI="#1990_temporal_object"/>
-        <NamedIndividual IRI="#municipal_1_adm2_code_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#valid_time_of"/>
-        <NamedIndividual IRI="#1990_temporal_object"/>
-        <NamedIndividual IRI="#municipal_1_adm2_name_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#valid_time_of"/>
-        <NamedIndividual IRI="#1990_temporal_object"/>
-        <NamedIndividual IRI="#municipal_1_bounding_box_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#valid_time_of"/>
-        <NamedIndividual IRI="#1990_temporal_object"/>
-        <NamedIndividual IRI="#municipal_1_disp_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#valid_time_of"/>
-        <NamedIndividual IRI="#2013_temporal_object"/>
-        <NamedIndividual IRI="#maputo_split_adm2_code_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#valid_time_of"/>
-        <NamedIndividual IRI="#2013_temporal_object"/>
-        <NamedIndividual IRI="#maputo_split_adm2_name_1"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#valid_time_of"/>
-        <NamedIndividual IRI="#2013_temporal_object"/>
-        <NamedIndividual IRI="#maputo_split_disp_area_1"/>
     </ObjectPropertyAssertion>
     <ObjectPropertyAssertion>
         <ObjectProperty IRI="#during"/>
@@ -798,9 +616,54 @@
         <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#integer">65253</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
+        <DataProperty IRI="#database_from"/>
+        <NamedIndividual IRI="#aero_split_adm2_code_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2016-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_from"/>
+        <NamedIndividual IRI="#aero_split_adm2_code_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1990-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_to"/>
+        <NamedIndividual IRI="#aero_split_adm2_code_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2013-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
         <DataProperty IRI="#ADM2_Name"/>
         <NamedIndividual IRI="#aero_split_adm2_name_1"/>
         <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#string">Aeroporto</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#database_from"/>
+        <NamedIndividual IRI="#aero_split_adm2_name_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2016-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_from"/>
+        <NamedIndividual IRI="#aero_split_adm2_name_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1990-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_to"/>
+        <NamedIndividual IRI="#aero_split_adm2_name_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2013-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#database_from"/>
+        <NamedIndividual IRI="#aero_split_bounding_box_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2016-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_from"/>
+        <NamedIndividual IRI="#aero_split_bounding_box_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1990-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_to"/>
+        <NamedIndividual IRI="#aero_split_bounding_box_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2013-01-01T00:00:00Z</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
         <DataProperty IRI="http://www.opengis.net/ont/geosparql#asWKT"/>
@@ -813,9 +676,24 @@
         <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#boolean">false</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
+        <DataProperty IRI="#database_from"/>
+        <NamedIndividual IRI="#aero_split_disp_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2016-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_from"/>
+        <NamedIndividual IRI="#aero_split_disp_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1990-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_to"/>
+        <NamedIndividual IRI="#aero_split_disp_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2013-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
         <DataProperty IRI="#Relation_Strength"/>
         <NamedIndividual IRI="#maputo_aero_relation"/>
-        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#decimal">0.8</Literal>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#double">0.8</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
         <DataProperty IRI="#database_from"/>
@@ -823,14 +701,19 @@
         <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2016-01-01T00:00:00Z</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
-        <DataProperty IRI="#exists_from"/>
-        <NamedIndividual IRI="#maputo_object_temporal"/>
-        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2013-01-01T00:00:00Z</Literal>
-    </DataPropertyAssertion>
-    <DataPropertyAssertion>
         <DataProperty IRI="#ADM0_Code"/>
         <NamedIndividual IRI="#maputo_split_adm2_code_1"/>
         <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#integer">41374</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#database_from"/>
+        <NamedIndividual IRI="#maputo_split_adm2_code_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2016-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_from"/>
+        <NamedIndividual IRI="#maputo_split_adm2_code_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2013-01-01T00:00:00Z</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
         <DataProperty IRI="#ADM2_Name"/>
@@ -838,14 +721,29 @@
         <Literal datatypeIRI="http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral">Cidade de Maputo</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
-        <DataProperty IRI="http://www.opengis.net/ont/geosparql#asWKT"/>
+        <DataProperty IRI="#database_from"/>
+        <NamedIndividual IRI="#maputo_split_adm2_name_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2016-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_from"/>
+        <NamedIndividual IRI="#maputo_split_adm2_name_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2013-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#database_from"/>
         <NamedIndividual IRI="#maputo_split_bounding_box_1"/>
-        <Literal datatypeIRI="http://www.opengis.net/ont/geosparql#wktLiteral">MULTIPOLYGON(((32.9915311 -25.9701193999999,32.9573777000001 -25.9982697,32.9427438000001 -25.9861478999999,32.9143349 -26.0033473,32.8960634000001 -26.0516855999999,32.9044608040001 -26.0701784999999,32.9257746000001 -26.0450888,32.9136869000001 -26.0241227999999,32.9391123 -26.0327745,32.9553558000001 -26.0791321,32.9915311 -25.9701193999999)),((32.5096456000001 -25.967816,32.4928904000001 -25.9757911,32.4908142090001 -26.035755157,32.4727706910001 -26.0565986629999,32.4411926270001 -26.0584659579999,32.4560050960001 -26.091545105,32.53560257 -26.075172424,32.5701370240001 -26.0840835569999,32.6053314210001 -26.0416069029999,32.5695855000001 -26.0133028,32.5549668 -25.9741010999999,32.5096456000001 -25.967816)),((32.9103849900001 -25.9692587509999,32.9009066 -25.973668,32.9139718000001 -25.982851,32.9221983 -25.9703081,32.9103849900001 -25.9692587509999)),((32.611003876 -25.9445438389999,32.5529831420001 -25.96678773,32.5932554 -25.9838586999999,32.611003876 -25.9445438389999)))</Literal>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2016-01-01T00:00:00Z</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
         <DataProperty IRI="#valid_at"/>
-        <NamedIndividual IRI="#maputo_split_bounding_box_temporal_1"/>
+        <NamedIndividual IRI="#maputo_split_bounding_box_1"/>
         <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1990-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="http://www.opengis.net/ont/geosparql#asWKT"/>
+        <NamedIndividual IRI="#maputo_split_bounding_box_1"/>
+        <Literal datatypeIRI="http://www.opengis.net/ont/geosparql#wktLiteral">POINT(32.9915311 -25.9701193999999,32.9573777000001)</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
         <DataProperty IRI="#DISP_Area"/>
@@ -853,14 +751,69 @@
         <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#boolean">false</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
+        <DataProperty IRI="#database_from"/>
+        <NamedIndividual IRI="#maputo_split_disp_area_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2016-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_from"/>
+        <NamedIndividual IRI="#maputo_split_disp_area_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2013-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
         <DataProperty IRI="#ADM2_Code"/>
         <NamedIndividual IRI="#municipal_1_adm2_code_1"/>
         <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#integer">65254</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
+        <DataProperty IRI="#database_from"/>
+        <NamedIndividual IRI="#municipal_1_adm2_code_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2016-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_from"/>
+        <NamedIndividual IRI="#municipal_1_adm2_code_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1990-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_to"/>
+        <NamedIndividual IRI="#municipal_1_adm2_code_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2013-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
         <DataProperty IRI="#ADM2_Name"/>
         <NamedIndividual IRI="#municipal_1_adm2_name_1"/>
         <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#string">Distrito Municipal 1</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#database_from"/>
+        <NamedIndividual IRI="#municipal_1_adm2_name_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2016-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_from"/>
+        <NamedIndividual IRI="#municipal_1_adm2_name_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1990-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_to"/>
+        <NamedIndividual IRI="#municipal_1_adm2_name_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2013-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#database_from"/>
+        <NamedIndividual IRI="#municipal_1_bounding_box_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2016-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_from"/>
+        <NamedIndividual IRI="#municipal_1_bounding_box_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1990-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_to"/>
+        <NamedIndividual IRI="#municipal_1_bounding_box_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2013-01-01T00:00:00Z</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
         <DataProperty IRI="http://www.opengis.net/ont/geosparql#asWKT"/>
@@ -871,6 +824,21 @@
         <DataProperty IRI="#DISP_Area"/>
         <NamedIndividual IRI="#municipal_1_disp_1"/>
         <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#boolean">false</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#database_from"/>
+        <NamedIndividual IRI="#municipal_1_disp_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2016-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_from"/>
+        <NamedIndividual IRI="#municipal_1_disp_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1990-01-01T00:00:00Z</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#valid_to"/>
+        <NamedIndividual IRI="#municipal_1_disp_1"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2013-01-01T00:00:00Z</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
         <DataProperty IRI="#exists_at"/>
@@ -918,19 +886,89 @@
         <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1990-01-02T12:00:00</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
-        <DataProperty IRI="#valid_from"/>
-        <NamedIndividual IRI="#1990_temporal_object"/>
-        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1990-01-01T00:00:00Z</Literal>
+        <DataProperty IRI="#database_from"/>
+        <NamedIndividual IRI="#aeroporto:1990:2013"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2017-01-01T00:00:00</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
-        <DataProperty IRI="#valid_to"/>
-        <NamedIndividual IRI="#1990_temporal_object"/>
-        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2013-01-01T00:00:00Z</Literal>
+        <DataProperty IRI="#database_to"/>
+        <NamedIndividual IRI="#aeroporto:1990:2013"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2025-01-01T00:00:00</Literal>
     </DataPropertyAssertion>
     <DataPropertyAssertion>
-        <DataProperty IRI="#valid_from"/>
-        <NamedIndividual IRI="#2013_temporal_object"/>
-        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2013-01-01T00:00:00Z</Literal>
+        <DataProperty IRI="#exists_from"/>
+        <NamedIndividual IRI="#aeroporto:1990:2013"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1990-01-01T00:00:00</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#exists_to"/>
+        <NamedIndividual IRI="#aeroporto:1990:2013"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2012-12-31T00:00:00</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#database_from"/>
+        <NamedIndividual IRI="#begin:1980:1990"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2017-01-01T00:00:00</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#exists_from"/>
+        <NamedIndividual IRI="#begin:1980:1990"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1989-01-01T00:00:00</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#exists_to"/>
+        <NamedIndividual IRI="#begin:1980:1990"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1990-12-31T00:00:00</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#database_from"/>
+        <NamedIndividual IRI="#earlyTime:1900:1989"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2017-01-01T00:00:00</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#exists_from"/>
+        <NamedIndividual IRI="#earlyTime:1900:1989"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1990-01-01T00:00:00</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#exists_to"/>
+        <NamedIndividual IRI="#earlyTime:1900:1989"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1988-12-31T00:00:00</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#exists_from"/>
+        <NamedIndividual IRI="#maputo:2013:3000"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2013-01-01T00:00:00</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#exists_from"/>
+        <NamedIndividual IRI="#municipal1:1990:2013"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1990-01-01T00:00:00</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#exists_to"/>
+        <NamedIndividual IRI="#municipal1:1990:2013"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2012-12-31T00:00:00</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#exists_from"/>
+        <NamedIndividual IRI="#municipal2:1990:2013"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1990-01-01T00:00:00</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#exists_to"/>
+        <NamedIndividual IRI="#municipal2:1990:2013"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">2012-12-31T00:00:00</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#exists_from"/>
+        <NamedIndividual IRI="#overlaps:1980:1995"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1980-01-01T00:00:00</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#exists_to"/>
+        <NamedIndividual IRI="#overlaps:1980:1995"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#dateTime">1984-12-31T00:00:00</Literal>
     </DataPropertyAssertion>
     <SubObjectPropertyOf>
         <ObjectProperty IRI="#after"/>
@@ -961,10 +999,6 @@
         <ObjectProperty IRI="#Spatial_Relation"/>
     </SubObjectPropertyOf>
     <SubObjectPropertyOf>
-        <ObjectProperty IRI="#database_time"/>
-        <ObjectProperty IRI="#has_temporal"/>
-    </SubObjectPropertyOf>
-    <SubObjectPropertyOf>
         <ObjectProperty IRI="#disjoint"/>
         <ObjectProperty IRI="#Spatial_Relation"/>
     </SubObjectPropertyOf>
@@ -979,10 +1013,6 @@
     <SubObjectPropertyOf>
         <ObjectProperty IRI="#equal"/>
         <ObjectProperty IRI="#Spatial_Relation"/>
-    </SubObjectPropertyOf>
-    <SubObjectPropertyOf>
-        <ObjectProperty IRI="#exists_time"/>
-        <ObjectProperty IRI="#has_temporal"/>
     </SubObjectPropertyOf>
     <SubObjectPropertyOf>
         <ObjectProperty IRI="#facet_of"/>
@@ -1012,10 +1042,6 @@
         <ObjectProperty IRI="#temporal_overlaps"/>
         <ObjectProperty IRI="#Temporal_Relation"/>
     </SubObjectPropertyOf>
-    <SubObjectPropertyOf>
-        <ObjectProperty IRI="#valid_time"/>
-        <ObjectProperty IRI="#has_temporal"/>
-    </SubObjectPropertyOf>
     <InverseObjectProperties>
         <ObjectProperty IRI="#after"/>
         <ObjectProperty IRI="#before"/>
@@ -1041,14 +1067,6 @@
         <ObjectProperty IRI="#covers"/>
     </InverseObjectProperties>
     <InverseObjectProperties>
-        <ObjectProperty IRI="#database_time"/>
-        <ObjectProperty IRI="#database_time_of"/>
-    </InverseObjectProperties>
-    <InverseObjectProperties>
-        <ObjectProperty IRI="#exists_time"/>
-        <ObjectProperty IRI="#exists_time_of"/>
-    </InverseObjectProperties>
-    <InverseObjectProperties>
         <ObjectProperty IRI="#facet_of"/>
         <ObjectProperty IRI="#has_facet"/>
     </InverseObjectProperties>
@@ -1065,16 +1083,8 @@
         <ObjectProperty IRI="#relation_of"/>
     </InverseObjectProperties>
     <InverseObjectProperties>
-        <ObjectProperty IRI="#has_temporal"/>
-        <ObjectProperty IRI="#temporal_of"/>
-    </InverseObjectProperties>
-    <InverseObjectProperties>
         <ObjectProperty IRI="#related_by"/>
         <ObjectProperty IRI="#related_to"/>
-    </InverseObjectProperties>
-    <InverseObjectProperties>
-        <ObjectProperty IRI="#valid_time"/>
-        <ObjectProperty IRI="#valid_time_of"/>
     </InverseObjectProperties>
     <SymmetricObjectProperty>
         <ObjectProperty IRI="#disjoint"/>
@@ -1127,14 +1137,6 @@
         <Class IRI="#Trestle_Concept"/>
     </ObjectPropertyDomain>
     <ObjectPropertyDomain>
-        <ObjectProperty IRI="#database_time"/>
-        <Class IRI="#Fact"/>
-    </ObjectPropertyDomain>
-    <ObjectPropertyDomain>
-        <ObjectProperty IRI="#exists_time"/>
-        <Class IRI="#Trestle_Object"/>
-    </ObjectPropertyDomain>
-    <ObjectPropertyDomain>
         <ObjectProperty IRI="#has_concept"/>
         <Class IRI="#Trestle_Object"/>
     </ObjectPropertyDomain>
@@ -1158,10 +1160,6 @@
         <ObjectProperty IRI="#relation_of"/>
         <Class IRI="#Trestle_Relation"/>
     </ObjectPropertyDomain>
-    <ObjectPropertyDomain>
-        <ObjectProperty IRI="#valid_time"/>
-        <Class IRI="#Fact"/>
-    </ObjectPropertyDomain>
     <ObjectPropertyRange>
         <ObjectProperty IRI="#Temporal_Relation"/>
         <Class IRI="#Trestle_Object"/>
@@ -1169,14 +1167,6 @@
     <ObjectPropertyRange>
         <ObjectProperty IRI="#concept_of"/>
         <Class IRI="#Trestle_Object"/>
-    </ObjectPropertyRange>
-    <ObjectPropertyRange>
-        <ObjectProperty IRI="#database_time"/>
-        <Class IRI="#Database_Object"/>
-    </ObjectPropertyRange>
-    <ObjectPropertyRange>
-        <ObjectProperty IRI="#exists_time"/>
-        <Class IRI="#Exists_Object"/>
     </ObjectPropertyRange>
     <ObjectPropertyRange>
         <ObjectProperty IRI="#facet_of"/>
@@ -1205,10 +1195,6 @@
     <ObjectPropertyRange>
         <ObjectProperty IRI="#relation_of"/>
         <Class IRI="#Trestle_Object"/>
-    </ObjectPropertyRange>
-    <ObjectPropertyRange>
-        <ObjectProperty IRI="#valid_time"/>
-        <Class IRI="#Valid_Object"/>
     </ObjectPropertyRange>
     <SubObjectPropertyOf>
         <ObjectPropertyChain>
@@ -1484,7 +1470,7 @@
     </DataPropertyRange>
     <DataPropertyRange>
         <DataProperty IRI="#Relation_Strength"/>
-        <Datatype abbreviatedIRI="xsd:decimal"/>
+        <Datatype abbreviatedIRI="xsd:double"/>
     </DataPropertyRange>
     <DataPropertyRange>
         <DataProperty IRI="#SOverlap"/>
@@ -1507,19 +1493,12 @@
         <Datatype abbreviatedIRI="xsd:dateTime"/>
     </DataPropertyRange>
     <DisjointDataProperties>
-        <DataProperty IRI="#database_at"/>
         <DataProperty IRI="#exists_at"/>
         <DataProperty IRI="#valid_at"/>
     </DisjointDataProperties>
     <DisjointDataProperties>
-        <DataProperty IRI="#database_from"/>
         <DataProperty IRI="#exists_from"/>
         <DataProperty IRI="#valid_from"/>
-    </DisjointDataProperties>
-    <DisjointDataProperties>
-        <DataProperty IRI="#database_to"/>
-        <DataProperty IRI="#exists_to"/>
-        <DataProperty IRI="#valid_to"/>
     </DisjointDataProperties>
     <DisjointDataProperties>
         <DataProperty IRI="#exists_to"/>
@@ -1574,5 +1553,5 @@ Defines an object that contains a number of different facts with distinct validi
 
 
 
-<!-- Generated by the OWL API (version 4.2.6.20160910-2108) https://github.com/owlcs/owlapi -->
+<!-- Generated by the OWL API (version 4.2.8.20170104-2310) https://github.com/owlcs/owlapi -->
 
