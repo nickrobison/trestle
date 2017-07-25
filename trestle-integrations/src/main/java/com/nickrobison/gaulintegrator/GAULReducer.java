@@ -193,6 +193,17 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //            Now, do the normal spatial intersection with the new object and its matched objects
 
+            // test of approx equal union
+            if(matchedObjects.size()>1) {
+                List<GAULObject> allGAUL = new ArrayList<GAULObject>(matchedObjects);
+                allGAUL.add(newGAULObject);
+
+                GAULSpatialApproximator.GAULSetMatch match = GAULSpatialApproximator.getApproxEqualUnion(allGAUL, inputSR, 0.9);
+                if (match!=null) {
+                    // do something here
+                    logger.info("found approximate equality between " + match.getEarlyGaulObjs() + " and " + match.getLateGaulObjs());
+                }
+            }
 
 //            If there are no matching objects in the database, just insert the new record and move on.
             if (!matchedObjects.isEmpty()) {
@@ -204,6 +215,14 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
                     if (newGAULObject.getObjectName().equals(matchedObject.getObjectName())) {
                         objectWeight = .8;
+                    }
+
+                    // test of approx equality
+                    boolean isApproxEqual = GAULSpatialApproximator.isApproxEqual(newGAULObject,matchedObject,inputSR,0.9);
+                    if(isApproxEqual)
+                    {
+                        // do something here
+                        logger.info("found approximate equality between GAULObjects "+newGAULObject.getID()+" and "+matchedObject.getID());
                     }
 
 //                    Spatial intersections
