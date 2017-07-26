@@ -30,11 +30,13 @@ public class MergeEngineImpl implements TrestleMergeEngine {
     public static final String OBJECT = "object";
     private final Config config;
     private MergeStrategy defaultStrategy;
+    private ExistenceStrategy existenceStrategy;
     private final boolean onLoad;
 
     public MergeEngineImpl() {
         config = ConfigFactory.load().getConfig("trestle.merge");
         defaultStrategy = MergeStrategy.valueOf(config.getString("defaultStrategy"));
+        existenceStrategy = ExistenceStrategy.valueOf(config.getString("existenceStrategy"));
         this.onLoad = config.getBoolean("onLoad");
     }
 
@@ -51,11 +53,14 @@ public class MergeEngineImpl implements TrestleMergeEngine {
 
     @Override
     public MergeScript mergeFacts(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, Temporal databaseTemporal, MergeStrategy strategy) {
+        final MergeStrategy methodStrategy;
         if (strategy.equals(MergeStrategy.Default)) {
-            strategy = defaultStrategy;
+            methodStrategy = this.defaultStrategy;
+        } else {
+            methodStrategy = strategy;
         }
         logger.debug("Merging facts using the {} strategy", strategy);
-        switch (strategy) {
+        switch (methodStrategy) {
             case ContinuingFacts:
                 return mergeLogic(newFacts, existingFacts, eventTemporal, databaseTemporal, true);
             case ExistingFacts:
