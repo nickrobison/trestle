@@ -12,6 +12,7 @@ import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.OffsetDateTime;
 import java.time.temporal.Temporal;
 import java.util.Collections;
 import java.util.List;
@@ -47,12 +48,12 @@ public class MergeEngineImpl implements TrestleMergeEngine {
     }
 
     @Override
-    public MergeScript mergeFacts(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, Temporal databaseTemporal) {
-        return mergeFacts(newFacts, existingFacts, eventTemporal, databaseTemporal, MergeStrategy.Default);
+    public MergeScript mergeFacts(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, Temporal databaseTemporal, Optional<TemporalObject> existsTemporal) {
+        return mergeFacts(newFacts, existingFacts, eventTemporal, databaseTemporal, existsTemporal, MergeStrategy.Default);
     }
 
     @Override
-    public MergeScript mergeFacts(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, Temporal databaseTemporal, MergeStrategy strategy) {
+    public MergeScript mergeFacts(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, Temporal databaseTemporal, Optional<TemporalObject> existsTemporal, MergeStrategy strategy) {
         final MergeStrategy methodStrategy;
         if (strategy.equals(MergeStrategy.Default)) {
             methodStrategy = this.defaultStrategy;
@@ -60,6 +61,9 @@ public class MergeEngineImpl implements TrestleMergeEngine {
             methodStrategy = strategy;
         }
         logger.debug("Merging facts using the {} strategy", strategy);
+//        Validate existence first
+        this.validateExistence(existenceStrategy, eventTemporal, existsTemporal);
+
         switch (methodStrategy) {
             case ContinuingFacts:
                 return mergeLogic(newFacts, existingFacts, eventTemporal, databaseTemporal, true);
@@ -205,5 +209,27 @@ public class MergeEngineImpl implements TrestleMergeEngine {
             default:
                 throw new IllegalArgumentException("Wrong temporal type");
         }
+    }
+
+    private void validateExistence(ExistenceStrategy strategy, Temporal validTemporal, Optional<TemporalObject> existsTemporal) {
+        final ExistenceStrategy existMergeStrategy;
+        if (strategy == ExistenceStrategy.Default) {
+            existMergeStrategy = this.existenceStrategy;
+        } else {
+            existMergeStrategy = strategy;
+        }
+
+        switch (existMergeStrategy) {
+            case Ignore:
+                return;
+            case During:
+                return;
+            case Extend:
+                return;
+            case Default:
+//                We shouldn't be able to end up here
+                throw new TrestleMergeException("Can't execute default merge, should use strategy from config");
+        }
+
     }
 }
