@@ -1414,7 +1414,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     final TemporalObject temporalObject = individualExistsTemporal.orElseThrow(() -> new RuntimeException(String.format("Unable to get exists temporals for %s", iri)));
                     final int compared = temporalObject.compareTo(atTemporal);
                     final Temporal adjustedIntersection;
-                    if (compared == 1) { // Intersection is after object existence, get the latest version
+                    if (compared == -1) { // Intersection is after object existence, get the latest version
                         if (temporalObject.isInterval()) {
 //                            we need to do a minus one precision unit, because the intervals are exclusive on the end {[)}
                             adjustedIntersection = (Temporal) temporalObject.asInterval().getAdjustedToTime().get();

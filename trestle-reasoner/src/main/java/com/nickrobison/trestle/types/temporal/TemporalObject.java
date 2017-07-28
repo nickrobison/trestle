@@ -91,10 +91,10 @@ public abstract class TemporalObject implements Serializable {
 
     /**
      * Compares a temporal with the TemporalObject to determine if the given Temporal is before, during, or after the {@link TemporalObject}
-     * @param comparingTemporal - {@link OffsetDateTime} to compare against the temporal object
-     * @return - {@code -1} if the {@link OffsetDateTime} comes before the {@link TemporalObject}, {@code 0} is it occurs during (or at), {@code 1} if it comes after
+     * @param comparingTemporal - {@link Temporal} to compare against the temporal object
+     * @return - {@code -1} if this {@link TemporalObject} comes before the {@link Temporal}, {@code 0} if the {@link Temporal} occurs during (or is equal to), {@code 1} if it comes after
      */
-    public abstract int compareTo(OffsetDateTime comparingTemporal);
+    public abstract int compareTo(Temporal comparingTemporal);
 
     @Override
     public boolean equals(@Nullable Object o) {

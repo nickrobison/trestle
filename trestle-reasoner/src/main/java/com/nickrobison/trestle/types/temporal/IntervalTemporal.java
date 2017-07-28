@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.types.temporal;
 
+import com.nickrobison.trestle.common.TemporalUtils;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
@@ -96,18 +97,27 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     }
 
     @Override
-    public int compareTo(OffsetDateTime comparingTemporal) {
-        final OffsetDateTime t1 = parseTemporalToOntologyDateTime(this.fromTime, ZoneOffset.of(this.startTimeZone.getId()));
-        if (this.isContinuing()) {
-            if (t1.compareTo(comparingTemporal) > 0) return -1;
-            return 0;
-        } else {
-            //noinspection OptionalGetWithoutIsPresent
-            final OffsetDateTime t2 = parseTemporalToOntologyDateTime(this.toTime, ZoneOffset.of(this.startTimeZone.getId()));
-            if (t2.compareTo(comparingTemporal) <= 0) return 1;
-            if (t2.compareTo(comparingTemporal) >0 && t1.compareTo(comparingTemporal) <= 0) return 0;
-            return -1;
+    public int compareTo(Temporal comparingTemporal) {
+        final int compareFrom = TemporalUtils.compareTemporals(this.fromTime, comparingTemporal);
+//        If the start temporal is after the comparingTemporal, then the interval object occurs after the comparingTemporal
+        if (compareFrom == 1) {
+            return 1;
         }
+
+//        Do we have an ending temporal?
+        if (this.toTime != null) {
+            final int compareTo = TemporalUtils.compareTemporals(this.toTime, comparingTemporal);
+//            If the ending temporal is less than or equal to the comparingTemporal, then the interval object occurs before the comparingTemporal
+            if (compareTo == 0 || compareTo == -1) {
+                return -1;
+//            If the ending temporal comes after the comparingTemporal, hen the temporal is during the interval object
+            } else {
+                return 0;
+            }
+        }
+
+//        If it's a continuing interval and the start is before the comparingTemporal, then the temporal is during the interval object
+        return 0;
     }
 
     @Override
