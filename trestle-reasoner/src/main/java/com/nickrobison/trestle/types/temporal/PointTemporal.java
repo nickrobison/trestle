@@ -6,13 +6,10 @@ import com.nickrobison.trestle.types.TemporalType;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
 import java.util.*;
-
-import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
 
 /**
  * Created by nrobison on 6/30/16.
@@ -87,6 +84,26 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
     @Override
     public int compareTo(Temporal comparingTemporal) {
         return TemporalUtils.compareTemporals(this.atTime, comparingTemporal);
+    }
+
+    @Override
+    public boolean during(TemporalObject comparingObject) {
+        if (comparingObject.isPoint()) {
+            final int pointCompare = TemporalUtils.compareTemporals(this.atTime, comparingObject.asPoint().atTime);
+            return pointCompare == 0;
+        }
+//        If we're comparing against an interval
+        final int fromCompare = TemporalUtils.compareTemporals(this.atTime, comparingObject.asInterval().getFromTime());
+        if (fromCompare == 1) {
+            return false;
+        }
+        if (!comparingObject.asInterval().isContinuing()) {
+            final int toCompare = TemporalUtils.compareTemporals(this.atTime, (Temporal) comparingObject.asInterval().getToTime().get());
+            if (toCompare != -1) {
+                return false;
+            }
+        }
+        return false;
     }
 
     @Override

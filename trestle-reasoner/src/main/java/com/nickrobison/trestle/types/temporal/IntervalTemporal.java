@@ -121,6 +121,55 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     }
 
     @Override
+    public boolean during(TemporalObject comparingObject) {
+        if (comparingObject.isPoint()) {
+            if (this.isContinuing()) {
+                return TemporalUtils.compareTemporals(this.fromTime, comparingObject.asPoint().getPointTime()) != 1;
+            }
+            return (TemporalUtils.compareTemporals(this.fromTime, comparingObject.asPoint().getPointTime()) != 1) &&
+                    (TemporalUtils.compareTemporals(this.toTime, comparingObject.asPoint().getPointTime()) == 1);
+        }
+
+//        If we're comparing an interval object. Is the comparing Object fully enclosed by this object?
+        final int fromCompare = TemporalUtils.compareTemporals(this.fromTime, comparingObject.asInterval().fromTime);
+        if (fromCompare == 0) {
+            return false;
+        }
+
+//        If we're continuing, they're within us
+        if (this.isContinuing()) {
+            return true;
+        }
+
+//        If they're continuing and we're not, they're not within us
+        if (comparingObject.asInterval().isContinuing()) {
+            return false;
+        }
+        return TemporalUtils.compareTemporals(this.toTime, (Temporal) comparingObject.asInterval().getToTime().get()) == 1;
+//
+//
+//        final int fromCompare = TemporalUtils.compareTemporals(this.fromTime, comparingObject.asInterval().fromTime);
+////        If the other from is greater than out from. We're before them.
+//        if (fromCompare == 1) {
+//            return -1;
+//        }
+////        If they're continuing, we're during them
+//        if (comparingObject.asInterval().isContinuing()) {
+//            return 0;
+//        }
+////        If we're continuing and they're not. We're after them.
+//        if (this.isContinuing()) {
+//            return 1;
+//        }
+////        If neither of us are continuing, compare our end temporals
+//        final int toCompare = TemporalUtils.compareTemporals(this.toTime, this.getToTime().get());
+//        if (toCompare == -1) {
+//            return -1;
+//        }
+//        return 1;
+    }
+
+    @Override
     public boolean isPoint() {
         return false;
     }

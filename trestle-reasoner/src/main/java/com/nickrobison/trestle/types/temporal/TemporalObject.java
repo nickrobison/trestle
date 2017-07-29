@@ -21,7 +21,6 @@ public abstract class TemporalObject implements Serializable {
 
     private final String id;
     private final Set<OWLNamedIndividual> temporal_of;
-//    private final Optional<Set<OWLNamedIndividual>> temporal_of;
 
     TemporalObject(String id, Optional<Set<OWLNamedIndividual>> relations) {
         this.id = id;
@@ -95,6 +94,13 @@ public abstract class TemporalObject implements Serializable {
      * @return - {@code -1} if this {@link TemporalObject} comes before the {@link Temporal}, {@code 0} if the {@link Temporal} occurs during (or is equal to), {@code 1} if it comes after
      */
     public abstract int compareTo(Temporal comparingTemporal);
+
+    /**
+     * Compares two temporal objects to determine if the provide object occurs during this object
+     * @param comparingObject - {@link TemporalObject} object to compare against this one
+     * @return - {@code true} if the provided object occurs entirely within this object
+     */
+    public abstract boolean during(TemporalObject comparingObject);
 
     @Override
     public boolean equals(@Nullable Object o) {
