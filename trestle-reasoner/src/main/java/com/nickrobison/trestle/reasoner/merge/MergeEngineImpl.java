@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.reasoner.merge;
 
+import com.nickrobison.trestle.common.TemporalUtils;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TrestleOWLFact;
@@ -9,19 +10,26 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.nickrobison.trestle.common.StaticIRI.temporalExistsFromIRI;
+import static com.nickrobison.trestle.common.StaticIRI.temporalExistsToIRI;
+import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
+
 /**
  * Created by nrobison on 6/13/17.
  */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class MergeEngineImpl implements TrestleMergeEngine {
 
     private static final Logger logger = LoggerFactory.getLogger(MergeEngineImpl.class);
@@ -48,27 +56,34 @@ public class MergeEngineImpl implements TrestleMergeEngine {
     }
 
     @Override
-    public MergeScript mergeFacts(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, Temporal databaseTemporal, Optional<TemporalObject> existsTemporal) {
-        return mergeFacts(newFacts, existingFacts, eventTemporal, databaseTemporal, existsTemporal, MergeStrategy.Default);
+    public MergeScript mergeFacts(OWLNamedIndividual individual, TemporalObject validTemporal, List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, Temporal databaseTemporal, Optional<TemporalObject> existsTemporal) {
+        return mergeFacts(individual, validTemporal, newFacts, existingFacts, eventTemporal, databaseTemporal, existsTemporal, MergeStrategy.Default);
     }
 
     @Override
-    public MergeScript mergeFacts(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, Temporal databaseTemporal, Optional<TemporalObject> existsTemporal, MergeStrategy strategy) {
+    public MergeScript mergeFacts(OWLNamedIndividual individual, TemporalObject validTemporal, List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, Temporal databaseTemporal, Optional<TemporalObject> existsTemporal, MergeStrategy strategy) {
         final MergeStrategy methodStrategy;
         if (strategy.equals(MergeStrategy.Default)) {
             methodStrategy = this.defaultStrategy;
         } else {
             methodStrategy = strategy;
         }
+
+        final ExistenceStrategy eStrategy;
+        if (existenceStrategy.equals(ExistenceStrategy.Default)) {
+            eStrategy = this.existenceStrategy;
+        } else {
+            eStrategy = existenceStrategy;
+        }
         logger.debug("Merging facts using the {} strategy", strategy);
 //        Validate existence first
-        this.validateExistence(existenceStrategy, eventTemporal, existsTemporal);
+//        this.validateExistence(existenceStrategy, eventTemporal, existsTemporal);
 
         switch (methodStrategy) {
             case ContinuingFacts:
-                return mergeLogic(newFacts, existingFacts, eventTemporal, databaseTemporal, true);
+                return mergeLogic(individual, newFacts, existingFacts, validTemporal, databaseTemporal, existsTemporal, eStrategy, true);
             case ExistingFacts:
-                return mergeLogic(newFacts, existingFacts, eventTemporal, databaseTemporal, false);
+                return mergeLogic(individual, newFacts, existingFacts, validTemporal, databaseTemporal, existsTemporal, eStrategy, false);
             case NoMerge:
                 return noMerge(newFacts, existingFacts);
             default:
@@ -87,7 +102,10 @@ public class MergeEngineImpl implements TrestleMergeEngine {
         return this.onLoad;
     }
 
-    private static MergeScript mergeLogic(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> currentFacts, Temporal eventTemporal, Temporal databaseTemporal, boolean continuingOnly) {
+    private static MergeScript mergeLogic(OWLNamedIndividual individual, List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> currentFacts, TemporalObject eventTemporal, Temporal databaseTemporal, Optional<TemporalObject> existenceTemporal, ExistenceStrategy existenceStrategy, boolean continuingOnly) {
+
+//        Start with existence
+        final List<OWLDataPropertyAssertionAxiom> existenceAxioms = validateExistence(existenceStrategy, individual, existenceTemporal, eventTemporal);
 //        Determine if any of the currently valid facts diverge (have different values) from the newFacts we're attempting to write
         final List<OWLDataPropertyAssertionAxiom> divergingFacts = newFacts
                 .stream()
@@ -119,7 +137,7 @@ public class MergeEngineImpl implements TrestleMergeEngine {
                     if (continuingOnly && !validTemporal1.isContinuing()) {
                         throw new TrestleMergeConflict("Not all interval facts are continuing");
                     }
-                    TemporalObject overriddenTemporal = overrideTemporal(validTemporal1, eventTemporal);
+                    TemporalObject overriddenTemporal = overrideTemporal(validTemporal1, eventTemporal.getIdTemporal());
 //                    And the database temporal as well
                     final TemporalObject newDbTemporal = TemporalObjectBuilder.database().from(databaseTemporal).build();
 //                            Build the Fact
@@ -146,7 +164,7 @@ public class MergeEngineImpl implements TrestleMergeEngine {
                 .map(result -> result.getIndividual("fact").orElseThrow(() -> new RuntimeException("Fact is null")).asOWLNamedIndividual())
                 .collect(Collectors.toList());
 
-        return new MergeScript(individualsToUpdate, factsToVersion, divergingFacts);
+        return new MergeScript(existenceAxioms, individualsToUpdate, factsToVersion, divergingFacts);
     }
 
     private static MergeScript noMerge(List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts) {
@@ -170,34 +188,95 @@ public class MergeEngineImpl implements TrestleMergeEngine {
         return new MergeScript(Collections.emptyList(), Collections.emptyList(), newFacts);
     }
 
+    private static List<OWLDataPropertyAssertionAxiom> validateExistence(ExistenceStrategy strategy, OWLNamedIndividual individual, Optional<TemporalObject> existsTemporal, TemporalObject validTemporal) {
+
+        switch (strategy) {
+            case Ignore:
+                return Collections.emptyList();
+            case During:
+                return validDuringExistence(existsTemporal, validTemporal);
+            case Extend:
+                return extendExistence(individual, existsTemporal, validTemporal);
+            case Default:
+//                We shouldn't be able to end up here
+                throw new TrestleMergeException("Can't execute default merge, should use strategy from config");
+        }
+        return Collections.emptyList();
+    }
+
+    private static List<OWLDataPropertyAssertionAxiom> validDuringExistence(Optional<TemporalObject> existsTemporalOptional, TemporalObject validTemporal) {
+        if (existsTemporalOptional.isPresent()) {
+            final TemporalObject existsTemporal = existsTemporalOptional.get();
+            if (validTemporal.during(existsTemporal)) {
+                return Collections.emptyList();
+            }
+//            final int fromCompare = existsTemporal.compareTo(validFrom);
+//            if (fromCompare == 0 && !existsTemporal.isContinuing() && validTo != null) {
+//                final int toCompare = existsTemporal.compareTo(validTo);
+//                if (toCompare == 0) {
+//                    return Optional.empty();
+//                }
+//            }
+            throw new TrestleMergeException(String.format("Merge temporal %s is not during exists temporal %s", validTemporal, existsTemporal));
+        }
+        throw new TrestleMergeException("Missing exists temporal");
+    }
+
+    private static List<OWLDataPropertyAssertionAxiom> extendExistence(OWLNamedIndividual individual, Optional<TemporalObject> existsTemporalOptional, TemporalObject validTemporal) {
+        if (existsTemporalOptional.isPresent()) {
+            final TemporalObject existsTemporal = existsTemporalOptional.get();
+//            If valid temporal is entirely within the exists temporal, hurrah! Nothing to do
+            if (validTemporal.during(existsTemporal)) {
+                return Collections.emptyList();
+            }
+            if (!existsTemporal.isContinuing() && validTemporal.isContinuing()) {
+                throw new TrestleMergeException("Can't merge a non-continuing object with a continuing fact");
+            }
+            List<OWLDataPropertyAssertionAxiom> individualAxioms = new ArrayList<>();
+//            Extend the exists start?
+            if (TemporalUtils.compareTemporals(validTemporal.getIdTemporal(), existsTemporal.getIdTemporal()) == 1) {
+                individualAxioms.add(df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(temporalExistsFromIRI),
+                        individual,
+                        df.getOWLLiteral(parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC).toString(), OWL2Datatype.XSD_DATE_TIME)));
+            }
+            if (!existsTemporal.isContinuing() && validTemporal.isInterval() && !validTemporal.isContinuing()) {
+                final int toCompare = TemporalUtils.compareTemporals((Temporal) validTemporal.asInterval().getToTime().get(), (Temporal) existsTemporal.asInterval().getToTime().get());
+                if (toCompare != 1) {
+                    individualAxioms.add(df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(temporalExistsToIRI),
+                            individual,
+                            df.getOWLLiteral(parseTemporalToOntologyDateTime((Temporal) validTemporal.asInterval().getToTime().get(), ZoneOffset.UTC).toString(), OWL2Datatype.XSD_DATE_TIME)));
+                }
+            }
+            return individualAxioms;
+        }
+        throw new TrestleMergeException("Missing exists temporal");
+    }
+
     private static TemporalObject overrideTemporal(TemporalObject temporal, Temporal eventTemporal) {
         switch (temporal.getScope()) {
             case VALID: {
-                if (temporal.isInterval()) {
-                    return overrideIntervalTemporal(TemporalScope.VALID, temporal, eventTemporal);
-                } else {
-                    return temporal;
-                }
+                return overrideTemporalScope(temporal, eventTemporal, TemporalScope.VALID);
             }
             case DATABASE: {
-                if (temporal.isInterval()) {
-                    return overrideIntervalTemporal(TemporalScope.DATABASE, temporal, eventTemporal);
-                } else {
-                    return temporal;
-                }
+                return overrideTemporalScope(temporal, eventTemporal, TemporalScope.DATABASE);
             }
             case EXISTS: {
-                if (temporal.isInterval()) {
-                    return overrideIntervalTemporal(TemporalScope.EXISTS, temporal, eventTemporal);
-                } else {
-                    return temporal;
-                }
+                return overrideTemporalScope(temporal, eventTemporal, TemporalScope.EXISTS);
             }
             default:
                 throw new IllegalArgumentException("Wrong temporal type");
         }
     }
 
+    private static TemporalObject overrideTemporalScope(TemporalObject temporal, Temporal eventTemporal, TemporalScope valid) {
+        if (temporal.isInterval()) {
+            return overrideIntervalTemporal(valid, temporal, eventTemporal);
+        } else {
+            return temporal;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
     private static TemporalObject overrideIntervalTemporal(TemporalScope scope, TemporalObject temporal, Temporal eventTemporal) {
         switch (scope) {
             case VALID:
@@ -209,27 +288,5 @@ public class MergeEngineImpl implements TrestleMergeEngine {
             default:
                 throw new IllegalArgumentException("Wrong temporal type");
         }
-    }
-
-    private void validateExistence(ExistenceStrategy strategy, Temporal validTemporal, Optional<TemporalObject> existsTemporal) {
-        final ExistenceStrategy existMergeStrategy;
-        if (strategy == ExistenceStrategy.Default) {
-            existMergeStrategy = this.existenceStrategy;
-        } else {
-            existMergeStrategy = strategy;
-        }
-
-        switch (existMergeStrategy) {
-            case Ignore:
-                return;
-            case During:
-                return;
-            case Extend:
-                return;
-            case Default:
-//                We shouldn't be able to end up here
-                throw new TrestleMergeException("Can't execute default merge, should use strategy from config");
-        }
-
     }
 }

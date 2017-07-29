@@ -416,7 +416,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //                Get all the currently valid facts, compare them with the ones present on the object, and update the different ones.
                     final Timer.Context compareTimer = this.metrician.registerTimer("trestle-merge-comparison-timer").time();
                     final List<TrestleResult> currentFacts = resultSet.getResults();
-                    final MergeScript mergeScript = this.mergeEngine.mergeFacts(individualFacts, currentFacts, factTemporal.getIdTemporal(), dTemporal.getIdTemporal(), existsTemporal);
+                    final MergeScript mergeScript = this.mergeEngine.mergeFacts(owlNamedIndividual, factTemporal, individualFacts, currentFacts, factTemporal.getIdTemporal(), dTemporal.getIdTemporal(), existsTemporal);
                     compareTimer.stop();
 
 //                Update all the unbounded DB temporals for the diverging facts
@@ -433,6 +433,15 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     final Timer.Context factsTimer = this.metrician.registerTimer("trestle-merge-facts-timer").time();
                     writeObjectFacts(owlNamedIndividual, mergeScript.getNewFacts(), factTemporal, dTemporal);
                     factsTimer.stop();
+
+//                    Write new individual existence axioms
+                    mergeScript.getIndividualExistenceAxioms().forEach(axiom -> {
+                        try {
+                            this.ontology.writeIndividualDataProperty(axiom);
+                        } catch (MissingOntologyEntity e) {
+                            logger.error("Missing ontology individual {}", owlNamedIndividual, e);
+                        }
+                    });
                 }
             } catch (Exception e) {
                 ontology.returnAndAbortTransaction(trestleTransaction);
@@ -560,7 +569,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         try {
             final TrestleResultSet validFactResultSet = this.ontology.executeSPARQLResults(validFactQuery);
 //            FIXME(nrobison): Implement this
-            final MergeScript newFactMergeScript = this.mergeEngine.mergeFacts(Collections.singletonList(newFactAxiom), validFactResultSet.getResults(), validTemporal.getIdTemporal(), databaseTemporal.getIdTemporal(), Optional.empty());
+            final MergeScript newFactMergeScript = this.mergeEngine.mergeFacts(owlNamedIndividual, validTemporal, Collections.singletonList(newFactAxiom), validFactResultSet.getResults(), validTemporal.getIdTemporal(), databaseTemporal.getIdTemporal(), Optional.empty());
             final String update = this.qb.buildUpdateUnboundedTemporal(parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC), newFactMergeScript.getFactsToVersionAsArray());
             this.ontology.executeUpdateSPARQL(update);
 
