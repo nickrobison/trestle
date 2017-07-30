@@ -94,7 +94,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
         }
 //        If we're comparing against an interval
         final int fromCompare = TemporalUtils.compareTemporals(this.atTime, comparingObject.asInterval().getFromTime());
-        if (fromCompare == 1) {
+        if (fromCompare == -1) {
             return false;
         }
         if (!comparingObject.asInterval().isContinuing()) {
@@ -103,7 +103,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
                 return false;
             }
         }
-        return false;
+        return true;
     }
 
     @Override

@@ -119,17 +119,22 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
     @Override
     public boolean during(TemporalObject comparingObject) {
+//        If the given object is a point, we can't be during it.
         if (comparingObject.isPoint()) {
-            if (this.isContinuing()) {
-                return TemporalUtils.compareTemporals(this.fromTime, comparingObject.asPoint().getPointTime()) != 1;
-            }
-            return (TemporalUtils.compareTemporals(this.fromTime, comparingObject.asPoint().getPointTime()) != 1) &&
-                    (TemporalUtils.compareTemporals(this.toTime, comparingObject.asPoint().getPointTime()) == 1);
+            return false;
         }
+//        if (comparingObject.isPoint()) {
+//            if (this.isContinuing()) {
+//                return TemporalUtils.compareTemporals(this.fromTime, comparingObject.asPoint().getPointTime()) != 1;
+//            }
+//            return (TemporalUtils.compareTemporals(this.fromTime, comparingObject.asPoint().getPointTime()) != 1) &&
+//                    (TemporalUtils.compareTemporals(this.toTime, comparingObject.asPoint().getPointTime()) == 1);
+//        }
 
-//        If we're comparing an interval object. Is the comparing Object fully enclosed by this object?
+//        If we're comparing an interval object, are we fully with in the given object?
+//        Do we start before the given object?
         final int fromCompare = TemporalUtils.compareTemporals(this.fromTime, comparingObject.asInterval().fromTime);
-        if (fromCompare == 0) {
+        if (fromCompare == -1) {
             return false;
         }
 
@@ -139,10 +144,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         }
 
 //        If they're continuing and we're not, they're not within us
-        if (comparingObject.asInterval().isContinuing()) {
-            return false;
-        }
-        return TemporalUtils.compareTemporals(this.toTime, (Temporal) comparingObject.asInterval().getToTime().get()) == 1;
+        return !comparingObject.asInterval().isContinuing() && TemporalUtils.compareTemporals(this.toTime, (Temporal) comparingObject.asInterval().getToTime().get()) == 1;
 //
 //
 //        final int fromCompare = TemporalUtils.compareTemporals(this.fromTime, comparingObject.asInterval().fromTime);

@@ -96,9 +96,9 @@ public abstract class TemporalObject implements Serializable {
     public abstract int compareTo(Temporal comparingTemporal);
 
     /**
-     * Compares two temporal objects to determine if the provide object occurs during this object
+     * Compares two temporal objects to determine if this object occurs during the given object
      * @param comparingObject - {@link TemporalObject} object to compare against this one
-     * @return - {@code true} if the provided object occurs entirely within this object
+     * @return - {@code true} if this object occurs entirely within the given object
      */
     public abstract boolean during(TemporalObject comparingObject);
 
