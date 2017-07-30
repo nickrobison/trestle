@@ -210,13 +210,6 @@ public class MergeEngineImpl implements TrestleMergeEngine {
             if (validTemporal.during(existsTemporal)) {
                 return Collections.emptyList();
             }
-//            final int fromCompare = existsTemporal.compareTo(validFrom);
-//            if (fromCompare == 0 && !existsTemporal.isContinuing() && validTo != null) {
-//                final int toCompare = existsTemporal.compareTo(validTo);
-//                if (toCompare == 0) {
-//                    return Optional.empty();
-//                }
-//            }
             throw new TrestleMergeException(String.format("Merge temporal %s is not during exists temporal %s", validTemporal, existsTemporal));
         }
         throw new TrestleMergeException("Missing exists temporal");

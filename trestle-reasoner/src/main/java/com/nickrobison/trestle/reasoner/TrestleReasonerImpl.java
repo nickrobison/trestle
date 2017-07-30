@@ -568,8 +568,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         try {
             final TrestleResultSet validFactResultSet = this.ontology.executeSPARQLResults(validFactQuery);
+
+            //                    Get object existence information
+            final Set<OWLDataPropertyAssertionAxiom> individualProperties = this.ontology.getAllDataPropertiesForIndividual(owlNamedIndividual);
+            final Optional<TemporalObject> existsTemporal = TemporalObjectBuilder.buildTemporalFromProperties(individualProperties, OffsetDateTime.class, null, null);
+
 //            FIXME(nrobison): Implement this
-            final MergeScript newFactMergeScript = this.mergeEngine.mergeFacts(owlNamedIndividual, validTemporal, Collections.singletonList(newFactAxiom), validFactResultSet.getResults(), validTemporal.getIdTemporal(), databaseTemporal.getIdTemporal(), Optional.empty());
+            final MergeScript newFactMergeScript = this.mergeEngine.mergeFacts(owlNamedIndividual, validTemporal, Collections.singletonList(newFactAxiom), validFactResultSet.getResults(), validTemporal.getIdTemporal(), databaseTemporal.getIdTemporal(), existsTemporal);
             final String update = this.qb.buildUpdateUnboundedTemporal(parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC), newFactMergeScript.getFactsToVersionAsArray());
             this.ontology.executeUpdateSPARQL(update);
 
