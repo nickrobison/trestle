@@ -5,6 +5,10 @@ package com.nickrobison.trestle.reasoner.merge;
  */
 public class TrestleMergeException extends RuntimeException {
 
+    public TrestleMergeException(Throwable t) {
+        super(t);
+    }
+
     public TrestleMergeException(String message) {
         super(message);
     }
