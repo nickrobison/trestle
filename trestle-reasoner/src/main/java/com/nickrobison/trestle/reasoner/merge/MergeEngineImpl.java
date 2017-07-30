@@ -244,7 +244,7 @@ public class MergeEngineImpl implements TrestleMergeEngine {
                 if (toCompare != 1) {
                     individualAxioms.add(df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(temporalExistsToIRI),
                             individual,
-                            df.getOWLLiteral(parseTemporalToOntologyDateTime((Temporal) validTemporal.asInterval().getToTime().get(), ZoneOffset.UTC).toString(), OWL2Datatype.XSD_DATE_TIME)));
+                            df.getOWLLiteral(parseTemporalToOntologyDateTime((Temporal) validTemporal.asInterval().getAdjustedToTime(1).get(), ZoneOffset.UTC).toString(), OWL2Datatype.XSD_DATE_TIME)));
                 }
             }
             return individualAxioms;

@@ -1426,7 +1426,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     if (compared == -1) { // Intersection is after object existence, get the latest version
                         if (temporalObject.isInterval()) {
 //                            we need to do a minus one precision unit, because the intervals are exclusive on the end {[)}
-                            adjustedIntersection = (Temporal) temporalObject.asInterval().getAdjustedToTime().get();
+                            adjustedIntersection = (Temporal) temporalObject.asInterval().getAdjustedToTime(-1).get();
                         } else {
                             adjustedIntersection = temporalObject.asPoint().getPointTime();
                         }
