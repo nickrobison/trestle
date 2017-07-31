@@ -398,15 +398,16 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             final Optional<List<OWLDataPropertyAssertionAxiom>> individualFactsOptional = trestleParser.classParser.getFacts(inputObject);
             final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(true);
             try {
-                final List<OWLDataPropertyAssertionAxiom> individualFacts = individualFactsOptional.get();
-//                Extract OWLDataProperties from the list of new facts to merge
-                final List<OWLDataProperty> filteredFactProperties = individualFacts
-                        .stream()
-                        .map(fact -> fact.getProperty().asOWLDataProperty())
-                        .collect(Collectors.toList());
 
 //            Get all the currently valid facts
                 if (individualFactsOptional.isPresent()) {
+                    final List<OWLDataPropertyAssertionAxiom> individualFacts = individualFactsOptional.get();
+//                Extract OWLDataProperties from the list of new facts to merge
+                    final List<OWLDataProperty> filteredFactProperties = individualFacts
+                            .stream()
+                            .map(fact -> fact.getProperty().asOWLDataProperty())
+                            .collect(Collectors.toList());
+
                     final CompletableFuture<TrestleResultSet> factsFuture = CompletableFuture.supplyAsync(() -> {
                         final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                         try {

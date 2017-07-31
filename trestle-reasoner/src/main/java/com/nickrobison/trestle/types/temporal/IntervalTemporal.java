@@ -121,6 +121,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     }
 
     @Override
+    @SuppressWarnings({"squid:S3655", "ConstantConditions"})
     public boolean during(TemporalObject comparingObject) {
 //        If the given object is a point, we can't be during it.
         if (comparingObject.isPoint()) {
@@ -182,7 +183,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
      */
     public Optional<T> getAdjustedToTime(int amount) {
         if (isContinuing()) return Optional.empty();
-        final T end = this.getToTime().get();
+        @SuppressWarnings({"ConstantConditions", "squid:S3655"}) final T end = this.getToTime().get();
         final TemporalUnit query = end.query(TemporalQueries.precision());
 //        We can't do precisions finer than Microseconds
         if (((ChronoUnit) query).compareTo(ChronoUnit.MICROS) < 0) {
@@ -334,19 +335,6 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         public Builder withToTimeZone(ZoneId zoneId) {
             this.toTimeZone = Optional.of(zoneId);
             return this;
-        }
-
-        /**
-         * Set the Individuals this temporal relates to
-         *
-         * @param relations - OWLNamedIndividuals associated with this temporal
-         * @return - Builder
-         * @deprecated - We don't use this anymore
-         */
-        @Deprecated
-        public IntervalTemporal withRelations(OWLNamedIndividual... relations) {
-            this.relations = Optional.of(new HashSet<>(Arrays.asList(relations)));
-            return new IntervalTemporal<>(this);
         }
 
         public IntervalTemporal build() {

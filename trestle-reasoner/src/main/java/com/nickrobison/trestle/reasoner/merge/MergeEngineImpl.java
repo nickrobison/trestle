@@ -224,6 +224,7 @@ public class MergeEngineImpl implements TrestleMergeEngine {
         throw new TrestleMergeException("Missing exists temporal");
     }
 
+    @SuppressWarnings({"ConstantConditions", "squid:S3655"})
     private static List<OWLDataPropertyAssertionAxiom> extendExistence(OWLNamedIndividual individual, Optional<TemporalObject> existsTemporalOptional, TemporalObject validTemporal) {
         if (existsTemporalOptional.isPresent()) {
             final TemporalObject existsTemporal = existsTemporalOptional.get();

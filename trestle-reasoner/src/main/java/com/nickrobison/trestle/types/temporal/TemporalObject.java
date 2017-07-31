@@ -30,11 +30,6 @@ public abstract class TemporalObject implements Serializable {
         return this.id;
     }
 
-    @Deprecated
-    public Set<OWLNamedIndividual> getTemporalRelations() {
-        return this.temporal_of;
-    }
-
     public abstract boolean isInterval();
 
     public IntervalTemporal asInterval() {

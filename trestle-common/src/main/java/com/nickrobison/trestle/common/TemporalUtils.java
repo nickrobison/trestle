@@ -5,6 +5,8 @@ import java.time.temporal.Temporal;
 
 public class TemporalUtils {
 
+    private TemporalUtils() {}
+
     /**
      * Compares two temporals against each other
      * In the event that the temporals have different levels of resolution, they will be casted down to the lowest level of precision

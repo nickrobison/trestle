@@ -24,12 +24,12 @@ public class MergeEngineNoOp implements TrestleMergeEngine {
 
     @Override
     public void changeDefaultMergeStrategy(MergeStrategy strategy) {
-
+//        Not needed
     }
 
     @Override
     public void changeDefaultExistenceStrategy(ExistenceStrategy strategy) {
-
+//        Not needed
     }
 
     @Override

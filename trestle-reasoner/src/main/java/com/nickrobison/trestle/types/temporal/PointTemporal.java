@@ -99,7 +99,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
             return false;
         }
         if (!comparingObject.asInterval().isContinuing()) {
-            final int toCompare = TemporalUtils.compareTemporals(this.atTime, (Temporal) comparingObject.asInterval().getToTime().get());
+            @SuppressWarnings({"ConstantConditions", "squid:S3655"}) final int toCompare = TemporalUtils.compareTemporals(this.atTime, (Temporal) comparingObject.asInterval().getToTime().get());
             if (toCompare != -1) {
                 return false;
             }
@@ -195,18 +195,6 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
         public Builder withTimeZone(ZoneId zoneId) {
             this.explicitTimeZone = Optional.of(zoneId);
             return this;
-        }
-
-        /**
-         * Set the Individuals this temporal relates to
-         *
-         * @param relations - OWLNamedIndividuals associated with this temporal
-         * @return - Builder
-         */
-        @Deprecated
-        public PointTemporal withRelations(OWLNamedIndividual... relations) {
-            this.relations = Optional.of(new HashSet<>(Arrays.asList(relations)));
-            return new PointTemporal<>(this);
         }
 
         public PointTemporal build() {
