@@ -8,6 +8,8 @@ import { animate, style, transition, trigger } from "@angular/animations";
 import { MdSliderChange } from "@angular/material";
 import * as Moment from "moment";
 import LngLatBounds = mapboxgl.LngLatBounds;
+import moment = require("moment");
+import { VisualizeService } from "../visualize/visualize.service";
 
 enum DatasetState {
     UNLOADED,
@@ -31,19 +33,6 @@ interface IDatasetState {
                 style({transform: "scale(0)", opacity: 0}),
                 animate("500ms", style({transform: "scale(1)", opacity: 1}))
             ]),
-            // transition(":leave", [
-            //     style({opacity: 1, transform: "scale(1)"}),
-            //     animate("200ms", style({opacity: 0, transform: "scale(0)"}))
-            // ])
-            // state("in", style({
-            //     opacity: "1.0"
-            // })),
-            // state("out", style({
-            //     opacity: "0.0"
-            // })),
-            // transition("in => out", animate("400ms ease-in-out")),
-            // transition("out => in", animate("400ms ease-in-out")),
-
         ])
     ]
 })
@@ -51,10 +40,12 @@ export class DatsetViewerComponent implements OnInit {
     public availableDatasets: IDatasetState[] = [];
     public DatasetState = DatasetState;
     public loadedDataset: ITrestleMapSource;
+    public minTime = moment("1990-01-01");
+    public maxTime = moment("2016-01-01");
     public sliderValue = 2013;
     private mapBounds: LngLatBounds;
 
-    constructor(private mapService: MapService) {
+    constructor(private mapService: MapService, private vs: VisualizeService) {
     }
 
     public ngOnInit(): void {
@@ -98,5 +89,13 @@ export class DatsetViewerComponent implements OnInit {
         this.availableDatasets
             .filter((ds) => ds.state === DatasetState.LOADED)
             .forEach((ds) => this.loadDataset(ds));
+    };
+
+    public mapClicked = (event: string): void => {
+        console.debug("Clicked:", event);
+        this.vs.getIndividualAttributes(event)
+            .subscribe((data) => {
+                console.log("Has individual", data);
+            })
     }
 }

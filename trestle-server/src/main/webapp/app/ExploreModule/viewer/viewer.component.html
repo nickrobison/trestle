@@ -3,7 +3,7 @@
     <div class="row ">
         <div class="col s10 map-container">
             <trestle-map [individual]="loadedDataset" [single]="true" [multiSelect]="false"
-                         (mapBounds)="updateBounds($event)"></trestle-map>
+                         (mapBounds)="updateBounds($event)" (clicked)="mapClicked($event)"></trestle-map>
         </div>
         <div class="col s2 z-depth-2 dataset-container">
             <h6>Available Datasets</h6>
@@ -22,10 +22,16 @@
     <div class="section">
         <div class="row">
             <div class="col s10">
-                <md-slider thumbLabel tickInterval="1" [max]="2015" [min]="1990" [value]="sliderValue"
+                <md-slider thumbLabel tickInterval="1" [max]="maxTime.year()" [min]="minTime.year()" [value]="sliderValue"
                            (change)="sliderChanged($event)">
                 </md-slider>
             </div>
         </div>
+    </div>
+</div>
+<div class="section">
+    <h4>Object Events</h4>
+    <div class="row">
+        <object-events [minTime]="minTime" [maxTime]="maxTime"></object-events>
     </div>
 </div>

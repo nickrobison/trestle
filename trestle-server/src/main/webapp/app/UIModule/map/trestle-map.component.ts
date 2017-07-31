@@ -31,6 +31,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     @Input() public single: boolean;
     @Input() public multiSelect: boolean;
     @Output() public mapBounds: EventEmitter<LngLatBounds> = new EventEmitter();
+    @Output() public clicked: EventEmitter<string> = new EventEmitter();
     private map: mapboxgl.Map;
     private mapSources: string[];
 
@@ -138,8 +139,11 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         console.debug("Filtered features", features);
         const feature: any = features[0];
         let layerID = features[0].layer.id;
+        // Emit the clicked layer
+        const featureID = feature.properties[idField];
+        this.clicked.emit(featureID);
         layerID = layerID.replace("-fill", "");
-        this.map.setFilter(layerID + "-hover", ["==", idField, feature.properties[idField]]);
+        this.map.setFilter(layerID + "-hover", ["==", idField, featureID]);
         // If multi-select is not enabled, deselect everything else
         if (!this.multiSelect) {
             this.mapSources.forEach((layer) => {

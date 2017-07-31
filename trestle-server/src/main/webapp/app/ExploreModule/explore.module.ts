@@ -20,6 +20,7 @@ import {RouterModule} from "@angular/router";
 import {ExploreRoutes} from "./explore.routing";
 import { DatsetViewerComponent } from "./viewer/viewer.component";
 import { MapService } from "./viewer/map.service";
+import { ObjectEventGraphComponent } from "./object-event-graph/ObjectEventGraph";
 
 @NgModule({
     imports: [
@@ -39,7 +40,8 @@ import { MapService } from "./viewer/map.service";
         CodeMirrorComponent,
         QueryComponent,
         QueryViewer,
-        DatsetViewerComponent
+        DatsetViewerComponent,
+        ObjectEventGraphComponent
     ],
     providers: [VisualizeService, QueryService, MapService],
     entryComponents: [IndividualValueDialog]
