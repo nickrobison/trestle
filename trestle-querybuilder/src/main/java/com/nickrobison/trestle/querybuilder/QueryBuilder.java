@@ -595,6 +595,48 @@ public class QueryBuilder {
     }
 
     /**
+     * Takes a list of {@link OWLDataPropertyAssertionAxiom}s and REPLACES any existing values
+     *
+     * @param axioms - Axioms to add to object
+     * @return - SPARQL query string
+     */
+    public String updateObjectProperties(List<OWLDataPropertyAssertionAxiom> axioms) {
+
+//        Find the data properties to delete all values of
+
+        final String deleteAxioms = axioms
+                .stream()
+                .map(axiom -> axiom.getProperty().asOWLDataProperty())
+                .map(property -> String.format("?m <%s> ?o", property.getIRI().toString()))
+                .collect(Collectors.joining(". "));
+
+        final String updateAxioms = axioms
+                .stream()
+                .map(axiom -> String.format("%s %s %s", axiom.getSubject().toString(), axiom.getProperty().asOWLDataProperty().toString(), axiom.getObject().toString()))
+                .collect(Collectors.joining(". "));
+
+        final String filterAxiom = axioms
+                .stream()
+                .map(axiom -> axiom.getSubject().toString())
+                .collect(Collectors.joining(", "));
+
+
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText(String.format("DELETE {" +
+                "%s }" +
+                "INSERT {" +
+                "%s }" +
+                "WHERE {" +
+                "?m rdf:type trestle:Trestle_Object ." +
+                "VALUES ?m {%s} ." +
+                "?m ?p ?o" +
+                "}", deleteAxioms, updateAxioms, filterAxiom));
+
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
+    /**
      * Initialize the base SPARQL String, with the correct prefixes
      *
      * @return - Base SPARQL string

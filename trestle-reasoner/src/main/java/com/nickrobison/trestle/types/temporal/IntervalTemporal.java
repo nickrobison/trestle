@@ -123,13 +123,6 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         if (comparingObject.isPoint()) {
             return false;
         }
-//        if (comparingObject.isPoint()) {
-//            if (this.isContinuing()) {
-//                return TemporalUtils.compareTemporals(this.fromTime, comparingObject.asPoint().getPointTime()) != 1;
-//            }
-//            return (TemporalUtils.compareTemporals(this.fromTime, comparingObject.asPoint().getPointTime()) != 1) &&
-//                    (TemporalUtils.compareTemporals(this.toTime, comparingObject.asPoint().getPointTime()) == 1);
-//        }
 
 //        If we're comparing an interval object, are we fully with in the given object?
 //        Do we start before the given object?
@@ -138,34 +131,13 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
             return false;
         }
 
-//        If we're continuing, they're within us
-        if (this.isContinuing()) {
+//        If they're continuing, we're fully within them
+        if (comparingObject.isContinuing()) {
             return true;
         }
 
-//        If they're continuing and we're not, they're not within us
-        return !comparingObject.asInterval().isContinuing() && TemporalUtils.compareTemporals(this.toTime, (Temporal) comparingObject.asInterval().getToTime().get()) == 1;
-//
-//
-//        final int fromCompare = TemporalUtils.compareTemporals(this.fromTime, comparingObject.asInterval().fromTime);
-////        If the other from is greater than out from. We're before them.
-//        if (fromCompare == 1) {
-//            return -1;
-//        }
-////        If they're continuing, we're during them
-//        if (comparingObject.asInterval().isContinuing()) {
-//            return 0;
-//        }
-////        If we're continuing and they're not. We're after them.
-//        if (this.isContinuing()) {
-//            return 1;
-//        }
-////        If neither of us are continuing, compare our end temporals
-//        final int toCompare = TemporalUtils.compareTemporals(this.toTime, this.getToTime().get());
-//        if (toCompare == -1) {
-//            return -1;
-//        }
-//        return 1;
+//        If we're continuing and they're not, we're not within them
+        return !this.asInterval().isContinuing() && TemporalUtils.compareTemporals(this.toTime, (Temporal) comparingObject.asInterval().getToTime().get()) == -1;
     }
 
     @Override

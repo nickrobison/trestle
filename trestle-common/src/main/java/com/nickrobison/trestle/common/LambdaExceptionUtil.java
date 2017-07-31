@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.common;
 
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -89,5 +90,22 @@ public final class LambdaExceptionUtil {
 
     @SuppressWarnings ("unchecked")
     private static <E extends Throwable> void throwAsUnchecked(Exception exception) throws E { throw (E)exception; }
+
+
+    /**
+     * Recovers the underlying exception that gets wrapped by something like a {@link java.util.concurrent.CompletionException}
+     * If the given exception doesn't match anything in the parameter list, we simply rethrow the original exception
+     *
+     * @param e - {@link RuntimeException} that's wrapping the exception we really want
+     * @param exceptionsList - Generic exception types to try and cast the underlying exception to
+     */
+    public static void recoverExceptionType(RuntimeException e, Class<? extends RuntimeException>... exceptionsList) {
+        for (Class<? extends RuntimeException> possibleException : exceptionsList) {
+            if (possibleException.isAssignableFrom(e.getCause().getClass())) {
+                throw possibleException.cast(e.getCause());
+            }
+        }
+        throw e;
+    }
 
 }

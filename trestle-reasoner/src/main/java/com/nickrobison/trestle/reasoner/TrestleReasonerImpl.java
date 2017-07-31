@@ -70,6 +70,7 @@ import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.IRIUtils.extractTrestleIndividualName;
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
+import static com.nickrobison.trestle.common.LambdaExceptionUtil.recoverExceptionType;
 import static com.nickrobison.trestle.common.LambdaUtils.sequenceCompletableFutures;
 import static com.nickrobison.trestle.common.StaticIRI.*;
 import static com.nickrobison.trestle.iri.IRIVersion.V1;
@@ -417,7 +418,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     }, this.objectThreadPool);
 
 //                    Get object existence information
-                    final CompletableFuture<Optional<TemporalObject>> existsFuture = CompletableFuture.supplyAsync(() -> {
+                    @SuppressWarnings("Duplicates") final CompletableFuture<Optional<TemporalObject>> existsFuture = CompletableFuture.supplyAsync(() -> {
                         final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                         try {
                             final Set<OWLDataPropertyAssertionAxiom> individualProperties = this.ontology.getAllDataPropertiesForIndividual(owlNamedIndividual);
@@ -454,29 +455,21 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                             writeObjectFacts(owlNamedIndividual, mergeScript.getNewFacts(), factTemporal, dTemporal);
                             factsTimer.stop();
 
-//                    Write new individual existence axioms
-                            mergeScript.getIndividualExistenceAxioms().forEach(axiom -> {
-                                try {
-                                    this.ontology.writeIndividualDataProperty(axiom);
-                                } catch (MissingOntologyEntity e) {
-                                    logger.error("Missing ontology individual {}", owlNamedIndividual, e);
-                                }
-                            });
+//                    Write new individual existence axioms, if they exist
+                            if (!mergeScript.getIndividualExistenceAxioms().isEmpty()) {
+                                final String updateExistenceQuery = this.qb.updateObjectProperties(mergeScript.getIndividualExistenceAxioms());
+                                this.ontology.executeUpdateSPARQL(updateExistenceQuery);
+                            }
                         } finally {
                             this.ontology.returnAndCommitTransaction(tt);
                         }
                     }, this.objectThreadPool);
-                        mergeFuture.join();
+                    mergeFuture.join();
                 }
-            } catch (CompletionException e) {
-//                Handle a Merge Conflict, if one was thrown
-                if (e.getCause() instanceof TrestleMergeConflict) {
-                    throw new TrestleMergeConflict(e.getCause());
-                }
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 ontology.returnAndAbortTransaction(trestleTransaction);
                 logger.error("Error while writing object {}", owlNamedIndividual, e);
-                throw e;
+                recoverExceptionType(e, TrestleMergeConflict.class, TrestleMergeException.class);
             } finally {
                 ontology.returnAndCommitTransaction(trestleTransaction);
                 mergeTimer.stop();
@@ -621,7 +614,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
             final CompletableFuture<Void> mergeFuture = factsFuture.thenAcceptBothAsync(existsFuture, (validFactResultSet, existsTemporal) -> {
 
-//            FIXME(nrobison): Implement this
                 final MergeScript newFactMergeScript = this.mergeEngine.mergeFacts(owlNamedIndividual, validTemporal, Collections.singletonList(newFactAxiom), validFactResultSet.getResults(), validTemporal.getIdTemporal(), databaseTemporal.getIdTemporal(), existsTemporal);
                 final String update = this.qb.buildUpdateUnboundedTemporal(parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC), newFactMergeScript.getFactsToVersionAsArray());
                 this.ontology.executeUpdateSPARQL(update);
@@ -634,16 +626,18 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //        Write the new fact versions
                 writeObjectFacts(owlNamedIndividual, newFactMergeScript.getNewFacts(), validTemporal, databaseTemporal);
 
+//                Write the new existence axioms, if they exist
+                if (!newFactMergeScript.getIndividualExistenceAxioms().isEmpty()) {
+                    final String updateExistenceQuery = this.qb.updateObjectProperties(newFactMergeScript.getIndividualExistenceAxioms());
+                    this.ontology.executeUpdateSPARQL(updateExistenceQuery);
+                }
+
             }, this.objectThreadPool);
             mergeFuture.join();
-        } catch (CompletionException e) {
-            if (e.getCause() instanceof TrestleMergeConflict) {
-                throw new TrestleMergeConflict(e.getCause());
-            }
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             logger.error("Unable to add fact {} to object {}", factName, owlNamedIndividual, e);
-            throw e;
+            recoverExceptionType(e, TrestleMergeConflict.class, TrestleMergeException.class);
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         }

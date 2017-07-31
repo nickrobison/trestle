@@ -233,14 +233,14 @@ public class MergeEngineImpl implements TrestleMergeEngine {
             }
             List<OWLDataPropertyAssertionAxiom> individualAxioms = new ArrayList<>();
 //            Extend the exists start?
-            if (TemporalUtils.compareTemporals(validTemporal.getIdTemporal(), existsTemporal.getIdTemporal()) == 1) {
+            if (TemporalUtils.compareTemporals(validTemporal.getIdTemporal(), existsTemporal.getIdTemporal()) == -1) {
                 individualAxioms.add(df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(temporalExistsFromIRI),
                         individual,
                         df.getOWLLiteral(parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC).toString(), OWL2Datatype.XSD_DATE_TIME)));
             }
             if (!existsTemporal.isContinuing() && validTemporal.isInterval() && !validTemporal.isContinuing()) {
                 final int toCompare = TemporalUtils.compareTemporals((Temporal) validTemporal.asInterval().getToTime().get(), (Temporal) existsTemporal.asInterval().getToTime().get());
-                if (toCompare != 1) {
+                if (toCompare != -1) {
                     individualAxioms.add(df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(temporalExistsToIRI),
                             individual,
                             df.getOWLLiteral(parseTemporalToOntologyDateTime((Temporal) validTemporal.asInterval().getAdjustedToTime(1).get(), ZoneOffset.UTC).toString(), OWL2Datatype.XSD_DATE_TIME)));

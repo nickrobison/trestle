@@ -12,6 +12,7 @@ import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.merge.ExistenceStrategy;
 import com.nickrobison.trestle.reasoner.merge.MergeStrategy;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeConflict;
+import com.nickrobison.trestle.reasoner.merge.TrestleMergeException;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.Test;
@@ -31,7 +32,7 @@ public class TrestleFactTests extends AbstractReasonerTest {
 
     @Override
     protected ImmutableList<Class<?>> registerClasses() {
-        return ImmutableList.of(TestClasses.FactVersionTest.class, TestClasses.GAULTestClass.class);
+        return ImmutableList.of(TestClasses.FactVersionTest.class, TestClasses.GAULTestClass.class, BoundedFact.class);
     }
 
     @Test
@@ -147,20 +148,25 @@ public class TrestleFactTests extends AbstractReasonerTest {
 
         //        During tests
         reasoner.writeTrestleObject(v1);
-        assertThrows(TrestleMergeConflict.class, () -> reasoner.writeTrestleObject(beforeExists));
+        assertThrows(TrestleMergeException.class, () -> reasoner.writeTrestleObject(beforeExists));
 
 //        Extend existence
         this.reasoner.getMergeEngine().changeDefaultExistenceStrategy(ExistenceStrategy.Extend);
 //        Try to write the before object, again
         this.reasoner.writeTrestleObject(beforeExists);
-        final TestClasses.@NonNull FactVersionTest extendedFact = this.reasoner.readTrestleObject(TestClasses.FactVersionTest.class, "test-object", LocalDate.of(1984, 5, 14), null);
+        final TestClasses.FactVersionTest extendedFact = this.reasoner.readTrestleObject(TestClasses.FactVersionTest.class, "test-object", LocalDate.of(1984, 5, 14), null);
         assertEquals(LocalDate.of(1980, 3, 26), extendedFact.getValidFrom(), "Should have extended existsFrom");
 
 //        Try to write forward fact
         this.reasoner.writeTrestleObject(boundedFact);
-        this.reasoner.addFactToTrestleObject(BoundedFact.class, "bounded-object", "testValue", LocalDate.of(1989, 3, 26).plusYears(6), null, null);
-        @NonNull final BoundedFact extendedBoundedFact = this.reasoner.readTrestleObject(BoundedFact.class, "bounded-object", LocalDate.of(2005, 3, 26), null);
-        assertEquals(LocalDate.of(1989, 3, 26).plusYears(6), extendedBoundedFact.getValidTo(), "Should have extended ending temporal");
+//        Try to add continuing fact to non-continuing object
+        assertThrows(TrestleMergeException.class, () -> this.reasoner.addFactToTrestleObject(BoundedFact.class, "bounded-object", "testValue", "new value, after exists", LocalDate.of(1989, 3, 26).plusYears(6), null, null));
+//        Need to add all the facts, because otherwise we'll get an invalid state exception
+        this.reasoner.addFactToTrestleObject(BoundedFact.class, "bounded-object", "testValue", "new value, after exists", LocalDate.of(1989, 3, 26).plusYears(6), LocalDate.of(1989, 3, 26).plusYears(10), null);
+        this.reasoner.addFactToTrestleObject(BoundedFact.class, "bounded-object", "id", "bounded-object", LocalDate.of(1989, 3, 26).plusYears(6), LocalDate.of(1989, 3, 26).plusYears(10), null);
+        this.reasoner.addFactToTrestleObject(BoundedFact.class, "bounded-object", "wkt", "POINT(0.71255092695307 -25.572028714467507)", LocalDate.of(1989, 3, 26).plusYears(6), LocalDate.of(1989, 3, 26).plusYears(10), null);
+        @NonNull final BoundedFact extendedBoundedFact = this.reasoner.readTrestleObject(BoundedFact.class, "bounded-object", LocalDate.of(1989, 3, 26).plusYears(7), null);
+        assertEquals(LocalDate.of(1989, 3, 26).plusYears(10).plusDays(1), extendedBoundedFact.getValidTo(), "Should have extended ending temporal");
 
 
 //        Ignore
@@ -169,7 +175,7 @@ public class TrestleFactTests extends AbstractReasonerTest {
     }
 
     @DatasetClass(name = "BoundedVersionTest")
-    private static class BoundedFact implements Serializable {
+    public static class BoundedFact implements Serializable {
         private static final long serialVersionUID = 42L;
 
         @IndividualIdentifier
