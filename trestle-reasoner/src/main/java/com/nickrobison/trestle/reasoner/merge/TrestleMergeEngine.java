@@ -14,11 +14,18 @@ import java.util.Optional;
  */
 public interface TrestleMergeEngine {
     /**
-     * Change to default {@link MergeStrategy}
+     * Change the default {@link MergeStrategy}
      *
      * @param strategy - new {@link MergeStrategy} to use for objects and facts
      */
     void changeDefaultMergeStrategy(MergeStrategy strategy);
+
+    /**
+     * Change the default {@link ExistenceStrategy}
+     *
+     * @param strategy - new {@link ExistenceStrategy} to use for objects and facts
+     */
+    void changeDefaultExistenceStrategy(ExistenceStrategy strategy);
 
     /**
      * Perform merge calculation using the default {@link MergeStrategy} set in the reasoner config

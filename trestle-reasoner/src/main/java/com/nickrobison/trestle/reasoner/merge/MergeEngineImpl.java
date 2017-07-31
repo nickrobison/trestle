@@ -56,6 +56,12 @@ public class MergeEngineImpl implements TrestleMergeEngine {
     }
 
     @Override
+    public void changeDefaultExistenceStrategy(ExistenceStrategy strategy) {
+        logger.info("Changing default existence strategy from {} to {}", this.existenceStrategy, strategy);
+        this.existenceStrategy = strategy;
+    }
+
+    @Override
     public MergeScript mergeFacts(OWLNamedIndividual individual, TemporalObject validTemporal, List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, Temporal databaseTemporal, Optional<TemporalObject> existsTemporal) {
         return mergeFacts(individual, validTemporal, newFacts, existingFacts, eventTemporal, databaseTemporal, existsTemporal, MergeStrategy.Default);
     }

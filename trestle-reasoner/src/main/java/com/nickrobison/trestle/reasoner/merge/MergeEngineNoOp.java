@@ -19,11 +19,16 @@ public class MergeEngineNoOp implements TrestleMergeEngine {
     private static final Logger logger = LoggerFactory.getLogger(MergeEngineNoOp.class);
 
     public MergeEngineNoOp() {
-        logger.warn("Merging disabled, creating No-Op merge engine");
+        logger.info("Merging disabled, creating No-Op merge engine");
     }
 
     @Override
     public void changeDefaultMergeStrategy(MergeStrategy strategy) {
+
+    }
+
+    @Override
+    public void changeDefaultExistenceStrategy(ExistenceStrategy strategy) {
 
     }
 
