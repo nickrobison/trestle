@@ -12,8 +12,8 @@
                     <md-icon *ngIf="(ds.state == DatasetState.UNLOADED)" [@fadeInOut]>check_circle</md-icon>
                     <md-spinner class="loading-spinner" *ngIf="ds.state == DatasetState.LOADING"
                                 [@fadeInOut]></md-spinner>
-                    <md-icon *ngIf="(ds.state == DatasetState.LOADED)" class="selected" [@fadeInOut]>check_circle
-                    </md-icon>
+                    <md-icon *ngIf="(ds.state == DatasetState.LOADED)" class="selected" [@fadeInOut]>check_circle</md-icon>
+                    <md-icon *ngIf="(ds.state == DatasetState.ERROR)" class="orange600" [@fadeInOut]>error</md-icon>
                     {{ds.name}}
                 </li>
             </ul>

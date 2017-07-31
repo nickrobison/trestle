@@ -12,7 +12,8 @@ import LngLatBounds = mapboxgl.LngLatBounds;
 enum DatasetState {
     UNLOADED,
     LOADING,
-    LOADED
+    LOADED,
+    ERROR
 }
 
 interface IDatasetState {
@@ -80,6 +81,9 @@ export class DatsetViewerComponent implements OnInit {
                     idField: "id",
                     data
                 };
+            }, (error) => {
+                console.error("Error loading dataset:", error);
+                dataset.state = DatasetState.ERROR;
             });
     }
 
@@ -90,7 +94,7 @@ export class DatsetViewerComponent implements OnInit {
     public sliderChanged = (event: MdSliderChange): void => {
         console.debug("Value changed to:", event);
         this.sliderValue = event.value;
-    //    Reload all the currently loaded datasets
+        //    Reload all the currently loaded datasets
         this.availableDatasets
             .filter((ds) => ds.state === DatasetState.LOADED)
             .forEach((ds) => this.loadDataset(ds));
