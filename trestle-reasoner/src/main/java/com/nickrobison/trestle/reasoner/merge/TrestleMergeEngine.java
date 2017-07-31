@@ -66,6 +66,12 @@ public interface TrestleMergeEngine {
     boolean mergeEnabled();
 
     /**
+     * Determine if the merge process should consider object existence
+     * @return - {@code true} Existence is being considered. {@code false} we're ignoring existence
+     */
+    boolean existenceEnabled();
+
+    /**
      * Merge on load?
      *
      * @return - {@code true} merge objects on merge. {@code false} merge only facts

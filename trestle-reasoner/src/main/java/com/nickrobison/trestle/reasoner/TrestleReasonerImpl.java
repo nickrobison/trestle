@@ -418,15 +418,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     }, this.objectThreadPool);
 
 //                    Get object existence information
-                    @SuppressWarnings("Duplicates") final CompletableFuture<Optional<TemporalObject>> existsFuture = CompletableFuture.supplyAsync(() -> {
-                        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-                        try {
-                            final Set<OWLDataPropertyAssertionAxiom> individualProperties = this.ontology.getAllDataPropertiesForIndividual(owlNamedIndividual);
-                            return TemporalObjectBuilder.buildTemporalFromProperties(individualProperties, OffsetDateTime.class, null, null);
-                        } finally {
-                            this.ontology.returnAndCommitTransaction(tt);
-                        }
-                    }, this.objectThreadPool);
+                    @SuppressWarnings("Duplicates") final CompletableFuture<Optional<TemporalObject>> existsFuture = readObjectExistence(owlNamedIndividual, trestleTransaction, this.objectThreadPool, !this.mergeEngine.existenceEnabled());
 
 
                     final CompletableFuture<Void> mergeFuture = factsFuture.thenAcceptBothAsync(existsFuture, (resultSet, existsTemporal) -> {
@@ -602,15 +594,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 
 //                    Get object existence information
-            @SuppressWarnings("Duplicates") final CompletableFuture<Optional<TemporalObject>> existsFuture = CompletableFuture.supplyAsync(() -> {
-                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-                try {
-                    final Set<OWLDataPropertyAssertionAxiom> individualExistenceProperties = this.ontology.getAllDataPropertiesForIndividual(owlNamedIndividual);
-                    return TemporalObjectBuilder.buildTemporalFromProperties(individualExistenceProperties, OffsetDateTime.class, null, null);
-                } finally {
-                    this.ontology.returnAndCommitTransaction(tt);
-                }
-            }, this.objectThreadPool);
+            @SuppressWarnings("Duplicates") final CompletableFuture<Optional<TemporalObject>> existsFuture = readObjectExistence(owlNamedIndividual,
+                    trestleTransaction,
+                    this.objectThreadPool,
+                    !this.mergeEngine.existenceEnabled());
 
             final CompletableFuture<Void> mergeFuture = factsFuture.thenAcceptBothAsync(existsFuture, (validFactResultSet, existsTemporal) -> {
 
@@ -649,7 +636,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC));
         trestleCache.deleteTrestleObject(individualIRI);
     }
-
     /**
      * Writes a data property as an asserted fact for an individual TS_Object.
      *
@@ -2143,6 +2129,30 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             return isRelated.isPresent();
         }
         return false;
+    }
+
+    /**
+     * Read object existence {@link TemporalObject} for the given {@link OWLNamedIndividual}, unless we bypass it, then just return an empty optional
+     *
+     * @param individual - {@link OWLNamedIndividual} to read
+     * @param transaction - Execute as part of provided {@link TrestleTransaction}
+     * @param executor - Execute within provided {@link ExecutorService}
+     * @param bypass - {@code true} bypass execution and return {@link Optional#empty()}
+     * @return - {@link Optional} of {@link TemporalObject} provided existence interval of the individual
+     */
+    private CompletableFuture<Optional<TemporalObject>> readObjectExistence(OWLNamedIndividual individual, TrestleTransaction transaction, ExecutorService executor, boolean bypass) {
+        if (!bypass) {
+            return CompletableFuture.supplyAsync(() -> {
+                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(transaction);
+                try {
+                    final Set<OWLDataPropertyAssertionAxiom> individualExistenceProperties = this.ontology.getAllDataPropertiesForIndividual(individual);
+                    return TemporalObjectBuilder.buildTemporalFromProperties(individualExistenceProperties, OffsetDateTime.class, null, null);
+                } finally {
+                    this.ontology.returnAndCommitTransaction(tt);
+                }
+            }, executor);
+        }
+        return CompletableFuture.completedFuture(Optional.empty());
     }
 
     /**

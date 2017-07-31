@@ -108,6 +108,11 @@ public class MergeEngineImpl implements TrestleMergeEngine {
         return this.onLoad;
     }
 
+    @Override
+    public boolean existenceEnabled() {
+        return !this.existenceStrategy.equals(ExistenceStrategy.Ignore);
+    }
+
     private static MergeScript mergeLogic(OWLNamedIndividual individual, List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> currentFacts, TemporalObject eventTemporal, Temporal databaseTemporal, Optional<TemporalObject> existenceTemporal, ExistenceStrategy existenceStrategy, boolean continuingOnly) {
 
 //        Start with existence
