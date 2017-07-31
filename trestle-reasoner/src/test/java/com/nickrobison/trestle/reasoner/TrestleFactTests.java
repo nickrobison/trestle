@@ -37,6 +37,8 @@ public class TrestleFactTests extends AbstractReasonerTest {
 
     @Test
     public void testFactValidityMerge() throws TrestleClassException, MissingOntologyEntity {
+//        Disable existence merge
+        this.reasoner.getMergeEngine().changeDefaultExistenceStrategy(ExistenceStrategy.Ignore);
         final TestClasses.FactVersionTest v1 = new TestClasses.FactVersionTest("test-object",
                 LocalDate.of(1989, 3, 26),
                 "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))",
