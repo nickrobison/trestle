@@ -578,7 +578,7 @@ public abstract class SesameOntology extends TransactingOntology {
         logger.trace("Attempting to set thread connection");
         final TrestleTransaction threadTransactionObject = this.getThreadTransactionObject();
         if (threadTransactionObject == null) {
-            logger.warn("Thread has no transaction object, getting connection from the pool");
+            logger.debug("Thread has no transaction object, getting connection from the pool");
             this.tc.set(this.cm.getConnection());
         } else {
             @Nullable final RepositoryConnection connection = threadTransactionObject.getConnection();

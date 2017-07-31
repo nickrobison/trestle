@@ -235,7 +235,7 @@ public class GraphDBOntology extends SesameOntology {
     @Override
     public void openDatasetTransaction(boolean write) {
         if (this.tc.get() == null) {
-            logger.warn("Thread has no open connection, creating a new one");
+            logger.debug("Thread has no open connection, creating a new one");
             this.setOntologyConnection();
         }
         this.getThreadConnection().begin();
