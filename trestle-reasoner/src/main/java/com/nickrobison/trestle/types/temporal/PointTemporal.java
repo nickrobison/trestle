@@ -1,17 +1,15 @@
 package com.nickrobison.trestle.types.temporal;
 
+import com.nickrobison.trestle.common.TemporalUtils;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
 import java.util.*;
-
-import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
 
 /**
  * Created by nrobison on 6/30/16.
@@ -35,6 +33,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
         this.temporalType = (Class<T>) builder.atTime.getClass();
         this.timeZone = builder.explicitTimeZone.orElse(ZoneOffset.UTC);
     }
+
     @Override
     public TemporalType getType() {
         return TYPE;
@@ -84,11 +83,28 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
     }
 
     @Override
-    public int compareTo(OffsetDateTime comparingTemporal) {
-        final OffsetDateTime t1 = parseTemporalToOntologyDateTime(this.atTime, ZoneOffset.of(this.timeZone.getId()));
-        if (t1.compareTo(comparingTemporal) > 0) return 1;
-        if (t1.compareTo(comparingTemporal) == 0) return 0;
-        return -1;
+    public int compareTo(Temporal comparingTemporal) {
+        return TemporalUtils.compareTemporals(this.atTime, comparingTemporal);
+    }
+
+    @Override
+    public boolean during(TemporalObject comparingObject) {
+        if (comparingObject.isPoint()) {
+            final int pointCompare = TemporalUtils.compareTemporals(this.atTime, comparingObject.asPoint().atTime);
+            return pointCompare == 0;
+        }
+//        If we're comparing against an interval
+        final int fromCompare = TemporalUtils.compareTemporals(this.atTime, comparingObject.asInterval().getFromTime());
+        if (fromCompare == -1) {
+            return false;
+        }
+        if (!comparingObject.asInterval().isContinuing()) {
+            @SuppressWarnings({"ConstantConditions", "squid:S3655"}) final int toCompare = TemporalUtils.compareTemporals(this.atTime, (Temporal) comparingObject.asInterval().getToTime().get());
+            if (toCompare != -1) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
@@ -114,6 +130,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
 
     /**
      * Returns the explicit timezone of the temporal object
+     *
      * @return - ZoneID
      */
     public ZoneId getTimeZone() {
@@ -136,6 +153,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Manually set point parameter name
+         *
          * @param name - String to use for parameter name
          * @return - Builder
          */
@@ -146,6 +164,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Manually set temporalID
+         *
          * @param temporalID - String of TemporalID
          * @return - Builder
          */
@@ -156,6 +175,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Set the point time zone
+         *
          * @param zoneID - String to parse into timezone
          * @return - Builder
          */
@@ -168,23 +188,13 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Set the point time zone
+         *
          * @param zoneId - ZoneID to use
          * @return - Builder
          */
         public Builder withTimeZone(ZoneId zoneId) {
             this.explicitTimeZone = Optional.of(zoneId);
             return this;
-        }
-
-        /**
-         * Set the Individuals this temporal relates to
-         * @param relations - OWLNamedIndividuals associated with this temporal
-         * @return - Builder
-         */
-        @Deprecated
-        public PointTemporal withRelations(OWLNamedIndividual... relations) {
-            this.relations = Optional.of(new HashSet<>(Arrays.asList(relations)));
-            return new PointTemporal<>(this);
         }
 
         public PointTemporal build() {

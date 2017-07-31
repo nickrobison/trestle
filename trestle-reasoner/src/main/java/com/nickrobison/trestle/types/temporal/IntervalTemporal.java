@@ -1,18 +1,19 @@
 package com.nickrobison.trestle.types.temporal;
 
+import com.nickrobison.trestle.common.TemporalUtils;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.temporal.*;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.Temporal;
+import java.time.temporal.TemporalQueries;
+import java.time.temporal.TemporalUnit;
 import java.util.*;
-
-import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
 
 /**
  * Created by nrobison on 6/30/16.
@@ -96,18 +97,51 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     }
 
     @Override
-    public int compareTo(OffsetDateTime comparingTemporal) {
-        final OffsetDateTime t1 = parseTemporalToOntologyDateTime(this.fromTime, ZoneOffset.of(this.startTimeZone.getId()));
-        if (this.isContinuing()) {
-            if (t1.compareTo(comparingTemporal) > 0) return -1;
-            return 0;
-        } else {
-            //noinspection OptionalGetWithoutIsPresent
-            final OffsetDateTime t2 = parseTemporalToOntologyDateTime(this.toTime, ZoneOffset.of(this.startTimeZone.getId()));
-            if (t2.compareTo(comparingTemporal) <= 0) return 1;
-            if (t2.compareTo(comparingTemporal) >0 && t1.compareTo(comparingTemporal) <= 0) return 0;
-            return -1;
+    public int compareTo(Temporal comparingTemporal) {
+        final int compareFrom = TemporalUtils.compareTemporals(this.fromTime, comparingTemporal);
+//        If the start temporal is after the comparingTemporal, then the interval object occurs after the comparingTemporal
+        if (compareFrom == 1) {
+            return 1;
         }
+
+//        Do we have an ending temporal?
+        if (this.toTime != null) {
+            final int compareTo = TemporalUtils.compareTemporals(this.toTime, comparingTemporal);
+//            If the ending temporal is less than or equal to the comparingTemporal, then the interval object occurs before the comparingTemporal
+            if (compareTo == 0 || compareTo == -1) {
+                return -1;
+//            If the ending temporal comes after the comparingTemporal, hen the temporal is during the interval object
+            } else {
+                return 0;
+            }
+        }
+
+//        If it's a continuing interval and the start is before the comparingTemporal, then the temporal is during the interval object
+        return 0;
+    }
+
+    @Override
+    @SuppressWarnings({"squid:S3655", "ConstantConditions"})
+    public boolean during(TemporalObject comparingObject) {
+//        If the given object is a point, we can't be during it.
+        if (comparingObject.isPoint()) {
+            return false;
+        }
+
+//        If we're comparing an interval object, are we fully with in the given object?
+//        Do we start before the given object?
+        final int fromCompare = TemporalUtils.compareTemporals(this.fromTime, comparingObject.asInterval().fromTime);
+        if (fromCompare == -1) {
+            return false;
+        }
+
+//        If they're continuing, we're fully within them
+        if (comparingObject.isContinuing()) {
+            return true;
+        }
+
+//        If we're continuing and they're not, we're not within them
+        return !this.asInterval().isContinuing() && TemporalUtils.compareTemporals(this.toTime, (Temporal) comparingObject.asInterval().getToTime().get()) == -1;
     }
 
     @Override
@@ -140,20 +174,22 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
     /**
      * Temporal intervals are exclusive of the toTime, this method returns the latest inclusive value of the interval
-     * Executes {@link TemporalQueries#precision()} to find the smallest supported value and subtracts 1 unit
+     * Executes {@link TemporalQueries#precision()} to find the smallest supported value and subtracts the given amount
      * If the interval is continuing, returns an empty optional
      * If the precision is finer than {@link ChronoUnit#MICROS}, we return {@link ChronoUnit#MICROS}
+     *
+     * @param amount - amount to add/subtract from the ending temporal
      * @return - Optional temporal of type {@link T}
      */
-    public Optional<T> getAdjustedToTime() {
+    public Optional<T> getAdjustedToTime(int amount) {
         if (isContinuing()) return Optional.empty();
-        final T end = this.getToTime().get();
+        @SuppressWarnings({"ConstantConditions", "squid:S3655"}) final T end = this.getToTime().get();
         final TemporalUnit query = end.query(TemporalQueries.precision());
 //        We can't do precisions finer than Microseconds
         if (((ChronoUnit) query).compareTo(ChronoUnit.MICROS) < 0) {
-            return Optional.of((T) end.minus(1, ChronoUnit.MICROS));
+            return Optional.of((T) end.plus(amount, ChronoUnit.MICROS));
         }
-        return Optional.of((T) end.minus(1, query));
+        return Optional.of((T) end.plus(amount, query));
     }
 
     public String getStartName() {
@@ -244,6 +280,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Manually set temporalID
+         *
          * @param temporalID - String of TemporalID
          * @return - Builder
          */
@@ -298,19 +335,6 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         public Builder withToTimeZone(ZoneId zoneId) {
             this.toTimeZone = Optional.of(zoneId);
             return this;
-        }
-
-        /**
-         * Set the Individuals this temporal relates to
-         * @deprecated  - We don't use this anymore
-         *
-         * @param relations - OWLNamedIndividuals associated with this temporal
-         * @return - Builder
-         */
-        @Deprecated
-        public IntervalTemporal withRelations(OWLNamedIndividual... relations) {
-            this.relations = Optional.of(new HashSet<>(Arrays.asList(relations)));
-            return new IntervalTemporal<>(this);
         }
 
         public IntervalTemporal build() {

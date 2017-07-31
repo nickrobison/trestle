@@ -1,18 +1,16 @@
 package com.nickrobison.trestle.reasoner.caching;
 
-import com.nickrobison.trestle.reasoner.TestClasses;
-import com.nickrobison.trestle.reasoner.TrestleBuilder;
-import com.nickrobison.trestle.reasoner.TrestleReasoner;
+import com.google.common.collect.ImmutableList;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.reasoner.AbstractReasonerTest;
+import com.nickrobison.trestle.reasoner.TestClasses;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
-import com.nickrobison.trestle.reasoner.merge.MergeStrategy;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
-import org.junit.jupiter.api.*;
-import org.semanticweb.owlapi.model.IRI;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,29 +26,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @Tag("integration")
 @Disabled
-public class TrestleCacheTest {
+public class TrestleCacheTest extends AbstractReasonerTest {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleCacheTest.class);
-    private static final String OVERRIDE_PREFIX = "http://nickrobison.com/test-owl#";
-    private TrestleReasoner reasoner;
 
-    @BeforeEach
-    public void setup() {
-        final Config config = ConfigFactory.load(ConfigFactory.parseResources("application.conf"));
-        reasoner = new TrestleBuilder()
-                .withDBConnection(config.getString("trestle.ontology.connectionString"),
-                        config.getString("trestle.ontology.username"),
-                        config.getString("trestle.ontology.password"))
-                .withName("cache_test")
-                .withOntology(IRI.create(config.getString("trestle.ontology.location")))
-                .withPrefix(OVERRIDE_PREFIX)
-                .withInputClasses(TestClasses.JTSGeometryTest.class)
-                .withoutMetrics()
-                .initialize()
-                .build();
-        reasoner.getMergeEngine().changeDefaultMergeStrategy(MergeStrategy.ExistingFacts);
+    @Override
+    protected String getTestName() {
+        return "cache_test";
+    }
 
-//        df = OWLManager.getOWLDataFactory();
+    @Override
+    protected ImmutableList<Class<?>> registerClasses() {
+        return ImmutableList.of(TestClasses.JTSGeometryTest.class);
     }
 
     @Test
@@ -91,11 +78,5 @@ public class TrestleCacheTest {
 
 ////        Test for invalidation
 //        mock(TrestleCache.IndividualCacheEntryListener.class);
-    }
-
-
-    @AfterEach
-    public void shutdown() {
-        reasoner.shutdown(true);
     }
 }

@@ -1,16 +1,17 @@
 package com.nickrobison.trestle.reasoner;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.google.common.collect.ImmutableList;
+import com.nickrobison.trestle.exporter.ITrestleExporter;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.annotations.*;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
-import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
-import com.nickrobison.trestle.exporter.ITrestleExporter;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import org.junit.jupiter.api.*;
-import org.semanticweb.owlapi.model.IRI;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import java.io.*;
 import java.time.LocalDate;
@@ -26,29 +27,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SuppressWarnings("Duplicates")
 @Tag("integration")
 @Disabled
-public class DataExporterTests {
+public class DataExporterTests extends AbstractReasonerTest {
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
-    private static TrestleReasoner reasoner;
     private static List<String> ids = new ArrayList<>();
     private static List<SimpleGAULObject> gaulObjects = new ArrayList<>();
 
-    @BeforeAll
-    public static void setup() throws IOException {
-        final Config config = ConfigFactory.load(ConfigFactory.parseResources("application.conf")).getConfig("trestle.ontology");
-        reasoner = new TrestleBuilder()
-                .withDBConnection(config.getString("connectionString"),
-                        config.getString("username"),
-                        config.getString("password"))
-                .withName("hadoop_gaul_exporter")
-                .withInputClasses(SimpleGAULObject.class)
-                .withOntology(IRI.create(config.getString("trestle.ontology.location")))
-                .withoutMetrics()
-                .withoutCaching()
-                .withoutMetrics()
-                .initialize()
-                .build();
-
+    @BeforeEach
+    public void setupData() throws IOException {
         loadData();
     }
 
@@ -95,11 +81,15 @@ public class DataExporterTests {
         assertTrue(file.length() > 0, "Should have non-zero length");
     }
 
-    @AfterAll
-    public static void shutdown() {
-        reasoner.shutdown(false);
+    @Override
+    protected String getTestName() {
+        return "hadoop_gaul_exporter";
     }
 
+    @Override
+    protected ImmutableList<Class<?>> registerClasses() {
+        return ImmutableList.of(SimpleGAULObject.class);
+    }
 
     @DatasetClass(name = "gaul-test")
     public static class SimpleGAULObject implements Serializable {

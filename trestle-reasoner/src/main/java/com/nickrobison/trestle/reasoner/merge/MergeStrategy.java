@@ -8,6 +8,7 @@ package com.nickrobison.trestle.reasoner.merge;
  * Defines the strategy for merging facts and objects
  * Specifying {@link MergeStrategy#Default} will default to the strategy defined in the configuration file
  */
+@SuppressWarnings({"squid:S00115"})
 public enum MergeStrategy {
     /**
      * For each fact which is currently valid, if it is a continuing fact,

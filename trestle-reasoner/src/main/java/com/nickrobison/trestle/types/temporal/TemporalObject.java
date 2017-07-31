@@ -6,7 +6,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.io.Serializable;
-import java.time.OffsetDateTime;
 import java.time.temporal.Temporal;
 import java.util.HashSet;
 import java.util.Optional;
@@ -21,7 +20,6 @@ public abstract class TemporalObject implements Serializable {
 
     private final String id;
     private final Set<OWLNamedIndividual> temporal_of;
-//    private final Optional<Set<OWLNamedIndividual>> temporal_of;
 
     TemporalObject(String id, Optional<Set<OWLNamedIndividual>> relations) {
         this.id = id;
@@ -30,11 +28,6 @@ public abstract class TemporalObject implements Serializable {
 
     public String getID() {
         return this.id;
-    }
-
-    @Deprecated
-    public Set<OWLNamedIndividual> getTemporalRelations() {
-        return this.temporal_of;
     }
 
     public abstract boolean isInterval();
@@ -91,10 +84,17 @@ public abstract class TemporalObject implements Serializable {
 
     /**
      * Compares a temporal with the TemporalObject to determine if the given Temporal is before, during, or after the {@link TemporalObject}
-     * @param comparingTemporal - {@link OffsetDateTime} to compare against the temporal object
-     * @return - {@code -1} if the {@link OffsetDateTime} comes before the {@link TemporalObject}, {@code 0} is it occurs during (or at), {@code 1} if it comes after
+     * @param comparingTemporal - {@link Temporal} to compare against the temporal object
+     * @return - {@code -1} if this {@link TemporalObject} comes before the {@link Temporal}, {@code 0} if the {@link Temporal} occurs during (or is equal to), {@code 1} if it comes after
      */
-    public abstract int compareTo(OffsetDateTime comparingTemporal);
+    public abstract int compareTo(Temporal comparingTemporal);
+
+    /**
+     * Compares two temporal objects to determine if this object occurs during the given object
+     * @param comparingObject - {@link TemporalObject} object to compare against this one
+     * @return - {@code true} if this object occurs entirely within the given object
+     */
+    public abstract boolean during(TemporalObject comparingObject);
 
     @Override
     public boolean equals(@Nullable Object o) {

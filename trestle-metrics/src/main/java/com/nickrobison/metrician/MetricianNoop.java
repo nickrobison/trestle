@@ -25,7 +25,7 @@ public class MetricianNoop implements Metrician {
     public static final String METRICIAN_DISABLED_RETURNING_NO_OP_METRIC = "Metrician disabled, returning No-Op Metric";
 
     MetricianNoop() {
-        logger.warn("Running with Metrician disabled, all calls will be No-Ops");
+        logger.info("Running with Metrician disabled, all calls will be No-Ops");
     }
     @Override
     public void shutdown() {
@@ -74,19 +74,19 @@ public class MetricianNoop implements Metrician {
 
     @Override
     public Timer registerTimer(String name) {
-        logger.warn(METRICIAN_DISABLED_RETURNING_NO_OP_METRIC);
+        logger.trace(METRICIAN_DISABLED_RETURNING_NO_OP_METRIC);
         return new NoOpTimer();
     }
 
     @Override
     public Counter registerCounter(String name) {
-        logger.warn(METRICIAN_DISABLED_RETURNING_NO_OP_METRIC);
+        logger.trace(METRICIAN_DISABLED_RETURNING_NO_OP_METRIC);
         return new NoOpCounter();
     }
 
     @Override
     public Histogram registerHistogram(String name) {
-        logger.warn(METRICIAN_DISABLED_RETURNING_NO_OP_METRIC);
+        logger.trace(METRICIAN_DISABLED_RETURNING_NO_OP_METRIC);
         return new NoOpHistogram();
     }
 
@@ -97,11 +97,11 @@ public class MetricianNoop implements Metrician {
 
     @Override
     public <T> void registerGauge(String name, Gauge<T> gauge) {
-        logger.warn(METRICIAN_DISABLED_RETURNING_NO_OP_METRIC);
+        logger.trace(METRICIAN_DISABLED_RETURNING_NO_OP_METRIC);
     }
 
     @Override
     public void registerMetricSet(MetricSet metricSet) {
-        logger.warn("Metrician disabled, not registering MetricSet");
+        logger.trace("Metrician disabled, not registering MetricSet");
     }
 }
