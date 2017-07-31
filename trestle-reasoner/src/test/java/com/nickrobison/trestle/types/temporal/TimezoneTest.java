@@ -1,25 +1,18 @@
 package com.nickrobison.trestle.types.temporal;
 
-import com.nickrobison.trestle.reasoner.TrestleBuilder;
-import com.nickrobison.trestle.reasoner.TrestleReasoner;
+import com.google.common.collect.ImmutableList;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.reasoner.AbstractReasonerTest;
 import com.nickrobison.trestle.reasoner.annotations.DatasetClass;
 import com.nickrobison.trestle.reasoner.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
-import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.TemporalType;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLDataFactory;
 
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -32,27 +25,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * Created by nrobison on 9/14/16.
  */
 @Tag("integration")
-public class TimezoneTest {
+public class TimezoneTest extends AbstractReasonerTest {
 
-    private static TrestleReasoner reasoner;
-    private static OWLDataFactory df;
+    @Override
+    protected String getTestName() {
+        return "timezone_tests";
+    }
 
-    @BeforeAll
-    public static void setup() {
-        final Config config = ConfigFactory.load(ConfigFactory.parseResources("application.conf"));
-        reasoner = new TrestleBuilder()
-                .withDBConnection(config.getString("trestle.ontology.connectionString"),
-                        config.getString("trestle.ontology.username"),
-                        config.getString("trestle.ontology.password"))
-                .withName("timezone_tests")
-                .withInputClasses(DefaultTimeZone.class, DifferentIntervalTimeZones.class)
-                .withOntology(IRI.create(config.getString("trestle.ontology.location")))
-                .withoutMetrics()
-                .withoutCaching()
-                .initialize()
-                .build();
-
-        df = OWLManager.getOWLDataFactory();
+    @Override
+    protected ImmutableList<Class<?>> registerClasses() {
+        return ImmutableList.of(DefaultTimeZone.class, DifferentIntervalTimeZones.class);
     }
 
     @Test
@@ -73,13 +55,6 @@ public class TimezoneTest {
         @NonNull final DifferentIntervalTimeZones returnedIntervalTimeZones = reasoner.readTrestleObject(DifferentIntervalTimeZones.class, "different-intervals", LocalDate.of(1993, 1, 1).atStartOfDay(), null);
         assertEquals(differentIntervalTimeZones, returnedIntervalTimeZones, "Should be equal");
     }
-
-    @AfterAll
-    public static void shutdown() {
-//        reasoner.writeOntology(new File("/Users/nrobison/Desktop/tz.owl").toURI(), false);
-        reasoner.shutdown(true);
-    }
-
 
     @DatasetClass(name = "defaulttimezone-test")
     public static class DefaultTimeZone implements Serializable {

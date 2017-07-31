@@ -2,39 +2,32 @@ package com.nickrobison.trestle.reasoner;
 
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
+import com.google.common.collect.ImmutableList;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.NoValidStateException;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.merge.MergeStrategy;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeConflict;
-import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.opengis.referencing.operation.TransformException;
-import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -43,42 +36,9 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @SuppressWarnings({"Duplicates", "initialization", "ConstantConditions"})
 @Tag("integration")
-public class TrestleAPITest {
+public class TrestleAPITest extends AbstractReasonerTest {
 
-    private static final Logger logger = LoggerFactory.getLogger(TrestleAPITest.class);
-    public static final String OVERRIDE_PREFIX = "http://nickrobison.com/test-owl#";
-    private TrestleReasonerImpl reasoner;
-    private OWLDataFactory df;
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
-    private String datasetClassID;
-    private TrestleParser tp;
-
-    @BeforeEach
-    public void setup() {
-        final Config config = ConfigFactory.load(ConfigFactory.parseResources("application.conf"));
-        reasoner = (TrestleReasonerImpl) new TrestleBuilder()
-                .withDBConnection(config.getString("trestle.ontology.connectionString"),
-                        config.getString("trestle.ontology.username"),
-                        config.getString("trestle.ontology.password"))
-                .withName("api_test")
-                .withOntology(IRI.create(config.getString("trestle.ontology.location")))
-                .withPrefix(OVERRIDE_PREFIX)
-                .withInputClasses(TestClasses.GAULTestClass.class,
-                        TestClasses.GAULComplexClassTest.class,
-                        TestClasses.JTSGeometryTest.class,
-                        TestClasses.ESRIPolygonTest.class,
-                        TestClasses.GeotoolsPolygonTest.class,
-                        TestClasses.OffsetDateTimeTest.class,
-                        TestClasses.MultiLangTest.class,
-                        TestClasses.FactVersionTest.class)
-                .withoutCaching()
-                .withoutMetrics()
-                .initialize()
-                .build();
-
-        df = OWLManager.getOWLDataFactory();
-        tp = new TrestleParser(df, OVERRIDE_PREFIX, false, null);
-    }
 
     @Test
     public void testClasses() throws TrestleClassException, MissingOntologyEntity, ParseException, TransformException {
@@ -137,7 +97,6 @@ public class TrestleAPITest {
         final Instant iStart = Instant.now();
         final TrestleIndividual trestleIndividual = reasoner.getTrestleIndividual(individuals.get(0));
         final Instant iEnd = Instant.now();
-        logger.info("Creating individual took {} ms", Duration.between(iStart, iEnd).toMillis());
         assertAll(() -> assertEquals(2, trestleIndividual.getFacts().size(), "Wrong number of attributes"),
                 () -> assertEquals(2, trestleIndividual.getRelations().size(), "Wrong number of relations"));
 
@@ -228,7 +187,7 @@ public class TrestleAPITest {
         reasoner.writeTrestleObject(updatedFactClass);
         final TestClasses.@NonNull GAULTestClass updatedObject = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 15), null);
         assertEquals(updatedFactClass, updatedObject);
-        reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "wkt", "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", LocalDate.of(1989, 5,14), null, null);
+        reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "wkt", "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", LocalDate.of(1989, 5, 14), null, null);
         final TestClasses.GAULTestClass newWKT = new TestClasses.GAULTestClass(9944, "test-fact-object", LocalDate.of(1989, 03, 26).atStartOfDay(), "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))");
         final TestClasses.@NonNull GAULTestClass updatedWKT = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 15), null);
         assertEquals(newWKT, updatedWKT);
@@ -236,7 +195,7 @@ public class TrestleAPITest {
 //        Try for no merge.
         this.reasoner.getMergeEngine().changeDefaultMergeStrategy(MergeStrategy.NoMerge);
         assertThrows(TrestleMergeConflict.class, () -> reasoner.writeTrestleObject(updatedFactClass));
-        assertThrows(TrestleMergeConflict.class, () -> reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "wkt", "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", LocalDate.of(1989, 5,14), null, null));
+        assertThrows(TrestleMergeConflict.class, () -> reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "wkt", "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", LocalDate.of(1989, 5, 14), null, null));
 //        Try to add facts in the future.
         this.reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "adm0_code", 1234, LocalDate.of(1990, 5, 14).atStartOfDay(), null, null);
         final Optional<List<Object>> factValues = reasoner.getFactValues(TestClasses.GAULTestClass.class, "test-fact-object", "adm0_code", null, null, null);
@@ -303,7 +262,7 @@ public class TrestleAPITest {
         final Set<String> availableDatasets = reasoner.getAvailableDatasets();
         assertTrue(availableDatasets.size() > 0, "Should have dataset");
 
-        datasetClassID = availableDatasets.stream()
+        String datasetClassID = availableDatasets.stream()
                 .filter(ds -> ds.equals("GAUL_Test"))
                 .findAny()
                 .get();
@@ -330,10 +289,20 @@ public class TrestleAPITest {
         reasoner.getMetricsEngine().exportData(new File("./target/api-test-gaul-loader-metrics.csv"));
     }
 
-    @AfterEach
-    public void close() throws OWLOntologyStorageException {
-        assertEquals(reasoner.getUnderlyingOntology().getOpenedTransactionCount(), reasoner.getUnderlyingOntology().getCommittedTransactionCount() + reasoner.getUnderlyingOntology().getAbortedTransactionCount(), "Should have symmetric opened/aborted+committed transactions");
-        reasoner.shutdown(true);
+    @Override
+    protected String getTestName() {
+        return "api_test";
     }
 
+    @Override
+    protected ImmutableList<Class<?>> registerClasses() {
+        return ImmutableList.of(TestClasses.GAULTestClass.class,
+                TestClasses.GAULComplexClassTest.class,
+                TestClasses.JTSGeometryTest.class,
+                TestClasses.ESRIPolygonTest.class,
+                TestClasses.GeotoolsPolygonTest.class,
+                TestClasses.OffsetDateTimeTest.class,
+                TestClasses.MultiLangTest.class,
+                TestClasses.FactVersionTest.class);
+    }
 }
