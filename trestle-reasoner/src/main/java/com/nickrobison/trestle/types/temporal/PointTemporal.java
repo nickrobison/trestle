@@ -33,6 +33,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
         this.temporalType = (Class<T>) builder.atTime.getClass();
         this.timeZone = builder.explicitTimeZone.orElse(ZoneOffset.UTC);
     }
+
     @Override
     public TemporalType getType() {
         return TYPE;
@@ -129,6 +130,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
 
     /**
      * Returns the explicit timezone of the temporal object
+     *
      * @return - ZoneID
      */
     public ZoneId getTimeZone() {
@@ -151,6 +153,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Manually set point parameter name
+         *
          * @param name - String to use for parameter name
          * @return - Builder
          */
@@ -161,6 +164,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Manually set temporalID
+         *
          * @param temporalID - String of TemporalID
          * @return - Builder
          */
@@ -171,6 +175,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Set the point time zone
+         *
          * @param zoneID - String to parse into timezone
          * @return - Builder
          */
@@ -183,6 +188,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Set the point time zone
+         *
          * @param zoneId - ZoneID to use
          * @return - Builder
          */
@@ -193,6 +199,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Set the Individuals this temporal relates to
+         *
          * @param relations - OWLNamedIndividuals associated with this temporal
          * @return - Builder
          */

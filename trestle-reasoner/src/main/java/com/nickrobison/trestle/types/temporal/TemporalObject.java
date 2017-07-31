@@ -6,7 +6,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.io.Serializable;
-import java.time.OffsetDateTime;
 import java.time.temporal.Temporal;
 import java.util.HashSet;
 import java.util.Optional;

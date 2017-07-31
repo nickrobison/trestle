@@ -6,7 +6,6 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Created by nrobison on 6/13/17.

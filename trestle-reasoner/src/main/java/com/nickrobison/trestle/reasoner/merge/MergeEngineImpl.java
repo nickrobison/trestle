@@ -82,8 +82,6 @@ public class MergeEngineImpl implements TrestleMergeEngine {
             eStrategy = existenceStrategy;
         }
         logger.debug("Merging facts using the {} strategy", strategy);
-//        Validate existence first
-//        this.validateExistence(existenceStrategy, eventTemporal, existsTemporal);
 
         switch (methodStrategy) {
             case ContinuingFacts:

@@ -9,7 +9,10 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.temporal.*;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.Temporal;
+import java.time.temporal.TemporalQueries;
+import java.time.temporal.TemporalUnit;
 import java.util.*;
 
 /**
@@ -276,6 +279,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Manually set temporalID
+         *
          * @param temporalID - String of TemporalID
          * @return - Builder
          */
@@ -334,10 +338,10 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
         /**
          * Set the Individuals this temporal relates to
-         * @deprecated  - We don't use this anymore
          *
          * @param relations - OWLNamedIndividuals associated with this temporal
          * @return - Builder
+         * @deprecated - We don't use this anymore
          */
         @Deprecated
         public IntervalTemporal withRelations(OWLNamedIndividual... relations) {
