@@ -28,6 +28,7 @@ import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
+import com.nickrobison.trestle.reasoner.events.EventEngine;
 import com.nickrobison.trestle.reasoner.exceptions.*;
 import com.nickrobison.trestle.reasoner.merge.MergeScript;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeConflict;
@@ -100,6 +101,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final QueryBuilder.DIALECT spatialDalect;
     private final TrestleParser trestleParser;
     private final TrestleMergeEngine mergeEngine;
+    private final EventEngine eventEngine;
     private final Config trestleConfig;
     private final TrestleCache trestleCache;
     private final Metrician metrician;
@@ -167,7 +169,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     builder.password);
         }
 
-        final Injector injector = Guice.createInjector(new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled")), new TrestleOntologyModule(ontologyBuilder));
+        final Injector injector = Guice.createInjector(new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled"), this.trestleConfig.getBoolean("events.enabled")), new TrestleOntologyModule(ontologyBuilder, REASONER_PREFIX));
 
 //        Setup metrics engine
 //        metrician = null;
@@ -200,8 +202,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
         logger.info("Ontology {} ready", builder.ontologyName.orElse(DEFAULTNAME));
 
-//      Start the engines
+//      Engines on
         this.mergeEngine = injector.getInstance(TrestleMergeEngine.class);
+        this.eventEngine = injector.getInstance(EventEngine.class);
 
         //        Setup the Parser
         trestleParser = new TrestleParser(df, REASONER_PREFIX, trestleConfig.getBoolean("enableMultiLanguage"), trestleConfig.getString("defaultLanguage"));

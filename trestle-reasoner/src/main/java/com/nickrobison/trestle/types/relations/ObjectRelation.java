@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.types.relations;
 
+import org.semanticweb.owlapi.model.HasIRI;
 import org.semanticweb.owlapi.model.IRI;
 
 import java.util.Arrays;
@@ -9,7 +10,7 @@ import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 /**
  * Created by nrobison on 12/19/16.
  */
-public enum ObjectRelation {
+public enum ObjectRelation implements HasIRI {
 //    Spatial
     CONTAINS            ("contains"),
     COVERS              ("covers"),
@@ -27,10 +28,8 @@ public enum ObjectRelation {
     TEMPORAL_OVERLAPS   ("temporal_overlaps");
 
     private final IRI relationIRI;
-    private final String relationShortName;
 
     ObjectRelation(String relationString) {
-        this.relationShortName = relationString;
         this.relationIRI = IRI.create(TRESTLE_PREFIX, relationString);
     }
 
@@ -38,13 +37,14 @@ public enum ObjectRelation {
      * Get the IRI of the relation
      * @return - IRI
      */
+    @Override
     public IRI getIRI() {
         return relationIRI;
     }
 
     /**
-     * Get the IRI of the relation, as a string
-     * @return - String of IRI
+     * Get the {@link IRI} of the relation, as a string
+     * @return - {@link String} of {@link IRI}
      */
     public String getIRIString() {
         return relationIRI.getIRIString();
@@ -60,6 +60,6 @@ public enum ObjectRelation {
         return Arrays.stream(ObjectRelation.values())
                 .filter(object -> object.getIRI().equals(relationIRI))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException(String.format("Cannot find ObjectRelation for IRI %s", relationIRI.getIRIString())));
+                .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot find ObjectRelation for IRI %s", relationIRI.getIRIString())));
     }
 }

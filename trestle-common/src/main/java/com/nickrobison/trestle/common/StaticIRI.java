@@ -49,6 +49,7 @@ public class StaticIRI {
     public static final IRI factClassIRI = IRI.create(TRESTLE_PREFIX, "Fact");
     public static final IRI temporalClassIRI = IRI.create(TRESTLE_PREFIX, "Temporal_Object");
     public static final IRI temporalPropertyIRI = IRI.create(TRESTLE_PREFIX, "Temporal_Property");
+    public static final IRI trestleEventIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Event");
 //    Properties
     public static final IRI relationStrengthIRI = IRI.create(TRESTLE_PREFIX, "Relation_Strength");
     public static final IRI sOverlapIRI = IRI.create(TRESTLE_PREFIX, "SOverlap");

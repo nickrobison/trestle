@@ -43,6 +43,7 @@ public class MergeEngineImpl implements TrestleMergeEngine {
     private final boolean onLoad;
 
     public MergeEngineImpl() {
+        logger.info("Creating Merge Engine");
         config = ConfigFactory.load().getConfig("trestle.merge");
         defaultStrategy = MergeStrategy.valueOf(config.getString("defaultStrategy"));
         existenceStrategy = ExistenceStrategy.valueOf(config.getString("existenceStrategy"));
