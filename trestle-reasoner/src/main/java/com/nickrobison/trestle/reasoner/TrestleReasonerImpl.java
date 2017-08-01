@@ -113,18 +113,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         trestleConfig = ConfigFactory.load().getConfig("trestle");
         ValidateConfig(trestleConfig);
 
-        final Injector injector = Guice.createInjector(new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled")));
-
-//        Setup metrics engine
-//        metrician = null;
-        metrician = injector.getInstance(Metrician.class);
-
-//        Create our own thread pools to help isolate processes
-        trestleThreadPool = TrestleExecutorService.executorFactory(builder.ontologyName.orElse("default"), trestleConfig.getInt("threading.default-pool.size"), this.metrician);
-        objectThreadPool = TrestleExecutorService.executorFactory("object-pool", trestleConfig.getInt("threading.object-pool.size"), this.metrician);
-
-
-//        Setup the reasoner prefix
+        //        Setup the reasoner prefix
 //        If not specified, use the default Trestle prefix
         REASONER_PREFIX = builder.reasonerPrefix.orElse(TRESTLE_PREFIX);
         logger.info("Setting up reasoner with prefix {}", REASONER_PREFIX);
@@ -163,29 +152,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
         logger.info("Loading ontology from {}", ontologyResource == null ? "Null resource" : ontologyResource);
 
-//        Validate ontology name
-        try {
-            validateOntologyName(builder.ontologyName.orElse(DEFAULTNAME));
-        } catch (InvalidOntologyName e) {
-            logger.error("{} is an invalid ontology name", builder.ontologyName.orElse(DEFAULTNAME), e);
-            throw new RuntimeException("invalid ontology name", e);
-        }
-
-//        Setup the Parser
-        trestleParser = new TrestleParser(df, REASONER_PREFIX, trestleConfig.getBoolean("enableMultiLanguage"), trestleConfig.getString("defaultLanguage"));
-
-//            validate the classes
-        builder.inputClasses.forEach(clazz -> {
-            try {
-                ClassRegister.ValidateClass(clazz);
-                this.registeredClasses.put(trestleParser.classParser.getObjectClass(clazz), clazz);
-            } catch (TrestleClassException e) {
-                logger.error("Cannot validate class {}", clazz, e);
-            }
-        });
-
-//        Register some constructor functions
-        TypeConverter.registerTypeConstructor(UUID.class, df.getOWLDatatype(UUIDDatatypeIRI), (uuidString) -> UUID.fromString(uuidString.toString()));
+        //        Setup the ontology builder
         logger.info("Connecting to ontology {} at {}", builder.ontologyName.orElse(DEFAULTNAME), builder.connectionString.orElse("localhost"));
         logger.debug("IS: {}", ontologyIS);
         logger.debug("Resource: {}", ontologyResource == null ? "Null resource" : ontologyResource);
@@ -200,7 +167,28 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     builder.password);
         }
 
-        ontology = ontologyBuilder.build();
+        final Injector injector = Guice.createInjector(new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled")), new TrestleOntologyModule(ontologyBuilder));
+
+//        Setup metrics engine
+//        metrician = null;
+        metrician = injector.getInstance(Metrician.class);
+
+//        Create our own thread pools to help isolate processes
+        trestleThreadPool = TrestleExecutorService.executorFactory(builder.ontologyName.orElse("default"), trestleConfig.getInt("threading.default-pool.size"), this.metrician);
+        objectThreadPool = TrestleExecutorService.executorFactory("object-pool", trestleConfig.getInt("threading.object-pool.size"), this.metrician);
+
+//        Validate ontology name
+        try {
+            validateOntologyName(builder.ontologyName.orElse(DEFAULTNAME));
+        } catch (InvalidOntologyName e) {
+            logger.error("{} is an invalid ontology name", builder.ontologyName.orElse(DEFAULTNAME), e);
+            throw new RuntimeException("invalid ontology name", e);
+        }
+
+//        Register some constructor functions
+        TypeConverter.registerTypeConstructor(UUID.class, df.getOWLDatatype(UUIDDatatypeIRI), (uuidString) -> UUID.fromString(uuidString.toString()));
+
+        ontology = injector.getInstance(ITrestleOntology.class);
         logger.debug("Ontology connected");
         if (builder.initialize) {
             logger.info("Initializing ontology");
@@ -212,11 +200,22 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
         logger.info("Ontology {} ready", builder.ontologyName.orElse(DEFAULTNAME));
 
-//        Setup the merge engine
+//      Start the engines
         this.mergeEngine = injector.getInstance(TrestleMergeEngine.class);
 
-//        Are we a caching reasoner?
-        logger.info("Instantiating Trestle Cache");
+        //        Setup the Parser
+        trestleParser = new TrestleParser(df, REASONER_PREFIX, trestleConfig.getBoolean("enableMultiLanguage"), trestleConfig.getString("defaultLanguage"));
+
+//            validate the classes
+        builder.inputClasses.forEach(clazz -> {
+            try {
+                ClassRegister.ValidateClass(clazz);
+                this.registeredClasses.put(trestleParser.classParser.getObjectClass(clazz), clazz);
+            } catch (TrestleClassException e) {
+                logger.error("Cannot validate class {}", clazz, e);
+            }
+        });
+
         trestleCache = injector.getInstance(TrestleCache.class);
 
 //        Setup the query builder
