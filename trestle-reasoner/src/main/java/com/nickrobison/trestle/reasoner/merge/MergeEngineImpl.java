@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import static com.nickrobison.trestle.common.StaticIRI.temporalExistsFromIRI;
 import static com.nickrobison.trestle.common.StaticIRI.temporalExistsToIRI;
 import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
+import static com.nickrobison.trestle.reasoner.parser.TemporalParser.temporalToLiteral;
 
 /**
  * Created by nrobison on 6/13/17.
@@ -241,14 +242,14 @@ public class MergeEngineImpl implements TrestleMergeEngine {
             if (TemporalUtils.compareTemporals(validTemporal.getIdTemporal(), existsTemporal.getIdTemporal()) == -1) {
                 individualAxioms.add(df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(temporalExistsFromIRI),
                         individual,
-                        df.getOWLLiteral(parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC).toString(), OWL2Datatype.XSD_DATE_TIME)));
+                        temporalToLiteral(validTemporal.getIdTemporal())));
             }
             if (!existsTemporal.isContinuing() && validTemporal.isInterval() && !validTemporal.isContinuing()) {
                 final int toCompare = TemporalUtils.compareTemporals((Temporal) validTemporal.asInterval().getToTime().get(), (Temporal) existsTemporal.asInterval().getToTime().get());
                 if (toCompare != -1) {
                     individualAxioms.add(df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(temporalExistsToIRI),
                             individual,
-                            df.getOWLLiteral(parseTemporalToOntologyDateTime((Temporal) validTemporal.asInterval().getAdjustedToTime(1).get(), ZoneOffset.UTC).toString(), OWL2Datatype.XSD_DATE_TIME)));
+                            temporalToLiteral((Temporal) validTemporal.asInterval().getAdjustedToTime(1).get())));
                 }
             }
             return individualAxioms;

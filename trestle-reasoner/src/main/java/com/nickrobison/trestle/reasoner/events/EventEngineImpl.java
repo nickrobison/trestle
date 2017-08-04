@@ -4,24 +4,21 @@ import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
+import com.nickrobison.trestle.reasoner.parser.TemporalParser;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TrestleEvent;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.nickrobison.trestle.common.StaticIRI.*;
-import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
 
 public class EventEngineImpl implements EventEngine {
     private static final Logger logger = LoggerFactory.getLogger(EventEngineImpl.class);
@@ -80,7 +77,7 @@ public class EventEngineImpl implements EventEngine {
         final OWLClassAssertionAxiom classAxiom = df.getOWLClassAssertionAxiom(df.getOWLClass(trestleEventIRI), eventID);
         final OWLDataPropertyAssertionAxiom existsAtAxiom = df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(temporalExistsAtIRI),
                 eventID,
-                temporalToLiteral(eventTemporal));
+                TemporalParser.temporalToLiteral(eventTemporal));
         final OWLObjectPropertyAssertionAxiom objectAssertion = df.getOWLObjectPropertyAssertionAxiom(df.getOWLObjectProperty(event.getIRI()),
                 individual,
                 eventID);
@@ -105,7 +102,4 @@ public class EventEngineImpl implements EventEngine {
         return df.getOWLNamedIndividual(IRI.create(this.prefix, String.format("%s:%s:event", IRIUtils.extractTrestleIndividualName(individual.getIRI()), event.getShortName())));
     }
 
-    private static OWLLiteral temporalToLiteral(Temporal temporal) {
-        return df.getOWLLiteral(parseTemporalToOntologyDateTime(temporal, ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME), OWL2Datatype.XSD_DATE_TIME);
-    }
 }

@@ -4,18 +4,22 @@ import com.nickrobison.trestle.common.exceptions.TrestleFormatException;
 import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
+import com.nickrobison.trestle.reasoner.events.EventEngineImpl;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.*;
 
@@ -31,6 +35,16 @@ import static com.nickrobison.trestle.reasoner.parser.temporal.JodaTimeParser.pa
 public class TemporalParser {
 
     private static final Logger logger = LoggerFactory.getLogger(TemporalParser.class);
+    private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
+
+    /**
+     * Parse a {@link Temporal} to an {@link OWLLiteral} by calling {@link TemporalParser#parseTemporalToOntologyDateTime(Temporal, ZoneId)}
+     * @param temporal - {@link Temporal} to parse
+     * @return - {@link OWLLiteral}
+     */
+    public static OWLLiteral temporalToLiteral(Temporal temporal) {
+        return df.getOWLLiteral(parseTemporalToOntologyDateTime(temporal, ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME), OWL2Datatype.XSD_DATE_TIME);
+    }
 
     /**
      * Enum to determine if the temporal represents the start or the end of a period.
