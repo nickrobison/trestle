@@ -34,9 +34,9 @@ public class MergeEngineImpl implements TrestleMergeEngine {
 
     private static final Logger logger = LoggerFactory.getLogger(MergeEngineImpl.class);
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
-    public static final String PROPERTY = "property";
-    public static final String INDIVIDUAL = "individual";
-    public static final String OBJECT = "object";
+    private static final String PROPERTY = "property";
+    private static final String INDIVIDUAL = "individual";
+    private static final String OBJECT = "object";
     private final Config config;
     private MergeStrategy defaultStrategy;
     private ExistenceStrategy existenceStrategy;

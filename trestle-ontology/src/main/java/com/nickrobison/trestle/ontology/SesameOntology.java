@@ -75,8 +75,13 @@ public abstract class SesameOntology extends TransactingOntology {
         this.ontology = ontology;
         this.pm = pm;
         this.df = OWLManager.getOWLDataFactory();
-        this.qb = new QueryBuilder(QueryBuilder.DIALECT.SESAME, this.pm);
+        this.qb = new QueryBuilder(QueryBuilder.Dialect.SESAME, this.pm);
         this.cm = new SesameConnectionManager(this.repository, config.getInt("connectionPool.maxSize"), config.getInt("connectionPool.initialConnections"));
+    }
+
+    @Override
+    public QueryBuilder getUnderlyingQueryBuilder() {
+        return this.qb;
     }
 
 
@@ -557,6 +562,7 @@ public abstract class SesameOntology extends TransactingOntology {
      * This is mostly here so that Checker will be quiet.
      * If we call {@link SesameOntology#setOntologyConnection()}, then the thread connection can never be null.
      * However, Checker can't seem to see through the call stack to notice that we've called that function, so we use this instead.
+     *
      * @return - {@link RepositoryConnection} associated with the given transaction
      */
     RepositoryConnection getThreadConnection() {

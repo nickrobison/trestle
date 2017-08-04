@@ -183,7 +183,7 @@ public class QueryBuilderTest {
 
     @BeforeEach
     public void setup() {
-        qb = new QueryBuilder(QueryBuilder.DIALECT.ORACLE, pm);
+        qb = new QueryBuilder(QueryBuilder.Dialect.ORACLE, pm);
     }
 
     @Test
@@ -208,7 +208,7 @@ public class QueryBuilderTest {
 
         assertAll(() -> {
                     //        Test Oracle temporal
-                    final String generatedOracleTS = qb.buildTemporalSpatialIntersection(gaulClass, wktString, 0.0, QueryBuilder.UNITS.KM, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
+                    final String generatedOracleTS = qb.buildTemporalSpatialIntersection(gaulClass, wktString, 0.0, QueryBuilder.Units.KM, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
                     assertEquals(oracleTSString, generatedOracleTS, "Oracle TS should be equal");
                 },
                 () -> {
@@ -218,7 +218,7 @@ public class QueryBuilderTest {
                 },
                 () -> {
                     //        Check unsupported
-                    QueryBuilder stardogQB = new QueryBuilder(QueryBuilder.DIALECT.STARDOG, pm);
+                    QueryBuilder stardogQB = new QueryBuilder(QueryBuilder.Dialect.STARDOG, pm);
                     assertThrows(UnsupportedFeatureException.class, () -> stardogQB.buildTemporalSpatialConceptIntersection(wktString, 0.0, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC)));
                 });
     }

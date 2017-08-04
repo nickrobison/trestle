@@ -2,6 +2,7 @@ package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions;
+import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.query.*;
 import org.apache.jena.query.spatial.*;
@@ -44,7 +45,7 @@ public class LocalOntology extends JenaOntology {
 
 
     LocalOntology(String ontologyName, OWLOntology ont, DefaultPrefixManager pm) {
-        super(ontologyName, constructJenaModel(), ont, pm);
+        super(ontologyName, constructJenaModel(), ont, pm, QueryBuilder.Dialect.JENA);
         datasetGraphSpatial = (DatasetGraphSpatial) luceneDataset.asDatasetGraph();
         this.index = datasetGraphSpatial.getSpatialIndex();
         spatialIndexContext = new SpatialIndexContext(this.index);

@@ -98,7 +98,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     //    Seems gross?
     private static final OWLClass datasetClass = OWLManager.getOWLDataFactory().getOWLClass(datasetClassIRI);
     private final QueryBuilder qb;
-    private final QueryBuilder.DIALECT spatialDalect;
+    private final QueryBuilder.Dialect spatialDalect;
     private final TrestleParser trestleParser;
     private final TrestleMergeEngine mergeEngine;
     private final EventEngine eventEngine;
@@ -129,10 +129,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 ontologyIS = new FileInputStream(new File(builder.ontologyIRI.get().toURI()));
             } catch (MalformedURLException e) {
                 logger.error("Unable to parse IRI to URI", builder.ontologyIRI.get(), e);
-                throw new RuntimeException("Unable to parse IRI to URI", e);
+                throw new IllegalArgumentException(String.format("Unable to parse IRI %s to URI", builder.ontologyIRI.get()) ,e);
             } catch (FileNotFoundException e) {
                 logger.error("Cannot find ontology file {}", builder.ontologyIRI.get(), e);
-                throw new RuntimeException("File not found", e);
+                throw new MissingResourceException("File not found", this.getClass().getName(), builder.ontologyIRI.get().getIRIString());
             }
         } else {
 //            Load with the class loader
@@ -147,10 +147,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         try {
             final int available = ontologyIS.available();
             if (available == 0) {
-                throw new RuntimeException("Ontology InputStream does not seem to be available");
+                throw new MissingResourceException("Ontology InputStream does not seem to be available", this.getClass().getName(), ontologyIS.toString());
             }
         } catch (IOException e) {
-            throw new RuntimeException("Ontology InputStream does not seem to be available");
+            throw new MissingResourceException("Ontology InputStream does not seem to be available", this.getClass().getName(), ontologyIS.toString());
         }
         logger.info("Loading ontology from {}", ontologyResource == null ? "Null resource" : ontologyResource);
 
@@ -169,7 +169,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     builder.password);
         }
 
-        final Injector injector = Guice.createInjector(new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled"), this.trestleConfig.getBoolean("events.enabled")), new TrestleOntologyModule(ontologyBuilder, REASONER_PREFIX));
+        final Injector injector = Guice.createInjector(new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled"), this.trestleConfig.getBoolean("events.enabled")),
+                new TrestleOntologyModule(ontologyBuilder, REASONER_PREFIX));
 
 //        Setup metrics engine
 //        metrician = null;
@@ -184,7 +185,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             validateOntologyName(builder.ontologyName.orElse(DEFAULTNAME));
         } catch (InvalidOntologyName e) {
             logger.error("{} is an invalid ontology name", builder.ontologyName.orElse(DEFAULTNAME), e);
-            throw new RuntimeException("invalid ontology name", e);
+            throw new IllegalArgumentException("invalid ontology name", e);
         }
 
 //        Register some constructor functions
@@ -221,20 +222,28 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
         trestleCache = injector.getInstance(TrestleCache.class);
 
-//        Setup the query builder
-        if (ontology instanceof OracleOntology) {
-            spatialDalect = QueryBuilder.DIALECT.ORACLE;
-        } else if (ontology instanceof VirtuosoOntology) {
-            spatialDalect = QueryBuilder.DIALECT.VIRTUOSO;
-        } else if (ontology instanceof LocalOntology) {
-            spatialDalect = QueryBuilder.DIALECT.JENA;
-//        } else if (ontology instanceof StardogOntology) {
-//            spatialDalect = QueryBuilder.DIALECT.STARDOG;
-        } else {
-            spatialDalect = QueryBuilder.DIALECT.SESAME;
-        }
+////        Setup the query builder
+//        if (ontology instanceof OracleOntology) {
+//            spatialDalect = QueryBuilder.Dialect.ORACLE;
+//        } else if (ontology instanceof VirtuosoOntology) {
+//            spatialDalect = QueryBuilder.Dialect.VIRTUOSO;
+//        } else if (ontology instanceof LocalOntology) {
+//            spatialDalect = QueryBuilder.Dialect.JENA;
+////        } else if (ontology instanceof StardogOntology) {
+////            spatialDalect = QueryBuilder.Dialect.STARDOG;
+//        } else {
+//            spatialDalect = QueryBuilder.Dialect.SESAME;
+//        }
+
+//        This is probably a terrible idea, but whatever.
+//        qb = injector
+//                .createChildInjector(new QueryBuilderModule(spatialDalect,
+//                        this.ontology.getUnderlyingPrefixManager()))
+//                .getInstance(QueryBuilder.class);
+//        qb = new QueryBuilder(spatialDalect, ontology.getUnderlyingPrefixManager());
+        this.qb = injector.getInstance(QueryBuilder.class);
+        this.spatialDalect = this.qb.getDialect();
         logger.debug("Using SPARQL dialect {}", spatialDalect);
-        qb = new QueryBuilder(spatialDalect, ontology.getUnderlyingPrefixManager());
 
         logger.info("Trestle Reasoner ready");
     }
@@ -454,12 +463,16 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                             if (!mergeScript.getIndividualExistenceAxioms().isEmpty()) {
                                 final String updateExistenceQuery = this.qb.updateObjectProperties(mergeScript.getIndividualExistenceAxioms());
                                 this.ontology.executeUpdateSPARQL(updateExistenceQuery);
+
+//                                Update object events
+                                this.eventEngine.adjustObjectEvents(mergeScript.getIndividualExistenceAxioms());
                             }
                         } finally {
                             this.ontology.returnAndCommitTransaction(tt);
                         }
                     }, this.objectThreadPool);
                     mergeFuture.join();
+
                 }
             } catch (RuntimeException e) {
                 ontology.returnAndAbortTransaction(trestleTransaction);
@@ -484,6 +497,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //        Write the data facts
             final Optional<List<OWLDataPropertyAssertionAxiom>> individualFacts = trestleParser.classParser.getFacts(inputObject);
             individualFacts.ifPresent(owlDataPropertyAssertionAxioms -> writeObjectFacts(owlNamedIndividual, owlDataPropertyAssertionAxioms, factTemporal, dTemporal));
+
+//            Add object events
+            this.eventEngine.addEvent(TrestleEvent.CREATED, owlNamedIndividual, objectTemporal.asInterval().getFromTime());
+            if (!objectTemporal.asInterval().isContinuing()) {
+                this.eventEngine.addEvent(TrestleEvent.DESTROYED, owlNamedIndividual, (Temporal) objectTemporal.asInterval().getToTime().get());
+            }
 
             ontology.returnAndCommitTransaction(trestleTransaction);
         }
@@ -1106,7 +1125,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         String spatialIntersection;
         try {
             logger.debug("Running spatial intersection at time {}", atTemporal);
-            spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.UNITS.METER, atTemporal, dbTemporal);
+            spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.Units.METER, atTemporal, dbTemporal);
 //                }
         } catch (UnsupportedFeatureException e) {
             logger.error("Database {} doesn't support spatial intersections.", spatialDalect, e);

@@ -28,10 +28,10 @@ import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
  */
 public class QueryBuilder {
 
-    public static final double OFFSET = 0.01;
-    public static final int SCALE = 100000;
+    private static final double OFFSET = 0.01;
+    private static final int SCALE = 100000;
 
-    public enum DIALECT {
+    public enum Dialect {
         ORACLE,
         VIRTUOSO,
         STARDOG,
@@ -39,7 +39,7 @@ public class QueryBuilder {
         SESAME
     }
 
-    public enum UNITS {
+    public enum Units {
         KM,
         MILE,
         METER,
@@ -47,7 +47,7 @@ public class QueryBuilder {
     }
 
     private static final Logger logger = LoggerFactory.getLogger(QueryBuilder.class);
-    private final DIALECT dialect;
+    private final Dialect dialect;
     private final String prefixes;
     private final DefaultPrefixManager pm;
     private final String baseURI;
@@ -55,7 +55,7 @@ public class QueryBuilder {
     private static final WKTReader reader = new WKTReader();
     private static final WKTWriter writer = new WKTWriter();
 
-    public QueryBuilder(DIALECT dialect, DefaultPrefixManager pm) {
+    public QueryBuilder(Dialect dialect, DefaultPrefixManager pm) {
         this.dialect = dialect;
         trimmedPrefixMap = new HashMap<>();
         StringBuilder builder = new StringBuilder();
@@ -83,6 +83,15 @@ public class QueryBuilder {
             this.baseURI = TRESTLE_PREFIX;
         }
         this.pm = pm;
+    }
+
+    /**
+     * Returns the {@link Dialect} currently configured
+     *
+     * @return - {@link Dialect}
+     */
+    public Dialect getDialect() {
+        return this.dialect;
     }
 
     public String buildDatasetQuery() {
@@ -129,7 +138,7 @@ public class QueryBuilder {
 //        Jena won't expand URIs in the FILTER operator, so we need to give it the fully expanded value.
 //        But we can't do it through the normal routes, because then it'll insert superfluous '"' values. Because, of course.
 //        Virtuoso needs to limit the transitive depth, Oracle doesn't not, and fails
-        if (dialect == DIALECT.VIRTUOSO) {
+        if (dialect == Dialect.VIRTUOSO) {
             ps.setCommandText(String.format("SELECT ?f ?s" +
                     " WHERE" +
                     " { ?m rdf:type ?t . " +
@@ -324,7 +333,7 @@ public class QueryBuilder {
     }
 
     @Deprecated
-    public String buildSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, UNITS unit) throws UnsupportedFeatureException {
+    public String buildSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, Units unit) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m" +
                 " WHERE { " +
@@ -339,7 +348,7 @@ public class QueryBuilder {
     }
 
     //    FIXME(nrobison): This needs to account for exists and valid times.
-    public String buildTemporalSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, UNITS unit, OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
+    public String buildTemporalSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, Units unit, OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m ?tStart ?tEnd" +
                 " WHERE { " +

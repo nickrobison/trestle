@@ -47,10 +47,10 @@ public abstract class JenaOntology extends TransactingOntology {
     protected final OWLOntology ontology;
     protected final DefaultPrefixManager pm;
     protected final OWLDataFactory df;
-    protected final QueryBuilder qb;
-    protected final JenaLiteralFactory jf;
+    private final QueryBuilder qb;
+    private final JenaLiteralFactory jf;
 
-    JenaOntology(String ontologyName, Model model, OWLOntology ontology, DefaultPrefixManager pm) {
+    JenaOntology(String ontologyName, Model model, OWLOntology ontology, DefaultPrefixManager pm, QueryBuilder.Dialect dialect) {
         super(ontologyName);
         this.ontologyName = ontologyName;
         this.model = model;
@@ -58,8 +58,13 @@ public abstract class JenaOntology extends TransactingOntology {
         this.ontology = ontology;
         this.pm = pm;
         this.df = OWLManager.getOWLDataFactory();
-        this.qb = new QueryBuilder(QueryBuilder.DIALECT.JENA, this.pm);
+        this.qb = new QueryBuilder(dialect, this.pm);
         this.jf = new JenaLiteralFactory(this.model);
+    }
+
+    @Override
+    public QueryBuilder getUnderlyingQueryBuilder() {
+        return this.qb;
     }
 
     @Override

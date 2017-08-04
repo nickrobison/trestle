@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -30,7 +31,7 @@ public class VirtuosoOntology extends JenaOntology {
     private static VirtModel virtModel;
 
     VirtuosoOntology(String name, OWLOntology ont, DefaultPrefixManager pm, String connectionString, String username, String password) {
-        super(name, initializeVirtModel(name, connectionString, username, password), ont, pm);
+        super(name, initializeVirtModel(name, connectionString, username, password), ont, pm, QueryBuilder.Dialect.VIRTUOSO);
         TRESTLE_RULES = String.format("%s_trestle_rules", name);
         try {
             virtModel.setRuleSet(TRESTLE_RULES);

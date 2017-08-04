@@ -2,7 +2,9 @@ package com.nickrobison.trestle.ontology;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.PrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,12 +14,18 @@ import javax.inject.Singleton;
 public class TrestleOntologyModule extends AbstractModule {
     private static final Logger logger = LoggerFactory.getLogger(TrestleOntologyModule.class);
 
-    private final OntologyBuilder builder;
+//    private final OntologyBuilder builder;
+    private final ITrestleOntology ontology;
     private final String prefix;
 
     public TrestleOntologyModule(OntologyBuilder builder, String prefix) {
-        this.builder = builder;
         this.prefix = prefix;
+        try {
+            this.ontology = builder.build();
+        } catch (OWLOntologyCreationException e) {
+            logger.error("Cannot initialize ontology", e);
+            throw new IllegalStateException(e);
+        }
     }
 
     @Override
@@ -28,12 +36,19 @@ public class TrestleOntologyModule extends AbstractModule {
     @Provides
     @Singleton
     public ITrestleOntology provideOntology() {
-        try {
-            return this.builder.build();
-        } catch (OWLOntologyCreationException e) {
-            logger.error("Cannot initialize ontology", e);
-            throw new IllegalStateException(e);
-        }
+        return this.ontology;
+    }
+
+    @Provides
+    @Singleton
+    public QueryBuilder provideQueryBuilder() {
+        return this.ontology.getUnderlyingQueryBuilder();
+    }
+
+    @Provides
+    @Singleton
+    public PrefixManager providePrefixManager() {
+        return this.ontology.getUnderlyingPrefixManager();
     }
 
     @Provides
