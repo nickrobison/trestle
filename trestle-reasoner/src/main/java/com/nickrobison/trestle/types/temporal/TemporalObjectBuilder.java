@@ -108,7 +108,7 @@ public class TemporalObjectBuilder {
         if (clazz == null) {
             isDefault = false;
         } else {
-            isDefault = TemporalParser.IsDefault(clazz);
+            isDefault = TemporalParser.isDefault(clazz);
         }
 
 //        Try for valid first
@@ -118,7 +118,7 @@ public class TemporalObjectBuilder {
 
         if (valid_from.isPresent()) {
 //            final Temporal validFromTemporal = LocalDateTime.parse(valid_from.get().getObject().getLiteral(), DateTimeFormatter.ISO_DATE_TIME);
-            final Temporal validFromTemporal = parseToTemporal(valid_from.get().getObject(), temporalType, TemporalParser.GetStartZoneID(clazz));
+            final Temporal validFromTemporal = parseToTemporal(valid_from.get().getObject(), temporalType, TemporalParser.getStartZoneID(clazz));
 //            Try for valid_to
             final Optional<OWLDataPropertyAssertionAxiom> valid_to = properties.stream()
                     .filter(dp -> dp.getProperty().asOWLDataProperty().getIRI().equals(temporalValidToIRI))
@@ -126,17 +126,17 @@ public class TemporalObjectBuilder {
             if (valid_to.isPresent()) {
                 return Optional.of(TemporalObjectBuilder.valid()
                         .from(validFromTemporal)
-                        .to(parseToTemporal(valid_to.get().getObject(), temporalType, TemporalParser.GetEndZoneID(clazz)))
+                        .to(parseToTemporal(valid_to.get().getObject(), temporalType, TemporalParser.getEndZoneID(clazz)))
                         .isDefault(isDefault)
                         .withID(temporalIdentifier)
-                        .withFromTimeZone(TemporalParser.GetStartZoneID(clazz))
-                        .withToTimeZone(TemporalParser.GetEndZoneID(clazz))
+                        .withFromTimeZone(TemporalParser.getStartZoneID(clazz))
+                        .withToTimeZone(TemporalParser.getEndZoneID(clazz))
                         .build());
 //                        .withRelations(valid_from.get().getSubject().asOWLNamedIndividual()));
             } else {
                 return Optional.of(TemporalObjectBuilder.valid()
                         .from(validFromTemporal)
-                        .withFromTimeZone(TemporalParser.GetStartZoneID(clazz))
+                        .withFromTimeZone(TemporalParser.getStartZoneID(clazz))
                         .withID(temporalIdentifier)
                         .build());
 //                        .withRelations(valid_from.get().getSubject().asOWLNamedIndividual()));
@@ -147,8 +147,8 @@ public class TemporalObjectBuilder {
                     .findFirst();
             if (valid_at.isPresent()) {
                 return Optional.of(TemporalObjectBuilder.valid()
-                        .at(parseToTemporal(valid_at.get().getObject(), temporalType, TemporalParser.GetAtZoneID(clazz)))
-                        .withTimeZone(TemporalParser.GetAtZoneID(clazz))
+                        .at(parseToTemporal(valid_at.get().getObject(), temporalType, TemporalParser.getAtZoneID(clazz)))
+                        .withTimeZone(TemporalParser.getAtZoneID(clazz))
                         .withID(temporalIdentifier)
                         .build());
 //                        .withRelations(valid_at.get().getSubject().asOWLNamedIndividual()));
@@ -162,7 +162,7 @@ public class TemporalObjectBuilder {
                 .findFirst();
 
         if (exists_from.isPresent()) {
-            final Temporal existsFromTemporal = parseToTemporal(exists_from.get().getObject(), temporalType, TemporalParser.GetStartZoneID(clazz));
+            final Temporal existsFromTemporal = parseToTemporal(exists_from.get().getObject(), temporalType, TemporalParser.getStartZoneID(clazz));
 //            Try for exists_to
             final Optional<OWLDataPropertyAssertionAxiom> exists_to = properties.stream()
                     .filter(dp -> dp.getProperty().asOWLDataProperty().getIRI().equals(temporalExistsToIRI))
@@ -170,9 +170,9 @@ public class TemporalObjectBuilder {
             if (exists_to.isPresent()) {
                 return Optional.of(TemporalObjectBuilder.exists()
                         .from(existsFromTemporal)
-                        .to(parseToTemporal(exists_to.get().getObject(), temporalType, TemporalParser.GetEndZoneID(clazz)))
-                        .withFromTimeZone(TemporalParser.GetStartZoneID(clazz))
-                        .withToTimeZone(TemporalParser.GetEndZoneID(clazz))
+                        .to(parseToTemporal(exists_to.get().getObject(), temporalType, TemporalParser.getEndZoneID(clazz)))
+                        .withFromTimeZone(TemporalParser.getStartZoneID(clazz))
+                        .withToTimeZone(TemporalParser.getEndZoneID(clazz))
                         .withID(temporalIdentifier)
                         .isDefault(isDefault)
                         .build());
@@ -180,7 +180,7 @@ public class TemporalObjectBuilder {
             } else {
                 return Optional.of(TemporalObjectBuilder.exists()
                         .from(existsFromTemporal)
-                        .withFromTimeZone(TemporalParser.GetStartZoneID(clazz))
+                        .withFromTimeZone(TemporalParser.getStartZoneID(clazz))
                         .withID(temporalIdentifier)
                         .build());
 //                        .withRelations(exists_from.get().getSubject().asOWLNamedIndividual()));
@@ -191,8 +191,8 @@ public class TemporalObjectBuilder {
                     .findFirst();
             if (exists_at.isPresent()) {
                 return Optional.of(TemporalObjectBuilder.exists()
-                        .at(parseToTemporal(exists_at.get().getObject(), temporalType, TemporalParser.GetAtZoneID(clazz)))
-                        .withTimeZone(TemporalParser.GetAtZoneID(clazz))
+                        .at(parseToTemporal(exists_at.get().getObject(), temporalType, TemporalParser.getAtZoneID(clazz)))
+                        .withTimeZone(TemporalParser.getAtZoneID(clazz))
                         .withID(temporalIdentifier)
                         .build());
 
@@ -214,16 +214,16 @@ public class TemporalObjectBuilder {
             if (db_to.isPresent()) {
                 return Optional.of(
                         TemporalObjectBuilder.database()
-                                .from(parseToTemporal(db_from.get().getObject(), temporalType, TemporalParser.GetAtZoneID(clazz)))
-                                .withFromTimeZone(TemporalParser.GetAtZoneID(clazz))
-                                .to(parseToTemporal(db_to.get().getObject(), temporalType, TemporalParser.GetAtZoneID(clazz)))
-                                .withToTimeZone(TemporalParser.GetAtZoneID(clazz))
+                                .from(parseToTemporal(db_from.get().getObject(), temporalType, TemporalParser.getAtZoneID(clazz)))
+                                .withFromTimeZone(TemporalParser.getAtZoneID(clazz))
+                                .to(parseToTemporal(db_to.get().getObject(), temporalType, TemporalParser.getAtZoneID(clazz)))
+                                .withToTimeZone(TemporalParser.getAtZoneID(clazz))
                                 .build());
             } else {
                 return Optional.of(
                         TemporalObjectBuilder.database()
-                                .from(parseToTemporal(db_from.get().getObject(), temporalType, TemporalParser.GetAtZoneID(clazz)))
-                                .withFromTimeZone(TemporalParser.GetAtZoneID(clazz))
+                                .from(parseToTemporal(db_from.get().getObject(), temporalType, TemporalParser.getAtZoneID(clazz)))
+                                .withFromTimeZone(TemporalParser.getAtZoneID(clazz))
                                 .build());
             }
         }
