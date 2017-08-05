@@ -57,6 +57,17 @@ public class TrestleResult {
     }
 
     /**
+     * Safely unwrap {@link TrestleResult#getLiteral(String)}
+     * Call this if the desired {@link OWLLiteral} should never be empty
+     * throw {@link IllegalStateException} if {@link Optional#empty()}
+     * @param varName - {@link String} Variable name to access
+     * @return - {@link OWLLiteral}
+     */
+    public OWLLiteral unwrapLiteral(String varName) {
+        return getLiteral(varName).orElseThrow(() -> new IllegalStateException(String.format("Unable to get OWLLiteral for property %s", varName)));
+    }
+
+    /**
      * Get the variable as an {@link OWLIndividual}
      * Returns an empty optional if the result is null, meaning the variable is unbound
      * Throws an {@link ClassCastException} if the result is not an {@link OWLIndividual}
@@ -67,24 +78,32 @@ public class TrestleResult {
     public Optional<OWLIndividual> getIndividual(String varName) {
         if (resultValues.containsKey(varName)) {
             final OWLObject owlObject = resultValues.get(varName);
-            if (owlObject != null) {
-                if (owlObject instanceof OWLIndividual) {
-                    return Optional.of(OWLIndividual.class.cast(owlObject));
-                }
+            if (owlObject != null && owlObject instanceof OWLIndividual) {
+                return Optional.of(OWLIndividual.class.cast(owlObject));
             }
             throw new ClassCastException(String.format("OWLObject for variable %s is not an OWLIndividual", varName));
         }
         return Optional.empty();
     }
 
+    /**
+     * Safely unwrap {@link TrestleResult#getIndividual(String)}
+     * Call this if the desired {@link OWLIndividual} should never be empty
+     * <p>
+     * throw {@link IllegalStateException} if {@link Optional#empty()}
+     *
+     * @param varName - Variable name to access
+     * @return - {@link OWLIndividual} for that variable
+     */
+    public OWLIndividual unwrapIndividual(String varName) {
+        return getIndividual(varName).orElseThrow(() -> new IllegalStateException(String.format("Unable to get Individual for property %s", varName)));
+    }
+
     @SuppressWarnings({"lambda.param.type.incompatible"})
     public Map<String, String> getResultValues() {
         Map<String, String> stringMap = new HashMap<>();
         this.resultValues
-                .entrySet()
-                .forEach(entry -> {
-                    stringMap.put(entry.getKey(), entry.getValue().toString());
-                });
+                .forEach((key, value) -> stringMap.put(key, value.toString()));
         return stringMap;
     }
 

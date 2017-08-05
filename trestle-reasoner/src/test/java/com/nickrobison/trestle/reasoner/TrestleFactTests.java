@@ -14,6 +14,8 @@ import com.nickrobison.trestle.reasoner.merge.MergeStrategy;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeConflict;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeException;
 import com.nickrobison.trestle.types.TrestleIndividual;
+import com.nickrobison.trestle.types.events.TrestleEvent;
+import com.nickrobison.trestle.types.events.TrestleEventType;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +23,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -54,9 +57,19 @@ public class TrestleFactTests extends AbstractReasonerTest {
 
 //        Write each, then validate
         reasoner.writeTrestleObject(v1);
+//        Check that events exist
+        Optional<Set<TrestleEvent>> events = reasoner.getIndividualEvents(v1.id);
+        assertAll(() -> assertTrue(events.isPresent(), "Should have events"),
+                () -> assertEquals(1, events.get().size(), "Should only have created event"),
+                () -> assertEquals(v1.getValidFrom(), events.get().stream().filter(event -> event.getType().equals(TrestleEventType.CREATED)).findFirst().get().getAtTemporal(), "CREATED event should equal valid from"));
         final TestClasses.FactVersionTest v1Return = reasoner.readTrestleObject(v1.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
         assertEquals(v1, v1Return, "Should be equal to V1");
         reasoner.writeTrestleObject(v2);
+        final Optional<Set<TrestleEvent>> events2 = reasoner.getIndividualEvents(v2.id);
+        assertAll(() -> assertTrue(events2.isPresent(), "Should have events"),
+                () -> assertEquals(1, events2.get().size(), "Should only have created event"),
+                () -> assertEquals(v1.getValidFrom(), events2.get().stream().filter(event -> event.getType().equals(TrestleEventType.CREATED)).findFirst().get().getAtTemporal(), "CREATED event should equal V1 Valid from"));
+
         final TestClasses.FactVersionTest v2Return = reasoner.readTrestleObject(v2.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
         assertEquals(v2, v2Return, "Should be equal to V2");
         reasoner.writeTrestleObject(v3);

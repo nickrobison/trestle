@@ -81,6 +81,7 @@ public class EventEngineImpl implements EventEngine {
         final OWLObjectPropertyAssertionAxiom objectAssertion = df.getOWLObjectPropertyAssertionAxiom(df.getOWLObjectProperty(event.getIRI()),
                 individual,
                 eventID);
+
 //        Open the transaction
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         try {

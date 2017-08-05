@@ -239,7 +239,7 @@ public class QueryBuilder {
      * Build SPARQL query to return all temporal/spatial relations for a given individual
      *
      * @param individual - {@link OWLNamedIndividual} to retrieve relations for
-     * @return - SPARQL query string
+     * @return - SPARQL query string (?m - Individual, ?o - Object, ?p Property)
      */
     public String buildIndividualRelationQuery(OWLNamedIndividual individual) {
         final ParameterizedSparqlString ps = buildBaseString();
@@ -259,18 +259,20 @@ public class QueryBuilder {
     }
 
     /**
-     * Build SPARQL query to return all TrestleEvents for a given individual
+     * Build SPARQL query to return all TrestleEvents (with their corresponding properties) for a given individual
      *
      * @param individual - {@link OWLNamedIndividual} to query
-     * @return - SPARQL query string
+     * @return - SPARQL query string (?r - Event Individual, ?type - Event Type (IRI), ?t - at Temporal)
      */
     public String buildIndividualEventQuery(OWLNamedIndividual individual) {
         final ParameterizedSparqlString ps = buildBaseString();
 
-        ps.setCommandText(String.format("SELECT DISTINCT ?m ?r " +
-                "WHERE { " +
-                "?m rdf:type trestle:Trestle_Object ." +
+        ps.setCommandText(String.format("SELECT DISTINCT ?r ?type ?t" +
+                " WHERE { ?m rdf:type trestle:Trestle_Object ." +
                 "?m trestle:Event_Relation ?r ." +
+                "?r rdf:type ?type ." +
+                "?type rdfs:subClassOf trestle:Trestle_Event ." +
+                "?r trestle:exists_at ?t ." +
                 "VALUES ?m {<%s>}}", getFullIRIString(individual)));
 
         logger.debug(ps.toString());

@@ -78,6 +78,7 @@ import static com.nickrobison.trestle.common.LambdaUtils.sequenceCompletableFutu
 import static com.nickrobison.trestle.common.StaticIRI.*;
 import static com.nickrobison.trestle.iri.IRIVersion.V1;
 import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
+import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseToTemporal;
 import static com.nickrobison.trestle.reasoner.utils.ConfigValidator.ValidateConfig;
 
 /**
@@ -131,7 +132,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 ontologyIS = new FileInputStream(new File(builder.ontologyIRI.get().toURI()));
             } catch (MalformedURLException e) {
                 logger.error("Unable to parse IRI to URI", builder.ontologyIRI.get(), e);
-                throw new IllegalArgumentException(String.format("Unable to parse IRI %s to URI", builder.ontologyIRI.get()) ,e);
+                throw new IllegalArgumentException(String.format("Unable to parse IRI %s to URI", builder.ontologyIRI.get()), e);
             } catch (FileNotFoundException e) {
                 logger.error("Cannot find ontology file {}", builder.ontologyIRI.get(), e);
                 throw new MissingResourceException("File not found", this.getClass().getName(), builder.ontologyIRI.get().getIRIString());
@@ -660,6 +661,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC));
         trestleCache.deleteTrestleObject(individualIRI);
     }
+
     /**
      * Writes a data property as an asserted fact for an individual TS_Object.
      *
@@ -1079,24 +1081,46 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         return Optional.of(factValues);
     }
 
+    @Override
     public Optional<Set<TrestleEvent>> getIndividualEvents(String individual) {
         return getIndividualEvents(df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual)));
     }
 
+    @Override
     public Optional<Set<TrestleEvent>> getIndividualEvents(OWLNamedIndividual individual) {
-//        Build the query string
-        Set<TrestleEvent> individualEvents = new HashSet<>();
+
+        logger.debug("Retrieving events for {}", individual);
+        //        Build the query string
         final String eventQuery = this.qb.buildIndividualEventQuery(individual);
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         final TrestleResultSet resultSet;
         try {
-             resultSet = this.ontology.executeSPARQLResults(eventQuery);
+            resultSet = this.ontology.executeSPARQLResults(eventQuery);
         } catch (Exception e) {
             logger.error("Unable to get events for individual: {}", individual);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
+//        Parse out the events
+        final Set<TrestleEvent> individualEvents = resultSet.getResults()
+                .stream()
+//                Filter out Trestle_Event from results
+                .filter(result -> !result
+                        .unwrapIndividual("type")
+                        .asOWLNamedIndividual()
+                        .getIRI().equals(trestleEventIRI))
+                .map(result -> {
+                    final OWLNamedIndividual eventIndividual = result.unwrapIndividual("r").asOWLNamedIndividual();
+                    final IRI eventTypeIRI = result.unwrapIndividual("type").asOWLNamedIndividual().getIRI();
+                    final TrestleEventType eventType = TrestleEventType.getEventClassFromIRI(eventTypeIRI);
+//                    TODO(nrobison): This should be more generic
+                    final Temporal temporal = parseToTemporal(result.unwrapLiteral("t"), OffsetDateTime.class);
+                    return new TrestleEvent(eventType, individual, eventIndividual, temporal);
+                })
+                .collect(Collectors.toSet());
+
         return Optional.of(individualEvents);
     }
 
@@ -2179,10 +2203,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     /**
      * Read object existence {@link TemporalObject} for the given {@link OWLNamedIndividual}, unless we bypass it, then just return an empty optional
      *
-     * @param individual - {@link OWLNamedIndividual} to read
+     * @param individual  - {@link OWLNamedIndividual} to read
      * @param transaction - Execute as part of provided {@link TrestleTransaction}
-     * @param executor - Execute within provided {@link ExecutorService}
-     * @param bypass - {@code true} bypass execution and return {@link Optional#empty()}
+     * @param executor    - Execute within provided {@link ExecutorService}
+     * @param bypass      - {@code true} bypass execution and return {@link Optional#empty()}
      * @return - {@link Optional} of {@link TemporalObject} provided existence interval of the individual
      */
     private CompletableFuture<Optional<TemporalObject>> readObjectExistence(OWLNamedIndividual individual, TrestleTransaction transaction, ExecutorService executor, boolean bypass) {

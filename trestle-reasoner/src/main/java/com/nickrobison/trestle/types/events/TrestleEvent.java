@@ -10,12 +10,14 @@ public class TrestleEvent implements Serializable {
 
     private final TrestleEventType type;
     private final OWLNamedIndividual individual;
+    private final OWLNamedIndividual eventID;
     private final Temporal atTemporal;
 
 
-    public TrestleEvent(TrestleEventType type, OWLNamedIndividual individual, Temporal atTemporal) {
+    public TrestleEvent(TrestleEventType type, OWLNamedIndividual subject, OWLNamedIndividual eventID, Temporal atTemporal) {
         this.type = type;
-        this.individual = individual;
+        this.individual = subject;
+        this.eventID = eventID;
         this.atTemporal = atTemporal;
     }
 
@@ -40,6 +42,7 @@ public class TrestleEvent implements Serializable {
 
         if (getType() != that.getType()) return false;
         if (!getIndividual().equals(that.getIndividual())) return false;
+        if (!eventID.equals(that.eventID)) return false;
         return getAtTemporal().equals(that.getAtTemporal());
     }
 
@@ -47,6 +50,7 @@ public class TrestleEvent implements Serializable {
     public int hashCode() {
         int result = getType().hashCode();
         result = 31 * result + getIndividual().hashCode();
+        result = 31 * result + eventID.hashCode();
         result = 31 * result + getAtTemporal().hashCode();
         return result;
     }
@@ -56,6 +60,7 @@ public class TrestleEvent implements Serializable {
         return "TrestleEvent{" +
                 "type=" + type +
                 ", individual=" + individual +
+                ", eventID=" + eventID +
                 ", atTemporal=" + atTemporal +
                 '}';
     }

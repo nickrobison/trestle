@@ -9,6 +9,7 @@ import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.types.TrestleIndividual;
+import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -216,6 +217,22 @@ public interface TrestleReasoner {
      * @return - Optional List of Java Objects
      */
     Optional<List<Object>> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal);
+
+    /**
+     * Get all {@link TrestleEvent} for the given individual
+     *
+     * @param individual - {@link String} ID of the individual to gather events for
+     * @return - {@link Optional} {@link Set} of {@link TrestleEvent} for the given individual
+     */
+    Optional<Set<TrestleEvent>> getIndividualEvents(String individual);
+
+    /**
+     * Get all {@link TrestleEvent} for the given individual
+     *
+     * @param individual - {@link OWLNamedIndividual} to gather events for
+     * @return - {@link Optional} {@link Set} of {@link TrestleEvent} for the given individual
+     */
+    Optional<Set<TrestleEvent>> getIndividualEvents(OWLNamedIndividual individual);
 
     /**
      * Spatial Intersect Object with most recent records in the database
