@@ -502,10 +502,16 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             individualFacts.ifPresent(owlDataPropertyAssertionAxioms -> writeObjectFacts(owlNamedIndividual, owlDataPropertyAssertionAxioms, factTemporal, dTemporal));
 
 //            Add object events
-            this.eventEngine.addEvent(TrestleEventType.CREATED, owlNamedIndividual, objectTemporal.asInterval().getFromTime());
-            if (!objectTemporal.asInterval().isContinuing()) {
-                this.eventEngine.addEvent(TrestleEventType.DESTROYED, owlNamedIndividual, (Temporal) objectTemporal.asInterval().getToTime().get());
-            }
+//            if (objectTemporal.isInterval()) {
+                this.eventEngine.addEvent(TrestleEventType.CREATED, owlNamedIndividual, objectTemporal.getIdTemporal());
+                if (!objectTemporal.isContinuing()) {
+                    if (objectTemporal.isInterval()) {
+                        this.eventEngine.addEvent(TrestleEventType.DESTROYED, owlNamedIndividual, (Temporal) objectTemporal.asInterval().getToTime().get());
+                    } else {
+                        this.eventEngine.addEvent(TrestleEventType.DESTROYED, owlNamedIndividual, objectTemporal.getIdTemporal());
+                    }
+                }
+
 
             ontology.returnAndCommitTransaction(trestleTransaction);
         }
@@ -856,7 +862,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         validAtTemporal = parseTemporalToOntologyDateTime(validTemporal.getPointTime(), ZoneOffset.UTC);
 
 //            Get the temporal objects to figure out the correct return type
-        final Class<? extends Temporal> baseTemporalType = TemporalParser.GetTemporalType(clazz);
+        final Class<? extends Temporal> baseTemporalType = TemporalParser.getTemporalType(clazz);
 
 //        Build the fact query
         final String factQuery = qb.buildObjectFactRetrievalQuery(validAtTemporal, dbAtTemporal, true, null, df.getOWLNamedIndividual(individualIRI));
@@ -1082,12 +1088,14 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public Optional<Set<TrestleEvent>> getIndividualEvents(String individual) {
-        return getIndividualEvents(df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual)));
+    public Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, String individual) {
+        return getIndividualEvents(clazz, df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual)));
     }
 
     @Override
-    public Optional<Set<TrestleEvent>> getIndividualEvents(OWLNamedIndividual individual) {
+    public Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, OWLNamedIndividual individual) {
+
+        final Class<? extends Temporal> temporalType = TemporalParser.getTemporalType(clazz);
 
         logger.debug("Retrieving events for {}", individual);
         //        Build the query string
@@ -1116,7 +1124,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     final IRI eventTypeIRI = result.unwrapIndividual("type").asOWLNamedIndividual().getIRI();
                     final TrestleEventType eventType = TrestleEventType.getEventClassFromIRI(eventTypeIRI);
 //                    TODO(nrobison): This should be more generic
-                    final Temporal temporal = parseToTemporal(result.unwrapLiteral("t"), OffsetDateTime.class);
+                    final Temporal temporal = parseToTemporal(result.unwrapLiteral("t"), temporalType);
                     return new TrestleEvent(eventType, individual, eventIndividual, temporal);
                 })
                 .collect(Collectors.toSet());
@@ -2096,7 +2104,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         propertyMembers.ifPresent(owlDataProperties -> owlDataProperties.forEach(property -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, property.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property))));
 
 //        Now the temporals
-        final Optional<List<OWLDataProperty>> temporalProperties = trestleParser.temporalParser.GetTemporalsAsDataProperties(inputClass);
+        final Optional<List<OWLDataProperty>> temporalProperties = trestleParser.temporalParser.getTemporalsAsDataProperties(inputClass);
         temporalProperties.ifPresent(owlDataProperties -> owlDataProperties.forEach(temporal -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, temporal.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, temporal))));
 
 
