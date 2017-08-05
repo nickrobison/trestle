@@ -6,7 +6,7 @@ import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.parser.TemporalParser;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
-import com.nickrobison.trestle.types.TrestleEvent;
+import com.nickrobison.trestle.types.events.TrestleEventType;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
@@ -37,14 +37,14 @@ public class EventEngineImpl implements EventEngine {
     }
 
     @Override
-    public void addEvent(TrestleEvent event, OWLNamedIndividual individual, Temporal eventTemporal) {
+    public void addEvent(TrestleEventType event, OWLNamedIndividual individual, Temporal eventTemporal) {
         logger.debug("Adding event {} to {} at {}", event, individual, eventTemporal);
         switch (event) {
             case CREATED:
-                addCreatedDestroyedEvent(TrestleEvent.CREATED, individual, eventTemporal);
+                addCreatedDestroyedEvent(TrestleEventType.CREATED, individual, eventTemporal);
                 break;
             case DESTROYED:
-                addCreatedDestroyedEvent(TrestleEvent.DESTROYED, individual, eventTemporal);
+                addCreatedDestroyedEvent(TrestleEventType.DESTROYED, individual, eventTemporal);
                 break;
         }
     }
@@ -55,14 +55,14 @@ public class EventEngineImpl implements EventEngine {
         objectExistenceAxioms.forEach(axiom -> {
 //            Move the creation event?
             if (axiom.getProperty().asOWLDataProperty().getIRI().equals(temporalExistsFromIRI)) {
-                logger.debug("Adjusting {} event for {} to {}", TrestleEvent.CREATED, axiom.getSubject(), axiom.getObject().toString());
+                logger.debug("Adjusting {} event for {} to {}", TrestleEventType.CREATED, axiom.getSubject(), axiom.getObject().toString());
                 eventAxioms.add(df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(temporalExistsAtIRI),
-                        buildEventName(axiom.getSubject().asOWLNamedIndividual(), TrestleEvent.CREATED),
+                        buildEventName(axiom.getSubject().asOWLNamedIndividual(), TrestleEventType.CREATED),
                         axiom.getObject()));
             } else if (axiom.getProperty().asOWLDataProperty().getIRI().equals(temporalExistsToIRI)) {
-                logger.debug("Adjusting {} event for {} to {}", TrestleEvent.DESTROYED, axiom.getSubject(), axiom.getObject().toString());
+                logger.debug("Adjusting {} event for {} to {}", TrestleEventType.DESTROYED, axiom.getSubject(), axiom.getObject().toString());
                 eventAxioms.add(df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(temporalExistsAtIRI),
-                        buildEventName(axiom.getSubject().asOWLNamedIndividual(), TrestleEvent.DESTROYED),
+                        buildEventName(axiom.getSubject().asOWLNamedIndividual(), TrestleEventType.DESTROYED),
                         axiom.getObject()));
             }
 //            Write the properties
@@ -71,7 +71,7 @@ public class EventEngineImpl implements EventEngine {
         });
     }
 
-    private void addCreatedDestroyedEvent(TrestleEvent event, OWLNamedIndividual individual, Temporal eventTemporal) {
+    private void addCreatedDestroyedEvent(TrestleEventType event, OWLNamedIndividual individual, Temporal eventTemporal) {
 //        Create the axioms
         final OWLNamedIndividual eventID = buildEventName(individual, event);
         final OWLClassAssertionAxiom classAxiom = df.getOWLClassAssertionAxiom(df.getOWLClass(trestleEventIRI), eventID);
@@ -98,7 +98,7 @@ public class EventEngineImpl implements EventEngine {
         }
     }
 
-    private OWLNamedIndividual buildEventName(OWLNamedIndividual individual, TrestleEvent event) {
+    private OWLNamedIndividual buildEventName(OWLNamedIndividual individual, TrestleEventType event) {
         return df.getOWLNamedIndividual(IRI.create(this.prefix, String.format("%s:%s:event", IRIUtils.extractTrestleIndividualName(individual.getIRI()), event.getShortName())));
     }
 

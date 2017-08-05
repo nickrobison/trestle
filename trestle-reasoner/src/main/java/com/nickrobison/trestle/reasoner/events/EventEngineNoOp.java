@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.reasoner.events;
 
-import com.nickrobison.trestle.types.TrestleEvent;
+import com.nickrobison.trestle.types.events.TrestleEventType;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.slf4j.Logger;
@@ -17,7 +17,7 @@ public class EventEngineNoOp implements EventEngine {
     }
 
     @Override
-    public void addEvent(TrestleEvent event, OWLNamedIndividual individual, Temporal eventTemporal) {
+    public void addEvent(TrestleEventType event, OWLNamedIndividual individual, Temporal eventTemporal) {
 //        Not implemented
     }
 

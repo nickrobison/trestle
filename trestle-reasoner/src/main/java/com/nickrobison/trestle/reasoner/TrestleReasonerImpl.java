@@ -39,6 +39,8 @@ import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.reasoner.utils.TemporalPropertiesPair;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.*;
+import com.nickrobison.trestle.types.events.TrestleEvent;
+import com.nickrobison.trestle.types.events.TrestleEventType;
 import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
@@ -499,9 +501,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             individualFacts.ifPresent(owlDataPropertyAssertionAxioms -> writeObjectFacts(owlNamedIndividual, owlDataPropertyAssertionAxioms, factTemporal, dTemporal));
 
 //            Add object events
-            this.eventEngine.addEvent(TrestleEvent.CREATED, owlNamedIndividual, objectTemporal.asInterval().getFromTime());
+            this.eventEngine.addEvent(TrestleEventType.CREATED, owlNamedIndividual, objectTemporal.asInterval().getFromTime());
             if (!objectTemporal.asInterval().isContinuing()) {
-                this.eventEngine.addEvent(TrestleEvent.DESTROYED, owlNamedIndividual, (Temporal) objectTemporal.asInterval().getToTime().get());
+                this.eventEngine.addEvent(TrestleEventType.DESTROYED, owlNamedIndividual, (Temporal) objectTemporal.asInterval().getToTime().get());
             }
 
             ontology.returnAndCommitTransaction(trestleTransaction);
@@ -1075,6 +1077,27 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 .map(literal -> TypeConverter.extractOWLLiteral(datatype, literal.get()))
                 .collect(Collectors.toList());
         return Optional.of(factValues);
+    }
+
+    public Optional<Set<TrestleEvent>> getIndividualEvents(String individual) {
+        return getIndividualEvents(df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual)));
+    }
+
+    public Optional<Set<TrestleEvent>> getIndividualEvents(OWLNamedIndividual individual) {
+//        Build the query string
+        Set<TrestleEvent> individualEvents = new HashSet<>();
+        final String eventQuery = this.qb.buildIndividualEventQuery(individual);
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+        final TrestleResultSet resultSet;
+        try {
+             resultSet = this.ontology.executeSPARQLResults(eventQuery);
+        } catch (Exception e) {
+            logger.error("Unable to get events for individual: {}", individual);
+            return Optional.empty();
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+        }
+        return Optional.of(individualEvents);
     }
 
     @Override

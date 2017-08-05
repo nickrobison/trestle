@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.types;
+package com.nickrobison.trestle.types.events;
 
 import org.semanticweb.owlapi.model.HasIRI;
 import org.semanticweb.owlapi.model.IRI;
@@ -10,7 +10,7 @@ import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 /**
  * Exhaustive list of Trestle Events
  */
-public enum TrestleEvent implements HasIRI {
+public enum TrestleEventType implements HasIRI {
     CREATED     ("created"),
     DESTROYED   ("destroyed"),
     BECOMES     ("becomes"),
@@ -20,7 +20,7 @@ public enum TrestleEvent implements HasIRI {
     private final IRI relationIRI;
     private final String shortName;
 
-    TrestleEvent(String eventString) {
+    TrestleEventType(String eventString) {
         this.relationIRI = IRI.create(TRESTLE_PREFIX, eventString);
         this.shortName = eventString;
     }
@@ -47,8 +47,8 @@ public enum TrestleEvent implements HasIRI {
         return this.shortName;
     }
 
-    public static TrestleEvent getEventFromIRI(IRI eventIRI) {
-        return Arrays.stream(TrestleEvent.values())
+    public static TrestleEventType getEventFromIRI(IRI eventIRI) {
+        return Arrays.stream(TrestleEventType.values())
                 .filter(event -> event.getIRI().equals(eventIRI))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot find EventType for IRI %s", eventIRI.getIRIString())));

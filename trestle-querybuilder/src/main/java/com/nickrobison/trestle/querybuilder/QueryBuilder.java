@@ -178,11 +178,12 @@ public class QueryBuilder {
     /**
      * Retrieve fact axioms for a given set of {@link OWLNamedIndividual}.
      * Optionally, can provide a list of {@link OWLDataProperty} to return, as a subset of all available facts
-     * @param validTemporal - {@link OffsetDateTime} of valid time, to filter results on
-     * @param databaseTemporal - {@link OffsetDateTime} of database time, to filter results on
-     * @param filterTemporals - filter temporal assertions from the resultset?
+     *
+     * @param validTemporal          - {@link OffsetDateTime} of valid time, to filter results on
+     * @param databaseTemporal       - {@link OffsetDateTime} of database time, to filter results on
+     * @param filterTemporals        - filter temporal assertions from the resultset?
      * @param filteredFactProperties - Optional filtered list of {@link OWLDataProperty} facts to return
-     *@param individual - {@link OWLNamedIndividual} to retrieve results for  @return - SPARQL query string
+     * @param individual             - {@link OWLNamedIndividual} to retrieve results for  @return - SPARQL query string
      */
     public String buildObjectFactRetrievalQuery(OffsetDateTime validTemporal, OffsetDateTime databaseTemporal, boolean filterTemporals, @Nullable List<OWLDataProperty> filteredFactProperties, OWLNamedIndividual... individual) {
         final ParameterizedSparqlString ps = buildBaseString();
@@ -219,11 +220,11 @@ public class QueryBuilder {
             ps.append(String.format("VALUES ?property { %s } .", factValues));
         }
 //        If the temporals are specified, constrain with them. Otherwise, find the facts with the unbound ending temporals
-            ps.append("FILTER((!bound(?vf) || ?vf <= ?validVariable^^xsd:dateTime) && (!bound(?vt) || ?vt > ?validVariable^^xsd:dateTime)) .");
-            ps.append("FILTER(!bound(?va) || ?va = ?validVariable^^xsd:dateTime) .");
-            ps.setLiteral("validVariable", validTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-            ps.append("FILTER((!bound(?df) || ?df <= ?databaseVariable^^xsd:dateTime) && (!bound(?dt) || ?dt > ?databaseVariable^^xsd:dateTime)) .");
-            ps.setLiteral("databaseVariable", databaseTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        ps.append("FILTER((!bound(?vf) || ?vf <= ?validVariable^^xsd:dateTime) && (!bound(?vt) || ?vt > ?validVariable^^xsd:dateTime)) .");
+        ps.append("FILTER(!bound(?va) || ?va = ?validVariable^^xsd:dateTime) .");
+        ps.setLiteral("validVariable", validTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        ps.append("FILTER((!bound(?df) || ?df <= ?databaseVariable^^xsd:dateTime) && (!bound(?dt) || ?dt > ?databaseVariable^^xsd:dateTime)) .");
+        ps.setLiteral("databaseVariable", databaseTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         if (filterTemporals) {
             ps.append(" FILTER NOT EXISTS {?property rdfs:subPropertyOf trestle:Temporal_Property}");
         } else {
@@ -235,9 +236,9 @@ public class QueryBuilder {
     }
 
     /**
-     * Build SPARQL query to return all temporal/spatial relations for a given object
+     * Build SPARQL query to return all temporal/spatial relations for a given individual
      *
-     * @param individual - OWLNamedIndividual to retrieve relations for
+     * @param individual - {@link OWLNamedIndividual} to retrieve relations for
      * @return - SPARQL query string
      */
     public String buildIndividualRelationQuery(OWLNamedIndividual individual) {
@@ -251,6 +252,25 @@ public class QueryBuilder {
                 "?m ?o ?p . " +
                 "?o rdfs:subPropertyOf trestle:Spatial_Relation ." +
                 "} . " +
+                "VALUES ?m {<%s>}}", getFullIRIString(individual)));
+
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
+    /**
+     * Build SPARQL query to return all TrestleEvents for a given individual
+     *
+     * @param individual - {@link OWLNamedIndividual} to query
+     * @return - SPARQL query string
+     */
+    public String buildIndividualEventQuery(OWLNamedIndividual individual) {
+        final ParameterizedSparqlString ps = buildBaseString();
+
+        ps.setCommandText(String.format("SELECT DISTINCT ?m ?r " +
+                "WHERE { " +
+                "?m rdf:type trestle:Trestle_Object ." +
+                "?m trestle:Event_Relation ?r ." +
                 "VALUES ?m {<%s>}}", getFullIRIString(individual)));
 
         logger.debug(ps.toString());
@@ -282,10 +302,11 @@ public class QueryBuilder {
      * Retrieve all Fact values for a given individual
      * If a temporal range is provided, the returned values will be valid within that range
      * If a database temporal value is provided, only db versions beyond that point will be returned
+     *
      * @param individual - OWLNamedIndividual to get facts from
-     * @param property - OWLDataProperty values to retrieve
+     * @param property   - OWLDataProperty values to retrieve
      * @param validStart - Optional start of fact value, temporal filter
-     * @param validEnd - Optional end of fact value, temporal filter
+     * @param validEnd   - Optional end of fact value, temporal filter
      * @param dbTemporal - Optional database temporal filter
      * @return - SPARQL Query string
      */
@@ -297,7 +318,7 @@ public class QueryBuilder {
                 "{?f trestle:database_from ?df} ." +
                 "OPTIONAL{?f trestle:database_to ?dt} ." +
                 "OPTIONAL{?f trestle:valid_from ?vf } ." +
-                "OPTIONAL{?f trestle:valid_at ?va } ."+
+                "OPTIONAL{?f trestle:valid_at ?va } ." +
                 "OPTIONAL{?f trestle:valid_to ?vt }. " +
                 "?f <%s> ?value ." +
                 "VALUES ?m {<%s>} .", getFullIRIString(property), getFullIRIString(individual)));
@@ -374,7 +395,8 @@ public class QueryBuilder {
 
     /**
      * Build SPARQL query to find the concepts that intersect a given space/time pair
-     *If a validAt temporal is given, intersect at that point in time, otherwise, find anything that intersects, ever
+     * If a validAt temporal is given, intersect at that point in time, otherwise, find anything that intersects, ever
+     *
      * @param wktValue - WKT value
      * @param buffer   - buffer value (in meters)
      * @param atTime   - Temporal to select appropriate, valid fact
@@ -554,7 +576,8 @@ public class QueryBuilder {
 
     /**
      * Update the ending value of a database interval, provided the interval is continuing
-     * @param temporal - {@link OffsetDateTime} of value to use
+     *
+     * @param temporal   - {@link OffsetDateTime} of value to use
      * @param individual - {@link OWLNamedIndividual} of Interval_Object to update
      * @return - SPARQL Query String
      */
@@ -582,9 +605,10 @@ public class QueryBuilder {
     /**
      * Update fact ending temporal to new value
      * Provided the currently valid fact has a continuing interval
+     *
      * @param individual - {@link OWLNamedIndividual} of Interval_Object to update
-     * @param property - {@link OWLNamedIndividual} of Fact
-     * @param temporal - {@link OffsetDateTime} of value to use
+     * @param property   - {@link OWLNamedIndividual} of Fact
+     * @param temporal   - {@link OffsetDateTime} of value to use
      * @return - SPARQL Query String
      */
     public String updateUnboundedFact(OWLNamedIndividual individual, OWLDataProperty property, OffsetDateTime temporal) {
