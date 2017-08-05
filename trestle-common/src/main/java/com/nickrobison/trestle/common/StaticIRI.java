@@ -40,6 +40,7 @@ public class StaticIRI {
     public static final IRI overlapOfIRI = IRI.create(TRESTLE_PREFIX, "overlap_of");
 //    Classes
     public static final IRI trestleConceptIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Concept");
+    public static final IRI trestleObjectIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Object");
     public static final IRI trestleRelationIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Relation");
     public static final IRI spatialRelationIRI = IRI.create(TRESTLE_PREFIX, "Spatial_Relation");
     public static final IRI temporalRelationIRI = IRI.create(TRESTLE_PREFIX, "Temporal_Relation");
@@ -50,6 +51,13 @@ public class StaticIRI {
     public static final IRI temporalClassIRI = IRI.create(TRESTLE_PREFIX, "Temporal_Object");
     public static final IRI temporalPropertyIRI = IRI.create(TRESTLE_PREFIX, "Temporal_Property");
     public static final IRI trestleEventIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Event");
+    public static final IRI temporalObjectIRI = IRI.create(TRESTLE_PREFIX, "Temporal_Object");
+    public static final IRI existsTemporalObjectIRI = IRI.create(TRESTLE_PREFIX, "Exists_Object");
+    public static final IRI validTemporalObjectIRI = IRI.create(TRESTLE_PREFIX, "Valid_Object");
+    public static final IRI databaseTemporalObjectIRI = IRI.create(TRESTLE_PREFIX, "Database_Object");
+    public static final IRI intervalTemporalObjectIRI = IRI.create(TRESTLE_PREFIX, "Interval_Object");
+    public static final IRI pointTemporalObjectIRI = IRI.create(TRESTLE_PREFIX, "Point_Object");
+
 //    Properties
     public static final IRI relationStrengthIRI = IRI.create(TRESTLE_PREFIX, "Relation_Strength");
     public static final IRI sOverlapIRI = IRI.create(TRESTLE_PREFIX, "SOverlap");

@@ -464,7 +464,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 //                    Write new individual existence axioms, if they exist
                             if (!mergeScript.getIndividualExistenceAxioms().isEmpty()) {
-                                final String updateExistenceQuery = this.qb.updateObjectProperties(mergeScript.getIndividualExistenceAxioms());
+                                final String updateExistenceQuery = this.qb.updateObjectProperties(mergeScript.getIndividualExistenceAxioms(), trestleObjectIRI);
                                 this.ontology.executeUpdateSPARQL(updateExistenceQuery);
 
 //                                Update object events
@@ -502,16 +502,14 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             individualFacts.ifPresent(owlDataPropertyAssertionAxioms -> writeObjectFacts(owlNamedIndividual, owlDataPropertyAssertionAxioms, factTemporal, dTemporal));
 
 //            Add object events
-//            if (objectTemporal.isInterval()) {
-                this.eventEngine.addEvent(TrestleEventType.CREATED, owlNamedIndividual, objectTemporal.getIdTemporal());
-                if (!objectTemporal.isContinuing()) {
-                    if (objectTemporal.isInterval()) {
-                        this.eventEngine.addEvent(TrestleEventType.DESTROYED, owlNamedIndividual, (Temporal) objectTemporal.asInterval().getToTime().get());
-                    } else {
-                        this.eventEngine.addEvent(TrestleEventType.DESTROYED, owlNamedIndividual, objectTemporal.getIdTemporal());
-                    }
+            this.eventEngine.addEvent(TrestleEventType.CREATED, owlNamedIndividual, objectTemporal.getIdTemporal());
+            if (!objectTemporal.isContinuing()) {
+                if (objectTemporal.isInterval()) {
+                    this.eventEngine.addEvent(TrestleEventType.DESTROYED, owlNamedIndividual, (Temporal) objectTemporal.asInterval().getToTime().get());
+                } else {
+                    this.eventEngine.addEvent(TrestleEventType.DESTROYED, owlNamedIndividual, objectTemporal.getIdTemporal());
                 }
-
+            }
 
             ontology.returnAndCommitTransaction(trestleTransaction);
         }
@@ -645,9 +643,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 writeObjectFacts(owlNamedIndividual, newFactMergeScript.getNewFacts(), validTemporal, databaseTemporal);
 
 //                Write the new existence axioms, if they exist
-                if (!newFactMergeScript.getIndividualExistenceAxioms().isEmpty()) {
-                    final String updateExistenceQuery = this.qb.updateObjectProperties(newFactMergeScript.getIndividualExistenceAxioms());
+                final List<OWLDataPropertyAssertionAxiom> individualExistenceAxioms = newFactMergeScript.getIndividualExistenceAxioms();
+                if (!individualExistenceAxioms.isEmpty()) {
+                    final String updateExistenceQuery = this.qb.updateObjectProperties(individualExistenceAxioms, trestleObjectIRI);
                     this.ontology.executeUpdateSPARQL(updateExistenceQuery);
+
+//                    Update events
+                    this.eventEngine.adjustObjectEvents(individualExistenceAxioms);
                 }
 
             }, this.objectThreadPool);

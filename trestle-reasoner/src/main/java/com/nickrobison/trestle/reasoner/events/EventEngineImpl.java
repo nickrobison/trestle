@@ -66,7 +66,7 @@ public class EventEngineImpl implements EventEngine {
                         axiom.getObject()));
             }
 //            Write the properties
-            final String updateQuery = this.qb.updateObjectProperties(eventAxioms);
+            final String updateQuery = this.qb.updateObjectProperties(eventAxioms, trestleEventIRI);
             this.ontology.executeUpdateSPARQL(updateQuery);
         });
     }

@@ -13,6 +13,8 @@ import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
+import org.semanticweb.owlapi.vocab.OWL2Datatype;
+import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -633,9 +635,18 @@ public class QueryBuilder {
      * Takes a list of {@link OWLDataPropertyAssertionAxiom}s and REPLACES any existing values
      *
      * @param axioms - Axioms to add to object
+     * @param typeRestriction - Optional {@link IRI} which specifies an
      * @return - SPARQL query string
      */
-    public String updateObjectProperties(List<OWLDataPropertyAssertionAxiom> axioms) {
+    public String updateObjectProperties(List<OWLDataPropertyAssertionAxiom> axioms, @Nullable IRI typeRestriction) {
+
+//        Restrict query to specific object class?
+        final IRI restrictionIRI;
+        if (typeRestriction == null) {
+            restrictionIRI = OWLRDFVocabulary.OWL_NAMED_INDIVIDUAL.getIRI();
+        } else {
+            restrictionIRI = typeRestriction;
+        }
 
 //        Find the data properties to delete all values of
 
@@ -662,10 +673,10 @@ public class QueryBuilder {
                 "INSERT {" +
                 "%s }" +
                 "WHERE {" +
-                "?m rdf:type trestle:Trestle_Object ." +
+                "?m rdf:type <%s> ." +
                 "VALUES ?m {%s} ." +
                 "?m ?p ?o" +
-                "}", deleteAxioms, updateAxioms, filterAxiom));
+                "}", deleteAxioms, updateAxioms, restrictionIRI.getIRIString(), filterAxiom));
 
         logger.debug(ps.toString());
         return ps.toString();
