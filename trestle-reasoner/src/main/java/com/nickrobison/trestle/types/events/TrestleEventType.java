@@ -13,9 +13,9 @@ import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 public enum TrestleEventType implements HasIRI {
     CREATED("created", "Created_Event"),
     DESTROYED("destroyed", "Destroyed_Event"),
-    BECOMES("becomes", "Becomes_Event"),
-    SPLIT("splits", "Split_Event"),
-    MERGE("merges", "Merged_Event");
+    BECAME("became", "Became_Event"),
+    SPLIT("split", "Split_Event"),
+    MERGED("merged", "Merged_Event");
 
     private final IRI relationIRI;
     private final IRI classIRI;
