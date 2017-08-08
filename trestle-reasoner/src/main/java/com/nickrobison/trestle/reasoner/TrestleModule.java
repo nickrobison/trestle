@@ -4,7 +4,7 @@ import com.google.inject.AbstractModule;
 import com.nickrobison.metrician.MetricianModule;
 
 import com.nickrobison.trestle.reasoner.caching.TrestleCacheModule;
-import com.nickrobison.trestle.reasoner.events.EventEngine;
+import com.nickrobison.trestle.reasoner.events.TrestleEventEngine;
 import com.nickrobison.trestle.reasoner.events.EventEngineImpl;
 import com.nickrobison.trestle.reasoner.events.EventEngineNoOp;
 import com.nickrobison.trestle.reasoner.merge.MergeEngineImpl;
@@ -46,9 +46,9 @@ public class TrestleModule extends AbstractModule {
 
 //        Event Engine
         if (eventEnabled) {
-            bind(EventEngine.class).to(EventEngineImpl.class);
+            bind(TrestleEventEngine.class).to(EventEngineImpl.class);
         } else {
-            bind(EventEngine.class).to(EventEngineNoOp.class);
+            bind(TrestleEventEngine.class).to(EventEngineNoOp.class);
         }
 
     }

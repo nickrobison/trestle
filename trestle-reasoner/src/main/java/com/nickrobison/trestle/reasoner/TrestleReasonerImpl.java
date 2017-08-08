@@ -28,7 +28,8 @@ import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
-import com.nickrobison.trestle.reasoner.events.EventEngine;
+import com.nickrobison.trestle.reasoner.events.TrestleEventEngine;
+import com.nickrobison.trestle.reasoner.events.TrestleEventException;
 import com.nickrobison.trestle.reasoner.exceptions.*;
 import com.nickrobison.trestle.reasoner.merge.MergeScript;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeConflict;
@@ -104,7 +105,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final QueryBuilder.Dialect spatialDalect;
     private final TrestleParser trestleParser;
     private final TrestleMergeEngine mergeEngine;
-    private final EventEngine eventEngine;
+    private final TrestleEventEngine eventEngine;
     private final Config trestleConfig;
     private final TrestleCache trestleCache;
     private final Metrician metrician;
@@ -208,7 +209,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 //      Engines on
         this.mergeEngine = injector.getInstance(TrestleMergeEngine.class);
-        this.eventEngine = injector.getInstance(EventEngine.class);
+        this.eventEngine = injector.getInstance(TrestleEventEngine.class);
 
         //        Setup the Parser
         trestleParser = new TrestleParser(df, REASONER_PREFIX, trestleConfig.getBoolean("enableMultiLanguage"), trestleConfig.getString("defaultLanguage"));
@@ -1132,6 +1133,37 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 .collect(Collectors.toSet());
 
         return Optional.of(individualEvents);
+    }
+
+    @Override
+    public <@NonNull T> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects) {
+        if (!type.equals(TrestleEventType.SPLIT) && !type.equals(TrestleEventType.MERGED)) {
+            throw new IllegalArgumentException("Only MERGED and SPLIT types are valid");
+        }
+        final OWLNamedIndividual subjectIndividual = this.trestleParser.classParser.getIndividual(subject);
+        final Set<OWLNamedIndividual> objectIndividuals = objects
+                .stream()
+                .map(this.trestleParser.classParser::getIndividual)
+                .collect(Collectors.toSet());
+
+//        Write everyone
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
+        try {
+            this.writeTrestleObject(subject);
+            for (T object : objects) {
+                writeTrestleObject(object);
+            }
+//            Add the event
+            this.eventEngine.addSplitMergeEvent(type, subjectIndividual, objectIndividuals);
+        } catch (TrestleClassException | MissingOntologyEntity e) {
+            logger.error("Unable to add individuals", e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+        } catch (TrestleEventException e) {
+            logger.error("Unable add Event", e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+        }
     }
 
     @Override

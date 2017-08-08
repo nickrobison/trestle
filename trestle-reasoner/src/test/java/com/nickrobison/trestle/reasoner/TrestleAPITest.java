@@ -3,12 +3,15 @@ package com.nickrobison.trestle.reasoner;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.NoValidStateException;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.merge.MergeStrategy;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeConflict;
 import com.nickrobison.trestle.types.TrestleIndividual;
+import com.nickrobison.trestle.types.events.TrestleEvent;
+import com.nickrobison.trestle.types.events.TrestleEventType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
@@ -118,6 +121,31 @@ public class TrestleAPITest extends AbstractReasonerTest {
 //        assertEquals(geotoolsPolygonTest, geotoolsPolygonTest1, "Should be equal");
 
         reasoner.getMetricsEngine().exportData(new File("./target/api-test-metrics.csv"));
+    }
+
+    @Test
+    public void eventTest() throws TrestleClassException, MissingOntologyEntity {
+//        Try for split
+//        Create test events
+        final OffsetDateTime earlyStart = LocalDate.of(1990, 1, 1).atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
+        final OffsetDateTime middle = earlyStart.plusYears(5);
+        final OffsetDateTime end = middle.plusYears(5);
+        final TestClasses.OffsetDateTimeTest split_start = new TestClasses.OffsetDateTimeTest(100, earlyStart, middle);
+        final TestClasses.OffsetDateTimeTest split1 = new TestClasses.OffsetDateTimeTest(101, middle, end);
+        final TestClasses.OffsetDateTimeTest split2 = new TestClasses.OffsetDateTimeTest(102, middle, end);
+        final TestClasses.OffsetDateTimeTest split3 = new TestClasses.OffsetDateTimeTest(103, middle, end);
+        final TestClasses.OffsetDateTimeTest split4 = new TestClasses.OffsetDateTimeTest(104, middle, end);
+        final TestClasses.OffsetDateTimeTest split5 = new TestClasses.OffsetDateTimeTest(105, middle, end);
+        final ImmutableList<TestClasses.OffsetDateTimeTest> splitSet = ImmutableList.of(split1, split2, split3, split4, split5);
+//        Try for invalid event types
+        assertAll(() -> assertThrows(IllegalArgumentException.class, () -> this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.CREATED, split_start, splitSet)),
+                () -> assertThrows(IllegalArgumentException.class, () -> this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.BECAME, split_start, splitSet)),
+                () -> assertThrows(IllegalArgumentException.class, () -> this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.DESTROYED, split_start, splitSet)));
+        this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.SPLIT, split_start, splitSet);
+//        Check that the subject has the split event
+        final Optional<Set<TrestleEvent>> individualEvents = this.reasoner.getIndividualEvents(split_start.getClass(), split_start.adm0_code.toString());
+        assertAll(() -> assertTrue(individualEvents.isPresent()),
+                () -> assertEquals(3, individualEvents.get().size()));
     }
 
     @Test

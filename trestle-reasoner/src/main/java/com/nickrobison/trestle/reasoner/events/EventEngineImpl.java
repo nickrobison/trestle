@@ -14,13 +14,16 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.time.OffsetDateTime;
 import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static com.nickrobison.trestle.common.StaticIRI.*;
+import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseToTemporal;
 
-public class EventEngineImpl implements EventEngine {
+public class EventEngineImpl implements TrestleEventEngine {
     private static final Logger logger = LoggerFactory.getLogger(EventEngineImpl.class);
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
 
@@ -41,10 +44,10 @@ public class EventEngineImpl implements EventEngine {
         logger.debug("Adding event {} to {} at {}", event, individual, eventTemporal);
         switch (event) {
             case CREATED:
-                addCreatedDestroyedEvent(TrestleEventType.CREATED, individual, eventTemporal);
+                addTemporalEvent(TrestleEventType.CREATED, individual, eventTemporal);
                 break;
             case DESTROYED:
-                addCreatedDestroyedEvent(TrestleEventType.DESTROYED, individual, eventTemporal);
+                addTemporalEvent(TrestleEventType.DESTROYED, individual, eventTemporal);
                 break;
         }
     }
@@ -71,7 +74,60 @@ public class EventEngineImpl implements EventEngine {
         });
     }
 
-    private void addCreatedDestroyedEvent(TrestleEventType event, OWLNamedIndividual individual, Temporal eventTemporal) {
+    @Override
+    public void addSplitMergeEvent(TrestleEventType type, OWLNamedIndividual subject, Set<OWLNamedIndividual> objects) {
+        switch (type) {
+            case MERGED:
+                this.addMergedEvent(subject, objects);
+            case SPLIT:
+                this.addSplitEvent(subject, objects);
+            default:
+                throw new IllegalArgumentException("Only SPLIT and MERGED events are supported");
+        }
+    }
+
+    private void addMergedEvent(OWLNamedIndividual subject, Set<OWLNamedIndividual> objects) {
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
+        try {
+            final OWLNamedIndividual eventName = buildEventName(subject, TrestleEventType.MERGED);
+//            Get the start temporal of the subject
+            final Temporal fromTemporal = this.extractTrestleObjectTemporal(subject, temporalExistsFromIRI);
+//            Write the new event
+            addTemporalEvent(TrestleEventType.MERGED, subject, fromTemporal);
+//            Add the components to the event
+            for (OWLNamedIndividual object : objects) {
+                this.ontology.writeIndividualObjectProperty(object, componentOfIRI, eventName);
+            }
+        } catch (MissingOntologyEntity e) {
+            logger.error("Missing Individual {}", e.getIndividual(), e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+        }
+    }
+
+    private void addSplitEvent(OWLNamedIndividual subject, Set<OWLNamedIndividual> objects) {
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
+        try {
+            final OWLNamedIndividual eventName = buildEventName(subject, TrestleEventType.SPLIT);
+//            Get the start temporal of the subject
+            final Temporal fromTemporal = this.extractTrestleObjectTemporal(subject, temporalExistsToIRI);
+//            Write the new event
+            addTemporalEvent(TrestleEventType.SPLIT, subject, fromTemporal);
+//            Add the components to the event
+            for (OWLNamedIndividual object : objects) {
+                this.ontology.writeIndividualObjectProperty(object, componentOfIRI, eventName);
+            }
+        } catch (MissingOntologyEntity e) {
+            logger.error("Missing Individual {}", e.getIndividual(), e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+            throw new TrestleEventException(df.getOWLNamedIndividual(e.getIndividual()), "Missing individual");
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+        }
+    }
+
+    private void addTemporalEvent(TrestleEventType event, OWLNamedIndividual individual, Temporal eventTemporal) {
 //        Create the axioms
         final OWLNamedIndividual eventID = buildEventName(individual, event);
         final OWLClassAssertionAxiom classAxiom = df.getOWLClassAssertionAxiom(df.getOWLClass(trestleEventIRI), eventID);
@@ -91,12 +147,25 @@ public class EventEngineImpl implements EventEngine {
             this.ontology.writeIndividualDataProperty(existsAtAxiom);
             this.ontology.writeIndividualObjectProperty(objectAssertion);
 //            Write the object relation
-        } catch (MissingOntologyEntity missingOntologyEntity) {
-            logger.error("Missing ontology entity", missingOntologyEntity);
+        } catch (MissingOntologyEntity e) {
+            logger.error("Missing ontology entity", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
+            throw new TrestleEventException(df.getOWLNamedIndividual(e.getIndividual()), "Missing individual");
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
+    }
+
+    private Temporal extractTrestleObjectTemporal(OWLNamedIndividual individual, IRI temporalIRI) {
+        final Set<OWLLiteral> existsFromProperty = this.ontology
+                .getIndividualDataProperty(individual,
+                        df.getOWLDataProperty(temporalIRI))
+                .orElseGet(() -> this.ontology
+                        .getIndividualDataProperty(individual, temporalExistsAtIRI)
+                        .orElseThrow(() -> new IllegalStateException(String.format("Individual %s does not have existsFrom or ExistsTo Temporal", individual.toStringID()))));
+//            We can just grab the first set member
+//            TODO(nrobison): This should be either LocalDate or OffsetDateTime. In the future
+        return parseToTemporal(existsFromProperty.stream().findFirst().orElseThrow(() -> new IllegalStateException(String.format("Individual %s does not have existsFrom or ExistsTo Temporal", individual.toStringID()))), OffsetDateTime.class);
     }
 
     private OWLNamedIndividual buildEventName(OWLNamedIndividual individual, TrestleEventType event) {

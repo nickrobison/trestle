@@ -8,8 +8,9 @@ import org.slf4j.LoggerFactory;
 
 import java.time.temporal.Temporal;
 import java.util.List;
+import java.util.Set;
 
-public class EventEngineNoOp implements EventEngine {
+public class EventEngineNoOp implements TrestleEventEngine {
     private static final Logger logger = LoggerFactory.getLogger(EventEngineNoOp.class);
 
     public EventEngineNoOp() {
@@ -23,6 +24,11 @@ public class EventEngineNoOp implements EventEngine {
 
     @Override
     public void adjustObjectEvents(List<OWLDataPropertyAssertionAxiom> objectExistenceAxioms) {
+//        Not implemented
+    }
+
+    @Override
+    public void addSplitMergeEvent(TrestleEventType type, OWLNamedIndividual subject, Set<OWLNamedIndividual> objects) {
 //        Not implemented
     }
 }

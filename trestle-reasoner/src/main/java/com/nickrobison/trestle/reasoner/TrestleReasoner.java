@@ -10,6 +10,7 @@ import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.events.TrestleEvent;
+import com.nickrobison.trestle.types.events.TrestleEventType;
 import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -237,6 +238,19 @@ public interface TrestleReasoner {
      * @return - {@link Optional} {@link Set} of {@link TrestleEvent} for the given individual
      */
     Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, OWLNamedIndividual individual);
+
+    /**
+     * Add a SPLIT or MERGE {@link TrestleEventType} to a given {@link OWLNamedIndividual}
+     * Events are oriented subject -> object, so A splits_into [B,C,D] and H merged_from [E,F,G]
+     * Individuals are not created if they don't already exist
+     * throws {@link IllegalArgumentException} if something other than {@link TrestleEventType#MERGED} or {@link TrestleEventType#SPLIT} is passed
+     *
+     * @param type    {@link TrestleEventType} to add
+     * @param subject - {@link OWLNamedIndividual} subject of Event
+     * @param objects - {@link Set} of {@link OWLNamedIndividual} that are the objects of the event
+     * @param <T> - Generic type parameter of Trestle Object
+     */
+    <@NonNull T> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects);
 
     /**
      * Spatial Intersect Object with most recent records in the database

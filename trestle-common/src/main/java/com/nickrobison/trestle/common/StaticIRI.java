@@ -38,6 +38,8 @@ public class StaticIRI {
     public static final IRI databaseTimeOfIRI = IRI.create(TRESTLE_PREFIX, "database_time_of");
     public static final IRI hasOverlapIRI = IRI.create(TRESTLE_PREFIX, "has_overlap");
     public static final IRI overlapOfIRI = IRI.create(TRESTLE_PREFIX, "overlap_of");
+    public static final IRI componentOfIRI = IRI.create(TRESTLE_PREFIX, "component_of");
+    public static final IRI hasComponetIRI = IRI.create(TRESTLE_PREFIX, "has_component");
     public static final IRI mergedIntoIRI = IRI.create(TRESTLE_PREFIX, "merged_into");
     public static final IRI mergedFromIRI = IRI.create(TRESTLE_PREFIX, "merged_from");
     public static final IRI splitFromIRI = IRI.create(TRESTLE_PREFIX, "split_from");
