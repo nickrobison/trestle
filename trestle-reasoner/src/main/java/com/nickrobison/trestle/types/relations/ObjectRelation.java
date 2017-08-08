@@ -25,7 +25,13 @@ public enum ObjectRelation implements HasIRI {
     BEGINS("begins"),
     DURING("during"),
     ENDS("ends"),
-    TEMPORAL_OVERLAPS("temporal_overlaps");
+    TEMPORAL_OVERLAPS("temporal_overlaps"),
+//    Event
+    MERGED_INTO("merged_into"),
+    MERGED_FROM("merged_from"),
+    SPLIT_INTO("split_into"),
+    SPLIT_FROM("split_from");
+
 
     private final IRI relationIRI;
 

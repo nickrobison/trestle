@@ -39,6 +39,10 @@ public class StaticIRI {
     public static final IRI hasOverlapIRI = IRI.create(TRESTLE_PREFIX, "has_overlap");
     public static final IRI overlapOfIRI = IRI.create(TRESTLE_PREFIX, "overlap_of");
     public static final IRI componentOfIRI = IRI.create(TRESTLE_PREFIX, "component_of");
+    public static final IRI mergedIRI = IRI.create(TRESTLE_PREFIX, "merged");
+    public static final IRI mergeOfIRI = IRI.create(TRESTLE_PREFIX, "merge_of");
+    public static final IRI splitIRI = IRI.create(TRESTLE_PREFIX, "split");
+    public static final IRI splitOfIRI = IRI.create(TRESTLE_PREFIX, "split_of");
     public static final IRI hasComponetIRI = IRI.create(TRESTLE_PREFIX, "has_component");
     public static final IRI mergedIntoIRI = IRI.create(TRESTLE_PREFIX, "merged_into");
     public static final IRI mergedFromIRI = IRI.create(TRESTLE_PREFIX, "merged_from");
@@ -51,6 +55,7 @@ public class StaticIRI {
     public static final IRI spatialRelationIRI = IRI.create(TRESTLE_PREFIX, "Spatial_Relation");
     public static final IRI temporalRelationIRI = IRI.create(TRESTLE_PREFIX, "Temporal_Relation");
     public static final IRI semanticRelationIRI = IRI.create(TRESTLE_PREFIX, "Semantic_Relation");
+    public static final IRI eventRelationIRI = IRI.create(TRESTLE_PREFIX, "Event_Relation");
     public static final IRI trestleOverlapIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Overlap");
     public static final IRI datasetClassIRI = IRI.create(TRESTLE_PREFIX, "Dataset");
     public static final IRI factClassIRI = IRI.create(TRESTLE_PREFIX, "Fact");

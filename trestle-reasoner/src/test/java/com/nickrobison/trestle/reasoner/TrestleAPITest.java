@@ -10,6 +10,7 @@ import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.merge.MergeStrategy;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeConflict;
 import com.nickrobison.trestle.types.TrestleIndividual;
+import com.nickrobison.trestle.types.TrestleRelation;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -161,6 +163,23 @@ public class TrestleAPITest extends AbstractReasonerTest {
         assertAll(() -> assertTrue(mergeEvents.isPresent()),
                 () -> assertEquals(3, individualEvents.get().size()),
                 () -> assertEquals(merge_subject.startTemporal, mergeEvents.get().stream().filter(event -> event.getType().equals(TrestleEventType.MERGED)).findFirst().get().getAtTemporal(), "MERGED temporal should equal created date"));
+
+//        Ensure that events are handled correctly (along with relations).
+//        Split first
+        final TrestleIndividual splitStartIndividual = this.reasoner.getTrestleIndividual(split_start.adm0_code.toString());
+        assertAll(() -> assertEquals(3, splitStartIndividual.getEvents().size(), "Should have 3 events"),
+                () -> assertEquals(5, splitStartIndividual.getRelations().size(), "Should have 5 split_into events"));
+        final Optional<TrestleRelation> split_from = this.reasoner.getTrestleIndividual(split1.adm0_code.toString()).getRelations().stream().filter(relation -> relation.getType().equals("SPLIT_FROM")).findFirst();
+        assertAll(() -> assertTrue(split_from.isPresent()),
+                () -> assertEquals("http://nickrobison.com/test-owl#100", split_from.get().getObject(), "Should point to starting split"));
+
+//        Now merged
+        final TrestleIndividual mergeSubjectIndividual = this.reasoner.getTrestleIndividual(merge_subject.adm0_code.toString());
+        assertAll(() -> assertEquals(3, mergeSubjectIndividual.getEvents().size(), "Should have 3 events"),
+                () -> assertEquals(5, mergeSubjectIndividual.getRelations().size(), "Should have 5 merged objects"));
+        final Optional<TrestleRelation> merged_into = this.reasoner.getTrestleIndividual(merge5.adm0_code.toString()).getRelations().stream().filter(relation -> relation.getType().equals("MERGED_INTO")).findFirst();
+        assertAll(() -> assertTrue(merged_into.isPresent()),
+                () -> assertEquals("http://nickrobison.com/test-owl#200", merged_into.get().getObject(), "Should point to merged subject"));
     }
 
     @Test

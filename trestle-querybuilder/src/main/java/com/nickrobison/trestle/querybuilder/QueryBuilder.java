@@ -253,7 +253,9 @@ public class QueryBuilder {
                 "UNION { " +
                 "?m ?o ?p . " +
                 "?o rdfs:subPropertyOf trestle:Spatial_Relation ." +
-                "} . " +
+                "} " +
+                "UNION { ?m ?o ?p . ?o rdfs:subPropertyOf trestle:Event_Relation ." +
+                " ?p rdf:type trestle:Trestle_Object} . " +
                 "VALUES ?m {<%s>}}", getFullIRIString(individual)));
 
         logger.debug(ps.toString());
