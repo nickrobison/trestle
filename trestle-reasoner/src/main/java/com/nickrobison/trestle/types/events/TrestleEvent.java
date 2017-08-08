@@ -5,6 +5,7 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import java.io.Serializable;
 import java.time.temporal.Temporal;
 
+@SuppressWarnings({"squid:S1948", "squid:S3437"}) // I believe all implementations of Temporal are serializable
 public class TrestleEvent implements Serializable {
     private static final long serialVersionUID = 42L;
 
@@ -12,7 +13,6 @@ public class TrestleEvent implements Serializable {
     private final OWLNamedIndividual individual;
     private final OWLNamedIndividual eventID;
     private final Temporal atTemporal;
-
 
     public TrestleEvent(TrestleEventType type, OWLNamedIndividual subject, OWLNamedIndividual eventID, Temporal atTemporal) {
         this.type = type;

@@ -49,6 +49,8 @@ public class EventEngineImpl implements TrestleEventEngine {
             case DESTROYED:
                 addTemporalEvent(TrestleEventType.DESTROYED, individual, eventTemporal);
                 break;
+            default:
+                throw new IllegalArgumentException("Only CREATED or DESTROYED events are supported");
         }
     }
 
@@ -76,6 +78,7 @@ public class EventEngineImpl implements TrestleEventEngine {
 
     @Override
     public void addSplitMergeEvent(TrestleEventType type, OWLNamedIndividual subject, Set<OWLNamedIndividual> objects, Temporal eventTemporal) {
+        logger.debug("Adding event {} to {} at {} with {}", type, subject, eventTemporal, objects);
         switch (type) {
             case MERGED:
                 this.addMergedEvent(subject, objects, eventTemporal);
@@ -167,6 +170,7 @@ public class EventEngineImpl implements TrestleEventEngine {
      * @param temporalIRI - {@link IRI} of temporal value to start with
      * @return - {@link Temporal} corresponding to the value of the given {@link IRI} or {@link com.nickrobison.trestle.common.StaticIRI#temporalExistsAtIRI}
      */
+    @SuppressWarnings({"squid:UnusedPrivateMethod"}) // Suppressed because we may add this later, once we figure out isolation levels
     private Temporal extractTrestleObjectTemporal(OWLNamedIndividual individual, IRI temporalIRI) {
         final Set<OWLLiteral> existsFromProperty = this.ontology
                 .getIndividualDataProperty(individual,
