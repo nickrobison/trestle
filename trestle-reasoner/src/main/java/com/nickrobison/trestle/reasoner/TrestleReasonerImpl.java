@@ -1137,6 +1137,19 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
+    public void addTrestleObjectEvent(TrestleEventType type, String individual, Temporal eventTemporal) {
+        addTrestleObjectEvent(type, df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual)), eventTemporal);
+    }
+
+    @Override
+    public void addTrestleObjectEvent(TrestleEventType type, OWLNamedIndividual individual, Temporal eventTemporal) {
+        if (type.equals(TrestleEventType.SPLIT) || type.equals(TrestleEventType.MERGED)) {
+            throw new IllegalArgumentException("SPLIT and MERGED events cannot be added through this method");
+        }
+        this.eventEngine.addEvent(type, individual, eventTemporal);
+    }
+
+    @Override
     public <@NonNull T> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects) {
         if (!type.equals(TrestleEventType.SPLIT) && !type.equals(TrestleEventType.MERGED)) {
             throw new IllegalArgumentException("Only MERGED and SPLIT types are valid");

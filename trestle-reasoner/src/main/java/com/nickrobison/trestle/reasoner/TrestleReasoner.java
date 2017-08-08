@@ -240,6 +240,28 @@ public interface TrestleReasoner {
     Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, OWLNamedIndividual individual);
 
     /**
+     * Add {@link TrestleEvent} to individual
+     * This method cannot be used to add {@link TrestleEventType#MERGED} or {@link TrestleEventType#SPLIT} events because those require additional information.
+     * Use the {@link TrestleReasoner#addTrestleObjectSplitMerge(TrestleEventType, Object, List)} for those event types
+     *
+     * @param type - {@link TrestleEventType} to add to individual
+     * @param individual - {@link String} ID of individual
+     * @param eventTemporal - {@link Temporal} temporal to use for event
+     */
+    void addTrestleObjectEvent(TrestleEventType type, String individual, Temporal eventTemporal);
+
+    /**
+     * Add {@link TrestleEvent} to individual
+     * This method cannot be used to add {@link TrestleEventType#MERGED} or {@link TrestleEventType#SPLIT} events because those require additional information.
+     * Use the {@link TrestleReasoner#addTrestleObjectSplitMerge(TrestleEventType, Object, List)} for those event types
+     *
+     * @param type - {@link TrestleEventType} to add to individual
+     * @param individual - {@link OWLNamedIndividual} individual to add event to
+     * @param eventTemporal - {@link Temporal} temporal to use for event
+     */
+    void addTrestleObjectEvent(TrestleEventType type, OWLNamedIndividual individual, Temporal eventTemporal);
+
+    /**
      * Add a SPLIT or MERGE {@link TrestleEventType} to a given {@link OWLNamedIndividual}
      * Events are oriented subject -> object, so A splits_into [B,C,D] and H merged_from [E,F,G]
      * Individuals are not created if they don't already exist
