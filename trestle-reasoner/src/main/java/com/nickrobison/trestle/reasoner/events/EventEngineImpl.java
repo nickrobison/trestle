@@ -75,25 +75,27 @@ public class EventEngineImpl implements TrestleEventEngine {
     }
 
     @Override
-    public void addSplitMergeEvent(TrestleEventType type, OWLNamedIndividual subject, Set<OWLNamedIndividual> objects) {
+    public void addSplitMergeEvent(TrestleEventType type, OWLNamedIndividual subject, Set<OWLNamedIndividual> objects, Temporal eventTemporal) {
         switch (type) {
             case MERGED:
-                this.addMergedEvent(subject, objects);
+                this.addMergedEvent(subject, objects, eventTemporal);
+                break;
             case SPLIT:
-                this.addSplitEvent(subject, objects);
+                this.addSplitEvent(subject, objects, eventTemporal);
+                break;
             default:
                 throw new IllegalArgumentException("Only SPLIT and MERGED events are supported");
         }
     }
 
-    private void addMergedEvent(OWLNamedIndividual subject, Set<OWLNamedIndividual> objects) {
+    private void addMergedEvent(OWLNamedIndividual subject, Set<OWLNamedIndividual> objects, Temporal eventTemporal) {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         try {
             final OWLNamedIndividual eventName = buildEventName(subject, TrestleEventType.MERGED);
 //            Get the start temporal of the subject
-            final Temporal fromTemporal = this.extractTrestleObjectTemporal(subject, temporalExistsFromIRI);
+//            final Temporal fromTemporal = this.extractTrestleObjectTemporal(subject, temporalExistsFromIRI);
 //            Write the new event
-            addTemporalEvent(TrestleEventType.MERGED, subject, fromTemporal);
+            addTemporalEvent(TrestleEventType.MERGED, subject, eventTemporal);
 //            Add the components to the event
             for (OWLNamedIndividual object : objects) {
                 this.ontology.writeIndividualObjectProperty(object, componentOfIRI, eventName);
@@ -106,14 +108,14 @@ public class EventEngineImpl implements TrestleEventEngine {
         }
     }
 
-    private void addSplitEvent(OWLNamedIndividual subject, Set<OWLNamedIndividual> objects) {
+    private void addSplitEvent(OWLNamedIndividual subject, Set<OWLNamedIndividual> objects, Temporal eventTemporal) {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         try {
             final OWLNamedIndividual eventName = buildEventName(subject, TrestleEventType.SPLIT);
 //            Get the start temporal of the subject
-            final Temporal fromTemporal = this.extractTrestleObjectTemporal(subject, temporalExistsToIRI);
+//            final Temporal fromTemporal = this.extractTrestleObjectTemporal(subject, temporalExistsToIRI);
 //            Write the new event
-            addTemporalEvent(TrestleEventType.SPLIT, subject, fromTemporal);
+            addTemporalEvent(TrestleEventType.SPLIT, subject, eventTemporal);
 //            Add the components to the event
             for (OWLNamedIndividual object : objects) {
                 this.ontology.writeIndividualObjectProperty(object, componentOfIRI, eventName);
@@ -156,6 +158,15 @@ public class EventEngineImpl implements TrestleEventEngine {
         }
     }
 
+    /**
+     * Get the temporal values from the specified individual
+     * Will first attempt to read a {@link OWLDataProperty} corresponding to the provided {@link IRI} and will then read {@link com.nickrobison.trestle.common.StaticIRI#temporalExistsAtIRI} if no value is found
+     * Note: Will only work if either the individual existed before the transaction started, or the isolation level is READ_UNCOMMITTED
+     *
+     * @param individual - {@link OWLNamedIndividual} to get temporals from
+     * @param temporalIRI - {@link IRI} of temporal value to start with
+     * @return - {@link Temporal} corresponding to the value of the given {@link IRI} or {@link com.nickrobison.trestle.common.StaticIRI#temporalExistsAtIRI}
+     */
     private Temporal extractTrestleObjectTemporal(OWLNamedIndividual individual, IRI temporalIRI) {
         final Set<OWLLiteral> existsFromProperty = this.ontology
                 .getIndividualDataProperty(individual,

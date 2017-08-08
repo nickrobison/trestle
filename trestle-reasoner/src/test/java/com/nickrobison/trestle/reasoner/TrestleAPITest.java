@@ -125,7 +125,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
 
     @Test
     public void eventTest() throws TrestleClassException, MissingOntologyEntity {
-//        Try for split
+//        Split event
 //        Create test events
         final OffsetDateTime earlyStart = LocalDate.of(1990, 1, 1).atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
         final OffsetDateTime middle = earlyStart.plusYears(5);
@@ -146,6 +146,21 @@ public class TrestleAPITest extends AbstractReasonerTest {
         final Optional<Set<TrestleEvent>> individualEvents = this.reasoner.getIndividualEvents(split_start.getClass(), split_start.adm0_code.toString());
         assertAll(() -> assertTrue(individualEvents.isPresent()),
                 () -> assertEquals(3, individualEvents.get().size()));
+
+//        Merge event
+        final TestClasses.OffsetDateTimeTest merge_subject = new TestClasses.OffsetDateTimeTest(200, middle, end);
+        final TestClasses.OffsetDateTimeTest merge1 = new TestClasses.OffsetDateTimeTest(201, earlyStart, middle);
+        final TestClasses.OffsetDateTimeTest merge2 = new TestClasses.OffsetDateTimeTest(202, earlyStart, middle);
+        final TestClasses.OffsetDateTimeTest merge3 = new TestClasses.OffsetDateTimeTest(203, earlyStart, middle);
+        final TestClasses.OffsetDateTimeTest merge4 = new TestClasses.OffsetDateTimeTest(204, earlyStart, middle);
+        final TestClasses.OffsetDateTimeTest merge5 = new TestClasses.OffsetDateTimeTest(205, earlyStart, middle);
+        final ImmutableList<TestClasses.OffsetDateTimeTest> mergeSet = ImmutableList.of(merge1, merge2, merge3, merge4, merge5);
+        this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.MERGED, merge_subject, mergeSet);
+        final Optional<Set<TrestleEvent>> mergeEvents = this.reasoner.getIndividualEvents(merge_subject.getClass(), merge_subject.adm0_code.toString());
+        assertAll(() -> assertTrue(mergeEvents.isPresent()),
+                () -> assertEquals(3, individualEvents.get().size()));
+
+
     }
 
     @Test

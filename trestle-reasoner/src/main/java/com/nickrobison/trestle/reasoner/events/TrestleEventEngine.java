@@ -28,10 +28,10 @@ public interface TrestleEventEngine {
      * Events are oriented subject -> object, so A splits_into [B,C,D] and H merged_from [E,F,G]
      * Individuals are not created if they don't already exist
      * throws {@link IllegalArgumentException} if something other than {@link TrestleEventType#MERGED} or {@link TrestleEventType#SPLIT} is passed
-     *
-     * @param type    {@link TrestleEventType} to add
+     *  @param type    {@link TrestleEventType} to add
      * @param subject - {@link OWLNamedIndividual} subject of Event
      * @param objects - {@link Set} of {@link OWLNamedIndividual} that are the objects of the event
+     * @param eventTemporal
      */
-    void addSplitMergeEvent(TrestleEventType type, OWLNamedIndividual subject, Set<OWLNamedIndividual> objects);
+    void addSplitMergeEvent(TrestleEventType type, OWLNamedIndividual subject, Set<OWLNamedIndividual> objects, Temporal eventTemporal);
 }

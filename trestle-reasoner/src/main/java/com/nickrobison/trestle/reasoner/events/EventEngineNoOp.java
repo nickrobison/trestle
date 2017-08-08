@@ -28,7 +28,7 @@ public class EventEngineNoOp implements TrestleEventEngine {
     }
 
     @Override
-    public void addSplitMergeEvent(TrestleEventType type, OWLNamedIndividual subject, Set<OWLNamedIndividual> objects) {
+    public void addSplitMergeEvent(TrestleEventType type, OWLNamedIndividual subject, Set<OWLNamedIndividual> objects, Temporal eventTemporal) {
 //        Not implemented
     }
 }
