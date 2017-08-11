@@ -1,7 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
-import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import oracle.spatial.rdf.client.jena.*;
@@ -35,7 +34,7 @@ public class OracleOntology extends JenaOntology {
     private static boolean updateOnCommit;
 
     OracleOntology(String name, OWLOntology ont, DefaultPrefixManager pm, String connectionString, String username, String password) {
-        super(name, createOracleModel(name, connectionString, username, password), ont, pm, QueryBuilder.Dialect.ORACLE);
+        super(name, createOracleModel(name, connectionString, username, password), ont, pm, new OracleQueryBuilder(pm));
     }
 
     private static Model createOracleModel(String ontologyName, String connectionString, String username, String password) {

@@ -45,7 +45,7 @@ public class LocalOntology extends JenaOntology {
 
 
     LocalOntology(String ontologyName, OWLOntology ont, DefaultPrefixManager pm) {
-        super(ontologyName, constructJenaModel(), ont, pm, QueryBuilder.Dialect.JENA);
+        super(ontologyName, constructJenaModel(), ont, pm, new QueryBuilder(QueryBuilder.Dialect.JENA, pm));
         datasetGraphSpatial = (DatasetGraphSpatial) luceneDataset.asDatasetGraph();
         this.index = datasetGraphSpatial.getSpatialIndex();
         spatialIndexContext = new SpatialIndexContext(this.index);

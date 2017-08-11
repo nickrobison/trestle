@@ -13,7 +13,6 @@ import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
-import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -469,35 +468,12 @@ public class QueryBuilder {
      * @param dbAtTime
      * @throws UnsupportedFeatureException
      */
-    private void buildDatabaseTSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
+    protected void buildDatabaseTSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
 //        Add DB intersection
         ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime)) .");
-        switch (this.dialect) {
-            case ORACLE: {
-//                We need to remove this, otherwise Oracle substitutes geosparql for ogc
-                ps.removeNsPrefix("geosparql");
-//                Add this hint to the query planner
-                ps.setNsPrefix("ORACLE_SEM_HT_NS", "http://oracle.com/semtech#leading(?wkt)");
-                ps.append("FILTER(((!bound(?tStart) || ?tStart <= ?startVariable^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > ?endVariable^^xsd:dateTime)) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
-//                ps.append("FILTER((?tStart < ?startVariable^^xsd:dateTime && ?tEnd >= ?endVariable^^xsd:dateTime) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
-                break;
-            }
-            case VIRTUOSO: {
-                logger.warn("Unit conversion not implemented yet, assuming meters as base distance");
-                ps.append("FILTER(((!bound(?tStart) || ?tStart <= ?startVariable^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > ?endVariable^^xsd:dateTime)) && bif:st_intersects(?wkt, ?wktString^^ogc:wktLiteral, ?distance)) }");
-                ps.setLiteral("distance", buffer);
-                break;
-            }
-            case SESAME: {
 //                We need to remove this, otherwise GraphDB substitutes geosparql for ogc
-                ps.removeNsPrefix("geosparql");
-                ps.append("FILTER(((!bound(?tStart) || ?tStart <= ?startVariable^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > ?endVariable^^xsd:dateTime)) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
-                break;
-            }
-
-            default:
-                throw new UnsupportedFeatureException(String.format("Trestle doesn't yet support spatial queries on %s", dialect));
-        }
+        ps.removeNsPrefix("geosparql");
+        ps.append("FILTER(((!bound(?tStart) || ?tStart <= ?startVariable^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > ?endVariable^^xsd:dateTime)) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
 
         ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
         ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
@@ -513,32 +489,10 @@ public class QueryBuilder {
      * @param buffer   - double buffer (in meters) around the intersection
      * @throws UnsupportedFeatureException
      */
-    private void buildDatabaseSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime dbAt) throws UnsupportedFeatureException {
+    protected void buildDatabaseSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime dbAt) throws UnsupportedFeatureException {
         ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime)) .");
-        switch (this.dialect) {
-            case ORACLE: {
-//                We need to remove this, otherwise Oracle substitutes geosparql for ogc
-                ps.removeNsPrefix("geosparql");
-//                Add this hint to the query planner
-                ps.setNsPrefix("ORACLE_SEM_HT_NS", "http://oracle.com/semtech#leading(?wkt)");
-                ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
-                break;
-            }
-            case VIRTUOSO: {
-                logger.warn("Unit conversion not implemented yet, assuming meters as base distance");
-                ps.append("FILTER(bif:st_intersects(?wkt, ?wktString^^ogc:wktLiteral, ?distance)) }");
-                ps.setLiteral("distance", buffer);
-                break;
-            }
-            case SESAME: {
-                ps.removeNsPrefix("geosparql");
-                ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
-                break;
-            }
-
-            default:
-                throw new UnsupportedFeatureException(String.format("Trestle doesn't yet support spatial queries on %s", dialect));
-        }
+        ps.removeNsPrefix("geosparql");
+        ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
         ps.setLiteral("dbAt", dbAt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
 //        We need to simplify the WKT to get under the 4000 character SQL limit.
@@ -636,7 +590,7 @@ public class QueryBuilder {
     /**
      * Takes a list of {@link OWLDataPropertyAssertionAxiom}s and REPLACES any existing values
      *
-     * @param axioms - Axioms to add to object
+     * @param axioms          - Axioms to add to object
      * @param typeRestriction - Optional {@link IRI} which specifies an
      * @return - SPARQL query string
      */
@@ -719,7 +673,7 @@ public class QueryBuilder {
      * @param buffer - Buffer to add to WKT
      * @return - String of simplified WKT
      */
-    private static String simplifyWkt(String wkt, double factor, double buffer) {
+    protected static String simplifyWkt(String wkt, double factor, double buffer) {
 
         final Geometry geom;
         try {

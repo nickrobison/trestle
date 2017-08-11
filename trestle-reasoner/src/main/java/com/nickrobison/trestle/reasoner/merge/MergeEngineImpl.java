@@ -10,11 +10,9 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,7 +22,6 @@ import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.StaticIRI.temporalExistsFromIRI;
 import static com.nickrobison.trestle.common.StaticIRI.temporalExistsToIRI;
-import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
 import static com.nickrobison.trestle.reasoner.parser.TemporalParser.temporalToLiteral;
 
 /**
