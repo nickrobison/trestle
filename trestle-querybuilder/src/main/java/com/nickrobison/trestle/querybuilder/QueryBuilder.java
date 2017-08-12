@@ -358,6 +358,16 @@ public class QueryBuilder {
         return ps.toString();
     }
 
+    /**
+     * Build spatial intersection
+     * @param datasetClass - {@link OWLClass} to restrict on
+     * @param wktValue - {@link String} representation of WKT value
+     * @param buffer - {@link Double} buffer to build around WKT value
+     * @param unit - {@link Units} used by subclasses to adjust buffer values
+     * @return - {@link String} SPARQL query string
+     * @throws UnsupportedFeatureException - Throws if we don't support this
+     * @deprecated - Don't use this
+     */
     @Deprecated
     public String buildSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, Units unit) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();

@@ -46,12 +46,10 @@ public class TrestleResult {
     public Optional<OWLLiteral> getLiteral(String varName) {
         if (resultValues.containsKey(varName)) {
             final OWLObject owlObject = resultValues.get(varName);
-            if (owlObject != null) {
-                if (owlObject instanceof OWLLiteral) {
-                    return Optional.of(OWLLiteral.class.cast(owlObject));
-                }
-                throw new ClassCastException(String.format("OWLObject for variable %s is not an OWLLiteral", varName));
+            if (owlObject instanceof OWLLiteral) {
+                return Optional.of(OWLLiteral.class.cast(owlObject));
             }
+            throw new ClassCastException(String.format("OWLObject for variable %s is not an OWLLiteral", varName));
         }
         return Optional.empty();
     }
@@ -60,6 +58,7 @@ public class TrestleResult {
      * Safely unwrap {@link TrestleResult#getLiteral(String)}
      * Call this if the desired {@link OWLLiteral} should never be empty
      * throw {@link IllegalStateException} if {@link Optional#empty()}
+     *
      * @param varName - {@link String} Variable name to access
      * @return - {@link OWLLiteral}
      */
@@ -78,7 +77,7 @@ public class TrestleResult {
     public Optional<OWLIndividual> getIndividual(String varName) {
         if (resultValues.containsKey(varName)) {
             final OWLObject owlObject = resultValues.get(varName);
-            if (owlObject != null && owlObject instanceof OWLIndividual) {
+            if (owlObject instanceof OWLIndividual) {
                 return Optional.of(OWLIndividual.class.cast(owlObject));
             }
             throw new ClassCastException(String.format("OWLObject for variable %s is not an OWLIndividual", varName));
