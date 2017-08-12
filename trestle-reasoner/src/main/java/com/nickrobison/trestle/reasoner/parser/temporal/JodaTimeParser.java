@@ -16,11 +16,15 @@ public class JodaTimeParser {
 
     private static final Logger logger = LoggerFactory.getLogger(JodaTimeParser.class);
 
+    private JodaTimeParser() {
+//        Empty constructory
+    }
+
     /**
-     * Parse OWL xsd:dateTime to Joda Temporal
+     * Parse {@link org.semanticweb.owlapi.vocab.OWL2Datatype#XSD_DATE_TIME} to Joda Temporal
      * @param destinationTypeName - Java type to parse to
-     * @param literal - OWLLiteral of type xsd:dateTime
-     * @return - Optional Joda Time Temporal
+     * @param literal - {@link OWLLiteral} of type {@link org.semanticweb.owlapi.vocab.OWL2Datatype#XSD_DATE_TIME}
+     * @return - {@link Optional} Joda Time Temporal
      */
 //    TODO(nrobison): Should support time zones
     public static Optional<Temporal> parseDateTimeToJodaTemporal(String destinationTypeName, OWLLiteral literal) {

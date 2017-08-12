@@ -34,6 +34,10 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+        </dependency>
         <!--OWL Dependencies-->
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
@@ -161,10 +165,6 @@
                                 </includes>
                             </artifactSet>
                             <relocations>
-                                <relocation>
-                                    <pattern>com.google.inject</pattern>
-                                    <shadedPattern>embedded.com.google.inject</shadedPattern>
-                                </relocation>
                                 <relocation>
                                     <pattern>org.apache.http</pattern>
                                     <shadedPattern>embedded.org.apache.http</shadedPattern>

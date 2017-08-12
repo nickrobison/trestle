@@ -14,6 +14,8 @@ import com.nickrobison.trestle.reasoner.merge.MergeStrategy;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeConflict;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeException;
 import com.nickrobison.trestle.types.TrestleIndividual;
+import com.nickrobison.trestle.types.events.TrestleEvent;
+import com.nickrobison.trestle.types.events.TrestleEventType;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +23,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -54,9 +57,19 @@ public class TrestleFactTests extends AbstractReasonerTest {
 
 //        Write each, then validate
         reasoner.writeTrestleObject(v1);
+//        Check that events exist
+        Optional<Set<TrestleEvent>> events = reasoner.getIndividualEvents(v1.getClass(), v1.id);
+        assertAll(() -> assertTrue(events.isPresent(), "Should have events"),
+                () -> assertEquals(1, events.get().size(), "Should only have created event"),
+                () -> assertEquals(v1.getValidFrom(), events.get().stream().filter(event -> event.getType().equals(TrestleEventType.CREATED)).findFirst().get().getAtTemporal(), "CREATED event should equal valid from"));
         final TestClasses.FactVersionTest v1Return = reasoner.readTrestleObject(v1.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
         assertEquals(v1, v1Return, "Should be equal to V1");
         reasoner.writeTrestleObject(v2);
+        final Optional<Set<TrestleEvent>> events2 = reasoner.getIndividualEvents(v2.getClass(), v2.id);
+        assertAll(() -> assertTrue(events2.isPresent(), "Should have events"),
+                () -> assertEquals(1, events2.get().size(), "Should only have created event"),
+                () -> assertEquals(v1.getValidFrom(), events2.get().stream().filter(event -> event.getType().equals(TrestleEventType.CREATED)).findFirst().get().getAtTemporal(), "CREATED event should equal V1 Valid from"));
+
         final TestClasses.FactVersionTest v2Return = reasoner.readTrestleObject(v2.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
         assertEquals(v2, v2Return, "Should be equal to V2");
         reasoner.writeTrestleObject(v3);
@@ -158,9 +171,20 @@ public class TrestleFactTests extends AbstractReasonerTest {
         this.reasoner.writeTrestleObject(beforeExists);
         final TestClasses.FactVersionTest extendedFact = this.reasoner.readTrestleObject(TestClasses.FactVersionTest.class, "test-object", LocalDate.of(1984, 5, 14), null);
         assertEquals(LocalDate.of(1980, 3, 26), extendedFact.getValidFrom(), "Should have extended existsFrom");
+//        Check that the CREATED event was extended correctly
+        final Optional<Set<TrestleEvent>> beforeEvents = this.reasoner.getIndividualEvents(TestClasses.FactVersionTest.class, "test-object");
+        assertAll(() -> assertTrue(beforeEvents.isPresent(), "Should have events"),
+                () -> assertEquals(1, beforeEvents.get().size(), "Should only have CREATED event"),
+                () -> assertEquals(beforeExists.getValidFrom(), beforeEvents.get().stream().findFirst().get().getAtTemporal(), "CREATED event should equal new existsFrom"));
 
 //        Try to write forward fact
         this.reasoner.writeTrestleObject(boundedFact);
+        final Optional<Set<TrestleEvent>> boundedEvents = this.reasoner.getIndividualEvents(boundedFact.getClass(), boundedFact.id);
+        assertAll(() -> assertTrue(boundedEvents.isPresent(), "Should have events"),
+                () -> assertEquals(2, boundedEvents.get().size(), "Should have CREATED and DESTROYED events"),
+                () -> assertEquals(boundedFact.validFrom, boundedEvents.get().stream().filter(event -> event.getType().equals(TrestleEventType.CREATED)).findFirst().get().getAtTemporal(), "CREATED should equal existsFrom"),
+                () -> assertEquals(boundedFact.validTo, boundedEvents.get().stream().filter(event -> event.getType().equals(TrestleEventType.DESTROYED)).findFirst().get().getAtTemporal(), "DESTROYED should equal existsTo"));
+
 //        Try to add continuing fact to non-continuing object
         assertThrows(TrestleMergeException.class, () -> this.reasoner.addFactToTrestleObject(BoundedFact.class, "bounded-object", "testValue", "new value, after exists", LocalDate.of(1989, 3, 26).plusYears(6), null, null));
 //        Need to add all the facts, because otherwise we'll get an invalid state exception
@@ -168,7 +192,12 @@ public class TrestleFactTests extends AbstractReasonerTest {
         this.reasoner.addFactToTrestleObject(BoundedFact.class, "bounded-object", "id", "bounded-object", LocalDate.of(1989, 3, 26).plusYears(6), LocalDate.of(1989, 3, 26).plusYears(10), null);
         this.reasoner.addFactToTrestleObject(BoundedFact.class, "bounded-object", "wkt", "POINT(0.71255092695307 -25.572028714467507)", LocalDate.of(1989, 3, 26).plusYears(6), LocalDate.of(1989, 3, 26).plusYears(10), null);
         @NonNull final BoundedFact extendedBoundedFact = this.reasoner.readTrestleObject(BoundedFact.class, "bounded-object", LocalDate.of(1989, 3, 26).plusYears(7), null);
+        final Optional<Set<TrestleEvent>> boundedExtendedEvents = this.reasoner.getIndividualEvents(BoundedFact.class, "bounded-object");
         assertEquals(LocalDate.of(1989, 3, 26).plusYears(10).plusDays(1), extendedBoundedFact.getValidTo(), "Should have extended ending temporal");
+        assertAll(() -> assertTrue(boundedExtendedEvents.isPresent()),
+                () -> assertEquals(2, boundedExtendedEvents.get().size(), "Should have CREATED and DESTROYED events"),
+                () -> assertEquals(boundedFact.validFrom, boundedExtendedEvents.get().stream().filter(event -> event.getType().equals(TrestleEventType.CREATED)).findFirst().get().getAtTemporal(), "CREATED should equal existsFrom"),
+                () -> assertEquals(LocalDate.of(1989, 3, 26).plusYears(10).plusDays(1), boundedExtendedEvents.get().stream().filter(event -> event.getType().equals(TrestleEventType.DESTROYED)).findFirst().get().getAtTemporal(), "DESTROYED should equal existsTo"));
 
 
 //        Ignore

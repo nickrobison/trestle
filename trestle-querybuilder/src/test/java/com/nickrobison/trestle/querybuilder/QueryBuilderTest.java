@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Created by nrobison on 8/11/16.
  */
-@SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization"})
+@SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "Duplicates"})
 public class QueryBuilderTest {
 
     private static DefaultPrefixManager pm;
@@ -48,19 +48,6 @@ public class QueryBuilderTest {
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
             "SELECT DISTINCT ?concept ?individual WHERE { ?i trestle:has_relation ?r .?r trestle:Relation_Strength ?strength .?r trestle:related_to ?concept .?concept trestle:related_by ?rc .?rc trestle:Relation_Strength ?strength .?rc trestle:relation_of ?individual .VALUES ?i {<http://nickrobison.com/dissertation/trestle.owl#test_muni4>} .FILTER(?strength >= \"0.6\"^^xsd:double). VALUES ?concept {<http://nickrobison.com/dissertation/trestle.owl#test_muni4>}}";
-
-    private static final String oracleTSString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
-            "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
-            "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
-            "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
-            "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
-            "PREFIX xml: <http://www.w3.org/XML/1998/namespace>\n" +
-            "PREFIX ORACLE_SEM_HT_NS: <http://oracle.com/semtech#leading(?wkt)>\n" +
-            "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
-            "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
-            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
-            "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?m ?tStart ?tEnd WHERE { ?m rdf:type trestle:GAUL .?m trestle:has_fact ?f .?f ogc:asWKT ?wkt .OPTIONAL{?f trestle:valid_from ?tStart} .OPTIONAL{?f trestle:valid_to ?tEnd} .OPTIONAL{?f trestle:valid_at ?tAt} .?f trestle:database_from ?df .OPTIONAL{?f trestle:database_to ?dt} .FILTER(?df <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime && (!bound(?dt) || ?dt > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) .FILTER(((!bound(?tStart) || ?tStart <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) && ogcf:sfIntersects(?wkt, \"POINT (39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }";
 
     private static final String objectPropertyStartIntervalString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
@@ -133,13 +120,24 @@ public class QueryBuilderTest {
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
             "SELECT DISTINCT ?individual ?property ?object WHERE { OPTIONAL{?individual trestle:exists_at ?tAt} . OPTIONAL{?individual trestle:exists_from ?tStart} . OPTIONAL{?individual trestle:exists_to ?tEnd} . ?individual ?property ?object VALUES ?individual { <http://nickrobison.com/dissertation/trestle.owl#test_muni4> } . FILTER(!isURI(?object) && !isBlank(?object)) .}";
 
+    private static final String tsIntersectString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+            "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
+            "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+            "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
+            "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+            "PREFIX xml: <http://www.w3.org/XML/1998/namespace>\n" +
+            "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
+            "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+            "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
+            "SELECT DISTINCT ?m ?tStart ?tEnd WHERE { ?m rdf:type trestle:GAUL .?m trestle:has_fact ?f .?f ogc:asWKT ?wkt .OPTIONAL{?f trestle:valid_from ?tStart} .OPTIONAL{?f trestle:valid_to ?tEnd} .OPTIONAL{?f trestle:valid_at ?tAt} .?f trestle:database_from ?df .OPTIONAL{?f trestle:database_to ?dt} .FILTER(?df <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime && (!bound(?dt) || ?dt > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) .FILTER(((!bound(?tStart) || ?tStart <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) && ogcf:sfIntersects(?wkt, \"POINT (39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }";
+
     private static final String tsConceptString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
             "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
             "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
             "PREFIX xml: <http://www.w3.org/XML/1998/namespace>\n" +
-            "PREFIX ORACLE_SEM_HT_NS: <http://oracle.com/semtech#leading(?wkt)>\n" +
             "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
@@ -156,7 +154,7 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?m ?o ?p WHERE { { ?m ?o ?p . ?o rdfs:subPropertyOf trestle:Temporal_Relation } UNION { ?m ?o ?p . ?o rdfs:subPropertyOf trestle:Spatial_Relation .} . VALUES ?m {<http://nickrobison.com/dissertation/trestle.owl#test_muni4>}}";
+            "SELECT DISTINCT ?m ?o ?p WHERE { { ?m ?o ?p . ?o rdfs:subPropertyOf trestle:Temporal_Relation } UNION { ?m ?o ?p . ?o rdfs:subPropertyOf trestle:Spatial_Relation .} UNION { ?m ?o ?p . ?o rdfs:subPropertyOf trestle:Event_Relation . ?p rdf:type trestle:Trestle_Object} . VALUES ?m {<http://nickrobison.com/dissertation/trestle.owl#test_muni4>}}";
 
     private static final String updateTemporalString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
@@ -183,7 +181,7 @@ public class QueryBuilderTest {
 
     @BeforeEach
     public void setup() {
-        qb = new QueryBuilder(QueryBuilder.DIALECT.ORACLE, pm);
+        qb = new QueryBuilder(QueryBuilder.Dialect.ORACLE, pm);
     }
 
     @Test
@@ -207,19 +205,14 @@ public class QueryBuilderTest {
         final String wktString = "Point(39.5398864750001 -12.0671005249999)";
 
         assertAll(() -> {
-                    //        Test Oracle temporal
-                    final String generatedOracleTS = qb.buildTemporalSpatialIntersection(gaulClass, wktString, 0.0, QueryBuilder.UNITS.KM, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
-                    assertEquals(oracleTSString, generatedOracleTS, "Oracle TS should be equal");
+                    //        Test st-intersection
+                    final String tsString = qb.buildTemporalSpatialIntersection(gaulClass, wktString, 0.0, QueryBuilder.Units.KM, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
+                    assertEquals(tsIntersectString, tsString, "Oracle TS should be equal");
                 },
                 () -> {
                     //        Test concept
                     final String generatedTSConceptString = qb.buildTemporalSpatialConceptIntersection(wktString, 0.0, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
                     assertEquals(tsConceptString, generatedTSConceptString, "TS Concept intersection be equal");
-                },
-                () -> {
-                    //        Check unsupported
-                    QueryBuilder stardogQB = new QueryBuilder(QueryBuilder.DIALECT.STARDOG, pm);
-                    assertThrows(UnsupportedFeatureException.class, () -> stardogQB.buildTemporalSpatialConceptIntersection(wktString, 0.0, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC)));
                 });
     }
 

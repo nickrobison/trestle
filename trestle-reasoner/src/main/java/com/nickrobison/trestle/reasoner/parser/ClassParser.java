@@ -591,7 +591,7 @@ public class ClassParser {
 
 //        Temporal
 //        Default
-        if (TemporalParser.IsDefault(clazz)) {
+        if (TemporalParser.isDefault(clazz)) {
             final Optional<Field> temporalField = Arrays.stream(clazz.getDeclaredFields())
                     .filter(f -> (f.isAnnotationPresent(DefaultTemporal.class)))
                     .findFirst();

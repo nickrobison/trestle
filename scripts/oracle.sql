@@ -59,6 +59,6 @@ SELECT *
 
 SELECT * FROM mdsys.sem_model$;
 BEGIN
-sem_apis.drop_sem_model('api_test');
+sem_apis.drop_sem_model('TRESTLE_TEST3');
 END;
-DROP TABLE api_test_tpl;
+DROP TABLE TRESTLE_TEST3_TPL;

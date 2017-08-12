@@ -2,6 +2,7 @@ package com.nickrobison.trestle.ontology;
 
 import com.codahale.metrics.annotation.Gauge;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import org.semanticweb.owlapi.model.*;
@@ -17,6 +18,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by nrobison on 5/23/16.
  */
 public interface ITrestleOntology {
+
+    /**
+     * Get the underlying {@link QueryBuilder} setup for the appropriate {@link QueryBuilder.Dialect}
+     *
+     * @return - {@link QueryBuilder}
+     */
+    QueryBuilder getUnderlyingQueryBuilder();
 
     /**
      * Checks whether or not the ontology is consistent

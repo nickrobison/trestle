@@ -5,9 +5,9 @@ import com.google.common.collect.Multimap;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
-import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.ontology.utils.JenaLiteralFactory;
 import com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions;
+import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
@@ -28,7 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.ThreadSafe;
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -47,10 +49,10 @@ public abstract class JenaOntology extends TransactingOntology {
     protected final OWLOntology ontology;
     protected final DefaultPrefixManager pm;
     protected final OWLDataFactory df;
-    protected final QueryBuilder qb;
-    protected final JenaLiteralFactory jf;
+    private final QueryBuilder qb;
+    private final JenaLiteralFactory jf;
 
-    JenaOntology(String ontologyName, Model model, OWLOntology ontology, DefaultPrefixManager pm) {
+    JenaOntology(String ontologyName, Model model, OWLOntology ontology, DefaultPrefixManager pm, QueryBuilder qb) {
         super(ontologyName);
         this.ontologyName = ontologyName;
         this.model = model;
@@ -58,8 +60,13 @@ public abstract class JenaOntology extends TransactingOntology {
         this.ontology = ontology;
         this.pm = pm;
         this.df = OWLManager.getOWLDataFactory();
-        this.qb = new QueryBuilder(QueryBuilder.DIALECT.JENA, this.pm);
+        this.qb = qb;
         this.jf = new JenaLiteralFactory(this.model);
+    }
+
+    @Override
+    public QueryBuilder getUnderlyingQueryBuilder() {
+        return this.qb;
     }
 
     @Override

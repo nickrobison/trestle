@@ -90,7 +90,7 @@ abstract class TransactingOntology implements ITrestleOntology {
             this.openAndLock(write, true);
             return trestleTransaction;
         } else {
-            logger.warn("Thread transaction owned by {}, returning empty object", threadTransactionObject.get().getTransactionID());
+            logger.trace("Thread transaction owned by {}, returning empty object", threadTransactionObject.get().getTransactionID());
             final TrestleTransaction trestleTransaction = new TrestleTransaction(write);
             trestleTransaction.setConnection(this.getOntologyConnection());
             return trestleTransaction;

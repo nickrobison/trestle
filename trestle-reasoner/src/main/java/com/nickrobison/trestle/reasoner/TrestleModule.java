@@ -4,6 +4,9 @@ import com.google.inject.AbstractModule;
 import com.nickrobison.metrician.MetricianModule;
 
 import com.nickrobison.trestle.reasoner.caching.TrestleCacheModule;
+import com.nickrobison.trestle.reasoner.events.TrestleEventEngine;
+import com.nickrobison.trestle.reasoner.events.EventEngineImpl;
+import com.nickrobison.trestle.reasoner.events.EventEngineNoOp;
 import com.nickrobison.trestle.reasoner.merge.MergeEngineImpl;
 import com.nickrobison.trestle.reasoner.merge.MergeEngineNoOp;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeEngine;
@@ -19,36 +22,33 @@ public class TrestleModule extends AbstractModule {
     private final boolean metricsEnabled;
     private final boolean cachingEnabled;
     private final boolean mergeEnabled;
+    private final boolean eventEnabled;
 
-    TrestleModule(boolean metricsEnabled, boolean cachingEnabled, boolean mergeEnabled) {
+    TrestleModule(boolean metricsEnabled, boolean cachingEnabled, boolean mergeEnabled, boolean eventEnabled) {
         logger.debug("Building Trestle Module");
         this.metricsEnabled = metricsEnabled;
         this.cachingEnabled = cachingEnabled;
         this.mergeEnabled = mergeEnabled;
+        this.eventEnabled = eventEnabled;
 
     }
 
-    //    TrestleModule() {
-////        Setup the ByteBuddy agent, for class path retransformation
-//        try {
-//            ByteBuddyAgent.getInstrumentation();
-//        } catch (IllegalStateException e) {
-//            try {
-//                ByteBuddyAgent.install();
-//            } catch (IllegalStateException es) {
-//                throw new IllegalStateException("Unable to attach Metrics Agent, possibly not running on JDK?", es);
-//            }
-////            MetricianAgentBuilder.BuildAgent().installOnByteBuddyAgent();
-//        }
-//    }
     @Override
     protected void configure() {
         install(new MetricianModule(metricsEnabled));
         install(new TrestleCacheModule(cachingEnabled));
+//        Merge Engine
         if (mergeEnabled) {
             bind(TrestleMergeEngine.class).to(MergeEngineImpl.class);
         } else {
             bind(TrestleMergeEngine.class).to(MergeEngineNoOp.class);
+        }
+
+//        Event Engine
+        if (eventEnabled) {
+            bind(TrestleEventEngine.class).to(EventEngineImpl.class);
+        } else {
+            bind(TrestleEventEngine.class).to(EventEngineNoOp.class);
         }
 
     }

@@ -34,7 +34,7 @@ public class OracleOntology extends JenaOntology {
     private static boolean updateOnCommit;
 
     OracleOntology(String name, OWLOntology ont, DefaultPrefixManager pm, String connectionString, String username, String password) {
-        super(name, createOracleModel(name, connectionString, username, password), ont, pm);
+        super(name, createOracleModel(name, connectionString, username, password), ont, pm, new OracleQueryBuilder(pm));
     }
 
     private static Model createOracleModel(String ontologyName, String connectionString, String username, String password) {

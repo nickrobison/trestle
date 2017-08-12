@@ -3,12 +3,16 @@ package com.nickrobison.trestle.reasoner;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.NoValidStateException;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.merge.MergeStrategy;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeConflict;
 import com.nickrobison.trestle.types.TrestleIndividual;
+import com.nickrobison.trestle.types.TrestleRelation;
+import com.nickrobison.trestle.types.events.TrestleEvent;
+import com.nickrobison.trestle.types.events.TrestleEventType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
@@ -28,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -118,6 +123,63 @@ public class TrestleAPITest extends AbstractReasonerTest {
 //        assertEquals(geotoolsPolygonTest, geotoolsPolygonTest1, "Should be equal");
 
         reasoner.getMetricsEngine().exportData(new File("./target/api-test-metrics.csv"));
+    }
+
+    @Test
+    public void eventTest() throws TrestleClassException, MissingOntologyEntity {
+//        Split event
+//        Create test events
+        final OffsetDateTime earlyStart = LocalDate.of(1990, 1, 1).atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
+        final OffsetDateTime middle = earlyStart.plusYears(5);
+        final OffsetDateTime end = middle.plusYears(5);
+        final TestClasses.OffsetDateTimeTest split_start = new TestClasses.OffsetDateTimeTest(100, earlyStart, middle);
+        final TestClasses.OffsetDateTimeTest split1 = new TestClasses.OffsetDateTimeTest(101, middle, end);
+        final TestClasses.OffsetDateTimeTest split2 = new TestClasses.OffsetDateTimeTest(102, middle, end);
+        final TestClasses.OffsetDateTimeTest split3 = new TestClasses.OffsetDateTimeTest(103, middle, end);
+        final TestClasses.OffsetDateTimeTest split4 = new TestClasses.OffsetDateTimeTest(104, middle, end);
+        final TestClasses.OffsetDateTimeTest split5 = new TestClasses.OffsetDateTimeTest(105, middle, end);
+        final ImmutableList<TestClasses.OffsetDateTimeTest> splitSet = ImmutableList.of(split1, split2, split3, split4, split5);
+//        Try for invalid event types
+        assertAll(() -> assertThrows(IllegalArgumentException.class, () -> this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.CREATED, split_start, splitSet)),
+                () -> assertThrows(IllegalArgumentException.class, () -> this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.BECAME, split_start, splitSet)),
+                () -> assertThrows(IllegalArgumentException.class, () -> this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.DESTROYED, split_start, splitSet)));
+        this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.SPLIT, split_start, splitSet);
+//        Check that the subject has the split event
+        final Optional<Set<TrestleEvent>> individualEvents = this.reasoner.getIndividualEvents(split_start.getClass(), split_start.adm0_code.toString());
+        assertAll(() -> assertTrue(individualEvents.isPresent()),
+                () -> assertEquals(3, individualEvents.get().size()),
+                () -> assertEquals(middle, individualEvents.get().stream().filter(event -> event.getType().equals(TrestleEventType.SPLIT)).findFirst().get().getAtTemporal(), "SPLIT event should equal end temporal"));
+
+//        Merge event
+        final TestClasses.OffsetDateTimeTest merge_subject = new TestClasses.OffsetDateTimeTest(200, middle, end);
+        final TestClasses.OffsetDateTimeTest merge1 = new TestClasses.OffsetDateTimeTest(201, earlyStart, middle);
+        final TestClasses.OffsetDateTimeTest merge2 = new TestClasses.OffsetDateTimeTest(202, earlyStart, middle);
+        final TestClasses.OffsetDateTimeTest merge3 = new TestClasses.OffsetDateTimeTest(203, earlyStart, middle);
+        final TestClasses.OffsetDateTimeTest merge4 = new TestClasses.OffsetDateTimeTest(204, earlyStart, middle);
+        final TestClasses.OffsetDateTimeTest merge5 = new TestClasses.OffsetDateTimeTest(205, earlyStart, middle);
+        final ImmutableList<TestClasses.OffsetDateTimeTest> mergeSet = ImmutableList.of(merge1, merge2, merge3, merge4, merge5);
+        this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.MERGED, merge_subject, mergeSet);
+        final Optional<Set<TrestleEvent>> mergeEvents = this.reasoner.getIndividualEvents(merge_subject.getClass(), merge_subject.adm0_code.toString());
+        assertAll(() -> assertTrue(mergeEvents.isPresent()),
+                () -> assertEquals(3, individualEvents.get().size()),
+                () -> assertEquals(merge_subject.startTemporal, mergeEvents.get().stream().filter(event -> event.getType().equals(TrestleEventType.MERGED)).findFirst().get().getAtTemporal(), "MERGED temporal should equal created date"));
+
+//        Ensure that events are handled correctly (along with relations).
+//        Split first
+        final TrestleIndividual splitStartIndividual = this.reasoner.getTrestleIndividual(split_start.adm0_code.toString());
+        assertAll(() -> assertEquals(3, splitStartIndividual.getEvents().size(), "Should have 3 events"),
+                () -> assertEquals(5, splitStartIndividual.getRelations().size(), "Should have 5 split_into events"));
+        final Optional<TrestleRelation> split_from = this.reasoner.getTrestleIndividual(split1.adm0_code.toString()).getRelations().stream().filter(relation -> relation.getType().equals("SPLIT_FROM")).findFirst();
+        assertAll(() -> assertTrue(split_from.isPresent()),
+                () -> assertEquals("http://nickrobison.com/test-owl#100", split_from.get().getObject(), "Should point to starting split"));
+
+//        Now merged
+        final TrestleIndividual mergeSubjectIndividual = this.reasoner.getTrestleIndividual(merge_subject.adm0_code.toString());
+        assertAll(() -> assertEquals(3, mergeSubjectIndividual.getEvents().size(), "Should have 3 events"),
+                () -> assertEquals(5, mergeSubjectIndividual.getRelations().size(), "Should have 5 merged objects"));
+        final Optional<TrestleRelation> merged_into = this.reasoner.getTrestleIndividual(merge5.adm0_code.toString()).getRelations().stream().filter(relation -> relation.getType().equals("MERGED_INTO")).findFirst();
+        assertAll(() -> assertTrue(merged_into.isPresent()),
+                () -> assertEquals("http://nickrobison.com/test-owl#200", merged_into.get().getObject(), "Should point to merged subject"));
     }
 
     @Test

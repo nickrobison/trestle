@@ -10,11 +10,9 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,7 +22,7 @@ import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.StaticIRI.temporalExistsFromIRI;
 import static com.nickrobison.trestle.common.StaticIRI.temporalExistsToIRI;
-import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
+import static com.nickrobison.trestle.reasoner.parser.TemporalParser.temporalToLiteral;
 
 /**
  * Created by nrobison on 6/13/17.
@@ -34,15 +32,16 @@ public class MergeEngineImpl implements TrestleMergeEngine {
 
     private static final Logger logger = LoggerFactory.getLogger(MergeEngineImpl.class);
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
-    public static final String PROPERTY = "property";
-    public static final String INDIVIDUAL = "individual";
-    public static final String OBJECT = "object";
+    private static final String PROPERTY = "property";
+    private static final String INDIVIDUAL = "individual";
+    private static final String OBJECT = "object";
     private final Config config;
     private MergeStrategy defaultStrategy;
     private ExistenceStrategy existenceStrategy;
     private final boolean onLoad;
 
     public MergeEngineImpl() {
+        logger.info("Creating Merge Engine");
         config = ConfigFactory.load().getConfig("trestle.merge");
         defaultStrategy = MergeStrategy.valueOf(config.getString("defaultStrategy"));
         existenceStrategy = ExistenceStrategy.valueOf(config.getString("existenceStrategy"));
@@ -240,14 +239,14 @@ public class MergeEngineImpl implements TrestleMergeEngine {
             if (TemporalUtils.compareTemporals(validTemporal.getIdTemporal(), existsTemporal.getIdTemporal()) == -1) {
                 individualAxioms.add(df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(temporalExistsFromIRI),
                         individual,
-                        df.getOWLLiteral(parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC).toString(), OWL2Datatype.XSD_DATE_TIME)));
+                        temporalToLiteral(validTemporal.getIdTemporal())));
             }
             if (!existsTemporal.isContinuing() && validTemporal.isInterval() && !validTemporal.isContinuing()) {
                 final int toCompare = TemporalUtils.compareTemporals((Temporal) validTemporal.asInterval().getToTime().get(), (Temporal) existsTemporal.asInterval().getToTime().get());
                 if (toCompare != -1) {
                     individualAxioms.add(df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(temporalExistsToIRI),
                             individual,
-                            df.getOWLLiteral(parseTemporalToOntologyDateTime((Temporal) validTemporal.asInterval().getAdjustedToTime(1).get(), ZoneOffset.UTC).toString(), OWL2Datatype.XSD_DATE_TIME)));
+                            temporalToLiteral((Temporal) validTemporal.asInterval().getAdjustedToTime(1).get())));
                 }
             }
             return individualAxioms;

@@ -9,6 +9,8 @@ import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.types.TrestleIndividual;
+import com.nickrobison.trestle.types.events.TrestleEvent;
+import com.nickrobison.trestle.types.events.TrestleEventType;
 import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -216,6 +218,61 @@ public interface TrestleReasoner {
      * @return - Optional List of Java Objects
      */
     Optional<List<Object>> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal);
+
+    /**
+     * Get all {@link TrestleEvent} for the given individual
+     *
+     *
+     * @param clazz - Class of object to get events for
+     * @param individual - {@link String} ID of the individual to gather events for
+     * @return - {@link Optional} {@link Set} of {@link TrestleEvent} for the given individual
+     */
+    Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, String individual);
+
+    /**
+     * Get all {@link TrestleEvent} for the given individual
+     *
+     *
+     * @param clazz - Class of object get get event for
+     * @param individual - {@link OWLNamedIndividual} to gather events for
+     * @return - {@link Optional} {@link Set} of {@link TrestleEvent} for the given individual
+     */
+    Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, OWLNamedIndividual individual);
+
+    /**
+     * Add {@link TrestleEvent} to individual
+     * This method cannot be used to add {@link TrestleEventType#MERGED} or {@link TrestleEventType#SPLIT} events because those require additional information.
+     * Use the {@link TrestleReasoner#addTrestleObjectSplitMerge(TrestleEventType, Object, List)} for those event types
+     *
+     * @param type - {@link TrestleEventType} to add to individual
+     * @param individual - {@link String} ID of individual
+     * @param eventTemporal - {@link Temporal} temporal to use for event
+     */
+    void addTrestleObjectEvent(TrestleEventType type, String individual, Temporal eventTemporal);
+
+    /**
+     * Add {@link TrestleEvent} to individual
+     * This method cannot be used to add {@link TrestleEventType#MERGED} or {@link TrestleEventType#SPLIT} events because those require additional information.
+     * Use the {@link TrestleReasoner#addTrestleObjectSplitMerge(TrestleEventType, Object, List)} for those event types
+     *
+     * @param type - {@link TrestleEventType} to add to individual
+     * @param individual - {@link OWLNamedIndividual} individual to add event to
+     * @param eventTemporal - {@link Temporal} temporal to use for event
+     */
+    void addTrestleObjectEvent(TrestleEventType type, OWLNamedIndividual individual, Temporal eventTemporal);
+
+    /**
+     * Add a SPLIT or MERGE {@link TrestleEventType} to a given {@link OWLNamedIndividual}
+     * Events are oriented subject to object, so A splits_into [B,C,D] and H merged_from [E,F,G]
+     * Individuals are not created if they don't already exist
+     * throws {@link IllegalArgumentException} if something other than {@link TrestleEventType#MERGED} or {@link TrestleEventType#SPLIT} is passed
+     *
+     * @param type    {@link TrestleEventType} to add
+     * @param subject - {@link OWLNamedIndividual} subject of Event
+     * @param objects - {@link Set} of {@link OWLNamedIndividual} that are the objects of the event
+     * @param <T> - Generic type parameter of Trestle Object
+     */
+    <@NonNull T> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects);
 
     /**
      * Spatial Intersect Object with most recent records in the database
