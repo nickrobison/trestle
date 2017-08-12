@@ -11,6 +11,7 @@
 
     <artifactId>trestle-actor</artifactId>
     <properties>
+        <sonar.skip>true</sonar.skip>
         <logback.version>1.1.8</logback.version>
     </properties>
 
