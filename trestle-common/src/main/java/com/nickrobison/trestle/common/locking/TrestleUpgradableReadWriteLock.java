@@ -24,7 +24,7 @@ public class TrestleUpgradableReadWriteLock {
      * Take the Read lock
      * If the calling thread already owns the lock, an internal counter is incremented and the thread continues
      *
-     * @throws InterruptedException
+     * @throws InterruptedException - throws if the lock timesout
      */
     @EnsuresLockHeld("this")
     public synchronized void lockRead() throws InterruptedException {

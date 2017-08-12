@@ -166,10 +166,6 @@
                             </artifactSet>
                             <relocations>
                                 <relocation>
-                                    <pattern>com.google.inject</pattern>
-                                    <shadedPattern>embedded.com.google.inject</shadedPattern>
-                                </relocation>
-                                <relocation>
                                     <pattern>org.apache.http</pattern>
                                     <shadedPattern>embedded.org.apache.http</shadedPattern>
                                 </relocation>

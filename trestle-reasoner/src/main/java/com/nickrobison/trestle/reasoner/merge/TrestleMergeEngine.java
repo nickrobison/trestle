@@ -39,6 +39,7 @@ public interface TrestleMergeEngine {
      * @param eventTemporal    - {@link Temporal} to use as the new valid temporal
      * @param databaseTemporal - {@link Temporal} to use as the new database temporal
      * @param existsTemporal   - {@link Optional} {@link TemporalObject} to use to fulfill {@link ExistenceStrategy}
+     * @return - {@link MergeScript}
      */
     MergeScript mergeFacts(OWLNamedIndividual individual, TemporalObject validTemporal, List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, Temporal databaseTemporal, Optional<TemporalObject> existsTemporal);
 
@@ -55,6 +56,7 @@ public interface TrestleMergeEngine {
      * @param databaseTemporal - {@link Temporal} to use as the new database temporal
      * @param existsTemporal   - {@link Optional} {@link TemporalObject} to use to fulfill {@link ExistenceStrategy}
      * @param strategy         - {@link MergeStrategy} to use when merging facts  @return - {@link MergeScript}
+     * @return - {@link MergeScript}
      */
     MergeScript mergeFacts(OWLNamedIndividual individual, TemporalObject validTemporal, List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, Temporal databaseTemporal, Optional<TemporalObject> existsTemporal, MergeStrategy strategy);
 
@@ -67,6 +69,7 @@ public interface TrestleMergeEngine {
 
     /**
      * Determine if the merge process should consider object existence
+     *
      * @return - {@code true} Existence is being considered. {@code false} we're ignoring existence
      */
     boolean existenceEnabled();

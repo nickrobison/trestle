@@ -14,7 +14,6 @@ import javax.inject.Singleton;
 public class TrestleOntologyModule extends AbstractModule {
     private static final Logger logger = LoggerFactory.getLogger(TrestleOntologyModule.class);
 
-//    private final OntologyBuilder builder;
     private final ITrestleOntology ontology;
     private final String prefix;
 
