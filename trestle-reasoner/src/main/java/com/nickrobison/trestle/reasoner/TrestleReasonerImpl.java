@@ -30,6 +30,7 @@ import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
+import com.nickrobison.trestle.reasoner.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.events.TrestleEventEngine;
 import com.nickrobison.trestle.reasoner.events.TrestleEventException;
 import com.nickrobison.trestle.reasoner.exceptions.*;
@@ -108,6 +109,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final TrestleParser trestleParser;
     private final TrestleMergeEngine mergeEngine;
     private final TrestleEventEngine eventEngine;
+    private final EqualityEngine equalityEngine;
     private final Config trestleConfig;
     private final TrestleCache trestleCache;
     private final Metrician metrician;
@@ -175,8 +177,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     builder.password);
         }
 
-        final Injector injector = Guice.createInjector(new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled"), this.trestleConfig.getBoolean("events.enabled")),
-                new TrestleOntologyModule(ontologyBuilder, REASONER_PREFIX));
+        final Injector injector = Guice.createInjector(new TrestleOntologyModule(ontologyBuilder, REASONER_PREFIX), new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled"), this.trestleConfig.getBoolean("events.enabled"), this.trestleConfig.getBoolean("equality.enabled")));
 
 //        Setup metrics engine
 //        metrician = null;
@@ -209,12 +210,14 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
         logger.info("Ontology {} ready", builder.ontologyName.orElse(DEFAULTNAME));
 
+//        Setup the Parser
+        trestleParser = injector.getInstance(TrestleParser.class);
+
 //      Engines on
         this.mergeEngine = injector.getInstance(TrestleMergeEngine.class);
         this.eventEngine = injector.getInstance(TrestleEventEngine.class);
-
-        //        Setup the Parser
-        trestleParser = new TrestleParser(df, REASONER_PREFIX, trestleConfig.getBoolean("enableMultiLanguage"), trestleConfig.getString("defaultLanguage"));
+//        TODO(nrobison): This should be injectable
+        this.equalityEngine = injector.getInstance(EqualityEngine.class);
 
 //            validate the classes
         builder.inputClasses.forEach(clazz -> {
@@ -305,6 +308,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public TrestleMergeEngine getMergeEngine() {
         return this.mergeEngine;
+    }
+
+    @Override
+    public EqualityEngine getEqualityEngine() {
+        return this.equalityEngine;
     }
 
     @Override
@@ -1208,7 +1216,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @SuppressWarnings("unchecked")
     public <@NonNull T> Optional<List<T>> spatialIntersectObject(@NonNull T inputObject, double buffer, @Nullable Temporal temporalAt) {
         final OWLNamedIndividual owlNamedIndividual = trestleParser.classParser.getIndividual(inputObject);
-        final Optional<String> wktString = SpatialParser.GetSpatialValue(inputObject);
+        final Optional<String> wktString = SpatialParser.getSpatialValueAsString(inputObject);
 
         if (wktString.isPresent()) {
             return spatialIntersect((Class<@NonNull T>) inputObject.getClass(), wktString.get(), buffer, temporalAt);

@@ -27,8 +27,11 @@ import static com.nickrobison.trestle.reasoner.parser.ClassParser.filterMethodNa
  * Created by nrobison on 8/29/16.
  */
 public class SpatialParser {
-
     private static final Logger logger = LoggerFactory.getLogger(SpatialParser.class);
+
+    private SpatialParser() {
+
+    }
 
     static Optional<OWLLiteral> parseWKTFromGeom(Object spatialObject) {
 
@@ -79,7 +82,7 @@ public class SpatialParser {
         return Optional.empty();
     }
 
-    static Class<?> GetSpatialClass(Class<?> clazz) {
+    static Class<?> getSpatialClass(Class<?> clazz) {
 
         //        Methods first
         final Optional<Method> matchedMethod = Arrays.stream(clazz.getDeclaredMethods())
@@ -102,9 +105,30 @@ public class SpatialParser {
 
     }
 
+
+    /**
+     * Returns the {@link String} representation of the spatial fact of the given {@link Object}
+     *
+     * @param inputObject - {@link Object} to extract spatial fact from
+     * @return - {@link Optional} {@link String} value of spatial data
+     */
+    public static Optional<String> getSpatialValueAsString(Object inputObject) {
+        final Optional<Object> spatialValue = getSpatialValue(inputObject);
+        if (spatialValue.isPresent()) {
+            return Optional.of(spatialValue.get().toString());
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Returns the the spatial fact of the given {@link Object}
+     *
+     * @param inputObject - {@link Object} to extract spatial fact from
+     * @return - {@link Optional} {@link Object} value of spatial data
+     */
     //    We can suppress this for default annotation properties
     @SuppressWarnings({"dereference.of.nullable"})
-    public static Optional<String> GetSpatialValue(Object inputObject) {
+    public static Optional<Object> getSpatialValue(Object inputObject) {
         final Class<?> clazz = inputObject.getClass();
 
 //        Methods first
@@ -116,7 +140,7 @@ public class SpatialParser {
             final Optional<Object> methodValue = ClassParser.accessMethodValue(matchedMethod.get(), inputObject);
 
             if (methodValue.isPresent()) {
-                return Optional.of(methodValue.get().toString());
+                return Optional.of(methodValue.get());
             }
         }
 
@@ -126,9 +150,9 @@ public class SpatialParser {
                 .findFirst();
 
         if (matchedField.isPresent()) {
-            String fieldValue = null;
+            Object fieldValue = null;
             try {
-                fieldValue = matchedField.get().get(inputObject).toString();
+                fieldValue = matchedField.get().get(inputObject);
             } catch (IllegalAccessException e) {
                 logger.warn("Cannot access field {}", matchedField.get().getName(), e);
             }
@@ -141,7 +165,7 @@ public class SpatialParser {
         return Optional.empty();
     }
 
-//    We can suppress this for default annotation properties
+    //    We can suppress this for default annotation properties
     @SuppressWarnings({"dereference.of.nullable"})
     static IRI filterDataSpatialName(Field classField, String propertyPrefix) {
         if (classField.isAnnotationPresent(Fact.class)) {
