@@ -5,6 +5,7 @@ import com.nickrobison.trestle.datasets.GAULObject;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
+import com.nickrobison.trestle.reasoner.equality.union.UnionEqualityResult;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.types.relations.ConceptRelationType;
@@ -198,10 +199,13 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 List<GAULObject> allGAUL = new ArrayList<GAULObject>(matchedObjects);
                 allGAUL.add(newGAULObject);
 
-                GAULSpatialApproximator.GAULSetMatch match = GAULSpatialApproximator.getApproxEqualUnion(allGAUL, inputSR, 0.9);
-                if (match!=null) {
+//                GAULSpatialApproximator.GAULSetMatch match = GAULSpatialApproximator.getApproxEqualUnion(allGAUL, inputSR, 0.9);
+                final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(allGAUL, inputSR, 0.9);
+                if (matchOptional.isPresent()) {
                     // do something here
-                    logger.info("found approximate equality between " + match.getEarlyGaulObjs() + " and " + match.getLateGaulObjs());
+                    final UnionEqualityResult<GAULObject> match = matchOptional.get();
+                    logger.debug("found approximate equality between " + match.getUnionObject() + " and " + match.getUnionOf());
+                    this.reasoner.addTrestleObjectSplitMerge(match.getType(), match.getUnionObject(), new ArrayList<>(match.getUnionOf()));
                 }
             }
 
