@@ -29,6 +29,7 @@ public class SpatialUnionEngine {
         this.tp = tp;
     }
 
+    @SuppressWarnings({"ConstantConditions", "squid:S3655"})
     public <T> Optional<UnionEqualityResult<T>> getApproximateEqualUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
         final TemporallyDividedObjects<T> dividedObjects = divideObjects(inputObjects);
 
@@ -56,7 +57,6 @@ public class SpatialUnionEngine {
 //        Are we a split or a merge
         if (polygonMatchSet.earlyPolygons.size() == 1) {
             final Optional<T> first = dividedObjects.getEarlyObjects().stream().findFirst();
-            //noinspection ConstantConditions
             return Optional.of(new UnionEqualityResult<>(first.get(), dividedObjects.getLateObjects(), TrestleEventType.SPLIT));
         } else {
             final Optional<T> first = dividedObjects.getLateObjects().stream().findFirst();
@@ -74,32 +74,42 @@ public class SpatialUnionEngine {
                 continue;
             }
 
-            List<Geometry> inputGeomList = new ArrayList<>(inputSet);
-            final SimpleGeometryCursor inputGeomsCursor = new SimpleGeometryCursor(inputGeomList);
-            final GeometryCursor unionInputGeoms = OperatorUnion.local().execute(inputGeomsCursor, inputSR, null);
-            Geometry unionInputGeom;
-            while ((unionInputGeom = unionInputGeoms.next()) != null) {
+            PolygonMatchSet matchSet = executeUnionCalculation(matchPolygons, inputSR, matchThreshold, inputSet);
+            if (matchSet != null) return matchSet;
+        }
+        return null;
+    }
+
+    private static @Nullable PolygonMatchSet executeUnionCalculation(Set<Polygon> matchPolygons, SpatialReference inputSR, double matchThreshold, Set<Polygon> inputSet) {
+        final SimpleGeometryCursor inputGeomsCursor = new SimpleGeometryCursor(new ArrayList<>(inputSet));
+        final GeometryCursor unionInputGeoms = operatorUnion.execute(inputGeomsCursor, inputSR, new EqualityProgressTracker("Union calculation"));
+        Geometry unionInputGeom;
+        while ((unionInputGeom = unionInputGeoms.next()) != null) {
 
 //                Get all subsets of matchPolygons
-                final Set<Set<Polygon>> allMatchSets = powerSet(matchPolygons);
-                for (Set<Polygon> matchSet : allMatchSets) {
-                    if (matchSet.isEmpty()) {
-                        continue;
-                    }
-
-                    List<Geometry> matchGeomList = new ArrayList<>(matchSet);
-                    final SimpleGeometryCursor matchGeomCursor = new SimpleGeometryCursor(matchGeomList);
-                    final GeometryCursor unionMatchGeoms = operatorUnion.execute(matchGeomCursor, inputSR, new EqualityProgressTracker("Union calculation"));
-                    Geometry unionMatchGeom;
-                    while ((unionMatchGeom = unionMatchGeoms.next()) != null) {
-                        if (isApproxEqual((Polygon) unionInputGeom, (Polygon) unionMatchGeom, inputSR) > matchThreshold) {
-                            return new PolygonMatchSet(inputSet, matchSet);
-                        }
-                    }
+            final Set<Set<Polygon>> allMatchSets = powerSet(matchPolygons);
+            for (Set<Polygon> matchSet : allMatchSets) {
+                if (matchSet.isEmpty()) {
+                    continue;
                 }
+
+                if (executeUnion(inputSR, matchThreshold, (Polygon) unionInputGeom, new ArrayList<>(matchSet)))
+                    return new PolygonMatchSet(inputSet, matchSet);
             }
         }
         return null;
+    }
+
+    private static boolean executeUnion(SpatialReference inputSR, double matchThreshold, Polygon unionInputGeom, List<Geometry> matchGeomList) {
+        final SimpleGeometryCursor matchGeomCursor = new SimpleGeometryCursor(matchGeomList);
+        final GeometryCursor unionMatchGeoms = operatorUnion.execute(matchGeomCursor, inputSR, new EqualityProgressTracker("Union calculation"));
+        Geometry unionMatchGeom;
+        while ((unionMatchGeom = unionMatchGeoms.next()) != null) {
+            if (isApproxEqual(unionInputGeom, (Polygon) unionMatchGeom, inputSR) > matchThreshold) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -121,15 +131,21 @@ public class SpatialUnionEngine {
         return intersectionArea / greaterArea;
     }
 
+    /**
+     * Constructs a {@link Set} of {@link Set} representing all possible combinations of the input set of {@link Polygon}
+     *
+     * @param originalSet - {@link Set} of {@link Polygon} representing possible input combinations
+     * @return - {@link Set} of {@link Set} of {@link Polygon} to determine if a union combination exists
+     */
     private static Set<Set<Polygon>> powerSet(Set<Polygon> originalSet) {
         Set<Set<Polygon>> sets = new HashSet<>();
         if (originalSet.isEmpty()) {
             sets.add(new HashSet<>());
             return sets;
         }
-        List<Polygon> list = new ArrayList<>(originalSet);
-        Polygon head = list.get(0);
-        Set<Polygon> rest = new HashSet<>(list.subList(1, list.size()));
+        final ArrayDeque<Polygon> list = new ArrayDeque<>(originalSet);
+        Polygon head = list.getFirst();
+        Set<Polygon> rest = new HashSet<>(list);
         for (Set<Polygon> set : powerSet(rest)) {
             Set<Polygon> newSet = new HashSet<>();
             newSet.add(head);
@@ -141,6 +157,13 @@ public class SpatialUnionEngine {
     }
 
 
+    /**
+     * Divide objects into 2 temporal regions
+     *
+     * @param inputObjects - {@link List} if input Objects
+     * @param <T>          - Generic type parameter
+     * @return - {@link TemporallyDividedObjects} representing objects divided on end date
+     */
     private <T> TemporallyDividedObjects<T> divideObjects(List<T> inputObjects) {
         final TemporalParser temporalParser = this.tp.temporalParser;
 //        Get the temporal type of the input objects
@@ -188,6 +211,7 @@ public class SpatialUnionEngine {
         return temporalObject.getIdTemporal();
     }
 
+    @SuppressWarnings({"ConstantConditions", "squid:S3655"})
     private static Temporal extractEndTemporal(Optional<List<TemporalObject>> inputTemporals) {
         final TemporalObject temporalObject = extractTemporal(inputTemporals);
         if (temporalObject.isPoint()) {
@@ -197,7 +221,6 @@ public class SpatialUnionEngine {
         if (temporalObject.isContinuing()) {
             throw new IllegalStateException("Cannot extract end temporal for continuing object");
         }
-        //noinspection ConstantConditions
         return (Temporal) temporalObject.asInterval().getToTime().get();
     }
 
