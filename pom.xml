@@ -36,6 +36,8 @@
         <geotools.version>17.0</geotools.version>
         <metrics.version>3.2.2</metrics.version>
         <httpcomponents.version>4.5.3</httpcomponents.version>
+        <owasp.version>2.1.0</owasp.version>
+        <maven.enforcer.version>1.4.1</maven.enforcer.version>
         <!--Checker properties-->
         <checker.version>2.1.11</checker.version>
         <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
@@ -43,6 +45,8 @@
         <java.version>1.8</java.version>
         <!--Sonar-->
         <sonar.jacoco.reportPaths>${maven.multiModuleProjectDirectory}/target/jacoco_analysis/jacoco.exec</sonar.jacoco.reportPaths>
+        <dependency.check.reportPath>target/dependency-check</dependency.check.reportPath>
+        <sonar.dependencyCheck.reportPath>${dependency.check.reportPath}/dependency-check-report.xml</sonar.dependencyCheck.reportPath>
     </properties>
 
     <dependencyManagement>
@@ -435,6 +439,7 @@
                                 <arg>-Xep:MissingOverride:ERROR</arg>
                                 <arg>-Xep:ClassCanBeStatic:ERROR</arg>
                                 <arg>-Xep:DefaultCharset:ERROR</arg>
+                                <arg>-XepDisableWarningsInGeneratedCode</arg>
                                 <!--TODO(nrobison): We should use this, but I'm not sure how-->
                                 <!--<arg>-Xep:TypeParameterUnusedInFormals:ERROR</arg>-->
                             </compilerArgs>
@@ -456,6 +461,45 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.owasp</groupId>
+                        <artifactId>dependency-check-maven</artifactId>
+                        <version>${owasp.version}</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <format>XML</format>
+                            <outputDirectory>${dependency.check.reportPath}</outputDirectory>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+            <reporting>
+                <plugins>
+                    <plugin>
+                        <groupId>org.owasp</groupId>
+                        <artifactId>dependency-check-maven</artifactId>
+                        <version>${owasp.version}</version>
+                        <reportSets>
+                            <reportSet>
+                                <reports>
+                                    <report>aggregate</report>
+                                </reports>
+                            </reportSet>
+                        </reportSets>
+                    </plugin>
+                </plugins>
+            </reporting>
         </profile>
         <profile>
             <id>coverage</id>
@@ -605,7 +649,7 @@
                 <inherited>true</inherited>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>1.4.1</version>
+                <version>${maven.enforcer.version}</version>
                 <executions>
                     <execution>
                         <id>enforce-maven-3</id>
@@ -615,7 +659,7 @@
                         <configuration>
                             <rules>
                                 <requireMavenVersion>
-                                    <version>3.0.5</version>
+                                    <version>3.1</version>
                                 </requireMavenVersion>
                             </rules>
                             <fail>true</fail>

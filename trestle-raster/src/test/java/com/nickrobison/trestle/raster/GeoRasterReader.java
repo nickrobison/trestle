@@ -6,8 +6,6 @@ import com.nickrobison.trestle.raster.common.RasterDatabase;
 import com.nickrobison.trestle.raster.common.RasterID;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.WKTReader;
-import oracle.spatial.georaster.geotiff.GeoTIFFWriter;
-import oracle.spatial.georaster.geotiff.GeorGtfParser;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -16,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import javax.imageio.ImageIO;
 import java.awt.image.RenderedImage;
 import java.io.File;
-import java.util.function.Consumer;
 
 /**
  * Created by nrobison on 9/17/16.

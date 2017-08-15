@@ -10,9 +10,7 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Created by nrobison on 7/22/16.

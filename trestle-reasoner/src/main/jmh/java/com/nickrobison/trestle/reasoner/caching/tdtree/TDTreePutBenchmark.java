@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Thread)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @BenchmarkMode({Mode.SingleShotTime})
+@CompilerControl(CompilerControl.Mode.EXCLUDE)
 public class TDTreePutBenchmark {
     private TDTree<IndexValues> index;
     private IndexValues[] values;

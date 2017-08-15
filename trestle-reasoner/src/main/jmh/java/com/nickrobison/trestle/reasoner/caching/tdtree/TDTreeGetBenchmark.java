@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Thread)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @BenchmarkMode({Mode.SingleShotTime})
+@CompilerControl(CompilerControl.Mode.EXCLUDE)
 @SuppressWarnings("Duplicates")
 public class TDTreeGetBenchmark {
     private Random r;

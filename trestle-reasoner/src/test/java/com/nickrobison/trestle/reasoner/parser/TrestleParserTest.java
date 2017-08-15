@@ -304,7 +304,7 @@ public class TrestleParserTest {
     }
 
     @DatasetClass(name = "GAUL_Test")
-    protected class ExpandedGAULTests {
+    protected static class ExpandedGAULTests {
 
         public int adm0_code;
         @IndividualIdentifier

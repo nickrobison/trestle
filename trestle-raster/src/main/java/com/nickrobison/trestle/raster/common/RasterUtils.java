@@ -15,6 +15,7 @@ public class RasterUtils {
 
     /**
      * Converts a Raster tile to a byte array
+     *
      * @param tile - Raster to extract data from
      * @return - byte array of Raster tile
      */
