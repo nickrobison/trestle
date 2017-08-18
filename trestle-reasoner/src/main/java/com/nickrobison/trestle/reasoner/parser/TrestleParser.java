@@ -1,5 +1,7 @@
 package com.nickrobison.trestle.reasoner.parser;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 
 /**
@@ -21,6 +23,7 @@ public class TrestleParser {
      * @param defaultLanguageCode - Default language code to use in the absence of one provided by an {@link org.semanticweb.owlapi.model.OWLLiteral}
      */
     public TrestleParser(OWLDataFactory df, String ReasonerPrefix, boolean multiLangEnabled, String defaultLanguageCode) {
+
         this.df = df;
         this.ReasonerPrefix = ReasonerPrefix;
 

@@ -136,10 +136,10 @@ public class TrestleAPITest extends AbstractReasonerTest {
         final TestClasses.OffsetDateTimeTest split5 = new TestClasses.OffsetDateTimeTest(105, middle, end);
         final ImmutableList<TestClasses.OffsetDateTimeTest> splitSet = ImmutableList.of(split1, split2, split3, split4, split5);
 //        Try for invalid event types
-        assertAll(() -> assertThrows(IllegalArgumentException.class, () -> this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.CREATED, split_start, splitSet)),
-                () -> assertThrows(IllegalArgumentException.class, () -> this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.BECAME, split_start, splitSet)),
-                () -> assertThrows(IllegalArgumentException.class, () -> this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.DESTROYED, split_start, splitSet)));
-        this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.SPLIT, split_start, splitSet);
+        assertAll(() -> assertThrows(IllegalArgumentException.class, () -> this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.CREATED, split_start, splitSet, 0.8)),
+                () -> assertThrows(IllegalArgumentException.class, () -> this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.BECAME, split_start, splitSet, 0.8)),
+                () -> assertThrows(IllegalArgumentException.class, () -> this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.DESTROYED, split_start, splitSet, 0.8)));
+        this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.SPLIT, split_start, splitSet, 0.8);
 //        Check that the subject has the split event
         final Optional<Set<TrestleEvent>> individualEvents = this.reasoner.getIndividualEvents(split_start.getClass(), split_start.adm0_code.toString());
         assertAll(() -> assertTrue(individualEvents.isPresent()),
@@ -154,7 +154,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
         final TestClasses.OffsetDateTimeTest merge4 = new TestClasses.OffsetDateTimeTest(204, earlyStart, middle);
         final TestClasses.OffsetDateTimeTest merge5 = new TestClasses.OffsetDateTimeTest(205, earlyStart, middle);
         final ImmutableList<TestClasses.OffsetDateTimeTest> mergeSet = ImmutableList.of(merge1, merge2, merge3, merge4, merge5);
-        this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.MERGED, merge_subject, mergeSet);
+        this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.MERGED, merge_subject, mergeSet, 0.8);
         final Optional<Set<TrestleEvent>> mergeEvents = this.reasoner.getIndividualEvents(merge_subject.getClass(), merge_subject.adm0_code.toString());
         assertAll(() -> assertTrue(mergeEvents.isPresent()),
                 () -> assertEquals(3, individualEvents.get().size()),

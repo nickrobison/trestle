@@ -1,6 +1,9 @@
 package com.nickrobison.trestle.reasoner.events;
 
+import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.types.events.TrestleEventType;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
@@ -9,6 +12,19 @@ import java.util.List;
 import java.util.Set;
 
 public interface TrestleEventEngine {
+    /**
+     * Build the name of the Event to be created
+     *
+     * @param df         - {@link OWLDataFactory} to use
+     * @param prefix     - {@link String} Prefix to use
+     * @param individual - {@link OWLNamedIndividual} subject
+     * @param event      - {@link TrestleEventType} event type
+     * @return - {@link OWLNamedIndividual} of event
+     */
+    static OWLNamedIndividual buildEventName(OWLDataFactory df, String prefix, OWLNamedIndividual individual, TrestleEventType event) {
+        return df.getOWLNamedIndividual(IRI.create(prefix, String.format("%s:%s:event", IRIUtils.extractTrestleIndividualName(individual.getIRI()), event.getShortName())));
+    }
+
     /**
      * Added a Trestle_Event to the given individual
      * @param event - {@link TrestleEventType} to add

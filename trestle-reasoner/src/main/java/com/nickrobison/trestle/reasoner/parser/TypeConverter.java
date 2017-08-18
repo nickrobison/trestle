@@ -196,7 +196,7 @@ public class TypeConverter {
             if (classToVerify == null) {
                 javaClass = String.class;
             } else {
-                javaClass = SpatialParser.GetSpatialClass(classToVerify);
+                javaClass = SpatialParser.getSpatialClass(classToVerify);
             }
         } else {
 //            Look it up from the datatype map, else return a string

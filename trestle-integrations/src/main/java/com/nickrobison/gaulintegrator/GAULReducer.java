@@ -5,6 +5,7 @@ import com.nickrobison.trestle.datasets.GAULObject;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
+import com.nickrobison.trestle.reasoner.equality.union.UnionEqualityResult;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.types.relations.ConceptRelationType;
@@ -193,6 +194,19 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //            Now, do the normal spatial intersection with the new object and its matched objects
 
+            // test of approx equal union
+            if(matchedObjects.size()>1) {
+                List<GAULObject> allGAUL = new ArrayList<GAULObject>(matchedObjects);
+                allGAUL.add(newGAULObject);
+
+                final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(allGAUL, inputSR, 0.9);
+                if (matchOptional.isPresent()) {
+                    // do something here
+                    final UnionEqualityResult<GAULObject> match = matchOptional.get();
+                    logger.debug("found approximate equality between " + match.getUnionObject() + " and " + match.getUnionOf());
+                    this.reasoner.addTrestleObjectSplitMerge(match.getType(), match.getUnionObject(), new ArrayList<>(match.getUnionOf()), match.getStrength());
+                }
+            }
 
 //            If there are no matching objects in the database, just insert the new record and move on.
             if (!matchedObjects.isEmpty()) {
@@ -204,6 +218,12 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
                     if (newGAULObject.getObjectName().equals(matchedObject.getObjectName())) {
                         objectWeight = .8;
+                    }
+
+                    // test of approx equality
+                    if(this.reasoner.getEqualityEngine().isApproximatelyEqual(newGAULObject, matchedObject, inputSR, 0.9))  {
+                        // do something here
+                        logger.info("found approximate equality between GAULObjects "+newGAULObject.getID()+" and "+matchedObject.getID());
                     }
 
 //                    Spatial intersections
