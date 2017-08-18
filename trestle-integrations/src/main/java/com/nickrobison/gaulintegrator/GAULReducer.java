@@ -199,7 +199,6 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 List<GAULObject> allGAUL = new ArrayList<GAULObject>(matchedObjects);
                 allGAUL.add(newGAULObject);
 
-//                GAULSpatialApproximator.GAULSetMatch match = GAULSpatialApproximator.getApproxEqualUnion(allGAUL, inputSR, 0.9);
                 final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(allGAUL, inputSR, 0.9);
                 if (matchOptional.isPresent()) {
                     // do something here
