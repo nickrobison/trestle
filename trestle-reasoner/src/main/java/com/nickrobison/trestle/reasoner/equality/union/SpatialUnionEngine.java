@@ -57,11 +57,11 @@ public class SpatialUnionEngine {
 //        Are we a split or a merge
         if (polygonMatchSet.earlyPolygons.size() == 1) {
             final Optional<T> first = dividedObjects.getEarlyObjects().stream().findFirst();
-            return Optional.of(new UnionEqualityResult<>(first.get(), dividedObjects.getLateObjects(), TrestleEventType.SPLIT));
+            return Optional.of(new UnionEqualityResult<>(first.get(), dividedObjects.getLateObjects(), TrestleEventType.SPLIT, polygonMatchSet.getStrength()));
         } else {
             final Optional<T> first = dividedObjects.getLateObjects().stream().findFirst();
             //noinspection ConstantConditions
-            return Optional.of(new UnionEqualityResult<>(first.get(), dividedObjects.getEarlyObjects(), TrestleEventType.MERGED));
+            return Optional.of(new UnionEqualityResult<>(first.get(), dividedObjects.getEarlyObjects(), TrestleEventType.MERGED, polygonMatchSet.getStrength()));
         }
     }
 
@@ -93,23 +93,24 @@ public class SpatialUnionEngine {
                     continue;
                 }
 
-                if (executeUnion(inputSR, matchThreshold, (Polygon) unionInputGeom, new ArrayList<>(matchSet)))
-                    return new PolygonMatchSet(inputSet, matchSet);
+                if (executeUnion(inputSR, matchThreshold, (Polygon) unionInputGeom, new ArrayList<>(matchSet)) > matchThreshold)
+                    return new PolygonMatchSet(inputSet, matchSet, matchThreshold);
             }
         }
         return null;
     }
 
-    private static boolean executeUnion(SpatialReference inputSR, double matchThreshold, Polygon unionInputGeom, List<Geometry> matchGeomList) {
+    private static double executeUnion(SpatialReference inputSR, double matchThreshold, Polygon unionInputGeom, List<Geometry> matchGeomList) {
         final SimpleGeometryCursor matchGeomCursor = new SimpleGeometryCursor(matchGeomList);
         final GeometryCursor unionMatchGeoms = operatorUnion.execute(matchGeomCursor, inputSR, new EqualityProgressTracker("Union calculation"));
         Geometry unionMatchGeom;
         while ((unionMatchGeom = unionMatchGeoms.next()) != null) {
-            if (isApproxEqual(unionInputGeom, (Polygon) unionMatchGeom, inputSR) > matchThreshold) {
-                return true;
+            final double approxEqual = isApproxEqual(unionInputGeom, (Polygon) unionMatchGeom, inputSR);
+            if (approxEqual > matchThreshold) {
+                return approxEqual;
             }
         }
-        return false;
+        return 0.0;
     }
 
     /**
@@ -253,18 +254,24 @@ public class SpatialUnionEngine {
 
         private final Set<Polygon> earlyPolygons;
         private final Set<Polygon> latePolygons;
+        private final double strength;
 
-        PolygonMatchSet(Set<Polygon> earlyPolygons, Set<Polygon> latePolygons) {
+        PolygonMatchSet(Set<Polygon> earlyPolygons, Set<Polygon> latePolygons, double strength) {
             this.earlyPolygons = earlyPolygons;
             this.latePolygons = latePolygons;
+            this.strength = strength;
         }
 
-        public Set<Polygon> getEarlyPolygons() {
+        Set<Polygon> getEarlyPolygons() {
             return earlyPolygons;
         }
 
-        public Set<Polygon> getLatePolygons() {
+        Set<Polygon> getLatePolygons() {
             return latePolygons;
+        }
+
+        double getStrength() {
+            return this.strength;
         }
     }
 

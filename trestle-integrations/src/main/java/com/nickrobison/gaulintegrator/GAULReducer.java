@@ -205,7 +205,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                     // do something here
                     final UnionEqualityResult<GAULObject> match = matchOptional.get();
                     logger.debug("found approximate equality between " + match.getUnionObject() + " and " + match.getUnionOf());
-                    this.reasoner.addTrestleObjectSplitMerge(match.getType(), match.getUnionObject(), new ArrayList<>(match.getUnionOf()));
+                    this.reasoner.addTrestleObjectSplitMerge(match.getType(), match.getUnionObject(), new ArrayList<>(match.getUnionOf()), match.getStrength());
                 }
             }
 

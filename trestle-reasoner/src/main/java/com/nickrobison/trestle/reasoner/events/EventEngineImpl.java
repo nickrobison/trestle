@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.reasoner.events;
 
-import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
@@ -62,12 +61,12 @@ public class EventEngineImpl implements TrestleEventEngine {
             if (axiom.getProperty().asOWLDataProperty().getIRI().equals(temporalExistsFromIRI)) {
                 logger.debug("Adjusting {} event for {} to {}", TrestleEventType.CREATED, axiom.getSubject(), axiom.getObject().toString());
                 eventAxioms.add(df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(temporalExistsAtIRI),
-                        buildEventName(axiom.getSubject().asOWLNamedIndividual(), TrestleEventType.CREATED),
+                        TrestleEventEngine.buildEventName(df, this.prefix, axiom.getSubject().asOWLNamedIndividual(), TrestleEventType.CREATED),
                         axiom.getObject()));
             } else if (axiom.getProperty().asOWLDataProperty().getIRI().equals(temporalExistsToIRI)) {
                 logger.debug("Adjusting {} event for {} to {}", TrestleEventType.DESTROYED, axiom.getSubject(), axiom.getObject().toString());
                 eventAxioms.add(df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(temporalExistsAtIRI),
-                        buildEventName(axiom.getSubject().asOWLNamedIndividual(), TrestleEventType.DESTROYED),
+                        TrestleEventEngine.buildEventName(df, this.prefix, axiom.getSubject().asOWLNamedIndividual(), TrestleEventType.DESTROYED),
                         axiom.getObject()));
             }
 //            Write the properties
@@ -94,7 +93,7 @@ public class EventEngineImpl implements TrestleEventEngine {
     private void addMergedEvent(OWLNamedIndividual subject, Set<OWLNamedIndividual> objects, Temporal eventTemporal) {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         try {
-            final OWLNamedIndividual eventName = buildEventName(subject, TrestleEventType.MERGED);
+            final OWLNamedIndividual eventName = TrestleEventEngine.buildEventName(df, this.prefix, subject, TrestleEventType.MERGED);
 //            Get the start temporal of the subject
 //            final Temporal fromTemporal = this.extractTrestleObjectTemporal(subject, temporalExistsFromIRI);
 //            Write the new event
@@ -114,7 +113,7 @@ public class EventEngineImpl implements TrestleEventEngine {
     private void addSplitEvent(OWLNamedIndividual subject, Set<OWLNamedIndividual> objects, Temporal eventTemporal) {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         try {
-            final OWLNamedIndividual eventName = buildEventName(subject, TrestleEventType.SPLIT);
+            final OWLNamedIndividual eventName = TrestleEventEngine.buildEventName(df, this.prefix, subject, TrestleEventType.SPLIT);
 //            Get the start temporal of the subject
 //            final Temporal fromTemporal = this.extractTrestleObjectTemporal(subject, temporalExistsToIRI);
 //            Write the new event
@@ -134,7 +133,7 @@ public class EventEngineImpl implements TrestleEventEngine {
 
     private void addTemporalEvent(TrestleEventType event, OWLNamedIndividual individual, Temporal eventTemporal) {
 //        Create the axioms
-        final OWLNamedIndividual eventID = buildEventName(individual, event);
+        final OWLNamedIndividual eventID = TrestleEventEngine.buildEventName(df, this.prefix, individual, event);
         final OWLClassAssertionAxiom classAxiom = df.getOWLClassAssertionAxiom(df.getOWLClass(trestleEventIRI), eventID);
         final OWLDataPropertyAssertionAxiom existsAtAxiom = df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(temporalExistsAtIRI),
                 eventID,
@@ -166,11 +165,12 @@ public class EventEngineImpl implements TrestleEventEngine {
      * Will first attempt to read a {@link OWLDataProperty} corresponding to the provided {@link IRI} and will then read {@link com.nickrobison.trestle.common.StaticIRI#temporalExistsAtIRI} if no value is found
      * Note: Will only work if either the individual existed before the transaction started, or the isolation level is READ_UNCOMMITTED
      *
-     * @param individual - {@link OWLNamedIndividual} to get temporals from
+     * @param individual  - {@link OWLNamedIndividual} to get temporals from
      * @param temporalIRI - {@link IRI} of temporal value to start with
      * @return - {@link Temporal} corresponding to the value of the given {@link IRI} or {@link com.nickrobison.trestle.common.StaticIRI#temporalExistsAtIRI}
      */
-    @SuppressWarnings({"squid:UnusedPrivateMethod"}) // Suppressed because we may add this later, once we figure out isolation levels
+    @SuppressWarnings({"squid:UnusedPrivateMethod"})
+    // Suppressed because we may add this later, once we figure out isolation levels
     private Temporal extractTrestleObjectTemporal(OWLNamedIndividual individual, IRI temporalIRI) {
         final Set<OWLLiteral> existsFromProperty = this.ontology
                 .getIndividualDataProperty(individual,
@@ -181,10 +181,6 @@ public class EventEngineImpl implements TrestleEventEngine {
 //            We can just grab the first set member
 //            TODO(nrobison): This should be either LocalDate or OffsetDateTime. In the future
         return parseToTemporal(existsFromProperty.stream().findFirst().orElseThrow(() -> new IllegalStateException(String.format("Individual %s does not have existsFrom or ExistsTo Temporal", individual.toStringID()))), OffsetDateTime.class);
-    }
-
-    private OWLNamedIndividual buildEventName(OWLNamedIndividual individual, TrestleEventType event) {
-        return df.getOWLNamedIndividual(IRI.create(this.prefix, String.format("%s:%s:event", IRIUtils.extractTrestleIndividualName(individual.getIRI()), event.getShortName())));
     }
 
 }

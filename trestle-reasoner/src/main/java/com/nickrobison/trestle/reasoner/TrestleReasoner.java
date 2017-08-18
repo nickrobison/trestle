@@ -252,7 +252,7 @@ public interface TrestleReasoner {
     /**
      * Add {@link TrestleEvent} to individual
      * This method cannot be used to add {@link TrestleEventType#MERGED} or {@link TrestleEventType#SPLIT} events because those require additional information.
-     * Use the {@link TrestleReasoner#addTrestleObjectSplitMerge(TrestleEventType, Object, List)} for those event types
+     * Use the {@link TrestleReasoner#addTrestleObjectSplitMerge(TrestleEventType, Object, List, double)} for those event types
      *
      * @param type          - {@link TrestleEventType} to add to individual
      * @param individual    - {@link String} ID of individual
@@ -263,7 +263,7 @@ public interface TrestleReasoner {
     /**
      * Add {@link TrestleEvent} to individual
      * This method cannot be used to add {@link TrestleEventType#MERGED} or {@link TrestleEventType#SPLIT} events because those require additional information.
-     * Use the {@link TrestleReasoner#addTrestleObjectSplitMerge(TrestleEventType, Object, List)} for those event types
+     * Use the {@link TrestleReasoner#addTrestleObjectSplitMerge(TrestleEventType, Object, List, double)} for those event types
      *
      * @param type          - {@link TrestleEventType} to add to individual
      * @param individual    - {@link OWLNamedIndividual} individual to add event to
@@ -277,12 +277,13 @@ public interface TrestleReasoner {
      * Individuals are not created if they don't already exist
      * throws {@link IllegalArgumentException} if something other than {@link TrestleEventType#MERGED} or {@link TrestleEventType#SPLIT} is passed
      *
+     * @param <T>     - Generic type parameter of Trestle Object
      * @param type    {@link TrestleEventType} to add
      * @param subject - {@link OWLNamedIndividual} subject of Event
      * @param objects - {@link Set} of {@link OWLNamedIndividual} that are the objects of the event
-     * @param <T>     - Generic type parameter of Trestle Object
+     * @param strength - {@link Double} Strength of union association
      */
-    <@NonNull T> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects);
+    <@NonNull T> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength);
 
     /**
      * Spatial Intersect Object with most recent records in the database

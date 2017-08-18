@@ -1158,12 +1158,14 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <@NonNull T> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects) {
+    public <@NonNull T> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength) {
         if (!type.equals(TrestleEventType.SPLIT) && !type.equals(TrestleEventType.MERGED)) {
             throw new IllegalArgumentException("Only MERGED and SPLIT types are valid");
         }
 
         final OWLNamedIndividual subjectIndividual = this.trestleParser.classParser.getIndividual(subject);
+//        Build the event name
+        final OWLNamedIndividual eventIndividual = TrestleEventEngine.buildEventName(df, this.REASONER_PREFIX, subjectIndividual, type);
 //        Get the event temporal to use, and just grab the first one
         final Optional<List<TemporalObject>> temporalObjects = this.trestleParser.temporalParser.getTemporalObjects(subject);
         final TemporalObject subjectTemporal = temporalObjects.orElseThrow(() -> new IllegalStateException("Cannot get temporals for individual")).get(0);
@@ -1195,6 +1197,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             }
 //            Add the event
             this.eventEngine.addSplitMergeEvent(type, subjectIndividual, objectIndividuals, eventTemporal);
+//            Write the strength
+            this.ontology.writeIndividualDataProperty(eventIndividual, df.getOWLDataProperty(relationStrengthIRI), df.getOWLLiteral(strength));
         } catch (TrestleClassException | MissingOntologyEntity e) {
             logger.error("Unable to add individuals", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
