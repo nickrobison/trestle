@@ -65,6 +65,20 @@ public class SpatialUnionEngine {
         }
     }
 
+    /**
+     * Calculate the percentage spatial match between two object
+     * @param inputObject - Input object
+     * @param matchObject - Object to match against
+     * @param inputSR - {@link SpatialReference} spatial reference of input objects
+     * @param <T> - Generic type parameter
+     * @return - {@link Double} percentage spatial match
+     */
+    public <T> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR) {
+        final Polygon inputPolygon = parseESRIPolygon(SpatialParser.getSpatialValue(inputObject));
+        final Polygon matchPolygon = parseESRIPolygon(SpatialParser.getSpatialValue(matchObject));
+        return isApproxEqual(inputPolygon, matchPolygon, inputSR);
+    }
+
 
     private static @Nullable PolygonMatchSet getApproxEqualUnion(Set<Polygon> inputPolygons, Set<Polygon> matchPolygons, SpatialReference inputSR, double matchThreshold) {
         final Set<Set<Polygon>> allInputSets = powerSet(inputPolygons);

@@ -17,4 +17,16 @@ public interface EqualityEngine {
      * @return - {@link Optional} {@link UnionEqualityResult} if a Spatial Union exists within the object set, above the given threshold
      */
     <T> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold);
+
+    /**
+     * Determines if two objects are approximately equal, in spatial area, to each other, given a threshold value.
+     *
+     * @param <T>         - Generic type parameter
+     * @param inputObject - Input object
+     * @param matchObject - Object to match against
+     * @param inputSR     - {@link SpatialReference} of objects
+     * @param threshold   - threshold value which determines 'approximately equal'  @return - {@link boolean} {@code true} objects are approximately equal. {@code false} they are not.
+     *                    @return  - Whether or not the spatial equality of the objects exceeds the given threshold
+     */
+    <T> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold);
 }

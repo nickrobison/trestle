@@ -27,4 +27,10 @@ public class EqualityEngineImpl implements EqualityEngine {
     public <T> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
         return this.unionEngine.getApproximateEqualUnion(inputObjects, inputSR, matchThreshold);
     }
+
+    @Override
+    public <T> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold) {
+        final double percentEquals = this.unionEngine.calculateSpatialEquals(inputObject, matchObject, inputSR);
+        return percentEquals >= threshold;
+    }
 }

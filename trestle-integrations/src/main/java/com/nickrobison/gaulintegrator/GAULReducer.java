@@ -222,9 +222,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                     }
 
                     // test of approx equality
-                    boolean isApproxEqual = GAULSpatialApproximator.isApproxEqual(newGAULObject,matchedObject,inputSR,0.9);
-                    if(isApproxEqual)
-                    {
+                    if(this.reasoner.getEqualityEngine().isApproximatelyEqual(newGAULObject, matchedObject, inputSR, 0.9))  {
                         // do something here
                         logger.info("found approximate equality between GAULObjects "+newGAULObject.getID()+" and "+matchedObject.getID());
                     }

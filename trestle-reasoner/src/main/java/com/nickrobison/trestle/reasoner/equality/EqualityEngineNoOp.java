@@ -19,4 +19,9 @@ public class EqualityEngineNoOp implements EqualityEngine {
     public <T> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
         return Optional.empty();
     }
+
+    @Override
+    public <T> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold) {
+        return false;
+    }
 }
