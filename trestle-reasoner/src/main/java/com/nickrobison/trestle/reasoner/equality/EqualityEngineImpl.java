@@ -1,7 +1,9 @@
 package com.nickrobison.trestle.reasoner.equality;
 
 import com.esri.core.geometry.SpatialReference;
-import com.nickrobison.trestle.reasoner.equality.union.SpatialUnionEngine;
+import com.nickrobison.trestle.ontology.ITrestleOntology;
+import com.nickrobison.trestle.reasoner.equality.union.SpatialUnionBuilder;
+import com.nickrobison.trestle.reasoner.equality.union.SpatialUnionWalker;
 import com.nickrobison.trestle.reasoner.equality.union.UnionEqualityResult;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import org.slf4j.Logger;
@@ -15,22 +17,24 @@ import java.util.Optional;
 public class EqualityEngineImpl implements EqualityEngine {
     private static final Logger logger = LoggerFactory.getLogger(EqualityEngineImpl.class);
 
-    private final SpatialUnionEngine unionEngine;
+    private final SpatialUnionBuilder unionBuilder;
+    private final SpatialUnionWalker unionWalker;
 
     @Inject
-    public EqualityEngineImpl(TrestleParser tp) {
+    public EqualityEngineImpl(TrestleParser tp, ITrestleOntology ontology) {
         logger.info("Instantiating Equality Engine");
-        this.unionEngine = new SpatialUnionEngine(tp);
+        this.unionBuilder = new SpatialUnionBuilder(tp);
+        this.unionWalker = new SpatialUnionWalker(ontology);
     }
 
     @Override
     public <T> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
-        return this.unionEngine.getApproximateEqualUnion(inputObjects, inputSR, matchThreshold);
+        return this.unionBuilder.getApproximateEqualUnion(inputObjects, inputSR, matchThreshold);
     }
 
     @Override
     public <T> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold) {
-        final double percentEquals = this.unionEngine.calculateSpatialEquals(inputObject, matchObject, inputSR);
+        final double percentEquals = this.unionBuilder.calculateSpatialEquals(inputObject, matchObject, inputSR);
         return percentEquals >= threshold;
     }
 }

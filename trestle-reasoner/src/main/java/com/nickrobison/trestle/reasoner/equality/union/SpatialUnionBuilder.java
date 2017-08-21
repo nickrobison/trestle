@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.TemporalUtils.compareTemporals;
 
-public class SpatialUnionEngine {
+public class SpatialUnionBuilder {
     private static final String TEMPORAL_OPTIONAL_ERROR = "Cannot get temporal for comparison object";
 
     private static final OperatorFactoryLocal instance = OperatorFactoryLocal.getInstance();
@@ -25,7 +25,7 @@ public class SpatialUnionEngine {
     private static final OperatorUnion operatorUnion = (OperatorUnion) instance.getOperator(Operator.Type.Union);
     private final TrestleParser tp;
 
-    public SpatialUnionEngine(TrestleParser tp) {
+    public SpatialUnionBuilder(TrestleParser tp) {
         this.tp = tp;
     }
 
@@ -38,7 +38,7 @@ public class SpatialUnionEngine {
                 .getEarlyObjects()
                 .stream()
                 .map(SpatialParser::getSpatialValue)
-                .map(SpatialUnionEngine::parseESRIPolygon)
+                .map(SpatialUnionBuilder::parseESRIPolygon)
                 .collect(Collectors.toSet());
 
         //        Extract the ESRI polygons for each objects
@@ -46,7 +46,7 @@ public class SpatialUnionEngine {
                 .getLateObjects()
                 .stream()
                 .map(SpatialParser::getSpatialValue)
-                .map(SpatialUnionEngine::parseESRIPolygon)
+                .map(SpatialUnionBuilder::parseESRIPolygon)
                 .collect(Collectors.toSet());
 
         @Nullable final PolygonMatchSet polygonMatchSet = getApproxEqualUnion(earlyPolygons, latePolygons, inputSR, matchThreshold);

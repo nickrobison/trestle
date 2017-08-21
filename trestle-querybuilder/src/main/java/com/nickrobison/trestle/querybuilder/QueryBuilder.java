@@ -360,10 +360,11 @@ public class QueryBuilder {
 
     /**
      * Build spatial intersection
+     *
      * @param datasetClass - {@link OWLClass} to restrict on
-     * @param wktValue - {@link String} representation of WKT value
-     * @param buffer - {@link Double} buffer to build around WKT value
-     * @param unit - {@link Units} used by subclasses to adjust buffer values
+     * @param wktValue     - {@link String} representation of WKT value
+     * @param buffer       - {@link Double} buffer to build around WKT value
+     * @param unit         - {@link Units} used by subclasses to adjust buffer values
      * @return - {@link String} SPARQL query string
      * @throws UnsupportedFeatureException - Throws if we don't support this
      * @deprecated - Don't use this
@@ -643,6 +644,78 @@ public class QueryBuilder {
                 "VALUES ?m {%s} ." +
                 "?m ?p ?o" +
                 "}", deleteAxioms, updateAxioms, restrictionIRI.getIRIString(), filterAxiom));
+
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
+    /**
+     * Build SPARQL Query to walk the equality graph for a given {@link OWLNamedIndividual}
+     *
+     * @param inputObject - {@link OWLNamedIndividual} to get equality graph for
+     * @return - {@link String} SPARQL Query String
+     */
+    public String buildSTEquivalenceQuery(OWLNamedIndividual inputObject) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText(String.format("SELECT DISTINCT ?inputObject ?object ?start ?end ?type WHERE { " +
+                "BIND(<%s> AS ?inputObject ." +
+                "{ " +
+                "?inputObject trestle:equals ?object ." +
+                "?object rdf:type ?type ." +
+                "?object s:exists_from ?start . " +
+                "OPTIONAL {?object s:exists_to ?end} ." +
+                "FILTER(?type=trestle:Trestle_Object) ." +
+                "} " +
+                "UNION " +
+                "{ " +
+                "?inputObject trestle:equals ?union ." +
+                "?union rdf:type trestle:SpatialUnion ." +
+                "?union trestle:has_component ?object ." +
+                "?object rdf:type trestle:Trestle_Object ." +
+                "?object trestle:exists_from ?start ." +
+                "OPTIONAL {?object trestle:exists_to ?end}. " +
+                "} " +
+                "UNION " +
+                "{ " +
+                "?inputObject trestle:component_of ?object ." +
+                "?object rdf:type ?type ." +
+                "FILTER(?type=trestle:SpatialUnion) ." +
+                "{ " +
+                "?object trestle:equals ?nextObject ." +
+                "?inputObject trestle:exists_from ?inStart ." +
+                "?nextObject trsetle:exists_from ?start ." +
+                "FILTER(?start > ?inStart) ." +
+                "?nextObject trestle:exists_from ?end ." +
+                "} " +
+                "UNION " +
+                "{ " +
+                "?object trestle:equals ?nextObject ." +
+                "OPTIONAL {?inputObject trestle:exists_to ?inEnd} ." +
+                "OPTIONAL {?nextObject trestle:exists_to ?end} ." +
+                "FILTER(?end < ?inEnd) ." +
+                "OPTIONAL{?nextObject trestle:exists_to ?start} ." +
+                "}" +
+                "}" +
+                "FILTER(?type=trestle:Trestle_Object||?type=trestle:SpatialUnion) ." +
+                "}", getFullIRIString(inputObject)));
+
+        logger.debug(ps.toString());
+        return ps.toString();
+    }
+
+    /**
+     * Returns all components of a given {@link OWLNamedIndividual} representing a {@link com.nickrobison.trestle.common.StaticIRI#spatialUnionIRI}
+     * @param unionIndividual - {@link OWLNamedIndividual} to retrieve {@link com.nickrobison.trestle.common.StaticIRI#hasComponetIRI} relation
+     * @return - SPARQL Query String
+     */
+    public String buildSTUnionComponentQuery(OWLNamedIndividual unionIndividual) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText(String.format("SELECT ?object ?start ?end {" +
+                "BIND(<%s> AS ?union)" +
+                "?object trestle:component_of ?union ." +
+                "?union rdf:type trestle:SpatialUnion ." +
+                "?object trestle:exists_from ?start ." +
+                "OPTIONAL{?object trestle:exists_to ?end} }", getFullIRIString(unionIndividual)));
 
         logger.debug(ps.toString());
         return ps.toString();
