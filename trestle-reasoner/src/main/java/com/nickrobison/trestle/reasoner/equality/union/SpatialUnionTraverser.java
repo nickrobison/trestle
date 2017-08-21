@@ -5,6 +5,7 @@ import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
+import com.nickrobison.trestle.reasoner.parser.TemporalParser;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
@@ -16,9 +17,7 @@ import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.plugin.dom.exception.InvalidStateException;
 
-import java.time.OffsetDateTime;
 import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,9 +25,9 @@ import java.util.stream.Collectors;
 import static com.nickrobison.trestle.common.StaticIRI.spatialUnionIRI;
 import static com.nickrobison.trestle.common.StaticIRI.trestleObjectIRI;
 
-public class SpatialUnionWalker {
+public class SpatialUnionTraverser {
 
-    private static final Logger logger = LoggerFactory.getLogger(SpatialUnionWalker.class);
+    private static final Logger logger = LoggerFactory.getLogger(SpatialUnionTraverser.class);
     private static final String TEMPORALS_ERROR = "Cannot get temporals for object";
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
 
@@ -40,7 +39,7 @@ public class SpatialUnionWalker {
     private final ITrestleOntology ontology;
     private final QueryBuilder qb;
 
-    public SpatialUnionWalker(ITrestleOntology ontology) {
+    public SpatialUnionTraverser(ITrestleOntology ontology) {
         this.ontology = ontology;
         this.qb = ontology.getUnderlyingQueryBuilder();
     }
@@ -52,9 +51,15 @@ public class SpatialUnionWalker {
 
     public <T> void traverseUnion(Class<T> clazz, List<OWLNamedIndividual> subjects, Temporal queryTemporal) {
 
+//        Get the base temporal type of the input class
+        final Class<? extends Temporal> temporalType = TemporalParser.getTemporalType(clazz);
+
+//        Setup the sets to hold the various objects we encounter
         final Set<STObjectWrapper> seenObjects = new HashSet<>();
         final Queue<STObjectWrapper> invalidObjects;
         final Set<STObjectWrapper> validObjects = new HashSet<>();
+
+//        Start the transaction
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
             TemporalDirection temporalDirection = null;
@@ -62,9 +67,10 @@ public class SpatialUnionWalker {
             for (OWLNamedIndividual subject : subjects) {
                 //        Get the existence temporals for the object
                 final Set<OWLDataPropertyAssertionAxiom> individualExistenceProperties = this.ontology.getAllDataPropertiesForIndividual(subject);
-                final Optional<TemporalObject> temporals = TemporalObjectBuilder.buildTemporalFromProperties(individualExistenceProperties, OffsetDateTime.class, null, null);
+                final Optional<TemporalObject> temporals = TemporalObjectBuilder.buildTemporalFromProperties(individualExistenceProperties, temporalType, null, null);
                 final STObjectWrapper stObject = new STObjectWrapper(subject, trestleObjectIRI, temporals.orElseThrow(() -> new IllegalStateException(TEMPORALS_ERROR)));
                 stObjects.add(stObject);
+//                Figure out which direction we're going, towards the future, or towards the past
                 final TemporalDirection currentTemporalDirection;
 //                If the query temporal is before the object temporal, then we need to go backwards in time
                 if (TemporalUtils.compareTemporals(queryTemporal, stObject.getExistenceTemporal().getIdTemporal()) == -1) {
@@ -80,9 +86,9 @@ public class SpatialUnionWalker {
                 }
             }
             if (temporalDirection == TemporalDirection.FORWARD) {
-                invalidObjects = new PriorityQueue<>(ForwardComparator);
+                invalidObjects = new PriorityQueue<>(forwardComparator);
             } else {
-                invalidObjects = new PriorityQueue<>(BackwardComparator);
+                invalidObjects = new PriorityQueue<>(backwardComparator);
             }
             seenObjects.addAll(stObjects);
             final Set<STObjectWrapper> currentInvalidObjects = getInvalidObjects(stObjects, queryTemporal);
@@ -134,7 +140,7 @@ public class SpatialUnionWalker {
                 .getResults()
                 .stream()
 //                Build the STObjectWrapper
-                .map(SpatialUnionWalker::extractSTObjectWrapperFromResults)
+                .map(SpatialUnionTraverser::extractSTObjectWrapperFromResults)
 //                Filter out self object
                 .filter(object -> !object.getIndividual().equals(inputObject.getIndividual()))
 //                Filter out objects that are pointed in the wrong direction
@@ -173,7 +179,7 @@ public class SpatialUnionWalker {
         final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(unionQuery);
         final Optional<STObjectWrapper> hasUnseenObjects = resultSet.getResults()
                 .stream()
-                .map(SpatialUnionWalker::extractSTObjectWrapperFromResults)
+                .map(SpatialUnionTraverser::extractSTObjectWrapperFromResults)
                 .filter(object -> !seenObjects.contains(object))
                 .findAny();
         return !hasUnseenObjects.isPresent();
@@ -192,7 +198,7 @@ public class SpatialUnionWalker {
                 TemporalObjectBuilder.buildTemporalFromResults(TemporalScope.EXISTS,
                         Optional.empty(),
                         result.getLiteral("start"),
-                        result.getLiteral("end")).orElseThrow(() -> new InvalidStateException(TEMPORALS_ERROR)));
+                        result.getLiteral("end")).orElseThrow(() -> new IllegalStateException(TEMPORALS_ERROR)));
     }
 
     /**
@@ -209,7 +215,7 @@ public class SpatialUnionWalker {
                 .collect(Collectors.toSet());
     }
 
-    static Comparator<STObjectWrapper> ForwardComparator = (object1, object2) -> TemporalUtils.compareTemporals(object1.getExistenceTemporal().getIdTemporal(), object2.getExistenceTemporal().getIdTemporal());
+    static Comparator<STObjectWrapper> forwardComparator = (object1, object2) -> TemporalUtils.compareTemporals(object1.getExistenceTemporal().getIdTemporal(), object2.getExistenceTemporal().getIdTemporal());
 
-    static Comparator<STObjectWrapper> BackwardComparator = (object1, object2) -> TemporalUtils.compareTemporals(object2.getExistenceTemporal().getIdTemporal(), object1.getExistenceTemporal().getIdTemporal());
+    static Comparator<STObjectWrapper> backwardComparator = (object1, object2) -> TemporalUtils.compareTemporals(object2.getExistenceTemporal().getIdTemporal(), object1.getExistenceTemporal().getIdTemporal());
 }
