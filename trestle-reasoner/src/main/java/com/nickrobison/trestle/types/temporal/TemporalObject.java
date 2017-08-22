@@ -83,7 +83,7 @@ public abstract class TemporalObject implements Serializable {
     public abstract TemporalObject castTo(TemporalScope castScope);
 
     /**
-     * Compares a temporal with the TemporalObject to determine if the given Temporal is before, during, or after the {@link TemporalObject}
+     * Compares a {@link Temporal} with the {@link TemporalObject} to determine if the given {@link Temporal} is before, during, or after the {@link TemporalObject}
      * @param comparingTemporal - {@link Temporal} to compare against the temporal object
      * @return - {@code -1} if this {@link TemporalObject} comes before the {@link Temporal}, {@code 0} if the {@link Temporal} occurs during (or is equal to), {@code 1} if it comes after
      */
@@ -96,21 +96,5 @@ public abstract class TemporalObject implements Serializable {
      */
     public abstract boolean during(TemporalObject comparingObject);
 
-    @Override
-    public boolean equals(@Nullable Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
 
-        TemporalObject that = (TemporalObject) o;
-
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        return temporal_of != null ? temporal_of.equals(that.temporal_of) : that.temporal_of == null;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (temporal_of != null ? temporal_of.hashCode() : 0);
-        return result;
-    }
 }
