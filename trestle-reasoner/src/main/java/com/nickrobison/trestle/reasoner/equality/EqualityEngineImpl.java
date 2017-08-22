@@ -6,10 +6,12 @@ import com.nickrobison.trestle.reasoner.equality.union.SpatialUnionBuilder;
 import com.nickrobison.trestle.reasoner.equality.union.SpatialUnionTraverser;
 import com.nickrobison.trestle.reasoner.equality.union.UnionEqualityResult;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.time.temporal.Temporal;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,5 +38,9 @@ public class EqualityEngineImpl implements EqualityEngine {
     public <T> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold) {
         final double percentEquals = this.unionBuilder.calculateSpatialEquals(inputObject, matchObject, inputSR);
         return percentEquals >= threshold;
+    }
+
+    public <T> List<OWLNamedIndividual> getEquivalentObjects(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
+        return this.unionWalker.traverseUnion(clazz, individual, queryTemporal);
     }
 }

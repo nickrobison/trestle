@@ -44,12 +44,12 @@ public class SpatialUnionTraverser {
         this.qb = ontology.getUnderlyingQueryBuilder();
     }
 
-    public <T> void traverseUnion(Class<T> clazz, OWLNamedIndividual subject, Temporal queryTemporal) {
-        traverseUnion(clazz, Collections.singletonList(subject), queryTemporal);
+    public <T> List<OWLNamedIndividual> traverseUnion(Class<T> clazz, OWLNamedIndividual subject, Temporal queryTemporal) {
+        return traverseUnion(clazz, Collections.singletonList(subject), queryTemporal);
     }
 
 
-    public <T> void traverseUnion(Class<T> clazz, List<OWLNamedIndividual> subjects, Temporal queryTemporal) {
+    public <T> List<OWLNamedIndividual> traverseUnion(Class<T> clazz, List<OWLNamedIndividual> subjects, Temporal queryTemporal) {
 
 //        Get the base temporal type of the input class
         final Class<? extends Temporal> temporalType = TemporalParser.getTemporalType(clazz);
@@ -99,6 +99,7 @@ public class SpatialUnionTraverser {
 
             @Nullable final Set<STObjectWrapper> equivalence = getEquivalence(validObjects, invalidObjects, seenObjects, queryTemporal, temporalDirection);
             logger.debug("Found equivalence:", equivalence);
+            return equivalence.stream().map(STObjectWrapper::getIndividual).collect(Collectors.toList());
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         }

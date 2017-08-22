@@ -29,4 +29,13 @@ class STObjectWrapper {
     public IRI getType() {
         return this.type;
     }
+
+    @Override
+    public String toString() {
+        return "STObjectWrapper{" +
+                "individual=" + individual +
+                ", existenceTemporal=" + existenceTemporal +
+                ", type=" + type +
+                '}';
+    }
 }

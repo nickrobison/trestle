@@ -658,12 +658,12 @@ public class QueryBuilder {
     public String buildSTEquivalenceQuery(OWLNamedIndividual inputObject) {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText(String.format("SELECT DISTINCT ?inputObject ?object ?start ?end ?type WHERE { " +
-                "BIND(<%s> AS ?inputObject ." +
+                "BIND(<%s> AS ?inputObject) ." +
                 "{ " +
                 "?inputObject trestle:equals ?object ." +
                 "?object rdf:type ?type ." +
-                "?object s:exists_from ?start . " +
-                "OPTIONAL {?object s:exists_to ?end} ." +
+                "?object trestle:exists_from ?start . " +
+                "OPTIONAL {?object trestle:exists_to ?end} ." +
                 "FILTER(?type=trestle:Trestle_Object) ." +
                 "} " +
                 "UNION " +
@@ -671,7 +671,7 @@ public class QueryBuilder {
                 "?inputObject trestle:equals ?union ." +
                 "?union rdf:type trestle:SpatialUnion ." +
                 "?union trestle:has_component ?object ." +
-                "?object rdf:type trestle:Trestle_Object ." +
+                "?object rdf:type ?type ." +
                 "?object trestle:exists_from ?start ." +
                 "OPTIONAL {?object trestle:exists_to ?end}. " +
                 "} " +
@@ -683,7 +683,7 @@ public class QueryBuilder {
                 "{ " +
                 "?object trestle:equals ?nextObject ." +
                 "?inputObject trestle:exists_from ?inStart ." +
-                "?nextObject trsetle:exists_from ?start ." +
+                "?nextObject trestle:exists_from ?start ." +
                 "FILTER(?start > ?inStart) ." +
                 "?nextObject trestle:exists_from ?end ." +
                 "} " +
