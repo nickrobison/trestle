@@ -7,13 +7,10 @@ import com.nickrobison.trestle.reasoner.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.reasoner.equality.EqualityEngineImpl;
-import com.nickrobison.trestle.reasoner.merge.MergeStrategy;
 import com.nickrobison.trestle.types.events.TrestleEventType;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.io.Serializable;
@@ -21,9 +18,9 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
+@Tag("integration")
 public class EqualityTests extends AbstractReasonerTest {
 
 
@@ -62,7 +59,29 @@ public class EqualityTests extends AbstractReasonerTest {
 //        What is obj1 equal to in 2013?
         final OWLNamedIndividual obj1Individual = this.tp.classParser.getIndividual(obj1);
         final List<OWLNamedIndividual> equivalentObjects = ((EqualityEngineImpl) this.reasoner.getEqualityEngine()).getEquivalentObjects(EqualityTestClass.class, obj1Individual, LocalDate.of(2013, 3, 11));
-        assertAll(() -> assertEquals(5, equivalentObjects.size(), "Should only have 5 equivalent objects in 2013"));
+        assertAll(() -> assertEquals(5, equivalentObjects.size(), "Should only have 5 equivalent objects in 2013"),
+                () -> assertTrue(equivalentObjects.contains(this.tp.classParser.getIndividual(obj2)), "Should have Obj2"),
+                () -> assertTrue(!equivalentObjects.contains(this.tp.classParser.getIndividual(obj8)), "Should not have Obj8"));
+
+//        What about 2014?
+        final List<OWLNamedIndividual> eqObjects2 = ((EqualityEngineImpl) this.reasoner.getEqualityEngine()).getEquivalentObjects(EqualityTestClass.class, obj1Individual, LocalDate.of(2014, 3, 11));
+        assertAll(() -> assertEquals(6, eqObjects2.size(), "Should have 6 equivalent objects in 2014"),
+                () -> assertTrue(eqObjects2.contains(this.tp.classParser.getIndividual(obj8)), "Should have obj8"),
+                () -> assertTrue(!eqObjects2.contains(this.tp.classParser.getIndividual(obj2)), "Should not have Obj2"));
+
+//        2015
+        final List<OWLNamedIndividual> eqObjects3 = ((EqualityEngineImpl) this.reasoner.getEqualityEngine()).getEquivalentObjects(EqualityTestClass.class, obj1Individual, LocalDate.of(2015, 3, 11));
+        assertAll(() -> assertEquals(6, eqObjects3.size(), "Should have 6 equivalent objects in 2015"),
+                () -> assertTrue(eqObjects3.contains(this.tp.classParser.getIndividual(obj8)), "Should have obj8"),
+                () -> assertTrue(!eqObjects3.contains(this.tp.classParser.getIndividual(obj2)), "Should not have Obj2"));
+
+//        2016
+        final List<OWLNamedIndividual> eqObjects4 = ((EqualityEngineImpl) this.reasoner.getEqualityEngine()).getEquivalentObjects(EqualityTestClass.class, obj1Individual, LocalDate.of(2016, 3, 11));
+        assertAll(() -> assertEquals(5, eqObjects4.size(), "Should have 5 equivalent objects in 2016"),
+                () -> assertTrue(eqObjects4.contains(this.tp.classParser.getIndividual(obj9)), "Should have Obj9"),
+                () -> assertTrue(!eqObjects4.contains(this.tp.classParser.getIndividual(obj6)), "Should not have Obj6"));
+
+
     }
 
 
