@@ -10,7 +10,6 @@ import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
@@ -93,28 +92,30 @@ public class SpatialUnionTraverser {
             seenObjects.addAll(stObjects);
             final Set<STObjectWrapper> currentInvalidObjects = getInvalidObjects(stObjects, queryTemporal);
             invalidObjects.addAll(currentInvalidObjects);
-            final HashSet<STObjectWrapper> currentValidObjects = new HashSet<>(stObjects);
+            final Set<STObjectWrapper> currentValidObjects = new HashSet<>(stObjects);
             currentValidObjects.removeAll(currentInvalidObjects);
             validObjects.addAll(currentValidObjects);
 
-            @Nullable final Set<STObjectWrapper> equivalence = getEquivalence(validObjects, invalidObjects, seenObjects, queryTemporal, temporalDirection);
-            logger.debug("Found equivalence:", equivalence);
+            final Set<STObjectWrapper> equivalence = getEquivalence(validObjects, invalidObjects, seenObjects, queryTemporal, temporalDirection);
+            if (!equivalence.isEmpty()) {
+                logger.debug("Found equivalence: {}", equivalence);
+            }
             return equivalence.stream().map(STObjectWrapper::getIndividual).collect(Collectors.toList());
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
     }
 
-    private @Nullable Set<STObjectWrapper> getEquivalence(Set<STObjectWrapper> validObjects, Queue<STObjectWrapper> invalidObjects, Set<STObjectWrapper> seenObjects, Temporal queryTemporal, TemporalDirection temporalDirection) {
+    private Set<STObjectWrapper> getEquivalence(Set<STObjectWrapper> validObjects, Queue<STObjectWrapper> invalidObjects, Set<STObjectWrapper> seenObjects, Temporal queryTemporal, TemporalDirection temporalDirection) {
         if (invalidObjects.isEmpty()) {
             return validObjects;
         }
 
         final STObjectWrapper object = invalidObjects.poll();
 
-        @Nullable final Set<STObjectWrapper> eqObjects = executeEqualityQuery(object, temporalDirection, seenObjects);
-        if (eqObjects == null || eqObjects.isEmpty()) {
-            return null;
+        final Set<STObjectWrapper> eqObjects = executeEqualityQuery(object, temporalDirection, seenObjects);
+        if (eqObjects.isEmpty()) {
+            return new HashSet<>();
         }
 
         seenObjects.addAll(eqObjects);
@@ -133,7 +134,7 @@ public class SpatialUnionTraverser {
         return getEquivalence(validObjects, invalidObjects, seenObjects, queryTemporal, temporalDirection);
     }
 
-    private @Nullable Set<STObjectWrapper> executeEqualityQuery(STObjectWrapper inputObject, TemporalDirection direction, Set<STObjectWrapper> seenObjects) {
+    private Set<STObjectWrapper> executeEqualityQuery(STObjectWrapper inputObject, TemporalDirection direction, Set<STObjectWrapper> seenObjects) {
         Set<STObjectWrapper> equivalentObjects = new HashSet<>();
         final String equivalenceQuery = this.qb.buildSTEquivalenceQuery(inputObject.getIndividual());
         final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(equivalenceQuery);
@@ -147,9 +148,9 @@ public class SpatialUnionTraverser {
 //                Filter out objects that are pointed in the wrong direction
                 .filter(object -> {
                     if (direction.equals(TemporalDirection.FORWARD)) {
-                        return object.getExistenceTemporal().compareTo(inputObject.getExistenceTemporal().getIdTemporal()) == 1;
+                        return object.getExistenceTemporal().compareTo(inputObject.getExistenceTemporal().getIdTemporal()) != -1;
                     } else {
-                        return object.getExistenceTemporal().compareTo(inputObject.getExistenceTemporal().getIdTemporal()) == -1;
+                        return object.getExistenceTemporal().compareTo(inputObject.getExistenceTemporal().getIdTemporal()) != 1;
                     }
                 })
                 .collect(Collectors.toSet());
@@ -159,13 +160,13 @@ public class SpatialUnionTraverser {
             if (queryObject.getType().equals(spatialUnionIRI)) {
                 if (isCompleteUnion(queryObject, seenObjects)) {
                     final Set<STObjectWrapper> unionEqualities = executeEqualityQuery(queryObject, direction, seenObjects);
-                    if (unionEqualities == null || unionEqualities.isEmpty()) {
-                        return null;
+                    if (unionEqualities.isEmpty()) {
+                        return new HashSet<>();
                     }
                     equivalentObjects.addAll(unionEqualities);
                     seenObjects.addAll(unionEqualities);
                 } else {
-                    return null;
+                    return new HashSet<>();
                 }
             }
 

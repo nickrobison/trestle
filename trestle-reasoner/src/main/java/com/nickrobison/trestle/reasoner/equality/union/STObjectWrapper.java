@@ -38,4 +38,24 @@ class STObjectWrapper {
                 ", type=" + type +
                 '}';
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        STObjectWrapper that = (STObjectWrapper) o;
+
+        if (!getIndividual().equals(that.getIndividual())) return false;
+        if (!getExistenceTemporal().equals(that.getExistenceTemporal())) return false;
+        return getType().equals(that.getType());
+    }
+
+    @Override
+    public int hashCode() {
+        int result = getIndividual().hashCode();
+        result = 31 * result + getExistenceTemporal().hashCode();
+        result = 31 * result + getType().hashCode();
+        return result;
+    }
 }

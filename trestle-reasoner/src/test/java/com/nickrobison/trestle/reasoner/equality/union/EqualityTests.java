@@ -81,6 +81,9 @@ public class EqualityTests extends AbstractReasonerTest {
                 () -> assertTrue(eqObjects4.contains(this.tp.classParser.getIndividual(obj9)), "Should have Obj9"),
                 () -> assertTrue(!eqObjects4.contains(this.tp.classParser.getIndividual(obj6)), "Should not have Obj6"));
 
+//        2017
+        final List<OWLNamedIndividual> eqObjects5 = ((EqualityEngineImpl) this.reasoner.getEqualityEngine()).getEquivalentObjects(EqualityTestClass.class, obj1Individual, LocalDate.of(2017, 3, 11));
+        assertTrue(eqObjects5.isEmpty(), "Should have no equivalent objects in 2017");
 
     }
 
