@@ -61,7 +61,7 @@ public class SpatialUnionTraverser {
 //        Start the transaction
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
-            TemporalDirection temporalDirection = null;
+//            TemporalDirection temporalDirection = null;
             Set<STObjectWrapper> stObjects = new HashSet<>();
             for (OWLNamedIndividual subject : subjects) {
                 //        Get the existence temporals for the object
@@ -69,22 +69,24 @@ public class SpatialUnionTraverser {
                 final Optional<TemporalObject> temporals = TemporalObjectBuilder.buildTemporalFromProperties(individualExistenceProperties, temporalType, null, null);
                 final STObjectWrapper stObject = new STObjectWrapper(subject, trestleObjectIRI, temporals.orElseThrow(() -> new IllegalStateException(TEMPORALS_ERROR)));
                 stObjects.add(stObject);
-//                Figure out which direction we're going, towards the future, or towards the past
-                final TemporalDirection currentTemporalDirection;
-//                If the query temporal is before the object temporal, then we need to go backwards in time
-                if (TemporalUtils.compareTemporals(queryTemporal, stObject.getExistenceTemporal().getIdTemporal()) == -1) {
-                    currentTemporalDirection = TemporalDirection.BACKWARD;
-                } else {
-                    currentTemporalDirection = TemporalDirection.FORWARD;
-                }
-
-                if (temporalDirection == null) {
-                    temporalDirection = currentTemporalDirection;
-                } else if (currentTemporalDirection != temporalDirection) {
-                    throw new IllegalStateException("Input objects have opposing temporal directions");
-                }
+////                Figure out which direction we're going, towards the future, or towards the past
+//                TemporalDirection currentTemporalDirection = TemporalDirection.FORWARD;
+////                If the query temporal is before the object temporal, then we need to go backwards in time
+//                if (TemporalUtils.compareTemporals(queryTemporal, stObject.getExistenceTemporal().getIdTemporal()) == -1) {
+//                    currentTemporalDirection = TemporalDirection.BACKWARD;
+//                }
+//
+//                if (temporalDirection == null) {
+//                    temporalDirection = currentTemporalDirection;
+//                } else if (currentTemporalDirection != temporalDirection) {
+//                    throw new IllegalStateException("Input objects have opposing temporal directions");
+//                }
             }
-            if (temporalDirection == TemporalDirection.FORWARD) {
+            final Optional<TemporalDirection> temporalDirection = determineQueryDirection(stObjects, queryTemporal);
+            if (!temporalDirection.isPresent()) {
+                return subjects;
+            }
+            if (temporalDirection.get() == TemporalDirection.FORWARD) {
                 invalidObjects = new PriorityQueue<>(forwardComparator);
             } else {
                 invalidObjects = new PriorityQueue<>(backwardComparator);
@@ -96,7 +98,7 @@ public class SpatialUnionTraverser {
             currentValidObjects.removeAll(currentInvalidObjects);
             validObjects.addAll(currentValidObjects);
 
-            final Set<STObjectWrapper> equivalence = getEquivalence(validObjects, invalidObjects, seenObjects, queryTemporal, temporalDirection);
+            final Set<STObjectWrapper> equivalence = getEquivalence(validObjects, invalidObjects, seenObjects, queryTemporal, temporalDirection.get());
             if (!equivalence.isEmpty()) {
                 logger.debug("Found equivalence: {}", equivalence);
             }
@@ -180,7 +182,7 @@ public class SpatialUnionTraverser {
      * Determines is the given {@link STObjectWrapper} representing a SpatialUnion has an object that have not been seen yet
      * If so, it's not a complete union, and we can't do anything with it
      *
-     * @param union {@link STObjectWrapper} SpatialUnion object
+     * @param union        {@link STObjectWrapper} SpatialUnion object
      * @param seenObjects- {@link Set} of {@link STObjectWrapper} of seen objects
      * @return - {@code true} is complete union (we have everything), {@code false} is not a complete union, we need more info
      */
@@ -223,6 +225,31 @@ public class SpatialUnionTraverser {
                 .stream()
                 .filter(object -> object.getExistenceTemporal().compareTo(queryDate) != 0)
                 .collect(Collectors.toSet());
+    }
+
+    /**
+     * Determine which direction to execute the traversal query
+     * If all the objects exist at the queryTemporal point, then we return an empty optional
+     * throws {@link IllegalStateException} if some of the objects are pointed in the wrong direction
+     *
+     * @param inputObjects  - {@link Set} of {@link STObjectWrapper} representing intitial input objects
+     * @param queryTemporal - {@link Temporal} query temporal
+     * @return - {@link Optional} {@link TemporalDirection} if not all of the objects exist at the query point
+     */
+    private static Optional<TemporalDirection> determineQueryDirection(Set<STObjectWrapper> inputObjects, Temporal queryTemporal) {
+        TemporalDirection direction = null;
+        for (STObjectWrapper inputObject : inputObjects) {
+            final int comparison = inputObject.getExistenceTemporal().compareTo(queryTemporal);
+            if (direction != null && (direction == TemporalDirection.FORWARD && comparison == 1) || (direction == TemporalDirection.BACKWARD && comparison == -1)) {
+                throw new IllegalStateException("Input objects have different temporal directions");
+            } else if (direction == null && comparison == 1) {
+                direction = TemporalDirection.BACKWARD;
+            } else if (direction == null && comparison == -1) {
+                direction = TemporalDirection.FORWARD;
+            }
+        }
+
+        return Optional.ofNullable(direction);
     }
 
     static Comparator<STObjectWrapper> forwardComparator = (object1, object2) -> TemporalUtils.compareTemporals(object1.getExistenceTemporal().getIdTemporal(), object2.getExistenceTemporal().getIdTemporal());
