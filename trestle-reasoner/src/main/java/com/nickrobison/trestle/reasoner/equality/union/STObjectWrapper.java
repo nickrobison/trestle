@@ -46,16 +46,11 @@ class STObjectWrapper {
 
         STObjectWrapper that = (STObjectWrapper) o;
 
-        if (!getIndividual().equals(that.getIndividual())) return false;
-        if (!getExistenceTemporal().equals(that.getExistenceTemporal())) return false;
-        return getType().equals(that.getType());
+        return individual.equals(that.individual);
     }
 
     @Override
     public int hashCode() {
-        int result = getIndividual().hashCode();
-        result = 31 * result + getExistenceTemporal().hashCode();
-        result = 31 * result + getType().hashCode();
-        return result;
+        return getIndividual().hashCode();
     }
 }

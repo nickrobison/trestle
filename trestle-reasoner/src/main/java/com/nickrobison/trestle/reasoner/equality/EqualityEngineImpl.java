@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.time.temporal.Temporal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,6 +42,10 @@ public class EqualityEngineImpl implements EqualityEngine {
     }
 
     public <T> List<OWLNamedIndividual> getEquivalentObjects(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
+        return this.unionWalker.traverseUnion(clazz, individual, queryTemporal);
+    }
+
+    public <T> List<OWLNamedIndividual> getEquivalentObjects(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal) {
         return this.unionWalker.traverseUnion(clazz, individual, queryTemporal);
     }
 }

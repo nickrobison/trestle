@@ -176,6 +176,14 @@ public class SpatialUnionTraverser {
         return equivalentObjects;
     }
 
+    /**
+     * Determines is the given {@link STObjectWrapper} representing a SpatialUnion has an object that have not been seen yet
+     * If so, it's not a complete union, and we can't do anything with it
+     *
+     * @param union {@link STObjectWrapper} SpatialUnion object
+     * @param seenObjects- {@link Set} of {@link STObjectWrapper} of seen objects
+     * @return - {@code true} is complete union (we have everything), {@code false} is not a complete union, we need more info
+     */
     private boolean isCompleteUnion(STObjectWrapper union, Set<STObjectWrapper> seenObjects) {
         final String unionQuery = this.qb.buildSTUnionComponentQuery(union.getIndividual());
         final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(unionQuery);
