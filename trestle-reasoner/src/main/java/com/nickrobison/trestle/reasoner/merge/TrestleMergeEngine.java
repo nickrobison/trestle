@@ -68,6 +68,13 @@ public interface TrestleMergeEngine {
     boolean mergeEnabled();
 
     /**
+     * Enable/Disable {@link TrestleMergeEngine} during runtime
+     *
+     * @param enable - {@code true} enable merging. {@code false} disable merging
+     */
+    void changeMergeOnLoad(boolean enable);
+
+    /**
      * Determine if the merge process should consider object existence
      *
      * @return - {@code true} Existence is being considered. {@code false} we're ignoring existence

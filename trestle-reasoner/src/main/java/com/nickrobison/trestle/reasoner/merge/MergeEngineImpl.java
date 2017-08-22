@@ -38,7 +38,7 @@ public class MergeEngineImpl implements TrestleMergeEngine {
     private final Config config;
     private MergeStrategy defaultStrategy;
     private ExistenceStrategy existenceStrategy;
-    private final boolean onLoad;
+    private boolean onLoad;
 
     public MergeEngineImpl() {
         logger.info("Creating Merge Engine");
@@ -103,6 +103,12 @@ public class MergeEngineImpl implements TrestleMergeEngine {
     @Override
     public boolean mergeOnLoad() {
         return this.onLoad;
+    }
+
+    @Override
+    public void changeMergeOnLoad(boolean enable) {
+        logger.debug("Changing merge engine status. Enabled? {}", enable);
+        this.onLoad = enable;
     }
 
     @Override
