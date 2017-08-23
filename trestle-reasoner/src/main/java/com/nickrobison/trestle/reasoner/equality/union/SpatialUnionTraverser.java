@@ -69,19 +69,8 @@ public class SpatialUnionTraverser {
                 final Optional<TemporalObject> temporals = TemporalObjectBuilder.buildTemporalFromProperties(individualExistenceProperties, temporalType, null, null);
                 final STObjectWrapper stObject = new STObjectWrapper(subject, trestleObjectIRI, temporals.orElseThrow(() -> new IllegalStateException(TEMPORALS_ERROR)));
                 stObjects.add(stObject);
-////                Figure out which direction we're going, towards the future, or towards the past
-//                TemporalDirection currentTemporalDirection = TemporalDirection.FORWARD;
-////                If the query temporal is before the object temporal, then we need to go backwards in time
-//                if (TemporalUtils.compareTemporals(queryTemporal, stObject.getExistenceTemporal().getIdTemporal()) == -1) {
-//                    currentTemporalDirection = TemporalDirection.BACKWARD;
-//                }
-//
-//                if (temporalDirection == null) {
-//                    temporalDirection = currentTemporalDirection;
-//                } else if (currentTemporalDirection != temporalDirection) {
-//                    throw new IllegalStateException("Input objects have opposing temporal directions");
-//                }
             }
+
             final Optional<TemporalDirection> temporalDirection = determineQueryDirection(stObjects, queryTemporal);
             if (!temporalDirection.isPresent()) {
                 return subjects;

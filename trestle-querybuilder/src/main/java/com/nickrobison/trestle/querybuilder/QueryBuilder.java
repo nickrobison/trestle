@@ -673,7 +673,8 @@ public class QueryBuilder {
                 "?union trestle:has_component ?object ." +
                 "?object rdf:type ?type ." +
                 "?object trestle:exists_from ?start ." +
-                "OPTIONAL {?object trestle:exists_to ?end}. " +
+                "OPTIONAL {?object trestle:exists_to ?end} ." +
+                "FILTER(?union != ?inputObject) ." +
                 "} " +
                 "UNION " +
                 "{ " +
