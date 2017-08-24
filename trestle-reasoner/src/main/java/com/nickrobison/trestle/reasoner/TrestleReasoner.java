@@ -16,6 +16,7 @@ import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
@@ -361,6 +362,30 @@ public interface TrestleReasoner {
      * @return - {@link Optional} {@link Map} of String IRI representations of related concepts
      */
     Optional<Map<String, List<String>>> getRelatedConcepts(String individual, @Nullable String conceptID, double relationStrength);
+
+    /**
+     * Get a {@link List} of objects that are equivalent to given individual at the given time point
+     * If no objects satisfy the equality constraints and an empty {@link List} is returned
+     *
+     * @param clazz - {@link Class} of input individuals
+     * @param individuals - Individual {@link IRI}
+     * @param queryTemporal - {@link Temporal} of query point
+     * @param <T> - Type parameter
+     * @return - {@link Optional} {@link List} of {@link T} objects
+     */
+    <@NonNull T> Optional<List<T>> getEquivalentObjects(Class<T> clazz, IRI individual, Temporal queryTemporal);
+
+    /**
+     * Get a {@link List} of objects that are equivalent to given {@link List} of individuals at the given time point
+     * If no objects satisfy the equality constraints and an empty {@link List} is returned
+     *
+     * @param clazz - {@link Class} of input individuals
+     * @param individuals - {@link List} of individual {@link IRI}
+     * @param queryTemporal - {@link Temporal} of query point
+     * @param <T> - Type parameter
+     * @return - {@link Optional} {@link List} of {@link T} objects
+     */
+    <@NonNull T> Optional<List<T>> getEquivalentObjects(Class<T> clazz, List<IRI> individuals, Temporal queryTemporal);
 
     /**
      * Search the ontology for individuals with IRIs that match the given search string

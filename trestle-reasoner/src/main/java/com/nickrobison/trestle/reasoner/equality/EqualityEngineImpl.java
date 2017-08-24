@@ -1,22 +1,18 @@
 package com.nickrobison.trestle.reasoner.equality;
 
 import com.esri.core.geometry.SpatialReference;
-import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.reasoner.equality.union.SpatialUnionBuilder;
 import com.nickrobison.trestle.reasoner.equality.union.SpatialUnionTraverser;
 import com.nickrobison.trestle.reasoner.equality.union.UnionEqualityResult;
-import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.time.temporal.Temporal;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class EqualityEngineImpl implements EqualityEngine {
     private static final Logger logger = LoggerFactory.getLogger(EqualityEngineImpl.class);
 
@@ -24,10 +20,10 @@ public class EqualityEngineImpl implements EqualityEngine {
     private final SpatialUnionTraverser unionWalker;
 
     @Inject
-    public EqualityEngineImpl(TrestleParser tp, ITrestleOntology ontology) {
+    public EqualityEngineImpl(SpatialUnionBuilder builder, SpatialUnionTraverser walker) {
         logger.info("Instantiating Equality Engine");
-        this.unionBuilder = new SpatialUnionBuilder(tp);
-        this.unionWalker = new SpatialUnionTraverser(ontology);
+        this.unionBuilder = builder;
+        this.unionWalker = walker;
     }
 
     @Override
@@ -41,11 +37,13 @@ public class EqualityEngineImpl implements EqualityEngine {
         return percentEquals >= threshold;
     }
 
-    public <T> List<OWLNamedIndividual> getEquivalentObjects(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
+    @Override
+    public <T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
         return this.unionWalker.traverseUnion(clazz, individual, queryTemporal);
     }
 
-    public <T> List<OWLNamedIndividual> getEquivalentObjects(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal) {
+    @Override
+    public <T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal) {
         return this.unionWalker.traverseUnion(clazz, individual, queryTemporal);
     }
 }

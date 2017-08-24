@@ -11,6 +11,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,6 +26,7 @@ public class SpatialUnionBuilder {
     private static final OperatorUnion operatorUnion = (OperatorUnion) instance.getOperator(Operator.Type.Union);
     private final TrestleParser tp;
 
+    @Inject
     public SpatialUnionBuilder(TrestleParser tp) {
         this.tp = tp;
     }

@@ -177,7 +177,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     builder.password);
         }
 
-        final Injector injector = Guice.createInjector(new TrestleOntologyModule(ontologyBuilder, REASONER_PREFIX), new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled"), this.trestleConfig.getBoolean("events.enabled"), this.trestleConfig.getBoolean("equality.enabled")));
+        final Injector injector = Guice.createInjector(new TrestleOntologyModule(ontologyBuilder, REASONER_PREFIX), new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled"), this.trestleConfig.getBoolean("events.enabled")));
 
 //        Setup metrics engine
 //        metrician = null;
@@ -216,7 +216,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //      Engines on
         this.mergeEngine = injector.getInstance(TrestleMergeEngine.class);
         this.eventEngine = injector.getInstance(TrestleEventEngine.class);
-//        TODO(nrobison): This should be injectable
         this.equalityEngine = injector.getInstance(EqualityEngine.class);
 
 //            validate the classes
@@ -1438,6 +1437,42 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             return objectProperties.stream().findAny().orElseThrow(RuntimeException::new).getSubject().asOWLNamedIndividual();
         }, trestleThreadPool);
 
+    }
+
+    @Override
+    public <@NonNull T> Optional<List<T>> getEquivalentObjects(Class<T> clazz, IRI individual, Temporal queryTemporal) {
+        return getEquivalentObjects(clazz, Collections.singletonList(individual), queryTemporal);
+    }
+
+    @Override
+    public <@NonNull T> Optional<List<T>> getEquivalentObjects(Class<T> clazz, List<IRI> individuals, Temporal queryTemporal) {
+        final List<OWLNamedIndividual> individualSubjects = individuals
+                .stream()
+                .map(df::getOWLNamedIndividual)
+                .collect(Collectors.toList());
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+        try {
+            final List<OWLNamedIndividual> equivalentIndividuals = this.equalityEngine.getEquivalentIndividuals(clazz, individualSubjects, queryTemporal);
+            final List<CompletableFuture<T>> individualsFutureList = equivalentIndividuals
+                    .stream()
+                    .map(individual -> CompletableFuture.supplyAsync(() -> {
+                        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                        try {
+                            return this.readTrestleObject(clazz, individual.getIRI(), false, queryTemporal, null);
+                        } finally {
+                            this.ontology.returnAndCommitTransaction(tt);
+                        }
+                    }, this.objectThreadPool))
+                    .collect(Collectors.toList());
+            final CompletableFuture<List<T>> individualsFuture = sequenceCompletableFutures(individualsFutureList);
+            return Optional.of(individualsFuture.join());
+        } catch (Exception e) {
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+            logger.error("Unable to get equivalent objects for {} at {}", individuals, queryTemporal, e);
+            return Optional.empty();
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+        }
     }
 
     @Override

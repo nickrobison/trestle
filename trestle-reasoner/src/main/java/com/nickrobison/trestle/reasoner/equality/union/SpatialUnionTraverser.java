@@ -17,6 +17,7 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,6 +39,7 @@ public class SpatialUnionTraverser {
     private final ITrestleOntology ontology;
     private final QueryBuilder qb;
 
+    @Inject
     public SpatialUnionTraverser(ITrestleOntology ontology) {
         this.ontology = ontology;
         this.qb = ontology.getUnderlyingQueryBuilder();
