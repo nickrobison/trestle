@@ -45,11 +45,31 @@ public class SpatialUnionTraverser {
         this.qb = ontology.getUnderlyingQueryBuilder();
     }
 
+    /**
+     * Traverse spatial union to determine individuals that are equivalent to the given {@link OWLNamedIndividual} at the given query {@link Temporal}
+     * If no individuals satisfy the equality constraints, an empty {@link List} is returned
+     *
+     * @param clazz         - {@link Class} of type {@link T} of individual
+     * @param subject       - {@link OWLNamedIndividual} to determine equality of
+     * @param queryTemporal - {@link Temporal} traverse union to given time
+     * @param <T>           - Generic type parameter
+     * @return - {@link List} of {@link OWLNamedIndividual} that are equivalent to the given individual at the specified query time
+     */
     public <T> List<OWLNamedIndividual> traverseUnion(Class<T> clazz, OWLNamedIndividual subject, Temporal queryTemporal) {
         return traverseUnion(clazz, Collections.singletonList(subject), queryTemporal);
     }
 
 
+    /**
+     * Traverse spatial union to determine individuals that are equivalent to the given {@link List} of {@link OWLNamedIndividual} at the given query {@link Temporal}
+     * If no individuals satisfy the equality constraints, an empty {@link List} is returned
+     *
+     * @param clazz         - {@link Class} of type {@link T} of individual
+     * @param subject       - {@link List} of {@link OWLNamedIndividual} to determine equality of
+     * @param queryTemporal - {@link Temporal} traverse union to given time
+     * @param <T>           - Generic type parameter
+     * @return - {@link List} of {@link OWLNamedIndividual} that are equivalent to the given individual at the specified query time
+     */
     public <T> List<OWLNamedIndividual> traverseUnion(Class<T> clazz, List<OWLNamedIndividual> subjects, Temporal queryTemporal) {
 
 //        Get the base temporal type of the input class
@@ -75,8 +95,10 @@ public class SpatialUnionTraverser {
 
             final Optional<TemporalDirection> temporalDirection = determineQueryDirection(stObjects, queryTemporal);
             if (!temporalDirection.isPresent()) {
+                logger.debug("All objects are valid at {}, returning self-set", queryTemporal);
                 return subjects;
             }
+            logger.debug("Executing query in the {} direction", temporalDirection.get());
             if (temporalDirection.get() == TemporalDirection.FORWARD) {
                 invalidObjects = new PriorityQueue<>(forwardComparator);
             } else {
@@ -99,6 +121,16 @@ public class SpatialUnionTraverser {
         }
     }
 
+    /**
+     * Recursive function to return a {@link Set} of {@link STObjectWrapper} that represent the {@link OWLNamedIndividual}s equivalent to the input Set
+     *
+     * @param validObjects      - {@link Set} of {@link STObjectWrapper} of valid objects that make up the equivalence set
+     * @param invalidObjects    - {@link Queue} of {@link STObjectWrapper} representing invalid objects that could contain additional valid objects
+     * @param seenObjects       - {@link Set} of {@link STObjectWrapper} of objects that have already been seen by the equivalence algorithm
+     * @param queryTemporal     - {@link Temporal} query temporal
+     * @param temporalDirection - {@link TemporalDirection} determining whether the algorithm is moving forwards or backwards in time
+     * @return - {@link Set} of {@link STObjectWrapper} that are equivalent to the first object in the {@link Queue} or represent all valid objects for the input set
+     */
     private Set<STObjectWrapper> getEquivalence(Set<STObjectWrapper> validObjects, Queue<STObjectWrapper> invalidObjects, Set<STObjectWrapper> seenObjects, Temporal queryTemporal, TemporalDirection temporalDirection) {
         if (invalidObjects.isEmpty()) {
             return validObjects;
@@ -127,7 +159,15 @@ public class SpatialUnionTraverser {
         return getEquivalence(validObjects, invalidObjects, seenObjects, queryTemporal, temporalDirection);
     }
 
+    /**
+     * Execute equality query to determine the {@link Set} of {@link STObjectWrapper} that are equivalent to the given {@link STObjectWrapper} input object
+     * @param inputObject - {@link STObjectWrapper} to determine equality of
+     * @param direction - {@link TemporalDirection} whether the query is moving forwards or backwards in time
+     * @param seenObjects - {@link Set} of {@link STObjectWrapper} of objects that have already been processed by the algorithm
+     * @return - {@link Set} of {@link STObjectWrapper} objects that are equivalent to the given input object
+     */
     private Set<STObjectWrapper> executeEqualityQuery(STObjectWrapper inputObject, TemporalDirection direction, Set<STObjectWrapper> seenObjects) {
+        logger.trace("Executing equality query for {}", inputObject.getIndividual());
         Set<STObjectWrapper> equivalentObjects = new HashSet<>();
         final String equivalenceQuery = this.qb.buildSTEquivalenceQuery(inputObject.getIndividual());
         final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(equivalenceQuery);
@@ -151,7 +191,9 @@ public class SpatialUnionTraverser {
         for (STObjectWrapper queryObject : queryObjects) {
 //            Unions first
             if (queryObject.getType().equals(spatialUnionIRI)) {
+                logger.trace("{} is a union", queryObject.getIndividual());
                 if (isCompleteUnion(queryObject, seenObjects)) {
+                    logger.trace("{} is a complete union", queryObject.getIndividual());
                     final Set<STObjectWrapper> unionEqualities = executeEqualityQuery(queryObject, direction, seenObjects);
                     if (unionEqualities.isEmpty()) {
                         return new HashSet<>();
@@ -159,6 +201,7 @@ public class SpatialUnionTraverser {
                     equivalentObjects.addAll(unionEqualities);
                     seenObjects.addAll(unionEqualities);
                 } else {
+                    logger.trace("{} is not a complete union", queryObject.getIndividual());
                     return new HashSet<>();
                 }
             }

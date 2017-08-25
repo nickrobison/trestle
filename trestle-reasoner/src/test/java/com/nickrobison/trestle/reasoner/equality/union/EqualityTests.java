@@ -87,7 +87,7 @@ public class EqualityTests extends AbstractReasonerTest {
                 () -> assertTrue(equivalentObjects.contains(obj2Individual), "Should have Obj2"),
                 () -> assertTrue(!equivalentObjects.contains(obj8Individual), "Should not have Obj8"));
 
-        final List<OWLNamedIndividual> obj2EqObjects = unionWalker.getEquivalentIndividuals(EqualityTestClass.class, obj2Individual, LocalDate.of(2014, 3, 11));
+        final List<OWLNamedIndividual> obj2EqObjects = unionWalker.getEquivalentIndividuals(EqualityTestClass.class, obj2Individual, LocalDate.of(2015, 3, 11));
         assertAll(() -> assertEquals(2, obj2EqObjects.size(), "Should have 2 equivalent objects"),
                 () -> assertTrue(obj2EqObjects.contains(obj7Individual), "Should be partially equivalent to Obj7"));
 
@@ -112,6 +112,9 @@ public class EqualityTests extends AbstractReasonerTest {
         final List<OWLNamedIndividual> eqObjects56 = unionWalker.getEquivalentIndividuals(EqualityTestClass.class, Arrays.asList(obj5Individual, obj6Individual), LocalDate.of(2016, 3, 11));
         assertAll(() -> assertEquals(1, eqObjects56.size(), "Should only have 1 equivalent object"),
                 () -> assertTrue(eqObjects56.contains(obj9Individual), "Should be equal to Obj9"));
+
+        final List<OWLNamedIndividual> eqObjects56Empty = unionWalker.getEquivalentIndividuals(EqualityTestClass.class, Arrays.asList(obj5Individual), LocalDate.of(2016, 3, 11));
+        assertAll(() -> assertEquals(0, eqObjects56Empty.size(), "Should have no equivalent objects"));
 
 //        2017
         final List<OWLNamedIndividual> eqObjects5 = unionWalker.getEquivalentIndividuals(EqualityTestClass.class, obj1Individual, LocalDate.of(2017, 3, 11));

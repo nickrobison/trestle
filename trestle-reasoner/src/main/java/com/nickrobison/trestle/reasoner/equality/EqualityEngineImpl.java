@@ -34,6 +34,7 @@ public class EqualityEngineImpl implements EqualityEngine {
     @Override
     public <T> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold) {
         final double percentEquals = this.unionBuilder.calculateSpatialEquals(inputObject, matchObject, inputSR);
+        logger.debug("{} and {} have equality of {}", inputObject, matchObject, percentEquals);
         return percentEquals >= threshold;
     }
 
