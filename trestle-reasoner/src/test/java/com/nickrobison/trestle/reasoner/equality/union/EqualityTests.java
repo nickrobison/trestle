@@ -1,20 +1,26 @@
 package com.nickrobison.trestle.reasoner.equality.union;
 
+import com.esri.core.geometry.*;
 import com.google.common.collect.ImmutableList;
 import com.nickrobison.trestle.reasoner.AbstractReasonerTest;
+import com.nickrobison.trestle.reasoner.TestClasses;
 import com.nickrobison.trestle.reasoner.annotations.DatasetClass;
 import com.nickrobison.trestle.reasoner.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.reasoner.equality.EqualityEngine;
 import com.nickrobison.trestle.types.events.TrestleEventType;
+import com.vividsolutions.jts.io.ParseException;
+import com.vividsolutions.jts.io.WKTReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
-import java.io.Serializable;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -189,6 +195,46 @@ public class EqualityTests extends AbstractReasonerTest {
 
     }
 
+    @Test
+    public void unionTest() throws IOException, ParseException {
+        final WKTReader wktReader = new WKTReader();
+        final TestClasses.ESRIPolygonTest originalObject;
+//        Read in the individuals
+        List<TestClasses.ESRIPolygonTest> inputObjects = new ArrayList<>();
+        final InputStream originalStream = EqualityTestClass.class.getClassLoader().getResourceAsStream("98103.csv");
+        final BufferedReader originalReader = new BufferedReader(new InputStreamReader(originalStream, StandardCharsets.UTF_8));
+        try {
+            final String[] firstLine = originalReader.readLine().split(";");
+            originalObject = new TestClasses.ESRIPolygonTest(Integer.parseInt(firstLine[0]), (Polygon) GeometryEngine.geometryFromWkt(firstLine[1], 0, Geometry.Type.Polygon), LocalDate.of(2000, 1, 1));
+            inputObjects.add(originalObject);
+        } finally {
+            originalReader.close();
+            originalStream.close();
+        }
+
+//        Read in the dissolved ones
+        final InputStream splitIS = EqualityTestClass.class.getClassLoader().getResourceAsStream("98103_split.csv");
+        final BufferedReader splitReader = new BufferedReader(new InputStreamReader(splitIS, StandardCharsets.UTF_8));
+        try {
+            String line;
+            while ((line = splitReader.readLine()) != null) {
+                final String[] splitLine = line.split(";");
+                inputObjects.add(new TestClasses.ESRIPolygonTest(Integer.parseInt(splitLine[0]), (Polygon) GeometryEngine.geometryFromWkt(splitLine[1], 0, Geometry.Type.Polygon), LocalDate.of(2001, 1, 1)));
+            }
+        } finally {
+            splitReader.close();
+            splitIS.close();
+        }
+        assertEquals(6, inputObjects.size(), "Should have 6 split objects");
+
+//        Calculate equality
+        final Optional<UnionEqualityResult<TestClasses.ESRIPolygonTest>> equalityResult = this.reasoner.getEqualityEngine().calculateSpatialUnion(inputObjects, SpatialReference.create(4296), 0.9);
+        assertAll(() -> assertTrue(equalityResult.isPresent(), "Should have equality result"),
+                () -> assertEquals(TrestleEventType.SPLIT, equalityResult.get().getType(), "Should have detected a split"),
+//                We need to do this, because we can't compare on doubles, plus rounding
+                () -> assertTrue(equalityResult.get().getStrength() > 0.99, "Should be perfectly equal"));
+    }
+
     @Override
     protected String getTestName() {
         return "equality_tests";
@@ -196,7 +242,7 @@ public class EqualityTests extends AbstractReasonerTest {
 
     @Override
     protected ImmutableList<Class<?>> registerClasses() {
-        return ImmutableList.of(EqualityTestClass.class);
+        return ImmutableList.of(EqualityTestClass.class, TestClasses.ESRIPolygonTest.class);
     }
 
     @DatasetClass(name = "equality-test")

@@ -108,9 +108,9 @@ public class SpatialUnionBuilder {
                 if (matchSet.isEmpty()) {
                     continue;
                 }
-
-                if (executeUnion(inputSR, matchThreshold, (Polygon) unionInputGeom, new ArrayList<>(matchSet)) > matchThreshold)
-                    return new PolygonMatchSet(inputSet, matchSet, matchThreshold);
+                double matchStrength;
+                if ((matchStrength = executeUnion(inputSR, matchThreshold, (Polygon) unionInputGeom, new ArrayList<>(matchSet))) > matchThreshold)
+                    return new PolygonMatchSet(inputSet, matchSet, matchStrength);
             }
         }
         return null;
@@ -160,8 +160,8 @@ public class SpatialUnionBuilder {
             sets.add(new HashSet<>());
             return sets;
         }
-        final ArrayDeque<Polygon> list = new ArrayDeque<>(originalSet);
-        Polygon head = list.getFirst();
+        final Queue<Polygon> list = new ArrayDeque<>(originalSet);
+        Polygon head = list.poll();
         Set<Polygon> rest = new HashSet<>(list);
         for (Set<Polygon> set : powerSet(rest)) {
             Set<Polygon> newSet = new HashSet<>();
