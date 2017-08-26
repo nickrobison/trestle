@@ -18,6 +18,7 @@ import com.vividsolutions.jts.io.WKTReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.io.*;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -220,11 +222,9 @@ public class EqualityTests extends AbstractReasonerTest {
         final BufferedReader splitReader = new BufferedReader(new InputStreamReader(splitIS, StandardCharsets.UTF_8));
         try {
             String line;
-            int lineCount = 1;
             while ((line = splitReader.readLine()) != null) {
                 final String[] splitLine = line.split(";");
-                splitObjects.add(new TestClasses.ESRIPolygonTest(Integer.parseInt(splitLine[0]) + lineCount, (Polygon) GeometryEngine.geometryFromWkt(splitLine[1], 0, Geometry.Type.Polygon), LocalDate.of(2000, 1, 1)));
-                lineCount++;
+                splitObjects.add(new TestClasses.ESRIPolygonTest(Integer.parseInt(splitLine[0]), (Polygon) GeometryEngine.geometryFromWkt(splitLine[1], 0, Geometry.Type.Polygon), LocalDate.of(2000, 1, 1)));
             }
         } finally {
             splitReader.close();
@@ -257,11 +257,9 @@ public class EqualityTests extends AbstractReasonerTest {
         final BufferedReader nsSplitReader = new BufferedReader(new InputStreamReader(nsSplitIS, StandardCharsets.UTF_8));
         try {
             String line;
-            int lineCount = 1;
             while ((line = nsSplitReader.readLine()) != null) {
                 final String[] splitLine = line.split(";");
-                nsUnionObjects.add(new TestClasses.ESRIPolygonTest(Integer.parseInt(splitLine[0]) + lineCount, (Polygon) GeometryEngine.geometryFromWkt(splitLine[1], 0, Geometry.Type.Polygon), LocalDate.of(2001, 1, 1)));
-                lineCount++;
+                nsUnionObjects.add(new TestClasses.ESRIPolygonTest(Integer.parseInt(splitLine[0]), (Polygon) GeometryEngine.geometryFromWkt(splitLine[1], 0, Geometry.Type.Polygon), LocalDate.of(2001, 1, 1)));
             }
         } finally {
             nsSplitReader.close();
@@ -272,6 +270,7 @@ public class EqualityTests extends AbstractReasonerTest {
 
         final Optional<UnionEqualityResult<TestClasses.ESRIPolygonTest>> unionResult = this.reasoner.getEqualityEngine().calculateSpatialUnion(nsUnionObjects, INPUT_SR, 0.9);
         assertAll(() -> assertTrue(unionResult.isPresent(), "Should have equality"),
+                () -> assertEquals(northSeattle, unionResult.get().getUnionObject(), "Should be a union of North Seattle"),
                 () -> assertEquals(TrestleEventType.MERGED, unionResult.get().getType(), "Should be split"),
                 () -> assertTrue(unionResult.get().getStrength() < 0.99, "Should be really equal"));
 
@@ -281,11 +280,9 @@ public class EqualityTests extends AbstractReasonerTest {
         final BufferedReader fakeSplitBR = new BufferedReader(new InputStreamReader(fakeSplitIS, StandardCharsets.UTF_8));
         try {
             String line;
-            int lineCount = 1;
             while ((line = fakeSplitBR.readLine()) != null) {
                 final String[] split = line.split(";");
-                fakeSplitObjects.add(new TestClasses.ESRIPolygonTest(Integer.parseInt(split[0]) + lineCount, (Polygon) GeometryEngine.geometryFromWkt(split[1], 0, Geometry.Type.Polygon), LocalDate.of(2003, 1, 1)));
-                lineCount++;
+                fakeSplitObjects.add(new TestClasses.ESRIPolygonTest(Integer.parseInt(split[0]), (Polygon) GeometryEngine.geometryFromWkt(split[1], 0, Geometry.Type.Polygon), LocalDate.of(2003, 1, 1)));
             }
         } finally {
             fakeSplitBR.close();
@@ -293,10 +290,28 @@ public class EqualityTests extends AbstractReasonerTest {
         }
         fakeSplitObjects.add(northSeattle);
 
-        final Optional<UnionEqualityResult<TestClasses.ESRIPolygonTest>> esriPolygonTestUnionEqualityResult = this.reasoner.getEqualityEngine().calculateSpatialUnion(fakeSplitObjects, INPUT_SR, 0.9);
-        assertAll(() -> assertTrue(esriPolygonTestUnionEqualityResult.isPresent(), "Should have equality"),
-                () -> assertEquals(TrestleEventType.SPLIT, esriPolygonTestUnionEqualityResult.get().getType(), "Should be split"),
-                () -> assertTrue(esriPolygonTestUnionEqualityResult.get().getStrength() > 0.99, "Should be pretty much equal"));
+        final Optional<UnionEqualityResult<TestClasses.ESRIPolygonTest>> nsSplitResult = this.reasoner.getEqualityEngine().calculateSpatialUnion(fakeSplitObjects, INPUT_SR, 0.9);
+        assertAll(() -> assertTrue(nsSplitResult.isPresent(), "Should have equality"),
+                () -> assertEquals(northSeattle, nsSplitResult.get().getUnionObject(), "Should be a split of North Seattle"),
+                () -> assertEquals(TrestleEventType.SPLIT, nsSplitResult.get().getType(), "Should be split"),
+                () -> assertTrue(nsSplitResult.get().getStrength() > 0.99, "Should be pretty much equal"));
+
+//        Should not have equality if we drop some of the elements
+        final List<TestClasses.ESRIPolygonTest> missingSplitObjects = fakeSplitObjects
+                .stream()
+                .filter(obj -> obj.getAdm0_code() != 26)
+                .collect(Collectors.toList());
+        final Optional<UnionEqualityResult<TestClasses.ESRIPolygonTest>> missingSplitResult = this.reasoner.getEqualityEngine().calculateSpatialUnion(missingSplitObjects, INPUT_SR, 0.9);
+        assertTrue(!missingSplitResult.isPresent(), "Should not have equality");
+
+//        Try to write the objects
+        this.reasoner.addTrestleObjectSplitMerge(equalityResult.get().getType(), equalityResult.get().getUnionObject(), new ArrayList<>(equalityResult.get().getUnionOf()), equalityResult.get().getStrength());
+        this.reasoner.addTrestleObjectSplitMerge(nsSplitResult.get().getType(), nsSplitResult.get().getUnionObject(), new ArrayList<>(nsSplitResult.get().getUnionOf()), nsSplitResult.get().getStrength());
+        this.reasoner.addTrestleObjectSplitMerge(unionResult.get().getType(), unionResult.get().getUnionObject(), new ArrayList<>(unionResult.get().getUnionOf()), unionResult.get().getStrength());
+
+        final Optional<List<TestClasses.ESRIPolygonTest>> eqObj2000 = this.reasoner.getEquivalentObjects(TestClasses.ESRIPolygonTest.class, IRI.create(OVERRIDE_PREFIX, "98103"), LocalDate.of(2000, 1, 1));
+        assertAll(() -> assertTrue(eqObj2000.isPresent(), "Should have objects"),
+                () -> assertEquals(5, eqObj2000.get().size(), "Should have 5 objects"));
 
     }
 
