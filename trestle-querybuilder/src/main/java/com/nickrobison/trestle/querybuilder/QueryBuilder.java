@@ -27,6 +27,8 @@ import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 /**
  * Created by nrobison on 8/11/16.
  */
+// We can suppress the duplicated string warning, because that just makes things more confusing
+@SuppressWarnings({"squid:S1192"})
 public class QueryBuilder {
 
     private static final double OFFSET = 0.01;
@@ -68,7 +70,7 @@ public class QueryBuilder {
                 trimmedPrefixMap.put("", entry.getValue());
             }
             trimmedPrefixMap.put(entry.getKey().replace(":", ""), entry.getValue());
-            builder.append(String.format("TRESTLE_PREFIX %s : <%s>\n", entry.getKey().replace(":", ""), entry.getValue()));
+            builder.append(String.format("TRESTLE_PREFIX %s : <%s>%n", entry.getKey().replace(":", ""), entry.getValue()));
         }
         this.prefixes = builder.toString();
         final String defaultPrefix = pm.getDefaultPrefix();
@@ -133,6 +135,13 @@ public class QueryBuilder {
         return ps.toString();
     }
 
+    /**
+     * @param individual           - Individual
+     * @param datasetClass         - OWLClass
+     * @param relationshipStrength - Relationship strength
+     * @return - SPARQL Query
+     * @deprecated - Don't us this, it probably doesn't even work
+     */
     @Deprecated
     public String buildRelationQuery(OWLNamedIndividual individual, @Nullable OWLClass datasetClass, double relationshipStrength) {
         final ParameterizedSparqlString ps = buildBaseString();
@@ -385,6 +394,8 @@ public class QueryBuilder {
     }
 
     //    FIXME(nrobison): This needs to account for exists and valid times.
+//    We need the units parameter for one of the subclasses
+    @SuppressWarnings({"squid:S1172"})
     public String buildTemporalSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, Units unit, OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m ?tStart ?tEnd" +
@@ -472,14 +483,13 @@ public class QueryBuilder {
     /**
      * Common method to build the spatio-temporal intersection component of the SPARQL query
      *
-     * @param ps       - ParamaterizedSparqlString to build on
-     * @param wktValue - ParamaterizedSparqlString to build on
-     * @param buffer   - double buffer (in meters) around the intersection
-     * @param atTime   - OffsetDateTime to set intersection time to
-     * @param dbAtTime
-     * @throws UnsupportedFeatureException
+     * @param ps       - {@link ParameterizedSparqlString} to build on
+     * @param wktValue - {@link ParameterizedSparqlString} to build on
+     * @param buffer   - {@link Double} buffer (in meters) around the intersection
+     * @param atTime   - {@link OffsetDateTime} to set intersection time to
+     * @param dbAtTime - {@link OffsetDateTime} of database intersection time
      */
-    protected void buildDatabaseTSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
+    protected void buildDatabaseTSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime atTime, OffsetDateTime dbAtTime) {
 //        Add DB intersection
         ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime)) .");
 //                We need to remove this, otherwise GraphDB substitutes geosparql for ogc
@@ -500,7 +510,7 @@ public class QueryBuilder {
      * @param buffer   - double buffer (in meters) around the intersection
      * @throws UnsupportedFeatureException
      */
-    protected void buildDatabaseSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime dbAt) throws UnsupportedFeatureException {
+    protected void buildDatabaseSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime dbAt) {
         ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime)) .");
         ps.removeNsPrefix("geosparql");
         ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
@@ -706,6 +716,7 @@ public class QueryBuilder {
 
     /**
      * Returns all components of a given {@link OWLNamedIndividual} representing a {@link com.nickrobison.trestle.common.StaticIRI#spatialUnionIRI}
+     *
      * @param unionIndividual - {@link OWLNamedIndividual} to retrieve {@link com.nickrobison.trestle.common.StaticIRI#hasComponetIRI} relation
      * @return - SPARQL Query String
      */
