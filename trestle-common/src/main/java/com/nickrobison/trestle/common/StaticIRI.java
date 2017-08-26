@@ -68,6 +68,7 @@ public class StaticIRI {
     public static final IRI databaseTemporalObjectIRI = IRI.create(TRESTLE_PREFIX, "Database_Object");
     public static final IRI intervalTemporalObjectIRI = IRI.create(TRESTLE_PREFIX, "Interval_Object");
     public static final IRI pointTemporalObjectIRI = IRI.create(TRESTLE_PREFIX, "Point_Object");
+    public static final IRI spatialUnionIRI = IRI.create(TRESTLE_PREFIX, "SpatialUnion");
 
 //    Properties
     public static final IRI relationStrengthIRI = IRI.create(TRESTLE_PREFIX, "Relation_Strength");

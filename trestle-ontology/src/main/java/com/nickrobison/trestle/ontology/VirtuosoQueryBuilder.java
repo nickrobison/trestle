@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.ontology;
 
-import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import org.apache.jena.query.ParameterizedSparqlString;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
@@ -18,7 +17,7 @@ public class VirtuosoQueryBuilder extends QueryBuilder {
     }
 
     @Override
-    protected void buildDatabaseTSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
+    protected void buildDatabaseTSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime atTime, OffsetDateTime dbAtTime) {
         ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime)) .");
 
         logger.warn("Unit conversion not implemented yet, assuming meters as base distance");
@@ -32,7 +31,7 @@ public class VirtuosoQueryBuilder extends QueryBuilder {
     }
 
     @Override
-    protected void buildDatabaseSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime dbAt) throws UnsupportedFeatureException {
+    protected void buildDatabaseSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime dbAt) {
         ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime)) .");
 
         logger.warn("Unit conversion not implemented yet, assuming meters as base distance");

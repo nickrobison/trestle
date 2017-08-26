@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -164,7 +165,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
 //        Split first
         final TrestleIndividual splitStartIndividual = this.reasoner.getTrestleIndividual(split_start.adm0_code.toString());
         assertAll(() -> assertEquals(3, splitStartIndividual.getEvents().size(), "Should have 3 events"),
-                () -> assertEquals(5, splitStartIndividual.getRelations().size(), "Should have 5 split_into events"));
+                () -> assertEquals(5, splitStartIndividual.getRelations().stream().filter(relation -> relation.getType().equals("SPLIT_INTO")).collect(Collectors.toList()).size(), "Should have 5 split_into events"));
         final Optional<TrestleRelation> split_from = this.reasoner.getTrestleIndividual(split1.adm0_code.toString()).getRelations().stream().filter(relation -> relation.getType().equals("SPLIT_FROM")).findFirst();
         assertAll(() -> assertTrue(split_from.isPresent()),
                 () -> assertEquals("http://nickrobison.com/test-owl#100", split_from.get().getObject(), "Should point to starting split"));
@@ -172,7 +173,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
 //        Now merged
         final TrestleIndividual mergeSubjectIndividual = this.reasoner.getTrestleIndividual(merge_subject.adm0_code.toString());
         assertAll(() -> assertEquals(3, mergeSubjectIndividual.getEvents().size(), "Should have 3 events"),
-                () -> assertEquals(5, mergeSubjectIndividual.getRelations().size(), "Should have 5 merged objects"));
+                () -> assertEquals(5, mergeSubjectIndividual.getRelations().stream().filter(relation -> relation.getType().equals("MERGED_FROM")).collect(Collectors.toList()).size(), "Should have 5 merged objects"));
         final Optional<TrestleRelation> merged_into = this.reasoner.getTrestleIndividual(merge5.adm0_code.toString()).getRelations().stream().filter(relation -> relation.getType().equals("MERGED_INTO")).findFirst();
         assertAll(() -> assertTrue(merged_into.isPresent()),
                 () -> assertEquals("http://nickrobison.com/test-owl#200", merged_into.get().getObject(), "Should point to merged subject"));

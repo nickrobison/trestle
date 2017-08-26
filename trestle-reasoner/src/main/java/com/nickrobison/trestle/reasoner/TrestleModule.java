@@ -3,11 +3,8 @@ package com.nickrobison.trestle.reasoner;
 import com.google.inject.AbstractModule;
 import com.nickrobison.metrician.MetricianModule;
 
-import com.nickrobison.trestle.ontology.TrestleOntologyModule;
 import com.nickrobison.trestle.reasoner.caching.TrestleCacheModule;
-import com.nickrobison.trestle.reasoner.equality.EqualityEngine;
-import com.nickrobison.trestle.reasoner.equality.EqualityEngineImpl;
-import com.nickrobison.trestle.reasoner.equality.EqualityEngineNoOp;
+import com.nickrobison.trestle.reasoner.equality.EqualityEngineModule;
 import com.nickrobison.trestle.reasoner.events.TrestleEventEngine;
 import com.nickrobison.trestle.reasoner.events.EventEngineImpl;
 import com.nickrobison.trestle.reasoner.events.EventEngineNoOp;
@@ -29,22 +26,20 @@ public class TrestleModule extends AbstractModule {
     private final boolean cachingEnabled;
     private final boolean mergeEnabled;
     private final boolean eventEnabled;
-    private final boolean equalityEnabled;
 
-    TrestleModule(boolean metricsEnabled, boolean cachingEnabled, boolean mergeEnabled, boolean eventEnabled, boolean equalityEnabled) {
+    TrestleModule(boolean metricsEnabled, boolean cachingEnabled, boolean mergeEnabled, boolean eventEnabled) {
         logger.debug("Building Trestle Module");
         this.metricsEnabled = metricsEnabled;
         this.cachingEnabled = cachingEnabled;
         this.mergeEnabled = mergeEnabled;
         this.eventEnabled = eventEnabled;
-        this.equalityEnabled = equalityEnabled;
-
     }
 
     @Override
     protected void configure() {
         install(new MetricianModule(metricsEnabled));
         install(new TrestleCacheModule(cachingEnabled));
+        install(new EqualityEngineModule());
 
 //        Bind the parser
         bind(TrestleParser.class)
@@ -63,13 +58,5 @@ public class TrestleModule extends AbstractModule {
         } else {
             bind(TrestleEventEngine.class).to(EventEngineNoOp.class);
         }
-
-//        Equality Engine
-        if (equalityEnabled) {
-            bind(EqualityEngine.class).to(EqualityEngineImpl.class);
-        } else {
-            bind(EqualityEngine.class).to(EqualityEngineNoOp.class);
-        }
-
     }
 }

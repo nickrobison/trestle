@@ -137,6 +137,37 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
         return this.timeZone;
     }
 
+    @Override
+    public String toString() {
+        return String.format("%s@%s type:%s", this.scope, this.atTime, this.temporalType);
+    }
+
+    @Override
+    @SuppressWarnings({"pmd:NPathComplexity"})
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        PointTemporal<?> that = (PointTemporal<?>) o;
+
+        if (scope != that.scope) return false;
+        if (!atTime.equals(that.atTime)) return false;
+        if (parameterName != null ? !parameterName.equals(that.parameterName) : that.parameterName != null)
+            return false;
+        if (!temporalType.equals(that.temporalType)) return false;
+        return timeZone.equals(that.timeZone);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = scope.hashCode();
+        result = 31 * result + atTime.hashCode();
+        result = 31 * result + (parameterName != null ? parameterName.hashCode() : 0);
+        result = 31 * result + temporalType.hashCode();
+        result = 31 * result + timeZone.hashCode();
+        return result;
+    }
+
     public static class Builder<T extends Temporal> {
 
         private TemporalScope scope;
@@ -201,10 +232,5 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
             return new PointTemporal<>(this);
         }
 
-    }
-
-    @Override
-    public String toString() {
-        return String.format("%s@%s type:%s", this.scope, this.atTime, this.temporalType);
     }
 }

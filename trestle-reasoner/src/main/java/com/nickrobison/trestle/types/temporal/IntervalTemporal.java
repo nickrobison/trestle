@@ -222,6 +222,39 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         return String.format("%sFrom:%s To:%s type:%s", this.scope, this.fromTime, this.toTime, this.temporalType);
     }
 
+    @Override
+    @SuppressWarnings({"pmd:NPathComplexity"})
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        IntervalTemporal<?> that = (IntervalTemporal<?>) o;
+
+        if (isDefault != that.isDefault) return false;
+        if (scope != that.scope) return false;
+        if (!fromTime.equals(that.fromTime)) return false;
+        if (toTime != null ? !toTime.equals(that.toTime) : that.toTime != null) return false;
+        if (startName != null ? !startName.equals(that.startName) : that.startName != null) return false;
+        if (endName != null ? !endName.equals(that.endName) : that.endName != null) return false;
+        if (!temporalType.equals(that.temporalType)) return false;
+        if (!startTimeZone.equals(that.startTimeZone)) return false;
+        return endTimeZone.equals(that.endTimeZone);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = scope.hashCode();
+        result = 31 * result + fromTime.hashCode();
+        result = 31 * result + (toTime != null ? toTime.hashCode() : 0);
+        result = 31 * result + (isDefault ? 1 : 0);
+        result = 31 * result + (startName != null ? startName.hashCode() : 0);
+        result = 31 * result + (endName != null ? endName.hashCode() : 0);
+        result = 31 * result + temporalType.hashCode();
+        result = 31 * result + startTimeZone.hashCode();
+        result = 31 * result + endTimeZone.hashCode();
+        return result;
+    }
+
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public static class Builder<T extends Temporal> {
 

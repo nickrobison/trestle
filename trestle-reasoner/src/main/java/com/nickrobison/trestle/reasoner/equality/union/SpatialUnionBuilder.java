@@ -11,13 +11,14 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.TemporalUtils.compareTemporals;
 
-public class SpatialUnionEngine {
+public class SpatialUnionBuilder {
     private static final String TEMPORAL_OPTIONAL_ERROR = "Cannot get temporal for comparison object";
 
     private static final OperatorFactoryLocal instance = OperatorFactoryLocal.getInstance();
@@ -25,7 +26,8 @@ public class SpatialUnionEngine {
     private static final OperatorUnion operatorUnion = (OperatorUnion) instance.getOperator(Operator.Type.Union);
     private final TrestleParser tp;
 
-    public SpatialUnionEngine(TrestleParser tp) {
+    @Inject
+    public SpatialUnionBuilder(TrestleParser tp) {
         this.tp = tp;
     }
 
@@ -38,7 +40,7 @@ public class SpatialUnionEngine {
                 .getEarlyObjects()
                 .stream()
                 .map(SpatialParser::getSpatialValue)
-                .map(SpatialUnionEngine::parseESRIPolygon)
+                .map(SpatialUnionBuilder::parseESRIPolygon)
                 .collect(Collectors.toSet());
 
         //        Extract the ESRI polygons for each objects
@@ -46,7 +48,7 @@ public class SpatialUnionEngine {
                 .getLateObjects()
                 .stream()
                 .map(SpatialParser::getSpatialValue)
-                .map(SpatialUnionEngine::parseESRIPolygon)
+                .map(SpatialUnionBuilder::parseESRIPolygon)
                 .collect(Collectors.toSet());
 
         @Nullable final PolygonMatchSet polygonMatchSet = getApproxEqualUnion(earlyPolygons, latePolygons, inputSR, matchThreshold);
@@ -106,9 +108,9 @@ public class SpatialUnionEngine {
                 if (matchSet.isEmpty()) {
                     continue;
                 }
-
-                if (executeUnion(inputSR, matchThreshold, (Polygon) unionInputGeom, new ArrayList<>(matchSet)) > matchThreshold)
-                    return new PolygonMatchSet(inputSet, matchSet, matchThreshold);
+                double matchStrength;
+                if ((matchStrength = executeUnion(inputSR, matchThreshold, (Polygon) unionInputGeom, new ArrayList<>(matchSet))) > matchThreshold)
+                    return new PolygonMatchSet(inputSet, matchSet, matchStrength);
             }
         }
         return null;
@@ -158,8 +160,8 @@ public class SpatialUnionEngine {
             sets.add(new HashSet<>());
             return sets;
         }
-        final ArrayDeque<Polygon> list = new ArrayDeque<>(originalSet);
-        Polygon head = list.getFirst();
+        final Queue<Polygon> list = new ArrayDeque<>(originalSet);
+        Polygon head = list.poll();
         Set<Polygon> rest = new HashSet<>(list);
         for (Set<Polygon> set : powerSet(rest)) {
             Set<Polygon> newSet = new HashSet<>();

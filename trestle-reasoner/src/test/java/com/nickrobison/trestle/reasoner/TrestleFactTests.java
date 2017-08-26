@@ -17,6 +17,7 @@ import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
@@ -27,6 +28,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Tag("integration")
 public class TrestleFactTests extends AbstractReasonerTest {
     @Override
     protected String getTestName() {

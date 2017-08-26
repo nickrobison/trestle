@@ -123,6 +123,7 @@ public final class LambdaExceptionUtil {
      * @param e              - {@link RuntimeException} that's wrapping the exception we really want
      * @param exceptionsList - Generic exception types to try and cast the underlying exception to
      */
+    @SafeVarargs
     public static void recoverExceptionType(RuntimeException e, Class<? extends RuntimeException>... exceptionsList) {
         for (Class<? extends RuntimeException> possibleException : exceptionsList) {
             if (possibleException.isAssignableFrom(e.getCause().getClass())) {

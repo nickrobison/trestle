@@ -13,8 +13,8 @@ import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 public abstract class AbstractReasonerTest {
-    static final String OVERRIDE_PREFIX = "http://nickrobison.com/test-owl#";
-    TrestleParser tp;
+    protected static final String OVERRIDE_PREFIX = "http://nickrobison.com/test-owl#";
+    protected TrestleParser tp;
     protected TrestleReasonerImpl reasoner;
     protected OWLDataFactory df;
 

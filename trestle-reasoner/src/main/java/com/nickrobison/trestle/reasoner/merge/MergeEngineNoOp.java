@@ -53,6 +53,11 @@ public class MergeEngineNoOp implements TrestleMergeEngine {
     }
 
     @Override
+    public void changeMergeOnLoad(boolean enable) {
+//        Not implemented
+    }
+
+    @Override
     public boolean existenceEnabled() {
         return false;
     }

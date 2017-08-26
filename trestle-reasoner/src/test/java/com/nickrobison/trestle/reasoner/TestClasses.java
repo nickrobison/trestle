@@ -104,7 +104,7 @@ public class TestClasses {
     }
 
     @DatasetClass(name = "GAUL_ESRI_Test")
-    protected static class ESRIPolygonTest implements Serializable {
+    public static class ESRIPolygonTest implements Serializable {
         private static final long serialVersionUID = 42L;
 
         private final Integer adm0_code;
