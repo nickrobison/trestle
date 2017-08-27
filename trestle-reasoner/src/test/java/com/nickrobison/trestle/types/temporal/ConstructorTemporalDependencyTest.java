@@ -8,6 +8,7 @@ import com.nickrobison.trestle.reasoner.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.reasoner.annotations.TrestleCreator;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  * Created by detwiler on 5/5/17.
  */
 @Tag("integration")
+@SuppressWarnings({"argument.type.incompatible"})
 public class ConstructorTemporalDependencyTest extends AbstractReasonerTest {
 
     @Override
@@ -69,10 +71,11 @@ public class ConstructorTemporalDependencyTest extends AbstractReasonerTest {
         @TrestleCreator
         public TestObject(String id) {
             this.id = id;
+            this.startTime = LocalDate.of(1989, 3, 26);
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 

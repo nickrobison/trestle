@@ -5,6 +5,7 @@ import javax.validation.constraints.NotNull;
 /**
  * Created by nrobison on 4/22/17.
  */
+@SuppressWarnings({"initialization.fields.uninitialized"})
 public class TrestleReasonerConfiguration {
     @NotNull
     private String connectionString;

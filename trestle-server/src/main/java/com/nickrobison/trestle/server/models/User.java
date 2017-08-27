@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.server.models;
 
 import com.nickrobison.trestle.server.auth.Privilege;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -17,6 +18,8 @@ import java.util.Set;
         @NamedQuery(name = "com.nickrobison.trestle.server.queries.User.findByUsername", query = "select u from User u where u.username = :username"),
         @NamedQuery(name = "com.nickrobison.trestle.server.queries.User.deleteByID", query = "delete from User u where u.id = :id")
 })
+// I think we can suppress this for Beans
+@SuppressWarnings({"initialization.fields.uninitialized"})
 public class User {
 
     @Id
@@ -114,7 +117,7 @@ public class User {
     public void setPrivileges(int privileges) { this.privileges = privileges; }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 

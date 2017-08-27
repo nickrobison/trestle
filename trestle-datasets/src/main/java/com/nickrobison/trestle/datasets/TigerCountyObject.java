@@ -6,6 +6,7 @@ import com.nickrobison.trestle.reasoner.annotations.Spatial;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.time.LocalDate;
 
@@ -64,7 +65,6 @@ public class TigerCountyObject {
     private final float rate_death;
     private final float rate_natural_increase;
     private final LocalDate record_start_date;
-    private LocalDate record_end_date;
 
     public TigerCountyObject(String geoid, String geom, String region, String division,
                              String state, String county, int pop_estimate, int births,
@@ -176,7 +176,8 @@ public class TigerCountyObject {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
+        if (obj == null) return false;
         if (!(obj instanceof TigerCountyObject))
             return false;
         if (obj == this)

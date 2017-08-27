@@ -15,6 +15,7 @@ import javax.inject.Singleton;
  * Created by nrobison on 11/28/16.
  */
 @Singleton
+@SuppressWarnings({"initialization.fields.uninitialized"})
 public class ReasonerModule implements Managed {
 
     private static final Logger logger = LoggerFactory.getLogger(ReasonerModule.class);

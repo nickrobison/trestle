@@ -10,6 +10,7 @@ import javax.validation.constraints.NotNull;
 /**
  * Created by nrobison on 11/28/16.
  */
+@SuppressWarnings({"initialization.fields.uninitialized"})
 public class TrestleServerConfiguration extends Configuration {
 
     @Valid

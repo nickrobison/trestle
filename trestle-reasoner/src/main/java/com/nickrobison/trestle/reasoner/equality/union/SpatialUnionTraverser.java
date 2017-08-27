@@ -56,7 +56,7 @@ public class SpatialUnionTraverser {
      * @param <T>           - Generic type parameter
      * @return - {@link List} of {@link OWLNamedIndividual} that are equivalent to the given individual at the specified query time
      */
-    public <@NonNull T> List<OWLNamedIndividual> traverseUnion(Class<T> clazz, OWLNamedIndividual subject, Temporal queryTemporal) {
+    public <T extends @NonNull Object> List<OWLNamedIndividual> traverseUnion(Class<T> clazz, OWLNamedIndividual subject, Temporal queryTemporal) {
         return traverseUnion(clazz, Collections.singletonList(subject), queryTemporal);
     }
 
@@ -71,7 +71,7 @@ public class SpatialUnionTraverser {
      * @param <T>           - Generic type parameter
      * @return - {@link List} of {@link OWLNamedIndividual} that are equivalent to the given individual at the specified query time
      */
-    public <@NonNull T> List<OWLNamedIndividual> traverseUnion(Class<T> clazz, List<OWLNamedIndividual> subjects, Temporal queryTemporal) {
+    public <T extends @NonNull Object> List<OWLNamedIndividual> traverseUnion(Class<T> clazz, List<OWLNamedIndividual> subjects, Temporal queryTemporal) {
 
 //        Get the base temporal type of the input class
         final Class<? extends Temporal> temporalType = TemporalParser.getTemporalType(clazz);
@@ -133,11 +133,11 @@ public class SpatialUnionTraverser {
      * @return - {@link Set} of {@link STObjectWrapper} that are equivalent to the first object in the {@link Queue} or represent all valid objects for the input set
      */
     private Set<STObjectWrapper> getEquivalence(Set<STObjectWrapper> validObjects, Queue<STObjectWrapper> invalidObjects, Set<STObjectWrapper> seenObjects, Temporal queryTemporal, TemporalDirection temporalDirection) {
-        if (invalidObjects.isEmpty()) {
+//        This is a null safe way of checking that the queue is empty
+        final STObjectWrapper object = invalidObjects.poll();
+        if (object == null) {
             return validObjects;
         }
-
-        final STObjectWrapper object = invalidObjects.poll();
 
         final Set<STObjectWrapper> eqObjects = executeEqualityQuery(object, temporalDirection, seenObjects);
         if (eqObjects.isEmpty()) {
@@ -181,7 +181,7 @@ public class SpatialUnionTraverser {
                 .filter(object -> !object.getIndividual().equals(inputObject.getIndividual()))
 //                Filter out objects that are pointed in the wrong direction
                 .filter(object -> {
-                    if (direction.equals(TemporalDirection.FORWARD)) {
+                    if (direction == TemporalDirection.FORWARD) {
                         return object.getExistenceTemporal().compareTo(inputObject.getExistenceTemporal().getIdTemporal()) != -1;
                     } else {
                         return object.getExistenceTemporal().compareTo(inputObject.getExistenceTemporal().getIdTemporal()) != 1;

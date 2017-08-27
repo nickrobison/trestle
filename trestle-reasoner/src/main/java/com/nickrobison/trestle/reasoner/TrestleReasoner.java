@@ -284,7 +284,7 @@ public interface TrestleReasoner {
      * @param objects - {@link Set} of {@link OWLNamedIndividual} that are the objects of the event
      * @param strength - {@link Double} Strength of union association
      */
-    <@NonNull T> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength);
+    <T extends @NonNull Object> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength);
 
     /**
      * Spatial Intersect Object with most recent records in the database

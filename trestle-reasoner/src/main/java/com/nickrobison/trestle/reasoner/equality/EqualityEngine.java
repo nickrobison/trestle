@@ -2,6 +2,7 @@ package com.nickrobison.trestle.reasoner.equality;
 
 import com.esri.core.geometry.SpatialReference;
 import com.nickrobison.trestle.reasoner.equality.union.UnionEqualityResult;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.time.temporal.Temporal;
@@ -18,7 +19,7 @@ public interface EqualityEngine {
      * @param <T>            - generic type parameter
      * @return - {@link Optional} {@link UnionEqualityResult} if a Spatial Union exists within the object set, above the given threshold
      */
-    <T> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold);
+    <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold);
 
     /**
      * Determines if two objects are approximately equal, in spatial area, to each other, given a threshold value.
@@ -30,7 +31,7 @@ public interface EqualityEngine {
      * @param threshold   - threshold value which determines 'approximately equal'  @return - {@link boolean} {@code true} objects are approximately equal. {@code false} they are not.
      * @return - Whether or not the spatial equality of the objects exceeds the given threshold
      */
-    <T> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold);
+    <T extends @NonNull Object> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold);
 
     /**
      * Return a {@link List} of {@link OWLNamedIndividual} that are equivalent to the given individual at the specific point in time
@@ -42,7 +43,7 @@ public interface EqualityEngine {
      * @param <T>           - Generic type parameter
      * @return - {@link List} of {@link OWLNamedIndividual}
      */
-    <T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal);
+    <T extends @NonNull Object> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal);
 
     /**
      * Return a {@link List} of {@link OWLNamedIndividual} that are equivalent to the given {@link List} of individuals at the specific point in time
@@ -54,5 +55,5 @@ public interface EqualityEngine {
      * @param <T>           - Generic type parameter
      * @return - {@link List} of {@link OWLNamedIndividual}
      */
-    <T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal);
+    <T extends @NonNull Object> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal);
 }

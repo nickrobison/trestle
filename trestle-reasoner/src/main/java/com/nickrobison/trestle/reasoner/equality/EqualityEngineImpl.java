@@ -28,24 +28,24 @@ public class EqualityEngineImpl implements EqualityEngine {
     }
 
     @Override
-    public <@NonNull T> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
+    public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
         return this.unionBuilder.getApproximateEqualUnion(inputObjects, inputSR, matchThreshold);
     }
 
     @Override
-    public <@NonNull T> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold) {
+    public <T extends @NonNull Object> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold) {
         final double percentEquals = this.unionBuilder.calculateSpatialEquals(inputObject, matchObject, inputSR);
         logger.debug("{} and {} have equality of {}", inputObject, matchObject, percentEquals);
         return percentEquals >= threshold;
     }
 
     @Override
-    public <@NonNull T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
+    public <T extends @NonNull Object> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
         return this.unionWalker.traverseUnion(clazz, individual, queryTemporal);
     }
 
     @Override
-    public <@NonNull T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal) {
+    public <T extends @NonNull Object> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal) {
         return this.unionWalker.traverseUnion(clazz, individual, queryTemporal);
     }
 }

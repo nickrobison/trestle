@@ -11,6 +11,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.MultiLineString;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
 import org.geotools.data.simple.SimpleFeatureCollection;
@@ -37,6 +38,7 @@ import java.util.Map;
  * Created by nrobison on 9/19/16.
  */
 @Disabled
+@SuppressWarnings({"initialization.fields.uninitialized"})
 public class RoadLoader {
 
 
@@ -170,7 +172,7 @@ public class RoadLoader {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
