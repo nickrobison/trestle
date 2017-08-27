@@ -68,14 +68,14 @@ public class MergeEngineImpl implements TrestleMergeEngine {
     @Override
     public MergeScript mergeFacts(OWLNamedIndividual individual, TemporalObject validTemporal, List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> existingFacts, Temporal eventTemporal, Temporal databaseTemporal, Optional<TemporalObject> existsTemporal, MergeStrategy strategy) {
         final MergeStrategy methodStrategy;
-        if (strategy.equals(MergeStrategy.Default)) {
+        if (strategy == MergeStrategy.Default) {
             methodStrategy = this.defaultStrategy;
         } else {
             methodStrategy = strategy;
         }
 
         final ExistenceStrategy eStrategy;
-        if (existenceStrategy.equals(ExistenceStrategy.Default)) {
+        if (existenceStrategy == ExistenceStrategy.Default) {
             eStrategy = this.existenceStrategy;
         } else {
             eStrategy = existenceStrategy;
@@ -113,7 +113,7 @@ public class MergeEngineImpl implements TrestleMergeEngine {
 
     @Override
     public boolean existenceEnabled() {
-        return !this.existenceStrategy.equals(ExistenceStrategy.Ignore);
+        return !(this.existenceStrategy == ExistenceStrategy.Ignore);
     }
 
     private static MergeScript mergeLogic(OWLNamedIndividual individual, List<OWLDataPropertyAssertionAxiom> newFacts, List<TrestleResult> currentFacts, TemporalObject eventTemporal, Temporal databaseTemporal, Optional<TemporalObject> existenceTemporal, ExistenceStrategy existenceStrategy, boolean continuingOnly) {

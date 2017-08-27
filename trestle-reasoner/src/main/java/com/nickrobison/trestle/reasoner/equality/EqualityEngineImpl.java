@@ -4,6 +4,7 @@ import com.esri.core.geometry.SpatialReference;
 import com.nickrobison.trestle.reasoner.equality.union.SpatialUnionBuilder;
 import com.nickrobison.trestle.reasoner.equality.union.SpatialUnionTraverser;
 import com.nickrobison.trestle.reasoner.equality.union.UnionEqualityResult;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,24 +28,24 @@ public class EqualityEngineImpl implements EqualityEngine {
     }
 
     @Override
-    public <T> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
+    public <@NonNull T> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
         return this.unionBuilder.getApproximateEqualUnion(inputObjects, inputSR, matchThreshold);
     }
 
     @Override
-    public <T> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold) {
+    public <@NonNull T> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold) {
         final double percentEquals = this.unionBuilder.calculateSpatialEquals(inputObject, matchObject, inputSR);
         logger.debug("{} and {} have equality of {}", inputObject, matchObject, percentEquals);
         return percentEquals >= threshold;
     }
 
     @Override
-    public <T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
+    public <@NonNull T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
         return this.unionWalker.traverseUnion(clazz, individual, queryTemporal);
     }
 
     @Override
-    public <T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal) {
+    public <@NonNull T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal) {
         return this.unionWalker.traverseUnion(clazz, individual, queryTemporal);
     }
 }

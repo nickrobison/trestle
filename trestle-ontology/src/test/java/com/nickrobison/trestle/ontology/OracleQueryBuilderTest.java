@@ -18,6 +18,7 @@ import java.time.ZoneOffset;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@SuppressWarnings({"initialization.fields.uninitialized"})
 public class OracleQueryBuilderTest {
 
     private static DefaultPrefixManager pm;

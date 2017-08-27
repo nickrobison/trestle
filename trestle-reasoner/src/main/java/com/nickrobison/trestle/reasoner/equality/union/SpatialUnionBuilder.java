@@ -7,6 +7,7 @@ import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.reasoner.parser.spatial.ESRIParser;
 import com.nickrobison.trestle.types.events.TrestleEventType;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +33,7 @@ public class SpatialUnionBuilder {
     }
 
     @SuppressWarnings({"ConstantConditions", "squid:S3655"})
-    public <T> Optional<UnionEqualityResult<T>> getApproximateEqualUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
+    public <@NonNull T> Optional<UnionEqualityResult<T>> getApproximateEqualUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
         final TemporallyDividedObjects<T> dividedObjects = divideObjects(inputObjects);
 
 //        Extract the ESRI polygons for each objects
@@ -75,7 +76,7 @@ public class SpatialUnionBuilder {
      * @param <T> - Generic type parameter
      * @return - {@link Double} percentage spatial match
      */
-    public <T> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR) {
+    public <@NonNull T> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR) {
         final Polygon inputPolygon = parseESRIPolygon(SpatialParser.getSpatialValue(inputObject));
         final Polygon matchPolygon = parseESRIPolygon(SpatialParser.getSpatialValue(matchObject));
         return isApproxEqual(inputPolygon, matchPolygon, inputSR);
@@ -181,7 +182,7 @@ public class SpatialUnionBuilder {
      * @param <T>          - Generic type parameter
      * @return - {@link TemporallyDividedObjects} representing objects divided on end date
      */
-    private <T> TemporallyDividedObjects<T> divideObjects(List<T> inputObjects) {
+    private <@NonNull T> TemporallyDividedObjects<T> divideObjects(List<T> inputObjects) {
         final TemporalParser temporalParser = this.tp.temporalParser;
 //        Get the temporal type of the input objects
 //        Sort the input objects

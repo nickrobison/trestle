@@ -10,6 +10,7 @@ import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
@@ -55,7 +56,7 @@ public class SpatialUnionTraverser {
      * @param <T>           - Generic type parameter
      * @return - {@link List} of {@link OWLNamedIndividual} that are equivalent to the given individual at the specified query time
      */
-    public <T> List<OWLNamedIndividual> traverseUnion(Class<T> clazz, OWLNamedIndividual subject, Temporal queryTemporal) {
+    public <@NonNull T> List<OWLNamedIndividual> traverseUnion(Class<T> clazz, OWLNamedIndividual subject, Temporal queryTemporal) {
         return traverseUnion(clazz, Collections.singletonList(subject), queryTemporal);
     }
 
@@ -70,7 +71,7 @@ public class SpatialUnionTraverser {
      * @param <T>           - Generic type parameter
      * @return - {@link List} of {@link OWLNamedIndividual} that are equivalent to the given individual at the specified query time
      */
-    public <T> List<OWLNamedIndividual> traverseUnion(Class<T> clazz, List<OWLNamedIndividual> subjects, Temporal queryTemporal) {
+    public <@NonNull T> List<OWLNamedIndividual> traverseUnion(Class<T> clazz, List<OWLNamedIndividual> subjects, Temporal queryTemporal) {
 
 //        Get the base temporal type of the input class
         final Class<? extends Temporal> temporalType = TemporalParser.getTemporalType(clazz);

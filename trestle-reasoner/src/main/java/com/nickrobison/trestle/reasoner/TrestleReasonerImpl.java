@@ -1124,6 +1124,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
 //        Parse out the events
+        if (resultSet == null) {
+            throw new IllegalStateException("The result set is null, should never happen");
+        }
         final Set<TrestleEvent> individualEvents = resultSet.getResults()
                 .stream()
 //                Filter out Trestle_Event from results

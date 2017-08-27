@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.reasoner.equality.union;
 
 import com.nickrobison.trestle.types.temporal.TemporalObject;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
@@ -40,7 +41,7 @@ class STObjectWrapper {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 

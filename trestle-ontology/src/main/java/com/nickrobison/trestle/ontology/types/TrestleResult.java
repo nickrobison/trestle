@@ -8,6 +8,7 @@ import org.semanticweb.owlapi.model.OWLObject;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Created by nrobison on 1/10/17.
@@ -60,6 +61,7 @@ public class TrestleResult {
      * Safely unwrap {@link TrestleResult#getLiteral(String)}
      * Call this if the desired {@link OWLLiteral} should never be empty
      * throw {@link IllegalStateException} if {@link Optional#empty()}
+     *
      * @param varName - {@link String} Variable name to access
      * @return - {@link OWLLiteral}
      */
@@ -103,7 +105,11 @@ public class TrestleResult {
     public Map<String, String> getResultValues() {
         Map<String, String> stringMap = new HashMap<>();
         this.resultValues
-                .forEach((key, value) -> stringMap.put(key, value.toString()));
+                .forEach((key, value) -> {
+                    if (value != null) {
+                        stringMap.put(key, value.toString());
+                    }
+                });
         return stringMap;
     }
 

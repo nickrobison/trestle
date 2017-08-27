@@ -223,8 +223,8 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     }
 
     @Override
-    @SuppressWarnings({"pmd:NPathComplexity"})
-    public boolean equals(Object o) {
+    @SuppressWarnings({"pmd:NPathComplexity", "non.interned"})
+    public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
@@ -236,7 +236,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         if (toTime != null ? !toTime.equals(that.toTime) : that.toTime != null) return false;
         if (startName != null ? !startName.equals(that.startName) : that.startName != null) return false;
         if (endName != null ? !endName.equals(that.endName) : that.endName != null) return false;
-        if (!temporalType.equals(that.temporalType)) return false;
+        if (!(temporalType == that.temporalType)) return false;
         if (!startTimeZone.equals(that.startTimeZone)) return false;
         return endTimeZone.equals(that.endTimeZone);
     }

@@ -2,6 +2,7 @@ package com.nickrobison.trestle.types;
 
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -103,7 +104,7 @@ public class TrestleIndividual implements Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 

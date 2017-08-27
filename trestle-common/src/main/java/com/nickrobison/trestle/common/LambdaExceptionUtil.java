@@ -126,8 +126,10 @@ public final class LambdaExceptionUtil {
     @SafeVarargs
     public static void recoverExceptionType(RuntimeException e, Class<? extends RuntimeException>... exceptionsList) {
         for (Class<? extends RuntimeException> possibleException : exceptionsList) {
-            if (possibleException.isAssignableFrom(e.getCause().getClass())) {
-                throw possibleException.cast(e.getCause());
+            if (e.getCause() != null) {
+                if (possibleException.isAssignableFrom(e.getCause().getClass())) {
+                    throw possibleException.cast(e.getCause());
+                }
             }
         }
         throw e;

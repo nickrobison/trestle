@@ -144,7 +144,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
 
     @Override
     @SuppressWarnings({"pmd:NPathComplexity"})
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
@@ -154,7 +154,7 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
         if (!atTime.equals(that.atTime)) return false;
         if (parameterName != null ? !parameterName.equals(that.parameterName) : that.parameterName != null)
             return false;
-        if (!temporalType.equals(that.temporalType)) return false;
+        if (!(temporalType == that.temporalType)) return false;
         return timeZone.equals(that.timeZone);
     }
 

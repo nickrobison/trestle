@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @BenchmarkMode({Mode.SingleShotTime})
 @CompilerControl(CompilerControl.Mode.EXCLUDE)
-@SuppressWarnings("Duplicates")
+@SuppressWarnings({"Duplicates", "initialization.fields.uninitialized", "argument.type.incompatible"})
 public class TDTreeGetBenchmark {
     private Random r;
     private TDTree<IndexValues> index;

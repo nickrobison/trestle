@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by nrobison on 5/2/17.
  */
-@SuppressWarnings({"ForLoopReplaceableByForEach", "Duplicates"})
+@SuppressWarnings({"ForLoopReplaceableByForEach", "Duplicates", "initialization.fields.uninitialized"})
 @State(Scope.Thread)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @BenchmarkMode({Mode.SingleShotTime})

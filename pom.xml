@@ -39,7 +39,7 @@
         <owasp.version>2.1.0</owasp.version>
         <maven.enforcer.version>1.4.1</maven.enforcer.version>
         <!--Checker properties-->
-        <checker.version>2.1.11</checker.version>
+        <checker.version>2.1.14</checker.version>
         <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
         <compiler.default.args>-parameters</compiler.default.args>
         <java.version>1.8</java.version>
@@ -401,8 +401,9 @@
                             <annotationProcessors>
                                 <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker
                                 </annotationProcessor>
-                                <annotationProcessor>org.checkerframework.checker.formatter.FormatterChecker
-                                </annotationProcessor>
+                                <!--I don't think we can use this checker, since we use constant strings-->
+                                <!--<annotationProcessor>org.checkerframework.checker.formatter.FormatterChecker-->
+                                <!--</annotationProcessor>-->
                                 <annotationProcessor>org.checkerframework.checker.signature.SignatureChecker
                                 </annotationProcessor>
                                 <annotationProcessor>org.checkerframework.checker.interning.InterningChecker
