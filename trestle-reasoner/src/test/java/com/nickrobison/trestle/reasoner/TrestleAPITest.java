@@ -145,7 +145,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
         final Optional<Set<TrestleEvent>> individualEvents = this.reasoner.getIndividualEvents(split_start.getClass(), split_start.adm0_code.toString());
         assertAll(() -> assertTrue(individualEvents.isPresent()),
                 () -> assertEquals(3, individualEvents.get().size()),
-                () -> assertEquals(middle, individualEvents.get().stream().filter(event -> event.getType().equals(TrestleEventType.SPLIT)).findFirst().get().getAtTemporal(), "SPLIT event should equal end temporal"));
+                () -> assertEquals(middle, individualEvents.get().stream().filter(event -> event.getType() == TrestleEventType.SPLIT).findFirst().get().getAtTemporal(), "SPLIT event should equal end temporal"));
 
 //        Merge event
         final TestClasses.OffsetDateTimeTest merge_subject = new TestClasses.OffsetDateTimeTest(200, middle, end);
@@ -159,7 +159,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
         final Optional<Set<TrestleEvent>> mergeEvents = this.reasoner.getIndividualEvents(merge_subject.getClass(), merge_subject.adm0_code.toString());
         assertAll(() -> assertTrue(mergeEvents.isPresent()),
                 () -> assertEquals(3, individualEvents.get().size()),
-                () -> assertEquals(merge_subject.startTemporal, mergeEvents.get().stream().filter(event -> event.getType().equals(TrestleEventType.MERGED)).findFirst().get().getAtTemporal(), "MERGED temporal should equal created date"));
+                () -> assertEquals(merge_subject.startTemporal, mergeEvents.get().stream().filter(event -> event.getType() == TrestleEventType.MERGED).findFirst().get().getAtTemporal(), "MERGED temporal should equal created date"));
 
 //        Ensure that events are handled correctly (along with relations).
 //        Split first

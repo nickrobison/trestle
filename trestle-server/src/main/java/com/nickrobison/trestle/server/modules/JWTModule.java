@@ -15,6 +15,7 @@ import java.nio.charset.Charset;
  * Created by nrobison on 1/20/17.
  */
 @Singleton
+@SuppressWarnings({"initialization.fields.uninitialized"})
 public class JWTModule extends AbstractModule {
 
     private JWTHandler<User> handler;

@@ -165,12 +165,12 @@ public class TemporalComparisonTest {
 
         @Override
         public Temporal with(TemporalField field, long newValue) {
-            return null;
+            return new TestTemporal();
         }
 
         @Override
         public Temporal plus(long amountToAdd, TemporalUnit unit) {
-            return null;
+            return new TestTemporal();
         }
 
         @Override

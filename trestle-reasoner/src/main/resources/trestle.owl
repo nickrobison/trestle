@@ -343,10 +343,10 @@
         <Class IRI="#GAUL"/>
     </Declaration>
     <Declaration>
-        <NamedIndividual IRI="#manhica1:2009:2013"/>
+        <Class IRI="#RasterFact"/>
     </Declaration>
     <Declaration>
-        <Class IRI="#RasterFact"/>
+        <NamedIndividual IRI="#manhica1:2009:2013"/>
     </Declaration>
     <Declaration>
         <DataProperty IRI="#SOverlap"/>
@@ -370,10 +370,10 @@
         <NamedIndividual IRI="#test_valid_at"/>
     </Declaration>
     <Declaration>
-        <ObjectProperty IRI="#Spatial_Relation"/>
+        <DataProperty IRI="#end_temporal"/>
     </Declaration>
     <Declaration>
-        <DataProperty IRI="#end_temporal"/>
+        <ObjectProperty IRI="#Spatial_Relation"/>
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="#merged"/>
@@ -1248,8 +1248,16 @@
         <ObjectProperty IRI="#Event_Relation"/>
     </SubObjectPropertyOf>
     <SubObjectPropertyOf>
+        <ObjectProperty IRI="#merge_of"/>
+        <ObjectProperty IRI="#equals"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
         <ObjectProperty IRI="#merged"/>
         <ObjectProperty IRI="#Event_Relation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#merged"/>
+        <ObjectProperty IRI="#equals"/>
     </SubObjectPropertyOf>
     <SubObjectPropertyOf>
         <ObjectProperty IRI="#merged_from"/>
@@ -1272,6 +1280,10 @@
         <ObjectProperty IRI="#Event_Relation"/>
     </SubObjectPropertyOf>
     <SubObjectPropertyOf>
+        <ObjectProperty IRI="#split"/>
+        <ObjectProperty IRI="#equals"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
         <ObjectProperty IRI="#split_from"/>
         <ObjectProperty IRI="#Event_Relation"/>
     </SubObjectPropertyOf>
@@ -1282,6 +1294,10 @@
     <SubObjectPropertyOf>
         <ObjectProperty IRI="#split_of"/>
         <ObjectProperty IRI="#Event_Relation"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#split_of"/>
+        <ObjectProperty IRI="#equals"/>
     </SubObjectPropertyOf>
     <SubObjectPropertyOf>
         <ObjectProperty IRI="#temporal_overlaps"/>

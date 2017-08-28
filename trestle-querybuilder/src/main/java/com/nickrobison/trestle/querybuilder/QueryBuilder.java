@@ -508,7 +508,7 @@ public class QueryBuilder {
      * @param ps       - ParamaterizedSparqlString to build on
      * @param wktValue - ParamaterizedSparqlString to build on
      * @param buffer   - double buffer (in meters) around the intersection
-     * @throws UnsupportedFeatureException
+     * @param dbAt     - {@link OffsetDateTime} of database intersection
      */
     protected void buildDatabaseSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime dbAt) {
         ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime)) .");

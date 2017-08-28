@@ -5,6 +5,7 @@ import javax.validation.constraints.NotNull;
 /**
  * Created by nrobison on 1/19/17.
  */
+@SuppressWarnings({"initialization.fields.uninitialized"})
 public class JWTConfig {
 
     @NotNull

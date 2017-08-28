@@ -93,7 +93,7 @@ public abstract class AbstractMetricianTransformer {
 
 
 
-    public static abstract class MetricianDynamicValue<T extends Annotation> extends Advice.DynamicValue.ForFixedValue<T> {
+    public static abstract class MetricianDynamicValue<T extends Annotation> {
         public abstract Class<T> getAnnotationClass();
     }
 

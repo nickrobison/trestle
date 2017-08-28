@@ -1124,7 +1124,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
 //        Parse out the events
-        final Set<TrestleEvent> individualEvents = resultSet.getResults()
+//        I think I can suppress this, because if the above method throws an error, the catch statement will return an empty optional
+        @SuppressWarnings({"dereference.of.nullable"})
+        final List<TrestleResult> results = resultSet.getResults();
+        final Set<TrestleEvent> individualEvents = results
                 .stream()
 //                Filter out Trestle_Event from results
                 .filter(result -> !result
@@ -1150,15 +1153,15 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public void addTrestleObjectEvent(TrestleEventType type, OWLNamedIndividual individual, Temporal eventTemporal) {
-        if (type.equals(TrestleEventType.SPLIT) || type.equals(TrestleEventType.MERGED)) {
+        if (type == TrestleEventType.SPLIT || type == TrestleEventType.MERGED) {
             throw new IllegalArgumentException("SPLIT and MERGED events cannot be added through this method");
         }
         this.eventEngine.addEvent(type, individual, eventTemporal);
     }
 
     @Override
-    public <@NonNull T> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength) {
-        if (!type.equals(TrestleEventType.SPLIT) && !type.equals(TrestleEventType.MERGED)) {
+    public <T extends @NonNull Object> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength) {
+        if (!(type == TrestleEventType.SPLIT) && !(type == TrestleEventType.MERGED)) {
             throw new IllegalArgumentException("Only MERGED and SPLIT types are valid");
         }
 
@@ -1169,7 +1172,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final Optional<List<TemporalObject>> temporalObjects = this.trestleParser.temporalParser.getTemporalObjects(subject);
         final TemporalObject subjectTemporal = temporalObjects.orElseThrow(() -> new IllegalStateException("Cannot get temporals for individual")).get(0);
         final Temporal eventTemporal;
-        if (type.equals(TrestleEventType.SPLIT)) {
+        if (type == TrestleEventType.SPLIT) {
 //            If it's a split, grab the ending temporal
             if (subjectTemporal.isPoint()) {
                 eventTemporal = subjectTemporal.getIdTemporal();

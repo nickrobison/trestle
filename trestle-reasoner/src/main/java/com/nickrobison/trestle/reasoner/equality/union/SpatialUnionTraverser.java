@@ -10,6 +10,7 @@ import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
@@ -55,7 +56,7 @@ public class SpatialUnionTraverser {
      * @param <T>           - Generic type parameter
      * @return - {@link List} of {@link OWLNamedIndividual} that are equivalent to the given individual at the specified query time
      */
-    public <T> List<OWLNamedIndividual> traverseUnion(Class<T> clazz, OWLNamedIndividual subject, Temporal queryTemporal) {
+    public <T extends @NonNull Object> List<OWLNamedIndividual> traverseUnion(Class<T> clazz, OWLNamedIndividual subject, Temporal queryTemporal) {
         return traverseUnion(clazz, Collections.singletonList(subject), queryTemporal);
     }
 
@@ -65,12 +66,12 @@ public class SpatialUnionTraverser {
      * If no individuals satisfy the equality constraints, an empty {@link List} is returned
      *
      * @param clazz         - {@link Class} of type {@link T} of individual
-     * @param subject       - {@link List} of {@link OWLNamedIndividual} to determine equality of
+     * @param subjects       - {@link List} of {@link OWLNamedIndividual} to determine equality of
      * @param queryTemporal - {@link Temporal} traverse union to given time
      * @param <T>           - Generic type parameter
      * @return - {@link List} of {@link OWLNamedIndividual} that are equivalent to the given individual at the specified query time
      */
-    public <T> List<OWLNamedIndividual> traverseUnion(Class<T> clazz, List<OWLNamedIndividual> subjects, Temporal queryTemporal) {
+    public <T extends @NonNull Object> List<OWLNamedIndividual> traverseUnion(Class<T> clazz, List<OWLNamedIndividual> subjects, Temporal queryTemporal) {
 
 //        Get the base temporal type of the input class
         final Class<? extends Temporal> temporalType = TemporalParser.getTemporalType(clazz);
@@ -132,11 +133,11 @@ public class SpatialUnionTraverser {
      * @return - {@link Set} of {@link STObjectWrapper} that are equivalent to the first object in the {@link Queue} or represent all valid objects for the input set
      */
     private Set<STObjectWrapper> getEquivalence(Set<STObjectWrapper> validObjects, Queue<STObjectWrapper> invalidObjects, Set<STObjectWrapper> seenObjects, Temporal queryTemporal, TemporalDirection temporalDirection) {
-        if (invalidObjects.isEmpty()) {
+//        This is a null safe way of checking that the queue is empty
+        final STObjectWrapper object = invalidObjects.poll();
+        if (object == null) {
             return validObjects;
         }
-
-        final STObjectWrapper object = invalidObjects.poll();
 
         final Set<STObjectWrapper> eqObjects = executeEqualityQuery(object, temporalDirection, seenObjects);
         if (eqObjects.isEmpty()) {
@@ -150,7 +151,7 @@ public class SpatialUnionTraverser {
         eqObjects
                 .stream()
                 .filter(eqObj -> !currentInvalidObjects.contains(eqObj))
-                .collect(Collectors.toCollection(() -> validObjects));
+                .forEach(validObjects::add);
 
         if (invalidObjects.isEmpty()) {
             return validObjects;
@@ -161,8 +162,9 @@ public class SpatialUnionTraverser {
 
     /**
      * Execute equality query to determine the {@link Set} of {@link STObjectWrapper} that are equivalent to the given {@link STObjectWrapper} input object
+     *
      * @param inputObject - {@link STObjectWrapper} to determine equality of
-     * @param direction - {@link TemporalDirection} whether the query is moving forwards or backwards in time
+     * @param direction   - {@link TemporalDirection} whether the query is moving forwards or backwards in time
      * @param seenObjects - {@link Set} of {@link STObjectWrapper} of objects that have already been processed by the algorithm
      * @return - {@link Set} of {@link STObjectWrapper} objects that are equivalent to the given input object
      */
@@ -180,7 +182,7 @@ public class SpatialUnionTraverser {
                 .filter(object -> !object.getIndividual().equals(inputObject.getIndividual()))
 //                Filter out objects that are pointed in the wrong direction
                 .filter(object -> {
-                    if (direction.equals(TemporalDirection.FORWARD)) {
+                    if (direction == TemporalDirection.FORWARD) {
                         return object.getExistenceTemporal().compareTo(inputObject.getExistenceTemporal().getIdTemporal()) != -1;
                     } else {
                         return object.getExistenceTemporal().compareTo(inputObject.getExistenceTemporal().getIdTemporal()) != 1;

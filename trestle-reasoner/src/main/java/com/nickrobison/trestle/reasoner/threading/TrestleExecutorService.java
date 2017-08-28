@@ -18,7 +18,8 @@ import java.util.stream.Collectors;
 /**
  * Created by nrobison on 7/7/17.
  */
-@SuppressWarnings({"pmd:DoNotUseThreads", "pmd:LawOfDemeter"})
+// I hate overriding the null warnings, but I don't really know how to fix them.
+@SuppressWarnings({"pmd:DoNotUseThreads", "pmd:LawOfDemeter", "override.return.invalid", "return.type.invalid", "return.type.incompatible"})
 public class TrestleExecutorService implements ExecutorService {
     private static final Logger logger = LoggerFactory.getLogger(TrestleExecutorService.class);
     private static final String THIS_CALL_IS_NOT_WRAPPED_BY_STACK_CLEANER_OR_TIMER = "This call is not wrapped by stack cleaner or timer";

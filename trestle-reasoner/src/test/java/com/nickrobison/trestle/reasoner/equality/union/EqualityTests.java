@@ -14,7 +14,7 @@ import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.reasoner.equality.EqualityEngine;
 import com.nickrobison.trestle.types.events.TrestleEventType;
 import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SuppressWarnings("ConstantConditions")
+@SuppressWarnings({"ConstantConditions", "initialization.fields.uninitialized"})
 @Tag("integration")
 public class EqualityTests extends AbstractReasonerTest {
 
@@ -202,6 +202,7 @@ public class EqualityTests extends AbstractReasonerTest {
     }
 
     @Test
+    @SuppressWarnings({"dereference.of.nullable", "argument.type.incompatible"})
     public void unionTest() throws IOException, ParseException {
         final TestClasses.ESRIPolygonTest originalObject;
 //        Read in the individuals
@@ -355,7 +356,7 @@ public class EqualityTests extends AbstractReasonerTest {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 

@@ -7,6 +7,7 @@ import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.reasoner.parser.spatial.ESRIParser;
 import com.nickrobison.trestle.types.events.TrestleEventType;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +33,7 @@ public class SpatialUnionBuilder {
     }
 
     @SuppressWarnings({"ConstantConditions", "squid:S3655"})
-    public <T> Optional<UnionEqualityResult<T>> getApproximateEqualUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
+    public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> getApproximateEqualUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
         final TemporallyDividedObjects<T> dividedObjects = divideObjects(inputObjects);
 
 //        Extract the ESRI polygons for each objects
@@ -69,13 +70,14 @@ public class SpatialUnionBuilder {
 
     /**
      * Calculate the percentage spatial match between two object
+     *
      * @param inputObject - Input object
      * @param matchObject - Object to match against
-     * @param inputSR - {@link SpatialReference} spatial reference of input objects
-     * @param <T> - Generic type parameter
+     * @param inputSR     - {@link SpatialReference} spatial reference of input objects
+     * @param <T>         - Generic type parameter
      * @return - {@link Double} percentage spatial match
      */
-    public <T> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR) {
+    public <T extends @NonNull Object> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR) {
         final Polygon inputPolygon = parseESRIPolygon(SpatialParser.getSpatialValue(inputObject));
         final Polygon matchPolygon = parseESRIPolygon(SpatialParser.getSpatialValue(matchObject));
         return isApproxEqual(inputPolygon, matchPolygon, inputSR);
@@ -156,12 +158,14 @@ public class SpatialUnionBuilder {
      */
     private static Set<Set<Polygon>> powerSet(Set<Polygon> originalSet) {
         Set<Set<Polygon>> sets = new HashSet<>();
-        if (originalSet.isEmpty()) {
+//        Null safe way of handling an empty queue
+        final Queue<Polygon> list = new ArrayDeque<>(originalSet);
+        Polygon head = list.poll();
+        if (head == null) {
             sets.add(new HashSet<>());
             return sets;
         }
-        final Queue<Polygon> list = new ArrayDeque<>(originalSet);
-        Polygon head = list.poll();
+
         Set<Polygon> rest = new HashSet<>(list);
         for (Set<Polygon> set : powerSet(rest)) {
             Set<Polygon> newSet = new HashSet<>();
@@ -181,7 +185,7 @@ public class SpatialUnionBuilder {
      * @param <T>          - Generic type parameter
      * @return - {@link TemporallyDividedObjects} representing objects divided on end date
      */
-    private <T> TemporallyDividedObjects<T> divideObjects(List<T> inputObjects) {
+    private <T extends @NonNull Object> TemporallyDividedObjects<T> divideObjects(List<T> inputObjects) {
         final TemporalParser temporalParser = this.tp.temporalParser;
 //        Get the temporal type of the input objects
 //        Sort the input objects

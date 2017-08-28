@@ -39,6 +39,7 @@ public class DataExporterTests extends AbstractReasonerTest {
         loadData();
     }
 
+    @SuppressWarnings({"dereference.of.nullable", "argument.type.incompatible"})
     private static void loadData() throws IOException {
         final InputStream is = TrestleAPITest.class.getClassLoader().getResourceAsStream("objects.csv");
 

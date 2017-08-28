@@ -9,6 +9,7 @@ import com.nickrobison.trestle.reasoner.annotations.TrestleCreator;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.fail;
  * Created by detwiler on 5/5/17.
  */
 @Tag("integration")
+// Suppress this because we're actually dealing with nulls, and I don't really care that much
+@SuppressWarnings({"assignment.type.incompatible", "argument.type.incompatible", "initialization.fields.uninitialized"})
 public class NullEndTemporalTest extends AbstractReasonerTest {
 
     @Override
@@ -57,10 +60,10 @@ public class NullEndTemporalTest extends AbstractReasonerTest {
                 fail("Output does not equal second input object");
         } catch (TrestleClassException e) {
             e.printStackTrace();
-            fail(e.getMessage());
+            fail(e);
         } catch (MissingOntologyEntity e) {
             e.printStackTrace();
-            fail(e.getMessage());
+            fail(e);
         }
     }
 
@@ -91,7 +94,7 @@ public class NullEndTemporalTest extends AbstractReasonerTest {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 

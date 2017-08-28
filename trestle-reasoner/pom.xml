@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <trestle.location>file:///Users/nrobison/Developer/git/dissertation/trestle-ontology</trestle.location>
-        <caffeine.version>2.4.0</caffeine.version>
+        <caffeine.version>2.5.5</caffeine.version>
     </properties>
 
     <artifactId>trestle-reasoner</artifactId>
@@ -127,7 +127,7 @@
         <dependency>
             <groupId>it.unimi.dsi</groupId>
             <artifactId>fastutil</artifactId>
-            <version>7.2.0</version>
+            <version>8.1.0</version>
         </dependency>
         <dependency>
             <groupId>info.yeppp</groupId>

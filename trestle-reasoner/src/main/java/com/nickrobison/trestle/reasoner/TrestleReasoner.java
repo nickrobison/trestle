@@ -284,7 +284,7 @@ public interface TrestleReasoner {
      * @param objects - {@link Set} of {@link OWLNamedIndividual} that are the objects of the event
      * @param strength - {@link Double} Strength of union association
      */
-    <@NonNull T> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength);
+    <T extends @NonNull Object> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength);
 
     /**
      * Spatial Intersect Object with most recent records in the database
@@ -368,7 +368,7 @@ public interface TrestleReasoner {
      * If no objects satisfy the equality constraints and an empty {@link List} is returned
      *
      * @param clazz - {@link Class} of input individuals
-     * @param individuals - Individual {@link IRI}
+     * @param individual - Individual {@link IRI}
      * @param queryTemporal - {@link Temporal} of query point
      * @param <T> - Type parameter
      * @return - {@link Optional} {@link List} of {@link T} objects

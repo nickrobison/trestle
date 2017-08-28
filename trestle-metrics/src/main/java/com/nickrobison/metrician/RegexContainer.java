@@ -35,7 +35,7 @@ class RegexContainer<T> {
 
     Optional<T> match(String metricName) {
         if (regex.matcher(metricName).find()) {
-            return Optional.of(this.content);
+            return Optional.ofNullable(this.content);
         }
         return Optional.empty();
     }

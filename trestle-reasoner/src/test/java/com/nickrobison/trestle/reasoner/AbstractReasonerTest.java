@@ -12,6 +12,7 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
+@SuppressWarnings({"initialization.fields.uninitialized"})
 public abstract class AbstractReasonerTest {
     protected static final String OVERRIDE_PREFIX = "http://nickrobison.com/test-owl#";
     protected TrestleParser tp;
@@ -35,7 +36,7 @@ public abstract class AbstractReasonerTest {
                 .build();
 
         df = OWLManager.getOWLDataFactory();
-        tp = new TrestleParser(df, AbstractReasonerTest.OVERRIDE_PREFIX, false, null);
+        tp = new TrestleParser(df, AbstractReasonerTest.OVERRIDE_PREFIX, false, "en");
     }
 
     @AfterEach

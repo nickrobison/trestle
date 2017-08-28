@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.types.events;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.io.Serializable;
@@ -34,7 +35,8 @@ public class TrestleEvent implements Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
+    @SuppressWarnings({"not.interned"})
+    public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
