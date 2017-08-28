@@ -6,7 +6,7 @@
 
     <groupId>com.nickrobison.trestle</groupId>
     <artifactId>trestle</artifactId>
-    <version>0.7-SNAPSHOT</version>
+    <version>0.7</version>
     <modules>
         <module>trestle-reasoner</module>
         <module>trestle-integrations</module>
