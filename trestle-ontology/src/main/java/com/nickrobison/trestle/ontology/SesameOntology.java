@@ -75,11 +75,17 @@ public abstract class SesameOntology extends TransactingOntology {
         this.ontology = ontology;
         this.pm = pm;
         this.df = OWLManager.getOWLDataFactory();
-        this.qb = new QueryBuilder(QueryBuilder.DIALECT.SESAME, this.pm);
+        this.qb = new QueryBuilder(QueryBuilder.Dialect.SESAME, this.pm);
         this.cm = new SesameConnectionManager(this.repository, config.getInt("connectionPool.maxSize"), config.getInt("connectionPool.initialConnections"));
     }
 
+    @Override
+    public QueryBuilder getUnderlyingQueryBuilder() {
+        return this.qb;
+    }
 
+
+    @Override
     public abstract boolean isConsistent();
 
     @Override
@@ -263,13 +269,7 @@ public abstract class SesameOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
         this.openTransaction(false);
         try {
-            if (getThreadConnection().hasStatement(individualIRI, null, null, false)) {
-                //this.tc.get().close();
-                return true;
-            } else {
-                //this.tc.get().close();
-                return false;
-            }
+            return getThreadConnection().hasStatement(individualIRI, null, null, false);
         } finally {
             this.commitTransaction(false);
         }
@@ -314,6 +314,7 @@ public abstract class SesameOntology extends TransactingOntology {
         return this.pm;
     }
 
+    @Override
     public abstract void runInference();
 
     @Override
@@ -487,7 +488,7 @@ public abstract class SesameOntology extends TransactingOntology {
 
     @Override
     public Set<OWLDataPropertyAssertionAxiom> getFactsForIndividual(OWLNamedIndividual individual, OffsetDateTime validTemporal, OffsetDateTime databaseTemporal, boolean filterTemporals) {
-        final String objectQuery = qb.buildObjectPropertyRetrievalQuery(validTemporal, databaseTemporal, true, individual);
+        final String objectQuery = qb.buildObjectFactRetrievalQuery(validTemporal, databaseTemporal, true, null, individual);
         final TrestleResultSet resultSet = this.executeSPARQLResults(objectQuery);
         return getDataPropertiesFromIndividualFacts(this.df, resultSet);
     }
@@ -514,6 +515,7 @@ public abstract class SesameOntology extends TransactingOntology {
         return getFullIRI(IRI.create(prefix, suffix));
     }
 
+    @Override
     public abstract void initializeOntology();
 
     @Override
@@ -526,6 +528,7 @@ public abstract class SesameOntology extends TransactingOntology {
         return getFullIRI(owlNamedObject).toString();
     }
 
+    @Override
     public abstract TrestleResultSet executeSPARQLResults(String queryString);
 
     TrestleResultSet buildResultSet(TupleQueryResult resultSet) {
@@ -559,6 +562,7 @@ public abstract class SesameOntology extends TransactingOntology {
      * This is mostly here so that Checker will be quiet.
      * If we call {@link SesameOntology#setOntologyConnection()}, then the thread connection can never be null.
      * However, Checker can't seem to see through the call stack to notice that we've called that function, so we use this instead.
+     *
      * @return - {@link RepositoryConnection} associated with the given transaction
      */
     RepositoryConnection getThreadConnection() {
@@ -569,25 +573,23 @@ public abstract class SesameOntology extends TransactingOntology {
         return repositoryConnection;
     }
 
+    @Override
     public abstract void openDatasetTransaction(boolean write);
 
+    @Override
     public abstract void commitDatasetTransaction(boolean write);
 
     @Override
     public void setOntologyConnection() {
+        logger.trace("Attempting to set thread connection");
         final TrestleTransaction threadTransactionObject = this.getThreadTransactionObject();
         if (threadTransactionObject == null) {
-            logger.warn("Thread has no transaction object, getting connection from the pool");
+            logger.debug("Thread has no transaction object, getting connection from the pool");
             this.tc.set(this.cm.getConnection());
         } else {
-            logger.debug("Setting thread connection from transaction object");
             @Nullable final RepositoryConnection connection = threadTransactionObject.getConnection();
-            if (connection != null) {
-                this.tc.set(connection);
-            } else {
-                logger.warn("Transaction object has null connection, creating new one");
-                this.tc.set(this.cm.getConnection());
-            }
+            logger.trace("Setting thread connection from transaction object {}", connection);
+            this.tc.set(connection);
         }
     }
 
@@ -595,6 +597,7 @@ public abstract class SesameOntology extends TransactingOntology {
      * Reset thread connection to null and return the connection to the {@link SesameConnectionManager}
      */
     protected void resetThreadConnection() {
+        logger.trace("Resetting thread connection");
         @Nullable final RepositoryConnection connection = getThreadConnection();
         this.tc.set(null);
         this.cm.returnConnection(connection);
@@ -602,6 +605,8 @@ public abstract class SesameOntology extends TransactingOntology {
 
     @Override
     public @NonNull RepositoryConnection getOntologyConnection() {
-        return this.cm.getConnection();
+        final RepositoryConnection connection = this.cm.getConnection();
+        logger.trace("Got ontology connection {}", connection);
+        return connection;
     }
 }

@@ -4,23 +4,19 @@ import akka.actor.*;
 import akka.pattern.Patterns;
 import akka.util.Timeout;
 import com.typesafe.config.ConfigFactory;
-import org.apache.log4j.spi.LoggerFactory;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
 
-import java.time.Duration;
-import java.time.temporal.TemporalUnit;
 import java.util.concurrent.TimeUnit;
-
-import static com.nickrobison.trestle.actor.TrestleActor.startupRemoteActor;
 
 /**
  * Created by nrobison on 10/26/16.
  */
 @Tag("integration")
+@Tag("oracle")
 public class RemoteTest {
 
     Timeout timeout = Timeout.apply(120, TimeUnit.SECONDS);

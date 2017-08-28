@@ -59,5 +59,6 @@ SELECT *
 
 SELECT * FROM mdsys.sem_model$;
 BEGIN
-sem_apis.drop_sem_model('hadoop_test');
+sem_apis.drop_sem_model('TRESTLE_TEST3');
 END;
+DROP TABLE TRESTLE_TEST3_TPL;

@@ -30,7 +30,6 @@ public class MetricianImpl implements Metrician {
     private final MetricianReporter metricianReporter;
     private final IMetricianBackend metricsBackend;
     private final JVMMetrics jvmMetrics;
-    private final Config config;
     private final long updatePeriod;
 
     @Inject
@@ -39,14 +38,13 @@ public class MetricianImpl implements Metrician {
                      IMetricianBackend backend,
                      JVMMetrics jvmMetrics) {
         logger.info("Initializing Trestle Metrician");
-        config = ConfigFactory.load().getConfig("trestle.metrics");
+        final Config config = ConfigFactory.load().getConfig("trestle.metrics");
         updatePeriod = config.getLong("period");
         logger.info("Updating registry every {} ms.", updatePeriod);
         this.registry = registry;
         this.dataQueue = dataqueue;
         metricsBackend = backend;
         final MetricsDecomposer metricsDecomposer = new MetricsDecomposer(new HashMap<>(), new ArrayList<>());
-        final MetricsListener metricsListener = new MetricsListener(Optional.empty(), new HashMap<>(), new HashMap<>(), new ArrayList<>(), false, metricsDecomposer, registry, MetricFilter.ALL, this.metricsBackend);
         metricianReporter = new MetricianReporter(registry, dataQueue, Optional.empty(), metricsDecomposer, MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
         this.jvmMetrics = jvmMetrics;
         this.metricianReporter.start(updatePeriod, TimeUnit.MILLISECONDS);
@@ -120,6 +118,16 @@ public class MetricianImpl implements Metrician {
     @Override
     public Histogram registerHistogram(String name) {
         return this.registry.histogram(name);
+    }
+
+    @Override
+    public Meter registerMeter(String name) {
+        return this.registry.meter(name);
+    }
+
+    @Override
+    public <T> void registerGauge(String name, com.codahale.metrics.Gauge<T> gauge) {
+        this.registry.register(name, gauge);
     }
 
     @Gauge(name = "data-queue-length")

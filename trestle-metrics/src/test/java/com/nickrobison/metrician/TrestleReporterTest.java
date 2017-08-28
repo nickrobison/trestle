@@ -2,12 +2,8 @@ package com.nickrobison.metrician;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
-import com.codahale.metrics.annotation.Gauge;
-import com.codahale.metrics.annotation.Metered;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.nickrobison.trestle.reasoner.annotations.metrics.CounterIncrement;
-import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.typesafe.config.ConfigFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -48,7 +44,7 @@ public class TrestleReporterTest {
 
     @Test
     public void testSimpleClass() throws InterruptedException {
-        final TestMetricsClass metricsClass = new TestMetricsClass();
+        final TestMetricsReporterClass metricsClass = new TestMetricsReporterClass();
         metricsClass.testIncrement();
         metricsClass.testIncrement();
         reporter.report();
@@ -56,7 +52,7 @@ public class TrestleReporterTest {
         assertAll(() -> assertEquals(65, metrician.getRegistry().getGauges().size(), "Should have gauges"),
                 () -> assertEquals(1, metrician.getRegistry().getMeters().size(), "Should have meters"),
                 () -> assertEquals(1, metrician.getRegistry().getCounters().size(), "Should have timers"),
-                () -> assertEquals(2, metrician.getRegistry().counter("com.nickrobison.metrician.TrestleReporterTest$TestMetricsClass.test-reporter-counter").getCount(), "Count should be 2"));
+                () -> assertEquals(2, metrician.getRegistry().counter("com.nickrobison.metrician.TestMetricsReporterClass.test-reporter-counter").getCount(), "Count should be 2"));
         Thread.sleep(500);
         reporter.report();
         reporter.report();
@@ -119,7 +115,7 @@ public class TrestleReporterTest {
         metricsClass.testIncrement();
         Thread.sleep(2000);
         reporter.report();
-        assertEquals(17, metrician.getRegistry().counter("com.nickrobison.metrician.TrestleReporterTest$TestMetricsClass.test-reporter-counter").getCount(), "Should be incremented correctly");
+        assertEquals(17, metrician.getRegistry().counter("com.nickrobison.metrician.TestMetricsReporterClass.test-reporter-counter").getCount(), "Should be incremented correctly");
     }
 
     @Test
@@ -138,27 +134,5 @@ public class TrestleReporterTest {
         assertAll(() -> assertEquals(0, timer.getCount(), "Should never be called"),
                 () -> assertEquals(0, timer.getSnapshot().get75thPercentile(), "Should have 0 snapshot"));
 
-    }
-
-
-    @Metriced
-    private class TestMetricsClass {
-
-        TestMetricsClass() {
-        }
-
-
-        @Gauge
-        int testReporterGauge() {
-            return 7;
-        }
-
-        @CounterIncrement(name = "test-reporter-counter")
-        void testIncrement() {
-        }
-
-        @Metered
-        void testMeter() {
-        }
     }
 }

@@ -6,7 +6,7 @@
 
     <groupId>com.nickrobison.trestle</groupId>
     <artifactId>trestle</artifactId>
-    <version>0.6</version>
+    <version>0.7</version>
     <modules>
         <module>trestle-reasoner</module>
         <module>trestle-integrations</module>
@@ -20,42 +20,37 @@
         <module>trestle-iri</module>
         <module>trestle-metrics</module>
         <module>trestle-annotations</module>
+        <module>trestle-datasets</module>
     </modules>
     <packaging>pom</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <excludeTags></excludeTags>
-        <provided.scope>provided</provided.scope>
-        <storm.version>1.0.0</storm.version>
-        <owl.version>5.1.0</owl.version>
+        <excludeTags>oracle,virtuoso,local,load</excludeTags>
+        <owl.version>5.1.1</owl.version>
         <jena.version>3.1.0</jena.version>
         <slf4j.version>1.7.25</slf4j.version>
-        <junit.jupiter.version>5.0.0-M3</junit.jupiter.version>
-        <jmh.version>1.18</jmh.version>
-        <geotools.version>17.0</geotools.version>
-        <metrics.version>3.2.2</metrics.version>
+        <junit.jupiter.version>5.0.0-M6</junit.jupiter.version>
+        <junit.platform.version>1.0.0-M6</junit.platform.version>
+        <jmh.version>1.19</jmh.version>
+        <geotools.version>17.2</geotools.version>
+        <metrics.version>3.2.4</metrics.version>
         <httpcomponents.version>4.5.3</httpcomponents.version>
+        <owasp.version>2.1.1</owasp.version>
+        <maven.enforcer.version>1.4.1</maven.enforcer.version>
         <!--Checker properties-->
-        <checker.version>2.1.11</checker.version>
+        <checker.version>2.1.14</checker.version>
         <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
         <compiler.default.args>-parameters</compiler.default.args>
         <java.version>1.8</java.version>
+        <!--Sonar-->
+        <sonar.jacoco.reportPaths>${maven.multiModuleProjectDirectory}/target/jacoco_analysis/jacoco.exec</sonar.jacoco.reportPaths>
+        <dependency.check.reportPath>target/dependency-check</dependency.check.reportPath>
+        <sonar.dependencyCheck.reportPath>${dependency.check.reportPath}/dependency-check-report.xml</sonar.dependencyCheck.reportPath>
     </properties>
+
     <dependencyManagement>
         <dependencies>
-            <!--Hadoop dependencies-->
-            <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-client</artifactId>
-                <version>${hadoop.version}</version>
-                <scope>${provided.scope}</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-common</artifactId>
-                <version>${hadoop.version}</version>
-            </dependency>
             <!--Common dependencies-->
             <dependency>
                 <groupId>commons-io</groupId>
@@ -65,7 +60,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>21.0</version>
+                <version>23.0</version>
             </dependency>
             <dependency>
                 <groupId>com.google.inject</groupId>
@@ -116,7 +111,7 @@
             <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
-                <version>42.1.0</version>
+                <version>42.1.4</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -136,12 +131,12 @@
             <dependency>
                 <groupId>org.agrona</groupId>
                 <artifactId>agrona</artifactId>
-                <version>0.9.5</version>
+                <version>0.9.7</version>
             </dependency>
             <dependency>
                 <groupId>com.h2database</groupId>
                 <artifactId>h2</artifactId>
-                <version>1.4.195</version>
+                <version>1.4.196</version>
             </dependency>
             <!--OWL Dependencies-->
             <dependency>
@@ -277,28 +272,10 @@
             </dependency>
             <!--Testing dependencies-->
             <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-minicluster</artifactId>
-                <version>${hadoop.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-log4j12</artifactId>
-                    </exclusion>
-                </exclusions>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-auth</artifactId>
-                <version>${hadoop.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.openjdk.jmh</groupId>
                 <artifactId>jmh-core</artifactId>
                 <version>${jmh.version}</version>
-                <scope>compile</scope>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.openjdk.jmh</groupId>
@@ -310,6 +287,16 @@
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter-api</artifactId>
                 <version>${junit.jupiter.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>${junit.jupiter.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.platform</groupId>
+                <artifactId>junit-platform-launcher</artifactId>
+                <version>${junit.platform.version}</version>
             </dependency>
             <!--Checker dependencies-->
             <dependency>
@@ -338,20 +325,22 @@
         <dependency>
             <groupId>org.checkerframework</groupId>
             <artifactId>checker</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.checkerframework</groupId>
             <artifactId>checker-qual</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.checkerframework</groupId>
             <artifactId>jdk8</artifactId>
+            <scope>provided</scope>
         </dependency>
         <!--Testing/logging dependencies-->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <scope>${provided.scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -361,6 +350,16 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -385,14 +384,6 @@
             <name>Open Source Geospatial Foundation Repository</name>
             <url>http://download.osgeo.org/webdav/geotools/</url>
         </repository>
-        <repository>
-            <id>hortonworks</id>
-            <url>http://repo.hortonworks.com/content/repositories/releases/</url>
-        </repository>
-        <repository>
-            <id>cloudera</id>
-            <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-        </repository>
         <!-- Repository for oracle ojdbc7 -->
         <repository>
             <id>codelds</id>
@@ -401,41 +392,21 @@
     </repositories>
     <profiles>
         <profile>
-            <id>cdh5</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <hadoop.version>2.6.0-cdh5.5.4</hadoop.version>
-            </properties>
-        </profile>
-        <profile>
-            <id>hdp</id>
-            <properties>
-                <hadoop.version>2.7.1.2.3.5.0-81</hadoop.version>
-            </properties>
-        </profile>
-        <profile>
-            <id>intellij</id>
-            <properties>
-                <provided.scope>compile</provided.scope>
-            </properties>
-        </profile>
-        <profile>
-            <id>enable-checker</id>
+            <id>checker</id>
             <build>
                 <plugins>
                     <plugin>
                         <artifactId>maven-compiler-plugin</artifactId>
                         <configuration combine.self="override">
-                            <source>1.8</source>
-                            <target>1.8</target>
+                            <source>${java.version}</source>
+                            <target>${java.version}</target>
                             <fork>true</fork>
                             <annotationProcessors>
                                 <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker
                                 </annotationProcessor>
-                                <annotationProcessor>org.checkerframework.checker.formatter.FormatterChecker
-                                </annotationProcessor>
+                                <!--I don't think we can use this checker, since we use constant strings-->
+                                <!--<annotationProcessor>org.checkerframework.checker.formatter.FormatterChecker-->
+                                <!--</annotationProcessor>-->
                                 <annotationProcessor>org.checkerframework.checker.signature.SignatureChecker
                                 </annotationProcessor>
                                 <annotationProcessor>org.checkerframework.checker.interning.InterningChecker
@@ -447,6 +418,126 @@
                                 <arg>-Xbootclasspath/p:${annotatedJdk}</arg>
                             </compilerArgs>
                         </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>errorprone</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <compilerId>javac-with-errorprone</compilerId>
+                            <source>${java.version}</source>
+                            <target>${java.version}</target>
+                            <fork>true</fork>
+                            <useIncrementalCompilation>false</useIncrementalCompilation>
+                            <forceJavacCompilerUse>true</forceJavacCompilerUse>
+                            <showWarnings>true</showWarnings>
+                            <compilerArgs>
+                                <arg>${compiler.default.args}</arg>
+                                <arg>-Xep:RemoveUnusedImports:ERROR</arg>
+                                <arg>-Xep:ShortCircuitBoolean:ERROR</arg>
+                                <arg>-Xep:MissingOverride:ERROR</arg>
+                                <arg>-Xep:ClassCanBeStatic:ERROR</arg>
+                                <arg>-Xep:DefaultCharset:ERROR</arg>
+                                <arg>-XepDisableWarningsInGeneratedCode</arg>
+                                <!--TODO(nrobison): We should use this, but I'm not sure how-->
+                                <!--<arg>-Xep:TypeParameterUnusedInFormals:ERROR</arg>-->
+                            </compilerArgs>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.codehaus.plexus</groupId>
+                                <artifactId>plexus-compiler-javac-errorprone</artifactId>
+                                <version>2.8.2</version>
+                            </dependency>
+                            <!-- override plexus-compiler-javac-errorprone's dependency on
+                                 Error Prone with the latest version -->
+                            <dependency>
+                                <groupId>com.google.errorprone</groupId>
+                                <artifactId>error_prone_core</artifactId>
+                                <version>2.1.0</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.owasp</groupId>
+                        <artifactId>dependency-check-maven</artifactId>
+                        <version>${owasp.version}</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <format>XML</format>
+                            <outputDirectory>${dependency.check.reportPath}</outputDirectory>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+            <reporting>
+                <plugins>
+                    <plugin>
+                        <groupId>org.owasp</groupId>
+                        <artifactId>dependency-check-maven</artifactId>
+                        <version>${owasp.version}</version>
+                        <reportSets>
+                            <reportSet>
+                                <reports>
+                                    <report>aggregate</report>
+                                </reports>
+                            </reportSet>
+                        </reportSets>
+                    </plugin>
+                </plugins>
+            </reporting>
+        </profile>
+        <profile>
+            <id>coverage</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>0.7.9</version>
+                        <configuration>
+                            <append>true</append>
+                            <destFile>${sonar.jacoco.reportPaths}</destFile>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>pre-unit-test</id>
+                                <goals>
+                                    <goal>prepare-agent</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>pre-integration-test</id>
+                                <goals>
+                                    <goal>prepare-agent-integration</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>build-reports</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>report</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
@@ -467,7 +558,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.1.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -477,37 +568,15 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.6.1</version>
+                    <version>3.6.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
-            <!--<plugin>-->
-            <!--<groupId>org.apache.maven.plugins</groupId>-->
-            <!--<artifactId>maven-assembly-plugin</artifactId>-->
-            <!--<version>2.6</version>-->
-            <!--<configuration>-->
-            <!--<descriptor>src/main/assembly/job.xml</descriptor>-->
-            <!--<archive>-->
-            <!--<manifest>-->
-            <!--<mainClass>com.nickrobison.gaulintegrator.IntegrationRunner</mainClass>-->
-            <!--</manifest>-->
-            <!--</archive>-->
-            <!--</configuration>-->
-            <!--<executions>-->
-            <!--<execution>-->
-            <!--<id>make-assembly</id>-->
-            <!--<phase>package</phase>-->
-            <!--<goals>-->
-            <!--<goal>single</goal>-->
-            <!--</goals>-->
-            <!--</execution>-->
-            <!--</executions>-->
-            <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.0.1</version>
                 <executions>
                     <execution>
                         <id>getClasspathFilenames</id>
@@ -536,7 +605,7 @@
                     <dependency>
                         <groupId>org.junit.platform</groupId>
                         <artifactId>junit-platform-surefire-provider</artifactId>
-                        <version>1.0.0-M3</version>
+                        <version>${junit.platform.version}</version>
                     </dependency>
                     <dependency>
                         <groupId>org.junit.jupiter</groupId>
@@ -584,7 +653,7 @@
                 <inherited>true</inherited>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>1.4.1</version>
+                <version>${maven.enforcer.version}</version>
                 <executions>
                     <execution>
                         <id>enforce-maven-3</id>
@@ -594,7 +663,7 @@
                         <configuration>
                             <rules>
                                 <requireMavenVersion>
-                                    <version>3.0.5</version>
+                                    <version>3.1</version>
                                 </requireMavenVersion>
                             </rules>
                             <fail>true</fail>

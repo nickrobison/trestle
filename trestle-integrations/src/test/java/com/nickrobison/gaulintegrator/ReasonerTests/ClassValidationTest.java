@@ -3,11 +3,11 @@ package com.nickrobison.gaulintegrator.ReasonerTests;
 import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
-import com.nickrobison.gaulintegrator.GAULObject;
 import com.nickrobison.gaulintegrator.common.ObjectID;
+import com.nickrobison.trestle.datasets.GAULObject;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
-import com.nickrobison.trestle.reasoner.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  */
 @SuppressWarnings({"argument.type.incompatible", "initialization.fields.uninitialized"})
 @Tag("integration")
+@Tag("oracle")
 public class ClassValidationTest {
 
     static TrestleReasoner reasoner;
@@ -43,13 +44,19 @@ public class ClassValidationTest {
         Polygon testPolygon = (Polygon) GeometryEngine.geometryFromWkt("POLYGON((39.322559357 -13.2994823459999,39.322559357 -12.5851001739999,40.2268218990001 -12.5851001739999,40.2268218990001 -13.2994823459999,39.322559357 -13.2994823459999))", 0, Geometry.Type.Polygon);
 //        Envelope env = new Envelope(1000, 2000, 1010, 2010);
 //        testPolygon.addEnvelope(env, false);
-        testID = new ObjectID();
-        testObject = new GAULObject(testID,
+        testObject = new GAULObject(testID.toString(),
                 4321,
                 "Test Object",
                 LocalDate.of(1990, 1, 1),
                 LocalDate.of(2000, 1, 1),
-                testPolygon);
+                testPolygon,
+                1L,
+                "1 name",
+                "hello",
+                false,
+                0L,
+                "0 name");
+        testID = new ObjectID();
     }
 
     @Test

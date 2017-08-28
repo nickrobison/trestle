@@ -3,7 +3,6 @@ package com.nickrobison.metrician.backends;
 import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.metrician.MetricianReporter;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
-import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -25,6 +25,9 @@ public class ServerSPAResource {
         if (staticPath.isPresent()) {
             final String jsPath = String.format("%s/%s", "build", segments.get(segments.size() - 1).getPath());
             final InputStream jsStream = ServerSPAResource.class.getClassLoader().getResourceAsStream(jsPath);
+            if (jsStream == null) {
+                throw new WebApplicationException("Unable to access JS resource", Response.Status.NOT_FOUND);
+            }
             return Response.ok(jsStream).build();
 
 

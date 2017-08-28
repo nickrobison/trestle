@@ -10,10 +10,6 @@ import java.util.stream.Collectors;
  */
 public class ConstructorArguments {
 
-//    private final String argumentName;
-//    private final Class<?> argumentType;
-//    private final Object argumentObject;
-
     private final Map<String, Argument> arguments;
 
     public ConstructorArguments() {
@@ -89,7 +85,7 @@ public class ConstructorArguments {
         return sortedObjects.toArray(new Object[sortedObjects.size()]);
     }
 
-    private class Argument {
+    private static class Argument {
 
         private final Class<?> argumentType;
         private final Object argumentObject;
@@ -106,5 +102,20 @@ public class ConstructorArguments {
         Object getArgumentValue() {
             return this.argumentObject;
         }
+
+        @Override
+        public String toString() {
+            return "Argument{" +
+                    "argumentType=" + argumentType +
+                    ", argumentObject=" + argumentObject +
+                    '}';
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "ConstructorArguments{" +
+                "arguments=" + arguments +
+                '}';
     }
 }

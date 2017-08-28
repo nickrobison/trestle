@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
+import com.codahale.metrics.annotation.Gauge;
 import com.nickrobison.trestle.reasoner.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
@@ -19,14 +20,13 @@ import java.util.concurrent.atomic.AtomicLong;
 abstract class TransactingOntology implements ITrestleOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(TransactingOntology.class);
-    private static final OntologySecurityManager securityManager = new OntologySecurityManager();
+    private final String ontologyName;
     protected final AtomicInteger openWriteTransactions = new AtomicInteger();
     protected final AtomicInteger openReadTransactions = new AtomicInteger();
     protected final AtomicLong openedTransactions = new AtomicLong();
     protected final AtomicLong committedTransactions = new AtomicLong();
     protected final AtomicLong abortedTransactions = new AtomicLong();
     protected static boolean singleWriterOntology = false;
-    private final String ontologyName;
 
     TransactingOntology(String ontologyName) {
         this.ontologyName = ontologyName;
@@ -52,7 +52,7 @@ abstract class TransactingOntology implements ITrestleOntology {
      */
     @Override
     public TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject, boolean write) {
-        logger.debug("Inheriting transaction from existing transaction object, setting flags, but not opening new transaction");
+        logger.trace("Inheriting transaction from existing transaction object {}, setting flags, but not opening new transaction", transactionObject.getTransactionID());
         this.threadLocked.set(true);
         this.threadInTransaction.set(true);
         threadTransactionObject.set(transactionObject);
@@ -78,16 +78,19 @@ abstract class TransactingOntology implements ITrestleOntology {
      * @return - {@link TrestleTransaction}
      */
     @Override
+//    We can suppress this, because the first call is to check whether the transaction object is null or not
+    @SuppressWarnings({"dereference.of.nullable"})
     public TrestleTransaction createandOpenNewTransaction(boolean write) {
         if (threadTransactionObject.get() == null) {
-            logger.debug("Unowned transaction, opening a new one");
-            final TrestleTransaction trestleTransaction = new TrestleTransaction(System.nanoTime(), write);
+            final long transactionID = System.nanoTime();
+            logger.debug("Unowned transaction, opening new transaction {}", transactionID);
+            final TrestleTransaction trestleTransaction = new TrestleTransaction(transactionID, write);
             trestleTransaction.setConnection(this.getOntologyConnection());
             threadTransactionObject.set(trestleTransaction);
             this.openAndLock(write, true);
             return trestleTransaction;
         } else {
-            logger.warn("Thread transaction owned, returning empty object");
+            logger.trace("Thread transaction owned by {}, returning empty object", threadTransactionObject.get().getTransactionID());
             final TrestleTransaction trestleTransaction = new TrestleTransaction(write);
             trestleTransaction.setConnection(this.getOntologyConnection());
             return trestleTransaction;
@@ -106,17 +109,17 @@ abstract class TransactingOntology implements ITrestleOntology {
             final TrestleTransaction trestleTransaction = threadTransactionObject.get();
             if (trestleTransaction != null) {
                 if (trestleTransaction.equals(transaction)) {
-                    logger.debug("Owns transaction, committing");
+                    logger.trace("Owns transaction, committing transaction {}", transaction.getTransactionID());
                     this.unlockAndCommit(transaction.isWriteTransaction(), true);
                     threadTransactionObject.set(null);
                 } else {
-                    logger.debug("Doesn't own transaction, continuing");
+                    logger.trace("Doesn't own transaction, continuing");
                 }
             } else {
-                logger.warn("Null transaction object, how did that happen?");
+                logger.warn("Null thread transaction object, transaction {} continuing", transaction.getTransactionID());
             }
         } else {
-            logger.debug("Transaction state is inherited, continuing");
+            logger.trace("Transaction state is inherited, continuing");
         }
     }
 
@@ -127,17 +130,17 @@ abstract class TransactingOntology implements ITrestleOntology {
             final TrestleTransaction trestleTransaction = threadTransactionObject.get();
             if (trestleTransaction != null) {
                 if (trestleTransaction.equals(transaction)) {
-                    logger.debug("Owns transaction, aborting");
+                    logger.trace("Transaction object {} owns transaction, aborting", transaction.getTransactionID());
                     this.unlockAndAbort(transaction.isWriteTransaction(), true);
                     threadTransactionObject.set(null);
                 } else {
-                    logger.debug("Doesn't own transaction, continuing");
+                    logger.trace("Doesn't own transaction, continuing");
                 }
             } else {
-                logger.warn("Null transaction object, how did that happen?");
+                logger.warn("Null transaction object, transaction {} continuing", transaction.getTransactionID());
             }
         } else {
-            logger.debug("Transaction state is inherited, continuing");
+            logger.trace("Transaction state is inherited, continuing");
         }
     }
 
@@ -160,6 +163,7 @@ abstract class TransactingOntology implements ITrestleOntology {
      *
      * @param write - Open writable transaction?
      */
+    @Override
     public void openAndLock(boolean write) {
         this.openAndLock(write, false);
     }
@@ -197,6 +201,7 @@ abstract class TransactingOntology implements ITrestleOntology {
      *
      * @param write - Is this a write transaction?
      */
+    @Override
     public void unlockAndCommit(boolean write) {
         this.unlockAndCommit(write, false);
     }
@@ -259,6 +264,7 @@ abstract class TransactingOntology implements ITrestleOntology {
      * Open transaction
      * @param write - Open a writable transaction
      */
+    @Override
     public void openTransaction(boolean write) {
         this.openTransaction(write, false);
     }
@@ -311,6 +317,7 @@ abstract class TransactingOntology implements ITrestleOntology {
      * Commit transaction
      * @param write - Is this a write transaction?
      */
+    @Override
     public void commitTransaction(boolean write) {
         this.commitTransaction(write, false);
     }
@@ -380,36 +387,37 @@ abstract class TransactingOntology implements ITrestleOntology {
         }
     }
 
-    /**
-     * Get the current number of opened transactions, for the lifetime of the application
-     * @return - long of opened transactions
-     */
+    @Override
     public long getOpenedTransactionCount() {
         return this.openedTransactions.get();
     }
 
-    /**
-     * Get the current number of committed transactions, for the lifetime of the application
-     * @return - long of committed transactions
-     */
+    @Override
     public long getCommittedTransactionCount() {
         return this.committedTransactions.get();
     }
 
-    /**
-     * Get the current number of aborted transactions, for the lifetime of the application
-     * @return - long of aborted transactions
-     */
+    @Override
     public long getAbortedTransactionCount() {
         return this.abortedTransactions.get();
     }
 
 
-    private static class OntologySecurityManager extends SecurityManager {
+    @Override
+    public int getCurrentlyOpenTransactions() {
+        return this.openReadTransactions.get() + this.openWriteTransactions.get();
+    }
 
-        public String getCallerClassName(int callstackDepth) {
-            return getClassContext()[callstackDepth].getName();
-        }
+    @Override
+    @Gauge(name = "trestle-open-write-transactions", absolute = true)
+    public int getOpenWriteTransactions() {
+        return this.openWriteTransactions.get();
+    }
+
+    @Override
+    @Gauge(name = "trestle-open-read-transactions", absolute = true)
+    public int getOpenReadTransactions() {
+        return this.openReadTransactions.get();
     }
 
 

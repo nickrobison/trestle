@@ -32,7 +32,7 @@ public class TrestleObjectCacheEntryListener implements
     TrestleObjectCacheEntryListener(@Named("valid") ITrestleIndex<TrestleIRI> validIndex, @Named("cacheLock") TrestleUpgradableReadWriteLock cacheLock) {
         this.validIndex = validIndex;
         this.cacheLock = cacheLock;
-        logger.debug("Registering cache listener, waiting for expired events");
+        logger.debug("Registering cache listener, waiting for expired or removed events");
     }
 
     @Override
@@ -48,6 +48,7 @@ public class TrestleObjectCacheEntryListener implements
     private void removeFromIndex(Iterable<CacheEntryEvent<? extends IRI, ?>> cacheEntryEvents) {
 //            Remove from index
         try {
+            logger.debug("Evicting entries from cache");
             cacheLock.lockWrite();
             cacheEntryEvents.forEach(event -> {
                 final TrestleIRI parsedTrestleIRI = IRIBuilder.parseIRIToTrestleIRI(event.getKey());

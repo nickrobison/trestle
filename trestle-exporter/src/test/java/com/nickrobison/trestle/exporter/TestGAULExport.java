@@ -2,7 +2,6 @@ package com.nickrobison.trestle.exporter;
 
 import com.vividsolutions.jts.geom.MultiPolygon;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -10,10 +9,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.MissingResourceException;
 import java.util.stream.Collectors;
 
 /**
@@ -51,7 +50,7 @@ public class TestGAULExport {
         if (is == null) {
             throw new RuntimeException("Can't load objects");
         }
-        final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is));
+        final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
 
         return bufferedReader.lines()
                 .skip(1)

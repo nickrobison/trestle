@@ -29,7 +29,9 @@ public class TrestleActorProtocol implements Serializable {
 
     public static class HelloStatus implements Serializable {
         private static final long serialVersionUID = 42L;
-        public HelloStatus() {}
+
+        public HelloStatus() {
+        }
     }
 
     public static class SpatialIntersectObject<T> implements Serializable {
@@ -84,7 +86,9 @@ public class TrestleActorProtocol implements Serializable {
             return this.wkt;
         }
 
-        public String getClassString() { return this.classString; }
+        public String getClassString() {
+            return this.classString;
+        }
     }
 
     public static class TemporalSpatialIntersect extends SpatialIntersect {
@@ -156,12 +160,14 @@ public class TrestleActorProtocol implements Serializable {
         }
     }
 
-    public static class GetDatasets<T> implements Serializable{
+    public static class GetDatasets<T> implements Serializable {
         private static final long serialVersionUID = 42L;
-        public GetDatasets(){}
+
+        public GetDatasets() {
+        }
     }
 
-    public static class ReadObject<T> implements Serializable{
+    public static class ReadObject<T> implements Serializable {
         private static final long serialVersionUID = 42L;
         private final Class<T> clazz;
         private final String objectID;

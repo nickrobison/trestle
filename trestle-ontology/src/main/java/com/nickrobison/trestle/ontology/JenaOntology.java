@@ -5,9 +5,9 @@ import com.google.common.collect.Multimap;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
-import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.ontology.utils.JenaLiteralFactory;
 import com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions;
+import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
@@ -28,7 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.ThreadSafe;
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -47,10 +49,10 @@ public abstract class JenaOntology extends TransactingOntology {
     protected final OWLOntology ontology;
     protected final DefaultPrefixManager pm;
     protected final OWLDataFactory df;
-    protected final QueryBuilder qb;
-    protected final JenaLiteralFactory jf;
+    private final QueryBuilder qb;
+    private final JenaLiteralFactory jf;
 
-    JenaOntology(String ontologyName, Model model, OWLOntology ontology, DefaultPrefixManager pm) {
+    JenaOntology(String ontologyName, Model model, OWLOntology ontology, DefaultPrefixManager pm, QueryBuilder qb) {
         super(ontologyName);
         this.ontologyName = ontologyName;
         this.model = model;
@@ -58,11 +60,14 @@ public abstract class JenaOntology extends TransactingOntology {
         this.ontology = ontology;
         this.pm = pm;
         this.df = OWLManager.getOWLDataFactory();
-        this.qb = new QueryBuilder(QueryBuilder.DIALECT.JENA, this.pm);
+        this.qb = qb;
         this.jf = new JenaLiteralFactory(this.model);
     }
 
-    abstract public boolean isConsistent();
+    @Override
+    public QueryBuilder getUnderlyingQueryBuilder() {
+        return this.qb;
+    }
 
     @Override
     public Optional<List<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, IRI propertyIRI) {
@@ -93,7 +98,6 @@ public abstract class JenaOntology extends TransactingOntology {
                     if (statement.getObject().isURIResource()) {
                         final OWLNamedIndividual propertyObject = df.getOWLNamedIndividual(IRI.create(statement.getObject().asResource().getURI()));
                         final OWLObjectPropertyAssertionAxiom owlObjectProperty = df.getOWLObjectPropertyAssertionAxiom(property, individual, propertyObject);
-//                final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(IRI.create(statement.getObject().toString()));
                         properties.add(owlObjectProperty);
                     } else {
                         logger.error("Model doesn't contain resource {}", statement.getObject());
@@ -124,11 +128,6 @@ public abstract class JenaOntology extends TransactingOntology {
         try {
             final Resource modelResource = model.getResource(getFullIRIString(owlClassAssertionAxiom.getIndividual().asOWLNamedIndividual()));
             final Resource modelClass = model.getResource(getFullIRIString(owlClassAssertionAxiom.getClassExpression().asOWLClass()));
-//            I think we can just ignore this and move on, try to add the assertion, it should simply move on if it already exists
-//            if (model.contains(modelResource, RDF.type, modelClass)) {
-//                logger.debug("{} already exists in the model", owlClassAssertionAxiom.getIndividual());
-//                return;
-//            }
             modelResource.addProperty(RDF.type, modelClass);
 
         } catch (TDBTransactionException e) {
@@ -314,14 +313,6 @@ public abstract class JenaOntology extends TransactingOntology {
         try {
             final Resource modelResource = this.model.getResource(getFullIRIString(individual));
             modelResource.removeProperties();
-//            final StmtIterator stmtIterator = modelResource.listProperties();
-//                try {
-//                    logger.debug("Removing statements for {}", individual.getIRI());
-//                    final List<Statement> statements = stmtIterator.toList();
-//                    model.remove(statements);
-//                } finally {
-//                    stmtIterator.close();
-//                }
 //                Now, remove the individual
         } finally {
             this.model.leaveCriticalSection();
@@ -348,6 +339,7 @@ public abstract class JenaOntology extends TransactingOntology {
         }
     }
 
+    @Override
     public void writeOntology(IRI path, boolean validate) throws OWLOntologyStorageException {
         this.openAndLock(true);
         if (validate) {
@@ -373,27 +365,19 @@ public abstract class JenaOntology extends TransactingOntology {
         this.unlockAndCommit(true);
     }
 
+    @Override
     public OWLOntology getUnderlyingOntology() {
         return this.ontology;
     }
 
+    @Override
     public DefaultPrefixManager getUnderlyingPrefixManager() {
         return this.pm;
     }
 
-//    @Override
-//    public void openTransaction(boolean write) {
-//        logger.info("Opening model transaction");
-//        model.begin();
-//    }
-//
-//    @Override
-//    public void commitTransaction() {
-//        logger.info("Committing model transaction");
-//        model.commit();
-//    }
 
     //    TODO(nrobison): Implement this
+    @Override
     public Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean inferred) {
         Set<OWLNamedIndividual> instances = new HashSet<>();
         this.openTransaction(false);
@@ -437,7 +421,6 @@ public abstract class JenaOntology extends TransactingOntology {
     @Override
     public Set<OWLDataPropertyAssertionAxiom> getAllDataPropertiesForIndividual(OWLNamedIndividual individual) {
         Set<OWLDataPropertyAssertionAxiom> properties = new HashSet<>();
-//        Map<String, Literal> statementLiterals = new HashMap<>();
         Multimap<String, Literal> statementLiterals = ArrayListMultimap.create();
         this.openTransaction(false);
         this.model.enterCriticalSection(Lock.READ);
@@ -448,16 +431,14 @@ public abstract class JenaOntology extends TransactingOntology {
                 while (stmtIterator.hasNext()) {
                     final Statement statement = stmtIterator.nextStatement();
 //            Filter out RDF stuff
-                    if (!statement.getPredicate().getNameSpace().contains("rdf-syntax")) {
 //                Check to see if it's an object or data property
-                        if (statement.getObject().isLiteral()) {
 //                Check to see if property is object or data project
-                            try {
-//                                statement.getLiteral();
-                                statementLiterals.put(statement.getPredicate().getURI(), statement.getLiteral());
-                            } catch (Exception e) {
-                                logger.debug("Can't get literal for {}", statement.getSubject(), e);
-                            }
+                    if (!statement.getPredicate().getNameSpace().contains("rdf-syntax") && statement.getObject().isLiteral()) {
+
+                        try {
+                            statementLiterals.put(statement.getPredicate().getURI(), statement.getLiteral());
+                        } catch (Exception e) {
+                            logger.debug("Can't get literal for {}", statement.getSubject(), e);
                         }
                     }
                 }
@@ -506,16 +487,14 @@ public abstract class JenaOntology extends TransactingOntology {
                 while (stmtIterator.hasNext()) {
                     final Statement statement = stmtIterator.nextStatement();
 
-                    if (!statement.getPredicate().getNameSpace().contains("rdf-syntax")) {
-//                Ensure that it's an object property
-                        if (statement.getObject().isURIResource()) {
-                            final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(IRI.create(statement.getPredicate().getURI()));
-                            final OWLNamedIndividual objectIndividual = df.getOWLNamedIndividual(IRI.create(statement.getObject().asResource().getURI()));
-                            final OWLObjectPropertyAssertionAxiom owlClassAssertionAxiom = df.getOWLObjectPropertyAssertionAxiom(owlObjectProperty,
-                                    individual,
-                                    objectIndividual);
-                            properties.add(owlClassAssertionAxiom);
-                        }
+                    //                Ensure that it's an object property
+                    if (!statement.getPredicate().getNameSpace().contains("rdf-syntax") && statement.getObject().isURIResource()) {
+                        final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(IRI.create(statement.getPredicate().getURI()));
+                        final OWLNamedIndividual objectIndividual = df.getOWLNamedIndividual(IRI.create(statement.getObject().asResource().getURI()));
+                        final OWLObjectPropertyAssertionAxiom owlClassAssertionAxiom = df.getOWLObjectPropertyAssertionAxiom(owlObjectProperty,
+                                individual,
+                                objectIndividual);
+                        properties.add(owlClassAssertionAxiom);
                     }
 
                 }
@@ -529,6 +508,7 @@ public abstract class JenaOntology extends TransactingOntology {
         return properties;
     }
 
+    @Override
     public Optional<OWLNamedIndividual> getIndividual(OWLNamedIndividual individual) {
 
         final Resource modelResource;
@@ -598,44 +578,19 @@ public abstract class JenaOntology extends TransactingOntology {
 
     @Override
     public Set<OWLDataPropertyAssertionAxiom> getFactsForIndividual(OWLNamedIndividual individual, OffsetDateTime validTemporal, OffsetDateTime databaseTemporal, boolean filterTemporals) {
-        final String objectQuery = qb.buildObjectPropertyRetrievalQuery(validTemporal, databaseTemporal, true, individual);
-//        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
+        final String objectQuery = qb.buildObjectFactRetrievalQuery(validTemporal, databaseTemporal, true, null, individual);
         final TrestleResultSet resultSet = this.executeSPARQLResults(objectQuery);
-//        final ResultSet resultSet = this.executeUpdateSPARQL(objectQuery);
-        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = SharedOntologyFunctions.getDataPropertiesFromIndividualFacts(df, resultSet);
-
-
-
-//        while (resultSet.hasNext()) {
-//            final QuerySolution next = resultSet.next();
-//            final Optional<OWLLiteral> owlLiteral = this.jf.createOWLLiteral(next.getLiteral("object"));
-//            owlLiteral.ifPresent(literal -> retrievedDataProperties.add(df.getOWLDataPropertyAssertionAxiom(
-//                    df.getOWLDataProperty(next.getResource("property").getURI()),
-//                    df.getOWLNamedIndividual(next.getResource("individual").getURI()),
-//                    literal
-//            )));
-//        }
-        return retrievedDataProperties;
+        return SharedOntologyFunctions.getDataPropertiesFromIndividualFacts(df, resultSet);
     }
 
     @Override
     public Set<OWLDataPropertyAssertionAxiom> getTemporalsForIndividual(OWLNamedIndividual individual) {
         final String temporalQuery = qb.buildIndividualTemporalQuery(individual);
-//        Set<OWLDataPropertyAssertionAxiom> retrievedDataProperties = new HashSet<>();
         final TrestleResultSet resultSet = this.executeSPARQLResults(temporalQuery);
         return SharedOntologyFunctions.getDataPropertiesFromIndividualFacts(df, resultSet);
-//        final ResultSet resultSet = this.executeUpdateSPARQL(temporalQuery);
-//        while (resultSet.hasNext()) {
-//            final QuerySolution next = resultSet.next();
-//            final Optional<OWLLiteral> owlLiteral = this.jf.createOWLLiteral(next.getLiteral("object"));
-//            owlLiteral.ifPresent(literal -> retrievedDataProperties.add(df.getOWLDataPropertyAssertionAxiom(
-//                    df.getOWLDataProperty(next.getResource("property").getURI()),
-//                    df.getOWLNamedIndividual(next.getResource("individual").getURI()),
-//                    literal
-//            )));
-//        }
     }
 
+    @Override
     public IRI getFullIRI(IRI iri) {
         //        Check to see if it's already been expanded
         if (pm.getPrefix(iri.getScheme() + ":") == null) {
@@ -645,11 +600,10 @@ public abstract class JenaOntology extends TransactingOntology {
         }
     }
 
+    @Override
     public IRI getFullIRI(String prefix, String suffix) {
         return getFullIRI(IRI.create(prefix, suffix));
     }
-
-    abstract public void initializeOntology();
 
     @Override
     public IRI getFullIRI(OWLNamedObject owlNamedObject) {
@@ -670,8 +624,6 @@ public abstract class JenaOntology extends TransactingOntology {
         return this.model;
     }
 
-    abstract public void close(boolean drop);
-
     /**
      * Parse boolean to correct Jena transaction
      *
@@ -686,7 +638,8 @@ public abstract class JenaOntology extends TransactingOntology {
     }
 
     @Override
-    public void setOntologyConnection() { }
+    public void setOntologyConnection() {
+    }
 
     @Override
     @SuppressWarnings({"override.return.invalid"})
@@ -696,6 +649,7 @@ public abstract class JenaOntology extends TransactingOntology {
 
     /**
      * Build {@link TrestleResultSet} from Jena {@link ResultSet}
+     *
      * @param resultSet - Jena {@link ResultSet} to parse
      * @return - {@link TrestleResultSet}
      */

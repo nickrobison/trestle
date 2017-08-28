@@ -5,8 +5,9 @@ import com.nickrobison.trestle.reasoner.annotations.*;
 import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
-import com.nickrobison.trestle.reasoner.types.TemporalType;
+import com.nickrobison.trestle.types.TemporalType;
 import com.vividsolutions.jts.geom.Geometry;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 import java.io.Serializable;
@@ -40,7 +41,7 @@ public class TestClasses {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
@@ -85,7 +86,7 @@ public class TestClasses {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
@@ -104,7 +105,7 @@ public class TestClasses {
     }
 
     @DatasetClass(name = "GAUL_ESRI_Test")
-    protected static class ESRIPolygonTest implements Serializable {
+    public static class ESRIPolygonTest implements Serializable {
         private static final long serialVersionUID = 42L;
 
         private final Integer adm0_code;
@@ -129,7 +130,7 @@ public class TestClasses {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
@@ -165,7 +166,7 @@ public class TestClasses {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
@@ -225,7 +226,7 @@ public class TestClasses {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
@@ -298,7 +299,7 @@ public class TestClasses {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
@@ -346,7 +347,7 @@ public class TestClasses {
         private LocalDateTime intervalEnd;
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
@@ -484,7 +485,7 @@ public class TestClasses {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
@@ -513,7 +514,8 @@ public class TestClasses {
     }
 
     @DatasetClass(name = "VersionTest")
-    public static class FactVersionTest {
+    public static class FactVersionTest implements Serializable {
+        private static final long serialVersionUID = 42L;
 
         @IndividualIdentifier
         public final String id;
@@ -540,7 +542,7 @@ public class TestClasses {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 

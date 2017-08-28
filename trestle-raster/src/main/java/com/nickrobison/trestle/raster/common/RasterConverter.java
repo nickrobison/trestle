@@ -11,9 +11,9 @@ import java.io.IOException;
 public class RasterConverter {
 
     public enum ImageType {
-        PNG ("png"),
-        JPEG ("jpeg"),
-        TIFF ("tiff");
+        PNG("png"),
+        JPEG("jpeg"),
+        TIFF("tiff");
 
         private final String type;
 
@@ -30,9 +30,10 @@ public class RasterConverter {
 
     /**
      * Convert a RenderedImage to the destination output format
+     *
      * @param image - RenderedImage source image
-     * @param type - ImageType of output file
-     * @param file - Output file to write to
+     * @param type  - ImageType of output file
+     * @param file  - Output file to write to
      * @throws IOException
      */
     public static void convertImage(RenderedImage image, ImageType type, File file) throws IOException {

@@ -2,6 +2,7 @@ package com.nickrobison.gaulintegrator.UnitTests;
 
 import com.esri.io.PolygonFeatureWritable;
 import com.nickrobison.gaulintegrator.MapperOutput;
+import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -35,7 +36,13 @@ public class GAULRecordTests {
                 new IntWritable(1990),
                 new PolygonFeatureWritable(),
                 testStartDate,
-                testExpirationDate
+                testExpirationDate,
+                new LongWritable(0),
+                new Text("0 name"),
+                new LongWritable(1),
+                new Text("1 name"),
+                new BooleanWritable(true),
+                new Text("My status")
         );
     }
 
@@ -98,7 +105,13 @@ public class GAULRecordTests {
                 new IntWritable(1990),
                 new PolygonFeatureWritable(),
                 testStartDate,
-                testExpirationDate
+                testExpirationDate,
+                new LongWritable(0),
+                new Text("0 name"),
+                new LongWritable(1),
+                new Text("1 name"),
+                new BooleanWritable(true),
+                new Text("My status")
         );
 
         MapperOutput mapperCompareGreaterYear = new MapperOutput(
@@ -107,7 +120,13 @@ public class GAULRecordTests {
                 new IntWritable(2000),
                 new PolygonFeatureWritable(),
                 testStartDate,
-                testExpirationDate
+                testExpirationDate,
+                new LongWritable(0),
+                new Text("0 name"),
+                new LongWritable(1),
+                new Text("1 name"),
+                new BooleanWritable(true),
+                new Text("My status")
         );
 
         MapperOutput mapperCompareLesserID = new MapperOutput(
@@ -116,7 +135,13 @@ public class GAULRecordTests {
                 new IntWritable(1990),
                 new PolygonFeatureWritable(),
                 testStartDate,
-                testExpirationDate
+                testExpirationDate,
+                new LongWritable(0),
+                new Text("0 name"),
+                new LongWritable(1),
+                new Text("1 name"),
+                new BooleanWritable(true),
+                new Text("My status")
         );
 
         MapperOutput mapperCompareLesserYear = new MapperOutput(
@@ -125,7 +150,13 @@ public class GAULRecordTests {
                 new IntWritable(1800),
                 new PolygonFeatureWritable(),
                 testStartDate,
-                testExpirationDate
+                testExpirationDate,
+                new LongWritable(0),
+                new Text("0 name"),
+                new LongWritable(1),
+                new Text("1 name"),
+                new BooleanWritable(true),
+                new Text("My status")
         );
 
         MapperOutput mapperCompareLesserIDAndYear = new MapperOutput(
@@ -134,7 +165,13 @@ public class GAULRecordTests {
                 new IntWritable(1800),
                 new PolygonFeatureWritable(),
                 testStartDate,
-                testExpirationDate
+                testExpirationDate,
+                new LongWritable(0),
+                new Text("0 name"),
+                new LongWritable(1),
+                new Text("1 name"),
+                new BooleanWritable(true),
+                new Text("My status")
         );
 
         MapperOutput mapperCompareGreaterIDandYear = new MapperOutput(
@@ -143,7 +180,13 @@ public class GAULRecordTests {
                 new IntWritable(2000),
                 new PolygonFeatureWritable(),
                 testStartDate,
-                testExpirationDate
+                testExpirationDate,
+                new LongWritable(0),
+                new Text("0 name"),
+                new LongWritable(1),
+                new Text("1 name"),
+                new BooleanWritable(true),
+                new Text("My status")
         );
 
         assertEquals(-1, mapperOutput.compareTo(mapperCompareGreaterID), "Other has greater ID");

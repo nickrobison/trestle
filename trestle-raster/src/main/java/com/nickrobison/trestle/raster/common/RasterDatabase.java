@@ -1,7 +1,5 @@
 package com.nickrobison.trestle.raster.common;
 
-import java.awt.image.Raster;
-
 /**
  * Created by nrobison on 9/25/16.
  */
@@ -10,13 +8,13 @@ import java.awt.image.Raster;
  * Enum defining supported raster databases
  */
 public enum RasterDatabase {
-    ORACLE ("Oracle"),
-    POSTGRES ("Postgres");
+    ORACLE("Oracle"),
+    POSTGRES("Postgres");
 
     private final String name;
 
     private RasterDatabase(String name) {
-     this.name = name;
+        this.name = name;
     }
 
     @Override

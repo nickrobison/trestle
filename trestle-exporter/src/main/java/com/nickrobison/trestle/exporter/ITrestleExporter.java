@@ -19,15 +19,18 @@ public interface ITrestleExporter {
 
     /**
      * Determines which
-     * @return
+     *
+     * @return - {@link DataType}
      */
     DataType exporterType();
 
     /**
      * Write a given list of properties to the output format
+     *
      * @param individuals - List of Property,Value maps to write
-     * @param fileName
+     * @param fileName    - {@link String} of file to create
      * @return - ByteBuffer of data format
+     * @throws IOException - Throws exception
      */
     File writePropertiesToByteBuffer(List<TSIndividual> individuals, String fileName) throws IOException;
 }

@@ -1,17 +1,22 @@
 package com.nickrobison.trestle.reasoner;
 
+import com.nickrobison.metrician.Metrician;
+import com.nickrobison.trestle.exporter.ITrestleExporter;
+import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.reasoner.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
-import com.nickrobison.trestle.exporter.ITrestleExporter;
-import com.nickrobison.metrician.Metrician;
-import com.nickrobison.trestle.ontology.ITrestleOntology;
-import com.nickrobison.trestle.ontology.types.TrestleResultSet;
-import com.nickrobison.trestle.reasoner.types.TrestleIndividual;
-import com.nickrobison.trestle.reasoner.types.relations.ConceptRelationType;
-import com.nickrobison.trestle.reasoner.types.relations.ObjectRelation;
+import com.nickrobison.trestle.reasoner.merge.TrestleMergeEngine;
+import com.nickrobison.trestle.types.TrestleIndividual;
+import com.nickrobison.trestle.types.events.TrestleEvent;
+import com.nickrobison.trestle.types.events.TrestleEventType;
+import com.nickrobison.trestle.types.relations.ConceptRelationType;
+import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
@@ -56,18 +61,35 @@ public interface TrestleReasoner {
 
     /**
      * Get the underlying metrics engine
+     *
      * @return - {@link Metrician} metrics engine
      */
     Metrician getMetricsEngine();
 
     /**
+     * Get the underlying {@link TrestleMergeEngine}
+     *
+     * @return - Get {@link TrestleMergeEngine}
+     */
+    TrestleMergeEngine getMergeEngine();
+
+    /**
+     * Get the underlying {@link EqualityEngine}
+     *
+     * @return - {@link EqualityEngine}
+     */
+    EqualityEngine getEqualityEngine();
+
+    /**
      * Get the currently registered prefixes and URIs
+     *
      * @return - {@link Map} of prefixes and their corresponding URIs
      */
     Map<String, String> getReasonerPrefixes();
 
     /**
      * Execute SPARQL select query
+     *
      * @param queryString - Query String
      * @return - {@link TrestleResultSet}
      */
@@ -211,6 +233,60 @@ public interface TrestleReasoner {
     Optional<List<Object>> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal);
 
     /**
+     * Get all {@link TrestleEvent} for the given individual
+     *
+     * @param clazz      - Class of object to get events for
+     * @param individual - {@link String} ID of the individual to gather events for
+     * @return - {@link Optional} {@link Set} of {@link TrestleEvent} for the given individual
+     */
+    Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, String individual);
+
+    /**
+     * Get all {@link TrestleEvent} for the given individual
+     *
+     * @param clazz      - Class of object get get event for
+     * @param individual - {@link OWLNamedIndividual} to gather events for
+     * @return - {@link Optional} {@link Set} of {@link TrestleEvent} for the given individual
+     */
+    Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, OWLNamedIndividual individual);
+
+    /**
+     * Add {@link TrestleEvent} to individual
+     * This method cannot be used to add {@link TrestleEventType#MERGED} or {@link TrestleEventType#SPLIT} events because those require additional information.
+     * Use the {@link TrestleReasoner#addTrestleObjectSplitMerge(TrestleEventType, Object, List, double)} for those event types
+     *
+     * @param type          - {@link TrestleEventType} to add to individual
+     * @param individual    - {@link String} ID of individual
+     * @param eventTemporal - {@link Temporal} temporal to use for event
+     */
+    void addTrestleObjectEvent(TrestleEventType type, String individual, Temporal eventTemporal);
+
+    /**
+     * Add {@link TrestleEvent} to individual
+     * This method cannot be used to add {@link TrestleEventType#MERGED} or {@link TrestleEventType#SPLIT} events because those require additional information.
+     * Use the {@link TrestleReasoner#addTrestleObjectSplitMerge(TrestleEventType, Object, List, double)} for those event types
+     *
+     * @param type          - {@link TrestleEventType} to add to individual
+     * @param individual    - {@link OWLNamedIndividual} individual to add event to
+     * @param eventTemporal - {@link Temporal} temporal to use for event
+     */
+    void addTrestleObjectEvent(TrestleEventType type, OWLNamedIndividual individual, Temporal eventTemporal);
+
+    /**
+     * Add a SPLIT or MERGE {@link TrestleEventType} to a given {@link OWLNamedIndividual}
+     * Events are oriented subject to object, so A splits_into [B,C,D] and H merged_from [E,F,G]
+     * Individuals are not created if they don't already exist
+     * throws {@link IllegalArgumentException} if something other than {@link TrestleEventType#MERGED} or {@link TrestleEventType#SPLIT} is passed
+     *
+     * @param <T>     - Generic type parameter of Trestle Object
+     * @param type    {@link TrestleEventType} to add
+     * @param subject - {@link OWLNamedIndividual} subject of Event
+     * @param objects - {@link Set} of {@link OWLNamedIndividual} that are the objects of the event
+     * @param strength - {@link Double} Strength of union association
+     */
+    <T extends @NonNull Object> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength);
+
+    /**
      * Spatial Intersect Object with most recent records in the database
      * An empty Optional means an error, an Optional of an empty List means no intersected objects
      *
@@ -269,6 +345,7 @@ public interface TrestleReasoner {
      * @param cutoff   - Double of relation strength cutoff
      * @param <T>      - Type to specialize return with
      * @return - Optional Map of related java objects and their corresponding relational strength
+     * @deprecated This is an old method, we don't use it anymore
      */
     //    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
     @SuppressWarnings("return.type.incompatible")
@@ -285,6 +362,30 @@ public interface TrestleReasoner {
      * @return - {@link Optional} {@link Map} of String IRI representations of related concepts
      */
     Optional<Map<String, List<String>>> getRelatedConcepts(String individual, @Nullable String conceptID, double relationStrength);
+
+    /**
+     * Get a {@link List} of objects that are equivalent to given individual at the given time point
+     * If no objects satisfy the equality constraints and an empty {@link List} is returned
+     *
+     * @param clazz - {@link Class} of input individuals
+     * @param individual - Individual {@link IRI}
+     * @param queryTemporal - {@link Temporal} of query point
+     * @param <T> - Type parameter
+     * @return - {@link Optional} {@link List} of {@link T} objects
+     */
+    <@NonNull T> Optional<List<T>> getEquivalentObjects(Class<T> clazz, IRI individual, Temporal queryTemporal);
+
+    /**
+     * Get a {@link List} of objects that are equivalent to given {@link List} of individuals at the given time point
+     * If no objects satisfy the equality constraints and an empty {@link List} is returned
+     *
+     * @param clazz - {@link Class} of input individuals
+     * @param individuals - {@link List} of individual {@link IRI}
+     * @param queryTemporal - {@link Temporal} of query point
+     * @param <T> - Type parameter
+     * @return - {@link Optional} {@link List} of {@link T} objects
+     */
+    <@NonNull T> Optional<List<T>> getEquivalentObjects(Class<T> clazz, List<IRI> individuals, Temporal queryTemporal);
 
     /**
      * Search the ontology for individuals with IRIs that match the given search string
@@ -316,6 +417,7 @@ public interface TrestleReasoner {
     /**
      * Return a set of Trestle_Concepts that intersect with the given WKT
      * The temporal parameters allow for additional specificity on the spatio-temporal intersection
+     *
      * @param wkt     - String of WKT to intersect with
      * @param buffer  - double buffer to draw around WKT
      * @param validAt - {@link Temporal} of validAt time
@@ -329,6 +431,7 @@ public interface TrestleReasoner {
      * If the {@code spatialIntersection} parameter occurs outside of the exists range of the target TrestleObjects, the intersection point is adjusted, in order to return a valid object
      * If the intersection point occurs before the TrestleObject, the earliest version of that object is returned
      * If the intersection point occurs after the TrestleObject, the latest version of the object is returned
+     *
      * @param <T>                  - Generic type T of returned object
      * @param clazz                - Input class to retrieve from concept
      * @param conceptID            - String ID of concept to retrieve
@@ -395,12 +498,13 @@ public interface TrestleReasoner {
 
     /**
      * Export TrestleObject at the specified valid/database temporal
+     *
      * @param inputClass - Class to parse
-     * @param objectID - {@link List} of objectID strings to return
-     * @param validAt - {@link Temporal} of validAt time
+     * @param objectID   - {@link List} of objectID strings to return
+     * @param validAt    - {@link Temporal} of validAt time
      * @param databaseAt - {@link Temporal} of databaseAt time
      * @param exportType - {@link ITrestleExporter.DataType} export datatype of file
-     * @param <T> - Generic type parameter
+     * @param <T>        - Generic type parameter
      * @return - {@link File} of type {@link ITrestleExporter.DataType}
      * @throws IOException - Throws if it can't create the file
      */

@@ -42,6 +42,10 @@ public class TypeConverter {
     private static final Map<Class<?>, OWLDatatype> owlDatatypeMap = buildClassMap();
     private static final Map<String, Function> javaClassConstructors = new HashMap<>();
 
+    private TypeConverter() {
+
+    }
+
     public static void registerTypeConstructor(Class<?> clazz, OWLDatatype datatype, Function constructorFunc) {
             logger.debug("Registering java class {} with OWLDatatype {}", clazz.getName(), datatype.getIRI());
         datatypeMap.put(datatype, clazz);
@@ -123,6 +127,10 @@ public class TypeConverter {
                 return javaClass.cast(literal.parseDouble());
             }
 
+            case "boolean": {
+                return (@NonNull T) (Object) Boolean.getBoolean(literal.getLiteral());
+            }
+
             case "java.lang.Boolean": {
                 return javaClass.cast(literal.parseBoolean());
             }
@@ -144,7 +152,7 @@ public class TypeConverter {
 //                    Try to get a match from the custom constructor registry
                 final Function constructorFunction = javaClassConstructors.get(javaClass.getTypeName());
                 if (constructorFunction == null) {
-                    throw new RuntimeException(String.format("Unsupported cast %s", javaClass));
+                    throw new IllegalArgumentException(String.format("Unsupported cast %s", javaClass));
                 }
 
                 return javaClass.cast(constructorFunction.apply(literal.getLiteral()));
@@ -176,7 +184,7 @@ public class TypeConverter {
             }
             javaClass = datatypeMap.get(dataTypeToLookup);
             if (javaClass == null) {
-                throw new RuntimeException(String.format("Unsupported OWLDatatype %s", datatype));
+                throw new IllegalArgumentException(String.format("Unsupported OWLDatatype %s", datatype));
             }
 //            If it comes back as a primitive, check if we need the full class
             if (javaClass.isPrimitive()) {
@@ -188,7 +196,7 @@ public class TypeConverter {
             if (classToVerify == null) {
                 javaClass = String.class;
             } else {
-                javaClass = SpatialParser.GetSpatialClass(classToVerify);
+                javaClass = SpatialParser.getSpatialClass(classToVerify);
             }
         } else {
 //            Look it up from the datatype map, else return a string
@@ -253,7 +261,7 @@ public class TypeConverter {
             if (property.asOWLDataProperty().getIRI().getShortForm().equals("asWKT")) {
                 return String.class;
             }
-            throw new RuntimeException(String.format("Unsupported dataproperty %s", property.asOWLDataProperty().getIRI()));
+            throw new IllegalArgumentException(String.format("Unsupported dataproperty %s", property.asOWLDataProperty().getIRI()));
         }
 
         return javaClass;
@@ -352,7 +360,7 @@ public class TypeConverter {
                     return Double.class;
                 }
                 case "boolean": {
-                    return boolean.class;
+                    return Boolean.class;
                 }
                 case "long": {
                     return Long.class;

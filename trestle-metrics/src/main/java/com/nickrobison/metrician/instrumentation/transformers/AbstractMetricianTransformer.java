@@ -93,7 +93,7 @@ public abstract class AbstractMetricianTransformer {
 
 
 
-    public static abstract class MetricianDynamicValue<T extends Annotation> extends Advice.DynamicValue.ForFixedValue<T> {
+    public static abstract class MetricianDynamicValue<T extends Annotation> {
         public abstract Class<T> getAnnotationClass();
     }
 
@@ -133,7 +133,7 @@ public abstract class AbstractMetricianTransformer {
         } else if (CounterDecrement.class.isInstance(annotation)) {
             return ((CounterDecrement) annotation).name();
         } else {
-            throw new IllegalArgumentException("Unsupported Metrics annotation (" + annotation.getClass().getName() + ")");
+            throw new IllegalArgumentException("Unsupported Metrics annotation (" + annotation.annotationType().getName() + ")");
         }
     }
 
@@ -151,6 +151,6 @@ public abstract class AbstractMetricianTransformer {
         else if (CounterDecrement.class.isInstance(annotation))
             return ((CounterDecrement) annotation).absolute();
         else
-            throw new IllegalArgumentException("Unsupported Metrics annotation (" + annotation.getClass().getName() + ")");
+            throw new IllegalArgumentException("Unsupported Metrics annotation (" + annotation.annotationType().getName() + ")");
     }
 }

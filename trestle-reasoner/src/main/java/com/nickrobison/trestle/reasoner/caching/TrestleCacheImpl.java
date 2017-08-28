@@ -4,7 +4,7 @@ import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.reasoner.caching.listeners.TrestleObjectCacheEntryListener;
 import com.nickrobison.trestle.common.locking.TrestleUpgradableReadWriteLock;
 import com.nickrobison.trestle.iri.TrestleIRI;
-import com.nickrobison.trestle.reasoner.types.TrestleIndividual;
+import com.nickrobison.trestle.types.TrestleIndividual;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.lock.qual.GuardedBy;
@@ -117,10 +117,13 @@ public class TrestleCacheImpl implements TrestleCache {
             cacheLock.lockWrite();
             logger.debug("Adding {} to cache from {} to {}", individualIRI, startTemporal, endTemporal);
             trestleObjectCache.put(individualIRI.getIRI(), value);
+            logger.debug("Added to cache");
             validIndex.insertValue(individualIRI.getObjectID(), startTemporal, endTemporal, individualIRI);
+            logger.debug("Added {} to index", individualIRI);
         } catch (InterruptedException e) {
             logger.error("Unable to get write lock", e);
         } finally {
+            logger.debug("In the finally block");
             cacheLock.unlockWrite();
         }
     }
@@ -147,16 +150,11 @@ public class TrestleCacheImpl implements TrestleCache {
             cacheLock.lockRead();
             @Nullable final TrestleIRI value = validIndex.getValue(trestleIRI.getObjectID(), objectTemporal.toInstant().toEpochMilli());
             if (value != null) {
-                try {
-                    cacheLock.lockWrite();
                     logger.debug("Removing {} from index and cache", trestleIRI);
                     trestleObjectCache.remove(value.getIRI());
-                    validIndex.deleteValue(value.getObjectID(), objectTemporal.toInstant().toEpochMilli());
-                } finally {
-                    cacheLock.unlockWrite();
-                }
+            } else {
+                logger.debug("{} does not exist in index and cache", trestleIRI);
             }
-            logger.debug("{} does not exist in index and cache", trestleIRI);
         } catch (InterruptedException e) {
             logger.error("Unable to get lock", e);
         } finally {

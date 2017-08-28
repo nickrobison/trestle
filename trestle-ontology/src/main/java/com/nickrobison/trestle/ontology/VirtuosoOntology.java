@@ -1,7 +1,7 @@
 package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
-import org.apache.jena.query.*;
+import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.reasoner.ReasonerRegistry;
@@ -12,7 +12,9 @@ import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import virtuoso.jena.driver.*;
+import virtuoso.jena.driver.VirtGraph;
+import virtuoso.jena.driver.VirtModel;
+import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.ByteArrayInputStream;
@@ -30,7 +32,7 @@ public class VirtuosoOntology extends JenaOntology {
     private static VirtModel virtModel;
 
     VirtuosoOntology(String name, OWLOntology ont, DefaultPrefixManager pm, String connectionString, String username, String password) {
-        super(name, initializeVirtModel(name, connectionString, username, password), ont, pm);
+        super(name, initializeVirtModel(name, connectionString, username, password), ont, pm, new VirtuosoQueryBuilder(pm));
         TRESTLE_RULES = String.format("%s_trestle_rules", name);
         try {
             virtModel.setRuleSet(TRESTLE_RULES);
@@ -96,6 +98,7 @@ public class VirtuosoOntology extends JenaOntology {
         return resultSet;
     }
 
+    @Override
     public void runInference() {
     }
 

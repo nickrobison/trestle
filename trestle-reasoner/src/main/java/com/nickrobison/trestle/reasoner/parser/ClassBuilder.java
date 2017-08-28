@@ -23,6 +23,10 @@ public class ClassBuilder {
 
     private static final Logger logger = LoggerFactory.getLogger(ClassBuilder.class);
 
+    private ClassBuilder() {
+
+    }
+
     /**
      * Get a list of data properties from a given class
      * Returns all Facts (including spatial ones) and sets the prefixes to the default TrestlePrefix
@@ -106,7 +110,7 @@ public class ClassBuilder {
 //        Get sorted types and values
         final Class<?>[] sortedTypes = arguments.getSortedTypes(parameterNames);
         final Object[] sortedValues = arguments.getSortedValues(parameterNames);
-        if ((sortedTypes.length != parameterNames.size()) | (sortedValues.length != parameterNames.size())) {
+        if ((sortedTypes.length != parameterNames.size()) || (sortedValues.length != parameterNames.size())) {
             logger.error("Wrong number of constructor arguments, need {} have {}", parameterNames.size(), sortedValues.length);
             logger.error("Constructor for class {} has parameters {}, but we have {}", clazz.getSimpleName(), parameterNames, arguments.getNames());
 

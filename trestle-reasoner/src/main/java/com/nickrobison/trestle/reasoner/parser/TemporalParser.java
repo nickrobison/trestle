@@ -1,24 +1,32 @@
 package com.nickrobison.trestle.reasoner.parser;
 
+import com.nickrobison.trestle.common.exceptions.TrestleFormatException;
 import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
-import com.nickrobison.trestle.reasoner.types.TemporalScope;
-import com.nickrobison.trestle.reasoner.types.temporal.IntervalTemporal;
-import com.nickrobison.trestle.reasoner.types.temporal.TemporalObject;
-import com.nickrobison.trestle.reasoner.types.temporal.TemporalObjectBuilder;
+import com.nickrobison.trestle.types.TemporalScope;
+import com.nickrobison.trestle.types.temporal.IntervalTemporal;
+import com.nickrobison.trestle.types.temporal.TemporalObject;
+import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
-import static com.nickrobison.trestle.common.StaticIRI.*;
+import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
+import static com.nickrobison.trestle.common.StaticIRI.dateTimeDatatypeIRI;
 import static com.nickrobison.trestle.reasoner.parser.ClassParser.dfStatic;
 import static com.nickrobison.trestle.reasoner.parser.ClassParser.filterMethodName;
 import static com.nickrobison.trestle.reasoner.parser.temporal.JavaTimeParser.parseDateTimeToJavaTemporal;
@@ -30,6 +38,20 @@ import static com.nickrobison.trestle.reasoner.parser.temporal.JodaTimeParser.pa
 public class TemporalParser {
 
     private static final Logger logger = LoggerFactory.getLogger(TemporalParser.class);
+    private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
+    private static final String FIELD_WARNING = "Cannot access field {}";
+    private static final String TEMPORAL_ERROR = "Unable to extract temporal from %s";
+    private static final String UNSUPPORTED_TEMPORAL_PARSING = "Unsupported parsing of temporal %s to %s";
+    private static final String TEMPORAL_INIT_ERROR = "Cannot initialize temporal object";
+
+    /**
+     * Parse a {@link Temporal} to an {@link OWLLiteral} by calling {@link TemporalParser#parseTemporalToOntologyDateTime(Temporal, ZoneId)}
+     * @param temporal - {@link Temporal} to parse
+     * @return - {@link OWLLiteral}
+     */
+    public static OWLLiteral temporalToLiteral(Temporal temporal) {
+        return df.getOWLLiteral(parseTemporalToOntologyDateTime(temporal, ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME), OWL2Datatype.XSD_DATE_TIME);
+    }
 
     /**
      * Enum to determine if the temporal represents the start or the end of a period.
@@ -46,7 +68,7 @@ public class TemporalParser {
         this.cp = cp;
     }
 
-    public static boolean IsDefault(Class<?> clazz) {
+    public static boolean isDefault(Class<?> clazz) {
 
         final Optional<Method> method = Arrays.stream(clazz.getDeclaredMethods())
                 .filter(m -> m.isAnnotationPresent(DefaultTemporal.class))
@@ -72,14 +94,14 @@ public class TemporalParser {
      */
     //    We can suppress this for default annotation properties
     @SuppressWarnings({"dereference.of.nullable"})
-    public static ZoneId GetStartZoneID(@Nullable Class<?> clazz) {
+    public static ZoneId getStartZoneID(@Nullable Class<?> clazz) {
 
         if (clazz == null) {
             return ZoneOffset.UTC;
         }
 
-        if (IsDefault(clazz)) {
-            return GetDefaultZoneID(clazz);
+        if (isDefault(clazz)) {
+            return getDefaultZoneID(clazz);
         }
 
         final Optional<Method> startMethod = Arrays.stream(clazz.getDeclaredMethods())
@@ -100,7 +122,7 @@ public class TemporalParser {
             return extractZoneIdFromTemporalProperty(startAnnotation.timeZone());
         }
 
-        throw new RuntimeException(String.format("Unable to extract temporal from %s", clazz.getSimpleName()));
+        throw new TrestleFormatException(String.format(TEMPORAL_ERROR, clazz.getSimpleName()));
     }
 
     /**
@@ -112,13 +134,13 @@ public class TemporalParser {
      */
     //    We can suppress this for default annotation properties
     @SuppressWarnings({"dereference.of.nullable"})
-    public static ZoneId GetEndZoneID(@Nullable Class<?> clazz) {
+    public static ZoneId getEndZoneID(@Nullable Class<?> clazz) {
         if (clazz == null) {
             return ZoneOffset.UTC;
         }
 
-        if (IsDefault(clazz)) {
-            return GetDefaultZoneID(clazz);
+        if (isDefault(clazz)) {
+            return getDefaultZoneID(clazz);
         }
 
         final Optional<Method> startMethod = Arrays.stream(clazz.getDeclaredMethods())
@@ -139,7 +161,7 @@ public class TemporalParser {
             return extractZoneIdFromTemporalProperty(startAnnotation.timeZone());
         }
 
-        throw new RuntimeException(String.format("Unable to extract temporal from %s", clazz.getClass().getSimpleName()));
+        throw new TrestleFormatException(String.format(TEMPORAL_ERROR, clazz.getSimpleName()));
     }
 
     /**
@@ -148,15 +170,15 @@ public class TemporalParser {
      * @param clazz - Class to parse
      * @return - {@link ZoneId} of the specified class
      */
-    public static ZoneId GetAtZoneID(@Nullable Class<?> clazz) {
+    public static ZoneId getAtZoneID(@Nullable Class<?> clazz) {
         if (clazz == null) {
             return ZoneOffset.UTC;
         }
 
-        if (IsDefault(clazz)) {
-            return GetDefaultZoneID(clazz);
+        if (isDefault(clazz)) {
+            return getDefaultZoneID(clazz);
         } else {
-            return GetStartZoneID(clazz);
+            return getStartZoneID(clazz);
         }
     }
 
@@ -169,7 +191,7 @@ public class TemporalParser {
      */
     //    We can suppress this for default annotation properties
     @SuppressWarnings({"dereference.of.nullable"})
-    public static ZoneId GetDefaultZoneID(@Nullable Class<?> clazz) {
+    public static ZoneId getDefaultZoneID(@Nullable Class<?> clazz) {
         if (clazz == null) {
             return ZoneOffset.UTC;
         }
@@ -192,7 +214,7 @@ public class TemporalParser {
             return extractZoneIdFromTemporalProperty(startAnnotation.timeZone());
         }
 
-        throw new RuntimeException(String.format("Unable to extract temporal from %s", clazz.getClass().getSimpleName()));
+        throw new TrestleFormatException(String.format(TEMPORAL_ERROR, clazz.getSimpleName()));
     }
 
     private static ZoneId extractZoneIdFromTemporalProperty(String timeZone) {
@@ -204,10 +226,10 @@ public class TemporalParser {
     }
 
     //    TODO(nrobison): This looks gross, fix it.
-    public static @Nullable Class<? extends Temporal> GetTemporalType(Class<?> clazz) {
+    public static @Nullable Class<? extends Temporal> getTemporalType(Class<?> clazz) {
 
         final Optional<Field> first = Arrays.stream(clazz.getDeclaredFields())
-                .filter(f -> (f.isAnnotationPresent(DefaultTemporal.class) | f.isAnnotationPresent(StartTemporal.class) | f.isAnnotationPresent(EndTemporal.class)))
+                .filter(f -> (f.isAnnotationPresent(DefaultTemporal.class) || f.isAnnotationPresent(StartTemporal.class) || f.isAnnotationPresent(EndTemporal.class)))
                 .filter(f -> Temporal.class.isAssignableFrom(f.getType()))
                 .findFirst();
 
@@ -216,7 +238,7 @@ public class TemporalParser {
         }
 
         final Optional<Method> method = Arrays.stream(clazz.getDeclaredMethods())
-                .filter(m -> (m.isAnnotationPresent(DefaultTemporal.class) | m.isAnnotationPresent(StartTemporal.class) | m.isAnnotationPresent(EndTemporal.class)))
+                .filter(m -> (m.isAnnotationPresent(DefaultTemporal.class) || m.isAnnotationPresent(StartTemporal.class) || m.isAnnotationPresent(EndTemporal.class)))
                 .filter(m -> Temporal.class.isAssignableFrom(m.getReturnType()))
                 .findFirst();
 
@@ -233,12 +255,11 @@ public class TemporalParser {
      */
     //    We can suppress this for default annotation properties
     @SuppressWarnings({"dereference.of.nullable"})
-    public Optional<List<OWLDataProperty>> GetTemporalsAsDataProperties(Class<?> clazz) {
+    public Optional<List<OWLDataProperty>> getTemporalsAsDataProperties(Class<?> clazz) {
 
-        final OWLNamedIndividual owlNamedIndividual = cp.getIndividual(clazz);
         List<OWLDataProperty> temporalProperties = new ArrayList<>();
 
-        if (IsDefault(clazz)) {
+        if (isDefault(clazz)) {
 //            Try to find the default method or field
             final Optional<Method> defaultMethod = Arrays.stream(clazz.getDeclaredMethods())
                     .filter(m -> m.isAnnotationPresent(DefaultTemporal.class))
@@ -349,16 +370,16 @@ public class TemporalParser {
                 try {
                     fieldValue = classField.get(inputObject);
                 } catch (IllegalAccessException e) {
-                    logger.warn("Cannot access field {}", classField.getName(), e);
+                    logger.warn(FIELD_WARNING, classField.getName(), e);
 //                    should this be here?
                     continue;
                 }
 
                 if (!(fieldValue instanceof java.time.temporal.Temporal)) {
-                    throw new RuntimeException("Not a temporal field");
+                    throw new IllegalStateException("Not a temporal field");
                 }
 
-                final Optional<TemporalObject> temporalObject = parseDefaultTemporal(fieldValue, annotation, owlNamedIndividual);
+                final Optional<TemporalObject> temporalObject = parseDefaultTemporal(fieldValue, annotation);
 
 
 //                TODO(nrobison): All of this is gross
@@ -371,18 +392,18 @@ public class TemporalParser {
                 try {
                     fieldValue = classField.get(inputObject);
                 } catch (IllegalAccessException e) {
-                    logger.warn("Cannot access field {}", classField.getName(), e);
+                    logger.warn(FIELD_WARNING, classField.getName(), e);
 //                    should this be here?
                     continue;
                 }
 
                 if (!(fieldValue instanceof java.time.temporal.Temporal)) {
-                    throw new RuntimeException("Not a temporal field");
+                    throw new IllegalStateException("Not a temporal field");
                 }
 
                 switch (annotation.type()) {
                     case POINT: {
-                        temporalObject = buildPointTemporal((Temporal) fieldValue, annotation.scope(), annotation.timeZone(), owlNamedIndividual);
+                        temporalObject = buildPointTemporal((Temporal) fieldValue, annotation.scope(), annotation.timeZone());
                         break;
                     }
                     case INTERVAL: {
@@ -395,7 +416,7 @@ public class TemporalParser {
                     }
 
                     default:
-                        throw new RuntimeException("Cannot initialize temporal object");
+                        throw new IllegalStateException(TEMPORAL_INIT_ERROR);
                 }
 
                 if (temporalObject != null) {
@@ -414,10 +435,10 @@ public class TemporalParser {
                 if (methodValue.isPresent()) {
 
                     if (!(methodValue.get() instanceof Temporal)) {
-                        throw new RuntimeException("Not a temporal return value");
+                        throw new IllegalStateException("Not a temporal return value");
                     }
 
-                    final Optional<TemporalObject> temporalObject = parseDefaultTemporal(methodValue.get(), annotation, owlNamedIndividual);
+                    final Optional<TemporalObject> temporalObject = parseDefaultTemporal(methodValue.get(), annotation);
 
                     temporalObject.ifPresent(temporalObjects::add);
                 }
@@ -439,9 +460,9 @@ public class TemporalParser {
     }
 
     //    TODO(nrobison): Get the timezone from the temporal, if it supports it.
-    private static Optional<TemporalObject> parseDefaultTemporal(Object fieldValue, @Nullable DefaultTemporal annotation, OWLNamedIndividual owlNamedIndividual) {
+    private static Optional<TemporalObject> parseDefaultTemporal(Object fieldValue, @Nullable DefaultTemporal annotation) {
         if (annotation == null) {
-            throw new RuntimeException("Missing default temporal annotation");
+            throw new IllegalArgumentException("Missing default temporal annotation");
         }
         final TemporalObject temporalObject;
 
@@ -461,18 +482,16 @@ public class TemporalParser {
                                 .at((Temporal) fieldValue)
                                 .withTimeZone(annotation.timeZone())
                                 .build();
-//                                .withRelations(owlNamedIndividual);
                         break;
                     }
 
                     default:
-                        throw new RuntimeException("Cannot initialize temporal object");
+                        throw new IllegalStateException(TEMPORAL_INIT_ERROR);
                 }
                 break;
             }
 
             case INTERVAL: {
-//                final LocalDateTime from = LocalDateTime.from((Temporal) fieldValue);
                 final Temporal from = (Temporal) fieldValue;
                 @Nullable Temporal to = null;
                 if (annotation.duration() > 0) {
@@ -487,14 +506,12 @@ public class TemporalParser {
                                     .withFromTimeZone(annotation.timeZone())
                                     .isDefault(true)
                                     .build();
-//                                    .withRelations(owlNamedIndividual);
                         } else {
                             temporalObject = TemporalObjectBuilder.valid()
                                     .from(from)
                                     .withFromTimeZone(annotation.timeZone())
                                     .isDefault(true)
                                     .build();
-//                                    .withRelations(owlNamedIndividual);
                         }
                         break;
                     }
@@ -507,26 +524,24 @@ public class TemporalParser {
                                     .isDefault(true)
                                     .withFromTimeZone(annotation.timeZone())
                                     .build();
-//                                    .withRelations(owlNamedIndividual);
                         } else {
                             temporalObject = TemporalObjectBuilder.exists()
                                     .from(from)
                                     .isDefault(true)
                                     .withFromTimeZone(annotation.timeZone())
                                     .build();
-//                                    .withRelations(owlNamedIndividual);
                         }
                         break;
                     }
 
                     default:
-                        throw new RuntimeException("Cannot initialize temporal object");
+                        throw new IllegalStateException(TEMPORAL_INIT_ERROR);
                 }
                 break;
             }
 
             default:
-                throw new RuntimeException("Cannot initialize temporal object");
+                throw new IllegalStateException(TEMPORAL_INIT_ERROR);
         }
 
         if (temporalObject == null) {
@@ -541,12 +556,12 @@ public class TemporalParser {
     @SuppressWarnings({"dereference.of.nullable"})
     private static Optional<TemporalObject> parseStartTemporal(@Nullable StartTemporal annotation, Object fieldValue, OWLNamedIndividual owlNamedIndividual, Object inputObject, ClassParser.AccessType access, Class clazz) {
         if (annotation == null) {
-            throw new RuntimeException("Missing StartTemporal annotation");
+            throw new IllegalArgumentException("Missing StartTemporal annotation");
         }
-//        @Nullable final TemporalObject temporalObject;
+
         switch (annotation.type()) {
             case POINT: {
-                return Optional.of(buildPointTemporal((Temporal) fieldValue, annotation.scope(), annotation.timeZone(), owlNamedIndividual));
+                return Optional.of(buildPointTemporal((Temporal) fieldValue, annotation.scope(), annotation.timeZone()));
             }
             case INTERVAL: {
 
@@ -560,7 +575,7 @@ public class TemporalParser {
                     final Optional<Object> accessMethodValue = ClassParser.accessMethodValue(endMethod.get(), inputObject);
                     if (accessMethodValue.isPresent()) {
                         final String timeZone = endMethod.get().getAnnotation(EndTemporal.class).timeZone();
-                        return Optional.of(buildIntervalTemporal((Temporal) fieldValue, annotation.timeZone(), (Temporal) accessMethodValue.get(), timeZone, annotation.scope(), owlNamedIndividual));
+                        return Optional.of(buildIntervalTemporal((Temporal) fieldValue, annotation.timeZone(), (Temporal) accessMethodValue.get(), timeZone, annotation.scope()));
                     }
                 }
 
@@ -573,23 +588,23 @@ public class TemporalParser {
                     try {
                         final Object endFieldValue = endField.get().get(inputObject);
                         String endZoneID = endField.get().getAnnotation(EndTemporal.class).timeZone();
-                        return Optional.of(buildIntervalTemporal((Temporal) fieldValue, annotation.timeZone(), (Temporal) endFieldValue, endZoneID, annotation.scope(), owlNamedIndividual));
+                        return Optional.of(buildIntervalTemporal((Temporal) fieldValue, annotation.timeZone(), (Temporal) endFieldValue, endZoneID, annotation.scope()));
                     } catch (IllegalAccessException e) {
-                        logger.warn("Cannot access field {}", endField.get().getName(), e);
+                        logger.warn(FIELD_WARNING, endField.get().getName(), e);
                     }
                 } else {
-                    return Optional.of(buildIntervalTemporal((Temporal) fieldValue, annotation.timeZone(), null, null, annotation.scope(), owlNamedIndividual));
+                    return Optional.of(buildIntervalTemporal((Temporal) fieldValue, annotation.timeZone(), null, null, annotation.scope()));
                 }
                 break;
             }
             default:
-                throw new RuntimeException("Cannot initialize temporal object");
+                throw new IllegalStateException(TEMPORAL_INIT_ERROR);
         }
         return Optional.empty();
 
     }
 
-    private static TemporalObject buildIntervalTemporal(Temporal start, String startZoneID, @Nullable Temporal end, @Nullable String endZoneID, TemporalScope scope, OWLNamedIndividual... relations) {
+    private static TemporalObject buildIntervalTemporal(Temporal start, String startZoneID, @Nullable Temporal end, @Nullable String endZoneID, TemporalScope scope) {
 //        We store all temporals as datetimes, so we need to convert them.
 //        final Temporal from = start;
 //        final LocalDateTime from = parseTemporalToOntologyDateTime(start);
@@ -639,7 +654,7 @@ public class TemporalParser {
         } else if (temporal instanceof OffsetDateTime) {
             return (OffsetDateTime) temporal;
         } else {
-            throw new RuntimeException(String.format("Unsupported date class %s", temporal.getClass().getName()));
+            throw new IllegalArgumentException(String.format("Unsupported date class %s", temporal.getClass().getName()));
         }
     }
 
@@ -668,23 +683,23 @@ public class TemporalParser {
         if (datatype.getIRI().equals(dateTimeDatatypeIRI)) {
             if (destinationType.getTypeName().contains("java.time")) {
                 final Optional<Temporal> optionalJavaTemporal = parseDateTimeToJavaTemporal(destinationType.getTypeName(), literal, timeZone);
-                parsedTemporal = optionalJavaTemporal.orElseThrow(() -> new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype(), destinationType.getTypeName())));
+                parsedTemporal = optionalJavaTemporal.orElseThrow(() -> new RuntimeException(String.format(UNSUPPORTED_TEMPORAL_PARSING, literal.getDatatype(), destinationType.getTypeName())));
             } else if (destinationType.getTypeName().contains("org.joda.time")) {
                 Optional<Temporal> optionalJodaTemporal = parseDateTimeToJodaTemporal(destinationType.getTypeName(), literal);
-                parsedTemporal = optionalJodaTemporal.orElseThrow(() -> new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype(), destinationType.getTypeName())));
+                parsedTemporal = optionalJodaTemporal.orElseThrow(() -> new RuntimeException(String.format(UNSUPPORTED_TEMPORAL_PARSING, literal.getDatatype(), destinationType.getTypeName())));
             } else {
                 logger.error("Unsupported parsing of temporal {} to {}", literal.getDatatype(), destinationType.getTypeName());
-                throw new RuntimeException(String.format("Unsupported parsing of temporal %s to %s", literal.getDatatype(), destinationType.getTypeName()));
+                throw new IllegalArgumentException(String.format(UNSUPPORTED_TEMPORAL_PARSING, literal.getDatatype(), destinationType.getTypeName()));
             }
         } else {
             logger.error("Unsupported parsing of XSD type {}", datatype);
-            throw new RuntimeException(String.format("Unsupported parsing of XSD type %s", datatype));
+            throw new IllegalArgumentException(String.format("Unsupported parsing of XSD type %s", datatype));
         }
 
         return parsedTemporal;
     }
 
-    private static TemporalObject buildPointTemporal(Temporal pointTemporal, TemporalScope scope, String zoneID, OWLNamedIndividual... relations) {
+    private static TemporalObject buildPointTemporal(Temporal pointTemporal, TemporalScope scope, String zoneID) {
 //        final LocalDateTime at = parseTemporalToOntologyDateTime(pointTemporal);
 
         if (scope == TemporalScope.VALID) {

@@ -50,7 +50,7 @@ public class QueryResource {
 
             return ok(results).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(e).build();
         }
     }
 }

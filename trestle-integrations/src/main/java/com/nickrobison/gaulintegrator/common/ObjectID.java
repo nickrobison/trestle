@@ -87,11 +87,17 @@ public class ObjectID {
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof ObjectID) {
-            ObjectID other = (ObjectID) o;
-            return Arrays.equals(data, other.data);
-        }
-        return false;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ObjectID objectID = (ObjectID) o;
+
+        return Arrays.equals(data, objectID.data);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(data);
     }
 
     private static byte[] uuidToBytes(UUID id) {
@@ -117,11 +123,10 @@ public class ObjectID {
 //        Write UUID first
         bb.put(uuidToBytes(id));
         byte value = 0;
-        switch (version) {
-            case SIMPLE: value = 1;
-                break;
-            case HIERARCHICAL: value = 2;
-                break;
+        if (version.equals(IDVersion.SIMPLE)) {
+            value = 1;
+        } else if (version.equals(IDVersion.HIERARCHICAL)) {
+            value = 2;
         }
 //        Now write the Version number
         bb.put(value);

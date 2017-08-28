@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.common.exceptions;
 
-import org.apache.jena.vocabulary.OWL;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 

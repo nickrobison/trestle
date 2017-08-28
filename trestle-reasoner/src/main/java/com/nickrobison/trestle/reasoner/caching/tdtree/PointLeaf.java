@@ -56,7 +56,7 @@ public class PointLeaf<Value> extends LeafNode<Value> {
     @Override
     @SuppressWarnings({"type.argument.incompatible", "assignment.type.incompatible"})
     @Nullable Value getValue(TupleExpressionGenerator.BooleanTupleExpression expression) {
-        final Optional<@Nullable Value> value = this.values.entrySet()
+        final Optional<Value> value = this.values.entrySet()
                 .stream()
                 .filter(entry -> expression.evaluate(entry.getKey()))
                 .map(Map.Entry::getValue)

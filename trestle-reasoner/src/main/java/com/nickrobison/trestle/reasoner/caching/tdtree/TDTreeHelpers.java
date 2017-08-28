@@ -10,6 +10,7 @@ import java.util.Map;
 /**
  * Created by nrobison on 2/10/17.
  */
+@SuppressWarnings({"squid:S1244"})
 public class TDTreeHelpers {
 
     static final double ROOTTWO = FastMath.sqrt(2);
@@ -22,6 +23,10 @@ public class TDTreeHelpers {
 //        Initialize the lookup tables
         adjustedLength = new double[getIDLength(Integer.MAX_VALUE) + 1];
         computeAdjustedLengths();
+    }
+
+    private TDTreeHelpers() {
+
     }
 
     static void resetCaches() {
@@ -50,9 +55,9 @@ public class TDTreeHelpers {
      */
     static int checkRectangleIntersection(TriangleApex apex, int direction, int leafLength, long[] rectangleApex, long maxValue) {
         final double[] triangleVerticies = getTriangleVerticies(adjustedLength[leafLength], direction, apex.start, apex.end);
-        final int apexInside = ((triangleVerticies[0] <= rectangleApex[0]) & (triangleVerticies[0] >= 0)) & ((triangleVerticies[1] >= rectangleApex[1]) & (triangleVerticies[1] <= maxValue)) ? 1 : 0;
-        final int p2Inside = ((triangleVerticies[2] <= rectangleApex[0]) & (triangleVerticies[2] >= 0)) & ((triangleVerticies[3] >= rectangleApex[1]) & (triangleVerticies[3] <= maxValue)) ? 1 : 0;
-        final int p3Inside = ((triangleVerticies[4] <= rectangleApex[0]) & (triangleVerticies[4] >= 0)) & ((triangleVerticies[5] >= rectangleApex[1]) & (triangleVerticies[5] <= maxValue)) ? 1 : 0;
+        final int apexInside = ((triangleVerticies[0] <= rectangleApex[0]) && (triangleVerticies[0] >= 0)) && ((triangleVerticies[1] >= rectangleApex[1]) && (triangleVerticies[1] <= maxValue)) ? 1 : 0;
+        final int p2Inside = ((triangleVerticies[2] <= rectangleApex[0]) && (triangleVerticies[2] >= 0)) && ((triangleVerticies[3] >= rectangleApex[1]) && (triangleVerticies[3] <= maxValue)) ? 1 : 0;
+        final int p3Inside = ((triangleVerticies[4] <= rectangleApex[0]) && (triangleVerticies[4] >= 0)) && ((triangleVerticies[5] >= rectangleApex[1]) && (triangleVerticies[5] <= maxValue)) ? 1 : 0;
 
         return apexInside + p2Inside + p3Inside - 2;
     }
@@ -73,18 +78,20 @@ public class TDTreeHelpers {
      * @return - point in triangle?
      */
     static boolean pointInTriangle(long start, long end, double[] triangleVerticies) {
-        final boolean b1, b2, b3;
+        final boolean b1;
+        final boolean b2;
+        final boolean b3;
         b1 = sign(start, end, triangleVerticies[0], triangleVerticies[1], triangleVerticies[2], triangleVerticies[3]) < 0.0d;
         b2 = sign(start, end, triangleVerticies[2], triangleVerticies[3], triangleVerticies[4], triangleVerticies[5]) < 0.0d;
         b3 = sign(start, end, triangleVerticies[4], triangleVerticies[5], triangleVerticies[0], triangleVerticies[1]) < 0.0d;
 
-        return ((b1 == b2) & (b2 == b3));
+        return ((b1 == b2) && (b2 == b3));
     }
 
     static boolean triangleIsPoint(double[] triangleVerticies) {
-        return ((triangleVerticies[0] == triangleVerticies[2]) & (triangleVerticies[1] == triangleVerticies[3])) |
-                ((triangleVerticies[0] == triangleVerticies[4]) & (triangleVerticies[1] == triangleVerticies[5])) |
-                ((triangleVerticies[2] == triangleVerticies[4]) & (triangleVerticies[3] == triangleVerticies[5]));
+        return ((triangleVerticies[0] == triangleVerticies[2]) && (triangleVerticies[1] == triangleVerticies[3])) ||
+                ((triangleVerticies[0] == triangleVerticies[4]) && (triangleVerticies[1] == triangleVerticies[5])) ||
+                ((triangleVerticies[2] == triangleVerticies[4]) && (triangleVerticies[3] == triangleVerticies[5]));
     }
 
     //    http://stackoverflow.com/questions/2049582/how-to-determine-if-a-point-is-in-a-2d-triangle
@@ -165,12 +172,6 @@ public class TDTreeHelpers {
 //    FIXME(nrobison): This needs to get a calculated precision
     private static double normalizeZero(double value) {
         return normalizedZeroes.computeIfAbsent(value, TDTreeHelpers::computeNormalizedZero);
-//        final double abs = FastMath.abs(Precision.round(value, 6));
-////        If the value falls outside of the maxValue range, return the maxValue. This adjusts for double rounding issues
-//        if (abs > TDTree.maxValue) {
-//            return TDTree.maxValue;
-//        }
-//        return abs;
     }
 
     private static double computeNormalizedZero(double value) {
@@ -198,7 +199,6 @@ public class TDTreeHelpers {
         final ChildDirection childDirection = calculateChildDirection(parentDirection);
         final int prefix = leafID >> (getIDLength(leafID) - depth - 1) - 1;
         if ((prefix & 1) == 0) {
-//        if ((prefix < getMaximumValue(prefix))) {
             return calculateTriangleDirection(leafID, depth + 1, childDirection.lowerChild);
         }
         return calculateTriangleDirection(leafID, depth + 1, childDirection.higherChild);
@@ -229,7 +229,7 @@ public class TDTreeHelpers {
     }
 
     static ChildDirection calculateChildDirection(int parentDirection) {
-        if (parentDirection >= 1 & parentDirection <= 4) {
+        if (parentDirection >= 1 && parentDirection <= 4) {
             return new ChildDirection((parentDirection + 5) % 8, parentDirection + 3);
         } else {
             return new ChildDirection((parentDirection + 3) % 8, (parentDirection + 5) % 8);
@@ -282,8 +282,6 @@ public class TDTreeHelpers {
      */
     static int getIDLength(int leafID) {
         return computedIDLengths.computeIfAbsent(leafID, TDTreeHelpers::computeIDLength);
-//        return idLength[leafID];
-//        return computeIDLength(leafID);
     }
 
     /**

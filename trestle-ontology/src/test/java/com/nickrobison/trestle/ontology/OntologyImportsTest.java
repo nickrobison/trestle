@@ -7,6 +7,7 @@ import org.semanticweb.owlapi.model.UnloadableImportException;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -32,7 +33,7 @@ public class OntologyImportsTest {
                 "@base <http://test.org/import_test.owl> .\n" +
                 "<http://test.org/import_test.owl> rdf:type owl:Ontology ;\n" +
                 "owl:imports <http://test.org/unimportable_test.owl> .";
-        InputStream is = new ByteArrayInputStream( ontString.getBytes() );
+        InputStream is = new ByteArrayInputStream( ontString.getBytes(StandardCharsets.UTF_8) );
         assertThrows(UnloadableImportException.class, () -> {
             ITrestleOntology testOnt = new OntologyBuilder()
                     .withDBConnection("tdb:local", "", "")
@@ -53,7 +54,7 @@ public class OntologyImportsTest {
                 "@base <http://test.org/import_test.owl> .\n" +
                 "<http://test.org/import_test.owl> rdf:type owl:Ontology ;\n" +
                 "owl:imports <http://test.org/locally_importable_test.owl> .";
-        InputStream is2 = new ByteArrayInputStream( ontString2.getBytes() );
+        InputStream is2 = new ByteArrayInputStream( ontString2.getBytes(StandardCharsets.UTF_8) );
         try {
             ITrestleOntology testOnt2 = new OntologyBuilder()
                     .fromInputStream(is2)

@@ -3,7 +3,6 @@ package com.nickrobison.trestle.server.config;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import io.dropwizard.db.DataSourceFactory;
-import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -11,6 +10,7 @@ import javax.validation.constraints.NotNull;
 /**
  * Created by nrobison on 11/28/16.
  */
+@SuppressWarnings({"initialization.fields.uninitialized"})
 public class TrestleServerConfiguration extends Configuration {
 
     @Valid

@@ -9,11 +9,11 @@ import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.reasoner.exceptions.MissingConstructorException;
-import com.nickrobison.trestle.reasoner.types.TemporalScope;
-import com.nickrobison.trestle.reasoner.types.TemporalType;
-import com.nickrobison.trestle.reasoner.types.temporal.IntervalTemporal;
-import com.nickrobison.trestle.reasoner.types.temporal.TemporalObject;
-import com.nickrobison.trestle.reasoner.types.temporal.TemporalObjectBuilder;
+import com.nickrobison.trestle.types.TemporalScope;
+import com.nickrobison.trestle.types.TemporalType;
+import com.nickrobison.trestle.types.temporal.IntervalTemporal;
+import com.nickrobison.trestle.types.temporal.TemporalObject;
+import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -304,7 +304,7 @@ public class TrestleParserTest {
     }
 
     @DatasetClass(name = "GAUL_Test")
-    protected class ExpandedGAULTests {
+    protected static class ExpandedGAULTests {
 
         public int adm0_code;
         @IndividualIdentifier

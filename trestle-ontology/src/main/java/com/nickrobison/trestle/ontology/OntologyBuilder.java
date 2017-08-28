@@ -222,7 +222,7 @@ public class OntologyBuilder {
                         fileMap.put(iri, fileString);
                     }
                 }
-                System.err.println("mapping = "+fileMap);
+                logger.debug("mapping = {}", fileMap);
             }
 
             @Override

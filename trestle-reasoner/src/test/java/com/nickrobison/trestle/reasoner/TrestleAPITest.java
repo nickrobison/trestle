@@ -2,79 +2,45 @@ package com.nickrobison.trestle.reasoner;
 
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
+import com.google.common.collect.ImmutableList;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
-import com.nickrobison.trestle.reasoner.exceptions.NoValidStateException;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
-import com.nickrobison.trestle.reasoner.parser.TrestleParser;
-import com.nickrobison.trestle.reasoner.types.TrestleIndividual;
-import com.nickrobison.trestle.reasoner.types.relations.ObjectRelation;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
+import com.nickrobison.trestle.types.TrestleIndividual;
+import com.nickrobison.trestle.types.TrestleRelation;
+import com.nickrobison.trestle.types.events.TrestleEvent;
+import com.nickrobison.trestle.types.events.TrestleEventType;
+import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.opengis.referencing.operation.TransformException;
-import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by nrobison on 7/27/16.
  */
-@SuppressWarnings({"Duplicates", "initialization"})
+@SuppressWarnings({"Duplicates", "initialization", "ConstantConditions"})
 @Tag("integration")
-public class TrestleAPITest {
+public class TrestleAPITest extends AbstractReasonerTest {
 
-    private static final Logger logger = LoggerFactory.getLogger(TrestleAPITest.class);
-    public static final String OVERRIDE_PREFIX = "http://nickrobison.com/test-owl#";
-    private TrestleReasonerImpl reasoner;
-    private OWLDataFactory df;
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
-    private String datasetClassID;
-    private TrestleParser tp;
-
-    @BeforeEach
-    public void setup() {
-        final Config config = ConfigFactory.load(ConfigFactory.parseResources("application.conf"));
-        reasoner = (TrestleReasonerImpl) new TrestleBuilder()
-                .withDBConnection(config.getString("trestle.ontology.connectionString"),
-                        config.getString("trestle.ontology.username"),
-                        config.getString("trestle.ontology.password"))
-                .withName("api_test")
-                .withOntology(IRI.create(config.getString("trestle.ontology.location")))
-                .withPrefix(OVERRIDE_PREFIX)
-                .withInputClasses(TestClasses.GAULTestClass.class,
-                        TestClasses.GAULComplexClassTest.class,
-                        TestClasses.JTSGeometryTest.class,
-                        TestClasses.ESRIPolygonTest.class,
-                        TestClasses.GeotoolsPolygonTest.class,
-                        TestClasses.OffsetDateTimeTest.class,
-                        TestClasses.MultiLangTest.class,
-                        TestClasses.FactVersionTest.class)
-                .withoutCaching()
-                .withoutMetrics()
-                .initialize()
-                .build();
-
-        df = OWLManager.getOWLDataFactory();
-        tp = new TrestleParser(df, OVERRIDE_PREFIX, false, null);
-    }
 
     @Test
     public void testClasses() throws TrestleClassException, MissingOntologyEntity, ParseException, TransformException {
@@ -133,7 +99,6 @@ public class TrestleAPITest {
         final Instant iStart = Instant.now();
         final TrestleIndividual trestleIndividual = reasoner.getTrestleIndividual(individuals.get(0));
         final Instant iEnd = Instant.now();
-        logger.info("Creating individual took {} ms", Duration.between(iStart, iEnd).toMillis());
         assertAll(() -> assertEquals(2, trestleIndividual.getFacts().size(), "Wrong number of attributes"),
                 () -> assertEquals(2, trestleIndividual.getRelations().size(), "Wrong number of relations"));
 
@@ -158,58 +123,60 @@ public class TrestleAPITest {
     }
 
     @Test
-    public void testFactValidity() throws TrestleClassException, MissingOntologyEntity {
-        final TestClasses.FactVersionTest v1 = new TestClasses.FactVersionTest("test-object",
-                LocalDate.of(1989, 3, 26),
-                "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))",
-                "test value one");
-        final TestClasses.FactVersionTest v2 = new TestClasses.FactVersionTest("test-object",
-                LocalDate.of(1990, 5, 14),
-                "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))",
-                "test value two");
-        final TestClasses.FactVersionTest v3 = new TestClasses.FactVersionTest("test-object",
-                LocalDate.of(2016, 3, 11),
-                "POINT(0.71255092695307 -25.572028714467507)",
-                "test value two");
+    public void eventTest() throws TrestleClassException, MissingOntologyEntity {
+//        Split event
+//        Create test events
+        final OffsetDateTime earlyStart = LocalDate.of(1990, 1, 1).atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
+        final OffsetDateTime middle = earlyStart.plusYears(5);
+        final OffsetDateTime end = middle.plusYears(5);
+        final TestClasses.OffsetDateTimeTest split_start = new TestClasses.OffsetDateTimeTest(100, earlyStart, middle);
+        final TestClasses.OffsetDateTimeTest split1 = new TestClasses.OffsetDateTimeTest(101, middle, end);
+        final TestClasses.OffsetDateTimeTest split2 = new TestClasses.OffsetDateTimeTest(102, middle, end);
+        final TestClasses.OffsetDateTimeTest split3 = new TestClasses.OffsetDateTimeTest(103, middle, end);
+        final TestClasses.OffsetDateTimeTest split4 = new TestClasses.OffsetDateTimeTest(104, middle, end);
+        final TestClasses.OffsetDateTimeTest split5 = new TestClasses.OffsetDateTimeTest(105, middle, end);
+        final ImmutableList<TestClasses.OffsetDateTimeTest> splitSet = ImmutableList.of(split1, split2, split3, split4, split5);
+//        Try for invalid event types
+        assertAll(() -> assertThrows(IllegalArgumentException.class, () -> this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.CREATED, split_start, splitSet, 0.8)),
+                () -> assertThrows(IllegalArgumentException.class, () -> this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.BECAME, split_start, splitSet, 0.8)),
+                () -> assertThrows(IllegalArgumentException.class, () -> this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.DESTROYED, split_start, splitSet, 0.8)));
+        this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.SPLIT, split_start, splitSet, 0.8);
+//        Check that the subject has the split event
+        final Optional<Set<TrestleEvent>> individualEvents = this.reasoner.getIndividualEvents(split_start.getClass(), split_start.adm0_code.toString());
+        assertAll(() -> assertTrue(individualEvents.isPresent()),
+                () -> assertEquals(3, individualEvents.get().size()),
+                () -> assertEquals(middle, individualEvents.get().stream().filter(event -> event.getType() == TrestleEventType.SPLIT).findFirst().get().getAtTemporal(), "SPLIT event should equal end temporal"));
 
-//        Write each, then validate
-        reasoner.writeTrestleObject(v1);
-        final TestClasses.FactVersionTest v1Return = reasoner.readTrestleObject(v1.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
-        assertEquals(v1, v1Return, "Should be equal to V1");
-        reasoner.writeTrestleObject(v2);
-        final TestClasses.FactVersionTest v2Return = reasoner.readTrestleObject(v2.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
-        assertEquals(v2, v2Return, "Should be equal to V2");
-        reasoner.writeTrestleObject(v3);
-        final TestClasses.FactVersionTest v3Return = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
-        assertEquals(v3, v3Return, "Should be equal to V3");
-//        Try for specific points in time
-        final TestClasses.FactVersionTest v1ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1990, 3, 26), null);
-        assertEquals(v1, v1ReturnHistorical, "Historical query should be equal to V1");
-        final TestClasses.FactVersionTest v2ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1999, 3, 26), null);
-        assertEquals(v2, v2ReturnHistorical, "Historical query should be equal to V2");
-        final TestClasses.FactVersionTest v3ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(2016, 3, 26), null);
-        assertEquals(v3, v3ReturnHistorical, "Historical query should be equal to V3");
-        assertThrows(NoValidStateException.class, () -> reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), true, LocalDate.of(1980, 3, 26), null));
+//        Merge event
+        final TestClasses.OffsetDateTimeTest merge_subject = new TestClasses.OffsetDateTimeTest(200, middle, end);
+        final TestClasses.OffsetDateTimeTest merge1 = new TestClasses.OffsetDateTimeTest(201, earlyStart, middle);
+        final TestClasses.OffsetDateTimeTest merge2 = new TestClasses.OffsetDateTimeTest(202, earlyStart, middle);
+        final TestClasses.OffsetDateTimeTest merge3 = new TestClasses.OffsetDateTimeTest(203, earlyStart, middle);
+        final TestClasses.OffsetDateTimeTest merge4 = new TestClasses.OffsetDateTimeTest(204, earlyStart, middle);
+        final TestClasses.OffsetDateTimeTest merge5 = new TestClasses.OffsetDateTimeTest(205, earlyStart, middle);
+        final ImmutableList<TestClasses.OffsetDateTimeTest> mergeSet = ImmutableList.of(merge1, merge2, merge3, merge4, merge5);
+        this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.MERGED, merge_subject, mergeSet, 0.8);
+        final Optional<Set<TrestleEvent>> mergeEvents = this.reasoner.getIndividualEvents(merge_subject.getClass(), merge_subject.adm0_code.toString());
+        assertAll(() -> assertTrue(mergeEvents.isPresent()),
+                () -> assertEquals(3, individualEvents.get().size()),
+                () -> assertEquals(merge_subject.startTemporal, mergeEvents.get().stream().filter(event -> event.getType() == TrestleEventType.MERGED).findFirst().get().getAtTemporal(), "MERGED temporal should equal created date"));
 
-//        Check to make sure we have all the facts
-        final TrestleIndividual trestleIndividual = reasoner.getTrestleIndividual("test-object");
-        assertEquals(5, trestleIndividual.getFacts().size(), "Should have 5 facts over the lifetime of the object");
+//        Ensure that events are handled correctly (along with relations).
+//        Split first
+        final TrestleIndividual splitStartIndividual = this.reasoner.getTrestleIndividual(split_start.adm0_code.toString());
+        assertAll(() -> assertEquals(3, splitStartIndividual.getEvents().size(), "Should have 3 events"),
+                () -> assertEquals(5, splitStartIndividual.getRelations().stream().filter(relation -> relation.getType().equals("SPLIT_INTO")).collect(Collectors.toList()).size(), "Should have 5 split_into events"));
+        final Optional<TrestleRelation> split_from = this.reasoner.getTrestleIndividual(split1.adm0_code.toString()).getRelations().stream().filter(relation -> relation.getType().equals("SPLIT_FROM")).findFirst();
+        assertAll(() -> assertTrue(split_from.isPresent()),
+                () -> assertEquals("http://nickrobison.com/test-owl#100", split_from.get().getObject(), "Should point to starting split"));
 
-//        Try to manually add a new value
-        reasoner.addFactToTrestleObject(v3.getClass(), "test-object", "testValue", "test value three", LocalDate.of(2007, 3, 26), null, null);
-        reasoner.addFactToTrestleObject(v3.getClass(), "test-object", "wkt", "POINT(1.71255092695307 -30.572028714467507)", LocalDate.of(2017, 1, 1), null);
-
-//        Try to get some fact values
-        final Optional<List<Object>> values = reasoner.getFactValues(v3.getClass(), "test-object", "testValue", null, null, null);
-        assertAll(() -> assertTrue(values.isPresent(), "Should have fact values"),
-                () -> assertEquals(3, values.get().size(), "Should have 3 fact values"));
-
-        final Optional<List<Object>> wktValues = reasoner.getFactValues(v3.getClass(), "test-object", "wkt", LocalDate.of(1988, 3, 26), LocalDate.of(1995, 3, 26), null);
-        assertAll(() -> assertTrue(wktValues.isPresent(), "Should have wkt values"),
-                () -> assertEquals(1, wktValues.get().size(), "Should only have 1 wkt value"));
-
-//        Test database temporals
-        reasoner.getMetricsEngine().exportData(new File("./target/api-test-fact-validity-metrics.csv"));
+//        Now merged
+        final TrestleIndividual mergeSubjectIndividual = this.reasoner.getTrestleIndividual(merge_subject.adm0_code.toString());
+        assertAll(() -> assertEquals(3, mergeSubjectIndividual.getEvents().size(), "Should have 3 events"),
+                () -> assertEquals(5, mergeSubjectIndividual.getRelations().stream().filter(relation -> relation.getType().equals("MERGED_FROM")).collect(Collectors.toList()).size(), "Should have 5 merged objects"));
+        final Optional<TrestleRelation> merged_into = this.reasoner.getTrestleIndividual(merge5.adm0_code.toString()).getRelations().stream().filter(relation -> relation.getType().equals("MERGED_INTO")).findFirst();
+        assertAll(() -> assertTrue(merged_into.isPresent()),
+                () -> assertEquals("http://nickrobison.com/test-owl#200", merged_into.get().getObject(), "Should point to merged subject"));
     }
 
     @Test
@@ -219,7 +186,7 @@ public class TrestleAPITest {
 
         final InputStream is = TrestleAPITest.class.getClassLoader().getResourceAsStream("objects.csv");
 
-        final BufferedReader br = new BufferedReader(new InputStreamReader(is));
+        final BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
 
         String line;
 
@@ -269,7 +236,7 @@ public class TrestleAPITest {
         final Set<String> availableDatasets = reasoner.getAvailableDatasets();
         assertTrue(availableDatasets.size() > 0, "Should have dataset");
 
-        datasetClassID = availableDatasets.stream()
+        String datasetClassID = availableDatasets.stream()
                 .filter(ds -> ds.equals("GAUL_Test"))
                 .findAny()
                 .get();
@@ -282,6 +249,12 @@ public class TrestleAPITest {
         Optional<List<@NonNull Object>> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC));
         assertTrue(intersectedObjects.isPresent(), "Should have objects");
         assertTrue(intersectedObjects.get().size() > 0, "Should have more than 1 object");
+
+//        Big intersection
+        final String mozWKT = "POLYGON((30.21 -10.33, 41.05 -10.33, 41.05 -26.92, 30.21 -26.92, 30.21 -10.33))";
+        assertTimeoutPreemptively(Duration.ofSeconds(60), () -> reasoner.spatialIntersect(TestClasses.GAULTestClass.class, mozWKT, 100.0, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC)), "Should complete in less than 60 seconds");
+//        final Optional<List<TestClasses.@NonNull GAULTestClass>> mozClasses = reasoner.spatialIntersect(TestClasses.GAULTestClass.class, mozWKT, 100.0);
+//        assertAll(() -> assertTrue(intersectedObjects))
 //
 //        final Class<?> datasetClass = reasoner.getDatasetClass(datasetClassID);
 //        intersectedObjects = reasoner.spatialIntersect(datasetClass, ((TestClasses.GAULTestClass) ancuabe1).wkt, 100.0);
@@ -290,9 +263,20 @@ public class TrestleAPITest {
         reasoner.getMetricsEngine().exportData(new File("./target/api-test-gaul-loader-metrics.csv"));
     }
 
-    @AfterEach
-    public void close() throws OWLOntologyStorageException {
-        reasoner.shutdown(true);
+    @Override
+    protected String getTestName() {
+        return "api_test";
     }
 
+    @Override
+    protected ImmutableList<Class<?>> registerClasses() {
+        return ImmutableList.of(TestClasses.GAULTestClass.class,
+                TestClasses.GAULComplexClassTest.class,
+                TestClasses.JTSGeometryTest.class,
+                TestClasses.ESRIPolygonTest.class,
+                TestClasses.GeotoolsPolygonTest.class,
+                TestClasses.OffsetDateTimeTest.class,
+                TestClasses.MultiLangTest.class,
+                TestClasses.FactVersionTest.class);
+    }
 }

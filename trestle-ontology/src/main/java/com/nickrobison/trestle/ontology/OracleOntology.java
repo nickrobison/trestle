@@ -1,19 +1,19 @@
 package com.nickrobison.trestle.ontology;
 
-import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import oracle.spatial.rdf.client.jena.*;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.query.*;
-import org.apache.jena.rdf.model.Literal;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.shared.Lock;
-import org.apache.jena.update.UpdateAction;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.sql.SQLException;
-import java.util.*;
 
 /**
  * Created by nrobison on 5/23/16.
@@ -29,14 +28,13 @@ import java.util.*;
 @SuppressWarnings({"initialization"})
 public class OracleOntology extends JenaOntology {
 
-    private final static Logger logger = LoggerFactory.getLogger(OracleOntology.class);
+    private static final Logger logger = LoggerFactory.getLogger(OracleOntology.class);
     private static GraphOracleSem graph;
     private static Oracle oracle;
     private static boolean updateOnCommit;
-    private boolean locked = false;
 
     OracleOntology(String name, OWLOntology ont, DefaultPrefixManager pm, String connectionString, String username, String password) {
-        super(name, createOracleModel(name, connectionString, username, password), ont, pm);
+        super(name, createOracleModel(name, connectionString, username, password), ont, pm, new OracleQueryBuilder(pm));
     }
 
     private static Model createOracleModel(String ontologyName, String connectionString, String username, String password) {
@@ -114,6 +112,7 @@ public class OracleOntology extends JenaOntology {
      * Run the inference engine and rebuild the indexes.
      * The inference engine is only run manually, via this method.
      */
+    @Override
     public void runInference() {
         try {
             graph.performInference();
@@ -163,7 +162,6 @@ public class OracleOntology extends JenaOntology {
     @Override
     public void openDatasetTransaction(boolean write) {
         this.model.begin();
-//        this.model.enterCriticalSection(getJenaLock(write));
         logger.debug("Transaction opened and critical section entered");
     }
 
@@ -172,7 +170,7 @@ public class OracleOntology extends JenaOntology {
         this.model.abort();
         if (write) {
             try {
-                this.graph.rollbackTransaction();
+                graph.rollbackTransaction();
             } catch (SQLException e) {
                 logger.error("Cannot rollback graph transaction", e);
             }

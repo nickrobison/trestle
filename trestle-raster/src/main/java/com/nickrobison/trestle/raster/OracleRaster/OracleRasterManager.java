@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.raster.OracleRaster;
 
+import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.raster.ITrestleRasterManager;
 import com.nickrobison.trestle.raster.common.RasterDatabase;
@@ -7,7 +8,6 @@ import com.nickrobison.trestle.raster.common.RasterID;
 import com.nickrobison.trestle.raster.common.RasterUtils;
 import com.nickrobison.trestle.raster.exceptions.RasterDataSourceException;
 import com.nickrobison.trestle.raster.exceptions.TrestleDatabaseException;
-import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.raster.exceptions.TrestleRasterException;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
@@ -32,9 +32,7 @@ import org.opengis.referencing.ReferenceIdentifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.imageio.ImageIO;
 import java.awt.image.*;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -158,7 +156,8 @@ public class OracleRasterManager implements ITrestleRasterManager {
     /**
      * Retrieve the subset of a raster that intersects with the given geometry
      * Complex geometries are simplified to a bounding box
-     * @param geom - Geometry to intersect with raster
+     *
+     * @param geom     - Geometry to intersect with raster
      * @param rasterID - RasterID to retrieve
      * @return - RenderedImage of Raster subsection
      * @throws UnsupportedFeatureException
@@ -203,6 +202,7 @@ public class OracleRasterManager implements ITrestleRasterManager {
 
     /**
      * Return the entire raster as an AWT RenderedImage
+     *
      * @param rasterID - RasterID to retrieve
      * @return - RenderedImage of entire raster
      * @throws TrestleDatabaseException
@@ -282,8 +282,8 @@ public class OracleRasterManager implements ITrestleRasterManager {
             spatialReferenceInfo.setModelSRID(Integer.parseInt(first.get().getCode()));
         }
 
-            spatialReferenceInfo.setModelType(SpatialReferenceInfo.MDGRX_SRM_FUNCFITTING);
-            spatialReferenceInfo.setReferenced(true);
+        spatialReferenceInfo.setModelType(SpatialReferenceInfo.MDGRX_SRM_FUNCFITTING);
+        spatialReferenceInfo.setReferenced(true);
         spatialReferenceInfo.setWorldFile(30.0, 0.0, 0.0, -30.0, 572100.0, -1971900.0);
     }
 

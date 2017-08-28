@@ -75,7 +75,7 @@ public class IRIUtils {
      * @param iri - {@link IRI} to extract name from
      * @return - String of individual name
      */
-    public static @Nullable String extractTrestleIndividualName(IRI iri) {
+    public static String extractTrestleIndividualName(IRI iri) {
         return extractTrestleIndividualName(iri.getIRIString());
     }
 
@@ -85,9 +85,9 @@ public class IRIUtils {
      * @param iriString - IRI to extract name from
      * @return - String of individual name
      */
-    public static @Nullable String extractTrestleIndividualName(@Nullable String iriString) {
+    public static String extractTrestleIndividualName(@Nullable String iriString) {
         if (iriString == null) {
-            return null;
+            return "";
         }
         final Matcher matcher = remainderRegex.matcher(iriString);
         if (matcher.find()) {
