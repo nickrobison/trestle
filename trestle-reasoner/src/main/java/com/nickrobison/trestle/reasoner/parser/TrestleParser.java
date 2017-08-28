@@ -1,7 +1,5 @@
 package com.nickrobison.trestle.reasoner.parser;
 
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 
 /**

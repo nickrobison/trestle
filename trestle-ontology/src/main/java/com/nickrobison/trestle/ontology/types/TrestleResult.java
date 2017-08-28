@@ -8,7 +8,6 @@ import org.semanticweb.owlapi.model.OWLObject;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Created by nrobison on 1/10/17.

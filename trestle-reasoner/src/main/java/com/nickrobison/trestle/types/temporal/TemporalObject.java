@@ -2,7 +2,6 @@ package com.nickrobison.trestle.types.temporal;
 
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.io.Serializable;
@@ -55,6 +54,7 @@ public abstract class TemporalObject implements Serializable {
     /**
      * Determines whether the temporal object represents a continuing (unbounded) interval.
      * For {@link PointTemporal} this will always return false
+     *
      * @return - <code>true</code> temporal is continuing. <code>false</code> is not continuing
      */
     public abstract boolean isContinuing();
@@ -63,6 +63,7 @@ public abstract class TemporalObject implements Serializable {
      * Returns the temporal used as an identifier
      * For an {@link IntervalTemporal}, this is the startTemporal
      * For a {@link PointTemporal}, it is the atTemporal
+     *
      * @return - {@link Temporal} to use for identification
      */
     public abstract Temporal getIdTemporal();
@@ -77,6 +78,7 @@ public abstract class TemporalObject implements Serializable {
     /**
      * Cast TemporalObject to a different temporal scope
      * Always results in a new object even if the TemporalObject has the same temporal scope
+     *
      * @param castScope - TemporalScope to cast object to
      * @return - new TemporalObject
      */
@@ -84,6 +86,7 @@ public abstract class TemporalObject implements Serializable {
 
     /**
      * Compares a {@link Temporal} with the {@link TemporalObject} to determine if the given {@link Temporal} is before, during, or after the {@link TemporalObject}
+     *
      * @param comparingTemporal - {@link Temporal} to compare against the temporal object
      * @return - {@code -1} if this {@link TemporalObject} comes before the {@link Temporal}, {@code 0} if the {@link Temporal} occurs during (or is equal to), {@code 1} if it comes after
      */
@@ -91,6 +94,7 @@ public abstract class TemporalObject implements Serializable {
 
     /**
      * Compares two temporal objects to determine if this object occurs during the given object
+     *
      * @param comparingObject - {@link TemporalObject} object to compare against this one
      * @return - {@code true} if this object occurs entirely within the given object
      */

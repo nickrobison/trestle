@@ -148,7 +148,8 @@ public class SpatialUnionTraverser {
 
         final Set<STObjectWrapper> currentInvalidObjects = getInvalidObjects(eqObjects, queryTemporal);
         invalidObjects.addAll(currentInvalidObjects);
-        eqObjects
+//        This is to make Error Prone happy, but this feels terrible
+        final Set<STObjectWrapper> collect = eqObjects
                 .stream()
                 .filter(eqObj -> !currentInvalidObjects.contains(eqObj))
                 .collect(Collectors.toCollection(() -> validObjects));
@@ -162,8 +163,9 @@ public class SpatialUnionTraverser {
 
     /**
      * Execute equality query to determine the {@link Set} of {@link STObjectWrapper} that are equivalent to the given {@link STObjectWrapper} input object
+     *
      * @param inputObject - {@link STObjectWrapper} to determine equality of
-     * @param direction - {@link TemporalDirection} whether the query is moving forwards or backwards in time
+     * @param direction   - {@link TemporalDirection} whether the query is moving forwards or backwards in time
      * @param seenObjects - {@link Set} of {@link STObjectWrapper} of objects that have already been processed by the algorithm
      * @return - {@link Set} of {@link STObjectWrapper} objects that are equivalent to the given input object
      */
