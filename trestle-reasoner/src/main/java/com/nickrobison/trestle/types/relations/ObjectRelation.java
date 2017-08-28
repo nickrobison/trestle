@@ -15,7 +15,7 @@ public enum ObjectRelation implements HasIRI {
     CONTAINS("contains"),
     COVERS("covers"),
     DISJOINT("disjoint"),
-    EQUALS("equal"),
+    SPATIAL_EQUALS("spatial_equals"),
     INSIDE("inside"),
     MEETS("meets"),
     SPATIAL_OVERLAPS("spatial_overlaps"),
@@ -30,7 +30,9 @@ public enum ObjectRelation implements HasIRI {
     MERGED_INTO("merged_into"),
     MERGED_FROM("merged_from"),
     SPLIT_INTO("split_into"),
-    SPLIT_FROM("split_from");
+    SPLIT_FROM("split_from"),
+//    Fuzzy equals relation
+    EQUALS("equals");
 
 
     private final IRI relationIRI;
