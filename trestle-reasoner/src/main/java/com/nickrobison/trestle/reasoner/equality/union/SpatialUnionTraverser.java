@@ -148,11 +148,10 @@ public class SpatialUnionTraverser {
 
         final Set<STObjectWrapper> currentInvalidObjects = getInvalidObjects(eqObjects, queryTemporal);
         invalidObjects.addAll(currentInvalidObjects);
-//        This is to make Error Prone happy, but this feels terrible
-        final Set<STObjectWrapper> collect = eqObjects
+        eqObjects
                 .stream()
                 .filter(eqObj -> !currentInvalidObjects.contains(eqObj))
-                .collect(Collectors.toCollection(() -> validObjects));
+                .forEach(validObjects::add);
 
         if (invalidObjects.isEmpty()) {
             return validObjects;
