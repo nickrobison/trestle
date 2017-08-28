@@ -11,7 +11,7 @@
 
     <artifactId>trestle-metrics</artifactId>
     <properties>
-        <bytebuddy.version>1.6.14</bytebuddy.version>
+        <bytebuddy.version>1.7.2</bytebuddy.version>
     </properties>
 
     <dependencies>
