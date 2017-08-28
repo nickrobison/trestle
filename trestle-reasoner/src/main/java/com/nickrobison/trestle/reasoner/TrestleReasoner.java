@@ -368,7 +368,7 @@ public interface TrestleReasoner {
      * If no objects satisfy the equality constraints and an empty {@link List} is returned
      *
      * @param clazz - {@link Class} of input individuals
-     * @param individuals - Individual {@link IRI}
+     * @param individual - Individual {@link IRI}
      * @param queryTemporal - {@link Temporal} of query point
      * @param <T> - Type parameter
      * @return - {@link Optional} {@link List} of {@link T} objects

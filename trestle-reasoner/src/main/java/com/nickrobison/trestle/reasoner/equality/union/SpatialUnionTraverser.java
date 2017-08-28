@@ -66,7 +66,7 @@ public class SpatialUnionTraverser {
      * If no individuals satisfy the equality constraints, an empty {@link List} is returned
      *
      * @param clazz         - {@link Class} of type {@link T} of individual
-     * @param subject       - {@link List} of {@link OWLNamedIndividual} to determine equality of
+     * @param subjects       - {@link List} of {@link OWLNamedIndividual} to determine equality of
      * @param queryTemporal - {@link Temporal} traverse union to given time
      * @param <T>           - Generic type parameter
      * @return - {@link List} of {@link OWLNamedIndividual} that are equivalent to the given individual at the specified query time
