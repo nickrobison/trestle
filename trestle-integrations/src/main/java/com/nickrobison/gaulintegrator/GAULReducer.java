@@ -1,6 +1,7 @@
 package com.nickrobison.gaulintegrator;
 
 import com.esri.core.geometry.*;
+import com.nickrobison.trestle.common.TemporalUtils;
 import com.nickrobison.trestle.datasets.GAULObject;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
@@ -271,7 +272,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //                    Meets
         if (operatorTouches.execute(newGAULObject.getShapePolygon(), matchedObject.getShapePolygon(), inputSR, null)) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.MEETS);
+            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.SPATIAL_MEETS);
         }
 
 //                    Overlaps
@@ -288,47 +289,38 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
             reasoner.writeSpatialOverlap(newGAULObject, matchedObject, wktBoundary);
         }
 
-//                Temporals?
-//                For the begins, we add 1 day to the new object and see if they're equal
-        if (newGAULObject.getEndDate().plusDays(1).isEqual(matchedObject.getStartDate())) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.BEGINS);
-//                    New object before matched object?
-        } else if (newGAULObject.getEndDate().isBefore(matchedObject.getStartDate())) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.BEFORE);
-        } else if (newGAULObject.getStartDate().minusDays(1).isEqual(matchedObject.getEndDate())) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.ENDS);
-        } else if (newGAULObject.getStartDate().isAfter(matchedObject.getEndDate())) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.AFTER);
-//                        During, or overlap from start dates?
-        } else if (newGAULObject.getStartDate().isEqual(matchedObject.getStartDate())) {
-//                        objects have matching starts, do they have matching ends as well?
-            if (newGAULObject.getEndDate().isEqual(matchedObject.getEndDate())) {
-                reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.DURING);
-            } else {
-//                            No, but they do overlap
-                String temporalOverlap;
-                if (newGAULObject.getEndDate().isBefore(matchedObject.getEndDate())) {
-                    temporalOverlap = String.format("%s:%s", newGAULObject.getStartDate().toString(), newGAULObject.getEndDate().toString());
-                } else {
-                    temporalOverlap = String.format("%s:%s", matchedObject.getStartDate().toString(), matchedObject.getEndDate().toString());
-                }
-                reasoner.writeTemporalOverlap(newGAULObject, matchedObject, temporalOverlap);
-            }
-        } else if (newGAULObject.getEndDate().isEqual(matchedObject.getEndDate())) {
-//                        Overlap from end dates?
-            String temporalOverlap;
-            if (newGAULObject.getStartDate().isBefore(matchedObject.getStartDate())) {
-                temporalOverlap = String.format("%s:%s", matchedObject.getStartDate().toString(), matchedObject.getEndDate().toString());
-            } else {
-                temporalOverlap = String.format("%s:%s", newGAULObject.getStartDate().toString(), newGAULObject.getEndDate().toString());
-            }
-            reasoner.writeTemporalOverlap(newGAULObject, matchedObject, temporalOverlap);
+//        Temporals?
+
+//        Does one start the other?
+        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getStartDate()) == 0) {
+            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.STARTS);
         }
 
-        double intersectedArea = intersectedPolygon.calculateArea2D() / newGAULObject.getShapePolygon().calculateArea2D();
-        objectWeight += (1 - objectWeight) * intersectedArea;
+        if (TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getEndDate()) == 0) {
+            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.FINISHES);
+        }
+
+//            Meets?
+        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getEndDate()) == 0 ||
+                TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getStartDate()) == 0) {
+            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.TEMPORAL_MEETS);
+        }
+
+//        Before? (Including meets)
+        if (TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getStartDate()) != 1) {
+            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.BEFORE);
+        }
+
+//        After? (Including meets)
+        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getEndDate()) != -1) {
+            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.AFTER);
+        }
+
+    double intersectedArea = intersectedPolygon.calculateArea2D() / newGAULObject.getShapePolygon().calculateArea2D();
+    objectWeight +=(1-objectWeight)*intersectedArea;
         return objectWeight;
-    }
+}
+
 
 
     /**

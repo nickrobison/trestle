@@ -69,7 +69,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
             }
         });
 //        Try to write some relations between two objects
-        reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(0), ObjectRelation.MEETS);
+        reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(0), ObjectRelation.SPATIAL_MEETS);
         reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(3), ObjectRelation.DURING);
 
         classObjects.parallelStream().forEach(object -> {
