@@ -14,6 +14,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.semanticweb.owlapi.model.IRI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,8 +47,11 @@ public class IntegrationRunner extends Configured implements Tool {
 
 //        Setup the reasoner
         TrestleReasoner reasoner = new TrestleBuilder()
-                .withDBConnection(conf.get("reasoner.db.connection"), conf.get("reasoner.db.username"), conf.get("reasoner.db.password"))
+                .withDBConnection(conf.get("reasoner.db.connection"),
+                        conf.get("reasoner.db.username"),
+                        conf.get("reasoner.db.password"))
                 .withInputClasses(GAULObject.class)
+                .withOntology(IRI.create(conf.get("reasoner.ontology.location")))
                 .initialize()
                 .withName("gaul_hadoop")
                 .build();
@@ -66,7 +70,6 @@ public class IntegrationRunner extends Configured implements Tool {
         final Path outputDir = new Path(args[1]);
 
         //        If we're in debug mode, truncate the table and delete the output dir
-//        TODO(nrobison): Truncate database table
         if (logger.isDebugEnabled()) {
             logger.debug("Deleting output dir: {}", outputDir.getName());
             outputDir.getFileSystem(conf).delete(outputDir, true);

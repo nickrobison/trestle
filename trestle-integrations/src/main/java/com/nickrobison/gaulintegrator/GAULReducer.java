@@ -82,7 +82,8 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                             username,
                             password)
                     .withInputClasses(GAULObject.class)
-                    .withOntology(IRI.create(context.getCacheFiles()[0]))
+//                    .withOntology(IRI.create(context.getCacheFiles()[0]))
+                    .withOntology(IRI.create(conf.get("reasoner.ontology.location")))
                     .withPrefix(conf.get("reasoner.ontology.prefix"))
                     .withName(conf.get("reasoner.ontology.name"))
                     .withoutCaching()
