@@ -96,11 +96,9 @@ public class TrestleAPITest extends AbstractReasonerTest {
 //        assertEquals(4, individuals.size(), "Should have 4 individuals, overall");
 
 //        Test attribute generation
-        final Instant iStart = Instant.now();
         final TrestleIndividual trestleIndividual = reasoner.getTrestleIndividual(individuals.get(0));
-        final Instant iEnd = Instant.now();
         assertAll(() -> assertEquals(2, trestleIndividual.getFacts().size(), "Wrong number of attributes"),
-                () -> assertEquals(2, trestleIndividual.getRelations().size(), "Wrong number of relations"));
+                () -> assertEquals(1, trestleIndividual.getRelations().size(), "Wrong number of relations"));
 
 
 //        Now try to remove it
