@@ -12,25 +12,86 @@ import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
  */
 public enum ObjectRelation implements HasIRI {
     //    Spatial
+    /**
+     * Exists if Object fully encompassed within the Subject
+     */
     CONTAINS("contains"),
+    /**
+     * Exists if Subject contains Object and the exterior ring of Subject is at any point equal to the exterior ring of the Object.
+     */
     COVERS("covers"),
+    /**
+     * Subject and Object share no spatial relationships
+     */
     DISJOINT("disjoint"),
-    EQUALS("equal"),
+    /**
+     * Exists if the Subject and Object correspond to the same spatial area
+     */
+    SPATIAL_EQUALS("spatial_equals"),
+    /**
+     * Inverse Relationship of {@link ObjectRelation#CONTAINS}.
+     * Exists if Subject is fully encompassed within the Subject
+     */
     INSIDE("inside"),
-    MEETS("meets"),
+    /**
+     * Inverse Relationship of {@link ObjectRelation#COVERS}
+     * Exists if the Subject is inside the Object and the exterior ring of Subject is at any point equal to the exterior ring of the Object.
+     */
+    COVERED_BY("covered_by"),
+    /**
+     * Exists if the exterior ring of the Subject and the Object are at any point equal
+     */
+    SPATIAL_MEETS("meets"),
+    /**
+     * Exists if the Subject and Object share only a portion of the same spatial area.
+     */
     SPATIAL_OVERLAPS("spatial_overlaps"),
     //    Temporal
+    /**
+     * exists if the subject occurs after the object.
+     */
     AFTER("after"),
+    /**
+     * exists if the subject occurs before the object.
+     */
     BEFORE("before"),
-    BEGINS("begins"),
+    /**
+     * exists if subject and object share the same temporal start point.
+     */
+    STARTS("starts"),
+    /**
+     * Inverse relationship of {@link ObjectRelation#STARTS}
+     * exists if subject and object share the same temporal start point.
+     */
+    STARTED_BY("started_by"),
+    /**
+     * exists if subject temporal period exists entirely within the period of the object.
+     */
     DURING("during"),
-    ENDS("ends"),
+    /**
+     * exists if subject and object share the same temporal end point.
+     */
+    FINISHES("finishes"),
+    /**
+     * Inverse relationship of {@link ObjectRelation#FINISHES}
+     * exists if subject and object share the same temporal end point.
+     */
+    FINISHED_BY("finished_by"),
+    /**
+     * Exists if the subject overlaps the object at any point.
+     */
     TEMPORAL_OVERLAPS("temporal_overlaps"),
+    /**
+     * Symmetric relationship that exists if the end temporal of the subject equals the start temporal of object.
+     */
+    TEMPORAL_MEETS("temporal_meets"),
 //    Event
     MERGED_INTO("merged_into"),
     MERGED_FROM("merged_from"),
     SPLIT_INTO("split_into"),
-    SPLIT_FROM("split_from");
+    SPLIT_FROM("split_from"),
+//    Fuzzy equals relation
+    EQUALS("equals");
 
 
     private final IRI relationIRI;

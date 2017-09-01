@@ -69,7 +69,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
             }
         });
 //        Try to write some relations between two objects
-        reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(0), ObjectRelation.MEETS);
+        reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(0), ObjectRelation.SPATIAL_MEETS);
         reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(3), ObjectRelation.DURING);
 
         classObjects.parallelStream().forEach(object -> {
@@ -96,11 +96,9 @@ public class TrestleAPITest extends AbstractReasonerTest {
 //        assertEquals(4, individuals.size(), "Should have 4 individuals, overall");
 
 //        Test attribute generation
-        final Instant iStart = Instant.now();
         final TrestleIndividual trestleIndividual = reasoner.getTrestleIndividual(individuals.get(0));
-        final Instant iEnd = Instant.now();
         assertAll(() -> assertEquals(2, trestleIndividual.getFacts().size(), "Wrong number of attributes"),
-                () -> assertEquals(2, trestleIndividual.getRelations().size(), "Wrong number of relations"));
+                () -> assertEquals(1, trestleIndividual.getRelations().size(), "Wrong number of relations"));
 
 
 //        Now try to remove it
