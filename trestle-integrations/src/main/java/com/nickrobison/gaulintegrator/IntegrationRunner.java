@@ -54,6 +54,8 @@ public class IntegrationRunner extends Configured implements Tool {
                 .withOntology(IRI.create(conf.get("reasoner.ontology.location")))
                 .initialize()
                 .withName("gaul_hadoop")
+                .withoutCaching()
+                .withoutMetrics()
                 .build();
 
         Job job = Job.getInstance(conf, "GAUL Integrator");
