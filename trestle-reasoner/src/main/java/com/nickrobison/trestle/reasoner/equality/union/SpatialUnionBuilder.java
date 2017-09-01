@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import static com.nickrobison.trestle.common.TemporalUtils.compareTemporals;
 
 public class SpatialUnionBuilder {
+    private static final Logger logger = LoggerFactory.getLogger(SpatialUnionBuilder.class);
     private static final String TEMPORAL_OPTIONAL_ERROR = "Cannot get temporal for comparison object";
 
     private static final OperatorFactoryLocal instance = OperatorFactoryLocal.getInstance();
@@ -100,6 +101,7 @@ public class SpatialUnionBuilder {
 
     private static @Nullable PolygonMatchSet executeUnionCalculation(Set<Polygon> matchPolygons, SpatialReference inputSR, double matchThreshold, Set<Polygon> inputSet) {
         final SimpleGeometryCursor inputGeomsCursor = new SimpleGeometryCursor(new ArrayList<>(inputSet));
+        logger.debug("Executing union operation for {}", inputSet);
         final GeometryCursor unionInputGeoms = operatorUnion.execute(inputGeomsCursor, inputSR, new EqualityProgressTracker("Union calculation"));
         Geometry unionInputGeom;
         while ((unionInputGeom = unionInputGeoms.next()) != null) {
@@ -120,6 +122,7 @@ public class SpatialUnionBuilder {
 
     private static double executeUnion(SpatialReference inputSR, double matchThreshold, Polygon unionInputGeom, List<Geometry> matchGeomList) {
         final SimpleGeometryCursor matchGeomCursor = new SimpleGeometryCursor(matchGeomList);
+        logger.debug("Executing union operation for {}", matchGeomList);
         final GeometryCursor unionMatchGeoms = operatorUnion.execute(matchGeomCursor, inputSR, new EqualityProgressTracker("Union calculation"));
         Geometry unionMatchGeom;
         while ((unionMatchGeom = unionMatchGeoms.next()) != null) {

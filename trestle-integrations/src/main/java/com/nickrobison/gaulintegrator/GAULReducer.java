@@ -2,6 +2,7 @@ package com.nickrobison.gaulintegrator;
 
 import com.esri.core.geometry.*;
 import com.nickrobison.trestle.common.TemporalUtils;
+import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.datasets.GAULObject;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
@@ -135,6 +136,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 //            final LocalDate configEndDate = LocalDate.of(maxDate, 1, 1).plusYears(1).with(TemporalAdjusters.firstDayOfYear());
 
             GAULObject newGAULObject = inputRecords.get(0).toObject();
+            logger.info("Processing {}-{}-{}", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
 
 //            GAULObject newGAULObject = new GAULObject(
 //                    objectID,
@@ -156,29 +158,32 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
             final List<GAULObject> matchedObjects = new ArrayList<>();
             boolean hasConcept = false;
 
-
 //            See if there's a concept that spatially intersects the object
-            final Optional<Set<String>> conceptIRIs = reasoner.STIntersectConcept(newGAULObject.getPolygonAsWKT(), 0, null, null);
+            try {
+                final Optional<Set<String>> conceptIRIs = reasoner.STIntersectConcept(newGAULObject.getPolygonAsWKT(), 0, null, null);
 
 
 //            If true, get all the concept members
-            if (!conceptIRIs.orElse(new HashSet<>()).isEmpty()) {
-                hasConcept = true;
-                conceptIRIs.get().forEach(concept -> {
-                    final Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, concept, null, newGAULObject.getStartDate());
-                    conceptMembers.ifPresent(matchedObjects::addAll);
+                if (!conceptIRIs.orElse(new HashSet<>()).isEmpty()) {
+                    logger.info("{}-{}-{} has concept members", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
+                    hasConcept = true;
+                    conceptIRIs.get().forEach(concept -> {
+                        final Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, concept, null, newGAULObject.getStartDate());
+                        conceptMembers.ifPresent(matchedObjects::addAll);
 //                Now add the concept relations
 //                    TODO(nrobison): This feels bad.
-                    reasoner.addObjectToConcept(concept, newGAULObject, ConceptRelationType.TEMPORAL, 1.0);
-                });
-            } else {
+                        reasoner.addObjectToConcept(concept, newGAULObject, ConceptRelationType.TEMPORAL, 1.0);
+                    });
+                } else {
+                    logger.info("{}-{}-{} getting intersected objects", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
 //            If no, find objects to intersect
-                reasoner.spatialIntersectObject(newGAULObject, 0)
-                        .ifPresent(matchedObjects::addAll);
+                    reasoner.spatialIntersectObject(newGAULObject, 0)
+                            .ifPresent(matchedObjects::addAll);
 
 //                Go ahead the create the new concept
-                reasoner.addObjectToConcept(String.format("%s:concept", newGAULObject.getObjectName()), newGAULObject, ConceptRelationType.TEMPORAL, 1.0);
-            }
+                    logger.info("{}-{}-{} creating new concept", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
+                    reasoner.addObjectToConcept(String.format("%s:concept", newGAULObject.getObjectName()), newGAULObject, ConceptRelationType.TEMPORAL, 1.0);
+                }
 
 ////            Check to see if anything in the database either has the same name, or intersects the original object, with an added buffer.
 //            final Optional<List<@NonNull GAULObject>> gaulObjects = reasoner.spatialIntersectObject(newGAULObject, 500);
@@ -187,46 +192,54 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //            Now, do the normal spatial intersection with the new object and its matched objects
 
-            // test of approx equal union
-            if (matchedObjects.size() > 1) {
-                List<GAULObject> allGAUL = new ArrayList<>(matchedObjects);
-                allGAUL.add(newGAULObject);
+                // test of approx equal union
+                if (matchedObjects.size() > 1) {
+                    List<GAULObject> allGAUL = new ArrayList<>(matchedObjects);
+                    allGAUL.add(newGAULObject);
 
-                final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(allGAUL, inputSR, 0.9);
-                if (matchOptional.isPresent()) {
-                    // do something here
-                    final UnionEqualityResult<GAULObject> match = matchOptional.get();
-                    logger.debug("found approximate equality between " + match.getUnionObject() + " and " + match.getUnionOf());
-                    this.reasoner.addTrestleObjectSplitMerge(match.getType(), match.getUnionObject(), new ArrayList<>(match.getUnionOf()), match.getStrength());
+                    logger.info("{}-{}-{} calculating equality", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
+                    final Instant start = Instant.now();
+                    final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(allGAUL, inputSR, 0.9);
+                    logger.info("{}-{}-{} calculating equality took {} ms", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate(), Duration.between(start, Instant.now()).toMillis());
+                    if (matchOptional.isPresent()) {
+                        // do something here
+                        final UnionEqualityResult<GAULObject> match = matchOptional.get();
+                        logger.debug("found approximate equality between " + match.getUnionObject() + " and " + match.getUnionOf());
+                        this.reasoner.addTrestleObjectSplitMerge(match.getType(), match.getUnionObject(), new ArrayList<>(match.getUnionOf()), match.getStrength());
+                    }
                 }
-            }
 
 //            If there are no matching objects in the database, just insert the new record and move on.
-            if (!matchedObjects.isEmpty()) {
+                if (!matchedObjects.isEmpty()) {
 //                Map of objects and their respective weights
-                Map<GAULObject, Double> relatedObjects = new HashMap<>();
+                    Map<GAULObject, Double> relatedObjects = new HashMap<>();
 
-                for (GAULObject matchedObject : matchedObjects) {
-                    double objectWeight = 0.;
+                    for (GAULObject matchedObject : matchedObjects) {
+                        double objectWeight = 0.;
 
-                    if (newGAULObject.getObjectName().equals(matchedObject.getObjectName())) {
-                        objectWeight = .8;
+                        if (newGAULObject.getObjectName().equals(matchedObject.getObjectName())) {
+                            objectWeight = .8;
+                        }
+
+                        final double adjustedWeight = writeSTRelations(newGAULObject, matchedObject, objectWeight);
+
+                        relatedObjects.put(matchedObject, adjustedWeight);
                     }
-
-                    final double adjustedWeight = writeSTRelations(newGAULObject, matchedObject, objectWeight);
-
-                    relatedObjects.put(matchedObject, adjustedWeight);
                 }
-            }
 
 //            Now, we insert the new itself record into the database
-            try {
-                reasoner.writeTrestleObject(newGAULObject);
-            } catch (TrestleClassException e) {
-                logger.error("Cannot write {}", newGAULObject.getObjectName(), e);
-            } catch (MissingOntologyEntity missingOntologyEntity) {
-                logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
+                try {
+                    logger.info("{}-{}-{} inserting into repository", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
+                    reasoner.writeTrestleObject(newGAULObject);
+                } catch (TrestleClassException e) {
+                    logger.error("Cannot write {}", newGAULObject.getObjectName(), e);
+                } catch (MissingOntologyEntity missingOntologyEntity) {
+                    logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
+                }
+            } catch (RuntimeException e) {
+                logger.error("Unable to process object {}-{}-{}", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate(), e);
             }
+            logger.info("{}-{}-{} finished", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
         }
         context.write(key, new Text("Records: " + inputRecords.size()));
     }
@@ -238,6 +251,13 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 
     private double writeSTRelations(GAULObject newGAULObject, GAULObject matchedObject, double objectWeight) {
+        logger.info("{}-{}-{} writing relation for {}-{}-{}",
+                newGAULObject.getGaulCode(),
+                newGAULObject.getObjectName(),
+                newGAULObject.getStartDate(),
+                matchedObject.getGaulCode(),
+                matchedObject.getObjectName(),
+                matchedObject.getStartDate());
         // test of approx equality
         if (this.reasoner.getEqualityEngine().isApproximatelyEqual(newGAULObject, matchedObject, inputSR, 0.9)) {
             // do something here
@@ -309,11 +329,10 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
             reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.AFTER);
         }
 
-    double intersectedArea = intersectedPolygon.calculateArea2D() / newGAULObject.getShapePolygon().calculateArea2D();
-    objectWeight +=(1-objectWeight)*intersectedArea;
+        double intersectedArea = intersectedPolygon.calculateArea2D() / newGAULObject.getShapePolygon().calculateArea2D();
+        objectWeight += (1 - objectWeight) * intersectedArea;
         return objectWeight;
-}
-
+    }
 
 
     /**
@@ -342,8 +361,8 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 final LocalDate recordStart = LocalDate.of(record.getDatasetYear(), 1, 1);
                 try {
                     reasoner.writeTrestleObject(record.toObject(), recordStart, record.getExpirationDate());
-                } catch (MissingOntologyEntity | UnregisteredClassException e) {
-                    logger.error("Unable to write objects", e);
+                } catch (MissingOntologyEntity | UnregisteredClassException | TrestleInvalidDataException e) {
+                    logger.error("Unable to write object {}-{}-{}", record.getRegionID(), record.getRegionName(), record.getStartDate(), e);
                 }
             }
         }

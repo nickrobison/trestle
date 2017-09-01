@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.querybuilder;
 
+import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.PrecisionModel;
@@ -780,6 +781,7 @@ public class QueryBuilder {
 
         if (!geom.isValid()) {
             logger.error("Invalid geometry at simplification level {}: {}", factor, geom.toString());
+            throw new TrestleInvalidDataException("Invalid input geometry", geom);
         }
 
 //        If needed, add a buffer
