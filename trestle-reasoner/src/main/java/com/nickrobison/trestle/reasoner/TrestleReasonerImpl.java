@@ -30,6 +30,7 @@ import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
+import com.nickrobison.trestle.reasoner.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.events.TrestleEventEngine;
 import com.nickrobison.trestle.reasoner.events.TrestleEventException;
@@ -110,6 +111,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final TrestleMergeEngine mergeEngine;
     private final TrestleEventEngine eventEngine;
     private final EqualityEngine equalityEngine;
+    private final ContainmentEngine containmentEngine;
     private final Config trestleConfig;
     private final TrestleCache trestleCache;
     private final Metrician metrician;
@@ -217,6 +219,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         this.mergeEngine = injector.getInstance(TrestleMergeEngine.class);
         this.eventEngine = injector.getInstance(TrestleEventEngine.class);
         this.equalityEngine = injector.getInstance(EqualityEngine.class);
+        this.containmentEngine = injector.getInstance(ContainmentEngine.class);
 
 //            validate the classes
         builder.inputClasses.forEach(clazz -> {
@@ -312,6 +315,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public EqualityEngine getEqualityEngine() {
         return this.equalityEngine;
+    }
+
+    @Override
+    public ContainmentEngine getContainmentEngine() {
+        return this.containmentEngine;
     }
 
     @Override

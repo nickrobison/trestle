@@ -4,6 +4,7 @@ import com.google.inject.AbstractModule;
 import com.nickrobison.metrician.MetricianModule;
 
 import com.nickrobison.trestle.reasoner.caching.TrestleCacheModule;
+import com.nickrobison.trestle.reasoner.containment.ContainmentEngineModule;
 import com.nickrobison.trestle.reasoner.equality.EqualityEngineModule;
 import com.nickrobison.trestle.reasoner.events.TrestleEventEngine;
 import com.nickrobison.trestle.reasoner.events.EventEngineImpl;
@@ -40,6 +41,7 @@ public class TrestleModule extends AbstractModule {
         install(new MetricianModule(metricsEnabled));
         install(new TrestleCacheModule(cachingEnabled));
         install(new EqualityEngineModule());
+        install(new ContainmentEngineModule());
 
 //        Bind the parser
         bind(TrestleParser.class)

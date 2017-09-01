@@ -20,7 +20,6 @@ import org.semanticweb.owlapi.model.IRI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -60,36 +59,30 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
         configStartDate = LocalDate.ofYearDay(Integer.parseInt(conf.get(STARTDATE)), 1);
         configEndDate = LocalDate.ofYearDay(Integer.parseInt(conf.get(ENDDATE)), 1).with(TemporalAdjusters.lastDayOfYear());
 
-//        Get the cached files
-        if (context.getCacheFiles() != null && context.getCacheFiles().length > 0) {
-            File ontologyFile = new File("./ontology");
-
 
 //        Setup the Trestle Reasoner
 //            The conf file will strip out parameters with empty values, so we need to check for that and reset them.
-            String username = conf.get("reasoner.db.username");
-            if (username == null) {
-                username = "";
-            }
-
-            String password = conf.get("reasoner.db.password");
-            if (password == null) {
-                password = "";
-            }
-
-            reasoner = new TrestleBuilder()
-                    .withDBConnection(conf.get("reasoner.db.connection"),
-                            username,
-                            password)
-                    .withInputClasses(GAULObject.class)
-                    .withOntology(IRI.create(context.getCacheFiles()[0]))
-                    .withPrefix(conf.get("reasoner.ontology.prefix"))
-                    .withName(conf.get("reasoner.ontology.name"))
-                    .withoutCaching()
-                    .withoutMetrics()
-                    .build();
+        String username = conf.get("reasoner.db.username");
+        if (username == null) {
+            username = "";
         }
 
+        String password = conf.get("reasoner.db.password");
+        if (password == null) {
+            password = "";
+        }
+        logger.info("Initializing reasoner");
+        reasoner = new TrestleBuilder()
+                .withDBConnection(conf.get("reasoner.db.connection"),
+                        username,
+                        password)
+                .withInputClasses(GAULObject.class)
+                .withOntology(IRI.create(conf.get("reasoner.ontology.location")))
+                .withPrefix(conf.get("reasoner.ontology.prefix"))
+                .withName(conf.get("reasoner.ontology.name"))
+                .withoutCaching()
+                .withoutMetrics()
+                .build();
     }
 
     @Override

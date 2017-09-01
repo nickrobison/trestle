@@ -5,6 +5,7 @@ import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.reasoner.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
@@ -79,6 +80,13 @@ public interface TrestleReasoner {
      * @return - {@link EqualityEngine}
      */
     EqualityEngine getEqualityEngine();
+
+    /**
+     * Get the underlying {@link ContainmentEngine}
+     *
+     * @return - {@link ContainmentEngine}
+     */
+    ContainmentEngine getContainmentEngine();
 
     /**
      * Get the currently registered prefixes and URIs
