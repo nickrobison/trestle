@@ -15,7 +15,8 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,9 +39,9 @@ public class GAULMapper extends Mapper<LongWritable, PolygonFeatureWritable, Lon
     private static final Text DISP_AREA = new Text("DISP_AREA");
     private static final Text A0CODE = new Text("ADM0_CODE");
     private static final Text A0NAME = new Text("ADM0_NAME");
-//    List of ADM0 Codes for Africa Bounding Box POLYGON((-26.4 38.1, 61.9 38.1, 61.9 -37.2, -26.4 -37.2, -26.4 38.1))
-    private static final List<Long> GAUL_IDS = Arrays.asList(1L,4L,6L,8L,21L,25L,29L,35L,42L,43L,45L,47L,49L,50L,58L,59L,64L,66L,68L,70L,74L,76L,77L,79L,80L,89L,90L,91L,94L,95L,96L,97L,102L,105L,106L,117L,118L,121L,122L,130L,131L,133L,137L,141L,142L,144L,145L,150L,151L,152L,155L,156L,159L,160L,161L,169L,170L,172L,181L,182L,187L,188L,199L,201L,205L,206L,207L,214L,215L,217L,220L,221L,226L,227L,229L,235L,238L,243L,247L,248L,249L,250L,253L,255L,257L,267L,268L,269L,270L,271L,40760L,40762L,40765L,61013L,74578L);
-
+    //    List of ADM0 Codes for Africa Bounding Box POLYGON((-26.4 38.1, 61.9 38.1, 61.9 -37.2, -26.4 -37.2, -26.4 38.1))
+//    private static final List<Long> GAUL_IDS = Arrays.asList(1L,4L,6L,8L,21L,25L,29L,35L,42L,43L,45L,47L,49L,50L,58L,59L,64L,66L,68L,70L,74L,76L,77L,79L,80L,89L,90L,91L,94L,95L,96L,97L,102L,105L,106L,117L,118L,121L,122L,130L,131L,133L,137L,141L,142L,144L,145L,150L,151L,152L,155L,156L,159L,160L,161L,169L,170L,172L,181L,182L,187L,188L,199L,201L,205L,206L,207L,214L,215L,217L,220L,221L,226L,227L,229L,235L,238L,243L,247L,248L,249L,250L,253L,255L,257L,267L,268L,269L,270L,271L,40760L,40762L,40765L,61013L,74578L);
+    private static final Set<Long> GAUL_IDS = new HashSet<>(Arrays.asList(6L, 29L, 49L, 59L, 68L, 74L, 170L, 182L, 253L));
 
     //    Regex
     private static final Pattern coordinateRegex = Pattern.compile("(\\-?\\d+\\.\\d+)");
@@ -65,7 +66,15 @@ public class GAULMapper extends Mapper<LongWritable, PolygonFeatureWritable, Lon
         final Text status = new Text(inputRecord.attributes.getText(STATUS.toString()).trim());
         final Text dispArea = new Text(inputRecord.attributes.getText(DISP_AREA.toString()).trim());
 
+        final BooleanWritable dispBool;
+        if (dispArea.toString().equals("NO")) {
+            dispBool = new BooleanWritable(false);
+        } else {
+            dispBool = new BooleanWritable(true);
+        }
 
+//        Should we proceed?
+        if (!dispBool.get() && GAUL_IDS.contains(a0Code.get())) {
 //        Generate start and end dates
         LocalDate startDate = LocalDate.of(toIntExact(startYear.get()), Month.JANUARY, 1);
         LocalDate expirationYear = LocalDate.of(toIntExact(expYear.get()), Month.DECEMBER, 10);
@@ -83,14 +92,8 @@ public class GAULMapper extends Mapper<LongWritable, PolygonFeatureWritable, Lon
         if (firstCoordinate > 180.0 || firstCoordinate < -180.0) {
             logger.error("{}, Year {} has invalid polygon data. {}", polygonName, inputYear, inputRecord.polygon.getBoundary());
         }
-        final BooleanWritable dispBool;
-        if (dispArea.toString().equals("NO")) {
-            dispBool = new BooleanWritable(false);
-        } else {
-            dispBool = new BooleanWritable(true);
-        }
 
-        if (!dispBool.get() && GAUL_IDS.contains(a0Code.get())) {
+
             final MapperOutput outputRecord = new MapperOutput(polygonID, polygonName, inputYear, inputRecord, startDate, expirationDate, a0Code, a0Name, a1Code, a1Name, dispBool, status);
             context.write(polygonID, outputRecord);
         }

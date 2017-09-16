@@ -74,7 +74,8 @@ public class GAULIntegratorTests {
             conf.set(name, userProperties.getProperty(name));
         }
 
-         fileSystem = FileSystem.get(conf);
+//         fileSystem = FileSystem.get(conf);
+        fileSystem = FileSystem.getLocal(conf);
         final YarnConfiguration clusterConf = new YarnConfiguration();
         cluster = new MiniDFSCluster.Builder(conf).build();
 
@@ -122,7 +123,8 @@ public class GAULIntegratorTests {
         URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/gates-test/");
         URL OUT_DIR = GAULIntegratorTests.class.getClassLoader().getResource("out/");
 
-        Path inDir = new Path(IN_DIR.toString());
+//        Path inDir = new Path(IN_DIR.toString());
+        Path inDir = fileSystem.makeQualified(new Path("/Volumes/LaCie/gaul/"));
         Path outDir = new Path("./target/out/");
 
         fileSystem.delete(outDir, true);
@@ -139,7 +141,7 @@ public class GAULIntegratorTests {
 
         job.setInputFormatClass(PolygonFeatureInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
-        FileInputFormat.setInputDirRecursive(job, false);
+        FileInputFormat.setInputDirRecursive(job, true);
         FileInputFormat.setInputPaths(job, inDir);
         FileOutputFormat.setOutputPath(job, outDir);
         job.waitForCompletion(true);

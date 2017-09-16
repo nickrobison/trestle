@@ -112,7 +112,6 @@ public class ClassParser {
             }
         }
 
-        final OWLDataFactory df = OWLManager.getOWLDataFactory();
         return df.getOWLNamedIndividual(IRI.create(ReasonerPrefix, identifier));
     }
 
