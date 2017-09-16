@@ -7,7 +7,6 @@ import com.google.inject.Injector;
 import com.typesafe.config.ConfigFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -31,12 +30,6 @@ public class TrestleReporterTest {
         injector = Guice.createInjector(new MetricianModule());
     }
 
-    @BeforeEach
-    public void setup() {
-        metrician = injector.getInstance(Metrician.class);
-        reporter = metrician.getReporter();
-    }
-
     @AfterEach
     public void teardown() {
         metrician.shutdown(new File("./target/metricsTest.csv"));
@@ -44,6 +37,8 @@ public class TrestleReporterTest {
 
     @Test
     public void testSimpleClass() throws InterruptedException {
+        metrician = injector.getInstance(Metrician.class);
+        reporter = metrician.getReporter();
         final TestMetricsReporterClass metricsClass = new TestMetricsReporterClass();
         metricsClass.testIncrement();
         metricsClass.testIncrement();
@@ -120,19 +115,19 @@ public class TrestleReporterTest {
 
     @Test
     public void testNoOp() throws InterruptedException {
-        final Metrician noop = new MetricianNoop();
-        final Counter counter = noop.registerCounter("test-counter");
+        metrician = injector.getInstance(MetricianNoop.class);
+        reporter = metrician.getReporter();
+        final Counter counter = metrician.registerCounter("test-counter");
         counter.inc();
         counter.inc();
         counter.inc(5);
         counter.dec(2);
         assertEquals(0, counter.getCount(), "Should have not increments");
-        final Timer timer = noop.registerTimer("noop-timer");
+        final Timer timer = metrician.registerTimer("noop-timer");
         final Timer.Context time = timer.time();
         Thread.sleep(100);
         time.stop();
         assertAll(() -> assertEquals(0, timer.getCount(), "Should never be called"),
                 () -> assertEquals(0, timer.getSnapshot().get75thPercentile(), "Should have 0 snapshot"));
-
     }
 }
