@@ -127,7 +127,7 @@ public class H2Backend extends RDBMSBackend {
              final CallableStatement dropEverything = connection.prepareCall("DROP ALL OBJECTS DELETE FILES ")) {
             dropEverything.execute();
         } catch (SQLException e) {
-            logger.error("Unable to close H2 in-memory database", e);
+            logger.error("Unable to close H2 database", e);
         }
     }
 
