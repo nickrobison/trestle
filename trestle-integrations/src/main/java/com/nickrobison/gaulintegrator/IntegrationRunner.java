@@ -45,6 +45,13 @@ public class IntegrationRunner extends Configured implements Tool {
             conf.set(name, userProperties.getProperty(name));
         }
 
+
+//        Do we a command line property that specifies which GAUL codes to restrict output to?
+        if (args.length > 2) {
+            conf.set("gaulcode.restriction", args[2]);
+        }
+
+
 //        Setup the reasoner
         TrestleReasoner reasoner = new TrestleBuilder()
                 .withDBConnection(conf.get("reasoner.db.connection"),
@@ -52,7 +59,7 @@ public class IntegrationRunner extends Configured implements Tool {
                         conf.get("reasoner.db.password"))
                 .withInputClasses(GAULObject.class)
                 .withOntology(IRI.create(conf.get("reasoner.ontology.location")))
-                .initialize()
+//                .initialize()
                 .withName("gaul_hadoop")
                 .withoutCaching()
                 .withoutMetrics()
