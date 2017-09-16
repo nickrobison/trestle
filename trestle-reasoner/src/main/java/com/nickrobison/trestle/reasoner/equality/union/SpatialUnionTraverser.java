@@ -1,10 +1,13 @@
 package com.nickrobison.trestle.reasoner.equality.union;
 
+import com.codahale.metrics.annotation.Metered;
+import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.trestle.common.TemporalUtils;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
+import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.parser.TemporalParser;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TemporalScope;
@@ -26,6 +29,7 @@ import java.util.stream.Collectors;
 import static com.nickrobison.trestle.common.StaticIRI.spatialUnionIRI;
 import static com.nickrobison.trestle.common.StaticIRI.trestleObjectIRI;
 
+@Metriced
 public class SpatialUnionTraverser {
 
     private static final Logger logger = LoggerFactory.getLogger(SpatialUnionTraverser.class);
@@ -71,6 +75,7 @@ public class SpatialUnionTraverser {
      * @param <T>           - Generic type parameter
      * @return - {@link List} of {@link OWLNamedIndividual} that are equivalent to the given individual at the specified query time
      */
+    @Timed(name = "union-traversal-timer", absolute = true)
     public <T extends @NonNull Object> List<OWLNamedIndividual> traverseUnion(Class<T> clazz, List<OWLNamedIndividual> subjects, Temporal queryTemporal) {
 
 //        Get the base temporal type of the input class
@@ -132,6 +137,8 @@ public class SpatialUnionTraverser {
      * @param temporalDirection - {@link TemporalDirection} determining whether the algorithm is moving forwards or backwards in time
      * @return - {@link Set} of {@link STObjectWrapper} that are equivalent to the first object in the {@link Queue} or represent all valid objects for the input set
      */
+    @Timed(name = "equivalence-timer", absolute = true)
+    @Metered(name = "equivalence-meter", absolute = true)
     private Set<STObjectWrapper> getEquivalence(Set<STObjectWrapper> validObjects, Queue<STObjectWrapper> invalidObjects, Set<STObjectWrapper> seenObjects, Temporal queryTemporal, TemporalDirection temporalDirection) {
 //        This is a null safe way of checking that the queue is empty
         final STObjectWrapper object = invalidObjects.poll();
@@ -168,6 +175,8 @@ public class SpatialUnionTraverser {
      * @param seenObjects - {@link Set} of {@link STObjectWrapper} of objects that have already been processed by the algorithm
      * @return - {@link Set} of {@link STObjectWrapper} objects that are equivalent to the given input object
      */
+    @Timed(name = "equality-query-timer", absolute = true)
+    @Metered(name = "equality-query-meter", absolute = true)
     private Set<STObjectWrapper> executeEqualityQuery(STObjectWrapper inputObject, TemporalDirection direction, Set<STObjectWrapper> seenObjects) {
         logger.trace("Executing equality query for {}", inputObject.getIndividual());
         Set<STObjectWrapper> equivalentObjects = new HashSet<>();
@@ -222,6 +231,7 @@ public class SpatialUnionTraverser {
      * @param seenObjects- {@link Set} of {@link STObjectWrapper} of seen objects
      * @return - {@code true} is complete union (we have everything), {@code false} is not a complete union, we need more info
      */
+    @Timed
     private boolean isCompleteUnion(STObjectWrapper union, Set<STObjectWrapper> seenObjects) {
         final String unionQuery = this.qb.buildSTUnionComponentQuery(union.getIndividual());
         final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(unionQuery);

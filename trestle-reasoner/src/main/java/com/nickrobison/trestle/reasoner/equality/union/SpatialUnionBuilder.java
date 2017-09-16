@@ -1,6 +1,11 @@
 package com.nickrobison.trestle.reasoner.equality.union;
 
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.annotation.Metered;
+import com.codahale.metrics.annotation.Timed;
 import com.esri.core.geometry.*;
+import com.nickrobison.metrician.Metrician;
+import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.parser.SpatialParser;
 import com.nickrobison.trestle.reasoner.parser.TemporalParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
@@ -19,21 +24,25 @@ import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.TemporalUtils.compareTemporals;
 
+@Metriced
 public class SpatialUnionBuilder {
     private static final Logger logger = LoggerFactory.getLogger(SpatialUnionBuilder.class);
     private static final String TEMPORAL_OPTIONAL_ERROR = "Cannot get temporal for comparison object";
 
     private static final OperatorFactoryLocal instance = OperatorFactoryLocal.getInstance();
-    private static final OperatorIntersection operatorIntersection = (OperatorIntersection) instance.getOperator(Operator.Type.Intersection);
-    private static final OperatorUnion operatorUnion = (OperatorUnion) instance.getOperator(Operator.Type.Union);
+    private static final OperatorIntersection operatorIntersection = OperatorIntersection.local();
+    private static final OperatorUnion operatorUnion = OperatorUnion.local();
     private final TrestleParser tp;
+    private final Histogram unionSetSize;
 
     @Inject
-    public SpatialUnionBuilder(TrestleParser tp) {
+    public SpatialUnionBuilder(TrestleParser tp, Metrician metrician) {
         this.tp = tp;
+        unionSetSize = metrician.registerHistogram("union-set-size");
     }
 
     @SuppressWarnings({"ConstantConditions", "squid:S3655"})
+    @Timed(name = "union-equality-timer")
     public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> getApproximateEqualUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
         final TemporallyDividedObjects<T> dividedObjects = divideObjects(inputObjects);
 
@@ -85,7 +94,7 @@ public class SpatialUnionBuilder {
     }
 
 
-    private static @Nullable PolygonMatchSet getApproxEqualUnion(Set<Polygon> inputPolygons, Set<Polygon> matchPolygons, SpatialReference inputSR, double matchThreshold) {
+    private @Nullable PolygonMatchSet getApproxEqualUnion(Set<Polygon> inputPolygons, Set<Polygon> matchPolygons, SpatialReference inputSR, double matchThreshold) {
         final Set<Set<Polygon>> allInputSets = powerSet(inputPolygons);
 
         for (Set<Polygon> inputSet : allInputSets) {
@@ -99,9 +108,12 @@ public class SpatialUnionBuilder {
         return null;
     }
 
-    private static @Nullable PolygonMatchSet executeUnionCalculation(Set<Polygon> matchPolygons, SpatialReference inputSR, double matchThreshold, Set<Polygon> inputSet) {
+    @Timed(name = "union-calculation-timer", absolute = true)
+    @Metered(name = "union-calculation-meter", absolute = true)
+    private @Nullable PolygonMatchSet executeUnionCalculation(Set<Polygon> matchPolygons, SpatialReference inputSR, double matchThreshold, Set<Polygon> inputSet) {
         final SimpleGeometryCursor inputGeomsCursor = new SimpleGeometryCursor(new ArrayList<>(inputSet));
         logger.debug("Executing union operation for {}", inputSet);
+        this.unionSetSize.update(inputSet.size());
         final GeometryCursor unionInputGeoms = operatorUnion.execute(inputGeomsCursor, inputSR, new EqualityProgressTracker("Union calculation"));
         Geometry unionInputGeom;
         while ((unionInputGeom = unionInputGeoms.next()) != null) {
@@ -120,9 +132,12 @@ public class SpatialUnionBuilder {
         return null;
     }
 
-    private static double executeUnion(SpatialReference inputSR, double matchThreshold, Polygon unionInputGeom, List<Geometry> matchGeomList) {
+    @Timed(name = "union-strength-timer", absolute = true)
+    @Metered(name = "union-strength-meter", absolute = true)
+    private double executeUnion(SpatialReference inputSR, double matchThreshold, Polygon unionInputGeom, List<Geometry> matchGeomList) {
         final SimpleGeometryCursor matchGeomCursor = new SimpleGeometryCursor(matchGeomList);
         logger.debug("Executing union operation for {}", matchGeomList);
+        this.unionSetSize.update(matchGeomList.size());
         final GeometryCursor unionMatchGeoms = operatorUnion.execute(matchGeomCursor, inputSR, new EqualityProgressTracker("Union calculation"));
         Geometry unionMatchGeom;
         while ((unionMatchGeom = unionMatchGeoms.next()) != null) {

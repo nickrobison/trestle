@@ -1,6 +1,8 @@
 package com.nickrobison.trestle.reasoner.containment;
 
+import com.codahale.metrics.annotation.Timed;
 import com.esri.core.geometry.*;
+import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.equality.union.SpatialUnionBuilder;
 import com.nickrobison.trestle.reasoner.parser.SpatialParser;
 import com.nickrobison.trestle.reasoner.parser.spatial.ESRIParser;
@@ -12,6 +14,7 @@ import java.util.Optional;
 /**
  * Created by detwiler on 8/31/17.
  */
+@Metriced
 public class ContainmentEngineImpl implements ContainmentEngine
 {
     private static final OperatorFactoryLocal instance = OperatorFactoryLocal.getInstance();
@@ -30,6 +33,7 @@ public class ContainmentEngineImpl implements ContainmentEngine
      * equal to the threshold. ContainmentDirection.NONE if neither is true.
      */
     @Override
+    @Timed
     public <T> ContainmentDirection getApproximateContainment(T objectA, T objectB, SpatialReference inputSR, double threshold)
     {
         final Polygon polygonA = parseESRIPolygon(SpatialParser.getSpatialValue(objectA));
