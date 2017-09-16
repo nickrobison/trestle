@@ -47,7 +47,6 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
     private static final OperatorExportToWkt operatorWKTExport = (OperatorExportToWkt) instance.getOperator(Operator.Type.ExportToWkt);
     private static final int INPUTSRS = 32610;
     private static final SpatialReference inputSR = SpatialReference.create(INPUTSRS);
-
     private LocalDate configStartDate;
     private LocalDate configEndDate;
     private Configuration conf;
@@ -89,65 +88,10 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
     @Override
     public void reduce(LongWritable key, Iterable<MapperOutput> values, Context context) throws IOException, InterruptedException {
 
-        final Configuration configuration = context.getConfiguration();
-//        Copy from the iterator into a simple array list, we can't run through the iterator more than once
-//        This is a bit of a disaster, but since the set is relatively bounded, it should be ok.
-        List<MapperOutput> inputRecords = new ArrayList<>();
-        for (MapperOutput record : values) {
-            inputRecords.add(WritableUtils.clone(record, configuration));
-        }
-
-//        Do my records cover the entirety of the input space?
-        final int maxDate = inputRecords
-                .stream()
-                .mapToInt(MapperOutput::getDatasetYear)
-                .max()
-                .orElse(0);
-
-        final int minDate = inputRecords
-                .stream()
-                .mapToInt(MapperOutput::getDatasetYear)
-                .min()
-                .orElse(9999);
-
-//        If we have all the available records, than we can assume that the record is contiguous and just smash it into the database
-        if (minDate <= configStartDate.getYear() && maxDate >= configEndDate.getYear()) {
-            logger.info("Object ID: {} has all the records", key);
-//            ObjectID objectID = new ObjectID();
-
-//            final LocalDate configStartDate = LocalDate.of(minDate, Month.JANUARY, 1).with(TemporalAdjusters.firstDayOfYear());
-//            final LocalDate configEndDate = LocalDate.of(maxDate, 1, 1).plusYears(1).with(TemporalAdjusters.firstDayOfYear());
-            this.writeFullRecordSet(inputRecords);
-
-        } else {
-//            If we have records that don't cover the entirety of the input space, then we need to integrate them
-//            Try to see if any potentially matching records exist.
-
-//            Generate a new UUID for this set of objects
-//            ObjectID objectID = new ObjectID();
-//            Set<Text> polygonNames = inputRecords
-//                    .stream()
-//                    .map(MapperOutput::getRegionName)
-//                    .collect(Collectors.toSet());
-
-//            Create a new GAUL Object
-//            String objectName = polygonNames.iterator().next().toString();
-//            final LocalDate configStartDate = LocalDate.of(minDate, Month.JANUARY, 1).with(TemporalAdjusters.firstDayOfYear());
-//            final LocalDate configEndDate = LocalDate.of(maxDate, 1, 1).plusYears(1).with(TemporalAdjusters.firstDayOfYear());
-
-            GAULObject newGAULObject = inputRecords.get(0).toObject();
+        final GAULObject newGAULObject = this.processInputSet(key, values, context);
+//        If we have an object returned from the above function, we need to look for any other overlapping objects
+        if (newGAULObject != null) {
             logger.info("Processing {}-{}-{}", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-
-//            GAULObject newGAULObject = new GAULObject(
-//                    objectID,
-//                    key.get(),
-//                    objectName,
-//                    configStartDate,
-//                    configEndDate,
-//                    inputRecords.get(0).getPolygonData().polygon
-//            );
-
-//            Try from Trestle
 //            Manually run the inferencer, for now
             final Instant infStart = Instant.now();
             reasoner.getUnderlyingOntology().runInference();
@@ -184,13 +128,6 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                     logger.info("{}-{}-{} creating new concept", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
                     reasoner.addObjectToConcept(String.format("%s:concept", newGAULObject.getObjectName()), newGAULObject, ConceptRelationType.TEMPORAL, 1.0);
                 }
-
-////            Check to see if anything in the database either has the same name, or intersects the original object, with an added buffer.
-//            final Optional<List<@NonNull GAULObject>> gaulObjects = reasoner.spatialIntersectObject(newGAULObject, 500);
-//
-//            List<GAULObject> matchedObjects = gaulObjects.orElse(new ArrayList<>());
-
-//            Now, do the normal spatial intersection with the new object and its matched objects
 
                 // test of approx equal union
                 if (matchedObjects.size() > 1) {
@@ -241,7 +178,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
             }
             logger.info("{}-{}-{} finished", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
         }
-        context.write(key, new Text("Records: " + inputRecords.size()));
+        context.write(key, new Text("Records: " + 1));
     }
 
     @Override
@@ -334,6 +271,46 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
         return objectWeight;
     }
 
+    /**
+     * Process input set to determine if we actually have all the possible values for a given input set, if so write them and return a null.
+     * If not, return the first copy of the object to process further
+     *
+     * @param key     - {@link LongWritable} input Key
+     * @param values  - {@link Iterable} of {@link MapperOutput} representing all key values
+     * @param context - {@link org.apache.hadoop.mapreduce.Reducer.Context} Hadoop context
+     * @return - {@link GAULObject}, null if all the input set is present.
+     */
+    private GAULObject processInputSet(LongWritable key, Iterable<MapperOutput> values, Context context) {
+        final Configuration configuration = context.getConfiguration();
+//        Copy from the iterator into a simple array list, we can't run through the iterator more than once
+//        This is a bit of a disaster, but since the set is relatively bounded, it should be ok.
+        Queue<MapperOutput> inputRecords = new ArrayDeque<>();
+        for (MapperOutput record : values) {
+            inputRecords.add(WritableUtils.clone(record, configuration));
+        }
+
+//        Do my records cover the entirety of the input space?
+        final int maxDate = inputRecords
+                .stream()
+                .mapToInt(MapperOutput::getDatasetYear)
+                .max()
+                .orElse(0);
+
+        final int minDate = inputRecords
+                .stream()
+                .mapToInt(MapperOutput::getDatasetYear)
+                .min()
+                .orElse(9999);
+
+//        If we have all the available records, than we can assume that the record is contiguous and just smash it into the database
+        if (minDate <= configStartDate.getYear() && maxDate >= configEndDate.getYear()) {
+            logger.info("Object ID: {} has all the records", key);
+            this.writeFullRecordSet(inputRecords);
+            return null;
+        }
+        return inputRecords.poll().toObject();
+    }
+
 
     /**
      * If we have all the records (if an object spans the entire set space), write/merge them into Trestle
@@ -341,7 +318,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
      * @param records - {@link List} of {@link MapperOutput}
      */
 
-    private void writeFullRecordSet(List<MapperOutput> records) {
+    private void writeFullRecordSet(Collection<MapperOutput> records) {
         final ArrayDeque<MapperOutput> sortedRecords = records
                 .stream()
                 .sorted()
