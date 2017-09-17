@@ -21,7 +21,9 @@ import org.semanticweb.owlapi.model.IRI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -49,15 +51,21 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
     private static final SpatialReference inputSR = SpatialReference.create(INPUTSRS);
     private LocalDate configStartDate;
     private LocalDate configEndDate;
-    private Configuration conf;
     private TrestleReasoner reasoner;
+    private File metricsFile;
 
     @Override
     protected void setup(Context context) throws IOException {
 //        Load the properties file
-        conf = context.getConfiguration();
+        final Configuration conf = context.getConfiguration();
         configStartDate = LocalDate.ofYearDay(Integer.parseInt(conf.get(STARTDATE)), 1);
         configEndDate = LocalDate.ofYearDay(Integer.parseInt(conf.get(ENDDATE)), 1).with(TemporalAdjusters.lastDayOfYear());
+
+//        Setup stuff for the shutdown hook
+        //        Write out the metrics data
+        final String location = conf.get("metrics.path");
+        final String taskID = context.getTaskAttemptID().getTaskID().toString();
+        metricsFile = new File(location + taskID + ".log");
 
 
 //        Setup the Trestle Reasoner
@@ -81,8 +89,11 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 .withPrefix(conf.get("reasoner.ontology.prefix"))
                 .withName(conf.get("reasoner.ontology.name"))
                 .withoutCaching()
-                .withoutMetrics()
+//                .withoutMetrics()
                 .build();
+
+//        Add shutdown hook
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownReducer));
     }
 
     @Override
@@ -181,9 +192,19 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
         context.write(key, new Text("Records: " + 1));
     }
 
-    @Override
-    public void cleanup(Context context) {
+    private void shutdownReducer() {
+        reasoner.getMetricsEngine().exportData(metricsFile);
         reasoner.shutdown(false);
+
+//        Remove the metrics database, hard coded for now
+        final File mvFile = new File("./trestle-metrics.mv.db");
+        final File traceFile = new File("./trestle-metrics.trace.db");
+        try {
+            Files.delete(mvFile.toPath());
+            Files.delete(traceFile.toPath());
+        } catch (IOException e) {
+            logger.error("Cannot remove metrics files", e);
+        }
     }
 
 

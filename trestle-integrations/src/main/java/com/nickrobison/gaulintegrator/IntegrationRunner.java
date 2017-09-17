@@ -6,6 +6,7 @@ import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -84,6 +85,13 @@ public class IntegrationRunner extends Configured implements Tool {
             outputDir.getFileSystem(conf).delete(outputDir, true);
         }
         FileOutputFormat.setOutputPath(job, outputDir);
+
+        //        Remove the HDS output directory
+        try (final FileSystem fileSystem = FileSystem.get(conf)) {
+            if (fileSystem.exists(outputDir)) {
+                fileSystem.delete(outputDir, true);
+            }
+        }
 
 //        Add the cache files
 //        final URL resource = IntegrationRunner.class.getClassLoader().getResource("trestle.owl");
