@@ -31,7 +31,7 @@
         </dependency>
         <dependency>
             <groupId>com.vividsolutions</groupId>
-            <artifactId>jts</artifactId>
+            <artifactId>jts-core</artifactId>
         </dependency>
     </dependencies>
 
