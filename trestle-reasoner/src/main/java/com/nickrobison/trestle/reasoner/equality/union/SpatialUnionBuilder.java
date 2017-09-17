@@ -75,7 +75,7 @@ public class SpatialUnionBuilder {
                 .map(value -> parseJTSGeometry(value, wktReader, wkbReader))
                 .collect(Collectors.toSet());
 
-        @Nullable final PolygonMatchSet polygonMatchSet = getApproxEqualUnion(earlyPolygons, latePolygons, inputSR, matchThreshold, geometryFactory);
+        @Nullable final PolygonMatchSet polygonMatchSet = getApproxEqualUnion(geometryFactory, earlyPolygons, latePolygons, matchThreshold);
         if (polygonMatchSet == null) {
             return Optional.empty();
         }
@@ -110,7 +110,7 @@ public class SpatialUnionBuilder {
     }
 
 
-    private @Nullable PolygonMatchSet getApproxEqualUnion(Set<Geometry> inputPolygons, Set<Geometry> matchPolygons, SpatialReference inputSR, double matchThreshold, GeometryFactory geometryFactory) {
+    private PolygonMatchSet getApproxEqualUnion(GeometryFactory geometryFactory, Set<Geometry> inputPolygons, Set<Geometry> matchPolygons, double matchThreshold) {
         final Set<Set<Geometry>> allInputSets = powerSet(inputPolygons);
 
         for (Set<Geometry> inputSet : allInputSets) {
@@ -118,7 +118,7 @@ public class SpatialUnionBuilder {
                 continue;
             }
 
-            PolygonMatchSet matchSet = executeUnionCalculation(matchPolygons, inputSR, matchThreshold, inputSet, geometryFactory);
+            PolygonMatchSet matchSet = executeUnionCalculation(geometryFactory, matchPolygons, inputSet, matchThreshold);
             if (matchSet != null) return matchSet;
         }
         return null;
@@ -126,7 +126,7 @@ public class SpatialUnionBuilder {
 
     @Timed(name = "union-calculation-timer", absolute = true)
     @Metered(name = "union-calculation-meter", absolute = true)
-    private @Nullable PolygonMatchSet executeUnionCalculation(Set<Geometry> matchPolygons, SpatialReference inputSR, double matchThreshold, Set<Geometry> inputSet, GeometryFactory geometryFactory) {
+    private PolygonMatchSet executeUnionCalculation(GeometryFactory geometryFactory, Set<Geometry> matchPolygons, Set<Geometry> inputSet, double matchThreshold) {
         final GeometryCollection geometryCollection = new GeometryCollection(inputSet.toArray(new Geometry[inputSet.size()]), geometryFactory);
         logger.debug("Executing union operation for {}", inputSet);
         final Geometry unionInputGeom = geometryCollection.union();
@@ -140,7 +140,7 @@ public class SpatialUnionBuilder {
                 continue;
             }
             double matchStrength;
-            if ((matchStrength = executeUnion(inputSR, matchThreshold, unionInputGeom, new ArrayList<>(matchSet), geometryFactory)) > matchThreshold) {
+            if ((matchStrength = executeUnion(geometryFactory, matchThreshold, unionInputGeom, new ArrayList<>(matchSet))) > matchThreshold) {
                 return new PolygonMatchSet(inputSet, matchSet, matchStrength);
             }
         }
@@ -149,7 +149,7 @@ public class SpatialUnionBuilder {
 
     @Timed(name = "union-strength-timer", absolute = true)
     @Metered(name = "union-strength-meter", absolute = true)
-    private double executeUnion(SpatialReference inputSR, double matchThreshold, Geometry unionInputGeom, List<Geometry> matchGeomList, GeometryFactory geometryFactory) {
+    private double executeUnion(GeometryFactory geometryFactory, double matchThreshold, Geometry unionInputGeom, List<Geometry> matchGeomList) {
         final GeometryCollection geometryCollection = new GeometryCollection(matchGeomList.toArray(new Geometry[matchGeomList.size()]), geometryFactory);
         logger.debug("Executing union operation for {}", matchGeomList);
         this.unionSetSize.update(matchGeomList.size());
@@ -285,8 +285,11 @@ public class SpatialUnionBuilder {
      * Build a {@link Geometry} from a given {@link Object} representing the spatial value
      *
      * @param spatialValue - {@link Optional} {@link Object} representing a spatialValue
+     * @param wktReader    - {@link WKTReader} for marshalling Strings to Geometries
+     * @param wkbReader    - {@link WKBReader} for converting ESRI {@link Polygon} to JTS Geom
      * @return - {@link Polygon}
-     * @throws IllegalArgumentException is the {@link Object} is not a subclass of {@link Polygon} or {@link String}
+     * @throws IllegalArgumentException    if the {@link Object} is not a subclass of {@link Polygon} or {@link String}
+     * @throws TrestleInvalidDataException if JTS is unable to Parse the spatial input
      */
 //    TODO(nrobison): Unify this with the same implementation from the Containment Engine
     private static Geometry parseJTSGeometry(Optional<Object> spatialValue, WKTReader wktReader, WKBReader wkbReader) {

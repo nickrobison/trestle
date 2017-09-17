@@ -57,9 +57,7 @@ public class ContainmentEngineImpl implements ContainmentEngine {
             containmentDir = ContainmentDirection.CONTAINS;
         }
 
-//        final Geometry intersectionGeom = operatorIntersection.execute(polygonA, polygonB, inputSR, new ContainmentProgressTracker("Match intersection"));
         final double intersectionArea = polygonA.intersection(polygonB).getArea();
-//        final double intersectionArea = intersectionGeom.calculateArea2D();
 
         if (intersectionArea / smallerArea >= threshold) {
             // found containment above threshold
@@ -73,8 +71,11 @@ public class ContainmentEngineImpl implements ContainmentEngine {
      * Build a {@link Geometry} from a given {@link Object} representing the spatial value
      *
      * @param spatialValue - {@link Optional} {@link Object} representing a spatialValue
+     * @param wktReader    - {@link WKTReader} for marshalling Strings to Geometries
+     * @param wkbReader    - {@link WKBReader} for converting ESRI {@link Polygon} to JTS Geom
      * @return - {@link Polygon}
-     * @throws IllegalArgumentException is the {@link Object} is not a subclass of {@link Polygon} or {@link String}
+     * @throws IllegalArgumentException    if the {@link Object} is not a subclass of {@link Polygon} or {@link String}
+     * @throws TrestleInvalidDataException if JTS is unable to Parse the spatial input
      */
 //    TODO(nrobison): Unify this with the same implementation from the Equality Engine
     private static Geometry parseJTSGeometry(Optional<Object> spatialValue, WKTReader wktReader, WKBReader wkbReader) {
