@@ -29,6 +29,16 @@ import static java.lang.StrictMath.toIntExact;
 public class GAULMapper extends Mapper<LongWritable, PolygonFeatureWritable, LongWritable, MapperOutput> {
 
     private static final Logger logger = LoggerFactory.getLogger(GAULMapper.class);
+//    private static final Text CODE = new Text("adm2_code");
+//    private static final Text NAME = new Text("adm2_name");
+//    private static final Text STRYEAR = new Text("str2_year");
+//    private static final Text EXPYEAR = new Text("exp2_year");
+//    private static final Text A1CODE = new Text("adm1_code");
+//    private static final Text A1NAME = new Text("adm1_name");
+//    private static final Text STATUS = new Text("status");
+//    private static final Text DISP_AREA = new Text("disp_area");
+//    private static final Text A0CODE = new Text("adm0_code");
+//    private static final Text A0NAME = new Text("adm0_name");
     private static final Text CODE = new Text("ADM2_CODE");
     private static final Text NAME = new Text("ADM2_NAME");
     private static final Text STRYEAR = new Text("STR2_YEAR");

@@ -43,11 +43,13 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
     //    Setup the spatial stuff
     private static final OperatorFactoryLocal instance = OperatorFactoryLocal.getInstance();
+    private static final OperatorUnion operatorUnion = OperatorUnion.local();
     private static final OperatorIntersection operatorIntersection = (OperatorIntersection) instance.getOperator(Operator.Type.Intersection);
     private static final OperatorWithin operatorWithin = (OperatorWithin) instance.getOperator(Operator.Type.Within);
     private static final OperatorTouches operatorTouches = (OperatorTouches) instance.getOperator(Operator.Type.Touches);
     private static final OperatorExportToWkt operatorWKTExport = (OperatorExportToWkt) instance.getOperator(Operator.Type.ExportToWkt);
-    private static final int INPUTSRS = 32610;
+//    private static final int INPUTSRS = 32610;
+private static final int INPUTSRS = 4326;
     private static final SpatialReference inputSR = SpatialReference.create(INPUTSRS);
     private LocalDate configStartDate;
     private LocalDate configEndDate;
@@ -89,7 +91,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 .withPrefix(conf.get("reasoner.ontology.prefix"))
                 .withName(conf.get("reasoner.ontology.name"))
                 .withoutCaching()
-//                .withoutMetrics()
+                .withoutMetrics()
                 .build();
 
 //        Add shutdown hook
@@ -115,7 +117,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //            See if there's a concept that spatially intersects the object
             try {
-                final Optional<Set<String>> conceptIRIs = reasoner.STIntersectConcept(newGAULObject.getPolygonAsWKT(), 0, null, null);
+                final Optional<Set<String>> conceptIRIs = reasoner.STIntersectConcept(newGAULObject.getPolygonAsWKT(), 0, 0.7, null, null);
 
 
 //            If true, get all the concept members
@@ -123,11 +125,28 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                     logger.warn("{}-{}-{} has concept members", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
                     hasConcept = true;
                     conceptIRIs.get().forEach(concept -> {
-                        final Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, concept, null, newGAULObject.getStartDate());
+//                        Here, we want to grab all the concept members
+                        final Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, concept, 0.01, null, newGAULObject.getStartDate());
                         conceptMembers.ifPresent(matchedObjects::addAll);
-//                Now add the concept relations
-//                    TODO(nrobison): This feels bad.
-                        reasoner.addObjectToConcept(concept, newGAULObject, ConceptRelationType.TEMPORAL, 1.0);
+
+
+//                      Now add the concept relations
+//                      Union the existing members, and see if we have any overlap
+                        final List<Geometry> matchedPolygonList = matchedObjects
+                                .stream()
+                                .map(obj -> (Geometry) obj.getShapePolygon())
+                                .collect(Collectors.toList());
+                        final GeometryCursor conceptUnionGeom = operatorUnion.execute(new SimpleGeometryCursor(matchedPolygonList), inputSR, null);
+                        final Polygon unionPolygon = (Polygon) conceptUnionGeom.next();
+                        final double unionArea = unionPolygon.calculateArea2D();
+                        final double inputArea = newGAULObject.getShapePolygon().calculateArea2D();
+                        double greaterArea = inputArea >= unionArea ? inputArea : unionArea;
+
+                        final double intersectionArea = operatorIntersection.execute(newGAULObject.getShapePolygon(), unionPolygon, inputSR, null).calculateArea2D() / greaterArea;
+                        if (intersectionArea > 0.0) {
+                            reasoner.addObjectToConcept(concept, newGAULObject, ConceptRelationType.SPATIAL, intersectionArea);
+                        }
+
                     });
                 } else {
                     logger.warn("{}-{}-{} getting intersected objects", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
@@ -137,7 +156,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //                Go ahead the create the new concept
                     logger.info("{}-{}-{} creating new concept", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-                    reasoner.addObjectToConcept(String.format("%s:concept", newGAULObject.getObjectName()), newGAULObject, ConceptRelationType.TEMPORAL, 1.0);
+                    reasoner.addObjectToConcept(String.format("%s:concept", newGAULObject.getObjectName()), newGAULObject, ConceptRelationType.SPATIAL, 1.0);
                 }
 
                 // test of approx equal union

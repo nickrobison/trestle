@@ -74,8 +74,8 @@ public class GAULIntegratorTests {
             conf.set(name, userProperties.getProperty(name));
         }
 
-//         fileSystem = FileSystem.get(conf);
-        fileSystem = FileSystem.getLocal(conf);
+         fileSystem = FileSystem.get(conf);
+//        fileSystem = FileSystem.getLocal(conf);
         final YarnConfiguration clusterConf = new YarnConfiguration();
         cluster = new MiniDFSCluster.Builder(conf).build();
 
@@ -99,7 +99,7 @@ public class GAULIntegratorTests {
         conf.set("reasoner.ontology.path", ontologyPath);
         conf.set("reasoner.ontology.prefix", ontologyPrefix);
 
-        conf.set("gaulcode.restriction", "6");
+//        conf.set("gaulcode.restriction", "59");
 
 //        Setup reasoner
         reasoner = new TrestleBuilder()
@@ -125,8 +125,9 @@ public class GAULIntegratorTests {
         URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/gates-test/");
         URL OUT_DIR = GAULIntegratorTests.class.getClassLoader().getResource("out/");
 
-//        Path inDir = new Path(IN_DIR.toString());
-        Path inDir = fileSystem.makeQualified(new Path("/Volumes/LaCie/gaul/"));
+        Path inDir = new Path(IN_DIR.toString());
+//        Path inDir = fileSystem.makeQualified(new Path("/Volumes/LaCie/gaul/"));
+//        Path inDir = fileSystem.makeQualified(new Path("/Volumes/Macintosh HD/gaul/"));
         Path outDir = new Path("./target/out/");
 
         fileSystem.delete(outDir, true);
@@ -143,7 +144,7 @@ public class GAULIntegratorTests {
 
         job.setInputFormatClass(PolygonFeatureInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
-        FileInputFormat.setInputDirRecursive(job, true);
+        FileInputFormat.setInputDirRecursive(job, false);
         FileInputFormat.setInputPaths(job, inDir);
         FileOutputFormat.setOutputPath(job, outDir);
         job.waitForCompletion(true);
@@ -161,12 +162,12 @@ public class GAULIntegratorTests {
                 .withoutMetrics()
                 .build();
 
-        final Optional<List<GAULObject>> manhicaMembers = reasoner.getConceptMembers(GAULObject.class, "Manhica:concept", null, null);
+        final Optional<List<GAULObject>> manhicaMembers = reasoner.getConceptMembers(GAULObject.class, "Manhica:concept", 0.01, null, null);
         assertAll(() -> assertTrue(manhicaMembers.isPresent(), "Should have Manhica concept members"),
                 () -> assertEquals(3, manhicaMembers.get().size(), "Wrong number of members for Manhica"));
 
 //        Try for Cidade
-        final Optional<List<GAULObject>> cidadeMembers = reasoner.getConceptMembers(GAULObject.class, "Cidade_de_Maputo:concept", null, null);
+        final Optional<List<GAULObject>> cidadeMembers = reasoner.getConceptMembers(GAULObject.class, "Cidade_de_Maputo:concept", 0.01, null, null);
         assertAll(() -> assertTrue(manhicaMembers.isPresent(), "Should have Cidade concept members"),
                 () -> assertEquals(7, cidadeMembers.get().size(), "Wrong number of members for Cidade"));
 

@@ -1635,7 +1635,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public Optional<Set<String>> STIntersectConcept(String wkt, double buffer, Temporal validAt, @Nullable Temporal dbAt) {
+    public Optional<Set<String>> STIntersectConcept(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt) {
         final String queryString;
         final OffsetDateTime atTemporal;
         final OffsetDateTime dbTemporal;
@@ -1651,30 +1651,35 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
 
         try {
-            queryString = qb.buildTemporalSpatialConceptIntersection(wkt, buffer, atTemporal, dbTemporal);
+            queryString = qb.buildTemporalSpatialConceptIntersection(wkt, buffer, strength, atTemporal, dbTemporal);
         } catch (UnsupportedFeatureException e) {
             logger.error("Database {} does not support spatial queries", this.spatialDalect);
             return Optional.empty();
         }
 
-
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(queryString);
-        final Set<String> intersectedConceptURIs = resultSet.getResults()
-                .stream()
-                .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
-                .collect(Collectors.toSet());
-        this.ontology.returnAndCommitTransaction(trestleTransaction);
-
-        return Optional.of(intersectedConceptURIs);
+        try {
+            final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(queryString);
+            final Set<String> intersectedConceptURIs = resultSet.getResults()
+                    .stream()
+                    .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
+                    .collect(Collectors.toSet());
+            return Optional.of(intersectedConceptURIs);
+        } catch (RuntimeException e) {
+            logger.error("Problem intersecting spatial concept", e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+            return Optional.empty();
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+        }
     }
 
     @Override
-    public <T> Optional<List<T>> getConceptMembers(Class<T> clazz, String conceptID, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection) {
+    public <T> Optional<List<T>> getConceptMembers(Class<T> clazz, String conceptID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection) {
 
 
         final OWLClass datasetClass = trestleParser.classParser.getObjectClass(clazz);
-        final String retrievalStatement = qb.buildConceptObjectRetrieval(datasetClass, parseStringToIRI(REASONER_PREFIX, conceptID));
+        final String retrievalStatement = qb.buildConceptObjectRetrieval(datasetClass, parseStringToIRI(REASONER_PREFIX, conceptID), strength);
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         Set<String> individualIRIs = this.ontology.executeSPARQLResults(retrievalStatement)
