@@ -99,11 +99,13 @@ public class GAULIntegratorTests {
         conf.set("reasoner.ontology.path", ontologyPath);
         conf.set("reasoner.ontology.prefix", ontologyPrefix);
 
+        conf.set("gaulcode.restriction", "6");
+
 //        Setup reasoner
         reasoner = new TrestleBuilder()
                 .withDBConnection(connectionString, userName, password)
                 .withInputClasses(GAULObject.class)
-//                .withOntology(IRI.create(ontologyPath))
+                .withOntology(IRI.create(ontologyPath))
                 .withPrefix(ontologyPrefix)
                 .initialize()
                 .withName(ontologyName)
@@ -174,8 +176,8 @@ public class GAULIntegratorTests {
     public static void close() throws IOException {
         cluster.shutdown();
 
-        File outputFile = new File("/Users/nrobison/Desktop/hadoop-new.owl");
-        reasoner.writeOntology(outputFile.toURI(), true);
+//        File outputFile = new File("/Users/nrobison/Desktop/hadoop-new.owl");
+//        reasoner.writeOntology(outputFile.toURI(), true);
         reasoner.shutdown(false);
     }
 }

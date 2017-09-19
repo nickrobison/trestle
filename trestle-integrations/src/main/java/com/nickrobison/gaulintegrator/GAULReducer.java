@@ -102,7 +102,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
         final GAULObject newGAULObject = this.processInputSet(key, values, context);
 //        If we have an object returned from the above function, we need to look for any other overlapping objects
         if (newGAULObject != null) {
-            logger.info("Processing {}-{}-{}", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
+            logger.warn("Processing {}-{}-{} for union and intersections", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
 //            Manually run the inferencer, for now
             final Instant infStart = Instant.now();
             reasoner.getUnderlyingOntology().runInference();
@@ -120,7 +120,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //            If true, get all the concept members
                 if (!conceptIRIs.orElse(new HashSet<>()).isEmpty()) {
-                    logger.info("{}-{}-{} has concept members", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
+                    logger.warn("{}-{}-{} has concept members", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
                     hasConcept = true;
                     conceptIRIs.get().forEach(concept -> {
                         final Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, concept, null, newGAULObject.getStartDate());
@@ -130,7 +130,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                         reasoner.addObjectToConcept(concept, newGAULObject, ConceptRelationType.TEMPORAL, 1.0);
                     });
                 } else {
-                    logger.info("{}-{}-{} getting intersected objects", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
+                    logger.warn("{}-{}-{} getting intersected objects", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
 //            If no, find objects to intersect
                     reasoner.spatialIntersectObject(newGAULObject, 0)
                             .ifPresent(matchedObjects::addAll);
@@ -145,10 +145,10 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                     List<GAULObject> allGAUL = new ArrayList<>(matchedObjects);
                     allGAUL.add(newGAULObject);
 
-                    logger.info("{}-{}-{} calculating equality", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
+                    logger.warn("{}-{}-{} calculating equality", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
                     final Instant start = Instant.now();
                     final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(allGAUL, inputSR, 0.9);
-                    logger.info("{}-{}-{} calculating equality took {} ms", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate(), Duration.between(start, Instant.now()).toMillis());
+                    logger.warn("{}-{}-{} calculating equality took {} ms", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate(), Duration.between(start, Instant.now()).toMillis());
                     if (matchOptional.isPresent()) {
                         // do something here
                         final UnionEqualityResult<GAULObject> match = matchOptional.get();
@@ -177,7 +177,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //            Now, we insert the new itself record into the database
                 try {
-                    logger.info("{}-{}-{} inserting into repository", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
+                    logger.warn("{}-{}-{} inserting into repository", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
                     reasoner.writeTrestleObject(newGAULObject);
                 } catch (TrestleClassException e) {
                     logger.error("Cannot write {}", newGAULObject.getObjectName(), e);
@@ -187,12 +187,13 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
             } catch (RuntimeException e) {
                 logger.error("Unable to process object {}-{}-{}", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate(), e);
             }
-            logger.info("{}-{}-{} finished", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
+            logger.warn("{}-{}-{} finished", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
         }
         context.write(key, new Text("Records: " + 1));
     }
 
     private void shutdownReducer() {
+        logger.info("Shutting down, trying to export metrics data");
         reasoner.getMetricsEngine().exportData(metricsFile);
         reasoner.shutdown(false);
 
@@ -207,9 +208,8 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
         }
     }
 
-
     private double writeSTRelations(GAULObject newGAULObject, GAULObject matchedObject, double objectWeight) {
-        logger.info("{}-{}-{} writing relation for {}-{}-{}",
+        logger.warn("{}-{}-{} writing relation for {}-{}-{}",
                 newGAULObject.getGaulCode(),
                 newGAULObject.getObjectName(),
                 newGAULObject.getStartDate(),
@@ -313,19 +313,22 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 //        Do my records cover the entirety of the input space?
         final int maxDate = inputRecords
                 .stream()
-                .mapToInt(MapperOutput::getDatasetYear)
+//                .mapToInt(MapperOutput::getDatasetYear)
+                .map(MapperOutput::getExpirationDate)
+                .mapToInt(LocalDate::getYear)
                 .max()
                 .orElse(0);
 
         final int minDate = inputRecords
                 .stream()
-                .mapToInt(MapperOutput::getDatasetYear)
+//                .mapToInt(MapperOutput::getDatasetYear)
+                .map(MapperOutput::getStartDate)
+                .mapToInt(LocalDate::getYear)
                 .min()
                 .orElse(9999);
 
 //        If we have all the available records, than we can assume that the record is contiguous and just smash it into the database
         if (minDate <= configStartDate.getYear() && maxDate >= configEndDate.getYear()) {
-            logger.info("Object ID: {} has all the records", key);
             this.writeFullRecordSet(inputRecords);
             return null;
         }

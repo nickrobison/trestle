@@ -51,7 +51,7 @@ public class SpatialUnionBuilder {
     }
 
     @SuppressWarnings({"ConstantConditions", "squid:S3655"})
-    @Timed(name = "union-equality-timer")
+    @Timed(name = "union-equality-timer", absolute = true)
     public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> getApproximateEqualUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
 //        Setup the JTS components
         final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());

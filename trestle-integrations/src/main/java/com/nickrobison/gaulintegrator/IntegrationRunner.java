@@ -60,8 +60,9 @@ public class IntegrationRunner extends Configured implements Tool {
                         conf.get("reasoner.db.password"))
                 .withInputClasses(GAULObject.class)
                 .withOntology(IRI.create(conf.get("reasoner.ontology.location")))
-//                .initialize()
-                .withName("gaul_hadoop")
+                .withPrefix(conf.get("reasoner.ontology.prefix"))
+                .withName(conf.get("reasoner.ontology.name"))
+                .initialize()
                 .withoutCaching()
                 .withoutMetrics()
                 .build();
@@ -75,7 +76,7 @@ public class IntegrationRunner extends Configured implements Tool {
 
         job.setInputFormatClass(PolygonFeatureInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
-        FileInputFormat.setInputDirRecursive(job, false);
+        FileInputFormat.setInputDirRecursive(job, true);
         FileInputFormat.setInputPaths(job, new Path(args[0]));
         final Path outputDir = new Path(args[1]);
 

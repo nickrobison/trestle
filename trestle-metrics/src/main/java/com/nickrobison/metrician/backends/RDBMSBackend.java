@@ -224,7 +224,7 @@ public abstract class RDBMSBackend implements IMetricianBackend {
                 logger.trace("Counter {}: {}", key, value);
                 Long metricKey = metricMap.get(key);
                 if (metricKey == null) {
-                    logger.warn("Got null key for metric {}, registering", key);
+                    logger.debug("Got null key for metric {}, registering", key);
                     metricKey = registerMetric(key);
 
                 }
@@ -235,7 +235,7 @@ public abstract class RDBMSBackend implements IMetricianBackend {
                 logger.trace("Gauge {}: {}", key, value);
                 Long metricKey = metricMap.get(key);
                 if (metricKey == null) {
-                    logger.warn("Got null key for metric {}, registering", key);
+                    logger.debug("Got null key for metric {}, registering", key);
                     metricKey = registerMetric(key);
                 }
                 events.add(new MetricianMetricValue<>(MetricianMetricValue.ValueType.GAUGE, metricKey, timestamp, value));
