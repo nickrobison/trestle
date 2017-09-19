@@ -48,8 +48,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
     private static final OperatorWithin operatorWithin = (OperatorWithin) instance.getOperator(Operator.Type.Within);
     private static final OperatorTouches operatorTouches = (OperatorTouches) instance.getOperator(Operator.Type.Touches);
     private static final OperatorExportToWkt operatorWKTExport = (OperatorExportToWkt) instance.getOperator(Operator.Type.ExportToWkt);
-//    private static final int INPUTSRS = 32610;
-private static final int INPUTSRS = 4326;
+    private static final int INPUTSRS = 4326;
     private static final SpatialReference inputSR = SpatialReference.create(INPUTSRS);
     private LocalDate configStartDate;
     private LocalDate configEndDate;
@@ -113,7 +112,6 @@ private static final int INPUTSRS = 4326;
 
 //            List of objects to compare to given object
             final List<GAULObject> matchedObjects = new ArrayList<>();
-            boolean hasConcept = false;
 
 //            See if there's a concept that spatially intersects the object
             try {
@@ -123,31 +121,7 @@ private static final int INPUTSRS = 4326;
 //            If true, get all the concept members
                 if (!conceptIRIs.orElse(new HashSet<>()).isEmpty()) {
                     logger.warn("{}-{}-{} has concept members", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-                    hasConcept = true;
-                    conceptIRIs.get().forEach(concept -> {
-//                        Here, we want to grab all the concept members
-                        final Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, concept, 0.01, null, newGAULObject.getStartDate());
-                        conceptMembers.ifPresent(matchedObjects::addAll);
-
-
-//                      Now add the concept relations
-//                      Union the existing members, and see if we have any overlap
-                        final List<Geometry> matchedPolygonList = matchedObjects
-                                .stream()
-                                .map(obj -> (Geometry) obj.getShapePolygon())
-                                .collect(Collectors.toList());
-                        final GeometryCursor conceptUnionGeom = operatorUnion.execute(new SimpleGeometryCursor(matchedPolygonList), inputSR, null);
-                        final Polygon unionPolygon = (Polygon) conceptUnionGeom.next();
-                        final double unionArea = unionPolygon.calculateArea2D();
-                        final double inputArea = newGAULObject.getShapePolygon().calculateArea2D();
-                        double greaterArea = inputArea >= unionArea ? inputArea : unionArea;
-
-                        final double intersectionArea = operatorIntersection.execute(newGAULObject.getShapePolygon(), unionPolygon, inputSR, null).calculateArea2D() / greaterArea;
-                        if (intersectionArea > 0.0) {
-                            reasoner.addObjectToConcept(concept, newGAULObject, ConceptRelationType.SPATIAL, intersectionArea);
-                        }
-
-                    });
+                    conceptIRIs.get().forEach(concept -> processConceptMembers(newGAULObject, matchedObjects, concept));
                 } else {
                     logger.warn("{}-{}-{} getting intersected objects", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
 //            If no, find objects to intersect
@@ -161,19 +135,7 @@ private static final int INPUTSRS = 4326;
 
                 // test of approx equal union
                 if (matchedObjects.size() > 1) {
-                    List<GAULObject> allGAUL = new ArrayList<>(matchedObjects);
-                    allGAUL.add(newGAULObject);
-
-                    logger.warn("{}-{}-{} calculating equality", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-                    final Instant start = Instant.now();
-                    final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(allGAUL, inputSR, 0.9);
-                    logger.warn("{}-{}-{} calculating equality took {} ms", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate(), Duration.between(start, Instant.now()).toMillis());
-                    if (matchOptional.isPresent()) {
-                        // do something here
-                        final UnionEqualityResult<GAULObject> match = matchOptional.get();
-                        logger.debug("found approximate equality between " + match.getUnionObject() + " and " + match.getUnionOf());
-                        this.reasoner.addTrestleObjectSplitMerge(match.getType(), match.getUnionObject(), new ArrayList<>(match.getUnionOf()), match.getStrength());
-                    }
+                    processEquality(newGAULObject, matchedObjects);
                 }
 
 //            If there are no matching objects in the database, just insert the new record and move on.
@@ -209,6 +171,55 @@ private static final int INPUTSRS = 4326;
             logger.warn("{}-{}-{} finished", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
         }
         context.write(key, new Text("Records: " + 1));
+    }
+
+    private void processEquality(GAULObject newGAULObject, List<GAULObject> matchedObjects) {
+        matchedObjects.add(newGAULObject);
+
+        logger.warn("{}-{}-{} calculating equality", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
+        final Instant start = Instant.now();
+        final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(matchedObjects, inputSR, 0.9);
+        logger.warn("{}-{}-{} calculating equality took {} ms", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate(), Duration.between(start, Instant.now()).toMillis());
+        if (matchOptional.isPresent()) {
+            // do something here
+            final UnionEqualityResult<GAULObject> match = matchOptional.get();
+            logger.warn("found approximate equality between " + match.getUnionObject() + " and " + match.getUnionOf());
+            this.reasoner.addTrestleObjectSplitMerge(match.getType(), match.getUnionObject(), new ArrayList<>(match.getUnionOf()), match.getStrength());
+        }
+    }
+
+    /**
+     * Retrieve all the conceptIRI members and determine if the input object should be a member of this concept
+     * If so, add all the members to the matchCollection to look for a potential equality
+     *
+     * @param gaulObject      - input object to parse
+     * @param matchCollection - Match collection to add concept members to, if we should
+     * @param conceptIRI      - String IRI of concept to retrieve membership of
+     */
+    private void processConceptMembers(GAULObject gaulObject, List<GAULObject> matchCollection, String conceptIRI) {
+        //                        Here, we want to grab all the conceptIRI members
+        final Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, conceptIRI, 0.01, null, gaulObject.getStartDate());
+
+//                        If we have concept members, process them to see if we need to check them for membership
+        if (conceptMembers.isPresent()) {
+//                      Now add the concept relations
+//                      Union the existing members, and see if we have any overlap
+            final List<Geometry> matchedPolygonList = conceptMembers.get()
+                    .stream()
+                    .map(obj -> (Geometry) obj.getShapePolygon())
+                    .collect(Collectors.toList());
+            final GeometryCursor conceptUnionGeom = operatorUnion.execute(new SimpleGeometryCursor(matchedPolygonList), inputSR, null);
+            final Polygon unionPolygon = (Polygon) conceptUnionGeom.next();
+            final double unionArea = unionPolygon.calculateArea2D();
+            final double inputArea = gaulObject.getShapePolygon().calculateArea2D();
+            double greaterArea = inputArea >= unionArea ? inputArea : unionArea;
+
+            final double intersectionArea = operatorIntersection.execute(gaulObject.getShapePolygon(), unionPolygon, inputSR, null).calculateArea2D() / greaterArea;
+            if (intersectionArea > 0.0) {
+                reasoner.addObjectToConcept(conceptIRI, gaulObject, ConceptRelationType.SPATIAL, intersectionArea);
+                matchCollection.addAll(conceptMembers.get());
+            }
+        }
     }
 
     private void shutdownReducer() {
@@ -320,6 +331,7 @@ private static final int INPUTSRS = 4326;
      * @param context - {@link org.apache.hadoop.mapreduce.Reducer.Context} Hadoop context
      * @return - {@link GAULObject}, null if all the input set is present.
      */
+    @SuppressWarnings({"squid:S1172"}) // We can't break the method signature, so we need to suppress this warning
     private GAULObject processInputSet(LongWritable key, Iterable<MapperOutput> values, Context context) {
         final Configuration configuration = context.getConfiguration();
 //        Copy from the iterator into a simple array list, we can't run through the iterator more than once

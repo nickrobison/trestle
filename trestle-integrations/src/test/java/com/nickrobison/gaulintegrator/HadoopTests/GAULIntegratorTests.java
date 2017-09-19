@@ -74,7 +74,7 @@ public class GAULIntegratorTests {
             conf.set(name, userProperties.getProperty(name));
         }
 
-         fileSystem = FileSystem.get(conf);
+        fileSystem = FileSystem.get(conf);
 //        fileSystem = FileSystem.getLocal(conf);
         final YarnConfiguration clusterConf = new YarnConfiguration();
         cluster = new MiniDFSCluster.Builder(conf).build();
@@ -122,7 +122,7 @@ public class GAULIntegratorTests {
     @Test
     public void testReducer() throws IOException, ClassNotFoundException, InterruptedException, SQLException, URISyntaxException {
 
-        URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/gates-test/");
+        URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/sudan/");
         URL OUT_DIR = GAULIntegratorTests.class.getClassLoader().getResource("out/");
 
         Path inDir = new Path(IN_DIR.toString());
@@ -176,9 +176,6 @@ public class GAULIntegratorTests {
     @AfterAll
     public static void close() throws IOException {
         cluster.shutdown();
-
-//        File outputFile = new File("/Users/nrobison/Desktop/hadoop-new.owl");
-//        reasoner.writeOntology(outputFile.toURI(), true);
         reasoner.shutdown(false);
     }
 }
