@@ -98,6 +98,7 @@ public class GAULIntegratorTests {
 
         conf.set("reasoner.ontology.path", ontologyPath);
         conf.set("reasoner.ontology.prefix", ontologyPrefix);
+        conf.set("reasoner.ontology.location", "file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl");
 
 //        conf.set("gaulcode.restriction", "59");
 
@@ -138,6 +139,7 @@ public class GAULIntegratorTests {
         job.setMapOutputKeyClass(LongWritable.class);
         job.setMapOutputValueClass(MapperOutput.class);
         job.setReducerClass(GAULReducer.class);
+        job.setSortComparatorClass(LongWritable.Comparator.class);
 
 //        Add ontology to cache
         job.addCacheFile(new URI(String.format("%s", ontologyPath)));

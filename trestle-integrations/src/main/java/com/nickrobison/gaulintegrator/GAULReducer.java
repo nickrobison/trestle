@@ -1,6 +1,8 @@
 package com.nickrobison.gaulintegrator;
 
 import com.esri.core.geometry.*;
+import com.esri.core.geometry.Geometry;
+import com.esri.core.geometry.Polygon;
 import com.nickrobison.trestle.common.TemporalUtils;
 import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.datasets.GAULObject;
@@ -12,6 +14,10 @@ import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
+import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.io.ParseException;
+import com.vividsolutions.jts.io.WKBReader;
+import com.vividsolutions.jts.io.WKBWriter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -23,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.time.Instant;
@@ -47,9 +54,18 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
     private static final OperatorIntersection operatorIntersection = (OperatorIntersection) instance.getOperator(Operator.Type.Intersection);
     private static final OperatorWithin operatorWithin = (OperatorWithin) instance.getOperator(Operator.Type.Within);
     private static final OperatorTouches operatorTouches = (OperatorTouches) instance.getOperator(Operator.Type.Touches);
+    private static final OperatorBuffer operatorBuffer = OperatorBuffer.local();
+    private static final OperatorBoundary operatorBoundary = OperatorBoundary.local();
     private static final OperatorExportToWkt operatorWKTExport = (OperatorExportToWkt) instance.getOperator(Operator.Type.ExportToWkt);
+    private static final OperatorExportToWkb operatorWKBExport = OperatorExportToWkb.local();
+    private static final OperatorImportFromWkb operatorWKBImport = OperatorImportFromWkb.local();
     private static final int INPUTSRS = 4326;
     private static final SpatialReference inputSR = SpatialReference.create(INPUTSRS);
+
+    private static final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
+    private static final WKBReader wkbReader = new WKBReader(geometryFactory);
+    private static final WKBWriter wkbWriter = new WKBWriter();
+
     private LocalDate configStartDate;
     private LocalDate configEndDate;
     private TrestleReasoner reasoner;
@@ -100,9 +116,11 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
     @Override
     public void reduce(LongWritable key, Iterable<MapperOutput> values, Context context) throws IOException, InterruptedException {
 
-        final GAULObject newGAULObject = this.processInputSet(key, values, context);
+        final Optional<Queue<MapperOutput>> inputRecordsOptional = this.processInputSet(key, values, context);
 //        If we have an object returned from the above function, we need to look for any other overlapping objects
-        if (newGAULObject != null) {
+        if (inputRecordsOptional.isPresent()) {
+            final Queue<MapperOutput> inputRecords = inputRecordsOptional.get();
+            final GAULObject newGAULObject = inputRecords.poll().toObject();
             logger.warn("Processing {}-{}-{} for union and intersections", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
 //            Manually run the inferencer, for now
             final Instant infStart = Instant.now();
@@ -138,6 +156,13 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                     processEquality(newGAULObject, matchedObjects);
                 }
 
+                if (matchedObjects.isEmpty()) {
+//                Go ahead the create the new concept
+                    logger.info("{}-{}-{} creating new concept", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
+                    reasoner.addObjectToConcept(String.format("%s:concept", newGAULObject.getObjectName()), newGAULObject, ConceptRelationType.SPATIAL, 1.0);//                If we don't have any matches, create a new concept
+                }
+
+
 //            If there are no matching objects in the database, just insert the new record and move on.
                 if (!matchedObjects.isEmpty()) {
 //                Map of objects and their respective weights
@@ -160,6 +185,8 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 try {
                     logger.warn("{}-{}-{} inserting into repository", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
                     reasoner.writeTrestleObject(newGAULObject);
+//                    Write the remaining records
+                    this.writeRecordSet(inputRecords);
                 } catch (TrestleClassException e) {
                     logger.error("Cannot write {}", newGAULObject.getObjectName(), e);
                 } catch (MissingOntologyEntity missingOntologyEntity) {
@@ -198,27 +225,58 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
      */
     private void processConceptMembers(GAULObject gaulObject, List<GAULObject> matchCollection, String conceptIRI) {
         //                        Here, we want to grab all the conceptIRI members
-        final Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, conceptIRI, 0.01, null, gaulObject.getStartDate());
+        final Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, conceptIRI, 0.0, null, gaulObject.getStartDate());
 
 //                        If we have concept members, process them to see if we need to check them for membership
         if (conceptMembers.isPresent()) {
 //                      Now add the concept relations
 //                      Union the existing members, and see if we have any overlap
-            final List<Geometry> matchedPolygonList = conceptMembers.get()
-                    .stream()
-                    .map(obj -> (Geometry) obj.getShapePolygon())
-                    .collect(Collectors.toList());
-            final GeometryCursor conceptUnionGeom = operatorUnion.execute(new SimpleGeometryCursor(matchedPolygonList), inputSR, null);
-            final Polygon unionPolygon = (Polygon) conceptUnionGeom.next();
-            final double unionArea = unionPolygon.calculateArea2D();
+//            We need to convert to JTS, in order to properly handle the Union.
+//                Get the exterior rings, of the input objects, in order to handle any holes
+            final List<com.vividsolutions.jts.geom.Polygon> exteriorRings = getExteriorRings(gaulObject);
+            final com.vividsolutions.jts.geom.Geometry inputGeometry = new GeometryCollection(exteriorRings.toArray(new com.vividsolutions.jts.geom.Geometry[exteriorRings.size()]), geometryFactory).union();
+
+//            Create a new Geometry Collection, and union it
+            List<com.vividsolutions.jts.geom.Polygon> exteriorPolygonsToUnion = new ArrayList<>();
+            for (GAULObject object : conceptMembers.get()) {
+                getExteriorRings(exteriorPolygonsToUnion, object);
+            }
+            final com.vividsolutions.jts.geom.Geometry conceptUnionGeom = new GeometryCollection(exteriorPolygonsToUnion.toArray(new com.vividsolutions.jts.geom.Geometry[exteriorPolygonsToUnion.size()]), geometryFactory)
+                    .union();
+
+            final double unionArea = conceptUnionGeom.getArea();
             final double inputArea = gaulObject.getShapePolygon().calculateArea2D();
             double greaterArea = inputArea >= unionArea ? inputArea : unionArea;
 
-            final double intersectionArea = operatorIntersection.execute(gaulObject.getShapePolygon(), unionPolygon, inputSR, null).calculateArea2D() / greaterArea;
+//            final double intersectionArea = operatorIntersection.execute(gaulObject.getShapePolygon(), exteriorGeom, inputSR, null).calculateArea2D() / greaterArea;
+            final double intersectionArea = conceptUnionGeom.intersection(inputGeometry).getArea() / greaterArea;
             if (intersectionArea > 0.0) {
                 reasoner.addObjectToConcept(conceptIRI, gaulObject, ConceptRelationType.SPATIAL, intersectionArea);
                 matchCollection.addAll(conceptMembers.get());
             }
+        }
+    }
+
+    private List<com.vividsolutions.jts.geom.Polygon> getExteriorRings(GAULObject object) {
+        final List<com.vividsolutions.jts.geom.Polygon> polygons = new ArrayList<>();
+        getExteriorRings(polygons, object);
+        return polygons;
+    }
+
+    private void getExteriorRings(List<com.vividsolutions.jts.geom.Polygon> exteriorPolygonsToUnion, GAULObject object) {
+        final ByteBuffer polygonBuffer = operatorWKBExport.execute(0, object.getShapePolygon(), null);
+        try {
+            final com.vividsolutions.jts.geom.Geometry geometry = wkbReader.read(polygonBuffer.array());
+            for (int i = 0; i < geometry.getNumGeometries(); i++) {
+                final com.vividsolutions.jts.geom.Polygon polygon = (com.vividsolutions.jts.geom.Polygon) geometry.getGeometryN(i);
+                exteriorPolygonsToUnion.add(geometryFactory
+                        .createPolygon(polygon
+                                .getExteriorRing()
+                                .getCoordinates()));
+            }
+        } catch (Exception e) {
+            logger.error("Exception, just die", e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -247,7 +305,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 matchedObject.getObjectName(),
                 matchedObject.getStartDate());
         // test of approx equality
-        if (this.reasoner.getEqualityEngine().isApproximatelyEqual(newGAULObject, matchedObject, inputSR, 0.9)) {
+        if (this.reasoner.getEqualityEngine().isApproximatelyEqual(newGAULObject, matchedObject, inputSR, 0.9) && !newGAULObject.equals(matchedObject)) {
             // do something here
             logger.info("found approximate equality between GAULObjects {} and {}", newGAULObject.getID(), matchedObject.getID());
 //            Write a spatial equals
@@ -332,7 +390,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
      * @return - {@link GAULObject}, null if all the input set is present.
      */
     @SuppressWarnings({"squid:S1172"}) // We can't break the method signature, so we need to suppress this warning
-    private GAULObject processInputSet(LongWritable key, Iterable<MapperOutput> values, Context context) {
+    private Optional<Queue<MapperOutput>> processInputSet(LongWritable key, Iterable<MapperOutput> values, Context context) {
         final Configuration configuration = context.getConfiguration();
 //        Copy from the iterator into a simple array list, we can't run through the iterator more than once
 //        This is a bit of a disaster, but since the set is relatively bounded, it should be ok.
@@ -360,10 +418,10 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //        If we have all the available records, than we can assume that the record is contiguous and just smash it into the database
         if (minDate <= configStartDate.getYear() && maxDate >= configEndDate.getYear()) {
-            this.writeFullRecordSet(inputRecords);
-            return null;
+            this.writeRecordSet(inputRecords);
+            return Optional.empty();
         }
-        return inputRecords.poll().toObject();
+        return Optional.of(inputRecords);
     }
 
 
@@ -373,28 +431,31 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
      * @param records - {@link List} of {@link MapperOutput}
      */
 
-    private void writeFullRecordSet(Collection<MapperOutput> records) {
+    private void writeRecordSet(Collection<MapperOutput> records) {
         final ArrayDeque<MapperOutput> sortedRecords = records
                 .stream()
                 .sorted()
                 .collect(Collectors.toCollection(ArrayDeque::new));
 
-        MapperOutput latestRecord = sortedRecords.pop();
-        try {
-            final LocalDate recordStart = LocalDate.of(latestRecord.getDatasetYear(), 1, 1);
-            reasoner.writeTrestleObject(latestRecord.toObject(), recordStart, latestRecord.getExpirationDate());
-        } catch (MissingOntologyEntity | UnregisteredClassException e) {
-            logger.error("Unable to write objects", e);
-        }
+        if (!sortedRecords.isEmpty()) {
 
-        for (MapperOutput record : sortedRecords) {
-            if (record.hashCode() != latestRecord.hashCode()) {
-                latestRecord = record;
-                final LocalDate recordStart = LocalDate.of(record.getDatasetYear(), 1, 1);
-                try {
-                    reasoner.writeTrestleObject(record.toObject(), recordStart, record.getExpirationDate());
-                } catch (MissingOntologyEntity | UnregisteredClassException | TrestleInvalidDataException e) {
-                    logger.error("Unable to write object {}-{}-{}", record.getRegionID(), record.getRegionName(), record.getStartDate(), e);
+            MapperOutput latestRecord = sortedRecords.pop();
+            try {
+                final LocalDate recordStart = LocalDate.of(latestRecord.getDatasetYear(), 1, 1);
+                reasoner.writeTrestleObject(latestRecord.toObject(), recordStart, latestRecord.getExpirationDate());
+            } catch (MissingOntologyEntity | UnregisteredClassException e) {
+                logger.error("Unable to write objects", e);
+            }
+
+            for (MapperOutput record : sortedRecords) {
+                if (record.hashCode() != latestRecord.hashCode()) {
+                    latestRecord = record;
+                    final LocalDate recordStart = LocalDate.of(record.getDatasetYear(), 1, 1);
+                    try {
+                        reasoner.writeTrestleObject(record.toObject(), recordStart, record.getExpirationDate());
+                    } catch (MissingOntologyEntity | UnregisteredClassException | TrestleInvalidDataException e) {
+                        logger.error("Unable to write object {}-{}-{}", record.getRegionID(), record.getRegionName(), record.getStartDate(), e);
+                    }
                 }
             }
         }
