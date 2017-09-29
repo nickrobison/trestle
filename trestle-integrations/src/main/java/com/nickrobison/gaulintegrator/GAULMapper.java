@@ -62,9 +62,9 @@ public class GAULMapper extends Mapper<LongWritable, PolygonFeatureWritable, Lon
             GAUL_IDS.add(Long.parseLong(gaulCode));
         } else {
 //            Subset of a few countries, those explicitly mentioned in the World Bank paper
-//            GAUL_IDS.addAll(Arrays.asList(6L, 29L, 49L, 59L, 68L, 74L, 170L, 182L, 253L));
+            GAUL_IDS.addAll(Arrays.asList(6L, 29L, 49L, 59L, 68L, 74L, 170L, 182L, 253L));
 //          List of ADM0 Codes for Africa Bounding Box POLYGON((-26.4 38.1, 61.9 38.1, 61.9 -37.2, -26.4 -37.2, -26.4 38.1))
-            GAUL_IDS.addAll(Arrays.asList(1L, 4L, 6L, 8L, 21L, 25L, 29L, 35L, 42L, 43L, 45L, 47L, 49L, 50L, 58L, 59L, 64L, 66L, 68L, 70L, 74L, 76L, 77L, 79L, 80L, 89L, 90L, 91L, 94L, 95L, 96L, 97L, 102L, 105L, 106L, 117L, 118L, 121L, 122L, 130L, 131L, 133L, 137L, 141L, 142L, 144L, 145L, 150L, 151L, 152L, 155L, 156L, 159L, 160L, 161L, 169L, 170L, 172L, 181L, 182L, 187L, 188L, 199L, 201L, 205L, 206L, 207L, 214L, 215L, 217L, 220L, 221L, 226L, 227L, 229L, 235L, 238L, 243L, 247L, 248L, 249L, 250L, 253L, 255L, 257L, 267L, 268L, 269L, 270L, 271L, 40760L, 40762L, 40765L, 61013L, 74578L));
+//            GAUL_IDS.addAll(Arrays.asList(1L, 4L, 6L, 8L, 21L, 25L, 29L, 35L, 42L, 43L, 45L, 47L, 49L, 50L, 58L, 59L, 64L, 66L, 68L, 70L, 74L, 76L, 77L, 79L, 80L, 89L, 90L, 91L, 94L, 95L, 96L, 97L, 102L, 105L, 106L, 117L, 118L, 121L, 122L, 130L, 131L, 133L, 137L, 141L, 142L, 144L, 145L, 150L, 151L, 152L, 155L, 156L, 159L, 160L, 161L, 169L, 170L, 172L, 181L, 182L, 187L, 188L, 199L, 201L, 205L, 206L, 207L, 214L, 215L, 217L, 220L, 221L, 226L, 227L, 229L, 235L, 238L, 243L, 247L, 248L, 249L, 250L, 253L, 255L, 257L, 267L, 268L, 269L, 270L, 271L, 40760L, 40762L, 40765L, 61013L, 74578L));
         }
     }
 

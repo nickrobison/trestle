@@ -196,8 +196,8 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 logger.error("Unable to process object {}-{}-{}", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate(), e);
             }
             logger.warn("{}-{}-{} finished", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
+            context.write(key, new Text(String.format("%s:%s:%s:%s", newGAULObject.getAdm0Name(), newGAULObject.getObjectID(), newGAULObject.getStartDate(), newGAULObject.getEndDate())));
         }
-        context.write(key, new Text("Records: " + 1));
     }
 
     private void processEquality(GAULObject newGAULObject, List<GAULObject> matchedObjects) {
