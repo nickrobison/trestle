@@ -11,7 +11,8 @@ import net.bytebuddy.matcher.ElementMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationTargetException;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 
 import static com.nickrobison.metrician.instrumentation.MetricianInventory.*;
@@ -56,33 +57,49 @@ public class GaugeTransformer extends AbstractMetricianTransformer {
         Class<?> clazz = object.getClass();
         while (clazz != Object.class && clazz != null) {
             for (final Method method : clazz.getDeclaredMethods()) {
-                if (!gauges.containsKey(method.getName())) {
-                    final com.codahale.metrics.annotation.Gauge annotation = method.getAnnotation(com.codahale.metrics.annotation.Gauge.class);
-                    if (annotation != null && isNoParamsAndNonVoid(method)) {
-
-                        AnnotatedMetric<Gauge> gaugeAnnotatedMetric = metricAnnotation(method, com.codahale.metrics.annotation.Gauge.class, (name, absolute) -> {
-                            final String finalName = name.isEmpty() ? method.getName() : strategy.resolveMetricName(name);
-                            final String registerName = absolute ? finalName : MetricRegistry.name(method.getDeclaringClass(), finalName);
-                            try {
-                                final ForwardingGauge gauge = registry.register(registerName, new ForwardingGauge(method, object));
-                                return gauge;
-                            } catch (IllegalArgumentException e) {
-                                logger.debug("Unable to register Gauge", e);
-                                return null;
-                            }
-                        });
-                        if (gaugeAnnotatedMetric.isPresent()) {
-                            gauges.put(method.getName(), gaugeAnnotatedMetric);
-                            logger.debug("Registered Gauge {} method {}", gaugeAnnotatedMetric.getMetric().getValue().getClass().getName(), method.getName());
-                        } else {
-                            logger.debug("Missing Gauge for method {}", method.getName());
-                        }
-                    }
-                } else {
-                    logger.debug("Gauge already registered for {}", method.getName());
-                }
+                processMethod(object, method);
             }
             clazz = clazz.getSuperclass();
+        }
+    }
+
+    /**
+     * Process the input method to determine if we need to get a {@link Gauge} from it
+     * @param object - {@link Object} input object
+     * @param method - {@link Method} method object to process
+     */
+    private static void processMethod(Object object, Method method) {
+        if (!gauges.containsKey(method.getName())) {
+            final com.codahale.metrics.annotation.Gauge annotation = method.getAnnotation(com.codahale.metrics.annotation.Gauge.class);
+            if (annotation != null && isNoParamsAndNonVoid(method)) {
+                extractGauge(object, method);
+            }
+        } else {
+            logger.debug("Gauge already registered for {}", method.getName());
+        }
+    }
+
+    /**
+     * Extract the {@link Gauge}, since we now know one exists
+     * @param object - {@link Object} input object
+     * @param method - {@link Method} method to extract {@link Gauge} from
+     */
+    private static void extractGauge(Object object, Method method) {
+        AnnotatedMetric<Gauge> gaugeAnnotatedMetric = metricAnnotation(method, com.codahale.metrics.annotation.Gauge.class, (name, absolute) -> {
+            final String finalName = name.isEmpty() ? method.getName() : strategy.resolveMetricName(name);
+            final String registerName = absolute ? finalName : MetricRegistry.name(method.getDeclaringClass(), finalName);
+            try {
+                return registry.register(registerName, new ForwardingGauge(method, object));
+            } catch (IllegalArgumentException e) {
+                logger.debug("Unable to register Gauge", e);
+                return null;
+            }
+        });
+        if (gaugeAnnotatedMetric.isPresent()) {
+            gauges.put(method.getName(), gaugeAnnotatedMetric);
+            logger.debug("Registered Gauge {} method {}", gaugeAnnotatedMetric.getMetric().getValue().getClass().getName(), method.getName());
+        } else {
+            logger.debug("Missing Gauge for method {}", method.getName());
         }
     }
 
@@ -92,25 +109,27 @@ public class GaugeTransformer extends AbstractMetricianTransformer {
 
     protected static class ForwardingGauge implements com.codahale.metrics.Gauge<Object> {
 
-        private final Method method;
         private final Object object;
+        private final MethodHandle mh;
 
         ForwardingGauge(Method method, Object object) {
-            this.method = method;
+            try {
+                method.setAccessible(true);
+                this.mh = MethodHandles.lookup().unreflect(method);
+                method.setAccessible(false);
+            } catch (IllegalAccessException e) {
+                throw new IllegalStateException(String.format("Cannot access method %s", method.getName()), e);
+            }
             this.object = object;
-            this.method.setAccessible(true);
+
         }
 
         @Override
         public Object getValue() {
             try {
-                final Object invoke = this.method.invoke(this.object);
-                if (invoke == null) {
-                    throw new IllegalStateException("Error while calling method (" + method + ")");
-                }
-                return invoke;
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new IllegalStateException("Error while calling method (" + method + ")", e);
+                return this.mh.invoke(this.object);
+            } catch (Throwable throwable) {
+                throw new IllegalStateException(String.format("Error while calling method %s", this.mh.toString()), throwable);
             }
         }
     }
