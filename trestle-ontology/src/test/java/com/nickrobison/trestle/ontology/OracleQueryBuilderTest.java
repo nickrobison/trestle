@@ -49,7 +49,7 @@ public class OracleQueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?m WHERE { ?m rdf:type trestle:Trestle_Concept .?m trestle:related_by ?r .?r trestle:relation_of ?object .?object trestle:has_fact ?f .OPTIONAL {?f trestle:valid_from ?tStart }.OPTIONAL {?f trestle:valid_to ?tEnd }.OPTIONAL {?f trestle:valid_at ?tAt }.?f trestle:database_from ?df .OPTIONAL {?f trestle:database_to ?dt }.?f ogc:asWKT ?wkt .FILTER(?df <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime && (!bound(?dt) || ?dt > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) .FILTER(((!bound(?tStart) || ?tStart <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) && ogcf:sfIntersects(?wkt, \"POINT (39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }";
+            "SELECT DISTINCT ?m WHERE { ?m rdf:type trestle:Trestle_Concept .?m trestle:related_by ?r .?r trestle:Relation_Strength ?rs .?r trestle:relation_of ?object .?object trestle:has_fact ?f .OPTIONAL {?f trestle:valid_from ?tStart }.OPTIONAL {?f trestle:valid_to ?tEnd }.OPTIONAL {?f trestle:valid_at ?tAt }.?f trestle:database_from ?df .OPTIONAL {?f trestle:database_to ?dt }.?f ogc:asWKT ?wkt .FILTER(?rs >= \"0.0\"^^xsd:double) .FILTER(?df <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime && (!bound(?dt) || ?dt > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) .FILTER(((!bound(?tStart) || ?tStart <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) && ogcf:sfIntersects(?wkt, \"POINT (39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }";
 
     @BeforeAll
     public static void createPrefixes() {
@@ -77,7 +77,7 @@ public class OracleQueryBuilderTest {
             assertEquals(oracleTSString, generatedOracleTS, "Oracle TS should be equal");
         },
                 () -> {
-                    final String generatedOracleTSConceptString = qb.buildTemporalSpatialConceptIntersection(wktString, 0.0, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
+                    final String generatedOracleTSConceptString = qb.buildTemporalSpatialConceptIntersection(wktString, 0.0, 0.0, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
                     assertEquals(tsOracleConceptString, generatedOracleTSConceptString, "TS Concept intersection be equal");
                 });
     }

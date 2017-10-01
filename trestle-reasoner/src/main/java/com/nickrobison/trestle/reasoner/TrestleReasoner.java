@@ -286,10 +286,10 @@ public interface TrestleReasoner {
      * Individuals are not created if they don't already exist
      * throws {@link IllegalArgumentException} if something other than {@link TrestleEventType#MERGED} or {@link TrestleEventType#SPLIT} is passed
      *
-     * @param <T>     - Generic type parameter of Trestle Object
-     * @param type    {@link TrestleEventType} to add
-     * @param subject - {@link OWLNamedIndividual} subject of Event
-     * @param objects - {@link Set} of {@link OWLNamedIndividual} that are the objects of the event
+     * @param <T>      - Generic type parameter of Trestle Object
+     * @param type     {@link TrestleEventType} to add
+     * @param subject  - {@link OWLNamedIndividual} subject of Event
+     * @param objects  - {@link Set} of {@link OWLNamedIndividual} that are the objects of the event
      * @param strength - {@link Double} Strength of union association
      */
     <T extends @NonNull Object> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength);
@@ -375,10 +375,10 @@ public interface TrestleReasoner {
      * Get a {@link List} of objects that are equivalent to given individual at the given time point
      * If no objects satisfy the equality constraints and an empty {@link List} is returned
      *
-     * @param clazz - {@link Class} of input individuals
-     * @param individual - Individual {@link IRI}
+     * @param clazz         - {@link Class} of input individuals
+     * @param individual    - Individual {@link IRI}
      * @param queryTemporal - {@link Temporal} of query point
-     * @param <T> - Type parameter
+     * @param <T>           - Type parameter
      * @return - {@link Optional} {@link List} of {@link T} objects
      */
     <@NonNull T> Optional<List<T>> getEquivalentObjects(Class<T> clazz, IRI individual, Temporal queryTemporal);
@@ -387,10 +387,10 @@ public interface TrestleReasoner {
      * Get a {@link List} of objects that are equivalent to given {@link List} of individuals at the given time point
      * If no objects satisfy the equality constraints and an empty {@link List} is returned
      *
-     * @param clazz - {@link Class} of input individuals
-     * @param individuals - {@link List} of individual {@link IRI}
+     * @param clazz         - {@link Class} of input individuals
+     * @param individuals   - {@link List} of individual {@link IRI}
      * @param queryTemporal - {@link Temporal} of query point
-     * @param <T> - Type parameter
+     * @param <T>           - Type parameter
      * @return - {@link Optional} {@link List} of {@link T} objects
      */
     <@NonNull T> Optional<List<T>> getEquivalentObjects(Class<T> clazz, List<IRI> individuals, Temporal queryTemporal);
@@ -426,13 +426,13 @@ public interface TrestleReasoner {
      * Return a set of Trestle_Concepts that intersect with the given WKT
      * The temporal parameters allow for additional specificity on the spatio-temporal intersection
      *
-     * @param wkt     - String of WKT to intersect with
-     * @param buffer  - double buffer to draw around WKT
-     * @param validAt - {@link Temporal} of validAt time
-     * @param dbAt    - Optional {@link Temporal} of dbAt time
-     * @return - Optional Set of String URIs for intersected concepts
+     * @param wkt      - String of WKT to intersect with
+     * @param buffer   - double buffer to draw around WKT
+     * @param strength - strength parameter to filter weak associations
+     * @param validAt  - {@link Temporal} of validAt time
+     * @param dbAt     - Optional {@link Temporal} of dbAt time   @return - Optional Set of String URIs for intersected concepts
      */
-    Optional<Set<String>> STIntersectConcept(String wkt, double buffer, Temporal validAt, @Nullable Temporal dbAt);
+    Optional<Set<String>> STIntersectConcept(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt);
 
     /**
      * Retrieve all members of a specified concept that match a given class
@@ -443,11 +443,11 @@ public interface TrestleReasoner {
      * @param <T>                  - Generic type T of returned object
      * @param clazz                - Input class to retrieve from concept
      * @param conceptID            - String ID of concept to retrieve
+     * @param strength             - Strength parameter to filter weak associations
      * @param spatialIntersection  - Optional spatial intersection to restrict results
-     * @param temporalIntersection - Optional temporal intersection to restrict results
-     * @return - Optional Set of T objects
+     * @param temporalIntersection - Optional temporal intersection to restrict results   @return - Optional Set of T objects
      */
-    <T> Optional<List<T>> getConceptMembers(Class<T> clazz, String conceptID, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection);
+    <T> Optional<List<T>> getConceptMembers(Class<T> clazz, String conceptID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection);
 
     /**
      * Write an object into the database, as a member of a given concept

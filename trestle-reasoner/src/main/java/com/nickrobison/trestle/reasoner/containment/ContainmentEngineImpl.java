@@ -1,21 +1,28 @@
 package com.nickrobison.trestle.reasoner.containment;
 
-import com.esri.core.geometry.*;
-import com.nickrobison.trestle.reasoner.equality.union.SpatialUnionBuilder;
+import com.codahale.metrics.annotation.Timed;
+import com.esri.core.geometry.OperatorExportToWkb;
+import com.esri.core.geometry.Polygon;
+import com.esri.core.geometry.SpatialReference;
+import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
+import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.parser.SpatialParser;
-import com.nickrobison.trestle.reasoner.parser.spatial.ESRIParser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.PrecisionModel;
+import com.vividsolutions.jts.io.ParseException;
+import com.vividsolutions.jts.io.WKBReader;
+import com.vividsolutions.jts.io.WKTReader;
 
+import java.nio.ByteBuffer;
 import java.util.Optional;
 
 /**
  * Created by detwiler on 8/31/17.
  */
-public class ContainmentEngineImpl implements ContainmentEngine
-{
-    private static final OperatorFactoryLocal instance = OperatorFactoryLocal.getInstance();
-    private static final OperatorIntersection operatorIntersection = (OperatorIntersection) instance.getOperator(Operator.Type.Intersection);
+@Metriced
+public class ContainmentEngineImpl implements ContainmentEngine {
+    private static final OperatorExportToWkb operatorExport = OperatorExportToWkb.local();
 
     /**
      * Compares objectA and objectB to determine if one is contained, approximately, within the other
@@ -30,69 +37,59 @@ public class ContainmentEngineImpl implements ContainmentEngine
      * equal to the threshold. ContainmentDirection.NONE if neither is true.
      */
     @Override
-    public <T> ContainmentDirection getApproximateContainment(T objectA, T objectB, SpatialReference inputSR, double threshold)
-    {
-        final Polygon polygonA = parseESRIPolygon(SpatialParser.getSpatialValue(objectA));
-        final Polygon polygonB = parseESRIPolygon(SpatialParser.getSpatialValue(objectB));
-        final double areaA = polygonA.calculateArea2D();
-        final double areaB = polygonB.calculateArea2D();
+    @Timed
+    public <T> ContainmentDirection getApproximateContainment(T objectA, T objectB, SpatialReference inputSR, double threshold) {
+        final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
+        final WKTReader wktReader = new WKTReader(geometryFactory);
+        final WKBReader wkbReader = new WKBReader(geometryFactory);
+        final Geometry polygonA = parseJTSGeometry(SpatialParser.getSpatialValue(objectA), wktReader, wkbReader);
+        final Geometry polygonB = parseJTSGeometry(SpatialParser.getSpatialValue(objectB), wktReader, wkbReader);
+
+        final double areaA = polygonA.getArea();
+        final double areaB = polygonB.getArea();
         double smallerArea;
         ContainmentDirection containmentDir;
-        if(areaA <= areaB)
-        {
+        if (areaA <= areaB) {
             smallerArea = areaA;
             containmentDir = ContainmentDirection.WITHIN;
-        }
-        else
-        {
+        } else {
             smallerArea = areaB;
             containmentDir = ContainmentDirection.CONTAINS;
         }
 
-        final Geometry intersectionGeom = operatorIntersection.execute(polygonA, polygonB, inputSR, new ContainmentProgressTracker("Match intersection"));
-        final double intersectionArea = intersectionGeom.calculateArea2D();
+        final double intersectionArea = polygonA.intersection(polygonB).getArea();
 
-        if(intersectionArea / smallerArea >= threshold)
-        {
+        if (intersectionArea / smallerArea >= threshold) {
             // found containment above threshold
             return containmentDir;
-        }
-        else
-        {
+        } else {
             return ContainmentDirection.NONE;
         }
     }
 
     /**
-     * Build a {@link Polygon} from a given {@link Object} representing the spatial value
+     * Build a {@link Geometry} from a given {@link Object} representing the spatial value
      *
      * @param spatialValue - {@link Optional} {@link Object} representing a spatialValue
+     * @param wktReader    - {@link WKTReader} for marshalling Strings to Geometries
+     * @param wkbReader    - {@link WKBReader} for converting ESRI {@link Polygon} to JTS Geom
      * @return - {@link Polygon}
-     * @throws IllegalArgumentException is the {@link Object} is not a subclass of {@link Polygon} or {@link String}
+     * @throws IllegalArgumentException    if the {@link Object} is not a subclass of {@link Polygon} or {@link String}
+     * @throws TrestleInvalidDataException if JTS is unable to Parse the spatial input
      */
-    private static Polygon parseESRIPolygon(Optional<Object> spatialValue) {
+//    TODO(nrobison): Unify this with the same implementation from the Equality Engine
+    private static Geometry parseJTSGeometry(Optional<Object> spatialValue, WKTReader wktReader, WKBReader wkbReader) {
         final Object spatial = spatialValue.orElseThrow(() -> new IllegalStateException("Cannot get spatial value for object"));
-        if (spatial instanceof Polygon) {
-            return (Polygon) spatial;
-        } else if (spatial instanceof String) {
-            return (Polygon) ESRIParser.wktToESRIObject((String) spatial, Polygon.class);
-        }
-        throw new IllegalArgumentException("Only ESRI Polygons are supported by the Equality Engine");
-    }
-
-    private static class ContainmentProgressTracker extends ProgressTracker {
-        private static final Logger logger = LoggerFactory.getLogger(ContainmentProgressTracker.class);
-
-        private final String eventName;
-
-        ContainmentProgressTracker(String eventName) {
-            this.eventName = eventName;
-        }
-
-        @Override
-        public boolean progress(int step, int totalExpectedSteps) {
-            logger.debug("{} on step {} of {}", eventName, step, totalExpectedSteps);
-            return true;
+        try {
+            if (spatial instanceof Polygon) {
+                final ByteBuffer wkbBuffer = operatorExport.execute(0, (Polygon) spatial, null);
+                return wkbReader.read(wkbBuffer.array());
+            } else if (spatial instanceof String) {
+                return wktReader.read((String) spatial);
+            }
+            throw new IllegalArgumentException("Only ESRI Polygons are supported by the Equality Engine");
+        } catch (ParseException e) {
+            throw new TrestleInvalidDataException("Cannot parse input polygon", e);
         }
     }
 }

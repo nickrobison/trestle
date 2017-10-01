@@ -6,6 +6,7 @@ import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -45,6 +46,13 @@ public class IntegrationRunner extends Configured implements Tool {
             conf.set(name, userProperties.getProperty(name));
         }
 
+
+//        Do we a command line property that specifies which GAUL codes to restrict output to?
+        if (args.length > 2) {
+            conf.set("gaulcode.restriction", args[2]);
+        }
+
+
 //        Setup the reasoner
         TrestleReasoner reasoner = new TrestleBuilder()
                 .withDBConnection(conf.get("reasoner.db.connection"),
@@ -52,8 +60,9 @@ public class IntegrationRunner extends Configured implements Tool {
                         conf.get("reasoner.db.password"))
                 .withInputClasses(GAULObject.class)
                 .withOntology(IRI.create(conf.get("reasoner.ontology.location")))
+                .withPrefix(conf.get("reasoner.ontology.prefix"))
+                .withName(conf.get("reasoner.ontology.name"))
                 .initialize()
-                .withName("gaul_hadoop")
                 .withoutCaching()
                 .withoutMetrics()
                 .build();
@@ -67,7 +76,7 @@ public class IntegrationRunner extends Configured implements Tool {
 
         job.setInputFormatClass(PolygonFeatureInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
-        FileInputFormat.setInputDirRecursive(job, false);
+        FileInputFormat.setInputDirRecursive(job, true);
         FileInputFormat.setInputPaths(job, new Path(args[0]));
         final Path outputDir = new Path(args[1]);
 
@@ -77,6 +86,13 @@ public class IntegrationRunner extends Configured implements Tool {
             outputDir.getFileSystem(conf).delete(outputDir, true);
         }
         FileOutputFormat.setOutputPath(job, outputDir);
+
+        //        Remove the HDS output directory
+        try (final FileSystem fileSystem = FileSystem.get(conf)) {
+            if (fileSystem.exists(outputDir)) {
+                fileSystem.delete(outputDir, true);
+            }
+        }
 
 //        Add the cache files
 //        final URL resource = IntegrationRunner.class.getClassLoader().getResource("trestle.owl");

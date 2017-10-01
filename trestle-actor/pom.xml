@@ -56,10 +56,6 @@
             <version>0.4.1</version>
         </dependency>
         <dependency>
-            <groupId>com.typesafe</groupId>
-            <artifactId>config</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-reasoner</artifactId>
             <version>0.7.1-SNAPSHOT</version>
@@ -68,13 +64,6 @@
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-ontology</artifactId>
             <version>0.7.1-SNAPSHOT</version>
-        </dependency>
-        <!--Logging dependencies-->
-        <!--Need to override the slf4j dependency, since we're running as a command line application-->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>

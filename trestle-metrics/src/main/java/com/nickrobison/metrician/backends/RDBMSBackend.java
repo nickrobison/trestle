@@ -6,11 +6,11 @@ import com.nickrobison.metrician.MetricianReporter;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.zaxxer.hikari.HikariDataSource;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
@@ -27,20 +27,20 @@ import java.util.concurrent.BlockingQueue;
 public abstract class RDBMSBackend implements IMetricianBackend {
 
     private static final Logger logger = LoggerFactory.getLogger(RDBMSBackend.class);
-    final int thread_wait;
+    final int threadWait;
     final Config config;
     final Map<String, Long> metricMap;
     final Thread eventThread;
     final String threadName;
 
     final BlockingQueue<MetricianReporter.DataAccumulator> dataQueue;
-    protected Connection connection;
+    protected HikariDataSource ds;
 
     RDBMSBackend(BlockingQueue<MetricianReporter.DataAccumulator> dataQueue, String threadName) {
         this.threadName = threadName;
         this.dataQueue = dataQueue;
         this.config = ConfigFactory.load().getConfig("trestle.metrics.backend");
-        this.thread_wait = this.config.getInt("threadWait");
+        this.threadWait = this.config.getInt("threadWait");
         this.metricMap = new HashMap<>();
 
         final ProcessEvents processEvents = new ProcessEvents();
@@ -48,14 +48,27 @@ public abstract class RDBMSBackend implements IMetricianBackend {
         eventThread.start();
     }
 
+    abstract HikariDataSource setupDataSource();
+
+    protected Connection getConnection() {
+        try {
+            return this.ds.getConnection();
+        } catch (SQLException e) {
+            logger.error("Unable to get database connection", e);
+            throw new IllegalStateException("Problem getting connection to metrics database", e);
+        }
+    }
+
     @Override
     public void shutdown() {
         eventThread.interrupt();
+        this.ds.close();
         shutdown(null);
     }
 
     /**
      * Database implementation dependent call to build export query
+     *
      * @param metrics - Nullable list of metric names
      * @return - {@link PreparedStatement} to execute
      * @throws SQLException
@@ -91,6 +104,7 @@ public abstract class RDBMSBackend implements IMetricianBackend {
 
     /**
      * Given a {@link List} of metrics names, combine them into a String usable in an SQL "IN" clause
+     *
      * @param metrics
      * @return
      */
@@ -106,7 +120,30 @@ public abstract class RDBMSBackend implements IMetricianBackend {
         return joinedMetrics.toString();
     }
 
-    abstract ResultSet getMetricValueResultSet(Long metricID, Long start, @Nullable Long end) throws SQLException;
+    ResultSet getMetricValueResultSet(Long metricID, Long start, @Nullable Long end) throws SQLException {
+        String exportQuery = "SELECT C.TIMESTAMP, C.VALUE FROM \n" +
+                "(\n" +
+                "    SELECT *\n" +
+                "    FROM GAUGES\n" +
+                "    UNION ALL\n" +
+                "    SELECT *\n" +
+                "    FROM COUNTERS\n" +
+                "    ) AS C\n" +
+                "WHERE C.METRICID = ? AND C.TIMESTAMP >= ? AND C.TIMESTAMP <= ? ORDER BY C.TIMESTAMP ASC;";
+
+
+        try (final Connection connection = getConnection();
+             CallableStatement statement = connection.prepareCall(exportQuery)) {
+            statement.setLong(1, metricID);
+            statement.setLong(2, start);
+            if (end != null) {
+                statement.setLong(3, end);
+            } else {
+                statement.setLong(3, Long.MAX_VALUE);
+            }
+            return statement.executeQuery();
+        }
+    }
 
     @Override
     public Map<Long, Object> getMetricsValues(String metricID, Long start, @Nullable Long end) {
@@ -116,11 +153,10 @@ public abstract class RDBMSBackend implements IMetricianBackend {
         try {
             final ResultSet resultSet = getMetricValueResultSet(registeredMetricID, start, end);
             try {
-                while(resultSet.next()) {
+                while (resultSet.next()) {
                     results.put(resultSet.getLong(1), resultSet.getObject(2));
                 }
-            }
-            finally {
+            } finally {
                 resultSet.close();
             }
         } catch (SQLException e) {
@@ -130,9 +166,6 @@ public abstract class RDBMSBackend implements IMetricianBackend {
     }
 
     abstract @Nullable Long registerMetric(String metricName);
-
-    @Override
-    public abstract void exportData(File file);
 
     @Override
     public void registerGauge(String name, @Nullable Gauge<?> gauge) {
@@ -173,35 +206,36 @@ public abstract class RDBMSBackend implements IMetricianBackend {
                     processEvent(event);
                 }
             } catch (InterruptedException e) {
+
+                Thread.currentThread().interrupt();
             }
             logger.debug("Thread interrupted, draining queue");
             ArrayDeque<MetricianReporter.DataAccumulator> remainingEvents = new ArrayDeque<>();
-            dataQueue.drainTo(remainingEvents);
+            final int drainCount = dataQueue.drainTo(remainingEvents);
             remainingEvents.forEach(this::processEvent);
-            logger.debug("Finished draining events");
+            logger.debug("Finished draining {} events", drainCount);
         }
 
         private void processEvent(MetricianReporter.DataAccumulator event) {
             final long timestamp = event.getTimestamp();
             List<MetricianMetricValue> events = new ArrayList<>();
 //            Counters
-            event.getCounters().entrySet().forEach(entry -> {
-                final String key = entry.getKey();
-                logger.trace("Counter {}: {}", key, entry.getValue());
+            event.getCounters().forEach((key, value) -> {
+                logger.trace("Counter {}: {}", key, value);
                 Long metricKey = metricMap.get(key);
                 if (metricKey == null) {
-                    logger.warn("Got null key for metric {}, registering", key);
+                    logger.debug("Got null key for metric {}, registering", key);
                     metricKey = registerMetric(key);
 
                 }
-                events.add(new MetricianMetricValue<>(MetricianMetricValue.ValueType.COUNTER, metricKey, timestamp, entry.getValue()));
+                events.add(new MetricianMetricValue<>(MetricianMetricValue.ValueType.COUNTER, metricKey, timestamp, value));
             });
 //            Gauges
             event.getGauges().forEach((key, value) -> {
                 logger.trace("Gauge {}: {}", key, value);
                 Long metricKey = metricMap.get(key);
                 if (metricKey == null) {
-                    logger.warn("Got null key for metric {}, registering", key);
+                    logger.debug("Got null key for metric {}, registering", key);
                     metricKey = registerMetric(key);
                 }
                 events.add(new MetricianMetricValue<>(MetricianMetricValue.ValueType.GAUGE, metricKey, timestamp, value));

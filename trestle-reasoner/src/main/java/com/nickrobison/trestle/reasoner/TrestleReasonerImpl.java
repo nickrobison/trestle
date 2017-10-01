@@ -1133,8 +1133,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
 //        Parse out the events
 //        I think I can suppress this, because if the above method throws an error, the catch statement will return an empty optional
-        @SuppressWarnings({"dereference.of.nullable"})
-        final List<TrestleResult> results = resultSet.getResults();
+        @SuppressWarnings({"dereference.of.nullable"}) final List<TrestleResult> results = resultSet.getResults();
         final Set<TrestleEvent> individualEvents = results
                 .stream()
 //                Filter out Trestle_Event from results
@@ -1372,15 +1371,25 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     relationStrength);
         }
         ListMultimap<String, String> conceptIndividuals = ArrayListMultimap.create();
-        final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(conceptQuery);
-        resultSet.getResults()
-                .forEach(result -> conceptIndividuals.put(result.getIndividual("concept").orElseThrow(() -> new RuntimeException("concept is null")).toStringID(), result.getIndividual("individual").orElseThrow(() -> new RuntimeException("individual is null")).toStringID()));
 
-        if (conceptIndividuals.keySet().size() == 0) {
-            logger.info("Individual {} has no related concepts");
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+        try {
+            final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(conceptQuery);
+            resultSet.getResults()
+                    .forEach(result -> conceptIndividuals.put(result.getIndividual("concept").orElseThrow(() -> new RuntimeException("concept is null")).toStringID(), result.getIndividual("individual").orElseThrow(() -> new RuntimeException("individual is null")).toStringID()));
+
+            if (conceptIndividuals.keySet().size() == 0) {
+                logger.info("Individual {} has no related concepts");
+                return Optional.empty();
+            }
+            return Optional.of(Multimaps.asMap(conceptIndividuals));
+        } catch (RuntimeException e) {
+            logger.error("Problem getting concepts related to individual: {}", individual, e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
-        return Optional.of(Multimaps.asMap(conceptIndividuals));
     }
 
     /**
@@ -1635,7 +1644,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public Optional<Set<String>> STIntersectConcept(String wkt, double buffer, Temporal validAt, @Nullable Temporal dbAt) {
+    public Optional<Set<String>> STIntersectConcept(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt) {
         final String queryString;
         final OffsetDateTime atTemporal;
         final OffsetDateTime dbTemporal;
@@ -1651,30 +1660,42 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
 
         try {
-            queryString = qb.buildTemporalSpatialConceptIntersection(wkt, buffer, atTemporal, dbTemporal);
+            queryString = qb.buildTemporalSpatialConceptIntersection(wkt, buffer, strength, atTemporal, dbTemporal);
         } catch (UnsupportedFeatureException e) {
             logger.error("Database {} does not support spatial queries", this.spatialDalect);
             return Optional.empty();
         }
 
-
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(queryString);
-        final Set<String> intersectedConceptURIs = resultSet.getResults()
-                .stream()
-                .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
-                .collect(Collectors.toSet());
-        this.ontology.returnAndCommitTransaction(trestleTransaction);
-
-        return Optional.of(intersectedConceptURIs);
+        try {
+            final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(queryString);
+            final Set<String> intersectedConceptURIs = resultSet.getResults()
+                    .stream()
+                    .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
+                    .collect(Collectors.toSet());
+            return Optional.of(intersectedConceptURIs);
+        } catch (RuntimeException e) {
+            logger.error("Problem intersecting spatial concept", e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+            return Optional.empty();
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+        }
     }
 
     @Override
-    public <T> Optional<List<T>> getConceptMembers(Class<T> clazz, String conceptID, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection) {
+    public <T> Optional<List<T>> getConceptMembers(Class<T> clazz, String conceptID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection) {
 
 
         final OWLClass datasetClass = trestleParser.classParser.getObjectClass(clazz);
-        final String retrievalStatement = qb.buildConceptObjectRetrieval(datasetClass, parseStringToIRI(REASONER_PREFIX, conceptID));
+        final String retrievalStatement = qb.buildConceptObjectRetrieval(datasetClass, parseStringToIRI(REASONER_PREFIX, conceptID), strength);
+
+        final OffsetDateTime atTemporal;
+        if (temporalIntersection != null) {
+            atTemporal = parseTemporalToOntologyDateTime(temporalIntersection, ZoneOffset.UTC);
+        } else {
+            atTemporal = OffsetDateTime.now();
+        }
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         Set<String> individualIRIs = this.ontology.executeSPARQLResults(retrievalStatement)
@@ -1684,13 +1705,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 .filter(Optional::isPresent)
                 .map(individual -> individual.get().toStringID())
                 .collect(Collectors.toSet());
-
-        final OffsetDateTime atTemporal;
-        if (temporalIntersection != null) {
-            atTemporal = parseTemporalToOntologyDateTime(temporalIntersection, ZoneOffset.UTC);
-        } else {
-            atTemporal = OffsetDateTime.now();
-        }
 
 //        Try to retrieve the object members in an async fashion
 //        We need to figure out the exists time of each object, so if the intersection point comes after the exists interval of the object, we grab the latest version of that object. Likewise intersection -> before -> object, grab the earliest
@@ -1749,16 +1763,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public void addObjectToConcept(String conceptIRI, Object inputObject, ConceptRelationType relationType, double strength) {
-//        Write the object
-        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
-        try {
-            this.writeTrestleObject(inputObject);
-        } catch (TrestleClassException e) {
-            logger.error("Problem with class", e);
-        } catch (MissingOntologyEntity e) {
-            logger.error("Missing individual", e.getIndividual(), e);
-        }
-//        Create the concept relation
+
+        //        Create the concept relation
         final IRI concept = parseStringToIRI(REASONER_PREFIX, conceptIRI);
         final OWLNamedIndividual conceptIndividual = df.getOWLNamedIndividual(concept);
         final OWLNamedIndividual individual = this.trestleParser.classParser.getIndividual(inputObject);
@@ -1767,6 +1773,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 extractTrestleIndividualName(individual.getIRI())));
         final OWLNamedIndividual relationIndividual = df.getOWLNamedIndividual(relationIRI);
         final OWLClass relationClass = df.getOWLClass(trestleRelationIRI);
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
+
+        try {
+            //        Write the object
+            this.writeTrestleObject(inputObject);
 //        TODO(nrobison): Implement relation types
 //        switch (relationType) {
 //            case SEMANTIC:
@@ -1783,45 +1794,39 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //                break;
 //        }
 //        Write the concept properties
-        ontology.createIndividual(df.getOWLClassAssertionAxiom(relationClass, relationIndividual));
-        try {
+            ontology.createIndividual(df.getOWLClassAssertionAxiom(relationClass, relationIndividual));
             ontology.writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
                     df.getOWLObjectProperty(relationOfIRI),
                     relationIndividual,
                     individual));
-        } catch (MissingOntologyEntity e) {
-            logger.error("Missing individual {}", e.getIndividual(), e);
-        }
-        try {
             ontology.writeIndividualDataProperty(relationIndividual,
                     df.getOWLDataProperty(relationStrengthIRI),
                     df.getOWLLiteral(strength));
-        } catch (MissingOntologyEntity e) {
-            logger.error("Missing individual {}", e.getIndividual(), e);
-        }
 
 //        Write the relation to the concept
-        try {
-            ontology.writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
-                    df.getOWLObjectProperty(relatedToIRI),
-                    relationIndividual,
-                    conceptIndividual
-            ));
-        } catch (MissingOntologyEntity missingOntologyEntity) {
-//            If the concept doesn't exist, create it.
-            logger.debug("Missing concept {}, creating", missingOntologyEntity.getIndividual());
-            ontology.createIndividual(df.getOWLClassAssertionAxiom(df.getOWLClass(trestleConceptIRI), conceptIndividual));
-//            Try again
+//            TODO(nrobison): This is gross, catching exceptions is really expensive.
             try {
                 ontology.writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
                         df.getOWLObjectProperty(relatedToIRI),
                         relationIndividual,
+                        conceptIndividual
+                ));
+            } catch (MissingOntologyEntity missingOntologyEntity) {
+//            If the concept doesn't exist, create it.
+                logger.debug("Missing concept {}, creating", missingOntologyEntity.getIndividual());
+                ontology.createIndividual(df.getOWLClassAssertionAxiom(df.getOWLClass(trestleConceptIRI), conceptIndividual));
+//            Try again
+                ontology.writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
+                        df.getOWLObjectProperty(relatedToIRI),
+                        relationIndividual,
                         conceptIndividual));
-            } catch (MissingOntologyEntity e) {
-                logger.error("Individual {} does not exist", e.getIndividual());
             }
+        } catch (MissingOntologyEntity | TrestleClassException e) {
+            logger.error("Problem adding individual {} to concept {}", individual, conceptIndividual, e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
-        this.ontology.returnAndCommitTransaction(trestleTransaction);
     }
 
     @Override
