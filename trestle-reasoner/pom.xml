@@ -64,6 +64,10 @@
             <artifactId>commons-io</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.esri.geometry</groupId>
             <artifactId>esri-geometry-api</artifactId>
         </dependency>
@@ -144,5 +148,44 @@
             <artifactId>jmh-generator-annprocess</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!--Clojure Dependencies-->
+        <dependency>
+            <groupId>org.clojure</groupId>
+            <artifactId>clojure</artifactId>
+            <version>1.8.0</version>
+        </dependency>
     </dependencies>
+    <build>
+            <plugins>
+                <plugin>
+                    <groupId>com.theoryinpractise</groupId>
+                    <artifactId>clojure-maven-plugin</artifactId>
+                    <version>1.8.1</version>
+                    <executions>
+                        <execution>
+                            <id>default-clojure</id>
+                            <goals>
+                                <goal>add-source</goal>
+                                <goal>compile</goal>
+                                <goal>add-test-source</goal>
+                                <goal>testCompile</goal>
+                                <goal>test</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <copyAllCompiledNamespaces>true</copyAllCompiledNamespaces>
+                        <!--<namespaces>-->
+                            <!--<namespace>com.nickrobison.trestle</namespace>-->
+                        <!--</namespaces>-->
+                        <sourceDirectories>
+                            <sourceDirectory>src/main/clojure</sourceDirectory>
+                        </sourceDirectories>
+                        <testSourceDirectories>
+                            <testSourceDirectory>src/test/clojure</testSourceDirectory>
+                        </testSourceDirectories>
+                    </configuration>
+                </plugin>
+            </plugins>
+    </build>
 </project>
