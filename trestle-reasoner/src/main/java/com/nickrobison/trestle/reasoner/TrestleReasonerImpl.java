@@ -1637,6 +1637,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         } catch (InterruptedException | ExecutionException e) {
             logger.error("Interruption exception building Trestle Individual {}", individual, e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
+            if (e.getCause().getClass().isAssignableFrom(TrestleMissingIndividualException.class)) {
+                throw TrestleMissingIndividualException.class.cast(e.getCause());
+            }
             throw new RuntimeException(e);
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
