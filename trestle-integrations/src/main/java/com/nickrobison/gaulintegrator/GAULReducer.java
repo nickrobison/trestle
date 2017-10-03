@@ -1,8 +1,6 @@
 package com.nickrobison.gaulintegrator;
 
 import com.esri.core.geometry.*;
-import com.esri.core.geometry.Geometry;
-import com.esri.core.geometry.Polygon;
 import com.nickrobison.trestle.common.TemporalUtils;
 import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.datasets.GAULObject;
@@ -14,10 +12,10 @@ import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
-import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.io.ParseException;
+import com.vividsolutions.jts.geom.GeometryCollection;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.PrecisionModel;
 import com.vividsolutions.jts.io.WKBReader;
-import com.vividsolutions.jts.io.WKBWriter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -49,22 +47,16 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
     private static final String ENDDATE = "temporal.enddate";
 
     //    Setup the spatial stuff
-    private static final OperatorFactoryLocal instance = OperatorFactoryLocal.getInstance();
-    private static final OperatorUnion operatorUnion = OperatorUnion.local();
-    private static final OperatorIntersection operatorIntersection = (OperatorIntersection) instance.getOperator(Operator.Type.Intersection);
-    private static final OperatorWithin operatorWithin = (OperatorWithin) instance.getOperator(Operator.Type.Within);
-    private static final OperatorTouches operatorTouches = (OperatorTouches) instance.getOperator(Operator.Type.Touches);
-    private static final OperatorBuffer operatorBuffer = OperatorBuffer.local();
-    private static final OperatorBoundary operatorBoundary = OperatorBoundary.local();
-    private static final OperatorExportToWkt operatorWKTExport = (OperatorExportToWkt) instance.getOperator(Operator.Type.ExportToWkt);
+    private static final OperatorIntersection operatorIntersection = OperatorIntersection.local();
+    private static final OperatorWithin operatorWithin = OperatorWithin.local();
+    private static final OperatorTouches operatorTouches = OperatorTouches.local();
+    private static final OperatorExportToWkt operatorWKTExport = OperatorExportToWkt.local();
     private static final OperatorExportToWkb operatorWKBExport = OperatorExportToWkb.local();
-    private static final OperatorImportFromWkb operatorWKBImport = OperatorImportFromWkb.local();
     private static final int INPUTSRS = 4326;
     private static final SpatialReference inputSR = SpatialReference.create(INPUTSRS);
 
     private static final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
     private static final WKBReader wkbReader = new WKBReader(geometryFactory);
-    private static final WKBWriter wkbWriter = new WKBWriter();
 
     private LocalDate configStartDate;
     private LocalDate configEndDate;
@@ -196,7 +188,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 logger.error("Unable to process object {}-{}-{}", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate(), e);
             }
             logger.warn("{}-{}-{} finished", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-            context.write(key, new Text(String.format("%s:%s:%s:%s", newGAULObject.getAdm0Name(), newGAULObject.getObjectID(), newGAULObject.getStartDate(), newGAULObject.getEndDate())));
+            context.write(key, new Text(String.format("%s:%s:%s:%s:%s", newGAULObject.getAdm0Code(), newGAULObject.getAdm0Name(), newGAULObject.getObjectID(), newGAULObject.getStartDate(), newGAULObject.getEndDate())));
         }
     }
 
