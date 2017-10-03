@@ -346,7 +346,7 @@ public class TypeConverter {
     }
 
     @SuppressWarnings("Duplicates")
-    static Class<?> parsePrimitiveClass(Class<?> returnClass) {
+    public static Class<?> parsePrimitiveClass(Class<?> returnClass) {
         if (returnClass.isPrimitive()) {
             logger.trace("Converting primitive type {} to object", returnClass.getTypeName());
             switch (returnClass.getTypeName()) {

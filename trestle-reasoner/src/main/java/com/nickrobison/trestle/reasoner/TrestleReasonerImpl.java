@@ -2325,7 +2325,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //        if (objectOptional.isPresent()) {
 //            final T object = objectOptional.get();
         final Class<?> inputClass = object.getClass();
-        final Optional<OWLDataPropertyAssertionAxiom> spatialProperty = trestleParser.classParser.GetSpatialFact(object);
+        final Optional<OWLDataPropertyAssertionAxiom> spatialProperty = trestleParser.classParser.getSpatialFact(object);
         if (!spatialProperty.isPresent()) {
             logger.error("Individual is not a spatial object");
             return Optional.empty();

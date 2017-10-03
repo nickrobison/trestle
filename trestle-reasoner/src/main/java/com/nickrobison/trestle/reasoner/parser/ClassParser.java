@@ -27,7 +27,7 @@ import static com.nickrobison.trestle.reasoner.parser.StringParser.methodValueTo
  * Created by nrobison on 6/28/16.
  */
 @SuppressWarnings("initialization")
-public class ClassParser {
+public class ClassParser implements IClassParser {
 
     enum AccessType {
         FIELD,
@@ -51,10 +51,12 @@ public class ClassParser {
         this.defaultLanguageCode = defaultLanguageCode;
     }
 
+    @Override
     public boolean isMultiLangEnabled() {
         return this.multiLangEnabled;
     }
 
+    @Override
     public @Nullable String getDefaultLanguageCode() {
         if (this.defaultLanguageCode.equals("")) {
              return null;
@@ -62,12 +64,14 @@ public class ClassParser {
         return this.defaultLanguageCode;
     }
 
+    @Override
     public OWLClass getObjectClass(Object inputObject) {
         //        Get the class name, from the annotation, if possible;
         final Class<?> clazz = inputObject.getClass();
         return getObjectClass(clazz);
     }
 
+    @Override
     public OWLClass getObjectClass(Class<?> clazz) {
 
         final String className;
@@ -80,6 +84,7 @@ public class ClassParser {
         return df.getOWLClass(iri);
     }
 
+    @Override
     public OWLNamedIndividual getIndividual(Object inputObject) {
 
         final Class<?> clazz = inputObject.getClass();
@@ -174,21 +179,12 @@ public class ClassParser {
                 && (objectMember.getReturnType() != void.class));
     }
 
-    /**
-     * Extract the OWLDataPropertyAssertionAxiom from a given object
-     * @param inputObject - Object to parse
-     * @return - Optional List of OWLDataPropertyAssertionAxioms
-     */
+    @Override
     public Optional<List<OWLDataPropertyAssertionAxiom>> getFacts(Object inputObject) {
         return getFacts(inputObject, false);
     }
 
-    /**
-     * Extract the OWLDataPropertyAssertionAxiom from a given object
-     * @param inputObject - Object to parse
-     * @param filterSpatial - Boolean to determine whether or not to filter out the spatial annotations
-     * @return - Optional List of OWLDataPropertyAssertionAxioms
-     */
+    @Override
     public Optional<List<OWLDataPropertyAssertionAxiom>> getFacts(Object inputObject, boolean filterSpatial) {
         final Class<?> clazz = inputObject.getClass();
         final List<OWLDataPropertyAssertionAxiom> axioms = new ArrayList<>();
@@ -316,12 +312,8 @@ public class ClassParser {
         return Optional.of(axioms);
     }
 
-    /**
-     * Extract the spatial property a given object
-     * @param inputObject - Object to parse for spatial property
-     * @return - Optional of OWLDataPropertyAssertionAxiom representing spatial property
-     */
-    public Optional<OWLDataPropertyAssertionAxiom> GetSpatialFact(Object inputObject) {
+    @Override
+    public Optional<OWLDataPropertyAssertionAxiom> getSpatialFact(Object inputObject) {
         final OWLNamedIndividual owlNamedIndividual = getIndividual(inputObject);
         final IRI iri = IRI.create(GEOSPARQLPREFIX, "asWKT");
         final OWLDataProperty spatialDataProperty = df.getOWLDataProperty(iri);
@@ -378,12 +370,12 @@ public class ClassParser {
     }
 
     /**
-     * Match a given String, representing the short-form of a OWLDataProperty IRI with the appropriate class member
+     * Match a given String, representing the short-form of a {@link OWLDataProperty} {@link IRI} with the appropriate class member
      * If the languageCode param is not null, the method attempts to match the correct data property and language pair.
-     * @param clazz - Java class to parse
-     * @param classMember - IRI short-form to match against class
+     * @param clazz - Java {@link Class} to parse
+     * @param classMember - {@link IRI} short-form to match against class
      * @param languageTag - Nullable languageCode determining multi-lang String support required
-     * @return - String name of matching class member
+     * @return - {@link String} name of matching class member
      */
     public static String matchWithClassMember(Class<?> clazz, String classMember, @Nullable String languageTag) {
         if (languageTag == null) {
@@ -493,10 +485,10 @@ public class ClassParser {
     }
 
     /**
-     * Match a given String, representing the short-form of a OWLDataProperty IRI with the appropriate class member
-     * @param clazz - Java class to parse
-     * @param classMember - IRI short-form to match against class
-     * @return - String name of matching class member
+     * Match a given {@link String}, representing the short-form of a {@link OWLDataProperty} {@link IRI} with the appropriate class member
+     * @param clazz - Java {@link Class} to parse
+     * @param classMember - {@link IRI} short-form to match against class
+     * @return - {@link String} name of matching class member
      */
     public static String matchWithClassMember(Class<?> clazz, String classMember) {
 //        Check for a matching field
@@ -676,12 +668,7 @@ public class ClassParser {
         throw new RuntimeException("Cannot match field or method");
     }
 
-    /**
-     * Get the datatype of the fact represented in the given string
-     * @param clazz - Class to parse
-     * @param factName - String name of fact
-     * @return - Optional Class of return datatype
-     */
+    @Override
     public Optional<Class<@NonNull ?>> getFactDatatype(Class<?> clazz, String factName) {
 //        Split String to get the actual fact name
         final String name;
@@ -719,13 +706,7 @@ public class ClassParser {
         return Optional.empty();
     }
 
-    /**
-     * Get the correct Fact {@link IRI} from a given string
-     * Gets the correct IRI prefix to handle things like Spatial members and user defined types
-     * @param clazz - Java class to parse
-     * @param factName - Name of fact to build IRI for
-     * @return - Optional {@link IRI} of fact
-     */
+    @Override
     public Optional<IRI> getFactIRI(Class<?> clazz, String factName) {
 //        Split String to get the actual fact name
         final String name;
