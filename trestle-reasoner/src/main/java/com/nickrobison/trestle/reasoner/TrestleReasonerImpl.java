@@ -1265,14 +1265,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         dbTemporal = OffsetDateTime.now();
 
         String spatialIntersection;
-        try {
-            logger.debug("Running spatial intersection at time {}", atTemporal);
-            spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.Units.METER, atTemporal, dbTemporal);
-//                }
-        } catch (UnsupportedFeatureException e) {
-            logger.error("Database {} doesn't support spatial intersections.", spatialDalect, e);
-            return Optional.empty();
-        }
+        logger.debug("Running spatial intersection at time {}", atTemporal);
+        spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.Units.METER, atTemporal, dbTemporal);
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
             final String finalSpatialIntersection = spatialIntersection;
@@ -1557,13 +1551,28 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     .thenApply(temporalObject -> new TrestleIndividual(individual.toStringID(), temporalObject.orElseThrow(() -> new CompletionException(new TrestleMissingIndividualException(individual)))));
 
 //                Get all the facts
-            final Optional<List<OWLObjectPropertyAssertionAxiom>> individualFacts = ontology.getIndividualObjectProperty(individual, hasFactIRI);
-            final List<CompletableFuture<TrestleFact>> factFutureList = individualFacts.orElse(new ArrayList<>())
-                    .stream()
-                    .map(fact -> buildTrestleFact(fact.getObject().asOWLNamedIndividual(), trestleTransaction))
-                    .collect(Collectors.toList());
-
-            CompletableFuture<List<TrestleFact>> factsFuture = sequenceCompletableFutures(factFutureList);
+            final CompletableFuture<List<TrestleFact>> factsFuture = CompletableFuture.supplyAsync(() -> {
+                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                try {
+                    return ontology.getIndividualObjectProperty(individual, hasFactIRI);
+                } finally {
+                    this.ontology.returnAndCommitTransaction(tt);
+                }
+            }, this.trestleThreadPool)
+                    .thenCompose(factsOptional -> {
+                        final List<CompletableFuture<TrestleFact>> collect = factsOptional.orElse(new ArrayList<>())
+                                .stream()
+                                .map(fact -> buildTrestleFact(fact.getObject().asOWLNamedIndividual(), trestleTransaction))
+                                .collect(Collectors.toList());
+                        return sequenceCompletableFutures(collect);
+                    });
+//            final Optional<List<OWLObjectPropertyAssertionAxiom>> individualFacts = ontology.getIndividualObjectProperty(individual, hasFactIRI);
+//            final List<CompletableFuture<TrestleFact>> factFutureList = individualFacts.orElse(new ArrayList<>())
+//                    .stream()
+//                    .map(fact -> buildTrestleFact(fact.getObject().asOWLNamedIndividual(), trestleTransaction))
+//                    .collect(Collectors.toList());
+//
+//            CompletableFuture<List<TrestleFact>> factsFuture = sequenceCompletableFutures(factFutureList);
 
 //                Get the relations
             final CompletableFuture<List<TrestleRelation>> relationsFuture = CompletableFuture.supplyAsync(() -> {
