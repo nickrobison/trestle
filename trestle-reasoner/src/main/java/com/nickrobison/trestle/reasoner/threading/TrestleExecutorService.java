@@ -43,7 +43,6 @@ public class TrestleExecutorService implements ExecutorService {
                 TimeUnit.MILLISECONDS,
                 backingQueue,
                 threadFactory);
-        final Metrician metrician1 = metrician;
 
 //        Setup Metrician Timers
         queueTimer = metrician.registerTimer(String.format("%s-queue-time", executorName));
@@ -86,7 +85,7 @@ public class TrestleExecutorService implements ExecutorService {
         final Timer.Context time = this.queueTimer.time();
         return this.target.submit(() -> {
             time.stop();
-            logger.trace("Task took {} ms to start", Duration.between(Instant.now(), taskSubmit).toMillis());
+            logger.trace("Task took {} ms to start", Duration.between(taskSubmit, Instant.now()).toMillis());
             this.executionCount.mark();
             final Timer.Context execTimer = executionTimer.time();
             try {
