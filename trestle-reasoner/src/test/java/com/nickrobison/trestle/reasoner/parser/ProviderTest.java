@@ -18,16 +18,25 @@ public class ProviderTest {
         logger.info("{}", parser.getObjectClass(new ParserTestClass()));
 
         logger.info("{}", parser.getIndividual(new ParserTestClass()));
+
+        parser.parseClass(ParserTestClass.class);
     }
 
 
     public static class ParserTestClass {
+
+        public String testField1 = "testField1";
+        public String testField2 = "testField2";
 
         public ParserTestClass() {}
 
         @IndividualIdentifier
         public String getMethodID() {
             return "Have_stuff";
+        }
+
+        public String getMethod1() {
+            return "Has Method 1";
         }
     }
 }

@@ -34,6 +34,11 @@ public class ClassParser implements IClassParser {
         METHOD
     }
 
+    @Override
+    public Object parseClass(Class<?> clazz) {
+        return null;
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(ClassParser.class);
 //    TODO(nrobison): Move all of this into a non-static context
     static final OWLDataFactory dfStatic = OWLManager.getOWLDataFactory();

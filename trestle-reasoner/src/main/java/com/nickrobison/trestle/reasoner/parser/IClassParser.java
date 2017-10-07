@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface IClassParser {
+
+    Object parseClass(Class<?> clazz);
     /**
      * Is the current {@link ClassParser} multi-language enabled?
      * @return - {@code true} multi-language support enabled. {@code false} multi-language support is disabled.
