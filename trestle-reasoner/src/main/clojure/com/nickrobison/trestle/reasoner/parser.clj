@@ -2,15 +2,18 @@
   (:import [IClassParser]
            (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter)
            (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual)
-           (com.nickrobison.trestle.reasoner.annotations DatasetClass IndividualIdentifier Fact Spatial Language NoMultiLanguage Ignore)
            (java.lang.annotation Annotation)
            (java.lang.reflect InvocationTargetException Field Method Modifier)
-           (java.lang.invoke MethodHandles))
+           (java.lang.invoke MethodHandles)
+           (com.nickrobison.trestle.reasoner.annotations IndividualIdentifier DatasetClass))
   (:require [clojure.core.match :refer [match]]
-            [clojure.tools.logging :as log]))
+            [clojure.tools.logging :as log]
+            [clojure.string :as string]
+            [com.nickrobison.trestle.reasoner.com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]))
 
 
-(defn hasAnnotation? [member annotation] (.isAnnotationPresent member annotation))
+
+
 
 (defn accessMethodValue [classMethod inputObject]
   (. (TypeConverter/parsePrimitiveClass (.getReturnType classMethod)) cast
@@ -26,11 +29,11 @@
 (defn annotationFilter
   "Filters a list of members for a given annotation"
   [members annotation]
-  (filter #(hasAnnotation? % annotation) members))
+  (filter #(pred/hasAnnotation? % annotation) members))
 
 (defn parseIndividualFields [fields inputObject]
   (when-first [field
-               (filter #(hasAnnotation? % IndividualIdentifier) fields)]
+               (filter #(pred/hasAnnotation? % IndividualIdentifier) fields)]
     (.toString
       (try
         (. field get inputObject)
@@ -43,37 +46,6 @@
     )
   )
 
-; Filter Predicates
-(defn get-member-name [member] (.getName member))
-(defn public? [entity] (Modifier/isPublic (.getModifiers entity)))
-(defn ignore? [entity] (hasAnnotation? entity Ignore))
-(defn fact? [entity] (hasAnnotation? entity Fact))
-(defn spatial? [entity] (hasAnnotation? entity Spatial))
-(defn language? [entity] (hasAnnotation? entity Language))
-(defn noMultiLanguage? [entity] (hasAnnotation? entity NoMultiLanguage))
-(defn identifier? [entity] (hasAnnotation? entity IndividualIdentifier))
-(defn noAnnotations? [entity] (= (count (.getAnnotations entity)) 0))
-(defn ebean? [entity] (clojure.string/includes? (.getName entity) "_ebean"))
-(defn noParams? [entity] (= (.getParameterCount entity) 0))
-(defn internal?
-  "Are the methods internal methods? e.g. hashCode, Equals, etc"
-  [entity] (or
-             (= (get-member-name entity) "hashCode")
-             (= (get-member-name entity) "equals")
-             (= (get-member-name entity) "toString")
-             (= (get-member-name entity) "wait")
-             (= (get-member-name entity) "notify")
-             (= (get-member-name entity) "notifyAll")
-             (= (get-member-name entity) "getClass")))
-(defn void-return? [entity] (= (.getReturnType entity) Void))
-(defn include? [entity] ((some-fn fact?
-                             spatial?
-                             identifier?
-                             language?
-                             noMultiLanguage?
-                             noAnnotations?) entity))
-
-
 ; Method Handle methods
 (defmulti make-handle
           "Make a method handle for a given Class Member"
@@ -81,37 +53,11 @@
 (defmethod make-handle Field [field] (.unreflectGetter (MethodHandles/lookup) field))
 (defmethod make-handle Method [method] (.unreflect (MethodHandles/lookup) method))
 
-(defmulti filter-members
-  "Filter Class Members to only include the ones we need"
-  class)
-(defmethod filter-members Field [field]
-  ((every-pred
-     (complement ignore?)
-     public?
-     include?
-     (complement ebean?)) field))
-(defmethod filter-members Method [method]
-  ((every-pred
-     (complement ignore?)
-     public?
-     include?
-     noParams?
-     (complement internal?)
-     (complement ebean?)
-     (complement void-return?)) method))
-
-
-
-
-(defn get-methods
-  "Get all the methods for a class and return them as a method handle"
-  [clazz]
-  (into [] (map #(assoc {} :name (.getName %) :handle (make-handle %)) (filter filter-members (.getMethods clazz)))))
-
-(defn get-fields
-  "Get all the fields for a class and return them as a method handle"
-  [clazz]
-  (into [] (map #(assoc {} :name (.getName %) :handle (make-handle %)) (filter filter-members (.getFields clazz)))))
+(defmulti build-member
+          "Process class method/field and add it, if necessary"
+          class)
+(defmethod build-member Field [field] (assoc {} :name (.getName field) :handle (make-handle field) :type (pred/member-type field)))
+(defmethod build-member Method [method] (assoc {} :name (.getName method) :handle (make-handle method) :type (pred/member-type method)))
 
 
 (defrecord ClojureClassParser [^OWLDataFactory df,
@@ -140,7 +86,13 @@
                                                      [_ nil] field
                                                      :else "Nothing!")))))
   (parseClass ^Object [this ^Class clazz]
-    (assoc {} :members (concat (get-methods clazz) (get-fields clazz)))))
+    (let [output {}]
+      (assoc output :members
+                    (map #(build-member %)
+                         (filter pred/filter-member
+                                 (concat
+                                   (.getMethods clazz)
+                                   (.getFields clazz))))))))
 
 (defn make-parser
   "Creates a new ClassParser"
