@@ -21,7 +21,7 @@ public class GAULObject {
 
     private static final int ESRID = 4326;
 
-//    private final ObjectID objectID;
+    //    private final ObjectID objectID;
     private final String objectID;
     private final long gaulCode;
     private final String objectName;
@@ -58,10 +58,10 @@ public class GAULObject {
     }
 
     @TrestleCreator
-    public GAULObject(String id, long gaulCode, String objectName, LocalDate startDate, LocalDate endDate, String wkt, long adm1Code, String adm1Name, String status, boolean dispArea, long adm0Code, String adm0Name) {
+    public GAULObject(String id, long gaulCode, String adm2_name, LocalDate startDate, LocalDate endDate, String wkt, long adm1Code, String adm1Name, String status, boolean dispArea, long adm0Code, String adm0Name) {
         this.objectID = id;
         this.gaulCode = gaulCode;
-        this.objectName = objectName;
+        this.objectName = adm2_name;
         this.validRange = DateFieldUtils.writeDateField(startDate, endDate);
         this.shapePolygon = (Polygon) GeometryEngine.geometryFromWkt(wkt, 0, Geometry.Type.Polygon);
         this.adm0Code = adm0Code;
