@@ -1,11 +1,11 @@
 /**
  * Created by nrobison on 1/19/17.
  */
-import {Component, OnInit, ViewContainerRef, Pipe, PipeTransform} from "@angular/core";
-import {MdDialogRef, MdDialog, MdDialogConfig} from "@angular/material";
+import {Component, OnInit, ViewContainerRef} from "@angular/core";
 import {UserAddDialog, IUserDialogResponse, UserDialogResponseType} from "./users.add.dialog";
 import {AuthService, ITrestleUser, Privileges} from "../../UserModule/authentication.service";
 import {UserService} from "../../UserModule/users.service";
+import { MatDialog, MatDialogConfig, MatDialogRef } from "@angular/material";
 
 @Component({
     selector: "admin-users",
@@ -15,21 +15,21 @@ import {UserService} from "../../UserModule/users.service";
 
 export class UsersComponent implements OnInit {
 
-    users: Array<ITrestleUser>;
-    dialogRef: MdDialogRef<any>;
-    privileges: Privileges;
+    public users: ITrestleUser[];
+    public dialogRef: MatDialogRef<any>;
+    public privileges: Privileges;
 
-    constructor(private userService: UserService, public dialog: MdDialog, public viewContainerRef: ViewContainerRef, public authService: AuthService) {
+    constructor(private userService: UserService, public dialog: MatDialog, public viewContainerRef: ViewContainerRef, public authService: AuthService) {
     }
 
-    ngOnInit(): void {
+    public ngOnInit(): void {
         this.loadUsers();
     }
 
     public loadUsers() {
         this.userService.getUsers()
-            .subscribe((users: Array<ITrestleUser>) => this.users = users,
-                (err: any) => console.error(err))
+            .subscribe((users: ITrestleUser[]) => this.users = users,
+                (err: any) => console.error(err));
     };
 
     public isAdmin(user: ITrestleUser): boolean {
@@ -41,7 +41,7 @@ export class UsersComponent implements OnInit {
     }
 
     public openUserModal(user: ITrestleUser) {
-        let config = new MdDialogConfig();
+        const config = new MatDialogConfig();
         config.viewContainerRef = this.viewContainerRef;
         this.dialogRef = this.dialog.open(UserAddDialog, config);
         this.dialogRef.componentInstance.user = user;
@@ -54,7 +54,7 @@ export class UsersComponent implements OnInit {
                         this.users.push(result.user);
                         break;
                     case UserDialogResponseType.DELETE:
-                        let index = this.users.indexOf(result.user);
+                        const index = this.users.indexOf(result.user);
                         console.debug("Splicing out user at location:", index);
                         if (index > -1) {
                             this.users.splice(index, 1);
@@ -63,6 +63,6 @@ export class UsersComponent implements OnInit {
                 }
             }
             this.dialogRef = null;
-        })
+        });
     }
 }

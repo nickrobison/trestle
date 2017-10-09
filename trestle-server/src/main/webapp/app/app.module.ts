@@ -4,7 +4,6 @@
 import { NgModule } from "@angular/core";
 import { HttpModule } from "@angular/http";
 import { BrowserModule } from "@angular/platform-browser";
-import { MaterialModule } from "@angular/material";
 import { RouterModule } from "@angular/router";
 import { AppRoutes } from "./app.routes";
 import { AppComponent } from "./app.component";
@@ -13,14 +12,15 @@ import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { UserModule } from "./UserModule/user.module";
 import { NavigationModule } from "./NavigationModule/navigation.module";
 import { UIModule } from "./UIModule/ui.module";
+import { MaterialModule } from "./MaterialModule/material.module";
 
 @NgModule({
     imports: [
         HttpModule,
         BrowserModule,
         BrowserAnimationsModule,
-        MaterialModule,
         RouterModule.forRoot(AppRoutes),
+        MaterialModule,
         MaterializeModule,
         UserModule,
         NavigationModule,
@@ -30,4 +30,5 @@ import { UIModule } from "./UIModule/ui.module";
     bootstrap: [AppComponent]
 
 })
-export class AppModule {}
+export class AppModule {
+}

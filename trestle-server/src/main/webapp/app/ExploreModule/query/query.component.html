@@ -2,7 +2,7 @@
     <h4>SPARQL Editor</h4>
     <codemirror [prefixes]="prefixes" (query)="executeQuery($event)"></codemirror>
 </div>
-<md-progress-bar [color]="'primary'" [mode]="'indeterminate'" *ngIf="loading"></md-progress-bar>
+<mat-progress-bar [color]="'primary'" [mode]="'indeterminate'" *ngIf="loading"></mat-progress-bar>
 <div class="card-panel red lighten-2" *ngIf="errorMessage">
     <!--<div *ngIf="errorMessage">-->
     {{errorMessage}}

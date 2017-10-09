@@ -15,10 +15,10 @@
             <td>{{user.username}}</td>
             <td>{{user.email}}</td>
             <td>
-                <md-chip-list>
-                <md-chip color="red" selected="false" *ngIf="isDBA(user)">DBA</md-chip>
-                <md-chip color="primary" selected="false" *ngIf="isAdmin(user)">ADMIN</md-chip>
-                </md-chip-list>
+                <mat-chip-list>
+                <mat-chip color="red" selected="false" *ngIf="isDBA(user)">DBA</mat-chip>
+                <mat-chip color="primary" selected="false" *ngIf="isAdmin(user)">ADMIN</mat-chip>
+                </mat-chip-list>
             </td>
         </tr>
     </tbody>

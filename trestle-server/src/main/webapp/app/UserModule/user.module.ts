@@ -11,11 +11,13 @@ import { TrestleHttp } from "./trestle-http.provider";
 import { CommonModule } from "@angular/common";
 import { UserService } from "./users.service";
 import { DefaultRouteGuard } from "./DefaultRouteGuard";
+import { MaterialModule } from "../MaterialModule/material.module";
 
 @NgModule({
     imports: [
         HttpModule,
-        CommonModule
+        CommonModule,
+        MaterialModule
     ],
     providers: [
         AuthService,

@@ -2,14 +2,14 @@
  * Created by nrobison on 3/7/17.
  */
 import {Component, OnInit, ViewContainerRef, ViewEncapsulation} from "@angular/core";
-import {VisualizeService, ITrestleFact, TrestleIndividual, TrestleFact} from "./visualize.service";
+import {VisualizeService, TrestleIndividual, TrestleFact} from "./visualize.service";
 import {FormControl} from "@angular/forms";
 import {Observable} from "rxjs";
-import {MdDialog, MdDialogConfig, MdDialogRef} from "@angular/material";
 import {IndividualValueDialog} from "./individual-value.dialog";
 import {Moment} from "moment";
 import moment = require("moment");
 import {ITrestleMapSource} from "../../UIModule/map/trestle-map.component";
+import { MatDialog, MatDialogConfig, MatDialogRef } from "@angular/material";
 
 @Component({
     selector: "visualize",
@@ -19,18 +19,18 @@ import {ITrestleMapSource} from "../../UIModule/map/trestle-map.component";
 })
 
 export class VisualizeComponent implements OnInit {
-    individualName = new FormControl();
-    options: Observable<Array<string>>;
-    individual: TrestleIndividual;
-    mapIndividual: ITrestleMapSource;
-    minTime: Moment;
-    maxTime: Moment;
-    private dialogRef: MdDialogRef<IndividualValueDialog>;
+    public individualName = new FormControl();
+    public options: Observable<string[]>;
+    public individual: TrestleIndividual;
+    public mapIndividual: ITrestleMapSource;
+    public minTime: Moment;
+    public maxTime: Moment;
+    private dialogRef: MatDialogRef<IndividualValueDialog>;
 
-    constructor(private vs: VisualizeService, private dialog: MdDialog, private viewContainerRef: ViewContainerRef) {
+    constructor(private vs: VisualizeService, private dialog: MatDialog, private viewContainerRef: ViewContainerRef) {
     }
 
-    ngOnInit(): void {
+    public ngOnInit(): void {
         this.minTime = moment().year(2011).startOf("year");
         this.maxTime = moment().year(2016).endOf("year");
         this.options = this.individualName
@@ -40,7 +40,7 @@ export class VisualizeComponent implements OnInit {
             .switchMap(name => this.vs.searchForIndividual(name));
     }
 
-    onSubmit() {
+    public onSubmit() {
         console.debug("Submitted", this.individualName.value);
         this.vs.getIndividualAttributes(this.individualName.value)
             .subscribe((results: TrestleIndividual) => {
@@ -63,8 +63,8 @@ export class VisualizeComponent implements OnInit {
             });
     }
 
-    openValueModal(fact: TrestleFact): void {
-        let config = new MdDialogConfig();
+    public openValueModal(fact: TrestleFact): void {
+        const config = new MatDialogConfig();
         config.viewContainerRef = this.viewContainerRef;
         this.dialogRef = this.dialog.open(IndividualValueDialog, config);
         this.dialogRef.componentInstance.name = fact.getName();
@@ -72,12 +72,12 @@ export class VisualizeComponent implements OnInit {
         this.dialogRef.afterClosed().subscribe(() => this.dialogRef = null);
     }
 
-    displayFn(individualName: string): string {
-        let strings = individualName.split("#");
+    public displayFn(individualName: string): string {
+        const strings = individualName.split("#");
         return strings[1];
     }
     
-    selectedOption(value: any) {
+    public selectedOption(value: any) {
         console.debug("Clicked", value);
     }
 }

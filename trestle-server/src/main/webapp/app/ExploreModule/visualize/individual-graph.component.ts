@@ -13,7 +13,7 @@ import {
     SimulationLinkDatum, Simulation
 } from "d3-force";
 import {TrestleIndividual} from "./visualize.service";
-import {MdSlideToggleChange} from "@angular/material";
+import { MatSlideToggleChange } from "@angular/material";
 
 export interface IIndividualConfig {
     data: TrestleIndividual;
@@ -34,8 +34,8 @@ interface ID3Margin {
 }
 
 interface IGraphLayout {
-    nodes: Array<IFactNode>;
-    links: Array<SimulationLinkDatum<IFactNode>>;
+    nodes: IFactNode[];
+    links: SimulationLinkDatum<IFactNode>[];
 }
 
 interface IFactNode extends SimulationNodeDatum {
@@ -288,8 +288,8 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         }
     }
 
-    private changeGraphMembers(event: MdSlideToggleChange): void {
-        if (event.source.id == this.factToggleName) {
+    private changeGraphMembers(event: MatSlideToggleChange): void {
+        if (event.source.id === this.factToggleName) {
             console.debug("Graph facts?", event.checked);
             this.graphFacts = event.checked;
             this.buildGraph(this.config.data);
@@ -298,7 +298,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
                 links: [],
             });
             this.update(this.layout);
-        } else if (event.source.id = this.relationToggleName) {
+        } else if (event.source.id === this.relationToggleName) {
             console.debug("Graph relations?", event.checked);
             this.graphRelations = event.checked;
             this.buildGraph(this.config.data);

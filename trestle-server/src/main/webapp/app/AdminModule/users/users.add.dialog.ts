@@ -2,10 +2,10 @@
  * Created by nrobison on 2/6/17.
  */
 import {Component, OnInit} from "@angular/core";
-import {MdDialogRef} from "@angular/material";
 import {Response} from "@angular/http";
 import {ITrestleUser, Privileges} from "../../UserModule/authentication.service";
 import {UserService} from "../../UserModule/users.service";
+import { MatDialogRef } from "@angular/material";
 
 
 export enum UserDialogResponseType {
@@ -28,7 +28,7 @@ export class UserAddDialog implements OnInit {
     user: ITrestleUser;
     updateMode = true;
 
-    constructor(public dialogRef: MdDialogRef<UserAddDialog>, private userService: UserService) {
+    constructor(public dialogRef: MatDialogRef<UserAddDialog>, private userService: UserService) {
 //    Try to list all the enum keys
         for (let priv in Privileges) {
             if (parseInt(priv, 10) >= 0) {
@@ -66,7 +66,7 @@ export class UserAddDialog implements OnInit {
         console.log("user:", this.user);
         this.userService.modifyUser(this.user).subscribe((data: Response) => {
             console.debug("Response to add:", data);
-            let responseID = parseInt(data.text(), 10);
+            const responseID = parseInt(data.text(), 10);
             if (!this.isUpdate()) {
                 this.user.id = responseID;
             }

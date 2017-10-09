@@ -5,11 +5,11 @@ import { Component, OnInit } from "@angular/core";
 import { MapService } from "./map.service";
 import { ITrestleMapSource } from "../../UIModule/map/trestle-map.component";
 import { animate, style, transition, trigger } from "@angular/animations";
-import { MdSliderChange } from "@angular/material";
 import * as Moment from "moment";
 import LngLatBounds = mapboxgl.LngLatBounds;
 import moment = require("moment");
 import { VisualizeService } from "../visualize/visualize.service";
+import { MatSliderChange } from "@angular/material";
 
 enum DatasetState {
     UNLOADED,
@@ -20,7 +20,7 @@ enum DatasetState {
 
 interface IDatasetState {
     name: string,
-    state: DatasetState
+    state: DatasetState;
 }
 
 @Component({
@@ -82,7 +82,7 @@ export class DatsetViewerComponent implements OnInit {
         this.mapBounds = bounds;
     }
 
-    public sliderChanged = (event: MdSliderChange): void => {
+    public sliderChanged = (event: MatSliderChange): void => {
         console.debug("Value changed to:", event);
         this.sliderValue = event.value;
         //    Reload all the currently loaded datasets

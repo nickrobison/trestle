@@ -1,8 +1,8 @@
 /**
  * Created by nrobison on 3/16/17.
  */
-import {Component, OnInit} from "@angular/core";
-import {MdDialogRef} from "@angular/material";
+import {Component} from "@angular/core";
+import { MatDialogRef } from "@angular/material";
 
 @Component({
     selector: "individual-value-dialog",
@@ -11,8 +11,8 @@ import {MdDialogRef} from "@angular/material";
 })
 export class IndividualValueDialog {
 
-    name: string;
-    value: string;
+    public name: string;
+    public value: string;
 
-    constructor(private dialogRef: MdDialogRef<IndividualValueDialog>) {}
+    constructor(private dialogRef: MatDialogRef<IndividualValueDialog>) {}
 }

@@ -4,7 +4,6 @@
 import { RouterModule } from "@angular/router";
 import { DashboardComponent } from "./dashboard/app.dashboard";
 import { NgModule } from "@angular/core";
-import { MaterialModule } from "@angular/material";
 import { AdminComponent } from "./admin.component";
 import { UsersComponent } from "./users/users.component";
 import { CommonModule } from "@angular/common";
@@ -16,7 +15,7 @@ import { MetricsGraph } from "./metrics/metrics-graph.component";
 import { UserModule } from "../UserModule/user.module";
 import { AdminRoutes } from "../admin.routing";
 import { UIModule } from "../UIModule/ui.module";
-
+import { MaterialModule } from "../MaterialModule/material.module";
 
 @NgModule({
     declarations: [DashboardComponent,
@@ -30,9 +29,9 @@ import { UIModule } from "../UIModule/ui.module";
         FormsModule,
         ReactiveFormsModule,
         RouterModule.forChild(AdminRoutes),
-        MaterialModule,
         UserModule,
-        UIModule
+        UIModule,
+        MaterialModule
     ],
     providers: [MetricsService],
     entryComponents: [UserAddDialog],
