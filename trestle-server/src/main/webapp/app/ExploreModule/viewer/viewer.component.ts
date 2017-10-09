@@ -44,6 +44,7 @@ export class DatsetViewerComponent implements OnInit {
     public maxTime = moment("2016-01-01");
     public sliderValue = 2013;
     private mapBounds: LngLatBounds;
+    private mapLocked = false;
 
     constructor(private mapService: MapService, private vs: VisualizeService) {
     }
@@ -61,9 +62,13 @@ export class DatsetViewerComponent implements OnInit {
     }
 
     public loadDataset(dataset: IDatasetState): void {
+        this.mapLocked = true;
         console.debug("Loading:", dataset.name);
         dataset.state = DatasetState.LOADING;
-        this.mapService.stIntersect(dataset.name, this.mapBounds, Moment().year(this.sliderValue).startOf("year"))
+        this.mapService.stIntersect(dataset.name,
+            this.mapBounds, Moment()
+                .year(this.sliderValue)
+                .startOf("year"))
             .subscribe((data) => {
                 dataset.state = DatasetState.LOADED;
                 console.debug("Data:", data);
@@ -72,14 +77,25 @@ export class DatsetViewerComponent implements OnInit {
                     idField: "id",
                     data
                 };
+                this.mapLocked = false;
             }, (error) => {
                 console.error("Error loading dataset:", error);
                 dataset.state = DatasetState.ERROR;
+                this.mapLocked = false;
             });
     }
 
     public updateBounds(bounds: LngLatBounds): void {
-        this.mapBounds = bounds;
+        console.debug("Moving, updating bounds", bounds);
+        // If we've moved outside of the current bounds, get new data
+        if (!this.mapLocked && this.needNewData(bounds)) {
+            this.mapBounds = bounds;
+            // this.availableDatasets
+            //     .filter((ds) => ds.state === DatasetState.LOADED)
+            //     .forEach((ds) => this.loadDataset(ds));
+        } else {
+            this.mapBounds = bounds;
+        }
     }
 
     public sliderChanged = (event: MatSliderChange): void => {
@@ -96,6 +112,29 @@ export class DatsetViewerComponent implements OnInit {
         this.vs.getIndividualAttributes(event)
             .subscribe((data) => {
                 console.log("Has individual", data);
-            })
+            });
+    };
+
+    private needNewData(newBounds: mapboxgl.LngLatBounds) {
+        console.debug("Need new data", newBounds, "old Data", this.mapBounds);
+        // This short circuits the checks to avoid loading data on the first go 'round.
+        if (newBounds === null || this.mapBounds === undefined) {
+            return false;
+        }
+        // Moved up/down
+        if ((newBounds.getNorth() > this.mapBounds.getNorth())
+            || (newBounds.getSouth() < this.mapBounds.getSouth())) {
+            console.debug(newBounds.getNorth() + ", " + this.mapBounds.getNorth());
+            console.debug(newBounds.getSouth() + ", " + this.mapBounds.getSouth());
+            console.debug("Moved north/south, so true");
+            return true;
+            //    Moved east/west
+        } else if ((newBounds.getEast() > this.mapBounds.getEast())
+            || (newBounds.getWest() < this.mapBounds.getWest())) {
+            console.debug(newBounds.getEast() + ", " + this.mapBounds.getEast());
+            console.debug(newBounds.getWest() + ", " + this.mapBounds.getWest());
+            console.debug("Moved east/west, so true");
+        }
+        return false;
     }
 }

@@ -30,6 +30,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     @Input() public individual: ITrestleMapSource;
     @Input() public single: boolean;
     @Input() public multiSelect: boolean;
+    @Input() public lockMap: boolean;
     @Output() public mapBounds: EventEmitter<LngLatBounds> = new EventEmitter();
     @Output() public clicked: EventEmitter<string> = new EventEmitter();
     private map: mapboxgl.Map;
@@ -58,6 +59,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
 
     public ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
         const inputChanges = changes["individual"];
+        // Individual changes
         if (inputChanges != null
             && !inputChanges.isFirstChange()
             && (inputChanges.currentValue !== inputChanges.previousValue)) {
@@ -66,6 +68,32 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                 this.removeSource(inputChanges.previousValue);
             }
             this.addSource(inputChanges.currentValue);
+        }
+
+    //    Locked changes
+        const lockedChanges = changes["lockMap"];
+        if (lockedChanges != null
+        && !lockedChanges.isFirstChange()
+        && (lockedChanges.currentValue !== lockedChanges.previousValue)) {
+            this.lockMap = lockedChanges.currentValue;
+        //    Lock/unlock map
+            if (this.lockMap) {
+                this.map.dragPan.disable();
+                this.map.dragRotate.disable();
+                this.map.scrollZoom.disable();
+                this.map.keyboard.disable();
+                this.map.boxZoom.disable();
+                this.map.doublClickZoom.disable();
+                this.map.touchZoomRotate.disable();
+            } else {
+                this.map.dragPan.enable();
+                this.map.dragRotate.enable();
+                this.map.scrollZoom.enable();
+                this.map.keyboard.enable();
+                this.map.boxZoom.enable();
+                this.map.doublClickZoom.enable();
+                this.map.touchZoomRotate.enable();
+            }
         }
     }
 
@@ -117,7 +145,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         });
         this.mapSources.push(inputLayer.id);
         //    Center map
-        this.getBoundingBox(inputLayer.data);
+        this.centerMap(inputLayer.data);
     }
 
     private layerClick = (e: MapMouseEvent): void => {
@@ -165,11 +193,15 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     };
 
     private moveHandler = () => {
-        console.debug("New bounds", this.map.getBounds());
-        this.mapBounds.emit(this.map.getBounds());
+        if (!this.lockMap) {
+            console.debug("New bounds", this.map.getBounds());
+            this.mapBounds.emit(this.map.getBounds());
+        }
     };
 
-    private getBoundingBox(geom: FeatureCollection<GeometryObject>): void {
+    private centerMap(geom: FeatureCollection<GeometryObject>): void {
+        // We have to lock the map in order to avoid sending out a notice that the move happened.
+        this.lockMap = true;
         if (geom.bbox) {
             this.map.fitBounds(LngLatBounds.convert(geom.bbox));
         } else {
@@ -178,6 +210,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                 this.map.fitBounds(LngLatBounds.convert(bbox));
             }
         }
+        this.lockMap = false;
     }
 
     private static extractGeometryPoints(geom: GeometryObject): number[][] {
