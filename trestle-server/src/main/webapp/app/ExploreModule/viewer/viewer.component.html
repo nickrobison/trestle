@@ -11,7 +11,7 @@
                 <li class="collection-item" *ngFor="let ds of availableDatasets" (click)="loadDataset(ds)">
                     <mat-icon *ngIf="(ds.state == DatasetState.UNLOADED)" [@fadeInOut]>check_circle</mat-icon>
                     <mat-spinner class="loading-spinner" *ngIf="ds.state == DatasetState.LOADING"
-                                [@fadeInOut]></mat-spinner>
+                                [@fadeInOut] [diameter]="24" [strokeWidth]="3"></mat-spinner>
                     <mat-icon *ngIf="(ds.state == DatasetState.LOADED)" class="selected" [@fadeInOut]>check_circle</mat-icon>
                     <mat-icon *ngIf="(ds.state == DatasetState.ERROR)" class="orange600" [@fadeInOut]>error</mat-icon>
                     {{ds.name}}

@@ -110,7 +110,8 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             source: inputLayer.id,
             paint: {
                 "fill-color": "#627BC1",
-                "fill-opacity": 1
+                "fill-opacity": 1,
+                // Repaint the lines so that they're still visible
             },
             filter: ["==", "name", ""]
         });
