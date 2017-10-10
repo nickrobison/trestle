@@ -3,6 +3,9 @@
  */
 const webpackMerge = require("webpack-merge");
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
+const OptimizeJsPlugin = require('optimize-js-plugin');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const DefinePlugin = require('webpack/lib/DefinePlugin');
 const commonConfig = require("./webpack.common");
 const helpers = require("./helpers");
 
@@ -15,13 +18,32 @@ var prodOptions = {
     devtool: "source-map",
     output: {
         path: helpers.root("src/main/resources/build"),
-        publicPath: "static/",
-        filename: "[name].bundle.js",
-        sourceMapFilename: "[name].map",
-        chunkFilename: "[id].chunk.js"
+        publicPath: "/static/",
+        filename: "[name].[chunkhash].bundle.js",
+        sourceMapFilename: "[file].map",
+        chunkFilename: "[name].[chunkhash].chunk.js"
     },
     plugins: [
-        new ExtractTextPlugin("[name].css")
+        new ExtractTextPlugin("[name].css"),
+        new DefinePlugin({
+            ENV: JSON.stringify("production")
+        }),
+        new OptimizeJsPlugin({
+            sourceMap: false
+        }),
+        new UglifyJsPlugin({
+            parallel: true,
+            uglifyOptions: {
+                ie8: false,
+                ecma: 5,
+                warnings: true,
+                mangle: true, // debug false
+                output: {
+                    comments: false,
+                    beautify: false  // debug true
+                }
+            }
+        })
     ]
 };
 
