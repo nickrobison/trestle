@@ -3,7 +3,7 @@ import { IInterfacable } from "../../interfacable";
 export interface ITrestleRelation {
     subject: string;
     object: string;
-    relation: TrestleRelationType;
+    relation: string;
 }
 
 export enum TrestleRelationType {
@@ -31,7 +31,7 @@ export enum TrestleRelationType {
 export class TrestleRelation implements IInterfacable<ITrestleRelation> {
     private subject: string;
     private object: string;
-    private type: TrestleRelationType;
+    private type: string;
 
     constructor(relation: ITrestleRelation) {
         this.subject = relation.subject;
@@ -47,7 +47,7 @@ export class TrestleRelation implements IInterfacable<ITrestleRelation> {
         return this.object;
     }
 
-    public getType(): TrestleRelationType {
+    public getType(): string {
         return this.type;
     }
 

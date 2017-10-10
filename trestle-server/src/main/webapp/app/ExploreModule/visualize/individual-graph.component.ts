@@ -12,8 +12,8 @@ import {
     forceLink,
     SimulationLinkDatum, Simulation
 } from "d3-force";
-import {TrestleIndividual} from "./visualize.service";
 import { MatSlideToggleChange } from "@angular/material";
+import { TrestleIndividual } from "./individual/trestle-individual";
 
 export interface IIndividualConfig {
     data: TrestleIndividual;
@@ -124,21 +124,21 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
 
     private update(data: IGraphLayout): void {
         console.debug("Data in update function", data);
-        let force = forceManyBody();
+        const force = forceManyBody();
         force.strength(-1000);
         this.simulation = forceSimulation<IFactNode>()
             .force("link", forceLink().id((d: IFactNode) => d.id))
             .force("charge", force)
             .force("center", forceCenter(this.width / 2, this.height / 2));
 
-        let linkData = this.svg.selectAll(".link")
+        const linkData = this.svg.selectAll(".link")
             .data(data.links, (d: any) => d.source.id + "_" + d.target.id);
 
         this.links = linkData.enter()
             .append("line")
             .attr("class", "link");
 
-        let nodeData = this.svg.selectAll(".node")
+        const nodeData = this.svg.selectAll(".node")
             .data(data.nodes, (d: IFactNode) => d.id);
 
         this.nodes = nodeData
@@ -162,7 +162,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             .text(d => d.name);
 
         //    Legend
-        let legend = this.svg.selectAll(".legend")
+        const legend = this.svg.selectAll(".legend")
             .data(this.color.domain())
             .enter()
             .append("g")
@@ -233,14 +233,14 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         };
 
         //    Add the individual as node 0
-        let individualNode = {
+        const individualNode = {
             id: individual.getID(),
             name: IndividualGraph.parseIndividualID(individual.getID()),
             valid: true,
             group: NodeType.INDIVIDUAL
         };
 
-        let individualTemporal = {
+        const individualTemporal = {
             id: individual.getTemporal().getID(),
             name: "individual-temporal",
             valid: true,
@@ -256,7 +256,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
 
         if (this.graphFacts) {
             individual.getFacts().forEach(fact => {
-                let factNode = {
+                const factNode = {
                     id: fact.getID(),
                     name: fact.getName(),
                     valid: fact.getValidTemporal().getTo().toString() == "" && fact.getDatabaseTemporal().getTo().toString() == "",
@@ -273,7 +273,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         //    Relations
         if (this.graphRelations) {
             individual.getRelations().forEach(relation => {
-                let relationNode = {
+                const relationNode = {
                     id: relation.getObject(),
                     name: relation.getType().toString() + ": " + IndividualGraph.parseIndividualID(relation.getObject()),
                     valid: true,
@@ -326,7 +326,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
     }
 
     private static parseIndividualID(id: string): string {
-        let matches = id.match(/(#)(.*)/g);
+        const matches = id.match(/(#)(.*)/g);
         if (matches) {
             return matches[0].replace("#", "");
         }

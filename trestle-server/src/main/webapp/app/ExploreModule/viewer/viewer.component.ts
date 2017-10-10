@@ -8,13 +8,11 @@ import { animate, style, transition, trigger } from "@angular/animations";
 import * as Moment from "moment";
 import LngLatBounds = mapboxgl.LngLatBounds;
 import moment = require("moment");
-import {
-    TrestleEventType, TrestleIndividual, TrestleRelationType,
-    VisualizeService
-} from "../visualize/visualize.service";
 import { MatSliderChange } from "@angular/material";
 import { IIndividualHistory } from "../../UIModule/history-graph/history-graph.component";
 import { Observable } from "rxjs/Observable";
+import { VisualizeService } from "../visualize/visualize.service";
+import { TrestleIndividual } from "../visualize/individual/trestle-individual";
 
 enum DatasetState {
     UNLOADED,
@@ -144,7 +142,6 @@ export class DatsetViewerComponent implements OnInit {
             end: individual.getTemporal().getTo().toDate(),
             value: individual.getID()
         });
-        // const obsArray: Observable<TrestleIndividual>[] = [];
         //    For all the other individuals, add them as well
         console.debug("Has some individuals:", splitMerge.length);
         const obsArray = splitMerge.map((relation) => {

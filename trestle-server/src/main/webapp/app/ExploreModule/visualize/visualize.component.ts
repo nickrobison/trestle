@@ -2,7 +2,6 @@
  * Created by nrobison on 3/7/17.
  */
 import { Component, OnInit, ViewContainerRef, ViewEncapsulation } from "@angular/core";
-import { VisualizeService, TrestleIndividual, TrestleFact } from "./visualize.service";
 import { FormControl } from "@angular/forms";
 import { Observable } from "rxjs";
 import { IndividualValueDialog } from "./individual-value.dialog";
@@ -11,6 +10,9 @@ import moment = require("moment");
 import { ITrestleMapSource } from "../../UIModule/map/trestle-map.component";
 import { MatDialog, MatDialogConfig, MatDialogRef } from "@angular/material";
 import { IIndividualHistory } from "../../UIModule/history-graph/history-graph.component";
+import { TrestleIndividual } from "./individual/trestle-individual";
+import { VisualizeService } from "./visualize.service";
+import { TrestleFact } from "./individual/trestle-fact";
 
 @Component({
     selector: "visualize",
