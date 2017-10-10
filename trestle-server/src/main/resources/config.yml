@@ -33,3 +33,4 @@ database:
 jwt:
   authHeader: "Authorization"
   authSalt: "test-salt"
+  expirationTime: 7200
