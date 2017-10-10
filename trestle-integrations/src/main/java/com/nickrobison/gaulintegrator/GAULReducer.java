@@ -433,19 +433,17 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
             MapperOutput latestRecord = sortedRecords.pop();
             try {
-                final LocalDate recordStart = LocalDate.of(latestRecord.getDatasetYear(), 1, 1);
-                reasoner.writeTrestleObject(latestRecord.toObject(), recordStart, latestRecord.getExpirationDate());
-            } catch (MissingOntologyEntity | UnregisteredClassException e) {
+                reasoner.writeTrestleObject(latestRecord.toObject());
+            } catch (MissingOntologyEntity | TrestleClassException e) {
                 logger.error("Unable to write objects", e);
             }
 
             for (MapperOutput record : sortedRecords) {
                 if (record.hashCode() != latestRecord.hashCode()) {
                     latestRecord = record;
-                    final LocalDate recordStart = LocalDate.of(record.getDatasetYear(), 1, 1);
                     try {
-                        reasoner.writeTrestleObject(record.toObject(), recordStart, record.getExpirationDate());
-                    } catch (MissingOntologyEntity | UnregisteredClassException | TrestleInvalidDataException e) {
+                        reasoner.writeTrestleObject(record.toObject());
+                    } catch (MissingOntologyEntity | TrestleClassException | TrestleInvalidDataException e) {
                         logger.error("Unable to write object {}-{}-{}", record.getRegionID(), record.getRegionName(), record.getStartDate(), e);
                     }
                 }
