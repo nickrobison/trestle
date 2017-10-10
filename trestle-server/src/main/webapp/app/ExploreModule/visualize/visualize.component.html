@@ -27,8 +27,8 @@
 <div class="section">
     <mat-tab-group>
         <mat-tab label="Fact History">
-            <fact-history [data]="individual" [minTime]="minTime" [maxTime]="maxTime"
-                          [graphHeight]="600"></fact-history>
+            <history-graph id="fact-history" [data]="individualFactHistory" [minTime]="minTime" [maxTime]="maxTime"
+                          [graphHeight]="600"></history-graph>
         </mat-tab>
         <mat-tab label="Object History">
             Objects go here

@@ -10,10 +10,20 @@ import {
     SimpleChange,
     ViewChild
 } from "@angular/core";
-import { select, Selection } from "d3-selection";
+import { BaseType, select, Selection } from "d3-selection";
 import { scaleBand, scaleOrdinal, ScaleTime, scaleTime, schemeCategory20 } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
-import { TrestleFact, TrestleIndividual } from "./visualize.service";
+
+export interface ITemporalEntity {
+    label: string;
+    start: Date;
+    end: Date;
+    value: any;
+}
+
+export interface IIndividualHistory {
+    entities: ITemporalEntity[];
+}
 
 interface ID3Margin {
     top: number;
@@ -23,28 +33,25 @@ interface ID3Margin {
 }
 
 @Component({
-    selector: "fact-history",
-    templateUrl: "./fact-graph.component.html",
-    styleUrls: ["./fact-graph.component.css"]
+    selector: "history-graph",
+    templateUrl: "./history-graph.component.html",
+    styleUrls: ["./history-graph.component.css"]
 })
-
-export class FactHistoryGraph implements AfterViewInit, OnChanges {
+export class HistoryGraphComponent implements AfterViewInit, OnChanges {
     @ViewChild("graph") public element: ElementRef;
-    @Input() public data: TrestleIndividual;
+    @Input() public data: IIndividualHistory;
     @Input() public graphHeight: number;
     @Input() public minTime: Date;
     @Input() public maxTime: Date;
     private htmlElement: HTMLElement;
-    private host: Selection<HTMLElement, any, any, any>;
-    private svg: Selection<any, any, any, any>;
+    private host: Selection<HTMLElement, ITemporalEntity, Document, ITemporalEntity>;
+    private svg: Selection<BaseType, ITemporalEntity, Document, ITemporalEntity>;
     private width: number;
     private height: number;
     private margin: ID3Margin;
     private x: ScaleTime<number, number>;
 
-    constructor() {
-
-    }
+    constructor() {}
 
     public ngAfterViewInit(): void {
         console.debug("Fact History view-init");
@@ -62,19 +69,21 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
     private plotData(): void {
         //    Build the domain values
         console.debug("Building with data:", this.data);
-        const factNames = this.data.getFacts().map((d) => d.getName());
+        const entityNames = this.data.entities.map((d) => d.label);
+        // const entityNames = this.data.getFacts().map((d) => d.getName());
         const y = scaleBand()
             .range([this.height, 0])
-            .domain(factNames);
+            .domain(entityNames);
         console.debug("Y values", y.range());
         console.debug("Y values", y.domain());
 
         const z = scaleOrdinal(schemeCategory20)
-            .domain(factNames);
+            .domain(entityNames);
 
         // Build the lane lines
         const laneLines = this.svg.selectAll(".laneLine")
-            .data(this.data.getFacts().map(fact => fact.getName()))
+            // .data(this.data.getFacts().map((fact) => fact.getName()))
+            .data(this.data.entities.map((entity) => entity.label))
             .enter().append("line")
             .attr("class", "laneLine")
             .attr("x1", 0)
@@ -90,45 +99,47 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
 
         //    Add the data
         const mainItems = this.svg.selectAll(".fact")
-            .data(this.data
-                .getFacts()
-                .filter((f: TrestleFact) => f
-                    .getDatabaseTemporal()
-                    .isContinuing()),
-                (d: TrestleFact) => d.getID());
+            .data(this.data.entities, (entity: ITemporalEntity) => entity.label);
 
         mainItems
             .enter()
             .append("rect")
             .attr("class", "fact")
-            .attr("x", (d: TrestleFact) => this.x(d.getValidTemporal().getFrom().toDate()))
-            .attr("y", (d: TrestleFact) => y(d.getName()))
-            .attr("width", (d: TrestleFact) => this.x(this.maybeDate(d.getValidTemporal().getTo().toDate())) - this.x(this.maybeDate(d.getValidTemporal().getFrom().toDate())))
+            .attr("x", (d) => this.normalizeAxis("x", this.x(d.start)))
+            .attr("y", (d) => y(d.label))
+            .attr("width",
+                (d) => {
+                    const end = this.normalizeAxis("x",
+                        this.x(d.end));
+                    const start = this.normalizeAxis("x",
+                        this.x(d.start));
+                    return end - start;
+                })
             .attr("height", (d) => y.bandwidth())
-            .style("fill", (d: TrestleFact) => z(d.getName()))
+            // .style("fill", (d: TrestleFact) => z(d.getName()))
+            .style("fill", (d) => z(d.label))
             .style("fill-opacity", 0.7)
             .merge(mainItems);
 
         // Labels
         const mainLabels = this.svg.selectAll(".mainLabels")
-            .data(this.data.getFacts().filter((f) => f.getDatabaseTemporal().isContinuing()), (d: TrestleFact) => d.getID());
+            .data(this.data.entities, (d: ITemporalEntity) => d.label);
 
         mainLabels
             .enter()
             .append("text")
-            .text((d: TrestleFact) => this.parseValue(d.getValue()))
+            .text((d) => this.parseValue(d.value))
             .attr("class", "mainLabels")
-            .attr("x", (d: TrestleFact) => {
-                const end = this.maybeDate(d.getValidTemporal().getTo().toDate());
-                const start = this.maybeDate(d.getValidTemporal().getFrom().toDate());
+            .attr("x", (d) => {
+                const end = d.end;
+                const start = d.start;
                 const width = this.x(end) - this.x(start);
                 return this.x(start) + width / 2;
             })
-            .attr("y", (d: TrestleFact) => y(d.getName()) + y.bandwidth() - 5)
+            .attr("y", (d) => y(d.label) + y.bandwidth() - 5)
             .attr("text-anchor", "middle")
             .attr("dy", ".1ex")
             .merge(mainLabels);
-            // .attr("fill", "transparent");
 
         mainItems.exit().remove();
         mainLabels.exit().remove();
@@ -139,7 +150,7 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
         if (date instanceof Date) {
             return date;
         }
-        if (date == "") {
+        if (date === "") {
             return this.maxTime;
         }
         return new Date(date);
@@ -155,8 +166,29 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
         return value;
     }
 
+    private normalizeAxis(axis: "x" | "y", value: number): number {
+        // Normalize X Axis
+        if (axis === "x") {
+            if (value < 0) {
+                return 0;
+            }
+            if (value > this.width) {
+                return this.width;
+            }
+            return value;
+        } else {
+            if (value < 0) {
+                return 0;
+            }
+            if (value > this.height) {
+                return this.height;
+            }
+            return value;
+        }
+    }
+
     private setupD3(): void {
-        this.host = select(this.htmlElement);
+        this.host = select<HTMLElement, ITemporalEntity>(this.htmlElement);
         this.margin = {top: 20, right: 30, bottom: 20, left: 150};
         this.width = this.htmlElement.offsetWidth - this.margin.left - this.margin.right;
         this.height = this.graphHeight - this.margin.top - this.margin.bottom;

@@ -5,7 +5,6 @@ import {NgModule} from "@angular/core";
 import {UserModule} from "../UserModule/user.module";
 import {VisualizeComponent} from "./visualize/visualize.component";
 import {IndividualGraph} from "./visualize/individual-graph.component";
-import {FactHistoryGraph} from "./visualize/fact-graph.component";
 import {IndividualValueDialog} from "./visualize/individual-value.dialog";
 import {VisualizeService} from "./visualize/visualize.service";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
@@ -35,7 +34,6 @@ import { MaterialModule } from "../MaterialModule/material.module";
     declarations: [
         VisualizeComponent,
         IndividualGraph,
-        FactHistoryGraph,
         IndividualValueDialog,
         CodeMirrorComponent,
         QueryComponent,

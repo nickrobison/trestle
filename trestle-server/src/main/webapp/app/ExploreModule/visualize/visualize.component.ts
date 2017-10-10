@@ -1,15 +1,16 @@
 /**
  * Created by nrobison on 3/7/17.
  */
-import {Component, OnInit, ViewContainerRef, ViewEncapsulation} from "@angular/core";
-import {VisualizeService, TrestleIndividual, TrestleFact} from "./visualize.service";
-import {FormControl} from "@angular/forms";
-import {Observable} from "rxjs";
-import {IndividualValueDialog} from "./individual-value.dialog";
-import {Moment} from "moment";
+import { Component, OnInit, ViewContainerRef, ViewEncapsulation } from "@angular/core";
+import { VisualizeService, TrestleIndividual, TrestleFact } from "./visualize.service";
+import { FormControl } from "@angular/forms";
+import { Observable } from "rxjs";
+import { IndividualValueDialog } from "./individual-value.dialog";
+import { Moment } from "moment";
 import moment = require("moment");
-import {ITrestleMapSource} from "../../UIModule/map/trestle-map.component";
+import { ITrestleMapSource } from "../../UIModule/map/trestle-map.component";
 import { MatDialog, MatDialogConfig, MatDialogRef } from "@angular/material";
+import { IIndividualHistory } from "../../UIModule/history-graph/history-graph.component";
 
 @Component({
     selector: "visualize",
@@ -23,11 +24,14 @@ export class VisualizeComponent implements OnInit {
     public options: Observable<string[]>;
     public individual: TrestleIndividual;
     public mapIndividual: ITrestleMapSource;
+    public individualFactHistory: IIndividualHistory;
     public minTime: Moment;
     public maxTime: Moment;
     private dialogRef: MatDialogRef<IndividualValueDialog>;
 
-    constructor(private vs: VisualizeService, private dialog: MatDialog, private viewContainerRef: ViewContainerRef) {
+    constructor(private vs: VisualizeService,
+                private dialog: MatDialog,
+                private viewContainerRef: ViewContainerRef) {
     }
 
     public ngOnInit(): void {
@@ -37,7 +41,7 @@ export class VisualizeComponent implements OnInit {
             .valueChanges
             .debounceTime(400)
             .distinctUntilChanged()
-            .switchMap(name => this.vs.searchForIndividual(name));
+            .switchMap((name) => this.vs.searchForIndividual(name));
     }
 
     public onSubmit() {
@@ -46,6 +50,21 @@ export class VisualizeComponent implements OnInit {
             .subscribe((results: TrestleIndividual) => {
                 console.debug("has individual", results);
                 this.individual = results;
+
+                // Build fact history
+                this.individualFactHistory = {
+                    entities: results
+                        .getFacts()
+                        .filter((fact) => fact.getDatabaseTemporal().isContinuing())
+                        .map((fact) => {
+                            return {
+                                label: fact.getName(),
+                                start: fact.getValidTemporal().getFrom().toDate(),
+                                end: fact.getValidTemporal().getTo().toDate(),
+                                value: fact.getValue()
+                            };
+                        })
+                };
                 this.mapIndividual = {
                     id: results.getID(),
                     data: {
@@ -76,7 +95,7 @@ export class VisualizeComponent implements OnInit {
         const strings = individualName.split("#");
         return strings[1];
     }
-    
+
     public selectedOption(value: any) {
         console.debug("Clicked", value);
     }
