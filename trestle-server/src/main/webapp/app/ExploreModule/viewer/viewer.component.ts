@@ -8,8 +8,13 @@ import { animate, style, transition, trigger } from "@angular/animations";
 import * as Moment from "moment";
 import LngLatBounds = mapboxgl.LngLatBounds;
 import moment = require("moment");
-import { VisualizeService } from "../visualize/visualize.service";
+import {
+    TrestleEventType, TrestleIndividual, TrestleRelationType,
+    VisualizeService
+} from "../visualize/visualize.service";
 import { MatSliderChange } from "@angular/material";
+import { IIndividualHistory } from "../../UIModule/history-graph/history-graph.component";
+import { Observable } from "rxjs/Observable";
 
 enum DatasetState {
     UNLOADED,
@@ -43,6 +48,8 @@ export class DatsetViewerComponent implements OnInit {
     public minTime = moment("1990-01-01");
     public maxTime = moment("2016-01-01");
     public sliderValue = 2013;
+    public selectedIndividual: TrestleIndividual;
+    public objectHistory: IIndividualHistory;
     private mapBounds: LngLatBounds;
     private mapLocked = false;
 
@@ -50,6 +57,9 @@ export class DatsetViewerComponent implements OnInit {
     }
 
     public ngOnInit(): void {
+        this.objectHistory = {
+            entities: []
+        };
         this.mapService.getAvailableDatasets()
             .subscribe((results: string[]) => {
                 results.forEach((ds) => {
@@ -111,9 +121,51 @@ export class DatsetViewerComponent implements OnInit {
         console.debug("Clicked:", event);
         this.vs.getIndividualAttributes(event)
             .subscribe((data) => {
-                console.log("Has individual", data);
+                console.debug("Has individual", data);
+                this.buildHistoryGraph(data);
             });
     };
+
+    private buildHistoryGraph(individual: TrestleIndividual): void {
+        console.debug("has events", individual.getEvents());
+        //    Get the split/merged events
+        const splitMerge = individual
+            .getRelations()
+            .filter((relation) => (relation.getType() === "MERGED_FROM")
+                || (relation.getType() === "MERGED_INTO")
+                || (relation.getType() === "SPLIT_FROM")
+                || (relation.getType() === "SPLIT_INTO"));
+        const history: IIndividualHistory = {
+            entities: []
+        };
+        history.entities.push({
+            label: individual.getID(),
+            start: individual.getTemporal().getFrom().toDate(),
+            end: individual.getTemporal().getTo().toDate(),
+            value: individual.getID()
+        });
+        // const obsArray: Observable<TrestleIndividual>[] = [];
+        //    For all the other individuals, add them as well
+        console.debug("Has some individuals:", splitMerge.length);
+        const obsArray = splitMerge.map((relation) => {
+            console.debug("Getting attributes for:", relation.getObject());
+            return this.vs.getIndividualAttributes(relation.getObject());
+        });
+        Observable.forkJoin(obsArray)
+            .subscribe((objects) => {
+                console.debug("Have all observables:", objects);
+                objects.forEach((object) => {
+                    history.entities.push({
+                        label: object.getID(),
+                        start: object.getTemporal().getFrom().toDate(),
+                        end: object.getTemporal().getTo().toDate(),
+                        value: object.getID()
+                    });
+                });
+                console.debug("History", history);
+                this.objectHistory = history;
+            });
+    }
 
     private needNewData(newBounds: mapboxgl.LngLatBounds) {
         console.debug("Need new data", newBounds, "old Data", this.mapBounds);

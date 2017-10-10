@@ -81,6 +81,10 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
         return this.relations;
     }
 
+    public getEvents(): TrestleEvent[] {
+        return this.events;
+    }
+
     public asInterface(): ITrestleIndividual {
         const returnValue: ITrestleIndividual = {
             individualID: this.id,
@@ -161,7 +165,7 @@ export class TrestleFact implements IInterfacable<ITrestleFact> {
 export class TrestleRelation implements IInterfacable<ITrestleRelation> {
     private subject: string;
     private object: string;
-    private type: TrestleRelationType;
+    private type: string;
 
     constructor(relation: ITrestleRelation) {
         this.subject = relation.subject;
@@ -177,7 +181,7 @@ export class TrestleRelation implements IInterfacable<ITrestleRelation> {
         return this.object;
     }
 
-    public getType(): TrestleRelationType {
+    public getType(): string {
         return this.type;
     }
 
@@ -290,7 +294,7 @@ export interface ITrestleTemporal {
 export interface ITrestleRelation {
     subject: string;
     object: string;
-    relation: TrestleRelationType;
+    relation: string;
 }
 
 export enum TrestleRelationType {
@@ -308,7 +312,11 @@ export enum TrestleRelationType {
     BEGINS,
     DURING,
     ENDS,
-    TEMPORAL_OVERLAPS
+    TEMPORAL_OVERLAPS,
+    SPLIT_INTO,
+    SPLIT_FROM,
+    MERGED_INTO,
+    MERGED_FROM
 }
 
 export interface ITrestleEvent {
@@ -347,7 +355,7 @@ export class VisualizeService {
     }
 
     public getIndividualAttributes(name: string): Observable<TrestleIndividual> {
-        let params = new URLSearchParams();
+        const params = new URLSearchParams();
         params.set("name", name);
         return this.trestleHttp.get("/visualize/retrieve", {
             search: params

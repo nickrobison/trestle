@@ -54,7 +54,6 @@ export class HistoryGraphComponent implements AfterViewInit, OnChanges {
     constructor() {}
 
     public ngAfterViewInit(): void {
-        console.debug("Fact History view-init");
         this.htmlElement = this.element.nativeElement;
         this.setupD3();
     }
@@ -70,7 +69,7 @@ export class HistoryGraphComponent implements AfterViewInit, OnChanges {
         //    Build the domain values
         console.debug("Building with data:", this.data);
         const entityNames = this.data.entities.map((d) => d.label);
-        // const entityNames = this.data.getFacts().map((d) => d.getName());
+        console.debug("Names:", entityNames);
         const y = scaleBand()
             .range([this.height, 0])
             .domain(entityNames);
