@@ -10,12 +10,17 @@ import {ISO_8601, Moment} from "moment";
 import {GeometryObject} from "geojson";
 var parse = require("wellknown");
 
+export interface IInterfacable<I> {
+    asInterface(): I;
+    asInterface(): I;
+}
 
-export class TrestleIndividual {
+export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
 
     private id: string;
     private facts: Map<string, TrestleFact> = new Map();
-    private relations: Array<TrestleRelation> = [];
+    private relations: TrestleRelation[] = [];
+    private events: TrestleEvent[] = [];
     private existsTemporal: TrestleTemporal;
 
     constructor(individual: ITrestleIndividual) {
@@ -29,6 +34,7 @@ export class TrestleIndividual {
         individual.relations.forEach((relation) => {
             this.relations.push(new TrestleRelation(relation));
         });
+        individual.events.forEach((event) => this.events.push(new TrestleEvent(event)));
     }
 
     public getID(): string {
@@ -54,7 +60,7 @@ export class TrestleIndividual {
         return returnValue;
     }
 
-    public getFacts(): Array<TrestleFact> {
+    public getFacts(): TrestleFact[] {
         const facts: TrestleFact[] = [];
         this.facts.forEach((value, key) => {
             facts.push(value);
@@ -76,23 +82,25 @@ export class TrestleIndividual {
     }
 
     public asInterface(): ITrestleIndividual {
-        let returnValue: ITrestleIndividual = {
+        const returnValue: ITrestleIndividual = {
             individualID: this.id,
             individualTemporal: this.existsTemporal.asInterface(),
             facts: [],
-            relations: []
+            relations: [],
+            events: []
         };
         this.facts.forEach((value, key) => {
             returnValue.facts.push(value.asInterface());
         });
-        this.relations.forEach(value => {
+        this.relations.forEach((value) => {
             returnValue.relations.push(value.asInterface());
         });
+        this.events.forEach((event) => returnValue.events.push(event.asInterface()));
         return returnValue;
     }
 }
 
-export class TrestleFact {
+export class TrestleFact implements IInterfacable<ITrestleFact> {
     private identifier: string;
     private name: string;
     private type: string;
@@ -135,7 +143,7 @@ export class TrestleFact {
     }
 
     public isSpatial(): boolean {
-        return this.name == "asWKT";
+        return this.name === "asWKT";
     }
 
     public asInterface(): ITrestleFact {
@@ -150,7 +158,7 @@ export class TrestleFact {
     }
 }
 
-export class TrestleRelation {
+export class TrestleRelation implements IInterfacable<ITrestleRelation> {
     private subject: string;
     private object: string;
     private type: TrestleRelationType;
@@ -178,11 +186,43 @@ export class TrestleRelation {
             subject: this.subject,
             object: this.object,
             relation: this.type
-        }
+        };
     }
 }
 
-export class TrestleTemporal {
+export class TrestleEvent implements IInterfacable<ITrestleEvent> {
+    private individual: string;
+    private type: TrestleEventType;
+    private temporal: Moment;
+
+    constructor(event: ITrestleEvent) {
+        this.individual = event.individual;
+        this.type = event.type;
+        this.temporal = moment(event.temporal, ISO_8601);
+    }
+
+    public getIndividual() {
+        return this.individual;
+    }
+
+    public getType() {
+        return this.type;
+    }
+
+    public getTemporal() {
+        return this.temporal;
+    }
+
+    public asInterface() {
+        return {
+            individual: this.individual,
+            type: this.type,
+            temporal: this.temporal.toISOString()
+        };
+    }
+}
+
+export class TrestleTemporal implements IInterfacable<ITrestleTemporal> {
     private id: string;
     private from: Moment;
     private to?: Moment;
@@ -207,12 +247,12 @@ export class TrestleTemporal {
         return this.to;
     }
 
-    isContinuing(): boolean {
+    public isContinuing(): boolean {
         return this.to == null || !this.to.isValid();
     }
 
     public asInterface(): ITrestleTemporal {
-        let returnValue: ITrestleTemporal = {
+        const returnValue: ITrestleTemporal = {
             validID: this.id,
             validFrom: this.from.toDate()
         };
@@ -227,12 +267,13 @@ export class TrestleTemporal {
 export interface ITrestleIndividual {
     individualID: string;
     individualTemporal: ITrestleTemporal;
-    facts: Array<ITrestleFact>;
-    relations: Array<ITrestleRelation>;
+    facts: ITrestleFact[];
+    relations: ITrestleRelation[];
+    events: ITrestleEvent[];
 }
 
 export interface ITrestleFact {
-    identifier: string
+    identifier: string;
     name: string;
     type: string;
     value: string;
@@ -268,6 +309,20 @@ export enum TrestleRelationType {
     DURING,
     ENDS,
     TEMPORAL_OVERLAPS
+}
+
+export interface ITrestleEvent {
+    individual: string;
+    type: TrestleEventType;
+    temporal: string;
+}
+
+export enum TrestleEventType {
+    CREATED,
+    DESTROYED,
+    BECAME,
+    SPLIT,
+    MERGED
 }
 
 @Injectable()

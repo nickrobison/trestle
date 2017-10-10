@@ -1,12 +1,19 @@
 /**
  * Created by nrobison on 4/19/17.
  */
-import {AfterViewInit, Component, ElementRef, Input, OnChanges, SimpleChange, ViewChild} from "@angular/core";
-import {Selection, select} from "d3-selection";
-import {Moment} from "moment";
-import {scaleBand, scaleOrdinal, ScaleTime, scaleTime, schemeCategory20} from "d3-scale";
-import {axisBottom, axisLeft} from "d3-axis";
-import {ITrestleFact, ITrestleIndividual, TrestleFact, TrestleIndividual} from "./visualize.service";
+import {
+    AfterViewInit,
+    Component,
+    ElementRef,
+    Input,
+    OnChanges,
+    SimpleChange,
+    ViewChild
+} from "@angular/core";
+import { select, Selection } from "d3-selection";
+import { scaleBand, scaleOrdinal, ScaleTime, scaleTime, schemeCategory20 } from "d3-scale";
+import { axisBottom, axisLeft } from "d3-axis";
+import { TrestleFact, TrestleIndividual } from "./visualize.service";
 
 interface ID3Margin {
     top: number;
@@ -22,12 +29,11 @@ interface ID3Margin {
 })
 
 export class FactHistoryGraph implements AfterViewInit, OnChanges {
-    @ViewChild("graph") element: ElementRef;
-    // @Input("data") dataInput: TrestleIndividual;
-    @Input() data: TrestleIndividual;
-    @Input() graphHeight: number;
-    @Input() minTime: Date;
-    @Input() maxTime: Date;
+    @ViewChild("graph") public element: ElementRef;
+    @Input() public data: TrestleIndividual;
+    @Input() public graphHeight: number;
+    @Input() public minTime: Date;
+    @Input() public maxTime: Date;
     private htmlElement: HTMLElement;
     private host: Selection<HTMLElement, any, any, any>;
     private svg: Selection<any, any, any, any>;
@@ -40,14 +46,14 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
 
     }
 
-    ngAfterViewInit(): void {
+    public ngAfterViewInit(): void {
         console.debug("Fact History view-init");
         this.htmlElement = this.element.nativeElement;
         this.setupD3();
     }
 
-    ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
-        let dataChange = changes["data"];
+    public ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
+        const dataChange = changes["data"];
         if (dataChange != null && !dataChange.isFirstChange()) {
             this.plotData();
         }
@@ -56,18 +62,18 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
     private plotData(): void {
         //    Build the domain values
         console.debug("Building with data:", this.data);
-        let factNames = this.data.getFacts().map((d) => d.getName());
-        let y = scaleBand()
+        const factNames = this.data.getFacts().map((d) => d.getName());
+        const y = scaleBand()
             .range([this.height, 0])
             .domain(factNames);
         console.debug("Y values", y.range());
         console.debug("Y values", y.domain());
 
-        let z = scaleOrdinal(schemeCategory20)
+        const z = scaleOrdinal(schemeCategory20)
             .domain(factNames);
 
         // Build the lane lines
-        let laneLines = this.svg.selectAll(".laneLine")
+        const laneLines = this.svg.selectAll(".laneLine")
             .data(this.data.getFacts().map(fact => fact.getName()))
             .enter().append("line")
             .attr("class", "laneLine")
@@ -77,14 +83,19 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
             .attr("y2", (d) => y(d));
 
         //    Build the Y-Axis
-        let yAxis = this.svg
+        const yAxis = this.svg
             .append("g")
             .attr("class", "axis axis-y")
             .call(axisLeft(y));
 
         //    Add the data
-        let mainItems = this.svg.selectAll(".fact")
-            .data(this.data.getFacts().filter((f: TrestleFact) => f.getDatabaseTemporal().isContinuing()), (d: TrestleFact) => d.getID());
+        const mainItems = this.svg.selectAll(".fact")
+            .data(this.data
+                .getFacts()
+                .filter((f: TrestleFact) => f
+                    .getDatabaseTemporal()
+                    .isContinuing()),
+                (d: TrestleFact) => d.getID());
 
         mainItems
             .enter()
@@ -99,7 +110,7 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
             .merge(mainItems);
 
         // Labels
-        let mainLabels = this.svg.selectAll(".mainLabels")
+        const mainLabels = this.svg.selectAll(".mainLabels")
             .data(this.data.getFacts().filter((f) => f.getDatabaseTemporal().isContinuing()), (d: TrestleFact) => d.getID());
 
         mainLabels
@@ -108,9 +119,9 @@ export class FactHistoryGraph implements AfterViewInit, OnChanges {
             .text((d: TrestleFact) => this.parseValue(d.getValue()))
             .attr("class", "mainLabels")
             .attr("x", (d: TrestleFact) => {
-                let end = this.maybeDate(d.getValidTemporal().getTo().toDate());
-                let start = this.maybeDate(d.getValidTemporal().getFrom().toDate());
-                let width = this.x(end) - this.x(start);
+                const end = this.maybeDate(d.getValidTemporal().getTo().toDate());
+                const start = this.maybeDate(d.getValidTemporal().getFrom().toDate());
+                const width = this.x(end) - this.x(start);
                 return this.x(start) + width / 2;
             })
             .attr("y", (d: TrestleFact) => y(d.getName()) + y.bandwidth() - 5)

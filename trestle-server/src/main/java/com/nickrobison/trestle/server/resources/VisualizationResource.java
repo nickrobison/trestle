@@ -45,9 +45,9 @@ import static javax.ws.rs.core.Response.ok;
 public class VisualizationResource {
 
     private static final Logger logger = LoggerFactory.getLogger(VisualizationResource.class);
-    private static final DateTimeFormatter LocalDateTimeToJavascriptFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
     private static final GeoJSONReader reader = new GeoJSONReader();
     private static final ObjectMapper mapper = new ObjectMapper();
+    private final DateTimeFormatter LocalDateTimeToJavascriptFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
     private final TrestleReasoner reasoner;
 //    private final ObjectMapper mapper;
 
@@ -78,6 +78,7 @@ public class VisualizationResource {
         final ObjectNode individualNode = mapper.createObjectNode();
         final ArrayNode factArrayNode = mapper.createArrayNode();
         final ArrayNode relationArrayNode = mapper.createArrayNode();
+        final ArrayNode eventArrayNode = mapper.createArrayNode();
         individualNode.put("individualID", trestleIndividual.getIndividualID());
         trestleIndividual.getFacts()
                 .forEach(fact -> {
@@ -124,6 +125,16 @@ public class VisualizationResource {
            relationArrayNode.add(relationNode);
         });
         individualNode.set("relations", relationArrayNode);
+
+//        Events
+        trestleIndividual.getEvents().forEach(event -> {
+            final ObjectNode eventNode = mapper.createObjectNode();
+            eventNode.put("individual", event.getIndividual().getIRI().toString());
+            eventNode.put("type", event.getType().toString());
+            eventNode.put("temporal", event.getAtTemporal().toString());
+            eventArrayNode.add(eventNode);
+        });
+        individualNode.set("events", eventArrayNode);
 //        Now the individual temporal
         final ObjectNode individualTemporal = mapper.createObjectNode();
         final TemporalObject individualTemporalObject = trestleIndividual.getExistsTemporal();
