@@ -137,7 +137,7 @@ export class DatsetViewerComponent implements OnInit {
             entities: []
         };
         history.entities.push({
-            label: individual.getID(),
+            label: this.filterID(individual.getID()),
             start: individual.getTemporal().getFrom().toDate(),
             end: individual.getTemporal().getTo().toDate(),
             value: individual.getID()
@@ -153,7 +153,7 @@ export class DatsetViewerComponent implements OnInit {
                 console.debug("Have all observables:", objects);
                 objects.forEach((object) => {
                     history.entities.push({
-                        label: object.getID(),
+                        label: this.filterID(object.getID()),
                         start: object.getTemporal().getFrom().toDate(),
                         end: object.getTemporal().getTo().toDate(),
                         value: object.getID()
@@ -185,5 +185,11 @@ export class DatsetViewerComponent implements OnInit {
             console.debug("Moved east/west, so true");
         }
         return false;
+    }
+
+    private filterID(id: string): string {
+        const strings = id.split("#");
+        const idStrings = strings[1].split(":");
+        return idStrings[0] + ":" + idStrings[1];
     }
 }
