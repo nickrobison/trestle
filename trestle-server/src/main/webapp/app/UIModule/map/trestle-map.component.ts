@@ -2,6 +2,7 @@
  * Created by nrobison on 6/11/17.
  */
 import mapboxgl = require("mapbox-gl");
+// import mapboxgl from "mapbox-gl/dist/mapbox-gl";
 import {
     Component, EventEmitter, Input, OnChanges, OnInit, Output,
     SimpleChange

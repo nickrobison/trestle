@@ -23,6 +23,9 @@ var prodOptions = {
         sourceMapFilename: "[file].map",
         chunkFilename: "[name].[chunkhash].chunk.js"
     },
+    module: {
+        noParse: /(mapbox-gl)\.js$/
+    },
     plugins: [
         new ExtractTextPlugin("[name].css"),
         new DefinePlugin({
@@ -41,6 +44,11 @@ var prodOptions = {
                 output: {
                     comments: false,
                     beautify: false  // debug true
+                },
+                // If we optimize comparisons, mapbox will fail.
+                // https://github.com/mapbox/mapbox-gl-js/issues/4359#issuecomment-288001933
+                compress: {
+                    comparisons: false
                 }
             }
         })
