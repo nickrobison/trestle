@@ -1,6 +1,7 @@
 /**
  * Created by nrobison on 1/20/17.
  */
+const ngtools = require("@ngtools/webpack");
 const webpackMerge = require("webpack-merge");
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const OptimizeJsPlugin = require('optimize-js-plugin');
@@ -9,24 +10,35 @@ const DefinePlugin = require('webpack/lib/DefinePlugin');
 const commonConfig = require("./webpack.common");
 const helpers = require("./helpers");
 
+const AOT = process.env.AOT;
+
 var prodOptions = {
     entry: {
         "polyfills": "./src/main/webapp/polyfills.ts",
         "vendor": "./src/main/webapp/vendor.ts",
-        "app": "./src/main/webapp/bootstrap.ts"
+        "app": AOT? "./src/main/webapp/bootstrap.aot.ts" : "./src/main/webapp/bootstrap.ts"
     },
     devtool: "source-map",
     output: {
         path: helpers.root("src/main/resources/build"),
-        publicPath: "/static/",
         filename: "[name].[chunkhash].bundle.js",
         sourceMapFilename: "[file].map",
         chunkFilename: "[name].[chunkhash].chunk.js"
     },
     module: {
-        noParse: /(mapbox-gl)\.js$/
+        noParse: /(mapbox-gl)\.js$/,
+        loaders: [
+            {
+                test: /\.tsx?$/,
+                loader: "@ngtools/webpack"
+            }
+        ]
     },
     plugins: [
+        new ngtools.AotPlugin({
+            tsConfigPath: helpers.root("tsconfig.json"),
+            entryModule: helpers.root("src/main/webapp/app/app.module#AppModule")
+        }),
         new ExtractTextPlugin("[name].css"),
         new DefinePlugin({
             ENV: JSON.stringify("production")

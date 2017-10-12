@@ -12,30 +12,37 @@ var options = {
     resolve: {
         extensions: [".webpack.js", ".web.js", ".ts", ".tsx", ".js"]
     },
+    output: {
+        publicPath: "/static/",
+    },
     module: {
         loaders: [
-            {
-                test: /\.tsx?$/,
-                loaders: ["awesome-typescript-loader", "angular2-template-loader?keepUrl=true", "angular2-router-loader"],
-                exclude: [/\.(spec|e2e)\.ts$/]
-            },
             {
                 test: /\.html$/,
                 loader: "html-loader"
             },
             {
                 test: /\.(jpe?g|png|gif)$/i,
-                loaders: [
-                    "file-loader?hash=sha512&digest=hex&name=[hash].[ext]",
+                use: [
+                    {
+                        loader: "file-loader",
+                        options: {
+                            hash: "sha512",
+                            digest: "hex",
+                            name: "[hash].[ext]"
+                        }
+                    },
                     {
                         loader: "image-webpack-loader",
-                        query: {
+                        options: {
                             bypassOnDebug: true,
-                            progressive: true,
-                            optimizationLevel: 7,
-                            optipng: {
+                            optpng: {
                                 optimizationLevel: 7
+                            },
+                            mozjpeg: {
+                                progressive: true
                             }
+
                         }
                     }
                 ]

@@ -25,6 +25,5 @@
   "angularCompilerOptions": {
     "genDir": "aot",
     "skipMetadataEmit" : true
-//    "entryModule": "src/main/webapp/app/app.module#AppModule"
   }
 }

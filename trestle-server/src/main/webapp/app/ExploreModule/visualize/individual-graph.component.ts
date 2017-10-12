@@ -288,7 +288,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         }
     }
 
-    private changeGraphMembers(event: MatSlideToggleChange): void {
+    public changeGraphMembers(event: MatSlideToggleChange): void {
         if (event.source.id === this.factToggleName) {
             console.debug("Graph facts?", event.checked);
             this.graphFacts = event.checked;

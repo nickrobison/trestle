@@ -126,6 +126,15 @@
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/@mapbox/whoots-js/-/whoots-js-3.0.0.tgz#c1de4293081424da3ac30c23afa850af1019bb54"
 
+"@ngtools/webpack@^1.7.3":
+  version "1.7.3"
+  resolved "https://registry.yarnpkg.com/@ngtools/webpack/-/webpack-1.7.3.tgz#20d5bcca0d902e1f3e5accf4922f482539c93a3b"
+  dependencies:
+    enhanced-resolve "^3.1.0"
+    loader-utils "^1.0.2"
+    magic-string "^0.22.3"
+    source-map "^0.5.6"
+
 "@types/chai-as-promised@^0.0.31":
   version "0.0.31"
   resolved "https://registry.yarnpkg.com/@types/chai-as-promised/-/chai-as-promised-0.0.31.tgz#e1e905ea6d971dafcad36560c8f1f7a7d690c5e5"
@@ -4057,6 +4066,12 @@ magic-string@^0.14.0:
 magic-string@^0.16.0:
   version "0.16.0"
   resolved "https://registry.yarnpkg.com/magic-string/-/magic-string-0.16.0.tgz#970ebb0da7193301285fb1aa650f39bdd81eb45a"
+  dependencies:
+    vlq "^0.2.1"
+
+magic-string@^0.22.3:
+  version "0.22.4"
+  resolved "https://registry.yarnpkg.com/magic-string/-/magic-string-0.22.4.tgz#31039b4e40366395618c1d6cf8193c53917475ff"
   dependencies:
     vlq "^0.2.1"
 

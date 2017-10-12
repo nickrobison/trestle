@@ -27,9 +27,7 @@ import { MaterialModule } from "../MaterialModule/material.module";
         UserService,
         {
             provide: TrestleHttp,
-            useFactory: (backend: Http,
-                         defaultOptions: RequestOptions,
-                         router: Router) => new TrestleHttp(backend, defaultOptions, router),
+            useFactory: TrestleHttp.factory,
             deps: [Http, RequestOptions, Router]
         }
 

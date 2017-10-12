@@ -48,8 +48,8 @@ export class DatsetViewerComponent implements OnInit {
     public sliderValue = 2013;
     public selectedIndividual: TrestleIndividual;
     public objectHistory: IIndividualHistory;
+    public mapLocked = false;
     private mapBounds: LngLatBounds;
-    private mapLocked = false;
 
     constructor(private mapService: MapService, private vs: VisualizeService) {
     }

@@ -38,6 +38,7 @@
   "devDependencies": {
     "@angular/compiler-cli": "4.4.4",
     "@angular/language-service": "4.4.4",
+    "@ngtools/webpack": "^1.7.3",
     "@types/chai": "3.5.0",
     "@types/chai-as-promised": "^0.0.31",
     "@types/codemirror": "^0.0.38",

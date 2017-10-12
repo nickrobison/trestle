@@ -16,10 +16,18 @@ var devOptions = {
     devtool: "source-map",
     output: {
         path: helpers.root("target/classes/build"),
-        publicPath: "/static/",
         filename: "[name].bundle.js",
         sourceMapFilename: "[name].map",
         chunkFilename: "[id].chunk.js"
+    },
+    module: {
+        loaders: [
+            {
+                test: /\.tsx?$/,
+                loaders: ["awesome-typescript-loader", "angular2-template-loader?keepUrl=true", "angular2-router-loader"],
+                exclude: [/\.(spec|e2e)\.ts$/]
+            },
+        ]
     },
     plugins: [
         new ExtractTextPlugin("[name].css"),
