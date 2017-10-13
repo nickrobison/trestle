@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -34,16 +33,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Created by nrobison on 5/31/17.
  */
-var protractor_1 = require("protractor");
+import { element, by, browser } from 'protractor';
 var LoginPageObject = (function () {
     function LoginPageObject() {
-        this.header = protractor_1.element(protractor_1.by.css("md-card-header"));
-        this.usernameField = protractor_1.element(protractor_1.by.css('input[formControlName="username"]'));
-        this.passwordField = protractor_1.element(protractor_1.by.css("input[formControlName='password']"));
+        this.header = element(by.css("md-card-header"));
+        this.usernameField = element(by.css('input[formControlName="username"]'));
+        this.passwordField = element(by.css("input[formControlName='password']"));
     }
     LoginPageObject.prototype.pageIsValid = function () {
         return __awaiter(this, void 0, void 0, function () {
@@ -65,7 +63,7 @@ var LoginPageObject = (function () {
                 console.log("Logging in", username, password);
                 this.usernameField.sendKeys(username);
                 this.passwordField.sendKeys(password);
-                return [2 /*return*/, protractor_1.browser.sleep(1000)];
+                return [2 /*return*/, browser.sleep(1000)];
             });
         });
     };
@@ -73,10 +71,10 @@ var LoginPageObject = (function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, protractor_1.browser.sleep(1000)];
+                    case 0: return [4 /*yield*/, browser.sleep(1000)];
                     case 1:
                         _a.sent();
-                        return [2 /*return*/, protractor_1.element(protractor_1.by.css("form .ng-valid")).isPresent()];
+                        return [2 /*return*/, element(by.css("form .ng-valid")).isPresent()];
                 }
             });
         });
@@ -87,5 +85,5 @@ var LoginPageObject = (function () {
     };
     return LoginPageObject;
 }());
-exports.LoginPageObject = LoginPageObject;
+export { LoginPageObject };
 //# sourceMappingURL=login.page.js.map

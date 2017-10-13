@@ -48,6 +48,7 @@
     "@types/file-saver": "^0.0.0",
     "@types/geojson": "^1.0.2",
     "@types/hammerjs": "^2.0.34",
+    "@types/mapbox-gl": "^0.39.6",
     "@types/node": "^7.0.0",
     "@types/protractor": "^4.0.0",
     "angular2-router-loader": "^0.3.4",

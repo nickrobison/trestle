@@ -5,8 +5,7 @@ import { Component, OnInit, ViewContainerRef, ViewEncapsulation } from "@angular
 import { FormControl } from "@angular/forms";
 import { Observable } from "rxjs";
 import { IndividualValueDialog } from "./individual-value.dialog";
-import { Moment } from "moment";
-import moment = require("moment");
+import * as moment from "moment";
 import { ITrestleMapSource } from "../../UIModule/map/trestle-map.component";
 import { MatDialog, MatDialogConfig, MatDialogRef } from "@angular/material";
 import { IIndividualHistory } from "../../UIModule/history-graph/history-graph.component";
@@ -27,8 +26,8 @@ export class VisualizeComponent implements OnInit {
     public individual: TrestleIndividual;
     public mapIndividual: ITrestleMapSource;
     public individualFactHistory: IIndividualHistory;
-    public minTime: Moment;
-    public maxTime: Moment;
+    public minTime: moment.Moment;
+    public maxTime: moment.Moment;
     private dialogRef: MatDialogRef<IndividualValueDialog>;
 
     constructor(private vs: VisualizeService,

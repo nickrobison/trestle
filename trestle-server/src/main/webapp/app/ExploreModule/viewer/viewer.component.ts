@@ -5,9 +5,8 @@ import { Component, OnInit } from "@angular/core";
 import { MapService } from "./map.service";
 import { ITrestleMapSource } from "../../UIModule/map/trestle-map.component";
 import { animate, style, transition, trigger } from "@angular/animations";
-import * as Moment from "moment";
+import * as moment from "moment";
 import LngLatBounds = mapboxgl.LngLatBounds;
-import moment = require("moment");
 import { MatSliderChange } from "@angular/material";
 import { IIndividualHistory } from "../../UIModule/history-graph/history-graph.component";
 import { Observable } from "rxjs/Observable";
@@ -74,7 +73,7 @@ export class DatsetViewerComponent implements OnInit {
         console.debug("Loading:", dataset.name);
         dataset.state = DatasetState.LOADING;
         this.mapService.stIntersect(dataset.name,
-            this.mapBounds, Moment()
+            this.mapBounds, moment()
                 .year(this.sliderValue)
                 .startOf("year"))
             .subscribe((data) => {

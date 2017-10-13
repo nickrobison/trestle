@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -34,11 +33,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Created by nrobison on 5/31/17.
  */
-var protractor_1 = require("protractor");
+import { browser, element, by } from "protractor";
 var DashboardPageObject = (function () {
     function DashboardPageObject() {
         this.pages = {
@@ -49,26 +47,26 @@ var DashboardPageObject = (function () {
     DashboardPageObject.prototype.goToLoginPage = function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                return [2 /*return*/, protractor_1.browser.get("/login/")];
+                return [2 /*return*/, browser.get("/login/")];
             });
         });
     };
     DashboardPageObject.prototype.navigateToPage = function (page) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                protractor_1.browser.get("" + this.pages[page]);
-                return [2 /*return*/, protractor_1.browser.sleep(3000)];
+                browser.get("" + this.pages[page]);
+                return [2 /*return*/, browser.sleep(3000)];
             });
         });
     };
     DashboardPageObject.prototype.clickButton = function (button) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                return [2 /*return*/, protractor_1.element(protractor_1.by.id(button)).click()];
+                return [2 /*return*/, element(by.id(button)).click()];
             });
         });
     };
     return DashboardPageObject;
 }());
-exports.DashboardPageObject = DashboardPageObject;
+export { DashboardPageObject };
 //# sourceMappingURL=main.page.js.map

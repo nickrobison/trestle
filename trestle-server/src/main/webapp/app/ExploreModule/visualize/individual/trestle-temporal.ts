@@ -1,6 +1,5 @@
 import { IInterfacable } from "../../interfacable";
-import { ISO_8601, Moment } from "moment";
-import moment = require("moment");
+import * as moment from "moment";
 
 export interface ITrestleTemporal {
     validID: string;
@@ -10,14 +9,14 @@ export interface ITrestleTemporal {
 
 export class TrestleTemporal implements IInterfacable<ITrestleTemporal> {
     private id: string;
-    private from: Moment;
-    private to?: Moment;
+    private from: moment.Moment;
+    private to?: moment.Moment;
 
     constructor(temporal: ITrestleTemporal) {
         this.id = temporal.validID;
-        this.from = moment(temporal.validFrom, ISO_8601);
+        this.from = moment(temporal.validFrom, moment.ISO_8601);
         if (temporal.validTo !== null) {
-            this.to = moment.utc(temporal.validTo, ISO_8601);
+            this.to = moment.utc(temporal.validTo, moment.ISO_8601);
         }
     }
 
@@ -25,11 +24,11 @@ export class TrestleTemporal implements IInterfacable<ITrestleTemporal> {
         return this.id;
     }
 
-    public getFrom(): Moment {
+    public getFrom(): moment.Moment {
         return this.from;
     }
 
-    public getTo(): Moment {
+    public getTo(): moment.Moment {
         return this.to;
     }
 

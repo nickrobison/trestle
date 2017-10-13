@@ -1,6 +1,5 @@
 import { IInterfacable } from "../../interfacable";
-import { ISO_8601, Moment } from "moment";
-import moment = require("moment");
+import * as moment from "moment";
 
 export interface ITrestleEvent {
     individual: string;
@@ -19,12 +18,12 @@ export enum TrestleEventType {
 export class TrestleEvent implements IInterfacable<ITrestleEvent> {
     private individual: string;
     private type: TrestleEventType;
-    private temporal: Moment;
+    private temporal: moment.Moment;
 
     constructor(event: ITrestleEvent) {
         this.individual = event.individual;
         this.type = event.type;
-        this.temporal = moment(event.temporal, ISO_8601);
+        this.temporal = moment(event.temporal, moment.ISO_8601);
     }
 
     public getIndividual() {

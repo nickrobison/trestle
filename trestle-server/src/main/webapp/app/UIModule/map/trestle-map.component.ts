@@ -1,8 +1,9 @@
 /**
  * Created by nrobison on 6/11/17.
  */
-import mapboxgl = require("mapbox-gl");
-// import mapboxgl from "mapbox-gl/dist/mapbox-gl";
+// import mapboxgl = require("mapbox-gl");
+import * as mapboxgl from "mapbox-gl";
+import extent from "@mapbox/geojson-extent";
 import {
     Component, EventEmitter, Input, OnChanges, OnInit, Output,
     SimpleChange
@@ -12,7 +13,6 @@ import {
     Point, Polygon
 } from "geojson";
 import { MapMouseEvent, LngLatBounds } from "mapbox-gl";
-const extent = require("@mapbox/geojson-extent");
 
 export interface ITrestleMapSource {
     id: string;
@@ -38,7 +38,8 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     private mapSources: string[];
 
     constructor() {
-        mapboxgl.accessToken = "pk.eyJ1IjoibnJvYmlzb24iLCJhIjoiY2ozdDd5dmd2MDA3bTMxcW1kdHZrZ3ppMCJ9.YcJMRphQAfmZ0H8X9HnoKA";
+        // FIXME(nrobison): Fix this
+        (mapboxgl as any).accessToken = "pk.eyJ1IjoibnJvYmlzb24iLCJhIjoiY2ozdDd5dmd2MDA3bTMxcW1kdHZrZ3ppMCJ9.YcJMRphQAfmZ0H8X9HnoKA";
     }
 
     public ngOnInit(): void {
@@ -84,7 +85,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                 this.map.scrollZoom.disable();
                 this.map.keyboard.disable();
                 this.map.boxZoom.disable();
-                this.map.doublClickZoom.disable();
+                this.map.doubleClickZoom.disable();
                 this.map.touchZoomRotate.disable();
             } else {
                 this.map.dragPan.enable();
@@ -92,7 +93,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                 this.map.scrollZoom.enable();
                 this.map.keyboard.enable();
                 this.map.boxZoom.enable();
-                this.map.doublClickZoom.enable();
+                this.map.doubleClickZoom.enable();
                 this.map.touchZoomRotate.enable();
             }
         }
@@ -151,7 +152,8 @@ export class TrestleMapComponent implements OnInit, OnChanges {
 
     private layerClick = (e: MapMouseEvent): void => {
         console.debug("Clicked:", e);
-        const features = this.map.queryRenderedFeatures(e.point, {
+        // FIXME(nrobison): Get rid of this type cast.
+        const features: any[] = this.map.queryRenderedFeatures(e.point, {
             layers: this.mapSources.map((val) => val + "-fill")
         });
         // Set the hover filter using either the provided id field, or a default property
@@ -204,7 +206,8 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         // We have to lock the map in order to avoid sending out a notice that the move happened.
         this.lockMap = true;
         if (geom.bbox) {
-            this.map.fitBounds(LngLatBounds.convert(geom.bbox));
+            // FIXME(nrobison): This is garbage. Fix it.
+            this.map.fitBounds(LngLatBounds.convert(geom.bbox as any));
         } else {
             const bbox = extent(geom);
             if (bbox) {
