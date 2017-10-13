@@ -16,7 +16,7 @@ export class UserService {
      * Requires ADMIN permissions
      * @returns {Observable<R>}
      */
-    getUsers(): Observable<Array<ITrestleUser>> {
+    public getUsers(): Observable<Array<ITrestleUser>> {
         return this.trestleHttp.get("/users")
             .map((res: Response) => res.json())
             .catch((error: Error) => Observable.throw(error || "Server Error"));
@@ -28,7 +28,7 @@ export class UserService {
      * @param user - User to create/modify
      * @returns {Observable<R>}
      */
-    modifyUser(user: ITrestleUser): Observable<any> {
+    public modifyUser(user: ITrestleUser): Observable<any> {
         // If the user ID is null, we know it's a new user, so we create a new one, otherwise, modify the old one
         // if (user.id == null) {
             return this.trestleHttp.post("/users", user)

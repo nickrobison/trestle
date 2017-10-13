@@ -51,7 +51,10 @@ export class UsersComponent implements OnInit {
             if (result != null) {
                 switch(result.type) {
                     case UserDialogResponseType.ADD:
-                        this.users.push(result.user);
+                        if (!(this.users.filter(
+                            (aUser) => aUser.id === result.user.id).length > 0)) {
+                            this.users.push(result.user);
+                        }
                         break;
                     case UserDialogResponseType.DELETE:
                         const index = this.users.indexOf(result.user);
