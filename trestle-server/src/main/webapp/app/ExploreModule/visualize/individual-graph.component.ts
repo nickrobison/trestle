@@ -259,7 +259,8 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
                 const factNode = {
                     id: fact.getID(),
                     name: fact.getName(),
-                    valid: fact.getValidTemporal().getTo().toString() == "" && fact.getDatabaseTemporal().getTo().toString() == "",
+                    // FIXME(nrobison): This won't work with times in the far future
+                    valid: fact.getValidTemporal().getTo() === undefined && fact.getDatabaseTemporal().getTo() === undefined,
                     group: NodeType.FACT
                 };
                 this.layout.nodes.push(factNode);

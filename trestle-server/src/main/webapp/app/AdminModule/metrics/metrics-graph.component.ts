@@ -5,12 +5,12 @@ import {
     AfterViewInit, Component, ElementRef, Input, OnChanges, SimpleChange, SimpleChanges,
     ViewChild
 } from "@angular/core";
-import {Selection, select} from "d3-selection";
-import {scaleLinear, scaleOrdinal, scaleTime, ScaleTime, schemeCategory10} from "d3-scale";
-import {curveBasis, line} from "d3-shape";
-import {max, min} from "d3-array";
-import {axisBottom, axisLeft} from "d3-axis";
-import {IMetricsData, IMetricsValue} from "./metrics.service";
+import { Selection, select, BaseType } from "d3-selection";
+import { scaleLinear, scaleOrdinal, scaleTime, ScaleTime, schemeCategory10 } from "d3-scale";
+import { curveBasis, line } from "d3-shape";
+import { max, min } from "d3-array";
+import { axisBottom, axisLeft } from "d3-axis";
+import { IMetricsData, IMetricsValue } from "./metrics.service";
 
 interface ID3Margin {
     top: number;
@@ -26,14 +26,14 @@ interface ID3Margin {
 })
 
 export class MetricsGraph implements AfterViewInit, OnChanges {
-    @ViewChild("container") element: ElementRef;
-    @Input() data: IMetricsData;
-    @Input() minTime: Date;
-    @Input() maxTime: Date;
-    private graphData: Array<IMetricsData> = [];
+    @ViewChild("container") private element: ElementRef;
+    @Input() public data: IMetricsData;
+    @Input() public minTime: Date;
+    @Input() public maxTime: Date;
+    private graphData: IMetricsData[] = [];
     private htmlElement: HTMLElement;
-    private host: Selection<any, any, any, any>;
-    private svg: Selection<any, any, any, any>;
+    private host: Selection<HTMLElement, IMetricsData, null, undefined>;
+    private svg: Selection<BaseType, IMetricsData, null, undefined>;
     private width: number;
     private height: number;
     private margin: ID3Margin;
@@ -43,18 +43,20 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
     constructor() {
     }
 
-    ngAfterViewInit(): void {
+    public ngAfterViewInit(): void {
         console.debug("Graph view-init");
         this.htmlElement = this.element.nativeElement;
         this.setupD3();
 
     }
 
-    ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
-        let dataChange = changes["data"];
-        if (dataChange != null && !dataChange.isFirstChange() && (dataChange.currentValue !== dataChange.previousValue)) {
+    public ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
+        const dataChange = changes["data"];
+        if (dataChange != null
+            && !dataChange.isFirstChange()
+            && (dataChange.currentValue !== dataChange.previousValue)) {
             console.debug("Updated, plotting");
-            let currentValue: IMetricsData = changes["data"].currentValue;
+            const currentValue: IMetricsData = changes["data"].currentValue;
             this.graphData.push(currentValue);
             console.debug("Adding as visible:", currentValue.metric);
             this.visible.set(currentValue.metric, true);
@@ -62,9 +64,9 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
         }
     }
 
-    getVisibleMetrics(): Array<string> {
-        let metrics = Array<string>();
-        this.visible.forEach((value, key, map) => {
+    public getVisibleMetrics(): string[] {
+        const metrics = Array<string>();
+        this.visible.forEach((value, key) => {
             if (value) {
                 metrics.push(key);
             }
@@ -73,7 +75,7 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
     }
 
     private setupD3(): void {
-        this.host = select(this.htmlElement);
+        this.host = select<HTMLElement, IMetricsData>(this.htmlElement);
         this.margin = {top: 20, right: 200, bottom: 20, left: 70};
         this.width = this.htmlElement.offsetWidth - this.margin.left - this.margin.right;
         this.height = 500 - this.margin.top - this.margin.bottom;
@@ -100,18 +102,22 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
 
     private plotData(): void {
 
-        let y = scaleLinear().range([this.height, 0]);
-        let z = scaleOrdinal(schemeCategory10);
+        const y = scaleLinear().range([this.height, 0]);
+        const z = scaleOrdinal(schemeCategory10);
 
-        let metricsLine = line()
+        const metricsLine = line()
             .curve(curveBasis)
             .x((d: any) => this.x(d.timestamp))
             .y((d: any) => y(d.value));
 
-        //Build domain values
+        // Build domain values
         y.domain([
-            min(this.graphData, (d: IMetricsData) => min(d.values, (d: IMetricsValue) => d.value)),
-            max(this.graphData, (d: IMetricsData) => max(d.values, (d: IMetricsValue) => d.value))
+            (min(this.graphData,
+                (d) => min(d.values,
+                    (d) => d.value) || 0)  || 0),
+            (max(this.graphData,
+                (d) => max(d.values,
+                    (mv) => mv.value) || 0) || 0)
         ]);
 
         z.domain(this.graphData.map((d) => d.metric));
@@ -128,7 +134,7 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
             .attr("fill", "#000")
             .text("Value");
 
-        let metric = this.svg.selectAll(".metric")
+        const metric = this.svg.selectAll(".metric")
             .data(this.graphData)
             .enter().append("g")
             .attr("class", "metric");
@@ -141,14 +147,17 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
             // .attr("data-legend", (d) => d.metric)
             .style("stroke", (d) => z(d.metric));
 
-    //    Add the legend
-        let legend = this.svg.selectAll(".legend")
+        //    Add the legend
+        const legend = this.svg.selectAll(".legend")
             .data(z.domain())
             .enter()
             .append("g")
             .attr("class", "legend")
             .attr("id", (d) => "legend-" + d.replace(/\./g, "-"))
-            .attr("transform", (d, i) => "translate(" + (this.width) + "," + (i * ((this.width / 100) * 2) + 15) + ")")
+            .attr("transform",
+                (d, i) => "translate("
+                    + (this.width) + ","
+                    + (i * ((this.width / 100) * 2) + 15) + ")")
             .on("click", this.legendClickHandler);
 
         legend
@@ -171,7 +180,7 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
     private legendClickHandler = (d: string): void => {
         console.debug("Clicked", d);
         console.debug("Visible", this.visible);
-        let isVisible = this.visible.get(d);
+        const isVisible = this.visible.get(d);
         console.debug("Metric: " + d + " is visible?", isVisible);
         if (isVisible) {
             console.debug("Going out");
@@ -196,7 +205,7 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
         } else {
             console.debug("Coming back");
             this.svg.selectAll("#" + d.replace(/\./g, "-"))
-                // .style("display", "block")
+            // .style("display", "block")
                 .transition()
                 .duration(1000)
                 .style("opacity", 1);

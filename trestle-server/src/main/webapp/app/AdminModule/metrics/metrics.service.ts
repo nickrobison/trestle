@@ -1,10 +1,10 @@
 /**
  * Created by nrobison on 3/24/17.
  */
-import {Injectable} from "@angular/core";
-import {Observable} from "rxjs";
-import {Response, ResponseContentType, URLSearchParams} from "@angular/http";
-import {TrestleHttp} from "../../UserModule/trestle-http.provider";
+import { Injectable } from "@angular/core";
+import { Observable } from "rxjs";
+import { Response, ResponseContentType, URLSearchParams } from "@angular/http";
+import { TrestleHttp } from "../../UserModule/trestle-http.provider";
 
 export interface ITrestleMetricsHeader {
     upTime: number;
@@ -14,7 +14,7 @@ export interface ITrestleMetricsHeader {
 
 export interface IMetricsData {
     metric: string;
-    values: Array<IMetricsValue>;
+    values: IMetricsValue[];
 }
 
 export interface IMetricsValue {
@@ -48,9 +48,9 @@ export class MetricsService {
             .map((res: Response) => {
                 let json = res.json();
                 console.debug("Metric values:", json);
-                let metricValues: Array<IMetricsValue> = [];
+                const metricValues: IMetricsValue[] = [];
                 Object.keys(json).forEach((key) => {
-                    let longKey = parseInt(key, 10);
+                    const longKey = parseInt(key, 10);
                     if (longKey !== 0) {
                         metricValues.push({
                             timestamp: new Date(longKey),
@@ -61,23 +61,20 @@ export class MetricsService {
                 return {
                     metric: metricID,
                     values: metricValues.sort((a, b) => {
-                        if (a.timestamp == b.timestamp) {
+                        if (a.timestamp === b.timestamp) {
                             return 0;
                         }
                         if (a.timestamp < b.timestamp) {
                             return -1;
                         }
-                        if (a.timestamp > b.timestamp) {
-                            return 1;
-                        }
-                        return null;
+                        return 1;
                     })
-                }
+                };
             })
             .catch((error: Error) => Observable.throw(error || "Sever Error"));
     }
 
-    public exportMetricValues(metrics: null | Array<string>, start: number, end?: number): Observable<Blob> {
+    public exportMetricValues(metrics: null | string[], start: number, end?: number): Observable<Blob> {
         return this.authHttp.post("/metrics/export", {
                 metrics: metrics,
                 start: start,

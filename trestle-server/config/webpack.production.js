@@ -26,6 +26,8 @@ var prodOptions = {
         chunkFilename: "[name].[chunkhash].chunk.js"
     },
     module: {
+        // If we optimize comparisons, mapbox will fail.
+        // https://github.com/mapbox/mapbox-gl-js/issues/4359#issuecomment-288001933
         noParse: /(mapbox-gl)\.js$/,
         loaders: [
             {
@@ -57,10 +59,11 @@ var prodOptions = {
                     comments: false,
                     beautify: false  // debug true
                 },
-                // If we optimize comparisons, mapbox will fail.
-                // https://github.com/mapbox/mapbox-gl-js/issues/4359#issuecomment-288001933
                 compress: {
-                    comparisons: false
+                    unused: true,
+                    dead_code: true,
+                    drop_debugger: true,
+                    comparisons: true
                 }
             }
         })

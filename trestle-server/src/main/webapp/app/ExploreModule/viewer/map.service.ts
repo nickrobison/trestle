@@ -56,7 +56,7 @@ export class MapService {
         const responseObject: object[] = res.json();
         responseObject.forEach((obj: any) => {
             const properties: { [key: string]: {} } = {};
-            let geometry: GeometryObject = null;
+            let geometry: GeometryObject | null = null;
             let id = "";
             Object.keys(obj).forEach((key: string) => {
                 const value: any = obj[key];
@@ -74,12 +74,14 @@ export class MapService {
                     properties[key] = value;
                 }
             });
-            features.push({
-                type: "Feature",
-                id,
-                geometry,
-                properties
-            });
+            if (geometry) {
+                features.push({
+                    type: "Feature",
+                    id,
+                    geometry,
+                    properties
+                });
+            }
         });
 
         return {

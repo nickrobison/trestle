@@ -107,11 +107,13 @@ export class DatsetViewerComponent implements OnInit {
 
     public sliderChanged = (event: MatSliderChange): void => {
         console.debug("Value changed to:", event);
-        this.sliderValue = event.value;
-        //    Reload all the currently loaded datasets
-        this.availableDatasets
-            .filter((ds) => ds.state === DatasetState.LOADED)
-            .forEach((ds) => this.loadDataset(ds));
+        if (event.value) {
+            this.sliderValue = event.value;
+            //    Reload all the currently loaded datasets
+            this.availableDatasets
+                .filter((ds) => ds.state === DatasetState.LOADED)
+                .forEach((ds) => this.loadDataset(ds));
+        }
     };
 
     public mapClicked = (event: string): void => {
@@ -137,8 +139,8 @@ export class DatsetViewerComponent implements OnInit {
         };
         history.entities.push({
             label: this.filterID(individual.getID()),
-            start: individual.getTemporal().getFrom().toDate(),
-            end: individual.getTemporal().getTo().toDate(),
+            start: individual.getTemporal().getFromDate(),
+            end: individual.getTemporal().getToDate(),
             value: individual.getID()
         });
         //    For all the other individuals, add them as well
@@ -153,8 +155,8 @@ export class DatsetViewerComponent implements OnInit {
                 objects.forEach((object) => {
                     history.entities.push({
                         label: this.filterID(object.getID()),
-                        start: object.getTemporal().getFrom().toDate(),
-                        end: object.getTemporal().getTo().toDate(),
+                        start: object.getTemporal().getFromDate(),
+                        end: object.getTemporal().getToDate(),
                         value: object.getID()
                     });
                 });

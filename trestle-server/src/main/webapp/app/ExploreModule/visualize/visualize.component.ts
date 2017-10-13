@@ -28,7 +28,7 @@ export class VisualizeComponent implements OnInit {
     public individualFactHistory: IIndividualHistory;
     public minTime: moment.Moment;
     public maxTime: moment.Moment;
-    private dialogRef: MatDialogRef<IndividualValueDialog>;
+    private dialogRef: MatDialogRef<IndividualValueDialog> | null;
 
     constructor(private vs: VisualizeService,
                 private dialog: MatDialog,
@@ -60,8 +60,8 @@ export class VisualizeComponent implements OnInit {
                         .map((fact) => {
                             return {
                                 label: fact.getName(),
-                                start: fact.getValidTemporal().getFrom().toDate(),
-                                end: fact.getValidTemporal().getTo().toDate(),
+                                start: fact.getValidTemporal().getFromDate(),
+                                end: fact.getValidTemporal().getToDate(),
                                 value: fact.getValue()
                             };
                         })
@@ -79,7 +79,7 @@ export class VisualizeComponent implements OnInit {
                             }
                         ]
                     }
-                }
+                };
             });
     }
 

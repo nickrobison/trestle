@@ -17,7 +17,7 @@ import { axisBottom, axisLeft } from "d3-axis";
 export interface ITemporalEntity {
     label: string;
     start: Date;
-    end: Date;
+    end?: Date;
     value: any;
 }
 
@@ -44,8 +44,8 @@ export class HistoryGraphComponent implements AfterViewInit, OnChanges {
     @Input() public minTime: Date;
     @Input() public maxTime: Date;
     private htmlElement: HTMLElement;
-    private host: Selection<HTMLElement, ITemporalEntity, Document, ITemporalEntity>;
-    private svg: Selection<BaseType, ITemporalEntity, Document, ITemporalEntity>;
+    private host: Selection<HTMLElement, ITemporalEntity, null, undefined>;
+    private svg: Selection<BaseType, ITemporalEntity, null, undefined>;
     private width: number;
     private height: number;
     private margin: ID3Margin;
@@ -86,9 +86,9 @@ export class HistoryGraphComponent implements AfterViewInit, OnChanges {
             .enter().append("line")
             .attr("class", "laneLine")
             .attr("x1", 0)
-            .attr("y1", (d) => y(d))
+            .attr("y1", (d) => y(d) || 0)
             .attr("x2", this.width)
-            .attr("y2", (d) => y(d));
+            .attr("y2", (d) => y(d) || 0);
 
         //    Build the Y-Axis
         const yAxis = this.svg
@@ -105,11 +105,11 @@ export class HistoryGraphComponent implements AfterViewInit, OnChanges {
             .append("rect")
             .attr("class", "fact")
             .attr("x", (d) => this.normalizeAxis("x", this.x(d.start)))
-            .attr("y", (d) => y(d.label))
+            .attr("y", (d) => y(d.label) || 0)
             .attr("width",
                 (d) => {
                     const end = this.normalizeAxis("x",
-                        this.x(d.end));
+                        this.x(this.maybeDate(d.end)));
                     const start = this.normalizeAxis("x",
                         this.x(d.start));
                     return end - start;
@@ -132,10 +132,10 @@ export class HistoryGraphComponent implements AfterViewInit, OnChanges {
             .attr("x", (d) => {
                 const end = d.end;
                 const start = d.start;
-                const width = this.x(end) - this.x(start);
+                const width = this.x(this.maybeDate(end)) - this.x(start);
                 return this.x(start) + width / 2;
             })
-            .attr("y", (d) => y(d.label) + y.bandwidth() - 5)
+            .attr("y", (d) => (y(d.label) || 0) + y.bandwidth() - 5)
             .attr("text-anchor", "middle")
             .attr("dy", ".1ex")
             .merge(mainLabels);
@@ -145,9 +145,12 @@ export class HistoryGraphComponent implements AfterViewInit, OnChanges {
         yAxis.exit().remove();
     }
 
-    private maybeDate(date: string | Date): Date {
+    private maybeDate(date: string | Date | undefined): Date {
         if (date instanceof Date) {
             return date;
+        }
+        if (date === undefined) {
+            return this.minTime;
         }
         if (date === "") {
             return this.maxTime;

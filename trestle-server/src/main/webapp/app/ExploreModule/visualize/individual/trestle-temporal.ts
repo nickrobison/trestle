@@ -28,12 +28,23 @@ export class TrestleTemporal implements IInterfacable<ITrestleTemporal> {
         return this.from;
     }
 
-    public getTo(): moment.Moment {
+    public getFromDate(): Date {
+        return this.from.toDate();
+    }
+
+    public getTo(): moment.Moment | undefined {
         return this.to;
     }
 
+    public getToDate(): Date | undefined {
+        if (this.to) {
+            return this.to.toDate();
+        }
+        return undefined;
+    }
+
     public isContinuing(): boolean {
-        return this.to == null || !this.to.isValid();
+        return this.to === undefined || !this.to.isValid();
     }
 
     public asInterface(): ITrestleTemporal {
@@ -41,7 +52,7 @@ export class TrestleTemporal implements IInterfacable<ITrestleTemporal> {
             validID: this.id,
             validFrom: this.from.toDate()
         };
-        if (!this.isContinuing()) {
+        if (!this.isContinuing() && (this.to !== undefined)) {
             returnValue.validTo = this.to.toDate();
         }
         return returnValue;

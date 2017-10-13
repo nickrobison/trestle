@@ -233,8 +233,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             case "MultiPolygon":
                 return (geom as MultiPolygon).coordinates[0][0];
             default:
-                console.error("Unable to get coordinates for object of type:", geom.type);
-                return null;
+                throw new Error("Unable to get coordinates for object of type: " + geom.type);
         }
-    };
+    }
 }

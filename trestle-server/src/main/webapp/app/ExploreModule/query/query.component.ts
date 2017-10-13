@@ -16,14 +16,14 @@ import {Response} from "@angular/http";
 
 export class QueryComponent implements OnInit {
 
-    prefixes: string = "";
-    results: ITrestleResultSet = null;
-    errorMessage: string = null;
-    loading = false;
+    public prefixes: string = "";
+    public results: ITrestleResultSet | null = null;
+    public errorMessage: string | null = null;
+    public loading = false;
 
     constructor(private queryService: QueryService) { }
 
-    executeQuery(queryString: string) {
+    public executeQuery(queryString: string) {
         console.debug("Executing query:", queryString);
         this.loading = true;
         this.errorMessage = null;
@@ -40,14 +40,14 @@ export class QueryComponent implements OnInit {
             });
     }
 
-    ngOnInit(): void {
+    public ngOnInit(): void {
         this.queryService.getPrefixes()
-            .subscribe(prefixObject => {
+            .subscribe((prefixObject) => {
                 console.debug("has prefixObject:", prefixObject);
-                let prefixString: Array<string> = [];
+                const prefixString: string[] = [];
                 Object.keys(prefixObject).forEach(key => {
                     console.debug("Key:", key, "Value:", prefixObject[key]);
-                    if (key == ":") {
+                    if (key === ":") {
                         prefixString.push("BASE ", "<", prefixObject[key], ">\n");
                     }
                     prefixString.push("PREFIX ", key, " <", prefixObject[key], ">\n");

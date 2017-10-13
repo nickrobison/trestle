@@ -7,15 +7,14 @@ import {ITrestleUser, Privileges} from "../../UserModule/authentication.service"
 import {UserService} from "../../UserModule/users.service";
 import { MatDialogRef } from "@angular/material";
 
-
 export enum UserDialogResponseType {
     ADD,
     DELETE
 }
 
 export interface IUserDialogResponse {
-    type: UserDialogResponseType,
-    user: ITrestleUser
+    type: UserDialogResponseType;
+    user: ITrestleUser;
 }
 
 @Component({
@@ -24,13 +23,13 @@ export interface IUserDialogResponse {
     providers: [UserService]
 })
 export class UserAddDialog implements OnInit {
-    privileges: Map<string, number> = new Map();
-    user: ITrestleUser;
-    updateMode = true;
+    public privileges: Map<string, number> = new Map();
+    public user: ITrestleUser;
+    public updateMode = true;
 
     constructor(public dialogRef: MatDialogRef<UserAddDialog>, private userService: UserService) {
 //    Try to list all the enum keys
-        for (let priv in Privileges) {
+        for (const priv in Privileges) {
             if (parseInt(priv, 10) >= 0) {
                 console.debug("Privs:", priv, Privileges[priv]);
                 this.privileges.set(Privileges[priv], parseInt(priv, 10));
@@ -38,7 +37,7 @@ export class UserAddDialog implements OnInit {
         }
     }
 
-    ngOnInit(): void {
+    public ngOnInit(): void {
         if (this.user == null) {
             this.updateMode = false;
             console.debug("Passed null user, creating blank instance");
@@ -73,26 +72,32 @@ export class UserAddDialog implements OnInit {
             this.dialogRef.close({
                 type: UserDialogResponseType.ADD,
                 user: this.user
-            }),
-                (err: Error) => console.error(err)
-        });
-
+            });
+        }, (err: Error) => console.error(err));
     }
 
     public delete() {
-        this.userService.deleteUser(this.user.id).subscribe((data: any) => this.dialogRef.close({
-            type: UserDialogResponseType.DELETE,
-            user: this.user
-            }),
-            (err: Error) => console.error(err));
+        if (this.user.id !== undefined) {
+            this.userService
+                .deleteUser(this.user.id)
+                .subscribe((data: any) => this.dialogRef.close({
+                    type: UserDialogResponseType.DELETE,
+                    user: this.user
+                }),
+                (err: Error) => console.error(err));
+        } else {
+            console.error("Tried to save a user, but the ID was null");
+        }
     }
 
     public alterPermissionLevel(level: Privileges): void {
+        // tslint:disable-next-line:no-bitwise
         this.user.privileges = this.user.privileges ^ level;
         console.debug("User priv level:", this.user.privileges);
     }
 
     public isSelected(privilage: Privileges): boolean {
+        // tslint:disable-next-line:no-bitwise
         return (this.user.privileges & privilage) > 0;
     }
 }

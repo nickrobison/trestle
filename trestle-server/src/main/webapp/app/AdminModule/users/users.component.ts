@@ -16,7 +16,7 @@ import { MatDialog, MatDialogConfig, MatDialogRef } from "@angular/material";
 export class UsersComponent implements OnInit {
 
     public users: ITrestleUser[];
-    public dialogRef: MatDialogRef<any>;
+    public dialogRef: MatDialogRef<any> | null;
     public privileges: Privileges;
 
     constructor(private userService: UserService, public dialog: MatDialog, public viewContainerRef: ViewContainerRef, public authService: AuthService) {

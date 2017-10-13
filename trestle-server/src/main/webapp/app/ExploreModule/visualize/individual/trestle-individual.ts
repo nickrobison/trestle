@@ -57,7 +57,7 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
                 }
             }
         });
-        return returnValue;
+        throw new Error("Individual " + this.getID() + " is not spatial and should be");
     }
 
     public getFacts(): TrestleFact[] {
