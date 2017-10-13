@@ -13,15 +13,17 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Optional;
+
+import static javax.ws.rs.core.Response.ok;
 
 /**
  * Created by nrobison on 1/18/17.
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Path("/users")
-@Produces(MediaType.APPLICATION_JSON)
 public class UserResource {
 
     private final UserDAO userDAO;
@@ -36,31 +38,37 @@ public class UserResource {
     @GET
     @UnitOfWork
     @Valid
-    public List<User> findByName(@AuthRequired({Privilege.ADMIN}) User user, @QueryParam("name") Optional<String> name) {
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response findByName(@AuthRequired({Privilege.ADMIN}) User user, @QueryParam("name") Optional<String> name) {
         if (name.isPresent()) {
-            return userDAO.findByName(name.get());
+            return ok(userDAO.findByName(name.get())).build();
         }
-        return userDAO.findAll();
+        return ok(userDAO.findAll()).build();
     }
 
     @POST
     @UnitOfWork
     @Consumes(MediaType.APPLICATION_JSON)
-    public long createUser(@AuthRequired({Privilege.ADMIN}) User admin, @NotNull @Valid User user) {
-//        If the length is 60, we know that it's an unhashed (and thus modified password
+    public Response createUser(@AuthRequired({Privilege.ADMIN}) User admin, User user) {
+//        If the length is 60, we know that it's an unhashed (and thus modified password)
 //        We enforce a maximum length of 59 for the passwords, at the UI level
         if (user.getPassword().length() != 60) {
             user.setPassword(BCrypt.hashpw(user.getPassword(), this.salt));
         }
-        return this.userDAO.create(user);
+        return ok(this.userDAO.create(user)).build();
     }
 
     @GET
     @Path(("/{id}"))
     @UnitOfWork
     @Valid
-    public Optional<User> findByID(@AuthRequired({Privilege.ADMIN}) User user, @PathParam("id") LongParam id) {
-        return userDAO.findById(id.get());
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response findByID(@AuthRequired({Privilege.ADMIN}) User user, @PathParam("id") LongParam id) {
+        final Optional<User> userOptional = userDAO.findById(id.get());
+        if (userOptional.isPresent()) {
+            return ok(userOptional.get()).build();
+        }
+        return Response.status(Response.Status.NOT_FOUND).build();
     }
 
     @DELETE
