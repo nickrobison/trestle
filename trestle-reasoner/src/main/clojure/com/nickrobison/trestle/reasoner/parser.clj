@@ -7,6 +7,7 @@
            (java.lang.invoke MethodHandles)
            (com.nickrobison.trestle.reasoner.annotations IndividualIdentifier DatasetClass))
   (:require [clojure.core.match :refer [match]]
+            [clojure.core.reducers :as r]
             [clojure.tools.logging :as log]
             [clojure.string :as string]
             [com.nickrobison.trestle.reasoner.com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]))
@@ -60,6 +61,17 @@
 (defmethod build-member Method [method] (assoc {} :name (.getName method) :handle (make-handle method) :type (pred/member-type method)))
 
 
+(defn member-reducer
+  "Build the Class Member Map"
+  [acc member]
+  (let [members (get acc :members)
+        type (get member :type)]
+    (match [type]
+           [::pred/identifier] (merge acc {:members (conj members member) :identifier member})
+           [::pred/spatial] (merge acc {:members (conj members member) :spatial member})
+           :else (assoc acc :members (conj members member)))))
+
+
 (defrecord ClojureClassParser [^OWLDataFactory df,
                                ^String reasonerPrefix,
                                ^boolean multiLangEnabled,
@@ -86,13 +98,10 @@
                                                      [_ nil] field
                                                      :else "Nothing!")))))
   (parseClass ^Object [this ^Class clazz]
-    (let [output {}]
-      (assoc output :members
-                    (map #(build-member %)
-                         (filter pred/filter-member
-                                 (concat
-                                   (.getMethods clazz)
-                                   (.getFields clazz))))))))
+    (->> (concat (.getFields clazz) (.getMethods clazz))
+         (r/filter pred/filter-member)
+         (r/map build-member)
+         (r/reduce member-reducer {}))))
 
 (defn make-parser
   "Creates a new ClassParser"
