@@ -1,6 +1,8 @@
 (ns com.nickrobison.trestle.reasoner.com.nickrobison.trestle.reasoner.parser.utils.predicates
   (:import (java.lang.reflect Modifier Method Field)
-           (com.nickrobison.trestle.reasoner.annotations Ignore Fact Spatial Language NoMultiLanguage IndividualIdentifier))
+           (com.nickrobison.trestle.reasoner.annotations Ignore Fact Spatial Language NoMultiLanguage IndividualIdentifier)
+           (org.semanticweb.owlapi.model IRI)
+           (com.nickrobison.trestle.common StaticIRI))
   (:require [clojure.string :as string]
             [clojure.core.match :refer [match]]))
 
@@ -43,14 +45,15 @@
                                   noAnnotations?) entity))
 
 (defn member-type [member] (let [
-                              s (spatial? member)
-                              l (language? member)
-                              i (identifier? member)]
-                          (match [s l i]
-                                 [true _ _] ::spatial
-                                 [_ true _] ::language
-                                 [_ _ true] ::identifier
-                                 :else ::fact)))
+                                 s (spatial? member)
+                                 l (language? member)
+                                 i (identifier? member)
+                                 f (include? member)]
+                             (match [s l i f]
+                                    [true _ _ _] ::spatial
+                                    [_ true _ _] ::language
+                                    [_ _ true _] ::identifier
+                                    :else ::fact)))
 
 
 (defmulti filter-member
@@ -71,3 +74,36 @@
      (complement internal?)
      (complement ebean?)
      (complement void-return?)) method))
+
+; Filter member name to strip out unwanted characters
+(defmulti filter-member-name
+          "Filter name of class member"
+          class)
+(defmethod filter-member-name Field [field]
+  ; Just return the field name
+  (.getName field))
+(defmethod filter-member-name Method [method]
+  (let [name (.getName method)]
+    (if (string/starts-with? name "get")
+      ; Strip off the get and lower case the first letter
+      (str (string/lower-case (subs name 3 4)) (subs name 4))
+      ; If not, just return the name
+      name)))
+
+(defn build-iri
+  "Build the property IRI for the Member"
+  [member prefix]
+  (if (hasAnnotation? member Fact)
+    (IRI/create prefix (.name (.getAnnotation member Fact)))
+    (if (hasAnnotation? member Spatial)
+      ; If spatial, use the GEOSPARQL prefix
+      (IRI/create StaticIRI/GEOSPARQLPREFIX "asWKT")
+      ; Otherwise, use the member-name
+      (IRI/create prefix (filter-member-name member)))))
+
+; Build the OWLDataProperties
+
+(defn build-data-property
+  "Build the OWLDataProperty for the member"
+  [member prefix df]
+  (.getOWLDataProperty df (build-iri member prefix)))

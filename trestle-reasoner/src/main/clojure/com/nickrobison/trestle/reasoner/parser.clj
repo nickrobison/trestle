@@ -1,11 +1,12 @@
 (ns com.nickrobison.trestle.reasoner.parser
   (:import [IClassParser]
            (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter)
-           (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual)
+           (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom)
            (java.lang.annotation Annotation)
            (java.lang.reflect InvocationTargetException Field Method Modifier)
            (java.lang.invoke MethodHandles)
-           (com.nickrobison.trestle.reasoner.annotations IndividualIdentifier DatasetClass))
+           (com.nickrobison.trestle.reasoner.annotations IndividualIdentifier DatasetClass)
+           (java.util Optional List))
   (:require [clojure.core.match :refer [match]]
             [clojure.core.reducers :as r]
             [clojure.tools.logging :as log]
@@ -57,8 +58,17 @@
 (defmulti build-member
           "Process class method/field and add it, if necessary"
           class)
-(defmethod build-member Field [field] (assoc {} :name (.getName field) :handle (make-handle field) :type (pred/member-type field)))
-(defmethod build-member Method [method] (assoc {} :name (.getName method) :handle (make-handle method) :type (pred/member-type method)))
+(defmethod build-member Field [field] (
+                                        {
+                                        :name (pred/filter-member-name field)
+                                        :iri (pred/build-iri field "http://test/")
+                                        :handle (make-handle field)
+                                        :type (pred/member-type field)}))
+(defmethod build-member Method [method] ({
+                                          :name (pred/filter-member-name method)
+                                          :iri (pred/build-iri method "http://test/")
+                                          :handle (make-handle method)
+                                          :type (pred/member-type method)}))
 
 
 (defn member-reducer
@@ -98,10 +108,29 @@
                                                      [_ nil] field
                                                      :else "Nothing!")))))
   (parseClass ^Object [this ^Class clazz]
-    (->> (concat (.getFields clazz) (.getMethods clazz))
+    (->> (concat (.getDeclaredFields clazz) (.getDeclaredMethods clazz))
          (r/filter pred/filter-member)
          (r/map build-member)
-         (r/reduce member-reducer {}))))
+         (r/reduce member-reducer {})))
+  (getFacts [this inputObject filterSpatial]
+    (let [parsedClass (.parseClass this (.getClass inputObject))]
+      (Optional/of
+           (->> (.parseClass this (.getClass inputObject))
+                ; Filter spatial
+                (r/filter (fn [member]
+                            (if (true? filterSpatial)
+                              (complement (= (get member :type) ::pred/spatial))
+                              true)))
+                ; Build the data property, if it isn't build already
+                (r/map (fn [member]
+                         (if (contains? member :data-property)
+                           (get member :data-property)
+                           (get
+                             (assoc member :data-property (.getOWLDataProperty df :iri))
+                             :data-property))))
+                )))))
+
+
 
 (defn make-parser
   "Creates a new ClassParser"
