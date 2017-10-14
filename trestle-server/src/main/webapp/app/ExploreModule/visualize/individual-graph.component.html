@@ -1,0 +1,6 @@
+<!--<div #container class="container" style="width: 100%"></div>-->
+<div #container></div>
+<section>
+    <mat-slide-toggle [id]="factToggleName" [checked]="graphFacts" [color]="'accent'" (change)="changeGraphMembers($event)">Graph Facts</mat-slide-toggle>
+    <mat-slide-toggle [id]="relationToggleName" [checked]="graphRelations" [color]="'accent'" (change)="changeGraphMembers($event)">Graph Relationships</mat-slide-toggle>
+</section>

@@ -2,6 +2,7 @@ node_modules/
 binaries/
 **/*.map
 src/main/webapp/**/*.js
+src/test/**/*.js
 *.db
 aot/
 yarn-error.log
