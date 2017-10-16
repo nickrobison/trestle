@@ -1,7 +1,6 @@
 /**
  * Created by nrobison on 6/11/17.
  */
-// import mapboxgl = require("mapbox-gl");
 import * as mapboxgl from "mapbox-gl";
 import extent from "@mapbox/geojson-extent";
 import {

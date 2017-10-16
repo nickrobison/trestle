@@ -3,7 +3,7 @@ import {
     ViewChild
 } from "@angular/core";
 import { BaseType, select, Selection } from "d3-selection";
-import { scaleBand, scaleOrdinal, scaleTime, schemeCategory10 } from "d3-scale";
+import { scaleBand, scaleLinear, scaleOrdinal, scaleTime, schemeCategory10 } from "d3-scale";
 import { axisBottom } from "d3-axis";
 
 export interface IEventElement {
@@ -63,14 +63,15 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
     }
 
     private plotData(): void {
-    //    Setup the X/Y/Z values
+        //    Setup the X/Y/Z values
         const entityNames = this.data.nodes.map((d) => d.entity);
+        const bins = this.data.nodes.map((d) => d.bin);
         const x = scaleTime()
             .range([0, this.width])
             .domain([this.minDate, this.maxDate]);
-        const y = scaleBand()
+        const y = scaleLinear()
             .range([this.height, 0])
-            .domain(entityNames);
+            .domain(bins);
         const z = scaleOrdinal(schemeCategory10)
             .domain(entityNames);
 
@@ -86,34 +87,40 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
         });
 
         //    Add the lines
-        this.svg
+        const links = this.svg
             .selectAll(".link")
-            .data(this.data.links, (link: IEventLink) => link.source.id + "_" + link.target.id)
+            .data(this.data.links, (link: IEventLink) => link.source.id + "_" + link.target.id);
+
+        links
             .enter()
             .append("line")
             .attr("class", "link")
             .attr("x1", (d) => x(d.source.temporal))
             .attr("y1", (d) => {
                 console.debug("Setting y1  for line", d);
-                return y(d.source.entity) || null;
+                return y(d.source.bin) || null;
             })
             .attr("x2", (d) => x(d.target.temporal))
-            .attr("y2", (d) => y(d.target.entity) || null);
+            .attr("y2", (d) => y(d.target.bin) || null)
+            .merge(links);
 
-    //    Add the nodes to the graph
-        this.svg
+        //    Add the nodes to the graph
+        const nodes = this.svg
             .selectAll(".node")
-            .data(this.data.nodes, (data: IEventElement) => data.id)
+            .data(this.data.nodes, (data: IEventElement) => data.id);
+
+        nodes
             .enter()
             .append("circle")
             .attr("cx", (d) => x(d.temporal))
-            .attr("cy", (d) => y(d.entity) || null)
+            .attr("cy", (d) => y(d.bin) || null)
             .attr("r", 15)
-            .attr("name", (d) => d.entity)
+            .attr("name", (d) => d.bin)
             .style("fill", (d: IEventElement) => z(d.entity))
-            .style("opacity", (d) => d.continuing ? 0.7 : 1.0);
+            .style("opacity", (d) => d.continuing ? 0.7 : 1.0)
+            .merge(nodes);
 
-    //    Add the X-axis
+        //    Add the X-axis
         this.svg
             .append("g")
             .attr("class", "axis axis-x")

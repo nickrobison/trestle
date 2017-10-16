@@ -14,7 +14,7 @@ reasoner:
 #  prefix: "http://nickrobison.com/demonstration/tigercounty#"
   ontology: "gaul_hadoop_world_bank"
   prefix: "http://nickrobison.com/gaul#"
-  location: "file:////Users/nrobison/Developer/git/dissertation/trestle/ontology/trestle.owl"
+  location: "file:////Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl"
 
 logging:
   level: INFO

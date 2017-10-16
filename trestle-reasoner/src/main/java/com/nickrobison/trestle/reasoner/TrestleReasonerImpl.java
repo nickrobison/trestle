@@ -1577,6 +1577,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                             .filter(result -> !result.unwrapIndividual("o").asOWLNamedIndividual().getIRI().equals(temporalRelationIRI))
                             .filter(result -> !result.unwrapIndividual("o").asOWLNamedIndividual().getIRI().equals(spatialRelationIRI))
                             .filter(result -> !result.unwrapIndividual("o").asOWLNamedIndividual().getIRI().equals(eventRelationIRI))
+                            .filter(result -> !result.unwrapIndividual("o").asOWLNamedIndividual().getIRI().equals(componentRelationIRI))
 //                            Filter out self
                             .filter(result -> !result.unwrapIndividual("p").asOWLNamedIndividual().equals(individual))
                             .forEach(result -> relations.add(new TrestleRelation(result.unwrapIndividual("m").toStringID(),

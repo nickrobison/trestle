@@ -247,7 +247,7 @@ public class QueryBuilder {
     }
 
     /**
-     * Build SPARQL query to return all temporal/spatial relations for a given individual
+     * Build SPARQL query to return all temporal/spatial/event relations for a given individual
      *
      * @param individual - {@link OWLNamedIndividual} to retrieve relations for
      * @return - SPARQL query string (?m - Individual, ?o - Object, ?p Property)
@@ -264,7 +264,9 @@ public class QueryBuilder {
                 "?o rdfs:subPropertyOf trestle:Spatial_Relation ." +
                 "} " +
                 "UNION { ?m ?o ?p . ?o rdfs:subPropertyOf trestle:Event_Relation ." +
-                " ?p rdf:type trestle:Trestle_Object} . " +
+                " ?p rdf:type trestle:Trestle_Object} " +
+                "UNION {?m ?o ?p . ?o rdfs:subPropertyOf trestle:Component_Relation ." +
+                " ?p rdf:type trestle:Trestle_Object} ." +
                 "VALUES ?m {<%s>}}", getFullIRIString(individual)));
 
         logger.debug(ps.toString());

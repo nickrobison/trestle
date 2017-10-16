@@ -9,7 +9,6 @@ import * as moment from "moment";
 import LngLatBounds = mapboxgl.LngLatBounds;
 import { MatSliderChange } from "@angular/material";
 import { IIndividualHistory } from "../../UIModule/history-graph/history-graph.component";
-import { Observable } from "rxjs/Observable";
 import { VisualizeService } from "../visualize/visualize.service";
 import { TrestleIndividual } from "../visualize/individual/trestle-individual";
 import {
@@ -171,11 +170,29 @@ export class DatsetViewerComponent implements OnInit {
         //     });
 
         //    Now, build the object events
+
+
         // Split merge first,
         // because it'll show us if we need to drop a created or destroyed event
         const events: IEventElement[] = [];
         const links: IEventLink[] = [];
 
+        // Everything has a CREATED event, but not everything has destroyed
+        //    If we have a split event, get the CREATED event
+        const created = {
+            id: filteredID + "-created",
+            entity: filteredID,
+            bin: 1,
+            value: "individual",
+            temporal: individual
+                .getEvents()
+                .filter((event) => event.getType() === "CREATED")[0]
+                .getTemporal().toDate()
+        };
+
+        const destroyedEvents = individual
+            .getEvents()
+            .filter((event) => event.getType() === "DESTROYED");
         const splitEvents = individual
             .getEvents()
             .filter((event) => event.getType() === "SPLIT");
@@ -188,51 +205,159 @@ export class DatsetViewerComponent implements OnInit {
                 id: filteredID + "-merged",
                 entity: filteredID,
                 bin: 1,
-                value: "created",
+                value: "individual",
                 temporal: mergedEvents[0].getTemporal().toDate()
             };
-        //    If we have a merged event, grab the DESTROYED event as well.
+
+            // Since we have a merged event, add all the MERGED_FROM events
+            let bin = 2;
+            // Moments are mutable, so we have to clone it.
+            const mergedTemporal = individual
+                .getTemporal()
+                .getFrom()
+                .clone()
+                .subtract(1, "year")
+                .toDate();
+            individual
+                .getRelations()
+                .filter((relation) => relation.getType() === "MERGED_FROM")
+                .forEach((relation) => {
+                    const me = {
+                        id: filteredID + "-" + relation.getObject(),
+                        entity: relation.getObject(),
+                        bin: bin,
+                        value: "merged_from",
+                        temporal: mergedTemporal
+                    };
+                    events.push(me);
+                    links.push({
+                        source: me,
+                        target: merged
+                    });
+                    bin += 1;
+                });
+            // If we have both split/merge events, drop both CREATED and DESTROYED
+            if (splitEvents.length > 0) {
+                const split = {
+                    id: filteredID + "-split",
+                    entity: filteredID,
+                    bin: 1,
+                    value: "individual",
+                    temporal: splitEvents[0].getTemporal().toDate()
+                };
+                events.push(merged, split);
+                links.push({
+                    source: merged,
+                    target: split
+                });
+                //    If we just have SPLIT, get the created event as well.
+            } else if (destroyedEvents.length > 0) {
+                const destroyed = {
+                    id: filteredID + "-destroyed",
+                    entity: filteredID,
+                    bin: 1,
+                    value: "individual",
+                    temporal: individual
+                        .getEvents()
+                        .filter((event) => event.getType() === "DESTROYED")[0]
+                        .getTemporal().toDate()
+                };
+                events.push(merged, destroyed);
+                links.push({
+                    source: merged,
+                    target: destroyed
+                });
+                //    If we don't have a DESTROYED event, create on in the far future
+            } else {
+                const destroyed = {
+                    id: filteredID + "-destroyed",
+                    entity: filteredID,
+                    bin: 1,
+                    value: "individual",
+                    temporal: new Date("3001-01-01")
+                };
+                events.push(merged, destroyed);
+                links.push({
+                    source: merged,
+                    target: destroyed
+                });
+            }
+            //    If we have a SPLIT event, don't bother with DESTROYED
+        } else if (splitEvents.length > 0) {
+            const
+                split = {
+                    id: filteredID + "-split",
+                    entity: filteredID,
+                    bin: 1,
+                    value: "individual",
+                    temporal: splitEvents[0].getTemporal().toDate()
+                };
+            events
+                .push(created, split);
+
+            links
+                .push({
+                    source: created,
+                    target: split
+                });
+
+            //    Now CREATED/DESTROYED
+        } else if (destroyedEvents.length > 0) {
             const destroyed = {
                 id: filteredID + "-destroyed",
                 entity: filteredID,
                 bin: 1,
-                value: "created",
+                value: "individual",
                 temporal: individual
                     .getEvents()
                     .filter((event) => event.getType() === "DESTROYED")[0]
                     .getTemporal().toDate()
             };
-        //    Add them both
-            events.push(merged, destroyed);
-            links.push({
-                source: merged,
-                target: destroyed
-            });
-        } else if (splitEvents.length > 0) {
-        //    If we have a split event, get the CREATED event
-            const created = {
-                id: filteredID + "-created",
-                entity: filteredID,
-                bin: 1,
-                value: "created",
-                temporal: individual
-                    .getEvents()
-                    .filter((event) => event.getType() === "CREATED")[0]
-                    .getTemporal().toDate()
-            };
-            const split = {
-                id: filteredID + "-split",
-                entity: filteredID,
-                bin: 1,
-                value: "created",
-                temporal: splitEvents[0].getTemporal().toDate()
-            };
-            events.push(created, split);
+            events.push(created, destroyed);
             links.push({
                 source: created,
-                target: split
+                target: destroyed
+            });
+            //    Create a far-future DESTROYED;
+        } else {
+            const destroyed = {
+                id: filteredID + "-destroyed",
+                entity: filteredID,
+                bin: 1,
+                value: "individual",
+                temporal: new Date("3001-01-01")
+            };
+            events.push(created, destroyed);
+            links.push({
+                source: created,
+                target: destroyed
             });
         }
+        // Sort any merged events
+        let mergeCount = events.filter((event) => event.value === "merged_from").length;
+        // if we have an even number of merge events, add one, so that way
+        if ((mergeCount % 2) === 0) {
+            mergeCount += 1;
+        }
+
+        // Set the individual equal to the middle value
+        const individualBin = Math.ceil(mergeCount / 2);
+        events
+            .filter((event) => event.value === "individual")
+            .map((event) => {
+                event.bin = individualBin;
+            });
+        // Now, the merged events, alternating high/low
+        let sign = "+";
+        let step = 1;
+        events
+            .filter((event) => event.value === "merged_from")
+            .map((event) => {
+                event.bin = individualBin + Number.parseInt(sign + step);
+                step++;
+                sign = sign === "+" ? "-" : "+";
+            });
+
         this.eventData = {
             nodes: events,
             links: links
