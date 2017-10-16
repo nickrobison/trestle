@@ -21,17 +21,18 @@
   (. (TypeConverter/parsePrimitiveClass (.getReturnType classMethod)) cast
      (try
        (log/trace (str "Attempting to invoke on: " (.getName classMethod)))
-       (. classMethod (.invoke inputObject nil))
+       (.invoke classMethod inputObject nil)
        (catch IllegalAccessError e
          (log/error "Cannot access method " classMethod e))
        (catch InvocationTargetException e
-         (log/error "Invocation failed on" classMethod e))))
-  )
+         (log/error "Invocation failed on" classMethod e)))))
 
 (defn invoker
   "Invoke method handle"
-  [handle object & args]
-  (.invoke handle (object-array [object args])))
+  ; We need to use invokeWithArguments to work around IDEA-154967
+  ([handle object] (.invokeWithArguments handle (object-array [object])))
+  ([handle object & args]
+   (.invokeWithArguments handle (object-array [object args]))))
 
 (defn annotationFilter
   "Filters a list of members for a given annotation"
@@ -69,7 +70,6 @@
      :iri iri
      :data-property (.getOWLDataProperty df iri)
      :handle (make-handle member)
-     :return-type
      :type (pred/member-type member)}))
 
 
@@ -116,26 +116,25 @@
          ; Build members
          (r/map #(build-member % df reasonerPrefix))
          (r/reduce member-reducer {})))
-  (getFacts [this inputObject filterSpatial]
+  (getFacts ^Optional ^List ^ OWLDataPropertyAssertionAxiom [this inputObject filterSpatial]
     (let [parsedClass (.parseClass this (.getClass inputObject))
           individual (.getIndividual this inputObject)]
       (Optional/of
-           (->> (.parseClass this (.getClass inputObject))
+           (->> (get parsedClass :members)
                 ; Filter spatial
                 (r/filter (fn [member]
                             (if (true? filterSpatial)
                               (complement (= (get member :type) ::pred/spatial))
                               true)))
-                ; Build the data property, if it isn't build already
                 ; Build the assertion axiom
                 (r/map (fn [member]
                          (.getOWLDataPropertyAssertionAxiom df
-                                                            (get :data-property member)
+                                                            (get member :data-property)
                                                             individual
-                                                            (.getOWLLiteral df "hello-there"))))
-                )))))
-
-
+                                                            (.getOWLLiteral df
+                                                                            (invoker
+                                                                              (get member :handle) inputObject)))))
+                (into ()))))))
 
 (defn make-parser
   "Creates a new ClassParser"

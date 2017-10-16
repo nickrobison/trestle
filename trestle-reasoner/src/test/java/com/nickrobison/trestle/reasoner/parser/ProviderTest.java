@@ -2,8 +2,12 @@ package com.nickrobison.trestle.reasoner.parser;
 
 import com.nickrobison.trestle.reasoner.annotations.DatasetClass;
 import com.nickrobison.trestle.reasoner.annotations.IndividualIdentifier;
+import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Optional;
 
 @DatasetClass(name = "ProviderTest")
 public class ProviderTest {
@@ -20,6 +24,9 @@ public class ProviderTest {
         logger.info("{}", parser.getIndividual(new ParserTestClass()));
 
         parser.parseClass(ParserTestClass.class);
+
+        final Optional<List<OWLDataPropertyAssertionAxiom>> facts = parser.getFacts(new ParserTestClass(), true);
+        System.out.println(facts.isPresent());
     }
 
 
