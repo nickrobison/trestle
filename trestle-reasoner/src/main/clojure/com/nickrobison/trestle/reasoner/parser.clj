@@ -28,6 +28,11 @@
          (log/error "Invocation failed on" classMethod e))))
   )
 
+(defn invoker
+  "Invoke method handle"
+  [handle object & args]
+  (.invoke handle (object-array [object args])))
+
 (defn annotationFilter
   "Filters a list of members for a given annotation"
   [members annotation]
@@ -55,20 +60,17 @@
 (defmethod make-handle Field [field] (.unreflectGetter (MethodHandles/lookup) field))
 (defmethod make-handle Method [method] (.unreflect (MethodHandles/lookup) method))
 
-(defmulti build-member
-          "Process class method/field and add it, if necessary"
-          class)
-(defmethod build-member Field [field] (
-                                        {
-                                        :name (pred/filter-member-name field)
-                                        :iri (pred/build-iri field "http://test/")
-                                        :handle (make-handle field)
-                                        :type (pred/member-type field)}))
-(defmethod build-member Method [method] ({
-                                          :name (pred/filter-member-name method)
-                                          :iri (pred/build-iri method "http://test/")
-                                          :handle (make-handle method)
-                                          :type (pred/member-type method)}))
+(defn build-member
+  "Build member from class methods/fields"
+  [member df prefix]
+  (let [iri (pred/build-iri member prefix)]
+    {
+     :name (pred/filter-member-name member)
+     :iri iri
+     :data-property (.getOWLDataProperty df iri)
+     :handle (make-handle member)
+     :return-type
+     :type (pred/member-type member)}))
 
 
 (defn member-reducer
@@ -109,11 +111,14 @@
                                                      :else "Nothing!")))))
   (parseClass ^Object [this ^Class clazz]
     (->> (concat (.getDeclaredFields clazz) (.getDeclaredMethods clazz))
+         ; Filter out non-necessary members
          (r/filter pred/filter-member)
-         (r/map build-member)
+         ; Build members
+         (r/map #(build-member % df reasonerPrefix))
          (r/reduce member-reducer {})))
   (getFacts [this inputObject filterSpatial]
-    (let [parsedClass (.parseClass this (.getClass inputObject))]
+    (let [parsedClass (.parseClass this (.getClass inputObject))
+          individual (.getIndividual this inputObject)]
       (Optional/of
            (->> (.parseClass this (.getClass inputObject))
                 ; Filter spatial
@@ -122,12 +127,12 @@
                               (complement (= (get member :type) ::pred/spatial))
                               true)))
                 ; Build the data property, if it isn't build already
+                ; Build the assertion axiom
                 (r/map (fn [member]
-                         (if (contains? member :data-property)
-                           (get member :data-property)
-                           (get
-                             (assoc member :data-property (.getOWLDataProperty df :iri))
-                             :data-property))))
+                         (.getOWLDataPropertyAssertionAxiom df
+                                                            (get :data-property member)
+                                                            individual
+                                                            (.getOWLLiteral df "hello-there"))))
                 )))))
 
 
