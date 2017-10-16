@@ -3,7 +3,7 @@ import * as moment from "moment";
 
 export interface ITrestleEvent {
     individual: string;
-    type: TrestleEventType;
+    type: string;
     temporal: string;
 }
 
@@ -17,7 +17,7 @@ export enum TrestleEventType {
 
 export class TrestleEvent implements IInterfacable<ITrestleEvent> {
     private individual: string;
-    private type: TrestleEventType;
+    private type: string;
     private temporal: moment.Moment;
 
     constructor(event: ITrestleEvent) {

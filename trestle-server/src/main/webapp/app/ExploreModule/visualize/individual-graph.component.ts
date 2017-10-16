@@ -1,9 +1,17 @@
 /**
  * Created by nrobison on 3/16/17.
  */
-import {Component, AfterViewInit, ElementRef, ViewChild, Input, OnChanges, SimpleChange} from "@angular/core";
-import {Selection, select, event, BaseType} from "d3-selection";
-import {ScaleOrdinal, schemeCategory20, scaleOrdinal} from "d3-scale";
+import {
+    Component,
+    AfterViewInit,
+    ElementRef,
+    ViewChild,
+    Input,
+    OnChanges,
+    SimpleChange
+} from "@angular/core";
+import { Selection, select, event, BaseType } from "d3-selection";
+import { ScaleOrdinal, schemeCategory20, scaleOrdinal } from "d3-scale";
 import {
     SimulationNodeDatum,
     forceSimulation,

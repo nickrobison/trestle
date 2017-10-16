@@ -25,13 +25,6 @@ export interface IIndividualHistory {
     entities: ITemporalEntity[];
 }
 
-interface ID3Margin {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-}
-
 @Component({
     selector: "history-graph",
     templateUrl: "./history-graph.component.html",

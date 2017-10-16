@@ -12,6 +12,10 @@ import { IIndividualHistory } from "../../UIModule/history-graph/history-graph.c
 import { Observable } from "rxjs/Observable";
 import { VisualizeService } from "../visualize/visualize.service";
 import { TrestleIndividual } from "../visualize/individual/trestle-individual";
+import {
+    IEventData, IEventElement,
+    IEventLink
+} from "../../UIModule/event-graph/event-graph.component";
 
 enum DatasetState {
     UNLOADED,
@@ -47,6 +51,7 @@ export class DatsetViewerComponent implements OnInit {
     public sliderValue = 2013;
     public selectedIndividual: TrestleIndividual;
     public objectHistory: IIndividualHistory;
+    public eventData: IEventData;
     public mapLocked = false;
     private mapBounds: LngLatBounds;
 
@@ -137,32 +142,101 @@ export class DatsetViewerComponent implements OnInit {
         const history: IIndividualHistory = {
             entities: []
         };
+        const filteredID = this.filterID(individual.getID());
         history.entities.push({
-            label: this.filterID(individual.getID()),
+            label: filteredID,
             start: individual.getTemporal().getFromDate(),
             end: individual.getTemporal().getToDate(),
             value: individual.getID()
         });
-        //    For all the other individuals, add them as well
-        console.debug("Has some individuals:", splitMerge.length);
-        const obsArray = splitMerge.map((relation) => {
-            console.debug("Getting attributes for:", relation.getObject());
-            return this.vs.getIndividualAttributes(relation.getObject());
-        });
-        Observable.forkJoin(obsArray)
-            .subscribe((objects) => {
-                console.debug("Have all observables:", objects);
-                objects.forEach((object) => {
-                    history.entities.push({
-                        label: this.filterID(object.getID()),
-                        start: object.getTemporal().getFromDate(),
-                        end: object.getTemporal().getToDate(),
-                        value: object.getID()
-                    });
-                });
-                console.debug("History", history);
-                this.objectHistory = history;
+        // //    For all the other individuals, add them as well
+        // console.debug("Has some individuals:", splitMerge.length);
+        // const obsArray = splitMerge.map((relation) => {
+        //     console.debug("Getting attributes for:", relation.getObject());
+        //     return this.vs.getIndividualAttributes(relation.getObject());
+        // });
+        // Observable.forkJoin(obsArray)
+        //     .subscribe((objects) => {
+        //         console.debug("Have all observables:", objects);
+        //         objects.forEach((object) => {
+        //             history.entities.push({
+        //                 label: this.filterID(object.getID()),
+        //                 start: object.getTemporal().getFromDate(),
+        //                 end: object.getTemporal().getToDate(),
+        //                 value: object.getID()
+        //             });
+        //         });
+        //         console.debug("History", history);
+        //         this.objectHistory = history;
+        //     });
+
+        //    Now, build the object events
+        // Split merge first,
+        // because it'll show us if we need to drop a created or destroyed event
+        const events: IEventElement[] = [];
+        const links: IEventLink[] = [];
+
+        const splitEvents = individual
+            .getEvents()
+            .filter((event) => event.getType() === "SPLIT");
+        const mergedEvents = individual
+            .getEvents()
+            .filter((event) => event.getType() === "MERGED");
+
+        if (mergedEvents.length > 0) {
+            const merged = {
+                id: filteredID + "-merged",
+                entity: filteredID,
+                bin: 1,
+                value: "created",
+                temporal: mergedEvents[0].getTemporal().toDate()
+            };
+        //    If we have a merged event, grab the DESTROYED event as well.
+            const destroyed = {
+                id: filteredID + "-destroyed",
+                entity: filteredID,
+                bin: 1,
+                value: "created",
+                temporal: individual
+                    .getEvents()
+                    .filter((event) => event.getType() === "DESTROYED")[0]
+                    .getTemporal().toDate()
+            };
+        //    Add them both
+            events.push(merged, destroyed);
+            links.push({
+                source: merged,
+                target: destroyed
             });
+        } else if (splitEvents.length > 0) {
+        //    If we have a split event, get the CREATED event
+            const created = {
+                id: filteredID + "-created",
+                entity: filteredID,
+                bin: 1,
+                value: "created",
+                temporal: individual
+                    .getEvents()
+                    .filter((event) => event.getType() === "CREATED")[0]
+                    .getTemporal().toDate()
+            };
+            const split = {
+                id: filteredID + "-split",
+                entity: filteredID,
+                bin: 1,
+                value: "created",
+                temporal: splitEvents[0].getTemporal().toDate()
+            };
+            events.push(created, split);
+            links.push({
+                source: created,
+                target: split
+            });
+        }
+        this.eventData = {
+            nodes: events,
+            links: links
+        };
     }
 
     private needNewData(newBounds: mapboxgl.LngLatBounds) {
