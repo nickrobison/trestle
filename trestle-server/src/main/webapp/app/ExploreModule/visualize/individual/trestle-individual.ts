@@ -4,7 +4,7 @@ import { ITrestleRelation, TrestleRelation } from "./trestle-relation";
 import { ITrestleEvent, TrestleEvent } from "./trestle-event";
 import { GeometryObject } from "geojson";
 import { IInterfacable } from "../../interfacable";
-const parse = require("wellknown");
+import { parse } from "wellknown";
 
 export interface ITrestleIndividual {
     individualID: string;
@@ -13,7 +13,6 @@ export interface ITrestleIndividual {
     relations: ITrestleRelation[];
     events: ITrestleEvent[];
 }
-
 
 export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
 
@@ -49,7 +48,9 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
         let returnValue = null;
         this.facts.forEach((fact) => {
             if (fact.isSpatial()) {
+                console.debug("Fact is spatial", fact);
                 const geojson = parse(fact.getValue());
+                console.debug("GeoJSON value:", geojson);
                 if (geojson != null) {
                     returnValue = geojson;
                 } else {
@@ -57,7 +58,10 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
                 }
             }
         });
-        throw new Error("Individual " + this.getID() + " is not spatial and should be");
+        if (returnValue === null) {
+            throw new Error("Individual " + this.getID() + " is not spatial and should be");
+        }
+        return returnValue;
     }
 
     public getFacts(): TrestleFact[] {

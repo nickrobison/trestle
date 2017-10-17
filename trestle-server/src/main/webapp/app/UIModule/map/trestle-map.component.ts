@@ -209,8 +209,10 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             this.map.fitBounds(LngLatBounds.convert(geom.bbox as any));
         } else {
             const bbox = extent(geom);
+            console.debug("Extent", bbox);
             if (bbox) {
-                this.map.fitBounds(LngLatBounds.convert(bbox));
+                // This works, but it seems to confuse the type system, so any for the win!
+                this.map.fitBounds(LngLatBounds.convert(bbox as any));
             }
         }
         this.lockMap = false;
