@@ -2,8 +2,8 @@ import {
     AfterViewInit, Component, ElementRef, Input, OnChanges, SimpleChanges,
     ViewChild
 } from "@angular/core";
-import { BaseType, select, Selection } from "d3-selection";
-import { scaleBand, scaleLinear, scaleOrdinal, scaleTime, schemeCategory10 } from "d3-scale";
+import { BaseType, event, select, Selection } from "d3-selection";
+import { scaleLinear, scaleOrdinal, scaleTime, schemeCategory10 } from "d3-scale";
 import { axisBottom } from "d3-axis";
 
 export interface IEventElement {
@@ -32,6 +32,7 @@ export interface IEventData {
 })
 export class EventGraphComponent implements AfterViewInit, OnChanges {
     @ViewChild("graph") public element: ElementRef;
+    @ViewChild("tooltip") private tooltipEl: ElementRef;
     @Input() public data: IEventData;
     @Input() public graphHeight: number;
     @Input() public minDate: Date;
@@ -42,6 +43,7 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
     private width: number;
     private height: number;
     private margin: ID3Margin;
+    private tooltip: any;
 
 
     public constructor() {
@@ -122,6 +124,8 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
             .attr("entity", (d) => d.entity)
             .style("fill", (d: IEventElement) => z(d.entity))
             .style("opacity", (d) => d.continuing ? 0.7 : 1.0)
+            // .on("mouseover", this.mouseOverHandler)
+            // .on("mouseout", this.mouseOutHandler)
             .merge(nodes);
 
         nodes
@@ -148,6 +152,15 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
         this.width = this.htmlElement.offsetWidth - this.margin.left - this.margin.right;
         this.height = this.graphHeight - this.margin.top - this.margin.bottom;
 
+        // Add the tooltip
+        this.tooltip = select("body")
+            .append("div")
+            // .style("position", "absolute")
+            .style("z-index", "10")
+            .style("visibility", "hidden")
+            .style("background", "steelblue")
+            .text("a simple tooltip");
+
         this.svg = this.host.html("")
             .append("svg")
             .attr("width", this.width + this.margin.left + this.margin.right)
@@ -155,21 +168,22 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
             .append("g")
             .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
 
-        // this.initXAxis();
-
-        console.debug("D3 Initialized");
+        console.debug("Event Graph Initialized");
     }
 
-    private initXAxis(): void {
-        const x = scaleTime()
-            .range([0, this.width])
-            .domain([this.minDate, this.maxDate]);
+    private mouseOverHandler = (data: IEventElement): void => {
+        console.debug("Over event:", event);
+        this.tooltip
+        // .text("Hello!")
+            .html("Something")
+            .style("top", ((event as MouseEvent).pageY - 10) + "px")
+            .style("left", ((event as MouseEvent).pageX + 10) + "px")
+            .style("visibility", "visible");
+    };
 
-        //    Add the X-axis
-        this.svg
-            .append("g")
-            .attr("class", "axis x-axis")
-            .attr("transform", "translate(0," + this.height + ")")
-            .call(axisBottom(x));
+    private mouseOutHandler = (data: IEventElement): void => {
+        console.debug("Out event:", event);
+        this.tooltip
+            .style("visibility", "hidden");
     }
 }
