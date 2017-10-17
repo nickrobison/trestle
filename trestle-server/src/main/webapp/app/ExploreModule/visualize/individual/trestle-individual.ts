@@ -23,7 +23,6 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
     private existsTemporal: TrestleTemporal;
 
     constructor(individual: ITrestleIndividual) {
-        console.debug("Building individual", individual.individualID);
         this.id = individual.individualID;
         this.existsTemporal = new TrestleTemporal(individual.individualTemporal);
         individual.facts.forEach((fact) => {
@@ -73,8 +72,8 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
         return facts;
     }
 
-    public getFactValues(): {[name: string]: any} {
-        const values: {[name: string]: any} = {};
+    public getFactValues(): { [name: string]: any } {
+        const values: { [name: string]: any } = {};
         this.facts.forEach((value) => {
             values[value.getName()] = value.getValue();
         });
@@ -87,6 +86,50 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
 
     public getEvents(): TrestleEvent[] {
         return this.events;
+    }
+
+    /**
+     * Gets the start event for the given individual.
+     * Returns a MERGED event, if one exists
+     * Otherwise, returns CREATED
+     * @returns {TrestleEvent}
+     */
+    public getStartEvent(): TrestleEvent {
+        const mergedEvent = this.getEvents()
+            .filter((event) => event.getType() === "MERGED");
+
+        if (mergedEvent.length > 0) {
+            return mergedEvent[0];
+        }
+        const createdEvent = this.getEvents()
+            .filter((event) => event.getType() === "CREATED");
+        if (createdEvent.length > 0) {
+            return createdEvent[0];
+        }
+        throw new Error("Individual: " + this.getID() + " does not have a CREATED/MERGED event");
+    }
+
+    /**
+     * Returns the end event, if one exists
+     * If a SPLIT event exists, returns that
+     * Otherwise, returns DESTROYED
+     * Returns
+     * @returns {TrestleEvent}
+     */
+    public getEndEvent(): TrestleEvent | null {
+        const splitEvent = this.getEvents()
+            .filter((event) => event.getType() === "SPLIT");
+        if (splitEvent.length > 0) {
+            return splitEvent[0];
+        }
+
+        const destroyedEvent = this.getEvents()
+            .filter((event) => event.getType() === "DESTROYED");
+        if (destroyedEvent.length > 0) {
+            return destroyedEvent[0];
+        }
+
+        return null;
     }
 
     public asInterface(): ITrestleIndividual {

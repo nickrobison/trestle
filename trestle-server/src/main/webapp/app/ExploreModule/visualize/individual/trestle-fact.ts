@@ -19,7 +19,6 @@ export class TrestleFact implements IInterfacable<ITrestleFact> {
     private validTemporal: TrestleTemporal;
 
     constructor(fact: ITrestleFact) {
-        console.debug("Building fact", fact.identifier);
         this.identifier = fact.identifier;
         this.name = fact.name;
         this.type = fact.type;

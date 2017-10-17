@@ -21,6 +21,7 @@ export interface IEventLink {
 }
 
 export interface IEventData {
+    bins: number;
     nodes: IEventElement[];
     links: IEventLink[];
 }
@@ -67,13 +68,12 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
     private plotData(): void {
         //    Setup the X/Y/Z values
         const entityNames = this.data.nodes.map((d) => d.entity);
-        const bins = this.data.nodes.map((d) => d.bin);
         const x = scaleTime()
             .range([0, this.width])
             .domain([this.minDate, this.maxDate]);
         const y = scaleLinear()
             .range([this.height, 0])
-            .domain([0, bins.length]);
+            .domain([0, this.data.bins]);
         const z = scaleOrdinal(schemeCategory10)
             .domain(entityNames);
 
