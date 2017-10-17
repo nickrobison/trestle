@@ -15,6 +15,11 @@
 
 (defn get-member-name [member] (.getName member))
 
+(defn get-annotation
+  "Get the specified annotation on the class member"
+  [member annotation]
+  (.getAnnotation member annotation))
+
 (defn hasAnnotation? [member annotation] (.isAnnotationPresent member annotation))
 (defn public? [entity] (Modifier/isPublic (.getModifiers entity)))
 (defn ignore? [entity] (hasAnnotation? entity Ignore))

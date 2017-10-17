@@ -1,11 +1,11 @@
 (ns com.nickrobison.trestle.reasoner.parser
   (:import [IClassParser]
-           (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter)
+           (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter StringParser)
            (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom)
            (java.lang.annotation Annotation)
            (java.lang.reflect InvocationTargetException Field Method Modifier)
            (java.lang.invoke MethodHandles)
-           (com.nickrobison.trestle.reasoner.annotations IndividualIdentifier DatasetClass)
+           (com.nickrobison.trestle.reasoner.annotations IndividualIdentifier DatasetClass Fact NoMultiLanguage Language)
            (java.util Optional List))
   (:require [clojure.core.match :refer [match]]
             [clojure.core.reducers :as r]
@@ -61,16 +61,47 @@
 (defmethod make-handle Field [field] (.unreflectGetter (MethodHandles/lookup) field))
 (defmethod make-handle Method [method] (.unreflect (MethodHandles/lookup) method))
 
+(defmulti get-member-return-type
+          "Get the Java class return type of the field/method"
+          class)
+(defmethod get-member-return-type Field [field] (.getType field))
+(defmethod get-member-return-type Method [method] (.getReturnType method))
+
+(defn parse-return-type
+  "Determine the OWLDatatype of the field/method"
+  [member]
+  (if (pred/hasAnnotation? member Fact)
+    (TypeConverter/getDatatypeFromAnnotation (pred/get-annotation member Fact) (get-member-return-type member))
+    (TypeConverter/getDatatypeFromJavaClass (get-member-return-type member))))
+
+(defn get-member-language
+  "Get the language tag, if one exists"
+  [member defaultLang]
+  (if (pred/hasAnnotation? member Language)
+    (.language (pred/get-annotation member Language))
+    defaultLang))
+
 (defn build-member
   "Build member from class methods/fields"
-  [member df prefix]
+  [member df prefix defaultLang]
   (let [iri (pred/build-iri member prefix)]
     {
      :name (pred/filter-member-name member)
      :iri iri
      :data-property (.getOWLDataProperty df iri)
+     :return-type (parse-return-type member)
+     :language (if (complement (nil? defaultLang))
+                 (get-member-language member defaultLang))
      :handle (make-handle member)
      :type (pred/member-type member)}))
+
+(defmulti build-literal (fn [df value multiLangEnabled defaultLang returnType] (class value)))
+(defmethod build-literal String
+  [df value multiLangEnabled defaultLang returnType]
+          (.getOWLLiteral df value defaultLang))
+(defmethod build-literal :default
+  [df value multiLangEnabled defaultLang returnType]
+  (.getOWLLiteral df (.toString value) returnType))
 
 
 (defn member-reducer
@@ -114,7 +145,7 @@
          ; Filter out non-necessary members
          (r/filter pred/filter-member)
          ; Build members
-         (r/map #(build-member % df reasonerPrefix))
+         (r/map #(build-member % df reasonerPrefix (if (true? multiLangEnabled) defaultLanguageCode nil)))
          (r/reduce member-reducer {})))
   (getFacts ^Optional ^List ^ OWLDataPropertyAssertionAxiom [this inputObject filterSpatial]
     (let [parsedClass (.parseClass this (.getClass inputObject))
@@ -131,9 +162,11 @@
                          (.getOWLDataPropertyAssertionAxiom df
                                                             (get member :data-property)
                                                             individual
-                                                            (.getOWLLiteral df
-                                                                            (invoker
-                                                                              (get member :handle) inputObject)))))
+                                                            (build-literal df
+                                                                           (invoker (get member :handle) inputObject)
+                                                                           multiLangEnabled
+                                                                           defaultLanguageCode
+                                                                           (get member :return-type)))))
                 (into ()))))))
 
 (defn make-parser

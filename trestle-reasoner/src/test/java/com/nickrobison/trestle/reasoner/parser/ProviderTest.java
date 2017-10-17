@@ -34,6 +34,7 @@ public class ProviderTest {
 
         public String testField1 = "testField1";
         public String testField2 = "testField2";
+        public int testField3 = 3;
 
         public ParserTestClass() {}
 
@@ -44,6 +45,10 @@ public class ProviderTest {
 
         public String getMethod1() {
             return "Has Method 1";
+        }
+
+        public Long getMethod2() {
+            return 42L;
         }
     }
 }
