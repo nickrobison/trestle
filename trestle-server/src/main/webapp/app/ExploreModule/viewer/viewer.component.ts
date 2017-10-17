@@ -210,7 +210,6 @@ export class DatsetViewerComponent implements OnInit {
             };
 
             // Since we have a merged event, add all the MERGED_FROM events
-            let bin = 2;
             // Moments are mutable, so we have to clone it.
             const mergedTemporal = individual
                 .getTemporal()
@@ -225,7 +224,7 @@ export class DatsetViewerComponent implements OnInit {
                     const me = {
                         id: filteredID + "-" + relation.getObject(),
                         entity: relation.getObject(),
-                        bin: bin,
+                        bin: 1,
                         value: "merged_from",
                         temporal: mergedTemporal
                     };
@@ -234,7 +233,6 @@ export class DatsetViewerComponent implements OnInit {
                         source: me,
                         target: merged
                     });
-                    bin += 1;
                 });
             // If we have both split/merge events, drop both CREATED and DESTROYED
             if (splitEvents.length > 0) {
@@ -341,11 +339,11 @@ export class DatsetViewerComponent implements OnInit {
         }
 
         // Set the individual equal to the middle value
-        const individualBin = Math.ceil(mergeCount / 2);
+        let currentBin = Math.ceil(mergeCount / 2);
         events
             .filter((event) => event.value === "individual")
             .map((event) => {
-                event.bin = individualBin;
+                event.bin = currentBin;
             });
         // Now, the merged events, alternating high/low
         let sign = "+";
@@ -353,7 +351,10 @@ export class DatsetViewerComponent implements OnInit {
         events
             .filter((event) => event.value === "merged_from")
             .map((event) => {
-                event.bin = individualBin + Number.parseInt(sign + step);
+                // Increment the current bin
+                currentBin = currentBin + Number.parseInt(sign + step);
+                event.bin = currentBin;
+                // Increment the step and flip the sign
                 step++;
                 sign = sign === "+" ? "-" : "+";
             });

@@ -71,7 +71,7 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
             .domain([this.minDate, this.maxDate]);
         const y = scaleLinear()
             .range([this.height, 0])
-            .domain(bins);
+            .domain([0, bins.length]);
         const z = scaleOrdinal(schemeCategory10)
             .domain(entityNames);
 
@@ -96,10 +96,7 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
             .append("line")
             .attr("class", "link")
             .attr("x1", (d) => x(d.source.temporal))
-            .attr("y1", (d) => {
-                console.debug("Setting y1  for line", d);
-                return y(d.source.bin) || null;
-            })
+            .attr("y1", (d) => y(d.source.bin) || null)
             .attr("x2", (d) => x(d.target.temporal))
             .attr("y2", (d) => y(d.target.bin) || null)
             .merge(links);
@@ -114,7 +111,7 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
             .append("circle")
             .attr("cx", (d) => x(d.temporal))
             .attr("cy", (d) => y(d.bin) || null)
-            .attr("r", 15)
+            .attr("r", 9)
             .attr("name", (d) => d.bin)
             .style("fill", (d: IEventElement) => z(d.entity))
             .style("opacity", (d) => d.continuing ? 0.7 : 1.0)
