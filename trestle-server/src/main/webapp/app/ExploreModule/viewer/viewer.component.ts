@@ -221,9 +221,10 @@ export class DatsetViewerComponent implements OnInit {
                 .getRelations()
                 .filter((relation) => relation.getType() === "MERGED_FROM")
                 .forEach((relation) => {
+                    const relationID = this.filterID(relation.getObject());
                     const me = {
-                        id: filteredID + "-" + relation.getObject(),
-                        entity: relation.getObject(),
+                        id: filteredID + "-" + relationID,
+                        entity: relationID,
                         bin: 1,
                         value: "merged_from",
                         temporal: mergedTemporal

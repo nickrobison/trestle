@@ -101,6 +101,10 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
             .attr("y2", (d) => y(d.target.bin) || null)
             .merge(links);
 
+        links
+            .exit()
+            .remove();
+
         //    Add the nodes to the graph
         const nodes = this.svg
             .selectAll(".node")
@@ -109,19 +113,23 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
         nodes
             .enter()
             .append("circle")
+            .attr("class", "node")
             .attr("cx", (d) => x(d.temporal))
             .attr("cy", (d) => y(d.bin) || null)
             .attr("r", 9)
             .attr("name", (d) => d.bin)
+            .attr("node-id", (d) => d.id)
+            .attr("entity", (d) => d.entity)
             .style("fill", (d: IEventElement) => z(d.entity))
             .style("opacity", (d) => d.continuing ? 0.7 : 1.0)
             .merge(nodes);
 
-        //    Add the X-axis
-        this.svg
-            .append("g")
-            .attr("class", "axis axis-x")
-            .attr("transform", "translate(0," + this.height + ")")
+        nodes
+            .exit()
+            .remove();
+
+        //    Update the X-axis
+        this.svg.select(".x-axis")
             .call(axisBottom(x));
     }
 
@@ -138,6 +146,21 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
             .append("g")
             .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
 
+        this.initXAxis();
+
         console.debug("D3 Initialized");
+    }
+
+    private initXAxis(): void {
+        const x = scaleTime()
+            .range([0, this.width])
+            .domain([this.minDate, this.maxDate]);
+
+        //    Add the X-axis
+        this.svg
+            .append("g")
+            .attr("class", "axis x-axis")
+            .attr("transform", "translate(0," + this.height + ")")
+            .call(axisBottom(x));
     }
 }
