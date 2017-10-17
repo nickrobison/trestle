@@ -129,8 +129,17 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
             .remove();
 
         //    Update the X-axis
-        this.svg.select(".x-axis")
-            .call(axisBottom(x));
+        const xSelection = this.svg.selectAll("g.x-axis");
+        if (xSelection.empty()) {
+            this.svg
+                .append("g")
+                .attr("class", "axis x-axis")
+                .attr("transform", "translate(0," + this.height + ")")
+                .call(axisBottom(x));
+        } else {
+            xSelection
+                .call(axisBottom(x));
+        }
     }
 
     private setupD3(): void {
@@ -146,7 +155,7 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
             .append("g")
             .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
 
-        this.initXAxis();
+        // this.initXAxis();
 
         console.debug("D3 Initialized");
     }
