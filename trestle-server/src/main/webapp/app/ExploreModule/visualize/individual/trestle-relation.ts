@@ -23,7 +23,8 @@ export type TrestleRelationType =
     | "SPLIT_INTO"
     | "SPLIT_FROM"
     | "MERGED_INTO"
-    | "MERGED_FROM";
+    | "MERGED_FROM"
+    | "COMPONENT_WITH";
 
 // export enum TrestleRelationType {
 //     // Spatial

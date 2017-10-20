@@ -131,13 +131,14 @@ export class DatsetViewerComponent implements OnInit {
 
     private buildHistoryGraph(individual: TrestleIndividual): void {
         console.debug("has events", individual.getEvents());
-        //    Get the split/merged events
-        const splitMerge = individual
+        //    Get the split/merged/component relations
+        const additionalRelations = individual
             .getRelations()
             .filter((relation) => (relation.getType() === "MERGED_FROM")
                 || (relation.getType() === "MERGED_INTO")
                 || (relation.getType() === "SPLIT_FROM")
-                || (relation.getType() === "SPLIT_INTO"));
+                || (relation.getType() === "SPLIT_INTO")
+                || (relation.getType() === "COMPONENT_WITH"));
         const history: IIndividualHistory = {
             entities: []
         };
@@ -157,12 +158,12 @@ export class DatsetViewerComponent implements OnInit {
 
         // Get all the related individuals, if necessary
         // If we don't need any individuals, then just plot our own events
-        if (splitMerge.length > 0) {
-            console.debug("Has some individuals:", splitMerge.length);
+        if (additionalRelations.length > 0) {
+            console.debug("Has some individuals:", additionalRelations.length);
             // Figure out what to link to.
             let rootEvent: IEventElement;
 
-            const splitMergeType = splitMerge[0].getType();
+            const splitMergeType = additionalRelations[0].getType();
             if (splitMergeType === "MERGED_FROM") {
                 // Link to the start event
                 rootEvent = events[0];
@@ -170,7 +171,8 @@ export class DatsetViewerComponent implements OnInit {
                 // Link to the end event
                 rootEvent = events[1];
             }
-            const obsArray = splitMerge.map((relation) => {
+
+            const obsArray = additionalRelations.map((relation) => {
                 console.debug("Getting attributes for:", relation.getObject());
                 return this.vs.getIndividualAttributes(relation.getObject());
             });
