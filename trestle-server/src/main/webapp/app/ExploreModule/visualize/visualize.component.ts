@@ -60,8 +60,8 @@ export class VisualizeComponent implements OnInit {
                         .map((fact) => {
                             return {
                                 label: fact.getName(),
-                                start: fact.getValidTemporal().getFromDate(),
-                                end: fact.getValidTemporal().getToDate(),
+                                start: fact.getValidTemporal().getFromAsDate(),
+                                end: fact.getValidTemporal().getToAsDate(),
                                 value: fact.getValue()
                             };
                         })

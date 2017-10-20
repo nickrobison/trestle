@@ -144,8 +144,8 @@ export class DatsetViewerComponent implements OnInit {
         const filteredID = this.filterID(individual.getID());
         history.entities.push({
             label: filteredID,
-            start: individual.getTemporal().getFromDate(),
-            end: individual.getTemporal().getToDate(),
+            start: individual.getTemporal().getFromAsDate(),
+            end: individual.getTemporal().getToAsDate(),
             value: individual.getID()
         });
         // //    For all the other individuals, add them as well
@@ -155,37 +155,46 @@ export class DatsetViewerComponent implements OnInit {
         let links = individualEvents.links;
 
 
-        // Get all the related individuals
-        console.debug("Has some individuals:", splitMerge.length);
-        const obsArray = splitMerge.map((relation) => {
-            console.debug("Getting attributes for:", relation.getObject());
-            return this.vs.getIndividualAttributes(relation.getObject());
-        });
-        Observable.forkJoin(obsArray)
-            .subscribe((objects) => {
-                console.debug("Have all observables:", objects);
-                objects.forEach((object) => {
-                    const relatedEvents = this.buildObjectEvents(object,
-                        this.filterID(object.getID()),
-                        splitMerge[0].getType());
-                    events = events.concat(relatedEvents.events);
-                    links = links.concat(relatedEvents.links);
-                });
-                console.debug("has all events:", events);
-                // console.debug("History", history);
-                // this.objectHistory = history;
-                this.eventData = this.sortEvents(events, links, filteredID);
+        // Get all the related individuals, if necessary
+        // If we don't need any individuals, then just plot our own events
+        if (splitMerge.length > 0) {
+            console.debug("Has some individuals:", splitMerge.length);
+            const obsArray = splitMerge.map((relation) => {
+                console.debug("Getting attributes for:", relation.getObject());
+                return this.vs.getIndividualAttributes(relation.getObject());
             });
+            Observable.forkJoin(obsArray)
+                .subscribe((objects) => {
+                    console.debug("Have all observables:", objects);
+                    objects.forEach((object) => {
+                        const relatedEvents = this.buildObjectEvents(object,
+                            this.filterID(object.getID()),
+                            splitMerge[0].getType());
+                        events = events.concat(relatedEvents.events);
+                        links = links.concat(relatedEvents.links);
+                    });
+                    const sortedEvents = this.sortEvents(events, links, filteredID);
+                    console.debug("Sorted events:", sortedEvents)
+                    this.eventData = sortedEvents;
+                });
+        } else {
+            this.eventData = this.sortEvents(events, links, filteredID);
+        }
     }
 
     private sortEvents(events: IEventElement[], links: IEventLink[], individualID: string): IEventData {
 
         // Sort any merged events
         let eventBins = events
-            .filter((event) => (event.value === "merged") || (event.value === "split")).length;
+            .filter((event) => (event.value === "from") || (event.value === "into")).length;
         // if we have an even number of merge events, add one, so that way
         if ((eventBins % 2) === 0) {
             eventBins += 1;
+        }
+
+        // We only have a single individual, add 2, just for giggles and spits
+        if (eventBins === 1) {
+            eventBins = 3;
         }
 
         // Set the individual equal to the middle value
@@ -202,7 +211,7 @@ export class DatsetViewerComponent implements OnInit {
         let step = 1;
 
         events
-            .filter((event) => (event.value === "merged") || (event.value === "split"))
+            .filter((event) => (event.value === "from") || (event.value === "into"))
             .map((event) => {
                 // Increment the current bin
                 currentBin = currentBin + Number.parseInt(sign + step);
@@ -276,30 +285,29 @@ export class DatsetViewerComponent implements OnInit {
         };
 
         // If the root individual is a merged_from,
-        // then we're looking for a link between the start event and MERGED_FROM
-        if (relationType === "MERGED_FROM") {
-            console.debug("Has merged from");
+        // then we're looking for a link between the end event and an INTO relation
+        if ((relationType === "MERGED_FROM") || (relationType === "SPLIT_FROM")) {
+            console.debug("Has from");
             // const mergedEvent = events.filter((event) => (event.value === "merged_from")
             //     && (event.entity === entityName))[0];
-            const mergedEvent = {
-                id: entityName + "-" + "MERGED_INTO",
+            const fromEvent = {
+                id: entityName + "-" + this.invertRelationship(relationType),
                 entity: entityName,
                 bin: 1,
-                value: "merged",
+                value: "into",
                 // We can do this cast because if there's a merge event, there is some end point
-                temporal: (individual.getTemporal().getToDate() as Date)
+                temporal: (individual.getTemporal().getToAsDate() as Date)
             };
-            events.push(started, mergedEvent);
+            events.push(started, fromEvent);
             links.push({
                 source: started,
-                target: mergedEvent
+                target: fromEvent
             });
-            // We want the ending event, and the split event
-            //    FIXME(nickrobison): I think this is wrong
-        } else if (relationType === "SPLIT_INTO") {
-            console.debug("Has split into");
-            const splitEvent = events.filter((event) => (event.value === "split_into")
-                && (event.entity === entityName))[0];
+            // We want the split event and the ending event
+        } else if ((relationType === "SPLIT_INTO") || (relationType === "MERGED_INTO")) {
+            console.debug("Has into");
+            // const splitEvent = events.filter((event) => (event.value === "split_into")
+            //     && (event.entity === entityName))[0];
             const endEvent = (individual.getEndEvent() as TrestleEvent);
             // We know that if there's a split going on, that there's an end event
             const end = {
@@ -309,9 +317,16 @@ export class DatsetViewerComponent implements OnInit {
                 value: "individual",
                 temporal: endEvent.getTemporal().toDate()
             };
-            events.push(end);
+            const intoEvent = {
+                id: entityName + "-" + this.invertRelationship(relationType),
+                entity: entityName,
+                bin: 1,
+                value: "from",
+                temporal: startEvent.getTemporal().toDate()
+            };
+            events.push(end, intoEvent);
             links.push({
-                source: splitEvent,
+                source: intoEvent,
                 target: end
             });
             //    Otherwise, link the start and end events
@@ -481,7 +496,7 @@ export class DatsetViewerComponent implements OnInit {
         //         target: destroyed
         //     });
         // }
-
+        console.debug("Events for %s", individual.getID(), events);
         return {
             events: events,
             links: links
@@ -515,5 +530,23 @@ export class DatsetViewerComponent implements OnInit {
         const strings = id.split("#");
         const idStrings = strings[1].split(":");
         return idStrings[0] + ":" + idStrings[1];
+    }
+
+    /**
+     * Invert the object relationship, because our event graphs works in reverse
+     * @param {"MERGED_FROM" | "MERGED_INTO" | "SPLIT_FROM" | "SPLIT_INTO"} relationship
+     * @returns {string} of inverted relationship
+     */
+    private invertRelationship(relationship: "MERGED_FROM" | "MERGED_INTO" | "SPLIT_FROM" | "SPLIT_INTO"): string {
+        switch (relationship) {
+            case "MERGED_FROM":
+                return "MERGED_INTO";
+            case "MERGED_INTO":
+                return "MERGED_FROM";
+            case "SPLIT_INTO":
+                return "SPLIT_FROM";
+            case "SPLIT_FROM":
+                return "SPLIT_INTO";
+        }
     }
 }

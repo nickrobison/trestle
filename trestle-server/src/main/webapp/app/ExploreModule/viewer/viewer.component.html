@@ -34,7 +34,7 @@
 <div class="section" *ngIf="objectHistory">
     <h4>Object History</h4>
     <div class="row">
-        <history-graph [minTime]="minTime" [maxTime]="maxTime" [data]="objectHistory"
+        <history-graph [minTime]="minTime.toDate()" [maxTime]="maxTime.toDate()" [data]="objectHistory"
                        [graphHeight]="300"></history-graph>
     </div>
 </div>

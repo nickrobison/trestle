@@ -28,7 +28,7 @@ export class TrestleTemporal implements IInterfacable<ITrestleTemporal> {
         return this.from;
     }
 
-    public getFromDate(): Date {
+    public getFromAsDate(): Date {
         return this.from.toDate();
     }
 
@@ -36,7 +36,7 @@ export class TrestleTemporal implements IInterfacable<ITrestleTemporal> {
         return this.to;
     }
 
-    public getToDate(): Date | undefined {
+    public getToAsDate(): Date | undefined {
         if (this.to) {
             return this.to.toDate();
         }
