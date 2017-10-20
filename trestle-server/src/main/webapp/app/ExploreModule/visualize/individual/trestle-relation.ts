@@ -1,4 +1,4 @@
-import { IInterfacable } from "../../interfacable";
+import {IInterfacable} from "../../interfacable";
 
 export interface ITrestleRelation {
     subject: string;
@@ -6,37 +6,56 @@ export interface ITrestleRelation {
     relation: string;
 }
 
-export enum TrestleRelationType {
-    // Spatial
-    CONTAINS,
-    COVERS,
-    DISJOINT,
-    EQUALS,
-    INSIDE,
-    MEETS,
-    SPATIAL_OVERLAPS,
-    // Temporal
-    AFTER,
-    BEFORE,
-    BEGINS,
-    DURING,
-    ENDS,
-    TEMPORAL_OVERLAPS,
-    SPLIT_INTO,
-    SPLIT_FROM,
-    MERGED_INTO,
-    MERGED_FROM
-}
+export type TrestleRelationType =
+    "CONTAINS"
+    | "COVERS"
+    | "DISJOINT"
+    | "EQUALS"
+    | "INSIDE"
+    | "MEETS"
+    | "SPATIAL_OVERLAPS"
+    | "AFTER"
+    | "BEFORE"
+    | "BEGINS"
+    | "DURING"
+    | "ENDS"
+    | "TEMPORAL_OVERLAPS"
+    | "SPLIT_INTO"
+    | "SPLIT_FROM"
+    | "MERGED_INTO"
+    | "MERGED_FROM";
+
+// export enum TrestleRelationType {
+//     // Spatial
+//     CONTAINS,
+//     COVERS,
+//     DISJOINT,
+//     EQUALS,
+//     INSIDE,
+//     MEETS,
+//     SPATIAL_OVERLAPS,
+//     // Temporal
+//     AFTER,
+//     BEFORE,
+//     BEGINS,
+//     DURING,
+//     ENDS,
+//     TEMPORAL_OVERLAPS,
+//     SPLIT_INTO,
+//     SPLIT_FROM,
+//     MERGED_INTO,
+//     MERGED_FROM
+// }
 
 export class TrestleRelation implements IInterfacable<ITrestleRelation> {
     private subject: string;
     private object: string;
-    private type: string;
+    private type: TrestleRelationType;
 
     constructor(relation: ITrestleRelation) {
         this.subject = relation.subject;
         this.object = relation.object;
-        this.type = relation.relation;
+        this.type = (relation.relation as TrestleRelationType);
     }
 
     public getSubject(): string {
@@ -47,7 +66,7 @@ export class TrestleRelation implements IInterfacable<ITrestleRelation> {
         return this.object;
     }
 
-    public getType(): string {
+    public getType(): TrestleRelationType {
         return this.type;
     }
 

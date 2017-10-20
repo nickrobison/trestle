@@ -1,22 +1,20 @@
 /**
  * Created by nrobison on 6/23/17.
  */
-import { Component, OnInit } from "@angular/core";
-import { MapService } from "./map.service";
-import { ITrestleMapSource } from "../../UIModule/map/trestle-map.component";
-import { animate, style, transition, trigger } from "@angular/animations";
+import {Component, OnInit} from "@angular/core";
+import {MapService} from "./map.service";
+import {ITrestleMapSource} from "../../UIModule/map/trestle-map.component";
+import {animate, style, transition, trigger} from "@angular/animations";
 import * as moment from "moment";
+import {MatSliderChange} from "@angular/material";
+import {IIndividualHistory} from "../../UIModule/history-graph/history-graph.component";
+import {VisualizeService} from "../visualize/visualize.service";
+import {TrestleIndividual} from "../visualize/individual/trestle-individual";
+import {IEventData, IEventElement, IEventLink} from "../../UIModule/event-graph/event-graph.component";
+import {Observable} from "rxjs/Observable";
+import {TrestleEvent} from "../visualize/individual/trestle-event";
+import {TrestleRelationType} from "../visualize/individual/trestle-relation";
 import LngLatBounds = mapboxgl.LngLatBounds;
-import { MatSliderChange } from "@angular/material";
-import { IIndividualHistory } from "../../UIModule/history-graph/history-graph.component";
-import { VisualizeService } from "../visualize/visualize.service";
-import { TrestleIndividual } from "../visualize/individual/trestle-individual";
-import {
-    IEventData, IEventElement,
-    IEventLink
-} from "../../UIModule/event-graph/event-graph.component";
-import { Observable } from "rxjs/Observable";
-import { TrestleEvent } from "../visualize/individual/trestle-event";
 
 enum DatasetState {
     UNLOADED,
@@ -168,7 +166,8 @@ export class DatsetViewerComponent implements OnInit {
                 console.debug("Have all observables:", objects);
                 objects.forEach((object) => {
                     const relatedEvents = this.buildObjectEvents(object,
-                        this.filterID(object.getID()));
+                        this.filterID(object.getID()),
+                        splitMerge[0].getType());
                     events = events.concat(relatedEvents.events);
                     links = links.concat(relatedEvents.links);
                 });
@@ -183,13 +182,14 @@ export class DatsetViewerComponent implements OnInit {
 
         // Sort any merged events
         let eventBins = events
-            .filter((event) => event.value === "merged_from").length;
+            .filter((event) => (event.value === "merged") || (event.value === "split")).length;
         // if we have an even number of merge events, add one, so that way
         if ((eventBins % 2) === 0) {
             eventBins += 1;
         }
 
         // Set the individual equal to the middle value
+        console.debug("Sorting data into %s bins", eventBins);
         let currentBin = Math.ceil(eventBins / 2);
 
         events
@@ -202,7 +202,7 @@ export class DatsetViewerComponent implements OnInit {
         let step = 1;
 
         events
-            .filter((event) => event.value === "merged_from")
+            .filter((event) => (event.value === "merged") || (event.value === "split"))
             .map((event) => {
                 // Increment the current bin
                 currentBin = currentBin + Number.parseInt(sign + step);
@@ -227,11 +227,13 @@ export class DatsetViewerComponent implements OnInit {
 
     private buildObjectEvents(individual: TrestleIndividual,
                               entityName: string,
-                              relationType?: "merged_from" | "split_into",
+                              relationType?: TrestleRelationType,
                               rootIndividualID?: string): {
         events: IEventElement[],
         links: IEventLink[]
     } {
+        console.debug("Build events for individual: %s with relation type: %s",
+            individual, relationType);
         // Split merge first,
         // because it'll show us if we need to drop a created or destroyed event
         const events: IEventElement[] = [];
@@ -275,16 +277,27 @@ export class DatsetViewerComponent implements OnInit {
 
         // If the root individual is a merged_from,
         // then we're looking for a link between the start event and MERGED_FROM
-        if (relationType === "merged_from") {
-            const mergedEvent = events.filter((event) => (event.value === "merged_from")
-                && (event.entity === entityName))[0];
-            events.push(started);
+        if (relationType === "MERGED_FROM") {
+            console.debug("Has merged from");
+            // const mergedEvent = events.filter((event) => (event.value === "merged_from")
+            //     && (event.entity === entityName))[0];
+            const mergedEvent = {
+                id: entityName + "-" + "MERGED_INTO",
+                entity: entityName,
+                bin: 1,
+                value: "merged",
+                // We can do this cast because if there's a merge event, there is some end point
+                temporal: (individual.getTemporal().getToDate() as Date)
+            };
+            events.push(started, mergedEvent);
             links.push({
                 source: started,
                 target: mergedEvent
             });
             // We want the ending event, and the split event
-        } else if (relationType === "split_into") {
+            //    FIXME(nickrobison): I think this is wrong
+        } else if (relationType === "SPLIT_INTO") {
+            console.debug("Has split into");
             const splitEvent = events.filter((event) => (event.value === "split_into")
                 && (event.entity === entityName))[0];
             const endEvent = (individual.getEndEvent() as TrestleEvent);
@@ -320,6 +333,7 @@ export class DatsetViewerComponent implements OnInit {
                 });
                 //    Otherwise, create the end event and move on
             } else {
+                console.debug("Something else");
                 const ended = {
                     id: entityName + "-" + (endEvent as TrestleEvent).getType(),
                     entity: entityName,
