@@ -49,6 +49,7 @@ export class DatsetViewerComponent implements OnInit {
     public maxTime = moment("2016-01-01");
     public sliderValue = 2013;
     public selectedIndividual: TrestleIndividual;
+    public selectedIndividualID: string;
     public objectHistory: IIndividualHistory;
     public eventData: IEventData;
     public mapLocked = false;
@@ -125,9 +126,20 @@ export class DatsetViewerComponent implements OnInit {
         this.vs.getIndividualAttributes(event)
             .subscribe((data) => {
                 console.debug("Has individual", data);
+                this.selectedIndividualID = this.filterID(data.getID());
                 this.buildHistoryGraph(data);
             });
     };
+
+    public filterID(id: string): string {
+        const strings = id.split("#");
+        const idStrings = strings[1].split(":");
+        return idStrings[0] + ":" + idStrings[1];
+    }
+
+    public filterLabel(input: IEventElement): string {
+        return input.entity.split(":")[1];
+    }
 
     private buildHistoryGraph(individual: TrestleIndividual): void {
         console.debug("has events", individual.getEvents());
@@ -391,16 +403,6 @@ export class DatsetViewerComponent implements OnInit {
             console.debug("Moved east/west, so true");
         }
         return false;
-    }
-
-    private filterID(id: string): string {
-        const strings = id.split("#");
-        const idStrings = strings[1].split(":");
-        return idStrings[0] + ":" + idStrings[1];
-    }
-
-    public filterLabel(input: IEventElement): string {
-        return input.entity.split(":")[1];
     }
 
     /**

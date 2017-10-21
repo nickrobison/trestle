@@ -2,9 +2,9 @@ import {
     AfterViewInit, Component, ElementRef, Input, OnChanges, SimpleChanges,
     ViewChild
 } from "@angular/core";
-import { BaseType, event, select, Selection } from "d3-selection";
-import { scaleLinear, scaleOrdinal, scaleTime, schemeCategory10 } from "d3-scale";
-import { axisBottom } from "d3-axis";
+import {BaseType, event, select, Selection} from "d3-selection";
+import {scaleLinear, scaleOrdinal, scaleTime, schemeCategory10} from "d3-scale";
+import {axisBottom} from "d3-axis";
 
 export interface IEventElement {
     id: string;
@@ -34,6 +34,7 @@ export interface IEventData {
 export class EventGraphComponent implements AfterViewInit, OnChanges {
     @ViewChild("graph") public element: ElementRef;
     @ViewChild("tooltip") private tooltipEl: ElementRef;
+    @Input() public selectedIndividual: string;
     @Input() public data: IEventData;
     @Input() public graphHeight: number;
     @Input() public minDate: Date;
@@ -88,6 +89,31 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
                 node.temporal = this.minDate;
             }
         });
+
+        // Let's draw a box around the selected individual
+        const focusedIndividual = this.svg.selectAll(".selected")
+            .data(this.data.nodes
+                    .filter((node) => node.entity === this.selectedIndividual),
+                (d: IEventElement) => d.entity);
+
+        // Calculate bin height
+        const binHeight = y(1) - y(2);
+
+        focusedIndividual
+            .enter()
+            .append("rect")
+            .attr("class", "selected")
+            .attr("x", 0)
+            .attr("y", (d) => y(d.bin) + (binHeight / 2))
+            .attr("height", binHeight)
+            .attr("width", () => x(this.maxDate) + 120)
+            .attr("fill", "#FAFAD2")
+            .attr("opacity", "0.7")
+            .merge(focusedIndividual);
+
+        focusedIndividual
+            .exit()
+            .remove();
 
         //    Add the lines
         const links = this.svg
