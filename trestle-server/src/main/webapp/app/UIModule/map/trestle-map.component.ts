@@ -19,6 +19,12 @@ export interface ITrestleMapSource {
     data: FeatureCollection<GeometryObject>;
 }
 
+export interface ITrestleMapConfig {
+    center: mapboxgl.LngLatLike;
+    zoom?: number;
+    styleUrl?: string;
+}
+
 @Component({
     selector: "trestle-map",
     templateUrl: "./trestle-map.component.html",
@@ -31,6 +37,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     @Input() public single: boolean;
     @Input() public multiSelect: boolean;
     @Input() public zoomOnLoad? = true;
+    @Input() public config?: ITrestleMapConfig;
     @Output() public mapBounds: EventEmitter<LngLatBounds> = new EventEmitter();
     @Output() public clicked: EventEmitter<string> = new EventEmitter();
     private map: mapboxgl.Map;
@@ -44,13 +51,22 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     public ngOnInit(): void {
         console.debug("Creating map, singleSelect?", this.single, "mulitSelect?", this.multiSelect);
         this.mapSources = [];
-        this.map = new mapboxgl.Map({
-            container: "map",
-            style: "mapbox://styles/mapbox/light-v9",
-            center: new mapboxgl.LngLat(32.3558991, -25.6854313),
-            // center: [-74.50, 40], // starting position
-            zoom: 8 // starting zoom
-        });
+        if (this.config) {
+            this.map = new mapboxgl.Map({
+                container: "map",
+                style: this.config.styleUrl ?
+                    this.config.styleUrl : "mapbox://styles/mapbox/light-v9",
+                center: this.config.center,
+                zoom: this.config.zoom ? this.config.zoom : 8
+            });
+        } else {
+            this.map = new mapboxgl.Map({
+                container: "map",
+                style: "mapbox://styles/mapbox/light-v9",
+                center: new mapboxgl.LngLat(32.3558991, -25.6854313),
+                zoom: 8
+            });
+        }
         this.map.on("click", this.layerClick);
         this.map.on("mouseover", this.mouseOver);
         this.map.on("mouseleave", this.mouseOut);
