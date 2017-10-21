@@ -11,7 +11,7 @@ import {
     FeatureCollection, GeometryObject, LineString, MultiLineString, MultiPoint, MultiPolygon,
     Point, Polygon
 } from "geojson";
-import { MapMouseEvent, LngLatBounds } from "mapbox-gl";
+import {MapMouseEvent, LngLatBounds} from "mapbox-gl";
 
 export interface ITrestleMapSource {
     id: string;
@@ -30,7 +30,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     @Input() public individual: ITrestleMapSource;
     @Input() public single: boolean;
     @Input() public multiSelect: boolean;
-    @Input() public lockMap: boolean;
+    @Input() public zoomOnLoad? = true;
     @Output() public mapBounds: EventEmitter<LngLatBounds> = new EventEmitter();
     @Output() public clicked: EventEmitter<string> = new EventEmitter();
     private map: mapboxgl.Map;
@@ -69,32 +69,6 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                 this.removeSource(inputChanges.previousValue);
             }
             this.addSource(inputChanges.currentValue);
-        }
-
-    //    Locked changes
-        const lockedChanges = changes["lockMap"];
-        if (lockedChanges != null
-        && !lockedChanges.isFirstChange()
-        && (lockedChanges.currentValue !== lockedChanges.previousValue)) {
-            this.lockMap = lockedChanges.currentValue;
-        //    Lock/unlock map
-            if (this.lockMap) {
-                this.map.dragPan.disable();
-                this.map.dragRotate.disable();
-                this.map.scrollZoom.disable();
-                this.map.keyboard.disable();
-                this.map.boxZoom.disable();
-                this.map.doubleClickZoom.disable();
-                this.map.touchZoomRotate.disable();
-            } else {
-                this.map.dragPan.enable();
-                this.map.dragRotate.enable();
-                this.map.scrollZoom.enable();
-                this.map.keyboard.enable();
-                this.map.boxZoom.enable();
-                this.map.doubleClickZoom.enable();
-                this.map.touchZoomRotate.enable();
-            }
         }
     }
 
@@ -146,7 +120,9 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         });
         this.mapSources.push(inputLayer.id);
         //    Center map
-        this.centerMap(inputLayer.data);
+        if (this.zoomOnLoad) {
+            this.centerMap(inputLayer.data);
+        }
     }
 
     private layerClick = (e: MapMouseEvent): void => {
@@ -195,15 +171,12 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     };
 
     private moveHandler = () => {
-        if (!this.lockMap) {
-            console.debug("New bounds", this.map.getBounds());
-            this.mapBounds.emit(this.map.getBounds());
-        }
+        console.debug("New bounds", this.map.getBounds());
+        this.mapBounds.emit(this.map.getBounds());
     };
 
     private centerMap(geom: FeatureCollection<GeometryObject>): void {
         // We have to lock the map in order to avoid sending out a notice that the move happened.
-        this.lockMap = true;
         if (geom.bbox) {
             // FIXME(nrobison): This is garbage. Fix it.
             this.map.fitBounds(LngLatBounds.convert(geom.bbox as any));
@@ -215,7 +188,26 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                 this.map.fitBounds(LngLatBounds.convert(bbox as any));
             }
         }
-        this.lockMap = false;
+    }
+
+    private lockMap(): void {
+        this.map.dragPan.disable();
+        this.map.dragRotate.disable();
+        this.map.scrollZoom.disable();
+        this.map.keyboard.disable();
+        this.map.boxZoom.disable();
+        this.map.doubleClickZoom.disable();
+        this.map.touchZoomRotate.disable();
+    }
+
+    private unlockMap(): void {
+        this.map.dragPan.enable();
+        this.map.dragRotate.enable();
+        this.map.scrollZoom.enable();
+        this.map.keyboard.enable();
+        this.map.boxZoom.enable();
+        this.map.doubleClickZoom.enable();
+        this.map.touchZoomRotate.enable();
     }
 
     private static extractGeometryPoints(geom: GeometryObject): number[][] {

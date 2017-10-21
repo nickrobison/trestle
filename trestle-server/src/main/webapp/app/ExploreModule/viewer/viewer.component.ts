@@ -52,7 +52,6 @@ export class DatsetViewerComponent implements OnInit {
     public selectedIndividualID: string;
     public objectHistory: IIndividualHistory;
     public eventData: IEventData;
-    public mapLocked = false;
     private mapBounds: LngLatBounds;
 
     constructor(private mapService: MapService, private vs: VisualizeService) {
@@ -74,7 +73,6 @@ export class DatsetViewerComponent implements OnInit {
     }
 
     public loadDataset(dataset: IDatasetState): void {
-        this.mapLocked = true;
         console.debug("Loading:", dataset.name);
         dataset.state = DatasetState.LOADING;
         this.mapService.stIntersect(dataset.name,
@@ -89,22 +87,20 @@ export class DatsetViewerComponent implements OnInit {
                     idField: "id",
                     data
                 };
-                this.mapLocked = false;
             }, (error) => {
                 console.error("Error loading dataset:", error);
                 dataset.state = DatasetState.ERROR;
-                this.mapLocked = false;
             });
     }
 
     public updateBounds(bounds: LngLatBounds): void {
         console.debug("Moving, updating bounds", bounds);
         // If we've moved outside of the current bounds, get new data
-        if (!this.mapLocked && this.needNewData(bounds)) {
+        if (this.needNewData(bounds)) {
             this.mapBounds = bounds;
-            // this.availableDatasets
-            //     .filter((ds) => ds.state === DatasetState.LOADED)
-            //     .forEach((ds) => this.loadDataset(ds));
+            this.availableDatasets
+                .filter((ds) => ds.state === DatasetState.LOADED)
+                .forEach((ds) => this.loadDataset(ds));
         } else {
             this.mapBounds = bounds;
         }
