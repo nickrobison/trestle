@@ -6,7 +6,7 @@ import {UserModule} from "../UserModule/user.module";
 import {VisualizeComponent} from "./visualize/visualize.component";
 import {IndividualGraph} from "./visualize/individual-graph.component";
 import {IndividualValueDialog} from "./visualize/individual-value.dialog";
-import {VisualizeService} from "./visualize/visualize.service";
+import {IndividualService} from "../SharedModule/individual/individual.service";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {CommonModule} from "@angular/common";
 import {QueryViewer} from "./query/query-viewer/query-viewer.component";
@@ -45,7 +45,7 @@ import {CompareComponent} from "./compare/compare.component";
         ObjectEventGraphComponent,
         CompareComponent
     ],
-    providers: [VisualizeService, QueryService, MapService],
+    providers: [IndividualService, QueryService, MapService],
     entryComponents: [IndividualValueDialog]
 })
 export class ExploreModule {}

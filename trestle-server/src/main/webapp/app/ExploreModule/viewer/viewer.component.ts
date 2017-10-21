@@ -8,12 +8,12 @@ import {animate, style, transition, trigger} from "@angular/animations";
 import * as moment from "moment";
 import {MatSliderChange} from "@angular/material";
 import {IIndividualHistory} from "../../UIModule/history-graph/history-graph.component";
-import {VisualizeService} from "../visualize/visualize.service";
-import {TrestleIndividual} from "../visualize/individual/trestle-individual";
+import {IndividualService} from "../../SharedModule/individual/individual.service";
+import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
 import {IEventData, IEventElement, IEventLink} from "../../UIModule/event-graph/event-graph.component";
 import {Observable} from "rxjs/Observable";
-import {TrestleEvent} from "../visualize/individual/trestle-event";
-import {TrestleRelationType} from "../visualize/individual/trestle-relation";
+import {TrestleEvent} from "../../SharedModule/individual/TrestleIndividual/trestle-event";
+import {TrestleRelationType} from "../../SharedModule/individual/TrestleIndividual/trestle-relation";
 import LngLatBounds = mapboxgl.LngLatBounds;
 
 enum DatasetState {
@@ -54,7 +54,7 @@ export class DatsetViewerComponent implements OnInit {
     public eventData: IEventData;
     private mapBounds: LngLatBounds;
 
-    constructor(private mapService: MapService, private vs: VisualizeService) {
+    constructor(private mapService: MapService, private vs: IndividualService) {
     }
 
     public ngOnInit(): void {

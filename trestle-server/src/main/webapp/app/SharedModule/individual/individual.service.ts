@@ -5,11 +5,11 @@ import {Injectable} from "@angular/core";
 import {Observable} from "rxjs";
 import {URLSearchParams, Response} from "@angular/http";
 import {TrestleHttp} from "../../UserModule/trestle-http.provider";
-import {TrestleIndividual} from "./individual/trestle-individual";
-import {CacheService} from "../../SharedModule/cache/cache.service";
+import {TrestleIndividual} from "./TrestleIndividual/trestle-individual";
+import {CacheService} from "../cache/cache.service";
 
 @Injectable()
-export class VisualizeService {
+export class IndividualService {
 
     constructor(private trestleHttp: TrestleHttp,
                 private individualCache: CacheService<string, TrestleIndividual>) { }

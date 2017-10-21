@@ -9,9 +9,9 @@ import * as moment from "moment";
 import { ITrestleMapSource } from "../../UIModule/map/trestle-map.component";
 import { MatDialog, MatDialogConfig, MatDialogRef } from "@angular/material";
 import { IIndividualHistory } from "../../UIModule/history-graph/history-graph.component";
-import { TrestleIndividual } from "./individual/trestle-individual";
-import { VisualizeService } from "./visualize.service";
-import { TrestleFact } from "./individual/trestle-fact";
+import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
+import { IndividualService } from "../../SharedModule/individual/individual.service";
+import { TrestleFact } from "../../SharedModule/individual/TrestleIndividual/trestle-fact";
 
 @Component({
     selector: "visualize",
@@ -30,7 +30,7 @@ export class VisualizeComponent implements OnInit {
     public maxTime: moment.Moment;
     private dialogRef: MatDialogRef<IndividualValueDialog> | null;
 
-    constructor(private vs: VisualizeService,
+    constructor(private is: IndividualService,
                 private dialog: MatDialog,
                 private viewContainerRef: ViewContainerRef) {
     }
@@ -42,12 +42,12 @@ export class VisualizeComponent implements OnInit {
             .valueChanges
             .debounceTime(400)
             .distinctUntilChanged()
-            .switchMap((name) => this.vs.searchForIndividual(name));
+            .switchMap((name) => this.is.searchForIndividual(name));
     }
 
     public onSubmit() {
         console.debug("Submitted", this.individualName.value);
-        this.vs.getTrestleIndividual(this.individualName.value)
+        this.is.getTrestleIndividual(this.individualName.value)
             .subscribe((results: TrestleIndividual) => {
                 console.debug("has individual", results);
                 this.individual = results;

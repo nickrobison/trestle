@@ -21,7 +21,7 @@ import {
     SimulationLinkDatum, Simulation
 } from "d3-force";
 import { MatSlideToggleChange } from "@angular/material";
-import { TrestleIndividual } from "./individual/trestle-individual";
+import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
 
 export interface IIndividualConfig {
     data: TrestleIndividual;
