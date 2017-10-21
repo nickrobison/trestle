@@ -6,10 +6,12 @@ import {LoggedInGuard} from "../UserModule/LoggedInGuard";
 import {QueryComponent} from "./query/query.component";
 import {ITrestleRoute} from "../NavigationModule/navigation.module";
 import { DatsetViewerComponent } from "./viewer/viewer.component";
+import {CompareComponent} from "./compare/compare.component";
 
 export const ExploreRoutes: ITrestleRoute[] = [
     {path: "", redirectTo: "viewer", pathMatch: "full"},
     {path: "visualize", component: VisualizeComponent, canActivate: [LoggedInGuard]},
     {path: "query", component: QueryComponent, canActivate: [LoggedInGuard]},
-    {path: "viewer", component: DatsetViewerComponent, canActivate: [LoggedInGuard]}
+    {path: "viewer", component: DatsetViewerComponent, canActivate: [LoggedInGuard]},
+    {path: "compare", component: CompareComponent, canActivate: [LoggedInGuard]}
 ];
