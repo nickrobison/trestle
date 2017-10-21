@@ -1,17 +1,18 @@
 /**
  * Created by nrobison on 3/7/17.
  */
-import { Injectable } from "@angular/core";
-import { Observable } from "rxjs";
-import { URLSearchParams, Response } from "@angular/http";
-import { TrestleHttp } from "../../UserModule/trestle-http.provider";
-import { TrestleIndividual } from "./individual/trestle-individual";
+import {Injectable} from "@angular/core";
+import {Observable} from "rxjs";
+import {URLSearchParams, Response} from "@angular/http";
+import {TrestleHttp} from "../../UserModule/trestle-http.provider";
+import {TrestleIndividual} from "./individual/trestle-individual";
+import {CacheService} from "../../SharedModule/cache/cache.service";
 
 @Injectable()
 export class VisualizeService {
 
-    constructor(private trestleHttp: TrestleHttp) {
-    }
+    constructor(private trestleHttp: TrestleHttp,
+                private individualCache: CacheService<string, TrestleIndividual>) { }
 
     public searchForIndividual(name: string, dataset = "", limit = 10): Observable<string[]> {
         const params = new URLSearchParams();
@@ -28,7 +29,17 @@ export class VisualizeService {
             .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
 
-    public getIndividualAttributes(name: string): Observable<TrestleIndividual> {
+    /**
+     * Return a {TrestleIndividual} from the API
+     * Uses the cache if possible
+     * @param {string} name - Individual IRI string
+     * @returns {Observable<TrestleIndividual>}
+     */
+    public getTrestleIndividual(name: string): Observable<TrestleIndividual> {
+        return this.individualCache.get(name, this.getIndividualAPI(name));
+    }
+
+    private getIndividualAPI(name: string): Observable<TrestleIndividual> {
         const params = new URLSearchParams();
         params.set("name", name);
         return this.trestleHttp.get("/visualize/retrieve", {

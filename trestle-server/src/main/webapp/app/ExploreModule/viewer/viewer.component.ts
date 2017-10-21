@@ -123,7 +123,7 @@ export class DatsetViewerComponent implements OnInit {
 
     public mapClicked = (event: string): void => {
         console.debug("Clicked:", event);
-        this.vs.getIndividualAttributes(event)
+        this.vs.getTrestleIndividual(event)
             .subscribe((data) => {
                 console.debug("Has individual", data);
                 this.selectedIndividualID = this.filterID(data.getID());
@@ -186,7 +186,7 @@ export class DatsetViewerComponent implements OnInit {
 
             const obsArray = additionalRelations.map((relation) => {
                 console.debug("Getting attributes for:", relation.getObject());
-                return this.vs.getIndividualAttributes(relation.getObject());
+                return this.vs.getTrestleIndividual(relation.getObject());
             });
             Observable.forkJoin(obsArray)
                 .subscribe((objects) => {

@@ -47,7 +47,7 @@ export class VisualizeComponent implements OnInit {
 
     public onSubmit() {
         console.debug("Submitted", this.individualName.value);
-        this.vs.getIndividualAttributes(this.individualName.value)
+        this.vs.getTrestleIndividual(this.individualName.value)
             .subscribe((results: TrestleIndividual) => {
                 console.debug("has individual", results);
                 this.individual = results;

@@ -20,6 +20,7 @@ import { DatsetViewerComponent } from "./viewer/viewer.component";
 import { MapService } from "./viewer/map.service";
 import { ObjectEventGraphComponent } from "./object-event-graph/ObjectEventGraph";
 import { MaterialModule } from "../MaterialModule/material.module";
+import {SharedModule} from "../SharedModule/shared.module";
 
 @NgModule({
     imports: [
@@ -29,6 +30,7 @@ import { MaterialModule } from "../MaterialModule/material.module";
         MaterialModule,
         CommonModule,
         UIModule,
+        SharedModule,
         RouterModule.forChild(ExploreRoutes)
     ],
     declarations: [
