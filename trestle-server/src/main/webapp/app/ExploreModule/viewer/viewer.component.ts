@@ -399,6 +399,10 @@ export class DatsetViewerComponent implements OnInit {
         return idStrings[0] + ":" + idStrings[1];
     }
 
+    public filterLabel(input: IEventElement): string {
+        return input.entity.split(":")[1];
+    }
+
     /**
      * Invert the object relationship, because our event graphs works in reverse
      * @param {"MERGED_FROM" | "MERGED_INTO" | "SPLIT_FROM" | "SPLIT_INTO"} relationship

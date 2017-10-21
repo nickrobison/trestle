@@ -38,6 +38,7 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
     @Input() public graphHeight: number;
     @Input() public minDate: Date;
     @Input() public maxDate: Date;
+    @Input() public filterLabel?: (input: IEventElement) => string;
     private htmlElement: HTMLElement;
     private host: Selection<HTMLElement, IEventElement | IEventLink, null, undefined>;
     private svg: Selection<BaseType, IEventElement | IEventLink, null, undefined>;
@@ -69,7 +70,7 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
         //    Setup the X/Y/Z values
         const entityNames = this.data.nodes.map((d) => d.entity);
         const x = scaleTime()
-            .range([0, this.width])
+            .range([120, this.width])
             .domain([this.minDate, this.maxDate]);
         const y = scaleLinear()
             .range([this.height, 0])
@@ -132,6 +133,26 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
             .exit()
             .remove();
 
+        // Add the labels
+        const mainLabels = this.svg.selectAll(".entityName")
+            .data(this.data.nodes, (d: IEventElement) => d.entity)
+
+        mainLabels
+            .enter()
+            .append("text")
+            .text((d) => this.applyFilter(d))
+            .attr("class", "entityName")
+            .attr("x", 0)
+            .attr("y", (d) => y(d.bin) || 0)
+            .attr("text-anchor", "start")
+            .attr("dy", ".1ex")
+            .attr("font-size", "12px")
+            .merge(mainLabels);
+
+        mainLabels
+            .exit()
+            .remove();
+
         //    Update the X-axis
         const xSelection = this.svg.selectAll("g.x-axis");
         if (xSelection.empty()) {
@@ -185,5 +206,18 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
         console.debug("Out event:", event);
         this.tooltip
             .style("visibility", "hidden");
+    };
+
+    /**
+     * Apply the filter function, if it exists, otherwise, return the entity as the label
+     * @param {IEventElement} input
+     * @returns {string}
+     */
+    private applyFilter = (input: IEventElement): string => {
+        if (this.filterLabel) {
+            return this.filterLabel(input);
+        } else {
+            return input.entity;
+        }
     }
 }
