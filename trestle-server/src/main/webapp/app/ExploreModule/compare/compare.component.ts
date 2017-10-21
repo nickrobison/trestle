@@ -10,4 +10,8 @@ export class CompareComponent {
     public zoomMap: true;
 
     constructor() {}
+
+    public selectedHandler(individual: string): void {
+        console.debug("Selected:", individual);
+    }
 }
