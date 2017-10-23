@@ -1,18 +1,6 @@
 <div class="section">
     <h4>Search for Individual</h4>
-    <form (ngSubmit)="onSubmit()" class="search-form">
-        <mat-input-container class="search-field">
-            <input type="text" placeholder="Search for Individual" matInput [formControl]="individualName"
-                   [matAutocomplete]="auto">
-        </mat-input-container>
-
-        <mat-autocomplete class="search-field" #auto="matAutocomplete">
-            <mat-option *ngFor="let option of options | async" [value]="option" (click)="selectedOption(option)">
-                {{displayFn(option)}}
-            </mat-option>
-        </mat-autocomplete>
-        <button mat-raised-button type="submit">submit</button>
-    </form>
+    <search (selected)="selectedOption($event)"></search>
 </div>
 <div class="section">
     <div class="row">

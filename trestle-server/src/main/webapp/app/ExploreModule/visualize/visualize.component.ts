@@ -21,7 +21,6 @@ import { TrestleFact } from "../../SharedModule/individual/TrestleIndividual/tre
 })
 
 export class VisualizeComponent implements OnInit {
-    public individualName = new FormControl();
     public options: Observable<string[]>;
     public individual: TrestleIndividual;
     public mapIndividual: ITrestleMapSource;
@@ -38,16 +37,25 @@ export class VisualizeComponent implements OnInit {
     public ngOnInit(): void {
         this.minTime = moment().year(2011).startOf("year");
         this.maxTime = moment().year(2016).endOf("year");
-        this.options = this.individualName
-            .valueChanges
-            .debounceTime(400)
-            .distinctUntilChanged()
-            .switchMap((name) => this.is.searchForIndividual(name));
     }
 
-    public onSubmit() {
-        console.debug("Submitted", this.individualName.value);
-        this.is.getTrestleIndividual(this.individualName.value)
+    public openValueModal(fact: TrestleFact): void {
+        const config = new MatDialogConfig();
+        config.viewContainerRef = this.viewContainerRef;
+        this.dialogRef = this.dialog.open(IndividualValueDialog, config);
+        this.dialogRef.componentInstance.name = fact.getName();
+        this.dialogRef.componentInstance.value = fact.getValue();
+        this.dialogRef.afterClosed().subscribe(() => this.dialogRef = null);
+    }
+
+    public displayFn(individualName: string): string {
+        const strings = individualName.split("#");
+        return strings[1];
+    }
+
+    public selectedOption(value: string) {
+        console.debug("Clicked", value);
+        this.is.getTrestleIndividual(value)
             .subscribe((results: TrestleIndividual) => {
                 console.debug("has individual", results);
                 this.individual = results;
@@ -81,23 +89,5 @@ export class VisualizeComponent implements OnInit {
                     }
                 };
             });
-    }
-
-    public openValueModal(fact: TrestleFact): void {
-        const config = new MatDialogConfig();
-        config.viewContainerRef = this.viewContainerRef;
-        this.dialogRef = this.dialog.open(IndividualValueDialog, config);
-        this.dialogRef.componentInstance.name = fact.getName();
-        this.dialogRef.componentInstance.value = fact.getValue();
-        this.dialogRef.afterClosed().subscribe(() => this.dialogRef = null);
-    }
-
-    public displayFn(individualName: string): string {
-        const strings = individualName.split("#");
-        return strings[1];
-    }
-
-    public selectedOption(value: any) {
-        console.debug("Clicked", value);
     }
 }

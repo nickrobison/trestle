@@ -25,3 +25,10 @@ $theme: mat-light-theme($primary, $accent, $warn);
 
   @include angular-material-theme($dark-theme);
 }
+
+
+// Application specific styling
+// Disable underline
+.mat-input-container.app-input-no-underline .mat-input-underline {
+  display: none;
+}
