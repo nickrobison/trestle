@@ -68,28 +68,29 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     private baseConfig: mapboxgl.MapboxOptions;
     private baseStyle: ITrestleMapLayers;
     private map: mapboxgl.Map;
-    private mapSources: string[];
+    private mapSources: Map<string, string[]>;
 
     constructor() {
         // FIXME(nrobison): Fix this
         (mapboxgl as any).accessToken = "pk.eyJ1IjoibnJvYmlzb24iLCJhIjoiY2ozdDd5dmd2MDA3bTMxcW1kdHZrZ3ppMCJ9.YcJMRphQAfmZ0H8X9HnoKA";
 
-        if (this.zoomOnLoad === undefined) {
-            this.centerMapOnLoad = new BehaviorSubject(true);
-        } else {
-            this.centerMapOnLoad = new BehaviorSubject(this.zoomOnLoad);
-        }
+        this.mapSources = new Map();
 
         //    Set defaults
         this.setupDefaults();
     }
 
     public ngOnInit(): void {
+        if (this.zoomOnLoad === undefined) {
+            this.centerMapOnLoad = new BehaviorSubject(true);
+        } else {
+            this.centerMapOnLoad = new BehaviorSubject(this.zoomOnLoad);
+        }
+
         console.debug("Creating map, " +
             "singleSelect?", this.single,
             "mulitSelect?", this.multiSelect,
             "zoom?", this.centerMapOnLoad.getValue());
-        this.mapSources = [];
 
 
         // Merge the map configs together
@@ -125,15 +126,71 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         }
     }
 
-    private removeSource(removeSource: MapSource): void {
-        this.map.removeLayer(removeSource.id + "-fill");
-        this.map.removeLayer(removeSource.id + "-line");
-        this.map.removeLayer(removeSource.id + "-hover");
-        this.map.removeSource(removeSource.id);
-        const idx = this.mapSources.indexOf(removeSource.id);
-        if (idx >= 0) {
-            this.mapSources.splice(idx, 1);
+    public removeIndividual(individual: string): void {
+        console.debug("Removing individual %s from the map", individual);
+        // //    Figure out which layer the individual is a part of and remove it
+        //     // FIXME(nrobison): Get rid of this type cast.
+        //     this.map.querySourceFeatures()
+        //     const features: any[] = this.map.queryRenderedFeatures(e.point, {
+        //         layers: this.mapSources.map((val) => val + "-fill")
+        //     });
+        //     // Set the hover filter using either the provided id field, or a default property
+        //     const idField = this.individual.idField == null ? "id" : this.individual.idField;
+        //     console.debug("Accessing ID field:", idField);
+        //
+        //     // If we don't filter on anything, deselect it all
+        //     if (!this.multiSelect && !(features.length > 0)) {
+        //         console.debug("Deselecting", this.mapSources);
+        //         this.mapSources.forEach((source) => {
+        //             this.map.setFilter(source + "-hover", ["==", idField, ""]);
+        //         });
+        //         return;
+        //     }
+        //     console.debug("Filtered features", features);
+        //     const feature: any = features[0];
+        //     let layerID = features[0].layer.id;
+        //     // Emit the clicked layer
+        //     const featureID = feature.properties[idField];
+        //     this.clicked.emit(featureID);
+        //     layerID = layerID.replace("-fill", "");
+        //     this.map.setFilter(layerID + "-hover", ["==", idField, featureID]);
+        //     // If multi-select is not enabled, deselect everything else
+        //     if (!this.multiSelect) {
+        //         this.mapSources.forEach((layer) => {
+        //             if (layer !== layerID) {
+        //                 this.map.setFilter(layer + "-hover", ["==", idField, ""]);
+        //             }
+        //         });
+        //     }
+    }
+
+    public clearMap(): void {
+        console.debug("Clearing map");
+        this.mapSources.forEach((_, source) => {
+            console.debug("removing:", source);
+            this.removeSource(source);
+        });
+    }
+
+    private removeSource(source: MapSource | string): void {
+        let sourceID = null;
+        if (typeof source === "string") {
+            sourceID = source;
+        } else {
+            sourceID = source.id;
         }
+
+        // Remove all the layers for each source
+        const layers = this.mapSources.get(sourceID);
+        if (layers !== undefined) {
+            layers
+                .forEach((layer) => {
+                    this.map.removeLayer(layer);
+                });
+        }
+
+        this.map.removeSource(sourceID);
+        this.mapSources.delete(sourceID);
     }
 
     private addSource(inputLayer: MapSource): void {
@@ -150,10 +207,12 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         if (TrestleMapComponent.is3D(inputLayer)) {
             console.debug("Adding 3D layer:", inputLayer.extrude);
             this.map.addLayer(inputLayer.extrude);
+            this.mapSources.set(inputLayer.id, [inputLayer.extrude.id]);
         } else {
             // Add fill layer
+            const fillID = inputLayer.id + "-fill";
             this.map.addLayer({
-                id: inputLayer.id + "-fill",
+                id: fillID,
                 type: "fill",
                 source: inputLayer.id,
                 paint: {
@@ -162,8 +221,9 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                 }
             });
             // Add polygon line changes
+            const lineId = inputLayer.id + "-line";
             this.map.addLayer({
-                id: inputLayer.id + "-line",
+                id: lineId,
                 type: "line",
                 source: inputLayer.id,
                 paint: {
@@ -172,8 +232,9 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                 }
             });
             // Add hover layer
+            const hoverID = inputLayer.id + "-hover";
             this.map.addLayer({
-                id: inputLayer.id + "-hover",
+                id: hoverID,
                 type: "fill",
                 source: inputLayer.id,
                 paint: {
@@ -183,12 +244,11 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                 },
                 filter: ["==", "name", ""]
             });
+            this.mapSources.set(inputLayer.id, [fillID, lineId, hoverID]);
         }
 
-        this.mapSources.push(inputLayer.id);
         //    Center map
         if (this.centerMapOnLoad.getValue()) {
-            console.debug("Zooming");
             this.centerMap(inputLayer.data);
         }
     }
@@ -196,8 +256,16 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     private layerClick = (e: MapMouseEvent): void => {
         console.debug("Clicked:", e);
         // FIXME(nrobison): Get rid of this type cast.
+        // Get all the fill fillLayers
+        let fillLayers: string[] = [];
+        this.mapSources.forEach((values) => {
+            fillLayers = fillLayers
+                .concat((values
+                    .filter((val) => val.includes("-fill"))));
+        });
+        console.debug("Querying on fillLayers:", fillLayers);
         const features: any[] = this.map.queryRenderedFeatures(e.point, {
-            layers: this.mapSources.map((val) => val + "-fill")
+            layers: fillLayers
         });
         // Set the hover filter using either the provided id field, or a default property
         const idField = this.individual.idField == null ? "id" : this.individual.idField;
@@ -205,9 +273,15 @@ export class TrestleMapComponent implements OnInit, OnChanges {
 
         // If we don't filter on anything, deselect it all
         if (!this.multiSelect && !(features.length > 0)) {
-            console.debug("Deselecting", this.mapSources);
-            this.mapSources.forEach((source) => {
-                this.map.setFilter(source + "-hover", ["==", idField, ""]);
+            let hoverLayers: string[] = [];
+            this.mapSources.forEach((layers) => {
+                hoverLayers = hoverLayers
+                    .concat(layers
+                        .filter((val) => val.includes("-hover")));
+            });
+            console.debug("Deselecting", hoverLayers);
+            hoverLayers.forEach((layer) => {
+                this.map.setFilter(layer, ["==", idField, ""]);
             });
             return;
         }
@@ -218,14 +292,25 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         const featureID = feature.properties[idField];
         this.clicked.emit(featureID);
         layerID = layerID.replace("-fill", "");
+        console.debug("Filtering on layer:", layerID + "-hover");
         this.map.setFilter(layerID + "-hover", ["==", idField, featureID]);
         // If multi-select is not enabled, deselect everything else
         if (!this.multiSelect) {
-            this.mapSources.forEach((layer) => {
-                if (layer !== layerID) {
-                    this.map.setFilter(layer + "-hover", ["==", idField, ""]);
-                }
+            let hoverLayers: string[] = [];
+            this.mapSources.forEach((values) => {
+                hoverLayers = hoverLayers
+                    .concat(values
+                        .filter((val) => val.includes("-hover")));
             });
+            console.debug("Deselecting:", hoverLayers);
+            // Add hover back to the layerID, otherwise nothing will match
+            layerID = layerID + "-hover";
+            hoverLayers
+                .forEach((layer) => {
+                    if (layer !== layerID) {
+                        this.map.setFilter(layer, ["==", idField, ""]);
+                    }
+                });
         }
     };
 

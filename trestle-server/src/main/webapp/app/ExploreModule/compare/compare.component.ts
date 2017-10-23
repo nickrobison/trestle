@@ -1,6 +1,6 @@
-import {Component} from "@angular/core";
+import {Component, ViewChild} from "@angular/core";
 import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
-import {MapSource} from "../../UIModule/map/trestle-map.component";
+import {MapSource, TrestleMapComponent} from "../../UIModule/map/trestle-map.component";
 import {IndividualService} from "../../SharedModule/individual/individual.service";
 import {TrestleTemporal} from "../../SharedModule/individual/TrestleIndividual/trestle-temporal";
 import {schemeCategory10, schemeCategory20c} from "d3-scale";
@@ -21,6 +21,8 @@ export class CompareComponent {
     private maxHeight: number;
     private layerNumber: number;
     private colorScale: string[];
+    @ViewChild(TrestleMapComponent)
+    private mapComponent: TrestleMapComponent;
 
     constructor(private is: IndividualService) {
         this.mapConfig = {
@@ -52,6 +54,7 @@ export class CompareComponent {
     public reset(): void {
         //    Clear the map
         //    Remove all the individuals from map
+        this.mapComponent.clearMap();
         this.zoomMap = true;
         this.selectedIndividuals = [];
         //    Clear the base individual
