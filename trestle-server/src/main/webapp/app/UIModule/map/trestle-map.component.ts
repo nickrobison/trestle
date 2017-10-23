@@ -19,12 +19,6 @@ export interface ITrestleMapSource {
     data: FeatureCollection<GeometryObject>;
 }
 
-export interface ITrestleMapConfig {
-    center: mapboxgl.LngLatLike;
-    zoom?: number;
-    styleUrl?: string;
-}
-
 @Component({
     selector: "trestle-map",
     templateUrl: "./trestle-map.component.html",
