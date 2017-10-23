@@ -37,9 +37,10 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     @Input() public single: boolean;
     @Input() public multiSelect: boolean;
     @Input() public zoomOnLoad? = true;
-    @Input() public config?: ITrestleMapConfig;
+    @Input() public config?: mapboxgl.MapboxOptions;
     @Output() public mapBounds: EventEmitter<LngLatBounds> = new EventEmitter();
     @Output() public clicked: EventEmitter<string> = new EventEmitter();
+    private baseConfig: mapboxgl.MapboxOptions;
     private map: mapboxgl.Map;
     private mapSources: string[];
 
@@ -51,14 +52,18 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     public ngOnInit(): void {
         console.debug("Creating map, singleSelect?", this.single, "mulitSelect?", this.multiSelect);
         this.mapSources = [];
+        this.baseConfig = {
+            container: "map",
+            style: "mapbox://styles/mapbox/light-v9",
+            center: new mapboxgl.LngLat(32.3558991, -25.6854313),
+            zoom: 8
+        };
+
+        // Merge the configs together
+        const mergedConfig = Object.assign(this.baseConfig, this.config);
+
         if (this.config) {
-            this.map = new mapboxgl.Map({
-                container: "map",
-                style: this.config.styleUrl ?
-                    this.config.styleUrl : "mapbox://styles/mapbox/light-v9",
-                center: this.config.center,
-                zoom: this.config.zoom ? this.config.zoom : 8
-            });
+            this.map = new mapboxgl.Map(mergedConfig);
         } else {
             this.map = new mapboxgl.Map({
                 container: "map",
