@@ -39,6 +39,14 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
         return this.id;
     }
 
+    /**
+     * Get the individual ID, without the URI base
+     * @returns {string}
+     */
+    public getFilteredID(): string {
+        return TrestleIndividual.filterID(this.id);
+    }
+
     public getTemporal(): TrestleTemporal {
         return this.existsTemporal;
     }
@@ -148,5 +156,11 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
         });
         this.events.forEach((event) => returnValue.events.push(event.asInterface()));
         return returnValue;
+    }
+
+    private static filterID(id: string): string {
+        const strings = id.split("#");
+        const idStrings = strings[1].split(":");
+        return idStrings[0] + ":" + idStrings[1];
     }
 }

@@ -122,16 +122,10 @@ export class DatsetViewerComponent implements OnInit {
         this.vs.getTrestleIndividual(event)
             .subscribe((data) => {
                 console.debug("Has individual", data);
-                this.selectedIndividualID = this.filterID(data.getID());
+                this.selectedIndividualID = data.getFilteredID();
                 this.buildHistoryGraph(data);
             });
     };
-
-    public filterID(id: string): string {
-        const strings = id.split("#");
-        const idStrings = strings[1].split(":");
-        return idStrings[0] + ":" + idStrings[1];
-    }
 
     public filterLabel(input: IEventElement): string {
         return input.entity.split(":")[1];
@@ -150,7 +144,7 @@ export class DatsetViewerComponent implements OnInit {
         const history: IIndividualHistory = {
             entities: []
         };
-        const filteredID = this.filterID(individual.getID());
+        const filteredID = individual.getFilteredID();
         history.entities.push({
             label: filteredID,
             start: individual.getTemporal().getFromAsDate(),
@@ -189,7 +183,7 @@ export class DatsetViewerComponent implements OnInit {
                     console.debug("Have all observables:", objects);
                     objects.forEach((object) => {
                         const relatedEvents = this.buildObjectEvents(object,
-                            this.filterID(object.getID()),
+                            object.getFilteredID(),
                             splitMergeType,
                             rootEvent);
                         events = events.concat(relatedEvents.events);
