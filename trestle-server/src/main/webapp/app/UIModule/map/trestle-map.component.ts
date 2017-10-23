@@ -2,22 +2,52 @@
  * Created by nrobison on 6/11/17.
  */
 import * as mapboxgl from "mapbox-gl";
+import {LngLatBounds, MapMouseEvent} from "mapbox-gl";
 import extent from "@mapbox/geojson-extent";
+import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange} from "@angular/core";
 import {
-    Component, EventEmitter, Input, OnChanges, OnInit, Output,
-    SimpleChange
-} from "@angular/core";
-import {
-    FeatureCollection, GeometryObject, LineString, MultiLineString, MultiPoint, MultiPolygon,
-    Point, Polygon
+    FeatureCollection,
+    GeometryObject,
+    LineString,
+    MultiLineString,
+    MultiPoint,
+    MultiPolygon,
+    Point,
+    Polygon
 } from "geojson";
-import {MapMouseEvent, LngLatBounds} from "mapbox-gl";
+import {BehaviorSubject} from "rxjs/BehaviorSubject";
+
+export interface IMapFillLayer extends mapboxgl.Layer {
+    type: "fill";
+}
+
+export interface IMapLineLayer extends mapboxgl.Layer {
+    type: "line";
+}
+
+export interface IMapHoverLayer extends mapboxgl.Layer {
+    type: "fill";
+    filter: ["==", "name", ""];
+}
+
+export interface ITrestleMapLayers {
+    fill?: IMapFillLayer;
+    line?: IMapLineLayer;
+    hover?: IMapHoverLayer;
+}
 
 export interface ITrestleMapSource {
     id: string;
     idField?: string;
     data: FeatureCollection<GeometryObject>;
+    layers?: ITrestleMapLayers;
 }
+
+export interface I3DMapSource extends ITrestleMapSource {
+    extrude: mapboxgl.Layer;
+}
+
+export type MapSource = I3DMapSource | ITrestleMapSource;
 
 @Component({
     selector: "trestle-map",
@@ -27,45 +57,45 @@ export interface ITrestleMapSource {
 
 export class TrestleMapComponent implements OnInit, OnChanges {
 
-    @Input() public individual: ITrestleMapSource;
+    @Input() public individual: MapSource;
     @Input() public single: boolean;
     @Input() public multiSelect: boolean;
-    @Input() public zoomOnLoad? = true;
+    @Input() public zoomOnLoad?: boolean;
     @Input() public config?: mapboxgl.MapboxOptions;
     @Output() public mapBounds: EventEmitter<LngLatBounds> = new EventEmitter();
     @Output() public clicked: EventEmitter<string> = new EventEmitter();
+    private centerMapOnLoad: BehaviorSubject<boolean>;
     private baseConfig: mapboxgl.MapboxOptions;
+    private baseStyle: ITrestleMapLayers;
     private map: mapboxgl.Map;
     private mapSources: string[];
 
     constructor() {
         // FIXME(nrobison): Fix this
         (mapboxgl as any).accessToken = "pk.eyJ1IjoibnJvYmlzb24iLCJhIjoiY2ozdDd5dmd2MDA3bTMxcW1kdHZrZ3ppMCJ9.YcJMRphQAfmZ0H8X9HnoKA";
+
+        if (this.zoomOnLoad === undefined) {
+            this.centerMapOnLoad = new BehaviorSubject(true);
+        } else {
+            this.centerMapOnLoad = new BehaviorSubject(this.zoomOnLoad);
+        }
+
+        //    Set defaults
+        this.setupDefaults();
     }
 
     public ngOnInit(): void {
-        console.debug("Creating map, singleSelect?", this.single, "mulitSelect?", this.multiSelect);
+        console.debug("Creating map, " +
+            "singleSelect?", this.single,
+            "mulitSelect?", this.multiSelect,
+            "zoom?", this.centerMapOnLoad.getValue());
         this.mapSources = [];
-        this.baseConfig = {
-            container: "map",
-            style: "mapbox://styles/mapbox/light-v9",
-            center: new mapboxgl.LngLat(32.3558991, -25.6854313),
-            zoom: 8
-        };
 
-        // Merge the configs together
+
+        // Merge the map configs together
         const mergedConfig = Object.assign(this.baseConfig, this.config);
+        this.map = new mapboxgl.Map(mergedConfig);
 
-        if (this.config) {
-            this.map = new mapboxgl.Map(mergedConfig);
-        } else {
-            this.map = new mapboxgl.Map({
-                container: "map",
-                style: "mapbox://styles/mapbox/light-v9",
-                center: new mapboxgl.LngLat(32.3558991, -25.6854313),
-                zoom: 8
-            });
-        }
         this.map.on("click", this.layerClick);
         this.map.on("mouseover", this.mouseOver);
         this.map.on("mouseleave", this.mouseOut);
@@ -74,8 +104,8 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     }
 
     public ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
-        const inputChanges = changes["individual"];
         // Individual changes
+        const inputChanges = changes["individual"];
         if (inputChanges != null
             && !inputChanges.isFirstChange()
             && (inputChanges.currentValue !== inputChanges.previousValue)) {
@@ -85,9 +115,17 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             }
             this.addSource(inputChanges.currentValue);
         }
+
+        //    Zoom On Load changes
+        const zoomChanges = changes["zoomOnLoad"];
+        if (zoomChanges != null
+            && !zoomChanges.isFirstChange()) {
+            console.debug("Changing zoom value");
+            this.centerMapOnLoad.next(zoomChanges.currentValue);
+        }
     }
 
-    private removeSource(removeSource: ITrestleMapSource): void {
+    private removeSource(removeSource: MapSource): void {
         this.map.removeLayer(removeSource.id + "-fill");
         this.map.removeLayer(removeSource.id + "-line");
         this.map.removeLayer(removeSource.id + "-hover");
@@ -98,44 +136,59 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         }
     }
 
-    private addSource(inputLayer: ITrestleMapSource): void {
+    private addSource(inputLayer: MapSource): void {
         console.debug("Adding source data:", inputLayer.data);
+
+        // Merge the new source with the default layers
+
         this.map.addSource(inputLayer.id, {
             type: "geojson",
             data: inputLayer.data
         });
-        this.map.addLayer({
-            id: inputLayer.id + "-fill",
-            type: "fill",
-            source: inputLayer.id,
-            paint: {
-                "fill-color": "#627BC1",
-                "fill-opacity": 0.7,
-            }
-        });
-        this.map.addLayer({
-            id: inputLayer.id + "-line",
-            type: "line",
-            source: inputLayer.id,
-            paint: {
-                "line-color": "white",
-                "line-width": 2
-            }
-        });
-        this.map.addLayer({
-            id: inputLayer.id + "-hover",
-            type: "fill",
-            source: inputLayer.id,
-            paint: {
-                "fill-color": "#627BC1",
-                "fill-opacity": 1,
-                // Repaint the lines so that they're still visible
-            },
-            filter: ["==", "name", ""]
-        });
+
+        // If it's a 3D layer, add the extrusion, otherwise add the normal layers
+        if (TrestleMapComponent.is3D(inputLayer)) {
+            console.debug("Adding 3D layer:", inputLayer.extrude);
+            this.map.addLayer(inputLayer.extrude);
+        } else {
+            // Add fill layer
+            this.map.addLayer({
+                id: inputLayer.id + "-fill",
+                type: "fill",
+                source: inputLayer.id,
+                paint: {
+                    "fill-color": "#627BC1",
+                    "fill-opacity": 0.7,
+                }
+            });
+            // Add polygon line changes
+            this.map.addLayer({
+                id: inputLayer.id + "-line",
+                type: "line",
+                source: inputLayer.id,
+                paint: {
+                    "line-color": "white",
+                    "line-width": 2
+                }
+            });
+            // Add hover layer
+            this.map.addLayer({
+                id: inputLayer.id + "-hover",
+                type: "fill",
+                source: inputLayer.id,
+                paint: {
+                    "fill-color": "#627BC1",
+                    "fill-opacity": 1,
+                    // Repaint the lines so that they're still visible
+                },
+                filter: ["==", "name", ""]
+            });
+        }
+
         this.mapSources.push(inputLayer.id);
         //    Center map
-        if (this.zoomOnLoad) {
+        if (this.centerMapOnLoad.getValue()) {
+            console.debug("Zooming");
             this.centerMap(inputLayer.data);
         }
     }
@@ -205,6 +258,15 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         }
     }
 
+    private setupDefaults(): void {
+        this.baseConfig = {
+            container: "map",
+            style: "mapbox://styles/mapbox/light-v9",
+            center: new mapboxgl.LngLat(32.3558991, -25.6854313),
+            zoom: 8
+        };
+    }
+
     private lockMap(): void {
         this.map.dragPan.disable();
         this.map.dragRotate.disable();
@@ -243,5 +305,9 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             default:
                 throw new Error("Unable to get coordinates for object of type: " + geom.type);
         }
+    }
+
+    private static is3D(x: any): x is I3DMapSource {
+        return (x as I3DMapSource).extrude !== undefined;
     }
 }

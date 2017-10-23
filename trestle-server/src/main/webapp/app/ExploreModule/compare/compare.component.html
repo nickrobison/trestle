@@ -5,24 +5,37 @@
             <trestle-map [single]="false"
                          [multiSelect]="false"
                          [zoomOnLoad]="zoomMap"
-            [individual]="mapData"
-            [config]="mapConfig"></trestle-map>
+                         [individual]="mapData"
+                         [config]="mapConfig"></trestle-map>
         </div>
     </div>
 </div>
 <div class="section">
-    <h5>Add individuals to compare</h5>
-    <div class="row">
-        <div class="col s12 l5 ui-row">
-            Search here
-            <search (selected)="selectedHandler($event)"></search>
-            <div class="row">
-                <button>Intersect</button>
-                <button>Add</button>
-            </div>
+    <div *ngIf="!baseIndividual">
+        <h5>Add base individual</h5>
+        <search (selected)="addBaseIndividual($event)"></search>
+    </div>
+    <div *ngIf="baseIndividual">
+        <div class="row">
+            <h5>Comparing against: {{baseIndividual.getFilteredID()}}</h5>
+            <button mat-raised-button color="primary">INTERSECT</button>
+            <button mat-raised-button color="warn" (click)="reset()">RESET</button>
         </div>
-        <div class="col s12 l7 ui-row">
-            List of compared values here
+
+        <div class="row">
+            <div class="col s12 l5 ui-row">
+                Search here
+                <search (selected)="selectedHandler($event)"></search>
+                <div class="row">
+                    <button mat-raised-button>ADD</button>
+                </div>
+            </div>
+            <div class="col s12 l7 ui-row">
+                List of compared values here
+                <ul *ngFor="let individual of selectedIndividuals">
+                    <li>{{individual.getID()}}</li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
