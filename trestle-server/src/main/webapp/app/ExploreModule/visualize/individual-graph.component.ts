@@ -240,7 +240,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             links: []
         };
 
-        //    Add the individual as node 0
+        //    Add the selection as node 0
         const individualNode = {
             id: individual.getID(),
             name: IndividualGraph.parseIndividualID(individual.getID()),
@@ -250,7 +250,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
 
         const individualTemporal = {
             id: individual.getTemporal().getID(),
-            name: "individual-temporal",
+            name: "selection-temporal",
             valid: true,
             group: NodeType.VTEMPORAL
         };

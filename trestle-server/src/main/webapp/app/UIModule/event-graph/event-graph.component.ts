@@ -90,7 +90,7 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
             }
         });
 
-        // Let's draw a box around the selectHandler individual
+        // Let's draw a box around the selectHandler selection
         const focusedIndividual = this.svg.selectAll(".selected")
             .data(this.data.nodes
                     .filter((node) => node.entity === this.selectedIndividual),

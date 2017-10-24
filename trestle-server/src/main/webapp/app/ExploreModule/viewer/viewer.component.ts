@@ -121,7 +121,7 @@ export class DatsetViewerComponent implements OnInit {
         console.debug("Clicked:", event);
         this.vs.getTrestleIndividual(event)
             .subscribe((data) => {
-                console.debug("Has individual", data);
+                console.debug("Has selection", data);
                 this.selectedIndividualID = data.getFilteredID();
                 this.buildHistoryGraph(data);
             });
@@ -152,7 +152,7 @@ export class DatsetViewerComponent implements OnInit {
             value: individual.getID()
         });
         // //    For all the other individuals, add them as well
-        //    Now, build the individual events
+        //    Now, build the selection events
         const individualEvents = this.buildObjectEvents(individual, filteredID);
         let events = individualEvents.events;
         let links = individualEvents.links;
@@ -208,12 +208,12 @@ export class DatsetViewerComponent implements OnInit {
             eventBins += 1;
         }
 
-        // We only have a single individual, add 2, just for giggles and spits
+        // We only have a single selection, add 2, just for giggles and spits
         if (eventBins === 1) {
             eventBins = 3;
         }
 
-        // Set the individual equal to the middle value
+        // Set the selection equal to the middle value
         console.debug("Sorting data into %s bins", eventBins);
         let currentBin = Math.ceil(eventBins / 2);
 
@@ -233,7 +233,7 @@ export class DatsetViewerComponent implements OnInit {
                 currentBin = currentBin + Number.parseInt(sign + step);
                 event.bin = currentBin;
 
-                // And do so for all the other events of the given individual
+                // And do so for all the other events of the given selection
                 events
                     .filter((iEvent) => iEvent.entity === event.entity)
                     .map((iEvent) => iEvent.bin = currentBin);
@@ -257,7 +257,7 @@ export class DatsetViewerComponent implements OnInit {
         events: IEventElement[],
         links: IEventLink[]
     } {
-        console.debug("Build events for individual: %s with relation type: %s",
+        console.debug("Build events for selection: %s with relation type: %s",
             individual, relationType);
         // Split merge first,
         // because it'll show us if we need to drop a created or destroyed event
@@ -274,7 +274,7 @@ export class DatsetViewerComponent implements OnInit {
             temporal: startEvent.getTemporal().toDate()
         };
 
-        // If the root individual is a merged_from or split_from,
+        // If the root selection is a merged_from or split_from,
         // then we're looking for a link between the end event and an INTO relation
         if ((relationType === "MERGED_FROM") || (relationType === "SPLIT_FROM")) {
             console.debug("Has from");

@@ -32,8 +32,17 @@
             </div>
             <div class="col s12 l7 ui-row">
                 List of compared values here
-                <ul *ngFor="let individual of selectedIndividuals">
-                    <li>{{individual.getID()}}</li>
+                <ul *ngFor="let selection of selectedIndividuals">
+                    <li class="results-row">
+                        {{selection.individual.getID()}}
+                        <a (click)="toggleVisibility(selection)">
+                            <i *ngIf="selection.visible" class="material-icons mat-18">layers</i>
+                            <i *ngIf="!selection.visible" class="material-icons mat-18 light">layers_clear</i>
+                        </a>
+                        <a (click)="removeIndividual(selection)">
+                            <i class="material-icons mat-18">delete</i>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>

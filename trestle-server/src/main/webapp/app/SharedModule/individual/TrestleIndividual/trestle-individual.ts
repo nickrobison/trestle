@@ -40,7 +40,7 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
     }
 
     /**
-     * Get the individual ID, without the URI base
+     * Get the selection ID, without the URI base
      * @returns {string}
      */
     public getFilteredID(): string {
@@ -97,7 +97,7 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
     }
 
     /**
-     * Gets the start event for the given individual.
+     * Gets the start event for the given selection.
      * Returns a MERGED event, if one exists
      * Otherwise, returns CREATED
      * @returns {TrestleEvent}

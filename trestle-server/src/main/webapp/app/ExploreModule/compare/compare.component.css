@@ -6,3 +6,12 @@
     height: 530px;
 }
 
+.results-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+a {
+    color:inherit;
+}

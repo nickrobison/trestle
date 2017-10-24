@@ -57,7 +57,7 @@ export class VisualizeComponent implements OnInit {
         console.debug("Clicked", value);
         this.is.getTrestleIndividual(value)
             .subscribe((results: TrestleIndividual) => {
-                console.debug("has individual", results);
+                console.debug("has selection", results);
                 this.individual = results;
 
                 // Build fact history

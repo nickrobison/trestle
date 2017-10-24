@@ -4,7 +4,15 @@
 import * as mapboxgl from "mapbox-gl";
 import {LngLatBounds, MapMouseEvent} from "mapbox-gl";
 import extent from "@mapbox/geojson-extent";
-import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange} from "@angular/core";
+import {
+    Component,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnInit,
+    Output,
+    SimpleChange
+} from "@angular/core";
 import {
     FeatureCollection,
     GeometryObject,
@@ -92,7 +100,6 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             "mulitSelect?", this.multiSelect,
             "zoom?", this.centerMapOnLoad.getValue());
 
-
         // Merge the map configs together
         const mergedConfig = Object.assign(this.baseConfig, this.config);
         this.map = new mapboxgl.Map(mergedConfig);
@@ -127,15 +134,15 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     }
 
     public removeIndividual(individual: string): void {
-        console.debug("Removing individual %s from the map", individual);
-        // //    Figure out which layer the individual is a part of and remove it
+        console.debug("Removing selection %s from the map", individual);
+        // //    Figure out which layer the selection is a part of and remove it
         //     // FIXME(nrobison): Get rid of this type cast.
         //     this.map.querySourceFeatures()
         //     const features: any[] = this.map.queryRenderedFeatures(e.point, {
         //         layers: this.mapSources.map((val) => val + "-fill")
         //     });
         //     // Set the hover filter using either the provided id field, or a default property
-        //     const idField = this.individual.idField == null ? "id" : this.individual.idField;
+        //     const idField = this.selection.idField == null ? "id" : this.selection.idField;
         //     console.debug("Accessing ID field:", idField);
         //
         //     // If we don't filter on anything, deselect it all
@@ -162,6 +169,28 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         //             }
         //         });
         //     }
+    }
+
+    public toggleIndividualVisibility(individual: string, setVisible: boolean): void {
+        console.debug("setting visible?", setVisible);
+        //    See if the individual is a source
+        const layers = this.mapSources.get(individual);
+        if (layers !== undefined) {
+            console.debug("Has layers:", layers);
+            //    If we're a source, turn off all the layers
+            layers
+                .forEach((layer) => {
+                    const property = this.map.getLayoutProperty(layer, "visibility");
+                    if (setVisible) {
+                        this.map.setLayoutProperty(layer, "visibility", "visible");
+                    } else {
+                        this.map.setLayoutProperty(layer, "visibility", "none");
+                    }
+                });
+        }
+
+    //    If not, figure out which layers have the individual
+
     }
 
     public clearMap(): void {

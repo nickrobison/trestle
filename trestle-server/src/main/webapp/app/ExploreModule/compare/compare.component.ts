@@ -3,7 +3,13 @@ import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual
 import {MapSource, TrestleMapComponent} from "../../UIModule/map/trestle-map.component";
 import {IndividualService} from "../../SharedModule/individual/individual.service";
 import {TrestleTemporal} from "../../SharedModule/individual/TrestleIndividual/trestle-temporal";
-import {schemeCategory10, schemeCategory20c} from "d3-scale";
+import {schemeCategory10} from "d3-scale";
+
+interface ICompareIndividual {
+    individual: TrestleIndividual;
+    color: string;
+    visible: boolean;
+}
 
 @Component({
     selector: "compare",
@@ -15,7 +21,8 @@ export class CompareComponent {
     public zoomMap = true;
     public mapData: MapSource;
     public mapConfig: mapboxgl.MapboxOptions;
-    public selectedIndividuals: TrestleIndividual[];
+    // public selectedIndividuals: TrestleIndividual[];
+    public selectedIndividuals: ICompareIndividual[];
     public baseIndividual: TrestleIndividual | null;
     private layerDepth: number;
     private maxHeight: number;
@@ -57,14 +64,26 @@ export class CompareComponent {
         this.mapComponent.clearMap();
         this.zoomMap = true;
         this.selectedIndividuals = [];
-        //    Clear the base individual
+        //    Clear the base selection
         this.baseIndividual = null;
+    }
+
+    public toggleVisibility(individual: ICompareIndividual): void {
+        individual.visible = !individual.visible;
+        this.mapComponent
+            .toggleIndividualVisibility(individual.individual.getID(),
+                individual.visible);
+    }
+
+    public removeIndividual(individual: ICompareIndividual): void {
+        console.debug("Remove:", individual);
     }
 
 
     private loadSelectedIndividual(individual: string, base = false): void {
         this.is.getTrestleIndividual(individual)
             .subscribe((result) => {
+                const color = this.getColor(this.layerNumber);
                 this.mapData = {
                     id: result.getID(),
                     data: {
@@ -83,7 +102,7 @@ export class CompareComponent {
                         type: "fill-extrusion",
                         source: result.getID(),
                         paint: {
-                            "fill-extrusion-color": this.getColor(this.layerNumber),
+                            "fill-extrusion-color": color,
                             "fill-extrusion-height": this.getHeight(result.getTemporal()),
                             "fill-extrusion-base": this.getBase(result.getTemporal()),
                             "fill-extrusion-opacity": 0.7
@@ -91,14 +110,18 @@ export class CompareComponent {
                     }
                 };
 
-                // Are we loading the base individual, or not?
+                // Are we loading the base selection, or not?
                 if (base) {
                     this.baseIndividual = result;
                     //    Lock the map so it doesn't move anymore
                     this.zoomMap = false;
                 } else {
-                    //    Add the individual to the list
-                    this.selectedIndividuals.push(result);
+                    //    Add the selection to the list
+                    this.selectedIndividuals.push({
+                        individual: result,
+                        color,
+                        visible: true
+                    });
                 }
                 this.layerNumber++;
             });
