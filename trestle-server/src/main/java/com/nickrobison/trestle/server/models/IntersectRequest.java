@@ -1,7 +1,6 @@
 package com.nickrobison.trestle.server.models;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import org.geojson.GeoJsonObject;
 import org.hibernate.validator.constraints.NotEmpty;
 
@@ -19,15 +18,17 @@ public class IntersectRequest {
     private OffsetDateTime validAt;
     @NotEmpty
     private OffsetDateTime databaseAt;
-    private GeoJsonObject bbox;
+    private GeoJsonObject geojson;
+    private Double buffer;
 
     public IntersectRequest() {}
 
-    public IntersectRequest(String dataset, String validAt, String databaseAt, GeoJsonObject bbox) {
+    public IntersectRequest(String dataset, String validAt, String databaseAt, GeoJsonObject geojson, Double buffer) {
         this.dataset = dataset;
         this.validAt = OffsetDateTime.parse(validAt);
         this.databaseAt = OffsetDateTime.parse(databaseAt);
-        this.bbox = bbox;
+        this.geojson = geojson;
+        this.buffer = buffer;
     }
 
     public String getDataset() {
@@ -54,12 +55,20 @@ public class IntersectRequest {
         this.databaseAt = OffsetDateTime.parse(databaseAt);
     }
 
-    public GeoJsonObject getBbox() {
-        return bbox;
+    public GeoJsonObject getGeojson() {
+        return geojson;
     }
 
-    public void setBbox(GeoJsonObject bbox) {
-        this.bbox = bbox;
-//        this.bbox = mapper.convertValue(bbox, GeoJsonObject.class);
+    public void setGeojson(GeoJsonObject geojson) {
+        this.geojson = geojson;
+//        this.geojson = mapper.convertValue(geojson, GeoJsonObject.class);
+    }
+
+    public Double getBuffer() {
+        return buffer;
+    }
+
+    public void setBuffer(Double buffer) {
+        this.buffer = buffer;
     }
 }

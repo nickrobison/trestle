@@ -15,11 +15,9 @@ import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.vividsolutions.jts.geom.Geometry;
 import io.dropwizard.jersey.params.NonEmptyStringParam;
-import org.geojson.Polygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wololo.jts2geojson.GeoJSONReader;
-import org.wololo.jts2geojson.GeoJSONWriter;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
@@ -171,20 +169,26 @@ public class VisualizationResource {
 //        try {
 //            new GeoJSONWriter().write();
 //            reader.read()
-//        reader.read(request.getBbox());
+//        reader.read(request.getGeojson());
 //        } catch(Exception e) {
 //            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
 //        }
         final Geometry read;
         try {
-            read = reader.read(mapper.writeValueAsString(request.getBbox()));
+            read = reader.read(mapper.writeValueAsString(request.getGeojson()));
         } catch (JsonProcessingException e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e).build();
         }
 
-//        final String s = ((Polygon) request.getBbox()).getCoordinates().toString();
-        final Optional<? extends List<?>> intersectedObjects = this.reasoner.spatialIntersect(datasetClass, read.toString(), 0.0, request.getValidAt());
-        return intersectedObjects.map(list -> Response.ok(list).build()).orElseGet(() -> Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Empty reponse from server, something went wrong").build());
+//        We need to add a buffer, since the application doesn't really support it right now.
+        read.buffer(request.getBuffer());
+
+//        final String s = ((Polygon) request.getGeojson()).getCoordinates().toString();
+        final Optional<? extends List<?>> intersectedObjects = this.reasoner.spatialIntersect(datasetClass,
+                read.buffer(request.getBuffer()).toString(),
+                request.getBuffer(),
+                request.getValidAt());
+        return intersectedObjects.map(list -> Response.ok(list).build()).orElseGet(() -> Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Empty response from server, something went wrong").build());
     }
 
 }

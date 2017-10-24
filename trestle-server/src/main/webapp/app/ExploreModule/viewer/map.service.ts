@@ -6,7 +6,7 @@ import { TrestleHttp } from "../../UserModule/trestle-http.provider";
 import { Response } from "@angular/http";
 import { Observable } from "rxjs/Observable";
 import { LngLatBounds } from "mapbox-gl";
-import { Feature, FeatureCollection, GeometryObject, Polygon } from "geojson";
+import {Feature, FeatureCollection, GeometryObject, MultiPolygon, Polygon} from "geojson";
 import { Moment } from "moment";
 var parse = require("wellknown");
 
@@ -34,16 +34,18 @@ export class MapService {
     }
 
     public stIntersect(dataset: string,
-                       bounds: LngLatBounds,
+                       wkt: LngLatBounds | GeometryObject,
                        validTime: Moment,
-                       dbTime?: Moment): Observable<FeatureCollection<GeometryObject>> {
-        console.debug("Intersecting at:", bounds, validTime.toISOString());
+                       dbTime?: Moment,
+                       buffer: number = 0): Observable<FeatureCollection<GeometryObject>> {
+        console.debug("Intersecting at:", wkt, validTime.toISOString());
 
         const postBody = {
             dataset,
             validAt: validTime.toISOString(),
             databaseAt: new Date().toISOString(),
-            bbox: MapService.boundsToGeoJSON(bounds)
+            geojson: MapService.normalizeToGeoJSON(wkt),
+            buffer
         };
         console.debug("Post body", postBody);
         return this.http.post("/visualize/intersect", postBody)
@@ -63,7 +65,7 @@ export class MapService {
                 if (MapService.isSpatial(value)) {
                     geometry = parse(value);
                 } else if (typeof value === "string") {
-                    if (MapService.isID(value)) {
+                    if (MapService.isID(key)) {
                         id = value;
                         properties["id"] = value;
                     } else {
@@ -77,7 +79,7 @@ export class MapService {
             if (geometry) {
                 features.push({
                     type: "Feature",
-                    id,
+                    id: id,
                     geometry,
                     properties
                 });
@@ -90,15 +92,25 @@ export class MapService {
         };
     }
 
-    private static boundsToGeoJSON(bounds: LngLatBounds): Polygon {
+    private static normalizeToGeoJSON(geom: LngLatBounds | GeometryObject): Polygon | MultiPolygon {
+        if (MapService.isGeometryObject(geom)) {
+            if (geom.type === "Polygon") {
+                return (geom as Polygon);
+            } else if (geom.type === "MultiPolygon") {
+                return (geom as MultiPolygon);
+            } else {
+                console.error("Not correct geom", geom);
+                throw new Error("Not correct geometry");
+            }
+        }
         return {
             type: "Polygon",
             // need to return and array of bounds as an array of SW -> NW -> NE -> SE -> SW
-            coordinates: [[bounds.getSouthWest().toArray(),
-                bounds.getNorthWest().toArray(),
-                bounds.getNorthEast().toArray(),
-                bounds.getSouthEast().toArray(),
-                bounds.getSouthWest().toArray()]]
+            coordinates: [[geom.getSouthWest().toArray(),
+                geom.getNorthWest().toArray(),
+                geom.getNorthEast().toArray(),
+                geom.getSouthEast().toArray(),
+                geom.getSouthWest().toArray()]]
             // crs: {type: "name", properties: {name: "EPSG:4326"}}
         };
     }
@@ -131,10 +143,17 @@ export class MapService {
      * @returns {boolean} is id
      */
     private static isID(x: string): boolean {
+        if (x.toLowerCase() === "id") {
+            return true;
+        }
         if (x.length >= 2) {
             const sub = x.substring(x.length - 3, x.length - 1);
             return sub.toLowerCase() === "id";
         }
         return false;
+    }
+
+    private static isGeometryObject(x: any): x is GeometryObject {
+        return (x as GeometryObject).type !== undefined;
     }
 }

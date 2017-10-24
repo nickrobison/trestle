@@ -5,6 +5,9 @@ import {IndividualService} from "../../SharedModule/individual/individual.servic
 import {TrestleTemporal} from "../../SharedModule/individual/TrestleIndividual/trestle-temporal";
 import {schemeCategory10} from "d3-scale";
 import {MatSliderChange} from "@angular/material";
+import {MapService} from "../viewer/map.service";
+import {Feature} from "geojson";
+import * as moment from "moment";
 
 interface ICompareIndividual {
     individual: TrestleIndividual;
@@ -37,7 +40,8 @@ export class CompareComponent {
     private mapComponent: TrestleMapComponent;
     private currentSliderValue: number;
 
-    constructor(private is: IndividualService) {
+    constructor(private is: IndividualService,
+                private vs: MapService) {
         this.mapConfig = {
             style: "mapbox://styles/nrobison/cj3n7if3q000s2sutls5a1ny7",
             center: [32.3558991, -25.6854313],
@@ -118,6 +122,22 @@ export class CompareComponent {
         }
     }
 
+    public intersectBaseIndividual(): void {
+        if (this.baseIndividual) {
+            this.vs
+                .stIntersect("gaul-test",
+                    this.baseIndividual.individual.getSpatialValue(),
+                    moment(),
+                    moment(),
+                    1)
+                .subscribe((results) => {
+                    console.debug("Intersected results:", results);
+                //    Add all the results to the map
+
+                });
+        }
+    }
+
 
     private loadSelectedIndividual(individual: string, baseIndividual = false): void {
         this.is.getTrestleIndividual(individual)
@@ -170,10 +190,6 @@ export class CompareComponent {
             });
     }
 
-    private static getBase(temporal: TrestleTemporal): number {
-        return temporal.getFrom().get("year");
-    }
-
     private getHeight(temporal: TrestleTemporal): number {
         const to = temporal.getTo();
         if (to === undefined) {
@@ -194,5 +210,9 @@ export class CompareComponent {
             return color;
         }
         return aColor;
+    }
+
+    private static getBase(temporal: TrestleTemporal): number {
+        return temporal.getFrom().get("year");
     }
 }
