@@ -12,6 +12,7 @@ interface ICompareIndividual {
     visible: boolean;
     height: number;
     base: number;
+    sliderValue: number;
 }
 
 @Component({
@@ -97,16 +98,23 @@ export class CompareComponent {
             .removeIndividual(individual.individual.getID());
     }
 
-    public sliderUpdate(event: MatSliderChange) {
-        if ((event.value !== null) && this.baseIndividual) {
+    public sliderUpdate(event: MatSliderChange, selection = this.baseIndividual) {
+        if ((event.value !== null) && selection !== null) {
+            console.debug("Individual", selection);
             //     For now, let's just change the base individual,
             // we'll figure out the rest later
-            const newOffset = (event.value - this.currentSliderValue) * 100;
-            console.debug("Change paint property by:", newOffset);
-            this.mapComponent.change3DOffset(this.baseIndividual.height, newOffset);
-            this.currentSliderValue = event.value;
-            this.baseIndividual.height = this.baseIndividual.height + newOffset;
-            this.baseIndividual.base = this.baseIndividual.base + newOffset;
+            const newOffset = (event.value - selection.sliderValue) * 50;
+            // If we're changing the base individual, we want to move everything on that level
+            // Otherwise, we just want to move the single individual
+            const changeIndividual = selection === this.baseIndividual ?
+                undefined :
+                selection.individual.getID();
+            this.mapComponent.change3DOffset(selection.height,
+                newOffset,
+                changeIndividual);
+            selection.sliderValue = event.value;
+            selection.height = selection.height + newOffset;
+            selection.base = selection.base + newOffset;
         }
     }
 
@@ -143,11 +151,14 @@ export class CompareComponent {
                     color,
                     visible: true,
                     height,
-                    base: baseHeight
+                    base: baseHeight,
+                    sliderValue: 50
                 };
 
                 // Are we loading the base selection, or not?
                 if (baseIndividual) {
+                    // Reset the slider value to 0
+                    compare.sliderValue = 0;
                     this.baseIndividual = compare;
                     //    Lock the map so it doesn't move anymore
                     this.zoomMap = false;

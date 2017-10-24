@@ -12,7 +12,7 @@
             <mat-slider
                     [vertical]="true"
                     [min]="0"
-                    [max]="100"
+                    [max]="500"
                     (input)="sliderUpdate($event)"></mat-slider>
         </div>
     </div>
@@ -47,6 +47,13 @@
                             <div class="legend" [style.background]="selection.color"></div>
                         </td>
                         <td class="thin-column">{{selection.individual.getFilteredID()}}</td>
+                        <td class="thin-column">
+                            <mat-slider [min]="0"
+                                        [max]="100"
+                                        [value]="selection.sliderValue"
+                                        (input)="sliderUpdate($event,
+                                        selection)"></mat-slider>
+                        </td>
                         <td class="thin-column">
                             <a (click)="toggleVisibility(selection)">
                                 <i *ngIf="selection.visible" class="material-icons mat-18">layers</i>

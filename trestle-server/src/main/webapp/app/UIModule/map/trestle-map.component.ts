@@ -172,7 +172,8 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                 });
             //    If not, figure out which layers have the data
         } else {
-            console.debug("Looking for matching individual id:", TrestleMapComponent.buildFilterID(individual));
+            console.debug("Looking for matching individual id:",
+                TrestleMapComponent.buildFilterID(individual));
             for (const source of Array.from(this.mapSources.keys())) {
                 const mapSource = this.map.getSource(source);
                 if (TrestleMapComponent.isGeoJSON(mapSource)) {
@@ -182,15 +183,21 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                     // If it's a feature collection, dive into it
                     if (TrestleMapComponent.isCollection(data)) {
                         for (const feature of data.features) {
-                            if ((feature.properties as any).id === TrestleMapComponent.buildFilterID(individual)) {
-                                console.debug("Source %s matches individual %s", source, individual);
+                            // TODO(nickrobison): This will fail if the features don't have an ID property
+                            if ((feature.properties as any).id === TrestleMapComponent
+                                    .buildFilterID(individual)) {
+                                console.debug("Source %s matches individual %s",
+                                    source, individual);
                                 this.toggleSourceVisibility(source, setVisible, individual);
                                 break;
                             }
                         }
                     } else {
-                        if ((data.properties as any).id === TrestleMapComponent.buildFilterID(individual)) {
-                            console.debug("Source feature %s matches individual %s", source, individual);
+                        // TODO(nickrobison): This will fail if the features don't have an ID property
+                        if ((data.properties as any).id === TrestleMapComponent
+                                .buildFilterID(individual)) {
+                            console.debug("Source feature %s matches individual %s",
+                                source, individual);
                             this.toggleSourceVisibility(source, setVisible, individual);
                             break;
                         }
@@ -208,28 +215,56 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         });
     }
 
-    public change3DOffset(height: number, offset: number): void {
-        //    Find all the individuals that have the same property
-        //    For each layer, get its height
-        this.mapSources.forEach((layers) => {
-            layers.forEach((layer) => {
-                const layerHeight = this.map.getPaintProperty(layer,
-                    "fill-extrusion-height");
-                // If it matches the height of the layer, increase it
-                if (layerHeight === height) {
-                    const layerBase = this.map.getPaintProperty(layer,
-                        "fill-extrusion-base");
-                    if (layerBase) {
-                        this.map.setPaintProperty(layer,
-                            "fill-extrusion-base",
-                            layerBase + offset);
-                    }
-                    this.map.setPaintProperty(layer,
-                        "fill-extrusion-height",
-                        layerHeight + offset);
+    public change3DOffset(height: number, offset: number, individual?: string): void {
+
+        if (individual) {
+            this.mapSources.forEach((layers, key) => {
+                // If we have the individual's source, change its layers
+                if (key === individual) {
+                    layers.forEach((layer) => {
+                        const layerHeight = this.map.getPaintProperty(layer,
+                            "fill-extrusion-height");
+                        if (layerHeight) {
+                            this.map.setPaintProperty(layer,
+                                "fill-extrusion-height",
+                                layerHeight + offset);
+                            const layerBase = this.map.getPaintProperty(layer,
+                                "fill-extrusion-base");
+                            if (layerBase) {
+                                this.map.setPaintProperty(layer,
+                                    "fill-extrusion-base",
+                                    layerBase + offset);
+                            }
+                        }
+
+                    });
                 }
             });
-        });
+        } else {
+            //    Find all the individuals that have the same property
+            //    For each layer, get its height
+            this.mapSources.forEach((layers) => {
+                layers.forEach((layer) => {
+                    const layerHeight = this.map.getPaintProperty(layer,
+                        "fill-extrusion-height");
+                    // If it matches the height of the layer, increase it
+                    if (layerHeight === height) {
+                        console.debug("Changing individuals");
+                        const layerBase = this.map.getPaintProperty(layer,
+                            "fill-extrusion-base");
+                        if (layerBase) {
+                            this.map.setPaintProperty(layer,
+                                "fill-extrusion-base",
+                                layerBase + offset);
+                        }
+                        this.map.setPaintProperty(layer,
+                            "fill-extrusion-height",
+                            layerHeight + offset);
+                    }
+                });
+            });
+        }
+
     }
 
     private toggleSourceVisibility(source: string, setVisible: boolean, individual?: string): void {
@@ -254,12 +289,14 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                             //   If we're setting the layer invisible,
                             // add the individual to the list of filtered IDs
                         } else {
-                            console.debug("Removing individual %s from layer %s", individual, layer);
+                            console.debug("Removing individual %s from layer %s",
+                                individual, layer);
                             this.filteredIDs.push(filteredID);
                         }
                         // If we have items to filter, add them,
                         // otherwise remove the filter
                         if (this.filteredIDs.length > 0) {
+                            // TODO(nickrobison): This will fail if the features don't have an ID property
                             const filterValues = ["!in", "id"].concat(this.filteredIDs);
 
                             console.debug("Filtered Features:", this.map.querySourceFeatures(source,
@@ -526,6 +563,5 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         return TrestleIndividual.filterID(individual)
             .replace(/-/g, " ")
             .replace(":", "-");
-        // return TrestleIndividual.hashID(TrestleIndividual.filterID(individual));
     }
 }
