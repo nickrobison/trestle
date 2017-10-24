@@ -98,14 +98,9 @@ export class CompareComponent {
     }
 
     public sliderUpdate(event: MatSliderChange) {
-        console.debug("Slider changed:", event);
         if ((event.value !== null) && this.baseIndividual) {
             //     For now, let's just change the base individual,
             // we'll figure out the rest later
-            console.debug("Old value: %s New value: %s Offset:",
-                this.currentSliderValue,
-                event.value,
-                event.value - this.currentSliderValue);
             const newOffset = (event.value - this.currentSliderValue) * 100;
             console.debug("Change paint property by:", newOffset);
             this.mapComponent.change3DOffset(this.baseIndividual.height, newOffset);
