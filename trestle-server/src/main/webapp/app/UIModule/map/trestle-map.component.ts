@@ -157,41 +157,42 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         console.debug("setting visible?", setVisible);
         //    See if the data is a source
         const layers = this.mapSources.get(individual);
-        // if (layers !== undefined) {
-        //     console.debug("Has layers:", layers);
-        //     //    If we're a source, turn off all the layers
-        //     layers
-        //         .forEach((layer) => {
-        //             const property = this.map.getLayoutProperty(layer, "visibility");
-        //             if (setVisible) {
-        //                 this.map.setLayoutProperty(layer, "visibility", "visible");
-        //             } else {
-        //                 this.map.setLayoutProperty(layer, "visibility", "none");
-        //             }
-        //         });
-        //     //    If not, figure out which layers have the data
-        // } else {
-        console.debug("Looking for matching individual id:", TrestleMapComponent.buildFilterID(individual));
-        for (const source of Array.from(this.mapSources.keys())) {
-            const mapSource = this.map.getSource(source);
-            if (TrestleMapComponent.isGeoJSON(mapSource)) {
-                console.debug("Checking source:", mapSource);
-                console.debug("Has data:", (mapSource as any)._data);
-                const data = mapSource._data;
-                // If it's a feature collection, dive into it
-                if (TrestleMapComponent.isCollection(data)) {
-                    for (const feature of data.features) {
-                        if ((feature.properties as any).id === TrestleMapComponent.buildFilterID(individual)) {
-                            console.debug("Source %s matches individual %s", source, individual);
+        if (layers !== undefined) {
+            console.debug("Has layers:", layers);
+            //    If we're a source, turn off all the layers
+            layers
+                .forEach((layer) => {
+                    const property = this.map.getLayoutProperty(layer, "visibility");
+                    if (setVisible) {
+                        this.map.setLayoutProperty(layer, "visibility", "visible");
+                    } else {
+                        this.map.setLayoutProperty(layer, "visibility", "none");
+                    }
+                });
+            //    If not, figure out which layers have the data
+        } else {
+            console.debug("Looking for matching individual id:", TrestleMapComponent.buildFilterID(individual));
+            for (const source of Array.from(this.mapSources.keys())) {
+                const mapSource = this.map.getSource(source);
+                if (TrestleMapComponent.isGeoJSON(mapSource)) {
+                    console.debug("Checking source:", mapSource);
+                    console.debug("Has data:", (mapSource as any)._data);
+                    const data = mapSource._data;
+                    // If it's a feature collection, dive into it
+                    if (TrestleMapComponent.isCollection(data)) {
+                        for (const feature of data.features) {
+                            if ((feature.properties as any).id === TrestleMapComponent.buildFilterID(individual)) {
+                                console.debug("Source %s matches individual %s", source, individual);
+                                this.toggleSourceVisibility(source, setVisible, individual);
+                                break;
+                            }
+                        }
+                    } else {
+                        if ((data.properties as any).id === TrestleMapComponent.buildFilterID(individual)) {
+                            console.debug("Source feature %s matches individual %s", source, individual);
                             this.toggleSourceVisibility(source, setVisible, individual);
                             break;
                         }
-                    }
-                } else {
-                    if ((data.properties as any).id  === TrestleMapComponent.buildFilterID(individual)) {
-                        console.debug("Source feature %s matches individual %s", source, individual);
-                        this.toggleSourceVisibility(source, setVisible, individual);
-                        break;
                     }
                 }
             }

@@ -1,17 +1,17 @@
 /**
  * Created by nrobison on 3/7/17.
  */
-import { Component, OnInit, ViewContainerRef, ViewEncapsulation } from "@angular/core";
-import { FormControl } from "@angular/forms";
-import { Observable } from "rxjs";
-import { IndividualValueDialog } from "./individual-value.dialog";
+import {Component, OnInit, ViewContainerRef, ViewEncapsulation} from "@angular/core";
+import {FormControl} from "@angular/forms";
+import {Observable} from "rxjs";
+import {IndividualValueDialog} from "./individual-value.dialog";
 import * as moment from "moment";
-import { ITrestleMapSource } from "../../UIModule/map/trestle-map.component";
-import { MatDialog, MatDialogConfig, MatDialogRef } from "@angular/material";
-import { IIndividualHistory } from "../../UIModule/history-graph/history-graph.component";
-import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
-import { IndividualService } from "../../SharedModule/individual/individual.service";
-import { TrestleFact } from "../../SharedModule/individual/TrestleIndividual/trestle-fact";
+import {ITrestleMapSource} from "../../UIModule/map/trestle-map.component";
+import {MatDialog, MatDialogConfig, MatDialogRef} from "@angular/material";
+import {IIndividualHistory} from "../../UIModule/history-graph/history-graph.component";
+import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
+import {IndividualService} from "../../SharedModule/individual/individual.service";
+import {TrestleFact} from "../../SharedModule/individual/TrestleIndividual/trestle-fact";
 
 @Component({
     selector: "visualize",
@@ -77,15 +77,10 @@ export class VisualizeComponent implements OnInit {
                 this.mapIndividual = {
                     id: results.getID(),
                     data: {
-                        // type: "FeatureCollection",
-                        // features: [
-                        //     {
-                                type: "Feature",
-                                geometry: results.getSpatialValue(),
-                                id: results.getIDAsInteger(),
-                                properties: results.getFactValues()
-                            // }
-                        // ]
+                        type: "Feature",
+                        geometry: results.getSpatialValue(),
+                        id: results.getIDAsInteger(),
+                        properties: results.getFactValues()
                     }
                 };
             });

@@ -18,7 +18,7 @@ export class TrestleHttp extends AuthHttp {
     requestWithToken(req: Request, token: string): Observable<Response> {
         return super.requestWithToken(req, token)
             .map((res: Response) => {
-                console.debug("Intercepted");
+                console.debug("Intercepted:", req);
                 return res;
             })
             .catch((error: any) => {

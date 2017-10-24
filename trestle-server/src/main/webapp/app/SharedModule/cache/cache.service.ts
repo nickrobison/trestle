@@ -7,6 +7,10 @@ interface CacheContent<C> {
     value: C;
 }
 
+/**
+ * HTTP cache based on:
+ * https://hackernoon.com/angular-simple-in-memory-cache-service-on-the-ui-with-rxjs-77f167387e39
+ */
 @Injectable()
 export class CacheService<K, V> {
     private cache: Map<K, CacheContent<V>> = new Map<K, CacheContent<V>>();
@@ -32,6 +36,7 @@ export class CacheService<K, V> {
         }
 
         if (this.inFlightObservables.has(key)) {
+            console.debug("Has an observable in flight, returning");
             return (this.inFlightObservables.get(key) as Subject<V>);
         } else if (fallback && fallback instanceof Observable) {
             this.inFlightObservables.set(key, new Subject());
@@ -55,6 +60,10 @@ export class CacheService<K, V> {
                 console.debug("Notifying %i observers", observersCount);
                 inFlight.next(value);
             }
+            console.debug("Removing observable %O for %s from cache",
+                inFlight, key);
+            inFlight.complete();
+            this.inFlightObservables.delete(key);
         }
     }
 

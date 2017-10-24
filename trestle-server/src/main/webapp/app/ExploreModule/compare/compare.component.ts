@@ -21,13 +21,14 @@ export class CompareComponent {
     public zoomMap = true;
     public mapData: MapSource;
     public mapConfig: mapboxgl.MapboxOptions;
-    // public selectedIndividuals: TrestleIndividual[];
     public selectedIndividuals: ICompareIndividual[];
-    public baseIndividual: TrestleIndividual | null;
+    public baseIndividual: ICompareIndividual | null;
     private layerDepth: number;
     private maxHeight: number;
     private layerNumber: number;
     private colorScale: string[];
+    // When we delete a layer, we need to recycle its color
+    private availableColors: string[];
     @ViewChild(TrestleMapComponent)
     private mapComponent: TrestleMapComponent;
 
@@ -44,6 +45,7 @@ export class CompareComponent {
         this.selectedIndividuals = [];
         // Setup layer coloring
         this.layerNumber = 0;
+        this.availableColors = [];
         // Use this to pull out colors for the map
         this.colorScale = schemeCategory10;
     }
@@ -66,6 +68,8 @@ export class CompareComponent {
         this.selectedIndividuals = [];
         //    Clear the base selection
         this.baseIndividual = null;
+        this.layerNumber = 0;
+        this.availableColors = [];
     }
 
     public toggleVisibility(individual: ICompareIndividual): void {
@@ -78,12 +82,14 @@ export class CompareComponent {
 
     public removeIndividual(individual: ICompareIndividual): void {
         console.debug("Remove:", individual);
-        this.mapComponent
-            .removeIndividual(individual.individual.getID());
+        // Remove from the array first, then from the map
         const idx = this.selectedIndividuals.indexOf(individual);
         if (idx > -1) {
             this.selectedIndividuals.splice(idx, 1);
+            this.availableColors.push(individual.color);
         }
+        this.mapComponent
+            .removeIndividual(individual.individual.getID());
     }
 
     private loadSelectedIndividual(individual: string, base = false): void {
@@ -93,15 +99,10 @@ export class CompareComponent {
                 this.mapData = {
                     id: result.getID(),
                     data: {
-                        // type: "Feature",
-                        // features: [
-                        //     {
-                                type: "Feature",
-                                geometry: result.getSpatialValue(),
-                                id: result.getIDAsInteger(),
-                                properties: result.getFactValues()
-                            // }
-                        // ]
+                        type: "Feature",
+                        geometry: result.getSpatialValue(),
+                        id: result.getFilteredID(),
+                        properties: result.getFactValues()
                     },
                     extrude: {
                         id: result.getID() + "-extrude",
@@ -116,19 +117,20 @@ export class CompareComponent {
                     }
                 };
                 console.debug("new map data:", this.mapData);
+                const compare = {
+                    individual: result,
+                    color,
+                    visible: true
+                };
 
                 // Are we loading the base selection, or not?
                 if (base) {
-                    this.baseIndividual = result;
+                    this.baseIndividual = compare;
                     //    Lock the map so it doesn't move anymore
                     this.zoomMap = false;
                 } else {
                     //    Add the selection to the list
-                    this.selectedIndividuals.push({
-                        individual: result,
-                        color,
-                        visible: true
-                    });
+                    this.selectedIndividuals.push(compare);
                 }
                 this.layerNumber++;
             });
@@ -148,10 +150,15 @@ export class CompareComponent {
     }
 
     private getColor(layer: number): string {
-        const color = this.colorScale[layer];
-        if (color === null) {
-            return "white";
+        // See if we have a color available
+        const aColor = this.availableColors.pop();
+        if (aColor === undefined) {
+            const color = this.colorScale[layer];
+            if (color === null) {
+                return "white";
+            }
+            return color;
         }
-        return color;
+        return aColor;
     }
 }

@@ -17,9 +17,10 @@
     </div>
     <div *ngIf="baseIndividual">
         <div class="row">
-            <h5>Comparing against: {{baseIndividual.getFilteredID()}}</h5>
+            <h5>Comparing against: {{baseIndividual.individual.getFilteredID()}}</h5>
             <button mat-raised-button color="primary">INTERSECT</button>
             <button mat-raised-button color="warn" (click)="reset()">RESET</button>
+            <mat-button-toggle mat-raised-button (click)="toggleVisibility(baseIndividual)">HIDE</mat-button-toggle>
         </div>
 
         <div class="row">
