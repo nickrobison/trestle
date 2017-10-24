@@ -158,7 +158,7 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
         return returnValue;
     }
 
-    private static filterID(id: string): string {
+    public static filterID(id: string): string {
         const strings = id.split("#");
         const idStrings = strings[1].split(":");
         return idStrings[0] + ":" + idStrings[1];

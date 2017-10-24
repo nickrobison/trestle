@@ -2,7 +2,7 @@
  * Created by nrobison on 6/11/17.
  */
 import * as mapboxgl from "mapbox-gl";
-import {LngLatBounds, MapMouseEvent} from "mapbox-gl";
+import {LngLatBounds, MapMouseEvent, VectorSource, GeoJSONSource, GeoJSONSourceOptions} from "mapbox-gl";
 import extent from "@mapbox/geojson-extent";
 import {
     Component,
@@ -21,9 +21,11 @@ import {
     MultiPoint,
     MultiPolygon,
     Point,
-    Polygon
+    Polygon,
+    Feature
 } from "geojson";
 import {BehaviorSubject} from "rxjs/BehaviorSubject";
+import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
 
 export interface IMapFillLayer extends mapboxgl.Layer {
     type: "fill";
@@ -55,6 +57,10 @@ export interface I3DMapSource extends ITrestleMapSource {
     extrude: mapboxgl.Layer;
 }
 
+interface GeoJSONDataSource extends GeoJSONSource {
+    _data: Feature<GeometryObject> | FeatureCollection<GeometryObject>;
+}
+
 export type MapSource = I3DMapSource | ITrestleMapSource;
 
 @Component({
@@ -65,7 +71,7 @@ export type MapSource = I3DMapSource | ITrestleMapSource;
 
 export class TrestleMapComponent implements OnInit, OnChanges {
 
-    @Input() public individual: MapSource;
+    @Input() public data: MapSource;
     @Input() public single: boolean;
     @Input() public multiSelect: boolean;
     @Input() public zoomOnLoad?: boolean;
@@ -77,12 +83,14 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     private baseStyle: ITrestleMapLayers;
     private map: mapboxgl.Map;
     private mapSources: Map<string, string[]>;
+    private filteredIDs: string[];
 
     constructor() {
         // FIXME(nrobison): Fix this
         (mapboxgl as any).accessToken = "pk.eyJ1IjoibnJvYmlzb24iLCJhIjoiY2ozdDd5dmd2MDA3bTMxcW1kdHZrZ3ppMCJ9.YcJMRphQAfmZ0H8X9HnoKA";
 
         this.mapSources = new Map();
+        this.filteredIDs = [];
 
         //    Set defaults
         this.setupDefaults();
@@ -113,7 +121,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
 
     public ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
         // Individual changes
-        const inputChanges = changes["individual"];
+        const inputChanges = changes["data"];
         if (inputChanges != null
             && !inputChanges.isFirstChange()
             && (inputChanges.currentValue !== inputChanges.previousValue)) {
@@ -135,61 +143,107 @@ export class TrestleMapComponent implements OnInit, OnChanges {
 
     public removeIndividual(individual: string): void {
         console.debug("Removing selection %s from the map", individual);
-        // //    Figure out which layer the selection is a part of and remove it
-        //     // FIXME(nrobison): Get rid of this type cast.
-        //     this.map.querySourceFeatures()
-        //     const features: any[] = this.map.queryRenderedFeatures(e.point, {
-        //         layers: this.mapSources.map((val) => val + "-fill")
-        //     });
-        //     // Set the hover filter using either the provided id field, or a default property
-        //     const idField = this.selection.idField == null ? "id" : this.selection.idField;
-        //     console.debug("Accessing ID field:", idField);
-        //
-        //     // If we don't filter on anything, deselect it all
-        //     if (!this.multiSelect && !(features.length > 0)) {
-        //         console.debug("Deselecting", this.mapSources);
-        //         this.mapSources.forEach((source) => {
-        //             this.map.setFilter(source + "-hover", ["==", idField, ""]);
-        //         });
-        //         return;
-        //     }
-        //     console.debug("Filtered features", features);
-        //     const feature: any = features[0];
-        //     let layerID = features[0].layer.id;
-        //     // Emit the clicked layer
-        //     const featureID = feature.properties[idField];
-        //     this.clicked.emit(featureID);
-        //     layerID = layerID.replace("-fill", "");
-        //     this.map.setFilter(layerID + "-hover", ["==", idField, featureID]);
-        //     // If multi-select is not enabled, deselect everything else
-        //     if (!this.multiSelect) {
-        //         this.mapSources.forEach((layer) => {
-        //             if (layer !== layerID) {
-        //                 this.map.setFilter(layer + "-hover", ["==", idField, ""]);
-        //             }
-        //         });
-        //     }
+
+        // Is the data a source?
+        if (this.mapSources.has(individual)) {
+            this.removeSource(individual);
+        } else {
+            //    Otherwise find the matching layer and remove it
+        }
     }
 
     public toggleIndividualVisibility(individual: string, setVisible: boolean): void {
         console.debug("setting visible?", setVisible);
-        //    See if the individual is a source
+        //    See if the data is a source
         const layers = this.mapSources.get(individual);
+        // if (layers !== undefined) {
+        //     console.debug("Has layers:", layers);
+        //     //    If we're a source, turn off all the layers
+        //     layers
+        //         .forEach((layer) => {
+        //             const property = this.map.getLayoutProperty(layer, "visibility");
+        //             if (setVisible) {
+        //                 this.map.setLayoutProperty(layer, "visibility", "visible");
+        //             } else {
+        //                 this.map.setLayoutProperty(layer, "visibility", "none");
+        //             }
+        //         });
+        //     //    If not, figure out which layers have the data
+        // } else {
+        for (const source of Array.from(this.mapSources.keys())) {
+            const mapSource = this.map.getSource(source);
+            if (TrestleMapComponent.isGeoJSON(mapSource)) {
+                console.debug("Checking source:", mapSource);
+                console.debug("Has data:", (mapSource as any)._data);
+                const data = mapSource._data;
+                // If it's a feature collection, dive into it
+                if (TrestleMapComponent.isCollection(data)) {
+                    for (const feature of data.features) {
+                        if (feature.id === individual) {
+                            console.debug("Source %s matches individual %s", source, individual);
+                            this.toggleSourceVisibility(source, setVisible, individual);
+                            break;
+                        }
+                    }
+                } else {
+                    if (data.id === individual) {
+                        console.debug("Source %s matches individual %s", source, individual);
+                        this.toggleSourceVisibility(source, setVisible, individual);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    private toggleSourceVisibility(source: string, setVisible: boolean, individual?: string): void {
+        const layers = this.mapSources.get(source);
         if (layers !== undefined) {
             console.debug("Has layers:", layers);
             //    If we're a source, turn off all the layers
             layers
                 .forEach((layer) => {
-                    const property = this.map.getLayoutProperty(layer, "visibility");
-                    if (setVisible) {
-                        this.map.setLayoutProperty(layer, "visibility", "visible");
+                    // If we're filtering a layer and not a source,
+                    // set a filter to remove the individual
+                    if (individual) {
+                        // If we're setting the layer visible again,
+                        // remove it from the list and update the filter
+                        if (setVisible) {
+                            const idx = this.filteredIDs.indexOf(TrestleMapComponent.buildFilterID(individual));
+                            if (idx > -1) {
+                                this.filteredIDs.splice(idx, 1);
+                            }
+                            //   If we're setting the layer invisible,
+                            // add the individual to the list of filtered IDs
+                        } else {
+                            console.debug("Removing individual %s from layer %s", individual, layer);
+                            this.filteredIDs.push(TrestleMapComponent.buildFilterID(individual));
+                        }
+                        // If we have items to filter, add them,
+                        // otherwise remove the filter
+                        if (this.filteredIDs.length > 0) {
+                            const filterValues = ["!in", "id"].concat(this.filteredIDs);
+
+                            console.debug("Filtered Features:", this.map.querySourceFeatures(source,
+                                {
+                                    sourceLayer: layer,
+                                    filter: filterValues
+                                }));
+                            console.debug("Setting filter of %O on layer:", filterValues, layer);
+                            this.map.setFilter(layer, filterValues);
+                        } else {
+                            console.debug("Removing filter from layer:", layer);
+                            (this.map as any).setFilter(layer, null);
+                        }
                     } else {
-                        this.map.setLayoutProperty(layer, "visibility", "none");
+                        if (setVisible) {
+                            this.map.setLayoutProperty(layer, "visibility", "visible");
+                        } else {
+                            this.map.setLayoutProperty(layer, "visibility", "none");
+                        }
                     }
                 });
         }
-
-    //    If not, figure out which layers have the individual
 
     }
 
@@ -297,7 +351,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             layers: fillLayers
         });
         // Set the hover filter using either the provided id field, or a default property
-        const idField = this.individual.idField == null ? "id" : this.individual.idField;
+        const idField = this.data.idField == null ? "id" : this.data.idField;
         console.debug("Accessing ID field:", idField);
 
         // If we don't filter on anything, deselect it all
@@ -423,5 +477,21 @@ export class TrestleMapComponent implements OnInit, OnChanges {
 
     private static is3D(x: any): x is I3DMapSource {
         return (x as I3DMapSource).extrude !== undefined;
+    }
+
+    private static isVector(x: any): x is VectorSource {
+        return (x as VectorSource).type === "vector";
+    }
+
+    private static isGeoJSON(x: any): x is GeoJSONDataSource {
+        return (x as GeoJSONSource).type === "geojson";
+    }
+
+    private static isCollection(x: any): x is FeatureCollection<GeometryObject> {
+        return (x as FeatureCollection<GeometryObject>).type === "FeatureCollection";
+    }
+
+    private static buildFilterID(individual: string): string {
+        return TrestleIndividual.filterID(individual).replace(":", "-");
     }
 }

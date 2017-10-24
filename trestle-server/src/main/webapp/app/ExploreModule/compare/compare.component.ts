@@ -71,14 +71,20 @@ export class CompareComponent {
     public toggleVisibility(individual: ICompareIndividual): void {
         individual.visible = !individual.visible;
         this.mapComponent
-            .toggleIndividualVisibility(individual.individual.getID(),
+            .toggleIndividualVisibility(individual
+                    .individual.getID(),
                 individual.visible);
     }
 
     public removeIndividual(individual: ICompareIndividual): void {
         console.debug("Remove:", individual);
+        this.mapComponent
+            .removeIndividual(individual.individual.getID());
+        const idx = this.selectedIndividuals.indexOf(individual);
+        if (idx > -1) {
+            this.selectedIndividuals.splice(idx, 1);
+        }
     }
-
 
     private loadSelectedIndividual(individual: string, base = false): void {
         this.is.getTrestleIndividual(individual)

@@ -270,7 +270,7 @@ export class DatsetViewerComponent implements OnInit {
             id: entityName + "-" + startEvent.getType(),
             entity: entityName,
             bin: 1,
-            value: "individual",
+            value: "data",
             temporal: startEvent.getTemporal().toDate()
         };
 
@@ -308,7 +308,7 @@ export class DatsetViewerComponent implements OnInit {
                 id: entityName + "-" + endEvent.getType(),
                 entity: entityName,
                 bin: 1,
-                value: "individual",
+                value: "data",
                 temporal: endEvent.getTemporal().toDate()
             };
             const intoEvent = {
@@ -340,7 +340,7 @@ export class DatsetViewerComponent implements OnInit {
                     id: entityName + "-DESTROYED",
                     entity: entityName,
                     bin: 1,
-                    value: "individual",
+                    value: "data",
                     temporal: new Date("3001-01-01")
                 };
                 events.push(started, destroyed);
@@ -355,7 +355,7 @@ export class DatsetViewerComponent implements OnInit {
                     id: entityName + "-" + (endEvent as TrestleEvent).getType(),
                     entity: entityName,
                     bin: 1,
-                    value: "individual",
+                    value: "data",
                     temporal: (endEvent as TrestleEvent).getTemporal().toDate()
                 };
                 events.push(started, ended);
