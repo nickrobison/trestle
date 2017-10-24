@@ -93,15 +93,15 @@ export class CompareComponent {
                 this.mapData = {
                     id: result.getID(),
                     data: {
-                        type: "FeatureCollection",
-                        features: [
-                            {
+                        // type: "Feature",
+                        // features: [
+                        //     {
                                 type: "Feature",
                                 geometry: result.getSpatialValue(),
-                                id: result.getID(),
+                                id: result.getIDAsInteger(),
                                 properties: result.getFactValues()
-                            }
-                        ]
+                            // }
+                        // ]
                     },
                     extrude: {
                         id: result.getID() + "-extrude",
@@ -115,6 +115,7 @@ export class CompareComponent {
                         }
                     }
                 };
+                console.debug("new map data:", this.mapData);
 
                 // Are we loading the base selection, or not?
                 if (base) {

@@ -77,15 +77,15 @@ export class VisualizeComponent implements OnInit {
                 this.mapIndividual = {
                     id: results.getID(),
                     data: {
-                        type: "FeatureCollection",
-                        features: [
-                            {
+                        // type: "FeatureCollection",
+                        // features: [
+                        //     {
                                 type: "Feature",
                                 geometry: results.getSpatialValue(),
-                                id: results.getID(),
+                                id: results.getIDAsInteger(),
                                 properties: results.getFactValues()
-                            }
-                        ]
+                            // }
+                        // ]
                     }
                 };
             });

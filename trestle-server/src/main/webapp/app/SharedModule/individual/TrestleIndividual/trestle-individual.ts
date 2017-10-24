@@ -6,6 +6,7 @@ import { GeometryObject } from "geojson";
 import { IInterfacable } from "../../interfacable";
 import { parse } from "wellknown";
 
+
 export interface ITrestleIndividual {
     individualID: string;
     individualTemporal: ITrestleTemporal;
@@ -45,6 +46,10 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
      */
     public getFilteredID(): string {
         return TrestleIndividual.filterID(this.id);
+    }
+
+    public getIDAsInteger(): number {
+        return TrestleIndividual.hashID(this.getFilteredID());
     }
 
     public getTemporal(): TrestleTemporal {
@@ -162,5 +167,20 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
         const strings = id.split("#");
         const idStrings = strings[1].split(":");
         return idStrings[0] + ":" + idStrings[1];
+    }
+
+    /**
+     * SDBM algorithm for generating a numeric value of a provided string
+     * @param {string} id
+     * @returns {number}
+     */
+    public static hashID(id: string): number {
+        let hash = 0;
+        for (let i = 0; i < id.length; i++) {
+            const char = id.charCodeAt(i);
+            // tslint:disable-next-line:no-bitwise
+            hash = char + (hash << 6) + (hash << 16) - hash;
+        }
+        return hash;
     }
 }

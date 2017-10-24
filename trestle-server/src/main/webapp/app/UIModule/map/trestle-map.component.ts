@@ -49,7 +49,7 @@ export interface ITrestleMapLayers {
 export interface ITrestleMapSource {
     id: string;
     idField?: string;
-    data: FeatureCollection<GeometryObject>;
+    data: FeatureCollection<GeometryObject> | Feature<GeometryObject>;
     layers?: ITrestleMapLayers;
 }
 
@@ -83,6 +83,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     private baseStyle: ITrestleMapLayers;
     private map: mapboxgl.Map;
     private mapSources: Map<string, string[]>;
+    // This has to be integers, in order to match against the numeric IDs
     private filteredIDs: string[];
 
     constructor() {
@@ -170,6 +171,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         //         });
         //     //    If not, figure out which layers have the data
         // } else {
+        console.debug("Looking for matching individual id:", TrestleMapComponent.buildFilterID(individual));
         for (const source of Array.from(this.mapSources.keys())) {
             const mapSource = this.map.getSource(source);
             if (TrestleMapComponent.isGeoJSON(mapSource)) {
@@ -179,15 +181,15 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                 // If it's a feature collection, dive into it
                 if (TrestleMapComponent.isCollection(data)) {
                     for (const feature of data.features) {
-                        if (feature.id === individual) {
+                        if ((feature.properties as any).id === TrestleMapComponent.buildFilterID(individual)) {
                             console.debug("Source %s matches individual %s", source, individual);
                             this.toggleSourceVisibility(source, setVisible, individual);
                             break;
                         }
                     }
                 } else {
-                    if (data.id === individual) {
-                        console.debug("Source %s matches individual %s", source, individual);
+                    if ((data.properties as any).id  === TrestleMapComponent.buildFilterID(individual)) {
+                        console.debug("Source feature %s matches individual %s", source, individual);
                         this.toggleSourceVisibility(source, setVisible, individual);
                         break;
                     }
@@ -208,8 +210,10 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                     if (individual) {
                         // If we're setting the layer visible again,
                         // remove it from the list and update the filter
+                        const filteredID = TrestleMapComponent.buildFilterID(individual);
                         if (setVisible) {
-                            const idx = this.filteredIDs.indexOf(TrestleMapComponent.buildFilterID(individual));
+                            const idx = this.filteredIDs
+                                .indexOf(filteredID);
                             if (idx > -1) {
                                 this.filteredIDs.splice(idx, 1);
                             }
@@ -217,7 +221,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                             // add the individual to the list of filtered IDs
                         } else {
                             console.debug("Removing individual %s from layer %s", individual, layer);
-                            this.filteredIDs.push(TrestleMapComponent.buildFilterID(individual));
+                            this.filteredIDs.push(filteredID);
                         }
                         // If we have items to filter, add them,
                         // otherwise remove the filter
@@ -411,7 +415,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         this.mapBounds.emit(this.map.getBounds());
     };
 
-    private centerMap(geom: FeatureCollection<GeometryObject>): void {
+    private centerMap(geom: FeatureCollection<GeometryObject> | Feature<GeometryObject>): void {
         // We have to lock the map in order to avoid sending out a notice that the move happened.
         if (geom.bbox) {
             // FIXME(nrobison): This is garbage. Fix it.
@@ -492,6 +496,10 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     }
 
     private static buildFilterID(individual: string): string {
-        return TrestleIndividual.filterID(individual).replace(":", "-");
+        console.debug("Filtering:", individual);
+        return TrestleIndividual.filterID(individual)
+            .replace(/-/g, " ")
+            .replace(":", "-");
+        // return TrestleIndividual.hashID(TrestleIndividual.filterID(individual));
     }
 }

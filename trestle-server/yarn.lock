@@ -163,9 +163,9 @@
   version "0.0.38"
   resolved "https://registry.yarnpkg.com/@types/codemirror/-/codemirror-0.0.38.tgz#d07ad45baca499f37151455857ad08804274091e"
 
-"@types/crypto-js@^3.1.33":
-  version "3.1.33"
-  resolved "https://registry.yarnpkg.com/@types/crypto-js/-/crypto-js-3.1.33.tgz#7e6c91603533e0cd9f279a8405a9b9e379880c5d"
+"@types/crypto-js@^3.1.37":
+  version "3.1.37"
+  resolved "https://registry.yarnpkg.com/@types/crypto-js/-/crypto-js-3.1.37.tgz#ae05b21447d14f2db4bd0a2de950ef18fc78b478"
 
 "@types/cucumber@^2.0.1":
   version "2.0.1"
