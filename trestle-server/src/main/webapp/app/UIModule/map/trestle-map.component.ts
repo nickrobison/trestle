@@ -26,6 +26,7 @@ import {
 } from "geojson";
 import {BehaviorSubject} from "rxjs/BehaviorSubject";
 import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
+import {off} from "codemirror";
 
 export interface IMapFillLayer extends mapboxgl.Layer {
     type: "fill";
@@ -199,6 +200,38 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         }
     }
 
+    public clearMap(): void {
+        console.debug("Clearing map");
+        this.mapSources.forEach((_, source) => {
+            console.debug("removing:", source);
+            this.removeSource(source);
+        });
+    }
+
+    public change3DOffset(height: number, offset: number): void {
+        //    Find all the individuals that have the same property
+        //    For each layer, get its height
+        this.mapSources.forEach((layers) => {
+            layers.forEach((layer) => {
+                const layerHeight = this.map.getPaintProperty(layer,
+                    "fill-extrusion-height");
+                // If it matches the height of the layer, increase it
+                if (layerHeight === height) {
+                    const layerBase = this.map.getPaintProperty(layer,
+                        "fill-extrusion-base");
+                    if (layerBase) {
+                        this.map.setPaintProperty(layer,
+                            "fill-extrusion-base",
+                            layerBase + offset);
+                    }
+                    this.map.setPaintProperty(layer,
+                        "fill-extrusion-height",
+                        layerHeight + offset);
+                }
+            });
+        });
+    }
+
     private toggleSourceVisibility(source: string, setVisible: boolean, individual?: string): void {
         const layers = this.mapSources.get(source);
         if (layers !== undefined) {
@@ -250,14 +283,6 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                 });
         }
 
-    }
-
-    public clearMap(): void {
-        console.debug("Clearing map");
-        this.mapSources.forEach((_, source) => {
-            console.debug("removing:", source);
-            this.removeSource(source);
-        });
     }
 
     private removeSource(source: MapSource | string): void {

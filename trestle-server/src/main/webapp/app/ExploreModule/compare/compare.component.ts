@@ -4,11 +4,14 @@ import {MapSource, TrestleMapComponent} from "../../UIModule/map/trestle-map.com
 import {IndividualService} from "../../SharedModule/individual/individual.service";
 import {TrestleTemporal} from "../../SharedModule/individual/TrestleIndividual/trestle-temporal";
 import {schemeCategory10} from "d3-scale";
+import {MatSliderChange} from "@angular/material";
 
 interface ICompareIndividual {
     individual: TrestleIndividual;
     color: string;
     visible: boolean;
+    height: number;
+    base: number;
 }
 
 @Component({
@@ -31,6 +34,7 @@ export class CompareComponent {
     private availableColors: string[];
     @ViewChild(TrestleMapComponent)
     private mapComponent: TrestleMapComponent;
+    private currentSliderValue: number;
 
     constructor(private is: IndividualService) {
         this.mapConfig = {
@@ -48,6 +52,7 @@ export class CompareComponent {
         this.availableColors = [];
         // Use this to pull out colors for the map
         this.colorScale = schemeCategory10;
+        this.currentSliderValue = 0;
     }
 
 
@@ -92,10 +97,31 @@ export class CompareComponent {
             .removeIndividual(individual.individual.getID());
     }
 
-    private loadSelectedIndividual(individual: string, base = false): void {
+    public sliderUpdate(event: MatSliderChange) {
+        console.debug("Slider changed:", event);
+        if ((event.value !== null) && this.baseIndividual) {
+            //     For now, let's just change the base individual,
+            // we'll figure out the rest later
+            console.debug("Old value: %s New value: %s Offset:",
+                this.currentSliderValue,
+                event.value,
+                event.value - this.currentSliderValue);
+            const newOffset = (event.value - this.currentSliderValue) * 100;
+            console.debug("Change paint property by:", newOffset);
+            this.mapComponent.change3DOffset(this.baseIndividual.height, newOffset);
+            this.currentSliderValue = event.value;
+            this.baseIndividual.height = this.baseIndividual.height + newOffset;
+            this.baseIndividual.base = this.baseIndividual.base + newOffset;
+        }
+    }
+
+
+    private loadSelectedIndividual(individual: string, baseIndividual = false): void {
         this.is.getTrestleIndividual(individual)
             .subscribe((result) => {
                 const color = this.getColor(this.layerNumber);
+                const height = this.getHeight(result.getTemporal());
+                const baseHeight = CompareComponent.getBase(result.getTemporal());
                 this.mapData = {
                     id: result.getID(),
                     data: {
@@ -110,8 +136,8 @@ export class CompareComponent {
                         source: result.getID(),
                         paint: {
                             "fill-extrusion-color": color,
-                            "fill-extrusion-height": this.getHeight(result.getTemporal()),
-                            "fill-extrusion-base": this.getBase(result.getTemporal()),
+                            "fill-extrusion-height": height,
+                            "fill-extrusion-base": baseHeight,
                             "fill-extrusion-opacity": 0.7
                         }
                     }
@@ -120,11 +146,13 @@ export class CompareComponent {
                 const compare = {
                     individual: result,
                     color,
-                    visible: true
+                    visible: true,
+                    height,
+                    base: baseHeight
                 };
 
                 // Are we loading the base selection, or not?
-                if (base) {
+                if (baseIndividual) {
                     this.baseIndividual = compare;
                     //    Lock the map so it doesn't move anymore
                     this.zoomMap = false;
@@ -136,7 +164,7 @@ export class CompareComponent {
             });
     }
 
-    private getBase(temporal: TrestleTemporal): number {
+    private static getBase(temporal: TrestleTemporal): number {
         return temporal.getFrom().get("year");
     }
 
