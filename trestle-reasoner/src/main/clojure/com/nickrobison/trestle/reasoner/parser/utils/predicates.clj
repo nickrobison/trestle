@@ -1,4 +1,4 @@
-(ns com.nickrobison.trestle.reasoner.com.nickrobison.trestle.reasoner.parser.utils.predicates
+(ns com.nickrobison.trestle.reasoner.parser.utils.predicates
   (:import (java.lang.reflect Modifier Method Field)
            (com.nickrobison.trestle.reasoner.annotations Ignore Fact Spatial Language NoMultiLanguage IndividualIdentifier)
            (org.semanticweb.owlapi.model IRI)
@@ -12,13 +12,12 @@
 (keyword 'identifier)
 (keyword 'language)
 
-
-(defn get-member-name [member] (.getName member))
-
 (defn get-annotation
   "Get the specified annotation on the class member"
   [member annotation]
   (.getAnnotation member annotation))
+
+(defn get-member-name [member] (.getName member))
 
 (defn hasAnnotation? [member annotation] (.isAnnotationPresent member annotation))
 (defn public? [entity] (Modifier/isPublic (.getModifiers entity)))
@@ -94,21 +93,3 @@
       (str (string/lower-case (subs name 3 4)) (subs name 4))
       ; If not, just return the name
       name)))
-
-(defn build-iri
-  "Build the property IRI for the Member"
-  [member prefix]
-  (if (hasAnnotation? member Fact)
-    (IRI/create prefix (.name (.getAnnotation member Fact)))
-    (if (hasAnnotation? member Spatial)
-      ; If spatial, use the GEOSPARQL prefix
-      (IRI/create StaticIRI/GEOSPARQLPREFIX "asWKT")
-      ; Otherwise, use the member-name
-      (IRI/create prefix (filter-member-name member)))))
-
-; Build the OWLDataProperties
-
-(defn build-data-property
-  "Build the OWLDataProperty for the member"
-  [member prefix df]
-  (.getOWLDataProperty df (build-iri member prefix)))

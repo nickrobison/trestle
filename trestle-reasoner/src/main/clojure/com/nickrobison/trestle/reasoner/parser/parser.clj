@@ -1,4 +1,4 @@
-(ns com.nickrobison.trestle.reasoner.parser
+(ns com.nickrobison.trestle.reasoner.parser.parser
   (:import [IClassParser]
            (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter StringParser)
            (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom)
@@ -11,8 +11,8 @@
             [clojure.core.reducers :as r]
             [clojure.tools.logging :as log]
             [clojure.string :as string]
-            [com.nickrobison.trestle.reasoner.com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]))
-
+            [com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]
+            [com.nickrobison.trestle.reasoner.parser.utils.members :as m]))
 
 
 
@@ -84,7 +84,7 @@
 (defn build-member
   "Build member from class methods/fields"
   [member df prefix defaultLang]
-  (let [iri (pred/build-iri member prefix)]
+  (let [iri (m/build-iri member prefix)]
     {
      :name (pred/filter-member-name member)
      :iri iri
@@ -98,7 +98,7 @@
 (defmulti build-literal (fn [df value multiLangEnabled defaultLang returnType] (class value)))
 (defmethod build-literal String
   [df value multiLangEnabled defaultLang returnType]
-          (.getOWLLiteral df value defaultLang))
+  (.getOWLLiteral df value defaultLang))
 (defmethod build-literal :default
   [df value multiLangEnabled defaultLang returnType]
   (.getOWLLiteral df (.toString value) returnType))
@@ -151,25 +151,26 @@
     (let [parsedClass (.parseClass this (.getClass inputObject))
           individual (.getIndividual this inputObject)]
       (Optional/of
-           (->> (get parsedClass :members)
-                ; Filter spatial
-                (r/filter (fn [member]
-                            (if (true? filterSpatial)
-                              (complement (= (get member :type) ::pred/spatial))
-                              true)))
-                ; Build the assertion axiom
-                (r/map (fn [member]
-                         (.getOWLDataPropertyAssertionAxiom df
-                                                            (get member :data-property)
-                                                            individual
-                                                            (build-literal df
-                                                                           (invoker (get member :handle) inputObject)
-                                                                           multiLangEnabled
-                                                                           defaultLanguageCode
-                                                                           (get member :return-type)))))
-                (into ()))))))
+        (->> (get parsedClass :members)
+             ; Filter spatial
+             (r/filter (fn [member]
+                         (if (true? filterSpatial)
+                           (complement (= (get member :type) ::pred/spatial))
+                           true)))
+             ; Build the assertion axiom
+             (r/map (fn [member]
+                      (.getOWLDataPropertyAssertionAxiom df
+                                                         (get member :data-property)
+                                                         individual
+                                                         (build-literal df
+                                                                        (invoker (get member :handle) inputObject)
+                                                                        multiLangEnabled
+                                                                        defaultLanguageCode
+                                                                        (get member :return-type)))))
+             (into ()))))))
 
 (defn make-parser
   "Creates a new ClassParser"
   [df reasonerPrefix multiLangEnabled defaultLanguageCode]
   (->ClojureClassParser df reasonerPrefix multiLangEnabled defaultLanguageCode {}))
+

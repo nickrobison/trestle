@@ -55,7 +55,7 @@ public class StringParser {
 
     //    We can suppress this for default annotation properties
     @SuppressWarnings({"dereference.of.nullable"})
-    public static Optional<OWLLiteral> fieldValueToMultiLangString(@NonNull Object fieldValue, Field field, boolean multiLangMode, @Nullable String defaultLanguageTag) {
+    static Optional<OWLLiteral> fieldValueToMultiLangString(@NonNull Object fieldValue, Field field, boolean multiLangMode, @Nullable String defaultLanguageTag) {
 //        If it's not a string, return an empty optional and move on
         if (!(fieldValue instanceof String)) {
             return Optional.empty();
@@ -73,7 +73,7 @@ public class StringParser {
         return Optional.of(parseMultiLangString(((String) fieldValue), languageTag, multiLangMode, defaultLanguageTag));
     }
 
-    public static Optional<OWLLiteral> methodValueToMultiLangString(@NonNull Object methodValue, Method method, boolean multiLangMode, @Nullable String defaultLanguageTag) {
+    static Optional<OWLLiteral> methodValueToMultiLangString(@NonNull Object methodValue, Method method, boolean multiLangMode, @Nullable String defaultLanguageTag) {
         if (!(methodValue instanceof String)) {
             return Optional.empty();
         }
