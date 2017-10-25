@@ -129,17 +129,6 @@
                                                                  (.name (.getDeclaredAnnotation clazz DatasetClass))
                                                                  (.getName clazz)))))
   (^OWLClass getObjectClass [this ^Object inputObject] (.getObjectClass this (.getClass inputObject)))
-  (^OWLNamedIndividual getIndividual [this ^Object inputObject]
-    (. df getOWLNamedIndividual (IRI/create reasonerPrefix
-                                            (let [
-                                                  field (parseIndividualFields
-                                                          (seq (.getDeclaredFields (.getClass inputObject))) inputObject)
-                                                  method (parseIndividualMethods
-                                                           (.getDeclaredMethods (.getClass inputObject)) inputObject)]
-                                              (match [field method]
-                                                     [nil _] method
-                                                     [_ nil] field
-                                                     :else "Nothing!")))))
   (parseClass ^Object [this ^Class clazz]
     (->> (concat (.getDeclaredFields clazz) (.getDeclaredMethods clazz))
          ; Filter out non-necessary members
@@ -147,6 +136,16 @@
          ; Build members
          (r/map #(build-member % df reasonerPrefix (if (true? multiLangEnabled) defaultLanguageCode nil)))
          (r/reduce member-reducer {})))
+
+  (^OWLNamedIndividual getIndividual [this ^Object inputObject]
+    (.getOWLNamedIndividual df
+                            (IRI/create reasonerPrefix
+                                        (invoker (get
+                                                   (get (.parseClass this (.getClass inputObject)) :identifier)
+                                                   :handle)
+                                                 inputObject))))
+
+
   (getFacts ^Optional ^List ^ OWLDataPropertyAssertionAxiom [this inputObject filterSpatial]
     (let [parsedClass (.parseClass this (.getClass inputObject))
           individual (.getIndividual this inputObject)]
