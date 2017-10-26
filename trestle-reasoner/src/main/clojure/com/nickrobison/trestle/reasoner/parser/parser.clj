@@ -115,21 +115,36 @@
                                                                  (.getName clazz)))))
   (^OWLClass getObjectClass [this ^Object inputObject] (.getObjectClass this (.getClass inputObject)))
   (parseClass ^Object [this ^Class clazz]
-    (->> (concat (.getDeclaredFields clazz) (.getDeclaredMethods clazz))
-         ; Filter out non-necessary members
-         (r/filter pred/filter-member)
-         ; Build members
-         (r/map #(build-member % df reasonerPrefix (if (true? multiLangEnabled) defaultLanguageCode nil)))
-         (r/reduce member-reducer {})))
+    ; Check to see if we have the class in the registry
+    (if (contains? @classRegistry clazz)
+      (log/spyf :debug "Getting from cache"
+                ; Get the class from the registry atom
+                (get @classRegistry clazz))
+      (log/spyf :debug "Parsing test class"
+                ; Get the class from the newly updated atom
+                (get
+                  ; Update the atom with the new class record
+                  (swap! classRegistry
+                         assoc
+                         clazz
+                         ; Build the class record
+                         (->> (concat (.getDeclaredFields clazz) (.getDeclaredMethods clazz))
+                              ; Filter out non-necessary members
+                              (r/filter pred/filter-member)
+                              ; Build members
+                              (r/map #(build-member % df reasonerPrefix (if (true? multiLangEnabled) defaultLanguageCode nil)))
+                              ; Combine everything into a map
+                              (r/reduce member-reducer {})))
+                  clazz))))
 
   (^OWLNamedIndividual getIndividual [this ^Object inputObject]
     (let [parsedClass (.parseClass this (.getClass inputObject))]
       (.getOWLNamedIndividual df
                               (IRI/create reasonerPrefix
                                           (m/normalize-id (invoker (get
-                                                                   (get parsedClass :identifier)
-                                                                   :handle)
-                                                                 inputObject))))))
+                                                                     (get parsedClass :identifier)
+                                                                     :handle)
+                                                                   inputObject))))))
 
 
   (getFacts ^Optional ^List ^OWLDataPropertyAssertionAxiom [this inputObject filterSpatial]
@@ -159,5 +174,4 @@
 (defn make-parser
   "Creates a new ClassParser"
   [df reasonerPrefix multiLangEnabled defaultLanguageCode]
-  (->ClojureClassParser df reasonerPrefix multiLangEnabled defaultLanguageCode {}))
-
+  (->ClojureClassParser df reasonerPrefix multiLangEnabled defaultLanguageCode (atom {})))
