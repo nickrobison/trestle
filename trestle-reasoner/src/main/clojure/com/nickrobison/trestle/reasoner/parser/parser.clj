@@ -80,6 +80,7 @@
   (let [iri (m/build-iri member prefix)]
     {
      :name          (pred/filter-member-name member)
+     :member-name   (pred/get-member-name member)
      :iri           iri
      :data-property (.getOWLDataProperty df iri)
      :return-type   (parse-return-type member)
@@ -103,12 +104,14 @@
   "Build the Class Member Map"
   [acc member]
   (let [members (get acc :members)
+        temporals (get acc :temporals [])
         type (get member :type)
         ignore (get member :ignore)]
     (match [type, ignore]
            [::pred/identifier, true] (assoc acc :identifier member)
            [::pred/identifier, false] (merge acc {:members (conj members member) :identifier member})
            [::pred/spatial, _] (merge acc {:members (conj members member) :spatial member})
+           [::pred/temporal, _] (merge acc {:temporals (conj temporals member)})
            :else (assoc acc :members (conj members member)))))
 
 
@@ -181,7 +184,16 @@
                                                                         (get member :return-type)))))
              (into ())))))
   (getFacts ^Optional ^List ^OWLDataPropertyAssertionAxiom [this inputObject]
-    (.getFacts this inputObject false)))
+    (.getFacts this inputObject false))
+
+  (matchWithClassMember ^String [this clazz classMember]
+    (let [parsedClass (.parseClass this clazz)]
+      (->> (get parsedClass :members)
+           (r/filter (fn [member]
+                       (let [iri (.getShortForm (get member :iri))]
+                         (= iri classMember))))
+           (r/map (fn [member]
+                    (get member :member-name)))))))
 
 (defn make-parser
   "Creates a new ClassParser"

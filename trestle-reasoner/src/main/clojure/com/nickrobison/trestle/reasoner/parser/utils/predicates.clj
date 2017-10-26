@@ -2,7 +2,8 @@
   (:import (java.lang.reflect Modifier Method Field)
            (com.nickrobison.trestle.reasoner.annotations Ignore Fact Spatial Language NoMultiLanguage IndividualIdentifier)
            (org.semanticweb.owlapi.model IRI)
-           (com.nickrobison.trestle.common StaticIRI))
+           (com.nickrobison.trestle.common StaticIRI)
+           (com.nickrobison.trestle.reasoner.annotations.temporal DefaultTemporal StartTemporal EndTemporal))
   (:require [clojure.string :as string]
             [clojure.core.match :refer [match]]))
 
@@ -11,6 +12,12 @@
 (keyword 'spatial)
 (keyword 'identifier)
 (keyword 'language)
+(keyword 'temporal)
+(keyword 'start)
+(keyword 'end)
+(keyword 'default)
+(keyword 'point)
+(keyword 'interval)
 
 (defn get-annotation
   "Get the specified annotation on the class member"
@@ -27,6 +34,11 @@
 (defn language? [entity] (hasAnnotation? entity Language))
 (defn noMultiLanguage? [entity] (hasAnnotation? entity NoMultiLanguage))
 (defn identifier? [entity] (hasAnnotation? entity IndividualIdentifier))
+(defn temporal? [entity] (or
+                           (hasAnnotation? entity DefaultTemporal)
+                           (hasAnnotation? entity StartTemporal)
+                           (hasAnnotation? entity EndTemporal)))
+(defn isDefault? [entity] (hasAnnotation? entity DefaultTemporal))
 (defn noAnnotations? [entity] (= (count (.getAnnotations entity)) 0))
 (defn ebean? [entity] (string/includes? (.getName entity) "_ebean"))
 (defn noParams? [entity] (= (.getParameterCount entity) 0))
@@ -45,6 +57,7 @@
                                   spatial?
                                   identifier?
                                   language?
+                                  temporal?
                                   noMultiLanguage?
                                   noAnnotations?) entity))
 
@@ -59,11 +72,12 @@
                                  s (spatial? member)
                                  l (language? member)
                                  i (identifier? member)
-                                 f (include? member)]
-                             (match [s l i f]
+                                 t (temporal? member)]
+                             (match [s l i t]
                                     [true _ _ _] ::spatial
                                     [_ true _ _] ::language
                                     [_ _ true _] ::identifier
+                                    [_ _ _ true] ::temporal
                                     :else ::fact)))
 
 
