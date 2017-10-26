@@ -15,8 +15,6 @@
             [com.nickrobison.trestle.reasoner.parser.utils.members :as m]))
 
 
-
-
 (defn accessMethodValue [classMethod inputObject]
   (. (TypeConverter/parsePrimitiveClass (.getReturnType classMethod)) cast
      (try
@@ -60,12 +58,13 @@
 (defmethod get-member-return-type Field [field] (.getType field))
 (defmethod get-member-return-type Method [method] (.getReturnType method))
 
-(defn parse-return-type
+(defn owl-return-type
   "Determine the OWLDatatype of the field/method"
-  [member]
+  [member rtype]
+  (log/warn "Getting return type")
   (if (pred/hasAnnotation? member Fact)
-    (TypeConverter/getDatatypeFromAnnotation (pred/get-annotation member Fact) (get-member-return-type member))
-    (TypeConverter/getDatatypeFromJavaClass (get-member-return-type member))))
+    (TypeConverter/getDatatypeFromAnnotation (pred/get-annotation member Fact) rtype)
+    (TypeConverter/getDatatypeFromJavaClass rtype)))
 
 (defn get-member-language
   "Get the language tag, if one exists"
@@ -74,21 +73,62 @@
     (.language (pred/get-annotation member Language))
     defaultLang))
 
+(defn build-member-return-type
+  [acc member df]
+  (let [rtype (get-member-return-type member)]
+    (merge acc {
+                :return-type rtype
+                :owl-datatype (owl-return-type member rtype)
+                })))
+
+(defn build-member-map
+  [member fns]
+  (reduce (fn [acc f] (f acc member)) {} fns))
+
+(defn default-member-keys
+  [acc member]
+  (merge acc {
+              :name        (pred/filter-member-name member)
+              :member-name (pred/get-member-name member)
+              :handle      (make-handle member)
+              }))
+
+(defn ignore-fact
+  [acc member]
+  (let [ignore (pred/ignore? member)]
+    (if (true? ignore) (merge acc {:ignore true})
+                       acc)))
+
+(defn build-multi-lang
+  "If the return type is a string, check for multi-lang"
+  [acc member lang]
+  (let [rtype (get acc :return-type
+                   (get-member-return-type member))]
+    (log/warnf "Called with lang type %s" rtype)
+    (if (and (complement (nil? lang)) (= String rtype))
+      (merge acc {:language (get-member-language member lang)})
+      acc)))
+
 (defn build-member
   "Build member from class methods/fields"
   [member df prefix defaultLang]
   (let [iri (m/build-iri member prefix)]
-    {
-     :name          (pred/filter-member-name member)
-     :member-name   (pred/get-member-name member)
-     :iri           iri
-     :data-property (.getOWLDataProperty df iri)
-     :return-type   (parse-return-type member)
-     :language      (if (complement (nil? defaultLang))
-                      (get-member-language member defaultLang))
-     :handle        (make-handle member)
-     :type          (pred/member-type member)
-     :ignore        (pred/ignore? member)}))
+    (merge (build-member-map member
+                             [default-member-keys
+                              (fn [acc member]
+                                (build-member-return-type acc member df))
+                              ignore-fact
+                              (fn [acc member]
+                                (build-multi-lang acc member defaultLang))])
+           {
+            :iri           iri
+            :data-property (.getOWLDataProperty df iri)
+            :type          (pred/member-type member)
+            })))
+
+
+
+
 
 (defmulti build-literal (fn [df value multiLangEnabled
                              defaultLang returnType] (class value)))
@@ -106,7 +146,7 @@
   (let [members (get acc :members)
         temporals (get acc :temporals [])
         type (get member :type)
-        ignore (get member :ignore)]
+        ignore (get member :ignore false)]
     (match [type, ignore]
            [::pred/identifier, true] (assoc acc :identifier member)
            [::pred/identifier, false] (merge acc {:members (conj members member) :identifier member})
@@ -181,19 +221,20 @@
                                                                         (invoker (get member :handle) inputObject)
                                                                         multiLangEnabled
                                                                         defaultLanguageCode
-                                                                        (get member :return-type)))))
+                                                                        (get member :owl-datatype)))))
              (into ())))))
   (getFacts ^Optional ^List ^OWLDataPropertyAssertionAxiom [this inputObject]
     (.getFacts this inputObject false))
 
-  (matchWithClassMember ^String [this clazz classMember]
-    (let [parsedClass (.parseClass this clazz)]
-      (->> (get parsedClass :members)
-           (r/filter (fn [member]
-                       (let [iri (.getShortForm (get member :iri))]
-                         (= iri classMember))))
-           (r/map (fn [member]
-                    (get member :member-name)))))))
+  ;(matchWithClassMember ^String [this clazz classMember]
+  ;  (let [parsedClass (.parseClass this clazz)]
+  ;    (->> (get parsedClass :members)
+  ;         (r/filter (fn [member]
+  ;                     (let [iri (.getShortForm (get member :iri))]
+  ;                       (= iri classMember))))
+  ;         (r/map (fn [member]
+  ;                  (get member :member-name))))))
+  )
 
 (defn make-parser
   "Creates a new ClassParser"
