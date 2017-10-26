@@ -2,10 +2,7 @@ package com.nickrobison.trestle.reasoner.parser;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -70,6 +67,24 @@ public interface IClassParser {
      * @return - {@link Optional} of {@link OWLDataPropertyAssertionAxiom} representing spatial property
      */
     Optional<OWLDataPropertyAssertionAxiom> getSpatialFact(Object inputObject);
+
+    /**
+     * Match a given String, representing the short-form of a {@link OWLDataProperty} {@link IRI} with the appropriate class member
+     * If the languageCode param is not null, the method attempts to match the correct data property and language pair.
+     * @param clazz - Java {@link Class} to parse
+     * @param classMember - {@link IRI} short-form to match against class
+     * @param languageTag - Nullable languageCode determining multi-lang String support required
+     * @return - {@link String} name of matching class member
+     */
+    String matchWithClassMember(Class<?> clazz, String classMember, @Nullable String languageTag);
+
+    /**
+     * Match a given {@link String}, representing the short-form of a {@link OWLDataProperty} {@link IRI} with the appropriate class member
+     * @param clazz - Java {@link Class} to parse
+     * @param classMember - {@link IRI} short-form to match against class
+     * @return - {@link String} name of matching class member
+     */
+    String matchWithClassMember(Class<?> clazz, String classMember);
 
     /**
      * Get the datatype of the fact represented in the given string as an Java {@link Class}

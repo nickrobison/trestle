@@ -951,7 +951,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 logger.debug("In the arguments future");
                 final ConstructorArguments constructorArguments = new ConstructorArguments();
                 facts.forEach(fact -> constructorArguments.addArgument(
-                        ClassParser.matchWithClassMember(clazz, fact.getName(), fact.getLanguage()),
+                        this.trestleParser.classParser.matchWithClassMember(clazz, fact.getName(), fact.getLanguage()),
                         fact.getJavaClass(),
                         fact.getValue()));
                 if (!temporals.isPresent()) {
@@ -962,18 +962,18 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 if (temporal.isInterval()) {
                     final IntervalTemporal intervalTemporal = temporal.asInterval();
                     constructorArguments.addArgument(
-                            ClassParser.matchWithClassMember(clazz, intervalTemporal.getStartName()),
+                            this.trestleParser.classParser.matchWithClassMember(clazz, intervalTemporal.getStartName()),
                             intervalTemporal.getBaseTemporalType(),
                             intervalTemporal.getFromTime());
                     if (!intervalTemporal.isDefault() && intervalTemporal.getToTime().isPresent()) {
                         constructorArguments.addArgument(
-                                ClassParser.matchWithClassMember(clazz, intervalTemporal.getEndName()),
+                                this.trestleParser.classParser.matchWithClassMember(clazz, intervalTemporal.getEndName()),
                                 intervalTemporal.getBaseTemporalType(),
                                 intervalTemporal.getToTime().get());
                     }
                 } else {
                     constructorArguments.addArgument(
-                            ClassParser.matchWithClassMember(clazz, temporal.asPoint().getParameterName()),
+                            this.trestleParser.classParser.matchWithClassMember(clazz, temporal.asPoint().getParameterName()),
                             temporal.asPoint().getBaseTemporalType(),
                             temporal.asPoint().getPointTime());
                 }
@@ -2269,11 +2269,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //        FIXME(nrobison): Shapefile schema doesn't support multiple languages. Need to figure out how to flatten
         final ShapefileSchema shapefileSchema = new ShapefileSchema(MultiPolygon.class);
         final Optional<List<OWLDataProperty>> propertyMembers = ClassBuilder.getPropertyMembers(inputClass, true);
-        propertyMembers.ifPresent(owlDataProperties -> owlDataProperties.forEach(property -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, property.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property))));
+        propertyMembers.ifPresent(owlDataProperties -> owlDataProperties.forEach(property -> shapefileSchema.addProperty(this.trestleParser.classParser.matchWithClassMember(inputClass, property.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property))));
 
 //        Now the temporals
         final Optional<List<OWLDataProperty>> temporalProperties = trestleParser.temporalParser.getTemporalsAsDataProperties(inputClass);
-        temporalProperties.ifPresent(owlDataProperties -> owlDataProperties.forEach(temporal -> shapefileSchema.addProperty(ClassParser.matchWithClassMember(inputClass, temporal.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, temporal))));
+        temporalProperties.ifPresent(owlDataProperties -> owlDataProperties.forEach(temporal -> shapefileSchema.addProperty(this.trestleParser.classParser.matchWithClassMember(inputClass, temporal.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, temporal))));
 
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
@@ -2336,7 +2336,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         owlDataPropertyAssertionAxioms.ifPresent(owlDataPropertyAssertionAxioms1 -> owlDataPropertyAssertionAxioms1.forEach(property -> {
             final Class<@NonNull ?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, object.getClass());
             final Object literal = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
-            individual.addProperty(ClassParser.matchWithClassMember(inputClass, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
+            individual.addProperty(this.trestleParser.classParser.matchWithClassMember(inputClass, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
                     literal);
         }));
 //                    Temporals
@@ -2346,11 +2346,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             if (temporalObject.isInterval()) {
                 final IntervalTemporal intervalTemporal = temporalObject.asInterval();
                 final String startName = intervalTemporal.getStartName();
-                individual.addProperty(ClassParser.matchWithClassMember(inputClass, intervalTemporal.getStartName()), intervalTemporal.getFromTime().toString());
+                individual.addProperty(this.trestleParser.classParser.matchWithClassMember(inputClass, intervalTemporal.getStartName()), intervalTemporal.getFromTime().toString());
                 final Optional toTime = intervalTemporal.getToTime();
                 if (toTime.isPresent()) {
                     final Temporal to = (Temporal) toTime.get();
-                    individual.addProperty(ClassParser.matchWithClassMember(inputClass, intervalTemporal.getEndName()), to.toString());
+                    individual.addProperty(this.trestleParser.classParser.matchWithClassMember(inputClass, intervalTemporal.getEndName()), to.toString());
                 }
             } else {
                 final PointTemporal pointTemporal = temporalObject.asPoint();

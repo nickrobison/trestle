@@ -77,7 +77,7 @@
   [acc member df]
   (let [rtype (get-member-return-type member)]
     (merge acc {
-                :return-type rtype
+                :return-type  rtype
                 :owl-datatype (owl-return-type member rtype)
                 })))
 
@@ -154,6 +154,18 @@
            [::pred/temporal, _] (merge acc {:temporals (conj temporals member)})
            :else (assoc acc :members (conj members member)))))
 
+(defn build-assertion-axiom
+  "Build OWLDataPropertyAssertionAxiom from member"
+  [df individual member inputObject]
+  (.getOWLDataPropertyAssertionAxiom df
+                                     (get member :data-property)
+                                     individual
+                                     (build-literal df
+                                                    (invoker (get member :handle) inputObject)
+                                                    true
+                                                    (get member :language)
+                                                    (get member :owl-datatype))))
+
 
 (defrecord ClojureClassParser [^OWLDataFactory df,
                                ^String reasonerPrefix,
@@ -214,27 +226,51 @@
                            true)))
              ; Build the assertion axiom
              (r/map (fn [member]
-                      (.getOWLDataPropertyAssertionAxiom df
-                                                         (get member :data-property)
-                                                         individual
-                                                         (build-literal df
-                                                                        (invoker (get member :handle) inputObject)
-                                                                        multiLangEnabled
-                                                                        defaultLanguageCode
-                                                                        (get member :owl-datatype)))))
+                      (build-assertion-axiom df individual member inputObject)))
              (into ())))))
   (getFacts ^Optional ^List ^OWLDataPropertyAssertionAxiom [this inputObject]
     (.getFacts this inputObject false))
 
-  ;(matchWithClassMember ^String [this clazz classMember]
-  ;  (let [parsedClass (.parseClass this clazz)]
-  ;    (->> (get parsedClass :members)
-  ;         (r/filter (fn [member]
-  ;                     (let [iri (.getShortForm (get member :iri))]
-  ;                       (= iri classMember))))
-  ;         (r/map (fn [member]
-  ;                  (get member :member-name))))))
-  )
+  (getSpatialFact ^Optional ^OWLDataPropertyAssertionAxiom [this inputObject]
+    (let [parsedClass (.parseClass this (.getClass inputObject))
+          individual (.getIndividual this inputObject)]
+      (if-let [spatial (get parsedClass :spatial)]
+        (Optional/of (build-assertion-axiom df individual spatial inputObject))
+        (Optional/empty))))
+
+  (matchWithClassMember ^String [this clazz classMember]
+    (let [parsedClass (.parseClass this clazz)]
+      (->> (get parsedClass :members)
+           (filter (fn [member]
+                     (let [iri (.getShortForm (get member :iri))]
+                       (= iri classMember))))
+           (map (fn [member]
+                  (get member :name)))
+           (first))))
+  (matchWithClassMember ^String [this clazz classMember languageCode]
+    (let [parsedClass (.parseClass this clazz)]
+      (log/warnf "Matching %s with language %s" classMember languageCode)
+      (->> (get parsedClass :members)
+           (filter (fn [member]
+                     (let [iri (.getShortForm (get member :iri))]
+                       ; If the languageCode is nil, just match on IRI
+                       (if (nil? languageCode)
+                         (= iri classMember)
+                         (and (= iri classMember) (= languageCode (get member :language)))))))
+           (map (fn [member]
+                  (get member :name)))
+           (first))))
+
+  (getFactDatatype ^Optional [this clazz factName]
+    (let [parsedClass (.parseClass this clazz)]
+      (Optional/of
+        (->> (get parsedClass :members)
+             (filter (fn [member]
+                       (let [iriString (.toString (get member :iri))]
+                         (= iriString factName))))
+             (map (fn [member]
+                    (get member :return-type)))
+             (first))))))
 
 (defn make-parser
   "Creates a new ClassParser"

@@ -114,3 +114,12 @@
       (str (string/lower-case (subs name 3 4)) (subs name 4))
       ; If not, just return the name
       name)))
+
+; Split IRI utils
+(defn get-iri-fact-name
+  "Get the fact name from an IRI string"
+  [iri]
+  (let [split (string/split iri #"#")]
+    (if (< 2 (count split))
+      iri
+      (nth split 1))))

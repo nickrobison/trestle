@@ -374,15 +374,8 @@ public class ClassParser implements IClassParser {
         return name;
     }
 
-    /**
-     * Match a given String, representing the short-form of a {@link OWLDataProperty} {@link IRI} with the appropriate class member
-     * If the languageCode param is not null, the method attempts to match the correct data property and language pair.
-     * @param clazz - Java {@link Class} to parse
-     * @param classMember - {@link IRI} short-form to match against class
-     * @param languageTag - Nullable languageCode determining multi-lang String support required
-     * @return - {@link String} name of matching class member
-     */
-    public static String matchWithClassMember(Class<?> clazz, String classMember, @Nullable String languageTag) {
+    @Override
+    public String matchWithClassMember(Class<?> clazz, String classMember, @Nullable String languageTag) {
         if (languageTag == null) {
             return matchWithClassMember(clazz, classMember);
         }
@@ -393,7 +386,7 @@ public class ClassParser implements IClassParser {
                 .filter(m -> m.isAnnotationPresent(Fact.class))
                 .filter(m -> m.getAnnotation(Fact.class).name().equals(classMember))
                 .filter(m -> m.isAnnotationPresent(Language.class))
-                .filter(m -> m.getAnnotation(Language.class).language().toLowerCase().equals(languageTag))
+                .filter(m -> m.getAnnotation(Language.class).language().equalsIgnoreCase(languageTag))
                 .map(m -> {
                     try {
                         if (ClassBuilder.isConstructorArgument(clazz,
@@ -419,7 +412,7 @@ public class ClassParser implements IClassParser {
                 .filter(f -> f.isAnnotationPresent(Fact.class))
                 .filter(f -> f.getAnnotation(Fact.class).name().equals(classMember))
                 .filter(f -> f.isAnnotationPresent(Language.class))
-                .filter(f -> f.getAnnotation(Language.class).language().toLowerCase().equals(languageTag))
+                .filter(f -> f.getAnnotation(Language.class).language().equalsIgnoreCase(languageTag))
                 .map(f -> {
                     try {
                         if (ClassBuilder.isConstructorArgument(clazz,
@@ -489,13 +482,8 @@ public class ClassParser implements IClassParser {
         return fieldNoLanguage.orElse(matchWithClassMember(clazz, classMember));
     }
 
-    /**
-     * Match a given {@link String}, representing the short-form of a {@link OWLDataProperty} {@link IRI} with the appropriate class member
-     * @param clazz - Java {@link Class} to parse
-     * @param classMember - {@link IRI} short-form to match against class
-     * @return - {@link String} name of matching class member
-     */
-    public static String matchWithClassMember(Class<?> clazz, String classMember) {
+    @Override
+    public String matchWithClassMember(Class<?> clazz, String classMember) {
 //        Check for a matching field
         Field classField = null;
         try {
@@ -685,7 +673,7 @@ public class ClassParser implements IClassParser {
         }
         final String classMember;
         try {
-            classMember = ClassParser.matchWithClassMember(clazz, name);
+            classMember = this.matchWithClassMember(clazz, name);
         } catch (RuntimeException e) {
             return Optional.empty();
         }
@@ -723,7 +711,7 @@ public class ClassParser implements IClassParser {
         }
         final String classMember;
         try {
-            classMember = ClassParser.matchWithClassMember(clazz, name);
+            classMember = this.matchWithClassMember(clazz, name);
         } catch (RuntimeException e) {
             return Optional.empty();
         }
