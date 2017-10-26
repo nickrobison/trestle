@@ -326,7 +326,7 @@ public class TypeConverter {
         return types;
     }
 
-    static OWLDatatype getDatatypeFromAnnotation(Fact annotation, Class<?> objectClass) {
+    public static OWLDatatype getDatatypeFromAnnotation(Fact annotation, Class<?> objectClass) {
 //        I don't think this will ever be true
         if (annotation.datatype().toString().equals("") || annotation.datatype() == OWL2Datatype.XSD_NMTOKEN) {
             return getDatatypeFromJavaClass(objectClass);

@@ -48,6 +48,13 @@
                                   noMultiLanguage?
                                   noAnnotations?) entity))
 
+(defn ignore-member? [entity]
+  "Ignore the member if it's marked as ignore and is not spatial or identifier"
+  ((every-pred
+     ignore?
+     (or spatial? identifier?))
+    entity))
+
 (defn member-type [member] (let [
                                  s (spatial? member)
                                  l (language? member)
@@ -65,13 +72,13 @@
           class)
 (defmethod filter-member Field [field]
   ((every-pred
-     (complement ignore?)
+     (complement ignore-member?)
      public?
      include?
      (complement ebean?)) field))
 (defmethod filter-member Method [method]
   ((every-pred
-     (complement ignore?)
+     (complement ignore-member?)
      public?
      include?
      noParams?

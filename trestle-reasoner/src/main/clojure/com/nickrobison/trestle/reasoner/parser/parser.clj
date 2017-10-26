@@ -27,32 +27,13 @@
        (catch InvocationTargetException e
          (log/error "Invocation failed on" classMethod e)))))
 
+
 (defn invoker
   "Invoke method handle"
   ; We need to use invokeWithArguments to work around IDEA-154967
   ([handle object] (.invokeWithArguments handle (object-array [object])))
   ([handle object & args]
    (.invokeWithArguments handle (object-array [object args]))))
-
-(defn annotationFilter
-  "Filters a list of members for a given annotation"
-  [members annotation]
-  (filter #(pred/hasAnnotation? % annotation) members))
-
-(defn parseIndividualFields [fields inputObject]
-  (when-first [field
-               (filter #(pred/hasAnnotation? % IndividualIdentifier) fields)]
-    (.toString
-      (try
-        (. field get inputObject)
-        (catch IllegalStateException e (println "Problem!"))))))
-
-(defn parseIndividualMethods [methods inputObject]
-  (when-first [method (annotationFilter methods IndividualIdentifier)]
-    (.toString
-      (accessMethodValue method inputObject))
-    )
-  )
 
 ; Method Handle methods
 (defmulti make-handle
@@ -86,14 +67,14 @@
   [member df prefix defaultLang]
   (let [iri (m/build-iri member prefix)]
     {
-     :name (pred/filter-member-name member)
-     :iri iri
+     :name          (pred/filter-member-name member)
+     :iri           iri
      :data-property (.getOWLDataProperty df iri)
-     :return-type (parse-return-type member)
-     :language (if (complement (nil? defaultLang))
-                 (get-member-language member defaultLang))
-     :handle (make-handle member)
-     :type (pred/member-type member)}))
+     :return-type   (parse-return-type member)
+     :language      (if (complement (nil? defaultLang))
+                      (get-member-language member defaultLang))
+     :handle        (make-handle member)
+     :type          (pred/member-type member)}))
 
 (defmulti build-literal (fn [df value multiLangEnabled defaultLang returnType] (class value)))
 (defmethod build-literal String
@@ -138,15 +119,16 @@
          (r/reduce member-reducer {})))
 
   (^OWLNamedIndividual getIndividual [this ^Object inputObject]
-    (.getOWLNamedIndividual df
-                            (IRI/create reasonerPrefix
-                                        (invoker (get
-                                                   (get (.parseClass this (.getClass inputObject)) :identifier)
-                                                   :handle)
-                                                 inputObject))))
+    (let [parsedClass (.parseClass this (.getClass inputObject))]
+      (.getOWLNamedIndividual df
+                              (IRI/create reasonerPrefix
+                                          (invoker (get
+                                                     (get parsedClass :identifier)
+                                                     :handle)
+                                                   inputObject)))))
 
 
-  (getFacts ^Optional ^List ^ OWLDataPropertyAssertionAxiom [this inputObject filterSpatial]
+  (getFacts ^Optional ^List ^OWLDataPropertyAssertionAxiom [this inputObject filterSpatial]
     (let [parsedClass (.parseClass this (.getClass inputObject))
           individual (.getIndividual this inputObject)]
       (Optional/of
@@ -166,7 +148,9 @@
                                                                         multiLangEnabled
                                                                         defaultLanguageCode
                                                                         (get member :return-type)))))
-             (into ()))))))
+             (into ())))))
+  (getFacts ^Optional ^List ^OWLDataPropertyAssertionAxiom [this inputObject]
+    (.getFacts this inputObject false)))
 
 (defn make-parser
   "Creates a new ClassParser"
