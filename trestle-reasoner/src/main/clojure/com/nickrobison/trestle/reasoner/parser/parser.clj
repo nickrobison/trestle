@@ -74,9 +74,11 @@
      :language      (if (complement (nil? defaultLang))
                       (get-member-language member defaultLang))
      :handle        (make-handle member)
-     :type          (pred/member-type member)}))
+     :type          (pred/member-type member)
+     :ignore        (pred/ignore? member)}))
 
-(defmulti build-literal (fn [df value multiLangEnabled defaultLang returnType] (class value)))
+(defmulti build-literal (fn [df value multiLangEnabled
+                             defaultLang returnType] (class value)))
 (defmethod build-literal String
   [df value multiLangEnabled defaultLang returnType]
   (.getOWLLiteral df value defaultLang))
@@ -89,10 +91,12 @@
   "Build the Class Member Map"
   [acc member]
   (let [members (get acc :members)
-        type (get member :type)]
-    (match [type]
-           [::pred/identifier] (merge acc {:members (conj members member) :identifier member})
-           [::pred/spatial] (merge acc {:members (conj members member) :spatial member})
+        type (get member :type)
+        ignore (get member :ignore)]
+    (match [type, ignore]
+           [::pred/identifier, true] (assoc acc :identifier member)
+           [::pred/identifier, false] (merge acc {:members (conj members member) :identifier member})
+           [::pred/spatial, _] (merge acc {:members (conj members member) :spatial member})
            :else (assoc acc :members (conj members member)))))
 
 
@@ -122,10 +126,10 @@
     (let [parsedClass (.parseClass this (.getClass inputObject))]
       (.getOWLNamedIndividual df
                               (IRI/create reasonerPrefix
-                                          (invoker (get
-                                                     (get parsedClass :identifier)
-                                                     :handle)
-                                                   inputObject)))))
+                                          (m/normalize-id (invoker (get
+                                                                   (get parsedClass :identifier)
+                                                                   :handle)
+                                                                 inputObject))))))
 
 
   (getFacts ^Optional ^List ^OWLDataPropertyAssertionAxiom [this inputObject filterSpatial]

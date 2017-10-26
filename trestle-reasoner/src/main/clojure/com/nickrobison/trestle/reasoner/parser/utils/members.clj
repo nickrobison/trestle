@@ -2,7 +2,9 @@
   (:import (org.semanticweb.owlapi.model IRI)
            (com.nickrobison.trestle.common StaticIRI)
            (com.nickrobison.trestle.reasoner.annotations Spatial Fact))
-  (:require [com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]))
+  (:require [com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]
+            [clojure.string :as string]
+            [clojure.core.reducers :as r]))
 
 (defn build-iri
   "Build the property IRI for the Member"
@@ -21,3 +23,15 @@
   "Build the OWLDataProperty for the member"
   [member prefix df]
   (.getOWLDataProperty df (build-iri member prefix)))
+
+; Individual ID
+(defn replace-several
+  "Apply replacement rules to input string"
+  [id & replacements]
+  (let [replacement-list (partition 2 replacements)]
+    (r/reduce #(apply string/replace %1 %2) id replacement-list)))
+
+(defn normalize-id
+  "Apply normalization rules to Individual ID"
+  [id]
+  (replace-several id #"\s+" "_"))
