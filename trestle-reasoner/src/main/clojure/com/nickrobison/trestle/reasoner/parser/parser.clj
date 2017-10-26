@@ -31,9 +31,21 @@
 (defn invoker
   "Invoke method handle"
   ; We need to use invokeWithArguments to work around IDEA-154967
-  ([handle object] (.invokeWithArguments handle (object-array [object])))
+  ([handle object]
+   (try
+     (log/debugf "Invoking method handle %s on %s" handle object)
+     (.invokeWithArguments handle (object-array [object]))
+     (catch Exception e
+       (log/error "Problem invoking" e))))
   ([handle object & args]
-   (.invokeWithArguments handle (object-array [object args]))))
+   (try
+     (log/debugf "Invoking method handle %s on %s with args %s"
+                 handle
+                 object
+                 args)
+     (.invokeWithArguments handle (object-array [object args]))
+     (catch Exception e
+       (log/error "Problem invoking %s on %s" handle object e)))))
 
 ; Method Handle methods
 (defmulti make-handle
