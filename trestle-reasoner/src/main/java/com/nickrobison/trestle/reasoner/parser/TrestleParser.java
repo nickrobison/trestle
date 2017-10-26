@@ -8,25 +8,25 @@ import org.semanticweb.owlapi.model.OWLDataFactory;
 public class TrestleParser {
 
     private final OWLDataFactory df;
-    private final String ReasonerPrefix;
-    public final ClassParser classParser;
+    private final String reasonerPrefix;
+    public final IClassParser classParser;
     public final TemporalParser temporalParser;
 
     /**
      * Create the Trestle Parser class
-     *
-     * @param df                  - {@link OWLDataFactory} to use for generating the IRIs
-     * @param ReasonerPrefix      - Prefix of the Trestle Reasoner
+     *  @param df                  - {@link OWLDataFactory} to use for generating the IRIs
+     * @param reasonerPrefix      - Prefix of the Trestle Reasoner
      * @param multiLangEnabled    - {@code true} multi-language support is enabled and needs to be handled
      * @param defaultLanguageCode - Default language code to use in the absence of one provided by an {@link org.semanticweb.owlapi.model.OWLLiteral}
      */
-    public TrestleParser(OWLDataFactory df, String ReasonerPrefix, boolean multiLangEnabled, String defaultLanguageCode) {
+    public TrestleParser(OWLDataFactory df, String reasonerPrefix, boolean multiLangEnabled, String defaultLanguageCode) {
 
         this.df = df;
-        this.ReasonerPrefix = ReasonerPrefix;
+        this.reasonerPrefix = reasonerPrefix;
 
 //        Create the sub parsers
-        classParser = new ClassParser(df, ReasonerPrefix, multiLangEnabled, defaultLanguageCode);
+//        classParser = new ClassParser(df, reasonerPrefix, multiLangEnabled, defaultLanguageCode);
+        classParser = ClojureParserProvider.getParser(df, reasonerPrefix, multiLangEnabled, defaultLanguageCode);
         this.temporalParser = new TemporalParser(this.classParser);
     }
 }

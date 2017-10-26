@@ -104,7 +104,7 @@
   [acc member lang]
   (let [rtype (get acc :return-type
                    (get-member-return-type member))]
-    (log/warnf "Called with lang type %s" rtype)
+    (log/debugf "Called with lang type %s" rtype)
     (if (and (complement (nil? lang)) (= String rtype))
       (merge acc {:language (get-member-language member lang)})
       acc)))
@@ -249,7 +249,7 @@
            (first))))
   (matchWithClassMember ^String [this clazz classMember languageCode]
     (let [parsedClass (.parseClass this clazz)]
-      (log/warnf "Matching %s with language %s" classMember languageCode)
+      (log/debugf "Matching %s with language %s" classMember languageCode)
       (->> (get parsedClass :members)
            (filter (fn [member]
                      (let [iri (.getShortForm (get member :iri))]
