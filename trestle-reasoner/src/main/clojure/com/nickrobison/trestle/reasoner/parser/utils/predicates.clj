@@ -28,30 +28,6 @@
 
 (defn get-member-name [member] (.getName member))
 
-(defn get-temporal-name
-  "Get the name of the temporal either from the annotation or the member name"
-  [member]
-  ; Try for DefaultTemporal first
-  (if-let [default (get-annotation member DefaultTemporal)]
-    (let [name (.name default)]
-      (if (= name "")
-        (if (= (.type default) (TemporalType/POINT))
-          "pointTime"
-          "intervalStart")
-        name))
-    ; If missing, try for StartTemporal
-    (if-let [start (get-annotation member StartTemporal)]
-      (let [name (.name start)]
-        (if (= name "")
-          "intervalStart"
-          name))
-      ; Try for EndTemporal
-      (if-let [end (get-annotation member EndTemporal)]
-        (let [end (.name end)]
-          (if (= end "")
-            "intervalEnd"
-            end))))))
-
 (defn get-temporal-type
   "Get the TemporalType of the member"
   [member]
@@ -172,18 +148,11 @@
   "Are we start or end temporal?"
   [member]
   (if (or
-        (hasAnnotation? member DefaultTemporal)
+        (and
+          (hasAnnotation? member DefaultTemporal)
+          (= (.type (get-annotation member DefaultTemporal)) (TemporalType/INTERVAL)))
         (hasAnnotation? member StartTemporal))
     ::start
     (if (hasAnnotation? member EndTemporal)
       ::end
       ::at)))
-
-; Split IRI utils
-(defn get-iri-fact-name
-  "Get the fact name from an IRI string"
-  [iri]
-  (let [split (string/split iri #"#")]
-    (if (< 2 (count split))
-      iri
-      (nth split 1))))

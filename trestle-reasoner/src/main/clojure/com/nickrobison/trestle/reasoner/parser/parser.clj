@@ -109,11 +109,8 @@
   [acc member]
   (let [type (get acc :type)]
     (if (= type ::pred/temporal)
-      ; If we're a temporal do things
       (merge acc {
-                  ; Set the name, since it's on a different annotation
                   :temporal-type (pred/get-temporal-type member)
-                  ;:name          (pred/get-temporal-name member)
                   :position      (pred/get-temporal-position member)
                   })
       acc)))
@@ -204,8 +201,9 @@
 (defmethod member-matches? ::pred/temporal
   [member languageCode classMember]
   (let [iri (.getShortForm (get member :iri))
-        position (get member :position)]
-    (log/warnf "Matching %s against temporals" classMember)
+        position (get member :position)
+        ttype (get member :temporal-type)]
+    (log/warnf "Matching against temporal %s" classMember iri)
     (or
       ; Can we match directly against the class member?
       (= classMember (get member :name))
@@ -214,7 +212,8 @@
         (= position ::pred/start)
         (if (= classMember "intervalEnd")
           (= position ::pred/end)
-          (= position ::pred/at))))))
+          (if (= classMember "pointTime")
+            (= position ::pred/at)))))))
 (defmethod member-matches? ::pred/language
   [member languageCode classMember]
   (let [iri (.getShortForm (get member :iri))]
@@ -323,7 +322,7 @@
       (if
         (and (nil? languageCode) (ClassBuilder/isConstructorArgument clazz classMember nil))
         classMember
-        (if-some
+        (if-let
           ; Try for a classMember first, if it doesn't match, go for temporals
           [classMember (match-class-member (get parsedClass :members)
                                            languageCode classMember)]
