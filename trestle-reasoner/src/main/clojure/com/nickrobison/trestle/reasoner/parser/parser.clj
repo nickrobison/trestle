@@ -1,29 +1,19 @@
 (ns com.nickrobison.trestle.reasoner.parser.parser
   (:import [IClassParser]
-           (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter StringParser ClassBuilder)
+           (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter StringParser ClassBuilder SpatialParser)
            (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom)
            (java.lang.annotation Annotation)
            (java.lang.reflect InvocationTargetException Field Method Modifier)
            (java.lang.invoke MethodHandles)
            (com.nickrobison.trestle.reasoner.annotations IndividualIdentifier DatasetClass Fact NoMultiLanguage Language)
-           (java.util Optional List))
+           (java.util Optional List)
+           (com.nickrobison.trestle.common StaticIRI))
   (:require [clojure.core.match :refer [match]]
             [clojure.core.reducers :as r]
             [clojure.tools.logging :as log]
             [clojure.string :as string]
             [com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]
             [com.nickrobison.trestle.reasoner.parser.utils.members :as m]))
-
-
-(defn accessMethodValue [classMethod inputObject]
-  (. (TypeConverter/parsePrimitiveClass (.getReturnType classMethod)) cast
-     (try
-       (log/trace (str "Attempting to invoke on: " (.getName classMethod)))
-       (.invoke classMethod inputObject nil)
-       (catch IllegalAccessError e
-         (log/error "Cannot access method " classMethod e))
-       (catch InvocationTargetException e
-         (log/error "Invocation failed on" classMethod e)))))
 
 
 (defn invoker
@@ -52,12 +42,6 @@
 (defmethod make-handle Field [field] (.unreflectGetter (MethodHandles/lookup) field))
 (defmethod make-handle Method [method] (.unreflect (MethodHandles/lookup) method))
 
-(defmulti get-member-return-type
-          "Get the Java class return type of the field/method"
-          class)
-(defmethod get-member-return-type Field [field] (.getType field))
-(defmethod get-member-return-type Method [method] (.getReturnType method))
-
 (defn owl-return-type
   "Determine the OWLDatatype of the field/method"
   [member rtype]
@@ -73,9 +57,19 @@
     (.language (pred/get-annotation member Language))
     defaultLang))
 
-(defn build-member-return-type
+(defmulti build-member-return-type
+          "Specialized method to build return type for member"
+          (fn [acc member df] (:type acc)))
+(defmethod build-member-return-type ::pred/spatial
   [acc member df]
-  (let [rtype (get-member-return-type member)]
+  (let [rtype (pred/get-member-return-type member)]
+    (merge acc {
+                :return-type  rtype
+                :owl-datatype (.getOWLDatatype df (StaticIRI/WKTDatatypeIRI))
+                })))
+(defmethod build-member-return-type :default
+  [acc member df]
+  (let [rtype (pred/get-member-return-type member)]
     (merge acc {
                 :return-type  rtype
                 :owl-datatype (owl-return-type member rtype)
@@ -104,7 +98,7 @@
   "If the return type is a string, check for multi-lang"
   [acc member lang]
   (let [rtype (get acc :return-type
-                   (get-member-return-type member))]
+                   (pred/get-member-return-type member))]
     (log/debugf "Called with lang type %s" rtype)
     (if (and (complement (nil? lang)) (= String rtype))
       (merge acc {:language (get-member-language member lang)})
@@ -120,7 +114,7 @@
                   ; Set the name, since it's on a different annotation
                   :temporal-type (pred/get-temporal-type member)
                   ;:name          (pred/get-temporal-name member)
-                  :position (pred/get-temporal-position member)
+                  :position      (pred/get-temporal-position member)
                   })
       acc)))
 
@@ -146,14 +140,17 @@
 
 
 
-(defmulti build-literal (fn [df value multiLangEnabled
-                             defaultLang returnType] (class value)))
-(defmethod build-literal String
-  [df value multiLangEnabled defaultLang returnType]
-  (.getOWLLiteral df value defaultLang))
-(defmethod build-literal :default
-  [df value multiLangEnabled defaultLang returnType]
-  (.getOWLLiteral df (.toString value) returnType))
+;(defmulti build-literal (fn [df value multiLangEnabled
+;                             defaultLang returnType] (class value)))
+(defn build-literal
+  ([df value returnType defaultLang]
+   (.getOWLLiteral df value defaultLang))
+  ([df value returnType]
+   (.getOWLLiteral df (.toString value) returnType))
+
+  ;(.getOWLLiteral df value defaultLang)
+
+  )
 
 
 (defn member-reducer
@@ -170,16 +167,34 @@
            [::pred/temporal, _] (merge acc {:temporals (conj temporals member)})
            :else (assoc acc :members (conj members member)))))
 
-(defn build-assertion-axiom
-  "Build OWLDataPropertyAssertionAxiom from member"
+(defmulti build-assertion-axiom
+          "Build OWLDataPropertyAssertionAxiom from member"
+          (fn [df individual member inputObject] (:type member)))
+(defmethod build-assertion-axiom ::pred/spatial
+  [df individual member inputObject]
+  (let [wktOptional (SpatialParser/parseWKTFromGeom
+                      (invoker (get member :handle) inputObject))]
+    (if (.isPresent wktOptional)
+      (.getOWLDataPropertyAssertionAxiom df
+                                         (get member :data-property)
+                                         individual
+                                         (.get wktOptional)))))
+(defmethod build-assertion-axiom ::pred/language
   [df individual member inputObject]
   (.getOWLDataPropertyAssertionAxiom df
                                      (get member :data-property)
                                      individual
                                      (build-literal df
                                                     (invoker (get member :handle) inputObject)
-                                                    true
-                                                    (get member :language)
+                                                    (get member :owl-datatype)
+                                                    (get member :language))))
+(defmethod build-assertion-axiom :default
+  [df individual member inputObject]
+  (.getOWLDataPropertyAssertionAxiom df
+                                     (get member :data-property)
+                                     individual
+                                     (build-literal df
+                                                    (invoker (get member :handle) inputObject)
                                                     (get member :owl-datatype))))
 
 (defmulti member-matches?
@@ -298,7 +313,7 @@
         (Optional/empty))))
 
   (matchWithClassMember ^String [this clazz classMember]
-      (.matchWithClassMember this clazz classMember nil)
+    (.matchWithClassMember this clazz classMember nil)
     )
   (matchWithClassMember ^String [this clazz classMember languageCode]
     (let [parsedClass (.parseClass this clazz)]

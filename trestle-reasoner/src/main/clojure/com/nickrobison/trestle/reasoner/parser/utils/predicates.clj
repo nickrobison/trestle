@@ -62,6 +62,12 @@
     ::interval)
   )
 
+(defmulti get-member-return-type
+          "Get the Java class return type of the field/method"
+          class)
+(defmethod get-member-return-type Field [field] (.getType field))
+(defmethod get-member-return-type Method [method] (.getReturnType method))
+
 (defn hasAnnotation? [member annotation] (.isAnnotationPresent member annotation))
 (defn public? [entity] (Modifier/isPublic (.getModifiers entity)))
 (defn ignore? [entity] (hasAnnotation? entity Ignore))
@@ -89,6 +95,7 @@
              (= (get-member-name entity) "notifyAll")
              (= (get-member-name entity) "getClass")))
 (defn void-return? [entity] (= (.getReturnType entity) Void))
+(defn string-return? [entity] (= (get-member-return-type entity) String))
 (defn include? [entity] ((some-fn fact?
                                   spatial?
                                   identifier?
@@ -106,22 +113,24 @@
 
 (defn member-type [member defaultLanguageCode]
   (let [
-                                 s (spatial? member)
-                                 ; Is a language code if multilang is enabled and not no-multilang
-                                 ; or is annotated as language
-                                 l (or
-                                     (and
-                                       (not (nil? defaultLanguageCode))
-                                       (not (noMultiLanguage? member)))
-                                     (language? member))
-                                 i (identifier? member)
-                                 t (temporal? member)]
-                             (match [s t i l]
-                                    [true _ _ _] ::spatial
-                                    [_ true _ _] ::temporal
-                                    [_ _ true _] ::identifier
-                                    [_ _ _ true] ::language
-                                    :else ::fact)))
+        s (spatial? member)
+        ; Is a language code if multilang is enabled and not no-multilang
+        ; or is annotated as language
+        ; But only if it's a string type
+        l (and (string-return? member)
+               (or
+                 (and
+                   (not (nil? defaultLanguageCode))
+                   (not (noMultiLanguage? member)))
+                 (language? member)))
+        i (identifier? member)
+        t (temporal? member)]
+    (match [s t i l]
+           [true _ _ _] ::spatial
+           [_ true _ _] ::temporal
+           [_ _ true _] ::identifier
+           [_ _ _ true] ::language
+           :else ::fact)))
 
 
 (defmulti filter-member
