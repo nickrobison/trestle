@@ -104,16 +104,23 @@
      (or spatial? identifier?))
     entity))
 
-(defn member-type [member] (let [
+(defn member-type [member defaultLanguageCode]
+  (let [
                                  s (spatial? member)
-                                 l (language? member)
+                                 ; Is a language code if multilang is enabled and not no-multilang
+                                 ; or is annotated as language
+                                 l (or
+                                     (and
+                                       (not (nil? defaultLanguageCode))
+                                       (not (noMultiLanguage? member)))
+                                     (language? member))
                                  i (identifier? member)
                                  t (temporal? member)]
-                             (match [s l i t]
+                             (match [s t i l]
                                     [true _ _ _] ::spatial
-                                    [_ true _ _] ::language
+                                    [_ true _ _] ::temporal
                                     [_ _ true _] ::identifier
-                                    [_ _ _ true] ::temporal
+                                    [_ _ _ true] ::language
                                     :else ::fact)))
 
 

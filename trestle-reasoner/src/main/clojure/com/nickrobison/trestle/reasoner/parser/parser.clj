@@ -86,12 +86,12 @@
   (reduce (fn [acc f] (f acc member)) {} fns))
 
 (defn default-member-keys
-  [acc member]
+  [acc member defaultLanguageCode]
   (merge acc {
               :name        (pred/filter-member-name member)
               :member-name (pred/get-member-name member)
               :handle      (make-handle member)
-              :type        (pred/member-type member)
+              :type        (pred/member-type member defaultLanguageCode)
               }))
 
 (defn ignore-fact
@@ -129,7 +129,8 @@
   [member df prefix defaultLang]
   (let [iri (m/build-iri member prefix)]
     (merge (build-member-map member
-                             [default-member-keys
+                             [(fn [acc member]
+                                (default-member-keys acc member defaultLang))
                               (fn [acc member]
                                 (build-member-return-type acc member df))
                               ignore-fact
@@ -202,10 +203,10 @@
 (defmethod member-matches? ::pred/language
   [member languageCode classMember]
   (let [iri (.getShortForm (get member :iri))]
-    (log/debugf "Matching member %s against language %s"
+    (log/debugf "Matching against %s with language %s" iri (get member :language)
                 classMember languageCode)
-    ; Match against IRI and language code
-    (and (= iri classMember) (= languageCode (get member :language)))))
+    ; Match against IRI and language code (ignoring case)
+    (log/spyf "Matches? %s" (and (= iri classMember) (.equalsIgnoreCase languageCode (get member :language))))))
 (defmethod member-matches? :default
   [member languageCode classMember]
   (log/debugf "Matching %s against defaults" classMember)
@@ -297,11 +298,15 @@
         (Optional/empty))))
 
   (matchWithClassMember ^String [this clazz classMember]
-    (.matchWithClassMember this clazz classMember nil))
+      (.matchWithClassMember this clazz classMember nil)
+    )
   (matchWithClassMember ^String [this clazz classMember languageCode]
     (let [parsedClass (.parseClass this clazz)]
+      (log/debugf "Trying to match %s with language %s" classMember languageCode)
       ; Figure out if we directly match against a constructor argument
-      (if (ClassBuilder/isConstructorArgument clazz classMember nil)
+      ; But only if we don't have a provided language code
+      (if
+        (and (nil? languageCode) (ClassBuilder/isConstructorArgument clazz classMember nil))
         classMember
         (if-some
           ; Try for a classMember first, if it doesn't match, go for temporals
