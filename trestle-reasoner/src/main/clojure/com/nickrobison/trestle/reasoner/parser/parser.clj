@@ -1,6 +1,6 @@
 (ns com.nickrobison.trestle.reasoner.parser.parser
   (:import [IClassParser]
-           (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter StringParser)
+           (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter StringParser ClassBuilder)
            (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom)
            (java.lang.annotation Annotation)
            (java.lang.reflect InvocationTargetException Field Method Modifier)
@@ -91,6 +91,7 @@
               :name        (pred/filter-member-name member)
               :member-name (pred/get-member-name member)
               :handle      (make-handle member)
+              :type        (pred/member-type member)
               }))
 
 (defn ignore-fact
@@ -109,6 +110,20 @@
       (merge acc {:language (get-member-language member lang)})
       acc)))
 
+(defn build-temporal
+  "If we're a temporal, get the necessary properties"
+  [acc member]
+  (let [type (get acc :type)]
+    (if (= type ::pred/temporal)
+      ; If we're a temporal do things
+      (merge acc {
+                  ; Set the name, since it's on a different annotation
+                  :temporal-type (pred/get-temporal-type member)
+                  ;:name          (pred/get-temporal-name member)
+                  :position (pred/get-temporal-position member)
+                  })
+      acc)))
+
 (defn build-member
   "Build member from class methods/fields"
   [member df prefix defaultLang]
@@ -119,11 +134,11 @@
                                 (build-member-return-type acc member df))
                               ignore-fact
                               (fn [acc member]
-                                (build-multi-lang acc member defaultLang))])
+                                (build-multi-lang acc member defaultLang))
+                              build-temporal])
            {
             :iri           iri
             :data-property (.getOWLDataProperty df iri)
-            :type          (pred/member-type member)
             })))
 
 
@@ -165,6 +180,49 @@
                                                     true
                                                     (get member :language)
                                                     (get member :owl-datatype))))
+
+(defmulti member-matches?
+          "Match the string IRI name with a member in the given set"
+          (fn [member languageCode classMember]
+            (:type member)))
+(defmethod member-matches? ::pred/temporal
+  [member languageCode classMember]
+  (let [iri (.getShortForm (get member :iri))
+        position (get member :position)]
+    (log/warnf "Matching %s against temporals" classMember)
+    (or
+      ; Can we match directly against the class member?
+      (= classMember (get member :name))
+      ; If not, try to match against a default name and the position type
+      (if (= classMember "intervalStart")
+        (= position ::pred/start)
+        (if (= classMember "intervalEnd")
+          (= position ::pred/end)
+          (= position ::pred/at))))))
+(defmethod member-matches? ::pred/language
+  [member languageCode classMember]
+  (let [iri (.getShortForm (get member :iri))]
+    (log/debugf "Matching member %s against language %s"
+                classMember languageCode)
+    ; Match against IRI and language code
+    (and (= iri classMember) (= languageCode (get member :language)))))
+(defmethod member-matches? :default
+  [member languageCode classMember]
+  (log/debugf "Matching %s against defaults" classMember)
+  (let [iri (.getShortForm (get member :iri))]
+    (= iri classMember)))
+
+
+(defn match-class-member
+  "Match the string IRI name with a member in the given set"
+  [members languageCode classMember]
+  (->> members
+       (filter (fn [member]
+                 (log/debug "Matching")
+                 (member-matches? member languageCode classMember)))
+       (map (fn [member]
+              (get member :name)))
+       (first)))
 
 
 (defrecord ClojureClassParser [^OWLDataFactory df,
@@ -239,27 +297,20 @@
         (Optional/empty))))
 
   (matchWithClassMember ^String [this clazz classMember]
-    (let [parsedClass (.parseClass this clazz)]
-      (->> (get parsedClass :members)
-           (filter (fn [member]
-                     (let [iri (.getShortForm (get member :iri))]
-                       (= iri classMember))))
-           (map (fn [member]
-                  (get member :name)))
-           (first))))
+    (.matchWithClassMember this clazz classMember nil))
   (matchWithClassMember ^String [this clazz classMember languageCode]
     (let [parsedClass (.parseClass this clazz)]
-      (log/debugf "Matching %s with language %s" classMember languageCode)
-      (->> (get parsedClass :members)
-           (filter (fn [member]
-                     (let [iri (.getShortForm (get member :iri))]
-                       ; If the languageCode is nil, just match on IRI
-                       (if (nil? languageCode)
-                         (= iri classMember)
-                         (and (= iri classMember) (= languageCode (get member :language)))))))
-           (map (fn [member]
-                  (get member :name)))
-           (first))))
+      ; Figure out if we directly match against a constructor argument
+      (if (ClassBuilder/isConstructorArgument clazz classMember nil)
+        classMember
+        (if-some
+          ; Try for a classMember first, if it doesn't match, go for temporals
+          [classMember (match-class-member (get parsedClass :members)
+                                           languageCode classMember)]
+          classMember
+          ; Lookup temporals
+          (match-class-member (get parsedClass :temporals)
+                              languageCode classMember)))))
 
   (getFactDatatype ^Optional [this clazz factName]
     (let [parsedClass (.parseClass this clazz)]

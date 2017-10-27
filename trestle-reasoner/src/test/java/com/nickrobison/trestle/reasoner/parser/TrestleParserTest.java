@@ -262,7 +262,7 @@ public class TrestleParserTest {
         testProperties.add(adm0Name);
 
         final OWLDataPropertyAssertionAxiom testName = df.getOWLDataPropertyAssertionAxiom(
-                df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, "test_name")),
+                df.getOWLDataProperty(IRI.create(GEOSPARQLPREFIX, "asWKT")),
                 owlNamedIndividual,
                 df.getOWLLiteral("new_test"));
         testProperties.add(testName);
@@ -301,20 +301,19 @@ public class TrestleParserTest {
 
         final ConstructorArguments constructorArguments = new ConstructorArguments();
 
-//        FIXME(nrobison): Put this back in
-//
-////        Properties
-//        testProperties.forEach(property -> {
-//            final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, TestClasses.GAULMethodTest.class);
-//            inputClasses.add(javaClass);
-//            final Object literalValue = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
-////            final Object literalValue = javaClass.cast(property.getObject().getLiteral());
-//            inputObjects.add(literalValue);
-//            constructorArguments.addArgument(
-//                    cp.matchWithClassMember(TestClasses.GAULMethodTest.class, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
-//                    javaClass,
-//                    literalValue);
-//        });
+
+//        Properties
+        testProperties.forEach(property -> {
+            final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, TestClasses.GAULMethodTest.class);
+            inputClasses.add(javaClass);
+            final Object literalValue = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
+//            final Object literalValue = javaClass.cast(property.getObject().getLiteral());
+            inputObjects.add(literalValue);
+            constructorArguments.addArgument(
+                    cp.matchWithClassMember(TestClasses.GAULMethodTest.class, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
+                    javaClass,
+                    literalValue);
+        });
 
         //        Temporals
         testTemporals.forEach(temporal -> {

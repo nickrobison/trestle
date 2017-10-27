@@ -3,7 +3,8 @@
            (com.nickrobison.trestle.reasoner.annotations Ignore Fact Spatial Language NoMultiLanguage IndividualIdentifier)
            (org.semanticweb.owlapi.model IRI)
            (com.nickrobison.trestle.common StaticIRI)
-           (com.nickrobison.trestle.reasoner.annotations.temporal DefaultTemporal StartTemporal EndTemporal))
+           (com.nickrobison.trestle.reasoner.annotations.temporal DefaultTemporal StartTemporal EndTemporal)
+           (com.nickrobison.trestle.types TemporalScope TemporalType))
   (:require [clojure.string :as string]
             [clojure.core.match :refer [match]]))
 
@@ -15,6 +16,7 @@
 (keyword 'temporal)
 (keyword 'start)
 (keyword 'end)
+(keyword 'at)
 (keyword 'default)
 (keyword 'point)
 (keyword 'interval)
@@ -25,6 +27,40 @@
   (.getAnnotation member annotation))
 
 (defn get-member-name [member] (.getName member))
+
+(defn get-temporal-name
+  "Get the name of the temporal either from the annotation or the member name"
+  [member]
+  ; Try for DefaultTemporal first
+  (if-let [default (get-annotation member DefaultTemporal)]
+    (let [name (.name default)]
+      (if (= name "")
+        (if (= (.type default) (TemporalType/POINT))
+          "pointTime"
+          "intervalStart")
+        name))
+    ; If missing, try for StartTemporal
+    (if-let [start (get-annotation member StartTemporal)]
+      (let [name (.name start)]
+        (if (= name "")
+          "intervalStart"
+          name))
+      ; Try for EndTemporal
+      (if-let [end (get-annotation member EndTemporal)]
+        (let [end (.name end)]
+          (if (= end "")
+            "intervalEnd"
+            end))))))
+
+(defn get-temporal-type
+  "Get the TemporalType of the member"
+  [member]
+  (if-let [default (get-annotation member DefaultTemporal)]
+    (if (= (.type default) (TemporalType/POINT))
+      ::point
+      ::interval)
+    ::interval)
+  )
 
 (defn hasAnnotation? [member annotation] (.isAnnotationPresent member annotation))
 (defn public? [entity] (Modifier/isPublic (.getModifiers entity)))
@@ -114,6 +150,18 @@
       (str (string/lower-case (subs name 3 4)) (subs name 4))
       ; If not, just return the name
       name)))
+
+; Temporal utils
+(defn get-temporal-position
+  "Are we start or end temporal?"
+  [member]
+  (if (or
+        (hasAnnotation? member DefaultTemporal)
+        (hasAnnotation? member StartTemporal))
+    ::start
+    (if (hasAnnotation? member EndTemporal)
+      ::end
+      ::at)))
 
 ; Split IRI utils
 (defn get-iri-fact-name
