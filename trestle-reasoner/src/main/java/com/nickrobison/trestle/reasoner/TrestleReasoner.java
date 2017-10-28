@@ -17,10 +17,7 @@ import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLDataProperty;
-import org.semanticweb.owlapi.model.OWLDatatype;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -346,6 +343,20 @@ public interface TrestleReasoner {
     <T> Optional<List<T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal atTemporal);
 
     /**
+     * Performs a spatial intersection on a given dataset with a specified spatio-temporal restriction
+     * Returns an optional list of {@link TrestleIndividual}s
+     * If no valid temporal is specified, performs a spatial intersection with no temporal constraints
+     *
+     * @param clazz - {@link Class} of dataset {@link OWLClass}
+     * @param wkt - {@link String} WKT boundary
+     * @param buffer - {@link Double} buffer to extend around buffer. 0 is no buffer
+     * @param validAt - {@link Temporal} valid at restriction
+     * @param dbAt - {@link Temporal} database at restriction
+     * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
+     */
+    Optional<List<TrestleIndividual>> spatialIntersectIndividuals(Class<@NonNull ?> clazz, String wkt, double buffer, @Nullable Temporal validAt, @Nullable Temporal dbAt);
+
+    /**
      * Get a map of related objects and their relative strengths
      *
      * @param clazz    - Java class of object to serialize to
@@ -414,11 +425,11 @@ public interface TrestleReasoner {
     List<String> searchForIndividual(String individualIRI, @Nullable String datasetClass, @Nullable Integer limit);
 
     /**
-     * Return a TrestleIndividual with all the available facts and properties
+     * Return a {@link TrestleIndividual} with all the available facts and properties
      * Attempts to retrieve from the cache, if enabled and present
      *
      * @param individualIRI - String of individual IRI
-     * @return - TrestleIndividual
+     * @return - {@link TrestleIndividual}
      */
     TrestleIndividual getTrestleIndividual(String individualIRI);
 

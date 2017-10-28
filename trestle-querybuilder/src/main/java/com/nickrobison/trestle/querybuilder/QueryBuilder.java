@@ -377,12 +377,10 @@ public class QueryBuilder {
      * @param wktValue     - {@link String} representation of WKT value
      * @param buffer       - {@link Double} buffer to build around WKT value
      * @param unit         - {@link Units} used by subclasses to adjust buffer values
+     * @param dbAt         - {@link OffsetDateTime} of database temporal
      * @return - {@link String} SPARQL query string
-     * @throws UnsupportedFeatureException - Throws if we don't support this
-     * @deprecated - Don't use this
      */
-    @Deprecated
-    public String buildSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, Units unit) throws UnsupportedFeatureException {
+    public String buildSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, Units unit, OffsetDateTime dbAt) {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m" +
                 " WHERE { " +
@@ -390,7 +388,7 @@ public class QueryBuilder {
                 "?m trestle:has_fact ?f ." +
                 "?f ogc:asWKT ?wkt ");
         ps.setIri("type", getFullIRIString(datasetClass));
-        buildDatabaseSString(ps, wktValue, buffer, OffsetDateTime.now());
+        buildDatabaseSString(ps, wktValue, buffer, dbAt);
 
         logger.debug(ps.toString());
         return ps.toString();
@@ -399,7 +397,7 @@ public class QueryBuilder {
     //    FIXME(nrobison): This needs to account for exists and valid times.
 //    We need the units parameter for one of the subclasses
     @SuppressWarnings({"squid:S1172"})
-    public String buildTemporalSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, Units unit, OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
+    public String buildTemporalSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, Units unit, OffsetDateTime atTime, OffsetDateTime dbAtTime) {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m ?tStart ?tEnd" +
                 " WHERE { " +
