@@ -33,7 +33,7 @@ public class SpatialParser {
 
     }
 
-    static Optional<OWLLiteral> parseWKTFromGeom(Object spatialObject) {
+    public static Optional<OWLLiteral> parseWKTFromGeom(Object spatialObject) {
 
         final OWLDatatype wktDatatype = dfStatic.getOWLDatatype(WKTDatatypeIRI);
         final OWLLiteral wktLiteral;

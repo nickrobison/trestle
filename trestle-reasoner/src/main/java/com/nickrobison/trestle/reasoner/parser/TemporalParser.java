@@ -63,9 +63,9 @@ public class TemporalParser {
         END
     }
 
-    private final ClassParser cp;
+    private final IClassParser cp;
 
-    TemporalParser(ClassParser cp) {
+    TemporalParser(IClassParser cp) {
         this.cp = cp;
     }
 

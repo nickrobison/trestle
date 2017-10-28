@@ -28,7 +28,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.nickrobison.trestle.common.StaticIRI.GEOSPARQLPREFIX;
 import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -45,7 +47,9 @@ public class TrestleParserTest {
     private TemporalObject temporalPoint;
     private TestClasses.GAULMethodTest testMethod;
     private TestClasses.GAULComplexClassTest complexObjectClass;
+    private TestClasses.MultiLangTest multiLangTest;
     private TrestleParser tp;
+    private IClassParser cp; 
 
     @BeforeEach
     public void Setup() {
@@ -53,30 +57,33 @@ public class TrestleParserTest {
         expandedGAULClass = new ExpandedGAULTests();
         testMethod = new TestClasses.GAULMethodTest();
         complexObjectClass = new TestClasses.GAULComplexClassTest();
+        multiLangTest = new TestClasses.MultiLangTest();
         df = OWLManager.getOWLDataFactory();
         LocalDateTime dt = LocalDateTime.of(1989, 3, 26, 0, 0);
         LocalDate ld = LocalDate.of(1989, 3, 26);
         temporal = TemporalObjectBuilder.exists().from(dt).to(dt.plusYears(1)).build(); //.withRelations();
         temporalPoint = TemporalObjectBuilder.exists().at(ld).build(); // .withRelations();
         tp = new TrestleParser(df, TRESTLE_PREFIX, true, "");
+        cp = ClojureParserProvider.getParser(df, TRESTLE_PREFIX, true, "");
     }
 
     @Test
     public void TestSimpleGAULClass() {
 //        Test the class
-        final OWLClass owlClass = tp.classParser.getObjectClass(gaulTestClass);
+        final OWLClass owlClass = cp.getObjectClass(gaulTestClass);
         final OWLClass gaul_test1 = df.getOWLClass(IRI.create(TRESTLE_PREFIX, "GAUL_Test"));
         assertEquals(gaul_test1, owlClass, "Wrong OWL Class");
 //        Test the named individual
-        OWLNamedIndividual owlNamedIndividual = tp.classParser.getIndividual(gaulTestClass);
+        OWLNamedIndividual owlNamedIndividual = cp.getIndividual(gaulTestClass);
         OWLNamedIndividual gaul_test = df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, "test_me"));
         assertEquals(gaul_test, owlNamedIndividual, "Wrong named individual");
 
 //        Test the data property parser
 //        Code
-        final OWLDataProperty adm0_code = df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, "ADM0_Code"));
+        final IRI code_iri = IRI.create(TRESTLE_PREFIX, "ADM0_Code");
+        final OWLDataProperty adm0_code = df.getOWLDataProperty(code_iri);
         final OWLLiteral adm0_code_literal = df.getOWLLiteral("1234", OWL2Datatype.XSD_INTEGER);
-        Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = tp.classParser.getFacts(gaulTestClass);
+        Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = cp.getFacts(gaulTestClass);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have properties");
         assertEquals(3, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of properties");
         final OWLDataPropertyAssertionAxiom parsed_code = owlDataPropertyAssertionAxioms.get().get(0);
@@ -91,20 +98,25 @@ public class TrestleParserTest {
         assertEquals(gaul_test, parsed_name.getSubject(), "Wrong named individual");
         assertEquals(adm0_name, parsed_name.getProperty(), "Data property IRIs don't match");
         assertEquals(adm0_name_literal, parsed_name.getObject(), "Data property values are wrong");
+
+//        Check for Fact name
+        final Optional<Class<?>> factDatatype = cp.getFactDatatype(TestClasses.GAULTestClass.class, code_iri.toString());
+        assertAll(() -> assertTrue(factDatatype.isPresent(), "Should have datatype"),
+                () -> assertEquals(int.class, factDatatype.get(), "Should equal primitive int"));
     }
 
     @Test
     public void TestGAULComplexObjectClass() {
 
 //        Test the class
-        final OWLClass owlClass = tp.classParser.getObjectClass(complexObjectClass);
+        final OWLClass owlClass = cp.getObjectClass(complexObjectClass);
         final OWLClass gaul_test1 = df.getOWLClass(IRI.create(TRESTLE_PREFIX, "gaul-complex"));
         assertEquals(gaul_test1, owlClass, "Wrong OWL Class");
 //        Test the named individual
 //        Since we're using a UUID, we'll need to set it so we can match correctly
         final UUID individualUUID = UUID.randomUUID();
         complexObjectClass.id = individualUUID;
-        OWLNamedIndividual owlNamedIndividual = tp.classParser.getIndividual(complexObjectClass);
+        OWLNamedIndividual owlNamedIndividual = cp.getIndividual(complexObjectClass);
         OWLNamedIndividual gaul_test = df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, individualUUID.toString()));
         assertEquals(gaul_test, owlNamedIndividual, "Wrong named individual");
 
@@ -112,7 +124,7 @@ public class TrestleParserTest {
 //        Code
 //        final OWLDataProperty adm0_code = dfStatic.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, "ADM0_Code"));
 //        final OWLLiteral adm0_code_literal = dfStatic.getOWLLiteral("1234", OWL2Datatype.XSD_INTEGER);
-        Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = tp.classParser.getFacts(complexObjectClass);
+        Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = cp.getFacts(complexObjectClass);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have properties");
         assertEquals(7, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of properties");
         final OWLDataPropertyAssertionAxiom parsed_code = owlDataPropertyAssertionAxioms.get().get(0);
@@ -133,13 +145,24 @@ public class TrestleParserTest {
 
 //        Test the new gaul test
         //        Test the named individual
-        OWLNamedIndividual owlNamedIndividual = tp.classParser.getIndividual(expandedGAULClass);
+        OWLNamedIndividual owlNamedIndividual = cp.getIndividual(expandedGAULClass);
         OWLNamedIndividual gaul_test = df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, "test_region"));
         assertEquals(gaul_test, owlNamedIndividual, "Wrong named individual");
 
-        Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = tp.classParser.getFacts(expandedGAULClass);
+        Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = cp.getFacts(expandedGAULClass);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have properties");
         assertEquals(3, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of properties");
+
+        //        Check member matching
+        final IRI memberIRI = IRI.create(TRESTLE_PREFIX, "name");
+        final String filteredName = cp.matchWithClassMember(TestClasses.GAULMethodTest.class, memberIRI.getShortForm());
+        assertEquals("name", filteredName, "Should match member name");
+
+//        Check spatial member access
+        final Optional<OWLDataPropertyAssertionAxiom> spatialFact = cp.getSpatialFact(testMethod);
+        assertAll(() -> assertTrue(spatialFact.isPresent(), "Should have spatial fact"),
+                () -> assertEquals("new_test", spatialFact.get().getObject().getLiteral(), "Spatial should match"));
+
 
 //        Test the temporal
         Optional<List<TemporalObject>> temporalObjects = tp.temporalParser.getTemporalObjects(expandedGAULClass);
@@ -167,12 +190,12 @@ public class TrestleParserTest {
 
 //        Check methods
 //        Individual
-        owlNamedIndividual = tp.classParser.getIndividual(testMethod);
+        owlNamedIndividual = cp.getIndividual(testMethod);
         gaul_test = df.getOWLNamedIndividual(IRI.create(TRESTLE_PREFIX, "string_from_method"));
         assertEquals(gaul_test, owlNamedIndividual, "Wrong named individual");
 
 //        Data properties
-        owlDataPropertyAssertionAxioms = tp.classParser.getFacts(testMethod);
+        owlDataPropertyAssertionAxioms = cp.getFacts(testMethod);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have method properties");
         assertEquals(5, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of data properties");
 
@@ -197,6 +220,30 @@ public class TrestleParserTest {
     }
 
     @Test
+    public void multiLangTest() {
+        final Optional<List<OWLDataPropertyAssertionAxiom>> facts = cp.getFacts(multiLangTest);
+        assertAll(() -> assertTrue(facts.isPresent(), "Should have facts"),
+                () -> assertEquals(7, facts.get().size(), "Should have lots of facts"));
+
+////        Try to match on a multilang lang fact
+        final IRI iri = IRI.create(TRESTLE_PREFIX, "testString");
+        final String classMember = cp.matchWithClassMember(TestClasses.MultiLangTest.class, iri.getShortForm(), "en-GB");
+        assertEquals("englishGBString", classMember, "Should match with en-GB method");
+
+//        Check the return type
+        final Optional<Class<?>> factDatatype = cp.getFactDatatype(TestClasses.MultiLangTest.class, iri.toString());
+        assertEquals(String.class, factDatatype.get(), "Should have String datatype");
+
+//        Check to match on the non-language
+        final IRI idi_iri = IRI.create(TRESTLE_PREFIX, "id");
+        final String id = cp.matchWithClassMember(TestClasses.MultiLangTest.class, "id");
+        assertEquals("id", id, "Should get ID field");
+        final Optional<Class<?>> factDatatype1 = cp.getFactDatatype(TestClasses.MultiLangTest.class, idi_iri.toString());
+        assertEquals(String.class, factDatatype1.get(), "Should have string for ID class");
+
+    }
+
+    @Test
     public void testObjectConstructor() throws MissingConstructorException {
         List<OWLDataPropertyAssertionAxiom> testProperties = new ArrayList<>();
         List<TemporalObject> testTemporals = new ArrayList<>();
@@ -215,7 +262,7 @@ public class TrestleParserTest {
         testProperties.add(adm0Name);
 
         final OWLDataPropertyAssertionAxiom testName = df.getOWLDataPropertyAssertionAxiom(
-                df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, "test_name")),
+                df.getOWLDataProperty(IRI.create(GEOSPARQLPREFIX, "asWKT")),
                 owlNamedIndividual,
                 df.getOWLLiteral("new_test"));
         testProperties.add(testName);
@@ -250,7 +297,10 @@ public class TrestleParserTest {
 //            });
 //        }
 
+
+
         final ConstructorArguments constructorArguments = new ConstructorArguments();
+
 
 //        Properties
         testProperties.forEach(property -> {
@@ -260,7 +310,7 @@ public class TrestleParserTest {
 //            final Object literalValue = javaClass.cast(property.getObject().getLiteral());
             inputObjects.add(literalValue);
             constructorArguments.addArgument(
-                    tp.classParser.matchWithClassMember(TestClasses.GAULMethodTest.class, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
+                    cp.matchWithClassMember(TestClasses.GAULMethodTest.class, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
                     javaClass,
                     literalValue);
         });

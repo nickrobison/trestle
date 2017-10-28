@@ -163,7 +163,7 @@ public class ClassBuilder {
      * @return - Boolean if name/type pair matches
      * @throws MissingConstructorException
      */
-    static boolean isConstructorArgument(Class<?> clazz, String argumentName, @Nullable Class<?> argumentType) throws MissingConstructorException {
+    public static boolean isConstructorArgument(Class<?> clazz, String argumentName, @Nullable Class<?> argumentType) throws MissingConstructorException {
         final Optional<Constructor<?>> trestleConstructor = findTrestleConstructor(clazz);
 
         final Optional<Parameter> matchingParam = Arrays.stream(trestleConstructor.orElseThrow(MissingConstructorException::new).getParameters())
