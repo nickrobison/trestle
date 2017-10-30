@@ -67,7 +67,7 @@ public abstract class SesameOntology extends TransactingOntology {
 
 
     SesameOntology(String ontologyName, Repository repository, OWLOntology ontology, DefaultPrefixManager pm) {
-        super(ontologyName);
+        super();
         final Config config = ConfigFactory.load().getConfig("trestle.ontology.sesame");
         this.ontologyName = ontologyName;
         this.repository = repository;

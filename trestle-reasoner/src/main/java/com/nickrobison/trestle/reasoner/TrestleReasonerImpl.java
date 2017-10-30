@@ -29,18 +29,18 @@ import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
-import com.nickrobison.trestle.reasoner.containment.ContainmentEngine;
-import com.nickrobison.trestle.reasoner.equality.EqualityEngine;
-import com.nickrobison.trestle.reasoner.events.TrestleEventEngine;
-import com.nickrobison.trestle.reasoner.events.TrestleEventException;
+import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
+import com.nickrobison.trestle.reasoner.engines.events.TrestleEventEngine;
+import com.nickrobison.trestle.reasoner.engines.events.TrestleEventException;
 import com.nickrobison.trestle.reasoner.exceptions.*;
-import com.nickrobison.trestle.reasoner.individual.IndividualEngine;
-import com.nickrobison.trestle.reasoner.merge.MergeScript;
-import com.nickrobison.trestle.reasoner.merge.TrestleMergeConflict;
-import com.nickrobison.trestle.reasoner.merge.TrestleMergeEngine;
-import com.nickrobison.trestle.reasoner.merge.TrestleMergeException;
+import com.nickrobison.trestle.reasoner.engines.IndividualEngine;
+import com.nickrobison.trestle.reasoner.engines.merge.MergeScript;
+import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeConflict;
+import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
+import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeException;
 import com.nickrobison.trestle.reasoner.parser.*;
-import com.nickrobison.trestle.reasoner.spatial.SpatialEngine;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.reasoner.utils.TemporalPropertiesPair;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
@@ -111,8 +111,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final TrestleParser trestleParser;
     private final TrestleMergeEngine mergeEngine;
     private final TrestleEventEngine eventEngine;
-    private final EqualityEngine equalityEngine;
-    private final ContainmentEngine containmentEngine;
     private final IndividualEngine individualEngine;
     private final SpatialEngine spatialEngine;
     private final Config trestleConfig;
@@ -221,8 +219,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //      Engines on
         this.mergeEngine = injector.getInstance(TrestleMergeEngine.class);
         this.eventEngine = injector.getInstance(TrestleEventEngine.class);
-        this.equalityEngine = injector.getInstance(EqualityEngine.class);
-        this.containmentEngine = injector.getInstance(ContainmentEngine.class);
         this.individualEngine = injector.getInstance(IndividualEngine.class);
         this.spatialEngine = injector.getInstance(SpatialEngine.class);
 
@@ -319,17 +315,17 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public EqualityEngine getEqualityEngine() {
-        return this.equalityEngine;
+        return this.spatialEngine;
     }
 
     @Override
     public SpatialEngine getSpatialEngine() {
-        return spatialEngine;
+        return this.spatialEngine;
     }
 
     @Override
     public ContainmentEngine getContainmentEngine() {
-        return this.containmentEngine;
+        return this.spatialEngine;
     }
 
     @Override
@@ -1482,7 +1478,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 .collect(Collectors.toList());
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
-            final List<OWLNamedIndividual> equivalentIndividuals = this.equalityEngine.getEquivalentIndividuals(clazz, individualSubjects, queryTemporal);
+            final List<OWLNamedIndividual> equivalentIndividuals = this.spatialEngine.getEquivalentIndividuals(clazz, individualSubjects, queryTemporal);
             final List<CompletableFuture<T>> individualsFutureList = equivalentIndividuals
                     .stream()
                     .map(individual -> CompletableFuture.supplyAsync(() -> {

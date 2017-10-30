@@ -2,20 +2,10 @@ package com.nickrobison.trestle.reasoner;
 
 import com.google.inject.AbstractModule;
 import com.nickrobison.metrician.MetricianModule;
-
 import com.nickrobison.trestle.reasoner.caching.TrestleCacheModule;
-import com.nickrobison.trestle.reasoner.containment.ContainmentEngineModule;
-import com.nickrobison.trestle.reasoner.equality.EqualityEngineModule;
-import com.nickrobison.trestle.reasoner.events.TrestleEventEngine;
-import com.nickrobison.trestle.reasoner.events.EventEngineImpl;
-import com.nickrobison.trestle.reasoner.events.EventEngineNoOp;
-import com.nickrobison.trestle.reasoner.individual.IndividualEngine;
-import com.nickrobison.trestle.reasoner.merge.MergeEngineImpl;
-import com.nickrobison.trestle.reasoner.merge.MergeEngineNoOp;
-import com.nickrobison.trestle.reasoner.merge.TrestleMergeEngine;
+import com.nickrobison.trestle.reasoner.engines.EngineModule;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParserProvider;
-import com.nickrobison.trestle.reasoner.spatial.SpatialEngineModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,29 +32,11 @@ public class TrestleModule extends AbstractModule {
     protected void configure() {
         install(new MetricianModule(metricsEnabled));
         install(new TrestleCacheModule(cachingEnabled));
-        install(new EqualityEngineModule());
-        install(new ContainmentEngineModule());
-        install(new SpatialEngineModule());
+        install(new EngineModule(mergeEnabled, eventEnabled));
 
 //        Bind the parser
         bind(TrestleParser.class)
                 .toProvider(TrestleParserProvider.class)
                 .asEagerSingleton();
-//        Merge Engine
-        if (mergeEnabled) {
-            bind(TrestleMergeEngine.class).to(MergeEngineImpl.class);
-        } else {
-            bind(TrestleMergeEngine.class).to(MergeEngineNoOp.class);
-        }
-
-//        Event Engine
-        if (eventEnabled) {
-            bind(TrestleEventEngine.class).to(EventEngineImpl.class);
-        } else {
-            bind(TrestleEventEngine.class).to(EventEngineNoOp.class);
-        }
-
-//        Individual Engine
-        bind(IndividualEngine.class).asEagerSingleton();
     }
 }
