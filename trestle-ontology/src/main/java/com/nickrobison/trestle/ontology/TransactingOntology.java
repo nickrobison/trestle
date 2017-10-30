@@ -51,14 +51,19 @@ abstract class TransactingOntology implements ITrestleOntology {
      * @return - {@link TrestleTransaction}
      */
     @Override
-    public TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject, boolean write) {
-        logger.trace("Inheriting transaction from existing transaction object {}, setting flags, but not opening new transaction", transactionObject.getTransactionID());
-        this.threadLocked.set(true);
-        this.threadInTransaction.set(true);
-        threadTransactionObject.set(transactionObject);
-        threadTransactionInherited.set(true);
-        this.setOntologyConnection();
-        return transactionObject;
+    public TrestleTransaction createandOpenNewTransaction(@Nullable TrestleTransaction transactionObject, boolean write) {
+        if (transactionObject == null) {
+            logger.trace("Passed null transaction object, opening a new transaction. Write? {}", write);
+            return createandOpenNewTransaction(write);
+        } else {
+            logger.trace("Inheriting transaction from existing transaction object {}, setting flags, but not opening new transaction", transactionObject.getTransactionID());
+            this.threadLocked.set(true);
+            this.threadInTransaction.set(true);
+            threadTransactionObject.set(transactionObject);
+            threadTransactionInherited.set(true);
+            this.setOntologyConnection();
+            return transactionObject;
+        }
     }
 
     /**
@@ -67,8 +72,13 @@ abstract class TransactingOntology implements ITrestleOntology {
      * @return - TrestleTransaction object inheriting from parent transaction
      */
     @Override
-    public TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject) {
-        return createandOpenNewTransaction(transactionObject, transactionObject.isWriteTransaction());
+    public TrestleTransaction createandOpenNewTransaction(@Nullable TrestleTransaction transactionObject) {
+        if (transactionObject == null) {
+            logger.warn("Null transaction object. Creating new read-only transaction, as nothing is specified");
+            return createandOpenNewTransaction(false);
+        } else {
+            return createandOpenNewTransaction(transactionObject, transactionObject.isWriteTransaction());
+        }
     }
 
     /**
