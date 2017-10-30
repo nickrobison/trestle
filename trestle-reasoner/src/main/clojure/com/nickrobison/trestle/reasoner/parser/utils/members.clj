@@ -6,6 +6,22 @@
             [clojure.string :as string]
             [clojure.core.reducers :as r]))
 
+; Filter functions
+(defn filter-member-name-iri
+  "Filter a member based on matching the name or the IRI"
+  [name member]
+  (or
+    (= name (:name member))
+    (= name (.toString (:iri member)))))
+
+(defn filter-and-get
+  "Apply the given filter to the list of members and extract the specified key"
+  [members fn key]
+  (->> members
+       (filter fn)
+       (map #(get % key))
+       first))
+
 (defn build-iri
   "Build the property IRI for the Member"
   [member prefix]

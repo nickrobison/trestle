@@ -192,9 +192,6 @@
                     </executions>
                     <configuration>
                         <copyAllCompiledNamespaces>true</copyAllCompiledNamespaces>
-                        <!--<namespaces>-->
-                            <!--<namespace>com.nickrobison.trestle</namespace>-->
-                        <!--</namespaces>-->
                         <sourceDirectories>
                             <sourceDirectory>src/main/clojure</sourceDirectory>
                         </sourceDirectories>

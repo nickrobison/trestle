@@ -133,22 +133,11 @@
             :data-property (.getOWLDataProperty df iri)
             })))
 
-
-
-
-
-;(defmulti build-literal (fn [df value multiLangEnabled
-;                             defaultLang returnType] (class value)))
 (defn build-literal
   ([df value returnType defaultLang]
    (.getOWLLiteral df value defaultLang))
   ([df value returnType]
-   (.getOWLLiteral df (.toString value) returnType))
-
-  ;(.getOWLLiteral df value defaultLang)
-
-  )
-
+   (.getOWLLiteral df (.toString value) returnType)))
 
 (defn member-reducer
   "Build the Class Member Map"
@@ -202,18 +191,17 @@
   [member languageCode classMember]
   (let [iri (.getShortForm (get member :iri))
         position (get member :position)
-        ttype (get member :temporal-type)]
+        ttype (get member :temporal-type)
+        name (get member :name)]
     (log/warnf "Matching against temporal %s" classMember iri)
-    (or
+    (condp = classMember
       ; Can we match directly against the class member?
-      (= classMember (get member :name))
+      name true
       ; If not, try to match against a default name and the position type
-      (if (= classMember "intervalStart")
-        (= position ::pred/start)
-        (if (= classMember "intervalEnd")
-          (= position ::pred/end)
-          (if (= classMember "pointTime")
-            (= position ::pred/at)))))))
+      "intervalStart" (= position ::pred/start)
+      "intervalEnd" (= position ::pred/end)
+      "pointTime" (= position ::pred/at)
+      false)))
 (defmethod member-matches? ::pred/language
   [member languageCode classMember]
   (let [iri (.getShortForm (get member :iri))]
@@ -312,8 +300,7 @@
         (Optional/empty))))
 
   (matchWithClassMember ^String [this clazz classMember]
-    (.matchWithClassMember this clazz classMember nil)
-    )
+    (.matchWithClassMember this clazz classMember nil))
   (matchWithClassMember ^String [this clazz classMember languageCode]
     (let [parsedClass (.parseClass this clazz)]
       (log/debugf "Trying to match %s with language %s" classMember languageCode)
@@ -333,14 +320,23 @@
 
   (getFactDatatype ^Optional [this clazz factName]
     (let [parsedClass (.parseClass this clazz)]
-      (Optional/of
-        (->> (get parsedClass :members)
-             (filter (fn [member]
-                       (let [iriString (.toString (get member :iri))]
-                         (= iriString factName))))
-             (map (fn [member]
-                    (get member :return-type)))
-             (first))))))
+      (Optional/ofNullable (m/filter-and-get
+                             (:members parsedClass)
+                             (fn [member]
+                               (m/filter-member-name-iri
+                                 factName
+                                 member))
+                             :return-type))))
+
+  (getFactIRI ^Optional [this clazz factName]
+    (let [parsedClass (.parseClass this clazz)]
+      (Optional/ofNullable (m/filter-and-get
+                             (:members parsedClass)
+                             (fn [member]
+                               (m/filter-member-name-iri
+                                 factName
+                                 member))
+                             :iri)))))
 
 (defn make-parser
   "Creates a new ClassParser"
