@@ -130,7 +130,7 @@ export class CompareComponent {
                     this.baseIndividual.individual.getSpatialValue(),
                     undefined,
                     moment(),
-                    1)
+                    0)
                 .subscribe((results) => results
                     .filter((result) => {
                         // Filter out the base individual,

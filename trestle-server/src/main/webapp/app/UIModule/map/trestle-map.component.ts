@@ -83,6 +83,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     @Input() public multiSelect: boolean;
     @Input() public zoomOnLoad?: boolean;
     @Input() public config?: mapboxgl.MapboxOptions;
+    @Input() public dataChanges: Subject<MapSource>;
     @Output() public mapBounds: EventEmitter<LngLatBounds> = new EventEmitter();
     @Output() public clicked: EventEmitter<string> = new EventEmitter();
     private centerMapOnLoad: BehaviorSubject<boolean>;
@@ -92,8 +93,6 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     private mapSources: Map<string, string[]>;
     // This has to be integers, in order to match against the numeric IDs
     private filteredIDs: string[];
-
-    @Input() public dataChanges: Subject<MapSource>;
 
     constructor() {
         // FIXME(nrobison): Fix this
