@@ -350,20 +350,6 @@ public interface TrestleReasoner {
     <T> Optional<List<T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal atTemporal);
 
     /**
-     * Performs a spatial intersection on a given dataset with a specified spatio-temporal restriction
-     * Returns an optional list of {@link TrestleIndividual}s
-     * If no valid temporal is specified, performs a spatial intersection with no temporal constraints
-     *
-     * @param clazz - {@link Class} of dataset {@link OWLClass}
-     * @param wkt - {@link String} WKT boundary
-     * @param buffer - {@link Double} buffer to extend around buffer. 0 is no buffer
-     * @param validAt - {@link Temporal} valid at restriction
-     * @param dbAt - {@link Temporal} database at restriction
-     * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
-     */
-    Optional<List<TrestleIndividual>> spatialIntersectIndividuals(Class<@NonNull ?> clazz, String wkt, double buffer, @Nullable Temporal validAt, @Nullable Temporal dbAt);
-
-    /**
      * Get a map of related objects and their relative strengths
      *
      * @param clazz    - Java class of object to serialize to
@@ -430,6 +416,49 @@ public interface TrestleReasoner {
      * @return - List of Strings representing IRIs of matching individuals
      */
     List<String> searchForIndividual(String individualIRI, @Nullable String datasetClass, @Nullable Integer limit);
+
+    /**
+     * Performs a spatial intersection on a given dataset without considering any temporal constraints
+     * This will return all intersecting individuals, in their latest DB state
+     * Returns an optional list of {@link TrestleIndividual}s
+     * This method will return the individual represented by the input WKT, so it may need to be filtered out
+     *
+     * @param datasetClassID  - {@link String} ID of dataset {@link OWLClass}
+     * @param wkt    - {@link String} WKT boundary
+     * @param buffer - {@link Double} buffer to extend around buffer. 0 is no buffer
+     * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
+     */
+    Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer);
+
+    /**
+     * Performs a spatial intersection on a given dataset with a specified spatio-temporal restriction
+     * Returns an optional list of {@link TrestleIndividual}s
+     * If no valid temporal is specified, performs a spatial intersection with no temporal constraints
+     * This method will return the individual represented by the input WKT, so it may need to be filtered out
+     *
+     * @param datasetClassID      - {@link String} ID of dataset {@link OWLClass}
+     * @param wkt        - {@link String} WKT boundary
+     * @param buffer     - {@link Double} buffer to extend around buffer. 0 is no buffer
+     * @param atTemporal - {@link Temporal} valid at restriction
+     * @param dbTemporal - {@link Temporal} database at restriction
+     * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
+     */
+    Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal);
+
+    /**
+     * Performs a spatial intersection on a given dataset with a specified spatio-temporal restriction
+     * Returns an optional list of {@link TrestleIndividual}s
+     * If no valid temporal is specified, performs a spatial intersection with no temporal constraints
+     * This method will return the individual represented by the input WKT, so it may need to be filtered out
+     *
+     * @param clazz      - {@link Class} of dataset {@link OWLClass}
+     * @param wkt        - {@link String} WKT boundary
+     * @param buffer     - {@link Double} buffer to extend around buffer. 0 is no buffer
+     * @param atTemporal - {@link Temporal} valid at restriction
+     * @param dbTemporal - {@link Temporal} database at restriction
+     * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
+     */
+    Optional<List<TrestleIndividual>> spatialIntersectIndividuals(Class<?> clazz, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal);
 
     /**
      * Return a {@link TrestleIndividual} with all the available facts and properties
