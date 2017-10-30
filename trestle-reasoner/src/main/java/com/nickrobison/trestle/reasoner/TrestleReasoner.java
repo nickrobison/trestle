@@ -10,6 +10,7 @@ import com.nickrobison.trestle.reasoner.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeEngine;
+import com.nickrobison.trestle.reasoner.spatial.SpatialEngine;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
@@ -77,6 +78,12 @@ public interface TrestleReasoner {
      * @return - {@link EqualityEngine}
      */
     EqualityEngine getEqualityEngine();
+
+    /**
+     * Get underlying {@link SpatialEngine}
+     * @return - {@link SpatialEngine}
+     */
+    SpatialEngine getSpatialEngine();
 
     /**
      * Get the underlying {@link ContainmentEngine}

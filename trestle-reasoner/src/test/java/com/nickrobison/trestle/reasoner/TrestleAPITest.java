@@ -3,6 +3,7 @@ package com.nickrobison.trestle.reasoner;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
 import com.google.common.collect.ImmutableList;
+import com.nickrobison.trestle.SharedUtils;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.TrestleIndividual;
@@ -21,10 +22,12 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
+import java.io.File;
+import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -39,8 +42,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @SuppressWarnings({"Duplicates", "initialization", "ConstantConditions"})
 @Tag("integration")
 public class TrestleAPITest extends AbstractReasonerTest {
-
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
 
     @Test
     public void testClasses() throws TrestleClassException, MissingOntologyEntity, ParseException, TransformException {
@@ -179,37 +180,10 @@ public class TrestleAPITest extends AbstractReasonerTest {
 
     @Test
     public void gaulLoader() throws IOException, TrestleClassException, MissingOntologyEntity, OWLOntologyStorageException {
-//        Parse the CSV
-        List<TestClasses.GAULTestClass> gaulObjects = new ArrayList<>();
 
-        final InputStream is = TrestleAPITest.class.getClassLoader().getResourceAsStream("objects.csv");
-
-        final BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
-
-        String line;
-
-        while ((line = br.readLine()) != null) {
-
-
-            final String[] splitLine = line.split(";");
-            final int code;
-            try {
-                code = Integer.parseInt(splitLine[0]);
-            } catch (NumberFormatException e) {
-                continue;
-            }
-
-
-            LocalDate date = LocalDate.parse(splitLine[2].replace("\"", ""), formatter);
-//            final Instant instant = Instant.from(date);
-//            final LocalDateTime startTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
-
-//            Need to add a second to get it to format correctly.
-            gaulObjects.add(new TestClasses.GAULTestClass(code, splitLine[1].replace("\"", ""), date.atStartOfDay(), splitLine[4].replace("\"", "")));
-        }
 
 //        Write the objects
-        gaulObjects.parallelStream().forEach(gaul -> {
+        SharedUtils.readGAULObjects().parallelStream().forEach(gaul -> {
             try {
                 reasoner.writeTrestleObject(gaul);
             } catch (TrestleClassException e) {

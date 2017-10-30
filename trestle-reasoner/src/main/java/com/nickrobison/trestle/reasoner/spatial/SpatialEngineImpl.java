@@ -2,6 +2,7 @@ package com.nickrobison.trestle.reasoner.spatial;
 
 import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.LambdaUtils;
+import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.individual.IndividualEngine;
@@ -11,6 +12,11 @@ import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.PrecisionModel;
+import com.vividsolutions.jts.io.ParseException;
+import com.vividsolutions.jts.io.WKTReader;
+import com.vividsolutions.jts.io.WKTWriter;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -40,6 +46,8 @@ public class SpatialEngineImpl implements SpatialEngine {
     private final ITrestleOntology ontology;
     private final IndividualEngine individualEngine;
     private final TrestleExecutorService spatialPool;
+    private WKTReader reader;
+    private WKTWriter writer;
 
 
     @Inject
@@ -54,6 +62,11 @@ public class SpatialEngineImpl implements SpatialEngine {
         this.ontology = ontology;
         this.individualEngine = individualEngine;
         this.spatialPool = TrestleExecutorService.executorFactory("spatial-pool", trestleConfig.getInt("threading.spatial-pool.size"), metrician);
+
+//        Setup the WKT stuff
+        final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+        this.reader = new WKTReader(geometryFactory);
+        this.writer = new WKTWriter();
     }
 
     @Override
@@ -75,12 +88,26 @@ public class SpatialEngineImpl implements SpatialEngine {
             dbTemporal = parseTemporalToOntologyDateTime(dbAt, ZoneOffset.UTC);
         }
 
+//        Buffer?
+        final String wktBuffer;
+        if (buffer > 0.0) {
+            logger.debug("Adding {} buffer to WKT", buffer);
+            try {
+                wktBuffer = this.writer.write(this.reader.read(wkt).buffer(buffer));
+            } catch (ParseException e) {
+                logger.error("Unable to parse wkt");
+                throw new TrestleInvalidDataException("Unable to parse WKT", wkt);
+            }
+        } else {
+            wktBuffer = wkt;
+        }
+
         final String intersectQuery;
 //        If the atTemporal is null, do a spatial intersection
         if (validAt == null) {
-            intersectQuery = this.qb.buildSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.Units.METER, dbTemporal);
+            intersectQuery = this.qb.buildSpatialIntersection(owlClass, wktBuffer, buffer, QueryBuilder.Units.METER, dbTemporal);
         } else {
-            intersectQuery = this.qb.buildTemporalSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.Units.METER, atTemporal, dbTemporal);
+            intersectQuery = this.qb.buildTemporalSpatialIntersection(owlClass, wktBuffer, buffer, QueryBuilder.Units.METER, atTemporal, dbTemporal);
         }
 
 //        Do the intersection
@@ -104,7 +131,7 @@ public class SpatialEngineImpl implements SpatialEngine {
                         .map(individual -> CompletableFuture.supplyAsync(() -> {
                             final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                             try {
-                                return this.individualEngine.getTrestleIndividual(individual.asOWLNamedIndividual());
+                                return this.individualEngine.getTrestleIndividual(individual.asOWLNamedIndividual(), tt);
                             } finally {
                                 this.ontology.returnAndCommitTransaction(tt);
                             }
@@ -122,6 +149,8 @@ public class SpatialEngineImpl implements SpatialEngine {
             logger.error("Execution exception while intersecting", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
 
     }

@@ -323,6 +323,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
+    public SpatialEngine getSpatialEngine() {
+        return spatialEngine;
+    }
+
+    @Override
     public ContainmentEngine getContainmentEngine() {
         return this.containmentEngine;
     }

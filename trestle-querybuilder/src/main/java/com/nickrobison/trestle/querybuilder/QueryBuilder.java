@@ -386,11 +386,13 @@ public class QueryBuilder {
                 " WHERE { " +
                 "?m rdf:type ?type ." +
                 "?m trestle:has_fact ?f ." +
-                "?f ogc:asWKT ?wkt ");
+                "?f ogc:asWKT ?wkt ." +
+                "?f trestle:database_from ?df ." +
+                "OPTIONAL{?f trestle:database_to ?dt}");
         ps.setIri("type", getFullIRIString(datasetClass));
         buildDatabaseSString(ps, wktValue, buffer, dbAt);
 
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
