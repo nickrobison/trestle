@@ -36,7 +36,7 @@ public class OracleQueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?m ?tStart ?tEnd WHERE { ?m rdf:type trestle:GAUL .?m trestle:has_fact ?f .?f ogc:asWKT ?wkt .OPTIONAL{?f trestle:valid_from ?tStart} .OPTIONAL{?f trestle:valid_to ?tEnd} .OPTIONAL{?f trestle:valid_at ?tAt} .?f trestle:database_from ?df .OPTIONAL{?f trestle:database_to ?dt} .FILTER(?df <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime && (!bound(?dt) || ?dt > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) .FILTER(((!bound(?tStart) || ?tStart <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) && ogcf:sfIntersects(?wkt, \"POINT (39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }";
+            "SELECT DISTINCT ?m WHERE { ?m rdf:type trestle:GAUL .?m trestle:has_fact ?f .?f ogc:asWKT ?wkt .OPTIONAL{?f trestle:valid_from ?vf} .OPTIONAL{?f trestle:valid_to ?vt} .OPTIONAL{?f trestle:valid_at ?va} .?f trestle:database_from ?df .OPTIONAL{?f trestle:database_to ?dt} .FILTER(?df <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime && (!bound(?dt) || ?dt > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) .FILTER(((!bound(?tStart) || ?tStart <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) && ogcf:sfIntersects(?wkt, \"POINT (39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }";
 
     private static final String tsOracleConceptString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
