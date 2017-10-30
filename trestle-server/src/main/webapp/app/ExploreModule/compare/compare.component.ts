@@ -27,7 +27,6 @@ interface ICompareIndividual {
 export class CompareComponent {
 
     public zoomMap = true;
-    public mapData: MapSource;
     public mapConfig: mapboxgl.MapboxOptions;
     public selectedIndividuals: ICompareIndividual[];
     public baseIndividual: ICompareIndividual | null;
