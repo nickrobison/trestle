@@ -62,6 +62,11 @@ interface GeoJSONDataSource extends GeoJSONSource {
     _data: Feature<GeometryObject> | FeatureCollection<GeometryObject>;
 }
 
+interface MapDataChange {
+    previousValue: MapSource | null;
+    currentValue: MapSource | null;
+}
+
 export type MapSource = I3DMapSource | ITrestleMapSource;
 
 @Component({
@@ -87,6 +92,8 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     // This has to be integers, in order to match against the numeric IDs
     private filteredIDs: string[];
 
+    @Input() public dataChanges: BehaviorSubject<MapSource>;
+
     constructor() {
         // FIXME(nrobison): Fix this
         (mapboxgl as any).accessToken = "pk.eyJ1IjoibnJvYmlzb24iLCJhIjoiY2ozdDd5dmd2MDA3bTMxcW1kdHZrZ3ppMCJ9.YcJMRphQAfmZ0H8X9HnoKA";
@@ -104,6 +111,23 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         } else {
             this.centerMapOnLoad = new BehaviorSubject(this.zoomOnLoad);
         }
+
+        // this.dataChanges = new BehaviorSubject({previousValue: null, currentValue: null});
+
+        this.dataChanges.subscribe((data) => {
+            console.debug("Map has new data to load", data);
+            this.addSource(data);
+            // //    Remove data?
+            // if (data.previousValue !== null) {
+            //     console.debug("Removing data:", data.previousValue);
+            //     this.removeSource(data.previousValue);
+            // }
+            //
+            // if (data.currentValue !== null) {
+            //     console.debug("Adding data:", data.currentValue);
+            //     this.addSource(data.currentValue);
+            // }
+        });
 
         console.debug("Creating map, " +
             "singleSelect?", this.single,
@@ -123,16 +147,22 @@ export class TrestleMapComponent implements OnInit, OnChanges {
 
     public ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
         // Individual changes
-        const inputChanges = changes["data"];
-        if (inputChanges != null
-            && !inputChanges.isFirstChange()
-            && (inputChanges.currentValue !== inputChanges.previousValue)) {
-            console.debug("New change, updating", inputChanges);
-            if (inputChanges.previousValue != null && this.single) {
-                this.removeSource(inputChanges.previousValue);
-            }
-            this.addSource(inputChanges.currentValue);
-        }
+        // const inputChanges = changes["data"];
+        // if (inputChanges != null
+        //     && !inputChanges.isFirstChange()
+        //     && (inputChanges.currentValue !== inputChanges.previousValue)) {
+        //     console.debug("New change, updating", inputChanges);
+        //     const mapChanges: MapDataChange = {
+        //         currentValue: inputChanges.currentValue,
+        //         previousValue: null
+        //     };
+        //     if (inputChanges.previousValue != null && this.single) {
+        //         mapChanges.previousValue= inputChanges.previousValue;
+        //         // this.removeSource(inputChanges.previousValue);
+        //     }
+        //     this.dataChanges.next(mapChanges);
+        //     // this.addSource(inputChanges.currentValue);
+        // }
 
         //    Zoom On Load changes
         const zoomChanges = changes["zoomOnLoad"];

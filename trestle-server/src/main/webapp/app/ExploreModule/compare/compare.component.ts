@@ -8,6 +8,7 @@ import {MatSliderChange} from "@angular/material";
 import {MapService} from "../viewer/map.service";
 import {Feature} from "geojson";
 import * as moment from "moment";
+import {Subject} from "rxjs/Subject";
 
 interface ICompareIndividual {
     individual: TrestleIndividual;
@@ -30,6 +31,7 @@ export class CompareComponent {
     public mapConfig: mapboxgl.MapboxOptions;
     public selectedIndividuals: ICompareIndividual[];
     public baseIndividual: ICompareIndividual | null;
+    public dataChanges: Subject<MapSource> = new Subject();
     private layerDepth: number;
     private maxHeight: number;
     private layerNumber: number;
@@ -131,6 +133,14 @@ export class CompareComponent {
                     moment(),
                     1)
                 .subscribe((results) => results
+                    .filter((result) => {
+                        // Filter out the base individual,
+                        // if it exists, in the grossest way possible
+                        if (this.baseIndividual !== null) {
+                            return !(result.getID() === this.baseIndividual.individual.getID());
+                        }
+                        return true;
+                    })
                     .forEach((result) => this.addIndividualToCompare(result, false)));
         }
     }
@@ -142,11 +152,12 @@ export class CompareComponent {
     }
 
     private addIndividualToCompare(individual: TrestleIndividual, baseIndividual = false): void {
+        // This is one way to filter out the base individual
         console.debug("Adding %s to map", individual.getFilteredID());
         const color = this.getColor(this.layerNumber);
         const height = this.getHeight(individual.getTemporal());
         const baseHeight = CompareComponent.getBase(individual.getTemporal());
-        this.mapData = {
+        this.dataChanges.next({
             id: individual.getID(),
             data: {
                 type: "Feature",
@@ -165,10 +176,30 @@ export class CompareComponent {
                     "fill-extrusion-opacity": 0.7
                 }
             }
-        };
-        console.debug("new map data:", this.mapData);
+        });
+        // this.mapData = {
+        //     id: individual.getID(),
+        //     data: {
+        //         type: "Feature",
+        //         geometry: individual.getSpatialValue(),
+        //         id: individual.getFilteredID(),
+        //         properties: individual.getFactValues()
+        //     },
+        //     extrude: {
+        //         id: individual.getID() + "-extrude",
+        //         type: "fill-extrusion",
+        //         source: individual.getID(),
+        //         paint: {
+        //             "fill-extrusion-color": color,
+        //             "fill-extrusion-height": height,
+        //             "fill-extrusion-base": baseHeight,
+        //             "fill-extrusion-opacity": 0.7
+        //         }
+        //     }
+        // };
+        // console.debug("new map data:", this.mapData);
         const compare = {
-            individual: individual,
+            individual,
             color,
             visible: true,
             height,
