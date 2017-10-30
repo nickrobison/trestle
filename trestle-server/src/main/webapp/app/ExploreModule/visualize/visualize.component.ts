@@ -79,7 +79,7 @@ export class VisualizeComponent implements OnInit {
                     data: {
                         type: "Feature",
                         geometry: results.getSpatialValue(),
-                        id: results.getIDAsInteger(),
+                        id: results.getIDAsInteger().toString(),
                         properties: results.getFactValues()
                     }
                 };

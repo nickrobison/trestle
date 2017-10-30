@@ -196,8 +196,10 @@ public class TestClasses {
         public String test_name;
         @Spatial
         public String wkt;
-        @DefaultTemporal(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        @StartTemporal
         public LocalDateTime time;
+        @EndTemporal
+        public LocalDateTime endTime;
 
         GAULTestClass() {
             this.adm0_code = 12;
@@ -212,16 +214,18 @@ public class TestClasses {
             this.adm0_name = name;
             this.test_name = "test_me";
             this.time = LocalDateTime.now();
+            this.time = LocalDateTime.now().plusYears(5);
             this.wkt = "test_wkt";
         }
 
         @TrestleCreator
-        public GAULTestClass(int adm0_code, String adm0_name, LocalDateTime time, String wkt) {
+        public GAULTestClass(int adm0_code, String adm0_name, LocalDateTime time, LocalDateTime endTime, String wkt) {
             this.test_name = adm0_name;
             this.adm0_code = adm0_code;
             this.adm0_name = adm0_name;
             this.wkt = wkt;
             this.time = time;
+            this.endTime = endTime;
 
         }
 

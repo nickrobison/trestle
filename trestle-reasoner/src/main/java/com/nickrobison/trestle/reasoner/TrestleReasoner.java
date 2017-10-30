@@ -5,11 +5,12 @@ import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
-import com.nickrobison.trestle.reasoner.containment.ContainmentEngine;
-import com.nickrobison.trestle.reasoner.equality.EqualityEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
-import com.nickrobison.trestle.reasoner.merge.TrestleMergeEngine;
+import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
@@ -17,10 +18,7 @@ import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLDataProperty;
-import org.semanticweb.owlapi.model.OWLDatatype;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -80,6 +78,12 @@ public interface TrestleReasoner {
      * @return - {@link EqualityEngine}
      */
     EqualityEngine getEqualityEngine();
+
+    /**
+     * Get underlying {@link SpatialEngine}
+     * @return - {@link SpatialEngine}
+     */
+    SpatialEngine getSpatialEngine();
 
     /**
      * Get the underlying {@link ContainmentEngine}
@@ -414,11 +418,54 @@ public interface TrestleReasoner {
     List<String> searchForIndividual(String individualIRI, @Nullable String datasetClass, @Nullable Integer limit);
 
     /**
-     * Return a TrestleIndividual with all the available facts and properties
+     * Performs a spatial intersection on a given dataset without considering any temporal constraints
+     * This will return all intersecting individuals, in their latest DB state
+     * Returns an optional list of {@link TrestleIndividual}s
+     * This method will return the individual represented by the input WKT, so it may need to be filtered out
+     *
+     * @param datasetClassID  - {@link String} ID of dataset {@link OWLClass}
+     * @param wkt    - {@link String} WKT boundary
+     * @param buffer - {@link Double} buffer to extend around buffer. 0 is no buffer
+     * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
+     */
+    Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer);
+
+    /**
+     * Performs a spatial intersection on a given dataset with a specified spatio-temporal restriction
+     * Returns an optional list of {@link TrestleIndividual}s
+     * If no valid temporal is specified, performs a spatial intersection with no temporal constraints
+     * This method will return the individual represented by the input WKT, so it may need to be filtered out
+     *
+     * @param datasetClassID      - {@link String} ID of dataset {@link OWLClass}
+     * @param wkt        - {@link String} WKT boundary
+     * @param buffer     - {@link Double} buffer to extend around buffer. 0 is no buffer
+     * @param atTemporal - {@link Temporal} valid at restriction
+     * @param dbTemporal - {@link Temporal} database at restriction
+     * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
+     */
+    Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal);
+
+    /**
+     * Performs a spatial intersection on a given dataset with a specified spatio-temporal restriction
+     * Returns an optional list of {@link TrestleIndividual}s
+     * If no valid temporal is specified, performs a spatial intersection with no temporal constraints
+     * This method will return the individual represented by the input WKT, so it may need to be filtered out
+     *
+     * @param clazz      - {@link Class} of dataset {@link OWLClass}
+     * @param wkt        - {@link String} WKT boundary
+     * @param buffer     - {@link Double} buffer to extend around buffer. 0 is no buffer
+     * @param atTemporal - {@link Temporal} valid at restriction
+     * @param dbTemporal - {@link Temporal} database at restriction
+     * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
+     */
+    Optional<List<TrestleIndividual>> spatialIntersectIndividuals(Class<?> clazz, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal);
+
+    /**
+     * Return a {@link TrestleIndividual} with all the available facts and properties
      * Attempts to retrieve from the cache, if enabled and present
      *
      * @param individualIRI - String of individual IRI
-     * @return - TrestleIndividual
+     * @return - {@link TrestleIndividual}
      */
     TrestleIndividual getTrestleIndividual(String individualIRI);
 
