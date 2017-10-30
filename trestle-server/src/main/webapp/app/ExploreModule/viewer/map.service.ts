@@ -1,13 +1,18 @@
 /**
  * Created by nrobison on 6/23/17.
  */
-import { Injectable } from "@angular/core";
-import { TrestleHttp } from "../../UserModule/trestle-http.provider";
-import { Response } from "@angular/http";
-import { Observable } from "rxjs/Observable";
-import { LngLatBounds } from "mapbox-gl";
+import {Injectable} from "@angular/core";
+import {TrestleHttp} from "../../UserModule/trestle-http.provider";
+import {Response} from "@angular/http";
+import {Observable} from "rxjs/Observable";
+import {LngLatBounds} from "mapbox-gl";
 import {Feature, FeatureCollection, GeometryObject, MultiPolygon, Polygon} from "geojson";
-import { Moment } from "moment";
+import {Moment} from "moment";
+import {
+    ITrestleIndividual,
+    TrestleIndividual
+} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
+
 var parse = require("wellknown");
 
 type wktType = "POINT" |
@@ -16,6 +21,16 @@ type wktType = "POINT" |
     "MULTILINESTRING" |
     "POLYGON" |
     "MULTIPOLYGON";
+
+export type wktValue = LngLatBounds | GeometryObject;
+
+interface IIntersectionBody {
+    dataset: string;
+    geojson: Polygon | MultiPolygon;
+    buffer: number;
+    validAt?: string;
+    databaseAt?: string;
+}
 
 @Injectable()
 export class MapService {
@@ -34,13 +49,13 @@ export class MapService {
     }
 
     public stIntersect(dataset: string,
-                       wkt: LngLatBounds | GeometryObject,
+                       wkt: wktValue,
                        validTime: Moment,
                        dbTime?: Moment,
                        buffer: number = 0): Observable<FeatureCollection<GeometryObject>> {
         console.debug("Intersecting at:", wkt, validTime.toISOString());
 
-        const postBody = {
+        const postBody: IIntersectionBody = {
             dataset,
             validAt: validTime.toISOString(),
             databaseAt: new Date().toISOString(),
@@ -51,6 +66,38 @@ export class MapService {
         return this.http.post("/visualize/intersect", postBody)
             .map(MapService.parseObjectToGeoJSON)
             .catch((error: Error) => Observable.throw(error || "Server Error"));
+    }
+
+    public stIntersectIndividual(dataset: string,
+                                 wkt: wktValue,
+                                 validTime?: Moment,
+                                 dbTime?: Moment,
+                                 buffer: number = 0): Observable<TrestleIndividual[]> {
+        const postBody: IIntersectionBody = {
+            dataset,
+            buffer,
+            geojson: MapService.normalizeToGeoJSON(wkt)
+        };
+
+        if (validTime) {
+            postBody.validAt = validTime.toISOString();
+        }
+
+        if (dbTime) {
+            postBody.databaseAt = dbTime.toISOString();
+        }
+
+        console.debug("Intersecting individuals with", postBody);
+
+        return this.http.post("/visualize/intersect-individuals", postBody)
+            .map(MapService.parseResponseToIndividuals);
+    }
+
+    private static parseResponseToIndividuals(res: Response): TrestleIndividual[] {
+        const json = res.json();
+        console.debug("Intersected result from server:", json);
+        return json
+            .map((individual: ITrestleIndividual) => new TrestleIndividual(individual));
     }
 
     private static parseObjectToGeoJSON(res: Response): FeatureCollection<GeometryObject> {
@@ -79,7 +126,7 @@ export class MapService {
             if (geometry) {
                 features.push({
                     type: "Feature",
-                    id: id,
+                    id,
                     geometry,
                     properties
                 });
@@ -92,7 +139,7 @@ export class MapService {
         };
     }
 
-    private static normalizeToGeoJSON(geom: LngLatBounds | GeometryObject): Polygon | MultiPolygon {
+    private static normalizeToGeoJSON(geom: wktValue): Polygon | MultiPolygon {
         if (MapService.isGeometryObject(geom)) {
             if (geom.type === "Polygon") {
                 return (geom as Polygon);
@@ -125,11 +172,11 @@ export class MapService {
             const matches = x.match(/^([\w\-]+)/);
             if (matches != null &&
                 (matches[0] === "MULTIPOLYGON" ||
-                matches[0] === "POLYGON" ||
-                matches[0] === "POINT" ||
-                matches[0] === "MULTIPOINT" ||
-                matches[0] === "LINESTRING" ||
-                matches[0] === "MULTILINESTRING")) {
+                    matches[0] === "POLYGON" ||
+                    matches[0] === "POINT" ||
+                    matches[0] === "MULTIPOINT" ||
+                    matches[0] === "LINESTRING" ||
+                    matches[0] === "MULTILINESTRING")) {
                 return true;
             }
         }

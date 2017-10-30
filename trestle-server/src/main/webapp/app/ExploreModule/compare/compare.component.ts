@@ -3,7 +3,7 @@ import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual
 import {MapSource, TrestleMapComponent} from "../../UIModule/map/trestle-map.component";
 import {IndividualService} from "../../SharedModule/individual/individual.service";
 import {TrestleTemporal} from "../../SharedModule/individual/TrestleIndividual/trestle-temporal";
-import {schemeCategory10} from "d3-scale";
+import {schemeCategory10, schemeCategory20b} from "d3-scale";
 import {MatSliderChange} from "@angular/material";
 import {MapService} from "../viewer/map.service";
 import {Feature} from "geojson";
@@ -56,7 +56,7 @@ export class CompareComponent {
         this.layerNumber = 0;
         this.availableColors = [];
         // Use this to pull out colors for the map
-        this.colorScale = schemeCategory10;
+        this.colorScale = schemeCategory20b;
         this.currentSliderValue = 0;
     }
 
@@ -125,69 +125,69 @@ export class CompareComponent {
     public intersectBaseIndividual(): void {
         if (this.baseIndividual) {
             this.vs
-                .stIntersect("gaul-test",
+                .stIntersectIndividual("gaul-test",
                     this.baseIndividual.individual.getSpatialValue(),
-                    moment(),
+                    undefined,
                     moment(),
                     1)
-                .subscribe((results) => {
-                    console.debug("Intersected results:", results);
-                //    Add all the results to the map
-
-                });
+                .subscribe((results) => results
+                    .forEach((result) => this.addIndividualToCompare(result, false)));
         }
     }
 
 
     private loadSelectedIndividual(individual: string, baseIndividual = false): void {
         this.is.getTrestleIndividual(individual)
-            .subscribe((result) => {
-                const color = this.getColor(this.layerNumber);
-                const height = this.getHeight(result.getTemporal());
-                const baseHeight = CompareComponent.getBase(result.getTemporal());
-                this.mapData = {
-                    id: result.getID(),
-                    data: {
-                        type: "Feature",
-                        geometry: result.getSpatialValue(),
-                        id: result.getFilteredID(),
-                        properties: result.getFactValues()
-                    },
-                    extrude: {
-                        id: result.getID() + "-extrude",
-                        type: "fill-extrusion",
-                        source: result.getID(),
-                        paint: {
-                            "fill-extrusion-color": color,
-                            "fill-extrusion-height": height,
-                            "fill-extrusion-base": baseHeight,
-                            "fill-extrusion-opacity": 0.7
-                        }
-                    }
-                };
-                console.debug("new map data:", this.mapData);
-                const compare = {
-                    individual: result,
-                    color,
-                    visible: true,
-                    height,
-                    base: baseHeight,
-                    sliderValue: 50
-                };
+            .subscribe((result) => this.addIndividualToCompare(result, baseIndividual));
+    }
 
-                // Are we loading the base selection, or not?
-                if (baseIndividual) {
-                    // Reset the slider value to 0
-                    compare.sliderValue = 0;
-                    this.baseIndividual = compare;
-                    //    Lock the map so it doesn't move anymore
-                    this.zoomMap = false;
-                } else {
-                    //    Add the selection to the list
-                    this.selectedIndividuals.push(compare);
+    private addIndividualToCompare(individual: TrestleIndividual, baseIndividual = false): void {
+        console.debug("Adding %s to map", individual.getFilteredID());
+        const color = this.getColor(this.layerNumber);
+        const height = this.getHeight(individual.getTemporal());
+        const baseHeight = CompareComponent.getBase(individual.getTemporal());
+        this.mapData = {
+            id: individual.getID(),
+            data: {
+                type: "Feature",
+                geometry: individual.getSpatialValue(),
+                id: individual.getFilteredID(),
+                properties: individual.getFactValues()
+            },
+            extrude: {
+                id: individual.getID() + "-extrude",
+                type: "fill-extrusion",
+                source: individual.getID(),
+                paint: {
+                    "fill-extrusion-color": color,
+                    "fill-extrusion-height": height,
+                    "fill-extrusion-base": baseHeight,
+                    "fill-extrusion-opacity": 0.7
                 }
-                this.layerNumber++;
-            });
+            }
+        };
+        console.debug("new map data:", this.mapData);
+        const compare = {
+            individual: individual,
+            color,
+            visible: true,
+            height,
+            base: baseHeight,
+            sliderValue: 50
+        };
+
+        // Are we loading the base selection, or not?
+        if (baseIndividual) {
+            // Reset the slider value to 0
+            compare.sliderValue = 0;
+            this.baseIndividual = compare;
+            //    Lock the map so it doesn't move anymore
+            this.zoomMap = false;
+        } else {
+            //    Add the selection to the list
+            this.selectedIndividuals.push(compare);
+        }
+        this.layerNumber++;
     }
 
     private getHeight(temporal: TrestleTemporal): number {

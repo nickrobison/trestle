@@ -88,7 +88,7 @@ public class GAULIntegratorTests {
         connectionString = "http://localhost:7200";
         userName = "";
         password = "";
-        ontologyPath = "file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl";
+        ontologyPath = "file:///Users/nickrobison/Developer/git/dissertation/trestle-ontology/trestle.owl";
         ontologyPrefix = "http://nickrobison.com/test/hadoop.owl#";
         ontologyName = "hadoop_gaul_expanded_equality";
         conf.set("reasoner.db.connection", connectionString);
@@ -98,7 +98,7 @@ public class GAULIntegratorTests {
 
         conf.set("reasoner.ontology.path", ontologyPath);
         conf.set("reasoner.ontology.prefix", ontologyPrefix);
-        conf.set("reasoner.ontology.location", "file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl");
+        conf.set("reasoner.ontology.location", ontologyPath);
 
 //        conf.set("gaulcode.restriction", "59");
 
@@ -123,7 +123,8 @@ public class GAULIntegratorTests {
     @Test
     public void testReducer() throws IOException, ClassNotFoundException, InterruptedException, SQLException, URISyntaxException {
 
-        URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/sudan/");
+//        URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/sudan/");
+                URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/gates-test/");
         URL OUT_DIR = GAULIntegratorTests.class.getClassLoader().getResource("out/");
 
         Path inDir = new Path(IN_DIR.toString());

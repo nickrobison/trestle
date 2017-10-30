@@ -9,7 +9,7 @@ import { parse } from "wellknown";
 
 export interface ITrestleIndividual {
     individualID: string;
-    individualTemporal: ITrestleTemporal;
+    existsTemporal: ITrestleTemporal;
     facts: ITrestleFact[];
     relations: ITrestleRelation[];
     events: ITrestleEvent[];
@@ -25,7 +25,7 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
 
     constructor(individual: ITrestleIndividual) {
         this.id = individual.individualID;
-        this.existsTemporal = new TrestleTemporal(individual.individualTemporal);
+        this.existsTemporal = new TrestleTemporal(individual.existsTemporal);
         individual.facts.forEach((fact) => {
             const factClass = new TrestleFact(fact);
             this.facts.set(factClass.getName(), factClass);
@@ -148,7 +148,7 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
     public asInterface(): ITrestleIndividual {
         const returnValue: ITrestleIndividual = {
             individualID: this.id,
-            individualTemporal: this.existsTemporal.asInterface(),
+            existsTemporal: this.existsTemporal.asInterface(),
             facts: [],
             relations: [],
             events: []

@@ -14,7 +14,6 @@ public class IntersectRequest {
 
     @NotEmpty
     private String dataset;
-    @NotEmpty
     private OffsetDateTime validAt;
     @NotEmpty
     private OffsetDateTime databaseAt;
