@@ -195,7 +195,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
 
 //        Validate Results
         final Set<OWLNamedIndividual> gaulInstances = reasoner.getInstances(TestClasses.GAULTestClass.class);
-        assertEquals(191, gaulInstances.size(), "Wrong number of GAUL records from instances method");
+        assertEquals(200, gaulInstances.size(), "Wrong number of GAUL records from instances method");
 
 //        Try to read one out.
 //        final GAULTestClass ancuabe = reasoner.readTrestleObject(GAULTestClass.class, IRI.create("trestle:", "Ancuabe"));

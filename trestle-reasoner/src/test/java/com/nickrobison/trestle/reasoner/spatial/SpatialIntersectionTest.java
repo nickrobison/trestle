@@ -52,7 +52,7 @@ public class SpatialIntersectionTest extends AbstractReasonerTest {
                 maputo.wkt, 0.0, LocalDate.of(2015, 01, 01), null);
 
         assertAll(() -> assertTrue(individuals2015.isPresent(), "Should have an optional"),
-                () -> assertTrue(individuals2015.get().isEmpty(), "Should have no intersected individuals"));
+                () -> assertEquals(1, individuals2015.get().size(), "Should only have itself"));
 
 
 //        Find Manhica 2
@@ -71,9 +71,9 @@ public class SpatialIntersectionTest extends AbstractReasonerTest {
 
 //        Now with the buffer, do a TS Intersection
         final Optional<List<TrestleIndividual>> manhica2015 = this.reasoner.getSpatialEngine().spatialIntersectIndividuals(TestClasses.GAULTestClass.class,
-                manhica.wkt, 50.0, LocalDate.of(2015, 01, 01), null);
+                manhica.wkt, 0.1, LocalDate.of(2015, 01, 01), null);
         assertAll(() -> assertTrue(manhica2015.isPresent(), "Should have optional"),
-                () -> assertEquals(3, manhica2015.get().size(), "Should not have old Manhica"));
+                () -> assertEquals(2, manhica2015.get().size(), "Should not have old Manhica"));
 
     }
 

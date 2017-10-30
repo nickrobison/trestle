@@ -42,11 +42,16 @@ public class SharedUtils {
 
 
             LocalDate date = LocalDate.parse(splitLine[2].replace("\"", ""), formatter);
+            LocalDate endDate = LocalDate.parse(splitLine[3].replace("\"", ""), formatter);
 //            final Instant instant = Instant.from(date);
 //            final LocalDateTime startTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
 
 //            Need to add a second to get it to format correctly.
-            gaulObjects.add(new TestClasses.GAULTestClass(code, splitLine[1].replace("\"", ""), date.atStartOfDay(), splitLine[4].replace("\"", "")));
+            gaulObjects.add(new TestClasses.GAULTestClass(code,
+                    splitLine[1].replace("\"", ""),
+                    date.atStartOfDay(),
+                    endDate.atStartOfDay(),
+                    splitLine[4].replace("\"", "")));
         }
 
         return gaulObjects;
