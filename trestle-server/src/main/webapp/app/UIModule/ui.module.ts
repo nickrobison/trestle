@@ -12,6 +12,8 @@ import {SearchComponent} from "./search/search.component";
 import {MaterialModule} from "../MaterialModule/material.module";
 import {CommonModule} from "@angular/common";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
+import {LoadingSpinnerComponent} from "./spinner/loading-spinner.component";
+import {LoadingSpinnerService} from "./spinner/loading-spinner.service";
 
 @NgModule({
     imports: [
@@ -27,13 +29,15 @@ import {FormsModule, ReactiveFormsModule} from "@angular/forms";
         EventGraphComponent,
         SearchComponent,
         MapValuesPipe,
+        LoadingSpinnerComponent
     ],
-    providers: [EventBus],
+    providers: [EventBus, LoadingSpinnerService],
     exports: [TrestleMapComponent,
         MapValuesPipe,
         HistoryGraphComponent,
         EventGraphComponent,
-        SearchComponent]
+        SearchComponent],
+    entryComponents: [LoadingSpinnerComponent]
 })
 export class UIModule {
 }

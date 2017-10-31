@@ -2,18 +2,11 @@
  * Created by nrobison on 6/11/17.
  */
 import * as mapboxgl from "mapbox-gl";
-import {LngLatBounds, MapMouseEvent, VectorSource, GeoJSONSource, GeoJSONSourceOptions} from "mapbox-gl";
+import {GeoJSONSource, LngLatBounds, MapMouseEvent, VectorSource} from "mapbox-gl";
 import extent from "@mapbox/geojson-extent";
+import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange} from "@angular/core";
 import {
-    Component,
-    EventEmitter,
-    Input,
-    OnChanges,
-    OnInit,
-    Output,
-    SimpleChange
-} from "@angular/core";
-import {
+    Feature,
     FeatureCollection,
     GeometryObject,
     LineString,
@@ -21,12 +14,10 @@ import {
     MultiPoint,
     MultiPolygon,
     Point,
-    Polygon,
-    Feature
+    Polygon
 } from "geojson";
 import {BehaviorSubject} from "rxjs/BehaviorSubject";
 import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
-import {off} from "codemirror";
 import {Subject} from "rxjs/Subject";
 
 export interface IMapFillLayer extends mapboxgl.Layer {

@@ -1,14 +1,14 @@
-import {Component, ViewChild} from "@angular/core";
+import {AfterViewInit, Component, ElementRef, ViewChild, ViewContainerRef} from "@angular/core";
 import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
 import {MapSource, TrestleMapComponent} from "../../UIModule/map/trestle-map.component";
 import {IndividualService} from "../../SharedModule/individual/individual.service";
 import {TrestleTemporal} from "../../SharedModule/individual/TrestleIndividual/trestle-temporal";
-import {schemeCategory10, schemeCategory20b} from "d3-scale";
+import {schemeCategory20b} from "d3-scale";
 import {MatSliderChange} from "@angular/material";
 import {MapService} from "../viewer/map.service";
-import {Feature} from "geojson";
 import * as moment from "moment";
 import {Subject} from "rxjs/Subject";
+import {LoadingSpinnerService} from "../../UIModule/spinner/loading-spinner.service";
 
 interface ICompareIndividual {
     individual: TrestleIndividual;
@@ -24,7 +24,7 @@ interface ICompareIndividual {
     templateUrl: "./compare.component.html",
     styleUrls: ["./compare.component.css"]
 })
-export class CompareComponent {
+export class CompareComponent implements AfterViewInit {
 
     public zoomMap = true;
     public mapConfig: mapboxgl.MapboxOptions;
@@ -40,9 +40,14 @@ export class CompareComponent {
     @ViewChild(TrestleMapComponent)
     private mapComponent: TrestleMapComponent;
     private currentSliderValue: number;
+    @ViewChild("loadable")
+    private mapRef: ElementRef;
 
     constructor(private is: IndividualService,
-                private vs: MapService) {
+                private vs: MapService,
+                private spinner: LoadingSpinnerService) {
+
+
         this.mapConfig = {
             style: "mapbox://styles/nrobison/cj3n7if3q000s2sutls5a1ny7",
             center: [32.3558991, -25.6854313],
@@ -59,6 +64,11 @@ export class CompareComponent {
         // Use this to pull out colors for the map
         this.colorScale = schemeCategory20b;
         this.currentSliderValue = 0;
+    }
+
+    public ngAfterViewInit(): void {
+        console.debug("Child", this.mapComponent);
+        this.spinner.setViewContainerRef(this.mapRef.nativeElement);
     }
 
 
@@ -125,22 +135,26 @@ export class CompareComponent {
 
     public intersectBaseIndividual(): void {
         if (this.baseIndividual) {
+            // this.spinner.reveal();
             this.vs
                 .stIntersectIndividual("gaul-test",
                     this.baseIndividual.individual.getSpatialValue(),
                     undefined,
                     moment(),
                     0)
-                .subscribe((results) => results
-                    .filter((result) => {
-                        // Filter out the base individual,
-                        // if it exists, in the grossest way possible
-                        if (this.baseIndividual !== null) {
-                            return !(result.getID() === this.baseIndividual.individual.getID());
-                        }
-                        return true;
-                    })
-                    .forEach((result) => this.addIndividualToCompare(result, false)));
+                .subscribe((results) => {
+                    results
+                        .filter((result) => {
+                            // Filter out the base individual,
+                            // if it exists, in the grossest way possible
+                            if (this.baseIndividual !== null) {
+                                return !(result.getID() === this.baseIndividual.individual.getID());
+                            }
+                            return true;
+                        })
+                        .forEach((result) => this.addIndividualToCompare(result, false));
+                    // this.spinner.hide();
+                });
         }
     }
 
