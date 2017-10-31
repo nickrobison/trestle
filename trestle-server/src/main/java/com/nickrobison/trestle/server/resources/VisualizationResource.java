@@ -6,10 +6,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
+import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
-import com.nickrobison.trestle.server.models.IntersectRequest;
+import com.nickrobison.trestle.server.resources.requests.ComparisonRequest;
+import com.nickrobison.trestle.server.resources.requests.IntersectRequest;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
@@ -146,6 +148,23 @@ public class VisualizationResource {
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity("Unable get intersected individuals")
                 .build();
+    }
+
+    @POST
+    @Path("/compare")
+    public Response compareIndividuals(@NotNull ComparisonRequest request) {
+
+        List<String> compareIndividuals = new ArrayList<>(request.getCompareAgainst());
+        compareIndividuals.add(request.getCompare());
+
+//        Look for spatial union
+        final Optional<UnionEqualityResult<Object>> objectUnionEqualityResult = this.reasoner.calculateSpatialUnion("gaul-test", compareIndividuals, 4326, 0.8);
+
+        if (objectUnionEqualityResult.isPresent()) {
+            return Response.ok(objectUnionEqualityResult.get()).build();
+        } else {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unable to determine union").build();
+        }
     }
 
 

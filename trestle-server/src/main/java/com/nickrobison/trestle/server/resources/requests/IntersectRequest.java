@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.server.models;
+package com.nickrobison.trestle.server.resources.requests;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.geojson.GeoJsonObject;

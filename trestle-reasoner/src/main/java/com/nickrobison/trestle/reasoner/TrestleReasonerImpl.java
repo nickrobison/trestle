@@ -3,6 +3,7 @@ package com.nickrobison.trestle.reasoner;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
+import com.esri.core.geometry.SpatialReference;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
@@ -39,6 +40,7 @@ import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeException;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
 import com.nickrobison.trestle.reasoner.exceptions.*;
 import com.nickrobison.trestle.reasoner.parser.*;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
@@ -748,18 +750,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @SuppressWarnings("unchecked")
     public <T> @NonNull T readTrestleObject(String datasetClassID, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws MissingOntologyEntity, TrestleClassException {
 //        Lookup class
-        final OWLClass datasetClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, datasetClassID));
-        final Optional<@KeyFor("this.registeredClasses") OWLClass> matchingClass = this.registeredClasses
-                .keySet()
-                .stream()
-                .filter(owlclass -> owlclass.equals(datasetClass))
-                .findFirst();
-
-        if (!matchingClass.isPresent()) {
-            throw new MissingOntologyEntity("Cannot find matching class for: ", datasetClass);
-        }
-
-        final Class<@NonNull T> aClass = (Class<@NonNull T>) this.registeredClasses.get(matchingClass.get());
+        final Class<@NonNull T> aClass = (Class<@NonNull T>) this.getRegisteredClass(datasetClassID);
         return readTrestleObject(aClass, objectID, validTemporal, databaseTemporal);
     }
 
@@ -908,8 +899,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 final TrestleTransaction tt = ontology.createandOpenNewTransaction(trestleTransaction);
                 TrestleResultSet resultSet = ontology.executeSPARQLResults(factQuery);
                 ontology.returnAndCommitTransaction(tt);
-//                final Set<OWLDataPropertyAssertionAxiom> objectFacts = ontology.getFactsForIndividual(df.getOWLNamedIndividual(individualIRI), validAtTemporal, dbAtTemporal, true);
-//                logger.debug("Retrieved {} facts for {}", resultSet.getResults().size(), individualIRI);
                 if (resultSet.getResults().isEmpty()) {
                     throw new NoValidStateException(individualIRI, validAtTemporal, dbAtTemporal);
                 }
@@ -1422,6 +1411,80 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     }
 
+
+    @Override
+    public Optional<UnionEqualityResult<Object>> calculateSpatialUnion(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold) {
+
+        final Class<?> registeredClass = this.getRegisteredClass(datasetClassID);
+        final SpatialReference spatialReference = SpatialReference.create(inputSR);
+        final OffsetDateTime atTemporal = OffsetDateTime.now();
+
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+
+//        For each of the input individuals, build the object
+        final List<CompletableFuture<Object>> individualFutures = individualIRIs
+                .stream()
+                .map(individual -> CompletableFuture.supplyAsync(() -> {
+//                    Figure out if (and how much) we need to adjust the query temporal to get the earliest/latest version of the object
+                    return getAdjustedQueryTemporal(individual, atTemporal, trestleTransaction);
+
+                }, this.trestleThreadPool)
+                        .thenApply(temporal -> {
+                            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                            try {
+                                return (Object) this.readTrestleObject(registeredClass, individual, temporal, null);
+                            } catch (MissingOntologyEntity | TrestleClassException e) {
+                                this.ontology.returnAndAbortTransaction(tt);
+                                throw new CompletionException(e);
+                            } finally {
+                                this.ontology.returnAndCommitTransaction(tt);
+                            }
+                        }))
+                .collect(Collectors.toList());
+        final CompletableFuture<Optional<UnionEqualityResult<Object>>> unionFuture = LambdaUtils.sequenceCompletableFutures(individualFutures)
+                .thenApply(individuals -> this.spatialEngine.calculateSpatialUnion(individuals, spatialReference, matchThreshold));
+
+        try {
+            return unionFuture.get();
+        } catch (InterruptedException e) {
+            logger.error("Union calculation was interrupted", e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+            return Optional.empty();
+        } catch (ExecutionException e) {
+            logger.error("Union calculation excepted", e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+            return Optional.empty();
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+        }
+    }
+
+    private Temporal getAdjustedQueryTemporal(String individual, OffsetDateTime atTemporal, @Nullable TrestleTransaction trestleTransaction) {
+        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+        try {
+            final Set<OWLDataPropertyAssertionAxiom> temporalsForIndividual = this.ontology.getTemporalsForIndividual(df.getOWLNamedIndividual(IRI.create(individual)));
+            final Optional<TemporalObject> individualExistsTemporal = TemporalObjectBuilder.buildTemporalFromProperties(temporalsForIndividual, null, "blank");
+            final TemporalObject temporalObject = individualExistsTemporal.orElseThrow(() -> new RuntimeException(String.format("Unable to get exists temporals for %s", individual)));
+            final int compared = temporalObject.compareTo(atTemporal);
+            final Temporal adjustedIntersection;
+            if (compared == -1) { // Intersection is after object existence, get the latest version
+                if (temporalObject.isInterval()) {
+//                            we need to do a minus one precision unit, because the intervals are exclusive on the end {[)}
+                    adjustedIntersection = (Temporal) temporalObject.asInterval().getAdjustedToTime(-1).get();
+                } else {
+                    adjustedIntersection = temporalObject.asPoint().getPointTime();
+                }
+            } else if (compared == 0) { // Intersection is during existence, continue
+                adjustedIntersection = atTemporal;
+            } else { // Intersection is before object existence, get earliest version
+                adjustedIntersection = temporalObject.getIdTemporal();
+            }
+            return adjustedIntersection;
+        } finally {
+            this.ontology.returnAndCommitTransaction(tt);
+        }
+    }
+
     @Override
     public <@NonNull T> Optional<List<T>> getEquivalentObjects(Class<T> clazz, IRI individual, Temporal queryTemporal) {
         return getEquivalentObjects(clazz, Collections.singletonList(individual), queryTemporal);
@@ -1486,19 +1549,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal) {
-        //        Lookup class
-        final OWLClass individualClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, datasetClassID));
-        final Optional<@KeyFor("this.registeredClasses") OWLClass> matchingClass = this.registeredClasses
-                .keySet()
-                .stream()
-                .filter(owlclass -> owlclass.equals(individualClass))
-                .findFirst();
+        final Class<?> clazz = getRegisteredClass(datasetClassID);
 
-        if (!matchingClass.isPresent()) {
-            throw new IllegalArgumentException(String.format("Cannot find matching class for: %s", individualClass));
-        }
-
-        final Class<?> clazz = this.registeredClasses.get(matchingClass.get());
         return this.spatialEngine.spatialIntersectIndividuals(clazz, wkt, buffer, atTemporal, dbTemporal);
     }
 
@@ -1584,36 +1636,20 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final List<CompletableFuture<T>> completableFutureList = individualIRIs
                 .stream()
                 .map(iri -> CompletableFuture.supplyAsync(() -> {
-                    final TrestleTransaction futureTransaction = this.ontology.createandOpenNewTransaction(trestleTransaction);
-                    final Set<OWLDataPropertyAssertionAxiom> temporalsForIndividual = this.ontology.getTemporalsForIndividual(df.getOWLNamedIndividual(IRI.create(iri)));
-                    final Optional<TemporalObject> individualExistsTemporal = TemporalObjectBuilder.buildTemporalFromProperties(temporalsForIndividual, null, "blank");
-                    final TemporalObject temporalObject = individualExistsTemporal.orElseThrow(() -> new RuntimeException(String.format("Unable to get exists temporals for %s", iri)));
-                    final int compared = temporalObject.compareTo(atTemporal);
-                    final Temporal adjustedIntersection;
-                    if (compared == -1) { // Intersection is after object existence, get the latest version
-                        if (temporalObject.isInterval()) {
-//                            we need to do a minus one precision unit, because the intervals are exclusive on the end {[)}
-                            adjustedIntersection = (Temporal) temporalObject.asInterval().getAdjustedToTime(-1).get();
-                        } else {
-                            adjustedIntersection = temporalObject.asPoint().getPointTime();
-                        }
-                    } else if (compared == 0) { // Intersection is during existence, continue
-                        adjustedIntersection = atTemporal;
-                    } else { // Intersection is before object existence, get earliest version
-                        adjustedIntersection = temporalObject.getIdTemporal();
-                    }
+                    final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                     try {
-                        final @NonNull T retrievedObject = this.readTrestleObject(clazz, iri, adjustedIntersection, null);
-                        this.ontology.returnAndCommitTransaction(futureTransaction);
-                        return retrievedObject;
-                    } catch (TrestleClassException e) {
-                        logger.error("Unregistered class", e);
-                        this.ontology.returnAndCommitTransaction(futureTransaction);
-                        throw new RuntimeException(e);
+                        final Temporal adjustedIntersection = this.getAdjustedQueryTemporal(iri, atTemporal, tt);
+                        return this.readTrestleObject(clazz, iri, adjustedIntersection, null);
                     } catch (MissingOntologyEntity e) {
                         logger.error("Cannot find ontology individual {}", e.getIndividual(), e);
-                        this.ontology.returnAndCommitTransaction(futureTransaction);
-                        throw new RuntimeException(e);
+                        this.ontology.returnAndAbortTransaction(tt);
+                        throw new CompletionException(e);
+                    } catch (TrestleClassException e) {
+                        logger.error("Unregistered class", e);
+                        this.ontology.returnAndAbortTransaction(tt);
+                        throw new CompletionException(e);
+                    } finally {
+                        this.ontology.returnAndCommitTransaction(tt);
                     }
                 }, trestleThreadPool))
                 .collect(Collectors.toList());
@@ -2271,6 +2307,28 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             }, executor);
         }
         return CompletableFuture.completedFuture(Optional.empty());
+    }
+
+    /**
+     * Get the registered {@link Class} by the String id of the {@link OWLClass}
+     *
+     * @param datasetClassID - {@link String} ID of dataset
+     * @return - {@link Class} registered with reasoner
+     */
+    private Class<?> getRegisteredClass(String datasetClassID) {
+        //        Lookup class
+        final OWLClass individualClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, datasetClassID));
+        final Optional<@KeyFor("this.registeredClasses") OWLClass> matchingClass = this.registeredClasses
+                .keySet()
+                .stream()
+                .filter(owlclass -> owlclass.equals(individualClass))
+                .findFirst();
+
+        if (!matchingClass.isPresent()) {
+            throw new IllegalArgumentException(String.format("Cannot find matching class for: %s", individualClass));
+        }
+
+        return this.registeredClasses.get(matchingClass.get());
     }
 
     /**

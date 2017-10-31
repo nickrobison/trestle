@@ -32,6 +32,11 @@ interface IIntersectionBody {
     databaseAt?: string;
 }
 
+interface ICompareBody {
+    compare: string;
+    compareAgainst: string[];
+}
+
 @Injectable()
 export class MapService {
 
@@ -91,6 +96,12 @@ export class MapService {
 
         return this.http.post("/visualize/intersect-individuals", postBody)
             .map(MapService.parseResponseToIndividuals);
+    }
+
+    public compareIndividuals(request: ICompareBody): Observable<any> {
+        return this.http.post("/visualize/compare", request)
+            .map((results) => results.json())
+            .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
 
     private static parseResponseToIndividuals(res: Response): TrestleIndividual[] {

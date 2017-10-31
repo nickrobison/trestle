@@ -71,6 +71,21 @@ export class CompareComponent implements AfterViewInit {
         this.spinner.setViewContainerRef(this.mapRef.nativeElement);
     }
 
+    public compareIndividuals(): void {
+
+        // Get all the individuals
+        if (this.baseIndividual) {
+            this.vs.compareIndividuals({
+                compare: this.baseIndividual.individual.getID(),
+                compareAgainst: this.selectedIndividuals
+                    .map((individual) => individual.individual.getID())
+            })
+                .subscribe((data) => {
+                    console.debug("Has data from compare", data);
+                });
+        }
+    }
+
 
     public selectedHandler(individual: string): void {
         console.debug("Selected:", individual);
@@ -190,27 +205,7 @@ export class CompareComponent implements AfterViewInit {
                 }
             }
         });
-        // this.mapData = {
-        //     id: individual.getID(),
-        //     data: {
-        //         type: "Feature",
-        //         geometry: individual.getSpatialValue(),
-        //         id: individual.getFilteredID(),
-        //         properties: individual.getFactValues()
-        //     },
-        //     extrude: {
-        //         id: individual.getID() + "-extrude",
-        //         type: "fill-extrusion",
-        //         source: individual.getID(),
-        //         paint: {
-        //             "fill-extrusion-color": color,
-        //             "fill-extrusion-height": height,
-        //             "fill-extrusion-base": baseHeight,
-        //             "fill-extrusion-opacity": 0.7
-        //         }
-        //     }
-        // };
-        // console.debug("new map data:", this.mapData);
+
         const compare = {
             individual,
             color,

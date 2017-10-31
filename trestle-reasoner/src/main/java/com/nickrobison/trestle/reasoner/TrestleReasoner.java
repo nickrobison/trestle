@@ -8,6 +8,7 @@ import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
@@ -374,6 +375,17 @@ public interface TrestleReasoner {
      * @return - {@link Optional} {@link Map} of String IRI representations of related concepts
      */
     Optional<Map<String, List<String>>> getRelatedConcepts(String individual, @Nullable String conceptID, double relationStrength);
+
+    /**
+     * Calculate {@link UnionEqualityResult} for the given {@link List} of individual IRIs
+     *
+     * @param datasetClassID - {@link String} {@link OWLClass} string reference
+     * @param individualIRIs - {@link List} of Individual IRIs
+     * @param inputSR        - EPSG code to determine union projection
+     * @param matchThreshold - {@link Double} cutoff to determine minimum match percentage
+     * @return - {@link Optional} {@link UnionEqualityResult}
+     */
+    Optional<UnionEqualityResult<Object>> calculateSpatialUnion(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold);
 
     /**
      * Get a {@link List} of objects that are equivalent to given individual at the given time point

@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.server.resources;
+package com.nickrobison.trestle.server.resources.requests;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
