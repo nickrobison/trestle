@@ -8,6 +8,7 @@ import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
@@ -385,7 +386,7 @@ public interface TrestleReasoner {
      * @param matchThreshold - {@link Double} cutoff to determine minimum match percentage
      * @return - {@link Optional} {@link UnionEqualityResult}
      */
-    Optional<UnionEqualityResult<Object>> calculateSpatialUnion(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold);
+    Optional<UnionContributionResult<Object>> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold);
 
     /**
      * Get a {@link List} of objects that are equivalent to given individual at the given time point

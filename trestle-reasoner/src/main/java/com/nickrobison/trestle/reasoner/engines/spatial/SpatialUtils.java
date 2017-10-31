@@ -25,7 +25,6 @@ public class SpatialUtils {
      * @throws IllegalArgumentException    if the {@link Object} is not a subclass of {@link Polygon} or {@link String}
      * @throws TrestleInvalidDataException if JTS is unable to Parse the spatial input
      */
-//    TODO(nrobison): Unify this with the same implementation from the Equality Engine
     public static Geometry parseJTSGeometry(Optional<Object> spatialValue, WKTReader wktReader, WKBReader wkbReader) {
         final Object spatial = spatialValue.orElseThrow(() -> new IllegalStateException("Cannot get spatial value for object"));
         try {
@@ -33,11 +32,12 @@ public class SpatialUtils {
                 final ByteBuffer wkbBuffer = operatorExport.execute(0, (Polygon) spatial, null);
                 return wkbReader.read(wkbBuffer.array());
             } else if (spatial instanceof String) {
-                return wktReader.read((String) spatial);
+                return wktReader.read(String.class.cast(spatial));
             }
-            throw new IllegalArgumentException("Only ESRI Polygons are supported by the Equality Engine");
+            throw new IllegalArgumentException("Only ESRI Polygons and WKT Strings are supported by the Equality Engine");
         } catch (ParseException e) {
-            throw new TrestleInvalidDataException("Cannot parse input polygon", e);
+            throw new TrestleInvalidDataException(e.getMessage(), spatial);
+//            throw new TrestleInvalidDataException("Cannot parse input polygon", spatial);
         }
     }
 }

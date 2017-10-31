@@ -24,6 +24,21 @@ type wktType = "POINT" |
 
 export type wktValue = LngLatBounds | GeometryObject;
 
+export interface IContributionReport {
+    object: any;
+    area: number;
+    contributingParts: IContributionPart[];
+}
+
+export interface IComparisonReport {
+    union: IContributionReport | null;
+}
+
+export interface IContributionPart {
+    object: any;
+    contribution: number;
+}
+
 interface IIntersectionBody {
     dataset: string;
     geojson: Polygon | MultiPolygon;
@@ -98,7 +113,7 @@ export class MapService {
             .map(MapService.parseResponseToIndividuals);
     }
 
-    public compareIndividuals(request: ICompareBody): Observable<any> {
+    public compareIndividuals(request: ICompareBody): Observable<IComparisonReport> {
         return this.http.post("/visualize/compare", request)
             .map((results) => results.json())
             .catch((error: Error) => Observable.throw(error || "Server Error"));

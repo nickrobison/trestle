@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, ViewChild, ViewContainerRef} from "@angular/core";
+import {AfterViewInit, Component, ElementRef, ViewChild} from "@angular/core";
 import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
 import {MapSource, TrestleMapComponent} from "../../UIModule/map/trestle-map.component";
 import {IndividualService} from "../../SharedModule/individual/individual.service";
@@ -78,6 +78,8 @@ export class CompareComponent implements AfterViewInit {
             this.vs.compareIndividuals({
                 compare: this.baseIndividual.individual.getID(),
                 compareAgainst: this.selectedIndividuals
+                // Filter out invisible members
+                    .filter((individual) => individual.visible === true)
                     .map((individual) => individual.individual.getID())
             })
                 .subscribe((data) => {

@@ -40,6 +40,7 @@ import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeException;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
 import com.nickrobison.trestle.reasoner.exceptions.*;
 import com.nickrobison.trestle.reasoner.parser.*;
@@ -1413,7 +1414,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 
     @Override
-    public Optional<UnionEqualityResult<Object>> calculateSpatialUnion(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold) {
+    public Optional<UnionContributionResult<Object>> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold) {
 
         final Class<?> registeredClass = this.getRegisteredClass(datasetClassID);
         final SpatialReference spatialReference = SpatialReference.create(inputSR);
@@ -1445,7 +1446,15 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 .thenApply(individuals -> this.spatialEngine.calculateSpatialUnion(individuals, spatialReference, matchThreshold));
 
         try {
-            return unionFuture.get();
+            final Optional<UnionEqualityResult<Object>> objectUnionEqualityResult = unionFuture.get();
+//            Close the transaction before doing some intense computations
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+            if (objectUnionEqualityResult.isPresent()) {
+                return Optional.of(this.spatialEngine.calculateUnionContribution(objectUnionEqualityResult.get(), spatialReference));
+            } else {
+                return Optional.empty();
+            }
+
         } catch (InterruptedException e) {
             logger.error("Union calculation was interrupted", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
@@ -1454,8 +1463,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             logger.error("Union calculation excepted", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
-        } finally {
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
     }
 

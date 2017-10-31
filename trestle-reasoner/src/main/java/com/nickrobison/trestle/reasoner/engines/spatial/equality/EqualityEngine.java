@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.reasoner.engines.spatial.equality;
 
 import com.esri.core.geometry.SpatialReference;
+import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
@@ -20,6 +21,16 @@ public interface EqualityEngine {
      * @return - {@link Optional} {@link UnionEqualityResult} if a Spatial Union exists within the object set, above the given threshold
      */
     <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold);
+
+    /**
+     * Calculate the object contributions of the members of the given {@link UnionEqualityResult}
+     *
+     * @param <T> - generic type parameter
+     * @param result - {@link UnionEqualityResult}
+     * @param inputSR - {@link SpatialReference} of objects
+     * @return
+     */
+    <T> UnionContributionResult<T> calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR);
 
     /**
      * Determines if two objects are approximately equal, in spatial area, to each other, given a threshold value.

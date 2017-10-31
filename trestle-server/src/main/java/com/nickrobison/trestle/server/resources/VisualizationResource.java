@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
-import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
+import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
@@ -154,16 +154,25 @@ public class VisualizationResource {
     @Path("/compare")
     public Response compareIndividuals(@NotNull ComparisonRequest request) {
 
+        final ComparisonReport comparisonReport = new ComparisonReport();
+
         List<String> compareIndividuals = new ArrayList<>(request.getCompareAgainst());
         compareIndividuals.add(request.getCompare());
 
-//        Look for spatial union
-        final Optional<UnionEqualityResult<Object>> objectUnionEqualityResult = this.reasoner.calculateSpatialUnion("gaul-test", compareIndividuals, 4326, 0.8);
+        try {
 
-        if (objectUnionEqualityResult.isPresent()) {
-            return Response.ok(objectUnionEqualityResult.get()).build();
-        } else {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unable to determine union").build();
+//        Look for spatial union
+            final Optional<UnionContributionResult<Object>> objectUnionEqualityResult = this.reasoner.calculateSpatialUnionWithContribution("gaul-test", compareIndividuals, 4326, 0.8);
+
+            if (objectUnionEqualityResult.isPresent()) {
+                comparisonReport.setUnion(objectUnionEqualityResult.get());
+            }
+
+
+            return Response.ok(comparisonReport).build();
+
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e).build();
         }
     }
 

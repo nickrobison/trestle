@@ -3,6 +3,7 @@ package com.nickrobison.trestle.reasoner.engines.spatial.equality;
 import com.esri.core.geometry.SpatialReference;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.SpatialUnionBuilder;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.SpatialUnionTraverser;
+import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
@@ -30,6 +31,11 @@ public class EqualityEngineImpl implements EqualityEngine {
     @Override
     public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
         return this.unionBuilder.getApproximateEqualUnion(inputObjects, inputSR, matchThreshold);
+    }
+
+    @Override
+    public <T> UnionContributionResult<T> calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR) {
+        return this.unionBuilder.calculateContribution(result, inputSR);
     }
 
     @Override

@@ -6,6 +6,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.esri.core.geometry.Polygon;
 import com.esri.core.geometry.SpatialReference;
 import com.nickrobison.metrician.Metrician;
+import com.nickrobison.trestle.common.TrestlePair;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialUtils;
 import com.nickrobison.trestle.reasoner.parser.SpatialParser;
@@ -30,6 +31,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.TemporalUtils.compareTemporals;
+import static com.nickrobison.trestle.reasoner.engines.spatial.SpatialUtils.*;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Metriced
@@ -46,6 +48,41 @@ public class SpatialUnionBuilder {
         unionSetSize = metrician.registerHistogram("union-set-size");
     }
 
+    public <T extends @NonNull Object> UnionContributionResult<T> calculateContribution(UnionEqualityResult<T> equalityResult, SpatialReference inputSR) {
+        logger.debug("Calculating union contribution for input set");
+        //        Setup the JTS components
+        final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
+        final WKBReader wkbReader = new WKBReader(geometryFactory);
+        final WKTReader wktReader = new WKTReader(geometryFactory);
+
+//        Determine the class of the object
+        final T unionObject = equalityResult.getUnionObject();
+        final Optional<Object> spatialValue = SpatialParser.getSpatialValue(unionObject);
+        final Geometry geometry = parseJTSGeometry(spatialValue, wktReader, wkbReader);
+
+//        Build the contribution object
+        final UnionContributionResult<T> result = new UnionContributionResult<>(unionObject, geometry.getArea());
+
+//        Add all the others
+        final Set<UnionContributionResult.UnionContributionPart<T>> contributionParts = equalityResult
+                .getUnionOf()
+                .stream()
+//                Build geometry object
+                .map(object -> new TrestlePair<>(object, parseJTSGeometry(SpatialParser
+                                .getSpatialValue(object),
+                        wktReader, wkbReader)))
+                .map(pair -> {
+//                    Calculate the proportion contribution
+                    final double percentage = calculateEqualityPercentage(geometry, pair.getRight());
+                    return new UnionContributionResult.UnionContributionPart<>(pair.getLeft(), percentage);
+                })
+                .collect(Collectors.toSet());
+
+        result.addAllContributions(contributionParts);
+
+        return result;
+    }
+
     @SuppressWarnings({"ConstantConditions", "squid:S3655"})
     @Timed(name = "union-equality-timer", absolute = true)
     public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> getApproximateEqualUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
@@ -60,7 +97,7 @@ public class SpatialUnionBuilder {
                 .getEarlyObjects()
                 .stream()
                 .map(SpatialParser::getSpatialValue)
-                .map(value -> SpatialUtils.parseJTSGeometry(value, wktReader, wkbReader))
+                .map(value -> parseJTSGeometry(value, wktReader, wkbReader))
                 .collect(Collectors.toSet());
 
         //        Extract the JTS polygons for each objects
@@ -68,7 +105,7 @@ public class SpatialUnionBuilder {
                 .getLateObjects()
                 .stream()
                 .map(SpatialParser::getSpatialValue)
-                .map(value -> SpatialUtils.parseJTSGeometry(value, wktReader, wkbReader))
+                .map(value -> parseJTSGeometry(value, wktReader, wkbReader))
                 .collect(Collectors.toSet());
 
         @Nullable final PolygonMatchSet polygonMatchSet = getApproxEqualUnion(geometryFactory, earlyPolygons, latePolygons, matchThreshold);
@@ -100,9 +137,9 @@ public class SpatialUnionBuilder {
         final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
         final WKTReader wktReader = new WKTReader(geometryFactory);
         final WKBReader wkbReader = new WKBReader(geometryFactory);
-        final Geometry inputPolygon = SpatialUtils.parseJTSGeometry(SpatialParser.getSpatialValue(inputObject), wktReader, wkbReader);
-        final Geometry matchPolygon = SpatialUtils.parseJTSGeometry(SpatialParser.getSpatialValue(matchObject), wktReader, wkbReader);
-        return isApproxEqual(inputPolygon, matchPolygon);
+        final Geometry inputPolygon = parseJTSGeometry(SpatialParser.getSpatialValue(inputObject), wktReader, wkbReader);
+        final Geometry matchPolygon = parseJTSGeometry(SpatialParser.getSpatialValue(matchObject), wktReader, wkbReader);
+        return calculateEqualityPercentage(inputPolygon, matchPolygon);
     }
 
 
@@ -124,7 +161,7 @@ public class SpatialUnionBuilder {
     @Metered(name = "union-calculation-meter", absolute = true)
     private PolygonMatchSet executeUnionCalculation(GeometryFactory geometryFactory, Set<Geometry> matchPolygons, Set<Geometry> inputSet, double matchThreshold) {
         final GeometryCollection geometryCollection = new GeometryCollection(inputSet.toArray(new Geometry[inputSet.size()]), geometryFactory);
-        logger.debug("Executing union operation for {}", inputSet);
+        logger.trace("Executing union operation for {}", inputSet);
         final Geometry unionInputGeom = geometryCollection.union();
 
         this.unionSetSize.update(inputSet.size());
@@ -147,10 +184,10 @@ public class SpatialUnionBuilder {
     @Metered(name = "union-strength-meter", absolute = true)
     private double executeUnion(GeometryFactory geometryFactory, double matchThreshold, Geometry unionInputGeom, List<Geometry> matchGeomList) {
         final GeometryCollection geometryCollection = new GeometryCollection(matchGeomList.toArray(new Geometry[matchGeomList.size()]), geometryFactory);
-        logger.debug("Executing union operation for {}", matchGeomList);
+        logger.trace("Executing union operation for {}", matchGeomList);
         this.unionSetSize.update(matchGeomList.size());
         final Geometry unionMatchGeom = geometryCollection.union();
-        final double approxEqual = isApproxEqual(unionInputGeom, unionMatchGeom);
+        final double approxEqual = calculateEqualityPercentage(unionInputGeom, unionMatchGeom);
         if (approxEqual > matchThreshold) {
             return approxEqual;
         }
@@ -164,7 +201,7 @@ public class SpatialUnionBuilder {
      * @param matchPolygon - {@link Polygon} to match against input polygon
      * @return - {@link Double} value of percent overlap
      */
-    private static double isApproxEqual(Geometry inputPolygon, Geometry matchPolygon) {
+    private static double calculateEqualityPercentage(Geometry inputPolygon, Geometry matchPolygon) {
         final double inputArea = inputPolygon.getArea();
         final double matchArea = matchPolygon.getArea();
         double greaterArea = inputArea >= matchArea ? inputArea : matchArea;
