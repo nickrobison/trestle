@@ -3,12 +3,11 @@ package com.nickrobison.trestle.reasoner.engines.spatial.equality.union;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
-import com.esri.core.geometry.OperatorExportToWkb;
 import com.esri.core.geometry.Polygon;
 import com.esri.core.geometry.SpatialReference;
 import com.nickrobison.metrician.Metrician;
-import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
+import com.nickrobison.trestle.reasoner.engines.spatial.SpatialUtils;
 import com.nickrobison.trestle.reasoner.parser.SpatialParser;
 import com.nickrobison.trestle.reasoner.parser.TemporalParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
@@ -18,7 +17,6 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryCollection;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.PrecisionModel;
-import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKBReader;
 import com.vividsolutions.jts.io.WKTReader;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -27,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.nio.ByteBuffer;
 import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -40,7 +37,6 @@ public class SpatialUnionBuilder {
     private static final Logger logger = LoggerFactory.getLogger(SpatialUnionBuilder.class);
     private static final String TEMPORAL_OPTIONAL_ERROR = "Cannot get temporal for comparison object";
 
-    private static final OperatorExportToWkb operatorExport = OperatorExportToWkb.local();
     private final TrestleParser tp;
     private final Histogram unionSetSize;
 
@@ -64,7 +60,7 @@ public class SpatialUnionBuilder {
                 .getEarlyObjects()
                 .stream()
                 .map(SpatialParser::getSpatialValue)
-                .map(value -> parseJTSGeometry(value, wktReader, wkbReader))
+                .map(value -> SpatialUtils.parseJTSGeometry(value, wktReader, wkbReader))
                 .collect(Collectors.toSet());
 
         //        Extract the JTS polygons for each objects
@@ -72,7 +68,7 @@ public class SpatialUnionBuilder {
                 .getLateObjects()
                 .stream()
                 .map(SpatialParser::getSpatialValue)
-                .map(value -> parseJTSGeometry(value, wktReader, wkbReader))
+                .map(value -> SpatialUtils.parseJTSGeometry(value, wktReader, wkbReader))
                 .collect(Collectors.toSet());
 
         @Nullable final PolygonMatchSet polygonMatchSet = getApproxEqualUnion(geometryFactory, earlyPolygons, latePolygons, matchThreshold);
@@ -104,8 +100,8 @@ public class SpatialUnionBuilder {
         final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
         final WKTReader wktReader = new WKTReader(geometryFactory);
         final WKBReader wkbReader = new WKBReader(geometryFactory);
-        final Geometry inputPolygon = parseJTSGeometry(SpatialParser.getSpatialValue(inputObject), wktReader, wkbReader);
-        final Geometry matchPolygon = parseJTSGeometry(SpatialParser.getSpatialValue(matchObject), wktReader, wkbReader);
+        final Geometry inputPolygon = SpatialUtils.parseJTSGeometry(SpatialParser.getSpatialValue(inputObject), wktReader, wkbReader);
+        final Geometry matchPolygon = SpatialUtils.parseJTSGeometry(SpatialParser.getSpatialValue(matchObject), wktReader, wkbReader);
         return isApproxEqual(inputPolygon, matchPolygon);
     }
 
@@ -279,32 +275,6 @@ public class SpatialUnionBuilder {
             throw new IllegalStateException(TEMPORAL_OPTIONAL_ERROR);
         }
         return unwrappedList.get(0);
-    }
-
-    /**
-     * Build a {@link Geometry} from a given {@link Object} representing the spatial value
-     *
-     * @param spatialValue - {@link Optional} {@link Object} representing a spatialValue
-     * @param wktReader    - {@link WKTReader} for marshalling Strings to Geometries
-     * @param wkbReader    - {@link WKBReader} for converting ESRI {@link Polygon} to JTS Geom
-     * @return - {@link Polygon}
-     * @throws IllegalArgumentException    if the {@link Object} is not a subclass of {@link Polygon} or {@link String}
-     * @throws TrestleInvalidDataException if JTS is unable to Parse the spatial input
-     */
-//    TODO(nrobison): Unify this with the same implementation from the Containment Engine
-    private static Geometry parseJTSGeometry(Optional<Object> spatialValue, WKTReader wktReader, WKBReader wkbReader) {
-        final Object spatial = spatialValue.orElseThrow(() -> new IllegalStateException("Cannot get spatial value for object"));
-        try {
-            if (spatial instanceof Polygon) {
-                final ByteBuffer wkbBuffer = operatorExport.execute(0, (Polygon) spatial, null);
-                return wkbReader.read(wkbBuffer.array());
-            } else if (spatial instanceof String) {
-                return wktReader.read((String) spatial);
-            }
-            throw new IllegalArgumentException("Only ESRI Polygons are supported by the Equality Engine");
-        } catch (ParseException e) {
-            throw new TrestleInvalidDataException("Cannot parse input polygon", e);
-        }
     }
 
     private static class PolygonMatchSet {
