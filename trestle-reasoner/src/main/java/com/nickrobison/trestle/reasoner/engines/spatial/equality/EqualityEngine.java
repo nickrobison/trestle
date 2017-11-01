@@ -45,6 +45,16 @@ public interface EqualityEngine {
     <T extends @NonNull Object> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold);
 
     /**
+     * Calculate Spatial Equality between the two objects
+     * @param inputObject - {@link Object} to match against
+     * @param matchObject - {@link Object} to match
+     * @param inputSR - {@link SpatialReference}
+     * @param <T> - Type parameter
+     * @return - {@link Double} percent spatial equality between the objects
+     */
+    <T> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR);
+
+    /**
      * Return a {@link List} of {@link OWLNamedIndividual} that are equivalent to the given individual at the specific point in time
      * If no objects satisfy the equality constraint, and empty {@link List} is returned
      *

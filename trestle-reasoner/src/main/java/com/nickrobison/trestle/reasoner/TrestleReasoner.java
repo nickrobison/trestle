@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.reasoner;
 
+import com.esri.core.geometry.SpatialReference;
 import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
@@ -13,6 +14,7 @@ import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqua
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
+import com.nickrobison.trestle.reasoner.parser.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
@@ -83,6 +85,7 @@ public interface TrestleReasoner {
 
     /**
      * Get underlying {@link SpatialEngine}
+     *
      * @return - {@link SpatialEngine}
      */
     SpatialEngine getSpatialEngine();
@@ -389,6 +392,19 @@ public interface TrestleReasoner {
     Optional<UnionContributionResult<Object>> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold);
 
     /**
+     * Perform spatial comparison between two input objects
+     * Object relations unidirectional are A -> B. e.g. contains(A,B)
+     *
+     * @param datasetID           - {@link String} representation of {@link OWLClass}
+     * @param objectAID           - {@link String} ID of ObjectA
+     * @param comparisonObjectIDs - @{link List} of {@link String} IDs of comparison objects
+     * @param inputSR             - {@link SpatialReference} input spatial reference
+     * @param matchThreshold      - {@link Double} cutoff for all fuzzy matches
+     * @return - {@link Optional} {@link List} of {@link SpatialComparisonReport}
+     */
+    Optional<List<SpatialComparisonReport>> compareTrestleObjects(String datasetID, String objectAID, List<String> comparisonObjectIDs, int inputSR, double matchThreshold);
+
+    /**
      * Get a {@link List} of objects that are equivalent to given individual at the given time point
      * If no objects satisfy the equality constraints and an empty {@link List} is returned
      *
@@ -436,9 +452,9 @@ public interface TrestleReasoner {
      * Returns an optional list of {@link TrestleIndividual}s
      * This method will return the individual represented by the input WKT, so it may need to be filtered out
      *
-     * @param datasetClassID  - {@link String} ID of dataset {@link OWLClass}
-     * @param wkt    - {@link String} WKT boundary
-     * @param buffer - {@link Double} buffer to extend around buffer. 0 is no buffer
+     * @param datasetClassID - {@link String} ID of dataset {@link OWLClass}
+     * @param wkt            - {@link String} WKT boundary
+     * @param buffer         - {@link Double} buffer to extend around buffer. 0 is no buffer
      * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
      */
     Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer);
@@ -449,11 +465,11 @@ public interface TrestleReasoner {
      * If no valid temporal is specified, performs a spatial intersection with no temporal constraints
      * This method will return the individual represented by the input WKT, so it may need to be filtered out
      *
-     * @param datasetClassID      - {@link String} ID of dataset {@link OWLClass}
-     * @param wkt        - {@link String} WKT boundary
-     * @param buffer     - {@link Double} buffer to extend around buffer. 0 is no buffer
-     * @param atTemporal - {@link Temporal} valid at restriction
-     * @param dbTemporal - {@link Temporal} database at restriction
+     * @param datasetClassID - {@link String} ID of dataset {@link OWLClass}
+     * @param wkt            - {@link String} WKT boundary
+     * @param buffer         - {@link Double} buffer to extend around buffer. 0 is no buffer
+     * @param atTemporal     - {@link Temporal} valid at restriction
+     * @param dbTemporal     - {@link Temporal} database at restriction
      * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
      */
     Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal);

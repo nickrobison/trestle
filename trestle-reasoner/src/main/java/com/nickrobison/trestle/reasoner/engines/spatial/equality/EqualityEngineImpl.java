@@ -46,6 +46,11 @@ public class EqualityEngineImpl implements EqualityEngine {
     }
 
     @Override
+    public <T> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR) {
+        return this.unionBuilder.calculateSpatialEquals(inputObject, matchObject, inputSR);
+    }
+
+    @Override
     public <T extends @NonNull Object> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
         return this.unionWalker.traverseUnion(clazz, individual, queryTemporal);
     }

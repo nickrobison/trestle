@@ -44,6 +44,7 @@ import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionCont
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
 import com.nickrobison.trestle.reasoner.exceptions.*;
 import com.nickrobison.trestle.reasoner.parser.*;
+import com.nickrobison.trestle.reasoner.parser.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.reasoner.utils.TemporalPropertiesPair;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
@@ -1462,6 +1463,64 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         } catch (ExecutionException e) {
             logger.error("Union calculation excepted", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
+            return Optional.empty();
+        }
+    }
+
+    @SuppressWarnings("Duplicates")
+    @Override
+    @Timed
+    public Optional<List<SpatialComparisonReport>> compareTrestleObjects(String datasetID, String objectAID, List<String> comparisonObjectIDs, int inputSR, double matchThreshold) {
+
+        final SpatialReference spatialReference = SpatialReference.create(inputSR);
+
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+
+//        First, read object A
+        final CompletableFuture<Object> objectAFuture = CompletableFuture.supplyAsync(() -> {
+            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+            try {
+                return this.readTrestleObject(datasetID, objectAID);
+            } catch (MissingOntologyEntity | TrestleClassException e) {
+                this.ontology.returnAndAbortTransaction(tt);
+                throw new CompletionException(e);
+            } finally {
+                this.ontology.returnAndCommitTransaction(tt);
+            }
+        }, this.objectThreadPool);
+
+//        Read all the other objects
+        final List<CompletableFuture<Object>> objectFutures = comparisonObjectIDs
+                .stream()
+                .map(id -> CompletableFuture.supplyAsync(() -> {
+                    final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                    try {
+                        return this.readTrestleObject(datasetID, id);
+                    } catch (MissingOntologyEntity | TrestleClassException e) {
+                        this.ontology.returnAndAbortTransaction(tt);
+                        throw new CompletionException(e);
+                    } finally {
+                        this.ontology.returnAndCommitTransaction(tt);
+                    }
+                }, this.objectThreadPool))
+                .collect(Collectors.toList());
+        final CompletableFuture<List<Object>> sequencedFutures = LambdaUtils.sequenceCompletableFutures(objectFutures);
+
+//        Run the spatial comparison
+        final CompletableFuture<List<SpatialComparisonReport>> comparisonFuture = objectAFuture
+                .thenCombineAsync(sequencedFutures,
+                        (objectA, comparisonObjects) -> comparisonObjects
+                                .stream()
+                                .map(objectB -> this.spatialEngine.compareObjects(objectA, objectB, spatialReference, matchThreshold))
+                                .collect(Collectors.toList()), this.trestleThreadPool);
+
+        try {
+            return Optional.of(comparisonFuture.get());
+        } catch (InterruptedException e) {
+            logger.error("Spatial comparison is interrupted", e);
+            return Optional.empty();
+        } catch (ExecutionException e) {
+            logger.error("Spatial comparison was excepted", e);
             return Optional.empty();
         }
     }
