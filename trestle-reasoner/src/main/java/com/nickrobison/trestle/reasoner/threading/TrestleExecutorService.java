@@ -145,6 +145,7 @@ public class TrestleExecutorService implements ExecutorService {
     }
 
     @Override
+    @SuppressWarnings("FutureReturnValueIgnored") // I think we can ignore this
     public void execute(@NotNull Runnable command) {
         submit((Callable<Void>) () -> {
             command.run();

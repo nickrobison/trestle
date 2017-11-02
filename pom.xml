@@ -38,6 +38,7 @@
         <httpcomponents.version>4.5.3</httpcomponents.version>
         <owasp.version>2.1.1</owasp.version>
         <maven.enforcer.version>1.4.1</maven.enforcer.version>
+        <caffeine.version>2.6.0</caffeine.version>
         <!--Checker properties-->
         <checker.version>2.1.14</checker.version>
         <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
@@ -107,6 +108,16 @@
                 <groupId>org.geotools</groupId>
                 <artifactId>gt-geotiff</artifactId>
                 <version>${geotools.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.ben-manes.caffeine</groupId>
+                <artifactId>caffeine</artifactId>
+                <version>${caffeine.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.ben-manes.caffeine</groupId>
+                <artifactId>jcache</artifactId>
+                <version>${caffeine.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.postgresql</groupId>

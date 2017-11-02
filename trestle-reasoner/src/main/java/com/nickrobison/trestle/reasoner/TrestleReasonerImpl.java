@@ -838,7 +838,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //            Write back to index
             final TrestleObjectResult<@NonNull T> value = constructedObject.get();
             try {
-                this.trestleCache.writeTrestleObject(trestleIRI, value.getValidFrom().toInstant().toEpochMilli(), value.getValidTo().toInstant().toEpochMilli(), value.getObject());
+                this.trestleCache.writeTrestleObject(trestleIRI, value.getValidFrom(), value.getValidTo(), value.getDbFrom(), value.getDbTo(), value.getObject());
             } catch (Exception e) {
                 logger.error("Unable to write Trestle Object {} to cache", individualIRI, e);
             }
@@ -977,16 +977,16 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                             temporal.asPoint().getBaseTemporalType(),
                             temporal.asPoint().getPointTime());
                 }
-//                Get the temporal ranges
+//                Get the minimum temporal ranges
 //                Valid first
                 Comparator<Temporal> temporalComparator = (t1, t2) -> ((Comparable) t1).compareTo((Comparable) t2);
-                final Optional<Temporal> validMin = facts
+                final Optional<Temporal> validStart = facts
                         .stream()
                         .map(TrestleFact::getValidTemporal)
                         .map(TemporalObject::getIdTemporal)
-                        .min(temporalComparator);
+                        .max(temporalComparator);
 
-                final Optional<Temporal> validMax = facts
+                final Optional<Temporal> validEnd = facts
                         .stream()
                         .map(TrestleFact::getValidTemporal)
                         .map(valid -> {
@@ -996,17 +996,17 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                                 return (Temporal) valid.asInterval().getToTime().orElse(TEMPORAL_MAX_VALUE);
                             }
                         })
-                        .max(temporalComparator)
+                        .min(temporalComparator)
                         .map(Temporal.class::cast);
 //                Database temporal, next
-                final Optional<Temporal> dbMin = facts
+                final Optional<Temporal> dbStart = facts
                         .stream()
                         .map(TrestleFact::getDatabaseTemporal)
                         .map(TemporalObject::getIdTemporal)
-                        .min(temporalComparator)
+                        .max(temporalComparator)
                         .map(Temporal.class::cast);
 
-                final Optional<Temporal> dbMax = facts
+                final Optional<Temporal> dbEnd = facts
                         .stream()
                         .map(TrestleFact::getDatabaseTemporal)
                         .map(db -> {
@@ -1016,10 +1016,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                                 return (Temporal) db.asInterval().getToTime().orElse(TEMPORAL_MAX_VALUE);
                             }
                         })
-                        .max(temporalComparator)
+                        .min(temporalComparator)
                         .map(Temporal.class::cast);
 
-                return new TrestleObjectState(constructorArguments, validMin.get(), validMax.get(), dbMin.get(), dbMax.get());
+                return new TrestleObjectState(constructorArguments, validStart.get(), validEnd.get(), dbStart.get(), dbEnd.get());
             }, objectThreadPool);
 
             final TrestleObjectState objectState;

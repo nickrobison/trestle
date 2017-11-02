@@ -7,7 +7,12 @@ import com.nickrobison.trestle.common.locking.TrestleUpgradableReadWriteLock;
 import com.nickrobison.trestle.iri.TrestleIRI;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.cache.CacheManager;
+import javax.cache.Caching;
+import javax.cache.spi.CachingProvider;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -15,12 +20,19 @@ import javax.inject.Singleton;
  * Created by nrobison on 2/17/17.
  */
 public class TrestleCacheModule extends PrivateModule {
+    private final Logger logger = LoggerFactory.getLogger(TrestleCacheModule.class);
     private final Config cacheConfig;
     private final boolean cacheEnabled;
+    private final CacheManager cacheManager;
 
     public TrestleCacheModule(boolean cacheEnabled) {
         this.cacheConfig = ConfigFactory.load().getConfig("trestle.cache");
         this.cacheEnabled = cacheEnabled;
+        final String cacheImplementation = cacheConfig.getString("cacheImplementation");
+        logger.info("Creating TrestleCache with implementation {}", cacheImplementation);
+//        Do I need to shut this down?
+        CachingProvider cachingProvider = Caching.getCachingProvider(cacheImplementation);
+        cacheManager = cachingProvider.getCacheManager();
     }
 
     @Override
@@ -61,4 +73,11 @@ public class TrestleCacheModule extends PrivateModule {
     public TrestleUpgradableReadWriteLock provideIndexLock() {
         return new TrestleUpgradableReadWriteLock();
     }
+
+    @Provides
+    public CacheManager provideCacheManager() {
+        return this.cacheManager;
+    }
+
+
 }

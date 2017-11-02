@@ -286,7 +286,7 @@ public class SpatialUnionTraverser {
         TemporalDirection direction = null;
         for (STObjectWrapper inputObject : inputObjects) {
             final int comparison = inputObject.getExistenceTemporal().compareTo(queryTemporal);
-            if (direction != null && (direction == TemporalDirection.FORWARD && comparison == 1) || (direction == TemporalDirection.BACKWARD && comparison == -1)) {
+            if ((direction != null && (direction == TemporalDirection.FORWARD && comparison == 1)) || (direction == TemporalDirection.BACKWARD && comparison == -1)) {
                 throw new IllegalStateException("Input objects have different temporal directions");
             } else if (direction == null && comparison == 1) {
                 direction = TemporalDirection.BACKWARD;

@@ -102,4 +102,12 @@ public class TrestleIRIV1Test {
         assertAll(() -> assertThrows(IRIParseException.class, () -> IRIBuilder.parseIRIToTrestleIRI(malformedIRIVersion)),
                 () -> assertThrows(IRIParseException.class, () -> IRIBuilder.parseIRIToTrestleIRI(malformedIRIStructure)));
     }
+
+    @Test
+    public void testPartials() {
+        final IRI withoutDatabase = IRI.create(TEST_PREFIX, String.format("V1:%s@%s:%s", OBJECT_ID, OBJECT_FACT, TEST_DATE.toInstant().toEpochMilli()));
+        final IRI withoutTemporals = IRI.create(TEST_PREFIX, String.format("V1:%s@%s", OBJECT_ID, OBJECT_FACT));
+        final TrestleIRI objectTIRI = IRIBuilder.parseIRIToTrestleIRI(objectFactIRI);
+        assertEquals(IRIBuilder.parseIRIToTrestleIRI(withoutDatabase), objectTIRI.withoutDatabase(), "Should property remove the database temporal");
+    }
 }

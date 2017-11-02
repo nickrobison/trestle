@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.iri;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.HasIRI;
 
 import java.io.Serializable;
@@ -39,8 +40,30 @@ public abstract class TrestleIRI implements HasIRI, Serializable {
 
     public abstract Optional<OffsetDateTime> getDbTemporal();
 
+    /**
+     * Returns {@link TrestleIRI} for all values, except Database Temporal
+     * @return - {@link TrestleIRI} up to Valid Temporal
+     */
+    public TrestleIRI withoutDatabase() {
+        return IRIBuilder.encodeIRI(getVersion(), getPrefix(), getObjectID(), getObjectFact().orElse(""), getObjectTemporal().orElse(null), null);
+    }
+
     @Override
     public String toString() {
         return getIRI().toString();
+    }
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TrestleIRI that = (TrestleIRI) o;
+        return this.getIRI().equals(that.getIRI());
+    }
+
+    @Override
+    public int hashCode() {
+        return this.getIRI().hashCode();
     }
 }
