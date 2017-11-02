@@ -29,13 +29,12 @@ import static org.mockito.Mockito.*;
 /**
  * Created by nrobison on 7/3/17.
  */
-@Disabled
 public class TrestleCacheMockTests {
     private static final String PREFIX = "http://nickrobison.com/test#";
     private static final TrestleIRI TEST_IRI = IRIBuilder.encodeIRI(IRIVersion.V1, PREFIX, "test-object", null, LocalDate.of(2000, 3, 26).atTime(OffsetTime.MIN), LocalDate.of(2017, 6, 1).atTime(OffsetTime.MIN));
     private static final TrestleIRI TEST_IRI_2 = IRIBuilder.encodeIRI(IRIVersion.V1, PREFIX, "test-object", null, LocalDate.of(2000, 3, 26).atTime(OffsetTime.MIN), LocalDate.of(2017, 6, 1).atTime(OffsetTime.MIN));
-    private static final TrestleIRI TEST2_IRI = IRIBuilder.encodeIRI(IRIVersion.V1, PREFIX, "test-object-2", null, LocalDate.of(2000, 1, 10).atTime(OffsetTime.MIN), LocalDate.of(2017, 5, 14).atTime(OffsetTime.MIN));
-    private static final TrestleIRI TEST2_IRI_2 = IRIBuilder.encodeIRI(IRIVersion.V1, PREFIX, "test-object-2", null, LocalDate.of(2000, 1, 26).atTime(OffsetTime.MIN), LocalDate.of(2017, 7, 1).atTime(OffsetTime.MIN));
+    private static final TrestleIRI TEST2_IRI = IRIBuilder.encodeIRI(IRIVersion.V1, PREFIX, "test-object-2", null, LocalDate.of(2017, 1, 10).atTime(OffsetTime.MIN), LocalDate.of(2017, 5, 14).atTime(OffsetTime.MIN));
+    private static final TrestleIRI TEST2_IRI_2 = IRIBuilder.encodeIRI(IRIVersion.V1, PREFIX, "test-object-2", null, LocalDate.of(2017, 1, 26).atTime(OffsetTime.MIN), LocalDate.of(2017, 7, 1).atTime(OffsetTime.MIN));
     private static final String CACHE_NAME = "trestle-object-cache";
     public static final OffsetDateTime JANUARY_TEST_DATE = LocalDate.of(2017, 1, 1).atStartOfDay().atOffset(ZoneOffset.UTC);
     public static final OffsetDateTime FEB_TEST_DATE = LocalDate.of(2017, 2, 28).atStartOfDay().atOffset(ZoneOffset.UTC);
