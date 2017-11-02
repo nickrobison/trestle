@@ -42,6 +42,7 @@ public class TrestleCacheTest extends AbstractReasonerTest {
 
     @Test
     public void testCache() throws TrestleClassException, MissingOntologyEntity, ParseException {
+//        We don't care about correctness, so we'll just disable the merge checks
         this.reasoner.getMergeEngine().changeDefaultExistenceStrategy(ExistenceStrategy.Ignore);
         this.reasoner.getMergeEngine().changeDefaultMergeStrategy(MergeStrategy.ExistingFacts);
         final Geometry jtsGeom = new WKTReader().read("POINT(4.0 6.0)");
