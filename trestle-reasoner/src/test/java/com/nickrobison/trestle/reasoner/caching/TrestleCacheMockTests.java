@@ -63,6 +63,8 @@ public class TrestleCacheMockTests {
         when(manager.getCache(eq(CACHE_NAME), any(), eq(Object.class))).thenReturn(cache);
         trestleCache = new TrestleCacheImpl(validIndex, dbIndex, new TrestleUpgradableReadWriteLock(), listener, metrician, manager);
         verify(manager, times(1)).getCache(eq(CACHE_NAME), eq(IRI.class), eq(Object.class));
+//        Reset everything, in case the cache object gets instantiated in a running VM. Like in the test suite
+        reset(cache);
     }
 
     @Test
