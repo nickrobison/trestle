@@ -431,6 +431,7 @@ public interface TrestleReasoner {
      * @param strength - strength parameter to filter weak associations
      * @param validAt  - {@link Temporal} of validAt time
      * @param dbAt     - Optional {@link Temporal} of dbAt time   @return - Optional Set of String URIs for intersected concepts
+     * @return - {@link Optional} {@link Set} of {@link String} Concept IDs
      */
     Optional<Set<String>> STIntersectConcept(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt);
 
@@ -446,6 +447,7 @@ public interface TrestleReasoner {
      * @param strength             - Strength parameter to filter weak associations
      * @param spatialIntersection  - Optional spatial intersection to restrict results
      * @param temporalIntersection - Optional temporal intersection to restrict results   @return - Optional Set of T objects
+     * @return - {@link Optional} {@link List} of Objects
      */
     <T> Optional<List<T>> getConceptMembers(Class<T> clazz, String conceptID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection);
 

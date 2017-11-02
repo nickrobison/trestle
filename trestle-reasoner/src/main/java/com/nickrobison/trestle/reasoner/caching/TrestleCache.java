@@ -2,7 +2,6 @@ package com.nickrobison.trestle.reasoner.caching;
 
 import com.nickrobison.trestle.iri.TrestleIRI;
 import com.nickrobison.trestle.types.TrestleIndividual;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
@@ -23,35 +22,26 @@ public interface TrestleCache {
      */
     <T> @Nullable T getTrestleObject(Class<T> clazz, TrestleIRI individualIRI);
 
-//    /**
-//     * Write TrestleObject
-//     *
-//     * @param individualIRI - {@link TrestleIRI} to add as key index/cache at a specific temporal interval
-//     * @param startTemporal - Start temporal from Unix epoch (ms)
-//     * @param endTemporal   - End temporal from Unix epoch (ms)
-//     * @param value         - Value to write to cache
-//     */
-//    @Deprecated
-//    void writeTrestleObject(TrestleIRI individualIRI, long startTemporal, long endTemporal, @NonNull Object value);
-
     /**
      * Write TrestleObject to cache with a specified validity interval, using using {@link OffsetDateTime#now(ZoneId)} at {@link java.time.ZoneOffset#UTC}
+     *
      * @param individualIRI - {@link TrestleIRI} to add as key index/cache at a specific temporal interval
      * @param startTemporal - {@link OffsetDateTime} of start temporal
-     * @param endTemporal - {@link OffsetDateTime} of end temporal
-     * @param value - Value to write to cache
+     * @param endTemporal   - {@link OffsetDateTime} of end temporal
+     * @param value         - Value to write to cache
      */
     void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal, Object value);
 
 
     /**
      * Write TrestleObject to cache with a specified validity interval
-     * @param individalIRI - {@link TrestleIRI} to add as key index/cache at a specific temporal interval
-     * @param startTemporal - {@link OffsetDateTime} of start temporal
-     * @param endTemporal - {@link OffsetDateTime} of end temporal
+     *
+     * @param individualIRI   - {@link TrestleIRI} to add as key index/cache at a specific temporal interval
+     * @param startTemporal   - {@link OffsetDateTime} of start temporal
+     * @param endTemporal     - {@link OffsetDateTime} of end temporal
      * @param dbStartTemporal - {@link OffsetDateTime} of database start temporal
-     * @param dbEndTemporal - {@link OffsetDateTime} of database end temporal
-     * @param value - Value to write to cache
+     * @param dbEndTemporal   - {@link OffsetDateTime} of database end temporal
+     * @param value           - Value to write to cache
      */
     void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal, OffsetDateTime dbStartTemporal, @Nullable OffsetDateTime dbEndTemporal, Object value);
 
@@ -66,19 +56,21 @@ public interface TrestleCache {
 
     /**
      * Write TrestleObject to cache with a specified validity point, using {@link OffsetDateTime#now(ZoneId)} at {@link java.time.ZoneOffset#UTC} as the database temporal
+     *
      * @param individualIRI - {@link TrestleIRI} to add as key index/cache at a specific temporal interval
-     * @param atTemporal - {@link OffsetDateTime} of validity point temporal
-     * @param value - Value to write to cache
+     * @param atTemporal    - {@link OffsetDateTime} of validity point temporal
+     * @param value         - Value to write to cache
      */
     void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime atTemporal, Object value);
 
     /**
      * Write TrestleObject to cache with a specified validity point
-     * @param individualIRI - {@link TrestleIRI} to add as key index/cache at a specific temporal interval
-     * @param atTemporal - {@link OffsetDateTime} of validity point temporal
+     *
+     * @param individualIRI   - {@link TrestleIRI} to add as key index/cache at a specific temporal interval
+     * @param atTemporal      - {@link OffsetDateTime} of validity point temporal
      * @param dbStartTemporal - {@link OffsetDateTime} of database start temporal
-     * @param dbEndTemporal - {@link OffsetDateTime} of database end temporal
-     * @param value - Value to write to cache
+     * @param dbEndTemporal   - {@link OffsetDateTime} of database end temporal
+     * @param value           - Value to write to cache
      */
     void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime atTemporal, OffsetDateTime dbStartTemporal, @Nullable OffsetDateTime dbEndTemporal, Object value);
 
