@@ -5,6 +5,8 @@ import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.AbstractReasonerTest;
 import com.nickrobison.trestle.reasoner.TestClasses;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import com.nickrobison.trestle.reasoner.merge.ExistenceStrategy;
+import com.nickrobison.trestle.reasoner.merge.MergeStrategy;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
@@ -41,6 +43,8 @@ public class TrestleCacheTest extends AbstractReasonerTest {
 
     @Test
     public void testCache() throws TrestleClassException, MissingOntologyEntity, ParseException {
+        this.reasoner.getMergeEngine().changeDefaultExistenceStrategy(ExistenceStrategy.Ignore);
+        this.reasoner.getMergeEngine().changeDefaultMergeStrategy(MergeStrategy.ExistingFacts);
         final Geometry jtsGeom = new WKTReader().read("POINT(4.0 6.0)");
         final Geometry jtsGeom2 = new WKTReader().read("POINT(27.0 91.0)");
         final TestClasses.JTSGeometryTest jtsGeometryTest = new TestClasses.JTSGeometryTest(4326, jtsGeom, LocalDate.of(1989, 3, 16));
