@@ -57,8 +57,7 @@ public class SpatialUnionBuilder {
 
 //        Determine the class of the object
         final T unionObject = equalityResult.getUnionObject();
-        final Optional<Object> spatialValue = SpatialParser.getSpatialValue(unionObject);
-        final Geometry geometry = parseJTSGeometry(spatialValue, wktReader, wkbReader);
+        final Geometry geometry = buildObjectGeometry(unionObject, wktReader, wkbReader);
 
 //        Build the contribution object
         final UnionContributionResult<T> result = new UnionContributionResult<>(unionObject, geometry.getArea());
@@ -68,9 +67,9 @@ public class SpatialUnionBuilder {
                 .getUnionOf()
                 .stream()
 //                Build geometry object
-                .map(object -> new TrestlePair<>(object, parseJTSGeometry(SpatialParser
-                                .getSpatialValue(object),
-                        wktReader, wkbReader)))
+                .map(object -> new TrestlePair<>(object,
+                        buildObjectGeometry(object,
+                                wktReader, wkbReader)))
                 .map(pair -> {
 //                    Calculate the proportion contribution
                     final double percentage = calculateEqualityPercentage(geometry, pair.getRight());
@@ -96,16 +95,14 @@ public class SpatialUnionBuilder {
         final Set<Geometry> earlyPolygons = dividedObjects
                 .getEarlyObjects()
                 .stream()
-                .map(SpatialParser::getSpatialValue)
-                .map(value -> parseJTSGeometry(value, wktReader, wkbReader))
+                .map(object -> buildObjectGeometry(object, wktReader, wkbReader))
                 .collect(Collectors.toSet());
 
         //        Extract the JTS polygons for each objects
         final Set<Geometry> latePolygons = dividedObjects
                 .getLateObjects()
                 .stream()
-                .map(SpatialParser::getSpatialValue)
-                .map(value -> parseJTSGeometry(value, wktReader, wkbReader))
+                .map(object -> buildObjectGeometry(object, wktReader, wkbReader))
                 .collect(Collectors.toSet());
 
         @Nullable final PolygonMatchSet polygonMatchSet = getApproxEqualUnion(geometryFactory, earlyPolygons, latePolygons, matchThreshold);
@@ -137,8 +134,9 @@ public class SpatialUnionBuilder {
         final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
         final WKTReader wktReader = new WKTReader(geometryFactory);
         final WKBReader wkbReader = new WKBReader(geometryFactory);
-        final Geometry inputPolygon = parseJTSGeometry(SpatialParser.getSpatialValue(inputObject), wktReader, wkbReader);
-        final Geometry matchPolygon = parseJTSGeometry(SpatialParser.getSpatialValue(matchObject), wktReader, wkbReader);
+        final Geometry inputPolygon = SpatialUtils.buildObjectGeometry(inputObject, wktReader, wkbReader);
+        final Geometry matchPolygon = SpatialUtils.buildObjectGeometry(inputObject, wktReader, wkbReader);
+
         return calculateEqualityPercentage(inputPolygon, matchPolygon);
     }
 

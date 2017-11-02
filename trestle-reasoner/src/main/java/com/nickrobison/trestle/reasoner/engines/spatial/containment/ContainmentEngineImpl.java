@@ -20,8 +20,8 @@ public class ContainmentEngineImpl implements ContainmentEngine {
         final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
         final WKTReader wktReader = new WKTReader(geometryFactory);
         final WKBReader wkbReader = new WKBReader(geometryFactory);
-        final Geometry polygonA = SpatialUtils.parseJTSGeometry(SpatialParser.getSpatialValue(objectA), wktReader, wkbReader);
-        final Geometry polygonB = SpatialUtils.parseJTSGeometry(SpatialParser.getSpatialValue(objectB), wktReader, wkbReader);
+        final Geometry polygonA = SpatialUtils.buildObjectGeometry(objectA, wktReader, wkbReader);
+        final Geometry polygonB = SpatialUtils.buildObjectGeometry(objectB, wktReader, wkbReader);
 
         final double areaA = polygonA.getArea();
         final double areaB = polygonB.getArea();

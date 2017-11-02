@@ -1,5 +1,7 @@
 package com.nickrobison.trestle.reasoner.engines.spatial;
 
+import com.codahale.metrics.annotation.Gauge;
+import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
 import com.esri.core.geometry.SpatialReference;
 import com.nickrobison.metrician.Metrician;
@@ -13,7 +15,6 @@ import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentE
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
-import com.nickrobison.trestle.reasoner.parser.SpatialParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.reasoner.parser.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
@@ -26,9 +27,9 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.PrecisionModel;
 import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKBReader;
 import com.vividsolutions.jts.io.WKTReader;
 import com.vividsolutions.jts.io.WKTWriter;
+import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -37,17 +38,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.io.Serializable;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import static com.nickrobison.trestle.reasoner.engines.spatial.SpatialUtils.parseJTSGeometry;
 import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
 
 @Metriced
@@ -61,6 +61,8 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
     private final EqualityEngine equalityEngine;
     private final ContainmentEngine containmentEngine;
     private final TrestleExecutorService spatialPool;
+    //    TODO(nickrobison): Move this into TrestleCache, once it's done
+    private final Map<Integer, Geometry> geometryCache;
     private WKTReader reader;
     private WKTWriter writer;
 
@@ -86,6 +88,9 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
         final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
         this.reader = new WKTReader(geometryFactory);
         this.writer = new WKTWriter();
+
+//        Setup object caches
+        this.geometryCache = new Int2ObjectArrayMap<>();
     }
 
 
@@ -196,11 +201,12 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
     /**
      * Perform spatial comparison between two input objects
      * Object relations unidirectional are A -> B. e.g. contains(A,B)
-     * @param objectA - {@link Object} to comapare against
-     * @param objectB - {@link Object} to compre with
-     * @param inputSR - {@link SpatialReference} input spatial reference
+     *
+     * @param objectA        - {@link Object} to comapare against
+     * @param objectB        - {@link Object} to compre with
+     * @param inputSR        - {@link SpatialReference} input spatial reference
      * @param matchThreshold - {@link Double} cutoff for all fuzzy matches
-     * @param <T> - Type parameter
+     * @param <T>            - Type parameter
      * @return - {@link SpatialComparisonReport}
      */
     public <T> SpatialComparisonReport compareObjects(T objectA, T objectB, SpatialReference inputSR, double matchThreshold) {
@@ -208,14 +214,12 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
         final SpatialComparisonReport spatialComparisonReport = new SpatialComparisonReport<>(objectA, objectB);
 
         //        Build the geometries
-        final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
-        final WKTReader wktReader = new WKTReader(geometryFactory);
-        final WKBReader wkbReader = new WKBReader(geometryFactory);
-        final Geometry APolygon = parseJTSGeometry(SpatialParser.getSpatialValue(objectA), wktReader, wkbReader);
-        final Geometry BPolygon = parseJTSGeometry(SpatialParser.getSpatialValue(objectB), wktReader, wkbReader);
+        final int srid = inputSR.getID();
+        final Geometry aPolygon = this.geometryCache.computeIfAbsent(objectA.hashCode(), (key) -> computeGeometry(objectA, srid));
+        final Geometry bPolygon = this.geometryCache.computeIfAbsent(objectB.hashCode(), (key) -> computeGeometry(objectB, srid));
 
         //        If they're disjoint, return
-        if (APolygon.disjoint(BPolygon)) {
+        if (aPolygon.disjoint(bPolygon)) {
             return spatialComparisonReport;
         }
 
@@ -228,12 +232,12 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
 
 //        TODO(nickrobison): Figure out covers/contains
 //        Meets
-        if (APolygon.touches(BPolygon)) {
+        if (aPolygon.touches(bPolygon)) {
             logger.debug("{} touches {}", objectA, objectB);
             spatialComparisonReport.addRelation(ObjectRelation.SPATIAL_MEETS);
-        } else if (APolygon.overlaps(BPolygon)) { // Overlaps
+        } else if (aPolygon.overlaps(bPolygon)) { // Overlaps
             logger.debug("Found overlap between {} and {}", objectA, objectB);
-            final Geometry intersection = APolygon.intersection(BPolygon);
+            final Geometry intersection = aPolygon.intersection(bPolygon);
             spatialComparisonReport.addSpatialOverlap(intersection);
         }
 
@@ -287,5 +291,30 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
     @Timed
     public <T> ContainmentDirection getApproximateContainment(T objectA, T objectB, SpatialReference inputSR, double threshold) {
         return this.containmentEngine.getApproximateContainment(objectA, objectB, inputSR, threshold);
+    }
+    /**
+     * HELPER FUNCTIONS
+     */
+
+    /**
+     * Get the current size of the geometry cache
+     *
+     * @return - {@link Integer}
+     */
+    @Gauge(name = "geometry-cache-size")
+    public int getSize() {
+        return this.geometryCache.size();
+    }
+
+    /**
+     * Compute {@link Geometry} for the given {@link Object}
+     *
+     * @param object  - {@link Object} to get Geometry from
+     * @param inputSR - {@link Integer} input spatial reference
+     * @return - {@link Geometry}
+     */
+    @Metered(name = "geometry-calculation-meter")
+    public static Geometry computeGeometry(Object object, int inputSR) {
+        return SpatialUtils.buildObjectGeometry(object, inputSR);
     }
 }
