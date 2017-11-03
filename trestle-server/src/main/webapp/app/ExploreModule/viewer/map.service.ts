@@ -45,6 +45,7 @@ export interface ISpatialComparisonReport {
     objectBID: string;
     equality?: number;
     spatialOverlap?: string;
+    spatialOverlapPercentage?: number;
 }
 
 interface IIntersectionBody {

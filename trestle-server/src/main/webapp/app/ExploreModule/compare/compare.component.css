@@ -35,3 +35,13 @@ a {
 .legend-column {
     width: 20px;
 }
+
+.comparison-placeholder {
+    font-style: italic;
+    color: gray;
+}
+
+.wide-slider {
+    width: 80%;
+}
+

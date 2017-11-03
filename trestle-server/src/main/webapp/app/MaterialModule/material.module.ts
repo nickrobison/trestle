@@ -6,6 +6,7 @@ import {
     MatCardModule,
     MatChipsModule,
     MatDialogModule,
+    MatExpansionModule,
     MatFormFieldModule,
     MatGridListModule,
     MatIconModule,
@@ -42,7 +43,8 @@ import {
         MatTabsModule,
         MatProgressBarModule,
         MatFormFieldModule,
-        MatOptionModule],
+        MatOptionModule,
+        MatExpansionModule],
     exports: [MatButtonModule,
         MatAutocompleteModule,
         MatDialogModule,
@@ -62,7 +64,8 @@ import {
         MatTabsModule,
         MatProgressBarModule,
         MatFormFieldModule,
-        MatOptionModule]
+        MatOptionModule,
+        MatExpansionModule]
 })
 export class MaterialModule {
 }

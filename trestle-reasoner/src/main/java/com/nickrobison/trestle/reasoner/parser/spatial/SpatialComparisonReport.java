@@ -17,8 +17,9 @@ public class SpatialComparisonReport implements Serializable {
     private final String objectAID;
     private final String objectBID;
     private final Set<ObjectRelation> relations;
-    private double equality;
+    private @MonotonicNonNull Double equality;
     private @MonotonicNonNull String overlap;
+    private @MonotonicNonNull Double overlapPercentage;
 
     public SpatialComparisonReport(OWLNamedIndividual objectAID, OWLNamedIndividual objectBID) {
         this.objectAID = objectAID.toStringID();
@@ -62,9 +63,10 @@ public class SpatialComparisonReport implements Serializable {
      *
      * @param overlap - {@link String} overlapping geometry
      */
-    public void addSpatialOverlap(String overlap) {
+    public void addSpatialOverlap(String overlap, Double overlapPercentage) {
         this.addRelation(ObjectRelation.SPATIAL_OVERLAPS);
         this.overlap = overlap;
+        this.overlapPercentage = overlapPercentage;
     }
 
     /**
@@ -74,6 +76,16 @@ public class SpatialComparisonReport implements Serializable {
      */
     public Optional<String> getSpatialOverlap() {
         return Optional.ofNullable(this.overlap);
+    }
+
+
+    /**
+     * Get the {@link Double} percentage of the overlapping area, if it exists
+     *
+     * @return - {@link Optional} of {@link Double}, {@link Optional#empty()} if it doesn't exist
+     */
+    public Optional<Double> getSpatialOverlapPercentage() {
+        return Optional.ofNullable(this.overlapPercentage);
     }
 
     /**

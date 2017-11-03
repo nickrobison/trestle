@@ -39,34 +39,71 @@
                     <button mat-raised-button color="primary" (click)="compareIndividuals()">COMPARE</button>
                 </div>
             </div>
-            <div class="col s12 l7 ui-row">
+            <div class="col s12 l6 ui-row">
                 List of compared values here
-                <table>
-                    <tbody>
-                    <tr class="thin-column" *ngFor="let selection of selectedIndividuals">
-                        <td class="legend-column thin-column">
-                            <div class="legend" [style.background]="selection.color"></div>
-                        </td>
-                        <td class="thin-column">{{selection.individual.getFilteredID()}}</td>
-                        <td class="thin-column">
-                            <mat-slider [min]="0"
+                <mat-accordion [multi]="true">
+                    <mat-expansion-panel *ngFor="let selection of selectedIndividuals">
+                        <mat-expansion-panel-header>
+                            <mat-panel-title>
+                                <div class="legend" [style.background]="selection.color"></div>
+                                {{selection.individual.getFilteredID()}}
+                            </mat-panel-title>
+                            <mat-panel-description>
+
+                                <!--<mat-icon *ngIf="selection.visible">layers</mat-icon>-->
+                                <!--<mat-icon *ngIf="!selection.visible">layers_clear</mat-icon>-->
+                                <!--<i *ngIf="selection.visible" class="material-icons mat-18">layers</i>-->
+                                <!--<i *ngIf="!selection.visible" class="material-icons mat-18 light">layers_clear</i>-->
+                                <!--<a (click)="removeIndividual(selection)">-->
+                                <!--<i class="material-icons mat-18">delete</i>-->
+                                <!--</a>-->
+                            </mat-panel-description>
+                        </mat-expansion-panel-header>
+                        <div *ngIf="selection.report === undefined">
+                            <p class="comparison-placeholder">No comparison report</p>
+                        </div>
+                        <div *ngIf="selection.report">
+                            Accounts for {{selection.report.spatialOverlapPercentage * 100 | rounding: 2}}% of the individual
+                        </div>
+                        <mat-action-row>
+                            <mat-slider class="wide-slider"
+                                        [min]="0"
                                         [max]="100"
                                         [value]="selection.sliderValue"
                                         (input)="sliderUpdate($event,
-                                        selection)"></mat-slider>
-                        </td>
-                        <td class="thin-column">
-                            <a (click)="toggleVisibility(selection)">
-                                <i *ngIf="selection.visible" class="material-icons mat-18">layers</i>
-                                <i *ngIf="!selection.visible" class="material-icons mat-18 light">layers_clear</i>
-                            </a>
-                            <a (click)="removeIndividual(selection)">
-                                <i class="material-icons mat-18">delete</i>
-                            </a>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+                            selection)"></mat-slider>
+                            <button mat-button *ngIf="selection.visible" (click)="toggleVisibility(selection)">Hide</button>
+                            <button mat-button *ngIf="!selection.visible" (click)="toggleVisibility(selection)">Show</button>
+                            <button mat-button color="warn" (click)="removeIndividual(selection)">Remove</button>
+                        </mat-action-row>
+                    </mat-expansion-panel>
+                </mat-accordion>
+                <!--<table>-->
+                <!--<tbody>-->
+                <!--<tr class="thin-column" *ngFor="let selection of selectedIndividuals">-->
+                <!--<td class="legend-column thin-column">-->
+                <!--<div class="legend" [style.background]="selection.color"></div>-->
+                <!--</td>-->
+                <!--<td class="thin-column">{{selection.individual.getFilteredID()}}</td>-->
+                <!--<td class="thin-column">-->
+                <!--<mat-slider [min]="0"-->
+                <!--[max]="100"-->
+                <!--[value]="selection.sliderValue"-->
+                <!--(input)="sliderUpdate($event,-->
+                <!--selection)"></mat-slider>-->
+                <!--</td>-->
+                <!--<td class="thin-column">-->
+                <!--<a (click)="toggleVisibility(selection)">-->
+                <!--<i *ngIf="selection.visible" class="material-icons mat-18">layers</i>-->
+                <!--<i *ngIf="!selection.visible" class="material-icons mat-18 light">layers_clear</i>-->
+                <!--</a>-->
+                <!--<a (click)="removeIndividual(selection)">-->
+                <!--<i class="material-icons mat-18">delete</i>-->
+                <!--</a>-->
+                <!--</td>-->
+                <!--</tr>-->
+                <!--</tbody>-->
+                <!--</table>-->
             </div>
         </div>
     </div>

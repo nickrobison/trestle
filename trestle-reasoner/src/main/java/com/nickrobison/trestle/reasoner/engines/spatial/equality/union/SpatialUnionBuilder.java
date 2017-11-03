@@ -135,7 +135,7 @@ public class SpatialUnionBuilder {
         final WKTReader wktReader = new WKTReader(geometryFactory);
         final WKBReader wkbReader = new WKBReader(geometryFactory);
         final Geometry inputPolygon = SpatialUtils.buildObjectGeometry(inputObject, wktReader, wkbReader);
-        final Geometry matchPolygon = SpatialUtils.buildObjectGeometry(inputObject, wktReader, wkbReader);
+        final Geometry matchPolygon = SpatialUtils.buildObjectGeometry(matchObject, wktReader, wkbReader);
 
         return calculateEqualityPercentage(inputPolygon, matchPolygon);
     }

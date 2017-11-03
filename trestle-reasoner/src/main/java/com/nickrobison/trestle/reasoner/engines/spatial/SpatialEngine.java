@@ -243,15 +243,20 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
         if (aPolygon.touches(bPolygon)) {
             logger.debug("{} touches {}", objectA, objectB);
             spatialComparisonReport.addRelation(ObjectRelation.SPATIAL_MEETS);
-        } else if (aPolygon.overlaps(bPolygon)) { // Overlaps
+        } else if (aPolygon.intersects(bPolygon)) { // Overlaps
             logger.debug("Found overlap between {} and {}", objectA, objectB);
             final Geometry intersection = aPolygon.intersection(bPolygon);
 
             spatialComparisonReport.addSpatialOverlap(SpatialParser.parseWKTFromGeom(intersection)
-                    .orElseThrow(() -> new IllegalStateException("Can't parse Polygon")));
+                            .orElseThrow(() -> new IllegalStateException("Can't parse Polygon")),
+                    calculateOverlapPercentage(aPolygon, intersection));
         }
 
         return spatialComparisonReport;
+    }
+
+    private static double calculateOverlapPercentage(Geometry objectGeom, Geometry intersectionGeometry) {
+        return intersectionGeometry.getArea() / objectGeom.getArea();
     }
 
     /**

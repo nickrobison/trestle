@@ -5,7 +5,7 @@ import {IndividualService} from "../../SharedModule/individual/individual.servic
 import {TrestleTemporal} from "../../SharedModule/individual/TrestleIndividual/trestle-temporal";
 import {schemeCategory20b} from "d3-scale";
 import {MatSliderChange} from "@angular/material";
-import {MapService} from "../viewer/map.service";
+import {ISpatialComparisonReport, MapService} from "../viewer/map.service";
 import * as moment from "moment";
 import {Subject} from "rxjs/Subject";
 import {LoadingSpinnerService} from "../../UIModule/spinner/loading-spinner.service";
@@ -17,6 +17,7 @@ interface ICompareIndividual {
     height: number;
     base: number;
     sliderValue: number;
+    report?: ISpatialComparisonReport;
 }
 
 @Component({
@@ -83,10 +84,24 @@ export class CompareComponent implements AfterViewInit {
             })
                 .subscribe((data) => {
                     console.debug("Has data from compare", data);
+                    // Add the comparison reports to each individual,
+                    // or set them equal to undefined
+                    this.selectedIndividuals
+                        .forEach((individual) => {
+                            if (!individual.visible) {
+                                individual.report = undefined;
+                            } else {
+                                const iReport = data.reports
+                                    .filter((report) => {
+                                        return report.objectBID === individual
+                                            .individual.getID();
+                                    })[0];
+                                individual.report = iReport;
+                            }
+                        });
                 });
         }
     }
-
 
     public selectedHandler(individual: string): void {
         console.debug("Selected:", individual);
