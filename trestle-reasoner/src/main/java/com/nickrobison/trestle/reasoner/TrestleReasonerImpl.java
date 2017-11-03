@@ -1554,13 +1554,18 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         if (datasetClass != null) {
             owlClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, datasetClass));
         }
-        final String query = qb.buildIndividualSearchQuery(individualIRI, owlClass, limit);
-        final TrestleResultSet resultSet = ontology.executeSPARQLResults(query);
-        List<String> individuals = resultSet.getResults()
-                .stream()
-                .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
-                .collect(Collectors.toList());
-        return individuals;
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+        try {
+            final String query = qb.buildIndividualSearchQuery(individualIRI, owlClass, limit);
+            final TrestleResultSet resultSet = ontology.executeSPARQLResults(query);
+            List<String> individuals = resultSet.getResults()
+                    .stream()
+                    .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
+                    .collect(Collectors.toList());
+            return individuals;
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+        }
     }
 
     @Override
@@ -2002,8 +2007,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * Get the adjusted {@link Temporal} for a given individual
      * If temporal occurs AFTER the existence interval of the object, then we retrieve the LATEST state of the object
      * If it occurs BEFORE, we return the earliest state of the object
-     * @param individual - {@link String} individual ID
-     * @param atTemporal - {@link Temporal} temporal to adjust to
+     *
+     * @param individual         - {@link String} individual ID
+     * @param atTemporal         - {@link Temporal} temporal to adjust to
      * @param trestleTransaction - {@link Nullable} {@link TrestleTransaction}
      * @return - {@link Temporal}
      */
