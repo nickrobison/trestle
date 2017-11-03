@@ -30,7 +30,7 @@ public interface EqualityEngine {
      * @param inputSR - {@link SpatialReference} of objects
      * @return
      */
-    <T> UnionContributionResult<T> calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR);
+    <T> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR);
 
     /**
      * Determines if two objects are approximately equal, in spatial area, to each other, given a threshold value.

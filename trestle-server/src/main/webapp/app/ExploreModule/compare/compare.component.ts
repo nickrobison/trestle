@@ -72,7 +72,6 @@ export class CompareComponent implements AfterViewInit {
     }
 
     public compareIndividuals(): void {
-
         // Get all the individuals
         if (this.baseIndividual) {
             this.vs.compareIndividuals({
@@ -131,7 +130,7 @@ export class CompareComponent implements AfterViewInit {
     }
 
     public sliderUpdate(event: MatSliderChange, selection = this.baseIndividual) {
-        if ((event.value !== null) && selection !== null) {
+        if ((event.value !== null) && (selection !== null)) {
             console.debug("Individual", selection);
             //     For now, let's just change the base individual,
             // we'll figure out the rest later

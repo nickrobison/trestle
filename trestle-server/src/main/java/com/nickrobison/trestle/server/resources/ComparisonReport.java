@@ -6,27 +6,28 @@ import com.nickrobison.trestle.reasoner.parser.spatial.SpatialComparisonReport;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ComparisonReport implements Serializable {
     public static final long serialVersionUID = 42L;
 
-    private UnionContributionResult<Object> union;
-    private final List<SpatialComparisonReport> reports;
+    private UnionContributionResult union;
+    private final Set<SpatialComparisonReport> reports;
 
     public ComparisonReport() {
-        this.reports = new ArrayList<>();
+        this.reports = new HashSet<>();
     }
 
-    public UnionContributionResult<Object> getUnion() {
+    public UnionContributionResult getUnion() {
         return union;
     }
 
-    public void setUnion(UnionContributionResult<Object> union) {
+    public void setUnion(UnionContributionResult union) {
         this.union = union;
     }
 
-    public List<SpatialComparisonReport> getReports() {
+    public Set<SpatialComparisonReport> getReports() {
         return reports;
     }
 

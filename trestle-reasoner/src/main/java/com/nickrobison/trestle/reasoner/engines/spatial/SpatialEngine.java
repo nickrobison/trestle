@@ -15,6 +15,7 @@ import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentE
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
+import com.nickrobison.trestle.reasoner.parser.SpatialParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.reasoner.parser.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
@@ -29,7 +30,6 @@ import com.vividsolutions.jts.geom.PrecisionModel;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import com.vividsolutions.jts.io.WKTWriter;
-import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -90,7 +91,7 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
         this.writer = new WKTWriter();
 
 //        Setup object caches
-        this.geometryCache = new Int2ObjectArrayMap<>();
+        this.geometryCache = new ConcurrentHashMap<>();
     }
 
 
@@ -209,9 +210,16 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
      * @param <T>            - Type parameter
      * @return - {@link SpatialComparisonReport}
      */
+    @Timed
     public <T> SpatialComparisonReport compareObjects(T objectA, T objectB, SpatialReference inputSR, double matchThreshold) {
 
-        final SpatialComparisonReport spatialComparisonReport = new SpatialComparisonReport<>(objectA, objectB);
+        final OWLNamedIndividual objectAID = this.tp.classParser.getIndividual(objectA);
+        final OWLNamedIndividual objectBID = this.tp.classParser.getIndividual(objectB);
+        logger.debug("Beginning comparison of {} with {}",
+                objectAID,
+                objectBID);
+
+        final SpatialComparisonReport spatialComparisonReport = new SpatialComparisonReport(objectAID, objectBID);
 
         //        Build the geometries
         final int srid = inputSR.getID();
@@ -238,7 +246,9 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
         } else if (aPolygon.overlaps(bPolygon)) { // Overlaps
             logger.debug("Found overlap between {} and {}", objectA, objectB);
             final Geometry intersection = aPolygon.intersection(bPolygon);
-            spatialComparisonReport.addSpatialOverlap(intersection);
+
+            spatialComparisonReport.addSpatialOverlap(SpatialParser.parseWKTFromGeom(intersection)
+                    .orElseThrow(() -> new IllegalStateException("Can't parse Polygon")));
         }
 
         return spatialComparisonReport;
@@ -255,7 +265,7 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
     }
 
     @Override
-    public <T> UnionContributionResult<T> calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR) {
+    public <T> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR) {
         return this.equalityEngine.calculateUnionContribution(result, inputSR);
     }
 
@@ -315,6 +325,7 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
      */
     @Metered(name = "geometry-calculation-meter")
     public static Geometry computeGeometry(Object object, int inputSR) {
+        logger.debug("Cache miss for {}, computing", object);
         return SpatialUtils.buildObjectGeometry(object, inputSR);
     }
 }

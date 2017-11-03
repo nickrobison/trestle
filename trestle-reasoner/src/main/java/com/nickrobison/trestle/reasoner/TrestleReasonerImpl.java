@@ -1415,7 +1415,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 
     @Override
-    public Optional<UnionContributionResult<Object>> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold) {
+    public Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold) {
 
         final Class<?> registeredClass = this.getRegisteredClass(datasetClassID);
         final SpatialReference spatialReference = SpatialReference.create(inputSR);
@@ -1467,42 +1467,24 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
     }
 
-    @SuppressWarnings("Duplicates")
     @Override
     @Timed
     public Optional<List<SpatialComparisonReport>> compareTrestleObjects(String datasetID, String objectAID, List<String> comparisonObjectIDs, int inputSR, double matchThreshold) {
 
         final SpatialReference spatialReference = SpatialReference.create(inputSR);
+        final OffsetDateTime atTemporal = OffsetDateTime.now();
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-
 //        First, read object A
-        final CompletableFuture<Object> objectAFuture = CompletableFuture.supplyAsync(() -> {
-            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-            try {
-                return this.readTrestleObject(datasetID, objectAID);
-            } catch (MissingOntologyEntity | TrestleClassException e) {
-                this.ontology.returnAndAbortTransaction(tt);
-                throw new CompletionException(e);
-            } finally {
-                this.ontology.returnAndCommitTransaction(tt);
-            }
-        }, this.objectThreadPool);
+        final CompletableFuture<Object> objectAFuture = CompletableFuture.supplyAsync(() -> getAdjustedQueryTemporal(objectAID, atTemporal, trestleTransaction), this.objectThreadPool)
+                .thenCompose((temporal) -> this.getAdjustedIndividual(datasetID, objectAID, temporal, trestleTransaction));
 
 //        Read all the other objects
         final List<CompletableFuture<Object>> objectFutures = comparisonObjectIDs
                 .stream()
-                .map(id -> CompletableFuture.supplyAsync(() -> {
-                    final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-                    try {
-                        return this.readTrestleObject(datasetID, id);
-                    } catch (MissingOntologyEntity | TrestleClassException e) {
-                        this.ontology.returnAndAbortTransaction(tt);
-                        throw new CompletionException(e);
-                    } finally {
-                        this.ontology.returnAndCommitTransaction(tt);
-                    }
-                }, this.objectThreadPool))
+                .map(id -> CompletableFuture.supplyAsync(() -> getAdjustedQueryTemporal(id, atTemporal, trestleTransaction),
+                        this.objectThreadPool)
+                        .thenCompose((temporal) -> this.getAdjustedIndividual(datasetID, id, temporal, trestleTransaction)))
                 .collect(Collectors.toList());
         final CompletableFuture<List<Object>> sequencedFutures = LambdaUtils.sequenceCompletableFutures(objectFutures);
 
@@ -1522,32 +1504,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         } catch (ExecutionException e) {
             logger.error("Spatial comparison was excepted", e);
             return Optional.empty();
-        }
-    }
-
-    private Temporal getAdjustedQueryTemporal(String individual, OffsetDateTime atTemporal, @Nullable TrestleTransaction trestleTransaction) {
-        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-        try {
-            final Set<OWLDataPropertyAssertionAxiom> temporalsForIndividual = this.ontology.getTemporalsForIndividual(df.getOWLNamedIndividual(IRI.create(individual)));
-            final Optional<TemporalObject> individualExistsTemporal = TemporalObjectBuilder.buildTemporalFromProperties(temporalsForIndividual, null, "blank");
-            final TemporalObject temporalObject = individualExistsTemporal.orElseThrow(() -> new RuntimeException(String.format("Unable to get exists temporals for %s", individual)));
-            final int compared = temporalObject.compareTo(atTemporal);
-            final Temporal adjustedIntersection;
-            if (compared == -1) { // Intersection is after object existence, get the latest version
-                if (temporalObject.isInterval()) {
-//                            we need to do a minus one precision unit, because the intervals are exclusive on the end {[)}
-                    adjustedIntersection = (Temporal) temporalObject.asInterval().getAdjustedToTime(-1).get();
-                } else {
-                    adjustedIntersection = temporalObject.asPoint().getPointTime();
-                }
-            } else if (compared == 0) { // Intersection is during existence, continue
-                adjustedIntersection = atTemporal;
-            } else { // Intersection is before object existence, get earliest version
-                adjustedIntersection = temporalObject.getIdTemporal();
-            }
-            return adjustedIntersection;
-        } finally {
-            this.ontology.returnAndCommitTransaction(tt);
         }
     }
 
@@ -2017,6 +1973,64 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     return new TemporalPropertiesPair(temporalIndividual, allDataPropertiesForIndividual);
                 })
                 .thenApply(temporalPair -> TemporalObjectBuilder.buildTemporalFromProperties(temporalPair.getTemporalProperties(), null, temporalPair.getTemporalID()));
+    }
+
+    /**
+     * Get an individual using an adjusted {@link Temporal} gathered from {@link TrestleReasonerImpl#getAdjustedQueryTemporal(String, OffsetDateTime, TrestleTransaction)}
+     *
+     * @param datasetID   - {@link String} datasetID
+     * @param id          - {@link String} individual ID
+     * @param temporal    - {@link Temporal} adjusted temporal
+     * @param transaction - {@link Nullable} {@link TrestleTransaction}
+     * @return - {@link CompletableFuture} of {@link Object}
+     */
+    private CompletableFuture<Object> getAdjustedIndividual(String datasetID, String id, Temporal temporal, @Nullable TrestleTransaction transaction) {
+        return CompletableFuture.supplyAsync(() -> {
+            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(transaction);
+            try {
+                return this.readTrestleObject(datasetID, id, temporal, null);
+            } catch (MissingOntologyEntity | TrestleClassException e) {
+                this.ontology.returnAndAbortTransaction(tt);
+                throw new CompletionException(e);
+            } finally {
+                this.ontology.returnAndCommitTransaction(tt);
+            }
+        });
+    }
+
+    /**
+     * Get the adjusted {@link Temporal} for a given individual
+     * If temporal occurs AFTER the existence interval of the object, then we retrieve the LATEST state of the object
+     * If it occurs BEFORE, we return the earliest state of the object
+     * @param individual - {@link String} individual ID
+     * @param atTemporal - {@link Temporal} temporal to adjust to
+     * @param trestleTransaction - {@link Nullable} {@link TrestleTransaction}
+     * @return - {@link Temporal}
+     */
+    private Temporal getAdjustedQueryTemporal(String individual, OffsetDateTime atTemporal, @Nullable TrestleTransaction trestleTransaction) {
+        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+        try {
+            final Set<OWLDataPropertyAssertionAxiom> temporalsForIndividual = this.ontology.getTemporalsForIndividual(df.getOWLNamedIndividual(IRI.create(individual)));
+            final Optional<TemporalObject> individualExistsTemporal = TemporalObjectBuilder.buildTemporalFromProperties(temporalsForIndividual, null, "blank");
+            final TemporalObject temporalObject = individualExistsTemporal.orElseThrow(() -> new RuntimeException(String.format("Unable to get exists temporals for %s", individual)));
+            final int compared = temporalObject.compareTo(atTemporal);
+            final Temporal adjustedIntersection;
+            if (compared == -1) { // Intersection is after object existence, get the latest version
+                if (temporalObject.isInterval()) {
+//                            we need to do a minus one precision unit, because the intervals are exclusive on the end {[)}
+                    adjustedIntersection = (Temporal) temporalObject.asInterval().getAdjustedToTime(-1).get();
+                } else {
+                    adjustedIntersection = temporalObject.asPoint().getPointTime();
+                }
+            } else if (compared == 0) { // Intersection is during existence, continue
+                adjustedIntersection = atTemporal;
+            } else { // Intersection is before object existence, get earliest version
+                adjustedIntersection = temporalObject.getIdTemporal();
+            }
+            return adjustedIntersection;
+        } finally {
+            this.ontology.returnAndCommitTransaction(tt);
+        }
     }
 
     @Override

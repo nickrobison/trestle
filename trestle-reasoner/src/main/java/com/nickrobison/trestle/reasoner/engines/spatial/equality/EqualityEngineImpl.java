@@ -34,7 +34,7 @@ public class EqualityEngineImpl implements EqualityEngine {
     }
 
     @Override
-    public <T> UnionContributionResult<T> calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR) {
+    public <T> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR) {
         return this.unionBuilder.calculateContribution(result, inputSR);
     }
 

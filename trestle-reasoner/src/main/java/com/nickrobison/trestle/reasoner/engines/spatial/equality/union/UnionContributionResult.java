@@ -1,26 +1,28 @@
 package com.nickrobison.trestle.reasoner.engines.spatial.equality.union;
 
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class UnionContributionResult<T> implements Serializable {
+public class UnionContributionResult implements Serializable {
     public static final long serialVersionUID = 42L;
 
-    private final T object;
+    private final String objectID;
     private final double area;
-    private final Set<UnionContributionPart<T>> contributingParts;
+    private final Set<UnionContributionPart> contributingParts;
 
 
-    public UnionContributionResult(T unionObject, double area) {
-        this.object = unionObject;
+    public UnionContributionResult(OWLNamedIndividual unionObject, double area) {
+        this.objectID = unionObject.toStringID();
         this.area = area;
         this.contributingParts = new HashSet<>();
     }
 
-    public T getObject() {
-        return object;
+    public String getObjectID() {
+        return objectID;
     }
 
     public double getArea() {
@@ -32,18 +34,18 @@ public class UnionContributionResult<T> implements Serializable {
      *
      * @return - {@link Set} {@link UnionContributionPart}
      */
-    public Set<UnionContributionPart<T>> getContributingParts() {
+    public Set<UnionContributionPart> getContributingParts() {
         return contributingParts;
     }
 
     /**
-     * Add object contributing to whole
+     * Add objectID contributing to whole
      *
-     * @param contributingObject     - {@link T} contributing object
+     * @param contributingObjectID   - {@link OWLNamedIndividual} contributing objectID
      * @param contributionPercentage - {@link Double} contribution percentage
      */
-    public void addContribution(T contributingObject, double contributionPercentage) {
-        this.contributingParts.add(new UnionContributionPart<>(contributingObject, contributionPercentage));
+    public void addContribution(OWLNamedIndividual contributingObjectID, double contributionPercentage) {
+        this.contributingParts.add(new UnionContributionPart(contributingObjectID, contributionPercentage));
     }
 
     /**
@@ -51,14 +53,14 @@ public class UnionContributionResult<T> implements Serializable {
      *
      * @param parts - {@link Collection} of {@link UnionContributionPart}
      */
-    public void addAllContributions(Collection<UnionContributionPart<T>> parts) {
+    public void addAllContributions(Collection<UnionContributionPart> parts) {
         this.contributingParts.addAll(parts);
     }
 
     @Override
     public String toString() {
         return "UnionContributionResult{" +
-                "object=" + object +
+                "objectID=" + objectID +
                 ", area=" + area +
                 ", contributingParts=" + contributingParts +
                 '}';
@@ -69,10 +71,10 @@ public class UnionContributionResult<T> implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        UnionContributionResult<?> that = (UnionContributionResult<?>) o;
+        UnionContributionResult that = (UnionContributionResult) o;
 
         if (Double.compare(that.area, area) != 0) return false;
-        if (!object.equals(that.object)) return false;
+        if (!objectID.equals(that.objectID)) return false;
         return contributingParts.equals(that.contributingParts);
     }
 
@@ -80,26 +82,27 @@ public class UnionContributionResult<T> implements Serializable {
     public int hashCode() {
         int result;
         long temp;
-        result = object.hashCode();
+        result = objectID.hashCode();
         temp = Double.doubleToLongBits(area);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         result = 31 * result + contributingParts.hashCode();
         return result;
     }
 
-    static class UnionContributionPart<T> implements Serializable {
+
+    static class UnionContributionPart implements Serializable {
         public static final long serialVersionUID = 42L;
 
-        private final T object;
+        private final String objectID;
         private final double contribution;
 
-        UnionContributionPart(T object, double contribution) {
-            this.object = object;
+        UnionContributionPart(OWLNamedIndividual objectID, double contribution) {
+            this.objectID = objectID.toStringID();
             this.contribution = contribution;
         }
 
-        public T getObject() {
-            return object;
+        public String getObjectID() {
+            return objectID;
         }
 
         public double getContribution() {
@@ -109,7 +112,7 @@ public class UnionContributionResult<T> implements Serializable {
         @Override
         public String toString() {
             return "UnionContributionPart{" +
-                    "object=" + object +
+                    "objectID=" + objectID +
                     ", contribution=" + contribution +
                     '}';
         }
@@ -119,17 +122,17 @@ public class UnionContributionResult<T> implements Serializable {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            UnionContributionPart<?> that = (UnionContributionPart<?>) o;
+            UnionContributionPart that = (UnionContributionPart) o;
 
             if (Double.compare(that.contribution, contribution) != 0) return false;
-            return object.equals(that.object);
+            return objectID.equals(that.objectID);
         }
 
         @Override
         public int hashCode() {
             int result;
             long temp;
-            result = object.hashCode();
+            result = objectID.hashCode();
             temp = Double.doubleToLongBits(contribution);
             result = 31 * result + (int) (temp ^ (temp >>> 32));
             return result;

@@ -3,6 +3,7 @@ package com.nickrobison.trestle.reasoner.parser.spatial;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.vividsolutions.jts.geom.Geometry;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.io.Serializable;
 import java.util.HashSet;
@@ -10,27 +11,27 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 
-public class SpatialComparisonReport<A, B> implements Serializable {
+public class SpatialComparisonReport implements Serializable {
     public static final long serialVersionUID = 42L;
 
-    private final A objectA;
-    private final B objectB;
+    private final String objectAID;
+    private final String objectBID;
     private final Set<ObjectRelation> relations;
     private double equality;
-    private @MonotonicNonNull Geometry overlap;
+    private @MonotonicNonNull String overlap;
 
-    public SpatialComparisonReport(A objectA, B objectB) {
-        this.objectA = objectA;
-        this.objectB = objectB;
+    public SpatialComparisonReport(OWLNamedIndividual objectAID, OWLNamedIndividual objectBID) {
+        this.objectAID = objectAID.toStringID();
+        this.objectBID = objectBID.toStringID();
         this.relations = new HashSet<>();
     }
 
-    public A getObjectA() {
-        return objectA;
+    public String getObjectAID() {
+        return objectAID;
     }
 
-    public B getObjectB() {
-        return objectB;
+    public String getObjectBID() {
+        return objectBID;
     }
 
     /**
@@ -57,11 +58,11 @@ public class SpatialComparisonReport<A, B> implements Serializable {
     }
 
     /**
-     * Add {@link ObjectRelation#SPATIAL_OVERLAPS} relation along with {@link Geometry} representing overlapping area
+     * Add {@link ObjectRelation#SPATIAL_OVERLAPS} relation along with {@link String} WKT representation overlapping area
      *
-     * @param overlap - {@link Geometry} overlapping geometry
+     * @param overlap - {@link String} overlapping geometry
      */
-    public void addSpatialOverlap(Geometry overlap) {
+    public void addSpatialOverlap(String overlap) {
         this.addRelation(ObjectRelation.SPATIAL_OVERLAPS);
         this.overlap = overlap;
     }
@@ -69,9 +70,9 @@ public class SpatialComparisonReport<A, B> implements Serializable {
     /**
      * Get the {@link Geometry} of overlapping area, if it exists
      *
-     * @return - {@link Optional} of {@link Geometry}, {@link OptionalLong#empty()} if it doesn't exist
+     * @return - {@link Optional} of {@link String}, {@link OptionalLong#empty()} if it doesn't exist
      */
-    public Optional<Geometry> getSpatialOverlap() {
+    public Optional<String> getSpatialOverlap() {
         return Optional.ofNullable(this.overlap);
     }
 

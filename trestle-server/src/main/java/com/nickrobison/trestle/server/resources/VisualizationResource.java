@@ -27,6 +27,8 @@ import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.ArrayList;
@@ -161,17 +163,19 @@ public class VisualizationResource {
         compareIndividuals.add(request.getCompare());
 
         try {
-
 //        Look for spatial union
-            final Optional<UnionContributionResult<Object>> objectUnionEqualityResult = this.reasoner.calculateSpatialUnionWithContribution("gaul-test", compareIndividuals, 4326, 0.8);
+            logger.debug("Executing union");
+            final Instant unionStart = Instant.now();
+            final Optional<UnionContributionResult> objectUnionEqualityResult = this.reasoner.calculateSpatialUnionWithContribution("gaul-test", compareIndividuals, 4326, 0.8);
+            logger.debug("Union computation took {} ms", Duration.between(unionStart, Instant.now()).toMillis());
+            objectUnionEqualityResult.ifPresent(comparisonReport::setUnion);
 
-            if (objectUnionEqualityResult.isPresent()) {
-                comparisonReport.setUnion(objectUnionEqualityResult.get());
-            } else {
 //                Do a piecewise comparison for each individual
-                final Optional<List<SpatialComparisonReport>> spatialComparisonReports = this.reasoner.compareTrestleObjects("gaul-test", request.getCompare(), request.getCompareAgainst(), 4326, 0.8);
-                spatialComparisonReports.ifPresent(comparisonReport::addAllReports);
-            }
+            logger.debug("Beginning piecewise comparison");
+            final Instant compareStart = Instant.now();
+            final Optional<List<SpatialComparisonReport>> spatialComparisonReports = this.reasoner.compareTrestleObjects("gaul-test", request.getCompare(), request.getCompareAgainst(), 4326, 0.8);
+            logger.debug("Comparison took {} ms", Duration.between(compareStart, Instant.now()).toMillis());
+            spatialComparisonReports.ifPresent(comparisonReport::addAllReports);
 
 
             return Response.ok(comparisonReport).build();

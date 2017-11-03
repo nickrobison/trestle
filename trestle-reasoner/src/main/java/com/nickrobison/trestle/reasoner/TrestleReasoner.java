@@ -389,7 +389,7 @@ public interface TrestleReasoner {
      * @param matchThreshold - {@link Double} cutoff to determine minimum match percentage
      * @return - {@link Optional} {@link UnionEqualityResult}
      */
-    Optional<UnionContributionResult<Object>> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold);
+    Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold);
 
     /**
      * Perform spatial comparison between two input objects

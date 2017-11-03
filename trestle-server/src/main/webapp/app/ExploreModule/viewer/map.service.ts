@@ -32,11 +32,19 @@ export interface IContributionReport {
 
 export interface IComparisonReport {
     union: IContributionReport | null;
+    reports: ISpatialComparisonReport[];
 }
 
 export interface IContributionPart {
     object: any;
     contribution: number;
+}
+
+export interface ISpatialComparisonReport {
+    objectAID: string;
+    objectBID: string;
+    equality?: number;
+    spatialOverlap?: string;
 }
 
 interface IIntersectionBody {

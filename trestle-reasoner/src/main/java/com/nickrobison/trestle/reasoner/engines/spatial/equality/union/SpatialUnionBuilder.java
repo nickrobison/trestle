@@ -9,7 +9,6 @@ import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.TrestlePair;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialUtils;
-import com.nickrobison.trestle.reasoner.parser.SpatialParser;
 import com.nickrobison.trestle.reasoner.parser.TemporalParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.types.events.TrestleEventType;
@@ -48,7 +47,7 @@ public class SpatialUnionBuilder {
         unionSetSize = metrician.registerHistogram("union-set-size");
     }
 
-    public <T extends @NonNull Object> UnionContributionResult<T> calculateContribution(UnionEqualityResult<T> equalityResult, SpatialReference inputSR) {
+    public <T extends @NonNull Object> UnionContributionResult calculateContribution(UnionEqualityResult<T> equalityResult, SpatialReference inputSR) {
         logger.debug("Calculating union contribution for input set");
         //        Setup the JTS components
         final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
@@ -60,20 +59,21 @@ public class SpatialUnionBuilder {
         final Geometry geometry = buildObjectGeometry(unionObject, wktReader, wkbReader);
 
 //        Build the contribution object
-        final UnionContributionResult<T> result = new UnionContributionResult<>(unionObject, geometry.getArea());
+        final UnionContributionResult result = new UnionContributionResult(this.tp.classParser.getIndividual(unionObject),
+                geometry.getArea());
 
 //        Add all the others
-        final Set<UnionContributionResult.UnionContributionPart<T>> contributionParts = equalityResult
+        final Set<UnionContributionResult.UnionContributionPart> contributionParts = equalityResult
                 .getUnionOf()
                 .stream()
 //                Build geometry object
-                .map(object -> new TrestlePair<>(object,
+                .map(object -> new TrestlePair<>(this.tp.classParser.getIndividual(object),
                         buildObjectGeometry(object,
                                 wktReader, wkbReader)))
                 .map(pair -> {
 //                    Calculate the proportion contribution
                     final double percentage = calculateEqualityPercentage(geometry, pair.getRight());
-                    return new UnionContributionResult.UnionContributionPart<>(pair.getLeft(), percentage);
+                    return new UnionContributionResult.UnionContributionPart(pair.getLeft(), percentage);
                 })
                 .collect(Collectors.toSet());
 
