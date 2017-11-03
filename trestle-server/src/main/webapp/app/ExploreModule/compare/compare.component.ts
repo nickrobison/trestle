@@ -1,14 +1,15 @@
 import {AfterViewInit, Component, ElementRef, ViewChild} from "@angular/core";
 import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
-import {MapSource, TrestleMapComponent} from "../../UIModule/map/trestle-map.component";
+import {IMapAttributeChange, MapSource, TrestleMapComponent} from "../../UIModule/map/trestle-map.component";
 import {IndividualService} from "../../SharedModule/individual/individual.service";
 import {TrestleTemporal} from "../../SharedModule/individual/TrestleIndividual/trestle-temporal";
-import {schemeCategory20b} from "d3-scale";
+import {interpolateCool, scaleLinear, schemeCategory20b} from "d3-scale";
 import {MatSliderChange} from "@angular/material";
 import {ISpatialComparisonReport, MapService} from "../viewer/map.service";
 import * as moment from "moment";
 import {Subject} from "rxjs/Subject";
 import {LoadingSpinnerService} from "../../UIModule/spinner/loading-spinner.service";
+import {interpolateReds} from "d3-scale-chromatic";
 
 interface ICompareIndividual {
     individual: TrestleIndividual;
@@ -31,7 +32,8 @@ export class CompareComponent implements AfterViewInit {
     public mapConfig: mapboxgl.MapboxOptions;
     public selectedIndividuals: ICompareIndividual[];
     public baseIndividual: ICompareIndividual | null;
-    public dataChanges: Subject<MapSource> = new Subject();
+    public dataChanges: Subject<MapSource>;
+    public layerChanges: Subject<IMapAttributeChange>;
     private layerDepth: number;
     private maxHeight: number;
     private layerNumber: number;
@@ -65,6 +67,8 @@ export class CompareComponent implements AfterViewInit {
         // Use this to pull out colors for the map
         this.colorScale = schemeCategory20b;
         this.currentSliderValue = 0;
+        this.dataChanges = new Subject();
+        this.layerChanges = new Subject();
     }
 
     public ngAfterViewInit(): void {
@@ -97,6 +101,26 @@ export class CompareComponent implements AfterViewInit {
                                             .individual.getID();
                                     })[0];
                                 individual.report = iReport;
+                                //    Change the color to something on the red scale
+                                if (iReport.spatialOverlapPercentage) {
+                                    const interpolated = interpolateReds(
+                                        iReport
+                                            .spatialOverlapPercentage);
+                                    individual.color = interpolated;
+                                    this.layerChanges.next({
+                                        individual: individual.individual.getID(),
+                                        // Change the color and set the opacity to 1
+                                        changes: [
+                                            {
+                                                attribute: "fill-extrusion-color",
+                                                value: interpolated
+                                            },
+                                            {
+                                                attribute: "fill-extrusion-opacity",
+                                                value: 1.0
+                                            }]
+                                    });
+                                }
                             }
                         });
                 });

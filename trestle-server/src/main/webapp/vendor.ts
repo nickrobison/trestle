@@ -24,6 +24,7 @@ import "d3-shape";
 import "d3-array";
 import "d3-axis";
 import "d3-transition";
+import "d3-scale-chromatic";
 import "moment";
 import "moment-timezone";
 import "file-saver";

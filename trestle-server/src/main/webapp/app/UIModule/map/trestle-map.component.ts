@@ -59,6 +59,13 @@ interface MapDataChange {
     currentValue: MapSource | null;
 }
 
+export interface IMapAttributeChange {
+    individual: string;
+    changes: Array<{attribute: string, value: any}>;
+    // attribute: string;
+    // value: any;
+}
+
 export type MapSource = I3DMapSource | ITrestleMapSource;
 
 @Component({
@@ -75,6 +82,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     @Input() public zoomOnLoad?: boolean;
     @Input() public config?: mapboxgl.MapboxOptions;
     @Input() public dataChanges: Subject<MapSource>;
+    @Input() public attributeChanges: Subject<IMapAttributeChange>;
     @Output() public mapBounds: EventEmitter<LngLatBounds> = new EventEmitter();
     @Output() public clicked: EventEmitter<string> = new EventEmitter();
     private centerMapOnLoad: BehaviorSubject<boolean>;
@@ -123,6 +131,10 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             //     console.debug("Adding data:", data.currentValue);
             //     this.addSource(data.currentValue);
             // }
+        });
+
+        this.attributeChanges.subscribe((change) => {
+            this.changeIndividualAttribute(change);
         });
 
         console.debug("Creating map, " +
@@ -178,6 +190,23 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         } else {
             //    Otherwise find the matching layer and remove it
         }
+    }
+
+    public changeIndividualAttribute(attributeChange: IMapAttributeChange): void {
+        console.debug("Changing attribute:", attributeChange);
+
+    //    Try to get the source first
+        const layers = this.mapSources.get(attributeChange.individual);
+        if (layers !== undefined) {
+            console.debug("Changing layers:", layers);
+            layers.forEach((layer) => {
+                attributeChange.changes.forEach((change) => {
+                    this.map.setPaintProperty(layer, change.attribute, change.value);
+                });
+
+            });
+        }
+    //    I don't think we can do this with individuals yet, but maybe?
     }
 
     public toggleIndividualVisibility(individual: string, setVisible: boolean): void {

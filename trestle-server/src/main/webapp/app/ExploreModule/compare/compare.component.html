@@ -6,7 +6,8 @@
                          [multiSelect]="false"
                          [zoomOnLoad]="zoomMap"
                          [config]="mapConfig"
-                         [dataChanges]="dataChanges"></trestle-map>
+                         [dataChanges]="dataChanges"
+                         [attributeChanges]="layerChanges"></trestle-map>
         </div>
         <div class="col s01 map-container">
             <mat-slider
@@ -63,7 +64,9 @@
                             <p class="comparison-placeholder">No comparison report</p>
                         </div>
                         <div *ngIf="selection.report">
-                            Accounts for {{selection.report.spatialOverlapPercentage * 100 | rounding: 2}}% of the individual
+                            Accounts for {{selection.report.spatialOverlapPercentage * 100 | rounding: 2}}% of the
+                            individual
+                            <mat-icon>layers</mat-icon>
                         </div>
                         <mat-action-row>
                             <mat-slider class="wide-slider"
@@ -72,8 +75,10 @@
                                         [value]="selection.sliderValue"
                                         (input)="sliderUpdate($event,
                             selection)"></mat-slider>
-                            <button mat-button *ngIf="selection.visible" (click)="toggleVisibility(selection)">Hide</button>
-                            <button mat-button *ngIf="!selection.visible" (click)="toggleVisibility(selection)">Show</button>
+                            <button mat-button *ngIf="selection.visible" (click)="toggleVisibility(selection)">Hide
+                            </button>
+                            <button mat-button *ngIf="!selection.visible" (click)="toggleVisibility(selection)">Show
+                            </button>
                             <button mat-button color="warn" (click)="removeIndividual(selection)">Remove</button>
                         </mat-action-row>
                     </mat-expansion-panel>
