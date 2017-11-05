@@ -109,7 +109,7 @@ export class CompareComponent implements AfterViewInit {
                                     individual.color = interpolated;
                                     this.layerChanges.next({
                                         individual: individual.individual.getID(),
-                                        // Change the color and set the opacity to 1
+                                        // Change the color and set the opacity a little higher
                                         changes: [
                                             {
                                                 attribute: "fill-extrusion-color",
@@ -117,7 +117,7 @@ export class CompareComponent implements AfterViewInit {
                                             },
                                             {
                                                 attribute: "fill-extrusion-opacity",
-                                                value: 1.0
+                                                value: 0.85
                                             }]
                                     });
                                 }
