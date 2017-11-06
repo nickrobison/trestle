@@ -201,7 +201,7 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
 
     /**
      * Perform spatial comparison between two input objects
-     * Object relations unidirectional are A -> B. e.g. contains(A,B)
+     * Object relations unidirectional are A -&gt; B. e.g. contains(A,B)
      *
      * @param objectA        - {@link Object} to comapare against
      * @param objectB        - {@link Object} to compre with

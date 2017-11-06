@@ -61,7 +61,8 @@ public class SpatialComparisonReport implements Serializable {
     /**
      * Add {@link ObjectRelation#SPATIAL_OVERLAPS} relation along with {@link String} WKT representation overlapping area
      *
-     * @param overlap - {@link String} overlapping geometry
+     * @param overlap           - {@link String} overlapping geometry
+     * @param overlapPercentage - {@link Double} percentage overlap of the two objects
      */
     public void addSpatialOverlap(String overlap, Double overlapPercentage) {
         this.addRelation(ObjectRelation.SPATIAL_OVERLAPS);

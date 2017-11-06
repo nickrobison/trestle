@@ -12,8 +12,9 @@ public interface ContainmentEngine {
      * @param objectB   - Second input object
      * @param inputSR   - {@link SpatialReference} of objects
      * @param threshold - threshold value which determines 'approximately contained in'
-     * @return - ContainmentDirection.CONTAINS if objectA contains a percentage of objectB greater than or equal to the
-     * threshold. ContainmentDirection.WITHIN if objectB contains a percentage of objectA greater than or
+     * @param <T>       - Type parameter
+     * @return - {@link ContainmentDirection#CONTAINS} if objectA contains a percentage of objectB greater than or equal to the
+     * threshold. {@link ContainmentDirection#WITHIN} if objectB contains a percentage of objectA greater than or
      * equal to the threshold. ContainmentDirection.NONE if neither is true.
      */
     @Timed

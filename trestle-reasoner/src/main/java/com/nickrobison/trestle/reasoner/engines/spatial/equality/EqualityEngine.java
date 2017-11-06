@@ -28,7 +28,7 @@ public interface EqualityEngine {
      * @param <T> - generic type parameter
      * @param result - {@link UnionEqualityResult}
      * @param inputSR - {@link SpatialReference} of objects
-     * @return
+     * @return - {@link UnionContributionResult}
      */
     <T> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR);
 
