@@ -2,16 +2,16 @@
  * Created by nrobison on 3/7/17.
  */
 import {Component, OnInit, ViewContainerRef, ViewEncapsulation} from "@angular/core";
-import {FormControl} from "@angular/forms";
 import {Observable} from "rxjs";
 import {IndividualValueDialog} from "./individual-value.dialog";
 import * as moment from "moment";
-import {ITrestleMapSource} from "../../UIModule/map/trestle-map.component";
+import {MapSource} from "../../UIModule/map/trestle-map.component";
 import {MatDialog, MatDialogConfig, MatDialogRef} from "@angular/material";
 import {IIndividualHistory} from "../../UIModule/history-graph/history-graph.component";
 import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
 import {IndividualService} from "../../SharedModule/individual/individual.service";
 import {TrestleFact} from "../../SharedModule/individual/TrestleIndividual/trestle-fact";
+import {Subject} from "rxjs/Subject";
 
 @Component({
     selector: "visualize",
@@ -23,7 +23,7 @@ import {TrestleFact} from "../../SharedModule/individual/TrestleIndividual/trest
 export class VisualizeComponent implements OnInit {
     public options: Observable<string[]>;
     public individual: TrestleIndividual;
-    public mapIndividual: ITrestleMapSource;
+    public mapIndividual: Subject<MapSource>;
     public individualFactHistory: IIndividualHistory;
     public minTime: moment.Moment;
     public maxTime: moment.Moment;
@@ -32,6 +32,7 @@ export class VisualizeComponent implements OnInit {
     constructor(private is: IndividualService,
                 private dialog: MatDialog,
                 private viewContainerRef: ViewContainerRef) {
+        this.mapIndividual = new Subject();
     }
 
     public ngOnInit(): void {
@@ -74,7 +75,7 @@ export class VisualizeComponent implements OnInit {
                             };
                         })
                 };
-                this.mapIndividual = {
+                this.mapIndividual.next({
                     id: results.getID(),
                     data: {
                         type: "Feature",
@@ -82,7 +83,7 @@ export class VisualizeComponent implements OnInit {
                         id: results.getIDAsInteger().toString(),
                         properties: results.getFactValues()
                     }
-                };
+                });
             });
     }
 }

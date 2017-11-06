@@ -2,7 +2,10 @@
     <h4>Dataset Viewer</h4>
     <div class="row">
         <div class="col s10 map-container">
-            <trestle-map [data]="loadedDataset" [single]="true" [multiSelect]="false" [zoomOnLoad]="false"
+            <trestle-map [single]="true"
+                         [dataChanges]="dataChanges"
+                         [multiSelect]="false"
+                         [zoomOnLoad]="false"
                          (mapBounds)="updateBounds($event)" (clicked)="mapClicked($event)"></trestle-map>
         </div>
         <div class="col s2 z-depth-2 dataset-container">
@@ -32,11 +35,11 @@
     </div>
 </div>
 <!--<div class="section" *ngIf="objectHistory">-->
-    <!--<h4>Object History</h4>-->
-    <!--<div class="row">-->
-        <!--<history-graph [minTime]="minTime.toDate()" [maxTime]="maxTime.toDate()" [data]="objectHistory"-->
-                       <!--[graphHeight]="300"></history-graph>-->
-    <!--</div>-->
+<!--<h4>Object History</h4>-->
+<!--<div class="row">-->
+<!--<history-graph [minTime]="minTime.toDate()" [maxTime]="maxTime.toDate()" [data]="objectHistory"-->
+<!--[graphHeight]="300"></history-graph>-->
+<!--</div>-->
 <!--</div>-->
 <div class="section">
     <h4>Event History</h4>
@@ -45,7 +48,7 @@
                      [minDate]="minTime"
                      [maxDate]="maxTime"
                      [data]="eventData"
-        [filterLabel]="filterLabel"
-        [selectedIndividual]="selectedIndividualID"></event-graph>
+                     [filterLabel]="filterLabel"
+                     [selectedIndividual]="selectedIndividualID"></event-graph>
     </div>
 </div>

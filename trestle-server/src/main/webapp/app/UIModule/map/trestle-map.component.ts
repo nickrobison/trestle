@@ -114,10 +114,11 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         // this.dataChanges = new BehaviorSubject({previousValue: null, currentValue: null});
 
         // If it's null, create a dummy one
-        if (this.dataChanges == null) {
+        if (this.dataChanges === undefined) {
+            console.debug("Creating dummy data changes subscription");
             this.dataChanges = new Subject();
         }
-
+        console.debug("Subscribing to data changes observable");
         this.dataChanges.subscribe((data) => {
             console.debug("Map has new data to load", data);
             this.addSource(data);
@@ -132,7 +133,11 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             //     this.addSource(data.currentValue);
             // }
         });
-
+        if (this.attributeChanges === undefined) {
+            console.debug("Creating dummy attribute subscription");
+            this.attributeChanges = new Subject();
+        }
+        console.debug("Subscribing to attribute changes observable");
         this.attributeChanges.subscribe((change) => {
             this.changeIndividualAttribute(change);
         });

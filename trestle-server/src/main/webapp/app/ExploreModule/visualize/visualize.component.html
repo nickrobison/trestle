@@ -5,7 +5,7 @@
 <div class="section">
     <div class="row">
         <div class="col s12 l7 ui-row">
-            <trestle-map [data]="mapIndividual" [single]="true" [multiSelect]="false"></trestle-map>
+            <trestle-map [dataChanges]="mapIndividual" [single]="true" [multiSelect]="false"></trestle-map>
         </div>
         <div class="col s12 l5 ui-row">
             <individual-graph [config]="{data: individual}"></individual-graph>

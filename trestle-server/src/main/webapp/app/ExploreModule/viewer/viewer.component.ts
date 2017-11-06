@@ -3,7 +3,7 @@
  */
 import {Component, OnInit} from "@angular/core";
 import {MapService} from "./map.service";
-import {ITrestleMapSource} from "../../UIModule/map/trestle-map.component";
+import {ITrestleMapSource, MapSource} from "../../UIModule/map/trestle-map.component";
 import {animate, style, transition, trigger} from "@angular/animations";
 import * as moment from "moment";
 import {MatSliderChange} from "@angular/material";
@@ -15,6 +15,7 @@ import {Observable} from "rxjs/Observable";
 import {TrestleEvent} from "../../SharedModule/individual/TrestleIndividual/trestle-event";
 import {TrestleRelationType} from "../../SharedModule/individual/TrestleIndividual/trestle-relation";
 import LngLatBounds = mapboxgl.LngLatBounds;
+import {Subject} from "rxjs/Subject";
 
 enum DatasetState {
     UNLOADED,
@@ -24,7 +25,7 @@ enum DatasetState {
 }
 
 interface IDatasetState {
-    name: string,
+    name: string;
     state: DatasetState;
 }
 
@@ -44,7 +45,6 @@ interface IDatasetState {
 export class DatsetViewerComponent implements OnInit {
     public availableDatasets: IDatasetState[] = [];
     public DatasetState = DatasetState;
-    public loadedDataset: ITrestleMapSource;
     public minTime = moment("1990-01-01");
     public maxTime = moment("2016-01-01");
     public sliderValue = 2013;
@@ -52,9 +52,11 @@ export class DatsetViewerComponent implements OnInit {
     public selectedIndividualID: string;
     public objectHistory: IIndividualHistory;
     public eventData: IEventData;
+    public dataChanges: Subject<MapSource>;
     private mapBounds: LngLatBounds;
 
     constructor(private mapService: MapService, private vs: IndividualService) {
+        this.dataChanges = new Subject();
     }
 
     public ngOnInit(): void {
@@ -82,11 +84,11 @@ export class DatsetViewerComponent implements OnInit {
             .subscribe((data) => {
                 dataset.state = DatasetState.LOADED;
                 console.debug("Data:", data);
-                this.loadedDataset = {
+                this.dataChanges.next({
                     id: "intersection-query",
                     idField: "id",
                     data
-                };
+                });
             }, (error) => {
                 console.error("Error loading dataset:", error);
                 dataset.state = DatasetState.ERROR;
@@ -115,7 +117,7 @@ export class DatsetViewerComponent implements OnInit {
                 .filter((ds) => ds.state === DatasetState.LOADED)
                 .forEach((ds) => this.loadDataset(ds));
         }
-    };
+    }
 
     public mapClicked = (event: string): void => {
         console.debug("Clicked:", event);
@@ -125,7 +127,7 @@ export class DatsetViewerComponent implements OnInit {
                 this.selectedIndividualID = data.getFilteredID();
                 this.buildHistoryGraph(data);
             });
-    };
+    }
 
     public filterLabel(input: IEventElement): string {
         return input.entity.split(":")[1];
@@ -156,7 +158,6 @@ export class DatsetViewerComponent implements OnInit {
         const individualEvents = this.buildObjectEvents(individual, filteredID);
         let events = individualEvents.events;
         let links = individualEvents.links;
-
 
         // Get all the related individuals, if necessary
         // If we don't need any individuals, then just plot our own events
@@ -245,7 +246,7 @@ export class DatsetViewerComponent implements OnInit {
 
         return {
             nodes: events,
-            links: links,
+            links,
             bins: eventBins
         };
     }
@@ -367,10 +368,10 @@ export class DatsetViewerComponent implements OnInit {
         }
         console.debug("Events for %s", individual.getID(), events);
         return {
-            events: events,
-            links: links
+            events,
+            links
         };
-    };
+    }
 
     private needNewData(newBounds: mapboxgl.LngLatBounds) {
         console.debug("Need new data", newBounds, "old Data", this.mapBounds);
