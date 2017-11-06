@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit, ViewContainerRef} from "@angular/core";
+import {AfterViewInit, Component, OnDestroy, OnInit, ViewContainerRef} from "@angular/core";
 import {IndividualService} from "../../../SharedModule/individual/individual.service";
 import {MatDialog, MatDialogConfig, MatDialogRef} from "@angular/material";
 import {ActivatedRoute} from "@angular/router";
@@ -16,7 +16,7 @@ import {IndividualValueDialog} from "../individual-value.dialog";
     templateUrl: "./visualize-details.component.html",
     styleUrls: ["./visualize-details.component.css"]
 })
-export class VisualizeDetailsComponent implements OnInit, OnDestroy {
+export class VisualizeDetailsComponent implements AfterViewInit, OnDestroy {
 
     public individual: TrestleIndividual;
     public mapIndividual: Subject<MapSource>;
@@ -35,7 +35,7 @@ export class VisualizeDetailsComponent implements OnInit, OnDestroy {
         this.maxTime = moment().year(2016).endOf("year");
     }
 
-    public ngOnInit(): void {
+    public ngAfterViewInit(): void {
         this.routeSubscription = this.route.params.subscribe((params) => {
             console.debug("has params", params);
             this.loadIndividual(params["id"]);

@@ -27,7 +27,10 @@
     </div>
     <div *ngIf="baseIndividual">
         <div class="row">
-            <h5>Comparing against: {{baseIndividual.individual.getFilteredID()}}</h5>
+            <div class="row results-row">
+                <h5>Comparing against: {{baseIndividual.individual.getFilteredID()}}</h5>
+                <a [routerLink]="['/explore', 'visualize', baseIndividual.individual.withoutHostname()]"><mat-icon>link</mat-icon></a>
+            </div>
             <button mat-raised-button color="primary" (click)="intersectBaseIndividual()">INTERSECT</button>
             <button mat-raised-button color="warn" (click)="reset()">RESET</button>
             <mat-button-toggle mat-raised-button (click)="toggleVisibility(baseIndividual)">HIDE</mat-button-toggle>
@@ -59,6 +62,8 @@
                             <mat-panel-title>
                                 <div class="legend" [style.background]="selection.color"></div>
                                 {{selection.individual.getFilteredID()}}
+                                <a [routerLink]="['/explore', 'visualize', selection.individual.withoutHostname()]"><mat-icon>link</mat-icon></a>
+
                             </mat-panel-title>
                             <mat-panel-description>
 

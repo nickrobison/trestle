@@ -41,11 +41,28 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
     }
 
     /**
-     * Get the selection ID, without the URI base
+     * Get the individual ID, without the URI base or temporal range
      * @returns {string}
      */
     public getFilteredID(): string {
         return TrestleIndividual.filterID(this.id);
+    }
+
+    /**
+     * Gets the URI base of the individual ID
+     * @returns {string}
+     */
+    public getHostname(): string {
+        const splits = this.id.split("#");
+        return splits[0];
+    }
+
+    /**
+     * Get the individual ID, without the URI base
+     * @returns {string}
+     */
+    public withoutHostname(): string {
+        return TrestleIndividual.withoutHostname(this.id);
     }
 
     public getIDAsInteger(): number {
