@@ -112,32 +112,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             this.centerMapOnLoad = new BehaviorSubject(this.zoomOnLoad);
         }
 
-        // this.dataChanges = new BehaviorSubject({previousValue: null, currentValue: null});
 
-        // If it's null, create a dummy one
-        if (this.dataChanges === undefined) {
-            console.debug("Creating dummy data changes subscription");
-            this.dataChanges = new Subject();
-        }
-        console.debug("Subscribing to data changes observable");
-        this.dataChanges.subscribe((data) => {
-            console.debug("Map has new data to load", data);
-            if (this.single && this.previousValue) {
-                console.debug("Removing data:", this.previousValue);
-                this.removeSource(this.previousValue);
-            }
-            this.addSource(data);
-            this.previousValue = data;
-        });
-
-        if (this.attributeChanges === undefined) {
-            console.debug("Creating dummy attribute subscription");
-            this.attributeChanges = new Subject();
-        }
-        console.debug("Subscribing to attribute changes observable");
-        this.attributeChanges.subscribe((change) => {
-            this.changeIndividualAttribute(change);
-        });
 
         console.debug("Creating map, " +
             "singleSelect?", this.single,
@@ -152,7 +127,35 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         this.map.on("mouseover", this.mouseOver);
         this.map.on("mouseleave", this.mouseOut);
         this.map.on("moveend", this.moveHandler);
-        this.mapBounds.emit(this.map.getBounds());
+
+        // Once the map is loaded, setup the subscriptions
+        this.map.on("style.load", () => {
+            // If it's null, create a dummy one
+            if (this.dataChanges === undefined) {
+                console.debug("Creating dummy data changes subscription");
+                this.dataChanges = new Subject();
+            }
+            console.debug("Subscribing to data changes observable");
+            this.dataChanges.subscribe((data) => {
+                console.debug("Map has new data to load", data);
+                if (this.single && this.previousValue) {
+                    console.debug("Removing data:", this.previousValue);
+                    this.removeSource(this.previousValue);
+                }
+                this.addSource(data);
+                this.previousValue = data;
+            });
+
+            if (this.attributeChanges === undefined) {
+                console.debug("Creating dummy attribute subscription");
+                this.attributeChanges = new Subject();
+            }
+            console.debug("Subscribing to attribute changes observable");
+            this.attributeChanges.subscribe((change) => {
+                this.changeIndividualAttribute(change);
+            });
+            this.mapBounds.emit(this.map.getBounds());
+        });
     }
 
     public ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
