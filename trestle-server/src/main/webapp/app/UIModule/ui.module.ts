@@ -4,7 +4,6 @@
 import {NgModule} from "@angular/core";
 import {TrestleMapComponent} from "./map/trestle-map.component";
 import {EventBus} from "./eventBus/eventBus.service";
-import {MapValuesPipe} from "./pipes/map-values.pipe";
 import {HistoryGraphComponent} from "./history-graph/history-graph.component";
 import {EventGraphComponent} from "./event-graph/event-graph.component";
 import {SharedModule} from "../SharedModule/shared.module";
@@ -28,12 +27,10 @@ import {LoadingSpinnerService} from "./spinner/loading-spinner.service";
         HistoryGraphComponent,
         EventGraphComponent,
         SearchComponent,
-        MapValuesPipe,
         LoadingSpinnerComponent
     ],
     providers: [EventBus, LoadingSpinnerService],
     exports: [TrestleMapComponent,
-        MapValuesPipe,
         HistoryGraphComponent,
         EventGraphComponent,
         SearchComponent],
