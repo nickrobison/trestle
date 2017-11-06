@@ -1,6 +1,6 @@
 (ns com.nickrobison.trestle.reasoner.parser.utils.predicates
   (:import (java.lang.reflect Modifier Method Field)
-           (com.nickrobison.trestle.reasoner.annotations Ignore Fact Spatial Language NoMultiLanguage IndividualIdentifier)
+           (com.nickrobison.trestle.reasoner.annotations Ignore Fact Spatial Language NoMultiLanguage IndividualIdentifier TrestleCreator)
            (org.semanticweb.owlapi.model IRI)
            (com.nickrobison.trestle.common StaticIRI)
            (com.nickrobison.trestle.reasoner.annotations.temporal DefaultTemporal StartTemporal EndTemporal)
@@ -156,3 +156,14 @@
     (if (hasAnnotation? member EndTemporal)
       ::end
       ::at)))
+
+; Constructor filters
+(defn trestle-creator?
+  "Is this constructor the TrestleCreator"
+  [constructor]
+  (hasAnnotation? constructor TrestleCreator))
+
+(defn multi-arg-constructor?
+  "Is this constructor a multi-arg one?"
+  [constructor]
+  (= (.getParameterCount constructor) 0))

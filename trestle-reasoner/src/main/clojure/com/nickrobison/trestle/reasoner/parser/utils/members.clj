@@ -1,7 +1,9 @@
 (ns com.nickrobison.trestle.reasoner.parser.utils.members
   (:import (org.semanticweb.owlapi.model IRI)
            (com.nickrobison.trestle.common StaticIRI)
-           (com.nickrobison.trestle.reasoner.annotations Spatial Fact))
+           (com.nickrobison.trestle.reasoner.annotations Spatial Fact)
+           (java.lang.invoke MethodHandles)
+           (java.lang.reflect Constructor Method Field))
   (:require [com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]
             [clojure.string :as string]
             [clojure.core.reducers :as r]))
@@ -32,6 +34,16 @@
       (IRI/create StaticIRI/GEOSPARQLPREFIX "asWKT")
       ; Otherwise, use the member-name
       (IRI/create prefix (pred/filter-member-name member)))))
+
+; Reflection helpers
+
+; Method Handle methods
+(defmulti make-handle
+          "Make a method handle for a given Class Member"
+          class)
+(defmethod make-handle Field [field] (.unreflectGetter (MethodHandles/lookup) field))
+(defmethod make-handle Method [method] (.unreflect (MethodHandles/lookup) method))
+(defmethod make-handle Constructor [constructor] (.unreflectConstructor (MethodHandles/lookup) constructor))
 
 ; Build the OWLDataProperties
 

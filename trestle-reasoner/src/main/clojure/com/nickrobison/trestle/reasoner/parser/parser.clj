@@ -3,7 +3,7 @@
            (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter StringParser ClassBuilder SpatialParser)
            (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom)
            (java.lang.annotation Annotation)
-           (java.lang.reflect InvocationTargetException Field Method Modifier)
+           (java.lang.reflect InvocationTargetException Field Method Modifier Constructor)
            (java.lang.invoke MethodHandles)
            (com.nickrobison.trestle.reasoner.annotations IndividualIdentifier DatasetClass Fact NoMultiLanguage Language)
            (java.util Optional List)
@@ -15,6 +15,57 @@
             [com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]
             [com.nickrobison.trestle.reasoner.parser.utils.members :as m]))
 
+; Class related helpers
+
+(defn find-matching-constructor
+  "Find first constructor that matches the given predicate"
+  [clazz predicate]
+  (->> (.getDeclaredConstructors clazz)
+       (filter predicate)
+       (first)))
+
+(defn get-constructor
+  "Get the TrestleConstructor for the provided class"
+  [clazz]
+  ; Look for one that's annotated with TrestleCreator
+  (if-let [constructor (find-matching-constructor
+                         clazz
+                         pred/trestle-creator?)]
+    constructor
+    ; If we don't have one, look for the first multi-arg constructor
+    (find-matching-constructor clazz
+                               pred/multi-arg-constructor?)))
+
+(defn build-parameter
+  [parameter]
+  {
+   :name (.getName parameter)
+   :type (.getType parameter)
+   })
+
+(defn build-constructor-args
+  "Build a list of constructor params and types"
+  [constructor]
+  (->> (.getParameters constructor)
+       (map build-parameter)))
+
+(defn build-constructor
+  "Build constructor map"
+  [clazz]
+  (let [constructor (get-constructor clazz)]
+    {
+     :handle (m/make-handle constructor)
+     :arguments (build-constructor-args constructor)
+     }))
+
+(defn get-class-name
+  "Get the OWL Class name"
+  [clazz df reasonerPrefix]
+  (. df getOWLClass
+     (IRI/create reasonerPrefix
+                 (if (.isAnnotationPresent clazz DatasetClass)
+                   (.name (.getDeclaredAnnotation clazz DatasetClass))
+                   (.getName clazz)))))
 
 (defn invoker
   "Invoke method handle"
@@ -34,13 +85,6 @@
      (.invokeWithArguments handle (object-array [object args]))
      (catch Exception e
        (log/error "Problem invoking %s on %s" handle object e)))))
-
-; Method Handle methods
-(defmulti make-handle
-          "Make a method handle for a given Class Member"
-          class)
-(defmethod make-handle Field [field] (.unreflectGetter (MethodHandles/lookup) field))
-(defmethod make-handle Method [method] (.unreflect (MethodHandles/lookup) method))
 
 (defn owl-return-type
   "Determine the OWLDatatype of the field/method"
@@ -84,7 +128,7 @@
   (merge acc {
               :name        (pred/filter-member-name member)
               :member-name (pred/get-member-name member)
-              :handle      (make-handle member)
+              :handle      (m/make-handle member)
               :type        (pred/member-type member defaultLanguageCode)
               }))
 
@@ -236,11 +280,9 @@
   IClassParser
   (isMultiLangEnabled [this] (multiLangEnabled))
   (getDefaultLanguageCode [this] (if (= defaultLanguageCode "") nil defaultLanguageCode))
-  (^OWLClass getObjectClass [this ^Class clazz] (. df getOWLClass
-                                                   (IRI/create reasonerPrefix
-                                                               (if (.isAnnotationPresent clazz DatasetClass)
-                                                                 (.name (.getDeclaredAnnotation clazz DatasetClass))
-                                                                 (.getName clazz)))))
+  (^OWLClass getObjectClass [this ^Class clazz]
+    (let [parsedClass (.parseClass this clazz)]
+      (:class-name parsedClass)))
   (^OWLClass getObjectClass [this ^Object inputObject] (.getObjectClass this (.getClass inputObject)))
   (parseClass ^Object [this ^Class clazz]
     ; Check to see if we have the class in the registry
@@ -262,7 +304,11 @@
                               ; Build members
                               (r/map #(build-member % df reasonerPrefix (if (true? multiLangEnabled) defaultLanguageCode nil)))
                               ; Combine everything into a map
-                              (r/reduce member-reducer {})))
+                              (r/reduce member-reducer {
+                                                        :class-name  (get-class-name
+                                                                       clazz df reasonerPrefix)
+                                                        :constructor (build-constructor clazz)
+                                                        })))
                   clazz))))
 
   (^OWLNamedIndividual getIndividual [this ^Object inputObject]
