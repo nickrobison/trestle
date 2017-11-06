@@ -92,6 +92,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     private mapSources: Map<string, string[]>;
     // This has to be integers, in order to match against the numeric IDs
     private filteredIDs: string[];
+    private previousValue: MapSource;
 
     constructor() {
         // FIXME(nrobison): Fix this
@@ -121,18 +122,14 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         console.debug("Subscribing to data changes observable");
         this.dataChanges.subscribe((data) => {
             console.debug("Map has new data to load", data);
+            if (this.single && this.previousValue) {
+                console.debug("Removing data:", this.previousValue);
+                this.removeSource(this.previousValue);
+            }
             this.addSource(data);
-            // //    Remove data?
-            // if (data.previousValue !== null) {
-            //     console.debug("Removing data:", data.previousValue);
-            //     this.removeSource(data.previousValue);
-            // }
-            //
-            // if (data.currentValue !== null) {
-            //     console.debug("Adding data:", data.currentValue);
-            //     this.addSource(data.currentValue);
-            // }
+            this.previousValue = data;
         });
+
         if (this.attributeChanges === undefined) {
             console.debug("Creating dummy attribute subscription");
             this.attributeChanges = new Subject();
