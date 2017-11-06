@@ -44,7 +44,7 @@ export class CompareComponent implements AfterViewInit {
     private availableColors: string[];
     @ViewChild(TrestleMapComponent)
     private mapComponent: TrestleMapComponent;
-    private currentSliderValue: number;
+    public currentSliderValue: number;
     @ViewChild("loadable")
     private mapRef: ElementRef;
 
@@ -152,6 +152,7 @@ export class CompareComponent implements AfterViewInit {
         //    Clear the base selection
         this.baseIndividual = null;
         this.layerNumber = 0;
+        this.currentSliderValue = 0;
         this.availableColors = [];
     }
 

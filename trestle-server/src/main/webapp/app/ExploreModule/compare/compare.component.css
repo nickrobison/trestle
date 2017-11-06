@@ -45,3 +45,6 @@ a {
     width: 80%;
 }
 
+.map-container .mat-slider-vertical {
+    height: 90%
+}

@@ -10,10 +10,12 @@
                          [attributeChanges]="layerChanges"></trestle-map>
         </div>
         <div class="col s01 map-container">
+            <h6 class="comparison-placeholder">Explode</h6>
             <mat-slider
                     [vertical]="true"
                     [min]="0"
                     [max]="500"
+                    [value]="currentSliderValue"
                     (input)="sliderUpdate($event)"></mat-slider>
         </div>
     </div>
@@ -37,7 +39,10 @@
                 <search (selected)="selectedHandler($event)"></search>
                 <div class="row">
                     <button mat-raised-button>ADD</button>
-                    <button mat-raised-button color="primary" (click)="compareIndividuals()">COMPARE</button>
+                    <button mat-raised-button
+                            color="primary"
+                            (click)="compareIndividuals()"
+                    [disabled]="selectedIndividuals.size == 0">COMPARE</button>
                     <mat-slide-toggle
                             [color]="accent"
                             [checked]="true"
