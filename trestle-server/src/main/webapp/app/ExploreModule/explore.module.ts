@@ -22,6 +22,7 @@ import { ObjectEventGraphComponent } from "./object-event-graph/ObjectEventGraph
 import { MaterialModule } from "../MaterialModule/material.module";
 import {SharedModule} from "../SharedModule/shared.module";
 import {CompareComponent} from "./compare/compare.component";
+import {VisualizeDetailsComponent} from "./visualize/details/visualize-details.component";
 
 @NgModule({
     imports: [
@@ -43,7 +44,8 @@ import {CompareComponent} from "./compare/compare.component";
         QueryViewer,
         DatsetViewerComponent,
         ObjectEventGraphComponent,
-        CompareComponent
+        CompareComponent,
+        VisualizeDetailsComponent
     ],
     providers: [IndividualService, QueryService, MapService],
     entryComponents: [IndividualValueDialog]

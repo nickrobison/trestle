@@ -170,6 +170,16 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
     }
 
     /**
+     * Filter ID string to remove hostname (authority)
+     * @param {string} id
+     * @returns {string}
+     */
+    public static withoutHostname(id: string): string {
+        const strings = id.split("#");
+        return strings[1];
+    }
+
+    /**
      * SDBM algorithm for generating a numeric value of a provided string
      * @param {string} id
      * @returns {number}
