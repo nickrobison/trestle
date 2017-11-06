@@ -4,7 +4,7 @@ import {IMapAttributeChange, MapSource, TrestleMapComponent} from "../../UIModul
 import {IndividualService} from "../../SharedModule/individual/individual.service";
 import {TrestleTemporal} from "../../SharedModule/individual/TrestleIndividual/trestle-temporal";
 import {interpolateCool, scaleLinear, schemeCategory20b} from "d3-scale";
-import {MatSliderChange} from "@angular/material";
+import {MatSliderChange, MatSlideToggleChange} from "@angular/material";
 import {ISpatialComparisonReport, MapService} from "../viewer/map.service";
 import * as moment from "moment";
 import {Subject} from "rxjs/Subject";
@@ -30,10 +30,12 @@ export class CompareComponent implements AfterViewInit {
 
     public zoomMap = true;
     public mapConfig: mapboxgl.MapboxOptions;
-    public selectedIndividuals: ICompareIndividual[];
+    // public selectedIndividuals: ICompareIndividual[];
+    public selectedIndividuals: Map<string, ICompareIndividual>;
     public baseIndividual: ICompareIndividual | null;
     public dataChanges: Subject<MapSource>;
     public layerChanges: Subject<IMapAttributeChange>;
+    private filterCompareResults: boolean;
     private layerDepth: number;
     private maxHeight: number;
     private layerNumber: number;
@@ -60,7 +62,7 @@ export class CompareComponent implements AfterViewInit {
         };
         this.layerDepth = 50;
         this.maxHeight = 2016;
-        this.selectedIndividuals = [];
+        this.selectedIndividuals = new Map();
         // Setup layer coloring
         this.layerNumber = 0;
         this.availableColors = [];
@@ -69,6 +71,7 @@ export class CompareComponent implements AfterViewInit {
         this.currentSliderValue = 0;
         this.dataChanges = new Subject();
         this.layerChanges = new Subject();
+        this.filterCompareResults = true;
     }
 
     public ngAfterViewInit(): void {
@@ -81,7 +84,7 @@ export class CompareComponent implements AfterViewInit {
         if (this.baseIndividual) {
             this.vs.compareIndividuals({
                 compare: this.baseIndividual.individual.getID(),
-                compareAgainst: this.selectedIndividuals
+                compareAgainst: Array.from(this.selectedIndividuals.values())
                 // Filter out invisible members
                     .filter((individual) => individual.visible === true)
                     .map((individual) => individual.individual.getID())
@@ -90,39 +93,42 @@ export class CompareComponent implements AfterViewInit {
                     console.debug("Has data from compare", data);
                     // Add the comparison reports to each individual,
                     // or set them equal to undefined
-                    this.selectedIndividuals
-                        .forEach((individual) => {
-                            if (!individual.visible) {
-                                individual.report = undefined;
-                            } else {
-                                const iReport = data.reports
-                                    .filter((report) => {
-                                        return report.objectBID === individual
-                                            .individual.getID();
-                                    })[0];
-                                individual.report = iReport;
+                    data.reports.forEach((report) => {
+                        const selection = this.selectedIndividuals.get(report.objectBID);
+                        if (selection) {
+                            if (selection.visible) {
+                                selection.report = report;
                                 //    Change the color to something on the red scale
-                                if (iReport.spatialOverlapPercentage) {
-                                    const interpolated = interpolateReds(
-                                        iReport
-                                            .spatialOverlapPercentage);
-                                    individual.color = interpolated;
-                                    this.layerChanges.next({
-                                        individual: individual.individual.getID(),
-                                        // Change the color and set the opacity a little higher
-                                        changes: [
-                                            {
-                                                attribute: "fill-extrusion-color",
-                                                value: interpolated
-                                            },
-                                            {
-                                                attribute: "fill-extrusion-opacity",
-                                                value: 0.85
-                                            }]
-                                    });
+                                if (report.spatialOverlapPercentage) {
+                                    // If filter is enabled
+                                    // and the spatial overlap is 0, remove from the list
+                                    if (this.filterCompareResults &&
+                                        report.spatialOverlapPercentage < 0.001) {
+                                        this.removeIndividual(selection);
+                                    } else {
+                                        const interpolated = interpolateReds(
+                                            report.spatialOverlapPercentage);
+                                        selection.color = interpolated;
+                                        this.layerChanges.next({
+                                            individual: selection.individual.getID(),
+                                            // Change the color and set the opacity a little higher
+                                            changes: [
+                                                {
+                                                    attribute: "fill-extrusion-color",
+                                                    value: interpolated
+                                                },
+                                                {
+                                                    attribute: "fill-extrusion-opacity",
+                                                    value: 0.85
+                                                }]
+                                        });
+                                    }
                                 }
+                            } else {
+                                selection.report = undefined;
                             }
-                        });
+                        }
+                    });
                 });
         }
     }
@@ -141,7 +147,8 @@ export class CompareComponent implements AfterViewInit {
         //    Remove all the individuals from map
         this.mapComponent.clearMap();
         this.zoomMap = true;
-        this.selectedIndividuals = [];
+        // this.selectedIndividuals = [];
+        this.selectedIndividuals = new Map();
         //    Clear the base selection
         this.baseIndividual = null;
         this.layerNumber = 0;
@@ -159,11 +166,7 @@ export class CompareComponent implements AfterViewInit {
     public removeIndividual(individual: ICompareIndividual): void {
         console.debug("Remove:", individual);
         // Remove from the array first, then from the map
-        const idx = this.selectedIndividuals.indexOf(individual);
-        if (idx > -1) {
-            this.selectedIndividuals.splice(idx, 1);
-            this.availableColors.push(individual.color);
-        }
+        this.selectedIndividuals.delete(individual.individual.getID());
         this.mapComponent
             .removeIndividual(individual.individual.getID());
     }
@@ -186,6 +189,10 @@ export class CompareComponent implements AfterViewInit {
             selection.height = selection.height + newOffset;
             selection.base = selection.base + newOffset;
         }
+    }
+
+    public filterChanged(event: MatSlideToggleChange): void {
+        this.filterCompareResults = event.checked;
     }
 
     public intersectBaseIndividual(): void {
@@ -213,6 +220,13 @@ export class CompareComponent implements AfterViewInit {
         }
     }
 
+    public getSelectedIndividuals(): ICompareIndividual[] {
+        return Array.from(this.selectedIndividuals.values());
+    }
+
+    public get mapValues(): ICompareIndividual[] {
+        return Array.from(this.selectedIndividuals.values());
+    }
 
     private loadSelectedIndividual(individual: string, baseIndividual = false): void {
         this.is.getTrestleIndividual(individual)
@@ -264,7 +278,9 @@ export class CompareComponent implements AfterViewInit {
             this.zoomMap = false;
         } else {
             //    Add the selection to the list
-            this.selectedIndividuals.push(compare);
+            this.selectedIndividuals.set(compare.individual.getID(),
+                compare);
+            // this.selectedIndividuals.push(compare);
         }
         this.layerNumber++;
     }

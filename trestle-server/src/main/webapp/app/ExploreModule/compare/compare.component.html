@@ -38,12 +38,18 @@
                 <div class="row">
                     <button mat-raised-button>ADD</button>
                     <button mat-raised-button color="primary" (click)="compareIndividuals()">COMPARE</button>
+                    <mat-slide-toggle
+                            [color]="accent"
+                            [checked]="true"
+                            (change)="filterChanged($event)"
+                    >Filter non-overlapping results?
+                    </mat-slide-toggle>
                 </div>
             </div>
             <div class="col s12 l6 ui-row">
                 List of compared values here
                 <mat-accordion [multi]="true">
-                    <mat-expansion-panel *ngFor="let selection of selectedIndividuals">
+                    <mat-expansion-panel *ngFor="let selection of getSelectedIndividuals()">
                         <mat-expansion-panel-header>
                             <mat-panel-title>
                                 <div class="legend" [style.background]="selection.color"></div>
