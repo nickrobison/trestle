@@ -53,8 +53,7 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
      * @returns {string}
      */
     public getHostname(): string {
-        const splits = this.id.split("#");
-        return splits[0];
+        return TrestleIndividual.extractHostname(this.id);
     }
 
     /**
@@ -194,6 +193,16 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
     public static withoutHostname(id: string): string {
         const strings = id.split("#");
         return strings[1];
+    }
+
+    /**
+     * Get the URI hostname
+     * @param {string} id
+     * @returns {string}
+     */
+    public static extractHostname(id: string): string {
+        const strings = id.split("#");
+        return strings[0];
     }
 
     /**

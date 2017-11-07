@@ -17,8 +17,14 @@ export class VisualizeComponent {
     constructor(private router: Router) { }
 
     public selectedOption(value: string) {
-        const filteredValue = TrestleIndividual.withoutHostname(value);
-        console.debug("Clicked", filteredValue);
-        this.router.navigate(["/explore/visualize", filteredValue]);
+        const split = value.split("#");
+        console.debug("Split value:", split);
+        if (split.length > 1) {
+            this.router.navigate(["/explore/visualize", split[1]], {queryParams:
+                {root: split[0]}});
+        } else {
+            this.router.navigate(["/explore/visualize", split[0]]);
+        }
+
     }
 }

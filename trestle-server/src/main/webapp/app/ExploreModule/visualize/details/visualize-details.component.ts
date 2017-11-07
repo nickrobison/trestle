@@ -1,8 +1,7 @@
-import {AfterViewInit, Component, OnDestroy, OnInit, ViewContainerRef} from "@angular/core";
+import {AfterViewInit, Component, ViewContainerRef} from "@angular/core";
 import {IndividualService} from "../../../SharedModule/individual/individual.service";
 import {MatDialog, MatDialogConfig, MatDialogRef} from "@angular/material";
-import {ActivatedRoute} from "@angular/router";
-import {Subscription} from "rxjs/Subscription";
+import {ActivatedRoute, Params} from "@angular/router";
 import {TrestleIndividual} from "../../../SharedModule/individual/TrestleIndividual/trestle-individual";
 import {MapSource} from "../../../UIModule/map/trestle-map.component";
 import {Subject} from "rxjs/Subject";
@@ -10,20 +9,26 @@ import {IIndividualHistory} from "../../../UIModule/history-graph/history-graph.
 import * as moment from "moment";
 import {TrestleFact} from "../../../SharedModule/individual/TrestleIndividual/trestle-fact";
 import {IndividualValueDialog} from "../individual-value.dialog";
+import {Observable} from "rxjs/Observable";
+
+interface IRouteObservable {
+    route: Params;
+    query: Params;
+}
 
 @Component({
     selector: "visualize-details",
     templateUrl: "./visualize-details.component.html",
     styleUrls: ["./visualize-details.component.css"]
 })
-export class VisualizeDetailsComponent implements AfterViewInit, OnDestroy {
+export class VisualizeDetailsComponent implements AfterViewInit {
 
     public individual: TrestleIndividual;
     public mapIndividual: Subject<MapSource>;
     public individualFactHistory: IIndividualHistory;
     public minTime: moment.Moment;
     public maxTime: moment.Moment;
-    private routeSubscription: Subscription;
+    private routeObservable: Observable<IRouteObservable>;
     private dialogRef: MatDialogRef<IndividualValueDialog> | null;
 
     constructor(private is: IndividualService,
@@ -36,14 +41,21 @@ export class VisualizeDetailsComponent implements AfterViewInit, OnDestroy {
     }
 
     public ngAfterViewInit(): void {
-        this.routeSubscription = this.route.params.subscribe((params) => {
-            console.debug("has params", params);
-            this.loadIndividual(params["id"]);
-        });
-    }
+        this.routeObservable = Observable.combineLatest(this.route.params, this.route.queryParams,
+            (route, query) => {
+            return {
+                route,
+                query};
+            });
+        this.routeObservable
+            .subscribe((combined) => {
+                console.debug("has params: %s %s", combined.route, combined.query);
+                if (combined.query["root"]) {
+                    this.loadIndividual(combined.query["root"] + "#" + combined.route["id"]);
+                }
+                this.loadIndividual(combined.route["id"]);
+            })
 
-    public ngOnDestroy(): void {
-        this.routeSubscription.unsubscribe();
     }
 
     public displayFn(individualName: string): string {

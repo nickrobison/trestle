@@ -29,7 +29,8 @@
         <div class="row">
             <div class="row results-row">
                 <h5>Comparing against: {{baseIndividual.individual.getFilteredID()}}</h5>
-                <a [routerLink]="['/explore', 'visualize', baseIndividual.individual.withoutHostname()]"><mat-icon>link</mat-icon></a>
+                <a [routerLink]="['/explore', 'visualize', baseIndividual.individual.withoutHostname()]"
+                [queryParams]="{root: baseIndividual.individual.getHostname()}"><mat-icon>link</mat-icon></a>
             </div>
             <button mat-raised-button color="primary" (click)="intersectBaseIndividual()">INTERSECT</button>
             <button mat-raised-button color="warn" (click)="reset()">RESET</button>
@@ -65,7 +66,10 @@
                             <mat-panel-title>
                                 <div class="legend" [style.background]="selection.color"></div>
                                 {{selection.individual.getFilteredID()}}
-                                <a [routerLink]="['/explore', 'visualize', selection.individual.withoutHostname()]"><mat-icon>link</mat-icon></a>
+                                <a [routerLink]="['/explore',
+                                'visualize',
+                                selection.individual.withoutHostname()]"
+                                [queryParams]="{root: selection.individual.getHostname()}"><mat-icon>link</mat-icon></a>
 
                             </mat-panel-title>
                             <mat-panel-description>
