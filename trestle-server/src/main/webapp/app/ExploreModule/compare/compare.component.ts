@@ -3,7 +3,7 @@ import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual
 import {IMapAttributeChange, MapSource, TrestleMapComponent} from "../../UIModule/map/trestle-map.component";
 import {IndividualService} from "../../SharedModule/individual/individual.service";
 import {TrestleTemporal} from "../../SharedModule/individual/TrestleIndividual/trestle-temporal";
-import {interpolateCool, scaleLinear, schemeCategory20b} from "d3-scale";
+import {schemeCategory20b} from "d3-scale";
 import {MatSliderChange, MatSlideToggleChange} from "@angular/material";
 import {ISpatialComparisonReport, MapService} from "../viewer/map.service";
 import * as moment from "moment";

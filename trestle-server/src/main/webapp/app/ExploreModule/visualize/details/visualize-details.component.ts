@@ -54,8 +54,7 @@ export class VisualizeDetailsComponent implements AfterViewInit {
                     this.loadIndividual(combined.query["root"] + "#" + combined.route["id"]);
                 }
                 this.loadIndividual(combined.route["id"]);
-            })
-
+            });
     }
 
     public displayFn(individualName: string): string {
