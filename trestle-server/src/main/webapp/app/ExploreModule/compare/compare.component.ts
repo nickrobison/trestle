@@ -11,6 +11,8 @@ import {Subject} from "rxjs/Subject";
 import {LoadingSpinnerService} from "../../UIModule/spinner/loading-spinner.service";
 import {interpolateReds} from "d3-scale-chromatic";
 import {IDataExport} from "../exporter/exporter.component";
+import {parse} from "wellknown";
+import {MultiPolygon} from "geojson";
 
 interface ICompareIndividual {
     individual: TrestleIndividual;
@@ -37,6 +39,7 @@ export class CompareComponent implements AfterViewInit {
     public dataChanges: Subject<MapSource>;
     public layerChanges: Subject<IMapAttributeChange>;
     public exportValues: IDataExport[];
+    public loadedOverlap: ISpatialComparisonReport | null;
     private filterCompareResults: boolean;
     private layerDepth: number;
     private maxHeight: number;
@@ -78,6 +81,7 @@ export class CompareComponent implements AfterViewInit {
             dataset: "gaul-test",
             individuals: []
         }];
+        this.loadedOverlap = null;
     }
 
     public ngAfterViewInit(): void {
@@ -177,7 +181,7 @@ export class CompareComponent implements AfterViewInit {
         this.mapComponent
             .removeIndividual(individual.individual.getID());
 
-    //    Remove from export
+        //    Remove from export
         const idx = this.exportValues[0].individuals.indexOf(individual.individual.getID());
         if (idx > -1) {
             this.exportValues[0].individuals.splice(idx);
@@ -241,6 +245,104 @@ export class CompareComponent implements AfterViewInit {
         return Array.from(this.selectedIndividuals.values());
     }
 
+    public toggleOverlap(overlap: ISpatialComparisonReport): void {
+        const id = TrestleIndividual.filterID(overlap.objectAID)
+            + "-" + TrestleIndividual.filterID(overlap.objectBID);
+        // If we have an overlap, and we haven't loaded it yet
+        if (overlap.spatialOverlap) {
+            // If the loaded overlap is null, add the new one
+            if (this.loadedOverlap === null) {
+                // Build the change value
+                const changes: MapSource = {
+                    id,
+                    data: {
+                        type: "Feature",
+                        // TODO(nickrobison): Gross?
+                        geometry: (parse(overlap.spatialOverlap) as MultiPolygon),
+                        properties: null,
+                        id
+                    },
+                    extrude: {
+                        id: id + "-extrude",
+                        type: "fill-extrusion",
+                        source: id,
+                        paint: {
+                            "fill-extrusion-color": "blue",
+                            "fill-extrusion-height": 3050,
+                            "fill-extrusion-base": 3000,
+                            "fill-extrusion-opacity": 0.7
+                        }
+                    }
+                };
+
+                //    Turn off all layers except objects A and B that we need
+                this.selectedIndividuals.forEach((value) => {
+                    if (CompareComponent.filterOverlapIndividuals(value, overlap)) {
+                        this.toggleVisibility(value);
+                    }
+                });
+
+                //    Now, add the new overlap
+                this.dataChanges.next(changes);
+                this.loadedOverlap = overlap;
+
+                //    If we are the overlap, remove us and turn everything back on
+            } else if (this.loadedOverlap === overlap) {
+                this.selectedIndividuals.forEach((value) => {
+                    if (CompareComponent.filterOverlapIndividuals(value, overlap)) {
+                        this.toggleVisibility(value);
+                    }
+                });
+                this.mapComponent.removeIndividual(id);
+                this.loadedOverlap = null;
+                //    Otherwise, remove the current overlap, and cycle what needs to be toggled
+            } else {
+                //    Unload the current overlap
+                const overlapID = TrestleIndividual.filterID(this.loadedOverlap.objectAID)
+                    + "-" + TrestleIndividual.filterID(this.loadedOverlap.objectBID);
+                this.mapComponent.removeIndividual(overlapID);
+                //    Build the change value
+                const changes: MapSource = {
+                    id,
+                    data: {
+                        type: "Feature",
+                        // TODO(nickrobison): Gross?
+                        geometry: (parse(overlap.spatialOverlap) as MultiPolygon),
+                        properties: null,
+                        id
+                    },
+                    extrude: {
+                        id: id + "-extrude",
+                        type: "fill-extrusion",
+                        source: id,
+                        paint: {
+                            "fill-extrusion-color": "blue",
+                            "fill-extrusion-height": 4000,
+                            "fill-extrusion-base": 3000,
+                            "fill-extrusion-opacity": 0.7
+                        }
+                    }
+                };
+
+                this.selectedIndividuals.forEach((value) => {
+                    //    If it's part of the new overlap, and is not visible, turn it on
+                    if (!CompareComponent.filterOverlapIndividuals(value, overlap)) {
+                        if (!value.visible) {
+                            this.toggleVisibility(value);
+                        }
+                        //    If it's visible and not part of the new overlap, turn it off
+                    } else if (value.visible) {
+                        this.toggleVisibility(value);
+                    }
+                });
+
+                //    Set the new overlap
+                this.dataChanges.next(changes);
+                this.loadedOverlap = overlap;
+            }
+        }
+    }
+
     private loadSelectedIndividual(individual: string, baseIndividual = false): void {
         this.is.getTrestleIndividual(individual)
             .subscribe((result) => this.addIndividualToCompare(result, baseIndividual));
@@ -297,7 +399,7 @@ export class CompareComponent implements AfterViewInit {
         }
         this.layerNumber++;
 
-    //    Add them to the export record
+        //    Add them to the export record
         this.exportValues[0].individuals.push(compare.individual.getID());
     }
 
@@ -325,5 +427,17 @@ export class CompareComponent implements AfterViewInit {
 
     private static getBase(temporal: TrestleTemporal): number {
         return temporal.getFrom().get("year");
+    }
+
+    /**
+     * Filter only individuals actually involved in the overlap
+     * @param {ICompareIndividual} value
+     * @param {ISpatialComparisonReport} overlap
+     * @returns {boolean}
+     */
+    private static filterOverlapIndividuals(value: ICompareIndividual, overlap: ISpatialComparisonReport) {
+        const id = value.individual.getID();
+        return (id !== overlap.objectAID) &&
+            (id !== overlap.objectBID);
     }
 }

@@ -30,7 +30,9 @@
             <div class="row results-row">
                 <h5>Comparing against: {{baseIndividual.individual.getFilteredID()}}</h5>
                 <a [routerLink]="['/explore', 'visualize', baseIndividual.individual.withoutHostname()]"
-                [queryParams]="{root: baseIndividual.individual.getHostname()}"><mat-icon>link</mat-icon></a>
+                   [queryParams]="{root: baseIndividual.individual.getHostname()}">
+                    <mat-icon>link</mat-icon>
+                </a>
             </div>
             <button mat-raised-button color="primary" (click)="intersectBaseIndividual()">INTERSECT</button>
             <button mat-raised-button color="warn" (click)="reset()">RESET</button>
@@ -46,7 +48,8 @@
                     <button mat-raised-button
                             color="primary"
                             (click)="compareIndividuals()"
-                    [disabled]="selectedIndividuals.size == 0">COMPARE</button>
+                            [disabled]="selectedIndividuals.size == 0">COMPARE
+                    </button>
                     <mat-slide-toggle
                             [color]="'accent'"
                             [checked]="true"
@@ -66,10 +69,14 @@
                             <mat-panel-title>
                                 <div class="legend" [style.background]="selection.color"></div>
                                 {{selection.individual.getFilteredID()}}
-                                <a [routerLink]="['/explore',
+                                <a
+                                        matTooltip="Visualize individual"
+                                        [routerLink]="['/explore',
                                 'visualize',
                                 selection.individual.withoutHostname()]"
-                                [queryParams]="{root: selection.individual.getHostname()}"><mat-icon>link</mat-icon></a>
+                                        [queryParams]="{root: selection.individual.getHostname()}">
+                                    <mat-icon>link</mat-icon>
+                                </a>
 
                             </mat-panel-title>
                             <mat-panel-description>
@@ -89,7 +96,14 @@
                         <div *ngIf="selection.report">
                             Accounts for {{selection.report.spatialOverlapPercentage * 100 | rounding: 2}}% of the
                             individual
-                            <mat-icon>layers</mat-icon>
+                            <mat-icon *ngIf="selection.report !== loadedOverlap"
+                                    matTooltip="Add overlap to map"
+                                    (click)="toggleOverlap(selection.report)">layers
+                            </mat-icon>
+                            <mat-icon *ngIf="selection.report === loadedOverlap"
+                                    matTooltip="Remove overlap from map"
+                                    (click)="toggleOverlap(selection.report)">layers_clear
+                            </mat-icon>
                         </div>
                         <mat-action-row>
                             <mat-slider class="wide-slider"
