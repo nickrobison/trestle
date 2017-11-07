@@ -238,15 +238,29 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
             spatialComparisonReport.addApproximateEquality(equality);
         }
 
-//        TODO(nickrobison): Figure out covers/contains
 //        Meets
         if (aPolygon.touches(bPolygon)) {
             logger.debug("{} touches {}", objectA, objectB);
             spatialComparisonReport.addRelation(ObjectRelation.SPATIAL_MEETS);
+//            Contains means totally inside, without any touching of the perimeter
+        } else if (aPolygon.contains(bPolygon)) {
+            logger.debug("{} contains {}", objectA, objectB);
+            spatialComparisonReport.addRelation(ObjectRelation.CONTAINS);
+//            Also add an overlap, since the overlap is total
+            spatialComparisonReport.addSpatialOverlap(SpatialParser.parseWKTFromGeom(bPolygon)
+                            .orElseThrow(() -> new IllegalStateException("Can't parse Polygon")),
+                    calculateOverlapPercentage(aPolygon, bPolygon));
+            //            Covers catches all contains relationships that also allow for
+        } else if (aPolygon.covers(bPolygon)) {
+            logger.debug("{} covers {}", objectA, objectB);
+            spatialComparisonReport.addRelation(ObjectRelation.COVERS);
+//            Also add an overlap, since the overlap is total
+            spatialComparisonReport.addSpatialOverlap(SpatialParser.parseWKTFromGeom(bPolygon)
+                            .orElseThrow(() -> new IllegalStateException("Can't parse Polygon")),
+                    calculateOverlapPercentage(aPolygon, bPolygon));
         } else if (aPolygon.intersects(bPolygon)) { // Overlaps
             logger.debug("Found overlap between {} and {}", objectA, objectB);
             final Geometry intersection = aPolygon.intersection(bPolygon);
-
             spatialComparisonReport.addSpatialOverlap(SpatialParser.parseWKTFromGeom(intersection)
                             .orElseThrow(() -> new IllegalStateException("Can't parse Polygon")),
                     calculateOverlapPercentage(aPolygon, intersection));
