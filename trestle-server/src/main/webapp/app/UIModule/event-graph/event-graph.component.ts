@@ -104,7 +104,7 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
             .append("rect")
             .attr("class", "selected")
             .attr("x", 0)
-            .attr("y", (d) => y(d.bin) + (binHeight / 2))
+            .attr("y", (d) => y(d.bin + 1) + (binHeight / 2))
             .attr("height", binHeight)
             .attr("width", () => x(this.maxDate) + 120)
             .attr("fill", "#FAFAD2")
