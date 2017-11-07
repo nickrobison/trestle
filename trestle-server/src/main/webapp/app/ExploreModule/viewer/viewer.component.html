@@ -17,7 +17,10 @@
                                  [@fadeInOut] [diameter]="24" [strokeWidth]="3"></mat-spinner>
                     <mat-icon *ngIf="(ds.state == DatasetState.LOADED)" class="selected" [@fadeInOut]>check_circle
                     </mat-icon>
-                    <mat-icon *ngIf="(ds.state == DatasetState.ERROR)" class="orange600" [@fadeInOut]>error</mat-icon>
+                    <mat-icon *ngIf="(ds.state == DatasetState.ERROR)"
+                              class="orange600"
+                              [matTooltip]="getError(ds)"
+                              [@fadeInOut]>error</mat-icon>
                     {{ds.name}}
                 </li>
             </ul>

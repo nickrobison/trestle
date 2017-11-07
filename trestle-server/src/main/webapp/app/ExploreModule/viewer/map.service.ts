@@ -12,6 +12,7 @@ import {
     ITrestleIndividual,
     TrestleIndividual
 } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
+import {isNullOrUndefined} from "util";
 
 var parse = require("wellknown");
 
@@ -83,6 +84,10 @@ export class MapService {
                        dbTime?: Moment,
                        buffer: number = 0): Observable<FeatureCollection<GeometryObject>> {
         console.debug("Intersecting at:", wkt, validTime.toISOString());
+
+        if (isNullOrUndefined(wkt)) {
+            return Observable.throw("Intersection boundary cannot be empty");
+        }
 
         const postBody: IIntersectionBody = {
             dataset,

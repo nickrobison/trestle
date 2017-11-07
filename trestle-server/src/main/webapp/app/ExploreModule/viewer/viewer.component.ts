@@ -28,6 +28,7 @@ enum DatasetState {
 interface IDatasetState {
     name: string;
     state: DatasetState;
+    error?: string;
 }
 
 @Component({
@@ -103,6 +104,7 @@ export class DatsetViewerComponent implements OnInit {
             }, (error) => {
                 console.error("Error loading dataset:", error);
                 dataset.state = DatasetState.ERROR;
+                dataset.error = error;
             });
     }
 
@@ -114,7 +116,9 @@ export class DatsetViewerComponent implements OnInit {
             this.availableDatasets
                 .filter((ds) => ds.state === DatasetState.LOADED)
                 .forEach((ds) => this.loadDataset(ds));
-        } else {
+        }
+        // On the first time around, set the map bounds
+        if (!this.mapBounds) {
             this.mapBounds = bounds;
         }
     }
@@ -142,6 +146,10 @@ export class DatsetViewerComponent implements OnInit {
 
     public filterLabel(input: IEventElement): string {
         return input.entity.split(":")[1];
+    }
+
+    public getError(ds: IDatasetState): string {
+        return ds.error === undefined ? "Error" : ds.error;
     }
 
     private buildHistoryGraph(individual: TrestleIndividual): void {

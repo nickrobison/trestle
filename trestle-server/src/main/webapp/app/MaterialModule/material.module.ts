@@ -21,7 +21,7 @@ import {
     MatSliderModule,
     MatSlideToggleModule,
     MatTabsModule,
-    MatToolbarModule
+    MatToolbarModule, MatTooltipModule
 } from "@angular/material";
 
 @NgModule({
@@ -37,6 +37,7 @@ import {
         MatChipsModule,
         MatButtonToggleModule,
         MatToolbarModule,
+        MatTooltipModule,
         MatListModule,
         MatIconModule,
         MatProgressSpinnerModule,
@@ -59,6 +60,7 @@ import {
         MatChipsModule,
         MatButtonToggleModule,
         MatToolbarModule,
+        MatTooltipModule,
         MatListModule,
         MatIconModule,
         MatProgressSpinnerModule,
