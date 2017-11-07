@@ -54,11 +54,12 @@ export class DatsetViewerComponent implements OnInit {
     public objectHistory: IIndividualHistory;
     public eventData: IEventData;
     public dataChanges: Subject<MapSource>;
-    public exportIndividuals: IDataExport;
+    public exportIndividuals: IDataExport[];
     private mapBounds: LngLatBounds;
 
     constructor(private mapService: MapService, private vs: IndividualService) {
         this.dataChanges = new Subject();
+        this.exportIndividuals = [];
     }
 
     public ngOnInit(): void {
@@ -87,13 +88,13 @@ export class DatsetViewerComponent implements OnInit {
                 dataset.state = DatasetState.LOADED;
                 console.debug("Data:", data);
                 // Get the list of individuals, for exporting
-                this.exportIndividuals = {
+                this.exportIndividuals.push({
                     dataset: this.availableDatasets[0].name,
                     individuals: (data.features
                         .filter((feature) => feature.id)
                         // We can do this cast, because we filter to make sure the features have an id
                         .map((feature) => feature.id) as string[])
-                };
+                });
                 this.dataChanges.next({
                     id: "intersection-query",
                     idField: "id",

@@ -1,6 +1,7 @@
 import {Component, Input} from "@angular/core";
 import {ExporterService} from "./exporter.service";
 import {saveAs} from "file-saver";
+import {Observable} from "rxjs/Observable";
 
 export interface IDataExport {
     dataset: string;
@@ -14,7 +15,7 @@ export interface IDataExport {
 })
 export class ExporterComponent {
 
-    @Input() public dataExport: IDataExport;
+    @Input() public dataExport: IDataExport[];
     @Input() public label = true;
     public options: { value: string, viewValue: string }[];
     public selectedValue: string;
@@ -34,21 +35,39 @@ export class ExporterComponent {
     public click(): void {
         console.debug("Clicked export", this.dataExport);
         // If the input is undefined, or there are not individuals, skip
-        if ((this.dataExport !== undefined) &&
-            (this.dataExport.individuals.length > 0)) {
+        if ((this.dataExport !== undefined)) {
             this.loading = true;
-            this.es
-                .exportIndividuals({
-                    dataset: this.dataExport.dataset,
-                    individuals: this.dataExport.individuals,
-                    type: this.selectedValue
-                })
-                .finally(() => this.loading = false)
-                .subscribe((data) => {
-                    console.debug("exported data:", data);
-                    const fileName = "trestle-test.zip";
-                    saveAs(data, fileName);
+
+            const exportArray = this.dataExport
+                .filter((de) => de.individuals.length > 0)
+                .map((de) => {
+                    return this.es.exportIndividuals({
+                        dataset: de.dataset,
+                        individuals: de.individuals,
+                        type: this.selectedValue
+                    });
                 });
+            Observable.forkJoin(exportArray)
+                .finally(() => this.loading = false)
+                .subscribe((exports) => {
+                    exports.forEach((data) => {
+                        console.debug("exported data:", data);
+                        const fileName = "trestle-test.zip";
+                        saveAs(data, fileName);
+                    });
+                });
+            //
+            //
+            // this.es
+            //     .exportIndividuals({
+            //         dataset: this.dataExport.dataset,
+            //         individuals: this.dataExport.individuals,
+            //         type: this.selectedValue
+            //     })
+            //     .finally(() => this.loading = false)
+            //     .subscribe((data) => {
+            //
+            //     });
         }
 
     }

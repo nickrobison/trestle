@@ -36,7 +36,7 @@ export class CompareComponent implements AfterViewInit {
     public baseIndividual: ICompareIndividual | null;
     public dataChanges: Subject<MapSource>;
     public layerChanges: Subject<IMapAttributeChange>;
-    public exportValues: IDataExport;
+    public exportValues: IDataExport[];
     private filterCompareResults: boolean;
     private layerDepth: number;
     private maxHeight: number;
@@ -74,10 +74,10 @@ export class CompareComponent implements AfterViewInit {
         this.dataChanges = new Subject();
         this.layerChanges = new Subject();
         this.filterCompareResults = true;
-        this.exportValues = {
+        this.exportValues = [{
             dataset: "gaul-test",
             individuals: []
-        }
+        }];
     }
 
     public ngAfterViewInit(): void {
@@ -178,9 +178,9 @@ export class CompareComponent implements AfterViewInit {
             .removeIndividual(individual.individual.getID());
 
     //    Remove from export
-        const idx = this.exportValues.individuals.indexOf(individual.individual.getID());
+        const idx = this.exportValues[0].individuals.indexOf(individual.individual.getID());
         if (idx > -1) {
-            this.exportValues.individuals.splice(idx);
+            this.exportValues[0].individuals.splice(idx);
         }
     }
 
@@ -298,7 +298,7 @@ export class CompareComponent implements AfterViewInit {
         this.layerNumber++;
 
     //    Add them to the export record
-        this.exportValues.individuals.push(compare.individual.getID());
+        this.exportValues[0].individuals.push(compare.individual.getID());
     }
 
     private getHeight(temporal: TrestleTemporal): number {
