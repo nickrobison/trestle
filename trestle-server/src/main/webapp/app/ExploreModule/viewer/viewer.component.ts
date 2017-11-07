@@ -225,7 +225,8 @@ export class DatsetViewerComponent implements OnInit {
                         if (!splitMergeIndividual) {
                             throw new Error("Can't find who to split/merge with during component_with");
                         }
-                        const smiEvents = this.buildObjectEvents(splitMergeIndividual[0], splitMergeIndividual[0].getFilteredID());
+                        const smiEvents = this.buildObjectEvents(splitMergeIndividual[0], splitMergeIndividual[0].getFilteredID(),
+                            undefined, undefined, true);
                         if ((splitMergeType === "MERGED_FROM") || (splitMergeType === "SPLIT_FROM")) {
                             // Link to the start event
                             rootEvent = smiEvents.events[1];
@@ -291,7 +292,7 @@ export class DatsetViewerComponent implements OnInit {
         let step = 1;
 
         events
-            .filter((event) => (event.value === "from") || (event.value === "into"))
+            .filter((event) => (event.value === "from") || (event.value === "into") || (event.value === "component"))
             .map((event) => {
                 // Increment the current bin
                 currentBin = currentBin + Number.parseInt(sign + step);
@@ -321,6 +322,7 @@ export class DatsetViewerComponent implements OnInit {
      * @param {string} entityName
      * @param {TrestleRelationType} relationType
      * @param {IEventElement} rootEvent
+     * @param {boolean} componentWith
      * @returns {{events: IEventElement[]; links: IEventLink[]}}
      */
     private buildObjectEvents(individual: TrestleIndividual,
@@ -432,12 +434,12 @@ export class DatsetViewerComponent implements OnInit {
                 });
                 //    Otherwise, create the end event and move on
             } else {
-                console.debug("Something else");
+                console.debug("Something else:", relationType);
                 const ended = {
                     id: entityName + "-" + (endEvent as TrestleEvent).getType(),
                     entity: entityName,
                     bin: 1,
-                    value: "data",
+                    value: componentWith === true ? "component" : "data",
                     temporal: (endEvent as TrestleEvent).getTemporal().toDate()
                 };
                 events.push(started, ended);
