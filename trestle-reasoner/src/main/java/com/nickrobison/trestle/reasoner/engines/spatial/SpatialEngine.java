@@ -243,14 +243,14 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
             logger.debug("{} touches {}", objectA, objectB);
             spatialComparisonReport.addRelation(ObjectRelation.SPATIAL_MEETS);
 //            Contains means totally inside, without any touching of the perimeter
-        } else if (aPolygon.contains(bPolygon)) {
-            logger.debug("{} contains {}", objectA, objectB);
-            spatialComparisonReport.addRelation(ObjectRelation.CONTAINS);
-//            Also add an overlap, since the overlap is total
-            spatialComparisonReport.addSpatialOverlap(SpatialParser.parseWKTFromGeom(bPolygon)
-                            .orElseThrow(() -> new IllegalStateException("Can't parse Polygon")),
-                    calculateOverlapPercentage(aPolygon, bPolygon));
-            //            Covers catches all contains relationships that also allow for
+//        } else if (aPolygon.contains(bPolygon)) {
+//            logger.debug("{} contains {}", objectA, objectB);
+//            spatialComparisonReport.addRelation(ObjectRelation.CONTAINS);
+////            Also add an overlap, since the overlap is total
+//            spatialComparisonReport.addSpatialOverlap(SpatialParser.parseWKTFromGeom(bPolygon)
+//                            .orElseThrow(() -> new IllegalStateException("Can't parse Polygon")),
+//                    calculateOverlapPercentage(aPolygon, bPolygon));
+//            //            Covers catches all contains relationships that also allow for touching the perimeter
         } else if (aPolygon.covers(bPolygon)) {
             logger.debug("{} covers {}", objectA, objectB);
             spatialComparisonReport.addRelation(ObjectRelation.COVERS);

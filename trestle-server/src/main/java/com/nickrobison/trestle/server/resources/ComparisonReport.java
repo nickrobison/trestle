@@ -4,10 +4,7 @@ import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionCont
 import com.nickrobison.trestle.reasoner.parser.spatial.SpatialComparisonReport;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class ComparisonReport implements Serializable {
     public static final long serialVersionUID = 42L;

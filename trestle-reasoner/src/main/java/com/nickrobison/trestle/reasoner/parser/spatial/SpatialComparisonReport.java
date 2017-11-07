@@ -97,4 +97,8 @@ public class SpatialComparisonReport implements Serializable {
     public void addRelation(ObjectRelation relation) {
         this.relations.add(relation);
     }
+
+    public Set<ObjectRelation> getRelations() {
+        return relations;
+    }
 }

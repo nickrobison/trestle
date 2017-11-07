@@ -80,14 +80,6 @@
 
                             </mat-panel-title>
                             <mat-panel-description>
-
-                                <!--<mat-icon *ngIf="selection.visible">layers</mat-icon>-->
-                                <!--<mat-icon *ngIf="!selection.visible">layers_clear</mat-icon>-->
-                                <!--<i *ngIf="selection.visible" class="material-icons mat-18">layers</i>-->
-                                <!--<i *ngIf="!selection.visible" class="material-icons mat-18 light">layers_clear</i>-->
-                                <!--<a (click)="removeIndividual(selection)">-->
-                                <!--<i class="material-icons mat-18">delete</i>-->
-                                <!--</a>-->
                             </mat-panel-description>
                         </mat-expansion-panel-header>
                         <div *ngIf="selection.report === undefined">
@@ -104,6 +96,12 @@
                                     matTooltip="Remove overlap from map"
                                     (click)="toggleOverlap(selection.report)">layers_clear
                             </mat-icon>
+                            <!--Relations-->
+                            <h6>Relations:</h6>
+                            <ul>
+                                <li *ngFor="let relation of selection.report.relations">{{relation}}</li>
+                            </ul>
+
                         </div>
                         <mat-action-row>
                             <mat-slider class="wide-slider"

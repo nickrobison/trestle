@@ -44,6 +44,7 @@ export interface IContributionPart {
 export interface ISpatialComparisonReport {
     objectAID: string;
     objectBID: string;
+    relations: string[];
     equality?: number;
     spatialOverlap?: string;
     spatialOverlapPercentage?: number;
