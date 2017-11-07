@@ -153,7 +153,7 @@ export class DatsetViewerComponent implements OnInit {
     }
 
     private buildHistoryGraph(individual: TrestleIndividual): void {
-        console.debug("has events", individual.getEvents());
+        console.debug("Individual has events", individual.getEvents());
         //    Get the split/merged/component relations
         const additionalRelations = individual
             .getRelations()
@@ -162,7 +162,7 @@ export class DatsetViewerComponent implements OnInit {
                 || (relation.getType() === "SPLIT_FROM")
                 || (relation.getType() === "SPLIT_INTO")
                 || (relation.getType() === "COMPONENT_WITH"));
-        console.debug("Individual %s has relations %o",
+        console.debug("Individual %s has relations %O",
             individual.getFilteredID(), additionalRelations);
         const history: IIndividualHistory = {
             entities: []
@@ -190,24 +190,17 @@ export class DatsetViewerComponent implements OnInit {
 
             // If we have a COMPONENT_WITH relationship,
             // then we need the individual being split/merged from/into
-            const hasComponent = additionalRelations
-                .filter((relation) => relation.getType() === "COMPONENT_WITH");
-            if (hasComponent) {
-                console.debug("Has component with relationship");
-                rootEvent = events[0];
-            } else if ((splitMergeType === "MERGED_FROM") || (splitMergeType === "SPLIT_FROM")) {
+            // const hasComponent = additionalRelations
+            //     .filter((relation) => relation.getType() === "COMPONENT_WITH");
+            // if (hasComponent) {
+            //     console.debug("Has component with relationship");
+            //     rootEvent = events[0];
+            if ((splitMergeType === "MERGED_FROM") || (splitMergeType === "SPLIT_FROM")) {
                 // Link to the start event
                 rootEvent = events[0];
             } else {
                 rootEvent = events[1];
             }
-            // } else if ((splitMergeType === "SPLIT_INTO") || (splitMergeType === "SPLIT_FROM")) {
-            //     // Link to the end event
-            //     rootEvent = events[1];
-            // } else {
-            //     rootEvent = undefined;
-            // }
-            console.debug("Linking to root event:", rootEvent);
 
             const obsArray = additionalRelations.map((relation) => {
                 console.debug("Getting attributes for:", relation.getObject());
@@ -216,13 +209,46 @@ export class DatsetViewerComponent implements OnInit {
             Observable.forkJoin(obsArray)
                 .subscribe((objects) => {
                     console.debug("Have all observables:", objects);
+
+                    // Do we have a component with relationship?
+                    // If so, find who we're supposed to split/merge with, and use that as the root event
+                    const hasComponent = additionalRelations
+                        .filter((relation) => relation.getType() === "COMPONENT_WITH");
+                    if (hasComponent.length > 0) {
+                        console.debug("has component with:", hasComponent);
+                        const splitMergeID = additionalRelations[0].getObject();
+                        console.debug("Using %s as root individual", splitMergeID);
+                        const splitMergeIndividual = objects
+                            .filter((obj) => obj.getID() === splitMergeID);
+                        console.debug("Found individual:", splitMergeIndividual[0]);
+                        if (!splitMergeIndividual) {
+                            throw new Error("Can't find who to split/merge with during component_with");
+                        }
+                        const smiEvents = this.buildObjectEvents(splitMergeIndividual[0], splitMergeIndividual[0].getFilteredID());
+                        if ((splitMergeType === "MERGED_FROM") || (splitMergeType === "SPLIT_FROM")) {
+                            // Link to the start event
+                            rootEvent = smiEvents.events[1];
+                        } else {
+                            rootEvent = smiEvents.events[0];
+                        }
+                        console.debug("Using as root event:", rootEvent);
+                    //    Add the events
+                        events = events.concat(smiEvents.events);
+                        links = links.concat(smiEvents.links);
+                    }
+
+
                     objects.forEach((object) => {
-                        const relatedEvents = this.buildObjectEvents(object,
-                            object.getFilteredID(),
-                            splitMergeType,
-                            rootEvent);
-                        events = events.concat(relatedEvents.events);
-                        links = links.concat(relatedEvents.links);
+                        // If you're the root event, don't process yourself
+                        if (object.getFilteredID() !== rootEvent.entity) {
+                            const relatedEvents = this.buildObjectEvents(object,
+                                object.getFilteredID(),
+                                // If it's a component with relationship, don't deal with the split/merges
+                                splitMergeType,
+                                rootEvent);
+                            events = events.concat(relatedEvents.events);
+                            links = links.concat(relatedEvents.links);
+                        }
                     });
                     const sortedEvents = this.sortEvents(events, links, filteredID);
                     console.debug("Sorted events:", sortedEvents);
@@ -234,6 +260,7 @@ export class DatsetViewerComponent implements OnInit {
     }
 
     private sortEvents(events: IEventElement[], links: IEventLink[], individualID: string): IEventData {
+        console.debug("Sorting with %s in the middle", individualID);
 
         // Sort any merged events
         let eventBins = events
@@ -285,15 +312,26 @@ export class DatsetViewerComponent implements OnInit {
         };
     }
 
+    /**
+     * Build events for individual
+     *
+     * @param {TrestleIndividual} individual
+     * @param {string} entityName
+     * @param {TrestleRelationType} relationType
+     * @param {IEventElement} rootEvent
+     * @returns {{events: IEventElement[]; links: IEventLink[]}}
+     */
     private buildObjectEvents(individual: TrestleIndividual,
                               entityName: string,
                               relationType?: TrestleRelationType,
-                              rootEvent?: IEventElement): {
+                              rootEvent?: IEventElement,
+                              componentWith = false): {
         events: IEventElement[],
         links: IEventLink[]
     } {
         console.debug("Build events for selection: %s with relation type: %s",
             individual, relationType);
+        console.debug("Using root event:", rootEvent);
         // Split merge first,
         // because it'll show us if we need to drop a created or destroyed event
         const events: IEventElement[] = [];
@@ -313,6 +351,8 @@ export class DatsetViewerComponent implements OnInit {
         // then we're looking for a link between the end event and an INTO relation
         if ((relationType === "MERGED_FROM") || (relationType === "SPLIT_FROM")) {
             console.debug("Has from");
+            const adjustedTemporal =  (individual.getTemporal().getTo() as moment.Moment)
+                .clone().add(-1, "year").toDate();
             const fromEvent = {
                 id: entityName + "-" + this.invertRelationship(relationType),
                 entity: entityName,
@@ -320,7 +360,7 @@ export class DatsetViewerComponent implements OnInit {
                 value: "into",
                 // We can do this cast because if there's a merge event, there is some end point
                 // We need to roll it back by 1 year, to make it look better
-                temporal: (individual.getTemporal().getTo() as moment.Moment).add(-1, "year").toDate()
+                temporal: adjustedTemporal
             };
             events.push(started, fromEvent);
             links.push({
@@ -346,21 +386,25 @@ export class DatsetViewerComponent implements OnInit {
                 value: "data",
                 temporal: endEvent.getTemporal().toDate()
             };
+            const adjustedDate = startEvent.getTemporal().clone()
+                .add(1, "year").toDate();
             const intoEvent = {
                 id: entityName + "-" + this.invertRelationship(relationType),
                 entity: entityName,
                 bin: 1,
                 value: "from",
                 // We need to roll it forward by 1 year, for art's sake
-                temporal: startEvent.getTemporal().add(1, "year").toDate()
+                temporal: adjustedDate
             };
+            console.debug("Writing link between %O and %O", end, intoEvent);
             events.push(end, intoEvent);
             links.push({
                 source: intoEvent,
                 target: end
             });
-            // If we also have a root event, draw a link between it and the split/merge event
+            // If we also have a root event, draw a link between it and the end event
             if (rootEvent) {
+                console.debug("Writing link between %O and %O", intoEvent, rootEvent);
                 links.push({
                     source: intoEvent,
                     target: rootEvent
