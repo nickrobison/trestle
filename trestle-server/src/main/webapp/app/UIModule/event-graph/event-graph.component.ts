@@ -68,6 +68,8 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
     }
 
     private plotData(): void {
+        // Nuke everything, because I can't figure out the update pattern
+        this.svg.selectAll("*").remove();
         //    Setup the X/Y/Z values
         const entityNames = this.data.nodes.map((d) => d.entity);
         const x = scaleTime()

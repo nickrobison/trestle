@@ -153,6 +153,8 @@ export class DatsetViewerComponent implements OnInit {
                 || (relation.getType() === "SPLIT_FROM")
                 || (relation.getType() === "SPLIT_INTO")
                 || (relation.getType() === "COMPONENT_WITH"));
+        console.debug("Individual %s has relations %o",
+            individual.getFilteredID(), additionalRelations);
         const history: IIndividualHistory = {
             entities: []
         };
@@ -175,15 +177,28 @@ export class DatsetViewerComponent implements OnInit {
             console.debug("Has some individuals:", additionalRelations.length);
             // Figure out what to link to.
             let rootEvent: IEventElement;
-
             const splitMergeType = additionalRelations[0].getType();
-            if (splitMergeType === "MERGED_FROM") {
+
+            // If we have a COMPONENT_WITH relationship,
+            // then we need the individual being split/merged from/into
+            const hasComponent = additionalRelations
+                .filter((relation) => relation.getType() === "COMPONENT_WITH");
+            if (hasComponent) {
+                console.debug("Has component with relationship");
+                rootEvent = events[0];
+            } else if ((splitMergeType === "MERGED_FROM") || (splitMergeType === "SPLIT_FROM")) {
                 // Link to the start event
                 rootEvent = events[0];
-            } else if (splitMergeType === "SPLIT_INTO") {
-                // Link to the end event
+            } else {
                 rootEvent = events[1];
             }
+            // } else if ((splitMergeType === "SPLIT_INTO") || (splitMergeType === "SPLIT_FROM")) {
+            //     // Link to the end event
+            //     rootEvent = events[1];
+            // } else {
+            //     rootEvent = undefined;
+            // }
+            console.debug("Linking to root event:", rootEvent);
 
             const obsArray = additionalRelations.map((relation) => {
                 console.debug("Getting attributes for:", relation.getObject());

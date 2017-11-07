@@ -27,7 +27,6 @@ export class CacheService<K, V> {
 
     public get(key: K, fallback?: Observable<V>, maxAge?: number): Observable<V> | Subject<V> {
         if (this.hasValidCachedKey(key)) {
-            console.debug(`%cGetting ${key} from cache`, `color: green`);
             return Observable.of((this.cache.get(key) as CacheContent<V>).value);
         }
 
@@ -36,11 +35,9 @@ export class CacheService<K, V> {
         }
 
         if (this.inFlightObservables.has(key)) {
-            console.debug("Has an observable in flight, returning");
             return (this.inFlightObservables.get(key) as Subject<V>);
         } else if (fallback && fallback instanceof Observable) {
             this.inFlightObservables.set(key, new Subject());
-            console.debug("Calling API for key %s", key);
             return fallback.do((value) => this.set(key, value, maxAge));
         } else {
             return Observable.throw("Requested key is not available in Cache");
@@ -57,11 +54,8 @@ export class CacheService<K, V> {
             const inFlight = (this.inFlightObservables.get(key) as Subject<V>);
             const observersCount = inFlight.observers.length;
             if (observersCount) {
-                console.debug("Notifying %i observers", observersCount);
                 inFlight.next(value);
             }
-            console.debug("Removing observable %O for %s from cache",
-                inFlight, key);
             inFlight.complete();
             this.inFlightObservables.delete(key);
         }
