@@ -23,6 +23,8 @@ import { MaterialModule } from "../MaterialModule/material.module";
 import {SharedModule} from "../SharedModule/shared.module";
 import {CompareComponent} from "./compare/compare.component";
 import {VisualizeDetailsComponent} from "./visualize/details/visualize-details.component";
+import {ExporterComponent} from "./exporter/exporter.component";
+import {ExporterService} from "./exporter/exporter.service";
 
 @NgModule({
     imports: [
@@ -45,9 +47,10 @@ import {VisualizeDetailsComponent} from "./visualize/details/visualize-details.c
         DatsetViewerComponent,
         ObjectEventGraphComponent,
         CompareComponent,
-        VisualizeDetailsComponent
+        VisualizeDetailsComponent,
+        ExporterComponent
     ],
-    providers: [IndividualService, QueryService, MapService],
+    providers: [IndividualService, QueryService, MapService, ExporterService],
     entryComponents: [IndividualValueDialog]
 })
 export class ExploreModule {}

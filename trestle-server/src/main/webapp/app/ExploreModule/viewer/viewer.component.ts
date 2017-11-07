@@ -16,6 +16,7 @@ import {TrestleEvent} from "../../SharedModule/individual/TrestleIndividual/tres
 import {TrestleRelationType} from "../../SharedModule/individual/TrestleIndividual/trestle-relation";
 import LngLatBounds = mapboxgl.LngLatBounds;
 import {Subject} from "rxjs/Subject";
+import {IDataExport} from "../exporter/exporter.component";
 
 enum DatasetState {
     UNLOADED,
@@ -53,6 +54,7 @@ export class DatsetViewerComponent implements OnInit {
     public objectHistory: IIndividualHistory;
     public eventData: IEventData;
     public dataChanges: Subject<MapSource>;
+    public exportIndividuals: IDataExport;
     private mapBounds: LngLatBounds;
 
     constructor(private mapService: MapService, private vs: IndividualService) {
@@ -84,6 +86,14 @@ export class DatsetViewerComponent implements OnInit {
             .subscribe((data) => {
                 dataset.state = DatasetState.LOADED;
                 console.debug("Data:", data);
+                // Get the list of individuals, for exporting
+                this.exportIndividuals = {
+                    dataset: this.availableDatasets[0].name,
+                    individuals: (data.features
+                        .filter((feature) => feature.id)
+                        // We can do this cast, because we filter to make sure the features have an id
+                        .map((feature) => feature.id) as string[])
+                };
                 this.dataChanges.next({
                     id: "intersection-query",
                     idField: "id",
@@ -117,7 +127,7 @@ export class DatsetViewerComponent implements OnInit {
                 .filter((ds) => ds.state === DatasetState.LOADED)
                 .forEach((ds) => this.loadDataset(ds));
         }
-    }
+    };
 
     public mapClicked = (event: string): void => {
         console.debug("Clicked:", event);
@@ -127,7 +137,7 @@ export class DatsetViewerComponent implements OnInit {
                 this.selectedIndividualID = data.getFilteredID();
                 this.buildHistoryGraph(data);
             });
-    }
+    };
 
     public filterLabel(input: IEventElement): string {
         return input.entity.split(":")[1];
