@@ -19,6 +19,7 @@ import {
 import {BehaviorSubject} from "rxjs/BehaviorSubject";
 import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
 import {Subject} from "rxjs/Subject";
+import {isNullOrUndefined} from "util";
 
 export interface IMapFillLayer extends mapboxgl.Layer {
     type: "fill";
@@ -478,7 +479,9 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             layers: fillLayers
         });
         // Set the hover filter using either the provided id field, or a default property
-        const idField = this.data.idField == null ? "id" : this.data.idField;
+        console.debug("Filtering with data:", this.data);
+        // const idField = this.data.idField === undefined ? "id" : this.data.idField;
+        const idField = "id";
         console.debug("Accessing ID field:", idField);
 
         // If we don't filter on anything, deselect it all
