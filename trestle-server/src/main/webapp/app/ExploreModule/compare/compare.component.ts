@@ -10,6 +10,7 @@ import * as moment from "moment";
 import {Subject} from "rxjs/Subject";
 import {LoadingSpinnerService} from "../../UIModule/spinner/loading-spinner.service";
 import {interpolateReds} from "d3-scale-chromatic";
+import {IDataExport} from "../exporter/exporter.component";
 
 interface ICompareIndividual {
     individual: TrestleIndividual;
@@ -35,6 +36,7 @@ export class CompareComponent implements AfterViewInit {
     public baseIndividual: ICompareIndividual | null;
     public dataChanges: Subject<MapSource>;
     public layerChanges: Subject<IMapAttributeChange>;
+    public exportValues: IDataExport;
     private filterCompareResults: boolean;
     private layerDepth: number;
     private maxHeight: number;
@@ -72,6 +74,10 @@ export class CompareComponent implements AfterViewInit {
         this.dataChanges = new Subject();
         this.layerChanges = new Subject();
         this.filterCompareResults = true;
+        this.exportValues = {
+            dataset: "gaul-test",
+            individuals: []
+        }
     }
 
     public ngAfterViewInit(): void {
@@ -170,6 +176,12 @@ export class CompareComponent implements AfterViewInit {
         this.selectedIndividuals.delete(individual.individual.getID());
         this.mapComponent
             .removeIndividual(individual.individual.getID());
+
+    //    Remove from export
+        const idx = this.exportValues.individuals.indexOf(individual.individual.getID());
+        if (idx > -1) {
+            this.exportValues.individuals.splice(idx);
+        }
     }
 
     public sliderUpdate(event: MatSliderChange, selection = this.baseIndividual) {
@@ -284,6 +296,9 @@ export class CompareComponent implements AfterViewInit {
             // this.selectedIndividuals.push(compare);
         }
         this.layerNumber++;
+
+    //    Add them to the export record
+        this.exportValues.individuals.push(compare.individual.getID());
     }
 
     private getHeight(temporal: TrestleTemporal): number {

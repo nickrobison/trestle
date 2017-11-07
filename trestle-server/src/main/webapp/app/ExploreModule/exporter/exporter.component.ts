@@ -14,32 +14,38 @@ export interface IDataExport {
 })
 export class ExporterComponent {
 
-    @Input() public individuals: IDataExport;
+    @Input() public dataExport: IDataExport;
+    @Input() public label = true;
     public options: { value: string, viewValue: string }[];
     public selectedValue: string;
 
     public constructor(private es: ExporterService) {
         this.options = [
-            {value: "GEOJSON", viewValue: "GeoJSON"},
             {value: "SHAPEFILE", viewValue: "Shapefile"},
-            {value: "KML", viewValue: "KML"},
-            {value: "TOPOJSON", viewValue: "TopoJSON"}
+            // {value: "GEOJSON", viewValue: "GeoJSON"},
+            // {value: "KML", viewValue: "KML"},
+            // {value: "TOPOJSON", viewValue: "TopoJSON"}
         ];
-        this.selectedValue = this.options[1].value;
+        this.selectedValue = this.options[0].value;
     }
 
     public click(): void {
-        console.debug("Clicked export");
-        this.es
-            .exportIndividuals({
-                dataset: this.individuals.dataset,
-                individuals: this.individuals.individuals,
-                type: this.selectedValue
-            })
-            .subscribe((data) => {
-                console.debug("exported data:", data);
-                const fileName = "trestle-test.zip";
-                saveAs(data, fileName);
-            });
+        console.debug("Clicked export", this.dataExport);
+        // If the input is undefined, or there are not individuals, skip
+        if ((this.dataExport !== undefined) &&
+            (this.dataExport.individuals.length > 0)) {
+            this.es
+                .exportIndividuals({
+                    dataset: this.dataExport.dataset,
+                    individuals: this.dataExport.individuals,
+                    type: this.selectedValue
+                })
+                .subscribe((data) => {
+                    console.debug("exported data:", data);
+                    const fileName = "trestle-test.zip";
+                    saveAs(data, fileName);
+                });
+        }
+
     }
 }

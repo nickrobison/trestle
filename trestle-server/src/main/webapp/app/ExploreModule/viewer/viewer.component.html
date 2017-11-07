@@ -22,7 +22,6 @@
                 </li>
             </ul>
         </div>
-        <data-exporter [individuals]="exportIndividuals"></data-exporter>
     </div>
     <div class="section">
         <div class="row">
@@ -31,6 +30,11 @@
                             [value]="sliderValue"
                             (change)="sliderChanged($event)">
                 </mat-slider>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col s4">
+                <data-exporter [dataExport]="exportIndividuals"></data-exporter>
             </div>
         </div>
     </div>
