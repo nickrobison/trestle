@@ -18,6 +18,7 @@ export class ExporterComponent {
     @Input() public label = true;
     public options: { value: string, viewValue: string }[];
     public selectedValue: string;
+    public loading: boolean;
 
     public constructor(private es: ExporterService) {
         this.options = [
@@ -27,6 +28,7 @@ export class ExporterComponent {
             // {value: "TOPOJSON", viewValue: "TopoJSON"}
         ];
         this.selectedValue = this.options[0].value;
+        this.loading = false;
     }
 
     public click(): void {
@@ -34,12 +36,14 @@ export class ExporterComponent {
         // If the input is undefined, or there are not individuals, skip
         if ((this.dataExport !== undefined) &&
             (this.dataExport.individuals.length > 0)) {
+            this.loading = true;
             this.es
                 .exportIndividuals({
                     dataset: this.dataExport.dataset,
                     individuals: this.dataExport.individuals,
                     type: this.selectedValue
                 })
+                .finally(() => this.loading = false)
                 .subscribe((data) => {
                     console.debug("exported data:", data);
                     const fileName = "trestle-test.zip";

@@ -11,3 +11,9 @@
     </form>
     <button mat-raised-button (click)="click()">EXPORT</button>
 </div>
+<div [hidden]="!loading">
+    <mat-progress-bar
+            [color]="'primary'"
+            [mode]="'indeterminate'">
+    </mat-progress-bar>
+</div>
