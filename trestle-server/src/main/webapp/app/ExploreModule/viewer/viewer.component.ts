@@ -1,22 +1,22 @@
 /**
  * Created by nrobison on 6/23/17.
  */
-import {Component, OnInit} from "@angular/core";
-import {MapService} from "./map.service";
-import {ITrestleMapSource, MapSource} from "../../UIModule/map/trestle-map.component";
-import {animate, style, transition, trigger} from "@angular/animations";
+import { Component, OnInit } from "@angular/core";
+import { MapService } from "./map.service";
+import { ITrestleMapSource, MapSource } from "../../UIModule/map/trestle-map.component";
+import { animate, style, transition, trigger } from "@angular/animations";
 import * as moment from "moment";
-import {MatSliderChange} from "@angular/material";
-import {IIndividualHistory} from "../../UIModule/history-graph/history-graph.component";
-import {IndividualService} from "../../SharedModule/individual/individual.service";
-import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
-import {IEventData, IEventElement, IEventLink} from "../../UIModule/event-graph/event-graph.component";
-import {Observable} from "rxjs/Observable";
-import {TrestleEvent} from "../../SharedModule/individual/TrestleIndividual/trestle-event";
-import {TrestleRelationType} from "../../SharedModule/individual/TrestleIndividual/trestle-relation";
+import { MatSliderChange } from "@angular/material";
+import { IIndividualHistory } from "../../UIModule/history-graph/history-graph.component";
+import { IndividualService } from "../../SharedModule/individual/individual.service";
+import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
+import { IEventData, IEventElement, IEventLink } from "../../UIModule/event-graph/event-graph.component";
+import { Observable } from "rxjs/Observable";
+import { TrestleEvent } from "../../SharedModule/individual/TrestleIndividual/trestle-event";
+import { TrestleRelationType } from "../../SharedModule/individual/TrestleIndividual/trestle-relation";
 import LngLatBounds = mapboxgl.LngLatBounds;
-import {Subject} from "rxjs/Subject";
-import {IDataExport} from "../exporter/exporter.component";
+import { Subject } from "rxjs/Subject";
+import { IDataExport } from "../exporter/exporter.component";
 
 enum DatasetState {
     UNLOADED,
@@ -208,6 +208,7 @@ export class DatsetViewerComponent implements OnInit {
             });
             Observable.forkJoin(obsArray)
                 .subscribe((objects) => {
+                    console.debug("Adding related events for:", individual);
                     console.debug("Have all observables:", objects);
 
                     // Do we have a component with relationship?
@@ -232,7 +233,7 @@ export class DatsetViewerComponent implements OnInit {
                             rootEvent = smiEvents.events[0];
                         }
                         console.debug("Using as root event:", rootEvent);
-                    //    Add the events
+                        //    Add the events
                         events = events.concat(smiEvents.events);
                         links = links.concat(smiEvents.links);
                     }
@@ -245,7 +246,8 @@ export class DatsetViewerComponent implements OnInit {
                                 object.getFilteredID(),
                                 // If it's a component with relationship, don't deal with the split/merges
                                 splitMergeType,
-                                rootEvent);
+                                rootEvent,
+                                hasComponent.length > 0);
                             events = events.concat(relatedEvents.events);
                             links = links.concat(relatedEvents.links);
                         }
@@ -330,7 +332,7 @@ export class DatsetViewerComponent implements OnInit {
         links: IEventLink[]
     } {
         console.debug("Build events for selection: %s with relation type: %s",
-            individual, relationType);
+            individual.getID(), relationType);
         console.debug("Using root event:", rootEvent);
         // Split merge first,
         // because it'll show us if we need to drop a created or destroyed event
@@ -351,14 +353,14 @@ export class DatsetViewerComponent implements OnInit {
         // then we're looking for a link between the end event and an INTO relation
         if ((relationType === "MERGED_FROM") || (relationType === "SPLIT_FROM")) {
             console.debug("Has from");
-            const adjustedTemporal =  (individual.getTemporal().getTo() as moment.Moment)
+            const adjustedTemporal = (individual.getTemporal().getTo() as moment.Moment)
                 .clone().add(-1, "year").toDate();
             const fromEvent = {
                 id: entityName + "-" + this.invertRelationship(relationType),
                 entity: entityName,
                 bin: 1,
                 value: "into",
-                // We can do this cast because if there's a merge event, there is some end point
+                // We can do this cast because if there's    a merge event, there is some end point
                 // We need to roll it back by 1 year, to make it look better
                 temporal: adjustedTemporal
             };
@@ -368,7 +370,8 @@ export class DatsetViewerComponent implements OnInit {
                 target: fromEvent
             });
             // If we also have a root event, draw a link between it and the split/merge event
-            if (rootEvent) {
+            if (rootEvent && !componentWith) {
+                console.debug("Writing link between %O and %O", fromEvent, rootEvent);
                 links.push({
                     source: fromEvent,
                     target: rootEvent
@@ -403,7 +406,7 @@ export class DatsetViewerComponent implements OnInit {
                 target: end
             });
             // If we also have a root event, draw a link between it and the end event
-            if (rootEvent) {
+            if (rootEvent && !componentWith) {
                 console.debug("Writing link between %O and %O", intoEvent, rootEvent);
                 links.push({
                     source: intoEvent,
@@ -442,6 +445,11 @@ export class DatsetViewerComponent implements OnInit {
                     source: started,
                     target: ended
                 });
+
+            //    Add root event?
+                if (rootEvent) {
+                    console.debug("Should add root event link");
+                }
             }
         }
         console.debug("Events for %s", individual.getID(), events);
