@@ -1459,6 +1459,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         } catch (InterruptedException e) {
             logger.error("Union calculation was interrupted", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
+            Thread.currentThread().interrupt();
             return Optional.empty();
         } catch (ExecutionException e) {
             logger.error("Union calculation excepted", e);
@@ -1500,6 +1501,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             return Optional.of(comparisonFuture.get());
         } catch (InterruptedException e) {
             logger.error("Spatial comparison is interrupted", e);
+            Thread.currentThread().interrupt();
             return Optional.empty();
         } catch (ExecutionException e) {
             logger.error("Spatial comparison was excepted", e);
@@ -2013,6 +2015,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @param trestleTransaction - {@link Nullable} {@link TrestleTransaction}
      * @return - {@link Temporal}
      */
+    @SuppressWarnings({"squid:S3655"})
     private Temporal getAdjustedQueryTemporal(String individual, OffsetDateTime atTemporal, @Nullable TrestleTransaction trestleTransaction) {
         final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
         try {

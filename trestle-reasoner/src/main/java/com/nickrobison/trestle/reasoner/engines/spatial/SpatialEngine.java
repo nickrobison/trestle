@@ -187,6 +187,7 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
         } catch (InterruptedException e) {
             logger.error("Spatial intersection interrupted", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
+            Thread.currentThread().interrupt();
             return Optional.empty();
         } catch (ExecutionException e) {
             logger.error("Execution exception while intersecting", e);
@@ -223,8 +224,8 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
 
         //        Build the geometries
         final int srid = inputSR.getID();
-        final Geometry aPolygon = this.geometryCache.computeIfAbsent(objectA.hashCode(), (key) -> computeGeometry(objectA, srid));
-        final Geometry bPolygon = this.geometryCache.computeIfAbsent(objectB.hashCode(), (key) -> computeGeometry(objectB, srid));
+        final Geometry aPolygon = this.geometryCache.computeIfAbsent(objectA.hashCode(), key -> computeGeometry(objectA, srid));
+        final Geometry bPolygon = this.geometryCache.computeIfAbsent(objectB.hashCode(), key -> computeGeometry(objectB, srid));
 
         //        If they're disjoint, return
         if (aPolygon.disjoint(bPolygon)) {

@@ -197,20 +197,17 @@ public class IndividualEngine {
                 this.ontology.returnAndCommitTransaction(tt);
             }
         }, this.individualThreadPool)
-                .thenApply(results -> {
-                    List<TrestleEvent> events = new ArrayList<>();
-                    return results.getResults()
-                            .stream()
-                            .filter(result -> !result.unwrapIndividual("type").asOWLNamedIndividual().getIRI().equals(trestleEventIRI))
-                            .map(result -> {
-                                final OWLNamedIndividual eventIndividual = result.unwrapIndividual("r").asOWLNamedIndividual();
-                                final IRI typeIRI = result.unwrapIndividual("type").asOWLNamedIndividual().getIRI();
-                                final TrestleEventType eventType = TrestleEventType.getEventClassFromIRI(typeIRI);
-                                final Temporal temporal = parseToTemporal(result.unwrapLiteral("t"), OffsetDateTime.class);
-                                return new TrestleEvent(eventType, individual, eventIndividual, temporal);
-                            })
-                            .collect(Collectors.toList());
-                });
+                .thenApply(results -> results.getResults()
+                        .stream()
+                        .filter(result -> !result.unwrapIndividual("type").asOWLNamedIndividual().getIRI().equals(trestleEventIRI))
+                        .map(result -> {
+                            final OWLNamedIndividual eventIndividual = result.unwrapIndividual("r").asOWLNamedIndividual();
+                            final IRI typeIRI = result.unwrapIndividual("type").asOWLNamedIndividual().getIRI();
+                            final TrestleEventType eventType = TrestleEventType.getEventClassFromIRI(typeIRI);
+                            final Temporal temporal = parseToTemporal(result.unwrapLiteral("t"), OffsetDateTime.class);
+                            return new TrestleEvent(eventType, individual, eventIndividual, temporal);
+                        })
+                        .collect(Collectors.toList()));
 
         final CompletableFuture<TrestleIndividual> individualFuture = temporalFuture.thenCombine(relationsFuture, (trestleIndividual, relations) -> {
             relations.forEach(trestleIndividual::addRelation);
@@ -227,16 +224,12 @@ public class IndividualEngine {
 
         try {
             TrestleIndividual trestleIndividual = individualFuture.get();
-            try {
-                this.trestleCache.writeTrestleIndividual(individual, trestleIndividual);
-            } catch (Exception e) {
-                logger.error("Unable to write Trestle Individual {} to cache", individual, e);
-            }
+            this.trestleCache.writeTrestleIndividual(individual, trestleIndividual);
             return trestleIndividual;
         } catch (InterruptedException | ExecutionException e) {
             logger.error("Interruption exception building Trestle Individual {}", individual, e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         }

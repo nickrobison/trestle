@@ -18,6 +18,10 @@ public class SpatialUtils {
 
     private static final OperatorExportToWkb operatorExport = OperatorExportToWkb.local();
 
+    private SpatialUtils() {
+//        UNUSED
+    }
+
     /**
      * Compute {@link Geometry} for the given {@link Object}
      *
@@ -66,7 +70,6 @@ public class SpatialUtils {
             throw new IllegalArgumentException("Only ESRI Polygons and WKT Strings are supported by the Equality Engine");
         } catch (ParseException e) {
             throw new TrestleInvalidDataException(e.getMessage(), spatial);
-//            throw new TrestleInvalidDataException("Cannot parse input polygon", spatial);
         }
     }
 }
