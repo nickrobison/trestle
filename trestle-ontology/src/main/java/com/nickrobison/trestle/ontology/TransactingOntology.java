@@ -126,13 +126,13 @@ abstract class TransactingOntology implements ITrestleOntology {
                     this.unlockAndCommit(transaction.isWriteTransaction(), true);
                     threadTransactionObject.set(null);
                 } else {
-                    logger.trace("Doesn't own transaction, continuing");
+                    logger.trace("Transaction {} doesn't own transaction, continuing", transaction.getTransactionID());
                 }
             } else {
                 logger.warn("Null thread transaction object, transaction {} continuing", transaction.getTransactionID());
             }
         } else {
-            logger.trace("Transaction state is inherited, continuing");
+            logger.trace("Transaction {} inherited state, continuing", transaction.getTransactionID());
         }
     }
 
@@ -147,13 +147,13 @@ abstract class TransactingOntology implements ITrestleOntology {
                     this.unlockAndAbort(transaction.isWriteTransaction(), true);
                     threadTransactionObject.set(null);
                 } else {
-                    logger.trace("Doesn't own transaction, continuing");
+                    logger.trace("Transaction {} doesn't own transaction, not aborting",transaction.getTransactionID());
                 }
             } else {
-                logger.warn("Null transaction object, transaction {} continuing", transaction.getTransactionID());
+                logger.warn("Null transaction object, transaction {} not aborting", transaction.getTransactionID());
             }
         } else {
-            logger.trace("Transaction state is inherited, continuing");
+            logger.trace("Transaction {} inherited state, not aborting", transaction.getTransactionID());
         }
     }
 
