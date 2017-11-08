@@ -74,7 +74,8 @@ public class GAULIntegratorTests {
             conf.set(name, userProperties.getProperty(name));
         }
 
-         fileSystem = FileSystem.get(conf);
+        fileSystem = FileSystem.get(conf);
+//        fileSystem = FileSystem.getLocal(conf);
         final YarnConfiguration clusterConf = new YarnConfiguration();
         cluster = new MiniDFSCluster.Builder(conf).build();
 
@@ -87,7 +88,7 @@ public class GAULIntegratorTests {
         connectionString = "http://localhost:7200";
         userName = "";
         password = "";
-        ontologyPath = "file:///Users/nrobison/Developer/git/dissertation/trestle-ontology/trestle.owl";
+        ontologyPath = "file:///Users/nickrobison/Developer/git/dissertation/trestle-ontology/trestle.owl";
         ontologyPrefix = "http://nickrobison.com/test/hadoop.owl#";
         ontologyName = "hadoop_gaul_expanded_equality";
         conf.set("reasoner.db.connection", connectionString);
@@ -97,12 +98,15 @@ public class GAULIntegratorTests {
 
         conf.set("reasoner.ontology.path", ontologyPath);
         conf.set("reasoner.ontology.prefix", ontologyPrefix);
+        conf.set("reasoner.ontology.location", ontologyPath);
+
+//        conf.set("gaulcode.restriction", "59");
 
 //        Setup reasoner
         reasoner = new TrestleBuilder()
                 .withDBConnection(connectionString, userName, password)
                 .withInputClasses(GAULObject.class)
-//                .withOntology(IRI.create(ontologyPath))
+                .withOntology(IRI.create(ontologyPath))
                 .withPrefix(ontologyPrefix)
                 .initialize()
                 .withName(ontologyName)
@@ -119,10 +123,13 @@ public class GAULIntegratorTests {
     @Test
     public void testReducer() throws IOException, ClassNotFoundException, InterruptedException, SQLException, URISyntaxException {
 
-        URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/gates-test/");
+//        URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/sudan/");
+                URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/gates-test/");
         URL OUT_DIR = GAULIntegratorTests.class.getClassLoader().getResource("out/");
 
         Path inDir = new Path(IN_DIR.toString());
+//        Path inDir = fileSystem.makeQualified(new Path("/Volumes/LaCie/gaul/"));
+//        Path inDir = fileSystem.makeQualified(new Path("/Volumes/Macintosh HD/gaul/"));
         Path outDir = new Path("./target/out/");
 
         fileSystem.delete(outDir, true);
@@ -133,6 +140,7 @@ public class GAULIntegratorTests {
         job.setMapOutputKeyClass(LongWritable.class);
         job.setMapOutputValueClass(MapperOutput.class);
         job.setReducerClass(GAULReducer.class);
+        job.setSortComparatorClass(LongWritable.Comparator.class);
 
 //        Add ontology to cache
         job.addCacheFile(new URI(String.format("%s", ontologyPath)));
@@ -157,12 +165,12 @@ public class GAULIntegratorTests {
                 .withoutMetrics()
                 .build();
 
-        final Optional<List<GAULObject>> manhicaMembers = reasoner.getConceptMembers(GAULObject.class, "Manhica:concept", null, null);
+        final Optional<List<GAULObject>> manhicaMembers = reasoner.getConceptMembers(GAULObject.class, "Manhica:concept", 0.01, null, null);
         assertAll(() -> assertTrue(manhicaMembers.isPresent(), "Should have Manhica concept members"),
                 () -> assertEquals(3, manhicaMembers.get().size(), "Wrong number of members for Manhica"));
 
 //        Try for Cidade
-        final Optional<List<GAULObject>> cidadeMembers = reasoner.getConceptMembers(GAULObject.class, "Cidade_de_Maputo:concept", null, null);
+        final Optional<List<GAULObject>> cidadeMembers = reasoner.getConceptMembers(GAULObject.class, "Cidade_de_Maputo:concept", 0.01, null, null);
         assertAll(() -> assertTrue(manhicaMembers.isPresent(), "Should have Cidade concept members"),
                 () -> assertEquals(7, cidadeMembers.get().size(), "Wrong number of members for Cidade"));
 
@@ -171,9 +179,6 @@ public class GAULIntegratorTests {
     @AfterAll
     public static void close() throws IOException {
         cluster.shutdown();
-
-        File outputFile = new File("/Users/nrobison/Desktop/hadoop-new.owl");
-        reasoner.writeOntology(outputFile.toURI(), true);
         reasoner.shutdown(false);
     }
 }

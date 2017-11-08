@@ -197,7 +197,7 @@ public class TDTreeHelpers {
             return parentDirection;
         }
         final ChildDirection childDirection = calculateChildDirection(parentDirection);
-        final int prefix = leafID >> (getIDLength(leafID) - depth - 1) - 1;
+        final int prefix = leafID >> ((getIDLength(leafID) - depth - 1) - 1);
         if ((prefix & 1) == 0) {
             return calculateTriangleDirection(leafID, depth + 1, childDirection.lowerChild);
         }

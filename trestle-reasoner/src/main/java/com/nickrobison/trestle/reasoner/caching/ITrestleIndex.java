@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Created by nrobison on 2/13/17.
  */
+@SuppressWarnings({"squid:S00119"})
 public interface ITrestleIndex<Value> {
     /**
      * Insert a key/value pair with an open interval
@@ -101,10 +102,16 @@ public interface ITrestleIndex<Value> {
     double calculateFragmentation();
 
     /**
-     * Calculate estimated cache size
+     * Calculate estimated index size
      * Each write/delete modifies a {@link AtomicLong}, so it's just an estimated count, but quick to get
-     * @return - long of cache size
+     * @return - long of index size
      */
-    @Gauge(name = "td-tree.cache-size", absolute = true)
-    long getCacheSize();
+    @Gauge(name = "td-tree.index-size", absolute = true)
+    long getIndexSize();
+
+    /**
+     * Return the maximum temporal value (epoch millis)
+     * @return - long of maximum value
+     */
+    long getMaxValue();
 }

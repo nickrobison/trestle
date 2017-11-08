@@ -12,24 +12,52 @@ var options = {
     resolve: {
         extensions: [".webpack.js", ".web.js", ".ts", ".tsx", ".js"]
     },
+    output: {
+        publicPath: "/static/",
+    },
     module: {
         loaders: [
-            {
-                test: /\.tsx?$/,
-                loaders: ["awesome-typescript-loader", "angular2-template-loader?keepUrl=true", "angular2-router-loader"],
-                exclude: [/\.(spec|e2e)\.ts$/]
-            },
             {
                 test: /\.html$/,
                 loader: "html-loader"
             },
             {
-                test: /\.(png|jpe?g|gif|svg|woff|woff2|ttf|eot|ico)$/,
-                loader: "file-loader?name=assets/[name].[hash].[ext]"
+                test: /\.(jpe?g|png|gif)$/i,
+                use: [
+                    {
+                        loader: "file-loader",
+                        options: {
+                            hash: "sha512",
+                            digest: "hex",
+                            name: "[hash].[ext]"
+                        }
+                    },
+                    {
+                        loader: "image-webpack-loader",
+                        options: {
+                            bypassOnDebug: true,
+                            optpng: {
+                                optimizationLevel: 7
+                            },
+                            mozjpeg: {
+                                progressive: true
+                            }
+
+                        }
+                    }
+                ]
+            },
+            {
+                test: /\.(woff|woff2|ttf|eot|ico)$/,
+                loader: "url-loader",
+                options: {
+                    limit: 50000,
+                    name: "fonts/[name].[hash].[ext]"
+                }
             },
             {
                 test: /\.css$/,
-                loader: "raw-loader",
+                loaders: ["to-string-loader", "css-loader"],
                 exclude: /\.async\.(html|css)$/
             },
             {
@@ -38,7 +66,7 @@ var options = {
             },
             {
                 test: /\.scss$/,
-                loaders: ["raw-loader", "sass-loader"]
+                loaders: ["to-string-loader", "css-loader", "resolve-url-loader", "sass-loader?sourceMap"]
             }
         ]
     },

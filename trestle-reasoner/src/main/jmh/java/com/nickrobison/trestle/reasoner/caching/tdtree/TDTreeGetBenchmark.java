@@ -35,7 +35,7 @@ public class TDTreeGetBenchmark {
         System.out.println("Writing records");
         Arrays.stream(values)
                 .forEach(value -> index.insertValue(value.getKey(), value.getStart(), value.getEnd(), value));
-        System.out.println(String.format("%s records, %s leafs", index.getCacheSize(), index.getLeafCount()));
+        System.out.println(String.format("%s records, %s leafs", index.getIndexSize(), index.getLeafCount()));
         System.out.println("Starting benchmark");
     }
 
@@ -51,7 +51,7 @@ public class TDTreeGetBenchmark {
     @TearDown
     public void tearDown() {
         System.out.println("Tearing down");
-        System.out.println(String.format("%s values, %s leafs", index.getCacheSize(), index.getLeafCount()));
+        System.out.println(String.format("%s values, %s leafs", index.getIndexSize(), index.getLeafCount()));
     }
 
     public static void main(String[] args) throws RunnerException {

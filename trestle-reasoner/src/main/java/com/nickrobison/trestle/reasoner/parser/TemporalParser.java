@@ -46,6 +46,7 @@ public class TemporalParser {
 
     /**
      * Parse a {@link Temporal} to an {@link OWLLiteral} by calling {@link TemporalParser#parseTemporalToOntologyDateTime(Temporal, ZoneId)}
+     *
      * @param temporal - {@link Temporal} to parse
      * @return - {@link OWLLiteral}
      */
@@ -167,6 +168,7 @@ public class TemporalParser {
     /**
      * Get the timezone of the temporal from the provided class definition
      * If no class is specified, return the default timezone {@link ZoneOffset#UTC}
+     *
      * @param clazz - Class to parse
      * @return - {@link ZoneId} of the specified class
      */
@@ -633,8 +635,8 @@ public class TemporalParser {
      * Currently OffsetDateTime, but that could change.
      * If we're given a date, we take the offset from either the start or end of the day, depending on the IntervalType parameter
      *
-     * @param temporal     - Temporal to parse to ontology storage format
-     * @param zoneId       - ZoneId of given temporal
+     * @param temporal - Temporal to parse to ontology storage format
+     * @param zoneId   - ZoneId of given temporal
      * @return - OffsetDateTime to store in ontology
      */
 //    TODO(nrobison): Is this the best way to handle temporal parsing? Should the zones be different?

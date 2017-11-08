@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.querybuilder;
 
+import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.PrecisionModel;
@@ -51,7 +52,6 @@ public class QueryBuilder {
 
     private static final Logger logger = LoggerFactory.getLogger(QueryBuilder.class);
     private final Dialect dialect;
-    private final String prefixes;
     private final DefaultPrefixManager pm;
     private final String baseURI;
     private final Map<String, String> trimmedPrefixMap;
@@ -72,7 +72,6 @@ public class QueryBuilder {
             trimmedPrefixMap.put(entry.getKey().replace(":", ""), entry.getValue());
             builder.append(String.format("TRESTLE_PREFIX %s : <%s>%n", entry.getKey().replace(":", ""), entry.getValue()));
         }
-        this.prefixes = builder.toString();
         final String defaultPrefix = pm.getDefaultPrefix();
 //        Because the madness of nulls
         if (defaultPrefix != null) {
@@ -101,7 +100,7 @@ public class QueryBuilder {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT ?dataset" +
                 " WHERE { ?dataset rdfs:subClassOf trestle:Dataset }");
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
@@ -131,7 +130,7 @@ public class QueryBuilder {
         }
         ps.append("}");
         ps.setLiteral("st", relationshipStrength);
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
@@ -181,7 +180,7 @@ public class QueryBuilder {
         }
         ps.setLiteral("st", relationshipStrength);
 
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
@@ -241,12 +240,12 @@ public class QueryBuilder {
             ps.append(" FILTER EXISTS {?property rdfs:subPropertyOf trestle:Temporal_Property}");
         }
         ps.append("}");
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
     /**
-     * Build SPARQL query to return all temporal/spatial relations for a given individual
+     * Build SPARQL query to return all temporal/spatial/event relations for a given individual
      *
      * @param individual - {@link OWLNamedIndividual} to retrieve relations for
      * @return - SPARQL query string (?m - Individual, ?o - Object, ?p Property)
@@ -263,10 +262,12 @@ public class QueryBuilder {
                 "?o rdfs:subPropertyOf trestle:Spatial_Relation ." +
                 "} " +
                 "UNION { ?m ?o ?p . ?o rdfs:subPropertyOf trestle:Event_Relation ." +
-                " ?p rdf:type trestle:Trestle_Object} . " +
+                " ?p rdf:type trestle:Trestle_Object} " +
+                "UNION {?m ?o ?p . ?o rdfs:subPropertyOf trestle:Component_Relation ." +
+                " ?p rdf:type trestle:Trestle_Object} ." +
                 "VALUES ?m {<%s>}}", getFullIRIString(individual)));
 
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
@@ -287,7 +288,7 @@ public class QueryBuilder {
                 "?r trestle:exists_at ?t ." +
                 "VALUES ?m {<%s>}}", getFullIRIString(individual)));
 
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
@@ -308,7 +309,7 @@ public class QueryBuilder {
                 " ?individual ?property ?object" +
                 " VALUES ?individual { %s } ." +
                 " FILTER(!isURI(?object) && !isBlank(?object)) .}", individualValues));
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
@@ -363,7 +364,7 @@ public class QueryBuilder {
             ps.setLiteral("dbAt", dbTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         }
         ps.append("}");
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
@@ -374,49 +375,47 @@ public class QueryBuilder {
      * @param wktValue     - {@link String} representation of WKT value
      * @param buffer       - {@link Double} buffer to build around WKT value
      * @param unit         - {@link Units} used by subclasses to adjust buffer values
+     * @param dbAt         - {@link OffsetDateTime} of database temporal
      * @return - {@link String} SPARQL query string
-     * @throws UnsupportedFeatureException - Throws if we don't support this
-     * @deprecated - Don't use this
      */
-    @Deprecated
-    public String buildSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, Units unit) throws UnsupportedFeatureException {
+    public String buildSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, Units unit, OffsetDateTime dbAt) {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m" +
                 " WHERE { " +
                 "?m rdf:type ?type ." +
                 "?m trestle:has_fact ?f ." +
-                "?f ogc:asWKT ?wkt ");
+                "?f ogc:asWKT ?wkt ." +
+                "?f trestle:database_from ?df ." +
+                "OPTIONAL{?f trestle:database_to ?dt}");
         ps.setIri("type", getFullIRIString(datasetClass));
-        buildDatabaseSString(ps, wktValue, buffer, OffsetDateTime.now());
+        buildDatabaseSString(ps, wktValue, buffer, dbAt);
 
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
     //    FIXME(nrobison): This needs to account for exists and valid times.
 //    We need the units parameter for one of the subclasses
     @SuppressWarnings({"squid:S1172"})
-    public String buildTemporalSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, Units unit, OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
+    public String buildTemporalSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, Units unit, OffsetDateTime atTime, OffsetDateTime dbAtTime) {
         final ParameterizedSparqlString ps = buildBaseString();
-        ps.setCommandText("SELECT DISTINCT ?m ?tStart ?tEnd" +
+        ps.setCommandText("SELECT DISTINCT ?m" +
                 " WHERE { " +
                 "?m rdf:type ?type ." +
                 "?m trestle:has_fact ?f ." +
                 "?f ogc:asWKT ?wkt ." +
 //                "?f trestle:valid_time ?t ." +
-                "OPTIONAL{?f trestle:valid_from ?tStart} ." +
-                "OPTIONAL{?f trestle:valid_to ?tEnd} ." +
-                "OPTIONAL{?f trestle:valid_at ?tAt} ." +
+                "OPTIONAL{?f trestle:valid_from ?vf} ." +
+                "OPTIONAL{?f trestle:valid_to ?vt} ." +
+                "OPTIONAL{?f trestle:valid_at ?va} ." +
                 "?f trestle:database_from ?df ." +
                 "OPTIONAL{?f trestle:database_to ?dt} .");
         buildDatabaseTSString(ps, wktValue, buffer, atTime, dbAtTime);
         ps.setIri("type", getFullIRIString(datasetClass));
-//        We need to simplify the WKT to get under the 4000 character SQL limit.
-//        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
-        ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+//        ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+//        ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
@@ -426,18 +425,20 @@ public class QueryBuilder {
      *
      * @param wktValue - WKT value
      * @param buffer   - buffer value (in meters)
+     * @param strength - Strength parameter to filter spurious results
      * @param atTime   - Temporal to select appropriate, valid fact
      * @param dbAtTime - Temporal to select currently valid version of the fact
      * @return - String of SPARQL query
      * @throws UnsupportedFeatureException - Throws if we're running on a database that doesn't support all the features
      */
     // TODO(nrobison): Why does this throw? It'll never need to be caught
-    public String buildTemporalSpatialConceptIntersection(String wktValue, double buffer, @Nullable OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
+    public String buildTemporalSpatialConceptIntersection(String wktValue, double buffer, double strength, @Nullable OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m" +
                 " WHERE { " +
                 "?m rdf:type trestle:Trestle_Concept ." +
                 "?m trestle:related_by ?r ." +
+                "?r trestle:Relation_Strength ?rs ." +
                 "?r trestle:relation_of ?object ." +
                 "?object trestle:has_fact ?f ." +
                 "OPTIONAL {?f trestle:valid_from ?tStart }." +
@@ -445,7 +446,10 @@ public class QueryBuilder {
                 "OPTIONAL {?f trestle:valid_at ?tAt }." +
                 "?f trestle:database_from ?df ." +
                 "OPTIONAL {?f trestle:database_to ?dt }." +
-                "?f ogc:asWKT ?wkt .");
+                "?f ogc:asWKT ?wkt ." +
+                "FILTER(?rs >= ?relationStrength) .");
+
+        ps.setLiteral("relationStrength", strength);
 
         if (atTime == null) {
             this.buildDatabaseSString(ps, wktValue, buffer, dbAtTime);
@@ -453,30 +457,34 @@ public class QueryBuilder {
             this.buildDatabaseTSString(ps, wktValue, buffer, atTime, dbAtTime);
         }
 
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
     /**
      * Build SPARQL Query to retrieve all given members of a Trestle_Concept that are subclassed from the given OWLClass
      *
-     * @param datasetClass OWLClass of individuals to return
+     * @param datasetClass - OWLClass of individuals to return
      * @param conceptID    - IRI of Trestle_Concept to query
+     * @param strength     - relation strength parameter
      * @return - SPARQL Query String
      */
 //    TODO(nrobison): Implement spatio-temporal intersection
-    public String buildConceptObjectRetrieval(OWLClass datasetClass, IRI conceptID) {
+    public String buildConceptObjectRetrieval(OWLClass datasetClass, IRI conceptID, double strength) {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText(String.format("SELECT DISTINCT ?m " +
                 "WHERE { " +
                 "?m rdf:type ?type . " +
                 "?m trestle:has_relation ?r ." +
+                "?r trestle:Relation_Strength ?rs ." +
                 "?r trestle:related_to ?concept ." +
+                "FILTER(?rs >= ?relationStrength) ." +
 //                "?m trestle:has_concept ?concept . " +
                 "VALUES ?concept { <%s> }}", getFullIRI(conceptID).toString()));
         ps.setIri("type", getFullIRIString(datasetClass));
+        ps.setLiteral("relationStrength", strength);
 
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
@@ -489,16 +497,25 @@ public class QueryBuilder {
      * @param atTime   - {@link OffsetDateTime} to set intersection time to
      * @param dbAtTime - {@link OffsetDateTime} of database intersection time
      */
+    @SuppressWarnings({"squid:S1172"}) // We need the buffer param for the Oracle code
     protected void buildDatabaseTSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime atTime, OffsetDateTime dbAtTime) {
 //        Add DB intersection
         ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime)) .");
 //                We need to remove this, otherwise GraphDB substitutes geosparql for ogc
         ps.removeNsPrefix("geosparql");
-        ps.append("FILTER(((!bound(?tStart) || ?tStart <= ?startVariable^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > ?endVariable^^xsd:dateTime)) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
+//        ps.append("FILTER(((!bound(?tStart) || ?tStart <= ?startVariable^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > ?endVariable^^xsd:dateTime)) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
+        ps.append("FILTER ((!bound(?vf) || " +
+                "(?vf <= ?validAt^^xsd:dateTime) && " +
+                "(!bound(?vt) || " +
+                "?vt > ?validAt^^xsd:dateTime)) && " +
+                "(!bound(?va) || " +
+                "(?va = ?validAt^^xsd:dateTime))) .");
+        ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }    ");
 
-        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
-        ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+//        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
+        ps.setLiteral("wktString", wktValue);
+        ps.setLiteral("validAt", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+//        ps.setLiteral("validEnd", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         ps.setLiteral("dbAt", dbAtTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
     }
 
@@ -510,14 +527,14 @@ public class QueryBuilder {
      * @param buffer   - double buffer (in meters) around the intersection
      * @param dbAt     - {@link OffsetDateTime} of database intersection
      */
+    @SuppressWarnings({"squid:S1172"}) // We need the buffer param for the Oracle code
     protected void buildDatabaseSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime dbAt) {
         ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime)) .");
         ps.removeNsPrefix("geosparql");
         ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
         ps.setLiteral("dbAt", dbAt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
-//        We need to simplify the WKT to get under the 4000 character SQL limit.
-        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
+        ps.setLiteral("wktString", wktValue);
     }
 
     /**
@@ -551,7 +568,7 @@ public class QueryBuilder {
         }
 
 
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
@@ -579,7 +596,7 @@ public class QueryBuilder {
 
         ps.setLiteral("newValue", temporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
@@ -604,7 +621,7 @@ public class QueryBuilder {
                 "FILTER(?m = <%s> && !bound(?vt)) }", getFullIRIString(property), getFullIRIString(individual)));
 
         ps.setLiteral("newValue", temporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
@@ -655,7 +672,7 @@ public class QueryBuilder {
                 "?m ?p ?o" +
                 "}", deleteAxioms, updateAxioms, restrictionIRI.getIRIString(), filterAxiom));
 
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
@@ -710,7 +727,7 @@ public class QueryBuilder {
                 "FILTER(?type=trestle:Trestle_Object||?type=trestle:SpatialUnion) ." +
                 "}", getFullIRIString(inputObject)));
 
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
@@ -729,7 +746,7 @@ public class QueryBuilder {
                 "?object trestle:exists_from ?start ." +
                 "OPTIONAL{?object trestle:exists_to ?end} }", getFullIRIString(unionIndividual)));
 
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
@@ -780,6 +797,7 @@ public class QueryBuilder {
 
         if (!geom.isValid()) {
             logger.error("Invalid geometry at simplification level {}: {}", factor, geom.toString());
+            throw new TrestleInvalidDataException("Invalid input geometry", geom);
         }
 
 //        If needed, add a buffer

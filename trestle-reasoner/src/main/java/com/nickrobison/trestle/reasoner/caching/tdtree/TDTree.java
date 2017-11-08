@@ -33,11 +33,14 @@ import static com.nickrobison.trestle.reasoner.caching.tdtree.TDTreeHelpers.*;
  */
 @NotThreadSafe
 @Metriced
+@SuppressWarnings({"squid:S00119"})
 public class TDTree<Value> implements ITrestleIndex<Value> {
 
     private static final Logger logger = LoggerFactory.getLogger(TDTree.class);
+    private static final String EMPTY_LEAF_VALUE = "Leaf {} does not have {}@{}";
     static long maxValue = LocalDate.of(3000, 1, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
     static final TupleSchema leafSchema = buildLeafSchema();
+
     private final int blockSize;
     private List<LeafNode<Value>> leafs = new ArrayList<>();
     private int maxDepth;
@@ -112,7 +115,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
                 logger.trace("Returning value {} for {} @ {} from {}", value, objectID, atTime, node.getBinaryStringID());
                 return value;
             }
-            logger.trace("Leaf {} does not have {}@{}", node.getBinaryStringID(), objectID, atTime);
+            logger.trace(EMPTY_LEAF_VALUE, node.getBinaryStringID(), objectID, atTime);
         }
         return null;
     }
@@ -131,7 +134,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
                 this.cacheSize.decrementAndGet();
                 return;
             }
-            logger.trace("Leaf {} does not have {}@{}", node.getBinaryStringID(), objectID, atTime);
+            logger.trace(EMPTY_LEAF_VALUE, node.getBinaryStringID(), objectID, atTime);
         }
     }
 
@@ -157,7 +160,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
                 logger.trace("Updated {}@{} to {} from {}", objectID, atTime, value, node.getBinaryStringID());
                 return;
             }
-            logger.trace("Leaf {} does not have {}@{}", node.getBinaryStringID(), objectID, atTime);
+            logger.trace(EMPTY_LEAF_VALUE, node.getBinaryStringID(), objectID, atTime);
         }
     }
 
@@ -188,10 +191,10 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         logger.info("Rebuilding TD-Tree");
 //        Dump the tree, create a new one, and reinsert all the values
         final Instant start = Instant.now();
-        final List<LeafNode<Value>> _leafs = new ArrayList<>(this.leafs);
+        final List<LeafNode<Value>> copiedLeaves = new ArrayList<>(this.leafs);
         this.leafs = new ArrayList<>();
         this.leafs.add(new SplittableLeaf<>(1, rootTuple, this.blockSize));
-        _leafs
+        copiedLeaves
                 .stream()
                 .filter(leaf -> leaf.getRecordCount() > 0)
                 .map(LeafNode::dumpLeaf)
@@ -216,8 +219,13 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
 
     @Override
     @Gauge(name = "td-tree.cache-size", absolute = true)
-    public long getCacheSize() {
+    public long getIndexSize() {
         return cacheSize.get();
+    }
+
+    @Override
+    public long getMaxValue() {
+        return maxValue;
     }
 
     int getLeafCount() {

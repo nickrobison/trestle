@@ -19,7 +19,7 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 
 import static com.nickrobison.trestle.common.StaticIRI.GEOSPARQLPREFIX;
-import static com.nickrobison.trestle.reasoner.parser.SpatialParser.parseWKTFromGeom;
+import static com.nickrobison.trestle.reasoner.parser.SpatialParser.parseOWLLiteralFromGeom;
 import static com.nickrobison.trestle.reasoner.parser.StringParser.fieldValueToMultiLangString;
 import static com.nickrobison.trestle.reasoner.parser.StringParser.methodValueToMultiLangString;
 
@@ -112,7 +112,6 @@ public class ClassParser {
             }
         }
 
-        final OWLDataFactory df = OWLManager.getOWLDataFactory();
         return df.getOWLNamedIndividual(IRI.create(ReasonerPrefix, identifier));
     }
 
@@ -231,7 +230,7 @@ public class ClassParser {
                         logger.warn("Cannot access field {}", classField.getName(), e);
                         continue;
                     }
-                    final Optional<OWLLiteral> owlLiteral = parseWKTFromGeom(fieldValue);
+                    final Optional<OWLLiteral> owlLiteral = parseOWLLiteralFromGeom(fieldValue);
                     owlLiteral.ifPresent(owlLiteral1 -> axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, owlLiteral1)));
                 } else {
                         final IRI iri = IRI.create(ReasonerPrefix, classField.getName());
@@ -287,7 +286,7 @@ public class ClassParser {
                     final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
 
                     if (methodValue.isPresent()) {
-                        final Optional<OWLLiteral> owlLiteral = parseWKTFromGeom(methodValue.get());
+                        final Optional<OWLLiteral> owlLiteral = parseOWLLiteralFromGeom(methodValue.get());
 //                    Since it's a literal, we need to strip out the double quotes.
                         owlLiteral.ifPresent(owlLiteral1 -> axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, owlLiteral1)));
                     }
@@ -335,7 +334,7 @@ public class ClassParser {
             final Optional<Object> methodValue = accessMethodValue(method.get(), inputObject);
 
             if (methodValue.isPresent()) {
-                final Optional<OWLLiteral> owlLiteral = parseWKTFromGeom(methodValue.get());
+                final Optional<OWLLiteral> owlLiteral = parseOWLLiteralFromGeom(methodValue.get());
                 if (owlLiteral.isPresent()) {
 ////                    Since it's a literal, we need to strip out the double quotes.
 //                        final OWLLiteral wktLiteral = dfStatic.getOWLLiteral(methodValue.get().toString().replace("\"", ""), wktDatatype);
@@ -358,7 +357,7 @@ public class ClassParser {
                 logger.warn("Cannot access field {}", field.get().getName(), e);
                 return Optional.empty();
             }
-            final Optional<OWLLiteral> owlLiteral = parseWKTFromGeom(fieldValue);
+            final Optional<OWLLiteral> owlLiteral = parseOWLLiteralFromGeom(fieldValue);
             if (owlLiteral.isPresent()) {
                 return Optional.of(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, owlLiteral.get()));
             }

@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.server;
 
-import com.github.dirkraft.dropwizard.fileassets.FileAssetsBundle;
 import com.hubspot.dropwizard.guice.GuiceBundle;
 import com.nickrobison.trestle.server.auth.AuthDynamicFeature;
 import com.nickrobison.trestle.server.auth.AuthValueFactoryProvider;
@@ -16,6 +15,8 @@ import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.stream.Stream;
 
@@ -23,6 +24,7 @@ import java.util.stream.Stream;
  * Created by nrobison on 11/28/16.
  */
 public class TrestleServer extends Application<TrestleServerConfiguration> {
+    private static final Logger logger = LoggerFactory.getLogger(TrestleServer.class);
 
     private final MigrationsBundle<TrestleServerConfiguration> migrations = new MigrationsBundle<TrestleServerConfiguration>() {
         @Override
@@ -42,7 +44,7 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
 
     @Override
     public void initialize(Bootstrap<TrestleServerConfiguration> bootstrap) {
-        bootstrap.addBundle(new FileAssetsBundle("src/main/resources/build/", "/static", "index.html"));
+//        bootstrap.addBundle(new FileAssetsBundle("src/main/resources/build/", "/static", "index.html"));
 //        bootstrap.addBundle(hibernate);
         bootstrap.addBundle(migrations);
 
@@ -69,6 +71,9 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
                 new AuthDynamicFeature(),
                 new AuthValueFactoryProvider.Binder()).forEach(jersey::register);
 
+//        URL Rewriting
+//        environment.getApplicationContext().addFilter(new FilterHolder(new URLRewriter()), "/workspace/*", EnumSet.allOf(DispatcherType.class));
+
         //    database migration?
 //        final ManagedDataSource migrationDataSource = createMigrationDataSource(trestleServerConfiguration, environment);
 //        try (Connection connection = migrationDataSource.getConnection()) {
@@ -90,6 +95,6 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
 
     private ManagedDataSource createMigrationDataSource(TrestleServerConfiguration trestleServerConfiguration, Environment environment) {
         final DataSourceFactory dataSourceFactory = trestleServerConfiguration.getDataSourceFactory();
-            return dataSourceFactory.build(environment.metrics(), "migration-ds");
+        return dataSourceFactory.build(environment.metrics(), "migration-ds");
     }
 }

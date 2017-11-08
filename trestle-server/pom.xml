@@ -5,7 +5,7 @@
     <parent>
         <artifactId>trestle</artifactId>
         <groupId>com.nickrobison.trestle</groupId>
-        <version>0.7</version>
+        <version>0.7.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -22,7 +22,12 @@
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-reasoner</artifactId>
-            <version>0.7</version>
+            <version>0.7.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.nickrobison.trestle</groupId>
+            <artifactId>trestle-datasets</artifactId>
+            <version>0.7.1</version>
         </dependency>
         <!--Manual Dependency specification-->
         <!--Dropwizard and modules-->
@@ -141,11 +146,6 @@
         </dependency>
         <!--General application dependencies-->
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
         </dependency>
@@ -166,6 +166,20 @@
             <groupId>org.mindrot</groupId>
             <artifactId>jbcrypt</artifactId>
             <version>0.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.wololo</groupId>
+            <artifactId>jts2geojson</artifactId>
+            <version>0.10.0</version>
+        </dependency>
+        <dependency>
+            <groupId>de.grundid.opendatalab</groupId>
+            <artifactId>geojson-jackson</artifactId>
+            <version>1.8</version>
+        </dependency>
+        <dependency>
+            <groupId>com.esri.geometry</groupId>
+            <artifactId>esri-geometry-api</artifactId>
         </dependency>
     </dependencies>
 

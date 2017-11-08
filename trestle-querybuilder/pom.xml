@@ -5,7 +5,7 @@
     <parent>
         <artifactId>trestle</artifactId>
         <groupId>com.nickrobison.trestle</groupId>
-        <version>0.7</version>
+        <version>0.7.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -15,7 +15,7 @@
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-common</artifactId>
-            <version>0.7</version>
+            <version>0.7.1</version>
         </dependency>
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
@@ -31,7 +31,7 @@
         </dependency>
         <dependency>
             <groupId>com.vividsolutions</groupId>
-            <artifactId>jts</artifactId>
+            <artifactId>jts-core</artifactId>
         </dependency>
     </dependencies>
 

@@ -6,6 +6,7 @@ import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -14,6 +15,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.semanticweb.owlapi.model.IRI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,12 +46,25 @@ public class IntegrationRunner extends Configured implements Tool {
             conf.set(name, userProperties.getProperty(name));
         }
 
+
+//        Do we a command line property that specifies which GAUL codes to restrict output to?
+        if (args.length > 2) {
+            conf.set("gaulcode.restriction", args[2]);
+        }
+
+
 //        Setup the reasoner
         TrestleReasoner reasoner = new TrestleBuilder()
-                .withDBConnection(conf.get("reasoner.db.connection"), conf.get("reasoner.db.username"), conf.get("reasoner.db.password"))
+                .withDBConnection(conf.get("reasoner.db.connection"),
+                        conf.get("reasoner.db.username"),
+                        conf.get("reasoner.db.password"))
                 .withInputClasses(GAULObject.class)
+                .withOntology(IRI.create(conf.get("reasoner.ontology.location")))
+                .withPrefix(conf.get("reasoner.ontology.prefix"))
+                .withName(conf.get("reasoner.ontology.name"))
                 .initialize()
-                .withName("gaul_hadoop")
+                .withoutCaching()
+                .withoutMetrics()
                 .build();
 
         Job job = Job.getInstance(conf, "GAUL Integrator");
@@ -61,17 +76,23 @@ public class IntegrationRunner extends Configured implements Tool {
 
         job.setInputFormatClass(PolygonFeatureInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
-        FileInputFormat.setInputDirRecursive(job, false);
+        FileInputFormat.setInputDirRecursive(job, true);
         FileInputFormat.setInputPaths(job, new Path(args[0]));
         final Path outputDir = new Path(args[1]);
 
         //        If we're in debug mode, truncate the table and delete the output dir
-//        TODO(nrobison): Truncate database table
         if (logger.isDebugEnabled()) {
             logger.debug("Deleting output dir: {}", outputDir.getName());
             outputDir.getFileSystem(conf).delete(outputDir, true);
         }
         FileOutputFormat.setOutputPath(job, outputDir);
+
+        //        Remove the HDS output directory
+        try (final FileSystem fileSystem = FileSystem.get(conf)) {
+            if (fileSystem.exists(outputDir)) {
+                fileSystem.delete(outputDir, true);
+            }
+        }
 
 //        Add the cache files
 //        final URL resource = IntegrationRunner.class.getClassLoader().getResource("trestle.owl");

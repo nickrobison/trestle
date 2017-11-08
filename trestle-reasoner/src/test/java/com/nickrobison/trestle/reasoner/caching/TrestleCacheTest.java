@@ -4,11 +4,12 @@ import com.google.common.collect.ImmutableList;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.AbstractReasonerTest;
 import com.nickrobison.trestle.reasoner.TestClasses;
+import com.nickrobison.trestle.reasoner.engines.merge.ExistenceStrategy;
+import com.nickrobison.trestle.reasoner.engines.merge.MergeStrategy;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -25,7 +26,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Created by nrobison on 2/17/17.
  */
 @Tag("integration")
-@Disabled
 public class TrestleCacheTest extends AbstractReasonerTest {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleCacheTest.class);
@@ -42,6 +42,9 @@ public class TrestleCacheTest extends AbstractReasonerTest {
 
     @Test
     public void testCache() throws TrestleClassException, MissingOntologyEntity, ParseException {
+//        We don't care about correctness, so we'll just disable the merge checks
+        this.reasoner.getMergeEngine().changeDefaultExistenceStrategy(ExistenceStrategy.Ignore);
+        this.reasoner.getMergeEngine().changeDefaultMergeStrategy(MergeStrategy.ExistingFacts);
         final Geometry jtsGeom = new WKTReader().read("POINT(4.0 6.0)");
         final Geometry jtsGeom2 = new WKTReader().read("POINT(27.0 91.0)");
         final TestClasses.JTSGeometryTest jtsGeometryTest = new TestClasses.JTSGeometryTest(4326, jtsGeom, LocalDate.of(1989, 3, 16));

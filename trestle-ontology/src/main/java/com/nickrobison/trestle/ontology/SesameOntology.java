@@ -67,7 +67,7 @@ public abstract class SesameOntology extends TransactingOntology {
 
 
     SesameOntology(String ontologyName, Repository repository, OWLOntology ontology, DefaultPrefixManager pm) {
-        super(ontologyName);
+        super();
         final Config config = ConfigFactory.load().getConfig("trestle.ontology.sesame");
         this.ontologyName = ontologyName;
         this.repository = repository;
@@ -301,7 +301,7 @@ public abstract class SesameOntology extends TransactingOntology {
         repository.shutDown();
         this.cm.shutdownPool();
         this.closeDatabase(drop);
-        logger.debug("Opened {} transactions, committed {}", this.openedTransactions.get(), this.committedTransactions.get());
+        logger.debug("Opened {} transactions, committed {}, aborted {}", this.getOpenedTransactionCount(), this.getCommittedTransactionCount(), this.getAbortedTransactionCount());
     }
 
     @Override
