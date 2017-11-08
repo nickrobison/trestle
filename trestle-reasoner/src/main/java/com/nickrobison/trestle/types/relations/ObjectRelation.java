@@ -90,6 +90,8 @@ public enum ObjectRelation implements HasIRI {
     MERGED_FROM("merged_from"),
     SPLIT_INTO("split_into"),
     SPLIT_FROM("split_from"),
+    COMPONENT_OF("component_of"),
+    COMPONENT_WITH("component_with"),
 //    Fuzzy equals relation
     EQUALS("equals");
 

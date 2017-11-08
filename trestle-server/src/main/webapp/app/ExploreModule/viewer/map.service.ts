@@ -1,13 +1,19 @@
 /**
  * Created by nrobison on 6/23/17.
  */
-import { Injectable } from "@angular/core";
-import { TrestleHttp } from "../../UserModule/trestle-http.provider";
-import { Response } from "@angular/http";
-import { Observable } from "rxjs/Observable";
-import { LngLatBounds } from "mapbox-gl";
-import { Feature, FeatureCollection, GeometryObject, Polygon } from "geojson";
-import { Moment } from "moment";
+import {Injectable} from "@angular/core";
+import {TrestleHttp} from "../../UserModule/trestle-http.provider";
+import {Response} from "@angular/http";
+import {Observable} from "rxjs/Observable";
+import {LngLatBounds} from "mapbox-gl";
+import {Feature, FeatureCollection, GeometryObject, MultiPolygon, Polygon} from "geojson";
+import {Moment} from "moment";
+import {
+    ITrestleIndividual,
+    TrestleIndividual
+} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
+import {isNullOrUndefined} from "util";
+
 var parse = require("wellknown");
 
 type wktType = "POINT" |
@@ -16,6 +22,46 @@ type wktType = "POINT" |
     "MULTILINESTRING" |
     "POLYGON" |
     "MULTIPOLYGON";
+
+export type wktValue = LngLatBounds | GeometryObject;
+
+export interface IContributionReport {
+    object: any;
+    area: number;
+    contributingParts: IContributionPart[];
+}
+
+export interface IComparisonReport {
+    union: IContributionReport | null;
+    reports: ISpatialComparisonReport[];
+}
+
+export interface IContributionPart {
+    object: any;
+    contribution: number;
+}
+
+export interface ISpatialComparisonReport {
+    objectAID: string;
+    objectBID: string;
+    relations: string[];
+    equality?: number;
+    spatialOverlap?: string;
+    spatialOverlapPercentage?: number;
+}
+
+interface IIntersectionBody {
+    dataset: string;
+    geojson: Polygon | MultiPolygon;
+    buffer: number;
+    validAt?: string;
+    databaseAt?: string;
+}
+
+interface ICompareBody {
+    compare: string;
+    compareAgainst: string[];
+}
 
 @Injectable()
 export class MapService {
@@ -34,21 +80,65 @@ export class MapService {
     }
 
     public stIntersect(dataset: string,
-                       bounds: LngLatBounds,
+                       wkt: wktValue,
                        validTime: Moment,
-                       dbTime?: Moment): Observable<FeatureCollection<GeometryObject>> {
-        console.debug("Intersecting at:", bounds, validTime.toISOString());
+                       dbTime?: Moment,
+                       buffer: number = 0): Observable<FeatureCollection<GeometryObject>> {
+        console.debug("Intersecting at:", wkt, validTime.toISOString());
 
-        const postBody = {
+        if (isNullOrUndefined(wkt)) {
+            return Observable.throw("Intersection boundary cannot be empty");
+        }
+
+        const postBody: IIntersectionBody = {
             dataset,
             validAt: validTime.toISOString(),
             databaseAt: new Date().toISOString(),
-            bbox: MapService.boundsToGeoJSON(bounds)
+            geojson: MapService.normalizeToGeoJSON(wkt),
+            buffer
         };
         console.debug("Post body", postBody);
         return this.http.post("/visualize/intersect", postBody)
             .map(MapService.parseObjectToGeoJSON)
             .catch((error: Error) => Observable.throw(error || "Server Error"));
+    }
+
+    public stIntersectIndividual(dataset: string,
+                                 wkt: wktValue,
+                                 validTime?: Moment,
+                                 dbTime?: Moment,
+                                 buffer: number = 0): Observable<TrestleIndividual[]> {
+        const postBody: IIntersectionBody = {
+            dataset,
+            buffer,
+            geojson: MapService.normalizeToGeoJSON(wkt)
+        };
+
+        if (validTime) {
+            postBody.validAt = validTime.toISOString();
+        }
+
+        if (dbTime) {
+            postBody.databaseAt = dbTime.toISOString();
+        }
+
+        console.debug("Intersecting individuals with", postBody);
+
+        return this.http.post("/visualize/intersect-individuals", postBody)
+            .map(MapService.parseResponseToIndividuals);
+    }
+
+    public compareIndividuals(request: ICompareBody): Observable<IComparisonReport> {
+        return this.http.post("/visualize/compare", request)
+            .map((results) => results.json())
+            .catch((error: Error) => Observable.throw(error || "Server Error"));
+    }
+
+    private static parseResponseToIndividuals(res: Response): TrestleIndividual[] {
+        const json = res.json();
+        console.debug("Intersected result from server:", json);
+        return json
+            .map((individual: ITrestleIndividual) => new TrestleIndividual(individual));
     }
 
     private static parseObjectToGeoJSON(res: Response): FeatureCollection<GeometryObject> {
@@ -63,7 +153,7 @@ export class MapService {
                 if (MapService.isSpatial(value)) {
                     geometry = parse(value);
                 } else if (typeof value === "string") {
-                    if (MapService.isID(value)) {
+                    if (MapService.isID(key)) {
                         id = value;
                         properties["id"] = value;
                     } else {
@@ -90,15 +180,25 @@ export class MapService {
         };
     }
 
-    private static boundsToGeoJSON(bounds: LngLatBounds): Polygon {
+    private static normalizeToGeoJSON(geom: wktValue): Polygon | MultiPolygon {
+        if (MapService.isGeometryObject(geom)) {
+            if (geom.type === "Polygon") {
+                return (geom as Polygon);
+            } else if (geom.type === "MultiPolygon") {
+                return (geom as MultiPolygon);
+            } else {
+                console.error("Not correct geom", geom);
+                throw new Error("Not correct geometry");
+            }
+        }
         return {
             type: "Polygon",
             // need to return and array of bounds as an array of SW -> NW -> NE -> SE -> SW
-            coordinates: [[bounds.getSouthWest().toArray(),
-                bounds.getNorthWest().toArray(),
-                bounds.getNorthEast().toArray(),
-                bounds.getSouthEast().toArray(),
-                bounds.getSouthWest().toArray()]]
+            coordinates: [[geom.getSouthWest().toArray(),
+                geom.getNorthWest().toArray(),
+                geom.getNorthEast().toArray(),
+                geom.getSouthEast().toArray(),
+                geom.getSouthWest().toArray()]]
             // crs: {type: "name", properties: {name: "EPSG:4326"}}
         };
     }
@@ -113,11 +213,11 @@ export class MapService {
             const matches = x.match(/^([\w\-]+)/);
             if (matches != null &&
                 (matches[0] === "MULTIPOLYGON" ||
-                matches[0] === "POLYGON" ||
-                matches[0] === "POINT" ||
-                matches[0] === "MULTIPOINT" ||
-                matches[0] === "LINESTRING" ||
-                matches[0] === "MULTILINESTRING")) {
+                    matches[0] === "POLYGON" ||
+                    matches[0] === "POINT" ||
+                    matches[0] === "MULTIPOINT" ||
+                    matches[0] === "LINESTRING" ||
+                    matches[0] === "MULTILINESTRING")) {
                 return true;
             }
         }
@@ -131,10 +231,17 @@ export class MapService {
      * @returns {boolean} is id
      */
     private static isID(x: string): boolean {
+        if (x.toLowerCase() === "id") {
+            return true;
+        }
         if (x.length >= 2) {
             const sub = x.substring(x.length - 3, x.length - 1);
             return sub.toLowerCase() === "id";
         }
         return false;
+    }
+
+    private static isGeometryObject(x: any): x is GeometryObject {
+        return (x as GeometryObject).type !== undefined;
     }
 }

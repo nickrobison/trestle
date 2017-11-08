@@ -247,7 +247,7 @@ public class QueryBuilder {
     }
 
     /**
-     * Build SPARQL query to return all temporal/spatial relations for a given individual
+     * Build SPARQL query to return all temporal/spatial/event relations for a given individual
      *
      * @param individual - {@link OWLNamedIndividual} to retrieve relations for
      * @return - SPARQL query string (?m - Individual, ?o - Object, ?p Property)
@@ -264,7 +264,9 @@ public class QueryBuilder {
                 "?o rdfs:subPropertyOf trestle:Spatial_Relation ." +
                 "} " +
                 "UNION { ?m ?o ?p . ?o rdfs:subPropertyOf trestle:Event_Relation ." +
-                " ?p rdf:type trestle:Trestle_Object} . " +
+                " ?p rdf:type trestle:Trestle_Object} " +
+                "UNION {?m ?o ?p . ?o rdfs:subPropertyOf trestle:Component_Relation ." +
+                " ?p rdf:type trestle:Trestle_Object} ." +
                 "VALUES ?m {<%s>}}", getFullIRIString(individual)));
 
         logger.debug(ps.toString());
@@ -375,45 +377,45 @@ public class QueryBuilder {
      * @param wktValue     - {@link String} representation of WKT value
      * @param buffer       - {@link Double} buffer to build around WKT value
      * @param unit         - {@link Units} used by subclasses to adjust buffer values
+     * @param dbAt         - {@link OffsetDateTime} of database temporal
      * @return - {@link String} SPARQL query string
-     * @throws UnsupportedFeatureException - Throws if we don't support this
-     * @deprecated - Don't use this
      */
-    @Deprecated
-    public String buildSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, Units unit) throws UnsupportedFeatureException {
+    public String buildSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, Units unit, OffsetDateTime dbAt) {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m" +
                 " WHERE { " +
                 "?m rdf:type ?type ." +
                 "?m trestle:has_fact ?f ." +
-                "?f ogc:asWKT ?wkt ");
+                "?f ogc:asWKT ?wkt ." +
+                "?f trestle:database_from ?df ." +
+                "OPTIONAL{?f trestle:database_to ?dt}");
         ps.setIri("type", getFullIRIString(datasetClass));
-        buildDatabaseSString(ps, wktValue, buffer, OffsetDateTime.now());
+        buildDatabaseSString(ps, wktValue, buffer, dbAt);
 
-        logger.debug(ps.toString());
+        logger.trace(ps.toString());
         return ps.toString();
     }
 
     //    FIXME(nrobison): This needs to account for exists and valid times.
 //    We need the units parameter for one of the subclasses
     @SuppressWarnings({"squid:S1172"})
-    public String buildTemporalSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, Units unit, OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
+    public String buildTemporalSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, Units unit, OffsetDateTime atTime, OffsetDateTime dbAtTime) {
         final ParameterizedSparqlString ps = buildBaseString();
-        ps.setCommandText("SELECT DISTINCT ?m ?tStart ?tEnd" +
+        ps.setCommandText("SELECT DISTINCT ?m" +
                 " WHERE { " +
                 "?m rdf:type ?type ." +
                 "?m trestle:has_fact ?f ." +
                 "?f ogc:asWKT ?wkt ." +
 //                "?f trestle:valid_time ?t ." +
-                "OPTIONAL{?f trestle:valid_from ?tStart} ." +
-                "OPTIONAL{?f trestle:valid_to ?tEnd} ." +
-                "OPTIONAL{?f trestle:valid_at ?tAt} ." +
+                "OPTIONAL{?f trestle:valid_from ?vf} ." +
+                "OPTIONAL{?f trestle:valid_to ?vt} ." +
+                "OPTIONAL{?f trestle:valid_at ?va} ." +
                 "?f trestle:database_from ?df ." +
                 "OPTIONAL{?f trestle:database_to ?dt} .");
         buildDatabaseTSString(ps, wktValue, buffer, atTime, dbAtTime);
         ps.setIri("type", getFullIRIString(datasetClass));
-        ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+//        ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+//        ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
         logger.debug(ps.toString());
         return ps.toString();
@@ -502,12 +504,19 @@ public class QueryBuilder {
         ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime)) .");
 //                We need to remove this, otherwise GraphDB substitutes geosparql for ogc
         ps.removeNsPrefix("geosparql");
-        ps.append("FILTER(((!bound(?tStart) || ?tStart <= ?startVariable^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > ?endVariable^^xsd:dateTime)) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
+//        ps.append("FILTER(((!bound(?tStart) || ?tStart <= ?startVariable^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > ?endVariable^^xsd:dateTime)) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
+        ps.append("FILTER ((!bound(?vf) || " +
+                "(?vf <= ?validAt^^xsd:dateTime) && " +
+                "(!bound(?vt) || " +
+                "?vt > ?validAt^^xsd:dateTime)) && " +
+                "(!bound(?va) || " +
+                "(?va = ?validAt^^xsd:dateTime))) .");
+        ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }    ");
 
 //        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
         ps.setLiteral("wktString", wktValue);
-        ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        ps.setLiteral("validAt", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+//        ps.setLiteral("validEnd", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         ps.setLiteral("dbAt", dbAtTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
     }
 

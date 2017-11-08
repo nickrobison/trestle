@@ -19,6 +19,7 @@
             <a id="viewer" mat-list-item [routerLink]="['explore/viewer']" aria-label="dataset viewer link">VIEWER</a>
             <a id="visualize" mat-list-item [routerLink]="['explore/visualize']" aria-label="visualizer link">VISUALIZER</a>
             <a id="query" mat-list-item [routerLink]="['explore/query']" aria-label="query link">QUERY</a>
+            <a id="compare" mat-list-item [routerLink]="['explore/compare']" aria-label="compare links">COMPARE</a>
             <div *ngIf="userHasRequiredPermissions([Privileges.ADMIN])">
                 <mat-divider></mat-divider>
                 <h4 mat-list-subheader>Admin</h4>

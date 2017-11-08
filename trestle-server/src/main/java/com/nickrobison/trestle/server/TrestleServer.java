@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.server;
 
-import com.github.dirkraft.dropwizard.fileassets.FileAssetsBundle;
 import com.hubspot.dropwizard.guice.GuiceBundle;
 import com.nickrobison.trestle.server.auth.AuthDynamicFeature;
 import com.nickrobison.trestle.server.auth.AuthValueFactoryProvider;
@@ -16,18 +15,9 @@ import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import liquibase.Liquibase;
-import liquibase.database.Database;
-import liquibase.database.DatabaseFactory;
-import liquibase.database.jvm.JdbcConnection;
-import liquibase.resource.ClassLoaderResourceAccessor;
-import org.eclipse.jetty.servlet.FilterHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.DispatcherType;
-import java.sql.Connection;
-import java.util.EnumSet;
 import java.util.stream.Stream;
 
 /**
@@ -105,6 +95,6 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
 
     private ManagedDataSource createMigrationDataSource(TrestleServerConfiguration trestleServerConfiguration, Environment environment) {
         final DataSourceFactory dataSourceFactory = trestleServerConfiguration.getDataSourceFactory();
-            return dataSourceFactory.build(environment.metrics(), "migration-ds");
+        return dataSourceFactory.build(environment.metrics(), "migration-ds");
     }
 }

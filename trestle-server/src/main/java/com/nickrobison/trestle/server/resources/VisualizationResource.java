@@ -6,32 +6,36 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
+import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
+import com.nickrobison.trestle.reasoner.parser.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
-import com.nickrobison.trestle.server.models.IntersectRequest;
+import com.nickrobison.trestle.server.resources.requests.ComparisonRequest;
+import com.nickrobison.trestle.server.resources.requests.IntersectRequest;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.vividsolutions.jts.geom.Geometry;
 import io.dropwizard.jersey.params.NonEmptyStringParam;
-import org.geojson.Polygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wololo.jts2geojson.GeoJSONReader;
-import org.wololo.jts2geojson.GeoJSONWriter;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.Response.ok;
 
@@ -74,7 +78,124 @@ public class VisualizationResource {
     public Response getIndividual(@NotNull @QueryParam("name") String individualName) {
         final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(individualName);
 
-//        Build a simplified JSON implementation
+        return ok(this.buildIndividualFromJSON(trestleIndividual)).build();
+    }
+
+
+    @GET
+    @Path("/datasets")
+    public Response getDatasets() {
+        final Set<String> availableDatasets = this.reasoner.getAvailableDatasets();
+        return ok(availableDatasets).build();
+    }
+
+    @POST
+    @Path("/intersect")
+    public Response intersect(@NotNull IntersectRequest request) {
+
+        final Class<?> datasetClass;
+        try {
+            datasetClass = this.getClassFromRequest(request);
+        } catch (UnregisteredClassException e) {
+            logger.error("Unable to find class", e);
+            return Response.status(Response.Status.BAD_REQUEST).entity("Class does not exist").build();
+        }
+
+        final Geometry read;
+        try {
+            read = this.getGeometryFromRequest(request);
+        } catch (JsonProcessingException e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e).build();
+        }
+
+        final Optional<? extends List<?>> intersectedObjects = this.reasoner.spatialIntersect(datasetClass,
+                read.buffer(request.getBuffer()).toString(),
+                request.getBuffer(),
+                request.getValidAt());
+        return intersectedObjects.map(list -> Response.ok(list).build()).orElseGet(() -> Response
+                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity("Empty response from server, something went wrong")
+                .build());
+    }
+
+    @POST
+    @Path("/intersect-individuals")
+    public Response intersectIndividuals(@NotNull IntersectRequest request) {
+        final Class<?> datasetClass;
+        try {
+            datasetClass = this.getClassFromRequest(request);
+        } catch (UnregisteredClassException e) {
+            logger.error("Unable to find class", e);
+            return Response.status(Response.Status.BAD_REQUEST).entity("Class does not exist").build();
+        }
+
+        final Geometry geom;
+        try {
+            geom = this.getGeometryFromRequest(request);
+        } catch (JsonProcessingException e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e).build();
+        }
+
+        final Optional<List<TrestleIndividual>> trestleIndividuals = this.reasoner.spatialIntersectIndividuals(datasetClass,
+                geom.toString(),
+                request.getBuffer(),
+                request.getValidAt(),
+                request.getDatabaseAt());
+        if (trestleIndividuals.isPresent()) {
+            final List<ObjectNode> builtIndividuals = trestleIndividuals.get()
+                    .stream()
+                    .map(this::buildIndividualFromJSON)
+                    .collect(Collectors.toList());
+            return Response.ok(builtIndividuals).build();
+        }
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity("Unable get intersected individuals")
+                .build();
+    }
+
+    @POST
+    @Path("/compare")
+    public Response compareIndividuals(@NotNull ComparisonRequest request) {
+
+        final ComparisonReport comparisonReport = new ComparisonReport();
+
+        List<String> compareIndividuals = new ArrayList<>(request.getCompareAgainst());
+        compareIndividuals.add(request.getCompare());
+
+        try {
+//        Look for spatial union
+            logger.debug("Executing union");
+            final Instant unionStart = Instant.now();
+            final Optional<UnionContributionResult> objectUnionEqualityResult = this.reasoner.calculateSpatialUnionWithContribution("gaul-test", compareIndividuals, 4326, 0.8);
+            logger.debug("Union computation took {} ms", Duration.between(unionStart, Instant.now()).toMillis());
+            objectUnionEqualityResult.ifPresent(comparisonReport::setUnion);
+
+//                Do a piecewise comparison for each individual
+            logger.debug("Beginning piecewise comparison");
+            final Instant compareStart = Instant.now();
+            final Optional<List<SpatialComparisonReport>> spatialComparisonReports = this.reasoner.compareTrestleObjects("gaul-test", request.getCompare(), request.getCompareAgainst(), 4326, 0.8);
+            logger.debug("Comparison took {} ms", Duration.between(compareStart, Instant.now()).toMillis());
+            spatialComparisonReports.ifPresent(comparisonReport::addAllReports);
+
+
+            return Response.ok(comparisonReport).build();
+
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e).build();
+        }
+    }
+
+
+    private Class<?> getClassFromRequest(IntersectRequest request) throws UnregisteredClassException {
+        return this.reasoner.getDatasetClass(request.getDataset());
+    }
+
+    private Geometry getGeometryFromRequest(IntersectRequest request) throws JsonProcessingException {
+        return reader.read(mapper.writeValueAsString(request.getGeojson()));
+    }
+
+    private ObjectNode buildIndividualFromJSON(TrestleIndividual trestleIndividual) {
+        //        Build a simplified JSON implementation
         final ObjectNode individualNode = mapper.createObjectNode();
         final ArrayNode factArrayNode = mapper.createArrayNode();
         final ArrayNode relationArrayNode = mapper.createArrayNode();
@@ -118,11 +239,11 @@ public class VisualizationResource {
         individualNode.set("facts", factArrayNode);
 //        Relationships
         trestleIndividual.getRelations().forEach(relation -> {
-           ObjectNode relationNode = mapper.createObjectNode();
-           relationNode.put("subject", relation.getSubject());
-           relationNode.put("object", relation.getObject());
-           relationNode.put("relation", relation.getType());
-           relationArrayNode.add(relationNode);
+            ObjectNode relationNode = mapper.createObjectNode();
+            relationNode.put("subject", relation.getSubject());
+            relationNode.put("object", relation.getObject());
+            relationNode.put("relation", relation.getType());
+            relationArrayNode.add(relationNode);
         });
         individualNode.set("relations", relationArrayNode);
 
@@ -136,55 +257,18 @@ public class VisualizationResource {
         });
         individualNode.set("events", eventArrayNode);
 //        Now the individual temporal
-        final ObjectNode individualTemporal = mapper.createObjectNode();
+        final ObjectNode existsTemporal = mapper.createObjectNode();
         final TemporalObject individualTemporalObject = trestleIndividual.getExistsTemporal();
-        individualTemporal.put("validID", individualTemporalObject.getID());
-        individualTemporal.put("validFrom", LocalDateTimeToJavascriptFormatter.format(individualTemporalObject.asInterval().getFromTime()));
+        existsTemporal.put("validID", individualTemporalObject.getID());
+        existsTemporal.put("validFrom", LocalDateTimeToJavascriptFormatter.format(individualTemporalObject.asInterval().getFromTime()));
         if (individualTemporalObject.asInterval().isContinuing()) {
-            individualTemporal.put("validTo", "");
+            existsTemporal.put("validTo", "");
         } else {
-            individualTemporal.put("validTo", LocalDateTimeToJavascriptFormatter.format(((Temporal) individualTemporalObject.asInterval().getToTime().get())));
+            existsTemporal.put("validTo", LocalDateTimeToJavascriptFormatter.format(((Temporal) individualTemporalObject.asInterval().getToTime().get())));
         }
-        individualNode.set("individualTemporal", individualTemporal);
-        return ok(individualNode).build();
-    }
+        individualNode.set("existsTemporal", existsTemporal);
 
-
-    @GET
-    @Path("/datasets")
-    public Response getDatasets() {
-        final Set<String> availableDatasets = this.reasoner.getAvailableDatasets();
-        return ok(availableDatasets).build();
-    }
-
-    @POST
-    @Path("/intersect")
-    public Response intersect(@NotNull IntersectRequest request) {
-        final Class<?> datasetClass;
-        try {
-             datasetClass = this.reasoner.getDatasetClass(request.getDataset());
-        } catch (UnregisteredClassException e) {
-            logger.error("Requested missing class", e);
-            return Response.status(Response.Status.BAD_REQUEST).entity("Class does not exist").build();
-        }
-
-//        try {
-//            new GeoJSONWriter().write();
-//            reader.read()
-//        reader.read(request.getBbox());
-//        } catch(Exception e) {
-//            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
-//        }
-        final Geometry read;
-        try {
-            read = reader.read(mapper.writeValueAsString(request.getBbox()));
-        } catch (JsonProcessingException e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e).build();
-        }
-
-//        final String s = ((Polygon) request.getBbox()).getCoordinates().toString();
-        final Optional<? extends List<?>> intersectedObjects = this.reasoner.spatialIntersect(datasetClass, read.toString(), 0.0, request.getValidAt());
-        return intersectedObjects.map(list -> Response.ok(list).build()).orElseGet(() -> Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Empty reponse from server, something went wrong").build());
+        return individualNode;
     }
 
 }

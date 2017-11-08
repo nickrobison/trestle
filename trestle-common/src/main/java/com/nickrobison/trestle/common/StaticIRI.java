@@ -56,6 +56,7 @@ public class StaticIRI {
     public static final IRI temporalRelationIRI = IRI.create(TRESTLE_PREFIX, "Temporal_Relation");
     public static final IRI semanticRelationIRI = IRI.create(TRESTLE_PREFIX, "Semantic_Relation");
     public static final IRI eventRelationIRI = IRI.create(TRESTLE_PREFIX, "Event_Relation");
+    public static final IRI componentRelationIRI = IRI.create(TRESTLE_PREFIX, "Component_Relation");
     public static final IRI trestleOverlapIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Overlap");
     public static final IRI datasetClassIRI = IRI.create(TRESTLE_PREFIX, "Dataset");
     public static final IRI factClassIRI = IRI.create(TRESTLE_PREFIX, "Fact");

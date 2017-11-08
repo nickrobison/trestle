@@ -1,0 +1,16 @@
+:host >>> .node circle {
+    stroke: #999;
+    stroke-width: 3px;
+}
+
+:host >>> .node text {
+    font: 12px sans-serif;
+    pointer-events: none;
+    color: black;
+}
+
+:host >>> .link {
+    stroke: #999;
+    stroke-width: 2px;
+    stroke-opacity: 0.6;
+}
