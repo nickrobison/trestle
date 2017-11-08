@@ -1,6 +1,8 @@
 package com.nickrobison.gaulintegrator;
 
 import com.esri.core.geometry.*;
+import com.esri.core.geometry.Geometry;
+import com.esri.core.geometry.Polygon;
 import com.nickrobison.trestle.common.TemporalUtils;
 import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.datasets.GAULObject;
