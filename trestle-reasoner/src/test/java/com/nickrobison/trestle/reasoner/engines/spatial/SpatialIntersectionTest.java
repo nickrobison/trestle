@@ -7,6 +7,7 @@ import com.nickrobison.trestle.reasoner.AbstractReasonerTest;
 import com.nickrobison.trestle.reasoner.TestClasses;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.TrestleIndividual;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +23,7 @@ public class SpatialIntersectionTest extends AbstractReasonerTest {
 
 
     @Test
+    @Disabled
     public void spatialIntersectionTest() throws IOException {
         final List<TestClasses.GAULTestClass> gaulObjects = SharedUtils.readGAULObjects();
         gaulObjects.parallelStream().forEach(gaul -> {
