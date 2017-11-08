@@ -103,6 +103,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     public static final String DEFAULTNAME = "trestle";
     public static final String ONTOLOGY_RESOURCE_NAME = "trestle.owl";
     private static final OffsetDateTime TEMPORAL_MAX_VALUE = LocalDate.of(3000, 1, 1).atStartOfDay().atOffset(ZoneOffset.UTC);
+    public static final String BLANK_TEMPORAL_ID = "blank";
 
     private final String REASONER_PREFIX;
     private final ITrestleOntology ontology;
@@ -1941,14 +1942,14 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                                 property.getProperty().asOWLDataProperty().getIRI().equals(temporalValidToIRI) ||
                                 property.getProperty().asOWLDataProperty().getIRI().equals(temporalValidAtIRI))
                         .collect(Collectors.toSet());
-                final Optional<TemporalObject> validTemporal = TemporalObjectBuilder.buildTemporalFromProperties(validTemporals, null, "blank");
+                final Optional<TemporalObject> validTemporal = TemporalObjectBuilder.buildTemporalFromProperties(validTemporals, null, BLANK_TEMPORAL_ID);
 //            Database time
                 final Set<OWLDataPropertyAssertionAxiom> dbTemporals = dataProperties
                         .stream()
                         .filter(property -> property.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseFromIRI) ||
                                 property.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseToIRI))
                         .collect(Collectors.toSet());
-                final Optional<TemporalObject> dbTemporal = TemporalObjectBuilder.buildTemporalFromProperties(dbTemporals, null, "blank");
+                final Optional<TemporalObject> dbTemporal = TemporalObjectBuilder.buildTemporalFromProperties(dbTemporals, null, BLANK_TEMPORAL_ID);
                 return new TrestleFact<>(
                         factIndividual.getIRI().toString(),
                         assertion.getProperty().asOWLDataProperty().getIRI().getShortForm(),
@@ -2030,7 +2031,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
         try {
             final Set<OWLDataPropertyAssertionAxiom> temporalsForIndividual = this.ontology.getTemporalsForIndividual(df.getOWLNamedIndividual(IRI.create(individual)));
-            final Optional<TemporalObject> individualExistsTemporal = TemporalObjectBuilder.buildTemporalFromProperties(temporalsForIndividual, null, "blank");
+            final Optional<TemporalObject> individualExistsTemporal = TemporalObjectBuilder.buildTemporalFromProperties(temporalsForIndividual, null, BLANK_TEMPORAL_ID);
             final TemporalObject temporalObject = individualExistsTemporal.orElseThrow(() -> new RuntimeException(String.format("Unable to get exists temporals for %s", individual)));
             final int compared = temporalObject.compareTo(atTemporal);
             final Temporal adjustedIntersection;
