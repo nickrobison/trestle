@@ -1,9 +1,17 @@
 /**
  * Created by nrobison on 3/16/17.
  */
-import {Component, AfterViewInit, ElementRef, ViewChild, Input, OnChanges, SimpleChange} from "@angular/core";
-import {Selection, select, event, BaseType} from "d3-selection";
-import {ScaleOrdinal, schemeCategory20, scaleOrdinal} from "d3-scale";
+import {
+    Component,
+    AfterViewInit,
+    ElementRef,
+    ViewChild,
+    Input,
+    OnChanges,
+    SimpleChange
+} from "@angular/core";
+import { Selection, select, event, BaseType } from "d3-selection";
+import { ScaleOrdinal, schemeCategory20, scaleOrdinal } from "d3-scale";
 import {
     SimulationNodeDatum,
     forceSimulation,
@@ -13,7 +21,7 @@ import {
     SimulationLinkDatum, Simulation
 } from "d3-force";
 import { MatSlideToggleChange } from "@angular/material";
-import { TrestleIndividual } from "./individual/trestle-individual";
+import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
 
 export interface IIndividualConfig {
     data: TrestleIndividual;
@@ -232,7 +240,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             links: []
         };
 
-        //    Add the individual as node 0
+        //    Add the selection as node 0
         const individualNode = {
             id: individual.getID(),
             name: IndividualGraph.parseIndividualID(individual.getID()),
@@ -242,7 +250,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
 
         const individualTemporal = {
             id: individual.getTemporal().getID(),
-            name: "individual-temporal",
+            name: "selection-temporal",
             valid: true,
             group: NodeType.VTEMPORAL
         };

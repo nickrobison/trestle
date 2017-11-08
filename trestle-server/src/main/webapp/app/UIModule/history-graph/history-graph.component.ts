@@ -25,13 +25,6 @@ export interface IIndividualHistory {
     entities: ITemporalEntity[];
 }
 
-interface ID3Margin {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-}
-
 @Component({
     selector: "history-graph",
     templateUrl: "./history-graph.component.html",
@@ -70,6 +63,8 @@ export class HistoryGraphComponent implements AfterViewInit, OnChanges {
         console.debug("Building with data:", this.data);
         const entityNames = this.data.entities.map((d) => d.label);
         console.debug("Names:", entityNames);
+        this.x = scaleTime().range([0, this.width]);
+        this.x.domain([this.minTime, this.maxTime]);
         const y = scaleBand()
             .range([this.height, 0])
             .domain(entityNames);
@@ -91,10 +86,20 @@ export class HistoryGraphComponent implements AfterViewInit, OnChanges {
             .attr("y2", (d) => y(d) || 0);
 
         //    Build the Y-Axis
-        const yAxis = this.svg
-            .append("g")
-            .attr("class", "axis axis-y")
-            .call(axisLeft(y));
+        const ySelection = this.svg.selectAll("g.y-axis");
+        if (ySelection.empty()) {
+            this.svg
+                .append("g")
+                .attr("class", "axis y-axis")
+                .call(axisLeft(y));
+        } else {
+            ySelection
+                .call(axisLeft(y));
+        }
+
+        // And the X-Axis
+        this.svg.select(".x-axis")
+            .call(axisBottom(this.x));
 
         //    Add the data
         const mainItems = this.svg.selectAll(".fact")
@@ -142,7 +147,6 @@ export class HistoryGraphComponent implements AfterViewInit, OnChanges {
 
         mainItems.exit().remove();
         mainLabels.exit().remove();
-        yAxis.exit().remove();
     }
 
     private maybeDate(date: string | Date | undefined): Date {
@@ -202,14 +206,11 @@ export class HistoryGraphComponent implements AfterViewInit, OnChanges {
             .append("g")
             .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
 
-        //    TODO(nrobison): Move this to the updateFunction
         this.x = scaleTime().range([0, this.width]);
         this.x.domain([this.minTime, this.maxTime]);
-        console.debug("X range", this.x.range());
-        console.debug("X domain", this.x.domain());
         this.svg
             .append("g")
-            .attr("class", "axis axis-x")
+            .attr("class", "axis x-axis")
             .attr("transform", "translate(0," + this.height + ")")
             .call(axisBottom(this.x));
 

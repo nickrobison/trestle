@@ -5,6 +5,7 @@ import com.nickrobison.metrician.backends.MetricianExportedValue;
 import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
+import com.nickrobison.trestle.server.resources.requests.MetricsQueryRequest;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

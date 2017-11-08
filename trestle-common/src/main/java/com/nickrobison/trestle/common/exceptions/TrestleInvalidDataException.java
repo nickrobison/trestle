@@ -6,7 +6,7 @@ public class TrestleInvalidDataException extends RuntimeException {
     private final String message;
 
     public TrestleInvalidDataException(String message, Object value) {
-        super(message);
+        super(String.format("%s. Type: %s", message, value.getClass()));
         this.value = value;
         this.message = message;
     }

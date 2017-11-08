@@ -16,6 +16,7 @@ import { UserModule } from "../UserModule/user.module";
 import { AdminRoutes } from "../admin.routing";
 import { UIModule } from "../UIModule/ui.module";
 import { MaterialModule } from "../MaterialModule/material.module";
+import {SharedModule} from "../SharedModule/shared.module";
 
 @NgModule({
     declarations: [DashboardComponent,
@@ -31,7 +32,8 @@ import { MaterialModule } from "../MaterialModule/material.module";
         RouterModule.forChild(AdminRoutes),
         UserModule,
         UIModule,
-        MaterialModule
+        MaterialModule,
+        SharedModule
     ],
     providers: [MetricsService],
     entryComponents: [UserAddDialog],
