@@ -29,7 +29,7 @@ var prodOptions = {
         // If we optimize comparisons, mapbox will fail.
         // https://github.com/mapbox/mapbox-gl-js/issues/4359#issuecomment-288001933
         noParse: /(mapbox-gl)\.js$/,
-        loaders: [
+        rules: [
             {
                 test: /\.tsx?$/,
                 loader: "@ngtools/webpack"
@@ -37,7 +37,7 @@ var prodOptions = {
         ]
     },
     plugins: [
-        new ngtools.AotPlugin({
+        new ngtools.AngularCompilerPlugin({
             tsConfigPath: helpers.root("tsconfig.json"),
             entryModule: helpers.root("src/main/webapp/app/app.module#AppModule")
         }),

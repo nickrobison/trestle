@@ -21,12 +21,25 @@ var devOptions = {
         chunkFilename: "[id].chunk.js"
     },
     module: {
-        loaders: [
+        rules: [
             {
                 test: /\.tsx?$/,
-                loaders: ["awesome-typescript-loader", "angular2-template-loader?keepUrl=true", "angular2-router-loader"],
+                use: [
+                    {
+                        loader: "awesome-typescript-loader"
+                    },
+                    {
+                        loader: "angular2-template-loader",
+                        options: {
+                            keepUrl: true
+                        }
+                    },
+                    {
+                        loader: "angular-router-loader"
+                    }
+                ],
                 exclude: [/\.(spec|e2e)\.ts$/]
-            },
+            }
         ]
     },
     plugins: [
