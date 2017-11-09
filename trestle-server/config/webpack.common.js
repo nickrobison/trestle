@@ -5,18 +5,19 @@
 
 const helper = require("./helpers");
 const webpack = require("webpack");
-const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const rxPaths = require("rxjs/_esm5/path-mapping");
 
 var options = {
     resolve: {
-        extensions: [".webpack.js", ".web.js", ".ts", ".tsx", ".js"]
+        extensions: [".webpack.js", ".web.js", ".ts", ".tsx", ".js"],
+        alias: rxPaths()
     },
     output: {
-        publicPath: "/static/",
+        publicPath: "/static/"
     },
     module: {
-        loaders: [
+        rules: [
             {
                 test: /\.html$/,
                 loader: "html-loader"
@@ -57,16 +58,49 @@ var options = {
             },
             {
                 test: /\.css$/,
-                loaders: ["to-string-loader", "css-loader"],
+                use: [
+                    {
+                        loader: "to-string-loader"
+                    },
+                    {
+                        loader: "css-loader"
+                    }
+                ],
                 exclude: /\.async\.(html|css)$/
             },
             {
                 test: /\.async\.(html|css)$/,
-                loaders: ['file?name=[name].[hash].[ext]', 'extract']
+                use:[
+                    {
+                        loader: "file-loader",
+                        options: {
+                            name: "[name].[hash].[ext]"
+                        }
+                    },
+                    {
+                        loader: "extract"
+                    }
+                ]
             },
             {
                 test: /\.scss$/,
-                loaders: ["to-string-loader", "css-loader", "resolve-url-loader", "sass-loader?sourceMap"]
+                use: [
+                    {
+                        loader: "to-string-loader"
+                    },
+                    {
+                        loader: "css-loader"
+                    },
+                    {
+                        loader: "resolve-url-loader"
+                    },
+                    {
+                        loader: "sass-loader",
+                        options: {
+                            sourceMap: true
+                        }
+                    }
+                ]
             }
         ]
     },
@@ -74,9 +108,14 @@ var options = {
         new webpack.optimize.CommonsChunkPlugin({
             name: ["app", "vendor", "polyfills"]
         }),
+        new webpack.optimize.ModuleConcatenationPlugin(),
         new HtmlWebpackPlugin({
             template: "./src/main/webapp/app/index.html"
-        })
+        }),
+        new webpack.ContextReplacementPlugin(
+            /(.+)?angular(\\|\/)core(.+)?/,
+            helper.root("/src/main/webapp/")
+        )
     ]
 };
 module.exports = options;
