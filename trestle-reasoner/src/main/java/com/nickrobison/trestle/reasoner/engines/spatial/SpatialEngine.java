@@ -4,12 +4,15 @@ import com.codahale.metrics.annotation.Gauge;
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
 import com.esri.core.geometry.SpatialReference;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.LambdaUtils;
 import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
+import com.nickrobison.trestle.reasoner.caching.CaffeineStatistics;
 import com.nickrobison.trestle.reasoner.engines.IndividualEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
@@ -42,11 +45,10 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
@@ -62,8 +64,7 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
     private final EqualityEngine equalityEngine;
     private final ContainmentEngine containmentEngine;
     private final TrestleExecutorService spatialPool;
-    //    TODO(nickrobison): Move this into TrestleCache, once it's done
-    private final Map<Integer, Geometry> geometryCache;
+    private final Cache<Integer, Geometry> geometryCache;
     private WKTReader reader;
     private WKTWriter writer;
 
@@ -91,7 +92,12 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
         this.writer = new WKTWriter();
 
 //        Setup object caches
-        this.geometryCache = new ConcurrentHashMap<>();
+        geometryCache = Caffeine.newBuilder()
+                .maximumSize(1_000)
+                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .recordStats(() -> new CaffeineStatistics(metrician, "geometry"))
+                .build();
+
     }
 
 
@@ -224,8 +230,8 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
 
         //        Build the geometries
         final int srid = inputSR.getID();
-        final Geometry aPolygon = this.geometryCache.computeIfAbsent(objectA.hashCode(), key -> computeGeometry(objectA, srid));
-        final Geometry bPolygon = this.geometryCache.computeIfAbsent(objectB.hashCode(), key -> computeGeometry(objectB, srid));
+        final Geometry aPolygon = this.geometryCache.get(objectA.hashCode(), key -> computeGeometry(objectA, srid));
+        final Geometry bPolygon = this.geometryCache.get(objectB.hashCode(), key -> computeGeometry(objectB, srid));
 
         //        If they're disjoint, return
         if (aPolygon.disjoint(bPolygon)) {
@@ -327,13 +333,13 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
      */
 
     /**
-     * Get the current size of the geometry cache
+     * Get the current size of the geometry geometryCache
      *
      * @return - {@link Integer}
      */
-    @Gauge(name = "geometry-cache-size")
-    public int getSize() {
-        return this.geometryCache.size();
+    @Gauge(name = "geometry-geometryCache-size")
+    public long getSize() {
+        return this.geometryCache.estimatedSize();
     }
 
     /**

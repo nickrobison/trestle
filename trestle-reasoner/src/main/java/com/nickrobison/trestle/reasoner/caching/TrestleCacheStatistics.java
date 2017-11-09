@@ -4,7 +4,7 @@ package com.nickrobison.trestle.reasoner.caching;
  * Created by nrobison on 5/1/17.
  */
 public class TrestleCacheStatistics {
-    private static final long serialVersionUID = 42L;
+    public static final long serialVersionUID = 42L;
 
     private final Long validIndexSize;
     private final Double validIndexFragmentation;

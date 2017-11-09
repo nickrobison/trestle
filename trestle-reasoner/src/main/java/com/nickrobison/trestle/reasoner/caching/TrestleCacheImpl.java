@@ -34,8 +34,8 @@ import java.util.Optional;
 public class TrestleCacheImpl implements TrestleCache {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleCacheImpl.class);
-    public static final String TRESTLE_OBJECT_CACHE = "trestle-object-cache";
-    public static final String TRESTLE_INDIVIDUAL_CACHE = "trestle-individual-cache";
+    private static final String TRESTLE_OBJECT_CACHE = "trestle-object-cache";
+    private static final String TRESTLE_INDIVIDUAL_CACHE = "trestle-individual-cache";
     private final TrestleUpgradableReadWriteLock cacheLock;
     private final CacheManager cacheManager;
     private final Cache<IRI, Object> trestleObjectCache;
@@ -63,7 +63,6 @@ public class TrestleCacheImpl implements TrestleCache {
         final MutableConfiguration<IRI, Object> trestleObjectCacheConfiguration = new MutableConfiguration<>();
         trestleObjectCacheConfiguration
                 .setTypes(IRI.class, Object.class)
-//                .addCacheEntryListenerConfiguration()
                 .setStatisticsEnabled(true);
         logger.debug("Creating cache {}", TRESTLE_OBJECT_CACHE);
         this.trestleObjectCache = cacheManager.getCache(TRESTLE_OBJECT_CACHE, IRI.class, Object.class);
@@ -115,25 +114,6 @@ public class TrestleCacheImpl implements TrestleCache {
         }
     }
 
-//    @Override
-//    public void writeTrestleObject(TrestleIRI individualIRI, long startTemporal, long endTemporal, @NonNull Object value) {
-////        Write to the cache and the index
-//        try {
-//            cacheLock.lockWrite();
-//            logger.debug("Adding {} to cache from {} to {}", individualIRI, startTemporal, endTemporal);
-//            trestleObjectCache.put(individualIRI.getIRI(), value);
-//            logger.debug("Added to cache");
-//            validIndex.insertValue(individualIRI.getObjectID(), startTemporal, endTemporal, individualIRI);
-//            logger.debug("Added {} to index", individualIRI);
-//        } catch (InterruptedException e) {
-//            logger.error("Unable to get write lock", e);
-//        } finally {
-//            logger.debug("In the finally block");
-//            cacheLock.unlockWrite();
-//        }
-//    }
-
-
     @Override
     public void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal, Object value) {
         writeTrestleObject(individualIRI, startTemporal, endTemporal, OffsetDateTime.now(ZoneOffset.UTC), null, value);
@@ -163,7 +143,6 @@ public class TrestleCacheImpl implements TrestleCache {
             final long dbStartTemporalMillis = dbStartTemporal.toInstant().toEpochMilli();
 
 //            Begin writing into the cache
-//            final TrestleIRI withoutDatabase = individualIRI.withoutDatabase();
 
 //            Figure out if we already have a record for this object at this validity interval
             final OffsetDateTime validAt = individualIRI.getObjectTemporal().orElseThrow(() -> new IllegalStateException("Cannot add object to cache without a temporal"));
@@ -199,11 +178,6 @@ public class TrestleCacheImpl implements TrestleCache {
                         dbStartTemporalMillis,
                         dbEndTemporalMillis);
             }
-
-//            dbIndex.insertValue(withoutDatabase.toString(),
-//                    dbStartTemporal.toInstant().toEpochMilli(),
-//                    dbEndTemporalMillis,
-//                    individualIRI);
             logger.debug("Added {} to db index", dbIndexKey);
         } catch (InterruptedException e) {
             logger.error("Unable to get write lock", e);
@@ -327,7 +301,6 @@ public class TrestleCacheImpl implements TrestleCache {
             cacheManager.destroyCache(TRESTLE_OBJECT_CACHE);
             cacheManager.destroyCache(TRESTLE_INDIVIDUAL_CACHE);
         }
-//        this.cachingProvider.close();
         cacheManager.close();
     }
 

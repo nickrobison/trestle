@@ -45,7 +45,6 @@ public class ReasonerModule implements Managed {
                 .withPrefix(configuration.getPrefix())
                 .withOntology(configuration.getLocation())
                 .withInputClasses(GAULObject.class)
-                .withoutCaching()
                 .withoutMetrics()
                 .build();
 
