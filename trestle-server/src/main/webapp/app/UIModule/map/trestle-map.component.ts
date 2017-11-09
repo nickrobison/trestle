@@ -20,6 +20,7 @@ import {BehaviorSubject} from "rxjs/BehaviorSubject";
 import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
 import {Subject} from "rxjs/Subject";
 import {isNullOrUndefined} from "util";
+import FillPaint = mapboxgl.FillPaint;
 
 export interface IMapFillLayer extends mapboxgl.Layer {
     type: "fill";
@@ -426,11 +427,11 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                 id: fillID,
                 type: "fill",
                 source: inputLayer.id,
-                paint: {
+                paint: ({
                     "fill-color": "#627BC1",
                     "fill-opacity": 0.7,
-                }
-            });
+                } as FillPaint)
+            } );
             // Add polygon line changes
             const lineId = inputLayer.id + "-line";
             this.map.addLayer({
@@ -448,11 +449,11 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                 id: hoverID,
                 type: "fill",
                 source: inputLayer.id,
-                paint: {
+                paint: ({
                     "fill-color": "#627BC1",
                     "fill-opacity": 1,
                     // Repaint the lines so that they're still visible
-                },
+                } as FillPaint),
                 filter: ["==", "name", ""]
             });
             this.mapSources.set(inputLayer.id, [fillID, lineId, hoverID]);
