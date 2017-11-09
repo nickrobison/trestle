@@ -6,10 +6,12 @@
 const helper = require("./helpers");
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const rxPaths = require("rxjs/_esm5/path-mapping");
 
 var options = {
     resolve: {
-        extensions: [".webpack.js", ".web.js", ".ts", ".tsx", ".js"]
+        extensions: [".webpack.js", ".web.js", ".ts", ".tsx", ".js"],
+        alias: rxPaths()
     },
     output: {
         publicPath: "/static/"
@@ -106,6 +108,7 @@ var options = {
         new webpack.optimize.CommonsChunkPlugin({
             name: ["app", "vendor", "polyfills"]
         }),
+        new webpack.optimize.ModuleConcatenationPlugin(),
         new HtmlWebpackPlugin({
             template: "./src/main/webapp/app/index.html"
         }),
