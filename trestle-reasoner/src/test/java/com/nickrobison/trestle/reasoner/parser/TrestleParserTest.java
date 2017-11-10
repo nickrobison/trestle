@@ -40,6 +40,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "unchecked"})
 public class TrestleParserTest {
 
+    public TrestleParserTest() {
+//        Not used
+    }
+
     private TestClasses.GAULTestClass gaulTestClass;
     private ExpandedGAULTests expandedGAULClass;
     private OWLDataFactory df;
@@ -49,7 +53,8 @@ public class TrestleParserTest {
     private TestClasses.GAULComplexClassTest complexObjectClass;
     private TestClasses.MultiLangTest multiLangTest;
     private TrestleParser tp;
-    private IClassParser cp; 
+    private IClassParser cp;
+    private IClassBuilder cb;
 
     @BeforeEach
     public void Setup() {
@@ -65,6 +70,7 @@ public class TrestleParserTest {
         temporalPoint = TemporalObjectBuilder.exists().at(ld).build(); // .withRelations();
         tp = new TrestleParser(df, TRESTLE_PREFIX, true, "");
         cp = ClojureParserProvider.getParser(df, TRESTLE_PREFIX, true, "");
+        cb = (IClassBuilder) cp;
     }
 
     @Test
@@ -245,6 +251,7 @@ public class TrestleParserTest {
 
     @Test
     public void testObjectConstructor() throws MissingConstructorException {
+
         List<OWLDataPropertyAssertionAxiom> testProperties = new ArrayList<>();
         List<TemporalObject> testTemporals = new ArrayList<>();
         final OWLNamedIndividual owlNamedIndividual = df.getOWLNamedIndividual(IRI.create("trestle:", "string_from_method"));
@@ -290,7 +297,7 @@ public class TrestleParserTest {
 //        Build the inputs and test the constructor
         List<Class<?>> inputClasses = new ArrayList<>();
         List<Object> inputObjects = new ArrayList<>();
-        final Optional<List<OWLDataProperty>> propertyMembers = ClassBuilder.getPropertyMembers(TestClasses.GAULMethodTest.class);
+        final Optional<List<OWLDataProperty>> propertyMembers = cb.getPropertyMembers(TestClasses.GAULMethodTest.class);
 //        if (propertyMembers.isPresent()) {
 //            propertyMembers.get().forEach(property -> {
 ////                inputClasses.add(property.get)
@@ -343,13 +350,15 @@ public class TrestleParserTest {
             }
         });
 
+
 //        Check that they match
         assertEquals(inputClasses.size(), constructorArguments.getTypes().size(), "Wrong number of property classes");
         assertEquals(inputObjects.size(), constructorArguments.getValues().size(), "Wrong number of Property Values");
 
         final TestClasses.GAULMethodTest expectedClass = new TestClasses.GAULMethodTest();
 //        final GAULMethodTest gaulMethodTest = ClassBuilder.constructObject(GAULMethodTest.class, inputClasses, inputObjects);
-        final TestClasses.GAULMethodTest gaulMethodTest = ClassBuilder.constructObject(TestClasses.GAULMethodTest.class, constructorArguments);
+//        final TestClasses.GAULMethodTest gaulMethodTest = ClassBuilder.constructObject(TestClasses.GAULMethodTest.class, constructorArguments);
+        final TestClasses.GAULMethodTest gaulMethodTest = cb.constructObject(TestClasses.GAULMethodTest.class, constructorArguments);
         assertEquals(expectedClass, gaulMethodTest, "Should match");
     }
 
@@ -376,6 +385,18 @@ public class TrestleParserTest {
 
         public ExpandedGAULTests() {
             this.adm0_code = 4326;
+            this.test_name = "new_test";
+            this.adm0_name = "test region";
+            this.testtime = LocalDateTime.of(1998, 3, 26, 0, 0);
+            this.privateField = "don't read me";
+            this.testpoint = LocalDateTime.of(1989, 3, 26, 0, 0);
+            this.teststart = LocalDateTime.of(1989, 3, 26, 0, 0);
+            this.testend = LocalDateTime.of(1989, 3, 26, 0, 0).plusYears(5);
+            this.testat = LocalDateTime.of(1989, 3, 26, 0, 0);
+        }
+
+        public ExpandedGAULTests(int adm0_code) {
+            this.adm0_code = adm0_code;
             this.test_name = "new_test";
             this.adm0_name = "test region";
             this.testtime = LocalDateTime.of(1998, 3, 26, 0, 0);

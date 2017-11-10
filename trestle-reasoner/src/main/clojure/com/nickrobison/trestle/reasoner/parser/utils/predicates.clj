@@ -166,4 +166,4 @@
 (defn multi-arg-constructor?
   "Is this constructor a multi-arg one?"
   [constructor]
-  (= (.getParameterCount constructor) 0))
+  (> (.getParameterCount constructor) 0))

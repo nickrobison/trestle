@@ -1,13 +1,14 @@
 (ns com.nickrobison.trestle.reasoner.parser.parser
   (:import [IClassParser]
-           (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter StringParser ClassBuilder SpatialParser)
+           (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter StringParser ClassBuilder SpatialParser IClassBuilder)
            (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom)
            (java.lang.annotation Annotation)
            (java.lang.reflect InvocationTargetException Field Method Modifier Constructor)
            (java.lang.invoke MethodHandles)
            (com.nickrobison.trestle.reasoner.annotations IndividualIdentifier DatasetClass Fact NoMultiLanguage Language)
            (java.util Optional List)
-           (com.nickrobison.trestle.common StaticIRI))
+           (com.nickrobison.trestle.common StaticIRI)
+           (com.nickrobison.trestle.reasoner.exceptions MissingConstructorException))
   (:require [clojure.core.match :refer [match]]
             [clojure.core.reducers :as r]
             [clojure.tools.logging :as log]
@@ -47,14 +48,15 @@
   "Build a list of constructor params and types"
   [constructor]
   (->> (.getParameters constructor)
-       (map build-parameter)))
+       (map build-parameter)
+       (into ())))
 
 (defn build-constructor
   "Build constructor map"
   [clazz]
   (let [constructor (get-constructor clazz)]
     {
-     :handle (m/make-handle constructor)
+     :handle    (m/make-handle constructor)
      :arguments (build-constructor-args constructor)
      }))
 
@@ -85,6 +87,24 @@
      (.invokeWithArguments handle (object-array [object args]))
      (catch Exception e
        (log/error "Problem invoking %s on %s" handle object e)))))
+
+(defn invoke-constructor
+  "Invoke Constructor Method Handle"
+  ; We need to use invokeWithArguments to work around IDEA-154967
+  ([handle]
+   (try
+     (log/debugf "Invoking constructor %s" handle)
+     (.invokeWithArguments handle [])
+     (catch Exception e
+       (log/error "Problem invoking" e))))
+  ([handle & args]
+   (try
+     (log/debugf "Invoking constructor %s with args %s" handle args)
+     ; I honestly have no idea why we need to do first, but that's how it is
+     (.invokeWithArguments handle (object-array (first args)))
+     (catch Exception e
+       (log/error "Problem invoking" e))))
+  )
 
 (defn owl-return-type
   "Determine the OWLDatatype of the field/method"
@@ -271,6 +291,9 @@
               (get member :name)))
        (first)))
 
+;
+; ClassParser/Builder
+;
 
 (defrecord ClojureClassParser [^OWLDataFactory df,
                                ^String reasonerPrefix,
@@ -382,7 +405,43 @@
                                (m/filter-member-name-iri
                                  factName
                                  member))
-                             :iri)))))
+                             :iri))))
+
+  ; IClassBuilder methods
+  IClassBuilder
+  (getPropertyMembers ^Optional [this clazz filterSpatial]
+    (let [parsedClass (.parseClass this clazz)]
+      (Optional/ofNullable (->> (:members parsedClass)
+                                (filter #(if filterSpatial
+                                           (complement
+                                             (= (:type %) ::pred/spatial))
+                                           true))
+                                (map #(.getOWLDataProperty df (:iri %)))))))
+  (getPropertyMembers ^Optional [this clazz]
+    (.getPropertyMembers this clazz false))
+  (constructObject ^Object [this clazz arguments]
+    (let [parsedClass (.parseClass this clazz)
+          constructor (:constructor parsedClass)
+          parameterNames (m/get-from-array :name (:arguments constructor))
+          sortedTypes (.getSortedTypes arguments parameterNames)
+          sortedValues (.getSortedValues arguments parameterNames)
+          ]
+      ; If we can't match things up, throw an error
+      (if (not (or
+                 (= (count parameterNames)
+                    (count sortedValues))
+                 (= (count parameterNames)
+                    (count sortedTypes))))
+        ((log/errorf "Wrong number of constructor arguments, need %s, have %s"
+                     (count parameterNames)
+                     (count sortedValues))
+          (log/errorf "Constructor for class %s has parameters %s but we have %s"
+                      (.getSimpleName clazz)
+                      parameterNames
+                      (.getNames arguments))
+          (throw (MissingConstructorException. "Missing parameters required for constructor generation")))
+        (invoke-constructor (:handle constructor) sortedValues))
+      )))
 
 (defn make-parser
   "Creates a new ClassParser"

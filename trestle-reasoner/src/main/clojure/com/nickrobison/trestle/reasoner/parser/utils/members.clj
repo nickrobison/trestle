@@ -63,3 +63,10 @@
   "Apply normalization rules to Individual ID"
   [id]
   (replace-several id #"\s+" "_"))
+
+(defn get-from-array
+  "Get specified key from array of maps"
+  [key coll]
+  (->> coll
+       (map #(key %))
+       (into ())))
