@@ -4,7 +4,9 @@
             <trestle-map [dataChanges]="mapIndividual" [single]="true" [multiSelect]="false"></trestle-map>
         </div>
         <div class="col s12 l5 ui-row">
-            <individual-graph [config]="{data: individual}"></individual-graph>
+            <individual-graph [config]="{data: individual,
+            validAt: validAt,
+            dbAt: dbAt}"></individual-graph>
         </div>
     </div>
 </div>

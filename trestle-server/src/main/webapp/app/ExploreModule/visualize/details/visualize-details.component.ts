@@ -28,6 +28,8 @@ export class VisualizeDetailsComponent implements AfterViewInit {
     public individualFactHistory: IIndividualHistory;
     public minTime: moment.Moment;
     public maxTime: moment.Moment;
+    public validAt: moment.Moment;
+    public dbAt: moment.Moment;
     private routeObservable: Observable<IRouteObservable>;
     private dialogRef: MatDialogRef<IndividualValueDialog> | null;
 
@@ -38,6 +40,9 @@ export class VisualizeDetailsComponent implements AfterViewInit {
         this.mapIndividual = new Subject();
         this.minTime = moment().year(2011).startOf("year");
         this.maxTime = moment().year(2016).endOf("year");
+        const now = moment();
+        this.validAt = now;
+        this.dbAt = now;
     }
 
     public ngAfterViewInit(): void {

@@ -4,7 +4,7 @@
 import {NgModule} from "@angular/core";
 import {UserModule} from "../UserModule/user.module";
 import {VisualizeComponent} from "./visualize/visualize.component";
-import {IndividualGraph} from "./visualize/individual-graph.component";
+import {IndividualGraphComponent} from "./visualize/individual-graph.component";
 import {IndividualValueDialog} from "./visualize/individual-value.dialog";
 import {IndividualService} from "../SharedModule/individual/individual.service";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
@@ -39,7 +39,7 @@ import {ExporterService} from "./exporter/exporter.service";
     ],
     declarations: [
         VisualizeComponent,
-        IndividualGraph,
+        IndividualGraphComponent,
         IndividualValueDialog,
         CodeMirrorComponent,
         QueryComponent,

@@ -22,9 +22,13 @@ import {
 } from "d3-force";
 import { MatSlideToggleChange } from "@angular/material";
 import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
+import * as moment from "moment";
+import { TrestleFact } from "../../SharedModule/individual/TrestleIndividual/trestle-fact";
 
 export interface IIndividualConfig {
     data: TrestleIndividual;
+    validAt: moment.Moment;
+    dbAt?: moment.Moment;
 }
 
 const enum NodeType {
@@ -43,7 +47,7 @@ interface ID3Margin {
 
 interface IGraphLayout {
     nodes: IFactNode[];
-    links: SimulationLinkDatum<IFactNode>[];
+    links: Array<SimulationLinkDatum<IFactNode>>;
 }
 
 interface IFactNode extends SimulationNodeDatum {
@@ -59,20 +63,19 @@ interface IFactNode extends SimulationNodeDatum {
     styleUrls: ["./individual-graph.component.css"]
 })
 
-export class IndividualGraph implements AfterViewInit, OnChanges {
+export class IndividualGraphComponent implements AfterViewInit, OnChanges {
 
-    @ViewChild("container") element: ElementRef;
-    @Input() config: IIndividualConfig;
+    @ViewChild("container") public element: ElementRef;
+    @Input() public config: IIndividualConfig;
 
-    factToggleName = "fact-toggle";
-    relationToggleName = "relation-toggle";
-    graphFacts = true;
-    graphRelations = true;
-
+    public factToggleName = "fact-toggle";
+    public relationToggleName = "relation-toggle";
+    public graphFacts = true;
+    public graphRelations = true;
 
     private htmlElement: HTMLElement;
-    private host: Selection<any, any, any, any>;
-    private svg: Selection<any, any, any, any>;
+    private host: Selection<HTMLElement, IFactNode, null, undefined>;
+    private svg: Selection<BaseType, IFactNode, null, undefined>;
     private margin: ID3Margin;
     private height: number;
     private width: number;
@@ -84,24 +87,23 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
     private nodeSize: number;
     private nodeSizeLarge: number;
 
-    constructor() {
-    }
+    constructor() { }
 
-    ngAfterViewInit(): void {
+    public ngAfterViewInit(): void {
         console.debug("graph view-init");
         this.htmlElement = this.element.nativeElement;
         this.setupD3();
         this.layout = {
             nodes: [],
             links: []
-        }
+        };
     }
 
-    ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
-        let configChange = changes["config"];
+    public ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
+        const configChange = changes["config"];
         if (!configChange.isFirstChange() && (configChange.currentValue !== configChange.previousValue)) {
             console.debug("Config changed", configChange);
-            this.buildGraph(configChange.currentValue.data);
+            this.buildGraph(configChange.currentValue);
             this.update({
                 nodes: [],
                 links: [],
@@ -111,7 +113,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
     }
 
     private setupD3() {
-        this.host = select(this.htmlElement);
+        this.host = select<HTMLElement, IFactNode>(this.htmlElement);
         this.margin = {top: 10, right: 20, bottom: 10, left: 10};
         console.debug("offsetWidth", this.htmlElement.offsetWidth);
         this.width = this.htmlElement.offsetWidth - this.margin.left - this.margin.right;
@@ -167,7 +169,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             .append("text")
             .attr("x", 16)
             .attr("dy", ".35em")
-            .text(d => d.name);
+            .text((d) => d.name);
 
         //    Legend
         const legend = this.svg.selectAll(".legend")
@@ -189,7 +191,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             .attr("y", this.nodeSize)
             .attr("dy", "0.35em")
             .style("text-anchor", "end")
-            .text((d) => IndividualGraph.parseColorGroup(d));
+            .text((d) => IndividualGraphComponent.parseColorGroup(d));
         // Force setup
         this.simulation
             .nodes(data.nodes)
@@ -226,7 +228,6 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         this.nodes
             .attr("transform", (d) => "translate(" + d.x + "," + d.y + ")");
 
-
         this.links
             .attr("x1", (d: any) => d.source.x)
             .attr("y1", (d: any) => d.source.y)
@@ -234,7 +235,8 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             .attr("y2", (d: any) => d.target.y);
     };
 
-    private buildGraph(individual: TrestleIndividual): void {
+    private buildGraph(config: IIndividualConfig): void {
+        const individual = config.data;
         this.layout = {
             nodes: [],
             links: []
@@ -243,7 +245,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         //    Add the selection as node 0
         const individualNode = {
             id: individual.getID(),
-            name: IndividualGraph.parseIndividualID(individual.getID()),
+            name: IndividualGraphComponent.parseIndividualID(individual.getID()),
             valid: true,
             group: NodeType.INDIVIDUAL
         };
@@ -267,8 +269,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
                 const factNode = {
                     id: fact.getID(),
                     name: fact.getName(),
-                    // FIXME(nrobison): This won't work with times in the far future
-                    valid: fact.getValidTemporal().getTo() === undefined && fact.getDatabaseTemporal().getTo() === undefined,
+                    valid: fact.isActive(config.validAt, config.dbAt),
                     group: NodeType.FACT
                 };
                 this.layout.nodes.push(factNode);
@@ -284,7 +285,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
             individual.getRelations().forEach(relation => {
                 const relationNode = {
                     id: relation.getObject(),
-                    name: relation.getType().toString() + ": " + IndividualGraph.parseIndividualID(relation.getObject()),
+                    name: relation.getType().toString() + ": " + IndividualGraphComponent.parseIndividualID(relation.getObject()),
                     valid: true,
                     group: NodeType.RELATION
                 };
@@ -301,7 +302,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         if (event.source.id === this.factToggleName) {
             console.debug("Graph facts?", event.checked);
             this.graphFacts = event.checked;
-            this.buildGraph(this.config.data);
+            this.buildGraph(this.config);
             this.update({
                 nodes: [],
                 links: [],
@@ -310,7 +311,7 @@ export class IndividualGraph implements AfterViewInit, OnChanges {
         } else if (event.source.id === this.relationToggleName) {
             console.debug("Graph relations?", event.checked);
             this.graphRelations = event.checked;
-            this.buildGraph(this.config.data);
+            this.buildGraph(this.config);
             this.update({
                 nodes: [],
                 links: [],
