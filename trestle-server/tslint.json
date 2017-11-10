@@ -1,4 +1,3 @@
-
 {
   "extends": [
     "tslint:recommended",
@@ -9,8 +8,17 @@
   ],
   "rules": {
     // Custom
-    "trailing-comma": [false, {"multiline": "always", "singleline": "never"}],
-    "interface-name": [false, "always-prefix"],
+    "trailing-comma": [
+      false,
+      {
+        "multiline": "always",
+        "singleline": "never"
+      }
+    ],
+    "interface-name": [
+      false,
+      "always-prefix"
+    ],
     // Angular 2
     "component-class-suffix": true,
     // "component-selector": [true, "element", "my", "kebab-case"],
@@ -23,7 +31,10 @@
     "no-forward-ref": true,
     "no-input-rename": true,
     "no-output-rename": true,
-    "pipe-naming": [true, "camelCase"],
+    "pipe-naming": [
+      true,
+      "camelCase"
+    ],
     "templates-use-public": true,
     "use-host-property-decorator": true,
     "use-input-property-decorator": true,
@@ -31,7 +42,8 @@
     "use-output-property-decorator": true,
     "use-pipe-transform-interface": true,
     // General
-    "no-console": [true,
+    "no-console": [
+      true,
       "time",
       "timeEnd",
       "trace"
@@ -72,10 +84,19 @@
         ]
       }
     ],
-    "triple-equals": [true, "allow-undefined-check", "allow-null-check"],
-    "rxjs-no-add": { "severity": "error" },
-    "rxjs-no-operator": { "severity": "error" },
-    "rxjs-no-patched": { "severity": "error" },
-    "rxjs-no-wholesale": { "severity": "error" }
+    "triple-equals": [
+      true,
+      "allow-undefined-check",
+      "allow-null-check"
+    ],
+    "rxjs-no-operator": {
+      "severity": "error"
+    },
+    "rxjs-no-patched": {
+      "severity": "error"
+    },
+    "rxjs-no-wholesale": {
+      "severity": "error"
+    }
   }
 }
