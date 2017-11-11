@@ -1,5 +1,6 @@
 import { ITrestleTemporal, TrestleTemporal } from "./trestle-temporal";
 import { IInterfacable } from "../../interfacable";
+import * as moment from "moment";
 
 export interface ITrestleFact {
     identifier: string;
@@ -53,6 +54,21 @@ export class TrestleFact implements IInterfacable<ITrestleFact> {
 
     public isSpatial(): boolean {
         return this.name === "asWKT";
+    }
+
+    /**
+     * Is this fact active at the specified valid/database intersection
+     * @param {moment.Moment} validAt
+     * @param {moment.Moment} dbAt
+     * @returns {boolean}
+     */
+    public isActive(validAt: moment.Moment, dbAt?: moment.Moment): boolean {
+        if (dbAt) {
+            return this.getValidTemporal().isActive(validAt) &&
+                this.getDatabaseTemporal().isActive(dbAt);
+        } else {
+            return this.getValidTemporal().isActive(validAt);
+        }
     }
 
     public asInterface(): ITrestleFact {

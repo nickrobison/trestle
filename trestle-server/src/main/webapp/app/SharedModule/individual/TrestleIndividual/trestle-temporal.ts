@@ -4,7 +4,7 @@ import * as moment from "moment";
 export interface ITrestleTemporal {
     validID: string;
     validFrom: Date;
-    validTo?: Date;
+    validTo?: Date | string;
 }
 
 export class TrestleTemporal implements IInterfacable<ITrestleTemporal> {
@@ -15,7 +15,8 @@ export class TrestleTemporal implements IInterfacable<ITrestleTemporal> {
     constructor(temporal: ITrestleTemporal) {
         this.id = temporal.validID;
         this.from = moment(temporal.validFrom, moment.ISO_8601);
-        if (temporal.validTo !== null) {
+        // There's a problem with our serialization, which means these things might end up as strings, which is no good.
+        if (temporal.validTo !== null && temporal.validTo !== "") {
             this.to = moment.utc(temporal.validTo, moment.ISO_8601);
         }
     }
@@ -45,6 +46,20 @@ export class TrestleTemporal implements IInterfacable<ITrestleTemporal> {
 
     public isContinuing(): boolean {
         return this.to === undefined || !this.to.isValid();
+    }
+
+    /**
+     * Does the specified temporal fall within the interval of this TemporalObject?
+     * @param {moment.Moment} temporal
+     * @returns {boolean}
+     */
+    public isActive(temporal: moment.Moment): boolean {
+        if (this.to === undefined) {
+            return this.from.isSameOrBefore(temporal);
+        } else {
+            return this.from.isSameOrBefore(temporal) &&
+                this.to.isAfter(temporal);
+        }
     }
 
     public asInterface(): ITrestleTemporal {

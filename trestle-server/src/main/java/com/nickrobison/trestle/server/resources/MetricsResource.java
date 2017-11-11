@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.server.resources;
 
 import com.nickrobison.metrician.Metrician;
+import com.nickrobison.metrician.MetricianHeader;
 import com.nickrobison.metrician.backends.MetricianExportedValue;
 import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
@@ -41,6 +42,10 @@ public class MetricsResource {
 
     @GET
     public Response getMetrics() {
+        final MetricianHeader header = this.metrician.getMetricsHeader();
+        if (header == null) {
+            return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+        }
         return Response.ok(this.metrician.getMetricsHeader()).build();
     }
 

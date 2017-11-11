@@ -23,7 +23,7 @@ var options = {
                 loader: "html-loader"
             },
             {
-                test: /\.(jpe?g|png|gif)$/i,
+                test: /\.(jpe?g|png|gif|svg)$/i,
                 use: [
                     {
                         loader: "file-loader",
