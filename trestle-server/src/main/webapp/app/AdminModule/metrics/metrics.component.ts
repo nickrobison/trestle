@@ -22,9 +22,11 @@ export class MetricsComponent implements OnInit, DoCheck {
     public oldValue = "";
     public selectedData: IMetricsData;
     public loadingData: boolean;
+    public disabled: boolean;
     @ViewChild(MetricsGraph) private graph: MetricsGraph;
 
     constructor(private ms: MetricsService) {
+        this.disabled = false;
     }
 
     public ngOnInit(): void {
@@ -41,10 +43,16 @@ export class MetricsComponent implements OnInit, DoCheck {
                 this.upTime = upDuration;
                 this.startTime = moment(metricsResponse.startTime);
                 this.nowTime = moment();
-            }, (error: Error) => {
-                console.error(error);
+            }, (error: Response) => {
+            // If we get a NOT_IMPLEMENTED response, that means metrics is disabled
+                if (error.status === 501) {
+                    this.disabled = true;
+                    console.debug("Metrician not enabled");
+                } else {
+                    console.error(error);
+                }
             });
-    }
+    };
 
     public ngDoCheck() {
         if (this.selectedValue !== this.oldValue) {
