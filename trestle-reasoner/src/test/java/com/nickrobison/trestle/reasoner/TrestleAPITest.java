@@ -180,8 +180,6 @@ public class TrestleAPITest extends AbstractReasonerTest {
     }
 
     @Test
-//    Disable this because it keeps failing. No idea why, but it does. But only on branches.
-    @Disabled
     public void gaulLoader() throws IOException, TrestleClassException, MissingOntologyEntity, OWLOntologyStorageException {
 
 
