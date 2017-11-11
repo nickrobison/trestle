@@ -9,7 +9,14 @@ import { AuthService, Privileges } from "./UserModule/authentication.service";
 import * as CryptoJS from "crypto-js";
 import { EventBus, UserLoginEvent } from "./UIModule/eventBus/eventBus.service";
 import { Subscription } from "rxjs/Subscription";
-import { MatSidenav } from "@angular/material";
+
+// Of some reason, MatSidenav doesn't work, so we have to default to any
+interface MySideNav {
+    open(): void;
+    close(): void;
+    toggle(): void;
+
+}
 
 @Component({
     selector: "app-root",
@@ -17,17 +24,16 @@ import { MatSidenav } from "@angular/material";
     styleUrls: ["../theme.scss", "./app.component.css"],
     encapsulation: ViewEncapsulation.None
 })
-
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     public userLoggedIn: Subject<boolean> = new BehaviorSubject<boolean>(false);
     public gravatarURL: string;
     // We need this in order to access the Privileges enum from the template
     public Privileges = Privileges;
-    // @ViewChild("sidenav") public something: MatSidenav;
+
+    @ViewChild("sidenav") public something: MySideNav;
     private loginSubscription: Subscription;
 
     constructor(private authService: AuthService, private router: Router, private eventBus: EventBus) {
-        console.debug("Width:", window.screen.width);
     }
 
     public ngOnInit(): void {
@@ -38,9 +44,13 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     public ngAfterViewInit(): void {
-        if (window.screen.width < 400) {
+        console.debug("Width:", window.innerWidth);
+        if (window.innerWidth <= 800) {
             console.debug("Small");
-            // this.something.close();
+            this.something.close();
+        } else {
+            console.debug("Big opening it up");
+            this.something.open();
         }
     }
 
@@ -78,6 +88,10 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 //    Resize function for sidenav
     @HostListener("window:resize", ["$event"])
     public onResize(event: any): void {
-        console.debug("resized", event.target.screen.width);
+        if (event.target.window.innerWidth <= 800) {
+            this.something.close();
+        } else {
+            this.something.open();
+        }
     }
 }
