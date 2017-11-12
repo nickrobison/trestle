@@ -1,7 +1,6 @@
 package com.nickrobison.trestle.exporter;
 
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.io.ParseException;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.geotools.data.DefaultTransaction;
@@ -13,7 +12,6 @@ import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
-import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.geotools.geometry.jts.WKTReader2;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.opengis.feature.simple.SimpleFeature;
@@ -36,7 +34,6 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
 
     private static final Logger logger = LoggerFactory.getLogger(ShapefileExporter.class);
     private final SimpleFeatureBuilder simpleFeatureBuilder;
-    private final GeometryFactory geometryFactory;
     private final DefaultFeatureCollection featureCollection;
     private final WKTReader2 wktReader;
     private final Class<T> type;
@@ -47,12 +44,12 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
     private ShapefileExporter(Builder builder) {
 
 //        Setup the export directory first
-        final File directory = (File) builder.path.orElse(new File("./target/shapefiles/"));
-        if (!directory.exists()) {
-            logger.debug("Creating dirctory {}", directory);
-            directory.mkdirs();
+        final File fileDirectory = (File) builder.path.orElse(new File("./target/shapefiles/"));
+        if (!fileDirectory.exists()) {
+            logger.debug("Creating dirctory {}", fileDirectory);
+            fileDirectory.mkdirs();
         }
-        this.directory = directory;
+        this.directory = fileDirectory;
         this.prefix = (String) builder.prefix.orElse("Trestle");
 
 
@@ -70,7 +67,6 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
         simpleFeatureType = typeBuilder.buildFeatureType();
         simpleFeatureBuilder = new SimpleFeatureBuilder(simpleFeatureType);
         featureCollection = new DefaultFeatureCollection();
-        geometryFactory = JTSFactoryFinder.getGeometryFactory();
         wktReader = new WKTReader2();
     }
 
@@ -108,8 +104,6 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
         }
         final File shpFile = new File(directory, String.format("%s.shp", exportName));
 
-//        shpFile.createNewFile();
-//        dbf.createNewFile();
         final ShapefileDataStoreFactory shapefileDataStoreFactory = new ShapefileDataStoreFactory();
         Map<String, Serializable> params = new HashMap<>();
         try {
@@ -123,29 +117,28 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
         dataStore.createSchema(simpleFeatureType);
 //            Write it out
         Transaction transaction = new DefaultTransaction("create");
-        final String typeName = dataStore.getTypeNames()[0];
-        final SimpleFeatureSource featureSource = dataStore.getFeatureSource(typeName);
-        if (featureSource instanceof SimpleFeatureStore) {
-            SimpleFeatureStore featureStore = (SimpleFeatureStore) featureSource;
+        try {
+            final String typeName = dataStore.getTypeNames()[0];
+            final SimpleFeatureSource featureSource = dataStore.getFeatureSource(typeName);
+            if (featureSource instanceof SimpleFeatureStore) {
+                SimpleFeatureStore featureStore = (SimpleFeatureStore) featureSource;
 
-            featureStore.setTransaction(transaction);
-            try {
+                featureStore.setTransaction(transaction);
                 featureStore.addFeatures(featureCollection);
                 transaction.commit();
-            } catch (Exception e) {
-                e.printStackTrace();
-                transaction.rollback();
-            } finally {
-                transaction.close();
             }
-
+        } catch (Exception e) {
+            logger.error("Error writing Shapefile properties", e);
+            transaction.rollback();
+        } finally {
+            transaction.close();
         }
 
 //        Now, zip it
         final File zipFile = new File(directory, String.format("%s.zip", exportName));
+        FileOutputStream fos = new FileOutputStream(zipFile);
+        final ZipOutputStream zos = new ZipOutputStream(fos);
         try {
-            FileOutputStream fos = new FileOutputStream(zipFile);
-            final ZipOutputStream zos = new ZipOutputStream(fos);
             addToZipArchive(zos,
                     String.format("%s.shp", new File(this.directory, exportName).toString()),
                     String.format("%s.dbf", new File(this.directory, exportName).toString()),
@@ -155,7 +148,10 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
             zos.close();
             fos.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Error creating zip file", e);
+        } finally {
+            zos.close();
+            fos.close();
         }
 
 
@@ -166,9 +162,9 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
         Arrays.stream(fileName).forEach(fn -> {
             File file = new File(fn);
             final FileInputStream fileInputStream;
+            final ZipEntry zipEntry = new ZipEntry(fn);
             try {
                 fileInputStream = new FileInputStream(file);
-                final ZipEntry zipEntry = new ZipEntry(fn);
                 try {
                     zos.putNextEntry(zipEntry);
                     byte[] bytes = new byte[1024];
@@ -179,10 +175,10 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
                     zos.closeEntry();
                     fileInputStream.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    logger.error("Error closing zip entry", e);
                 }
             } catch (FileNotFoundException e) {
-                e.printStackTrace();
+                logger.error("Cannot find file", e);
             }
         });
     }
