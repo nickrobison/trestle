@@ -438,6 +438,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         if (this.mergeEngine.mergeOnLoad() && checkExists(owlNamedIndividual.getIRI())) {
             final Timer.Context mergeTimer = this.metrician.registerTimer("trestle-merge-timer").time();
             final Optional<List<OWLDataPropertyAssertionAxiom>> individualFactsOptional = trestleParser.classParser.getFacts(inputObject);
+//            Open transaction
             final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(true);
             try {
 
@@ -509,6 +510,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 ontology.returnAndAbortTransaction(trestleTransaction);
                 logger.error("Error while writing object {}", owlNamedIndividual, e);
                 recoverExceptionType(e, TrestleMergeConflict.class, TrestleMergeException.class);
+                mergeTimer.stop();
             } finally {
                 ontology.returnAndCommitTransaction(trestleTransaction);
                 mergeTimer.stop();
@@ -520,26 +522,31 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             final OWLClass owlClass = trestleParser.classParser.getObjectClass(inputObject);
 //        Open the transaction
             final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(true);
-            ontology.associateOWLClass(owlClass, datasetClass);
+            try {
+                ontology.associateOWLClass(owlClass, datasetClass);
 //        Write the individual
-            ontology.createIndividual(owlNamedIndividual, owlClass);
-            writeTemporal(objectTemporal, owlNamedIndividual);
+                ontology.createIndividual(owlNamedIndividual, owlClass);
+                writeTemporal(objectTemporal, owlNamedIndividual);
 
 //        Write the data facts
-            final Optional<List<OWLDataPropertyAssertionAxiom>> individualFacts = trestleParser.classParser.getFacts(inputObject);
-            individualFacts.ifPresent(owlDataPropertyAssertionAxioms -> writeObjectFacts(owlNamedIndividual, owlDataPropertyAssertionAxioms, factTemporal, dTemporal));
+                final Optional<List<OWLDataPropertyAssertionAxiom>> individualFacts = trestleParser.classParser.getFacts(inputObject);
+                individualFacts.ifPresent(owlDataPropertyAssertionAxioms -> writeObjectFacts(owlNamedIndividual, owlDataPropertyAssertionAxioms, factTemporal, dTemporal));
 
 //            Add object events
-            this.eventEngine.addEvent(TrestleEventType.CREATED, owlNamedIndividual, objectTemporal.getIdTemporal());
-            if (!objectTemporal.isContinuing()) {
-                if (objectTemporal.isInterval()) {
-                    this.eventEngine.addEvent(TrestleEventType.DESTROYED, owlNamedIndividual, (Temporal) objectTemporal.asInterval().getToTime().get());
-                } else {
-                    this.eventEngine.addEvent(TrestleEventType.DESTROYED, owlNamedIndividual, objectTemporal.getIdTemporal());
+                this.eventEngine.addEvent(TrestleEventType.CREATED, owlNamedIndividual, objectTemporal.getIdTemporal());
+                if (!objectTemporal.isContinuing()) {
+                    if (objectTemporal.isInterval()) {
+                        this.eventEngine.addEvent(TrestleEventType.DESTROYED, owlNamedIndividual, (Temporal) objectTemporal.asInterval().getToTime().get());
+                    } else {
+                        this.eventEngine.addEvent(TrestleEventType.DESTROYED, owlNamedIndividual, objectTemporal.getIdTemporal());
+                    }
                 }
+            } catch (RuntimeException e) {
+                ontology.returnAndAbortTransaction(trestleTransaction);
+                logger.error("Error while writing object {}", owlNamedIndividual, e);
+            } finally {
+                ontology.returnAndCommitTransaction(trestleTransaction);
             }
-
-            ontology.returnAndCommitTransaction(trestleTransaction);
         }
 
 //        Invalidate the cache
@@ -1258,18 +1265,16 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                             .collect(Collectors.toList()))
                     .thenCompose(LambdaUtils::sequenceCompletableFutures);
 
-            try {
-                final List<@NonNull T> intersectedObjects = objectsFuture.get();
-                return Optional.of(intersectedObjects);
-            } catch (InterruptedException e) {
-                logger.error("Spatial intersection interrupted", e);
-                this.ontology.returnAndAbortTransaction(trestleTransaction);
-                return Optional.empty();
-            } catch (ExecutionException e) {
-                logger.error("Spatial intersection execution exception", e);
-                this.ontology.returnAndAbortTransaction(trestleTransaction);
-                return Optional.empty();
-            }
+            return Optional.of(objectsFuture.get());
+        } catch (InterruptedException e) {
+            logger.error("Spatial intersection interrupted", e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+            Thread.currentThread().interrupt();
+            return Optional.empty();
+        } catch (ExecutionException e) {
+            logger.error("Spatial intersection execution exception", e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+            return Optional.empty();
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
@@ -2394,7 +2399,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @param bypass      - {@code true} bypass execution and return {@link Optional#empty()}
      * @return - {@link Optional} of {@link TemporalObject} provided existence interval of the individual
      */
-    private CompletableFuture<Optional<TemporalObject>> readObjectExistence(OWLNamedIndividual individual, TrestleTransaction transaction, ExecutorService executor, boolean bypass) {
+    private CompletableFuture<Optional<TemporalObject>> readObjectExistence(OWLNamedIndividual individual, @Nullable TrestleTransaction transaction, ExecutorService executor, boolean bypass) {
         if (!bypass) {
             return CompletableFuture.supplyAsync(() -> {
                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(transaction);
