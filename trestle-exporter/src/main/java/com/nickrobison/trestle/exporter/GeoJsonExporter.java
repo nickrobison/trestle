@@ -52,7 +52,7 @@ public class GeoJsonExporter implements ITrestleExporter {
 //        Create the collection node
         final ObjectNode collectionNode = this.mapper.createObjectNode();
         final ArrayNode featuresNode = this.mapper.createArrayNode();
-        collectionNode.put("type", "FeatureCollection");
+        collectionNode.put(GeoJsonConstants.NAME_TYPE, GeoJsonConstants.NAME_COLLECTION);
 
         final String exportName;
         if (fileName != null) {
@@ -63,7 +63,7 @@ public class GeoJsonExporter implements ITrestleExporter {
 
         for (final TSIndividual individual : individuals) {
             final ObjectNode featureNode = this.mapper.createObjectNode();
-            featureNode.put("type", "Feature");
+            featureNode.put(GeoJsonConstants.NAME_TYPE, GeoJsonConstants.NAME_FEATURE);
             try {
                 final Geometry geometry = wktReader.read(individual.getGeom());
                 final String coordinateString = geoWriter.write(geometry);
@@ -77,7 +77,7 @@ public class GeoJsonExporter implements ITrestleExporter {
                     propertiesNode.set(entry.getKey(), this.mapper.readTree(propertyValue));
                 }
 //                        Add the properties
-                featureNode.set("properties", propertiesNode);
+                featureNode.set(GeoJsonConstants.NAME_PROPERTIES, propertiesNode);
                 featuresNode.add(featureNode);
             } catch (ParseException | IOException e) {
                 throw new TrestleInvalidDataException("Cannot read wkt", individual.getGeom());

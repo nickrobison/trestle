@@ -24,6 +24,7 @@ public class ShapefileSchema {
     /**
      * Add property to data export schema
      * DBFs don't support primitives, so we need to box the values
+     *
      * @param name - Data property name
      * @param type - Property type (primitives converted to proper classes)
      */
