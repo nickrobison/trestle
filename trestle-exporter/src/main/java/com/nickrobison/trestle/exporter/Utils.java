@@ -37,8 +37,9 @@ class Utils {
 
     /**
      * Parse the incoming types to make sure they're valid inputs for the DBF file
-     * @param typeClass -
-     * @return
+     *
+     * @param typeClass - Java {@link Class} to verify
+     * @return - {@link Class} to safely cast to
      */
     static Class<?> parseShapefileClass(Class<?> typeClass) {
         if (typeClass.isPrimitive()) {
@@ -64,7 +65,7 @@ class Utils {
             return typeClass;
         } else if (typeClass == byte[].class) {
             return typeClass;
-        } else  if (String.class.isAssignableFrom(typeClass)) {
+        } else if (String.class.isAssignableFrom(typeClass)) {
 //            When in doubt, return a string class
             return typeClass;
         } else {

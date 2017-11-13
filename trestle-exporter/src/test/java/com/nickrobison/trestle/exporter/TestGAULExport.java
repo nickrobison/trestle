@@ -41,7 +41,7 @@ public class TestGAULExport {
     @Test
     public void ShapeFileExport() throws IOException {
 
-        final ShapefileExporter exporter = new ShapefileExporter.Builder(shapefileSchema.getGeomName(), shapefileSchema.getGeomType(), shapefileSchema).build();
+        final ShapefileExporter exporter = (ShapefileExporter) new ShapefileExporter.ShapefileExporterBuilder(shapefileSchema.getGeomName(), shapefileSchema.getGeomType(), shapefileSchema).build();
         exporter.writePropertiesToByteBuffer(tsIndividuals, null);
     }
 

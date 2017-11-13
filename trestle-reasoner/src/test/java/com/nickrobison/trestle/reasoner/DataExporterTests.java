@@ -27,7 +27,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @SuppressWarnings("Duplicates")
 @Tag("integration")
-@Disabled
 public class DataExporterTests extends AbstractReasonerTest {
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
@@ -69,7 +68,7 @@ public class DataExporterTests extends AbstractReasonerTest {
     public void testExport() throws IOException {
 
         gaulObjects
-                .stream()
+                .parallelStream()
                 .forEach(object -> {
                     try {
                         reasoner.writeTrestleObject(object);
@@ -79,7 +78,7 @@ public class DataExporterTests extends AbstractReasonerTest {
                 });
 
         reasoner.getUnderlyingOntology().runInference();
-        final File file = reasoner.exportDataSetObjects(SimpleGAULObject.class, ids, LocalDate.of(1993, 1, 1), null, ITrestleExporter.DataType.SHAPEFILE);
+        final File file = reasoner.exportDataSetObjects(SimpleGAULObject.class, ids, LocalDate.of(1993, 1, 1), null, ITrestleExporter.DataType.GEOJSON);
         assertTrue(file.length() > 0, "Should have non-zero length");
     }
 

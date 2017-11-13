@@ -41,16 +41,16 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
     private final File directory;
     private final String prefix;
 
-    private ShapefileExporter(Builder builder) {
+    private ShapefileExporter(ShapefileExporterBuilder builder) {
 
 //        Setup the export directory first
         final File fileDirectory = (File) builder.path.orElse(new File("./target/shapefiles/"));
         if (!fileDirectory.exists()) {
-            logger.debug("Creating dirctory {}", fileDirectory);
+            logger.debug("Creating directory {}", fileDirectory);
             fileDirectory.mkdirs();
         }
         this.directory = fileDirectory;
-        this.prefix = (String) builder.prefix.orElse("Trestle");
+        this.prefix = (String) builder.getPrefix().orElse("Trestle");
 
 
         this.type = builder.type;
@@ -183,8 +183,9 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
         });
     }
 
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public static class Builder<T extends Geometry> {
+
+    public static class ShapefileExporterBuilder<T extends Geometry> {
+
 
         private final String typeName;
         private final Class<T> type;
@@ -193,24 +194,48 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
         private Optional<File> path = Optional.empty();
         private Optional<String> prefix = Optional.empty();
 
-        public Builder(String typeName, Class<T> type, ShapefileSchema schema) {
+        public ShapefileExporterBuilder(String typeName, Class<T> type, ShapefileSchema schema) {
             this.typeName = typeName;
             this.type = type;
             this.schema = schema;
             schema.getSchema().keySet().forEach(key -> properties.put(key, ""));
         }
 
-        public Builder<T> setExportDirectory(File path) {
+        public ShapefileExporterBuilder<T> setExportDirectory(File path) {
             this.path = Optional.of(path);
             return this;
         }
 
-        public Builder<T> setExportPrefix(String prefix) {
+        public ShapefileExporterBuilder<T> setExportPrefix(String prefix) {
             this.prefix = Optional.of(prefix);
             return this;
         }
 
-        public ShapefileExporter<Geometry> build() {
+        public String getTypeName() {
+            return typeName;
+        }
+
+        public Class<T> getType() {
+            return type;
+        }
+
+        public ShapefileSchema getSchema() {
+            return schema;
+        }
+
+        public Map<String, Object> getProperties() {
+            return properties;
+        }
+
+        public Optional<File> getPath() {
+            return path;
+        }
+
+        public Optional<String> getPrefix() {
+            return prefix;
+        }
+
+        public ShapefileExporter<T> build() {
             return new ShapefileExporter<>(this);
         }
     }

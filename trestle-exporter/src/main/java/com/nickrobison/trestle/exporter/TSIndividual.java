@@ -28,6 +28,10 @@ public class TSIndividual {
         this.properties.put(property, value);
     }
 
+    public void addAllProperties(Map<String, Object> properties) {
+        this.properties.putAll(properties);
+    }
+
     /**
      * Returns the properties for the individual
      * If a schema is present it returns a sorted map
