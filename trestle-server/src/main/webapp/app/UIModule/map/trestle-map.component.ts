@@ -83,7 +83,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     @Input() public multiSelect: boolean;
     @Input() public zoomOnLoad?: boolean;
     @Input() public config?: mapboxgl.MapboxOptions;
-    @Input() public dataChanges: Subject<MapSource>;
+    @Input() public dataChanges: Subject<MapSource | undefined>;
     @Input() public attributeChanges: Subject<IMapAttributeChange>;
     @Output() public mapBounds: EventEmitter<LngLatBounds> = new EventEmitter();
     @Output() public clicked: EventEmitter<string> = new EventEmitter();
@@ -140,12 +140,14 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             console.debug("Subscribing to data changes observable");
             this.dataChanges.subscribe((data) => {
                 console.debug("Map has new data to load", data);
-                if (this.single && this.previousValue) {
-                    console.debug("Removing data:", this.previousValue);
-                    this.removeSource(this.previousValue);
+                if (data !== undefined) {
+                    if (this.single && this.previousValue) {
+                        console.debug("Removing data:", this.previousValue);
+                        this.removeSource(this.previousValue);
+                    }
+                    this.addSource(data);
+                    this.previousValue = data;
                 }
-                this.addSource(data);
-                this.previousValue = data;
             });
 
             if (this.attributeChanges === undefined) {

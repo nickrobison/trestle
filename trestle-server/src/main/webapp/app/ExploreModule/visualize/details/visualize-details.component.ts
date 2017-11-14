@@ -10,6 +10,7 @@ import * as moment from "moment";
 import {TrestleFact} from "../../../SharedModule/individual/TrestleIndividual/trestle-fact";
 import {IndividualValueDialog} from "../individual-value.dialog";
 import {Observable} from "rxjs/Observable";
+import { BehaviorSubject } from "rxjs/BehaviorSubject";
 
 interface IRouteObservable {
     route: Params;
@@ -24,7 +25,7 @@ interface IRouteObservable {
 export class VisualizeDetailsComponent implements AfterViewInit {
 
     public individual: TrestleIndividual;
-    public mapIndividual: Subject<MapSource>;
+    public mapIndividual: BehaviorSubject<MapSource | undefined>;
     public individualFactHistory: IIndividualHistory;
     public minTime: moment.Moment;
     public maxTime: moment.Moment;
@@ -37,8 +38,8 @@ export class VisualizeDetailsComponent implements AfterViewInit {
                 private dialog: MatDialog,
                 private viewContainerRef: ViewContainerRef,
                 private route: ActivatedRoute) {
-        this.mapIndividual = new Subject();
-        this.minTime = moment().year(2011).startOf("year");
+        this.mapIndividual = new BehaviorSubject(undefined);
+        this.minTime = moment().year(1990).startOf("year");
         this.maxTime = moment().year(2016).endOf("year");
         const now = moment();
         this.validAt = now;
@@ -57,8 +58,9 @@ export class VisualizeDetailsComponent implements AfterViewInit {
                 console.debug("has params: %s %s", combined.route, combined.query);
                 if (combined.query["root"]) {
                     this.loadIndividual(combined.query["root"] + "#" + combined.route["id"]);
+                } else {
+                    this.loadIndividual(combined.route["id"]);
                 }
-                this.loadIndividual(combined.route["id"]);
             });
     }
 
@@ -97,6 +99,7 @@ export class VisualizeDetailsComponent implements AfterViewInit {
                             };
                         })
                 };
+                console.debug("Sending individual to map");
                 this.mapIndividual.next({
                     id: results.getID(),
                     data: {
