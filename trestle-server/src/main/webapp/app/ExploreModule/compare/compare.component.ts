@@ -1,18 +1,18 @@
-import {AfterViewInit, Component, ElementRef, ViewChild} from "@angular/core";
-import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
-import {IMapAttributeChange, MapSource, TrestleMapComponent} from "../../UIModule/map/trestle-map.component";
-import {IndividualService} from "../../SharedModule/individual/individual.service";
-import {TrestleTemporal} from "../../SharedModule/individual/TrestleIndividual/trestle-temporal";
-import {schemeCategory20b} from "d3-scale";
-import {MatSliderChange, MatSlideToggleChange} from "@angular/material";
-import {ISpatialComparisonReport, MapService} from "../viewer/map.service";
+import { AfterViewInit, Component, ElementRef, ViewChild } from "@angular/core";
+import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
+import { IMapAttributeChange, MapSource, TrestleMapComponent } from "../../UIModule/map/trestle-map.component";
+import { IndividualService } from "../../SharedModule/individual/individual.service";
+import { TrestleTemporal } from "../../SharedModule/individual/TrestleIndividual/trestle-temporal";
+import { schemeCategory20b } from "d3-scale";
+import { MatSliderChange, MatSlideToggleChange } from "@angular/material";
+import { ISpatialComparisonReport, MapService } from "../viewer/map.service";
 import * as moment from "moment";
-import {Subject} from "rxjs/Subject";
-import {LoadingSpinnerService} from "../../UIModule/spinner/loading-spinner.service";
-import {interpolateReds} from "d3-scale-chromatic";
-import {IDataExport} from "../exporter/exporter.component";
-import {parse} from "wellknown";
-import {MultiPolygon} from "geojson";
+import { Subject } from "rxjs/Subject";
+import { LoadingSpinnerService } from "../../UIModule/spinner/loading-spinner.service";
+import { interpolateReds } from "d3-scale-chromatic";
+import { IDataExport } from "../exporter/exporter.component";
+import { parse } from "wellknown";
+import { MultiPolygon } from "geojson";
 
 interface ICompareIndividual {
     individual: TrestleIndividual;
@@ -23,6 +23,15 @@ interface ICompareIndividual {
     sliderValue: number;
     report?: ISpatialComparisonReport;
 }
+
+interface ILoadingState {
+    color: loadingColor;
+    type: loadingState;
+    visible: boolean;
+}
+
+export type loadingState = "determinate" | "indeterminate";
+export type loadingColor = "accent" | "warn" | "primary";
 
 @Component({
     selector: "compare",
@@ -40,6 +49,8 @@ export class CompareComponent implements AfterViewInit {
     public layerChanges: Subject<IMapAttributeChange>;
     public exportValues: IDataExport[];
     public loadedOverlap: ISpatialComparisonReport | null;
+    public loading: ILoadingState;
+
     private filterCompareResults: boolean;
     private layerDepth: number;
     private maxHeight: number;
@@ -82,6 +93,12 @@ export class CompareComponent implements AfterViewInit {
             individuals: []
         }];
         this.loadedOverlap = null;
+
+        this.loading = {
+            color: "primary",
+            type: "indeterminate",
+            visible: false
+        };
     }
 
     public ngAfterViewInit(): void {
@@ -92,6 +109,11 @@ export class CompareComponent implements AfterViewInit {
     public compareIndividuals(): void {
         // Get all the individuals
         if (this.baseIndividual) {
+            this.loading = {
+                color: "accent",
+                type: "indeterminate",
+                visible: true
+            };
             this.vs.compareIndividuals({
                 compare: this.baseIndividual.individual.getID(),
                 compareAgainst: Array.from(this.selectedIndividuals.values())
@@ -104,6 +126,7 @@ export class CompareComponent implements AfterViewInit {
                     // Add the comparison reports to each individual,
                     // or set them equal to undefined
                     data.reports.forEach((report) => {
+                        this.loading.visible = false;
                         const selection = this.selectedIndividuals.get(report.objectBID);
                         if (selection) {
                             if (selection.visible) {
@@ -139,6 +162,13 @@ export class CompareComponent implements AfterViewInit {
                             }
                         }
                     });
+                }, (error) => {
+                    console.debug(error);
+                    this.loading = {
+                        color: "warn",
+                        type: "determinate",
+                        visible: true
+                    };
                 });
         }
     }
@@ -190,7 +220,6 @@ export class CompareComponent implements AfterViewInit {
 
     public sliderUpdate(event: MatSliderChange, selection = this.baseIndividual) {
         if ((event.value !== null) && (selection !== null)) {
-            console.debug("Individual", selection);
             //     For now, let's just change the base individual,
             // we'll figure out the rest later
             const newOffset = (event.value - selection.sliderValue) * 50;
@@ -215,6 +244,11 @@ export class CompareComponent implements AfterViewInit {
     public intersectBaseIndividual(): void {
         if (this.baseIndividual) {
             // this.spinner.reveal();
+            this.loading = {
+                color: "accent",
+                type: "indeterminate",
+                visible: true
+            };
             this.vs
                 .stIntersectIndividual("gaul-test",
                     this.baseIndividual.individual.getSpatialValue(),
@@ -222,6 +256,8 @@ export class CompareComponent implements AfterViewInit {
                     moment(),
                     0)
                 .subscribe((results) => {
+                    // If we have results, turn off the loading bar
+                    this.loading.visible = false;
                     results
                         .filter((result) => {
                             // Filter out the base individual,
@@ -233,9 +269,16 @@ export class CompareComponent implements AfterViewInit {
                         })
                         .forEach((result) => this.addIndividualToCompare(result, false));
                     // this.spinner.hide();
+                }, (error) => {
+                    console.error(error);
+                    this.loading = {
+                        color: "warn",
+                        type: "determinate",
+                        visible: true
+                    };
                 });
         }
-    }
+    };
 
     public getSelectedIndividuals(): ICompareIndividual[] {
         return Array.from(this.selectedIndividuals.values());

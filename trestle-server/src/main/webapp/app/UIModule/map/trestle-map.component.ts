@@ -83,7 +83,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     @Input() public multiSelect: boolean;
     @Input() public zoomOnLoad?: boolean;
     @Input() public config?: mapboxgl.MapboxOptions;
-    @Input() public dataChanges: Subject<MapSource>;
+    @Input() public dataChanges: Subject<MapSource | undefined>;
     @Input() public attributeChanges: Subject<IMapAttributeChange>;
     @Output() public mapBounds: EventEmitter<LngLatBounds> = new EventEmitter();
     @Output() public clicked: EventEmitter<string> = new EventEmitter();
@@ -140,12 +140,13 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             console.debug("Subscribing to data changes observable");
             this.dataChanges.subscribe((data) => {
                 console.debug("Map has new data to load", data);
-                if (this.single && this.previousValue) {
-                    console.debug("Removing data:", this.previousValue);
-                    this.removeSource(this.previousValue);
+                if (data !== undefined) {
+                    if (this.single && this.previousValue) {
+                        this.removeSource(this.previousValue);
+                    }
+                    this.addSource(data);
+                    this.previousValue = data;
                 }
-                this.addSource(data);
-                this.previousValue = data;
             });
 
             if (this.attributeChanges === undefined) {
@@ -392,23 +393,31 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             sourceID = source.id;
         }
 
-        // Remove all the layers for each source
-        const layers = this.mapSources.get(sourceID);
-        if (layers !== undefined) {
-            layers
-                .forEach((layer) => {
-                    this.map.removeLayer(layer);
-                });
-        }
+        if (this.mapSources.has(sourceID)) {
+            console.debug("Removing source %s from map", sourceID);
+            // Remove all the layers for each source
+            const layers = this.mapSources.get(sourceID);
+            if (layers !== undefined) {
+                layers
+                    .forEach((layer) => {
+                        this.map.removeLayer(layer);
+                    });
+            }
 
-        this.map.removeSource(sourceID);
-        this.mapSources.delete(sourceID);
+            this.map.removeSource(sourceID);
+            this.mapSources.delete(sourceID);
+        }
     }
 
     private addSource(inputLayer: MapSource): void {
         console.debug("Adding source data:", inputLayer.data);
 
         // Merge the new source with the default layers
+        // But only if we don't already have that layer
+        if (this.mapSources.has(inputLayer.id)) {
+            console.debug("Map already has source:", inputLayer.id);
+            return;
+        }
 
         this.map.addSource(inputLayer.id, {
             type: "geojson",

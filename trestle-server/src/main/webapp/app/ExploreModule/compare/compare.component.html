@@ -10,7 +10,7 @@
                          [attributeChanges]="layerChanges"></trestle-map>
         </div>
         <div class="col s01 map-container">
-            <h6 class="comparison-placeholder">Explode</h6>
+            <h6 class="light_gray_text">Explode</h6>
             <mat-slider
                     [vertical]="true"
                     [min]="0"
@@ -37,6 +37,12 @@
             <button mat-raised-button color="primary" (click)="intersectBaseIndividual()">INTERSECT</button>
             <button mat-raised-button color="warn" (click)="reset()">RESET</button>
             <mat-button-toggle mat-raised-button (click)="toggleVisibility(baseIndividual)">HIDE</mat-button-toggle>
+            <!--Need this because the hidden attribute doesn't work on progress bars. That would be too easy-->
+            <div class="progress" [style.visibility]="loading.visible ? 'visible' : 'hidden'">
+                <mat-progress-bar [color]="loading.color"
+                                  [mode]="loading.type"
+                                  [value]="100"></mat-progress-bar>
+            </div>
         </div>
 
         <div class="row">
@@ -89,12 +95,12 @@
                             Accounts for {{selection.report.spatialOverlapPercentage * 100 | rounding: 2}}% of the
                             individual
                             <mat-icon *ngIf="selection.report !== loadedOverlap"
-                                    matTooltip="Add overlap to map"
-                                    (click)="toggleOverlap(selection.report)">layers
+                                      matTooltip="Add overlap to map"
+                                      (click)="toggleOverlap(selection.report)">layers
                             </mat-icon>
                             <mat-icon *ngIf="selection.report === loadedOverlap"
-                                    matTooltip="Remove overlap from map"
-                                    (click)="toggleOverlap(selection.report)">layers_clear
+                                      matTooltip="Remove overlap from map"
+                                      (click)="toggleOverlap(selection.report)">layers_clear
                             </mat-icon>
                             <!--Relations-->
                             <h6>Relations:</h6>

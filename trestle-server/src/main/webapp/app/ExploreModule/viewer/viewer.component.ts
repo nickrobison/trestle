@@ -1,9 +1,9 @@
 /**
  * Created by nrobison on 6/23/17.
  */
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, ViewChild } from "@angular/core";
 import { MapService } from "./map.service";
-import { ITrestleMapSource, MapSource } from "../../UIModule/map/trestle-map.component";
+import { ITrestleMapSource, MapSource, TrestleMapComponent } from "../../UIModule/map/trestle-map.component";
 import { animate, style, transition, trigger } from "@angular/animations";
 import * as moment from "moment";
 import { MatSliderChange } from "@angular/material";
@@ -56,6 +56,8 @@ export class DatsetViewerComponent implements OnInit {
     public eventData: IEventData;
     public dataChanges: Subject<MapSource>;
     public exportIndividuals: IDataExport[];
+    @ViewChild("map")
+    public map: TrestleMapComponent;
     private mapBounds: LngLatBounds;
 
     constructor(private mapService: MapService, private vs: IndividualService) {
@@ -78,34 +80,46 @@ export class DatsetViewerComponent implements OnInit {
             });
     }
 
-    public loadDataset(dataset: IDatasetState): void {
-        console.debug("Loading:", dataset.name);
-        dataset.state = DatasetState.LOADING;
-        this.mapService.stIntersect(dataset.name,
-            this.mapBounds, moment()
-                .year(this.sliderValue)
-                .startOf("year"))
-            .subscribe((data) => {
-                dataset.state = DatasetState.LOADED;
-                console.debug("Data:", data);
-                // Get the list of individuals, for exporting
-                this.exportIndividuals.push({
-                    dataset: this.availableDatasets[0].name,
-                    individuals: (data.features
-                        .filter((feature) => feature.id)
-                        // We can do this cast, because we filter to make sure the features have an id
-                        .map((feature) => feature.id) as string[])
+    /**
+     * Load new data (or an entirely new dataset)
+     * If one's already loaded, unload it, unless we mark the keep flag
+     * @param {IDatasetState} dataset - dataset to load
+     * @param {boolean} keepLoaded - true if we need to keep the dataset loaded, false to unload it
+     */
+    public loadDataset(dataset: IDatasetState, keepLoaded = false): void {
+        if (dataset.state === DatasetState.LOADED && !keepLoaded) {
+            console.debug("Unloading dataset:", dataset.name);
+            this.map.removeIndividual("intersection-query");
+            dataset.state = DatasetState.UNLOADED;
+        } else {
+            console.debug("Loading:", dataset.name);
+            dataset.state = DatasetState.LOADING;
+            this.mapService.stIntersect(dataset.name,
+                this.mapBounds, moment()
+                    .year(this.sliderValue)
+                    .startOf("year"))
+                .subscribe((data) => {
+                    dataset.state = DatasetState.LOADED;
+                    console.debug("Data:", data);
+                    // Get the list of individuals, for exporting
+                    this.exportIndividuals.push({
+                        dataset: this.availableDatasets[0].name,
+                        individuals: (data.features
+                            .filter((feature) => feature.id)
+                            // We can do this cast, because we filter to make sure the features have an id
+                            .map((feature) => feature.id) as string[])
+                    });
+                    this.dataChanges.next({
+                        id: "intersection-query",
+                        idField: "id",
+                        data
+                    });
+                }, (error) => {
+                    console.error("Error loading dataset:", error);
+                    dataset.state = DatasetState.ERROR;
+                    dataset.error = error;
                 });
-                this.dataChanges.next({
-                    id: "intersection-query",
-                    idField: "id",
-                    data
-                });
-            }, (error) => {
-                console.error("Error loading dataset:", error);
-                dataset.state = DatasetState.ERROR;
-                dataset.error = error;
-            });
+        }
     }
 
     public updateBounds(bounds: LngLatBounds): void {
@@ -115,7 +129,7 @@ export class DatsetViewerComponent implements OnInit {
             this.mapBounds = bounds;
             this.availableDatasets
                 .filter((ds) => ds.state === DatasetState.LOADED)
-                .forEach((ds) => this.loadDataset(ds));
+                .forEach((ds) => this.loadDataset(ds, true));
         }
         // On the first time around, set the map bounds
         if (!this.mapBounds) {
@@ -130,7 +144,7 @@ export class DatsetViewerComponent implements OnInit {
             //    Reload all the currently loaded datasets
             this.availableDatasets
                 .filter((ds) => ds.state === DatasetState.LOADED)
-                .forEach((ds) => this.loadDataset(ds));
+                .forEach((ds) => this.loadDataset(ds, true));
         }
     };
 

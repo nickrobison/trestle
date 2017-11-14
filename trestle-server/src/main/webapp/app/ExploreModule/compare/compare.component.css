@@ -36,15 +36,15 @@ a {
     width: 20px;
 }
 
-.comparison-placeholder {
-    font-style: italic;
-    color: gray;
-}
-
 .wide-slider {
     width: 80%;
 }
 
 .map-container .mat-slider-vertical {
     height: 90%
+}
+
+.progress {
+    width: 95%;
+    margin-top: 10px;
 }

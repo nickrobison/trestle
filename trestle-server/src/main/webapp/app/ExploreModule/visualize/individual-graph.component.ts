@@ -24,6 +24,7 @@ import { MatSlideToggleChange } from "@angular/material";
 import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
 import * as moment from "moment";
 import { TrestleFact } from "../../SharedModule/individual/TrestleIndividual/trestle-fact";
+import { BehaviorSubject } from "rxjs/BehaviorSubject";
 
 export interface IIndividualConfig {
     data: TrestleIndividual;
@@ -71,7 +72,7 @@ export class IndividualGraphComponent implements AfterViewInit, OnChanges {
     public factToggleName = "fact-toggle";
     public relationToggleName = "relation-toggle";
     public graphFacts = true;
-    public graphRelations = true;
+    public graphRelations = false;
 
     private htmlElement: HTMLElement;
     private host: Selection<HTMLElement, IFactNode, null, undefined>;
@@ -86,8 +87,11 @@ export class IndividualGraphComponent implements AfterViewInit, OnChanges {
     private simulation: Simulation<IFactNode, any>;
     private nodeSize: number;
     private nodeSizeLarge: number;
+    private dataChanges: BehaviorSubject<IIndividualConfig | undefined>;
 
-    constructor() { }
+    constructor() {
+        this.dataChanges = new BehaviorSubject(undefined);
+    }
 
     public ngAfterViewInit(): void {
         console.debug("graph view-init");
@@ -97,18 +101,26 @@ export class IndividualGraphComponent implements AfterViewInit, OnChanges {
             nodes: [],
             links: []
         };
+    //    Subscribe
+        this.dataChanges
+            .subscribe((value) => {
+                if (value !== undefined) {
+                    this.buildGraph(value);
+                    this.update({
+                        nodes: [],
+                        links: [],
+                    });
+                    this.update(this.layout);
+                }
+            });
     }
 
     public ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
         const configChange = changes["config"];
-        if (!configChange.isFirstChange() && (configChange.currentValue !== configChange.previousValue)) {
+        console.debug("Changed", configChange);
+        if (configChange.currentValue !== configChange.previousValue) {
             console.debug("Config changed", configChange);
-            this.buildGraph(configChange.currentValue);
-            this.update({
-                nodes: [],
-                links: [],
-            });
-            this.update(this.layout);
+            this.dataChanges.next(configChange.currentValue);
         }
     }
 

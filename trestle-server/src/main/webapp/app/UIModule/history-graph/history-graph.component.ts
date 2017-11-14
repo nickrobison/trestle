@@ -13,6 +13,7 @@ import {
 import { BaseType, select, Selection } from "d3-selection";
 import { scaleBand, scaleOrdinal, ScaleTime, scaleTime, schemeCategory20 } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
+import { BehaviorSubject } from "rxjs/BehaviorSubject";
 
 export interface ITemporalEntity {
     label: string;
@@ -43,22 +44,42 @@ export class HistoryGraphComponent implements AfterViewInit, OnChanges {
     private height: number;
     private margin: ID3Margin;
     private x: ScaleTime<number, number>;
+    private dataChanges: BehaviorSubject<IIndividualHistory | undefined>;
 
-    constructor() {}
+    constructor() {
+        this.dataChanges = new BehaviorSubject(undefined);
+    }
 
     public ngAfterViewInit(): void {
         this.htmlElement = this.element.nativeElement;
         this.setupD3();
+        this.dataChanges
+            .subscribe((value) => {
+                console.debug("Updating plot with:", this.data);
+                if (value !== undefined) {
+                    this.plotData();
+                }
+            });
     }
 
     public ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
         const dataChange = changes["data"];
-        if (dataChange != null && !dataChange.isFirstChange()) {
-            this.plotData();
+        if (dataChange != null && (dataChange.previousValue !== dataChange.currentValue)) {
+            this.dataChanges.next(dataChange.currentValue);
         }
     }
 
     private plotData(): void {
+        // Nuke everything, because I can't figure out the update pattern
+        this.svg.selectAll("*").remove();
+        this.x = scaleTime().range([0, this.width]);
+        this.x.domain([this.minTime, this.maxTime]);
+        this.svg
+            .append("g")
+            .attr("class", "axis x-axis")
+            .attr("transform", "translate(0," + this.height + ")")
+            .call(axisBottom(this.x));
+
         //    Build the domain values
         console.debug("Building with data:", this.data);
         const entityNames = this.data.entities.map((d) => d.label);
@@ -76,7 +97,7 @@ export class HistoryGraphComponent implements AfterViewInit, OnChanges {
 
         // Build the lane lines
         const laneLines = this.svg.selectAll(".laneLine")
-            // .data(this.data.getFacts().map((fact) => fact.getName()))
+        // .data(this.data.getFacts().map((fact) => fact.getName()))
             .data(this.data.entities.map((entity) => entity.label))
             .enter().append("line")
             .attr("class", "laneLine")
