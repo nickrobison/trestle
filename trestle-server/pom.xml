@@ -212,7 +212,8 @@
                             <goal>webpack</goal>
                         </goals>
                         <configuration>
-                            <arguments>--config config/webpack.production.js --colors --progress</arguments>
+                            <!--TRESTLE-540: Disabling Production build until the next release of Angular CLI.-->
+                            <arguments>--config config/webpack.dev.js --colors --progress</arguments>
                         </configuration>
                     </execution>
                 </executions>
