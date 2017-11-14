@@ -48,3 +48,8 @@ a {
 .map-container .mat-slider-vertical {
     height: 90%
 }
+
+.progress {
+    width: 95%;
+    margin-top: 10px;
+}

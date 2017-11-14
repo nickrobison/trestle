@@ -409,6 +409,11 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         console.debug("Adding source data:", inputLayer.data);
 
         // Merge the new source with the default layers
+        // But only if we don't already have that layer
+        if (this.mapSources.has(inputLayer.id)) {
+            console.debug("Map already has source:", inputLayer.id);
+            return;
+        }
 
         this.map.addSource(inputLayer.id, {
             type: "geojson",
