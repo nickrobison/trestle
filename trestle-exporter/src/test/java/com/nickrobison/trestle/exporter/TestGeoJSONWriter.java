@@ -27,6 +27,6 @@ public class TestGeoJSONWriter {
         final TSIndividual tsIndividual = new TSIndividual(geom);
         tsIndividual.addAllProperties(properties);
 
-        new KMLExporter().writePropertiesToByteBuffer(Collections.singletonList(tsIndividual), "test-out.kml");
+        new KMLExporter(false).writePropertiesToByteBuffer(Collections.singletonList(tsIndividual), "test-out.kml");
     }
 }

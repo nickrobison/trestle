@@ -2322,7 +2322,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     return new GeoJsonExporter().writePropertiesToByteBuffer(individuals, null);
                 }
                 case KML: {
-                    return new KMLExporter().writePropertiesToByteBuffer(individuals, null);
+                    return new KMLExporter(false).writePropertiesToByteBuffer(individuals, null);
+                }
+                case KMZ: {
+                    return new KMLExporter(true).writePropertiesToByteBuffer(individuals, null);
                 }
                 default: {
                     throw new IllegalArgumentException(String.format("Cannot export to %s format", exportType.toString()));

@@ -5,6 +5,7 @@ import com.nickrobison.trestle.exporter.kml.*;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,11 +14,14 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class KMLExporter implements ITrestleExporter {
     private static final Logger logger = LoggerFactory.getLogger(KMLExporter.class);
@@ -25,11 +29,13 @@ public class KMLExporter implements ITrestleExporter {
     private final XmlMapper mapper;
     private final String prefix;
     private final XMLInputFactory xmlInputFactory;
+    private final boolean compress;
 
-    public KMLExporter() {
+    public KMLExporter(boolean compress) {
         this.prefix = "Trestle";
         xmlInputFactory = XMLInputFactory.newFactory();
         this.mapper = new XmlMapper(xmlInputFactory);
+        this.compress = compress;
     }
 
     @Override
@@ -42,18 +48,17 @@ public class KMLExporter implements ITrestleExporter {
         final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
         final WKTReader wktReader = new WKTReader(geometryFactory);
         final KMLWriter kmlWriter = new KMLWriter();
-        final String exportName;
+        String exportName;
         if (fileName != null) {
             exportName = String.format("%s_%s", this.prefix, fileName);
         } else {
-            exportName = String.format("%s_Export_%s", this.prefix, LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            exportName = String.format("%s_Export_%s.kml", this.prefix, LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         }
 
         final File file = new File(exportName);
-        final FileOutputStream fos = new FileOutputStream(file);
         final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
 //        Try to write the values
-        try {
+        try (FileOutputStream fos = new FileOutputStream(file)) {
             final XMLStreamWriter sw = xmlOutputFactory.createXMLStreamWriter(fos);
             sw.writeStartDocument();
             sw.writeStartElement("kml");
@@ -73,14 +78,27 @@ public class KMLExporter implements ITrestleExporter {
 //            Be done
             sw.writeEndElement();
             sw.writeEndDocument();
-        } catch (XMLStreamException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
-            e.printStackTrace();
-        } finally {
-            fos.close();
+
+            //        If compress is enabled, zip up the kml
+            if (compress) {
+                final String kmzFileLocation = exportName.replace(".kml", ".kmz");
+                final File kmzFile = new File(kmzFileLocation);
+                try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(kmzFile))) {
+                    final ZipEntry zipEntry = new ZipEntry(exportName);
+                    zos.putNextEntry(zipEntry);
+                    final FileInputStream fis = new FileInputStream(file);
+                    IOUtils.copy(fis, zos);
+                    zos.closeEntry();
+                    IOUtils.closeQuietly(fis);
+                    return kmzFile;
+                }
+            }
+            return file;
+
+
+        } catch (XMLStreamException | ParseException e) {
+            throw new IllegalStateException("Cannot parse KML", e);
         }
-        return file;
     }
 
 
