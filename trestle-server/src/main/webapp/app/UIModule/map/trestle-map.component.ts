@@ -142,7 +142,6 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                 console.debug("Map has new data to load", data);
                 if (data !== undefined) {
                     if (this.single && this.previousValue) {
-                        console.debug("Removing data:", this.previousValue);
                         this.removeSource(this.previousValue);
                     }
                     this.addSource(data);
@@ -394,17 +393,20 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             sourceID = source.id;
         }
 
-        // Remove all the layers for each source
-        const layers = this.mapSources.get(sourceID);
-        if (layers !== undefined) {
-            layers
-                .forEach((layer) => {
-                    this.map.removeLayer(layer);
-                });
-        }
+        if (this.mapSources.has(sourceID)) {
+            console.debug("Removing source %s from map", sourceID);
+            // Remove all the layers for each source
+            const layers = this.mapSources.get(sourceID);
+            if (layers !== undefined) {
+                layers
+                    .forEach((layer) => {
+                        this.map.removeLayer(layer);
+                    });
+            }
 
-        this.map.removeSource(sourceID);
-        this.mapSources.delete(sourceID);
+            this.map.removeSource(sourceID);
+            this.mapSources.delete(sourceID);
+        }
     }
 
     private addSource(inputLayer: MapSource): void {

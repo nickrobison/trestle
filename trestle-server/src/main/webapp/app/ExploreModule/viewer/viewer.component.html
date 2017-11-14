@@ -2,7 +2,7 @@
     <h4>Dataset Viewer</h4>
     <div class="row">
         <div class="col s10 map-container">
-            <trestle-map [single]="true"
+            <trestle-map #map [single]="true"
                          [dataChanges]="dataChanges"
                          [multiSelect]="false"
                          [zoomOnLoad]="false"
@@ -20,7 +20,8 @@
                     <mat-icon *ngIf="(ds.state == DatasetState.ERROR)"
                               class="orange600"
                               [matTooltip]="getError(ds)"
-                              [@fadeInOut]>error</mat-icon>
+                              [@fadeInOut]>error
+                    </mat-icon>
                     {{ds.name}}
                 </li>
             </ul>
