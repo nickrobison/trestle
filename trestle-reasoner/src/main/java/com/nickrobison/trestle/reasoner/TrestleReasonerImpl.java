@@ -289,7 +289,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //        Check to make sure we don't have any open transactions
         final long openTransactionCount = this.ontology.getCurrentlyOpenTransactions();
         if (openTransactionCount > 0) {
-            logger.error("{} currently open read/write transactions!", openTransactionCount);
+            logger.error("Currently  has {} open read and {} open write transactions!",
+                    this.ontology.getOpenReadTransactions(),
+                    this.ontology.getOpenWriteTransactions());
         }
         this.trestleCache.shutdown(delete);
         this.ontology.close(delete);
