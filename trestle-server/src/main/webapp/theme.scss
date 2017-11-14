@@ -49,3 +49,8 @@ $theme: mat-light-theme($primary, $accent, $warn);
 .material-icons.light {
   opacity: 0.7;
 }
+
+.light_gray_text {
+  font-style: italic;
+  color: gray;
+}

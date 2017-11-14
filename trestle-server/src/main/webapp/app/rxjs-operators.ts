@@ -5,6 +5,7 @@ import "rxjs/add/observable/forkJoin";
 import "rxjs/add/operator/debounceTime";
 import "rxjs/add/operator/distinctUntilChanged";
 import "rxjs/add/operator/filter";
+import "rxjs/add/operator/finally";
 import "rxjs/add/operator/first";
 import "rxjs/add/observable/from";
 import "rxjs/add/observable/fromEvent";
