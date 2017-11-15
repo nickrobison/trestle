@@ -7,9 +7,6 @@ import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
-import com.nickrobison.trestle.ontology.utils.SesameConnectionManager;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.model.Literal;
@@ -61,14 +58,12 @@ public abstract class SesameOntology extends TransactingOntology {
     protected final DefaultPrefixManager pm;
     protected final OWLDataFactory df;
     protected final QueryBuilder qb;
-//    private final SesameConnectionManager cm;
 
     protected ThreadLocal<@Nullable RepositoryConnection> tc = ThreadLocal.withInitial(() -> null);
 
 
     SesameOntology(String ontologyName, Repository repository, OWLOntology ontology, DefaultPrefixManager pm) {
         super();
-//        final Config config = ConfigFactory.load().getConfig("trestle.ontology.sesame");
         this.ontologyName = ontologyName;
         this.repository = repository;
         this.adminConnection = repository.getConnection();
@@ -76,7 +71,6 @@ public abstract class SesameOntology extends TransactingOntology {
         this.pm = pm;
         this.df = OWLManager.getOWLDataFactory();
         this.qb = new QueryBuilder(QueryBuilder.Dialect.SESAME, this.pm);
-//        this.cm = new SesameConnectionManager(this.repository, config.getInt("connectionPool.maxSize"), config.getInt("connectionPool.initialConnections"));
     }
 
     @Override
@@ -295,7 +289,6 @@ public abstract class SesameOntology extends TransactingOntology {
     public void close(boolean drop) {
         this.adminConnection.close();
         repository.shutDown();
-//        this.cm.shutdownPool();
         this.closeDatabase(drop);
         logger.debug("Opened {} transactions, committed {}, aborted {}", this.getOpenedTransactionCount(), this.getCommittedTransactionCount(), this.getAbortedTransactionCount());
     }
@@ -572,7 +565,6 @@ public abstract class SesameOntology extends TransactingOntology {
         final TrestleTransaction threadTransactionObject = this.getThreadTransactionObject();
         if (threadTransactionObject == null) {
             logger.debug("Thread has no transaction object, getting connection from the pool");
-//            this.tc.set(this.cm.getConnection());
             this.tc.set(this.repository.getConnection());
         } else {
             @Nullable final RepositoryConnection connection = threadTransactionObject.getConnection();
@@ -582,19 +574,17 @@ public abstract class SesameOntology extends TransactingOntology {
     }
 
     /**
-     * Reset thread connection to null and return the connection to the {@link SesameConnectionManager}
+     * Reset thread connection to null
      */
     protected void resetThreadConnection() {
         logger.trace("Resetting thread connection");
         @Nullable final RepositoryConnection connection = getThreadConnection();
         this.tc.set(null);
         connection.close();
-//        this.cm.returnConnection(connection);
     }
 
     @Override
     public @NonNull RepositoryConnection getOntologyConnection() {
-//        final RepositoryConnection connection = this.cm.getConnection();
         final RepositoryConnection connection = this.repository.getConnection();
         logger.trace("Got ontology connection {}", connection);
         return connection;
