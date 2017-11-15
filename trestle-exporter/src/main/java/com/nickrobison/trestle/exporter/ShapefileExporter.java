@@ -1,7 +1,6 @@
 package com.nickrobison.trestle.exporter;
 
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.io.ParseException;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.geotools.data.DefaultTransaction;
@@ -13,7 +12,6 @@ import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
-import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.geotools.geometry.jts.WKTReader2;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.opengis.feature.simple.SimpleFeature;
@@ -36,7 +34,6 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
 
     private static final Logger logger = LoggerFactory.getLogger(ShapefileExporter.class);
     private final SimpleFeatureBuilder simpleFeatureBuilder;
-    private final GeometryFactory geometryFactory;
     private final DefaultFeatureCollection featureCollection;
     private final WKTReader2 wktReader;
     private final Class<T> type;
@@ -44,16 +41,16 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
     private final File directory;
     private final String prefix;
 
-    private ShapefileExporter(Builder builder) {
+    private ShapefileExporter(ShapefileExporterBuilder builder) {
 
 //        Setup the export directory first
-        final File directory = (File) builder.path.orElse(new File("./target/shapefiles/"));
-        if (!directory.exists()) {
-            logger.debug("Creating dirctory {}", directory);
-            directory.mkdirs();
+        final File fileDirectory = (File) builder.path.orElse(new File("./target/shapefiles/"));
+        if (!fileDirectory.exists()) {
+            logger.debug("Creating directory {}", fileDirectory);
+            fileDirectory.mkdirs();
         }
-        this.directory = directory;
-        this.prefix = (String) builder.prefix.orElse("Trestle");
+        this.directory = fileDirectory;
+        this.prefix = (String) builder.getPrefix().orElse("Trestle");
 
 
         this.type = builder.type;
@@ -70,7 +67,6 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
         simpleFeatureType = typeBuilder.buildFeatureType();
         simpleFeatureBuilder = new SimpleFeatureBuilder(simpleFeatureType);
         featureCollection = new DefaultFeatureCollection();
-        geometryFactory = JTSFactoryFinder.getGeometryFactory();
         wktReader = new WKTReader2();
     }
 
@@ -108,44 +104,41 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
         }
         final File shpFile = new File(directory, String.format("%s.shp", exportName));
 
-//        shpFile.createNewFile();
-//        dbf.createNewFile();
         final ShapefileDataStoreFactory shapefileDataStoreFactory = new ShapefileDataStoreFactory();
-        Map<String, Serializable> params = new HashMap<>();
+        final Map<String, Serializable> params = new HashMap<>();
         try {
             params.put("url", shpFile.toURI().toURL());
         } catch (MalformedURLException e) {
             logger.error("{} is not a valid URL", shpFile.toURI());
         }
         params.put("create spatial index", Boolean.TRUE);
-        ShapefileDataStore dataStore = (ShapefileDataStore) shapefileDataStoreFactory.createDataStore(params);
+        final ShapefileDataStore dataStore = (ShapefileDataStore) shapefileDataStoreFactory.createDataStore(params);
 
         dataStore.createSchema(simpleFeatureType);
 //            Write it out
-        Transaction transaction = new DefaultTransaction("create");
-        final String typeName = dataStore.getTypeNames()[0];
-        final SimpleFeatureSource featureSource = dataStore.getFeatureSource(typeName);
-        if (featureSource instanceof SimpleFeatureStore) {
-            SimpleFeatureStore featureStore = (SimpleFeatureStore) featureSource;
+        final Transaction transaction = new DefaultTransaction("create");
+        try {
+            final String typeName = dataStore.getTypeNames()[0];
+            final SimpleFeatureSource featureSource = dataStore.getFeatureSource(typeName);
+            if (featureSource instanceof SimpleFeatureStore) {
+                SimpleFeatureStore featureStore = (SimpleFeatureStore) featureSource;
 
-            featureStore.setTransaction(transaction);
-            try {
+                featureStore.setTransaction(transaction);
                 featureStore.addFeatures(featureCollection);
                 transaction.commit();
-            } catch (Exception e) {
-                e.printStackTrace();
-                transaction.rollback();
-            } finally {
-                transaction.close();
             }
-
+        } catch (Exception e) {
+            logger.error("Error writing Shapefile properties", e);
+            transaction.rollback();
+        } finally {
+            transaction.close();
         }
 
 //        Now, zip it
         final File zipFile = new File(directory, String.format("%s.zip", exportName));
+        final FileOutputStream fos = new FileOutputStream(zipFile);
+        final ZipOutputStream zos = new ZipOutputStream(fos);
         try {
-            FileOutputStream fos = new FileOutputStream(zipFile);
-            final ZipOutputStream zos = new ZipOutputStream(fos);
             addToZipArchive(zos,
                     String.format("%s.shp", new File(this.directory, exportName).toString()),
                     String.format("%s.dbf", new File(this.directory, exportName).toString()),
@@ -155,7 +148,10 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
             zos.close();
             fos.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Error creating zip file", e);
+        } finally {
+            zos.close();
+            fos.close();
         }
 
 
@@ -164,14 +160,14 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
 
     private static void addToZipArchive(ZipOutputStream zos, String... fileName) {
         Arrays.stream(fileName).forEach(fn -> {
-            File file = new File(fn);
+            final File file = new File(fn);
             final FileInputStream fileInputStream;
+            final ZipEntry zipEntry = new ZipEntry(fn);
             try {
                 fileInputStream = new FileInputStream(file);
-                final ZipEntry zipEntry = new ZipEntry(fn);
                 try {
                     zos.putNextEntry(zipEntry);
-                    byte[] bytes = new byte[1024];
+                    final byte[] bytes = new byte[1024];
                     int length;
                     while ((length = fileInputStream.read(bytes)) >= 0) {
                         zos.write(bytes, 0, length);
@@ -179,16 +175,17 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
                     zos.closeEntry();
                     fileInputStream.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    logger.error("Error closing zip entry", e);
                 }
             } catch (FileNotFoundException e) {
-                e.printStackTrace();
+                logger.error("Cannot find file", e);
             }
         });
     }
 
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public static class Builder<T extends Geometry> {
+
+    public static class ShapefileExporterBuilder<T extends Geometry> {
+
 
         private final String typeName;
         private final Class<T> type;
@@ -197,24 +194,48 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
         private Optional<File> path = Optional.empty();
         private Optional<String> prefix = Optional.empty();
 
-        public Builder(String typeName, Class<T> type, ShapefileSchema schema) {
+        public ShapefileExporterBuilder(String typeName, Class<T> type, ShapefileSchema schema) {
             this.typeName = typeName;
             this.type = type;
             this.schema = schema;
             schema.getSchema().keySet().forEach(key -> properties.put(key, ""));
         }
 
-        public Builder<T> setExportDirectory(File path) {
+        public ShapefileExporterBuilder<T> setExportDirectory(File path) {
             this.path = Optional.of(path);
             return this;
         }
 
-        public Builder<T> setExportPrefix(String prefix) {
+        public ShapefileExporterBuilder<T> setExportPrefix(String prefix) {
             this.prefix = Optional.of(prefix);
             return this;
         }
 
-        public ShapefileExporter<Geometry> build() {
+        public String getTypeName() {
+            return typeName;
+        }
+
+        public Class<T> getType() {
+            return type;
+        }
+
+        public ShapefileSchema getSchema() {
+            return schema;
+        }
+
+        public Map<String, Object> getProperties() {
+            return properties;
+        }
+
+        public Optional<File> getPath() {
+            return path;
+        }
+
+        public Optional<String> getPrefix() {
+            return prefix;
+        }
+
+        public ShapefileExporter<T> build() {
             return new ShapefileExporter<>(this);
         }
     }

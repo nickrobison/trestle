@@ -15,10 +15,7 @@ import com.nickrobison.trestle.common.LambdaUtils;
 import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingFactException;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
-import com.nickrobison.trestle.exporter.ITrestleExporter;
-import com.nickrobison.trestle.exporter.ShapefileExporter;
-import com.nickrobison.trestle.exporter.ShapefileSchema;
-import com.nickrobison.trestle.exporter.TSIndividual;
+import com.nickrobison.trestle.exporter.*;
 import com.nickrobison.trestle.iri.IRIBuilder;
 import com.nickrobison.trestle.iri.TrestleIRI;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
@@ -2310,7 +2307,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
         final CompletableFuture<List<Optional<TSIndividual>>> sequencedFutures = sequenceCompletableFutures(completableFutures);
 
-        final ShapefileExporter shapeFileExporter = new ShapefileExporter.Builder<>(shapefileSchema.getGeomName(), shapefileSchema.getGeomType(), shapefileSchema).build();
         try {
             final List<TSIndividual> individuals = sequencedFutures
                     .get()
@@ -2319,7 +2315,25 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     .map(Optional::get)
                     .collect(Collectors.toList());
 
-            return shapeFileExporter.writePropertiesToByteBuffer(individuals, null);
+            switch (exportType) {
+                case SHAPEFILE: {
+                    final ShapefileExporter shapeFileExporter = new ShapefileExporter.ShapefileExporterBuilder(shapefileSchema.getGeomName(), shapefileSchema.getGeomType(), shapefileSchema).build();
+                    return shapeFileExporter.writePropertiesToByteBuffer(individuals, null);
+                }
+                case GEOJSON: {
+                    return new GeoJsonExporter().writePropertiesToByteBuffer(individuals, null);
+                }
+                case KML: {
+                    return new KMLExporter(false).writePropertiesToByteBuffer(individuals, null);
+                }
+                case KMZ: {
+                    return new KMLExporter(true).writePropertiesToByteBuffer(individuals, null);
+                }
+                default: {
+                    throw new IllegalArgumentException(String.format("Cannot export to %s format", exportType.toString()));
+                }
+            }
+
 
         } catch (InterruptedException | ExecutionException e) {
             logger.error("Error constructing object", e);
