@@ -22,12 +22,11 @@ import java.text.DecimalFormatSymbols;
  * The Z ordinate value output can be forced to be a specific value.
  * The <code>extrude</code> and <code>altitudeMode</code> modes can be set.
  * If set, the corresponding sub-elements will be output.
- *
+ * <p>
  * I snagged this from <a href="https://github.com/locationtech/jts/blob/master/modules/core/src/main/java/org/locationtech/jts/io/kml/KMLWriter.java">JTS</a>
  * so that way I don't need to pull in a SNAPSHOT dependencies. Eventually, we'll remove this
  */
-public class KMLWriter
-{
+public class KMLWriter {
     /**
      * The KML standard value <code>clampToGround</code> for use in {@link #setAltitudeMode(String)}.
      */
@@ -35,7 +34,7 @@ public class KMLWriter
     /**
      * The KML standard value <code>relativeToGround</code> for use in {@link #setAltitudeMode(String)}.
      */
-    public static final String ALTITUDE_MODE_RELATIVETOGROUND  = "relativeToGround  ";
+    public static final String ALTITUDE_MODE_RELATIVETOGROUND = "relativeToGround  ";
     /**
      * The KML standard value <code>absolute</code> for use in {@link #setAltitudeMode(String)}.
      */
@@ -46,7 +45,7 @@ public class KMLWriter
      * a specified Z value.
      *
      * @param geometry the geometry to write
-     * @param z the Z value to use
+     * @param z        the Z value to use
      * @return a string containing the KML geometry representation
      */
     public static String writeGeometry(Geometry geometry, double z) {
@@ -60,10 +59,10 @@ public class KMLWriter
      * a specified Z value, precision, extrude flag,
      * and altitude mode code.
      *
-     * @param geometry the geometry to write
-     * @param z the Z value to use
-     * @param precision the maximum number of decimal places to write
-     * @param extrude the extrude flag to write
+     * @param geometry     the geometry to write
+     * @param z            the Z value to use
+     * @param precision    the maximum number of decimal places to write
+     * @param extrude      the extrude flag to write
      * @param altitudeMode the altitude model code to write
      * @return a string containing the KML geometry representation
      */
@@ -81,13 +80,13 @@ public class KMLWriter
     private static final String COORDINATE_SEPARATOR = ",";
     private static final String TUPLE_SEPARATOR = " ";
 
-    private String linePrefix = null;
+    private String linePrefix;
     private int maxCoordinatesPerLine = 5;
     private double zVal = Double.NaN;
-    private boolean extrude = false;
+    private boolean extrude;
     private boolean tesselate;
-    private String altitudeMode = null;
-    private DecimalFormat numberFormatter = null;
+    private String altitudeMode;
+    private DecimalFormat numberFormatter;
 
     /**
      * Creates a new writer.
@@ -182,7 +181,7 @@ public class KMLWriter
      * Writes the KML representation of a {@link Geometry} to a {@link Writer}.
      *
      * @param geometry the geometry to write
-     * @param writer the Writer to write to
+     * @param writer   the Writer to write to
      * @throws IOException if an I/O error occurred
      */
     public void write(Geometry geometry, Writer writer) throws IOException {
@@ -193,7 +192,7 @@ public class KMLWriter
      * Appends the KML representation of a {@link Geometry} to a {@link StringBuffer}.
      *
      * @param geometry the geometry to write
-     * @param buf the buffer to write into
+     * @param buf      the buffer to write into
      */
     public void write(Geometry geometry, StringBuilder buf) {
         writeGeometry(geometry, 0, buf);
@@ -211,8 +210,7 @@ public class KMLWriter
             writePolygon((Polygon) g, attributes, level, buf);
         } else if (g instanceof GeometryCollection) {
             writeGeometryCollection((GeometryCollection) g, level, buf);
-        }
-        else
+        } else
             throw new IllegalArgumentException("Geometry type not supported: " + g.getGeometryType());
     }
 
@@ -225,18 +223,17 @@ public class KMLWriter
 
     private String geometryTag(String geometryName, String attributes) {
         StringBuilder buf = new StringBuilder();
-        buf.append("<");
-        buf.append(geometryName);
+        buf.append("<")
+                .append(geometryName);
         if (attributes != null && attributes.length() > 0) {
-            buf.append(" ");
-            buf.append(attributes);
+            buf.append(" ")
+                    .append(attributes);
         }
         buf.append(">");
         return buf.toString();
     }
 
-    private void writeModifiers(int level, StringBuilder buf)
-    {
+    private void writeModifiers(int level, StringBuilder buf) {
         if (extrude) {
             startLine("<extrude>1</extrude>\n", level, buf);
         }
@@ -253,7 +250,7 @@ public class KMLWriter
         // <Point><coordinates>...</coordinates></Point>
         startLine(geometryTag("Point", attributes) + "\n", level, buf);
         writeModifiers(level, buf);
-        write(new Coordinate[] { p.getCoordinate() }, level + 1, buf);
+        write(new Coordinate[]{p.getCoordinate()}, level + 1, buf);
         startLine("</Point>\n", level, buf);
     }
 
@@ -363,11 +360,10 @@ public class KMLWriter
      * Creates the <code>DecimalFormat</code> used to write <code>double</code>s
      * with a sufficient number of decimal places.
      *
-     * @param precisionModel
-     *          the <code>PrecisionModel</code> used to determine the number of
-     *          decimal places to write.
+     * @param precisionModel the <code>PrecisionModel</code> used to determine the number of
+     *                       decimal places to write.
      * @return a <code>DecimalFormat</code> that write <code>double</code> s
-     *         without scientific notation.
+     * without scientific notation.
      */
     private static DecimalFormat createFormatter(int precision) {
         // specify decimal separator explicitly to avoid problems in other locales

@@ -101,6 +101,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     public static final String ONTOLOGY_RESOURCE_NAME = "trestle.owl";
     private static final OffsetDateTime TEMPORAL_MAX_VALUE = LocalDate.of(3000, 1, 1).atStartOfDay().atOffset(ZoneOffset.UTC);
     public static final String BLANK_TEMPORAL_ID = "blank";
+    public static final String MISSING_INDIVIDUAL = "Unable to get individual";
 
     private final String REASONER_PREFIX;
     private final ITrestleOntology ontology;
@@ -923,9 +924,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                                     .stream()
                                     .map(result -> {
                                         final OWLDataPropertyAssertionAxiom assertion = df.getOWLDataPropertyAssertionAxiom(
-                                                df.getOWLDataProperty(result.getIndividual("property").orElseThrow(() -> new RuntimeException("Unable to get individual")).toStringID()),
-                                                result.getIndividual("individual").orElseThrow(() -> new RuntimeException("Unable to get individual")),
-                                                result.getLiteral("object").orElseThrow(() -> new RuntimeException("Unable to get individual")));
+                                                df.getOWLDataProperty(result.getIndividual("property").orElseThrow(() -> new IllegalStateException(MISSING_INDIVIDUAL)).toStringID()),
+                                                result.getIndividual("individual").orElseThrow(() -> new IllegalStateException(MISSING_INDIVIDUAL)),
+                                                result.getLiteral("object").orElseThrow(() -> new IllegalStateException(MISSING_INDIVIDUAL)));
 //                                    Get valid temporal
                                         final Optional<TemporalObject> factValidTemporal = TemporalObjectBuilder.buildTemporalFromResults(TemporalScope.VALID, result.getLiteral("va"), result.getLiteral("vf"), result.getLiteral("vt"));
 //                                    Get database temporal
