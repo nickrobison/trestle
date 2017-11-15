@@ -58,7 +58,7 @@ public class GeoJsonExporter implements ITrestleExporter {
         if (fileName != null) {
             exportName = String.format("%s_%s", this.prefix, fileName);
         } else {
-            exportName = String.format("%s_Export_%s", this.prefix, LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            exportName = String.format("%s_Export_%s.json", this.prefix, LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         }
 
         for (final TSIndividual individual : individuals) {

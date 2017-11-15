@@ -1,7 +1,7 @@
-import {Component, Input} from "@angular/core";
-import {ExporterService} from "./exporter.service";
-import {saveAs} from "file-saver";
-import {Observable} from "rxjs/Observable";
+import { Component, Input } from "@angular/core";
+import { ExporterService } from "./exporter.service";
+import { saveAs } from "file-saver";
+import { Observable } from "rxjs/Observable";
 
 export interface IDataExport {
     dataset: string;
@@ -24,8 +24,9 @@ export class ExporterComponent {
     public constructor(private es: ExporterService) {
         this.options = [
             {value: "SHAPEFILE", viewValue: "Shapefile"},
-            // {value: "GEOJSON", viewValue: "GeoJSON"},
-            // {value: "KML", viewValue: "KML"},
+            {value: "GEOJSON", viewValue: "GeoJson"},
+            {value: "KML", viewValue: "KML"},
+            {value: "KMZ", viewValue: "KMZ"}
             // {value: "TOPOJSON", viewValue: "TopoJSON"}
         ];
         this.selectedValue = this.options[0].value;
@@ -52,23 +53,28 @@ export class ExporterComponent {
                 .subscribe((exports) => {
                     exports.forEach((data) => {
                         console.debug("exported data:", data);
-                        const fileName = "trestle-test.zip";
+                        let fileName = "";
+                        switch (this.selectedValue) {
+                            case "GEOJSON": {
+                                fileName = "trestle.json";
+                                break;
+                            }
+                            case "KML": {
+                                fileName = "trestle.kml";
+                                break;
+                            }
+                            case "KMZ": {
+                                fileName = "trestle.kmz";
+                                break;
+                            }
+                            default: {
+                                fileName = "trestle.zip";
+                                break;
+                            }
+                        }
                         saveAs(data, fileName);
                     });
                 });
-            //
-            //
-            // this.es
-            //     .exportIndividuals({
-            //         dataset: this.dataExport.dataset,
-            //         individuals: this.dataExport.individuals,
-            //         type: this.selectedValue
-            //     })
-            //     .finally(() => this.loading = false)
-            //     .subscribe((data) => {
-            //
-            //     });
         }
-
     }
 }
