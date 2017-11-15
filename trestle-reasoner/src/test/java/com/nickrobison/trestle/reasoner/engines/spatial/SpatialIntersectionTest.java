@@ -23,6 +23,7 @@ public class SpatialIntersectionTest extends AbstractReasonerTest {
 
 
     @Test
+    @Disabled
     public void spatialIntersectionTest() throws IOException {
         final List<TestClasses.GAULTestClass> gaulObjects = SharedUtils.readGAULObjects();
         gaulObjects.parallelStream().forEach(gaul -> {
