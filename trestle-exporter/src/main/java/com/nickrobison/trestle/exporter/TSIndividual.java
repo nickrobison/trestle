@@ -14,24 +14,28 @@ public class TSIndividual {
     private final Map<String, Object> properties = new LinkedHashMap<>();
     private Optional<ShapefileSchema> schema = Optional.empty();
 
-    public TSIndividual(String geom){
+    public TSIndividual(String geom) {
         this.geom = geom;
     }
 
     public TSIndividual(String geom, ShapefileSchema schema) {
         this.geom = geom;
         this.schema = Optional.of(schema);
-//        schema.getSchema().keySet().forEach(key -> properties.put(key, null));
     }
 
     public void addProperty(String property, Object value) {
         this.properties.put(property, value);
     }
 
+    public void addAllProperties(Map<String, Object> properties) {
+        this.properties.putAll(properties);
+    }
+
     /**
      * Returns the properties for the individual
      * If a schema is present it returns a sorted map
      * Since DBFs don't support primitives, we need to manually box them.
+     *
      * @return - Map of property names and values
      */
     @SuppressWarnings({"argument.type.incompatible"})

@@ -10,6 +10,7 @@ import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.LambdaUtils;
 import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
+import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.CaffeineStatistics;
@@ -35,7 +36,9 @@ import com.vividsolutions.jts.io.WKTReader;
 import com.vividsolutions.jts.io.WKTWriter;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.eclipse.rdf4j.query.QueryEvaluationException;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLIndividual;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +49,7 @@ import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -159,8 +163,39 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
             intersectQuery = this.qb.buildTemporalSpatialIntersection(owlClass, wktBuffer, buffer, QueryBuilder.Units.METER, atTemporal, dbTemporal);
         }
 
-//        Do the intersection
+//        Do the intersection on the main thread, to try and avoid other weirdness
+        logger.debug("Beginning spatial intersection, should not have any transactions");
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+        try {
+//            CompletableFuture.supplyAsync(() -> {
+//                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+//                try {
+//                    return this.ontology.executeSPARQLResults(intersectQuery);
+//                } finally {
+//                    this.ontology.returnAndCommitTransaction(tt`);
+//                }
+//            }, this.spatialPool)
+//                    .thenCompose((results) -> {
+//                        return results
+//                                .getResults()
+//                                .stream()
+//                                .map(result -> result.unwrapIndividual("m"))
+//                                .map(owlIndividual -> CompletableFuture.supplyAsync(() -> {
+//                                    final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+//                                    try {
+//                                        return this.individualEngine.getTrestleIndividual(owlIndividual.asOWLNamedIndividual(), tt);
+//                                    } finally {
+//                                        this.ontology.returnAndCommitTransaction(tt);
+//                                    }
+//                                }))
+//                                .collect(Collectors.toList())
+//                    })
+////            final List<CompletableFuture<TrestleIndividual>> individualFutures = trestleResultSet
+////                    ;
+//
+//            final CompletableFuture<List<TrestleIndividual>> sequencedFuture = LambdaUtils.sequenceCompletableFutures(individualFutures);
+
+//
         final CompletableFuture<List<TrestleIndividual>> individualList = CompletableFuture.supplyAsync(() -> {
             final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
             try {
@@ -188,7 +223,7 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
                         .collect(Collectors.toList()))
                 .thenCompose(LambdaUtils::sequenceCompletableFutures);
 
-        try {
+
             return Optional.of(individualList.get());
         } catch (InterruptedException e) {
             logger.error("Spatial intersection interrupted", e);
@@ -197,6 +232,10 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
             return Optional.empty();
         } catch (ExecutionException e) {
             logger.error("Execution exception while intersecting", e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+            return Optional.empty();
+        } catch (QueryEvaluationException e) {
+            logger.error("You broke it, Nick!", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
         } finally {

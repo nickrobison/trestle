@@ -11,6 +11,7 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.slf4j.MDC;
 
 @SuppressWarnings({"initialization.fields.uninitialized"})
 public abstract class AbstractReasonerTest {
@@ -18,6 +19,7 @@ public abstract class AbstractReasonerTest {
     protected TrestleParser tp;
     protected TrestleReasonerImpl reasoner;
     protected OWLDataFactory df;
+    private static String LOGGING_CONTEXT = "test";
 
     @BeforeEach
     public void setup() {
@@ -36,12 +38,17 @@ public abstract class AbstractReasonerTest {
 
         df = OWLManager.getOWLDataFactory();
         tp = new TrestleParser(df, AbstractReasonerTest.OVERRIDE_PREFIX, false, "en");
+
+//        Set the logging context
+        MDC.put(LOGGING_CONTEXT, getTestName());
+
     }
 
     @AfterEach
     public void close() throws OWLOntologyStorageException {
         Assertions.assertEquals(reasoner.getUnderlyingOntology().getOpenedTransactionCount(), reasoner.getUnderlyingOntology().getCommittedTransactionCount() + reasoner.getUnderlyingOntology().getAbortedTransactionCount(), "Should have symmetric opened/aborted+committed transactions");
         reasoner.shutdown(true);
+        MDC.remove(LOGGING_CONTEXT);
     }
 
     protected abstract String getTestName();
