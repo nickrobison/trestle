@@ -88,10 +88,10 @@ public class TrestleCacheImpl implements TrestleCache {
             cacheLock.lockRead();
             final String individualID = individualIRI.getObjectID();
             final OffsetDateTime offsetDateTime = individualIRI.getObjectTemporal().orElse(OffsetDateTime.now());
-            logger.debug("Getting {} from cache @{}", individualIRI, offsetDateTime);
+            logger.trace("Looking for {} from cache @{}", individualIRI, offsetDateTime);
             @Nullable final TrestleIRI validIndexValue = validIndex.getValue(individualID, offsetDateTime.atZoneSameInstant(ZoneOffset.UTC).toInstant().toEpochMilli());
             if (validIndexValue != null) {
-                logger.debug("Valid Index has {} for {} @{}", validIndexValue, individualIRI, offsetDateTime);
+                logger.trace("Valid Index has {} for {} @{}", validIndexValue, individualIRI, offsetDateTime);
                 @Nullable final TrestleIRI dbIndexValue;
                 final Optional<OffsetDateTime> dbTemporal = individualIRI.getDbTemporal();
                 if (dbTemporal.isPresent()) {
@@ -100,11 +100,11 @@ public class TrestleCacheImpl implements TrestleCache {
                     dbIndexValue = dbIndex.getValue(validIndexValue.toString(), OffsetDateTime.now(ZoneOffset.UTC).toInstant().toEpochMilli());
                 }
                 if (dbIndexValue != null) {
-                    logger.debug("DB Index has {} for {} @{}", dbIndexValue, individualIRI, offsetDateTime);
+                    logger.trace("DB Index has {} for {} @{}", dbIndexValue, individualIRI, offsetDateTime);
                     return clazz.cast(trestleObjectCache.get(dbIndexValue.getIRI()));
                 }
             }
-            logger.debug("Indexes do not have {} @{}, going to cache", individualIRI, offsetDateTime);
+            logger.debug("Indexes do not have {} @{}, going directly to cache", individualIRI, offsetDateTime);
             return clazz.cast(trestleObjectCache.get(individualIRI.getIRI()));
         } catch (InterruptedException e) {
             logger.error("Unable to get read lock, returning null for {}", individualIRI.getIRI(), e);
@@ -156,7 +156,7 @@ public class TrestleCacheImpl implements TrestleCache {
                         startTemporalMillis,
                         endTemporalMillis,
                         dbIndexKey);
-                logger.debug("Added {} to valid index", dbIndexKey);
+                logger.trace("Added {} to valid index", dbIndexKey);
             } else {
                 validIndex.setKeyTemporals(validIndexValue.getObjectID(), validAtMillis, startTemporalMillis, endTemporalMillis);
                 dbIndexKey = validIndexValue.withoutDatabase();
@@ -178,7 +178,7 @@ public class TrestleCacheImpl implements TrestleCache {
                         dbStartTemporalMillis,
                         dbEndTemporalMillis);
             }
-            logger.debug("Added {} to db index", dbIndexKey);
+            logger.trace("Added {} to db index", dbIndexKey);
         } catch (InterruptedException e) {
             logger.error("Unable to get write lock", e);
         } finally {
@@ -203,7 +203,7 @@ public class TrestleCacheImpl implements TrestleCache {
             validIndex.insertValue(individualIRI.getObjectID(),
                     atTemporal.toInstant().toEpochMilli(),
                     individualIRI.withoutDatabase());
-            logger.debug("Added {} to valid index", withoutDatabase);
+            logger.trace("Added {} to valid index", withoutDatabase);
 
             final long dbEndTemporalMillis;
             if (dbEndTemporal == null) {
@@ -239,7 +239,7 @@ public class TrestleCacheImpl implements TrestleCache {
                 trestleIRI.getDbTemporal().ifPresent(temporal -> dbIndex.deleteValue(trestleIRI.withoutDatabase().toString(), temporal.toInstant().toEpochMilli()));
                 trestleObjectCache.remove(value.getIRI());
             } else {
-                logger.debug("{} does not exist in index", trestleIRI);
+                logger.trace("{} does not exist in index", trestleIRI);
 //                If we don't have anything in the index, try to delete from the cache anyways
                 this.trestleIndividualCache.remove(trestleIRI.getIRI());
             }
