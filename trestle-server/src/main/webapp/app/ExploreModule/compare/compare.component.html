@@ -28,7 +28,7 @@
     <div *ngIf="baseIndividual">
         <div class="row">
             <div class="row results-row">
-                <h5>Comparing against: {{baseIndividual.individual.getFilteredID()}}</h5>
+                <h5>Comparing: {{baseIndividual.individual.getFilteredID()}}</h5>
                 <a [routerLink]="['/explore', 'visualize', baseIndividual.individual.withoutHostname()]"
                    [queryParams]="{root: baseIndividual.individual.getHostname()}">
                     <mat-icon>link</mat-icon>
@@ -47,7 +47,7 @@
 
         <div class="row">
             <div class="col s12 l5 ui-row">
-                Search here
+                Add additional individuals
                 <search (selected)="selectedHandler($event)"></search>
                 <div class="row">
                     <button mat-raised-button>ADD</button>
@@ -68,7 +68,7 @@
                 </div>
             </div>
             <div class="col s12 l6 ui-row">
-                List of compared values here
+                Comparing against:
                 <mat-accordion [multi]="true">
                     <mat-expansion-panel *ngFor="let selection of getSelectedIndividuals()">
                         <mat-expansion-panel-header>
