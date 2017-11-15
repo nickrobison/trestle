@@ -24,8 +24,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class KMLExporter implements ITrestleExporter {
-    private static final Logger logger = LoggerFactory.getLogger(KMLExporter.class);
-
     private final XmlMapper mapper;
     private final String prefix;
     private final XMLInputFactory xmlInputFactory;

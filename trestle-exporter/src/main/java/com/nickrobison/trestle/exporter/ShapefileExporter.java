@@ -105,18 +105,18 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
         final File shpFile = new File(directory, String.format("%s.shp", exportName));
 
         final ShapefileDataStoreFactory shapefileDataStoreFactory = new ShapefileDataStoreFactory();
-        Map<String, Serializable> params = new HashMap<>();
+        final Map<String, Serializable> params = new HashMap<>();
         try {
             params.put("url", shpFile.toURI().toURL());
         } catch (MalformedURLException e) {
             logger.error("{} is not a valid URL", shpFile.toURI());
         }
         params.put("create spatial index", Boolean.TRUE);
-        ShapefileDataStore dataStore = (ShapefileDataStore) shapefileDataStoreFactory.createDataStore(params);
+        final ShapefileDataStore dataStore = (ShapefileDataStore) shapefileDataStoreFactory.createDataStore(params);
 
         dataStore.createSchema(simpleFeatureType);
 //            Write it out
-        Transaction transaction = new DefaultTransaction("create");
+        final Transaction transaction = new DefaultTransaction("create");
         try {
             final String typeName = dataStore.getTypeNames()[0];
             final SimpleFeatureSource featureSource = dataStore.getFeatureSource(typeName);
@@ -136,7 +136,7 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
 
 //        Now, zip it
         final File zipFile = new File(directory, String.format("%s.zip", exportName));
-        FileOutputStream fos = new FileOutputStream(zipFile);
+        final FileOutputStream fos = new FileOutputStream(zipFile);
         final ZipOutputStream zos = new ZipOutputStream(fos);
         try {
             addToZipArchive(zos,
@@ -160,14 +160,14 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
 
     private static void addToZipArchive(ZipOutputStream zos, String... fileName) {
         Arrays.stream(fileName).forEach(fn -> {
-            File file = new File(fn);
+            final File file = new File(fn);
             final FileInputStream fileInputStream;
             final ZipEntry zipEntry = new ZipEntry(fn);
             try {
                 fileInputStream = new FileInputStream(file);
                 try {
                     zos.putNextEntry(zipEntry);
-                    byte[] bytes = new byte[1024];
+                    final byte[] bytes = new byte[1024];
                     int length;
                     while ((length = fileInputStream.read(bytes)) >= 0) {
                         zos.write(bytes, 0, length);
