@@ -8,11 +8,12 @@
            (com.nickrobison.trestle.reasoner.annotations IndividualIdentifier DatasetClass Fact NoMultiLanguage Language)
            (java.util Optional List)
            (com.nickrobison.trestle.common StaticIRI)
-           (com.nickrobison.trestle.reasoner.exceptions MissingConstructorException))
+           (com.nickrobison.trestle.reasoner.exceptions MissingConstructorException InvalidClassException))
   (:require [clojure.core.match :refer [match]]
             [clojure.core.reducers :as r]
             [clojure.tools.logging :as log]
             [clojure.string :as string]
+            [clojure.set :as set]
             [com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]
             [com.nickrobison.trestle.reasoner.parser.utils.members :as m]))
 
@@ -34,8 +35,11 @@
                          pred/trestle-creator?)]
     constructor
     ; If we don't have one, look for the first multi-arg constructor
-    (find-matching-constructor clazz
-                               pred/multi-arg-constructor?)))
+    (if-let [no-arg-constructor (find-matching-constructor clazz
+                                                    pred/multi-arg-constructor?)]
+      no-arg-constructor
+      ; Throw an exception if we can't find the correct constructor
+      (throw (MissingConstructorException. "Cannot find TrestleCreator or multi-arg constructor")))))
 
 (defn build-parameter
   [parameter]
@@ -425,23 +429,13 @@
           parameterNames (m/get-from-array :name (:arguments constructor))
           sortedTypes (.getSortedTypes arguments parameterNames)
           sortedValues (.getSortedValues arguments parameterNames)
-          ]
-      ; If we can't match things up, throw an error
-      (if (not (or
-                 (= (count parameterNames)
-                    (count sortedValues))
-                 (= (count parameterNames)
-                    (count sortedTypes))))
-        ((log/errorf "Wrong number of constructor arguments, need %s, have %s"
-                     (count parameterNames)
-                     (count sortedValues))
-          (log/errorf "Constructor for class %s has parameters %s but we have %s"
-                      (.getSimpleName clazz)
-                      parameterNames
-                      (.getNames arguments))
-          (throw (MissingConstructorException. "Missing parameters required for constructor generation")))
-        (invoke-constructor (:handle constructor) sortedValues))
-      )))
+          missingParams (set/difference (set parameterNames) (.getNames arguments))]
+      ; Are we missing parameters?
+      (if (empty? missingParams)
+        ; If missingParams is empty, we have everything we need, so build the object
+        (invoke-constructor (:handle constructor) sortedValues)
+        ((log/errorf "Missing constructor arguments needs %s\n%s\n%s" missingParams parameterNames sortedValues)
+          (throw (MissingConstructorException. "Missing parameters required for constructor generation")))))))
 
 (defn make-parser
   "Creates a new ClassParser"

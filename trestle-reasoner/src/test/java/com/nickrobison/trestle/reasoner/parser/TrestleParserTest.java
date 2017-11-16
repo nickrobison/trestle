@@ -360,6 +360,15 @@ public class TrestleParserTest {
 //        final TestClasses.GAULMethodTest gaulMethodTest = ClassBuilder.constructObject(TestClasses.GAULMethodTest.class, constructorArguments);
         final TestClasses.GAULMethodTest gaulMethodTest = cb.constructObject(TestClasses.GAULMethodTest.class, constructorArguments);
         assertEquals(expectedClass, gaulMethodTest, "Should match");
+
+//        Try to build something with extra constructor args
+        cp.parseClass(ExpandedGAULTests.class);
+        final ConstructorArguments extraArgs = new ConstructorArguments();
+        extraArgs.addArgument("adm0_code", int.class, 42);
+        extraArgs.addArgument("should_not_match", String.class, "Nothing there");
+        extraArgs.addArgument("nope_integer", Integer.class, 1);
+        final ExpandedGAULTests constructedObject = cb.constructObject(ExpandedGAULTests.class, extraArgs);
+        assertEquals(new ExpandedGAULTests(42), constructedObject, "Extra arguments objects should match");
     }
 
     @DatasetClass(name = "GAUL_Test")
@@ -401,12 +410,42 @@ public class TrestleParserTest {
             this.adm0_name = "test region";
             this.testtime = LocalDateTime.of(1998, 3, 26, 0, 0);
             this.privateField = "don't read me";
-            this.testpoint = LocalDateTime.of(1989, 3, 26, 0, 0);
+            this.testpoint = LocalDa    teTime.of(1989, 3, 26, 0, 0);
             this.teststart = LocalDateTime.of(1989, 3, 26, 0, 0);
             this.testend = LocalDateTime.of(1989, 3, 26, 0, 0).plusYears(5);
             this.testat = LocalDateTime.of(1989, 3, 26, 0, 0);
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            ExpandedGAULTests that = (ExpandedGAULTests) o;
+
+            if (adm0_code != that.adm0_code) return false;
+            if (!adm0_name.equals(that.adm0_name)) return false;
+            if (!test_name.equals(that.test_name)) return false;
+            if (!testtime.equals(that.testtime)) return false;
+            if (!privateField.equals(that.privateField)) return false;
+            if (!testpoint.equals(that.testpoint)) return false;
+            if (!teststart.equals(that.teststart)) return false;
+            if (!testend.equals(that.testend)) return false;
+            return testat.equals(that.testat);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = adm0_code;
+            result = 31 * result + adm0_name.hashCode();
+            result = 31 * result + test_name.hashCode();
+            result = 31 * result + testtime.hashCode();
+            result = 31 * result + privateField.hashCode();
+            result = 31 * result + testpoint.hashCode();
+            result = 31 * result + teststart.hashCode();
+            result = 31 * result + testend.hashCode();
+            result = 31 * result + testat.hashCode();
+            return result;
+        }
     }
-
-
 }
