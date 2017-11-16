@@ -10,6 +10,7 @@ public class TrestleParser {
     private final OWLDataFactory df;
     private final String reasonerPrefix;
     public final IClassParser classParser;
+    public final IClassBuilder classBuilder;
     public final TemporalParser temporalParser;
 
     /**
@@ -25,8 +26,8 @@ public class TrestleParser {
         this.reasonerPrefix = reasonerPrefix;
 
 //        Create the sub parsers
-//        classParser = new ClassParser(df, reasonerPrefix, multiLangEnabled, defaultLanguageCode);
         classParser = ClojureParserProvider.getParser(df, reasonerPrefix, multiLangEnabled, defaultLanguageCode);
+        this.classBuilder = (IClassBuilder) classParser;
         this.temporalParser = new TemporalParser(this.classParser);
     }
 }

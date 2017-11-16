@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.reasoner.parser;
 
+import com.nickrobison.trestle.reasoner.exceptions.MissingConstructorException;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 
 import java.util.List;
@@ -12,7 +13,7 @@ public interface IClassBuilder {
      * Uses the provided {@link String} prefix for the properties
      * Filters out spatial members
      *
-     * @param clazz  - {@link Class} to parse
+     * @param clazz - {@link Class} to parse
      * @return - {@link Optional} {@link List} of {@link OWLDataProperty} for given class
      */
     Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz);
@@ -28,12 +29,15 @@ public interface IClassBuilder {
     Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz, boolean filterSpatial);
 
     /**
+     * /**
      * Creates object of type {@link T} from given class definition using the provided {@link ConstructorArguments}
      *
      * @param clazz     - {@link Class} clazz to build from
      * @param arguments - {@link ConstructorArguments} to use
      * @param <T>       - Type parameter
      * @return - {@link T} constructed object
+     * @throws MissingConstructorException if unable to match constructor with input params
      */
-    <T> T constructObject(Class<T> clazz, ConstructorArguments arguments);
+
+    <T> T constructObject(Class<T> clazz, ConstructorArguments arguments) throws MissingConstructorException;
 }

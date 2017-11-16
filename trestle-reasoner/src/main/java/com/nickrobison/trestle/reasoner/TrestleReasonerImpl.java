@@ -873,7 +873,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
 
 //        Do some things before opening a transaction
-        final Optional<List<OWLDataProperty>> dataProperties = ClassBuilder.getPropertyMembers(clazz);
+        final Optional<List<OWLDataProperty>> dataProperties = this.trestleParser.classBuilder.getPropertyMembers(clazz);
 
 //        If no temporals are provided, perform the intersection at query time.
         final OffsetDateTime dbAtTemporal;
@@ -1041,7 +1041,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 return Optional.empty();
             }
             try {
-                final @NonNull T constructedObject = ClassBuilder.constructObject(clazz, objectState.getArguments());
+                final @NonNull T constructedObject = trestleParser.classBuilder.constructObject(clazz, objectState.getArguments());
                 return Optional.of(new TrestleObjectResult<>(individualIRI, constructedObject, objectState.getMinValidFrom(), objectState.getMinValidTo(), objectState.getMinDatabaseFrom(), objectState.getMinDatabaseTo()));
             } catch (MissingConstructorException e) {
                 logger.error("Problem with constructor", e);
@@ -2268,7 +2268,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //        TODO(nrobison): Extract type from wkt
 //        FIXME(nrobison): Shapefile schema doesn't support multiple languages. Need to figure out how to flatten
         final ShapefileSchema shapefileSchema = new ShapefileSchema(MultiPolygon.class);
-        final Optional<List<OWLDataProperty>> propertyMembers = ClassBuilder.getPropertyMembers(inputClass, true);
+        final Optional<List<OWLDataProperty>> propertyMembers = this.trestleParser.classBuilder.getPropertyMembers(inputClass, true);
         propertyMembers.ifPresent(owlDataProperties -> owlDataProperties.forEach(property -> shapefileSchema.addProperty(this.trestleParser.classParser.matchWithClassMember(inputClass, property.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property))));
 
 //        Now the temporals

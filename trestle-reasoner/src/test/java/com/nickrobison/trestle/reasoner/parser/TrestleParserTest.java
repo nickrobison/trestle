@@ -410,7 +410,7 @@ public class TrestleParserTest {
             this.adm0_name = "test region";
             this.testtime = LocalDateTime.of(1998, 3, 26, 0, 0);
             this.privateField = "don't read me";
-            this.testpoint = LocalDa    teTime.of(1989, 3, 26, 0, 0);
+            this.testpoint = LocalDateTime.of(1989, 3, 26, 0, 0);
             this.teststart = LocalDateTime.of(1989, 3, 26, 0, 0);
             this.testend = LocalDateTime.of(1989, 3, 26, 0, 0).plusYears(5);
             this.testat = LocalDateTime.of(1989, 3, 26, 0, 0);
