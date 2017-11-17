@@ -1,5 +1,5 @@
 (ns com.nickrobison.trestle.reasoner.parser.utils.predicates
-  (:import (java.lang.reflect Modifier Method Field)
+  (:import (java.lang.reflect Modifier Method Field Constructor)
            (com.nickrobison.trestle.reasoner.annotations Ignore Fact Spatial Language NoMultiLanguage IndividualIdentifier TrestleCreator)
            (org.semanticweb.owlapi.model IRI)
            (com.nickrobison.trestle.common StaticIRI)
@@ -7,6 +7,8 @@
            (com.nickrobison.trestle.types TemporalScope TemporalType))
   (:require [clojure.string :as string]
             [clojure.core.match :refer [match]]))
+; We can disable reflection warning, because Reflection is what we want
+(set! *warn-on-reflection* false)
 
 (keyword 'field)
 (keyword 'method)
@@ -24,14 +26,19 @@
 (defn get-annotation
   "Get the specified annotation on the class member"
   [member annotation]
+  ; Reflection is ok here
   (.getAnnotation member annotation))
 
-(defn get-member-name [member] (.getName member))
+(defn get-member-name
+  "Get name of class member"
+  [member]
+  ; Reflection is ok here
+  (.getName member))
 
 (defn get-temporal-type
   "Get the TemporalType of the member"
   [member]
-  (if-let [default (get-annotation member DefaultTemporal)]
+  (if-let [default ^DefaultTemporal (get-annotation member DefaultTemporal)]
     (if (= (.type default) (TemporalType/POINT))
       ::point
       ::interval)
@@ -41,11 +48,18 @@
 (defmulti get-member-return-type
           "Get the Java class return type of the field/method"
           class)
-(defmethod get-member-return-type Field [field] (.getType field))
-(defmethod get-member-return-type Method [method] (.getReturnType method))
+(defmethod get-member-return-type Field [^Field field] (.getType field))
+(defmethod get-member-return-type Method [^Method method] (.getReturnType method))
 
-(defn hasAnnotation? [member annotation] (.isAnnotationPresent member annotation))
-(defn public? [entity] (Modifier/isPublic (.getModifiers entity)))
+(defn hasAnnotation?
+  "Does the class member have the specified annotation?"
+  [member annotation]
+  ; Reflection is ok here
+  (.isAnnotationPresent member annotation))
+(defn public?
+  "Is the class member marked as public?"
+  [entity]
+  (Modifier/isPublic (.getModifiers entity)))
 (defn ignore? [entity] (hasAnnotation? entity Ignore))
 (defn fact? [entity] (hasAnnotation? entity Fact))
 (defn spatial? [entity] (hasAnnotation? entity Spatial))
@@ -132,10 +146,10 @@
 (defmulti filter-member-name
           "Filter name of class member"
           class)
-(defmethod filter-member-name Field [field]
+(defmethod filter-member-name Field [^Field field]
   ; Just return the field name
   (.getName field))
-(defmethod filter-member-name Method [method]
+(defmethod filter-member-name Method [^Method method]
   (let [name (.getName method)]
     (if (string/starts-with? name "get")
       ; Strip off the get and lower case the first letter
@@ -165,5 +179,5 @@
 
 (defn multi-arg-constructor?
   "Is this constructor a multi-arg one?"
-  [constructor]
+  [^Constructor constructor]
   (> (.getParameterCount constructor) 0))

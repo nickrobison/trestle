@@ -1,5 +1,5 @@
 (ns com.nickrobison.trestle.reasoner.parser.utils.members
-  (:import (org.semanticweb.owlapi.model IRI)
+  (:import (org.semanticweb.owlapi.model IRI OWLDataFactory)
            (com.nickrobison.trestle.common StaticIRI)
            (com.nickrobison.trestle.reasoner.annotations Spatial Fact)
            (java.lang.invoke MethodHandles)
@@ -14,7 +14,7 @@
   [name member]
   (or
     (= name (:name member))
-    (= name (.toString (:iri member)))))
+    (= name (.toString ^IRI (:iri member)))))
 
 (defn filter-and-get
   "Apply the given filter to the list of members and extract the specified key"
@@ -24,11 +24,12 @@
        (map #(get % key))
        first))
 
-(defn build-iri
+(defn ^IRI build-iri
   "Build the property IRI for the Member"
   [member prefix]
   (if (pred/hasAnnotation? member Fact)
-    (IRI/create prefix (.name (.getAnnotation member Fact)))
+    ; Reflection is ok here, we're trying to paper over Field/Method differences
+    (IRI/create prefix (.name ^Fact (.getAnnotation member Fact)))
     (if (pred/hasAnnotation? member Spatial)
       ; If spatial, use the GEOSPARQL prefix
       (IRI/create StaticIRI/GEOSPARQLPREFIX "asWKT")
@@ -49,7 +50,7 @@
 
 (defn build-data-property
   "Build the OWLDataProperty for the member"
-  [member prefix df]
+  [member prefix ^OWLDataFactory df]
   (.getOWLDataProperty df (build-iri member prefix)))
 
 ; Individual ID

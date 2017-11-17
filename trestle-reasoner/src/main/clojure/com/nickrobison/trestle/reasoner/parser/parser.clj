@@ -1,10 +1,10 @@
 (ns com.nickrobison.trestle.reasoner.parser.parser
   (:import [IClassParser]
            (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter StringParser ClassBuilder SpatialParser IClassBuilder)
-           (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom)
+           (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom OWLDataProperty OWLLiteral OWLDatatype)
            (java.lang.annotation Annotation)
-           (java.lang.reflect InvocationTargetException Field Method Modifier Constructor)
-           (java.lang.invoke MethodHandles)
+           (java.lang.reflect InvocationTargetException Field Method Modifier Constructor Parameter)
+           (java.lang.invoke MethodHandles MethodHandle)
            (com.nickrobison.trestle.reasoner.annotations IndividualIdentifier DatasetClass Fact NoMultiLanguage Language)
            (java.util Optional List)
            (com.nickrobison.trestle.common StaticIRI)
@@ -21,7 +21,7 @@
 
 (defn find-matching-constructor
   "Find first constructor that matches the given predicate"
-  [clazz predicate]
+  [^Class clazz predicate]
   (->> (.getDeclaredConstructors clazz)
        (filter predicate)
        (first)))
@@ -42,7 +42,7 @@
       (throw (MissingConstructorException. "Cannot find TrestleCreator or multi-arg constructor")))))
 
 (defn build-parameter
-  [parameter]
+  [^Parameter parameter]
   {
    :name (.getName parameter)
    :type (.getType parameter)
@@ -50,7 +50,7 @@
 
 (defn build-constructor-args
   "Build a list of constructor params and types"
-  [constructor]
+  [^Constructor constructor]
   (->> (.getParameters constructor)
        (map build-parameter)
        (into ())))
@@ -66,23 +66,23 @@
 
 (defn get-class-name
   "Get the OWL Class name"
-  [clazz df reasonerPrefix]
-  (. df getOWLClass
+  [^Class clazz ^OWLDataFactory df reasonerPrefix]
+  (.getOWLClass df
      (IRI/create reasonerPrefix
                  (if (.isAnnotationPresent clazz DatasetClass)
-                   (.name (.getDeclaredAnnotation clazz DatasetClass))
+                   (.name ^DatasetClass (.getDeclaredAnnotation clazz DatasetClass))
                    (.getName clazz)))))
 
 (defn invoker
   "Invoke method handle"
   ; We need to use invokeWithArguments to work around IDEA-154967
-  ([handle object]
+  ([^MethodHandle handle object]
    (try
      (log/debugf "Invoking method handle %s on %s" handle object)
      (.invokeWithArguments handle (object-array [object]))
      (catch Exception e
        (log/error "Problem invoking" e))))
-  ([handle object & args]
+  ([^MethodHandle handle object & args]
    (try
      (log/debugf "Invoking method handle %s on %s with args %s"
                  handle
@@ -95,13 +95,13 @@
 (defn invoke-constructor
   "Invoke Constructor Method Handle"
   ; We need to use invokeWithArguments to work around IDEA-154967
-  ([handle]
+  ([^MethodHandle handle]
    (try
      (log/debugf "Invoking constructor %s" handle)
-     (.invokeWithArguments handle [])
+     (.invokeWithArguments handle (object-array []))
      (catch Exception e
        (log/error "Problem invoking" e))))
-  ([handle & args]
+  ([^MethodHandle handle & args]
    (try
      (log/debugf "Invoking constructor %s with args %s" handle args)
      ; I honestly have no idea why we need to do first, but that's how it is
@@ -122,14 +122,14 @@
   "Get the language tag, if one exists"
   [member defaultLang]
   (if (pred/hasAnnotation? member Language)
-    (.language (pred/get-annotation member Language))
+    (.language ^Language (pred/get-annotation member Language))
     defaultLang))
 
 (defmulti build-member-return-type
           "Specialized method to build return type for member"
           (fn [acc member df] (:type acc)))
 (defmethod build-member-return-type ::pred/spatial
-  [acc member df]
+  [acc member ^OWLDataFactory df]
   (let [rtype (pred/get-member-return-type member)]
     (merge acc {
                 :return-type  rtype
@@ -185,7 +185,7 @@
 
 (defn build-member
   "Build member from class methods/fields"
-  [member df prefix defaultLang]
+  [member ^OWLDataFactory df prefix defaultLang]
   (let [iri (m/build-iri member prefix)]
     (merge (build-member-map member
                              [(fn [acc member]
@@ -201,11 +201,11 @@
             :data-property (.getOWLDataProperty df iri)
             })))
 
-(defn build-literal
-  ([df value returnType defaultLang]
+(defn ^OWLLiteral build-literal
+  ([^OWLDataFactory df ^String value returnType ^String defaultLang]
    (.getOWLLiteral df value defaultLang))
-  ([df value returnType]
-   (.getOWLLiteral df (.toString value) returnType)))
+  ([^OWLDataFactory df ^Object value returnType]
+   (.getOWLLiteral df (.toString value) ^OWLDatatype returnType)))
 
 (defn member-reducer
   "Build the Class Member Map"
@@ -223,29 +223,29 @@
 
 (defmulti build-assertion-axiom
           "Build OWLDataPropertyAssertionAxiom from member"
-          (fn [df individual member inputObject] (:type member)))
+          (fn [^OWLDataFactory df individual member inputObject] (:type member)))
 (defmethod build-assertion-axiom ::pred/spatial
-  [df individual member inputObject]
+  [^OWLDataFactory df ^OWLNamedIndividual individual member inputObject]
   (let [wktOptional (SpatialParser/parseWKTFromGeom
                       (invoker (get member :handle) inputObject))]
     (if (.isPresent wktOptional)
       (.getOWLDataPropertyAssertionAxiom df
-                                         (get member :data-property)
+                                         ^OWLDataProperty (get member :data-property)
                                          individual
-                                         (.get wktOptional)))))
+                                         ^OWLLiteral (.get wktOptional)))))
 (defmethod build-assertion-axiom ::pred/language
-  [df individual member inputObject]
+  [^OWLDataFactory df ^OWLNamedIndividual individual member inputObject]
   (.getOWLDataPropertyAssertionAxiom df
-                                     (get member :data-property)
+                                     ^OWLDataProperty (get member :data-property)
                                      individual
                                      (build-literal df
                                                     (invoker (get member :handle) inputObject)
                                                     (get member :owl-datatype)
                                                     (get member :language))))
 (defmethod build-assertion-axiom :default
-  [df individual member inputObject]
+  [^OWLDataFactory df ^OWLNamedIndividual individual member inputObject]
   (.getOWLDataPropertyAssertionAxiom df
-                                     (get member :data-property)
+                                     ^OWLDataProperty (get member :data-property)
                                      individual
                                      (build-literal df
                                                     (invoker (get member :handle) inputObject)
@@ -257,7 +257,7 @@
             (:type member)))
 (defmethod member-matches? ::pred/temporal
   [member languageCode classMember]
-  (let [iri (.getShortForm (get member :iri))
+  (let [iri (.getShortForm ^IRI (get member :iri))
         position (get member :position)
         ttype (get member :temporal-type)
         name (get member :name)]
@@ -272,15 +272,15 @@
       false)))
 (defmethod member-matches? ::pred/language
   [member languageCode classMember]
-  (let [iri (.getShortForm (get member :iri))]
+  (let [iri (.getShortForm ^IRI (get member :iri))]
     (log/debugf "Matching against %s with language %s" iri (get member :language)
                 classMember languageCode)
     ; Match against IRI and language code (ignoring case)
-    (log/spyf "Matches? %s" (and (= iri classMember) (.equalsIgnoreCase languageCode (get member :language))))))
+    (log/spyf "Matches? %s" (and (= iri classMember) (.equalsIgnoreCase ^String languageCode (get member :language))))))
 (defmethod member-matches? :default
   [member languageCode classMember]
   (log/debugf "Matching %s against defaults" classMember)
-  (let [iri (.getShortForm (get member :iri))]
+  (let [iri (.getShortForm ^IRI (get member :iri))]
     (= iri classMember)))
 
 
@@ -420,15 +420,15 @@
                                            (complement
                                              (= (:type %) ::pred/spatial))
                                            true))
-                                (map #(.getOWLDataProperty df (:iri %)))))))
+                                (map #(.getOWLDataProperty df ^IRI (:iri %)))))))
   (getPropertyMembers ^Optional [this clazz]
     (.getPropertyMembers this clazz false))
   (constructObject ^Object [this clazz arguments]
     (let [parsedClass (.parseClass this clazz)
           constructor (:constructor parsedClass)
           parameterNames (m/get-from-array :name (:arguments constructor))
-          sortedTypes (.getSortedTypes arguments parameterNames)
-          sortedValues (.getSortedValues arguments parameterNames)
+          sortedTypes (.getSortedTypes arguments ^List parameterNames)
+          sortedValues (.getSortedValues arguments ^List parameterNames)
           missingParams (set/difference (set parameterNames) (.getNames arguments))]
       ; Are we missing parameters?
       (if (empty? missingParams)
