@@ -165,6 +165,11 @@
             <version>0.4.0</version>
         </dependency>
         <dependency>
+            <groupId>clj-fuzzy</groupId>
+            <artifactId>clj-fuzzy</artifactId>
+            <version>0.4.1</version>
+        </dependency>
+        <dependency>
             <groupId>org.clojure</groupId>
             <artifactId>tools.nrepl</artifactId>
             <version>0.2.13</version>

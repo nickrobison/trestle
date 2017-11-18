@@ -1,6 +1,6 @@
 (ns com.nickrobison.trestle.reasoner.parser.parser
   (:import [IClassParser]
-           (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter StringParser ClassBuilder SpatialParser IClassBuilder)
+           (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter StringParser ClassBuilder SpatialParser IClassBuilder IClassRegister)
            (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom OWLDataProperty OWLLiteral OWLDatatype)
            (java.lang.annotation Annotation)
            (java.lang.reflect InvocationTargetException Field Method Modifier Constructor Parameter)
@@ -8,17 +8,17 @@
            (com.nickrobison.trestle.reasoner.annotations IndividualIdentifier DatasetClass Fact NoMultiLanguage Language)
            (java.util Optional List)
            (com.nickrobison.trestle.common StaticIRI)
-           (com.nickrobison.trestle.reasoner.exceptions MissingConstructorException InvalidClassException))
+           (com.nickrobison.trestle.reasoner.exceptions MissingConstructorException InvalidClassException InvalidClassException$State UnregisteredClassException))
   (:require [clojure.core.match :refer [match]]
             [clojure.core.reducers :as r]
             [clojure.tools.logging :as log]
             [clojure.string :as string]
             [clojure.set :as set]
             [com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]
-            [com.nickrobison.trestle.reasoner.parser.utils.members :as m]))
+            [com.nickrobison.trestle.reasoner.parser.utils.members :as m])
+  (:use clj-fuzzy.metrics))
 
 ; Class related helpers
-
 (defn find-matching-constructor
   "Find first constructor that matches the given predicate"
   [^Class clazz predicate]
@@ -64,6 +64,16 @@
      :arguments (build-constructor-args constructor)
      }))
 
+(defn fuzzy-match-args
+  "If we can't match any of the constructor arguments,
+  try to find a close match"
+  [parameter arguments]
+  (throw (IllegalArgumentException.
+           (format "Cannot match %s against Constructor params, perhaps you meant %s"
+                   (->> arguments
+                        (map #(levenshtein parameter %))
+                        (sort-by #(compare %2 %1)))))))
+
 (defn get-class-name
   "Get the OWL Class name"
   [^Class clazz ^OWLDataFactory df reasonerPrefix]
@@ -71,7 +81,9 @@
      (IRI/create reasonerPrefix
                  (if (.isAnnotationPresent clazz DatasetClass)
                    (.name ^DatasetClass (.getDeclaredAnnotation clazz DatasetClass))
-                   (.getName clazz)))))
+                   (throw (InvalidClassException.
+                            (.toString (class DatasetClass))
+                            InvalidClassException$State/MISSING))))))
 
 (defn invoker
   "Invoke method handle"
@@ -113,7 +125,6 @@
 (defn owl-return-type
   "Determine the OWLDatatype of the field/method"
   [member rtype]
-  (log/warn "Getting return type")
   (if (pred/hasAnnotation? member Fact)
     (TypeConverter/getDatatypeFromAnnotation (pred/get-annotation member Fact) rtype)
     (TypeConverter/getDatatypeFromJavaClass rtype)))
@@ -188,6 +199,7 @@
   [member ^OWLDataFactory df prefix defaultLang]
   (let [iri (m/build-iri member prefix)]
     (merge (build-member-map member
+                             ; Apply all these transformations to build up the member map
                              [(fn [acc member]
                                 (default-member-keys acc member defaultLang))
                               (fn [acc member]
@@ -207,9 +219,28 @@
   ([^OWLDataFactory df ^Object value returnType]
    (.getOWLLiteral df (.toString value) ^OWLDatatype returnType)))
 
+; Validators
+(defn validate-member
+  "Validate member to make sure it matches everything"
+  [member context]
+  (build-member-map member
+                    ; Individual IRI doesn't have spaces
+                    [(fn [acc member]
+                       )
+                     ])
+  )
+
+;(defn validate-class-name
+;  [clazz]
+;  (if (pred/hasAnnotation? clazz DatasetClass)
+;    )
+;  )
+
 (defn member-reducer
   "Build the Class Member Map"
   [acc member]
+  ; Validate member
+  (log/debug "validating")
   (let [members (get acc :members)
         temporals (get acc :temporals [])
         type (get member :type)
@@ -308,38 +339,53 @@
   (isMultiLangEnabled [this] (multiLangEnabled))
   (getDefaultLanguageCode [this] (if (= defaultLanguageCode "") nil defaultLanguageCode))
   (^OWLClass getObjectClass [this ^Class clazz]
-    (let [parsedClass (.parseClass this clazz)]
+    (let [parsedClass (.getRegisteredClass this clazz)]
       (:class-name parsedClass)))
   (^OWLClass getObjectClass [this ^Object inputObject] (.getObjectClass this (.getClass inputObject)))
   (parseClass ^Object [this ^Class clazz]
-    ; Check to see if we have the class in the registry
-    (if (contains? @classRegistry clazz)
-      (log/spyf :debug "Getting from cache"
-                ; Get the class from the registry atom
-                (get @classRegistry clazz))
-      (log/spyf :debug "Parsing test class"
-                ; Get the class from the newly updated atom
-                (get
-                  ; Update the atom with the new class record
-                  (swap! classRegistry
-                         assoc
-                         clazz
-                         ; Build the class record
-                         (->> (concat (.getDeclaredFields clazz) (.getDeclaredMethods clazz))
-                              ; Filter out non-necessary members
-                              (r/filter pred/filter-member)
-                              ; Build members
-                              (r/map #(build-member % df reasonerPrefix (if (true? multiLangEnabled) defaultLanguageCode nil)))
-                              ; Combine everything into a map
-                              (r/reduce member-reducer {
-                                                        :class-name  (get-class-name
-                                                                       clazz df reasonerPrefix)
-                                                        :constructor (build-constructor clazz)
-                                                        })))
-                  clazz))))
+    ; Parse input class
+    ;(log/debugf "Parsing %s" clazz)
+    (->> (concat (.getDeclaredFields clazz) (.getDeclaredMethods clazz))
+         ; Filter out non-necessary members
+         (r/filter pred/filter-member)
+         ; Build members
+         (r/map #(build-member % df reasonerPrefix (if (true? multiLangEnabled) defaultLanguageCode nil)))
+         ; Combine everything into a map
+         (r/reduce member-reducer {
+                                   :class-name  (get-class-name
+                                                  clazz df reasonerPrefix)
+                                   :constructor (build-constructor clazz)
+                                   }))
+    ;
+    ;; Check to see if we have the class in the registry
+    ;(if (contains? @classRegistry clazz)
+    ;  (log/spyf :debug "Getting from cache"
+    ;            ; Get the class from the registry atom
+    ;            (get @classRegistry clazz))
+    ;  (log/spyf :debug "Parsing test class"
+    ;            ; Get the class from the newly updated atom
+    ;            (get
+    ;              ; Update the atom with the new class record
+    ;              (swap! classRegistry
+    ;                     assoc
+    ;                     clazz
+    ;                     ; Build the class record
+    ;                     (->> (concat (.getDeclaredFields clazz) (.getDeclaredMethods clazz))
+    ;                          ; Filter out non-necessary members
+    ;                          (r/filter pred/filter-member)
+    ;                          ; Build members
+    ;                          (r/map #(build-member % df reasonerPrefix (if (true? multiLangEnabled) defaultLanguageCode nil)))
+    ;                          ; Combine everything into a map
+    ;                          (r/reduce member-reducer {
+    ;                                                    :class-name  (get-class-name
+    ;                                                                   clazz df reasonerPrefix)
+    ;                                                    :constructor (build-constructor clazz)
+    ;                                                    })))
+    ;              clazz)))
+    )
 
   (^OWLNamedIndividual getIndividual [this ^Object inputObject]
-    (let [parsedClass (.parseClass this (.getClass inputObject))]
+    (let [parsedClass (.getRegisteredClass this (.getClass inputObject))]
       (.getOWLNamedIndividual df
                               (IRI/create reasonerPrefix
                                           (m/normalize-id (invoker (get
@@ -349,7 +395,7 @@
 
 
   (getFacts ^Optional ^List ^OWLDataPropertyAssertionAxiom [this inputObject filterSpatial]
-    (let [parsedClass (.parseClass this (.getClass inputObject))
+    (let [parsedClass (.getRegisteredClass this (.getClass inputObject))
           individual (.getIndividual this inputObject)]
       (Optional/of
         (->> (get parsedClass :members)
@@ -366,7 +412,7 @@
     (.getFacts this inputObject false))
 
   (getSpatialFact ^Optional ^OWLDataPropertyAssertionAxiom [this inputObject]
-    (let [parsedClass (.parseClass this (.getClass inputObject))
+    (let [parsedClass (.getRegisteredClass this (.getClass inputObject))
           individual (.getIndividual this inputObject)]
       (if-let [spatial (get parsedClass :spatial)]
         (Optional/of (build-assertion-axiom df individual spatial inputObject))
@@ -375,7 +421,7 @@
   (matchWithClassMember ^String [this clazz classMember]
     (.matchWithClassMember this clazz classMember nil))
   (matchWithClassMember ^String [this clazz classMember languageCode]
-    (let [parsedClass (.parseClass this clazz)]
+    (let [parsedClass (.getRegisteredClass this clazz)]
       (log/debugf "Trying to match %s with language %s" classMember languageCode)
       ; Figure out if we directly match against a constructor argument
       ; But only if we don't have a provided language code
@@ -392,7 +438,7 @@
                               languageCode classMember)))))
 
   (getFactDatatype ^Optional [this clazz factName]
-    (let [parsedClass (.parseClass this clazz)]
+    (let [parsedClass (.getRegisteredClass this clazz)]
       (Optional/ofNullable (m/filter-and-get
                              (:members parsedClass)
                              (fn [member]
@@ -402,7 +448,7 @@
                              :return-type))))
 
   (getFactIRI ^Optional [this clazz factName]
-    (let [parsedClass (.parseClass this clazz)]
+    (let [parsedClass (.getRegisteredClass this clazz)]
       (Optional/ofNullable (m/filter-and-get
                              (:members parsedClass)
                              (fn [member]
@@ -414,7 +460,7 @@
   ; IClassBuilder methods
   IClassBuilder
   (getPropertyMembers ^Optional [this clazz filterSpatial]
-    (let [parsedClass (.parseClass this clazz)]
+    (let [parsedClass (.getRegisteredClass this clazz)]
       (Optional/ofNullable (->> (:members parsedClass)
                                 (filter #(if filterSpatial
                                            (complement
@@ -424,7 +470,7 @@
   (getPropertyMembers ^Optional [this clazz]
     (.getPropertyMembers this clazz false))
   (constructObject ^Object [this clazz arguments]
-    (let [parsedClass (.parseClass this clazz)
+    (let [parsedClass (.getRegisteredClass this clazz)
           constructor (:constructor parsedClass)
           parameterNames (m/get-from-array :name (:arguments constructor))
           sortedTypes (.getSortedTypes arguments ^List parameterNames)
@@ -435,7 +481,26 @@
         ; If missingParams is empty, we have everything we need, so build the object
         (invoke-constructor (:handle constructor) sortedValues)
         ((log/errorf "Missing constructor arguments needs %s\n%s\n%s" missingParams parameterNames sortedValues)
-          (throw (MissingConstructorException. "Missing parameters required for constructor generation")))))))
+          (throw (MissingConstructorException. "Missing parameters required for constructor generation"))))))
+
+  ; ClassRegister methods
+  IClassRegister
+  (registerClass [this clazz]
+    (let [parsedClass (.parseClass this clazz)]
+      (if (contains? @classRegistry clazz)
+        ; Overwrite the class, if we already have it
+        ((log/debugf "Already registered %s, rebuilding" (.getName clazz))
+          (swap! classRegistry
+                 assoc clazz parsedClass))
+        ; Otherwise, just create it
+        (swap! classRegistry assoc clazz parsedClass))))
+  (getRegisteredClass ^Object [this ^Class clazz]
+    (if-let [parsedClass (get @classRegistry clazz)]
+      parsedClass
+      (throw (UnregisteredClassException. clazz))))
+  (deregisterClass [this clazz]
+    (log/debugf "Deregistering %s" clazz)
+    (swap! @classRegistry dissoc clazz)))
 
 (defn make-parser
   "Creates a new ClassParser"

@@ -16,32 +16,39 @@ public class InvalidClassException extends TrestleClassException {
     }
 
     private final State problemState;
+    private final @Nullable String member;
 
     public InvalidClassException(String className, State problemState) {
         super(parseException(className, problemState, null));
         this.problemState = problemState;
+        this.member = null;
     }
 
     public InvalidClassException(String className, State problemState, String member) {
         super(parseException(className, problemState, member));
         this.problemState = problemState;
+        this.member = member;
     }
 
     public InvalidClassException(Class<?> clazz, State problemState) {
         super(parseException(clazz.getSimpleName(), problemState, null));
         this.problemState = problemState;
+        this.member = null;
     }
 
     public InvalidClassException(Class<?> clazz, State problemState, String member) {
         super(parseException(clazz.getSimpleName(), problemState, member));
         this.problemState = problemState;
+        this.member = member;
     }
 
     public State getProblemState() {
         return this.problemState;
     }
 
-
+    public @Nullable  String getMember() {
+        return member;
+    }
 
     private static String parseException(String className, State problemState, @Nullable String member) {
 

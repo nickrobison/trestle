@@ -8,7 +8,7 @@ import com.nickrobison.trestle.reasoner.annotations.Spatial;
 import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
-import com.nickrobison.trestle.reasoner.exceptions.MissingConstructorException;
+import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
@@ -30,9 +30,7 @@ import java.util.UUID;
 
 import static com.nickrobison.trestle.common.StaticIRI.GEOSPARQLPREFIX;
 import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by nrobison on 6/28/16.
@@ -55,6 +53,7 @@ public class TrestleParserTest {
     private TrestleParser tp;
     private IClassParser cp;
     private IClassBuilder cb;
+    private IClassRegister cr;
 
     @BeforeEach
     public void Setup() {
@@ -69,12 +68,18 @@ public class TrestleParserTest {
         temporal = TemporalObjectBuilder.exists().from(dt).to(dt.plusYears(1)).build(); //.withRelations();
         temporalPoint = TemporalObjectBuilder.exists().at(ld).build(); // .withRelations();
         tp = new TrestleParser(df, TRESTLE_PREFIX, true, "");
-        cp = ClojureParserProvider.getParser(df, TRESTLE_PREFIX, true, "");
-        cb = (IClassBuilder) cp;
+        cp = tp.classParser;
+        cb = (IClassBuilder) tp.classParser;
+        cr = (IClassRegister) tp.classParser;
+
     }
 
     @Test
-    public void TestSimpleGAULClass() {
+    public void TestSimpleGAULClass() throws TrestleClassException {
+
+//        Register some classes
+        cr.registerClass(TestClasses.GAULTestClass.class);
+
 //        Test the class
         final OWLClass owlClass = cp.getObjectClass(gaulTestClass);
         final OWLClass gaul_test1 = df.getOWLClass(IRI.create(TRESTLE_PREFIX, "GAUL_Test"));
@@ -112,7 +117,9 @@ public class TrestleParserTest {
     }
 
     @Test
-    public void TestGAULComplexObjectClass() {
+    public void TestGAULComplexObjectClass() throws TrestleClassException {
+
+        cr.registerClass(TestClasses.GAULComplexClassTest.class);
 
 //        Test the class
         final OWLClass owlClass = cp.getObjectClass(complexObjectClass);
@@ -147,7 +154,10 @@ public class TrestleParserTest {
     }
 
     @Test
-    public void TestExpandedGAULObject() {
+    public void TestExpandedGAULObject() throws TrestleClassException {
+
+        cr.registerClass(ExpandedGAULTests.class);
+        cr.registerClass(TestClasses.GAULMethodTest.class);
 
 //        Test the new gaul test
         //        Test the named individual
@@ -226,7 +236,9 @@ public class TrestleParserTest {
     }
 
     @Test
-    public void multiLangTest() {
+    public void multiLangTest() throws TrestleClassException {
+
+        cr.registerClass(TestClasses.MultiLangTest.class);
         final Optional<List<OWLDataPropertyAssertionAxiom>> facts = cp.getFacts(multiLangTest);
         assertAll(() -> assertTrue(facts.isPresent(), "Should have facts"),
                 () -> assertEquals(7, facts.get().size(), "Should have lots of facts"));
@@ -250,7 +262,10 @@ public class TrestleParserTest {
     }
 
     @Test
-    public void testObjectConstructor() throws MissingConstructorException {
+    public void testObjectConstructor() throws TrestleClassException {
+
+        cr.registerClass(TestClasses.GAULMethodTest.class);
+        cr.registerClass(ExpandedGAULTests.class);
 
         List<OWLDataPropertyAssertionAxiom> testProperties = new ArrayList<>();
         List<TemporalObject> testTemporals = new ArrayList<>();
@@ -303,7 +318,6 @@ public class TrestleParserTest {
 ////                inputClasses.add(property.get)
 //            });
 //        }
-
 
 
         final ConstructorArguments constructorArguments = new ConstructorArguments();
