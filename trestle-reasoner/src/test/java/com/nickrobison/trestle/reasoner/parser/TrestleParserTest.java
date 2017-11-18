@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Created by nrobison on 6/28/16.
  */
-@SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "unchecked"})
+@SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "unchecked", "WeakerAccess"})
 public class TrestleParserTest {
 
     public TrestleParserTest() {
@@ -386,7 +386,7 @@ public class TrestleParserTest {
     }
 
     @DatasetClass(name = "GAUL_Test")
-    protected static class ExpandedGAULTests {
+    public static class ExpandedGAULTests {
 
         public int adm0_code;
         @IndividualIdentifier

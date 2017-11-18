@@ -21,12 +21,12 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Created by nrobison on 7/26/16.
  */
-@SuppressWarnings({"initialization"})
+@SuppressWarnings({"initialization", "WeakerAccess"})
 public class ClassRegisterTest {
 
     private static EmptyTest eTest;
     private static FullTest fTest;
-    private static ExtraMembers xTest;
+    private static ExtraID xTest;
     private static SpatialMembers sTest;
     private static PassingTemporalTest pTest;
     private static FailingTemporalTest ftTest;
@@ -35,18 +35,19 @@ public class ClassRegisterTest {
     private static Class<? extends SpatialMembers> sClass;
     private static Class<? extends FullTest> fClass;
     private static Class<? extends EmptyTest> eClass;
-    private static Class<? extends ExtraMembers> xClass;
+    private static Class<? extends ExtraID> xClass;
     private static Class<? extends PassingTemporalTest> pClass;
     private static Class<? extends FailingTemporalTest> ftClass;
     private static Class<? extends LanguageTest> lClass;
     private static Class<? extends FailingLanguageTest> flClass;
     private static final Logger logger = LoggerFactory.getLogger(ClassRegisterTest.class);
+    private static IClassRegister cr;
 
     @BeforeAll
     public static void setup() {
         fTest = new FullTest();
         eTest = new EmptyTest();
-        xTest = new ExtraMembers();
+        xTest = new ExtraID();
         sTest = new SpatialMembers();
         pTest = new PassingTemporalTest(LocalDate.now(), LocalDate.now());
         ftTest = new FailingTemporalTest(LocalDateTime.now(), LocalDateTime.now());
@@ -62,87 +63,68 @@ public class ClassRegisterTest {
         ftClass = ftTest.getClass();
         lClass = lTest.getClass();
         flClass = flTest.getClass();
+
+        cr = (IClassRegister) ClojureParserProvider.getParser();
+    }
+
+    @Test
+    public void testAccess() {
+//        Private class
+//        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(PrivateClassTest.class));
+//        assertAll(() -> assertEquals(INVALID, invalidClassException.getProblemState(), "Should have problem with class"),
+//                () -> assertEquals("Class", invalidClassException.getMember(), "Should have a problem with the class"));
+
+//        Public class, private constructor
+        final InvalidClassException invalidConstructor = assertThrows(InvalidClassException.class, () -> cr.registerClass(PrivateConstructorTest.class));
+        assertAll(() -> assertEquals(INVALID, invalidConstructor.getProblemState(), "Should have problem with constructor"),
+                () -> assertEquals("Constructor", invalidConstructor.getMember(), "Should have a problem with the constructor"));
     }
 
     @Test
     public void testIdentifier() {
-        try {
-            ClassRegister.checkIndividualIdentifier(fClass);
-        } catch (InvalidClassException e) {
-            logger.error("Invalid exception thrown", e);
-            fail("Should not throw exception");
-        }
 
-        InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> ClassRegister.checkIndividualIdentifier(eClass));
+        InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(eClass));
         assertEquals(MISSING, invalidClassException.getProblemState(), "Wrong problem state");
 
-        invalidClassException = assertThrows(InvalidClassException.class, () -> ClassRegister.checkIndividualIdentifier(xClass));
+        invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(xClass));
         assertEquals(EXCESS, invalidClassException.getProblemState(), "Wrong problem state");
     }
 
     @Test
     public void testName() {
 
-        try {
-            ClassRegister.checkForClassName(fClass);
-        } catch (InvalidClassException e) {
-            fail("Should not throw exception");
-        }
-
-        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> ClassRegister.checkForClassName(eClass));
+        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(eClass));
         assertEquals(MISSING, invalidClassException.getProblemState(), "Wrong problem state");
     }
 
     @Test
     public void testConstructor() {
 
-        try {
-            ClassRegister.checkForConstructor(fClass);
-        } catch (TrestleClassException e) {
-            fail("Should not throw exception");
-        }
 
-        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> ClassRegister.checkForConstructor(eClass));
+//        Check for too many constructors
+        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(ExcessConstructorTest.class));
         assertEquals(EXCESS, invalidClassException.getProblemState(), "Wrong problem state");
-
-        try {
-            ClassRegister.checkForConstructor(xClass);
-        } catch (TrestleClassException e) {
-            fail("Should not throw exception");
-        }
 
     }
 
     @Test
     public void testSpatial() {
-        try {
-            ClassRegister.checkForSpatial(fClass);
-        } catch (TrestleClassException e) {
-            e.printStackTrace();
-            fail("Should not throw exception");
-        }
 
-        InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> ClassRegister.checkForSpatial(xClass));
+        InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(ExtraSpatial.class));
         assertEquals(EXCESS, invalidClassException.getProblemState(), "Should have EXCESS problem state");
 
-        invalidClassException = assertThrows(InvalidClassException.class, () -> ClassRegister.checkForSpatial(sClass));
+        invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(sClass));
         assertEquals(MISSING, invalidClassException.getProblemState(), "Should be missing the spatial argument in the constructor");
     }
 
     @Test
     public void testTemporal() {
-        try {
-            ClassRegister.checkForTemporals(pClass);
-        } catch (TrestleClassException e) {
-            e.printStackTrace();
-            fail("Should not throw exception");
-        }
 
-        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> ClassRegister.checkForTemporals(ftClass));
+        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(ftClass));
         assertEquals(EXCESS, invalidClassException.getProblemState(), "Should have excess problem state");
 
         try {
-            ClassRegister.checkForTemporals(TimeZoneParsingTest.class);
+            cr.registerClass(TimeZoneParsingTest.class);
         } catch (TrestleClassException e) {
             e.printStackTrace();
             fail("Should not throw exception");
@@ -151,14 +133,8 @@ public class ClassRegisterTest {
 
     @Test
     public void testLanguage() {
-        try {
-            ClassRegister.checkForLanguage(lClass);
-        } catch (TrestleClassException e) {
-            e.printStackTrace();
-            fail("Should not throw exception");
-        }
 
-        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> ClassRegister.checkForLanguage(flClass));
+        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(flClass));
         assertEquals(INVALID, invalidClassException.getProblemState());
     }
 
@@ -182,37 +158,60 @@ public class ClassRegisterTest {
         }
     }
 
-    private static class FailingTemporalTest {
+
+    private static class PrivateClassTest {
+
+        PrivateClassTest() {
+//            Not used
+        }
+    }
+
+    @DatasetClass(name = "test")
+    public static class PrivateConstructorTest {
+
+        private final String test;
+
+        private PrivateConstructorTest(String test) {
+            this.test = test;
+        }
+
+    }
+
+    @DatasetClass(name = "test")
+    public static class FailingTemporalTest {
 
         @DefaultTemporal(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
         public LocalDateTime startDate;
         @StartTemporal
         public LocalDateTime endDate;
 
-        FailingTemporalTest(LocalDateTime startDate, LocalDateTime endDate) {
+        public FailingTemporalTest(LocalDateTime startDate, LocalDateTime endDate) {
             this.startDate = startDate;
             this.endDate = endDate;
         }
     }
 
-    private static class TimeZoneParsingTest {
+    public static class TimeZoneParsingTest {
         @DefaultTemporal(timeZone = "America/Los_Angeles", type = TemporalType.POINT, duration = 0, unit = ChronoUnit.YEARS)
         public LocalDate defaultDate;
 
-        TimeZoneParsingTest(LocalDate defaultDate) {
+        public TimeZoneParsingTest(LocalDate defaultDate) {
             this.defaultDate = defaultDate;
         }
     }
 
 
     @SuppressWarnings("UnusedParameters")
-    private static class EmptyTest {
+    @DatasetClass(name = "test")
+    public static class EmptyTest {
         public String thing = "nope";
 
         EmptyTest() {
+//            Not used
         }
 
-        EmptyTest(String test1) {
+        @TrestleCreator
+        public EmptyTest(String test1) {
             this.thing = test1;
         }
 
@@ -221,8 +220,26 @@ public class ClassRegisterTest {
         }
     }
 
+    @DatasetClass(name = "test")
+    public static class ExcessConstructorTest {
+        public String thing = "nope";
+
+        ExcessConstructorTest() {
+//            Not used
+        }
+
+        public ExcessConstructorTest(String test1) {
+            this.thing = test1;
+        }
+
+        public ExcessConstructorTest(String test1, String test2) {
+            this.thing = test2;
+        }
+    }
+
+
     @DatasetClass(name = "ready")
-    private static class FullTest {
+    public static class FullTest {
         @IndividualIdentifier
         public String thing;
         @Spatial(name = "wktString")
@@ -234,23 +251,24 @@ public class ClassRegisterTest {
         }
 
         @TrestleCreator
-        FullTest(String thing, String wktString) {
+        public FullTest(String thing, String wktString) {
             this.thing = thing;
             this.wkt = wktString;
         }
     }
 
-    private static class ExtraMembers {
+    @DatasetClass(name = "test")
+    public static class ExtraID {
 
         private final String id1;
         private final String id2;
 
-        ExtraMembers() {
+        ExtraID() {
             this.id1 = "hello";
             this.id2 = "hello2";
         }
 
-        ExtraMembers(String id1, String id2) {
+        public ExtraID(String id1, String id2) {
             this.id1 = id1;
             this.id2 = id2;
         }
@@ -266,18 +284,46 @@ public class ClassRegisterTest {
         public String getID2() {
             return this.id2;
         }
-
-
     }
 
-    private static class SpatialMembers {
+    @DatasetClass(name = "test")
+    public static class ExtraSpatial {
+
+        private final String id1;
+        private final String id2;
+        @IndividualIdentifier
+        public final String id = "testID";
+
+        ExtraSpatial() {
+            this.id1 = "hello";
+            this.id2 = "hello2";
+        }
+
+        public ExtraSpatial(String id1, String id2) {
+            this.id1 = id1;
+            this.id2 = id2;
+        }
+
+        @Spatial
+        public String getID1() {
+            return this.id1;
+        }
+
+        @Spatial
+        public String getID2() {
+            return this.id2;
+        }
+    }
+
+    @DatasetClass(name = "test")
+    public static class SpatialMembers {
         private final String wkt;
 
         SpatialMembers() {
             this.wkt = "testWKT";
         }
 
-        SpatialMembers(String wkt) {
+        public SpatialMembers(String wkt) {
             this.wkt = wkt;
         }
 

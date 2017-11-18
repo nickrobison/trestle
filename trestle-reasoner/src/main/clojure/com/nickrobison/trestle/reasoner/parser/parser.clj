@@ -19,25 +19,35 @@
   (:use clj-fuzzy.metrics))
 
 ; Class related helpers
-(defn find-matching-constructor
-  "Find first constructor that matches the given predicate"
+(defn find-matching-constructors
+  "Find constructors that match the given predicate
+  If no constructors are found, returns nil"
   [^Class clazz predicate]
-  (->> (.getDeclaredConstructors clazz)
-       (filter predicate)
-       (first)))
+  (let [constructors (->> (.getDeclaredConstructors clazz)
+                          (filter predicate))]
+    ;If we don't have any constructors, return nil
+    (if (= (count constructors) 0)
+      nil
+      constructors)))
 
 (defn get-constructor
   "Get the TrestleConstructor for the provided class"
   [clazz]
   ; Look for one that's annotated with TrestleCreator
-  (if-let [constructor (find-matching-constructor
+  (if-let [constructor (find-matching-constructors
                          clazz
                          pred/trestle-creator?)]
-    constructor
+    ; If we don't have 0 or 1 constructors, throw an exception
+    (if (not (= (count constructor) 1))
+      (throw (InvalidClassException. ^Class clazz InvalidClassException$State/EXCESS "Constructor"))
+      (first constructor))
     ; If we don't have one, look for the first multi-arg constructor
-    (if-let [no-arg-constructor (find-matching-constructor clazz
-                                                    pred/multi-arg-constructor?)]
-      no-arg-constructor
+    (if-let [no-arg-constructor (find-matching-constructors clazz
+                                                            pred/multi-arg-constructor?)]
+      ; If we don't have 0 or 1 constructors, throw an exception
+      (if (not (= (count no-arg-constructor) 1))
+        (throw (InvalidClassException. ^Class clazz InvalidClassException$State/EXCESS "Constructor"))
+        (first no-arg-constructor))
       ; Throw an exception if we can't find the correct constructor
       (throw (MissingConstructorException. "Cannot find TrestleCreator or multi-arg constructor")))))
 
@@ -59,10 +69,13 @@
   "Build constructor map"
   [clazz]
   (let [constructor (get-constructor clazz)]
-    {
-     :handle    (m/make-handle constructor)
-     :arguments (build-constructor-args constructor)
-     }))
+    ; If the constructor is not public, throw an exception
+    (if (pred/public? constructor)
+      {
+       :handle    (m/make-handle constructor)
+       :arguments (build-constructor-args constructor)
+       }
+      (throw (InvalidClassException. ^Class clazz "Constructor" "Must be public")))))
 
 (defn fuzzy-match-args
   "If we can't match any of the constructor arguments,
@@ -78,12 +91,13 @@
   "Get the OWL Class name"
   [^Class clazz ^OWLDataFactory df reasonerPrefix]
   (.getOWLClass df
-     (IRI/create reasonerPrefix
-                 (if (.isAnnotationPresent clazz DatasetClass)
-                   (.name ^DatasetClass (.getDeclaredAnnotation clazz DatasetClass))
-                   (throw (InvalidClassException.
-                            (.toString (class DatasetClass))
-                            InvalidClassException$State/MISSING))))))
+                (IRI/create reasonerPrefix
+                            (if (.isAnnotationPresent clazz DatasetClass)
+                              (.name ^DatasetClass (.getDeclaredAnnotation clazz DatasetClass))
+                              (throw (InvalidClassException.
+                                       clazz
+                                       InvalidClassException$State/MISSING
+                                       "OWL Class"))))))
 
 (defn invoker
   "Invoke method handle"
@@ -230,12 +244,6 @@
                      ])
   )
 
-;(defn validate-class-name
-;  [clazz]
-;  (if (pred/hasAnnotation? clazz DatasetClass)
-;    )
-;  )
-
 (defn member-reducer
   "Build the Class Member Map"
   [acc member]
@@ -246,9 +254,19 @@
         type (get member :type)
         ignore (get member :ignore false)]
     (match [type, ignore]
-           [::pred/identifier, true] (assoc acc :identifier member)
-           [::pred/identifier, false] (merge acc {:members (conj members member) :identifier member})
-           [::pred/spatial, _] (merge acc {:members (conj members member) :spatial member})
+           ; If we already have an identifier, throw an exception
+           [::pred/identifier, true] (if (contains? acc :identifier)
+                                       (throw (InvalidClassException.
+                                                "TestClass" InvalidClassException$State/EXCESS "Identifier"))
+                                       (assoc acc :identifier member))
+           [::pred/identifier, false] (if (contains? acc :identifier)
+                                        (throw (InvalidClassException.
+                                                 "TestClass" InvalidClassException$State/EXCESS "Identifier"))
+                                        (merge acc {:members (conj members member) :identifier member}))
+           [::pred/spatial, _] (if (contains? acc :spatial)
+                                 (throw (InvalidClassException.
+                                          "TestClass" InvalidClassException$State/EXCESS "Spatial"))
+                                 (merge acc {:members (conj members member) :spatial member}))
            [::pred/temporal, _] (merge acc {:temporals (conj temporals member)})
            :else (assoc acc :members (conj members member)))))
 
@@ -344,45 +362,27 @@
   (^OWLClass getObjectClass [this ^Object inputObject] (.getObjectClass this (.getClass inputObject)))
   (parseClass ^Object [this ^Class clazz]
     ; Parse input class
-    ;(log/debugf "Parsing %s" clazz)
-    (->> (concat (.getDeclaredFields clazz) (.getDeclaredMethods clazz))
-         ; Filter out non-necessary members
-         (r/filter pred/filter-member)
-         ; Build members
-         (r/map #(build-member % df reasonerPrefix (if (true? multiLangEnabled) defaultLanguageCode nil)))
-         ; Combine everything into a map
-         (r/reduce member-reducer {
-                                   :class-name  (get-class-name
-                                                  clazz df reasonerPrefix)
-                                   :constructor (build-constructor clazz)
-                                   }))
-    ;
-    ;; Check to see if we have the class in the registry
-    ;(if (contains? @classRegistry clazz)
-    ;  (log/spyf :debug "Getting from cache"
-    ;            ; Get the class from the registry atom
-    ;            (get @classRegistry clazz))
-    ;  (log/spyf :debug "Parsing test class"
-    ;            ; Get the class from the newly updated atom
-    ;            (get
-    ;              ; Update the atom with the new class record
-    ;              (swap! classRegistry
-    ;                     assoc
-    ;                     clazz
-    ;                     ; Build the class record
-    ;                     (->> (concat (.getDeclaredFields clazz) (.getDeclaredMethods clazz))
-    ;                          ; Filter out non-necessary members
-    ;                          (r/filter pred/filter-member)
-    ;                          ; Build members
-    ;                          (r/map #(build-member % df reasonerPrefix (if (true? multiLangEnabled) defaultLanguageCode nil)))
-    ;                          ; Combine everything into a map
-    ;                          (r/reduce member-reducer {
-    ;                                                    :class-name  (get-class-name
-    ;                                                                   clazz df reasonerPrefix)
-    ;                                                    :constructor (build-constructor clazz)
-    ;                                                    })))
-    ;              clazz)))
-    )
+    (log/debugf "Parsing %s" clazz)
+    ; If the class is not public, throw an exception
+    (if (pred/public? clazz)
+      ; Ensure it has an Identifier
+      (let [parsedClass (->> (concat (.getDeclaredFields clazz) (.getDeclaredMethods clazz))
+                             ; Filter out non-necessary members
+                             (r/filter pred/filter-member)
+                             ; Build members
+                             (r/map #(build-member % df reasonerPrefix (if (true? multiLangEnabled) defaultLanguageCode nil)))
+                             ; Combine everything into a map
+                             (r/reduce member-reducer {
+                                                       :class-name  (get-class-name
+                                                                      clazz df reasonerPrefix)
+                                                       :java-class  (.getName clazz)
+                                                       :constructor (build-constructor clazz)
+                                                       }))]
+        (if (contains? parsedClass :identifier)
+          parsedClass
+          (throw (InvalidClassException. clazz InvalidClassException$State/MISSING "Identifier"))))
+
+      (throw (InvalidClassException. clazz "Class" "Must be public"))))
 
   (^OWLNamedIndividual getIndividual [this ^Object inputObject]
     (let [parsedClass (.getRegisteredClass this (.getClass inputObject))]

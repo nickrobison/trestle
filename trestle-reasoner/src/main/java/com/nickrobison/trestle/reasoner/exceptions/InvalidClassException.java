@@ -18,6 +18,13 @@ public class InvalidClassException extends TrestleClassException {
     private final State problemState;
     private final @Nullable String member;
 
+    public InvalidClassException(Class<?> clazz, String member, String problem) {
+        super(String.format("%s:%s %s", clazz, member, problem));
+        this.problemState = State.INVALID;
+        this.member = member;
+    }
+
+
     public InvalidClassException(String className, State problemState) {
         super(parseException(className, problemState, null));
         this.problemState = problemState;
