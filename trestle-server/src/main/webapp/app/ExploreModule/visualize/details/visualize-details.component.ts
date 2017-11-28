@@ -64,9 +64,8 @@ export class VisualizeDetailsComponent implements AfterViewInit {
             });
     }
 
-    public displayFn(individualName: string): string {
-        const strings = individualName.split("#");
-        return strings[1];
+    public displayFn(name: string): string {
+        return TrestleIndividual.filterID(name);
     }
 
     public openValueModal(fact: TrestleFact): void {

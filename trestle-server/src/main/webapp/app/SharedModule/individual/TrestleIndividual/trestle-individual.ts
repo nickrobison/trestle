@@ -191,9 +191,8 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
     public static filterID(id: string): string {
         const suffix = TrestleIndividual.extractSuffix(id);
         const idStrings = suffix.split(":");
-        // const strings = id.split("#");
-        // const idStrings = strings[1].split(":");
-        return idStrings[0] + ":" + idStrings[1];
+        // return idStrings[0] + ":" + idStrings[1];
+        return idStrings[0];
     }
 
     /**
@@ -205,8 +204,6 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
         // Manually reset regex match, because Javascript
         TrestleIndividual.hostnameRegex.lastIndex = 0;
         return id.replace(TrestleIndividual.hostnameRegex, "");
-        // const strings = id.split("#");
-        // return strings[1];
     }
 
     /**

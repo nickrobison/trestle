@@ -547,7 +547,6 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     };
 
     private moveHandler = () => {
-        console.debug("New bounds", this.map.getBounds());
         this.mapBounds.emit(this.map.getBounds());
     };
 

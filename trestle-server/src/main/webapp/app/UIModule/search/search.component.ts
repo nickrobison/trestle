@@ -29,8 +29,6 @@ export class SearchComponent implements OnInit {
 
     public displayFn(name: string): string {
         return TrestleIndividual.extractSuffix(name);
-        // const strings = individualName.split("#");
-        // return strings[1];
     }
 
     public selectHandler = (event: MatAutocompleteSelectedEvent): void => {
