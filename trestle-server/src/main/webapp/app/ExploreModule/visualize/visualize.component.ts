@@ -1,9 +1,8 @@
 /**
  * Created by nrobison on 3/7/17.
  */
-import {Component, ViewEncapsulation} from "@angular/core";
-import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
-import {Router} from "@angular/router";
+import { Component, ViewEncapsulation } from "@angular/core";
+import { Router } from "@angular/router";
 
 @Component({
     selector: "visualize",
@@ -14,17 +13,11 @@ import {Router} from "@angular/router";
 
 export class VisualizeComponent {
 
-    constructor(private router: Router) { }
+    constructor(private router: Router) {
+    }
 
     public selectedOption(value: string) {
-        const split = value.split("#");
-        console.debug("Split value:", split);
-        if (split.length > 1) {
-            this.router.navigate(["/explore/visualize", split[1]], {queryParams:
-                {root: split[0]}});
-        } else {
-            this.router.navigate(["/explore/visualize", split[0]]);
-        }
-
+        // Using a static method from TrestleIndividual will cause Angular to explode, so don't do it, even though it seems to make perfect sense
+        this.router.navigate(["/explore/visualize", value]);
     }
 }

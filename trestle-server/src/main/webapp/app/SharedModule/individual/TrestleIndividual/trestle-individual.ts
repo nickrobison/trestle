@@ -17,11 +17,15 @@ export interface ITrestleIndividual {
 
 export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
 
+    private static suffixRegex = /.*[/#]([^/#]*)$/g;
+    private static prefixRegex = /.*[\/|#]/g;
+    private static hostnameRegex = /\w+:\/\/[^\/]*/g;
     private id: string;
     private facts: Map<string, TrestleFact> = new Map();
     private relations: TrestleRelation[] = [];
     private events: TrestleEvent[] = [];
     private existsTemporal: TrestleTemporal;
+
 
     constructor(individual: ITrestleIndividual) {
         this.id = individual.individualID;
@@ -179,9 +183,16 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
         return returnValue;
     }
 
+    /**
+     * Remove dates from ID
+     * @param {string} id
+     * @returns {string}
+     */
     public static filterID(id: string): string {
-        const strings = id.split("#");
-        const idStrings = strings[1].split(":");
+        const suffix = TrestleIndividual.extractSuffix(id);
+        const idStrings = suffix.split(":");
+        // const strings = id.split("#");
+        // const idStrings = strings[1].split(":");
         return idStrings[0] + ":" + idStrings[1];
     }
 
@@ -191,18 +202,58 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
      * @returns {string}
      */
     public static withoutHostname(id: string): string {
-        const strings = id.split("#");
-        return strings[1];
+        // Manually reset regex match, because Javascript
+        TrestleIndividual.hostnameRegex.lastIndex = 0;
+        return id.replace(TrestleIndividual.hostnameRegex, "");
+        // const strings = id.split("#");
+        // return strings[1];
     }
 
     /**
      * Get the URI hostname
+     * Returns an empty string if nothing matches
      * @param {string} id
      * @returns {string}
      */
     public static extractHostname(id: string): string {
-        const strings = id.split("#");
-        return strings[0];
+        // Manually reset regex match, because Javascript
+        TrestleIndividual.hostnameRegex.lastIndex = 0;
+        const matches = id.match(TrestleIndividual.hostnameRegex);
+        if (matches !== null) {
+            return matches[0];
+        }
+        return "";
+    }
+
+
+    /**
+     * Extracts the suffix from the individual, or returns an empty string
+     * @param {string} id
+     * @returns {string}
+     */
+    public static extractSuffix(id: string): string {
+        // Manually reset regex match, because Javascript
+        TrestleIndividual.suffixRegex.lastIndex = 0;
+        const matches = TrestleIndividual.suffixRegex.exec(id);
+        if (matches !== null) {
+            return matches[1];
+        }
+        return "";
+    }
+
+    /**
+     * Extracts the prefix from the individual, or returns an empty string
+     * @param {string} id
+     * @returns {string}
+     */
+    public static extractPrefix(id: string): string {
+        // Manually reset regex match, because Javascript
+        TrestleIndividual.prefixRegex.lastIndex = 0;
+        const matches = id.match(TrestleIndividual.prefixRegex);
+        if (matches !== null) {
+            return matches[0];
+        }
+        return "";
     }
 
     /**
