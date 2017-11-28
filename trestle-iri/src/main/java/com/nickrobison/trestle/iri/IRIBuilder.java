@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.iri;
 
-import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.iri.exceptions.IRIParseException;
 import com.nickrobison.trestle.iri.exceptions.IRIVersionException;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -33,6 +32,7 @@ public class IRIBuilder {
      * Given an {@link IRI}, parse it and return the appropriate {@link TrestleIRI}.
      * Throws an {@link IRIParseException} if the {@link IRI} doesn't represent a correctly formed {@link TrestleIRI}
      * Throws an {@link IRIVersionException} if the provided {@link IRI} passes a version that is unsupported by the current TrestleIRI implementation
+     *
      * @param encodedIRI - {@link IRI} of encoded {@link TrestleIRI}
      * @return - {@link TrestleIRI}
      */
@@ -42,14 +42,15 @@ public class IRIBuilder {
         switch (iriVersion) {
             case V1:
                 return V1IRIBuilder.extractFromIRI(encodedIRI);
-                default:
-                    throw new IRIVersionException(iriVersion);
+            default:
+                throw new IRIVersionException(iriVersion);
         }
     }
 
     /**
      * Extract ObjectID from IRI
      * Throws an {@link IRIVersionException} if the provided {@link IRI} passes a version that is unsupported by the current TrestleIRI implementation
+     *
      * @param encodedIRI - IRI to decode
      * @return - String of ObjectID
      */
@@ -71,6 +72,7 @@ public class IRIBuilder {
      * Extract Fact name from IRI
      * If not fact is specified, returns an empty Optional
      * Throws an {@link IRIVersionException} if the provided {@link IRI} passes a version that is unsupported by the current TrestleIRI implementation
+     *
      * @param encodedIRI - IRI to decode
      * @return - Optional String of Fact name
      */
@@ -93,6 +95,7 @@ public class IRIBuilder {
      * If an object fact is specified, the temporal refers to the valid point of that temporal
      * Returned temporal is specified at UTC
      * Throws an {@link IRIVersionException} if the provided {@link IRI} passes a version that is unsupported by the current TrestleIRI implementation
+     *
      * @param encodedIRI - IRI to decode
      * @return - Optional OffsetDateTime of object/fact temporal
      */
@@ -115,6 +118,7 @@ public class IRIBuilder {
      * If an object fact is specified, the temporal refers to the database point of that temporal
      * Returned temporal is specified at UTC
      * Throws an {@link IRIVersionException} if the provided {@link IRI} passes a version that is unsupported by the current TrestleIRI implementation
+     *
      * @param encodedIRI - IRI to decode
      * @return - Optional OffsetDateTime of object/fact database temporal
      */

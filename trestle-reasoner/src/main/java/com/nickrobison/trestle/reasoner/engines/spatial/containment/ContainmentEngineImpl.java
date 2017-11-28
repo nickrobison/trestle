@@ -1,9 +1,7 @@
 package com.nickrobison.trestle.reasoner.engines.spatial.containment;
 
-import com.esri.core.geometry.OperatorExportToWkb;
 import com.esri.core.geometry.SpatialReference;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialUtils;
-import com.nickrobison.trestle.reasoner.parser.SpatialParser;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.PrecisionModel;
