@@ -47,6 +47,10 @@ class V1IRIBuilder {
         final Optional<String> objectFact = getObjectFact(iriString);
         final Optional<OffsetDateTime> objectTemporal = getObjectTemporal(iriString);
         final Optional<OffsetDateTime> databaseTemporal = getDatabaseTemporal(iriString);
+//        If we don't have any properties, throw a parse exception
+        if (!objectFact.isPresent() && !objectTemporal.isPresent() && !databaseTemporal.isPresent()) {
+            throw new IRIParseException(encodedIRI);
+        }
         return new TrestleIRIV1(IRIVersion.V1, prefix, objectID, objectFact.orElse(""), objectTemporal.orElse(null), databaseTemporal.orElse(null));
     }
 

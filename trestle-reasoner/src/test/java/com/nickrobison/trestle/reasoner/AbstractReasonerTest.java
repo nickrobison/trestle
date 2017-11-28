@@ -15,7 +15,7 @@ import org.slf4j.MDC;
 
 @SuppressWarnings({"initialization.fields.uninitialized"})
 public abstract class AbstractReasonerTest {
-    protected static final String OVERRIDE_PREFIX = "http://nickrobison.com/test-owl#";
+    protected static final String OVERRIDE_PREFIX = "http://nickrobison.com/test-owl/";
     protected TrestleParser tp;
     protected TrestleReasonerImpl reasoner;
     protected OWLDataFactory df;

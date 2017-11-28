@@ -3,6 +3,7 @@ import {MatAutocompleteSelectedEvent} from "@angular/material/autocomplete";
 import {IndividualService} from "../../SharedModule/individual/individual.service";
 import {Observable} from "rxjs/Observable";
 import {FormControl} from "@angular/forms";
+import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
 
 @Component({
     selector: "search",
@@ -26,9 +27,10 @@ export class SearchComponent implements OnInit {
             .switchMap((name) => this.is.searchForIndividual(name));
     }
 
-    public displayFn(individualName: string): string {
-        const strings = individualName.split("#");
-        return strings[1];
+    public displayFn(name: string): string {
+        return TrestleIndividual.extractSuffix(name);
+        // const strings = individualName.split("#");
+        // return strings[1];
     }
 
     public selectHandler = (event: MatAutocompleteSelectedEvent): void => {

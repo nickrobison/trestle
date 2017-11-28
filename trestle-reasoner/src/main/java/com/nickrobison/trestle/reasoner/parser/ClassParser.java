@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.reasoner.parser;
 
+import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.reasoner.annotations.*;
 import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
@@ -35,7 +36,7 @@ public class ClassParser {
     }
 
     private static final Logger logger = LoggerFactory.getLogger(ClassParser.class);
-//    TODO(nrobison): Move all of this into a non-static context
+    //    TODO(nrobison): Move all of this into a non-static context
     static final OWLDataFactory dfStatic = OWLManager.getOWLDataFactory();
 
     private final OWLDataFactory df;
@@ -57,7 +58,7 @@ public class ClassParser {
 
     public @Nullable String getDefaultLanguageCode() {
         if (this.defaultLanguageCode.equals("")) {
-             return null;
+            return null;
         }
         return this.defaultLanguageCode;
     }
@@ -176,6 +177,7 @@ public class ClassParser {
 
     /**
      * Extract the OWLDataPropertyAssertionAxiom from a given object
+     *
      * @param inputObject - Object to parse
      * @return - Optional List of OWLDataPropertyAssertionAxioms
      */
@@ -185,7 +187,8 @@ public class ClassParser {
 
     /**
      * Extract the OWLDataPropertyAssertionAxiom from a given object
-     * @param inputObject - Object to parse
+     *
+     * @param inputObject   - Object to parse
      * @param filterSpatial - Boolean to determine whether or not to filter out the spatial annotations
      * @return - Optional List of OWLDataPropertyAssertionAxioms
      */
@@ -233,26 +236,26 @@ public class ClassParser {
                     final Optional<OWLLiteral> owlLiteral = parseOWLLiteralFromGeom(fieldValue);
                     owlLiteral.ifPresent(owlLiteral1 -> axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, owlLiteral1)));
                 } else {
-                        final IRI iri = IRI.create(ReasonerPrefix, classField.getName());
-                        final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
-                        Object fieldValue = null;
-                        try {
-                            fieldValue = classField.get(inputObject);
-                        } catch (IllegalAccessException e) {
-                            logger.warn("Cannot access field {}", classField.getName(), e);
-                            continue;
-                        }
-                        if (fieldValue != null) {
+                    final IRI iri = IRI.create(ReasonerPrefix, classField.getName());
+                    final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
+                    Object fieldValue = null;
+                    try {
+                        fieldValue = classField.get(inputObject);
+                    } catch (IllegalAccessException e) {
+                        logger.warn("Cannot access field {}", classField.getName(), e);
+                        continue;
+                    }
+                    if (fieldValue != null) {
 //                            If the field type is a String, we need to handle any multi-lang modifications
-                                final OWLLiteral owlLiteral = fieldValueToMultiLangString(fieldValue,
-                                        classField,
-                                        isMultiLangEnabled(),
-                                        getDefaultLanguageCode())
-                                        .orElse(df.getOWLLiteral(fieldValue.toString(),
-                                                TypeConverter.getDatatypeFromJavaClass(classField.getType())));
+                        final OWLLiteral owlLiteral = fieldValueToMultiLangString(fieldValue,
+                                classField,
+                                isMultiLangEnabled(),
+                                getDefaultLanguageCode())
+                                .orElse(df.getOWLLiteral(fieldValue.toString(),
+                                        TypeConverter.getDatatypeFromJavaClass(classField.getType())));
 
-                            axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, owlLiteral));
-                        }
+                        axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, owlLiteral));
+                    }
                 }
             }
         }
@@ -318,6 +321,7 @@ public class ClassParser {
 
     /**
      * Extract the spatial property a given object
+     *
      * @param inputObject - Object to parse for spatial property
      * @return - Optional of OWLDataPropertyAssertionAxiom representing spatial property
      */
@@ -369,7 +373,7 @@ public class ClassParser {
         String name = classMethod.getName();
 //        remove get and lowercase the first letter
         if (name.startsWith("get")) {
-            final String firstLetter = name.substring(3,4).toLowerCase();
+            final String firstLetter = name.substring(3, 4).toLowerCase();
             final String restOfLetters = name.substring(4);
             return firstLetter + restOfLetters;
         }
@@ -380,7 +384,8 @@ public class ClassParser {
     /**
      * Match a given String, representing the short-form of a OWLDataProperty IRI with the appropriate class member
      * If the languageCode param is not null, the method attempts to match the correct data property and language pair.
-     * @param clazz - Java class to parse
+     *
+     * @param clazz       - Java class to parse
      * @param classMember - IRI short-form to match against class
      * @param languageTag - Nullable languageCode determining multi-lang String support required
      * @return - String name of matching class member
@@ -494,7 +499,8 @@ public class ClassParser {
 
     /**
      * Match a given String, representing the short-form of a OWLDataProperty IRI with the appropriate class member
-     * @param clazz - Java class to parse
+     *
+     * @param clazz       - Java class to parse
      * @param classMember - IRI short-form to match against class
      * @return - String name of matching class member
      */
@@ -567,7 +573,7 @@ public class ClassParser {
                     .findFirst();
 
             if (!fieldArgName.orElse("").equals("")) {
-                return  fieldArgName.orElse("");
+                return fieldArgName.orElse("");
             }
 
 //            TODO(nrobison): I think these things can go away.
@@ -678,19 +684,14 @@ public class ClassParser {
 
     /**
      * Get the datatype of the fact represented in the given string
-     * @param clazz - Class to parse
+     *
+     * @param clazz    - Class to parse
      * @param factName - String name of fact
      * @return - Optional Class of return datatype
      */
     public Optional<Class<@NonNull ?>> getFactDatatype(Class<?> clazz, String factName) {
 //        Split String to get the actual fact name
-        final String name;
-        final String[] splitName = factName.split("#");
-        if (splitName.length < 2) {
-            name = factName;
-        } else {
-            name = splitName[1];
-        }
+        final String name = IRIUtils.extractTrestleIndividualName(factName);
         final String classMember;
         try {
             classMember = ClassParser.matchWithClassMember(clazz, name);
@@ -722,7 +723,8 @@ public class ClassParser {
     /**
      * Get the correct Fact {@link IRI} from a given string
      * Gets the correct IRI prefix to handle things like Spatial members and user defined types
-     * @param clazz - Java class to parse
+     *
+     * @param clazz    - Java class to parse
      * @param factName - Name of fact to build IRI for
      * @return - Optional {@link IRI} of fact
      */
@@ -791,6 +793,7 @@ public class ClassParser {
 
     /**
      * Parse the name of a given field and return either the name, or the one declared in the annotation
+     *
      * @param field - Field to parse name from
      * @return - String of parsed field name
      */
@@ -839,6 +842,7 @@ public class ClassParser {
 
     /**
      * Parse the name of a given method and return either the filtered name, or the one declared in the annotation
+     *
      * @param method - Method to parse name from
      * @return - String of filtered method name
      */

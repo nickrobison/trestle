@@ -89,7 +89,7 @@ public class GAULIntegratorTests {
         userName = "";
         password = "";
         ontologyPath = "file:///Users/nickrobison/Developer/git/dissertation/trestle-ontology/trestle.owl";
-        ontologyPrefix = "http://nickrobison.com/test/hadoop.owl#";
+        ontologyPrefix = "http://nickrobison.com/test/gaul/";
         ontologyName = "hadoop_gaul_expanded_equality";
         conf.set("reasoner.db.connection", connectionString);
         conf.set("reasoner.db.username", userName);

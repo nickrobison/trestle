@@ -10,7 +10,6 @@ import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.LambdaUtils;
 import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
-import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.CaffeineStatistics;
@@ -38,7 +37,6 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.query.QueryEvaluationException;
 import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLIndividual;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +47,6 @@ import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -196,32 +193,32 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
 //            final CompletableFuture<List<TrestleIndividual>> sequencedFuture = LambdaUtils.sequenceCompletableFutures(individualFutures);
 
 //
-        final CompletableFuture<List<TrestleIndividual>> individualList = CompletableFuture.supplyAsync(() -> {
-            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-            try {
-                return this.ontology.executeSPARQLResults(intersectQuery);
-            } finally {
-                this.ontology.returnAndCommitTransaction(tt);
-            }
-        }, this.spatialPool)
+            final CompletableFuture<List<TrestleIndividual>> individualList = CompletableFuture.supplyAsync(() -> {
+                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                try {
+                    return this.ontology.executeSPARQLResults(intersectQuery);
+                } finally {
+                    this.ontology.returnAndCommitTransaction(tt);
+                }
+            }, this.spatialPool)
 //                From the results, get all the individuals
-                .thenApply(trestleResultSet -> trestleResultSet
-                        .getResults()
-                        .stream()
-                        .map(result -> result.unwrapIndividual("m"))
-                        .collect(Collectors.toSet()))
-                .thenApply(intersectedIndividuals -> intersectedIndividuals
-                        .stream()
-                        .map(individual -> CompletableFuture.supplyAsync(() -> {
-                            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-                            try {
-                                return this.individualEngine.getTrestleIndividual(individual.asOWLNamedIndividual(), tt);
-                            } finally {
-                                this.ontology.returnAndCommitTransaction(tt);
-                            }
-                        }))
-                        .collect(Collectors.toList()))
-                .thenCompose(LambdaUtils::sequenceCompletableFutures);
+                    .thenApply(trestleResultSet -> trestleResultSet
+                            .getResults()
+                            .stream()
+                            .map(result -> result.unwrapIndividual("m"))
+                            .collect(Collectors.toSet()))
+                    .thenApply(intersectedIndividuals -> intersectedIndividuals
+                            .stream()
+                            .map(individual -> CompletableFuture.supplyAsync(() -> {
+                                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                                try {
+                                    return this.individualEngine.getTrestleIndividual(individual.asOWLNamedIndividual(), tt);
+                                } finally {
+                                    this.ontology.returnAndCommitTransaction(tt);
+                                }
+                            }))
+                            .collect(Collectors.toList()))
+                    .thenCompose(LambdaUtils::sequenceCompletableFutures);
 
 
             return Optional.of(individualList.get());

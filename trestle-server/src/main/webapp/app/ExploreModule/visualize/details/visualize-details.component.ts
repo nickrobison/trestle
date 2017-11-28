@@ -55,9 +55,9 @@ export class VisualizeDetailsComponent implements AfterViewInit {
             });
         this.routeObservable
             .subscribe((combined) => {
-                console.debug("has params: %s %s", combined.route, combined.query);
+                console.debug("has params: %O %O", combined.route, combined.query);
                 if (combined.query["root"]) {
-                    this.loadIndividual(combined.query["root"] + "#" + combined.route["id"]);
+                    this.loadIndividual(combined.query["root"] + combined.route["id"]);
                 } else {
                     this.loadIndividual(combined.route["id"]);
                 }
