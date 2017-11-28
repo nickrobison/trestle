@@ -38,8 +38,6 @@ public class IRIBuilder {
      */
     public static TrestleIRI parseIRIToTrestleIRI(IRI encodedIRI) {
         final IRIVersion iriVersion = getIRIVersion(extractTrestleIndividualName(encodedIRI));
-        final String objectID = getObjectID(encodedIRI);
-        final String prefix = IRIUtils.extractPrefix(encodedIRI);
         getObjectFact(encodedIRI);
         switch (iriVersion) {
             case V1:
