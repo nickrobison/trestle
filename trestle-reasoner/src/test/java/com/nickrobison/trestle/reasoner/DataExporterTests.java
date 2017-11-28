@@ -88,7 +88,7 @@ public class DataExporterTests extends AbstractReasonerTest {
         reasoner.getUnderlyingOntology().runInference();
 
 //        Verify GeoJSON
-        final File file = reasoner.exportDataSetObjects(SimpleGAULObject.class, ids, LocalDate.of(1993, 1, 1), null, ITrestleExporter.DataType.KML);
+        final File file = reasoner.exportDataSetObjects(SimpleGAULObject.class, ids, LocalDate.of(1993, 1, 1), null, ITrestleExporter.DataType.GEOJSON);
         assertTrue(file.length() > 0, "Should have non-zero length");
 
 //        Verify that we actually have something approaching the correct number of values
