@@ -8,6 +8,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,6 +95,7 @@ public class PointLeaf<Value> extends LeafNode<Value> {
                 .findAny();
         if (matchingKey.isPresent()) {
             this.values.remove(matchingKey.get());
+            this.records--;
             return true;
         }
         return false;
@@ -129,5 +132,16 @@ public class PointLeaf<Value> extends LeafNode<Value> {
     @Override
     double calculateFragmentation() {
         return 0;
+    }
+
+    @Override
+    public String toString() {
+        return "PointLeaf{" +
+                "binaryID='" + binaryID + '\'' +
+                ", records=" + records +
+                ", start=" + Instant.ofEpochMilli(Double.valueOf(leafMetadata.getDouble(1)).longValue()).atOffset(ZoneOffset.UTC) +
+                ", end=" + Instant.ofEpochMilli(Double.valueOf(leafMetadata.getDouble(2)).longValue()).atOffset(ZoneOffset.UTC) +
+                ", direction=" + leafMetadata.getShort(3) +
+                '}';
     }
 }

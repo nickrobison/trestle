@@ -8,6 +8,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -125,7 +127,7 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
 
                 lowerChildLeaf = new SplittableLeaf<>(leafID << 1, lowerChild, this.blockSize);
                 higherChildLeaf = new SplittableLeaf<>((leafID << 1) | 1, higherChild, this.blockSize);
-                logger.trace("Splitting {} into {} and {}", this.getBinaryStringID(), lowerChildLeaf.getBinaryStringID(), lowerChildLeaf.getBinaryStringID());
+                logger.trace("Splitting {} into {} and {}", this.getBinaryStringID(), lowerChildLeaf.getBinaryStringID(), higherChildLeaf.getBinaryStringID());
             }
             final LeafSplit leafSplit = new LeafSplit(this.leafID, lowerChildLeaf, higherChildLeaf);
 //            Divide values into children, by testing to see if they belong to the lower child
@@ -134,11 +136,13 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
                 FastTuple key = keys[i];
                 if (key != null) {
                     if (TDTreeHelpers.pointInTriangle(key.getLong(2), key.getLong(3), lowerChildVerticies)) {
+                        logger.trace("Inserting {} into lower child", key);
                         final LeafSplit lowerChildSplit = lowerChildLeaf.insert(key, values[i]);
                         if (lowerChildSplit != null) {
                             leafSplit.lowerSplit = lowerChildSplit;
                         }
                     } else {
+                        logger.trace("Inserting {} into higher child", key);
                         final LeafSplit higherChildSplit = higherChildLeaf.insert(key, values[i]);
                         if (higherChildSplit != null) {
                             leafSplit.higherSplit = higherChildSplit;
@@ -238,5 +242,16 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
             records++;
         }
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return "SplittableLeaf{" +
+                "binaryID='" + binaryID + '\'' +
+                ", records=" + records +
+                ", start=" + Instant.ofEpochMilli(Double.valueOf(leafMetadata.getDouble(1)).longValue()).atOffset(ZoneOffset.UTC) +
+                ", end=" + Instant.ofEpochMilli(Double.valueOf(leafMetadata.getDouble(2)).longValue()).atOffset(ZoneOffset.UTC) +
+                ", direction=" + leafMetadata.getShort(3) +
+                '}';
     }
 }

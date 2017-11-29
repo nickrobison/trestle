@@ -835,7 +835,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         if (individual != null) {
             return individual;
         }
-        logger.debug("Individual is null, continuing");
+        logger.debug("Individual is not in cache, continuing");
 
 //        final Optional<@NonNull T> constructedObject = readTrestleObjectImpl(clazz, individualIRI, validTemporal, databaseTemporal);
         final Optional<TrestleObjectResult<@NonNull T>> constructedObject = readTrestleObjectImpl(clazz, individualIRI, validTemporal, databaseTemporal);
