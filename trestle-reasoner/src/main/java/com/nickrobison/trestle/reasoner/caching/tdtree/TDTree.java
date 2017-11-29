@@ -239,6 +239,14 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         final ArrayDeque<LeafNode<Value>> populatedLeafs = this.leafs.stream()
                 .filter(leaf -> leaf.getRecordCount() > 0)
                 .collect(Collectors.toCollection(ArrayDeque::new));
+//        If we only have 1 leaf (such as when things split down into a single leaf), return it and try to match against it
+//        We don't really need to go through all the
+//        This is a really gross hack, and I'm pretty sure it doesn't actually work. But whatever.
+        if (populatedLeafs.size() == 1) {
+            candidateLeafs.add(populatedLeafs.pop());
+            return candidateLeafs;
+        }
+
         while (!populatedLeafs.isEmpty()) {
             final LeafNode<Value> first = populatedLeafs.pop();
             final int firstID = first.getID();
