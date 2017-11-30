@@ -16,7 +16,9 @@ import { UserModule } from "../UserModule/user.module";
 import { AdminRoutes } from "../admin.routing";
 import { UIModule } from "../UIModule/ui.module";
 import { MaterialModule } from "../MaterialModule/material.module";
-import {SharedModule} from "../SharedModule/shared.module";
+import { SharedModule } from "../SharedModule/shared.module";
+import { IndexComponent } from "./indicies/index.component";
+import { TreeGraphComponent } from "./indicies/tree-graph/tree-graph.component";
 
 @NgModule({
     declarations: [DashboardComponent,
@@ -24,7 +26,9 @@ import {SharedModule} from "../SharedModule/shared.module";
         UsersComponent,
         UserAddDialog,
         MetricsComponent,
-        MetricsGraph],
+        MetricsGraph,
+        IndexComponent,
+        TreeGraphComponent],
     imports: [
         CommonModule,
         FormsModule,

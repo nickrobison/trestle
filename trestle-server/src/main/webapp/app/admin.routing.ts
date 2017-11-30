@@ -1,13 +1,14 @@
 /**
  * Created by nrobison on 6/22/17.
  */
-import {ITrestleRoute} from "./NavigationModule/navigation.module";
-import {DashboardComponent} from "./AdminModule/dashboard/app.dashboard";
-import {LoggedInGuard} from "./UserModule/LoggedInGuard";
-import {PermissionsGuard} from "./UserModule/PermissionsGuard";
-import {Privileges} from "./UserModule/authentication.service";
-import {UsersComponent} from "./AdminModule/users/users.component";
-import {MetricsComponent} from "./AdminModule/metrics/metrics.component";
+import { ITrestleRoute } from "./NavigationModule/navigation.module";
+import { DashboardComponent } from "./AdminModule/dashboard/app.dashboard";
+import { LoggedInGuard } from "./UserModule/LoggedInGuard";
+import { PermissionsGuard } from "./UserModule/PermissionsGuard";
+import { Privileges } from "./UserModule/authentication.service";
+import { UsersComponent } from "./AdminModule/users/users.component";
+import { MetricsComponent } from "./AdminModule/metrics/metrics.component";
+import { IndexComponent } from "./AdminModule/indicies/index.component";
 
 export const AdminRoutes: ITrestleRoute[] = [
     {path: "", redirectTo: "dashboard", pathMatch: "full"},
@@ -29,4 +30,10 @@ export const AdminRoutes: ITrestleRoute[] = [
         canActivate: [LoggedInGuard, PermissionsGuard],
         data: {roles: [Privileges.ADMIN]}
     },
+    {
+        path: "index",
+        component: IndexComponent,
+        canActivate: [LoggedInGuard, PermissionsGuard],
+        data: {roles: [Privileges.DBA]}
+    }
 ];
