@@ -10,6 +10,8 @@ export interface IIndexLeafStatistics {
 }
 
 export interface ICacheStatistics {
+    offsetValue: number;
+    maxValue: number;
     dbIndexFragmentation: number;
     dbIndexSize: number;
     dbLeafStats: IIndexLeafStatistics[];

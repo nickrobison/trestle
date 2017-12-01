@@ -1,6 +1,10 @@
-<h4>Valid Index</h4>
-<tree-graph #valid_graph [data]="validStats"></tree-graph>
-<index-table #valid_table [data]="validStats"></index-table>
-<h3>DB Index</h3>
-<tree-graph #db_graph [data]="dbStats"></tree-graph>
-<index-table #db_table [data]="dbStats"></index-table>
+<div *ngIf="stats">
+    <h4>Valid Index</h4>
+    <tree-graph #valid_graph
+                [data]="{maxValue: stats.maxValue, offsetValue: stats.offsetValue, leafs: stats.validLeafStats}"></tree-graph>
+    <index-table #valid_table [data]="stats.validLeafStats"></index-table>
+    <h3>DB Index</h3>
+    <tree-graph #db_graph
+                [data]="{maxValue: stats.maxValue, offsetValue: stats.offsetValue, leafs: stats.dbLeafStats}"></tree-graph>
+    <index-table #db_table [data]="stats.dbLeafStats"></index-table>
+</div>

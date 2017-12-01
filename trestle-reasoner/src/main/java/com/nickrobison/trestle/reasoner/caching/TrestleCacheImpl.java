@@ -283,6 +283,9 @@ public class TrestleCacheImpl implements TrestleCache {
         try {
             cacheLock.lockRead();
             final TrestleCacheStatistics cacheStats = new TrestleCacheStatistics(
+                    offsetMillis,
+//                    These are currently the same value, so we can ignore them
+                    validIndex.getMaxValue(),
                     this.validIndex.getIndexSize(),
                     this.validIndex.calculateFragmentation(),
                     this.dbIndex.getIndexSize(),

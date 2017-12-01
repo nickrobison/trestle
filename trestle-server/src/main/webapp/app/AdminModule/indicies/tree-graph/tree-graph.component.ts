@@ -4,9 +4,16 @@ import { BaseType, select, Selection } from "d3-selection";
 import * as moment from "moment";
 import { Moment } from "moment";
 import { axisBottom, axisLeft } from "d3-axis";
-import { IIndexLeafStatistics } from "../index.service";
-import { timeFormat } from "d3-time-format";
+import { ICacheStatistics, IIndexLeafStatistics } from "../index.service";
 import { interpolateHsl } from "d3-interpolate";
+import { BehaviorSubject } from "rxjs/BehaviorSubject";
+import { Subject } from "rxjs/Subject";
+
+export interface IGraphHeader {
+    maxValue: number;
+    offsetValue: number;
+    leafs: IIndexLeafStatistics[];
+}
 
 @Component({
     selector: "tree-graph",
@@ -18,7 +25,7 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
     @ViewChild("graph")
     public element: ElementRef;
     @Input()
-    public data: IIndexLeafStatistics[];
+    public data: IGraphHeader;
     private htmlElement: HTMLElement;
     private host: Selection<HTMLElement, IIndexLeafStatistics, null, undefined>;
     private svg: Selection<BaseType, IIndexLeafStatistics, null, undefined>;
@@ -26,87 +33,51 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
     private height: number;
     private margin: ID3Margin;
     private maxTime: Moment;
+    private offsetValue: number;
     private x: ScaleLinear<number, number>;
     private y: ScaleLinear<number, number>;
     private colorScale: (value: number) => string;
+    private dataSubject: Subject<IGraphHeader | undefined> = new BehaviorSubject(undefined);
 
     public constructor() {
-        this.maxTime = moment("3001-01-01").startOf("year");
+        this.maxTime = moment("5000-01-01").startOf("year");
         this.colorScale = interpolateHsl("steelblue", "brown");
     }
 
     public ngAfterViewInit(): void {
         this.htmlElement = this.element.nativeElement;
         this.setupD3();
+
+        //    Subscribe
+        this.dataSubject
+            .subscribe((value) => {
+                if (value !== undefined) {
+                    this.plotData(value);
+                    this.data = value;
+                }
+            });
     }
 
     public ngOnChanges(changes: SimpleChanges): void {
         const dataChanges = changes["data"];
         if (dataChanges.currentValue !== dataChanges.previousValue) {
             console.debug("Plotting new changes");
-            this.plotData(dataChanges.currentValue);
+            this.dataSubject.next(dataChanges.currentValue);
+
+            // this.plotData(dataChanges.currentValue);
         }
     }
 
-    private plotData(data: IIndexLeafStatistics[]): void {
-        //    For each, leaf, draw the triangle
-        const leafData = this.svg
-            .selectAll(".leaf")
-            // This index function needs to be a string, for some reason
-            .data(data, (d: IIndexLeafStatistics) => d.binaryID);
+    private plotData(data: IGraphHeader): void {
+        // Calculate the max time, which need to adjust from the cache values
+        this.maxTime = moment(data.maxValue - data.offsetValue);
 
-        leafData
-            .enter()
-            .append("polygon")
-            .attr("class", "leaf")
-            .attr("points", (d) => this.normalizeTriangle(d.coordinates))
-            .attr("stroke-width", 1)
-            .attr("stroke", "black")
-            .attr("fill", (d) => {
-                const color = this.colorScale((d.records / 20));
-                console.debug("Fill color:", color);
-                return color;
-            })
-            .style("fill-opacity", 0.7)
-            .merge(leafData);
-
-    }
-
-    /**
-     * Normalize coordinates (represented as millis from UTC epoch) into D3 coordinates
-     * @param {number[]} coordinates
-     * @returns {string}
-     */
-    private normalizeTriangle(coordinates: number[]): string {
-        const size = coordinates.length;
-        const normalized = new Array(size);
-        let isX = true;
-        for (let idx = 0; idx < size; idx++) {
-            normalized[idx] = isX ? this.x(coordinates[idx]) : this.y(coordinates[idx]);
-            isX = !isX;
-        }
-        return normalized.join(",");
-    }
-
-    private setupD3(): void {
-        this.host = select<HTMLElement, IIndexLeafStatistics>(this.htmlElement);
-        this.margin = this.margin = {top: 20, right: 30, bottom: 100, left: 30};
-        this.width = this.htmlElement.offsetWidth - this.margin.left - this.margin.right;
-        this.height = 500 - this.margin.top - this.margin.bottom;
-
-        // Set the X/Y axis
+        // Set the X/Y scales
         this.x = scaleLinear().range([0, this.width]);
-        this.x.domain([0, this.maxTime.valueOf()]);
+        this.x.domain([0, data.maxValue]);
         // We need to invert this, in order to get the triangles to draw in the correct direction
         this.y = scaleLinear().range([this.height, 0]);
-        this.y.domain([0, this.maxTime.valueOf()]);
-
-        this.svg = this.host.html("")
-            .append("svg")
-            .attr("width", this.width + this.margin.left + this.margin.right)
-            .attr("height", this.height + this.margin.top + this.margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
+        this.y.domain([0, data.maxValue]);
 
         // Add the axises
         this.svg
@@ -114,7 +85,7 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
             .attr("class", "axis x-axis")
             .attr("transform", "translate(0," + this.height + ")")
             .call(axisBottom(this.x)
-                .tickFormat(timeFormat("%B %d, %Y")))
+                .tickFormat((d) => this.adjustTemporals(d, data.offsetValue)))
             .selectAll("text")
             .attr("y", 0)
             .attr("x", 9)
@@ -139,11 +110,64 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
             .attr("class", "dividing-line")
             .append("line")
             .attr("x1", 0)
-            .attr("x2", this.x(this.maxTime.valueOf()))
+            .attr("x2", this.x(data.maxValue))
             // .attr("y1", this.height)
             .attr("y1", this.height)
             .attr("y2", 0)
             .attr("stroke-width", 3)
             .attr("stroke", "black");
+
+
+        //    For each, leaf, draw the triangle
+        const leafData = this.svg
+            .selectAll(".leaf")
+            // This index function needs to be a string, for some reason
+            .data(data.leafs, (d: IIndexLeafStatistics) => d.binaryID);
+
+        leafData
+            .enter()
+            .append("polygon")
+            .attr("class", "leaf")
+            .attr("points", (d) => this.normalizeTriangle(d.coordinates))
+            .attr("stroke-width", 1)
+            .attr("stroke", "black")
+            .attr("fill", (d) => this.colorScale((d.records / 20)))
+            .style("fill-opacity", 0.7)
+            .merge(leafData);
+
+    }
+
+    /**
+     * Normalize coordinates (represented as millis from UTC epoch) into D3 coordinates
+     * @param {number[]} coordinates
+     * @returns {string}
+     */
+    private normalizeTriangle(coordinates: number[]): string {
+        const size = coordinates.length;
+        const normalized = new Array(size);
+        let isX = true;
+        for (let idx = 0; idx < size; idx++) {
+            normalized[idx] = isX ? this.x(coordinates[idx]) : this.y(coordinates[idx]);
+            isX = !isX;
+        }
+        return normalized.join(",");
+    }
+
+    private adjustTemporals(domain: any, offsetValue: number): string {
+        return new Date(domain - offsetValue).toISOString();
+    }
+
+    private setupD3(): void {
+        this.host = select<HTMLElement, IIndexLeafStatistics>(this.htmlElement);
+        this.margin = this.margin = {top: 20, right: 30, bottom: 100, left: 30};
+        this.width = this.htmlElement.offsetWidth - this.margin.left - this.margin.right;
+        this.height = 500 - this.margin.top - this.margin.bottom;
+
+        this.svg = this.host.html("")
+            .append("svg")
+            .attr("width", this.width + this.margin.left + this.margin.right)
+            .attr("height", this.height + this.margin.top + this.margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
     }
 }
