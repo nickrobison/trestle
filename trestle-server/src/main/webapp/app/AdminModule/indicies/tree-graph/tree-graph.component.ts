@@ -5,6 +5,8 @@ import * as moment from "moment";
 import { Moment } from "moment";
 import { axisBottom, axisLeft } from "d3-axis";
 import { IIndexLeafStatistics } from "../index.service";
+import { interpolateReds } from "d3-scale-chromatic";
+import { timeFormat } from "d3-time-format";
 
 @Component({
     selector: "tree-graph",
@@ -45,7 +47,7 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
     }
 
     private plotData(data: IIndexLeafStatistics[]): void {
-    //    For each, leaf, draw the triangle
+        //    For each, leaf, draw the triangle
         const leafData = this.svg
             .selectAll(".leaf")
             .data(data, (d: any) => d.leafID);
@@ -55,6 +57,10 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
             .append("polygon")
             .attr("class", "leaf")
             .attr("points", (d: any) => this.normalizeTriangle(d.coordinates))
+            .attr("stroke-width", 1)
+            .attr("stroke", "black")
+            .style("fill", (d: IIndexLeafStatistics) => interpolateReds((d.records / 20) + 0.1))
+            .style("opacity", 1)
             .merge(leafData);
     }
 
@@ -83,16 +89,9 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
         // Set the X/Y axis
         this.x = scaleLinear().range([0, this.width]);
         this.x.domain([0, this.maxTime.valueOf()]);
-        this.y = scaleLinear().range([0, this.height]);
+        // We need to invert this, in order to get the triangles to draw in the correct direction
+        this.y = scaleLinear().range([this.height, 0]);
         this.y.domain([0, this.maxTime.valueOf()]);
-
-        console.debug("Y:", this.y);
-        console.debug("Yd:", this.y.domain());
-        console.debug("Yr:", this.y.range());
-
-        console.debug("X:", this.x);
-        console.debug("Xd:", this.x.domain());
-        console.debug("Xr:", this.x.range());
 
         this.svg = this.host.html("")
             .append("svg")
@@ -106,7 +105,8 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
             .append("g")
             .attr("class", "axis x-axis")
             .attr("transform", "translate(0," + this.height + ")")
-            .call(axisBottom(this.x));
+            .call(axisBottom(this.x)
+                .tickFormat(timeFormat("%B %d, %Y")));
 
         this.svg
             .append("g")
@@ -127,9 +127,9 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
             .attr("x1", 0)
             .attr("x2", this.x(this.maxTime.valueOf()))
             // .attr("y1", this.height)
-            .attr("y1", this.y(this.maxTime.valueOf()))
+            .attr("y1", this.height)
             .attr("y2", 0)
-            .attr("stroke-width", 2)
+            .attr("stroke-width", 3)
             .attr("stroke", "black");
     }
 }

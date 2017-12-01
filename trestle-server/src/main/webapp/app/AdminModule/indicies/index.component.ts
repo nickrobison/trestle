@@ -8,7 +8,8 @@ import { IIndexLeafStatistics, IndexService } from "./index.service";
 })
 export class IndexComponent implements AfterViewInit {
 
-    public stats: IIndexLeafStatistics[];
+    public validStats: IIndexLeafStatistics[];
+    public dbStats: IIndexLeafStatistics[];
 
     public constructor(private is: IndexService) {
 
@@ -18,7 +19,8 @@ export class IndexComponent implements AfterViewInit {
         this.is.getIndexStatistics()
             .subscribe((data) => {
                 console.debug("Data:", data);
-                this.stats = data.validLeafStats;
+                this.validStats = data.validLeafStats;
+                this.dbStats = data.dbLeafStats;
             });
     }
 }
