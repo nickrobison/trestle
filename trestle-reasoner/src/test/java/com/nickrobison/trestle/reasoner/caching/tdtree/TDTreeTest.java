@@ -5,9 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by nrobison on 2/9/17.
@@ -86,6 +84,14 @@ public class TDTreeTest {
 //        Do some reads again
         assertAll(() -> assertEquals("updated-temporal-value", tdTree.getValue(TEMPORAL_TEST_ID, 3)),
                 () -> assertNull(tdTree.getValue(TEMPORAL_TEST_ID, 1)));
+    }
 
+    @Test
+    public void testOverUnderflow() throws Exception {
+        TDTree.maxValue = 12346;
+        TDTreeHelpers.computeAdjustedLengths();
+        final TDTree<String> tdTree = new TDTree<>(2);
+        assertAll(() -> assertThrows(IllegalArgumentException.class, () -> tdTree.insertValue("hello", 1, 12347, "overflow")),
+                () -> assertThrows(IllegalArgumentException.class, () -> tdTree.insertValue("hello", -1, 5, "overflow")));
     }
 }

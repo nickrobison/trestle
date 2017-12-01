@@ -38,7 +38,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
 
     private static final Logger logger = LoggerFactory.getLogger(TDTree.class);
     private static final String EMPTY_LEAF_VALUE = "Leaf {} does not have {}@{}";
-    static long maxValue = LocalDate.of(3000, 1, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
+    static long maxValue = LocalDate.of(3005, 1, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
     static final TupleSchema leafSchema = buildLeafSchema();
 
     private final int blockSize;
@@ -74,6 +74,14 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     @Timed(name = "td-tree.insert-timer", absolute = true)
     @CounterIncrement(name = "td-tree.insert-counter", absolute = true)
     private void insertValue(long objectID, long startTime, long endTime, @NonNull Value value) {
+//        Verify that the start and end times don't over/under flow. This addresses TRESTLE-559.
+        if (startTime < 0) {
+            throw new IllegalArgumentException("Cache cannot handle dates before Unix epoch");
+        }
+        if (endTime > maxValue) {
+            throw new IllegalArgumentException("End temporal exceeds max value for cache");
+        }
+
 //        Find the leaf at maxDepth that would contain the objectID
         final int matchingLeaf = getMatchingLeaf(startTime, endTime);
 //        Find the region in list with the most number of matching bits
