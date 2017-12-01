@@ -18,6 +18,7 @@ public class TDTreeHelpers {
     static final double[] adjustedLength;
     static final Map<Integer, Integer> computedIDLengths = new Int2IntOpenHashMap(2000, .7f);
     static final Map<Double, Double> normalizedZeroes = new Double2DoubleOpenHashMap(2000, 0.7f);
+    public static final String ILLEGAL_DIRECTION = "Cannot have a direction that is not 0-7";
 
     static {
 //        Initialize the lookup tables
@@ -113,53 +114,71 @@ public class TDTreeHelpers {
         double[] verticies = new double[6];
         verticies[0] = triangleStart;
         verticies[1] = triangleEnd;
-        if (direction == 0) {
-            final double l2 = (adjustedLength * ROOTTWO) / 2;
-            verticies[2] = normalizeZero(triangleStart - l2);
-            verticies[3] = normalizeZero(triangleEnd - l2);
-            verticies[4] = normalizeZero(triangleStart + l2);
-            verticies[5] = normalizeZero(triangleEnd + l2);
-        } else if (direction == 1) {
-            verticies[2] = normalizeZero(triangleStart - adjustedLength);
-            verticies[3] = triangleEnd;
-            verticies[4] = triangleStart;
-            verticies[5] = normalizeZero(triangleEnd - adjustedLength);
-        } else if (direction == 2) {
-            final double l2 = (adjustedLength * ROOTTWO) / 2;
-            verticies[2] = normalizeZero(triangleStart - l2);
-            verticies[3] = normalizeZero(triangleEnd + l2);
-            verticies[4] = normalizeZero(triangleStart - l2);
-            verticies[5] = normalizeZero(triangleEnd - l2);
-
-        } else if (direction == 3) {
-            verticies[2] = triangleStart;
-            verticies[3] = normalizeZero(triangleEnd + adjustedLength);
-            verticies[4] = normalizeZero(triangleStart - adjustedLength);
-            verticies[5] = triangleEnd;
-        } else if (direction == 4) {
-            final double l2 = (adjustedLength * ROOTTWO) / 2;
-            verticies[2] = normalizeZero(triangleStart + l2);
-            verticies[3] = normalizeZero(triangleEnd + l2);
-            verticies[4] = normalizeZero(triangleStart - l2);
-            verticies[5] = normalizeZero(triangleEnd + l2);
-        } else if (direction == 5) {
-            verticies[2] = normalizeZero(triangleStart + adjustedLength);
-            verticies[3] = triangleEnd;
-            verticies[4] = triangleStart;
-            verticies[5] = normalizeZero(triangleEnd + adjustedLength);
-        } else if (direction == 6) {
-            final double l2 = (adjustedLength * ROOTTWO) / 2;
-            verticies[2] = normalizeZero(triangleStart + l2);
-            verticies[3] = normalizeZero(triangleEnd - l2);
-            verticies[4] = normalizeZero(triangleStart + l2);
-            verticies[5] = normalizeZero(triangleEnd + l2);
-        } else {
-            verticies[2] = triangleStart;
-            verticies[3] = normalizeZero(triangleEnd - adjustedLength);
-            verticies[4] = normalizeZero(triangleStart + adjustedLength);
-            verticies[5] = triangleEnd;
+        switch (direction) {
+            case 0: {
+                final double l2 = (adjustedLength * ROOTTWO) / 2;
+                verticies[2] = normalizeZero(triangleStart - l2);
+                verticies[3] = normalizeZero(triangleEnd - l2);
+                verticies[4] = normalizeZero(triangleStart + l2);
+                verticies[5] = normalizeZero(triangleEnd + l2);
+                break;
+            }
+            case 1: {
+                verticies[2] = normalizeZero(triangleStart - adjustedLength);
+                verticies[3] = triangleEnd;
+                verticies[4] = triangleStart;
+                verticies[5] = normalizeZero(triangleEnd - adjustedLength);
+                break;
+            }
+            case 2: {
+                final double l2 = (adjustedLength * ROOTTWO) / 2;
+                verticies[2] = normalizeZero(triangleStart - l2);
+                verticies[3] = normalizeZero(triangleEnd + l2);
+                verticies[4] = normalizeZero(triangleStart - l2);
+                verticies[5] = normalizeZero(triangleEnd - l2);
+                break;
+            }
+            case 3: {
+                verticies[2] = triangleStart;
+                verticies[3] = normalizeZero(triangleEnd + adjustedLength);
+                verticies[4] = normalizeZero(triangleStart - adjustedLength);
+                verticies[5] = triangleEnd;
+                break;
+            }
+            case 4: {
+                final double l2 = (adjustedLength * ROOTTWO) / 2;
+                verticies[2] = normalizeZero(triangleStart + l2);
+                verticies[3] = normalizeZero(triangleEnd + l2);
+                verticies[4] = normalizeZero(triangleStart - l2);
+                verticies[5] = normalizeZero(triangleEnd + l2);
+                break;
+            }
+            case 5: {
+                verticies[2] = normalizeZero(triangleStart + adjustedLength);
+                verticies[3] = triangleEnd;
+                verticies[4] = triangleStart;
+                verticies[5] = normalizeZero(triangleEnd + adjustedLength);
+                break;
+            }
+            case 6: {
+                final double l2 = (adjustedLength * ROOTTWO) / 2;
+                verticies[2] = normalizeZero(triangleStart + l2);
+                verticies[3] = normalizeZero(triangleEnd - l2);
+                verticies[4] = normalizeZero(triangleStart + l2);
+                verticies[5] = normalizeZero(triangleEnd + l2);
+                break;
+            }
+            case 7: {
+                verticies[2] = triangleStart;
+                verticies[3] = normalizeZero(triangleEnd - adjustedLength);
+                verticies[4] = normalizeZero(triangleStart + adjustedLength);
+                verticies[5] = triangleEnd;
+                break;
+            }
+            default: {
+                throw new IllegalStateException(ILLEGAL_DIRECTION);
+            }
         }
-
         return verticies;
     }
 
@@ -238,38 +257,50 @@ public class TDTreeHelpers {
 
     static TriangleApex calculateChildApex(int leafLength, int parentDirection, double parentStart, double parentEnd) {
         final double length = adjustedLength[leafLength];
-        if (parentDirection == 0) {
-            return new TriangleApex(
-                    parentStart,
-                    normalizeZero(parentEnd - length));
-        } else if (parentDirection == 1) {
-            return new TriangleApex(
-                    normalizeZero(parentStart - (length / ROOTTWO)),
-                    normalizeZero(parentEnd - (length / ROOTTWO)));
-        } else if (parentDirection == 2) {
-            return new TriangleApex(
-                    normalizeZero(parentStart - length),
-                    parentEnd);
-        } else if (parentDirection == 3) {
-            return new TriangleApex(
-                    normalizeZero(parentStart - (length / ROOTTWO)),
-                    normalizeZero(parentEnd + length));
-        } else if (parentDirection == 4) {
-            return new TriangleApex(
-                    parentStart,
-                    normalizeZero(parentEnd + length));
-        } else if (parentDirection == 5) {
-            return new TriangleApex(
-                    normalizeZero(parentStart + (length / ROOTTWO)),
-                    normalizeZero(parentEnd + (length / ROOTTWO)));
-        } else if (parentDirection == 6) {
-            return new TriangleApex(
-                    normalizeZero(parentStart + length),
-                    parentEnd);
-        } else {
-            return new TriangleApex(
-                    normalizeZero(parentStart + (length / ROOTTWO)),
-                    normalizeZero(parentEnd - (length / ROOTTWO)));
+        switch (parentDirection) {
+            case 0: {
+                return new TriangleApex(
+                        parentStart,
+                        normalizeZero(parentEnd - length));
+            }
+            case 1: {
+                return new TriangleApex(
+                        normalizeZero(parentStart - (length / ROOTTWO)),
+                        normalizeZero(parentEnd - (length / ROOTTWO)));
+            }
+            case 2: {
+                return new TriangleApex(
+                        normalizeZero(parentStart - length),
+                        parentEnd);
+            }
+            case 3: {
+                return new TriangleApex(
+                        normalizeZero(parentStart - (length / ROOTTWO)),
+                        normalizeZero(parentEnd + length));
+            }
+            case 4: {
+                return new TriangleApex(
+                        parentStart,
+                        normalizeZero(parentEnd + length));
+            }
+            case 5: {
+                return new TriangleApex(
+                        normalizeZero(parentStart + (length / ROOTTWO)),
+                        normalizeZero(parentEnd + (length / ROOTTWO)));
+            }
+            case 6: {
+                return new TriangleApex(
+                        normalizeZero(parentStart + length),
+                        parentEnd);
+            }
+            case 7: {
+                return new TriangleApex(
+                        normalizeZero(parentStart + (length / ROOTTWO)),
+                        normalizeZero(parentEnd - (length / ROOTTWO)));
+            }
+            default: {
+                throw new IllegalStateException(ILLEGAL_DIRECTION);
+            }
         }
     }
 
