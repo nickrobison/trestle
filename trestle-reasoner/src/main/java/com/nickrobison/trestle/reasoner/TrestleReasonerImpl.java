@@ -333,6 +333,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
+    public TrestleCache getCache() {
+        return this.trestleCache;
+    }
+
+    @Override
     public Map<String, String> getReasonerPrefixes() {
         Map<String, String> prefixes = new HashMap<>();
         prefixes.put(":", this.REASONER_PREFIX);

@@ -6,6 +6,7 @@ import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.reasoner.caching.TrestleCache;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
@@ -96,6 +97,13 @@ public interface TrestleReasoner {
      * @return - {@link ContainmentEngine}
      */
     ContainmentEngine getContainmentEngine();
+
+    /**
+     * Get the underlying object/individual cache
+     *
+     * @return - {@link TrestleCache}
+     */
+    TrestleCache getCache();
 
     /**
      * Get the currently registered prefixes and URIs

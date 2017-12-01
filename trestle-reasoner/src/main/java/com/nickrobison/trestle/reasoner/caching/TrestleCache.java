@@ -95,5 +95,12 @@ public interface TrestleCache {
      */
     void deleteTrestleIndividual(OWLNamedIndividual individual);
 
+    /**
+     * Get statistics for the underlying caches
+     *
+     * @return - {@link TrestleCacheStatistics}
+     */
+    @Nullable TrestleCacheStatistics getCacheStatistics();
+
     void shutdown(boolean drop);
 }

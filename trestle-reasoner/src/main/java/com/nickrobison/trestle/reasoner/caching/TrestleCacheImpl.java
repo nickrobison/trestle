@@ -4,6 +4,7 @@ import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.locking.TrestleUpgradableReadWriteLock;
 import com.nickrobison.trestle.iri.TrestleIRI;
 import com.nickrobison.trestle.reasoner.caching.listeners.TrestleObjectCacheEntryListener;
+import com.nickrobison.trestle.reasoner.caching.tdtree.TDTree;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -272,19 +273,25 @@ public class TrestleCacheImpl implements TrestleCache {
         }
     }
 
-    /**
-     * Get statistics for the underlying caches
-     *
-     * @return - {@link TrestleCacheStatistics}
-     */
+    @Override
     public @Nullable TrestleCacheStatistics getCacheStatistics() {
         try {
             cacheLock.lockRead();
-            return new TrestleCacheStatistics(
+            final TrestleCacheStatistics cacheStats = new TrestleCacheStatistics(
                     this.validIndex.getIndexSize(),
                     this.validIndex.calculateFragmentation(),
                     this.dbIndex.getIndexSize(),
                     this.dbIndex.calculateFragmentation());
+
+//            Check if the indexes are TDTrees, if so, dump the leafs
+            if (this.validIndex instanceof TDTree) {
+                cacheStats.addValidLeafStats(this.validIndex.getLeafStatistics());
+            }
+
+            if (this.dbIndex instanceof TDTree) {
+                cacheStats.addDBLeafStats(this.dbIndex.getLeafStatistics());
+            }
+            return cacheStats;
         } catch (InterruptedException e) {
             logger.error("Cannot get read lock", e);
             return null;

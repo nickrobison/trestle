@@ -73,6 +73,11 @@ public class TrestleCacheNoop implements TrestleCache {
     }
 
     @Override
+    public @Nullable TrestleCacheStatistics getCacheStatistics() {
+        return null;
+    }
+
+    @Override
     public void shutdown(boolean drop) {
 //        Not implemented
     }

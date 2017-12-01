@@ -218,6 +218,19 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     }
 
     @Override
+    public List<LeafStatistics> getLeafStatistics() {
+        logger.debug("Computing index leaf statistics");
+//        For each leaf, calculate the triangle coordinates and return it
+        return this.leafs
+                .stream()
+                .map(leaf -> new LeafStatistics(leaf.getID(),
+                        leaf.getBinaryStringID(),
+                        leaf.getLeafVerticies(),
+                        leaf.getRecordCount()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
     @Gauge(name = "td-tree.cache-size", absolute = true)
     public long getIndexSize() {
         return cacheSize.get();

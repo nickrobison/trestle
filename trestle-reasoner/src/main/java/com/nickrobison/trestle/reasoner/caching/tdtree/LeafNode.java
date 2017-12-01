@@ -8,6 +8,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Map;
 
+import static com.nickrobison.trestle.reasoner.caching.tdtree.TDTreeHelpers.getIDLength;
 import static com.nickrobison.trestle.reasoner.caching.tdtree.TDTreeHelpers.longHashCode;
 
 /**
@@ -39,6 +40,13 @@ public abstract class LeafNode<Value> {
 
     public String getBinaryStringID() {
         return this.binaryID;
+    }
+
+    public double[] getLeafVerticies() {
+        return TDTreeHelpers.getTriangleVerticies(TDTreeHelpers.adjustedLength[getIDLength(this.leafID)],
+                this.leafMetadata.getShort(3),
+                this.leafMetadata.getDouble(1),
+                this.leafMetadata.getDouble(2));
     }
 
     /**
