@@ -1,22 +1,25 @@
-import { AfterViewInit, Component, ElementRef, ViewChild } from "@angular/core";
+import { AfterViewInit, Component, ElementRef, Input, OnChanges, SimpleChanges, ViewChild } from "@angular/core";
 import { ScaleLinear, scaleLinear } from "d3-scale";
 import { BaseType, select, Selection } from "d3-selection";
 import * as moment from "moment";
 import { Moment } from "moment";
 import { axisBottom, axisLeft } from "d3-axis";
+import { IIndexLeafStatistics } from "../index.service";
 
 @Component({
     selector: "tree-graph",
     templateUrl: "./tree-graph.component.html",
     styleUrls: ["./tree-graph.component.css"]
 })
-export class TreeGraphComponent implements AfterViewInit {
+export class TreeGraphComponent implements AfterViewInit, OnChanges {
 
     @ViewChild("graph")
     public element: ElementRef;
+    @Input()
+    public data: IIndexLeafStatistics[];
     private htmlElement: HTMLElement;
-    private host: Selection<HTMLElement, any, null, undefined>;
-    private svg: Selection<BaseType, any, null, undefined>;
+    private host: Selection<HTMLElement, IIndexLeafStatistics, null, undefined>;
+    private svg: Selection<BaseType, IIndexLeafStatistics, null, undefined>;
     private width: number;
     private height: number;
     private margin: ID3Margin;
@@ -33,8 +36,46 @@ export class TreeGraphComponent implements AfterViewInit {
         this.setupD3();
     }
 
+    public ngOnChanges(changes: SimpleChanges): void {
+        const dataChanges = changes["data"];
+        if (dataChanges.currentValue !== dataChanges.previousValue) {
+            console.debug("Plotting new changes");
+            this.plotData(dataChanges.currentValue);
+        }
+    }
+
+    private plotData(data: IIndexLeafStatistics[]): void {
+    //    For each, leaf, draw the triangle
+        const leafData = this.svg
+            .selectAll(".leaf")
+            .data(data, (d: any) => d.leafID);
+
+        leafData
+            .enter()
+            .append("polygon")
+            .attr("class", "leaf")
+            .attr("points", (d: any) => this.normalizeTriangle(d.coordinates))
+            .merge(leafData);
+    }
+
+    /**
+     * Normalize coordinates (represented as millis from UTC epoch) into D3 coordinates
+     * @param {number[]} coordinates
+     * @returns {string}
+     */
+    private normalizeTriangle(coordinates: number[]): string {
+        const size = coordinates.length;
+        const normalized = new Array(size);
+        let isX = true;
+        for (let idx = 0; idx < size; idx++) {
+            normalized[idx] = isX ? this.x(coordinates[idx]) : this.y(coordinates[idx]);
+            isX = !isX;
+        }
+        return normalized.join(",");
+    }
+
     private setupD3(): void {
-        this.host = select<HTMLElement, any>(this.htmlElement);
+        this.host = select<HTMLElement, IIndexLeafStatistics>(this.htmlElement);
         this.margin = this.margin = {top: 20, right: 30, bottom: 20, left: 30};
         this.width = this.htmlElement.offsetWidth - this.margin.left - this.margin.right;
         this.height = 500 - this.margin.top - this.margin.bottom;

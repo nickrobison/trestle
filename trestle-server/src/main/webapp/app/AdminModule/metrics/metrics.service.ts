@@ -2,9 +2,9 @@
  * Created by nrobison on 3/24/17.
  */
 import { Injectable } from "@angular/core";
-import { Observable } from "rxjs";
-import { Response, ResponseContentType, URLSearchParams } from "@angular/http";
 import { TrestleHttp } from "../../UserModule/trestle-http.provider";
+import { Observable } from "rxjs/Observable";
+import { ResponseContentType } from "@angular/http";
 
 export interface ITrestleMetricsHeader {
     upTime: number;
@@ -30,7 +30,7 @@ export class MetricsService {
 
     public getMetrics(): Observable<ITrestleMetricsHeader> {
         return this.authHttp.get("/metrics")
-            .map((res: Response) => {
+            .map((res) => {
                 console.debug("Metrics header:", res.json());
                 return res.json();
             })
@@ -39,14 +39,14 @@ export class MetricsService {
 
     public getMetricValues(metricID: string, start: number, end: number): Observable<IMetricsData> {
         console.debug("Retrieving values for metric: " + metricID + " from: " + start + " to: " + end);
-        let params = new URLSearchParams();
+        const params = new URLSearchParams();
         params.append("start", start.toString());
         params.append("end", end.toString());
         return this.authHttp.get("/metrics/metric/" + metricID, {
             search: params
         })
-            .map((res: Response) => {
-                let json = res.json();
+            .map((res) => {
+                const json = res.json();
                 console.debug("Metric values:", json);
                 const metricValues: IMetricsValue[] = [];
                 Object.keys(json).forEach((key) => {
@@ -76,14 +76,14 @@ export class MetricsService {
 
     public exportMetricValues(metrics: null | string[], start: number, end?: number): Observable<Blob> {
         return this.authHttp.post("/metrics/export", {
-                metrics: metrics,
-                start: start,
-                end: end
+                metrics,
+                start,
+                end
             },
             {
                 responseType: ResponseContentType.Blob
             })
-            .map((res: Response) => {
+            .map((res) => {
                 return res.blob();
             })
             .catch((error: Error) => Observable.throw(error || "Server Error"));

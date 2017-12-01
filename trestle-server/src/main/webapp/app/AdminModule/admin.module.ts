@@ -19,6 +19,7 @@ import { MaterialModule } from "../MaterialModule/material.module";
 import { SharedModule } from "../SharedModule/shared.module";
 import { IndexComponent } from "./indicies/index.component";
 import { TreeGraphComponent } from "./indicies/tree-graph/tree-graph.component";
+import { IndexService } from "./indicies/index.service";
 
 @NgModule({
     declarations: [DashboardComponent,
@@ -39,7 +40,7 @@ import { TreeGraphComponent } from "./indicies/tree-graph/tree-graph.component";
         MaterialModule,
         SharedModule
     ],
-    providers: [MetricsService],
+    providers: [MetricsService, IndexService],
     entryComponents: [UserAddDialog],
     bootstrap: [AdminComponent]
 })
