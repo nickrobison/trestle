@@ -75,9 +75,9 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     @CounterIncrement(name = "td-tree.insert-counter", absolute = true)
     private void insertValue(long objectID, long startTime, long endTime, @NonNull Value value) {
 //        Verify that the start and end times don't over/under flow. This addresses TRESTLE-559.
-        if (startTime < 0) {
-            throw new IllegalArgumentException("Cache cannot handle dates before Unix epoch");
-        }
+//        if (startTime < 0) {
+//            throw new IllegalArgumentException("Cache cannot handle dates before Unix epoch");
+//        }
         if (endTime > maxValue) {
             throw new IllegalArgumentException("End temporal exceeds max value for cache");
         }

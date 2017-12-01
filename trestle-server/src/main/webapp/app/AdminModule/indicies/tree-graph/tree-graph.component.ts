@@ -5,8 +5,8 @@ import * as moment from "moment";
 import { Moment } from "moment";
 import { axisBottom, axisLeft } from "d3-axis";
 import { IIndexLeafStatistics } from "../index.service";
-import { interpolateReds } from "d3-scale-chromatic";
 import { timeFormat } from "d3-time-format";
+import { interpolateHsl } from "d3-interpolate";
 
 @Component({
     selector: "tree-graph",
@@ -28,9 +28,11 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
     private maxTime: Moment;
     private x: ScaleLinear<number, number>;
     private y: ScaleLinear<number, number>;
+    private colorScale: (value: number) => string;
 
     public constructor() {
         this.maxTime = moment("3001-01-01").startOf("year");
+        this.colorScale = interpolateHsl("steelblue", "brown");
     }
 
     public ngAfterViewInit(): void {
@@ -50,18 +52,24 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
         //    For each, leaf, draw the triangle
         const leafData = this.svg
             .selectAll(".leaf")
-            .data(data, (d: any) => d.leafID);
+            // This index function needs to be a string, for some reason
+            .data(data, (d: IIndexLeafStatistics) => d.binaryID);
 
         leafData
             .enter()
             .append("polygon")
             .attr("class", "leaf")
-            .attr("points", (d: any) => this.normalizeTriangle(d.coordinates))
+            .attr("points", (d) => this.normalizeTriangle(d.coordinates))
             .attr("stroke-width", 1)
             .attr("stroke", "black")
-            .style("fill", (d: IIndexLeafStatistics) => interpolateReds((d.records / 20) + 0.1))
-            .style("opacity", 1)
+            .attr("fill", (d) => {
+                const color = this.colorScale((d.records / 20));
+                console.debug("Fill color:", color);
+                return color;
+            })
+            .style("fill-opacity", 0.7)
             .merge(leafData);
+
     }
 
     /**
@@ -82,7 +90,7 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
 
     private setupD3(): void {
         this.host = select<HTMLElement, IIndexLeafStatistics>(this.htmlElement);
-        this.margin = this.margin = {top: 20, right: 30, bottom: 20, left: 30};
+        this.margin = this.margin = {top: 20, right: 30, bottom: 100, left: 30};
         this.width = this.htmlElement.offsetWidth - this.margin.left - this.margin.right;
         this.height = 500 - this.margin.top - this.margin.bottom;
 
@@ -106,7 +114,13 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
             .attr("class", "axis x-axis")
             .attr("transform", "translate(0," + this.height + ")")
             .call(axisBottom(this.x)
-                .tickFormat(timeFormat("%B %d, %Y")));
+                .tickFormat(timeFormat("%B %d, %Y")))
+            .selectAll("text")
+            .attr("y", 0)
+            .attr("x", 9)
+            .attr("dy", ".35em")
+            .attr("transform", "rotate(45)")
+            .style("text-anchor", "start");
 
         this.svg
             .append("g")
