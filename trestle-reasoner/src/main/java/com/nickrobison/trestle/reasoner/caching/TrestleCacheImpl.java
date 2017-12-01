@@ -23,8 +23,7 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.Optional;
 
 /**
@@ -37,6 +36,10 @@ public class TrestleCacheImpl implements TrestleCache {
     private static final Logger logger = LoggerFactory.getLogger(TrestleCacheImpl.class);
     private static final String TRESTLE_OBJECT_CACHE = "trestle-object-cache";
     private static final String TRESTLE_INDIVIDUAL_CACHE = "trestle-individual-cache";
+    //    Offset value to adjust for the fact that the cache can only support positive temporal values
+    private static final long offsetMillis = Duration.between(LocalDate.of(0, 1, 1)
+                    .atStartOfDay().toInstant(ZoneOffset.UTC),
+            Instant.ofEpochMilli(0)).toMillis();
     private final TrestleUpgradableReadWriteLock cacheLock;
     private final CacheManager cacheManager;
     private final Cache<IRI, Object> trestleObjectCache;
@@ -90,15 +93,15 @@ public class TrestleCacheImpl implements TrestleCache {
             final String individualID = individualIRI.getObjectID();
             final OffsetDateTime offsetDateTime = individualIRI.getObjectTemporal().orElse(OffsetDateTime.now());
             logger.trace("Looking for {} from cache @{}", individualIRI, offsetDateTime);
-            @Nullable final TrestleIRI validIndexValue = validIndex.getValue(individualID, offsetDateTime.atZoneSameInstant(ZoneOffset.UTC).toInstant().toEpochMilli());
+            @Nullable final TrestleIRI validIndexValue = validIndex.getValue(individualID, adjustOffsetDateTime(offsetDateTime));
             if (validIndexValue != null) {
                 logger.trace("Valid Index has {} for {} @{}", validIndexValue, individualIRI, offsetDateTime);
                 @Nullable final TrestleIRI dbIndexValue;
                 final Optional<OffsetDateTime> dbTemporal = individualIRI.getDbTemporal();
                 if (dbTemporal.isPresent()) {
-                    dbIndexValue = dbIndex.getValue(validIndexValue.toString(), dbTemporal.get().toInstant().toEpochMilli());
+                    dbIndexValue = dbIndex.getValue(validIndexValue.toString(), adjustOffsetDateTime(dbTemporal.get()));
                 } else {
-                    dbIndexValue = dbIndex.getValue(validIndexValue.toString(), OffsetDateTime.now(ZoneOffset.UTC).toInstant().toEpochMilli());
+                    dbIndexValue = dbIndex.getValue(validIndexValue.toString(), adjustOffsetDateTime(OffsetDateTime.now()));
                 }
                 if (dbIndexValue != null) {
                     logger.trace("DB Index has {} for {} @{}", dbIndexValue, individualIRI, offsetDateTime);
@@ -133,21 +136,22 @@ public class TrestleCacheImpl implements TrestleCache {
             if (endTemporal == null) {
                 endTemporalMillis = validIndex.getMaxValue();
             } else {
-                endTemporalMillis = endTemporal.toInstant().toEpochMilli();
+                endTemporalMillis = adjustOffsetDateTime(endTemporal);
             }
             if (dbEndTemporal == null) {
+//                Make sure to add the offsetMillis
                 dbEndTemporalMillis = dbIndex.getMaxValue();
             } else {
-                dbEndTemporalMillis = dbEndTemporal.toInstant().toEpochMilli();
+                dbEndTemporalMillis = adjustOffsetDateTime(dbEndTemporal);
             }
-            final long startTemporalMillis = startTemporal.toInstant().toEpochMilli();
-            final long dbStartTemporalMillis = dbStartTemporal.toInstant().toEpochMilli();
+            final long startTemporalMillis = adjustOffsetDateTime(startTemporal);
+            final long dbStartTemporalMillis = adjustOffsetDateTime(dbStartTemporal);
 
 //            Begin writing into the cache
 
 //            Figure out if we already have a record for this object at this validity interval
             final OffsetDateTime validAt = individualIRI.getObjectTemporal().orElseThrow(() -> new IllegalStateException("Cannot add object to cache without a temporal"));
-            final long validAtMillis = validAt.toInstant().toEpochMilli();
+            final long validAtMillis = adjustOffsetDateTime(validAt);
             @Nullable final TrestleIRI validIndexValue = validIndex.getValue(individualIRI.getObjectID(), validAtMillis);
             final TrestleIRI dbIndexKey;
 //            If we don't have anything in the cache, write us as the new key, otherwise use the old key, but update the temporals
@@ -165,7 +169,7 @@ public class TrestleCacheImpl implements TrestleCache {
 
 //            Do we have a DB temporal that's currently valid?
 
-            final long dbAtMillis = individualIRI.getDbTemporal().orElse(OffsetDateTime.now()).toInstant().toEpochMilli();
+            final long dbAtMillis = adjustOffsetDateTime(individualIRI.getDbTemporal().orElse(OffsetDateTime.now()));
 
             @Nullable final TrestleIRI dbIndexValue = dbIndex.getValue(dbIndex.toString(), dbAtMillis);
 //            If we don't have a DB record at this time, insert a new one
@@ -202,7 +206,7 @@ public class TrestleCacheImpl implements TrestleCache {
             trestleObjectCache.put(individualIRI.getIRI(), value);
             final TrestleIRI withoutDatabase = individualIRI.withoutDatabase();
             validIndex.insertValue(individualIRI.getObjectID(),
-                    atTemporal.toInstant().toEpochMilli(),
+                    adjustOffsetDateTime(atTemporal),
                     individualIRI.withoutDatabase());
             logger.trace("Added {} to valid index", withoutDatabase);
 
@@ -210,11 +214,11 @@ public class TrestleCacheImpl implements TrestleCache {
             if (dbEndTemporal == null) {
                 dbEndTemporalMillis = dbIndex.getMaxValue();
             } else {
-                dbEndTemporalMillis = dbEndTemporal.toInstant().toEpochMilli();
+                dbEndTemporalMillis = adjustOffsetDateTime(dbEndTemporal);
             }
             dbIndex.insertValue(
                     withoutDatabase.toString(),
-                    dbStartTemporal.toInstant().toEpochMilli(),
+                    adjustOffsetDateTime(dbStartTemporal),
                     dbEndTemporalMillis,
                     individualIRI
             );
@@ -231,13 +235,14 @@ public class TrestleCacheImpl implements TrestleCache {
         final OffsetDateTime objectTemporal = trestleIRI.getObjectTemporal().orElse(OffsetDateTime.now());
         try {
             cacheLock.lockWrite();
-            @Nullable final TrestleIRI value = validIndex.getValue(trestleIRI.getObjectID(), objectTemporal.toInstant().toEpochMilli());
+            final long objectMillis = adjustOffsetDateTime(objectTemporal);
+            @Nullable final TrestleIRI value = validIndex.getValue(trestleIRI.getObjectID(), objectMillis);
             if (value != null) {
 
 //                If we have a record, try to find the one that exists in the database cache
                 logger.debug("Removing {} from index and cache", trestleIRI);
-                validIndex.deleteValue(trestleIRI.getObjectID(), objectTemporal.toInstant().toEpochMilli());
-                trestleIRI.getDbTemporal().ifPresent(temporal -> dbIndex.deleteValue(trestleIRI.withoutDatabase().toString(), temporal.toInstant().toEpochMilli()));
+                validIndex.deleteValue(trestleIRI.getObjectID(), objectMillis);
+                trestleIRI.getDbTemporal().ifPresent(temporal -> dbIndex.deleteValue(trestleIRI.withoutDatabase().toString(), adjustOffsetDateTime(temporal)));
                 trestleObjectCache.remove(value.getIRI());
             } else {
                 logger.trace("{} does not exist in index", trestleIRI);
@@ -311,4 +316,15 @@ public class TrestleCacheImpl implements TrestleCache {
         cacheManager.close();
     }
 
+    /**
+     * Adjusts a given {@link OffsetDateTime} by adding the number of milliseconds between 0000-01-01 and the Unix epoch
+     * Provided by {@link TrestleCacheImpl#offsetMillis}
+     *
+     * @param odt - {@link OffsetDateTime} to adjust
+     * @return - {@link Long} milliseconds from {@link TrestleCacheImpl#offsetMillis}
+     */
+    private static long adjustOffsetDateTime(OffsetDateTime odt) {
+        return odt.atZoneSameInstant(ZoneOffset.UTC)
+                .toInstant().toEpochMilli() + offsetMillis;
+    }
 }

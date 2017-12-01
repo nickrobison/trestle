@@ -18,7 +18,6 @@ import javax.annotation.concurrent.NotThreadSafe;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +37,8 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
 
     private static final Logger logger = LoggerFactory.getLogger(TDTree.class);
     private static final String EMPTY_LEAF_VALUE = "Leaf {} does not have {}@{}";
-    static long maxValue = LocalDate.of(3005, 1, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
+    static long maxValue = Duration.between(LocalDate.of(0, 1, 1).atStartOfDay(),
+            LocalDate.of(5000, 1, 1).atStartOfDay()).toMillis();
     static final TupleSchema leafSchema = buildLeafSchema();
 
     private final int blockSize;
@@ -75,9 +75,9 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     @CounterIncrement(name = "td-tree.insert-counter", absolute = true)
     private void insertValue(long objectID, long startTime, long endTime, @NonNull Value value) {
 //        Verify that the start and end times don't over/under flow. This addresses TRESTLE-559.
-//        if (startTime < 0) {
-//            throw new IllegalArgumentException("Cache cannot handle dates before Unix epoch");
-//        }
+        if (startTime < 0) {
+            throw new IllegalArgumentException("Cache cannot handle negative temporal values");
+        }
         if (endTime > maxValue) {
             throw new IllegalArgumentException("End temporal exceeds max value for cache");
         }
