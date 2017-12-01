@@ -20,6 +20,7 @@ import { SharedModule } from "../SharedModule/shared.module";
 import { IndexComponent } from "./indicies/index.component";
 import { TreeGraphComponent } from "./indicies/tree-graph/tree-graph.component";
 import { IndexService } from "./indicies/index.service";
+import { IndexTableComponent } from "./indicies/index-table/index-table.component";
 
 @NgModule({
     declarations: [DashboardComponent,
@@ -29,7 +30,8 @@ import { IndexService } from "./indicies/index.service";
         MetricsComponent,
         MetricsGraph,
         IndexComponent,
-        TreeGraphComponent],
+        TreeGraphComponent,
+        IndexTableComponent],
     imports: [
         CommonModule,
         FormsModule,
