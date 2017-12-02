@@ -101,8 +101,7 @@ public class TDTreeHelpers {
     }
 
     /**
-     * Gets the
-     * Returns a counter-clockwise array of double x/y pairs in the form P(n)X, P(n)Y
+     * Beginning with the triangle apex, returns a counter-clockwise array of double x/y pairs in the form P(n)X, P(n)Y
      *
      * @param adjustedLength - Adjusted length of Triangle side
      * @param direction      - Direction of triangle
@@ -120,7 +119,7 @@ public class TDTreeHelpers {
                 verticies[2] = normalizeZero(triangleStart - l2);
                 verticies[3] = normalizeZero(triangleEnd - l2);
                 verticies[4] = normalizeZero(triangleStart + l2);
-                verticies[5] = normalizeZero(triangleEnd + l2);
+                verticies[5] = normalizeZero(triangleEnd - l2);
                 break;
             }
             case 1: {
