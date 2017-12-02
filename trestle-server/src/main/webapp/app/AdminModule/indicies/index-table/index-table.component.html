@@ -3,6 +3,7 @@
     <tr>
         <th>ID</th>
         <th>Binary ID</th>
+        <th>Type</th>
         <th>Fill Factor</th>
     </tr>
     </thead>
@@ -10,6 +11,7 @@
     <tr *ngFor="let leaf of data">
         <td>{{leaf.leafID}}</td>
         <td>{{leaf.binaryID}}</td>
+        <td>{{leaf.type}}</td>
         <td>{{leaf.records / 20 }}</td>
     </tr>
     </tbody>

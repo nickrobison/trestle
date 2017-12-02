@@ -233,7 +233,9 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
                 .stream()
                 .map(leaf -> new LeafStatistics(leaf.getID(),
                         leaf.getBinaryStringID(),
+                        leaf.getLeafType(),
                         leaf.getLeafVerticies(),
+                        leaf.leafMetadata.getShort(3),
                         leaf.getRecordCount()))
                 .collect(Collectors.toList());
     }

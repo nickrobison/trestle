@@ -8,6 +8,7 @@ import { ICacheStatistics, IIndexLeafStatistics } from "../index.service";
 import { interpolateHsl } from "d3-interpolate";
 import { BehaviorSubject } from "rxjs/BehaviorSubject";
 import { Subject } from "rxjs/Subject";
+import { RoundingPipe } from "../../../SharedModule/pipes/rounding.pipe";
 
 export interface IGraphHeader {
     maxValue: number;
@@ -38,10 +39,12 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
     private y: ScaleLinear<number, number>;
     private colorScale: (value: number) => string;
     private dataSubject: Subject<IGraphHeader | undefined> = new BehaviorSubject(undefined);
+    private rounder: RoundingPipe;
 
     public constructor() {
         this.maxTime = moment("5000-01-01").startOf("year");
         this.colorScale = interpolateHsl("steelblue", "brown");
+        this.rounder = new RoundingPipe();
     }
 
     public ngAfterViewInit(): void {
@@ -63,14 +66,14 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
         if (dataChanges.currentValue !== dataChanges.previousValue) {
             console.debug("Plotting new changes");
             this.dataSubject.next(dataChanges.currentValue);
-
-            // this.plotData(dataChanges.currentValue);
         }
     }
 
     private plotData(data: IGraphHeader): void {
         // Calculate the max time, which need to adjust from the cache values
         this.maxTime = moment(data.maxValue - data.offsetValue);
+
+        console.debug("Plotting with max: %s and offset: %s", data.maxValue, data.offsetValue);
 
         // Set the X/Y scales
         this.x = scaleLinear().range([0, this.width]);
@@ -96,26 +99,26 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
         this.svg
             .append("g")
             .attr("class", "axis axis-y")
-            .append("text")
-            .attr("transform", "rotate(-90)")
-            .attr("y", 6)
-            .attr("dy", "0.71em")
-            .attr("fill", "#000")
-            .text("Value")
-            .call(axisLeft(this.y));
+            .call(axisLeft(this.y)
+                .tickFormat((d) => this.adjustTemporals(d, data.offsetValue)))
+            .selectAll("text")
+            .attr("y", 0)
+            .attr("x", -10)
+            .attr("dy", ".35em")
+            .style("text-anchor", "end");
 
         //    Draw a line
-        this.svg
-            .append("g")
-            .attr("class", "dividing-line")
-            .append("line")
-            .attr("x1", 0)
-            .attr("x2", this.x(data.maxValue))
-            // .attr("y1", this.height)
-            .attr("y1", this.height)
-            .attr("y2", 0)
-            .attr("stroke-width", 3)
-            .attr("stroke", "black");
+        // this.svg
+        //     .append("g")
+        //     .attr("class", "dividing-line")
+        //     .append("line")
+        //     .attr("x1", 0)
+        //     .attr("x2", this.x(data.maxValue))
+        //     // .attr("y1", this.height)
+        //     .attr("y1", this.height)
+        //     .attr("y2", 0)
+        //     .attr("stroke-width", 3)
+        //     .attr("stroke", "black");
 
 
         //    For each, leaf, draw the triangle
@@ -127,11 +130,15 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
         leafData
             .enter()
             .append("polygon")
+            .attr("id", (d) => d.binaryID)
+            .attr("direction", (d) => d.direction.toString())
+            .attr("coords", (d) => d.coordinates.join(","))
             .attr("class", "leaf")
             .attr("points", (d) => this.normalizeTriangle(d.coordinates))
             .attr("stroke-width", 1)
             .attr("stroke", "black")
-            .attr("fill", (d) => this.colorScale((d.records / 20)))
+            // .attr("fill", (d) => this.colorScale((d.records / 20) + 0.01))
+            .attr("fill", "blue")
             .style("fill-opacity", 0.7)
             .merge(leafData);
 
@@ -147,7 +154,9 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
         const normalized = new Array(size);
         let isX = true;
         for (let idx = 0; idx < size; idx++) {
-            normalized[idx] = isX ? this.x(coordinates[idx]) : this.y(coordinates[idx]);
+            // console.debug("Rounding %s to %s", coordinates[idx], this.rounder.transform(coordinates[idx], 0));
+            const rounded = this.rounder.transform(coordinates[idx], 0);
+            normalized[idx] = isX ? this.x(rounded) : this.y(rounded);
             isX = !isX;
         }
         return normalized.join(",");
@@ -159,7 +168,7 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
 
     private setupD3(): void {
         this.host = select<HTMLElement, IIndexLeafStatistics>(this.htmlElement);
-        this.margin = this.margin = {top: 20, right: 30, bottom: 100, left: 30};
+        this.margin = this.margin = {top: 20, right: 30, bottom: 100, left: 150};
         this.width = this.htmlElement.offsetWidth - this.margin.left - this.margin.right;
         this.height = 500 - this.margin.top - this.margin.bottom;
 

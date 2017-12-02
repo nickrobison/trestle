@@ -4,8 +4,10 @@ import { Observable } from "rxjs/Observable";
 
 export interface IIndexLeafStatistics {
     binaryID: string;
+    type: string;
     coordinates: number[];
     leafID: number;
+    direction: number;
     records: number;
 }
 

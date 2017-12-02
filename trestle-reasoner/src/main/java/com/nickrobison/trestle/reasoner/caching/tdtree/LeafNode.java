@@ -49,6 +49,8 @@ public abstract class LeafNode<Value> {
                 this.leafMetadata.getDouble(2));
     }
 
+    public abstract String getLeafType();
+
     /**
      * Gets the number of records stored in the leaf
      * <em>Note:</em> removing a key/value pair does not decrement the record count, so this represents the free space in the currently allocated leaf.

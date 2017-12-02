@@ -52,6 +52,11 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
     }
 
     @Override
+    public String getLeafType() {
+        return this.getClass().getSimpleName();
+    }
+
+    @Override
     @Nullable Value getValue(String objectID, long atTime) {
         final TupleExpressionGenerator.BooleanTupleExpression eval = buildFindExpression(objectID, atTime);
         return getValue(eval);
