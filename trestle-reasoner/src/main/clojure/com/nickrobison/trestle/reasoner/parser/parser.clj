@@ -38,14 +38,14 @@
                          clazz
                          pred/trestle-creator?)]
     ; If we don't have 0 or 1 constructors, throw an exception
-    (if (not (= (count constructor) 1))
+    (if (not= (count constructor) 1)
       (throw (InvalidClassException. ^Class clazz InvalidClassException$State/EXCESS "Constructor"))
       (first constructor))
     ; If we don't have one, look for the first multi-arg constructor
     (if-let [no-arg-constructor (find-matching-constructors clazz
                                                             pred/multi-arg-constructor?)]
       ; If we don't have 0 or 1 constructors, throw an exception
-      (if (not (= (count no-arg-constructor) 1))
+      (if (not= (count no-arg-constructor) 1)
         (throw (InvalidClassException. ^Class clazz InvalidClassException$State/EXCESS "Constructor"))
         (first no-arg-constructor))
       ; Throw an exception if we can't find the correct constructor
