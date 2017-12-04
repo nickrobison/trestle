@@ -39,8 +39,6 @@ public class ClassRegisterTest {
     private static Class<? extends PassingTemporalTest> pClass;
     private static Class<? extends FailingTemporalTest> ftClass;
     private static Class<? extends LanguageTest> lClass;
-    private static Class<? extends FailingLanguageTest> flClass;
-    private static final Logger logger = LoggerFactory.getLogger(ClassRegisterTest.class);
     private static IClassRegister cr;
 
     @BeforeAll
@@ -52,7 +50,6 @@ public class ClassRegisterTest {
         pTest = new PassingTemporalTest(LocalDate.now(), LocalDate.now());
         ftTest = new FailingTemporalTest(LocalDateTime.now(), LocalDateTime.now());
         lTest = new LanguageTest();
-        flTest = new FailingLanguageTest();
 
 
         fClass = fTest.getClass();
@@ -62,7 +59,6 @@ public class ClassRegisterTest {
         pClass = pTest.getClass();
         ftClass = ftTest.getClass();
         lClass = lTest.getClass();
-        flClass = flTest.getClass();
 
         cr = (IClassRegister) ClojureParserProvider.getParser();
     }
@@ -123,6 +119,10 @@ public class ClassRegisterTest {
         final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(ftClass));
         assertEquals(EXCESS, invalidClassException.getProblemState(), "Should have excess problem state");
 
+//        Check for multiple point temporals
+        final InvalidClassException multiPointException = assertThrows(InvalidClassException.class, () -> cr.registerClass(MultiplePointTemporal.class));
+        assertEquals(EXCESS, multiPointException.getProblemState(), "Should have excess point temporals");
+
         try {
             cr.registerClass(TimeZoneParsingTest.class);
         } catch (TrestleClassException e) {
@@ -134,7 +134,7 @@ public class ClassRegisterTest {
     @Test
     public void testLanguage() {
 
-        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(flClass));
+        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(FailingLanguageTest.class));
         assertEquals(INVALID, invalidClassException.getProblemState());
     }
 
@@ -184,6 +184,8 @@ public class ClassRegisterTest {
         public LocalDateTime startDate;
         @StartTemporal
         public LocalDateTime endDate;
+        @IndividualIdentifier
+        public String id;
 
         public FailingTemporalTest(LocalDateTime startDate, LocalDateTime endDate) {
             this.startDate = startDate;
@@ -191,11 +193,28 @@ public class ClassRegisterTest {
         }
     }
 
+    @DatasetClass(name = "test")
     public static class TimeZoneParsingTest {
         @DefaultTemporal(timeZone = "America/Los_Angeles", type = TemporalType.POINT, duration = 0, unit = ChronoUnit.YEARS)
         public LocalDate defaultDate;
+        @IndividualIdentifier
+        public String id;
 
         public TimeZoneParsingTest(LocalDate defaultDate) {
+            this.defaultDate = defaultDate;
+        }
+    }
+
+    @DatasetClass(name = "test")
+    public static class MultiplePointTemporal {
+        @DefaultTemporal(timeZone = "America/Los_Angeles", type = TemporalType.POINT, duration = 0, unit = ChronoUnit.YEARS)
+        public LocalDate defaultDate;
+        @DefaultTemporal(timeZone = "America/Los_Angeles", type = TemporalType.POINT, duration = 0, unit = ChronoUnit.YEARS)
+        public LocalDateTime excessDate;
+        @IndividualIdentifier
+        public String id;
+
+        public MultiplePointTemporal(LocalDate defaultDate) {
             this.defaultDate = defaultDate;
         }
     }
@@ -351,15 +370,18 @@ public class ClassRegisterTest {
         }
     }
 
-    private static class FailingLanguageTest {
+    @DatasetClass(name = "test")
+    public static class FailingLanguageTest {
         @Fact(name = "testString")
         @Language(language = "fr")
         public final String testString;
         private final String testString2;
+        @IndividualIdentifier
+        public String id;
 
-        FailingLanguageTest() {
-            this.testString = "test string";
-            this.testString2 = "test string";
+        public FailingLanguageTest(String testString, String testString2) {
+            this.testString = testString;
+            this.testString2 = testString2;
         }
 
         @Fact(name = "testString")

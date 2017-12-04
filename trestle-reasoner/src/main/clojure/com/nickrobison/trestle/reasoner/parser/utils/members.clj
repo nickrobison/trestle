@@ -3,7 +3,8 @@
            (com.nickrobison.trestle.common StaticIRI)
            (com.nickrobison.trestle.reasoner.annotations Spatial Fact)
            (java.lang.invoke MethodHandles)
-           (java.lang.reflect Constructor Method Field))
+           (java.lang.reflect Constructor Method Field)
+           (com.nickrobison.trestle.reasoner.exceptions InvalidClassException InvalidClassException$State))
   (:require [com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]
             [clojure.string :as string]
             [clojure.core.reducers :as r]))
@@ -71,3 +72,17 @@
   (->> coll
        (map #(key %))
        (into ())))
+
+
+; Temporal validations
+(defn ensure-temporal-count
+  "Verifies that the temporal count for a given type is satisfied"
+  [comp-fn num type member accessor
+   members ^String class-name
+   ^InvalidClassException$State state ^String message]
+  (if (comp-fn (count (filter (fn [m]
+                                (= (get m accessor) type)) members)) num)
+    ; If true, return the member
+    member
+    (throw (InvalidClassException.
+             class-name state message))))

@@ -234,14 +234,46 @@
    (.getOWLLiteral df (.toString value) ^OWLDatatype returnType)))
 
 ; Validators
-(defn validate-member
-  "Validate member to make sure it matches everything"
-  [member context]
-  (build-member-map member
-                    ; Individual IRI doesn't have spaces
-                    [(fn [acc member]
-                       )
-                     ])
+; Temporal validators
+(defn validate-interval-temporal
+  "Validate interval temporal to ensure it matches spec"
+  [interval-temporal type members class-name]
+  (if (= type ::pred/start)
+    ;Validate for start temporals
+    ;Ensure we have no more than 1 start temporal
+    (m/ensure-temporal-count = 0 ::pred/start
+                             ; if we have more than one ending temporal, throw an exception
+                             (m/ensure-temporal-count < 1 ::pred/end
+                                                      interval-temporal :position members
+                                                      class-name InvalidClassException$State/EXCESS "End temporal")
+                             :position members class-name InvalidClassException$State/EXCESS "Start temporals")
+    ; Validate for end temporals
+    ; Ensure we have no more than 1 start temporal
+    (m/ensure-temporal-count = 0 ::pred/start
+                             ; Ensure we have no more than 1 end temporal
+                             (m/ensure-temporal-count < 1 ::pred/end
+                                                      interval-temporal :position members
+                                                      class-name InvalidClassException$State/EXCESS "End Temporal")
+                             :position members class-name InvalidClassException$State/EXCESS "Start Temporal")))
+
+(defn validate-point-temporal
+  [point-temporal members class-name]
+  ; Ensure we only have 1 at temporal (since we may not actually have any members yet, this has to be a lt operator
+  (m/ensure-temporal-count = 0 ::pred/point
+                           ; Ensure we don't have any interval temporals
+                           (m/ensure-temporal-count = 0 ::pred/interval
+                                                    point-temporal :temporal-type members class-name InvalidClassException$State/EXCESS "Start Temporal")
+                           :temporal-type members class-name InvalidClassException$State/EXCESS "At Temporal"))
+
+(defn validate-temporal
+  "Ensure the temporal properties meet the required specifications"
+  [member members class-name]
+  (let [type (:temporal-type member)
+        position (:position member)]
+    (match [type]
+           [::pred/interval] (validate-interval-temporal member position members class-name)
+           [::pred/point] (validate-point-temporal member members class-name)
+           :else (throw (IllegalStateException. (str "Don't know what to match on" type)))))
   )
 
 (defn member-reducer
@@ -253,21 +285,21 @@
         temporals (get acc :temporals [])
         type (get member :type)
         ignore (get member :ignore false)]
-    (match [type, ignore]
+    (match [type ignore]
            ; If we already have an identifier, throw an exception
-           [::pred/identifier, true] (if (contains? acc :identifier)
+           [::pred/identifier true] (if (contains? acc :identifier)
+                                      (throw (InvalidClassException.
+                                               "TestClass" InvalidClassException$State/EXCESS "Identifier"))
+                                      (assoc acc :identifier member))
+           [::pred/identifier false] (if (contains? acc :identifier)
                                        (throw (InvalidClassException.
                                                 "TestClass" InvalidClassException$State/EXCESS "Identifier"))
-                                       (assoc acc :identifier member))
-           [::pred/identifier, false] (if (contains? acc :identifier)
-                                        (throw (InvalidClassException.
-                                                 "TestClass" InvalidClassException$State/EXCESS "Identifier"))
-                                        (merge acc {:members (conj members member) :identifier member}))
-           [::pred/spatial, _] (if (contains? acc :spatial)
-                                 (throw (InvalidClassException.
-                                          "TestClass" InvalidClassException$State/EXCESS "Spatial"))
-                                 (merge acc {:members (conj members member) :spatial member}))
-           [::pred/temporal, _] (merge acc {:temporals (conj temporals member)})
+                                       (merge acc {:members (conj members member) :identifier member}))
+           [::pred/spatial _] (if (contains? acc :spatial)
+                                (throw (InvalidClassException.
+                                         "TestClass" InvalidClassException$State/EXCESS "Spatial"))
+                                (merge acc {:members (conj members member) :spatial member}))
+           [::pred/temporal _] (merge acc {:temporals (conj temporals (validate-temporal member temporals (:java-class acc)))})
            :else (assoc acc :members (conj members member)))))
 
 (defmulti build-assertion-axiom
@@ -375,7 +407,7 @@
                              (r/reduce member-reducer {
                                                        :class-name  (get-class-name
                                                                       clazz df reasonerPrefix)
-                                                       :java-class  (.getName clazz)
+                                                       :java-class  (.getSimpleName clazz)
                                                        :constructor (build-constructor clazz)
                                                        }))]
         (if (contains? parsedClass :identifier)
