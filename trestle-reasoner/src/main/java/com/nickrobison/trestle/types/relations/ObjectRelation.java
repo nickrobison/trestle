@@ -3,6 +3,7 @@ package com.nickrobison.trestle.types.relations;
 import org.semanticweb.owlapi.model.HasIRI;
 import org.semanticweb.owlapi.model.IRI;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
@@ -10,7 +11,7 @@ import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 /**
  * Created by nrobison on 12/19/16.
  */
-public enum ObjectRelation implements HasIRI {
+public enum ObjectRelation implements HasIRI, Serializable {
     //    Spatial
     /**
      * Exists if Object fully encompassed within the Subject
