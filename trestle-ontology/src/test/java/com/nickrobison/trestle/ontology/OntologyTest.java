@@ -219,14 +219,14 @@ abstract public class OntologyTest {
         final TrestleResultSet trestleResultSet = ontology.executeSPARQLResults(queryString);
         Set<OWLObjectPropertyAssertionAxiom> temporalRelations = trestleResultSet.getResults().stream().map(solution ->
                 df.getOWLObjectPropertyAssertionAxiom(
-                        df.getOWLObjectProperty(IRI.create(solution.getIndividual("p").orElseThrow(() -> new RuntimeException("property is null")).toStringID())),
-                        df.getOWLNamedIndividual(IRI.create(solution.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())),
-                        df.getOWLNamedIndividual(IRI.create(solution.getIndividual("o").orElseThrow(() -> new RuntimeException("object is null")).toStringID()))))
+                        df.getOWLObjectProperty(IRI.create(solution.unwrapIndividual("p").toStringID())),
+                        df.getOWLNamedIndividual(IRI.create(solution.unwrapIndividual("m").toStringID())),
+                        df.getOWLNamedIndividual(IRI.create(solution.unwrapIndividual("o").toStringID()))))
                 .collect(Collectors.toSet());
-        assertAll(() -> assertEquals(12, temporalRelations.size(), "Wrong number of temporal relations for municipal1"),
+        assertAll(() -> assertEquals(14, temporalRelations.size(), "Wrong number of temporal relations for municipal1"),
                 () -> assertTrue(temporalRelations
                         .stream()
-                        .anyMatch(relation -> relation.getObject().equals(df.getOWLNamedIndividual(IRI.create("http://nickrobison.com/dissertation/trestle.owl#municipal2:1990:2013")))), "test_maputo is not related to municipal2")
+                        .anyMatch(relation -> relation.getObject().equals(df.getOWLNamedIndividual(IRI.create("http://nickrobison.com/dissertation/trestle.owl#municipal2:1990:2013")))), "municipal1 is not related to municipal2")
         );
         this.ontology.returnAndCommitTransaction(trestleTransaction);
     }
