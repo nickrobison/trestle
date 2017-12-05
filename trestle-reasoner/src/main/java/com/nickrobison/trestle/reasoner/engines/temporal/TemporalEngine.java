@@ -6,14 +6,11 @@ import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 
 @Metriced
 public class TemporalEngine {
-    private static final Logger logger = LoggerFactory.getLogger(TemporalEngine.class);
     private static final String MISSING_TEMPORAL = "%s must have temporal objects";
 
     private final TrestleParser tp;

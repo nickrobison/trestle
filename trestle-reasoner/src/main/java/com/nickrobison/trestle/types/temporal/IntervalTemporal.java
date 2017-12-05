@@ -150,30 +150,13 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     public boolean meets(TemporalObject comparingObject) {
         return !this.during(comparingObject) &&
                 !this.isContinuing()
-                && this.toTime.equals(comparingObject.getIdTemporal());
+                && TemporalUtils.compareTemporals(this.toTime, comparingObject.getIdTemporal()) == 0;
     }
-
-    //    @Override
-//    public boolean meets(TemporalObject comparingObject) {
-//        if (comparingObject.isInterval()) {
-////            If the comparing object is continuing, we only need to compare our toTemporal with its startTemporal
-//            if (comparingObject.isContinuing()) {
-//                return !this.isContinuing() && this.toTime.equals(comparingObject.getIdTemporal());
-//            }
-//
-////            Otherwise, compare start/end end/start
-//            return this.isContinuing() && this.fromTime.equals(comparingObject.asInterval().getToTime().get())
-//                    || this.toTime.equals(comparingObject.getIdTemporal());
-//        }
-//
-////        Compare against point
-//        return this.isContinuing() && this.fromTime.equals(comparingObject.getIdTemporal()) || this.toTime.equals(comparingObject.getIdTemporal());
-//    }
 
     @Override
     public boolean starts(TemporalObject comparingObject) {
         return this.during(comparingObject)
-                && this.fromTime.equals(comparingObject.getIdTemporal());
+                && TemporalUtils.compareTemporals(this.fromTime, comparingObject.getIdTemporal()) == 0;
     }
 
     @Override
@@ -182,7 +165,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
                 && !this.isContinuing()
                 && !comparingObject.isContinuing()
                 && comparingObject.isInterval()
-                && this.toTime.equals(comparingObject.asInterval().getToTime().get());
+                && TemporalUtils.compareTemporals(this.toTime, (Temporal) comparingObject.asInterval().getToTime().get()) == 0;
     }
 
     @Override

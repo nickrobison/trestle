@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -84,6 +85,14 @@ public class TemporalEngineTest {
         assertAll(() -> assertEquals(1, noMeetsCompare.getRelations().size(), "Should have 1 relation"),
                 () -> assertTrue(noMeetsCompare.getRelations().contains(ObjectRelation.AFTER), "Should have after relation"),
                 () -> assertFalse(noMeetsCompare.getRelations().contains(ObjectRelation.TEMPORAL_MEETS), "Should not have meets"));
+
+//        Test continuing
+        final ContinuingIntervalObject continuingA = new ContinuingIntervalObject("continuing-a", LocalDate.of(2017, 3, 11).atStartOfDay());
+        final TemporalComparisonReport noContinuing = engine.compareObjects(continuingA, meetsB);
+        assertEquals(0, noContinuing.getRelations().size(), "Should not have relations");
+        final TemporalComparisonReport startsContinuingReport = engine.compareObjects(meetsB, continuingA);
+        assertAll(() -> assertEquals(1, startsContinuingReport.getRelations().size(), "Should only have 1 relation"),
+                () -> assertTrue(startsContinuingReport.getRelations().contains(ObjectRelation.STARTS), "MeetsB should start ContinuingA"));
     }
 
     @Test
@@ -140,6 +149,27 @@ public class TemporalEngineTest {
         @DefaultTemporal(type = TemporalType.POINT, duration = 1, unit = ChronoUnit.YEARS)
         public LocalDate getAtTemporal() {
             return atTemporal;
+        }
+    }
+
+    @DatasetClass(name = "test-continuing")
+    public static class ContinuingIntervalObject implements Serializable {
+        private final String id;
+        private final LocalDateTime fromTemporal;
+
+        public ContinuingIntervalObject(String id, LocalDateTime fromTemporal) {
+            this.id = id;
+            this.fromTemporal = fromTemporal;
+        }
+
+        @IndividualIdentifier
+        public String getId() {
+            return id;
+        }
+
+        @StartTemporal
+        public LocalDateTime getFromTemporal() {
+            return fromTemporal;
         }
     }
 }
