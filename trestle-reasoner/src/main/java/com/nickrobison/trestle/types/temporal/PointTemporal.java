@@ -108,6 +108,23 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
     }
 
     @Override
+    public boolean meets(TemporalObject comparingObject) {
+        return this.starts(comparingObject) || this.finishes(comparingObject);
+    }
+
+    @Override
+    public boolean starts(TemporalObject comparingObject) {
+        return this.atTime.equals(comparingObject.getIdTemporal());
+    }
+
+    @Override
+    public boolean finishes(TemporalObject comparingObject) {
+        return comparingObject.isInterval()
+                && !comparingObject.isContinuing()
+                && comparingObject.asInterval().getToTime().get().equals(this.atTime);
+    }
+
+    @Override
     public boolean isPoint() {
         return true;
     }

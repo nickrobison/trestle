@@ -85,10 +85,10 @@ public abstract class TemporalObject implements Serializable {
     public abstract TemporalObject castTo(TemporalScope castScope);
 
     /**
-     * Compares a {@link Temporal} with the {@link TemporalObject} to determine if the given {@link Temporal} is before, during, or after the {@link TemporalObject}
+     * Compares a given {@link Temporal} with the {@link TemporalObject} to determine if the given {@link Temporal} is before, during, or after the {@link TemporalObject}
      *
      * @param comparingTemporal - {@link Temporal} to compare against the temporal object
-     * @return - {@code -1} if this {@link TemporalObject} comes before the {@link Temporal}, {@code 0} if the {@link Temporal} occurs during (or is equal to), {@code 1} if it comes after
+     * @return - {@code -1} if this {@link TemporalObject} comes before the {@link Temporal}, {@code 0} if the {@link Temporal} occurs during (or is equal to), {@code 1} if the {@link TemporalObject} comes after
      */
     public abstract int compareTo(Temporal comparingTemporal);
 
@@ -100,5 +100,36 @@ public abstract class TemporalObject implements Serializable {
      */
     public abstract boolean during(TemporalObject comparingObject);
 
+    /**
+     * Compares 2 {@link TemporalObject} to determine if this object starts the given object
+     * Is only possible if this object occurs DURING the given object
+     *
+     * @param comparingObject - {@link TemporalObject} to determine is started by
+     * @return - {@code true} this object starts the given object, {@link false} does not start the given object
+     */
+    public abstract boolean starts(TemporalObject comparingObject);
+
+    /**
+     * Compares 2 {@link TemporalObject} to determine if this object FINISHES the given object
+     * Is only possible if this object occurs DURING the given object
+     *
+     * @param comparingObject - {@link TemporalObject} to determine is started by
+     * @return - {@code true} this object starts the given object, {@link false} does not start the given object
+     */
+    public abstract boolean finishes(TemporalObject comparingObject);
+
+    /**
+     * Compares 2 {@link TemporalObject} to determine if this object MEETS the given object
+     *
+     * @param comparingObject - {@link TemporalObject} to determine meets
+     * @return - {@code true} this object starts the given object, {@link false} does not start the given object
+     */
+    public abstract boolean meets(TemporalObject comparingObject);
+
+    @Override
+    public abstract boolean equals(Object obj);
+
+    @Override
+    public abstract int hashCode();
 
 }

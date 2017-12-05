@@ -145,6 +145,41 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     }
 
     @Override
+    public boolean meets(TemporalObject comparingObject) {
+        return this.starts(comparingObject) || this.finishes(comparingObject);
+    }
+
+    //    @Override
+//    public boolean meets(TemporalObject comparingObject) {
+//        if (comparingObject.isInterval()) {
+////            If the comparing object is continuing, we only need to compare our toTemporal with its startTemporal
+//            if (comparingObject.isContinuing()) {
+//                return !this.isContinuing() && this.toTime.equals(comparingObject.getIdTemporal());
+//            }
+//
+////            Otherwise, compare start/end end/start
+//            return this.isContinuing() && this.fromTime.equals(comparingObject.asInterval().getToTime().get())
+//                    || this.toTime.equals(comparingObject.getIdTemporal());
+//        }
+//
+////        Compare against point
+//        return this.isContinuing() && this.fromTime.equals(comparingObject.getIdTemporal()) || this.toTime.equals(comparingObject.getIdTemporal());
+//    }
+
+    @Override
+    public boolean starts(TemporalObject comparingObject) {
+        return !this.isContinuing() && this.toTime.equals(comparingObject.getIdTemporal());
+    }
+
+    @Override
+    public boolean finishes(TemporalObject comparingObject) {
+        return !comparingObject.isContinuing()
+                && (comparingObject.isInterval()
+                && comparingObject.asInterval().getToTime().get().equals(this.fromTime)) ||
+                (comparingObject.isPoint() && comparingObject.getIdTemporal().equals(this.fromTime));
+    }
+
+    @Override
     public boolean isPoint() {
         return false;
     }
@@ -236,7 +271,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         if (toTime != null ? !toTime.equals(that.toTime) : that.toTime != null) return false;
         if (startName != null ? !startName.equals(that.startName) : that.startName != null) return false;
         if (endName != null ? !endName.equals(that.endName) : that.endName != null) return false;
-        if (!(temporalType == that.temporalType)) return false;
+        if (temporalType != that.temporalType) return false;
         if (!startTimeZone.equals(that.startTimeZone)) return false;
         return endTimeZone.equals(that.endTimeZone);
     }
