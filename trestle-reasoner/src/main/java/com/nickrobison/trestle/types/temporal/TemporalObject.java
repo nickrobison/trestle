@@ -103,6 +103,8 @@ public abstract class TemporalObject implements Serializable {
     /**
      * Compares 2 {@link TemporalObject} to determine if this object starts the given object
      * Is only possible if this object occurs DURING the given object
+     * <p>
+     * Note: {@link PointTemporal} will always return {@code false}
      *
      * @param comparingObject - {@link TemporalObject} to determine is started by
      * @return - {@code true} this object starts the given object, {@link false} does not start the given object
@@ -112,6 +114,8 @@ public abstract class TemporalObject implements Serializable {
     /**
      * Compares 2 {@link TemporalObject} to determine if this object FINISHES the given object
      * Is only possible if this object occurs DURING the given object
+     * <p>
+     * Note: {@link PointTemporal} will always return {@code false}
      *
      * @param comparingObject - {@link TemporalObject} to determine is started by
      * @return - {@code true} this object starts the given object, {@link false} does not start the given object

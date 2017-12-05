@@ -5,7 +5,6 @@ import com.nickrobison.trestle.reasoner.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
-import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParserProvider;
 import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
@@ -15,21 +14,22 @@ import org.junit.jupiter.api.Test;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TemporalEngineTest {
 
-    private TrestleParser parser;
     private TemporalEngine engine;
+    private static final IntervalTestObject BEFORE_OBJECT_A = new IntervalTestObject("object-1", LocalDate.of(1989, 3, 26), LocalDate.of(1989, 4, 15));
 
 
     @BeforeEach
     public void setup() {
 //        Setup the mock values
-        parser = new TrestleParserProvider("http://test-prefix.com/").get();
-        engine = new TemporalEngine(parser);
+        engine = new TemporalEngine(new TrestleParserProvider("http://test-prefix.com/").get());
     }
 
 
@@ -37,13 +37,12 @@ public class TemporalEngineTest {
     public void intervalToIntervalTests() {
 
 //        Before/After
-        final IntervalTestObject beforeObjectA = new IntervalTestObject("object-1", LocalDate.of(1989, 3, 26), LocalDate.of(1989, 4, 15));
         final IntervalTestObject beforeObjectB = new IntervalTestObject("object-2", LocalDate.of(1990, 5, 15), LocalDate.of(1990, 6, 7));
 
-        final TemporalComparisonReport aBeforeBCompare = engine.compareObjects(beforeObjectA, beforeObjectB);
+        final TemporalComparisonReport aBeforeBCompare = engine.compareObjects(BEFORE_OBJECT_A, beforeObjectB);
         assertAll(() -> assertEquals(1, aBeforeBCompare.getRelations().size(), "Should only have 1 relation"),
                 () -> assertTrue(aBeforeBCompare.getRelations().contains(ObjectRelation.BEFORE), "Should have before relation"));
-        final TemporalComparisonReport bAfterACompare = engine.compareObjects(beforeObjectB, beforeObjectA);
+        final TemporalComparisonReport bAfterACompare = engine.compareObjects(beforeObjectB, BEFORE_OBJECT_A);
         assertAll(() -> assertEquals(1, bAfterACompare.getRelations().size(), "Should only have 1 relation"),
                 () -> assertTrue(bAfterACompare.getRelations().contains(ObjectRelation.AFTER), "Should have after relation"));
 
@@ -98,6 +97,25 @@ public class TemporalEngineTest {
     @Test
     public void intervalToPointTests() {
 
+//        Before/after
+        final PointTestObject before = new PointTestObject("before-point", LocalDate.of(1988, 3, 11).atStartOfDay().atOffset(ZoneOffset.UTC));
+        final TemporalComparisonReport beforeComparisonReport = engine.compareObjects(before, BEFORE_OBJECT_A);
+        assertAll(() -> assertEquals(1, beforeComparisonReport.getRelations().size(), "Should have 1 relation"),
+                () -> assertTrue(beforeComparisonReport.getRelations().contains(ObjectRelation.BEFORE), "Should have before relation"));
+        final TemporalComparisonReport afterComparisonReport = engine.compareObjects(BEFORE_OBJECT_A, before);
+        assertAll(() -> assertEquals(1, afterComparisonReport.getRelations().size(), "Should have 1 relation"),
+                () -> assertTrue(afterComparisonReport.getRelations().contains(ObjectRelation.AFTER), "Should have after relation"));
+
+//        Meets
+        final PointTestObject meets = new PointTestObject("meets-point", LocalDate.of(1989, 3, 26).atStartOfDay().atOffset(ZoneOffset.UTC));
+        final TemporalComparisonReport meetsReport = engine.compareObjects(meets, BEFORE_OBJECT_A);
+        assertAll(() -> assertEquals(1, meetsReport.getRelations().size(), "Should have 1 relation"),
+                () -> assertTrue(meetsReport.getRelations().contains(ObjectRelation.TEMPORAL_MEETS), "Should have MEETS"));
+        final PointTestObject meetsAfter = new PointTestObject("meets-after", LocalDate.of(1989, 4, 15).atStartOfDay().atOffset(ZoneOffset.UTC));
+        final TemporalComparisonReport meetsAfterReport = engine.compareObjects(BEFORE_OBJECT_A, meetsAfter);
+        assertAll(() -> assertEquals(1, meetsAfterReport.getRelations().size(), "Should only have 1 relation"),
+                () -> assertTrue(meetsAfterReport.getRelations().contains(ObjectRelation.TEMPORAL_MEETS), "Should have MEETS"));
+
     }
 
 
@@ -134,9 +152,9 @@ public class TemporalEngineTest {
     public static class PointTestObject implements Serializable {
 
         private final String id;
-        private final LocalDate atTemporal;
+        private final OffsetDateTime atTemporal;
 
-        public PointTestObject(String id, LocalDate atTemporal) {
+        public PointTestObject(String id, OffsetDateTime atTemporal) {
             this.id = id;
             this.atTemporal = atTemporal;
         }
@@ -147,7 +165,7 @@ public class TemporalEngineTest {
         }
 
         @DefaultTemporal(type = TemporalType.POINT, duration = 1, unit = ChronoUnit.YEARS)
-        public LocalDate getAtTemporal() {
+        public OffsetDateTime getAtTemporal() {
             return atTemporal;
         }
     }
