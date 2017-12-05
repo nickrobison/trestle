@@ -160,6 +160,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
     }
 
     @Override
+    @SuppressWarnings({"squid:S3655"}) // We can suppress this because we call .isContinuing() earlier
     public boolean finishes(TemporalObject comparingObject) {
         return this.during(comparingObject)
                 && !this.isContinuing()
@@ -205,6 +206,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
      * @param amount - amount to add/subtract from the ending temporal
      * @return - Optional temporal of type {@link T}
      */
+    @SuppressWarnings({"squid:S3516"}) // I think we can suppress this because we don't actually return the same value. I think?
     public Optional<T> getAdjustedToTime(int amount) {
         if (isContinuing()) return Optional.empty();
         @SuppressWarnings({"ConstantConditions", "squid:S3655"}) final T end = this.getToTime().get();
