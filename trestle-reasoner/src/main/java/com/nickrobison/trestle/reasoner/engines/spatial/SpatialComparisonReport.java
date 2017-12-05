@@ -6,11 +6,8 @@ import com.vividsolutions.jts.geom.Geometry;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
-import java.io.Serializable;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Set;
 
 public class SpatialComparisonReport extends AbstractComparisonReport {
     public static final long serialVersionUID = 42L;

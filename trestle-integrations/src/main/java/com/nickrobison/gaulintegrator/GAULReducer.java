@@ -2,15 +2,15 @@ package com.nickrobison.gaulintegrator;
 
 import com.esri.core.geometry.OperatorExportToWkb;
 import com.esri.core.geometry.SpatialReference;
-import com.nickrobison.trestle.common.TemporalUtils;
 import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.datasets.GAULObject;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
-import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
-import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
+import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
+import com.nickrobison.trestle.reasoner.engines.temporal.TemporalComparisonReport;
+import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.vividsolutions.jts.geom.GeometryCollection;
@@ -333,31 +333,42 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 .forEach(relation -> reasoner.writeObjectRelationship(matchedObject, newGAULObject, relation));
 
 //        Temporals?
+        final TemporalComparisonReport temporalComparisonReport = this.reasoner.getTemporalEngine().compareObjects(newGAULObject, matchedObject);
+        temporalComparisonReport
+                .getRelations()
+                .forEach(relation -> reasoner.writeObjectRelationship(newGAULObject, matchedObject, relation));
 
-//        Does one start the other?
-        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getStartDate()) == 0) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.STARTS);
-        }
+//        Try in the other direction
 
-        if (TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getEndDate()) == 0) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.FINISHES);
-        }
+        final TemporalComparisonReport inverseTemporalRelations = this.reasoner.getTemporalEngine().compareObjects(matchedObject, newGAULObject);
+        inverseTemporalRelations
+                .getRelations()
+                .forEach(relation -> reasoner.writeObjectRelationship(matchedObject, newGAULObject, relation));
 
-//            Meets?
-        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getEndDate()) == 0 ||
-                TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getStartDate()) == 0) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.TEMPORAL_MEETS);
-        }
-
-//        Before? (Including meets)
-        if (TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getStartDate()) != 1) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.BEFORE);
-        }
-
-//        After? (Including meets)
-        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getEndDate()) != -1) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.AFTER);
-        }
+////        Does one start the other?
+//        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getStartDate()) == 0) {
+//            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.STARTS);
+//        }
+//
+//        if (TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getEndDate()) == 0) {
+//            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.FINISHES);
+//        }
+//
+////            Meets?
+//        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getEndDate()) == 0 ||
+//                TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getStartDate()) == 0) {
+//            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.TEMPORAL_MEETS);
+//        }
+//
+////        Before? (Including meets)
+//        if (TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getStartDate()) != 1) {
+//            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.BEFORE);
+//        }
+//
+////        After? (Including meets)
+//        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getEndDate()) != -1) {
+//            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.AFTER);
+//        }
 
 //        double intersectedArea = intersectedPolygon.calculateArea2D() / newGAULObject.getShapePolygon().calculateArea2D();
 //        objectWeight += (1 - objectWeight) * intersectedArea;

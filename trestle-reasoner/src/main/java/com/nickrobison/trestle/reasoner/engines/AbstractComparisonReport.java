@@ -12,7 +12,7 @@ public class AbstractComparisonReport implements Serializable {
 
     private final String objectAID;
     private final String objectBID;
-//    I don't really like this, but it's a work around to the Serialization warning
+    //    I don't really like this, but it's a work around to the Serialization warning
     protected final HashSet<ObjectRelation> relations;
 
     public AbstractComparisonReport(OWLNamedIndividual objectA, OWLNamedIndividual objectB) {
@@ -40,6 +40,7 @@ public class AbstractComparisonReport implements Serializable {
 
     /**
      * Get all asserted relations between Object A and Object B
+     *
      * @return - {@link Set} {@link ObjectRelation}
      */
     public Set<ObjectRelation> getRelations() {
