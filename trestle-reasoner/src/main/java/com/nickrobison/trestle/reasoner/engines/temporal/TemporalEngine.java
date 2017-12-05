@@ -33,7 +33,9 @@ public class TemporalEngine {
 
         final TemporalComparisonReport comparisonReport = new TemporalComparisonReport(objectAID, objectBID);
 
-        if (objectATemporal.meets(objectBTemporal)) {
+        if (objectATemporal.equals(objectBTemporal)) {
+            comparisonReport.addRelation(ObjectRelation.EQUALS);
+        } else if (objectATemporal.meets(objectBTemporal)) {
             comparisonReport.addRelation(ObjectRelation.TEMPORAL_MEETS);
         } else if (objectATemporal.starts(objectBTemporal)) {
             //        A during B?

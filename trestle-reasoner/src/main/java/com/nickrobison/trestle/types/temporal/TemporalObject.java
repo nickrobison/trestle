@@ -107,7 +107,7 @@ public abstract class TemporalObject implements Serializable {
      * Note: {@link PointTemporal} will always return {@code false}
      *
      * @param comparingObject - {@link TemporalObject} to determine is started by
-     * @return - {@code true} this object starts the given object, {@link false} does not start the given object
+     * @return - {@code true} this object starts the given object, {@code false} does not start the given object
      */
     public abstract boolean starts(TemporalObject comparingObject);
 
@@ -118,7 +118,7 @@ public abstract class TemporalObject implements Serializable {
      * Note: {@link PointTemporal} will always return {@code false}
      *
      * @param comparingObject - {@link TemporalObject} to determine is started by
-     * @return - {@code true} this object starts the given object, {@link false} does not start the given object
+     * @return - {@code true} this object starts the given object, {@code false} does not start the given object
      */
     public abstract boolean finishes(TemporalObject comparingObject);
 
@@ -126,7 +126,7 @@ public abstract class TemporalObject implements Serializable {
      * Compares 2 {@link TemporalObject} to determine if this object MEETS the given object
      *
      * @param comparingObject - {@link TemporalObject} to determine meets
-     * @return - {@code true} this object starts the given object, {@link false} does not start the given object
+     * @return - {@code true} this object starts the given object, {@code false} does not start the given object
      */
     public abstract boolean meets(TemporalObject comparingObject);
 

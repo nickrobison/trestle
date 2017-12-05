@@ -166,10 +166,10 @@ public class PointTemporal<T extends Temporal> extends TemporalObject {
         PointTemporal<?> that = (PointTemporal<?>) o;
 
         if (scope != that.scope) return false;
-        if (!atTime.equals(that.atTime)) return false;
+        if (TemporalUtils.compareTemporals(this.atTime, that.atTime) != 0) return false;
         if (parameterName != null ? !parameterName.equals(that.parameterName) : that.parameterName != null)
             return false;
-        if (!(temporalType == that.temporalType)) return false;
+        if (temporalType != that.temporalType) return false;
         return timeZone.equals(that.timeZone);
     }
 

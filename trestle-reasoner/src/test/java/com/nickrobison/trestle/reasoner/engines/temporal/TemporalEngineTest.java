@@ -55,6 +55,14 @@ public class TemporalEngineTest {
         final TemporalComparisonReport duringBReport = engine.compareObjects(duringB, duringA);
         assertEquals(0, duringBReport.getRelations().size(), "Should not have any relations");
 
+//        Equals
+        final IntervalTestObject equalsA = new IntervalTestObject("equals-a", LocalDate.of(1989, 3, 26), LocalDate.of(2017, 3, 11));
+        final IntervalTestObject equalsB = new IntervalTestObject("equals-b", LocalDate.of(1989, 3, 26), LocalDate.of(2017, 3, 11));
+        final TemporalComparisonReport equalsReport = engine.compareObjects(equalsA, equalsB);
+        assertAll(() -> assertEquals(1, equalsReport.getRelations().size(), "Should have 1 relation"),
+                () -> assertTrue(equalsReport.getRelations().contains(ObjectRelation.EQUALS), "Should have EQUALS"));
+
+
 //        Starts
         final IntervalTestObject aStarts = new IntervalTestObject("starts-a", LocalDate.of(2017, 3, 11), LocalDate.of(2017, 3, 26));
         final IntervalTestObject bStarts = new IntervalTestObject("starts-b", LocalDate.of(2017, 3, 11), LocalDate.of(2017, 5, 14));
@@ -116,6 +124,11 @@ public class TemporalEngineTest {
         assertAll(() -> assertEquals(1, meetsAfterReport.getRelations().size(), "Should only have 1 relation"),
                 () -> assertTrue(meetsAfterReport.getRelations().contains(ObjectRelation.TEMPORAL_MEETS), "Should have MEETS"));
 
+//        Equals
+        final PointTestObject equalsPoint = new PointTestObject("equals-point", LocalDate.of(1988, 3, 11).atStartOfDay().atOffset(ZoneOffset.UTC).withOffsetSameInstant(ZoneOffset.MAX));
+        final TemporalComparisonReport equalsReport = engine.compareObjects(before, equalsPoint);
+         assertAll(() -> assertEquals(1, equalsReport.getRelations().size(), "Should have 1 relation"),
+                () -> assertTrue(equalsReport.getRelations().contains(ObjectRelation.EQUALS), "Should have EQUALS"));
     }
 
 
