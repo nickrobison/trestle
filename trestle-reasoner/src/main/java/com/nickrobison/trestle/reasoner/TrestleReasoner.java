@@ -11,6 +11,7 @@ import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentE
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
+import com.nickrobison.trestle.reasoner.engines.temporal.TemporalEngine;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
@@ -89,6 +90,12 @@ public interface TrestleReasoner {
      * @return - {@link SpatialEngine}
      */
     SpatialEngine getSpatialEngine();
+
+    /**
+     * Return the underlying {@link TemporalEngine}
+     * @return - {@link TemporalEngine}
+     */
+    TemporalEngine getTemporalEngine();
 
     /**
      * Get the underlying {@link ContainmentEngine}

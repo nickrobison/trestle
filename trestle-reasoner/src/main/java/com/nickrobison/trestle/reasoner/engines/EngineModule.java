@@ -16,8 +16,6 @@ import com.nickrobison.trestle.reasoner.engines.temporal.TemporalEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.temporal.Temporal;
-
 public class EngineModule extends PrivateModule {
 
     private static final Logger logger = LoggerFactory.getLogger(EngineModule.class);
@@ -29,6 +27,7 @@ public class EngineModule extends PrivateModule {
         this.mergedEnabled = mergeEnabled;
         this.eventEnabled = eventEnabled;
     }
+
     @Override
     protected void configure() {
         logger.debug("Configuring Engine Module");
