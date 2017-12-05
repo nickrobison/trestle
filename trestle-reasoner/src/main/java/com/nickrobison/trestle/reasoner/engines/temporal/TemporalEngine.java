@@ -3,6 +3,7 @@ package com.nickrobison.trestle.reasoner.engines.temporal;
 import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
+import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.slf4j.Logger;
@@ -35,7 +36,24 @@ public class TemporalEngine {
 
         final TemporalComparisonReport comparisonReport = new TemporalComparisonReport(objectAID, objectBID);
 
-//        Does A start B?
+        if (objectATemporal.meets(objectBTemporal)) {
+            comparisonReport.addRelation(ObjectRelation.TEMPORAL_MEETS);
+        } else if (objectATemporal.starts(objectBTemporal)) {
+            //        A during B?
+            comparisonReport.addRelation(ObjectRelation.STARTS);
+        } else if (objectATemporal.finishes(objectBTemporal)) {
+            comparisonReport.addRelation(ObjectRelation.FINISHES);
+        } else if (objectATemporal.during(objectBTemporal)) {
+            comparisonReport.addRelation(ObjectRelation.DURING);
+
+//            Is A entirely before B?
+        } else if (objectATemporal.compareTo(objectBTemporal.getIdTemporal()) == -1) {
+//            Do they meet?
+            comparisonReport.addRelation(ObjectRelation.BEFORE);
+        } else if (objectATemporal.compareTo(objectBTemporal.getIdTemporal()) == 1) {
+//            Do they meet?
+            comparisonReport.addRelation(ObjectRelation.AFTER);
+        }
 
         return comparisonReport;
     }

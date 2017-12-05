@@ -13,7 +13,9 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.Temporal;
 import java.time.temporal.TemporalQueries;
 import java.time.temporal.TemporalUnit;
-import java.util.*;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Created by nrobison on 6/30/16.
@@ -141,12 +143,14 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         }
 
 //        If we're continuing and they're not, we're not within them
-        return !this.asInterval().isContinuing() && TemporalUtils.compareTemporals(this.toTime, (Temporal) comparingObject.asInterval().getToTime().get()) == -1;
+        return !this.asInterval().isContinuing() && TemporalUtils.compareTemporals(this.toTime, (Temporal) comparingObject.asInterval().getToTime().get()) != 1;
     }
 
     @Override
     public boolean meets(TemporalObject comparingObject) {
-        return this.starts(comparingObject) || this.finishes(comparingObject);
+        return !this.during(comparingObject) &&
+                !this.isContinuing()
+                && this.toTime.equals(comparingObject.getIdTemporal());
     }
 
     //    @Override
@@ -168,15 +172,17 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
 
     @Override
     public boolean starts(TemporalObject comparingObject) {
-        return !this.isContinuing() && this.toTime.equals(comparingObject.getIdTemporal());
+        return this.during(comparingObject)
+                && this.fromTime.equals(comparingObject.getIdTemporal());
     }
 
     @Override
     public boolean finishes(TemporalObject comparingObject) {
-        return !comparingObject.isContinuing()
-                && (comparingObject.isInterval()
-                && comparingObject.asInterval().getToTime().get().equals(this.fromTime)) ||
-                (comparingObject.isPoint() && comparingObject.getIdTemporal().equals(this.fromTime));
+        return this.during(comparingObject)
+                && !this.isContinuing()
+                && !comparingObject.isContinuing()
+                && comparingObject.isInterval()
+                && this.toTime.equals(comparingObject.asInterval().getToTime().get());
     }
 
     @Override
