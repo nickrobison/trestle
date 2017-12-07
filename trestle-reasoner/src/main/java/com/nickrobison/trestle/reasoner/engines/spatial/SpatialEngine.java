@@ -20,7 +20,6 @@ import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionCont
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
 import com.nickrobison.trestle.reasoner.parser.SpatialParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
-import com.nickrobison.trestle.reasoner.parser.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TrestleIndividual;
@@ -246,8 +245,8 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
      * Perform spatial comparison between two input objects
      * Object relations unidirectional are A -&gt; B. e.g. contains(A,B)
      *
-     * @param objectA        - {@link Object} to comapare against
-     * @param objectB        - {@link Object} to compre with
+     * @param objectA        - {@link Object} to compare against
+     * @param objectB        - {@link Object} to compare with
      * @param inputSR        - {@link SpatialReference} input spatial reference
      * @param matchThreshold - {@link Double} cutoff for all fuzzy matches
      * @param <T>            - Type parameter

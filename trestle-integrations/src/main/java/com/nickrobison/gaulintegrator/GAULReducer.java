@@ -1,13 +1,15 @@
 package com.nickrobison.gaulintegrator;
 
-import com.esri.core.geometry.*;
-import com.nickrobison.trestle.common.TemporalUtils;
+import com.esri.core.geometry.OperatorExportToWkb;
+import com.esri.core.geometry.SpatialReference;
 import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.datasets.GAULObject;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
+import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
+import com.nickrobison.trestle.reasoner.engines.temporal.TemporalComparisonReport;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
@@ -46,10 +48,6 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
     private static final String ENDDATE = "temporal.enddate";
 
     //    Setup the spatial stuff
-    private static final OperatorIntersection operatorIntersection = OperatorIntersection.local();
-    private static final OperatorWithin operatorWithin = OperatorWithin.local();
-    private static final OperatorTouches operatorTouches = OperatorTouches.local();
-    private static final OperatorExportToWkt operatorWKTExport = OperatorExportToWkt.local();
     private static final OperatorExportToWkb operatorWKBExport = OperatorExportToWkb.local();
     private static final int INPUTSRS = 4326;
     private static final SpatialReference inputSR = SpatialReference.create(INPUTSRS);
@@ -307,67 +305,73 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 //        Spatial interactions are exhaustive
 
 //                    newGAUL within matchedObject? Covers, or Contains? IF Covers, also contains
-        if (operatorTouches.execute(newGAULObject.getShapePolygon(), matchedObject.getShapePolygon(), inputSR, null) && operatorWithin.execute(newGAULObject.getShapePolygon(), matchedObject.getShapePolygon(), inputSR, null)) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.COVERS);
-        } else if (operatorWithin.execute(newGAULObject.getShapePolygon(), matchedObject.getShapePolygon(), inputSR, null)) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.CONTAINS);
-        }
+        final SpatialComparisonReport spatialComparisonReport = this.reasoner.getSpatialEngine().compareObjects(newGAULObject, matchedObject, inputSR, 0.9);
 
-//        What about in the other direction?
-        if (operatorTouches.execute(matchedObject.getShapePolygon(), newGAULObject.getShapePolygon(), inputSR, null) && operatorWithin.execute(matchedObject.getShapePolygon(), newGAULObject.getShapePolygon(), inputSR, null)) {
-            reasoner.writeObjectRelationship(matchedObject, newGAULObject, ObjectRelation.COVERS);
-        } else if (operatorWithin.execute(matchedObject.getShapePolygon(), newGAULObject.getShapePolygon(), inputSR, null)) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.INSIDE);
-        }
+//        Write all the relations from the spatial report
+//        Overlaps?
+        spatialComparisonReport.getSpatialOverlap().ifPresent(s -> {
+            if (spatialComparisonReport.getSpatialOverlapPercentage().orElseThrow(() -> new IllegalStateException("Should not have overlaps with percentage")) > 0.001) {
+                reasoner.writeSpatialOverlap(newGAULObject, matchedObject, s);
+            }
+        });
 
-//                    Meets
-        if (operatorTouches.execute(newGAULObject.getShapePolygon(), matchedObject.getShapePolygon(), inputSR, null)) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.SPATIAL_MEETS);
-        }
+//        Others, if they're not overlaps
+        spatialComparisonReport
+                .getRelations()
+                .stream()
+                .filter(relation -> !relation.equals(ObjectRelation.SPATIAL_EQUALS))
+                .forEach(relation -> reasoner.writeObjectRelationship(newGAULObject, matchedObject, relation));
 
-//                    Overlaps
-//                    Compute the total area intersection
-        Polygon intersectedPolygon = new Polygon();
-        final Geometry computedGeometry = operatorIntersection.execute(matchedObject.getShapePolygon(), newGAULObject.getShapePolygon(), inputSR, null);
-        if (computedGeometry.getType() == Geometry.Type.Polygon) {
-            intersectedPolygon = (Polygon) computedGeometry;
-        } else {
-            logger.error("Incorrectly computed geometry, assuming 0 intersection");
-        }
-        if (computedGeometry.calculateArea2D() > 0.0) {
-            final String wktBoundary = operatorWKTExport.execute(0, intersectedPolygon, null);
-            reasoner.writeSpatialOverlap(newGAULObject, matchedObject, wktBoundary);
-        }
+//        Try it in the other direction
+        final SpatialComparisonReport inverseSpatialReport = this.reasoner.getSpatialEngine().compareObjects(matchedObject, newGAULObject, inputSR, 0.9);
+
+//        Do all the non-overlaps relations
+        inverseSpatialReport
+                .getRelations()
+                .stream()
+                .filter(relation -> !relation.equals(ObjectRelation.SPATIAL_EQUALS))
+                .forEach(relation -> reasoner.writeObjectRelationship(matchedObject, newGAULObject, relation));
 
 //        Temporals?
+        final TemporalComparisonReport temporalComparisonReport = this.reasoner.getTemporalEngine().compareObjects(newGAULObject, matchedObject);
+        temporalComparisonReport
+                .getRelations()
+                .forEach(relation -> reasoner.writeObjectRelationship(newGAULObject, matchedObject, relation));
 
-//        Does one start the other?
-        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getStartDate()) == 0) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.STARTS);
-        }
+//        Try in the other direction
 
-        if (TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getEndDate()) == 0) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.FINISHES);
-        }
+        final TemporalComparisonReport inverseTemporalRelations = this.reasoner.getTemporalEngine().compareObjects(matchedObject, newGAULObject);
+        inverseTemporalRelations
+                .getRelations()
+                .forEach(relation -> reasoner.writeObjectRelationship(matchedObject, newGAULObject, relation));
 
-//            Meets?
-        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getEndDate()) == 0 ||
-                TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getStartDate()) == 0) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.TEMPORAL_MEETS);
-        }
+////        Does one start the other?
+//        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getStartDate()) == 0) {
+//            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.STARTS);
+//        }
+//
+//        if (TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getEndDate()) == 0) {
+//            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.FINISHES);
+//        }
+//
+////            Meets?
+//        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getEndDate()) == 0 ||
+//                TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getStartDate()) == 0) {
+//            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.TEMPORAL_MEETS);
+//        }
+//
+////        Before? (Including meets)
+//        if (TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getStartDate()) != 1) {
+//            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.BEFORE);
+//        }
+//
+////        After? (Including meets)
+//        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getEndDate()) != -1) {
+//            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.AFTER);
+//        }
 
-//        Before? (Including meets)
-        if (TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getStartDate()) != 1) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.BEFORE);
-        }
-
-//        After? (Including meets)
-        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getEndDate()) != -1) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.AFTER);
-        }
-
-        double intersectedArea = intersectedPolygon.calculateArea2D() / newGAULObject.getShapePolygon().calculateArea2D();
-        objectWeight += (1 - objectWeight) * intersectedArea;
+//        double intersectedArea = intersectedPolygon.calculateArea2D() / newGAULObject.getShapePolygon().calculateArea2D();
+//        objectWeight += (1 - objectWeight) * intersectedArea;
         return objectWeight;
     }
 

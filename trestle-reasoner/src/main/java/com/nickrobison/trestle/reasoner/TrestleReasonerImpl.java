@@ -39,9 +39,10 @@ import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentE
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
+import com.nickrobison.trestle.reasoner.engines.temporal.TemporalEngine;
 import com.nickrobison.trestle.reasoner.exceptions.*;
 import com.nickrobison.trestle.reasoner.parser.*;
-import com.nickrobison.trestle.reasoner.parser.spatial.SpatialComparisonReport;
+import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.reasoner.utils.TemporalPropertiesPair;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
@@ -115,6 +116,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final TrestleEventEngine eventEngine;
     private final IndividualEngine individualEngine;
     private final SpatialEngine spatialEngine;
+    private final TemporalEngine temporalEngine;
     private final Config trestleConfig;
     private final TrestleCache trestleCache;
     private final Metrician metrician;
@@ -223,6 +225,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         this.eventEngine = injector.getInstance(TrestleEventEngine.class);
         this.individualEngine = injector.getInstance(IndividualEngine.class);
         this.spatialEngine = injector.getInstance(SpatialEngine.class);
+        this.temporalEngine = injector.getInstance(TemporalEngine.class);
 
 //            validate the classes
         builder.inputClasses.forEach(clazz -> {
@@ -325,6 +328,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public SpatialEngine getSpatialEngine() {
         return this.spatialEngine;
+    }
+
+    @Override
+    public TemporalEngine getTemporalEngine() {
+        return this.temporalEngine;
     }
 
     @Override

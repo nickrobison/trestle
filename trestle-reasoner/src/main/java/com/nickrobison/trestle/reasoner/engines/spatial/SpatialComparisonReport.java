@@ -1,38 +1,23 @@
-package com.nickrobison.trestle.reasoner.parser.spatial;
+package com.nickrobison.trestle.reasoner.engines.spatial;
 
+import com.nickrobison.trestle.reasoner.engines.AbstractComparisonReport;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.vividsolutions.jts.geom.Geometry;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
-import java.io.Serializable;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Set;
 
-public class SpatialComparisonReport implements Serializable {
+public class SpatialComparisonReport extends AbstractComparisonReport {
     public static final long serialVersionUID = 42L;
 
-    private final String objectAID;
-    private final String objectBID;
-    private final Set<ObjectRelation> relations;
     private @MonotonicNonNull Double equality;
     private @MonotonicNonNull String overlap;
     private @MonotonicNonNull Double overlapPercentage;
 
-    public SpatialComparisonReport(OWLNamedIndividual objectAID, OWLNamedIndividual objectBID) {
-        this.objectAID = objectAID.toStringID();
-        this.objectBID = objectBID.toStringID();
-        this.relations = new HashSet<>();
-    }
-
-    public String getObjectAID() {
-        return objectAID;
-    }
-
-    public String getObjectBID() {
-        return objectBID;
+    public SpatialComparisonReport(OWLNamedIndividual objectA, OWLNamedIndividual objectB) {
+        super(objectA, objectB);
     }
 
     /**
@@ -87,18 +72,5 @@ public class SpatialComparisonReport implements Serializable {
      */
     public Optional<Double> getSpatialOverlapPercentage() {
         return Optional.ofNullable(this.overlapPercentage);
-    }
-
-    /**
-     * Add the specified {@link ObjectRelation} to the relation set
-     *
-     * @param relation - {@link ObjectRelation} to add
-     */
-    public void addRelation(ObjectRelation relation) {
-        this.relations.add(relation);
-    }
-
-    public Set<ObjectRelation> getRelations() {
-        return relations;
     }
 }

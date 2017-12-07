@@ -1,7 +1,7 @@
 package com.nickrobison.trestle.server.resources;
 
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
-import com.nickrobison.trestle.reasoner.parser.spatial.SpatialComparisonReport;
+import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 
 import java.io.Serializable;
 import java.util.*;
