@@ -411,7 +411,9 @@
                                                        :constructor (build-constructor clazz)
                                                        }))]
         (if (contains? parsedClass :identifier)
-          parsedClass
+          (if (contains? parsedClass :temporals)
+            parsedClass
+            (throw (InvalidClassException. clazz InvalidClassException$State/MISSING "Temporals")))
           (throw (InvalidClassException. clazz InvalidClassException$State/MISSING "Identifier"))))
 
       (throw (InvalidClassException. clazz "Class" "Must be public"))))

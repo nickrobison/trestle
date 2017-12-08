@@ -123,6 +123,10 @@ public class ClassRegisterTest {
         final InvalidClassException multiPointException = assertThrows(InvalidClassException.class, () -> cr.registerClass(MultiplePointTemporal.class));
         assertEquals(EXCESS, multiPointException.getProblemState(), "Should have excess point temporals");
 
+//        No temporals
+        final InvalidClassException noTemporalException = assertThrows(InvalidClassException.class, () -> cr.registerClass(NoTemporal.class));
+        assertEquals(MISSING, noTemporalException.getProblemState());
+
         try {
             cr.registerClass(TimeZoneParsingTest.class);
         } catch (TrestleClassException e) {
@@ -216,6 +220,16 @@ public class ClassRegisterTest {
 
         public MultiplePointTemporal(LocalDate defaultDate) {
             this.defaultDate = defaultDate;
+        }
+    }
+
+    @DatasetClass(name = "test")
+    public static class NoTemporal {
+        @IndividualIdentifier
+        public String id;
+
+        public NoTemporal(String id) {
+            this.id = id;
         }
     }
 
@@ -378,10 +392,13 @@ public class ClassRegisterTest {
         private final String testString2;
         @IndividualIdentifier
         public String id;
+        @StartTemporal
+        public LocalDate startTemporal;
 
-        public FailingLanguageTest(String testString, String testString2) {
+        public FailingLanguageTest(String testString, String testString2, LocalDate startTemporal) {
             this.testString = testString;
             this.testString2 = testString2;
+            this.startTemporal = startTemporal;
         }
 
         @Fact(name = "testString")
