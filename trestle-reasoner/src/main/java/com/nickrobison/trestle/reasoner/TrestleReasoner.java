@@ -10,6 +10,7 @@ import com.nickrobison.trestle.reasoner.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeEngine;
+import com.nickrobison.trestle.reasoner.parser.TypeConstructor;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
@@ -50,12 +51,11 @@ public interface TrestleReasoner {
 
     /**
      * Register custom constructor function for a given java class/OWLDataType intersection
+     * Note: It's advisable to use the {@link java.util.ServiceLoader} functionality instead of manually registering constructors
      *
-     * @param clazz           - Java class to construct
-     * @param datatype        - OWLDatatype to match with Java class
-     * @param constructorFunc - Function lambda function to take OWLLiteral and generate given java class
+     * @param typeConstructor - {@link TypeConstructor} to register with the Reasoner
      */
-    void registerTypeConstructor(Class<?> clazz, OWLDatatype datatype, Function constructorFunc);
+    <C extends TypeConstructor> void registerTypeConstructor(C typeConstructor);
 
     //    When you get the ontology, the ownership passes away, so then the reasoner can't perform any more queries.
     ITrestleOntology getUnderlyingOntology();

@@ -182,7 +182,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final Injector injector = Guice.createInjector(new TrestleOntologyModule(ontologyBuilder, REASONER_PREFIX), new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled"), this.trestleConfig.getBoolean("events.enabled")));
 
 //        Setup metrics engine
-//        metrician = null;
         metrician = injector.getInstance(Metrician.class);
 
 //        Create our own thread pools to help isolate processes
@@ -197,8 +196,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             throw new IllegalArgumentException("invalid ontology name", e);
         }
 
-//        Register some constructor functions
-        TypeConverter.registerTypeConstructor(UUID.class, df.getOWLDatatype(UUIDDatatypeIRI), (uuidString) -> UUID.fromString(uuidString.toString()));
+//        Register type constructors from the service loader
+        final ServiceLoader<TypeConstructor> constructors = ServiceLoader.load(TypeConstructor.class);
+        for (final TypeConstructor constructor : constructors) {
+            this.registerTypeConstructor(constructor);
+        }
 
         ontology = injector.getInstance(ITrestleOntology.class);
         logger.debug("Ontology connected");
@@ -292,8 +294,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public void registerTypeConstructor(Class<?> clazz, OWLDatatype datatype, Function constructorFunc) {
-        TypeConverter.registerTypeConstructor(clazz, datatype, constructorFunc);
+    public <C extends TypeConstructor> void registerTypeConstructor(C typeConstructor) {
+        TypeConverter.registerTypeConstructor(typeConstructor);
     }
 
     //    When you get the ontology, the ownership passes away, so then the reasoner can't perform any more queries.

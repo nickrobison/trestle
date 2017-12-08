@@ -6,10 +6,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.NotNull;
 import org.joda.time.DateTime;
-import org.semanticweb.owlapi.model.OWLDataProperty;
-import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLDatatype;
-import org.semanticweb.owlapi.model.OWLLiteral;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,17 +37,24 @@ public class TypeConverter {
     private static final Logger logger = LoggerFactory.getLogger(TypeConverter.class);
     private static final Map<OWLDatatype, Class<?>> datatypeMap = buildDatatype2ClassMap();
     private static final Map<Class<?>, OWLDatatype> owlDatatypeMap = buildClassMap();
-    private static final Map<String, Function> javaClassConstructors = new HashMap<>();
+    private static final Map<String, TypeConstructor> javaClassConstructors = new HashMap<>();
 
     private TypeConverter() {
-
+//        Not used
     }
 
-    public static void registerTypeConstructor(Class<?> clazz, OWLDatatype datatype, Function constructorFunc) {
-            logger.debug("Registering java class {} with OWLDatatype {}", clazz.getName(), datatype.getIRI());
-        datatypeMap.put(datatype, clazz);
-        owlDatatypeMap.put(clazz, datatype);
-        javaClassConstructors.put(clazz.getTypeName(), constructorFunc);
+    public static void registerTypeConstructor(TypeConstructor constructor) {
+        final Class javaClass = constructor.getJavaType();
+        if (owlDatatypeMap.containsKey(javaClass)) {
+            logger.warn("Overwriting mapping of Java Class {} with {}", javaClass, constructor.getConstructorName());
+        } else {
+            logger.info("Registering Type Constructor {} for {} and {}", constructor.getConstructorName(),
+                    javaClass, constructor.getOWLDatatype());
+        }
+        final OWLDatatype owlDatatype = dfStatic.getOWLDatatype(IRI.create(constructor.getOWLDatatype()));
+        datatypeMap.put(owlDatatype, javaClass);
+        owlDatatypeMap.put(javaClass, owlDatatype);
+        javaClassConstructors.put(javaClass.getTypeName(), constructor);
     }
 
     /**
@@ -62,7 +66,7 @@ public class TypeConverter {
      * @return Java type of type T
      */
     //    I need the unchecked casts in order to get the correct primitives for the constructor generation
-    @SuppressWarnings({"unchecked", "return.type.incompatible"})
+    @SuppressWarnings({"unchecked", "return.type.incompatible", "squid:S1199"})
     public static <@NonNull T> @NonNull T extractOWLLiteral(Class<@NonNull T> javaClass, OWLLiteral literal) {
 
         switch (javaClass.getTypeName()) {
@@ -150,12 +154,12 @@ public class TypeConverter {
                     return javaClass.cast(geomObject.get());
                 }
 //                    Try to get a match from the custom constructor registry
-                final Function constructorFunction = javaClassConstructors.get(javaClass.getTypeName());
-                if (constructorFunction == null) {
-                    throw new IllegalArgumentException(String.format("Unsupported cast %s", javaClass));
+                final TypeConstructor constructor = javaClassConstructors.get(javaClass.getTypeName());
+                if (constructor == null) {
+                    throw new ClassCastException(String.format("Unsupported cast %s", javaClass));
                 }
 
-                return javaClass.cast(constructorFunction.apply(literal.getLiteral()));
+                return javaClass.cast(constructor.constructType(literal.getLiteral()));
             }
         }
     }
@@ -339,13 +343,12 @@ public class TypeConverter {
         OWLDatatype owlDatatype = owlDatatypeMap.get(javaTypeClass);
         if (owlDatatype == null) {
             logger.error("Unsupported Java type {}", javaTypeClass);
-//            throw new RuntimeException(String.format("Unsupported Java type %s", javaTypeClass));
             owlDatatype = OWL2Datatype.XSD_STRING.getDatatype(dfStatic);
         }
         return owlDatatype;
     }
 
-    @SuppressWarnings("Duplicates")
+    @SuppressWarnings({"Duplicates", "squid:S1199"})
     public static Class<?> parsePrimitiveClass(Class<?> returnClass) {
         if (returnClass.isPrimitive()) {
             logger.trace("Converting primitive type {} to object", returnClass.getTypeName());
@@ -366,7 +369,7 @@ public class TypeConverter {
                     return Long.class;
                 }
                 default: {
-                    throw new RuntimeException(String.format("Unsupported cast of %s to primitive type", returnClass.getTypeName()));
+                    throw new ClassCastException(String.format("Unsupported cast of %s to primitive type", returnClass.getTypeName()));
                 }
             }
         }
