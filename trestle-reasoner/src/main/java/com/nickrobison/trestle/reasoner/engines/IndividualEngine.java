@@ -2,6 +2,7 @@ package com.nickrobison.trestle.reasoner.engines;
 
 import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.metrician.Metrician;
+import com.nickrobison.trestle.common.LambdaExceptionUtil;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingFactException;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
@@ -25,6 +26,7 @@ import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
@@ -230,7 +232,7 @@ public class IndividualEngine {
         } catch (InterruptedException | ExecutionException e) {
             logger.error("Interruption exception building Trestle Individual {}", individual, e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
-            throw new IllegalStateException(e);
+            return ExceptionUtils.rethrow(e.getCause());
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         }

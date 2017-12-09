@@ -31,9 +31,8 @@ import com.nickrobison.trestle.reasoner.engines.IndividualEngine;
 import com.nickrobison.trestle.reasoner.engines.events.TrestleEventEngine;
 import com.nickrobison.trestle.reasoner.engines.events.TrestleEventException;
 import com.nickrobison.trestle.reasoner.engines.merge.MergeScript;
-import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeConflict;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
-import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeException;
+import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
@@ -42,7 +41,6 @@ import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqua
 import com.nickrobison.trestle.reasoner.engines.temporal.TemporalEngine;
 import com.nickrobison.trestle.reasoner.exceptions.*;
 import com.nickrobison.trestle.reasoner.parser.*;
-import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.reasoner.utils.TemporalPropertiesPair;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
@@ -59,6 +57,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import org.apache.commons.lang3.ClassUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -81,7 +80,6 @@ import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.IRIUtils.extractTrestleIndividualName;
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
-import static com.nickrobison.trestle.common.LambdaExceptionUtil.recoverExceptionType;
 import static com.nickrobison.trestle.common.LambdaUtils.sequenceCompletableFutures;
 import static com.nickrobison.trestle.common.StaticIRI.*;
 import static com.nickrobison.trestle.iri.IRIVersion.V1;
@@ -286,6 +284,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             }
         } catch (InterruptedException e) {
             logger.error("Unable to shutdown thread-pool", e);
+            Thread.currentThread().interrupt();
         }
 //        Check to make sure we don't have any open transactions
         final long openTransactionCount = this.ontology.getCurrentlyOpenTransactions();
@@ -517,7 +516,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             } catch (RuntimeException e) {
                 ontology.returnAndAbortTransaction(trestleTransaction);
                 logger.error("Error while writing object {}", owlNamedIndividual, e);
-                recoverExceptionType(e, TrestleMergeConflict.class, TrestleMergeException.class);
+//                recoverExceptionType(e, TrestleMergeConflict.class, TrestleMergeException.class);
+                ExceptionUtils.rethrow(e.getCause());
                 mergeTimer.stop();
             } finally {
                 ontology.returnAndCommitTransaction(trestleTransaction);
@@ -700,7 +700,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         } catch (RuntimeException e) {
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             logger.error("Unable to add fact {} to object {}", factName, owlNamedIndividual, e);
-            recoverExceptionType(e, TrestleMergeConflict.class, TrestleMergeException.class);
+//            recoverExceptionType(e, TrestleMergeConflict.class, TrestleMergeException.class);
+            ExceptionUtils.rethrow(e.getCause());
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
@@ -1042,12 +1043,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 return Optional.of(new TrestleObjectResult<>(individualIRI, constructedObject, objectState.getMinValidFrom(), objectState.getMinValidTo(), objectState.getMinDatabaseFrom(), objectState.getMinDatabaseTo()));
             } catch (InterruptedException e) {
                 ontology.returnAndAbortTransaction(trestleTransaction);
-                logger.error("Read object {} interrupted", individualIRI, e);
+                logger.error("Read object {} interrupted", individualIRI, e.getCause());
                 Thread.currentThread().interrupt();
                 return Optional.empty();
             } catch (ExecutionException e) {
                 ontology.returnAndAbortTransaction(trestleTransaction);
-                logger.error("Execution exception when reading object {}", individualIRI, e);
+                logger.error("Execution exception when reading object {}", individualIRI, e.getCause());
                 return Optional.empty();
             } catch (MissingConstructorException e) {
                 logger.error("Problem with constructor", e);
@@ -1277,7 +1278,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             Thread.currentThread().interrupt();
             return Optional.empty();
         } catch (ExecutionException e) {
-            logger.error("Spatial intersection execution exception", e);
+            logger.error("Spatial intersection execution exception", e.getCause());
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
         } finally {
@@ -1374,9 +1375,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         try {
             listCompletableFuture.get();
         } catch (InterruptedException e) {
-            logger.error("Delete interrupted", e);
+            logger.error("Delete interrupted", e.getCause());
+            Thread.currentThread().interrupt();
         } catch (ExecutionException e) {
-            logger.error("Execution error", e);
+            logger.error("Execution error", e.getCause());
         }
     }
 
@@ -1468,12 +1470,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             }
 
         } catch (InterruptedException e) {
-            logger.error("Union calculation was interrupted", e);
+            logger.error("Union calculation was interrupted", e.getCause());
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             Thread.currentThread().interrupt();
             return Optional.empty();
         } catch (ExecutionException e) {
-            logger.error("Union calculation excepted", e);
+            logger.error("Union calculation excepted", e.getCause());
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
         }
@@ -1511,11 +1513,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         try {
             return Optional.of(comparisonFuture.get());
         } catch (InterruptedException e) {
-            logger.error("Spatial comparison is interrupted", e);
+            logger.error("Spatial comparison is interrupted", e.getCause());
             Thread.currentThread().interrupt();
             return Optional.empty();
         } catch (ExecutionException e) {
-            logger.error("Spatial comparison was excepted", e);
+            logger.error("Spatial comparison was excepted", e.getCause());
             return Optional.empty();
         }
     }
@@ -1571,11 +1573,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         try {
             final String query = qb.buildIndividualSearchQuery(individualIRI, owlClass, limit);
             final TrestleResultSet resultSet = ontology.executeSPARQLResults(query);
-            List<String> individuals = resultSet.getResults()
+            return resultSet.getResults()
                     .stream()
                     .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
                     .collect(Collectors.toList());
-            return individuals;
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
@@ -1698,11 +1699,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             List<T> objects = conceptObjectsFuture.get();
             return Optional.of(objects);
         } catch (InterruptedException e) {
-            logger.error("Object retrieval for concept {}, interrupted", conceptID, e);
+            logger.error("Object retrieval for concept {}, interrupted", conceptID, e.getCause());
             this.ontology.returnAndAbortTransaction(trestleTransaction);
+            Thread.currentThread().interrupt();
             return Optional.empty();
         } catch (ExecutionException e) {
-            logger.error("Unable to retrieve all objects for concept {}", conceptID, e);
+            logger.error("Unable to retrieve all objects for concept {}", conceptID, e.getCause());
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
         } finally {
@@ -2344,9 +2346,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             }
 
 
-        } catch (InterruptedException | ExecutionException e) {
-            logger.error("Error constructing object", e);
-            throw new RuntimeException("Problem constructing object");
+        } catch (ExecutionException e) {
+            logger.error("Error constructing object", e.getCause());
+            return ExceptionUtils.rethrow(e.getCause());
+        } catch (InterruptedException e) {
+            logger.error("Object construction excepted", e.getCause());
+            Thread.currentThread().interrupt();
+            return ExceptionUtils.rethrow(e.getCause());
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
