@@ -17,8 +17,8 @@ export interface ITrestleIndividual {
 
 export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
 
-    private static suffixRegex = /.*[/#]([^/#]*)$/g;
-    private static prefixRegex = /.*[\/|#]/g;
+    private static suffixRegex = /.*[\/#]([^\/#]*)$/g;
+    private static prefixRegex = /.*[\/#]/g;
     private static hostnameRegex = /\w+:\/\/[^\/]*/g;
     private id: string;
     private facts: Map<string, TrestleFact> = new Map();
