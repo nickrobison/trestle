@@ -59,7 +59,15 @@
                         <tbody>
                         <tr *ngFor="let relation of individual.getRelations()">
                             <td>{{relation.getType()}}</td>
-                            <td>{{displayFn(relation.getObject())}}</td>
+                            <td>{{displayFn(relation.getObject())}}
+                                <a
+                                        matTooltip="Visualize individual"
+                                        [routerLink]="['/explore',
+                                'visualize',
+                                getSuffix(relation.getObject())]"
+                                        [queryParams]="{root: getPrefix(relation.getObject())}">
+                                    <mat-icon>link</mat-icon>
+                                </a>                            </td>
                         </tr>
                         </tbody>
                     </table>

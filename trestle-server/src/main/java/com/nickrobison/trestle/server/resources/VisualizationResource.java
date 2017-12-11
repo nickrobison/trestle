@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
@@ -76,9 +77,12 @@ public class VisualizationResource {
     @GET
     @Path("/retrieve")
     public Response getIndividual(@NotNull @QueryParam("name") String individualName) {
-        final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(individualName);
-
-        return ok(this.buildIndividualFromJSON(trestleIndividual)).build();
+        try {
+            final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(individualName);
+            return ok(this.buildIndividualFromJSON(trestleIndividual)).build();
+        } catch (TrestleMissingIndividualException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(String.format("Cannot find individual %s", individualName)).build();
+        }
     }
 
 

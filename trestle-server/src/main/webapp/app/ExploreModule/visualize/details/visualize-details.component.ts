@@ -68,6 +68,24 @@ export class VisualizeDetailsComponent implements AfterViewInit {
         return TrestleIndividual.filterID(name);
     }
 
+    /**
+     * Gets the IRI suffix, since we can't access static methods in the Angular template
+     * @param {string} object
+     * @returns {string}
+     */
+    public getSuffix(object: string): string {
+        return TrestleIndividual.extractSuffix(object);
+    }
+
+    /**
+     * Gets the IRI hostname, since we can't access static methods in the Angular template
+     * @param {string} object
+     * @returns {string}
+     */
+    public getPrefix(object: string): string {
+        return TrestleIndividual.extractPrefix(object);
+    }
+
     public openValueModal(fact: TrestleFact): void {
         const config = new MatDialogConfig();
         config.viewContainerRef = this.viewContainerRef;
