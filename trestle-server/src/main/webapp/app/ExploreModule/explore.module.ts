@@ -18,7 +18,6 @@ import {RouterModule} from "@angular/router";
 import {ExploreRoutes} from "./explore.routing";
 import { DatsetViewerComponent } from "./viewer/viewer.component";
 import { MapService } from "./viewer/map.service";
-import { ObjectEventGraphComponent } from "./object-event-graph/ObjectEventGraph";
 import { MaterialModule } from "../MaterialModule/material.module";
 import {SharedModule} from "../SharedModule/shared.module";
 import {CompareComponent} from "./compare/compare.component";
@@ -46,7 +45,6 @@ import { SpatialUnionComponent } from "./spatial-union/spatial-union.component";
         QueryComponent,
         QueryViewer,
         DatsetViewerComponent,
-        ObjectEventGraphComponent,
         CompareComponent,
         VisualizeDetailsComponent,
         ExporterComponent,

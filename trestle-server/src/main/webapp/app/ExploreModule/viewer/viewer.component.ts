@@ -3,20 +3,16 @@
  */
 import { Component, OnInit, ViewChild } from "@angular/core";
 import { MapService } from "./map.service";
-import { ITrestleMapSource, MapSource, TrestleMapComponent } from "../../UIModule/map/trestle-map.component";
+import { MapSource, TrestleMapComponent } from "../../UIModule/map/trestle-map.component";
 import { animate, style, transition, trigger } from "@angular/animations";
 import * as moment from "moment";
 import { MatSliderChange } from "@angular/material";
 import { IIndividualHistory } from "../../UIModule/history-graph/history-graph.component";
 import { IndividualService } from "../../SharedModule/individual/individual.service";
 import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
-import { IEventData, IEventElement, IEventLink } from "../../UIModule/event-graph/event-graph.component";
-import { Observable } from "rxjs/Observable";
-import { TrestleEvent } from "../../SharedModule/individual/TrestleIndividual/trestle-event";
-import { TrestleRelationType } from "../../SharedModule/individual/TrestleIndividual/trestle-relation";
-import LngLatBounds = mapboxgl.LngLatBounds;
 import { Subject } from "rxjs/Subject";
 import { IDataExport } from "../exporter/exporter.component";
+import LngLatBounds = mapboxgl.LngLatBounds;
 
 enum DatasetState {
     UNLOADED,
@@ -51,7 +47,6 @@ export class DatsetViewerComponent implements OnInit {
     public maxTime = moment("2016-01-01");
     public sliderValue = 2013;
     public selectedIndividual: TrestleIndividual;
-    public selectedIndividualID: string;
     public objectHistory: IIndividualHistory;
     public dataChanges: Subject<MapSource>;
     public exportIndividuals: IDataExport[];
@@ -152,9 +147,7 @@ export class DatsetViewerComponent implements OnInit {
         this.vs.getTrestleIndividual(event)
             .subscribe((data) => {
                 console.debug("Has selection", data);
-                this.selectedIndividualID = data.getFilteredID();
                 this.selectedIndividual = data;
-                // this.buildHistoryGraph(data);
             });
     };
 
