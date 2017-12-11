@@ -133,28 +133,26 @@ export class CompareComponent implements AfterViewInit {
                                 selection.report = report;
                                 //    Change the color to something on the red scale
                                 if (report.spatialOverlapPercentage) {
-                                    // If filter is enabled
-                                    // and the spatial overlap is 0, remove from the list
-                                    if (this.filterCompareResults &&
-                                        report.spatialOverlapPercentage < 0.001) {
+                                    const interpolated = interpolateReds(
+                                        report.spatialOverlapPercentage);
+                                    selection.color = interpolated;
+                                    this.layerChanges.next({
+                                        individual: selection.individual.getID(),
+                                        // Change the color and set the opacity a little higher
+                                        changes: [
+                                            {
+                                                attribute: "fill-extrusion-color",
+                                                value: interpolated
+                                            },
+                                            {
+                                                attribute: "fill-extrusion-opacity",
+                                                value: 0.85
+                                            }]
+                                    });
+                                } else {
+                                    // If we don't have any overlap, are we supposed to filter ou those individuals?
+                                    if (this.filterCompareResults) {
                                         this.removeIndividual(selection);
-                                    } else {
-                                        const interpolated = interpolateReds(
-                                            report.spatialOverlapPercentage);
-                                        selection.color = interpolated;
-                                        this.layerChanges.next({
-                                            individual: selection.individual.getID(),
-                                            // Change the color and set the opacity a little higher
-                                            changes: [
-                                                {
-                                                    attribute: "fill-extrusion-color",
-                                                    value: interpolated
-                                                },
-                                                {
-                                                    attribute: "fill-extrusion-opacity",
-                                                    value: 0.85
-                                                }]
-                                        });
                                     }
                                 }
                             } else {
