@@ -13,6 +13,11 @@
         </div>
     </div>
     <div class="section">
+        <a mat-raised-button [routerLink]="['/explore', 'compare']"
+        [queryParams]="{id: individual.getID()}" color="primary">Add to Compare</a>
+        <button mat-raised-button color="warn">DELETE</button>
+    </div>
+    <div class="section">
         <mat-tab-group>
             <mat-tab label="Fact History">
                 <div class="section">

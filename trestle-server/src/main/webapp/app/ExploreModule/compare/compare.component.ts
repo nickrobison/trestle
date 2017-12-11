@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, ViewChild } from "@angular/core";
+import { AfterViewChecked, AfterViewInit, ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
 import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
 import { IMapAttributeChange, MapSource, TrestleMapComponent } from "../../UIModule/map/trestle-map.component";
 import { IndividualService } from "../../SharedModule/individual/individual.service";
@@ -13,6 +13,8 @@ import { interpolateReds } from "d3-scale-chromatic";
 import { IDataExport } from "../exporter/exporter.component";
 import { parse } from "wellknown";
 import { MultiPolygon } from "geojson";
+import { ActivatedRoute } from "@angular/router";
+import { BehaviorSubject } from "rxjs/BehaviorSubject";
 
 interface ICompareIndividual {
     individual: TrestleIndividual;
@@ -38,14 +40,14 @@ export type loadingColor = "accent" | "warn" | "primary";
     templateUrl: "./compare.component.html",
     styleUrls: ["./compare.component.css"]
 })
-export class CompareComponent implements AfterViewInit {
+export class CompareComponent implements AfterViewInit, AfterViewChecked {
 
     public zoomMap = true;
     public mapConfig: mapboxgl.MapboxOptions;
     // public selectedIndividuals: ICompareIndividual[];
     public selectedIndividuals: Map<string, ICompareIndividual>;
     public baseIndividual: ICompareIndividual | null;
-    public dataChanges: Subject<MapSource>;
+    public dataChanges: BehaviorSubject<MapSource | undefined>;
     public layerChanges: Subject<IMapAttributeChange>;
     public exportValues: IDataExport[];
     public loadedOverlap: ISpatialComparisonReport | null;
@@ -66,7 +68,9 @@ export class CompareComponent implements AfterViewInit {
 
     constructor(private is: IndividualService,
                 private vs: MapService,
-                private spinner: LoadingSpinnerService) {
+                private spinner: LoadingSpinnerService,
+                private route: ActivatedRoute,
+                private cdRef: ChangeDetectorRef) {
 
 
         this.mapConfig = {
@@ -85,7 +89,7 @@ export class CompareComponent implements AfterViewInit {
         // Use this to pull out colors for the map
         this.colorScale = schemeCategory20b;
         this.currentSliderValue = 0;
-        this.dataChanges = new Subject();
+        this.dataChanges = new BehaviorSubject(undefined);
         this.layerChanges = new Subject();
         this.filterCompareResults = true;
         this.exportValues = [{
@@ -102,8 +106,27 @@ export class CompareComponent implements AfterViewInit {
     }
 
     public ngAfterViewInit(): void {
+        // Subscribe to route observables
+        this.route.queryParams
+            .subscribe((queryParams) => {
+                console.debug("params", queryParams);
+                const individual = queryParams["id"];
+                if (individual !== null) {
+                    this.addBaseIndividual(individual);
+                }
+            });
+
         console.debug("Child", this.mapComponent);
         this.spinner.setViewContainerRef(this.mapRef.nativeElement);
+    }
+
+    /**
+     * Recheck the view.
+     * I'm really not sure why I need this, but SO says so
+     * https://stackoverflow.com/questions/43513421/ngif-expression-has-changed-after-it-was-checked
+     */
+    public ngAfterViewChecked(): void {
+        this.cdRef.detectChanges();
     }
 
     public compareIndividuals(): void {
@@ -390,6 +413,25 @@ export class CompareComponent implements AfterViewInit {
     }
 
     private addIndividualToCompare(individual: TrestleIndividual, baseIndividual = false): void {
+        console.debug("Adding individual:", individual);
+        // Before we add any individuals to the map, we need to see if we're loading the base individual or not
+        // This is to deal with some racy behavior between drawing the individual on the map and moving on from the data load
+        // It's gross, but what do you expect?
+        if (baseIndividual) {
+            console.debug("Setting zoom true");
+            this.zoomMap = true;
+        } else {
+            console.debug("Setting zoom false");
+            // If zoom is true, manually run the change detection.
+            // Why? no idea
+            if (this.zoomMap === true) {
+                this.zoomMap = false;
+                this.cdRef.detectChanges();
+            } else {
+                this.zoomMap = false;
+            }
+        }
+
         // This is one way to filter out the base individual
         console.debug("Adding %s to map", individual.getFilteredID());
         const color = this.getColor(this.layerNumber);
@@ -430,8 +472,6 @@ export class CompareComponent implements AfterViewInit {
             // Reset the slider value to 0
             compare.sliderValue = 0;
             this.baseIndividual = compare;
-            //    Lock the map so it doesn't move anymore
-            this.zoomMap = false;
         } else {
             //    Add the selection to the list
             this.selectedIndividuals.set(compare.individual.getID(),
