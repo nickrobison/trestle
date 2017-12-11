@@ -26,7 +26,8 @@ export class SpatialUnionComponent implements OnChanges {
 
     public ngOnChanges(changes: SimpleChanges): void {
         const changedData = changes["individual"];
-        if (changedData.currentValue !== changedData.previousValue) {
+        if (changedData !== undefined &&
+            changedData.currentValue !== changedData.previousValue) {
             console.debug("has new data?", changedData.currentValue !== changedData.previousValue);
             this.individual = changedData.currentValue;
             this.buildHistoryGraph(this.individual);

@@ -29,6 +29,8 @@ export class VisualizeDetailsComponent implements AfterViewInit {
     public individualFactHistory: IIndividualHistory;
     public minTime: moment.Moment;
     public maxTime: moment.Moment;
+    public minGraphDate = new Date("1990-01-01");
+    public maxGraphDate = new Date("2017-01-01");
     public validAt: moment.Moment;
     public dbAt: moment.Moment;
     private routeObservable: Observable<IRouteObservable>;

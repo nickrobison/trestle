@@ -74,7 +74,10 @@
                 </div>
             </mat-tab>
             <mat-tab label="Spatial Union" *ngIf="individual.isUnion()">
-
+                <spatial-union
+                        [minDate]="minGraphDate"
+                        [maxDate]="maxGraphDate"
+                        [individual]="individual"></spatial-union>
             </mat-tab>
         </mat-tab-group>
     </div>
