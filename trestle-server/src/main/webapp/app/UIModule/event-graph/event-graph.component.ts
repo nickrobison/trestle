@@ -60,7 +60,7 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
 
     public ngOnChanges(changes: SimpleChanges): void {
         const dataChange = changes["data"];
-        if (dataChange != null
+        if (dataChange !== null
             && (dataChange.currentValue !== dataChange.previousValue)) {
             console.debug("Changed, plotting data", this.data);
             this.plotData();

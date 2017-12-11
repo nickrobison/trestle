@@ -25,6 +25,7 @@ import {CompareComponent} from "./compare/compare.component";
 import {VisualizeDetailsComponent} from "./visualize/details/visualize-details.component";
 import {ExporterComponent} from "./exporter/exporter.component";
 import {ExporterService} from "./exporter/exporter.service";
+import { SpatialUnionComponent } from "./spatial-union/spatial-union.component";
 
 @NgModule({
     imports: [
@@ -48,7 +49,8 @@ import {ExporterService} from "./exporter/exporter.service";
         ObjectEventGraphComponent,
         CompareComponent,
         VisualizeDetailsComponent,
-        ExporterComponent
+        ExporterComponent,
+        SpatialUnionComponent
     ],
     providers: [IndividualService, QueryService, MapService, ExporterService],
     entryComponents: [IndividualValueDialog]

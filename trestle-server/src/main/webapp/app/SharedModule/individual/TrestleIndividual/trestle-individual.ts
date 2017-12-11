@@ -165,6 +165,14 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
         return null;
     }
 
+    /**
+     * Is this individual a part of a spatial union?
+     * @returns {boolean}
+     */
+    public isUnion(): boolean {
+        return this.relations.some((relation) => relation.isUnionType());
+    }
+
     public asInterface(): ITrestleIndividual {
         const returnValue: ITrestleIndividual = {
             individualID: this.id,
