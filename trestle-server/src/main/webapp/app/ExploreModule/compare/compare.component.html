@@ -15,7 +15,7 @@
                     [vertical]="true"
                     [min]="0"
                     [max]="500"
-                    [value]="currentSliderValue"
+                    [(ngModel)]="currentSliderValue"
                     (input)="sliderUpdate($event)"></mat-slider>
         </div>
     </div>
