@@ -83,6 +83,7 @@
                                         [queryParams]="{root: selection.individual.getHostname()}">
                                     <mat-icon>link</mat-icon>
                                 </a>
+                                <mat-icon matTooltip="Use as comparison" (click)="reset(selection.individual.getID())">compare</mat-icon>
 
                             </mat-panel-title>
                             <mat-panel-description>

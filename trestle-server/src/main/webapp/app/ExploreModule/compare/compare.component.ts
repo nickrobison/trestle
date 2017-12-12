@@ -199,11 +199,21 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
         this.loadSelectedIndividual(individual);
     }
 
+    /**
+     * Add base individual to compare
+     * @param {string} individual
+     */
     public addBaseIndividual(individual: string): void {
         this.loadSelectedIndividual(individual, true);
     }
 
-    public reset(): void {
+    /**
+     * Reset comparison to the base state
+     *
+     * If a new individual is provided, add it
+     * @param {string} individual
+     */
+    public reset(individual?: string): void {
         //    Clear the map
         //    Remove all the individuals from map
         this.mapComponent.clearMap();
@@ -215,6 +225,11 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
         this.layerNumber = 0;
         this.currentSliderValue = 0;
         this.availableColors = [];
+
+        //    Should we add the given individual to the compare?
+        if (individual) {
+            this.addBaseIndividual(individual);
+        }
     }
 
     public toggleVisibility(individual: ICompareIndividual): void {
