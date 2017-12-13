@@ -29,6 +29,8 @@
         <excludeTags>oracle,virtuoso,local,load</excludeTags>
         <owl.version>5.1.1</owl.version>
         <jena.version>3.1.0</jena.version>
+        <!--This needs to be locked to the version provided by GraphDB-->
+        <rdf4j.version>2.2.2</rdf4j.version>
         <slf4j.version>1.7.25</slf4j.version>
         <junit.jupiter.version>5.0.0-M6</junit.jupiter.version>
         <junit.platform.version>1.0.0-M6</junit.platform.version>
@@ -152,6 +154,13 @@
                 <version>1.4.196</version>
             </dependency>
             <!--OWL Dependencies-->
+            <dependency>
+                <groupId>org.eclipse.rdf4j</groupId>
+                <artifactId>rdf4j-bom</artifactId>
+                <version>${rdf4j.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
             <dependency>
                 <groupId>net.sourceforge.owlapi</groupId>
                 <artifactId>owlapi-api</artifactId>
