@@ -12,10 +12,31 @@
     <artifactId>trestle-server</artifactId>
 
     <properties>
-        <dropwizard.version>1.1.4</dropwizard.version>
-        <swagger.version>1.5.16</swagger.version>
+        <dropwizard.version>1.2.2</dropwizard.version>
+        <swagger.version>1.5.17</swagger.version>
+        <logback.version>1.2.3</logback.version>
         <sonar.skip>true</sonar.skip>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>3.0.1</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <!--Trestle modules-->
@@ -250,10 +271,12 @@
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.nickrobison.trestle.server.TrestleServer</mainClass>
                                 </transformer>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>reference.conf</resource>
                                 </transformer>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>application.conf</resource>
                                 </transformer>
                             </transformers>

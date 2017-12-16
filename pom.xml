@@ -42,7 +42,7 @@
         <maven.enforcer.version>1.4.1</maven.enforcer.version>
         <caffeine.version>2.6.0</caffeine.version>
         <!--This will probably need to get bumped each time we upgrade Dropwizard-->
-        <jackson.version>2.8.10</jackson.version>
+        <jackson.version>2.9.1</jackson.version>
         <!--Checker properties-->
         <checker.version>2.1.14</checker.version>
         <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
@@ -261,6 +261,21 @@
                 <version>${jackson.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
             </dependency>
             <!--GraphDB dependencies-->
             <dependency>
