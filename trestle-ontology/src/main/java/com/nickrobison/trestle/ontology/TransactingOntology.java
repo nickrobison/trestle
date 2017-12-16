@@ -107,8 +107,8 @@ abstract class TransactingOntology implements ITrestleOntology {
         if (threadTransactionObject.get() == null) {
             final long transactionID = System.nanoTime();
 //            Add the logging context
-            MDC.put(TRANSACTION, Long.toString(transactionID));
             logger.debug("Unowned transaction, opening new transaction {}", transactionID);
+            MDC.put(TRANSACTION, Long.toString(transactionID));
             final TrestleTransaction trestleTransaction = new TrestleTransaction(transactionID, write);
             trestleTransaction.setConnection(this.getOntologyConnection());
             threadTransactionObject.set(trestleTransaction);

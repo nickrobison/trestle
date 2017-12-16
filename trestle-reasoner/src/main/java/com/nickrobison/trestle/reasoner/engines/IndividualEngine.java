@@ -2,7 +2,6 @@ package com.nickrobison.trestle.reasoner.engines;
 
 import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.metrician.Metrician;
-import com.nickrobison.trestle.common.LambdaExceptionUtil;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingFactException;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
@@ -48,8 +47,6 @@ import java.util.stream.Collectors;
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
 import static com.nickrobison.trestle.common.LambdaUtils.sequenceCompletableFutures;
 import static com.nickrobison.trestle.common.StaticIRI.*;
-import static com.nickrobison.trestle.common.StaticIRI.componentRelationIRI;
-import static com.nickrobison.trestle.common.StaticIRI.trestleEventIRI;
 import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseToTemporal;
 
 @SuppressWarnings("Duplicates")

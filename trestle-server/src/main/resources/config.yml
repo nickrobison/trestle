@@ -2,19 +2,19 @@ reasoner:
 #  connectionString: "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial"
 #  username: "spatialUser"
 #  password: "spatial1"
-  connectionString: "http://localhost:7200"
-  username: ""
-  password: ""
-#  connectionString: "http://141.142.170.218:8080/"
+#  connectionString: "http://localhost:7200"
 #  username: ""
 #  password: ""
-  ontology: "hadoop_gaul_expanded_equality"
-  prefix: "http://nickrobison.com/test/gaul/"
+  connectionString: "http://141.142.170.88:7200/"
+  username: ""
+  password: ""
+#  ontology: "hadoop_gaul_expanded_equality"
+#  prefix: "http://nickrobison.com/test/gaul/"
 #  prefix: "http://nickrobison.com/test/hadoop.owl#"
 #  ontology: "tigercounties3"
 #  prefix: "http://nickrobison.com/demonstration/tigercounty#"
-#  ontology: "gaul_hadoop_world_bank"
-#  prefix: "http://nickrobison.com/gaul#"
+  ontology: "gaul_hadoop_world_bank"
+  prefix: "http://nickrobison.com/gaul/"
   location: "file:////Users/nickrobison/Developer/git/dissertation/trestle-ontology/trestle.owl"
 
 logging:
@@ -22,6 +22,10 @@ logging:
   loggers:
     "com.nickrobison.metrician": DEBUG
     "com.nickrobison.trestle": DEBUG
+  appenders:
+    - type: console
+      logFormat: "[%-5p | %t | %X{test}] %d %c:%L %X{transaction} - %m%n"
+      includeCallerData: true
 
 database:
   driverClass: org.h2.Driver

@@ -126,6 +126,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 
 //            If true, get all the concept members
+                final String conceptIRI = String.format("%s:concept", newGAULObject.getObjectID());
                 if (!conceptIRIs.orElse(new HashSet<>()).isEmpty()) {
                     logger.warn("{}-{}-{} has concept members", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
                     conceptIRIs.get().forEach(concept -> processConceptMembers(newGAULObject, matchedObjects, concept));
@@ -137,7 +138,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //                Go ahead the create the new concept
                     logger.info("{}-{}-{} creating new concept", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-                    reasoner.addObjectToConcept(String.format("%s:concept", newGAULObject.getObjectName()), newGAULObject, ConceptRelationType.SPATIAL, 1.0);
+                    reasoner.addObjectToConcept(conceptIRI, newGAULObject, ConceptRelationType.SPATIAL, 1.0);
                 }
 
                 // test of approx equal union
@@ -148,7 +149,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 if (matchedObjects.isEmpty()) {
 //                Go ahead the create the new concept
                     logger.info("{}-{}-{} creating new concept", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-                    reasoner.addObjectToConcept(String.format("%s:concept", newGAULObject.getObjectName()), newGAULObject, ConceptRelationType.SPATIAL, 1.0);//                If we don't have any matches, create a new concept
+                    reasoner.addObjectToConcept(conceptIRI, newGAULObject, ConceptRelationType.SPATIAL, 1.0);//                If we don't have any matches, create a new concept
                 }
 
 
