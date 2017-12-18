@@ -72,6 +72,10 @@ public class IntegrationRunner extends Configured implements Tool {
         job.setMapperClass(GAULMapper.class);
         job.setMapOutputKeyClass(LongWritable.class);
         job.setMapOutputValueClass(MapperOutput.class);
+        //        Deterministic sorting and partitioning, very course grained, we'll just do country code
+        job.setSortComparatorClass(LongWritable.Comparator.class);
+        job.setPartitionerClass(GAULPartitioner.class);
+        job.setReducerClass(GAULReducer.class);
         job.setReducerClass(GAULReducer.class);
 
         job.setInputFormatClass(PolygonFeatureInputFormat.class);

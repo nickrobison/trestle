@@ -1,10 +1,7 @@
 package com.nickrobison.gaulintegrator.HadoopTests;
 
 import com.esri.mapreduce.PolygonFeatureInputFormat;
-import com.nickrobison.gaulintegrator.GAULMapper;
-import com.nickrobison.gaulintegrator.GAULReducer;
-import com.nickrobison.gaulintegrator.IntegrationRunner;
-import com.nickrobison.gaulintegrator.MapperOutput;
+import com.nickrobison.gaulintegrator.*;
 import com.nickrobison.trestle.datasets.GAULObject;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
@@ -139,8 +136,10 @@ public class GAULIntegratorTests {
         job.setMapperClass(GAULMapper.class);
         job.setMapOutputKeyClass(LongWritable.class);
         job.setMapOutputValueClass(MapperOutput.class);
-        job.setReducerClass(GAULReducer.class);
+//        Deterministic sorting and partitioning, very course grained, we'll just do country code
         job.setSortComparatorClass(LongWritable.Comparator.class);
+        job.setPartitionerClass(GAULPartitioner.class);
+        job.setReducerClass(GAULReducer.class);
 
 //        Add ontology to cache
         job.addCacheFile(new URI(String.format("%s", ontologyPath)));
