@@ -24,7 +24,8 @@ export class SearchComponent implements OnInit {
             .valueChanges
             .debounceTime(400)
             .distinctUntilChanged()
-            .switchMap((name) => this.is.searchForIndividual(name));
+            .switchMap((name) => this.is.searchForIndividual(name))
+            .retry(2);
     }
 
     public displayFn(name: string): string {

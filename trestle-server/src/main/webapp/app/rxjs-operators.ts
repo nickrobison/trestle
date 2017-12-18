@@ -22,6 +22,7 @@ import "rxjs/add/operator/take";
 import "rxjs/add/operator/takeUntil";
 import "rxjs/add/operator/toArray";
 import "rxjs/add/operator/do";
+import "rxjs/add/operator/retry";
 import "rxjs/ReplaySubject";
 import "rxjs/Observable";
 import "rxjs/Subject";
