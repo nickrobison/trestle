@@ -90,12 +90,6 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
 
 //        Setup object caches
         geometryCache = cache;
-//        geometryCache = Caffeine.newBuilder()
-//                .maximumSize(1_000)
-//                .expireAfterWrite(10, TimeUnit.MINUTES)
-//                .recordStats(() -> new CaffeineStatistics(metrician, "geometry"))
-//                .build();
-
     }
 
 
@@ -326,7 +320,9 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
         final Geometry value = this.geometryCache.get(hashCode);
 
         if (value == null) {
-            return this.geometryCache.getAndPut(hashCode, computeGeometry(object, srid));
+            final Geometry geometry = computeGeometry(object, srid);
+            this.geometryCache.put(hashCode, geometry);
+            return geometry;
         }
         return value;
     }

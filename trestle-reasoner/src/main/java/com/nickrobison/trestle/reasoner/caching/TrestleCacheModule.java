@@ -47,7 +47,8 @@ public class TrestleCacheModule extends PrivateModule {
         }
         expose(TrestleCache.class);
 
-        //        Register the geometry cache provider
+//        Register the geometry cache provider
+//        This cannot currently be disabled, it's always watching, always
         final TypeLiteral<Cache<Integer, Geometry>> typeLiteral = new TypeLiteral<Cache<Integer, Geometry>>() {
         };
         bind(typeLiteral).toProvider(GeometryCacheProvider.class).in(Singleton.class);

@@ -23,6 +23,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.cache.Cache;
 import javax.inject.Inject;
 import java.time.temporal.Temporal;
 import java.util.*;
@@ -40,11 +41,13 @@ public class SpatialUnionBuilder {
 
     private final TrestleParser tp;
     private final Histogram unionSetSize;
+    private final Cache<Integer, Geometry> geometryCache;
 
     @Inject
-    public SpatialUnionBuilder(TrestleParser tp, Metrician metrician) {
+    public SpatialUnionBuilder(TrestleParser tp, Metrician metrician, Cache<Integer, Geometry> cache) {
         this.tp = tp;
         unionSetSize = metrician.registerHistogram("union-set-size");
+        this.geometryCache = cache;
     }
 
     public <T extends @NonNull Object> UnionContributionResult calculateContribution(UnionEqualityResult<T> equalityResult, SpatialReference inputSR) {
@@ -56,7 +59,7 @@ public class SpatialUnionBuilder {
 
 //        Determine the class of the object
         final T unionObject = equalityResult.getUnionObject();
-        final Geometry geometry = buildObjectGeometry(unionObject, wktReader, wkbReader);
+        final Geometry geometry = getGeomFromCache(unionObject, wktReader, wkbReader);
 
 //        Build the contribution object
         final UnionContributionResult result = new UnionContributionResult(this.tp.classParser.getIndividual(unionObject),
@@ -68,7 +71,7 @@ public class SpatialUnionBuilder {
                 .stream()
 //                Build geometry object
                 .map(object -> new TrestlePair<>(this.tp.classParser.getIndividual(object),
-                        buildObjectGeometry(object,
+                        getGeomFromCache(object,
                                 wktReader, wkbReader)))
                 .map(pair -> {
 //                    Calculate the proportion contribution
@@ -101,7 +104,7 @@ public class SpatialUnionBuilder {
         final Map<Geometry, T> earlyObjectMap = new HashMap<>();
         final Set<Geometry> earlyPolygons = new HashSet<>(dividedObjects.getEarlyObjects().size());
         for (T earlyObject : dividedObjects.getEarlyObjects()) {
-            final Geometry earlyGeom = buildObjectGeometry(earlyObject, wktReader, wkbReader);
+            final Geometry earlyGeom = getGeomFromCache(earlyObject, wktReader, wkbReader);
             earlyObjectMap.put(earlyGeom, earlyObject);
             earlyPolygons.add(earlyGeom);
         }
@@ -110,7 +113,7 @@ public class SpatialUnionBuilder {
         final Map<Geometry, T> lateObjectMap = new HashMap<>();
         final Set<Geometry> latePolygons = new HashSet<>(dividedObjects.getLateObjects().size());
         for (T lateObject : dividedObjects.getLateObjects()) {
-            final Geometry lateGeom = buildObjectGeometry(lateObject, wktReader, wkbReader);
+            final Geometry lateGeom = getGeomFromCache(lateObject, wktReader, wkbReader);
             lateObjectMap.put(lateGeom, lateObject);
             latePolygons.add(lateGeom);
         }
@@ -182,8 +185,8 @@ public class SpatialUnionBuilder {
         final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
         final WKTReader wktReader = new WKTReader(geometryFactory);
         final WKBReader wkbReader = new WKBReader(geometryFactory);
-        final Geometry inputPolygon = buildObjectGeometry(inputObject, wktReader, wkbReader);
-        final Geometry matchPolygon = buildObjectGeometry(matchObject, wktReader, wkbReader);
+        final Geometry inputPolygon = getGeomFromCache(inputObject, wktReader, wkbReader);
+        final Geometry matchPolygon = getGeomFromCache(matchObject, wktReader, wkbReader);
 
         return calculateEqualityPercentage(inputPolygon, matchPolygon);
     }
@@ -240,6 +243,26 @@ public class SpatialUnionBuilder {
             return approxEqual;
         }
         return 0.0;
+    }
+
+
+    /**
+     * Retrieve {@link Geometry} from shared {@link Cache}, computing if missing
+     *
+     * @param keyObject - {@link Object} to get geom for
+     * @param wktReader - {@link WKTReader} to use for building the {@link Geometry}
+     * @param wkbReader - {@link WKBReader} to use for building the {@link Geometry}
+     * @return - Object {@link Geometry}
+     */
+    private Geometry getGeomFromCache(Object keyObject, WKTReader wktReader, WKBReader wkbReader) {
+        final int key = keyObject.hashCode();
+        final Geometry cacheGeom = this.geometryCache.get(key);
+        if (cacheGeom == null) {
+            final Geometry geometry = buildObjectGeometry(keyObject, wktReader, wkbReader);
+            this.geometryCache.put(key, geometry);
+            return geometry;
+        }
+        return cacheGeom;
     }
 
     /**
