@@ -20,23 +20,33 @@ import java.util.*;
 public class TrestleCacheMetrics implements MetricSet {
     private static final String M_BEAN_COORDINATES = "javax.cache:type=CacheStatistics,CacheManager=*,Cache=*";
     private static final Logger logger = LoggerFactory.getLogger(TrestleCacheMetrics.class);
+    private final Set<String> cacheNames;
+
+    TrestleCacheMetrics(Set<String> cacheNames) {
+        this.cacheNames = cacheNames;
+    }
 
     @Override
     public Map<String, Metric> getMetrics() {
         final Set<ObjectInstance> cacheBeans = getCacheBeans();
         final List<String> statsNames = getStatsNames();
 
-        final Map<String, Metric> gauges = new HashMap<>(cacheBeans.size() * statsNames.size());
+        final Map<String, Metric> gauges = new HashMap<>();
 
-        cacheBeans.forEach(bean -> {
-            final ObjectName objectName = bean.getObjectName();
-            final String cacheName = objectName.getKeyProperty("Cache");
+//        Filter caches to only those specified by the constructor
+        cacheBeans
+                .stream()
+                .filter(cache -> this.cacheNames.contains(cache.getObjectName().getKeyProperty("Cache")))
+                .forEach(cache -> {
+                    final ObjectName objectName = cache.getObjectName();
+                    final String cacheName = objectName.getKeyProperty("Cache");
+                    statsNames
+                            .forEach(stat -> {
+                                final JmxAttributeGauge jmxAttributeGauge = new JmxAttributeGauge(objectName, stat);
+                                gauges.put(String.format("%s.%s", cacheName, stat), jmxAttributeGauge);
+                            });
 
-            statsNames.forEach(statsName -> {
-                final JmxAttributeGauge jmxAttributeGauge = new JmxAttributeGauge(objectName, statsName);
-                gauges.put(String.format("%s.%s", cacheName, statsName), jmxAttributeGauge);
-            });
-        });
+                });
 
         return Collections.unmodifiableMap(gauges);
     }
@@ -47,7 +57,7 @@ public class TrestleCacheMetrics implements MetricSet {
 
         } catch (MalformedObjectNameException e) {
             logger.error("Unable to get Cache statistics MBean, are stats enabled?", e);
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 

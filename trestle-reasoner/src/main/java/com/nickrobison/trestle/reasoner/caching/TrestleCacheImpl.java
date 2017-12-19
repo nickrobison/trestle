@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.reasoner.caching;
 
+import com.google.common.collect.ImmutableSet;
 import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.locking.TrestleUpgradableReadWriteLock;
 import com.nickrobison.trestle.iri.TrestleIRI;
@@ -75,7 +76,7 @@ public class TrestleCacheImpl implements TrestleCache {
         this.trestleIndividualCache = cacheManager.getCache(TRESTLE_INDIVIDUAL_CACHE, IRI.class, TrestleIndividual.class);
 
 //        Enable metrics
-        metrician.registerMetricSet(new TrestleCacheMetrics());
+        metrician.registerMetricSet(new TrestleCacheMetrics(ImmutableSet.of(TRESTLE_INDIVIDUAL_CACHE, TRESTLE_OBJECT_CACHE)));
     }
 
 //    TrestleObject methods

@@ -2,14 +2,17 @@ package com.nickrobison.trestle.reasoner.caching;
 
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
+import com.google.inject.TypeLiteral;
 import com.nickrobison.trestle.reasoner.caching.tdtree.TDTree;
 import com.nickrobison.trestle.common.locking.TrestleUpgradableReadWriteLock;
 import com.nickrobison.trestle.iri.TrestleIRI;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.vividsolutions.jts.geom.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.Caching;
 import javax.cache.spi.CachingProvider;
@@ -43,6 +46,12 @@ public class TrestleCacheModule extends PrivateModule {
             bind(TrestleCache.class).to(TrestleCacheNoop.class);
         }
         expose(TrestleCache.class);
+
+        //        Register the geometry cache provider
+        final TypeLiteral<Cache<Integer, Geometry>> typeLiteral = new TypeLiteral<Cache<Integer, Geometry>>() {
+        };
+        bind(typeLiteral).toProvider(GeometryCacheProvider.class).in(Singleton.class);
+        expose(typeLiteral);
     }
 
     @Provides
