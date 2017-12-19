@@ -1,5 +1,6 @@
-package com.nickrobison.gaulintegrator;
+package com.nickrobison.gaulintegrator.sorting;
 
+import com.nickrobison.gaulintegrator.MapperOutput;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Partitioner;
 import org.slf4j.Logger;

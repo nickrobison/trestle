@@ -26,7 +26,7 @@ import static java.lang.StrictMath.toIntExact;
  * Created by nrobison on 5/5/16.
  */
 @SuppressWarnings("argument.type.incompatible")
-public class GAULMapper extends Mapper<LongWritable, PolygonFeatureWritable, LongWritable, MapperOutput> {
+public class GAULMapper extends Mapper<LongWritable, PolygonFeatureWritable, GAULMapperKey, MapperOutput> {
 
     private static final Logger logger = LoggerFactory.getLogger(GAULMapper.class);
 //    private static final Text CODE = new Text("adm2_code");
@@ -116,7 +116,7 @@ public class GAULMapper extends Mapper<LongWritable, PolygonFeatureWritable, Lon
 
 
             final MapperOutput outputRecord = new MapperOutput(polygonID, polygonName, inputYear, inputRecord, startDate, expirationDate, a0Code, a0Name, a1Code, a1Name, dispBool, status);
-            context.write(polygonID, outputRecord);
+            context.write(new GAULMapperKey(polygonID, polygonName), outputRecord);
         }
     }
 }

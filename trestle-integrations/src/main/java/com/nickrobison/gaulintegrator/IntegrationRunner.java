@@ -1,6 +1,9 @@
 package com.nickrobison.gaulintegrator;
 
 import com.esri.mapreduce.PolygonFeatureInputFormat;
+import com.nickrobison.gaulintegrator.sorting.GAULMapperADM2CodeComparator;
+import com.nickrobison.gaulintegrator.sorting.GAULPartitioner;
+import com.nickrobison.gaulintegrator.sorting.NaturalKeyGroupingComparator;
 import com.nickrobison.trestle.datasets.GAULObject;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
@@ -70,12 +73,13 @@ public class IntegrationRunner extends Configured implements Tool {
         Job job = Job.getInstance(conf, "GAUL Integrator");
         job.setJarByClass(IntegrationRunner.class);
         job.setMapperClass(GAULMapper.class);
-        job.setMapOutputKeyClass(LongWritable.class);
+        job.setMapOutputKeyClass(GAULMapperKey.class);
         job.setMapOutputValueClass(MapperOutput.class);
         //        Deterministic sorting and partitioning, very course grained, we'll just do country code
-        job.setSortComparatorClass(LongWritable.Comparator.class);
+        //        We also need both the grouping and the sort comparator, not entirely sure why
+        job.setGroupingComparatorClass(NaturalKeyGroupingComparator.class);
+        job.setSortComparatorClass(GAULMapperADM2CodeComparator.class);
         job.setPartitionerClass(GAULPartitioner.class);
-        job.setReducerClass(GAULReducer.class);
         job.setReducerClass(GAULReducer.class);
 
         job.setInputFormatClass(PolygonFeatureInputFormat.class);

@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
  * Created by nrobison on 5/5/16.
  */
 @SuppressWarnings({"argument.type.incompatible", "initialization.fields.uninitialized", "squid:S2068", "pmd:LawOfDemeter", "pmd:DataflowAnomalyAnalysis "})
-public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritable, Text> {
+public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritable, Text> {
 
     private static final Logger logger = LoggerFactory.getLogger(GAULReducer.class);
     private static final String STARTDATE = "temporal.startdate";
@@ -105,9 +105,9 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
     }
 
     @Override
-    public void reduce(LongWritable key, Iterable<MapperOutput> values, Context context) throws IOException, InterruptedException {
+    public void reduce(GAULMapperKey key, Iterable<MapperOutput> values, Context context) throws IOException, InterruptedException {
 
-        final Optional<Queue<MapperOutput>> inputRecordsOptional = this.processInputSet(key, values, context);
+        final Optional<Queue<MapperOutput>> inputRecordsOptional = this.processInputSet(values, context);
 //        If we have an object returned from the above function, we need to look for any other overlapping objects
         if (inputRecordsOptional.isPresent()) {
             final Queue<MapperOutput> inputRecords = inputRecordsOptional.get();
@@ -188,7 +188,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 logger.error("Unable to process object {}-{}-{}", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate(), e);
             }
             logger.warn("{}-{}-{} finished", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-            context.write(key, new Text(String.format("%s:%s:%s:%s:%s", newGAULObject.getAdm0Code(), newGAULObject.getAdm0Name(), newGAULObject.getObjectID(), newGAULObject.getStartDate(), newGAULObject.getEndDate())));
+            context.write(key.getRegionID(), new Text(String.format("%s:%s:%s:%s:%s", newGAULObject.getAdm0Code(), newGAULObject.getAdm0Name(), newGAULObject.getObjectID(), newGAULObject.getStartDate(), newGAULObject.getEndDate())));
         }
     }
 
@@ -382,17 +382,16 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
      * Process input set to determine if we actually have all the possible values for a given input set, if so write them and return a null.
      * If not, return the first copy of the object to process further
      *
-     * @param key     - {@link LongWritable} input Key
      * @param values  - {@link Iterable} of {@link MapperOutput} representing all key values
-     * @param context - {@link org.apache.hadoop.mapreduce.Reducer.Context} Hadoop context
+     * @param context - {@link Context} Hadoop context
      * @return - {@link GAULObject}, null if all the input set is present.
      */
     @SuppressWarnings({"squid:S1172"}) // We can't break the method signature, so we need to suppress this warning
-    private Optional<Queue<MapperOutput>> processInputSet(LongWritable key, Iterable<MapperOutput> values, Context context) {
+    private Optional<Queue<MapperOutput>> processInputSet(Iterable<MapperOutput> values, Context context) {
         final Configuration configuration = context.getConfiguration();
 //        Copy from the iterator into a simple array list, we can't run through the iterator more than once
 //        This is a bit of a disaster, but since the set is relatively bounded, it should be ok.
-        Queue<MapperOutput> inputRecords = new ArrayDeque<>();
+        Queue<MapperOutput> inputRecords = new PriorityQueue<>(Comparator.comparingInt(MapperOutput::getDatasetYear));
         for (MapperOutput record : values) {
             inputRecords.add(WritableUtils.clone(record, configuration));
         }
@@ -400,7 +399,6 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 //        Do my records cover the entirety of the input space?
         final int maxDate = inputRecords
                 .stream()
-//                .mapToInt(MapperOutput::getDatasetYear)
                 .map(MapperOutput::getExpirationDate)
                 .mapToInt(LocalDate::getYear)
                 .max()
@@ -408,7 +406,6 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
         final int minDate = inputRecords
                 .stream()
-//                .mapToInt(MapperOutput::getDatasetYear)
                 .map(MapperOutput::getStartDate)
                 .mapToInt(LocalDate::getYear)
                 .min()
