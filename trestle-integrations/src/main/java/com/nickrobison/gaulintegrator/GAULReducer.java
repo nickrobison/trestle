@@ -54,6 +54,8 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
     private static final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
     private static final WKBReader wkbReader = new WKBReader(geometryFactory);
+//    Controls the granularity of the union matcher
+    private static final double THRESHOLD = 0.95;
 
     private LocalDate configStartDate;
     private LocalDate configEndDate;
@@ -195,7 +197,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
         logger.warn("{}-{}-{} calculating equality", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
         final Instant start = Instant.now();
-        final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(matchedObjects, inputSR, 0.9);
+        final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(matchedObjects, inputSR, THRESHOLD);
         logger.warn("{}-{}-{} calculating equality took {} ms", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate(), Duration.between(start, Instant.now()).toMillis());
         if (matchOptional.isPresent()) {
             // do something here
@@ -295,7 +297,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 matchedObject.getObjectName(),
                 matchedObject.getStartDate());
         // test of approx equality
-        if (this.reasoner.getEqualityEngine().isApproximatelyEqual(newGAULObject, matchedObject, inputSR, 0.9) && !newGAULObject.equals(matchedObject)) {
+        if (this.reasoner.getEqualityEngine().isApproximatelyEqual(newGAULObject, matchedObject, inputSR, THRESHOLD) && !newGAULObject.equals(matchedObject)) {
             // do something here
             logger.info("found approximate equality between GAULObjects {} and {}", newGAULObject.getID(), matchedObject.getID());
 //            Write a spatial equals
@@ -306,7 +308,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 //        Spatial interactions are exhaustive
 
 //                    newGAUL within matchedObject? Covers, or Contains? IF Covers, also contains
-        final SpatialComparisonReport spatialComparisonReport = this.reasoner.getSpatialEngine().compareObjects(newGAULObject, matchedObject, inputSR, 0.9);
+        final SpatialComparisonReport spatialComparisonReport = this.reasoner.getSpatialEngine().compareObjects(newGAULObject, matchedObject, inputSR, THRESHOLD);
 
 //        Write all the relations from the spatial report
 //        Overlaps?
@@ -324,7 +326,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 .forEach(relation -> reasoner.writeObjectRelationship(newGAULObject, matchedObject, relation));
 
 //        Try it in the other direction
-        final SpatialComparisonReport inverseSpatialReport = this.reasoner.getSpatialEngine().compareObjects(matchedObject, newGAULObject, inputSR, 0.9);
+        final SpatialComparisonReport inverseSpatialReport = this.reasoner.getSpatialEngine().compareObjects(matchedObject, newGAULObject, inputSR, THRESHOLD);
 
 //        Do all the non-overlaps relations
         inverseSpatialReport

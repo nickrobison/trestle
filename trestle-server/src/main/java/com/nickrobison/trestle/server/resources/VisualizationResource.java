@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
+import com.nickrobison.trestle.reasoner.engines.AbstractComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
@@ -16,6 +17,7 @@ import com.nickrobison.trestle.server.resources.requests.ComparisonRequest;
 import com.nickrobison.trestle.server.resources.requests.IntersectRequest;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
 import com.nickrobison.trestle.types.TrestleIndividual;
+import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.vividsolutions.jts.geom.Geometry;
 import io.dropwizard.jersey.params.NonEmptyStringParam;
@@ -52,6 +54,8 @@ public class VisualizationResource {
     private static final Logger logger = LoggerFactory.getLogger(VisualizationResource.class);
     private static final GeoJSONReader reader = new GeoJSONReader();
     private static final ObjectMapper mapper = new ObjectMapper();
+//    This should be a config parameter
+    public static final double MATCH_THRESHOLD = 0.95;
     private final DateTimeFormatter LocalDateTimeToJavascriptFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
     private final TrestleReasoner reasoner;
 //    private final ObjectMapper mapper;
@@ -162,24 +166,30 @@ public class VisualizationResource {
     public Response compareIndividuals(@NotNull ComparisonRequest request) {
 
         final ComparisonReport comparisonReport = new ComparisonReport();
-
-        List<String> compareIndividuals = new ArrayList<>(request.getCompareAgainst());
-        compareIndividuals.add(request.getCompare());
-
         try {
-//        Look for spatial union
-            logger.debug("Executing union");
-            final Instant unionStart = Instant.now();
-            final Optional<UnionContributionResult> objectUnionEqualityResult = this.reasoner.calculateSpatialUnionWithContribution("gaul-test", compareIndividuals, 4326, 0.8);
-            logger.debug("Union computation took {} ms", Duration.between(unionStart, Instant.now()).toMillis());
-            objectUnionEqualityResult.ifPresent(comparisonReport::setUnion);
-
 //                Do a piecewise comparison for each individual
             logger.debug("Beginning piecewise comparison");
             final Instant compareStart = Instant.now();
-            final Optional<List<SpatialComparisonReport>> spatialComparisonReports = this.reasoner.compareTrestleObjects("gaul-test", request.getCompare(), request.getCompareAgainst(), 4326, 0.8);
+            final Optional<List<SpatialComparisonReport>> spatialComparisonReports = this.reasoner.compareTrestleObjects("gaul-test", request.getCompare(), request.getCompareAgainst(), 4326, MATCH_THRESHOLD);
             logger.debug("Comparison took {} ms", Duration.between(compareStart, Instant.now()).toMillis());
             spatialComparisonReports.ifPresent(comparisonReport::addAllReports);
+
+//            Filter out objects that don't overlap with the base individual, and do the union calculation
+            final List<String> compareIndividuals = comparisonReport.getReports()
+                    .stream()
+                    .filter((report) -> report.getRelations().contains(ObjectRelation.SPATIAL_OVERLAPS))
+                    .map(AbstractComparisonReport::getObjectBID)
+                    .collect(Collectors.toList());
+
+            compareIndividuals.add(request.getCompare());
+
+
+            //        Look for spatial union
+            logger.debug("Executing union");
+            final Instant unionStart = Instant.now();
+            final Optional<UnionContributionResult> objectUnionEqualityResult = this.reasoner.calculateSpatialUnionWithContribution("gaul-test", compareIndividuals, 4326, MATCH_THRESHOLD);
+            logger.debug("Union computation took {} ms", Duration.between(unionStart, Instant.now()).toMillis());
+            objectUnionEqualityResult.ifPresent(comparisonReport::setUnion);
 
 
             return Response.ok(comparisonReport).build();
