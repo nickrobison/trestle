@@ -142,8 +142,23 @@ public class SpatialUnionBuilder {
                         });
                 break;
             }
-            default:
-                throw new IllegalStateException("Can only have SPLIT/MERGE types");
+//            If we don't know, we need to do it in both directions
+            default: {
+//                Merged first
+                matchSetQueue = new PriorityQueue<>(dividedObjects.getLateObjects().size() + dividedObjects.getEarlyObjects().size(), strengthComparator);
+                latePolygons
+                        .forEach(latePoly -> {
+                            final Optional<PolygonMatchSet> match = getApproxEqualUnion(geometryFactory, earlyPolygons, Collections.singleton(latePoly), matchThreshold);
+                            match.ifPresent(matchSetQueue::add);
+                        });
+//                Then split
+                earlyPolygons
+                        .forEach(earlyPoly -> {
+                            final Optional<PolygonMatchSet> match = getApproxEqualUnion(geometryFactory, Collections.singleton(earlyPoly), latePolygons, matchThreshold);
+                            match.ifPresent(matchSetQueue::add);
+                        });
+                break;
+            }
         }
 
         @Nullable final PolygonMatchSet polygonMatchSet = matchSetQueue.peek();
@@ -157,14 +172,14 @@ public class SpatialUnionBuilder {
                 return Optional.of(new UnionEqualityResult<>(
                         getSetFirstFromMap(lateObjectMap, polygonMatchSet.latePolygons),
                         getMapValuesFromSet(earlyObjectMap, polygonMatchSet.earlyPolygons),
-                        matchDirection.getType(),
+                        TrestleEventType.MERGED,
                         polygonMatchSet.getStrength()));
             }
             case SPLIT: {
                 return Optional.of(new UnionEqualityResult<>(
                         getSetFirstFromMap(earlyObjectMap, polygonMatchSet.earlyPolygons),
                         getMapValuesFromSet(lateObjectMap, polygonMatchSet.latePolygons),
-                        matchDirection.getType(),
+                        TrestleEventType.SPLIT,
                         polygonMatchSet.getStrength()));
             }
             default:
@@ -392,7 +407,7 @@ public class SpatialUnionBuilder {
         } else if (objects.getEarlyObjects().size() > objects.getLateObjects().size()) {
             return MATCH_DIRECTION.MERGE;
         }
-        throw new IllegalStateException("Cannot determine split/merge due to equal number of early/late polygons");
+        return MATCH_DIRECTION.UNKNOWN;
     }
 
     /**
@@ -423,18 +438,9 @@ public class SpatialUnionBuilder {
     }
 
     private enum MATCH_DIRECTION {
-        SPLIT(TrestleEventType.SPLIT),
-        MERGE(TrestleEventType.MERGED);
-
-        private final TrestleEventType type;
-
-        MATCH_DIRECTION(TrestleEventType type) {
-            this.type = type;
-        }
-
-        public TrestleEventType getType() {
-            return type;
-        }
+        SPLIT,
+        MERGE,
+        UNKNOWN
     }
 
     private static class PolygonMatchSet {
