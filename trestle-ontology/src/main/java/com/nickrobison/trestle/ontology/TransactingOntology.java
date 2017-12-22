@@ -104,7 +104,8 @@ abstract class TransactingOntology implements ITrestleOntology {
 //    We can suppress this, because the first call is to check whether the transaction object is null or not
     @SuppressWarnings({"dereference.of.nullable"})
     public TrestleTransaction createandOpenNewTransaction(boolean write) {
-        if (threadTransactionObject.get() == null) {
+        @Nullable final TrestleTransaction threadTransaction = threadTransactionObject.get();
+        if (threadTransaction == null) {
             final long transactionID = System.nanoTime();
 //            Add the logging context
             logger.debug("Unowned transaction, opening new transaction {}", transactionID);
@@ -115,7 +116,7 @@ abstract class TransactingOntology implements ITrestleOntology {
             this.openAndLock(write, true);
             return trestleTransaction;
         } else {
-            logger.trace("Thread transaction owned by {}, returning empty object", threadTransactionObject.get().getTransactionID());
+            logger.trace("Thread transaction owned by {}, returning empty object", threadTransaction.getTransactionID());
             final TrestleTransaction trestleTransaction = new TrestleTransaction(write);
             trestleTransaction.setConnection(this.getOntologyConnection());
             return trestleTransaction;
@@ -170,6 +171,13 @@ abstract class TransactingOntology implements ITrestleOntology {
         } else {
             logger.trace("Transaction {} inherited state, not aborting", transaction.getTransactionID());
         }
+    }
+
+    @Override
+    public void returnAndAbortWithForce(TrestleTransaction trestleTransaction) {
+        logger.error("Force aborting the transaction!");
+        this.unlockAndAbort(trestleTransaction.isWriteTransaction(), true);
+        threadTransactionObject.set(null);
     }
 
     /**

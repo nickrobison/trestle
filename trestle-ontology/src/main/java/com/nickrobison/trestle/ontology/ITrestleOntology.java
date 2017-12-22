@@ -412,6 +412,15 @@ public interface ITrestleOntology {
     void returnAndAbortTransaction(TrestleTransaction transaction);
 
     /**
+     * Returns {@link TrestleTransaction} and forces the transaction to abort
+     * This is a stop-gap solution to deal with the fact that sometimes quickly executed operations will fail to clear the thread transaction state
+     * Shouldn't really be used, but maybe in a pinch
+     *
+     * @param trestleTransaction - {@link TrestleTransaction} to abort
+     */
+    void returnAndAbortWithForce(TrestleTransaction trestleTransaction);
+
+    /**
      * Open a transaction and lock it
      *
      * @param write - Open writable transaction?
