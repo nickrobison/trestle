@@ -10,4 +10,6 @@ public interface IClassRegister {
     void deregisterClass(Class<?> clazz);
 
     Object getRegisteredClass(Class<?> clazz) throws TrestleClassException;
+
+    boolean isCacheable(Class<?> clazz) throws TrestleClassException;
 }

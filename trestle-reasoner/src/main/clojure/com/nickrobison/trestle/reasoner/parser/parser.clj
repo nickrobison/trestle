@@ -8,7 +8,8 @@
            (com.nickrobison.trestle.reasoner.annotations IndividualIdentifier DatasetClass Fact NoMultiLanguage Language)
            (java.util Optional List)
            (com.nickrobison.trestle.common StaticIRI LanguageUtils)
-           (com.nickrobison.trestle.reasoner.exceptions MissingConstructorException InvalidClassException InvalidClassException$State UnregisteredClassException))
+           (com.nickrobison.trestle.reasoner.exceptions MissingConstructorException InvalidClassException InvalidClassException$State UnregisteredClassException)
+           (java.io Serializable))
   (:require [clojure.core.match :refer [match]]
             [clojure.core.reducers :as r]
             [clojure.tools.logging :as log]
@@ -413,10 +414,12 @@
                              (r/map #(build-member % df reasonerPrefix (if (true? multiLangEnabled) defaultLanguageCode nil)))
                              ; Combine everything into a map
                              (r/reduce member-reducer {
-                                                       :class-name  (get-class-name
-                                                                      clazz df reasonerPrefix)
-                                                       :java-class  (.getSimpleName clazz)
-                                                       :constructor (build-constructor clazz)
+                                                       :class-name   (get-class-name
+                                                                       clazz df reasonerPrefix)
+                                                       :java-class   (.getSimpleName clazz)
+                                                       :constructor  (build-constructor clazz)
+                                                        ;Does the class implement Serializable, and is thus cachable?
+                                                       :serializable (instance? Serializable clazz)
                                                        }))]
         (if (contains? parsedClass :identifier)
           (if (contains? parsedClass :temporals)
@@ -542,7 +545,12 @@
       (throw (UnregisteredClassException. clazz))))
   (deregisterClass [this clazz]
     (log/debugf "Deregistering %s" clazz)
-    (swap! @classRegistry dissoc clazz)))
+    (swap! @classRegistry dissoc clazz))
+  (isCacheable [this clazz]
+    (if-let [parsedClass (get @classRegistry clazz)]
+      (:serializable parsedClass)
+      (throw (UnregisteredClassException. clazz)))))
+
 
 (defn make-parser
   "Creates a new ClassParser"
