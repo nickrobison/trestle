@@ -67,7 +67,7 @@ public class InvalidClassException extends TrestleClassException {
                 if (member == null) {
                     return String.format("Invalid configuration for %s", className);
                 } else {
-                    return String.format("Invalid configuration for %s, regarding %s", className, member);
+                    return String.format("Invalid configuration for %s, regarding '%s'", className, member);
                 }
             }
             case INCOMPLETE: {

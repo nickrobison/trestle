@@ -7,7 +7,7 @@
            (java.lang.invoke MethodHandles MethodHandle)
            (com.nickrobison.trestle.reasoner.annotations IndividualIdentifier DatasetClass Fact NoMultiLanguage Language)
            (java.util Optional List)
-           (com.nickrobison.trestle.common StaticIRI)
+           (com.nickrobison.trestle.common StaticIRI LanguageUtils)
            (com.nickrobison.trestle.reasoner.exceptions MissingConstructorException InvalidClassException InvalidClassException$State UnregisteredClassException))
   (:require [clojure.core.match :refer [match]]
             [clojure.core.reducers :as r]
@@ -147,7 +147,15 @@
   "Get the language tag, if one exists"
   [member defaultLang]
   (if (pred/hasAnnotation? member Language)
-    (.language ^Language (pred/get-annotation member Language))
+    (let [lang (.language ^Language (pred/get-annotation member Language))]
+      (if (LanguageUtils/checkLanguageCodeIsValid lang)
+        lang
+        (throw (InvalidClassException.
+                 ; I don't really know how to get the class name here
+                 (class Class)
+                 InvalidClassException$State/INVALID
+                 (str lang " is not a valid language code")))))
+
     defaultLang))
 
 (defmulti build-member-return-type
