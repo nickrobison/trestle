@@ -20,6 +20,7 @@ interface ICompareIndividual {
     individual: TrestleIndividual;
     color: string;
     visible: boolean;
+    focused: boolean;
     height: number;
     base: number;
     sliderValue: number;
@@ -52,6 +53,7 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
     public exportValues: IDataExport[];
     public loadedOverlap: ISpatialComparisonReport | null;
     public loading: ILoadingState;
+    public currentSliderValue: number;
 
     private filterCompareResults: boolean;
     private layerDepth: number;
@@ -62,9 +64,10 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
     private availableColors: string[];
     @ViewChild(TrestleMapComponent)
     private mapComponent: TrestleMapComponent;
-    public currentSliderValue: number;
     @ViewChild("loadable")
     private mapRef: ElementRef;
+    private disabledFocusIndividuals: string[];
+
 
     constructor(private is: IndividualService,
                 private vs: MapService,
@@ -103,6 +106,7 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
             type: "indeterminate",
             visible: false
         };
+        this.disabledFocusIndividuals = [];
     }
 
     public ngAfterViewInit(): void {
@@ -240,6 +244,52 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
                 individual.visible);
     }
 
+    public toggleFocus(individual: ICompareIndividual): void {
+        individual.focused = !individual.focused;
+
+        // If we've selected the focus option, grab all the currently visible layers, disable them, and stash them for later
+        if (individual.focused) {
+            // If we have previously disabled individuals, reenable them, then do your thing
+            if (!(this.disabledFocusIndividuals.length === 0)) {
+                this.disabledFocusIndividuals
+                    .forEach((fIndividual) => {
+                        const mapValue = this.selectedIndividuals.get(fIndividual);
+                        if (mapValue) {
+                            this.toggleVisibility(mapValue);
+                        }
+                    });
+                // Also, find any other focused layers, and unfocus them.
+                this.selectedIndividuals
+                    .forEach((value, key) => {
+                        if (value !== individual && value.focused) {
+                            value.focused = false;
+                        }
+                    });
+                this.disabledFocusIndividuals = [];
+            }
+        //    Get all the currently visible layers
+            this.selectedIndividuals
+                .forEach((value, key) => {
+                    // If the individual is visible, stash it's value so we can enable it later
+                    if (value !== individual && value.visible) {
+                        this.disabledFocusIndividuals.push(key);
+                        this.toggleVisibility(value);
+                    }
+                });
+        //    If the individual isn't supposed to be focused, grab all the stashed individuals and reenable them.
+        } else {
+            this.disabledFocusIndividuals
+                .forEach((fIndividual) => {
+                    const mapValue = this.selectedIndividuals.get(fIndividual);
+                    if (mapValue) {
+                        this.toggleVisibility(mapValue);
+                    }
+                });
+        //    Reset the focused list
+            this.disabledFocusIndividuals = [];
+        }
+    }
+
     public removeIndividual(individual: ICompareIndividual): void {
         console.debug("Remove:", individual);
         // Remove from the array first, then from the map
@@ -259,14 +309,9 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
             //     For now, let's just change the base individual,
             // we'll figure out the rest later
             const newOffset = (event.value - selection.sliderValue) * 50;
-            // If we're changing the base individual, we want to move everything on that level
-            // Otherwise, we just want to move the single individual
-            const changeIndividual = selection === this.baseIndividual ?
-                undefined :
-                selection.individual.getID();
             this.mapComponent.change3DOffset(selection.height,
                 newOffset,
-                changeIndividual);
+                selection.individual.getID());
             selection.sliderValue = event.value;
             selection.height = selection.height + newOffset;
             selection.base = selection.base + newOffset;
@@ -477,6 +522,7 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
             individual,
             color,
             visible: true,
+            focused: false,
             height,
             base: baseHeight,
             sliderValue: 50
