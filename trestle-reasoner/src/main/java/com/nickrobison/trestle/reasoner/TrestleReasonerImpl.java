@@ -225,8 +225,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         builder.inputClasses.forEach(clazz -> {
             try {
                 this.trestleParser.classRegistry.registerClass(trestleParser.classParser.getObjectClass(clazz), clazz);
-//                ClassRegister.ValidateClass(clazz);
-//                this.registeredClasses.put(trestleParser.classParser.getObjectClass(clazz), clazz);
             } catch (TrestleClassException e) {
                 logger.error("Cannot validate class {}", clazz, e);
             }
@@ -235,24 +233,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         trestleCache = injector.getInstance(TrestleCache.class);
 
 ////        Setup the query builder
-//        if (ontology instanceof OracleOntology) {
-//            spatialDalect = QueryBuilder.Dialect.ORACLE;
-//        } else if (ontology instanceof VirtuosoOntology) {
-//            spatialDalect = QueryBuilder.Dialect.VIRTUOSO;
-//        } else if (ontology instanceof LocalOntology) {
-//            spatialDalect = QueryBuilder.Dialect.JENA;
-////        } else if (ontology instanceof StardogOntology) {
-////            spatialDalect = QueryBuilder.Dialect.STARDOG;
-//        } else {
-//            spatialDalect = QueryBuilder.Dialect.SESAME;
-//        }
-
-//        This is probably a terrible idea, but whatever.
-//        qb = injector
-//                .createChildInjector(new QueryBuilderModule(spatialDalect,
-//                        this.ontology.getUnderlyingPrefixManager()))
-//                .getInstance(QueryBuilder.class);
-//        qb = new QueryBuilder(spatialDalect, ontology.getUnderlyingPrefixManager());
         this.qb = injector.getInstance(QueryBuilder.class);
         this.spatialDalect = this.qb.getDialect();
         logger.debug("Using SPARQL dialect {}", spatialDalect);
@@ -832,7 +812,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC));
 
 //        Try from cache first
-        final @Nullable T individual = this.trestleCache.getTrestleObject(clazz, trestleIRI);
+        final boolean isCacheable = this.trestleParser.classRegistry.isCacheable(clazz);
+        @Nullable T individual = null;
+        if (isCacheable) {
+            individual = this.trestleCache.getTrestleObject(clazz, trestleIRI);
+        }
         if (individual != null) {
             return individual;
         }
@@ -844,10 +828,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             logger.debug("Finished reading {}", individualIRI);
 //            Write back to index
             final TrestleObjectResult<@NonNull T> value = constructedObject.get();
-            try {
-                this.trestleCache.writeTrestleObject(trestleIRI, value.getValidFrom().toInstant().toEpochMilli(), value.getValidTo().toInstant().toEpochMilli(), value.getObject());
-            } catch (Exception e) {
-                logger.error("Unable to write Trestle Object {} to cache", individualIRI, e);
+            if (isCacheable) {
+                try {
+                    this.trestleCache.writeTrestleObject(trestleIRI, value.getValidFrom().toInstant().toEpochMilli(), value.getValidTo().toInstant().toEpochMilli(), value.getObject());
+                } catch (Exception e) {
+                    logger.error("Unable to write Trestle Object {} to cache", individualIRI, e);
+                }
             }
             return value.getObject();
         } else {

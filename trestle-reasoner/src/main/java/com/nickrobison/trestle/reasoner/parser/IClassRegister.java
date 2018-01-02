@@ -21,5 +21,5 @@ public interface IClassRegister {
 
     boolean isRegistered(Class<?> clazz);
 
-    boolean isCacheable(Class<?> clazz) throws UnregisteredClassException;
+    boolean isCacheable(Class<?> clazz);
 }

@@ -7,6 +7,7 @@ import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.reasoner.exceptions.*;
 import org.semanticweb.owlapi.model.OWLClass;
 
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -439,8 +440,8 @@ public class ClassRegister implements IClassRegister {
     }
 
     @Override
-    public boolean isCacheable(Class<?> clazz) throws UnregisteredClassException {
-        return false;
+    public boolean isCacheable(Class<?> clazz) {
+        return clazz.isInstance(Serializable.class);
     }
 
     @Override
