@@ -1567,7 +1567,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public List<String> searchForIndividual(String individualIRI, @Nullable String datasetClass, @Nullable Integer limit) {
-        @Nullable final OWLClass owlClass;
+        final OWLClass owlClass;
         if (datasetClass != null) {
             owlClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, datasetClass));
         } else {

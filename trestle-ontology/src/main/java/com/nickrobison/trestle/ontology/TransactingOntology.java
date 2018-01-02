@@ -104,7 +104,7 @@ abstract class TransactingOntology implements ITrestleOntology {
 //    We can suppress this, because the first call is to check whether the transaction object is null or not
     @SuppressWarnings({"dereference.of.nullable"})
     public TrestleTransaction createandOpenNewTransaction(boolean write) {
-        @Nullable final TrestleTransaction threadTransaction = threadTransactionObject.get();
+        final TrestleTransaction threadTransaction = threadTransactionObject.get();
         if (threadTransaction == null) {
             final long transactionID = System.nanoTime();
 //            Add the logging context
