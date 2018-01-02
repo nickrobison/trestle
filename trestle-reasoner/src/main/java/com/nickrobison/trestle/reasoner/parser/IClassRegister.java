@@ -1,17 +1,25 @@
 package com.nickrobison.trestle.reasoner.parser;
 
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
+import org.semanticweb.owlapi.model.OWLClass;
+
+import java.util.Set;
 
 public interface IClassRegister {
 
 
-    void registerClass(Class<?> clazz) throws TrestleClassException;
+    void registerClass(OWLClass owlClass, Class<?> clazz) throws TrestleClassException;
 
     void deregisterClass(Class<?> clazz);
 
-    Object getRegisteredClass(Class<?> clazz) throws TrestleClassException;
+    Object getRegisteredClass(Class<?> clazz) throws UnregisteredClassException;
 
-    boolean isRegistered(Class<?> clazz) throws TrestleClassException;
+    Set<OWLClass> getRegisteredOWLClasses();
 
-    boolean isCacheable(Class<?> clazz) throws TrestleClassException;
+    Class<?> lookupClass(OWLClass owlClass) throws UnregisteredClassException;
+
+    boolean isRegistered(Class<?> clazz);
+
+    boolean isCacheable(Class<?> clazz) throws UnregisteredClassException;
 }

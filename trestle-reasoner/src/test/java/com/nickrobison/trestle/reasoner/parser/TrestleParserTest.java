@@ -79,7 +79,7 @@ public class TrestleParserTest {
     public void TestSimpleGAULClass() throws TrestleClassException {
 
 //        Register some classes
-        cr.registerClass(TestClasses.GAULTestClass.class);
+        cr.registerClass(cp.getObjectClass(TestClasses.GAULTestClass.class), TestClasses.GAULTestClass.class);
 
 //        Test the class
         final OWLClass owlClass = cp.getObjectClass(gaulTestClass);
@@ -120,7 +120,7 @@ public class TrestleParserTest {
     @Test
     public void TestGAULComplexObjectClass() throws TrestleClassException {
 
-        cr.registerClass(TestClasses.GAULComplexClassTest.class);
+        cr.registerClass(cp.getObjectClass(TestClasses.GAULComplexClassTest.class), TestClasses.GAULComplexClassTest.class);
 
 //        Test the class
         final OWLClass owlClass = cp.getObjectClass(complexObjectClass);
@@ -157,8 +157,8 @@ public class TrestleParserTest {
     @Test
     public void TestExpandedGAULObject() throws TrestleClassException {
 
-        cr.registerClass(ExpandedGAULTests.class);
-        cr.registerClass(TestClasses.GAULMethodTest.class);
+        cr.registerClass(cp.getObjectClass(ExpandedGAULTests.class), ExpandedGAULTests.class);
+        cr.registerClass(cp.getObjectClass(TestClasses.GAULMethodTest.class), TestClasses.GAULMethodTest.class);
 
 //        Test the new gaul test
         //        Test the named individual
@@ -239,7 +239,7 @@ public class TrestleParserTest {
     @Test
     public void multiLangTest() throws TrestleClassException {
 
-        cr.registerClass(TestClasses.MultiLangTest.class);
+        cr.registerClass(cp.getObjectClass(TestClasses.MultiLangTest.class), TestClasses.MultiLangTest.class);
         final Optional<List<OWLDataPropertyAssertionAxiom>> facts = cp.getFacts(multiLangTest);
         assertAll(() -> assertTrue(facts.isPresent(), "Should have facts"),
                 () -> assertEquals(7, facts.get().size(), "Should have lots of facts"));
@@ -265,8 +265,8 @@ public class TrestleParserTest {
     @Test
     public void testObjectConstructor() throws TrestleClassException {
 
-        cr.registerClass(TestClasses.GAULMethodTest.class);
-        cr.registerClass(ExpandedGAULTests.class);
+        cr.registerClass(cp.getObjectClass(TestClasses.GAULMethodTest.class), TestClasses.GAULMethodTest.class);
+        cr.registerClass(cp.getObjectClass(ExpandedGAULTests.class), ExpandedGAULTests.class);
 
         List<OWLDataPropertyAssertionAxiom> testProperties = new ArrayList<>();
         List<TemporalObject> testTemporals = new ArrayList<>();

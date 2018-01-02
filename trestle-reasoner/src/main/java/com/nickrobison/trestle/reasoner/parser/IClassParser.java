@@ -25,6 +25,7 @@ public interface IClassParser {
 
     /**
      * Get the {@link OWLClass} representation of the given input {@link Object}
+     * Note: The method does not utilize the class cache
      * @param inputObject - {@link Object} to determine class of
      * @return - {@link OWLClass}
      */

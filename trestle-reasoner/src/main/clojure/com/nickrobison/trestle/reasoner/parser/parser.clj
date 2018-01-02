@@ -393,13 +393,16 @@
                                ^String reasonerPrefix,
                                ^boolean multiLangEnabled,
                                ^String defaultLanguageCode
-                               classRegistry]
+                               classRegistry
+                               owlClassMap]
   IClassParser
   (isMultiLangEnabled [this] (multiLangEnabled))
   (getDefaultLanguageCode [this] (if (= defaultLanguageCode "") nil defaultLanguageCode))
   (^OWLClass getObjectClass [this ^Class clazz]
-    (let [parsedClass (.getRegisteredClass this clazz)]
-      (:class-name parsedClass)))
+    (get-class-name clazz df reasonerPrefix)
+    ;(let [parsedClass (.getRegisteredClass this clazz)]
+    ;  (:class-name parsedClass))
+    )
   (^OWLClass getObjectClass [this ^Object inputObject] (.getObjectClass this (.getClass inputObject)))
   (parseClass ^Object [this ^Class clazz]
     ; Parse input class
@@ -530,31 +533,41 @@
 
   ; ClassRegister methods
   IClassRegister
-  (registerClass [this clazz]
+  (registerClass [this owlClass clazz]
     (let [parsedClass (.parseClass this clazz)]
       (if (contains? @classRegistry clazz)
         ; Overwrite the class, if we already have it
         ((log/debugf "Already registered %s, rebuilding" (.getName clazz))
           (swap! classRegistry
-                 assoc clazz parsedClass))
+                 assoc clazz parsedClass)
+          (swap! owlClassMap assoc owlClass clazz))
         ; Otherwise, just create it
-        (swap! classRegistry assoc clazz parsedClass))))
+        ((swap! classRegistry assoc clazz parsedClass)
+          (swap! owlClassMap assoc owlClass clazz)))))
   (getRegisteredClass ^Object [this ^Class clazz]
     (if-let [parsedClass (get @classRegistry clazz)]
       parsedClass
       (throw (UnregisteredClassException. clazz))))
   (deregisterClass [this clazz]
     (log/debugf "Deregistering %s" clazz)
-    (swap! @classRegistry dissoc clazz))
+    (swap! @classRegistry dissoc clazz)
+    (swap! @owlClassMap remove clazz))
   (isCacheable [this clazz]
     (if-let [parsedClass (get @classRegistry clazz)]
       (:serializable parsedClass)
       (throw (UnregisteredClassException. clazz))))
   (isRegistered [this clazz]
-    (contains? @classRegistry clazz)))
+    (contains? @classRegistry clazz))
+  (lookupClass [this owlClass]
+    (if-let [clazz (get @owlClassMap owlClass)]
+      clazz
+      (throw (UnregisteredClassException. owlClass)))))
 
 
 (defn make-parser
   "Creates a new ClassParser"
   [df reasonerPrefix multiLangEnabled defaultLanguageCode]
-  (->ClojureClassParser df reasonerPrefix multiLangEnabled defaultLanguageCode (atom {})))
+  (->ClojureClassParser df reasonerPrefix
+                        multiLangEnabled defaultLanguageCode
+                        (atom {})
+                        (atom {})))

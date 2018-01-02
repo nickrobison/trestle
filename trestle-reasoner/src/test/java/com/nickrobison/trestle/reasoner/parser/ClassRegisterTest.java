@@ -39,6 +39,7 @@ public class ClassRegisterTest {
     private static Class<? extends FailingTemporalTest> ftClass;
     private static Class<? extends LanguageTest> lClass;
     private static IClassRegister cr;
+    private static IClassParser cp;
 
     @BeforeAll
     public static void setup() {
@@ -59,7 +60,9 @@ public class ClassRegisterTest {
         ftClass = ftTest.getClass();
         lClass = lTest.getClass();
 
-        cr = (IClassRegister) ClojureProvider.buildClojureParser("http://nickrobison.com/test/", true, "en-US");
+        final Object o = ClojureProvider.buildClojureParser("http://nickrobison.com/test/", true, "en-US");
+        cr = (IClassRegister) o;
+        cp = (IClassParser) o;
     }
 
     @Test
@@ -70,7 +73,7 @@ public class ClassRegisterTest {
 //                () -> assertEquals("Class", invalidClassException.getMember(), "Should have a problem with the class"));
 
 //        Public class, private constructor
-        final InvalidClassException invalidConstructor = assertThrows(InvalidClassException.class, () -> cr.registerClass(PrivateConstructorTest.class));
+        final InvalidClassException invalidConstructor = assertThrows(InvalidClassException.class, () -> cr.registerClass(cp.getObjectClass(PrivateConstructorTest.class), PrivateConstructorTest.class));
         assertAll(() -> assertEquals(INVALID, invalidConstructor.getProblemState(), "Should have problem with constructor"),
                 () -> assertEquals("Constructor", invalidConstructor.getMember(), "Should have a problem with the constructor"));
     }
@@ -78,17 +81,17 @@ public class ClassRegisterTest {
     @Test
     public void testIdentifier() {
 
-        InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(eClass));
+        InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(cp.getObjectClass(eClass), eClass));
         assertEquals(MISSING, invalidClassException.getProblemState(), "Wrong problem state");
 
-        invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(xClass));
+        invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(cp.getObjectClass(xClass), xClass));
         assertEquals(EXCESS, invalidClassException.getProblemState(), "Wrong problem state");
     }
 
     @Test
     public void testName() {
 
-        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(eClass));
+        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(cp.getObjectClass(eClass), eClass));
         assertEquals(MISSING, invalidClassException.getProblemState(), "Wrong problem state");
     }
 
@@ -97,7 +100,7 @@ public class ClassRegisterTest {
 
 
 //        Check for too many constructors
-        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(ExcessConstructorTest.class));
+        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(cp.getObjectClass(ExcessConstructorTest.class), ExcessConstructorTest.class));
         assertEquals(EXCESS, invalidClassException.getProblemState(), "Wrong problem state");
 
     }
@@ -105,29 +108,29 @@ public class ClassRegisterTest {
     @Test
     public void testSpatial() {
 
-        InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(ExtraSpatial.class));
+        InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(cp.getObjectClass(ExtraSpatial.class), ExtraSpatial.class));
         assertEquals(EXCESS, invalidClassException.getProblemState(), "Should have EXCESS problem state");
 
-        invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(sClass));
+        invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(cp.getObjectClass(sClass), sClass));
         assertEquals(MISSING, invalidClassException.getProblemState(), "Should be missing the spatial argument in the constructor");
     }
 
     @Test
     public void testTemporal() {
 
-        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(ftClass));
+        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(cp.getObjectClass(ftClass), ftClass));
         assertEquals(EXCESS, invalidClassException.getProblemState(), "Should have excess problem state");
 
 //        Check for multiple point temporals
-        final InvalidClassException multiPointException = assertThrows(InvalidClassException.class, () -> cr.registerClass(MultiplePointTemporal.class));
+        final InvalidClassException multiPointException = assertThrows(InvalidClassException.class, () -> cr.registerClass(cp.getObjectClass(MultiplePointTemporal.class), MultiplePointTemporal.class));
         assertEquals(EXCESS, multiPointException.getProblemState(), "Should have excess point temporals");
 
 //        No temporals
-        final InvalidClassException noTemporalException = assertThrows(InvalidClassException.class, () -> cr.registerClass(NoTemporal.class));
+        final InvalidClassException noTemporalException = assertThrows(InvalidClassException.class, () -> cr.registerClass(cp.getObjectClass(NoTemporal.class), NoTemporal.class));
         assertEquals(MISSING, noTemporalException.getProblemState());
 
         try {
-            cr.registerClass(TimeZoneParsingTest.class);
+            cr.registerClass(cp.getObjectClass(TimeZoneParsingTest.class), TimeZoneParsingTest.class);
         } catch (TrestleClassException e) {
             e.printStackTrace();
             fail("Should not throw exception");
@@ -137,7 +140,7 @@ public class ClassRegisterTest {
     @Test
     public void testLanguage() {
 
-        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(FailingLanguageTest.class));
+        final InvalidClassException invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(cp.getObjectClass(FailingTemporalTest.class), FailingLanguageTest.class));
         assertEquals(INVALID, invalidClassException.getProblemState());
     }
 

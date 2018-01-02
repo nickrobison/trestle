@@ -56,7 +56,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import org.apache.commons.lang3.ClassUtils;
-import org.checkerframework.checker.nullness.qual.KeyFor;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -73,7 +73,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.IRIUtils.extractTrestleIndividualName;
@@ -102,7 +101,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     private final String REASONER_PREFIX;
     private final ITrestleOntology ontology;
-    private final Map<OWLClass, Class<?>> registeredClasses = new HashMap<>();
     //    Seems gross?
     private static final OWLClass datasetClass = OWLManager.getOWLDataFactory().getOWLClass(datasetClassIRI);
     private final QueryBuilder qb;
@@ -226,8 +224,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //            validate the classes
         builder.inputClasses.forEach(clazz -> {
             try {
-                ClassRegister.ValidateClass(clazz);
-                this.registeredClasses.put(trestleParser.classParser.getObjectClass(clazz), clazz);
+                this.trestleParser.classRegistry.registerClass(trestleParser.classParser.getObjectClass(clazz), clazz);
+//                ClassRegister.ValidateClass(clazz);
+//                this.registeredClasses.put(trestleParser.classParser.getObjectClass(clazz), clazz);
             } catch (TrestleClassException e) {
                 logger.error("Cannot validate class {}", clazz, e);
             }
@@ -369,7 +368,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //    ----------------------------
 
     private void checkRegisteredClass(Class<?> clazz) throws UnregisteredClassException {
-        if (!this.registeredClasses.containsValue(clazz)) {
+        if (!this.trestleParser.classRegistry.isRegistered(clazz)) {
             throw new UnregisteredClassException(clazz);
         }
     }
@@ -751,17 +750,18 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     public <T> @NonNull T readTrestleObject(String datasetClassID, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws MissingOntologyEntity, TrestleClassException {
 //        Lookup class
         final OWLClass datasetClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, datasetClassID));
-        final Optional<@KeyFor("this.registeredClasses") OWLClass> matchingClass = this.registeredClasses
-                .keySet()
-                .stream()
-                .filter(owlclass -> owlclass.equals(datasetClass))
-                .findFirst();
+        final Class<?> clazz = this.trestleParser.classRegistry.lookupClass(datasetClass);
+//        final Optional<@KeyFor("this.registeredClasses") OWLClass> matchingClass = this.registeredClasses
+//                .keySet()
+//                .stream()
+//                .filter(owlclass -> owlclass.equals(datasetClass))
+//                .findFirst();
+//
+//        if (!matchingClass.isPresent()) {
+//            throw new MissingOntologyEntity("Cannot find matching class for: ", datasetClass);
+//        }
 
-        if (!matchingClass.isPresent()) {
-            throw new MissingOntologyEntity("Cannot find matching class for: ", datasetClass);
-        }
-
-        final Class<@NonNull T> aClass = (Class<@NonNull T>) this.registeredClasses.get(matchingClass.get());
+        final Class<@NonNull T> aClass = (Class<@NonNull T>) clazz;
         return readTrestleObject(aClass, objectID, validTemporal, databaseTemporal);
     }
 
@@ -873,10 +873,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 //        Contains class?
         try {
-            checkRegisteredClass(clazz);
+            this.checkRegisteredClass(clazz);
         } catch (UnregisteredClassException e) {
-            logger.error("Unregistered class", e);
-            throw new CompletionException(e);
+            logger.error("Class {} is not registered", clazz.getName(), e);
+            ExceptionUtils.rethrow(e);
         }
 
 //        Do some things before opening a transaction
@@ -2053,8 +2053,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public void registerClass(Class inputClass) throws TrestleClassException {
-        ClassRegister.ValidateClass(inputClass);
-        this.registeredClasses.put(trestleParser.classParser.getObjectClass(inputClass), inputClass);
+        final OWLClass owlClass = this.trestleParser.classParser.getObjectClass(inputClass);
+        this.trestleParser.classRegistry.registerClass(owlClass, inputClass);
     }
 
     /**
@@ -2239,14 +2239,14 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
         final String datasetQuery = qb.buildDatasetQuery();
         final TrestleResultSet resultSet = ontology.executeSPARQLResults(datasetQuery);
-        List<OWLClass> datasetsInOntology = resultSet
+        Set<OWLClass> datasetsInOntology = resultSet
                 .getResults()
                 .stream()
                 .map(result -> df.getOWLClass(result.getIndividual("dataset").orElseThrow(() -> new RuntimeException("dataset is null")).toStringID()))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
 
-        return this.registeredClasses
-                .keySet()
+        return this.trestleParser.classRegistry
+                .getRegisteredOWLClasses()
                 .stream()
                 .filter(datasetsInOntology::contains)
                 .map(individual -> individual.getIRI().getShortForm())
@@ -2256,11 +2256,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public Class<?> getDatasetClass(String owlClassString) throws UnregisteredClassException {
         final OWLClass owlClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, owlClassString));
-        final Class<?> aClass = this.registeredClasses.get(owlClass);
-        if (aClass == null) {
-            throw new UnregisteredClassException(owlClass);
-        }
-        return aClass;
+        return this.trestleParser.classRegistry.lookupClass(owlClass);
     }
 
     @Override

@@ -4,10 +4,8 @@ import com.nickrobison.trestle.reasoner.annotations.*;
 import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
-import com.nickrobison.trestle.reasoner.exceptions.InvalidClassException;
-import com.nickrobison.trestle.reasoner.exceptions.MissingConstructorException;
-import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
-import com.nickrobison.trestle.reasoner.exceptions.UnsupportedTypeException;
+import com.nickrobison.trestle.reasoner.exceptions.*;
+import org.semanticweb.owlapi.model.OWLClass;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -16,10 +14,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.time.DateTimeException;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.LanguageUtils.checkLanguageCodeIsValid;
@@ -30,8 +25,10 @@ import static com.nickrobison.trestle.reasoner.parser.ClassParser.filterMethodNa
  */
 public class ClassRegister implements IClassRegister {
 
+    private final Map<OWLClass, Class<?>> registeredClasses;
+
     ClassRegister() {
-//        Not used
+        this.registeredClasses = new HashMap<>();
     }
 
     public static void ValidateClass(Class<?> clazz) throws TrestleClassException {
@@ -416,8 +413,9 @@ public class ClassRegister implements IClassRegister {
     }
 
     @Override
-    public void registerClass(Class<?> clazz) throws TrestleClassException {
-//        Not implemented
+    public void registerClass(OWLClass owlClass, Class<?> clazz) throws TrestleClassException {
+        ClassRegister.ValidateClass(clazz);
+        this.registeredClasses.put(owlClass, clazz);
     }
 
     @Override
@@ -426,17 +424,31 @@ public class ClassRegister implements IClassRegister {
     }
 
     @Override
-    public Object getRegisteredClass(Class<?> clazz) throws TrestleClassException {
+    public Object getRegisteredClass(Class<?> clazz) throws UnregisteredClassException {
         return null;
     }
 
     @Override
-    public boolean isRegistered(Class<?> clazz) throws TrestleClassException {
-        return true;
+    public Set<OWLClass> getRegisteredOWLClasses() {
+        return this.registeredClasses.keySet();
     }
 
     @Override
-    public boolean isCacheable(Class<?> clazz) throws TrestleClassException {
+    public boolean isRegistered(Class<?> clazz) {
+        return this.registeredClasses.containsValue(clazz);
+    }
+
+    @Override
+    public boolean isCacheable(Class<?> clazz) throws UnregisteredClassException {
         return false;
+    }
+
+    @Override
+    public Class<?> lookupClass(OWLClass owlClass) throws UnregisteredClassException {
+        final Class<?> aClass = this.registeredClasses.get(owlClass);
+        if (aClass == null) {
+            throw new UnregisteredClassException(owlClass);
+        }
+        return aClass;
     }
 }
