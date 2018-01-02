@@ -21,6 +21,10 @@
             <artifactId>jts-core</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-annotations</artifactId>
             <version>0.8.0-SNAPSHOT</version>

@@ -29,6 +29,8 @@ export class VisualizeDetailsComponent implements AfterViewInit {
     public individualFactHistory: IIndividualHistory;
     public minTime: moment.Moment;
     public maxTime: moment.Moment;
+    public minGraphDate = new Date("1990-01-01");
+    public maxGraphDate = new Date("2017-01-01");
     public validAt: moment.Moment;
     public dbAt: moment.Moment;
     private routeObservable: Observable<IRouteObservable>;
@@ -66,6 +68,24 @@ export class VisualizeDetailsComponent implements AfterViewInit {
 
     public displayFn(name: string): string {
         return TrestleIndividual.filterID(name);
+    }
+
+    /**
+     * Gets the IRI suffix, since we can't access static methods in the Angular template
+     * @param {string} object
+     * @returns {string}
+     */
+    public getSuffix(object: string): string {
+        return TrestleIndividual.extractSuffix(object);
+    }
+
+    /**
+     * Gets the IRI hostname, since we can't access static methods in the Angular template
+     * @param {string} object
+     * @returns {string}
+     */
+    public getPrefix(object: string): string {
+        return TrestleIndividual.extractPrefix(object);
     }
 
     public openValueModal(fact: TrestleFact): void {

@@ -1,10 +1,10 @@
 package com.nickrobison.gaulintegrator.HadoopTests;
 
 import com.esri.mapreduce.PolygonFeatureInputFormat;
-import com.nickrobison.gaulintegrator.GAULMapper;
-import com.nickrobison.gaulintegrator.GAULReducer;
-import com.nickrobison.gaulintegrator.IntegrationRunner;
-import com.nickrobison.gaulintegrator.MapperOutput;
+import com.nickrobison.gaulintegrator.*;
+import com.nickrobison.gaulintegrator.sorting.GAULMapperADM2CodeComparator;
+import com.nickrobison.gaulintegrator.sorting.GAULPartitioner;
+import com.nickrobison.gaulintegrator.sorting.NaturalKeyGroupingComparator;
 import com.nickrobison.trestle.datasets.GAULObject;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
@@ -13,7 +13,6 @@ import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -124,7 +123,7 @@ public class GAULIntegratorTests {
     public void testReducer() throws IOException, ClassNotFoundException, InterruptedException, SQLException, URISyntaxException {
 
 //        URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/sudan/");
-                URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/gates-test/");
+                URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("out/");
         URL OUT_DIR = GAULIntegratorTests.class.getClassLoader().getResource("out/");
 
         Path inDir = new Path(IN_DIR.toString());
@@ -137,10 +136,14 @@ public class GAULIntegratorTests {
         Job job = Job.getInstance(conf, "GAUL Integrator");
         job.setJarByClass(IntegrationRunner.class);
         job.setMapperClass(GAULMapper.class);
-        job.setMapOutputKeyClass(LongWritable.class);
+        job.setMapOutputKeyClass(GAULMapperKey.class);
         job.setMapOutputValueClass(MapperOutput.class);
+//        Deterministic sorting and partitioning, very course grained, we'll just do country code
+//        We also need both the grouping and the sort comparator, not entirely sure why
+        job.setGroupingComparatorClass(NaturalKeyGroupingComparator.class);
+        job.setSortComparatorClass(GAULMapperADM2CodeComparator.class);
+        job.setPartitionerClass(GAULPartitioner.class);
         job.setReducerClass(GAULReducer.class);
-        job.setSortComparatorClass(LongWritable.Comparator.class);
 
 //        Add ontology to cache
         job.addCacheFile(new URI(String.format("%s", ontologyPath)));

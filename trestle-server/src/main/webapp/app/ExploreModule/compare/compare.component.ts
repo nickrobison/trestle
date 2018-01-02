@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, ViewChild } from "@angular/core";
+import { AfterViewChecked, AfterViewInit, ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
 import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
 import { IMapAttributeChange, MapSource, TrestleMapComponent } from "../../UIModule/map/trestle-map.component";
 import { IndividualService } from "../../SharedModule/individual/individual.service";
@@ -13,11 +13,14 @@ import { interpolateReds } from "d3-scale-chromatic";
 import { IDataExport } from "../exporter/exporter.component";
 import { parse } from "wellknown";
 import { MultiPolygon } from "geojson";
+import { ActivatedRoute } from "@angular/router";
+import { BehaviorSubject } from "rxjs/BehaviorSubject";
 
 interface ICompareIndividual {
     individual: TrestleIndividual;
     color: string;
     visible: boolean;
+    focused: boolean;
     height: number;
     base: number;
     sliderValue: number;
@@ -38,18 +41,19 @@ export type loadingColor = "accent" | "warn" | "primary";
     templateUrl: "./compare.component.html",
     styleUrls: ["./compare.component.css"]
 })
-export class CompareComponent implements AfterViewInit {
+export class CompareComponent implements AfterViewInit, AfterViewChecked {
 
     public zoomMap = true;
     public mapConfig: mapboxgl.MapboxOptions;
     // public selectedIndividuals: ICompareIndividual[];
     public selectedIndividuals: Map<string, ICompareIndividual>;
     public baseIndividual: ICompareIndividual | null;
-    public dataChanges: Subject<MapSource>;
+    public dataChanges: BehaviorSubject<MapSource | undefined>;
     public layerChanges: Subject<IMapAttributeChange>;
     public exportValues: IDataExport[];
     public loadedOverlap: ISpatialComparisonReport | null;
     public loading: ILoadingState;
+    public currentSliderValue: number;
 
     private filterCompareResults: boolean;
     private layerDepth: number;
@@ -60,13 +64,16 @@ export class CompareComponent implements AfterViewInit {
     private availableColors: string[];
     @ViewChild(TrestleMapComponent)
     private mapComponent: TrestleMapComponent;
-    public currentSliderValue: number;
     @ViewChild("loadable")
     private mapRef: ElementRef;
+    private disabledFocusIndividuals: string[];
+
 
     constructor(private is: IndividualService,
                 private vs: MapService,
-                private spinner: LoadingSpinnerService) {
+                private spinner: LoadingSpinnerService,
+                private route: ActivatedRoute,
+                private cdRef: ChangeDetectorRef) {
 
 
         this.mapConfig = {
@@ -85,7 +92,7 @@ export class CompareComponent implements AfterViewInit {
         // Use this to pull out colors for the map
         this.colorScale = schemeCategory20b;
         this.currentSliderValue = 0;
-        this.dataChanges = new Subject();
+        this.dataChanges = new BehaviorSubject(undefined);
         this.layerChanges = new Subject();
         this.filterCompareResults = true;
         this.exportValues = [{
@@ -99,11 +106,31 @@ export class CompareComponent implements AfterViewInit {
             type: "indeterminate",
             visible: false
         };
+        this.disabledFocusIndividuals = [];
     }
 
     public ngAfterViewInit(): void {
+        // Subscribe to route observables
+        this.route.queryParams
+            .subscribe((queryParams) => {
+                console.debug("params", queryParams);
+                const individual = queryParams["id"];
+                if (individual !== null) {
+                    this.addBaseIndividual(individual);
+                }
+            });
+
         console.debug("Child", this.mapComponent);
         this.spinner.setViewContainerRef(this.mapRef.nativeElement);
+    }
+
+    /**
+     * Recheck the view.
+     * I'm really not sure why I need this, but SO says so
+     * https://stackoverflow.com/questions/43513421/ngif-expression-has-changed-after-it-was-checked
+     */
+    public ngAfterViewChecked(): void {
+        this.cdRef.detectChanges();
     }
 
     public compareIndividuals(): void {
@@ -133,28 +160,26 @@ export class CompareComponent implements AfterViewInit {
                                 selection.report = report;
                                 //    Change the color to something on the red scale
                                 if (report.spatialOverlapPercentage) {
-                                    // If filter is enabled
-                                    // and the spatial overlap is 0, remove from the list
-                                    if (this.filterCompareResults &&
-                                        report.spatialOverlapPercentage < 0.001) {
+                                    const interpolated = interpolateReds(
+                                        report.spatialOverlapPercentage);
+                                    selection.color = interpolated;
+                                    this.layerChanges.next({
+                                        individual: selection.individual.getID(),
+                                        // Change the color and set the opacity a little higher
+                                        changes: [
+                                            {
+                                                attribute: "fill-extrusion-color",
+                                                value: interpolated
+                                            },
+                                            {
+                                                attribute: "fill-extrusion-opacity",
+                                                value: 0.85
+                                            }]
+                                    });
+                                } else {
+                                    // If we don't have any overlap, are we supposed to filter ou those individuals?
+                                    if (this.filterCompareResults) {
                                         this.removeIndividual(selection);
-                                    } else {
-                                        const interpolated = interpolateReds(
-                                            report.spatialOverlapPercentage);
-                                        selection.color = interpolated;
-                                        this.layerChanges.next({
-                                            individual: selection.individual.getID(),
-                                            // Change the color and set the opacity a little higher
-                                            changes: [
-                                                {
-                                                    attribute: "fill-extrusion-color",
-                                                    value: interpolated
-                                                },
-                                                {
-                                                    attribute: "fill-extrusion-opacity",
-                                                    value: 0.85
-                                                }]
-                                        });
                                     }
                                 }
                             } else {
@@ -178,11 +203,21 @@ export class CompareComponent implements AfterViewInit {
         this.loadSelectedIndividual(individual);
     }
 
+    /**
+     * Add base individual to compare
+     * @param {string} individual
+     */
     public addBaseIndividual(individual: string): void {
         this.loadSelectedIndividual(individual, true);
     }
 
-    public reset(): void {
+    /**
+     * Reset comparison to the base state
+     *
+     * If a new individual is provided, add it
+     * @param {string} individual
+     */
+    public reset(individual?: string): void {
         //    Clear the map
         //    Remove all the individuals from map
         this.mapComponent.clearMap();
@@ -194,6 +229,11 @@ export class CompareComponent implements AfterViewInit {
         this.layerNumber = 0;
         this.currentSliderValue = 0;
         this.availableColors = [];
+
+        //    Should we add the given individual to the compare?
+        if (individual) {
+            this.addBaseIndividual(individual);
+        }
     }
 
     public toggleVisibility(individual: ICompareIndividual): void {
@@ -202,6 +242,52 @@ export class CompareComponent implements AfterViewInit {
             .toggleIndividualVisibility(individual
                     .individual.getID(),
                 individual.visible);
+    }
+
+    public toggleFocus(individual: ICompareIndividual): void {
+        individual.focused = !individual.focused;
+
+        // If we've selected the focus option, grab all the currently visible layers, disable them, and stash them for later
+        if (individual.focused) {
+            // If we have previously disabled individuals, reenable them, then do your thing
+            if (!(this.disabledFocusIndividuals.length === 0)) {
+                this.disabledFocusIndividuals
+                    .forEach((fIndividual) => {
+                        const mapValue = this.selectedIndividuals.get(fIndividual);
+                        if (mapValue) {
+                            this.toggleVisibility(mapValue);
+                        }
+                    });
+                // Also, find any other focused layers, and unfocus them.
+                this.selectedIndividuals
+                    .forEach((value, key) => {
+                        if (value !== individual && value.focused) {
+                            value.focused = false;
+                        }
+                    });
+                this.disabledFocusIndividuals = [];
+            }
+        //    Get all the currently visible layers
+            this.selectedIndividuals
+                .forEach((value, key) => {
+                    // If the individual is visible, stash it's value so we can enable it later
+                    if (value !== individual && value.visible) {
+                        this.disabledFocusIndividuals.push(key);
+                        this.toggleVisibility(value);
+                    }
+                });
+        //    If the individual isn't supposed to be focused, grab all the stashed individuals and reenable them.
+        } else {
+            this.disabledFocusIndividuals
+                .forEach((fIndividual) => {
+                    const mapValue = this.selectedIndividuals.get(fIndividual);
+                    if (mapValue) {
+                        this.toggleVisibility(mapValue);
+                    }
+                });
+        //    Reset the focused list
+            this.disabledFocusIndividuals = [];
+        }
     }
 
     public removeIndividual(individual: ICompareIndividual): void {
@@ -223,14 +309,9 @@ export class CompareComponent implements AfterViewInit {
             //     For now, let's just change the base individual,
             // we'll figure out the rest later
             const newOffset = (event.value - selection.sliderValue) * 50;
-            // If we're changing the base individual, we want to move everything on that level
-            // Otherwise, we just want to move the single individual
-            const changeIndividual = selection === this.baseIndividual ?
-                undefined :
-                selection.individual.getID();
             this.mapComponent.change3DOffset(selection.height,
                 newOffset,
-                changeIndividual);
+                selection.individual.getID());
             selection.sliderValue = event.value;
             selection.height = selection.height + newOffset;
             selection.base = selection.base + newOffset;
@@ -392,6 +473,25 @@ export class CompareComponent implements AfterViewInit {
     }
 
     private addIndividualToCompare(individual: TrestleIndividual, baseIndividual = false): void {
+        console.debug("Adding individual:", individual);
+        // Before we add any individuals to the map, we need to see if we're loading the base individual or not
+        // This is to deal with some racy behavior between drawing the individual on the map and moving on from the data load
+        // It's gross, but what do you expect?
+        if (baseIndividual) {
+            console.debug("Setting zoom true");
+            this.zoomMap = true;
+        } else {
+            console.debug("Setting zoom false");
+            // If zoom is true, manually run the change detection.
+            // Why? no idea
+            if (this.zoomMap === true) {
+                this.zoomMap = false;
+                this.cdRef.detectChanges();
+            } else {
+                this.zoomMap = false;
+            }
+        }
+
         // This is one way to filter out the base individual
         console.debug("Adding %s to map", individual.getFilteredID());
         const color = this.getColor(this.layerNumber);
@@ -422,6 +522,7 @@ export class CompareComponent implements AfterViewInit {
             individual,
             color,
             visible: true,
+            focused: false,
             height,
             base: baseHeight,
             sliderValue: 50
@@ -432,8 +533,6 @@ export class CompareComponent implements AfterViewInit {
             // Reset the slider value to 0
             compare.sliderValue = 0;
             this.baseIndividual = compare;
-            //    Lock the map so it doesn't move anymore
-            this.zoomMap = false;
         } else {
             //    Add the selection to the list
             this.selectedIndividuals.set(compare.individual.getID(),

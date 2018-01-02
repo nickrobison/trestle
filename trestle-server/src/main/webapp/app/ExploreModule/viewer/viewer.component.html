@@ -51,11 +51,9 @@
 <div class="section">
     <h4>Event History</h4>
     <div class="row">
-        <event-graph [graphHeight]="300"
-                     [minDate]="minTime"
-                     [maxDate]="maxTime"
-                     [data]="eventData"
-                     [filterLabel]="filterLabel"
-                     [selectedIndividual]="selectedIndividualID"></event-graph>
+        <spatial-union
+                [minDate]="minTime"
+                [maxDate]="maxTime"
+                [individual]="selectedIndividual"></spatial-union>
     </div>
 </div>

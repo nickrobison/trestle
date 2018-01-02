@@ -13,6 +13,11 @@
         </div>
     </div>
     <div class="section">
+        <a mat-raised-button [routerLink]="['/explore', 'compare']"
+        [queryParams]="{id: individual.getID()}" color="primary">Add to Compare</a>
+        <button mat-raised-button color="warn">DELETE</button>
+    </div>
+    <div class="section">
         <mat-tab-group>
             <mat-tab label="Fact History">
                 <div class="section">
@@ -59,11 +64,25 @@
                         <tbody>
                         <tr *ngFor="let relation of individual.getRelations()">
                             <td>{{relation.getType()}}</td>
-                            <td>{{displayFn(relation.getObject())}}</td>
+                            <td>{{displayFn(relation.getObject())}}
+                                <a
+                                        matTooltip="Visualize individual"
+                                        [routerLink]="['/explore',
+                                'visualize',
+                                getSuffix(relation.getObject())]"
+                                        [queryParams]="{root: getPrefix(relation.getObject())}">
+                                    <mat-icon>link</mat-icon>
+                                </a>                            </td>
                         </tr>
                         </tbody>
                     </table>
                 </div>
+            </mat-tab>
+            <mat-tab label="Spatial Union" *ngIf="individual.isUnion()">
+                <spatial-union
+                        [minDate]="minGraphDate"
+                        [maxDate]="maxGraphDate"
+                        [individual]="individual"></spatial-union>
             </mat-tab>
         </mat-tab-group>
     </div>

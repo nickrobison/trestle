@@ -120,6 +120,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final Metrician metrician;
     private final ExecutorService trestleThreadPool;
     private final TrestleExecutorService objectThreadPool;
+    private final ExecutorService searchThreadPool;
 
     @SuppressWarnings("dereference.of.nullable")
     TrestleReasonerImpl(TrestleBuilder builder) throws OWLOntologyCreationException {
@@ -191,6 +192,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //        Create our own thread pools to help isolate processes
         trestleThreadPool = TrestleExecutorService.executorFactory(builder.ontologyName.orElse("default"), trestleConfig.getInt("threading.default-pool.size"), this.metrician);
         objectThreadPool = TrestleExecutorService.executorFactory("object-pool", trestleConfig.getInt("threading.object-pool.size"), this.metrician);
+        searchThreadPool = TrestleExecutorService.executorFactory("search-pool", trestleConfig.getInt("threading.search-pool.size"), this.metrician);
 
 //        Validate ontology name
         try {
@@ -1565,20 +1567,39 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public List<String> searchForIndividual(String individualIRI, @Nullable String datasetClass, @Nullable Integer limit) {
-        @Nullable OWLClass owlClass = null;
+        final OWLClass owlClass;
         if (datasetClass != null) {
             owlClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, datasetClass));
+        } else {
+            owlClass = null;
         }
-        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        try {
+
+        final CompletableFuture<List<String>> searchFuture = CompletableFuture.supplyAsync(() -> {
             final String query = qb.buildIndividualSearchQuery(individualIRI, owlClass, limit);
-            final TrestleResultSet resultSet = ontology.executeSPARQLResults(query);
-            return resultSet.getResults()
-                    .stream()
-                    .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
-                    .collect(Collectors.toList());
-        } finally {
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
+            final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+            try {
+                final TrestleResultSet resultSet = ontology.executeSPARQLResults(query);
+                return resultSet.getResults()
+                        .stream()
+                        .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
+                        .collect(Collectors.toList());
+            } catch (Exception e) {
+                this.ontology.returnAndAbortWithForce(trestleTransaction);
+                return ExceptionUtils.rethrow(e);
+            } finally {
+                this.ontology.returnAndCommitTransaction(trestleTransaction);
+            }
+        }, this.searchThreadPool);
+
+        try {
+            return searchFuture.get();
+        } catch (InterruptedException e) {
+            logger.error("Search interrupted");
+            Thread.currentThread().interrupt();
+            return ExceptionUtils.rethrow(e);
+        } catch (ExecutionException e) {
+            logger.error("Problem searching for {}", individualIRI, e);
+            return ExceptionUtils.rethrow(e);
         }
     }
 

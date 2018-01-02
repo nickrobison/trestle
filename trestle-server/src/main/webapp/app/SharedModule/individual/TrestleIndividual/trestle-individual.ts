@@ -17,8 +17,8 @@ export interface ITrestleIndividual {
 
 export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
 
-    private static suffixRegex = /.*[/#]([^/#]*)$/g;
-    private static prefixRegex = /.*[\/|#]/g;
+    private static suffixRegex = /.*[\/#]([^\/#]*)$/g;
+    private static prefixRegex = /.*[\/#]/g;
     private static hostnameRegex = /\w+:\/\/[^\/]*/g;
     private id: string;
     private facts: Map<string, TrestleFact> = new Map();
@@ -163,6 +163,14 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
         }
 
         return null;
+    }
+
+    /**
+     * Is this individual a part of a spatial union?
+     * @returns {boolean}
+     */
+    public isUnion(): boolean {
+        return this.relations.some((relation) => relation.isUnionType());
     }
 
     public asInterface(): ITrestleIndividual {

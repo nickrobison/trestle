@@ -37,6 +37,7 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
     @Input() public selectedIndividual: string;
     @Input() public data: IEventData;
     @Input() public graphHeight: number;
+    @Input() public graphWidth: number;
     @Input() public minDate: Date;
     @Input() public maxDate: Date;
     @Input() public filterLabel?: (input: IEventElement) => string;
@@ -60,7 +61,7 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
 
     public ngOnChanges(changes: SimpleChanges): void {
         const dataChange = changes["data"];
-        if (dataChange != null
+        if (dataChange.currentValue !== undefined
             && (dataChange.currentValue !== dataChange.previousValue)) {
             console.debug("Changed, plotting data", this.data);
             this.plotData();
@@ -197,8 +198,22 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
 
     private setupD3(): void {
         this.host = select<HTMLElement, IEventElement | IEventLink>(this.htmlElement);
+        console.debug("Width for event graph:", this.htmlElement.offsetWidth);
         this.margin = {top: 20, right: 30, bottom: 20, left: 20};
-        this.width = this.htmlElement.offsetWidth - this.margin.left - this.margin.right;
+        // this.width = this.htmlElement.offsetWidth - this.margin.left - this.margin.right;
+        // Calculate width
+        // If the element isn't actually on the screen, then the width will be 0 which is wrong
+        // So we'll either take it from the input, or just make something up
+        if (this.graphWidth === undefined) {
+            if (this.htmlElement.offsetWidth == 0) {
+                this.width = 800 - this.margin.left - this.margin.right;
+            } else {
+                this.width = (this.htmlElement.offsetWidth) - this.margin.left - this.margin.right;
+            }
+        } else {
+            this.width = this.graphWidth - this.margin.left - this.margin.right;
+        }
+
         this.height = this.graphHeight - this.margin.top - this.margin.bottom;
 
         // Add the tooltip

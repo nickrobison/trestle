@@ -15,7 +15,7 @@
                     [vertical]="true"
                     [min]="0"
                     [max]="500"
-                    [value]="currentSliderValue"
+                    [(ngModel)]="currentSliderValue"
                     (input)="sliderUpdate($event)"></mat-slider>
         </div>
     </div>
@@ -54,7 +54,7 @@
                     <button mat-raised-button
                             color="primary"
                             (click)="compareIndividuals()"
-                            [disabled]="selectedIndividuals.size == 0">COMPARE
+                            [disabled]="selectedIndividuals.size === 0">COMPARE
                     </button>
                     <mat-slide-toggle
                             [color]="'accent'"
@@ -83,6 +83,7 @@
                                         [queryParams]="{root: selection.individual.getHostname()}">
                                     <mat-icon>link</mat-icon>
                                 </a>
+                                <mat-icon matTooltip="Use as comparison" (click)="reset(selection.individual.getID())">compare</mat-icon>
 
                             </mat-panel-title>
                             <mat-panel-description>
@@ -94,14 +95,16 @@
                         <div *ngIf="selection.report">
                             Accounts for {{selection.report.spatialOverlapPercentage * 100 | rounding: 2}}% of the
                             individual
-                            <mat-icon *ngIf="selection.report !== loadedOverlap"
-                                      matTooltip="Add overlap to map"
-                                      (click)="toggleOverlap(selection.report)">layers
-                            </mat-icon>
-                            <mat-icon *ngIf="selection.report === loadedOverlap"
-                                      matTooltip="Remove overlap from map"
-                                      (click)="toggleOverlap(selection.report)">layers_clear
-                            </mat-icon>
+                            <div *ngIf="selection.report.spatialOverlap">
+                                <mat-icon *ngIf="selection.report !== loadedOverlap"
+                                          matTooltip="Add overlap to map"
+                                          (click)="toggleOverlap(selection.report)">layers
+                                </mat-icon>
+                                <mat-icon *ngIf="selection.report === loadedOverlap"
+                                          matTooltip="Remove overlap from map"
+                                          (click)="toggleOverlap(selection.report)">layers_clear
+                                </mat-icon>
+                            </div>
                             <!--Relations-->
                             <h6>Relations:</h6>
                             <ul>
@@ -116,6 +119,8 @@
                                         [value]="selection.sliderValue"
                                         (input)="sliderUpdate($event,
                             selection)"></mat-slider>
+                            <button mat-button *ngIf="!selection.focused" (click)="toggleFocus(selection)">Focus</button>
+                            <button mat-button *ngIf="selection.focused" (click)="toggleFocus(selection)">Unfocus</button>
                             <button mat-button *ngIf="selection.visible" (click)="toggleVisibility(selection)">Hide
                             </button>
                             <button mat-button *ngIf="!selection.visible" (click)="toggleVisibility(selection)">Show
@@ -124,32 +129,6 @@
                         </mat-action-row>
                     </mat-expansion-panel>
                 </mat-accordion>
-                <!--<table>-->
-                <!--<tbody>-->
-                <!--<tr class="thin-column" *ngFor="let selection of selectedIndividuals">-->
-                <!--<td class="legend-column thin-column">-->
-                <!--<div class="legend" [style.background]="selection.color"></div>-->
-                <!--</td>-->
-                <!--<td class="thin-column">{{selection.individual.getFilteredID()}}</td>-->
-                <!--<td class="thin-column">-->
-                <!--<mat-slider [min]="0"-->
-                <!--[max]="100"-->
-                <!--[value]="selection.sliderValue"-->
-                <!--(input)="sliderUpdate($event,-->
-                <!--selection)"></mat-slider>-->
-                <!--</td>-->
-                <!--<td class="thin-column">-->
-                <!--<a (click)="toggleVisibility(selection)">-->
-                <!--<i *ngIf="selection.visible" class="material-icons mat-18">layers</i>-->
-                <!--<i *ngIf="!selection.visible" class="material-icons mat-18 light">layers_clear</i>-->
-                <!--</a>-->
-                <!--<a (click)="removeIndividual(selection)">-->
-                <!--<i class="material-icons mat-18">delete</i>-->
-                <!--</a>-->
-                <!--</td>-->
-                <!--</tr>-->
-                <!--</tbody>-->
-                <!--</table>-->
             </div>
         </div>
     </div>

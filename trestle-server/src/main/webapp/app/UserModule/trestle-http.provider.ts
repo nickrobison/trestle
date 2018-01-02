@@ -22,9 +22,9 @@ export class TrestleHttp extends AuthHttp {
             .map((res: Response) => res)
             .catch((error: any) => {
                 console.error(error);
-                if (error.status === 404) {
+                if (error.status === 401) {
                     console.error("Unauthorized", error);
-                    // this.router.navigate(["/login"[]);
+                    this.router.navigate(["/login"]);
                 }
                 return Observable.throw(error);
             });

@@ -272,7 +272,7 @@ public class TestClasses {
             this.atDate = LocalDate.of(1989, 3, 26);
             this.testBigInt = new BigInteger("10");
             this.testPrimitiveInt = 14;
-            this.testDouble = new Double("3.14");
+            this.testDouble = Double.valueOf("3.14");
             this.testPrimitiveDouble = 3.141592654;
             this.testInteger = 42;
         }

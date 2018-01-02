@@ -13,8 +13,8 @@ import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
  */
 public class IRIUtils {
 
-    private static final Pattern suffixRegex = Pattern.compile(".*[/|#]([^(/|#)]*)$");
-    private static final Pattern prefixRegex = Pattern.compile(".*(/|#)");
+    private static final Pattern suffixRegex = Pattern.compile(".*[/#]([^(/#)].*)$");
+    private static final Pattern prefixRegex = Pattern.compile(".*[/#]");
 
     private IRIUtils() {
 //        Not used

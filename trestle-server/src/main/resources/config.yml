@@ -5,7 +5,7 @@ reasoner:
   connectionString: "http://localhost:7200"
   username: ""
   password: ""
-#  connectionString: "http://141.142.170.218:8080/"
+#  connectionString: "http://141.142.170.88:7200/"
 #  username: ""
 #  password: ""
   ontology: "hadoop_gaul_expanded_equality"
@@ -14,7 +14,7 @@ reasoner:
 #  ontology: "tigercounties3"
 #  prefix: "http://nickrobison.com/demonstration/tigercounty#"
 #  ontology: "gaul_hadoop_world_bank"
-#  prefix: "http://nickrobison.com/gaul#"
+#  prefix: "http://nickrobison.com/gaul/"
   location: "file:////Users/nickrobison/Developer/git/dissertation/trestle-ontology/trestle.owl"
 
 logging:
@@ -22,6 +22,10 @@ logging:
   loggers:
     "com.nickrobison.metrician": DEBUG
     "com.nickrobison.trestle": DEBUG
+  appenders:
+    - type: console
+      logFormat: "[%-5p | %t | %X{test}] %d %c:%L %X{transaction} - %m%n"
+      includeCallerData: true
 
 database:
   driverClass: org.h2.Driver

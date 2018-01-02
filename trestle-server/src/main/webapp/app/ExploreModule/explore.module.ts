@@ -18,13 +18,13 @@ import {RouterModule} from "@angular/router";
 import {ExploreRoutes} from "./explore.routing";
 import { DatsetViewerComponent } from "./viewer/viewer.component";
 import { MapService } from "./viewer/map.service";
-import { ObjectEventGraphComponent } from "./object-event-graph/ObjectEventGraph";
 import { MaterialModule } from "../MaterialModule/material.module";
 import {SharedModule} from "../SharedModule/shared.module";
 import {CompareComponent} from "./compare/compare.component";
 import {VisualizeDetailsComponent} from "./visualize/details/visualize-details.component";
 import {ExporterComponent} from "./exporter/exporter.component";
 import {ExporterService} from "./exporter/exporter.service";
+import { SpatialUnionComponent } from "./spatial-union/spatial-union.component";
 
 @NgModule({
     imports: [
@@ -45,10 +45,10 @@ import {ExporterService} from "./exporter/exporter.service";
         QueryComponent,
         QueryViewer,
         DatsetViewerComponent,
-        ObjectEventGraphComponent,
         CompareComponent,
         VisualizeDetailsComponent,
-        ExporterComponent
+        ExporterComponent,
+        SpatialUnionComponent
     ],
     providers: [IndividualService, QueryService, MapService, ExporterService],
     entryComponents: [IndividualValueDialog]

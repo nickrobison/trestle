@@ -1,4 +1,4 @@
-import {IInterfacable} from "../../interfacable";
+import { IInterfacable } from "../../interfacable";
 
 export interface ITrestleRelation {
     subject: string;
@@ -69,6 +69,18 @@ export class TrestleRelation implements IInterfacable<ITrestleRelation> {
 
     public getType(): TrestleRelationType {
         return this.type;
+    }
+
+    /**
+     * Is this relation part of a SpatialUnion?
+     * @returns {boolean}
+     */
+    public isUnionType(): boolean {
+        return (this.type === "SPLIT_INTO") ||
+            (this.type === "SPLIT_FROM") ||
+            (this.type === "MERGED_INTO") ||
+            (this.type === "MERGED_FROM") ||
+            (this.type === "COMPONENT_WITH");
     }
 
     public asInterface(): ITrestleRelation {

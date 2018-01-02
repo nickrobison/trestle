@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
  * Created by nrobison on 5/5/16.
  */
 @SuppressWarnings({"argument.type.incompatible", "initialization.fields.uninitialized", "squid:S2068", "pmd:LawOfDemeter", "pmd:DataflowAnomalyAnalysis "})
-public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritable, Text> {
+public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritable, Text> {
 
     private static final Logger logger = LoggerFactory.getLogger(GAULReducer.class);
     private static final String STARTDATE = "temporal.startdate";
@@ -54,6 +54,8 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
     private static final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
     private static final WKBReader wkbReader = new WKBReader(geometryFactory);
+//    Controls the granularity of the union matcher
+    private static final double THRESHOLD = 0.95;
 
     private LocalDate configStartDate;
     private LocalDate configEndDate;
@@ -103,9 +105,9 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
     }
 
     @Override
-    public void reduce(LongWritable key, Iterable<MapperOutput> values, Context context) throws IOException, InterruptedException {
+    public void reduce(GAULMapperKey key, Iterable<MapperOutput> values, Context context) throws IOException, InterruptedException {
 
-        final Optional<Queue<MapperOutput>> inputRecordsOptional = this.processInputSet(key, values, context);
+        final Optional<Queue<MapperOutput>> inputRecordsOptional = this.processInputSet(values, context);
 //        If we have an object returned from the above function, we need to look for any other overlapping objects
         if (inputRecordsOptional.isPresent()) {
             final Queue<MapperOutput> inputRecords = inputRecordsOptional.get();
@@ -126,6 +128,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 
 //            If true, get all the concept members
+                final String conceptIRI = String.format("%s:concept", newGAULObject.getObjectID());
                 if (!conceptIRIs.orElse(new HashSet<>()).isEmpty()) {
                     logger.warn("{}-{}-{} has concept members", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
                     conceptIRIs.get().forEach(concept -> processConceptMembers(newGAULObject, matchedObjects, concept));
@@ -137,7 +140,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //                Go ahead the create the new concept
                     logger.info("{}-{}-{} creating new concept", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-                    reasoner.addObjectToConcept(String.format("%s:concept", newGAULObject.getObjectName()), newGAULObject, ConceptRelationType.SPATIAL, 1.0);
+                    reasoner.addObjectToConcept(conceptIRI, newGAULObject, ConceptRelationType.SPATIAL, 1.0);
                 }
 
                 // test of approx equal union
@@ -148,7 +151,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 if (matchedObjects.isEmpty()) {
 //                Go ahead the create the new concept
                     logger.info("{}-{}-{} creating new concept", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-                    reasoner.addObjectToConcept(String.format("%s:concept", newGAULObject.getObjectName()), newGAULObject, ConceptRelationType.SPATIAL, 1.0);//                If we don't have any matches, create a new concept
+                    reasoner.addObjectToConcept(conceptIRI, newGAULObject, ConceptRelationType.SPATIAL, 1.0);//                If we don't have any matches, create a new concept
                 }
 
 
@@ -185,7 +188,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 logger.error("Unable to process object {}-{}-{}", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate(), e);
             }
             logger.warn("{}-{}-{} finished", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-            context.write(key, new Text(String.format("%s:%s:%s:%s:%s", newGAULObject.getAdm0Code(), newGAULObject.getAdm0Name(), newGAULObject.getObjectID(), newGAULObject.getStartDate(), newGAULObject.getEndDate())));
+            context.write(key.getRegionID(), new Text(String.format("%s:%s:%s:%s:%s", newGAULObject.getAdm0Code(), newGAULObject.getAdm0Name(), newGAULObject.getObjectID(), newGAULObject.getStartDate(), newGAULObject.getEndDate())));
         }
     }
 
@@ -194,7 +197,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
         logger.warn("{}-{}-{} calculating equality", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
         final Instant start = Instant.now();
-        final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(matchedObjects, inputSR, 0.9);
+        final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(matchedObjects, inputSR, THRESHOLD);
         logger.warn("{}-{}-{} calculating equality took {} ms", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate(), Duration.between(start, Instant.now()).toMillis());
         if (matchOptional.isPresent()) {
             // do something here
@@ -294,7 +297,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 matchedObject.getObjectName(),
                 matchedObject.getStartDate());
         // test of approx equality
-        if (this.reasoner.getEqualityEngine().isApproximatelyEqual(newGAULObject, matchedObject, inputSR, 0.9) && !newGAULObject.equals(matchedObject)) {
+        if (this.reasoner.getEqualityEngine().isApproximatelyEqual(newGAULObject, matchedObject, inputSR, THRESHOLD) && !newGAULObject.equals(matchedObject)) {
             // do something here
             logger.info("found approximate equality between GAULObjects {} and {}", newGAULObject.getID(), matchedObject.getID());
 //            Write a spatial equals
@@ -305,7 +308,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 //        Spatial interactions are exhaustive
 
 //                    newGAUL within matchedObject? Covers, or Contains? IF Covers, also contains
-        final SpatialComparisonReport spatialComparisonReport = this.reasoner.getSpatialEngine().compareObjects(newGAULObject, matchedObject, inputSR, 0.9);
+        final SpatialComparisonReport spatialComparisonReport = this.reasoner.getSpatialEngine().compareObjects(newGAULObject, matchedObject, inputSR, THRESHOLD);
 
 //        Write all the relations from the spatial report
 //        Overlaps?
@@ -323,7 +326,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 .forEach(relation -> reasoner.writeObjectRelationship(newGAULObject, matchedObject, relation));
 
 //        Try it in the other direction
-        final SpatialComparisonReport inverseSpatialReport = this.reasoner.getSpatialEngine().compareObjects(matchedObject, newGAULObject, inputSR, 0.9);
+        final SpatialComparisonReport inverseSpatialReport = this.reasoner.getSpatialEngine().compareObjects(matchedObject, newGAULObject, inputSR, THRESHOLD);
 
 //        Do all the non-overlaps relations
         inverseSpatialReport
@@ -379,17 +382,16 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
      * Process input set to determine if we actually have all the possible values for a given input set, if so write them and return a null.
      * If not, return the first copy of the object to process further
      *
-     * @param key     - {@link LongWritable} input Key
      * @param values  - {@link Iterable} of {@link MapperOutput} representing all key values
-     * @param context - {@link org.apache.hadoop.mapreduce.Reducer.Context} Hadoop context
+     * @param context - {@link Context} Hadoop context
      * @return - {@link GAULObject}, null if all the input set is present.
      */
     @SuppressWarnings({"squid:S1172"}) // We can't break the method signature, so we need to suppress this warning
-    private Optional<Queue<MapperOutput>> processInputSet(LongWritable key, Iterable<MapperOutput> values, Context context) {
+    private Optional<Queue<MapperOutput>> processInputSet(Iterable<MapperOutput> values, Context context) {
         final Configuration configuration = context.getConfiguration();
 //        Copy from the iterator into a simple array list, we can't run through the iterator more than once
 //        This is a bit of a disaster, but since the set is relatively bounded, it should be ok.
-        Queue<MapperOutput> inputRecords = new ArrayDeque<>();
+        Queue<MapperOutput> inputRecords = new PriorityQueue<>(Comparator.comparingInt(MapperOutput::getDatasetYear));
         for (MapperOutput record : values) {
             inputRecords.add(WritableUtils.clone(record, configuration));
         }
@@ -397,7 +399,6 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 //        Do my records cover the entirety of the input space?
         final int maxDate = inputRecords
                 .stream()
-//                .mapToInt(MapperOutput::getDatasetYear)
                 .map(MapperOutput::getExpirationDate)
                 .mapToInt(LocalDate::getYear)
                 .max()
@@ -405,7 +406,6 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
         final int minDate = inputRecords
                 .stream()
-//                .mapToInt(MapperOutput::getDatasetYear)
                 .map(MapperOutput::getStartDate)
                 .mapToInt(LocalDate::getYear)
                 .min()

@@ -1,18 +1,14 @@
 package com.nickrobison.trestle.reasoner.engines.spatial;
 
-import com.codahale.metrics.annotation.Gauge;
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
 import com.esri.core.geometry.SpatialReference;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.LambdaUtils;
 import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
-import com.nickrobison.trestle.reasoner.caching.CaffeineStatistics;
 import com.nickrobison.trestle.reasoner.engines.IndividualEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
@@ -40,6 +36,7 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.cache.Cache;
 import javax.inject.Inject;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -48,7 +45,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
@@ -76,7 +72,8 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
                          IndividualEngine individualEngine,
                          EqualityEngine equalityEngine,
                          ContainmentEngine containmentEngine,
-                         Metrician metrician) {
+                         Metrician metrician,
+                         Cache<Integer, Geometry> cache) {
         final Config trestleConfig = ConfigFactory.load().getConfig("trestle");
         this.tp = trestleParser;
         this.qb = qb;
@@ -92,12 +89,7 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
         this.writer = new WKTWriter();
 
 //        Setup object caches
-        geometryCache = Caffeine.newBuilder()
-                .maximumSize(1_000)
-                .expireAfterWrite(10, TimeUnit.MINUTES)
-                .recordStats(() -> new CaffeineStatistics(metrician, "geometry"))
-                .build();
-
+        geometryCache = cache;
     }
 
 
@@ -265,8 +257,10 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
 
         //        Build the geometries
         final int srid = inputSR.getID();
-        final Geometry aPolygon = this.geometryCache.get(objectA.hashCode(), key -> computeGeometry(objectA, srid));
-        final Geometry bPolygon = this.geometryCache.get(objectB.hashCode(), key -> computeGeometry(objectB, srid));
+//        final Geometry aPolygon = this.geometryCache.get(objectA.hashCode(), key -> computeGeometry(objectA, srid));
+        final Geometry aPolygon = this.getGeomFromCache(objectA, srid);
+//        final Geometry bPolygon = this.geometryCache.get(objectB.hashCode(), key -> computeGeometry(objectB, srid));
+        final Geometry bPolygon = this.getGeomFromCache(objectB, srid);
 
         //        If they're disjoint, return
         if (aPolygon.disjoint(bPolygon)) {
@@ -313,6 +307,24 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
 
     private static double calculateOverlapPercentage(Geometry objectGeom, Geometry intersectionGeometry) {
         return intersectionGeometry.getArea() / objectGeom.getArea();
+    }
+
+    /**
+     * Get the object {@link Geometry} from the cache, computing if absent
+     * @param object - {@link Object inputObject}
+     * @param srid - {@link Integer} srid
+     * @return - {@link Geometry}
+     */
+    private Geometry getGeomFromCache(Object object, int srid) {
+        final int hashCode = object.hashCode();
+        final Geometry value = this.geometryCache.get(hashCode);
+
+        if (value == null) {
+            final Geometry geometry = computeGeometry(object, srid);
+            this.geometryCache.put(hashCode, geometry);
+            return geometry;
+        }
+        return value;
     }
 
     /**
@@ -367,15 +379,15 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
      * HELPER FUNCTIONS
      */
 
-    /**
-     * Get the current size of the geometry geometryCache
-     *
-     * @return - {@link Integer}
-     */
-    @Gauge(name = "geometry-geometryCache-size")
-    public long getSize() {
-        return this.geometryCache.estimatedSize();
-    }
+//    /**
+//     * Get the current size of the geometry geometryCache
+//     *
+//     * @return - {@link Integer}
+//     */
+//    @Gauge(name = "geometry-geometryCache-size")
+//    public long getSize() {
+//        return this.geometryCache.get
+//    }
 
     /**
      * Compute {@link Geometry} for the given {@link Object}

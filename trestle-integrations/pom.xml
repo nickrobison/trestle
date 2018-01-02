@@ -17,10 +17,29 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.nickrobison.trestle</groupId>
+            <artifactId>trestle-reasoner</artifactId>
+            <version>0.8.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.nickrobison.trestle</groupId>
+            <artifactId>trestle-ontology</artifactId>
+            <version>0.8.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.nickrobison.trestle</groupId>
+            <artifactId>trestle-datasets</artifactId>
+            <version>0.8.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <!--We need to lock this version of Guava, otherwise we get a NoSuchMethodException when building the Hadoop cluster-->
             <version>19.0</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.inject.extensions</groupId>
@@ -54,14 +73,15 @@
             <artifactId>postgresql</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.nickrobison.trestle</groupId>
-            <artifactId>trestle-reasoner</artifactId>
-            <version>0.8.0-SNAPSHOT</version>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-cql</artifactId>
+            <version>${geotools.version}</version>
         </dependency>
+        <!--This is just for fun-->
         <dependency>
-            <groupId>com.nickrobison.trestle</groupId>
-            <artifactId>trestle-ontology</artifactId>
-            <version>0.8.0-SNAPSHOT</version>
+            <groupId>me.tongfei</groupId>
+            <artifactId>progressbar</artifactId>
+            <version>0.5.5</version>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -80,11 +100,6 @@
             <artifactId>hadoop-auth</artifactId>
             <version>${hadoop.version}</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.nickrobison.trestle</groupId>
-            <artifactId>trestle-datasets</artifactId>
-            <version>0.8.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
     <build>

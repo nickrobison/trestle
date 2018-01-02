@@ -8,7 +8,6 @@ import com.esri.core.geometry.SpatialReference;
 import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.TrestlePair;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
-import com.nickrobison.trestle.reasoner.engines.spatial.SpatialUtils;
 import com.nickrobison.trestle.reasoner.parser.TemporalParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.types.events.TrestleEventType;
@@ -24,27 +23,31 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.cache.Cache;
 import javax.inject.Inject;
 import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.TemporalUtils.compareTemporals;
-import static com.nickrobison.trestle.reasoner.engines.spatial.SpatialUtils.*;
+import static com.nickrobison.trestle.reasoner.engines.spatial.SpatialUtils.buildObjectGeometry;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Metriced
 public class SpatialUnionBuilder {
     private static final Logger logger = LoggerFactory.getLogger(SpatialUnionBuilder.class);
     private static final String TEMPORAL_OPTIONAL_ERROR = "Cannot get temporal for comparison object";
+    private static final Comparator<PolygonMatchSet> strengthComparator = Comparator.comparingDouble(PolygonMatchSet::getStrength).reversed();
 
     private final TrestleParser tp;
     private final Histogram unionSetSize;
+    private final Cache<Integer, Geometry> geometryCache;
 
     @Inject
-    public SpatialUnionBuilder(TrestleParser tp, Metrician metrician) {
+    public SpatialUnionBuilder(TrestleParser tp, Metrician metrician, Cache<Integer, Geometry> cache) {
         this.tp = tp;
         unionSetSize = metrician.registerHistogram("union-set-size");
+        this.geometryCache = cache;
     }
 
     public <T extends @NonNull Object> UnionContributionResult calculateContribution(UnionEqualityResult<T> equalityResult, SpatialReference inputSR) {
@@ -56,7 +59,7 @@ public class SpatialUnionBuilder {
 
 //        Determine the class of the object
         final T unionObject = equalityResult.getUnionObject();
-        final Geometry geometry = buildObjectGeometry(unionObject, wktReader, wkbReader);
+        final Geometry geometry = getGeomFromCache(unionObject, wktReader, wkbReader);
 
 //        Build the contribution object
         final UnionContributionResult result = new UnionContributionResult(this.tp.classParser.getIndividual(unionObject),
@@ -68,7 +71,7 @@ public class SpatialUnionBuilder {
                 .stream()
 //                Build geometry object
                 .map(object -> new TrestlePair<>(this.tp.classParser.getIndividual(object),
-                        buildObjectGeometry(object,
+                        getGeomFromCache(object,
                                 wktReader, wkbReader)))
                 .map(pair -> {
 //                    Calculate the proportion contribution
@@ -91,33 +94,96 @@ public class SpatialUnionBuilder {
         final WKTReader wktReader = new WKTReader(geometryFactory);
         final TemporallyDividedObjects<T> dividedObjects = divideObjects(inputObjects);
 
-//        Extract the JTS polygons for each objects
-        final Set<Geometry> earlyPolygons = dividedObjects
-                .getEarlyObjects()
-                .stream()
-                .map(object -> buildObjectGeometry(object, wktReader, wkbReader))
-                .collect(Collectors.toSet());
+        //        If we don't have early or late polygons, then there can't be a Union, so just return
+        if (dividedObjects.getEarlyObjects().isEmpty()
+                || dividedObjects.getLateObjects().isEmpty()) {
+            return Optional.empty();
+        }
 
-        //        Extract the JTS polygons for each objects
-        final Set<Geometry> latePolygons = dividedObjects
-                .getLateObjects()
-                .stream()
-                .map(object -> buildObjectGeometry(object, wktReader, wkbReader))
-                .collect(Collectors.toSet());
+//        Extract the JTS polygons for each early object
+        final Map<Geometry, T> earlyObjectMap = new HashMap<>();
+        final Set<Geometry> earlyPolygons = new HashSet<>(dividedObjects.getEarlyObjects().size());
+        for (T earlyObject : dividedObjects.getEarlyObjects()) {
+            final Geometry earlyGeom = getGeomFromCache(earlyObject, wktReader, wkbReader);
+            earlyObjectMap.put(earlyGeom, earlyObject);
+            earlyPolygons.add(earlyGeom);
+        }
 
-        @Nullable final PolygonMatchSet polygonMatchSet = getApproxEqualUnion(geometryFactory, earlyPolygons, latePolygons, matchThreshold);
+        //        Extract the JTS polygons for each late object
+        final Map<Geometry, T> lateObjectMap = new HashMap<>();
+        final Set<Geometry> latePolygons = new HashSet<>(dividedObjects.getLateObjects().size());
+        for (T lateObject : dividedObjects.getLateObjects()) {
+            final Geometry lateGeom = getGeomFromCache(lateObject, wktReader, wkbReader);
+            lateObjectMap.put(lateGeom, lateObject);
+            latePolygons.add(lateGeom);
+        }
+
+//        In some cases, we might have multiple objects in the early/late polygons.
+//        If that happens, we need to figure out if we're a split/merge and then piecewise iterate through the possible matches
+        final Queue<PolygonMatchSet> matchSetQueue;
+        final MATCH_DIRECTION matchDirection = determineMatchDirection(dividedObjects);
+        switch (matchDirection) {
+//            If we're a merge, allocate the priority queue using the number of late polygons
+            case MERGE: {
+                matchSetQueue = new PriorityQueue<>(dividedObjects.getLateObjects().size(), strengthComparator);
+                latePolygons
+                        .forEach(latePoly -> {
+                            final Optional<PolygonMatchSet> match = getApproxEqualUnion(geometryFactory, earlyPolygons, Collections.singleton(latePoly), matchThreshold);
+                            match.ifPresent(matchSetQueue::add);
+                        });
+                break;
+            }
+            case SPLIT: {
+                matchSetQueue = new PriorityQueue<>(dividedObjects.getEarlyObjects().size(), strengthComparator);
+                earlyPolygons
+                        .forEach(earlyPoly -> {
+                            final Optional<PolygonMatchSet> match = getApproxEqualUnion(geometryFactory, Collections.singleton(earlyPoly), latePolygons, matchThreshold);
+                            match.ifPresent(matchSetQueue::add);
+                        });
+                break;
+            }
+//            If we don't know, we need to do it in both directions
+            default: {
+//                Merged first
+                matchSetQueue = new PriorityQueue<>(dividedObjects.getLateObjects().size() + dividedObjects.getEarlyObjects().size(), strengthComparator);
+                latePolygons
+                        .forEach(latePoly -> {
+                            final Optional<PolygonMatchSet> match = getApproxEqualUnion(geometryFactory, earlyPolygons, Collections.singleton(latePoly), matchThreshold);
+                            match.ifPresent(matchSetQueue::add);
+                        });
+//                Then split
+                earlyPolygons
+                        .forEach(earlyPoly -> {
+                            final Optional<PolygonMatchSet> match = getApproxEqualUnion(geometryFactory, Collections.singleton(earlyPoly), latePolygons, matchThreshold);
+                            match.ifPresent(matchSetQueue::add);
+                        });
+                break;
+            }
+        }
+
+        @Nullable final PolygonMatchSet polygonMatchSet = matchSetQueue.peek();
         if (polygonMatchSet == null) {
             return Optional.empty();
         }
 
-//        Are we a split or a merge
-        if (polygonMatchSet.earlyPolygons.size() == 1) {
-            final Optional<T> first = dividedObjects.getEarlyObjects().stream().findFirst();
-            return Optional.of(new UnionEqualityResult<>(first.get(), dividedObjects.getLateObjects(), TrestleEventType.SPLIT, polygonMatchSet.getStrength()));
-        } else {
-            final Optional<T> first = dividedObjects.getLateObjects().stream().findFirst();
-            //noinspection ConstantConditions
-            return Optional.of(new UnionEqualityResult<>(first.get(), dividedObjects.getEarlyObjects(), TrestleEventType.MERGED, polygonMatchSet.getStrength()));
+        switch (matchDirection) {
+//            If we're a merge, get the late object, and its associated early objects
+            case MERGE: {
+                return Optional.of(new UnionEqualityResult<>(
+                        getSetFirstFromMap(lateObjectMap, polygonMatchSet.latePolygons),
+                        getMapValuesFromSet(earlyObjectMap, polygonMatchSet.earlyPolygons),
+                        TrestleEventType.MERGED,
+                        polygonMatchSet.getStrength()));
+            }
+            case SPLIT: {
+                return Optional.of(new UnionEqualityResult<>(
+                        getSetFirstFromMap(earlyObjectMap, polygonMatchSet.earlyPolygons),
+                        getMapValuesFromSet(lateObjectMap, polygonMatchSet.latePolygons),
+                        TrestleEventType.SPLIT,
+                        polygonMatchSet.getStrength()));
+            }
+            default:
+                throw new IllegalStateException("Can only have SPLIT/MERGE types");
         }
     }
 
@@ -134,14 +200,14 @@ public class SpatialUnionBuilder {
         final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
         final WKTReader wktReader = new WKTReader(geometryFactory);
         final WKBReader wkbReader = new WKBReader(geometryFactory);
-        final Geometry inputPolygon = SpatialUtils.buildObjectGeometry(inputObject, wktReader, wkbReader);
-        final Geometry matchPolygon = SpatialUtils.buildObjectGeometry(matchObject, wktReader, wkbReader);
+        final Geometry inputPolygon = getGeomFromCache(inputObject, wktReader, wkbReader);
+        final Geometry matchPolygon = getGeomFromCache(matchObject, wktReader, wkbReader);
 
         return calculateEqualityPercentage(inputPolygon, matchPolygon);
     }
 
 
-    private PolygonMatchSet getApproxEqualUnion(GeometryFactory geometryFactory, Set<Geometry> inputPolygons, Set<Geometry> matchPolygons, double matchThreshold) {
+    private Optional<PolygonMatchSet> getApproxEqualUnion(GeometryFactory geometryFactory, Set<Geometry> inputPolygons, Set<Geometry> matchPolygons, double matchThreshold) {
         final Set<Set<Geometry>> allInputSets = powerSet(inputPolygons);
 
         for (Set<Geometry> inputSet : allInputSets) {
@@ -149,15 +215,17 @@ public class SpatialUnionBuilder {
                 continue;
             }
 
-            PolygonMatchSet matchSet = executeUnionCalculation(geometryFactory, matchPolygons, inputSet, matchThreshold);
-            if (matchSet != null) return matchSet;
+            Optional<PolygonMatchSet> matchSet = executeUnionCalculation(geometryFactory, matchPolygons, inputSet, matchThreshold);
+            if (matchSet.isPresent()) {
+                return matchSet;
+            }
         }
-        return null;
+        return Optional.empty();
     }
 
     @Timed(name = "union-calculation-timer", absolute = true)
     @Metered(name = "union-calculation-meter", absolute = true)
-    private PolygonMatchSet executeUnionCalculation(GeometryFactory geometryFactory, Set<Geometry> matchPolygons, Set<Geometry> inputSet, double matchThreshold) {
+    private Optional<PolygonMatchSet> executeUnionCalculation(GeometryFactory geometryFactory, Set<Geometry> matchPolygons, Set<Geometry> inputSet, double matchThreshold) {
         final GeometryCollection geometryCollection = new GeometryCollection(inputSet.toArray(new Geometry[inputSet.size()]), geometryFactory);
         logger.trace("Executing union operation for {}", inputSet);
         final Geometry unionInputGeom = geometryCollection.union();
@@ -170,12 +238,12 @@ public class SpatialUnionBuilder {
             if (matchSet.isEmpty()) {
                 continue;
             }
-            double matchStrength;
+            final double matchStrength;
             if ((matchStrength = executeUnion(geometryFactory, matchThreshold, unionInputGeom, new ArrayList<>(matchSet))) > matchThreshold) {
-                return new PolygonMatchSet(inputSet, matchSet, matchStrength);
+                return Optional.of(new PolygonMatchSet(inputSet, matchSet, matchStrength));
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     @Timed(name = "union-strength-timer", absolute = true)
@@ -190,6 +258,26 @@ public class SpatialUnionBuilder {
             return approxEqual;
         }
         return 0.0;
+    }
+
+
+    /**
+     * Retrieve {@link Geometry} from shared {@link Cache}, computing if missing
+     *
+     * @param keyObject - {@link Object} to get geom for
+     * @param wktReader - {@link WKTReader} to use for building the {@link Geometry}
+     * @param wkbReader - {@link WKBReader} to use for building the {@link Geometry}
+     * @return - Object {@link Geometry}
+     */
+    private Geometry getGeomFromCache(Object keyObject, WKTReader wktReader, WKBReader wkbReader) {
+        final int key = keyObject.hashCode();
+        final Geometry cacheGeom = this.geometryCache.get(key);
+        if (cacheGeom == null) {
+            final Geometry geometry = buildObjectGeometry(keyObject, wktReader, wkbReader);
+            this.geometryCache.put(key, geometry);
+            return geometry;
+        }
+        return cacheGeom;
     }
 
     /**
@@ -216,7 +304,8 @@ public class SpatialUnionBuilder {
      * @return - {@link Set} of {@link Set} of {@link Polygon} to determine if a union combination exists
      */
     private static Set<Set<Geometry>> powerSet(Set<Geometry> originalSet) {
-        Set<Set<Geometry>> sets = new HashSet<>();
+//        No idea why we need to do this instead of ComparingInt.reversed(), but we do
+        SortedSet<Set<Geometry>> sets = new TreeSet<>((o1, o2) -> Integer.compare(o2.size(), o1.size()));
 //        Null safe way of handling an empty queue
         final Queue<Geometry> list = new ArrayDeque<>(originalSet);
         Geometry head = list.poll();
@@ -310,6 +399,48 @@ public class SpatialUnionBuilder {
             throw new IllegalStateException(TEMPORAL_OPTIONAL_ERROR);
         }
         return unwrappedList.get(0);
+    }
+
+    private static MATCH_DIRECTION determineMatchDirection(TemporallyDividedObjects objects) {
+        if (objects.getEarlyObjects().size() < objects.getLateObjects().size()) {
+            return MATCH_DIRECTION.SPLIT;
+        } else if (objects.getEarlyObjects().size() > objects.getLateObjects().size()) {
+            return MATCH_DIRECTION.MERGE;
+        }
+        return MATCH_DIRECTION.UNKNOWN;
+    }
+
+    /**
+     * From the provided object set, get its corresponding map entry
+     *
+     * @param objectMap  - {@link Map} of {@link Geometry} to input objects
+     * @param polygonSet - {@link Set} of {@link Geometry} to get from
+     * @param <T>        - {@link T} type parameter
+     * @return - {@link T} object from map
+     */
+    private static <T> T getSetFirstFromMap(Map<Geometry, T> objectMap, Set<Geometry> polygonSet) {
+        return objectMap.get(polygonSet.stream().findFirst().orElseThrow(() -> new IllegalStateException("Cannot get first polygon from set")));
+    }
+
+    /**
+     * Get the matching objects in the given object {@link Map} from the {@link Set} of {@link Geometry}
+     *
+     * @param objectMap  - {@link Map} of {@link Geometry} to input objects
+     * @param polygonSet - {@link Set} of {@link Geometry} to get from
+     * @param <T>        - {@link T} type parameter
+     * @return - {@link T} object fromm map
+     */
+    private static <T> Set<T> getMapValuesFromSet(Map<Geometry, T> objectMap, Set<Geometry> polygonSet) {
+        return polygonSet
+                .stream()
+                .map(objectMap::get)
+                .collect(Collectors.toSet());
+    }
+
+    private enum MATCH_DIRECTION {
+        SPLIT,
+        MERGE,
+        UNKNOWN
     }
 
     private static class PolygonMatchSet {
