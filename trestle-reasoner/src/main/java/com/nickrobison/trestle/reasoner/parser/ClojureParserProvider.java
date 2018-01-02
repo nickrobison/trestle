@@ -3,12 +3,34 @@ package com.nickrobison.trestle.reasoner.parser;
 import clojure.java.api.Clojure;
 import clojure.lang.IFn;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.OWLDataFactory;
 
-public class ClojureParserProvider {
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Provider;
+
+public class ClojureParserProvider implements Provider<IClassParser> {
 
 
-    public static IClassParser getParser(OWLDataFactory df, String prefix, boolean multiLang, String defaultCode) {
+    private final String reasonerPrefix;
+    private final boolean multiLangEnabled;
+    private final String defaultLanguageCode;
+
+    @Inject
+    private ClojureParserProvider(@Named("reasonerPrefix") String reasonerPrefix,
+                                  @Named("multiLang") boolean multiLangEnabled,
+                                  @Named("default-code") String defaultLanguageCode) {
+
+        this.reasonerPrefix = reasonerPrefix;
+        this.multiLangEnabled = multiLangEnabled;
+        this.defaultLanguageCode = defaultLanguageCode;
+    }
+
+    @Override
+    public IClassParser get() {
+        return (IClassParser) ClojureParserProvider.buildClojureParser(this.reasonerPrefix, this.multiLangEnabled, this.defaultLanguageCode);
+    }
+
+    public static Object buildClojureParser(String prefix, boolean multiEnabled, String defaultCode) {
         final IFn require = Clojure.var("clojure.core", "require");
 
         require.invoke(Clojure.read("com.nickrobison.trestle.reasoner.parser.parser"));
@@ -18,11 +40,7 @@ public class ClojureParserProvider {
 //        require.invoke(Clojure.read("clojure.tools.nrepl.server"));
 //        IFn server = Clojure.var("clojure.tools.nrepl.server", "start-server");
 //        server.invoke();
-        return (IClassParser) newParserFn.invoke(df, prefix, multiLang, defaultCode);
-    }
-
-
-    public static IClassParser getParser() {
-        return ClojureParserProvider.getParser(OWLManager.getOWLDataFactory(), "http://nickrobison.com/test#", true, "en");
+        return newParserFn.invoke(OWLManager.getOWLDataFactory(), prefix,
+                multiEnabled, defaultCode);
     }
 }

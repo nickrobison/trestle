@@ -36,7 +36,7 @@ public abstract class AbstractReasonerTest {
                 .build();
 
         df = OWLManager.getOWLDataFactory();
-        tp = new TrestleParser(df, AbstractReasonerTest.OVERRIDE_PREFIX, false, "en");
+        tp = reasoner.getUnderlyingParser();
     }
 
     @AfterEach

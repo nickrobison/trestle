@@ -549,7 +549,9 @@
   (isCacheable [this clazz]
     (if-let [parsedClass (get @classRegistry clazz)]
       (:serializable parsedClass)
-      (throw (UnregisteredClassException. clazz)))))
+      (throw (UnregisteredClassException. clazz))))
+  (isRegistered [this clazz]
+    (contains? @classRegistry clazz)))
 
 
 (defn make-parser

@@ -333,6 +333,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
+    public TrestleParser getUnderlyingParser() {
+        return this.trestleParser;
+    }
+
+    @Override
     public TrestleResultSet executeSPARQLSelect(String queryString) {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(queryString);

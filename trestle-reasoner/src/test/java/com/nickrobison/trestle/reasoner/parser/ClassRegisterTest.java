@@ -8,8 +8,6 @@ import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.TemporalType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -60,7 +58,7 @@ public class ClassRegisterTest {
         ftClass = ftTest.getClass();
         lClass = lTest.getClass();
 
-        cr = (IClassRegister) ClojureParserProvider.getParser();
+        cr = (IClassRegister) ClojureParserProvider.buildClojureParser("http://nickrobison.com/test/", true, "en-US");
     }
 
     @Test

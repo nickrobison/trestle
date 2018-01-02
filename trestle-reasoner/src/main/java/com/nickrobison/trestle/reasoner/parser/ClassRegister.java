@@ -28,9 +28,10 @@ import static com.nickrobison.trestle.reasoner.parser.ClassParser.filterMethodNa
 /**
  * Created by nrobison on 7/26/16.
  */
-public class ClassRegister {
+public class ClassRegister implements IClassRegister {
 
-    private ClassRegister() {
+    ClassRegister() {
+//        Not used
     }
 
     public static void ValidateClass(Class<?> clazz) throws TrestleClassException {
@@ -412,5 +413,30 @@ public class ClassRegister {
                 .filter(n -> n.equals(argName))
                 .findFirst();
         matchingArgument.orElseThrow(() -> new InvalidClassException(clazz, InvalidClassException.State.MISSING));
+    }
+
+    @Override
+    public void registerClass(Class<?> clazz) throws TrestleClassException {
+//        Not implemented
+    }
+
+    @Override
+    public void deregisterClass(Class<?> clazz) {
+//        Not implemented
+    }
+
+    @Override
+    public Object getRegisteredClass(Class<?> clazz) throws TrestleClassException {
+        return null;
+    }
+
+    @Override
+    public boolean isRegistered(Class<?> clazz) throws TrestleClassException {
+        return true;
+    }
+
+    @Override
+    public boolean isCacheable(Class<?> clazz) throws TrestleClassException {
+        return false;
     }
 }

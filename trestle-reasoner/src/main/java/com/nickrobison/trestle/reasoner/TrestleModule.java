@@ -2,18 +2,16 @@ package com.nickrobison.trestle.reasoner;
 
 import com.google.inject.AbstractModule;
 import com.nickrobison.metrician.MetricianModule;
-
 import com.nickrobison.trestle.reasoner.caching.TrestleCacheModule;
 import com.nickrobison.trestle.reasoner.containment.ContainmentEngineModule;
 import com.nickrobison.trestle.reasoner.equality.EqualityEngineModule;
-import com.nickrobison.trestle.reasoner.events.TrestleEventEngine;
 import com.nickrobison.trestle.reasoner.events.EventEngineImpl;
 import com.nickrobison.trestle.reasoner.events.EventEngineNoOp;
+import com.nickrobison.trestle.reasoner.events.TrestleEventEngine;
 import com.nickrobison.trestle.reasoner.merge.MergeEngineImpl;
 import com.nickrobison.trestle.reasoner.merge.MergeEngineNoOp;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeEngine;
-import com.nickrobison.trestle.reasoner.parser.TrestleParser;
-import com.nickrobison.trestle.reasoner.parser.TrestleParserProvider;
+import com.nickrobison.trestle.reasoner.parser.TrestleParserModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,15 +36,16 @@ public class TrestleModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        install(new TrestleParserModule(true, "en-US"));
         install(new MetricianModule(metricsEnabled));
         install(new TrestleCacheModule(cachingEnabled));
         install(new EqualityEngineModule());
         install(new ContainmentEngineModule());
 
-//        Bind the parser
-        bind(TrestleParser.class)
-                .toProvider(TrestleParserProvider.class)
-                .asEagerSingleton();
+////        Bind the parser
+//        bind(TrestleParser.class)
+//                .toProvider(TrestleParserProvider.class)
+//                .asEagerSingleton();
 //        Merge Engine
         if (mergeEnabled) {
             bind(TrestleMergeEngine.class).to(MergeEngineImpl.class);

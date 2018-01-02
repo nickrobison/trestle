@@ -11,5 +11,7 @@ public interface IClassRegister {
 
     Object getRegisteredClass(Class<?> clazz) throws TrestleClassException;
 
+    boolean isRegistered(Class<?> clazz) throws TrestleClassException;
+
     boolean isCacheable(Class<?> clazz) throws TrestleClassException;
 }

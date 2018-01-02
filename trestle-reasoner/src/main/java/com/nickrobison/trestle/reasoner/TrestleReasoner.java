@@ -10,6 +10,7 @@ import com.nickrobison.trestle.reasoner.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.merge.TrestleMergeEngine;
+import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.reasoner.parser.TypeConstructor;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.events.TrestleEvent;
@@ -94,6 +95,12 @@ public interface TrestleReasoner {
      * @return - {@link Map} of prefixes and their corresponding URIs
      */
     Map<String, String> getReasonerPrefixes();
+
+    /**
+     * Get the underlying parser used by the reasoner
+     * @return - {@link TrestleParser}
+     */
+    public TrestleParser getUnderlyingParser();
 
     /**
      * Execute SPARQL select query

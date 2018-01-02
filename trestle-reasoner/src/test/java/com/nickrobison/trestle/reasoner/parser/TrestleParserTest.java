@@ -67,10 +67,10 @@ public class TrestleParserTest {
         LocalDate ld = LocalDate.of(1989, 3, 26);
         temporal = TemporalObjectBuilder.exists().from(dt).to(dt.plusYears(1)).build(); //.withRelations();
         temporalPoint = TemporalObjectBuilder.exists().at(ld).build(); // .withRelations();
-        tp = new TrestleParser(df, TRESTLE_PREFIX, true, "");
-        cp = tp.classParser;
-        cb = (IClassBuilder) tp.classParser;
-        cr = (IClassRegister) tp.classParser;
+        final Object clojureParser = ClojureParserProvider.buildClojureParser(TRESTLE_PREFIX, true, "");
+        cb = (IClassBuilder) clojureParser;
+        cp = (IClassParser) clojureParser;
+        cr = (IClassRegister) clojureParser;
 
     }
 

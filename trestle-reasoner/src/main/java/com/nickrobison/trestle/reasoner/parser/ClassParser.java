@@ -12,6 +12,8 @@ import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -49,9 +51,12 @@ public class ClassParser implements IClassParser {
     private final String defaultLanguageCode;
 
 
-    ClassParser(OWLDataFactory df, String ReasonerPrefix, boolean multiLangEnabled, String defaultLanguageCode) {
-        this.df = df;
-        this.ReasonerPrefix = ReasonerPrefix;
+    @Inject
+    ClassParser(@Named("reasonerPrefix") String reasonerPrefix,
+                @Named("multiLang") boolean multiLangEnabled,
+                @Named("default-code") String defaultLanguageCode) {
+        this.df = OWLManager.getOWLDataFactory();
+        this.ReasonerPrefix = reasonerPrefix;
         this.multiLangEnabled = multiLangEnabled;
         this.defaultLanguageCode = defaultLanguageCode;
     }

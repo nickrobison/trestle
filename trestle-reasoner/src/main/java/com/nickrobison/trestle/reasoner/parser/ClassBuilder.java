@@ -19,12 +19,12 @@ import static com.nickrobison.trestle.reasoner.parser.ClassParser.*;
  * Created by nrobison on 7/28/16.
  */
 @SuppressWarnings("Duplicates")
-public class ClassBuilder {
+public class ClassBuilder implements IClassBuilder {
 
     private static final Logger logger = LoggerFactory.getLogger(ClassBuilder.class);
 
-    private ClassBuilder() {
-
+    ClassBuilder() {
+//        Not used
     }
 
     /**
@@ -34,7 +34,7 @@ public class ClassBuilder {
      * @param clazz - Class to parse for data property members
      * @return - Optional list of {@link OWLDataProperty} for given class
      */
-    public static Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz) {
+    public Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz) {
         return getPropertyMembers(clazz, false, TRESTLE_PREFIX);
     }
 
@@ -46,7 +46,7 @@ public class ClassBuilder {
      * @param filterSpatial - filter spatial?
      * @return - Optional list of {@link OWLDataProperty} for given class
      */
-    public static Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz, boolean filterSpatial) {
+    public Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz, boolean filterSpatial) {
         return getPropertyMembers(clazz, filterSpatial, TRESTLE_PREFIX);
     }
 
@@ -98,7 +98,7 @@ public class ClassBuilder {
 
     //    FIXME(nrobison): I think these warnings are important.
     @SuppressWarnings({"type.argument.type.incompatible", "assignment.type.incompatible", "method.invocation.invalid", "argument.type.incompatible"})
-    public static <T> T constructObject(Class<T> clazz, ConstructorArguments arguments) throws MissingConstructorException {
+    public <T> T constructObject(Class<T> clazz, ConstructorArguments arguments) throws MissingConstructorException {
         Constructor<?> declaredConstructor = findTrestleConstructor(clazz).orElseThrow(MissingConstructorException::new);
 
 //        Get the list of parameters
