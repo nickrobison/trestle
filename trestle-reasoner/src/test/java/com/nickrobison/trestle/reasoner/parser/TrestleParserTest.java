@@ -9,6 +9,7 @@ import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import com.nickrobison.trestle.reasoner.parser.clojure.ClojureProvider;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
@@ -67,7 +68,7 @@ public class TrestleParserTest {
         LocalDate ld = LocalDate.of(1989, 3, 26);
         temporal = TemporalObjectBuilder.exists().from(dt).to(dt.plusYears(1)).build(); //.withRelations();
         temporalPoint = TemporalObjectBuilder.exists().at(ld).build(); // .withRelations();
-        final Object clojureParser = ClojureParserProvider.buildClojureParser(TRESTLE_PREFIX, true, "");
+        final Object clojureParser = ClojureProvider.buildClojureParser(TRESTLE_PREFIX, true, "");
         cb = (IClassBuilder) clojureParser;
         cp = (IClassParser) clojureParser;
         cr = (IClassRegister) clojureParser;

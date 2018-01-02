@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.reasoner.parser;
+package com.nickrobison.trestle.reasoner.parser.clojure;
 
 import clojure.java.api.Clojure;
 import clojure.lang.IFn;
@@ -8,7 +8,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 
-public class ClojureParserProvider implements Provider<IClassParser> {
+public class ClojureProvider implements Provider<Object> {
 
 
     private final String reasonerPrefix;
@@ -16,9 +16,9 @@ public class ClojureParserProvider implements Provider<IClassParser> {
     private final String defaultLanguageCode;
 
     @Inject
-    private ClojureParserProvider(@Named("reasonerPrefix") String reasonerPrefix,
-                                  @Named("multiLang") boolean multiLangEnabled,
-                                  @Named("default-code") String defaultLanguageCode) {
+    ClojureProvider(@Named("reasonerPrefix") String reasonerPrefix,
+                    @Named("multiLang") boolean multiLangEnabled,
+                    @Named("default-code") String defaultLanguageCode) {
 
         this.reasonerPrefix = reasonerPrefix;
         this.multiLangEnabled = multiLangEnabled;
@@ -26,8 +26,8 @@ public class ClojureParserProvider implements Provider<IClassParser> {
     }
 
     @Override
-    public IClassParser get() {
-        return (IClassParser) ClojureParserProvider.buildClojureParser(this.reasonerPrefix, this.multiLangEnabled, this.defaultLanguageCode);
+    public Object get() {
+        return ClojureProvider.buildClojureParser(this.reasonerPrefix, this.multiLangEnabled, this.defaultLanguageCode);
     }
 
     public static Object buildClojureParser(String prefix, boolean multiEnabled, String defaultCode) {

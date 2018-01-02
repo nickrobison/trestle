@@ -5,6 +5,7 @@ import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.reasoner.exceptions.InvalidClassException;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import com.nickrobison.trestle.reasoner.parser.clojure.ClojureProvider;
 import com.nickrobison.trestle.types.TemporalType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -58,7 +59,7 @@ public class ClassRegisterTest {
         ftClass = ftTest.getClass();
         lClass = lTest.getClass();
 
-        cr = (IClassRegister) ClojureParserProvider.buildClojureParser("http://nickrobison.com/test/", true, "en-US");
+        cr = (IClassRegister) ClojureProvider.buildClojureParser("http://nickrobison.com/test/", true, "en-US");
     }
 
     @Test
