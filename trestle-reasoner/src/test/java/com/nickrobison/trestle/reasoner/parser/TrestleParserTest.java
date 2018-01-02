@@ -24,10 +24,7 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static com.nickrobison.trestle.common.StaticIRI.GEOSPARQLPREFIX;
 import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
@@ -51,7 +48,7 @@ public class TrestleParserTest {
     private TestClasses.GAULMethodTest testMethod;
     private TestClasses.GAULComplexClassTest complexObjectClass;
     private TestClasses.MultiLangTest multiLangTest;
-    private TrestleParser tp;
+    private TemporalParser tp;
     private IClassParser cp;
     private IClassBuilder cb;
     private IClassRegister cr;
@@ -72,6 +69,7 @@ public class TrestleParserTest {
         cb = (IClassBuilder) clojureParser;
         cp = (IClassParser) clojureParser;
         cr = (IClassRegister) clojureParser;
+        this.tp = new TemporalParser(cp);
 
     }
 
@@ -145,7 +143,7 @@ public class TrestleParserTest {
         assertEquals(gaul_test, parsed_code.getSubject(), "Wrong named individual");
 
 //        Test the temporals
-        Optional<List<TemporalObject>> temporalObjects = tp.temporalParser.getTemporalObjects(complexObjectClass);
+        Optional<List<TemporalObject>> temporalObjects = tp.getTemporalObjects(complexObjectClass);
         assertTrue(temporalObjects.isPresent(), "Should have objects");
         assertEquals(1, temporalObjects.get().size(), "Wrong number of objects");
         assertEquals(LocalDate.of(1989, 3, 26), temporalObjects.get().get(0).asInterval().getFromTime());
@@ -182,9 +180,9 @@ public class TrestleParserTest {
 
 
 //        Test the temporal
-        Optional<List<TemporalObject>> temporalObjects = tp.temporalParser.getTemporalObjects(expandedGAULClass);
+        Optional<List<TemporalObject>> temporalObjects = tp.getTemporalObjects(expandedGAULClass);
         assertTrue(temporalObjects.isPresent(), "Should have objects");
-        assertEquals(4, temporalObjects.get().size(), "Wrong number of temporal objects");
+        assertEquals(1, temporalObjects.get().size(), "Wrong number of temporal objects");
 //        Check for the same type and scope for interval
         assertEquals(temporal.getType(), temporalObjects.get().get(0).getType(), "Wrong temporal type");
         assertEquals(temporal.getScope(), temporalObjects.get().get(0).getScope(), "Wrong temporal scope");
@@ -192,18 +190,9 @@ public class TrestleParserTest {
 //        assertEquals(gaul_test, temporalObjects.get().get(0).getTemporalRelations().stream().findFirst().get(), "Wrong temporal relation");
 //        Check for the correct values on the built temporal objects
         //        Interval
-        assertTrue(temporalObjects.get().get(2).isInterval(), "Should have build an interval object");
-        assertEquals(LocalDateTime.of(1989, 3, 26, 0, 0), temporalObjects.get().get(2).asInterval().getFromTime());
-        assertEquals(LocalDateTime.of(1989, 3, 26, 0, 0).plusYears(5), temporalObjects.get().get(2).asInterval().getToTime().get());
-//        Point
-        assertTrue(temporalObjects.get().get(3).isPoint(), "Should have built a point object");
-        assertEquals(LocalDateTime.of(1989, 3, 26, 0, 0), temporalObjects.get().get(3).asPoint().getPointTime(), "Wrong point time");
-
-//        Check geo point
-        assertEquals(temporalPoint.getType(), temporalObjects.get().get(1).getType(), "Wrong temporal type");
-        assertEquals(temporalPoint.getScope(), temporalObjects.get().get(1).getScope(), "Wrong temporal scope");
-//        assertEquals(1, temporalObjects.get().get(1).getTemporalRelations().size(), "Wrong # of temporal relations");
-//        assertEquals(gaul_test, temporalObjects.get().get(1).getTemporalRelations().stream().findFirst().get(), "Wrong temporal relation");
+        assertTrue(temporalObjects.get().get(0).isInterval(), "Should have build an interval object");
+        assertEquals(LocalDateTime.of(1998, 3, 26, 0, 0), temporalObjects.get().get(0).asInterval().getFromTime());
+        assertEquals(LocalDateTime.of(1998, 3, 26, 0, 0).plusYears(1), temporalObjects.get().get(0).asInterval().getToTime().get());
 
 //        Check methods
 //        Individual
@@ -395,17 +384,8 @@ public class TrestleParserTest {
         @Spatial
         public String test_name;
         @DefaultTemporal(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
-        @Ignore
         public LocalDateTime testtime;
         private String privateField;
-        @DefaultTemporal(type = TemporalType.POINT, scope = TemporalScope.EXISTS, duration = 0, unit = ChronoUnit.YEARS)
-        public LocalDateTime testpoint;
-        @StartTemporal(type = TemporalType.INTERVAL)
-        public LocalDateTime teststart;
-        @EndTemporal()
-        public LocalDateTime testend;
-        @StartTemporal(type = TemporalType.POINT)
-        public LocalDateTime testat;
 
         public ExpandedGAULTests() {
             this.adm0_code = 4326;
@@ -413,10 +393,6 @@ public class TrestleParserTest {
             this.adm0_name = "test region";
             this.testtime = LocalDateTime.of(1998, 3, 26, 0, 0);
             this.privateField = "don't read me";
-            this.testpoint = LocalDateTime.of(1989, 3, 26, 0, 0);
-            this.teststart = LocalDateTime.of(1989, 3, 26, 0, 0);
-            this.testend = LocalDateTime.of(1989, 3, 26, 0, 0).plusYears(5);
-            this.testat = LocalDateTime.of(1989, 3, 26, 0, 0);
         }
 
         public ExpandedGAULTests(int adm0_code) {
@@ -425,42 +401,29 @@ public class TrestleParserTest {
             this.adm0_name = "test region";
             this.testtime = LocalDateTime.of(1998, 3, 26, 0, 0);
             this.privateField = "don't read me";
-            this.testpoint = LocalDateTime.of(1989, 3, 26, 0, 0);
-            this.teststart = LocalDateTime.of(1989, 3, 26, 0, 0);
-            this.testend = LocalDateTime.of(1989, 3, 26, 0, 0).plusYears(5);
-            this.testat = LocalDateTime.of(1989, 3, 26, 0, 0);
+        }
+
+        @Ignore
+        public String getPrivateField() {
+            return this.privateField;
         }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-
             ExpandedGAULTests that = (ExpandedGAULTests) o;
-
-            if (adm0_code != that.adm0_code) return false;
-            if (!adm0_name.equals(that.adm0_name)) return false;
-            if (!test_name.equals(that.test_name)) return false;
-            if (!testtime.equals(that.testtime)) return false;
-            if (!privateField.equals(that.privateField)) return false;
-            if (!testpoint.equals(that.testpoint)) return false;
-            if (!teststart.equals(that.teststart)) return false;
-            if (!testend.equals(that.testend)) return false;
-            return testat.equals(that.testat);
+            return adm0_code == that.adm0_code &&
+                    Objects.equals(adm0_name, that.adm0_name) &&
+                    Objects.equals(test_name, that.test_name) &&
+                    Objects.equals(testtime, that.testtime) &&
+                    Objects.equals(privateField, that.privateField);
         }
 
         @Override
         public int hashCode() {
-            int result = adm0_code;
-            result = 31 * result + adm0_name.hashCode();
-            result = 31 * result + test_name.hashCode();
-            result = 31 * result + testtime.hashCode();
-            result = 31 * result + privateField.hashCode();
-            result = 31 * result + testpoint.hashCode();
-            result = 31 * result + teststart.hashCode();
-            result = 31 * result + testend.hashCode();
-            result = 31 * result + testat.hashCode();
-            return result;
+
+            return Objects.hash(adm0_code, adm0_name, test_name, testtime, privateField);
         }
     }
 }

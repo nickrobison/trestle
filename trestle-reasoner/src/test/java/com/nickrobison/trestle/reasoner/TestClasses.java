@@ -342,31 +342,8 @@ public class TestClasses {
         @Ignore
         public LocalDateTime defaultTime;
         private String privateField;
-        //        @DefaultTemporal(type = TemporalType.POINT, scope= TemporalScope.EXISTS, duration = 0, unit = ChronoUnit.YEARS)
         private LocalDateTime intervalStart;
         private LocalDateTime intervalEnd;
-
-        @Override
-        public boolean equals(@Nullable Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            GAULMethodTest that = (GAULMethodTest) o;
-
-            if (adm0_code != that.adm0_code) return false;
-            if (!adm0_name.equals(that.adm0_name)) return false;
-            if (!test_name.equals(that.test_name)) return false;
-            return privateField.equals(that.privateField);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = adm0_code;
-            result = 31 * result + adm0_name.hashCode();
-            result = 31 * result + test_name.hashCode();
-            result = 31 * result + privateField.hashCode();
-            return result;
-        }
 
         public GAULMethodTest() {
             this.adm0_code = 4326;
@@ -401,11 +378,6 @@ public class TestClasses {
             return this.adm0_name;
         }
 
-        @DefaultTemporal(type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
-        public LocalDateTime getTime() {
-            return this.defaultTime;
-        }
-
         @StartTemporal(type = TemporalType.INTERVAL)
         public LocalDateTime getStart() {
             return this.intervalStart;
@@ -414,6 +386,28 @@ public class TestClasses {
         @EndTemporal()
         public LocalDateTime getEnd() {
             return this.intervalEnd;
+        }
+
+        @Override
+        public boolean equals(@Nullable Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            GAULMethodTest that = (GAULMethodTest) o;
+
+            if (adm0_code != that.adm0_code) return false;
+            if (!adm0_name.equals(that.adm0_name)) return false;
+            if (!test_name.equals(that.test_name)) return false;
+            return privateField.equals(that.privateField);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = adm0_code;
+            result = 31 * result + adm0_name.hashCode();
+            result = 31 * result + test_name.hashCode();
+            result = 31 * result + privateField.hashCode();
+            return result;
         }
 
     }

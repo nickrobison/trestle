@@ -252,13 +252,13 @@
     ;Ensure we have no more than 1 start temporal
     (m/ensure-temporal-count = 0 ::pred/start
                              ; if we have more than one ending temporal, throw an exception
-                             (m/ensure-temporal-count < 1 ::pred/end
+                             (m/ensure-temporal-count <= 1 ::pred/end
                                                       interval-temporal :position members
                                                       class-name InvalidClassException$State/EXCESS "End temporal")
-                             :position members class-name InvalidClassException$State/EXCESS "Start temporals")
+                             :position members class-name InvalidClassException$State/EXCESS "Start temporal")
     ; Validate for end temporals
     ; Ensure we have no more than 1 start temporal
-    (m/ensure-temporal-count = 0 ::pred/start
+    (m/ensure-temporal-count <= 1 ::pred/start
                              ; Ensure we have no more than 1 end temporal
                              (m/ensure-temporal-count < 1 ::pred/end
                                                       interval-temporal :position members
@@ -399,10 +399,7 @@
   (isMultiLangEnabled [this] (multiLangEnabled))
   (getDefaultLanguageCode [this] (if (= defaultLanguageCode "") nil defaultLanguageCode))
   (^OWLClass getObjectClass [this ^Class clazz]
-    (get-class-name clazz df reasonerPrefix)
-    ;(let [parsedClass (.getRegisteredClass this clazz)]
-    ;  (:class-name parsedClass))
-    )
+    (get-class-name clazz df reasonerPrefix))
   (^OWLClass getObjectClass [this ^Object inputObject] (.getObjectClass this (.getClass inputObject)))
   (parseClass ^Object [this ^Class clazz]
     ; Parse input class
@@ -548,6 +545,8 @@
     (if-let [parsedClass (get @classRegistry clazz)]
       parsedClass
       (throw (UnregisteredClassException. clazz))))
+  (getRegisteredOWLClasses [this]
+    (set (keys @owlClassMap)))
   (deregisterClass [this clazz]
     (log/debugf "Deregistering %s" clazz)
     (swap! @classRegistry dissoc clazz)
