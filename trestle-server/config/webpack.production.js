@@ -7,8 +7,10 @@ const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const OptimizeJsPlugin = require('optimize-js-plugin');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const DefinePlugin = require('webpack/lib/DefinePlugin');
+const CSPWebpackPlugin = require("csp-webpack-plugin");
 const commonConfig = require("./webpack.common");
 const helpers = require("./helpers");
+const env = require("./env");
 
 const AOT = process.env.AOT;
 
@@ -66,7 +68,11 @@ var prodOptions = {
                     comparisons: true
                 }
             }
-        })
+        }),
+        // Merge the common CSP configuration along with the script settings that disallow inline execution, since we're all AOT now
+        new CSPWebpackPlugin(Object.assign(env.csp, {
+            "script-src": ["'self'", "'nonce-YLMZop38Ktla8/hmmA=='"]
+        }))
     ]
 };
 

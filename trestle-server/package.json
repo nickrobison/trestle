@@ -60,6 +60,7 @@
     "chai": "3.5.0",
     "chai-as-promised": "^6.0.0",
     "codelyzer": "^4.0.2",
+    "csp-webpack-plugin": "^1.0.2",
     "css-loader": "^0.28.7",
     "cucumber": "^2.2.0",
     "cucumber-tsflow": "^2.2.0",
