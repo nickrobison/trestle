@@ -16,7 +16,7 @@ var prodOptions = {
     entry: {
         "polyfills": "./src/main/webapp/polyfills.ts",
         "vendor": "./src/main/webapp/vendor.ts",
-        "app": AOT? "./src/main/webapp/bootstrap-aot.ts" : "./src/main/webapp/bootstrap.ts"
+        "app": "./src/main/webapp/bootstrap.ts"
     },
     devtool: "source-map",
     output: {
