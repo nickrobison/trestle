@@ -7,6 +7,8 @@ import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
 import com.nickrobison.trestle.server.resources.requests.ExportRequest;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -21,6 +23,7 @@ import static javax.ws.rs.core.Response.ok;
 
 @Path("/export")
 @AuthRequired({Privilege.USER})
+@Api(value = "export")
 public class ExportResource {
 
     private final TrestleReasoner reasoner;
@@ -32,6 +35,9 @@ public class ExportResource {
     }
 
     @POST
+    @ApiOperation(value = "Export data",
+            notes = "Exports the given set of objects into the specified output format. Returns a file descriptor, which can then be downloaded",
+            response = File.class)
     public Response exportData(@Valid ExportRequest request) {
         final ITrestleExporter.DataType dataType = ITrestleExporter.DataType.valueOf(request.getType());
 

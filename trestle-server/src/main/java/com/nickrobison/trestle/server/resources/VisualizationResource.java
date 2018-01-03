@@ -21,6 +21,10 @@ import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.vividsolutions.jts.geom.Geometry;
 import io.dropwizard.jersey.params.NonEmptyStringParam;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wololo.jts2geojson.GeoJSONReader;
@@ -49,26 +53,32 @@ import static javax.ws.rs.core.Response.ok;
 @Path("/visualize")
 @AuthRequired({Privilege.USER})
 @Produces(MediaType.APPLICATION_JSON)
+@Api(value = "visualize")
 public class VisualizationResource {
 
     private static final Logger logger = LoggerFactory.getLogger(VisualizationResource.class);
     private static final GeoJSONReader reader = new GeoJSONReader();
     private static final ObjectMapper mapper = new ObjectMapper();
-//    This should be a config parameter
+    //    This should be a config parameter
     public static final double MATCH_THRESHOLD = 0.95;
-    private final DateTimeFormatter LocalDateTimeToJavascriptFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    public static final String VALID_FROM = "validFrom";
+    public static final String VALID_TO = "validTo";
+    public static final String VALID_ID = "validID";
+    private final DateTimeFormatter localDateTimeToJavascriptFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
     private final TrestleReasoner reasoner;
-//    private final ObjectMapper mapper;
 
     @Inject
     public VisualizationResource(ReasonerModule reasonerModule) {
         this.reasoner = reasonerModule.getReasoner();
-//        mapper = new ObjectMapper();
         mapper.registerModule(new JtsModule());
     }
 
     @GET
     @Path("/search")
+    @ApiOperation(value = "Search for individual matching query string",
+            notes = "Performs a search against the database for any individuals with an id matching the query string",
+            response = String.class,
+            responseContainer = "List")
     public Response searchForIndividual(@NotNull @QueryParam("name") String name, @QueryParam("dataset") NonEmptyStringParam dataset, @QueryParam("limit") Optional<Integer> limit) {
         if (!name.equals("")) {
             final List<String> individuals = this.reasoner.searchForIndividual(name, dataset.get().orElse(null), limit.orElse(null));
@@ -80,6 +90,12 @@ public class VisualizationResource {
 
     @GET
     @Path("/retrieve")
+    @ApiOperation(value = "Retrieve specified individual",
+            notes = "Retrieves all properties for the specified individual, at all time points",
+            response = TrestleIndividual.class)
+    @ApiResponses({
+            @ApiResponse(code = 404, message = "Cannot find individual with the specified ID")
+    })
     public Response getIndividual(@NotNull @QueryParam("name") String individualName) {
         try {
             final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(individualName);
@@ -92,6 +108,10 @@ public class VisualizationResource {
 
     @GET
     @Path("/datasets")
+    @ApiOperation(value = "Retrieve all currently registered datasets",
+            notes = "Retrieves a Set of all available datasets currently registered with the database",
+            response = String.class,
+            responseContainer = "Set")
     public Response getDatasets() {
         final Set<String> availableDatasets = this.reasoner.getAvailableDatasets();
         return ok(availableDatasets).build();
@@ -99,6 +119,16 @@ public class VisualizationResource {
 
     @POST
     @Path("/intersect")
+    @ApiOperation(value = "Retrieve all objects, from a specified dataset, valid at the specified time point, that intersects the provided GeoJSON object",
+            notes = "Performs a spatial-temporal intersection for all matching objects for the given dataset. " +
+                    "Allows the user to specify both valid temporal and database temporal intersection points. " +
+                    "This method returns a specific object state, not the entirety of the object properties",
+            response = Object.class,
+            responseContainer = "List")
+    @ApiResponses({
+            @ApiResponse(code = 440, message = "Object class is not registered with the database"),
+            @ApiResponse(code = 500, message = "Problem while performing spatial intersection")
+    })
     public Response intersect(@NotNull IntersectRequest request) {
 
         final Class<?> datasetClass;
@@ -128,6 +158,16 @@ public class VisualizationResource {
 
     @POST
     @Path("/intersect-individuals")
+    @ApiOperation(value = "Retrieve all individuals, from a specified dataset, valid at the specified time point, that intersects the provided GeoJSON object",
+            notes = "Performs a spatial-temporal intersection for all matching objects for the given dataset. " +
+                    "Allows the user to specify both valid temporal and database temporal intersection points. " +
+                    "This method returns a TrestleIndividual, which represents the entirety of all individual properties",
+            response = TrestleIndividual.class,
+            responseContainer = "List")
+    @ApiResponses({
+            @ApiResponse(code = 440, message = "Object class is not registered with the database"),
+            @ApiResponse(code = 500, message = "Problem while performing spatial intersection")
+    })
     public Response intersectIndividuals(@NotNull IntersectRequest request) {
         final Class<?> datasetClass;
         try {
@@ -163,6 +203,12 @@ public class VisualizationResource {
 
     @POST
     @Path("/compare")
+    @ApiOperation(value = "Performs a spatial comparison between a set of individuals",
+            notes = "Compares the specified individual against the given set of individuals",
+            response = ComparisonReport.class)
+    @ApiResponses({
+            @ApiResponse(code = 500, message = "Error while performing comparison")
+    })
     public Response compareIndividuals(@NotNull ComparisonRequest request) {
 
         final ComparisonReport comparisonReport = new ComparisonReport();
@@ -177,7 +223,7 @@ public class VisualizationResource {
 //            Filter out objects that don't overlap with the base individual, and do the union calculation
             final List<String> compareIndividuals = comparisonReport.getReports()
                     .stream()
-                    .filter((report) -> report.getRelations().contains(ObjectRelation.SPATIAL_OVERLAPS))
+                    .filter(report -> report.getRelations().contains(ObjectRelation.SPATIAL_OVERLAPS))
                     .map(AbstractComparisonReport::getObjectBID)
                     .collect(Collectors.toList());
 
@@ -228,21 +274,21 @@ public class VisualizationResource {
 //                                Now the temporals
 //                                FIXME(nrobison): This is disgusting. Fix it.
                     final TemporalObject validTemporalObject = fact.getValidTemporal();
-                    validTemporal.put("validID", validTemporalObject.getID());
-                    validTemporal.put("validFrom", LocalDateTimeToJavascriptFormatter.format(validTemporalObject.asInterval().getFromTime()));
+                    validTemporal.put(VALID_ID, validTemporalObject.getID());
+                    validTemporal.put(VALID_FROM, localDateTimeToJavascriptFormatter.format(validTemporalObject.asInterval().getFromTime()));
                     if (validTemporalObject.asInterval().isContinuing()) {
-                        validTemporal.put("validTo", "");
+                        validTemporal.put(VALID_TO, "");
                     } else {
-                        validTemporal.put("validTo", LocalDateTimeToJavascriptFormatter.format(((Temporal) validTemporalObject.asInterval().getToTime().get())));
+                        validTemporal.put(VALID_TO, localDateTimeToJavascriptFormatter.format(((Temporal) validTemporalObject.asInterval().getToTime().get())));
                     }
 
                     final TemporalObject databaseTemporalObject = fact.getDatabaseTemporal();
-                    databaseTemporal.put("validID", databaseTemporalObject.getID());
-                    databaseTemporal.put("validFrom", LocalDateTimeToJavascriptFormatter.format(databaseTemporalObject.asInterval().getFromTime()));
+                    databaseTemporal.put(VALID_ID, databaseTemporalObject.getID());
+                    databaseTemporal.put(VALID_FROM, localDateTimeToJavascriptFormatter.format(databaseTemporalObject.asInterval().getFromTime()));
                     if (databaseTemporalObject.asInterval().isContinuing()) {
-                        databaseTemporal.put("validTo", "");
+                        databaseTemporal.put(VALID_TO, "");
                     } else {
-                        databaseTemporal.put("validTo", LocalDateTimeToJavascriptFormatter.format(((Temporal) databaseTemporalObject.asInterval().getToTime().get())));
+                        databaseTemporal.put(VALID_TO, localDateTimeToJavascriptFormatter.format(((Temporal) databaseTemporalObject.asInterval().getToTime().get())));
                     }
 
                     factNode.set("validTemporal", validTemporal);
@@ -273,12 +319,12 @@ public class VisualizationResource {
 //        Now the individual temporal
         final ObjectNode existsTemporal = mapper.createObjectNode();
         final TemporalObject individualTemporalObject = trestleIndividual.getExistsTemporal();
-        existsTemporal.put("validID", individualTemporalObject.getID());
-        existsTemporal.put("validFrom", LocalDateTimeToJavascriptFormatter.format(individualTemporalObject.asInterval().getFromTime()));
+        existsTemporal.put(VALID_ID, individualTemporalObject.getID());
+        existsTemporal.put(VALID_FROM, localDateTimeToJavascriptFormatter.format(individualTemporalObject.asInterval().getFromTime()));
         if (individualTemporalObject.asInterval().isContinuing()) {
-            existsTemporal.put("validTo", "");
+            existsTemporal.put(VALID_TO, "");
         } else {
-            existsTemporal.put("validTo", LocalDateTimeToJavascriptFormatter.format(((Temporal) individualTemporalObject.asInterval().getToTime().get())));
+            existsTemporal.put(VALID_TO, localDateTimeToJavascriptFormatter.format(((Temporal) individualTemporalObject.asInterval().getToTime().get())));
         }
         individualNode.set("existsTemporal", existsTemporal);
 

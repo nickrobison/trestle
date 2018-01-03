@@ -5,6 +5,10 @@ import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +30,7 @@ import static javax.ws.rs.core.Response.ok;
 @Path("/query")
 @AuthRequired({Privilege.USER})
 @Produces(MediaType.APPLICATION_JSON)
+@Api(value = "query")
 public class QueryResource {
 
     private static final Logger logger = LoggerFactory.getLogger(QueryResource.class);
@@ -38,11 +43,21 @@ public class QueryResource {
     }
 
     @GET
+    @ApiOperation(value = "Get reasoner prefixes",
+            notes = "Get a Map of all registered reasoner prefixes",
+            response = String.class,
+            responseContainer = "Map")
     public Map<String, String> getPrefixes() {
         return reasoner.getReasonerPrefixes();
     }
 
     @POST
+    @ApiOperation(value = "Execute SPARQL Query",
+            notes = "Execute SPARQL query against database",
+            response = TrestleResultSet.class)
+    @ApiResponses({
+            @ApiResponse(code = 400, message = "Error while executing query")
+    })
     public Response executeQuery(@NotEmpty String queryString) {
         logger.debug("Executing query {}", queryString);
         try {
