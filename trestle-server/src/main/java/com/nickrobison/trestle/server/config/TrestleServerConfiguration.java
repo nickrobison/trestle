@@ -3,6 +3,7 @@ package com.nickrobison.trestle.server.config;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import io.dropwizard.db.DataSourceFactory;
+import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -25,6 +26,8 @@ public class TrestleServerConfiguration extends Configuration {
     @NotNull
     @JsonProperty
     private TrestleReasonerConfiguration reasoner;
+    @JsonProperty
+    private SwaggerBundleConfiguration swaggerBundleConfiguration;
 
     @JsonProperty("database")
     public DataSourceFactory getDataSourceFactory() {
@@ -39,5 +42,10 @@ public class TrestleServerConfiguration extends Configuration {
     @JsonProperty("reasoner")
     public TrestleReasonerConfiguration getReasonerConfig() {
         return this.reasoner;
+    }
+
+    @JsonProperty("swagger")
+    public SwaggerBundleConfiguration getSwaggerBundleConfiguration() {
+        return this.swaggerBundleConfiguration;
     }
 }

@@ -6,6 +6,8 @@ import com.nickrobison.trestle.server.models.User;
 import com.nickrobison.trestle.server.models.UserDAO;
 import io.dropwizard.hibernate.UnitOfWork;
 import io.dropwizard.jersey.params.LongParam;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.mindrot.BCrypt;
 
 import javax.inject.Inject;
@@ -22,6 +24,7 @@ import static javax.ws.rs.core.Response.ok;
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Path("/users")
+@Api(value = "users")
 public class UserResource {
 
     private final UserDAO userDAO;
@@ -37,6 +40,10 @@ public class UserResource {
     @UnitOfWork
     @Valid
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Returns a list of users",
+            notes = "If a name fragment is provided, returns a list of users matching that name, otherwise returns all users",
+            response = User.class,
+            responseContainer = "List")
     public Response findByName(@AuthRequired({Privilege.ADMIN}) User user, @QueryParam("name") Optional<String> name) {
         if (name.isPresent()) {
             return ok(userDAO.findByName(name.get())).build();

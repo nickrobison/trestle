@@ -15,6 +15,8 @@ import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import io.federecio.dropwizard.swagger.SwaggerBundle;
+import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 
 import java.util.stream.Stream;
 
@@ -58,6 +60,14 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
                 .build();
 
         bootstrap.addBundle(guiceBundle);
+
+//        Add Swagger
+        bootstrap.addBundle(new SwaggerBundle<TrestleServerConfiguration>() {
+            @Override
+            protected SwaggerBundleConfiguration getSwaggerBundleConfiguration(TrestleServerConfiguration trestleServerConfiguration) {
+                return trestleServerConfiguration.getSwaggerBundleConfiguration();
+            }
+        });
     }
 
     @Override
