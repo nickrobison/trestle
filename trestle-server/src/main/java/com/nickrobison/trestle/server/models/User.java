@@ -1,7 +1,6 @@
 package com.nickrobison.trestle.server.models;
 
 import com.nickrobison.trestle.server.auth.Privilege;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
