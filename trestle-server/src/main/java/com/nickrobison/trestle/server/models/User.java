@@ -5,6 +5,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -117,30 +118,22 @@ public class User {
     public void setPrivileges(int privileges) { this.privileges = privileges; }
 
     @Override
-    public boolean equals(@Nullable Object o) {
+    public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         User user = (User) o;
-
-        if (getId() != user.getId()) return false;
-        if (getFirstName() != null ? !getFirstName().equals(user.getFirstName()) : user.getFirstName() != null)
-            return false;
-        if (getLastName() != null ? !getLastName().equals(user.getLastName()) : user.getLastName() != null)
-            return false;
-        if (!getUsername().equals(user.getUsername())) return false;
-        if (!getEmail().equals(user.getEmail())) return false;
-        return getPrivilegeSet().equals(user.getPrivilegeSet());
+        return id == user.id &&
+                privileges == user.privileges &&
+                Objects.equals(firstName, user.firstName) &&
+                Objects.equals(lastName, user.lastName) &&
+                Objects.equals(username, user.username) &&
+                Objects.equals(email, user.email) &&
+                Objects.equals(password, user.password);
     }
 
     @Override
     public int hashCode() {
-        int result = (int) (getId() ^ (getId() >>> 32));
-        result = 31 * result + (getFirstName() != null ? getFirstName().hashCode() : 0);
-        result = 31 * result + (getLastName() != null ? getLastName().hashCode() : 0);
-        result = 31 * result + getUsername().hashCode();
-        result = 31 * result + getEmail().hashCode();
-        result = 31 * result + getPrivilegeSet().hashCode();
-        return result;
+
+        return Objects.hash(id, firstName, lastName, username, email, password, privileges);
     }
 }
