@@ -37,4 +37,10 @@ export class IndexService {
             })
             .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
+
+    public rebuildIndex(index: string): Observable<void> {
+        return this.http
+            .get("/cache/rebuild/" + index.toLocaleLowerCase())
+            .catch((error: Error) => Observable.throw(error || "Server Error"));
+    }
 }

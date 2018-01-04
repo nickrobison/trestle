@@ -21,6 +21,8 @@ import { IndexComponent } from "./indicies/index.component";
 import { TreeGraphComponent } from "./indicies/tree-graph/tree-graph.component";
 import { IndexService } from "./indicies/index.service";
 import { IndexTableComponent } from "./indicies/index-table/index-table.component";
+import { MatDialogModule } from "@angular/material";
+import { WarningDialogComponent } from "./indicies/warning-dialog/warning-dialog-component";
 
 @NgModule({
     declarations: [DashboardComponent,
@@ -31,7 +33,8 @@ import { IndexTableComponent } from "./indicies/index-table/index-table.componen
         MetricsGraph,
         IndexComponent,
         TreeGraphComponent,
-        IndexTableComponent],
+        IndexTableComponent,
+        WarningDialogComponent],
     imports: [
         CommonModule,
         FormsModule,
@@ -43,7 +46,7 @@ import { IndexTableComponent } from "./indicies/index-table/index-table.componen
         SharedModule
     ],
     providers: [MetricsService, IndexService],
-    entryComponents: [UserAddDialog],
+    entryComponents: [UserAddDialog, WarningDialogComponent],
     bootstrap: [AdminComponent]
 })
 

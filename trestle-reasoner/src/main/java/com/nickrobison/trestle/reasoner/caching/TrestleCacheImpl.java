@@ -309,6 +309,32 @@ public class TrestleCacheImpl implements TrestleCache {
     }
 
     @Override
+    public void rebuildValidIndex() {
+        try {
+            cacheLock.lockWrite();
+            this.validIndex.rebuildIndex();
+        } catch (InterruptedException e) {
+            logger.error("Cannot get write lock to rebuild valid index", e);
+            Thread.currentThread().interrupt();
+        } finally {
+            cacheLock.unlockWrite();
+        }
+    }
+
+    @Override
+    public void rebuildDBIndex() {
+        try {
+            cacheLock.lockWrite();
+            this.dbIndex.rebuildIndex();
+        } catch (InterruptedException e) {
+            logger.error("Cannot get write lock to rebuild db index", e);
+            Thread.currentThread().interrupt();
+        } finally {
+            cacheLock.unlockWrite();
+        }
+    }
+
+    @Override
     public void shutdown(boolean drop) {
         logger.info("Shutting down TrestleCache");
         if (drop) {

@@ -8,9 +8,8 @@ import com.nickrobison.trestle.server.modules.ReasonerModule;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -36,5 +35,29 @@ public class CacheResource {
         }
         return Response.ok()
                 .entity(cacheStatistics).build();
+    }
+
+    @GET
+    @Path("/rebuild/{index}")
+    public Response rebuildIndex(@NotNull @PathParam(value = "index") String index) {
+        switch (index) {
+            case "valid": {
+                try {
+                    this.cache.rebuildValidIndex();
+                    return Response.ok().entity("Rebuilt Valid index").build();
+                } catch (Exception e) {
+                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e).build();
+                }
+            }
+            case "db": {
+                try {
+                    this.cache.rebuildDBIndex();
+                    return Response.ok().entity("Rebuilt DB index").build();
+                } catch (Exception e) {
+                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e).build();
+                }
+            }
+            default: return Response.status(Response.Status.NOT_IMPLEMENTED).entity("Not a recognized cache").build();
+        }
     }
 }

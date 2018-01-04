@@ -102,5 +102,15 @@ public interface TrestleCache {
      */
     @Nullable TrestleCacheStatistics getCacheStatistics();
 
+    /**
+     * Rebuild valid index, does not remove data, but reorganizes it
+     */
+    void rebuildValidIndex();
+
+    /**
+     * Rebuild DB index, does not remove data, but reorganizes it
+     */
+    void rebuildDBIndex();
+
     void shutdown(boolean drop);
 }
