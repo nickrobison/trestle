@@ -263,9 +263,10 @@ public class TDTreeHelpers {
                         normalizeZero(parentEnd - length));
             }
             case 1: {
+                final double l2 = length / ROOTTWO;
                 return new TriangleApex(
-                        normalizeZero(parentStart - (length / ROOTTWO)),
-                        normalizeZero(parentEnd - (length / ROOTTWO)));
+                        normalizeZero(parentStart - l2),
+                        normalizeZero(parentEnd - l2));
             }
             case 2: {
                 return new TriangleApex(
@@ -273,9 +274,10 @@ public class TDTreeHelpers {
                         parentEnd);
             }
             case 3: {
+                final double l2 = length / ROOTTWO;
                 return new TriangleApex(
-                        normalizeZero(parentStart - (length / ROOTTWO)),
-                        normalizeZero(parentEnd + length));
+                        normalizeZero(parentStart - l2),
+                        normalizeZero(parentEnd + l2));
             }
             case 4: {
                 return new TriangleApex(
@@ -283,9 +285,10 @@ public class TDTreeHelpers {
                         normalizeZero(parentEnd + length));
             }
             case 5: {
+                final double l2 = length / ROOTTWO;
                 return new TriangleApex(
-                        normalizeZero(parentStart + (length / ROOTTWO)),
-                        normalizeZero(parentEnd + (length / ROOTTWO)));
+                        normalizeZero(parentStart + l2),
+                        normalizeZero(parentEnd + l2));
             }
             case 6: {
                 return new TriangleApex(
@@ -293,9 +296,10 @@ public class TDTreeHelpers {
                         parentEnd);
             }
             case 7: {
+                final double l2 = length / ROOTTWO;
                 return new TriangleApex(
-                        normalizeZero(parentStart + (length / ROOTTWO)),
-                        normalizeZero(parentEnd - (length / ROOTTWO)));
+                        normalizeZero(parentStart + l2),
+                        normalizeZero(parentEnd - l2));
             }
             default: {
                 throw new IllegalStateException(ILLEGAL_DIRECTION);
