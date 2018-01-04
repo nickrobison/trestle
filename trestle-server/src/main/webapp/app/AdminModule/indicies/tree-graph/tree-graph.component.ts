@@ -1,10 +1,10 @@
-import { AfterViewInit, Component, ElementRef, Input, OnChanges, SimpleChanges, ViewChild } from "@angular/core";
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from "@angular/core";
 import { ScaleLinear, scaleLinear } from "d3-scale";
 import { BaseType, select, Selection } from "d3-selection";
 import * as moment from "moment";
 import { Moment } from "moment";
 import { axisBottom, axisLeft } from "d3-axis";
-import { ICacheStatistics, IIndexLeafStatistics } from "../index.service";
+import { IIndexLeafStatistics } from "../index.service";
 import { interpolateHsl } from "d3-interpolate";
 import { BehaviorSubject } from "rxjs/BehaviorSubject";
 import { Subject } from "rxjs/Subject";
@@ -27,6 +27,8 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
     public element: ElementRef;
     @Input()
     public data: IGraphHeader;
+    @Output()
+    public hovered: EventEmitter<string>;
     private htmlElement: HTMLElement;
     private host: Selection<HTMLElement, IIndexLeafStatistics, null, undefined>;
     private svg: Selection<BaseType, IIndexLeafStatistics, null, undefined>;
@@ -38,13 +40,15 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
     private x: ScaleLinear<number, number>;
     private y: ScaleLinear<number, number>;
     private colorScale: (value: number) => string;
-    private dataSubject: Subject<IGraphHeader | undefined> = new BehaviorSubject(undefined);
+    private dataSubject: Subject<IGraphHeader | undefined>;
     private rounder: RoundingPipe;
 
     public constructor() {
         this.maxTime = moment("5000-01-01").startOf("year");
         this.colorScale = interpolateHsl("steelblue", "brown");
         this.rounder = new RoundingPipe();
+        this.hovered = new EventEmitter<string>();
+        this.dataSubject = new BehaviorSubject(undefined);
     }
 
     public ngAfterViewInit(): void {
@@ -140,8 +144,15 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
             // .attr("fill", (d) => this.colorScale((d.records / 20) + 0.01))
             .attr("fill", "blue")
             .style("fill-opacity", 0.7)
+            // Hover handlers
+            .on("mouseover", this.hoverHandler)
             .merge(leafData);
 
+    }
+
+    private hoverHandler = (d: IIndexLeafStatistics): void => {
+        console.debug("Hovered", d.leafID.toString());
+        this.hovered.next(d.leafID.toString());
     }
 
     /**

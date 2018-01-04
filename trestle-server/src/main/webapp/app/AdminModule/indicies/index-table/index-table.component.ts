@@ -10,17 +10,20 @@ export class IndexTableComponent implements OnChanges {
 
     @Input()
     public data: IIndexLeafStatistics[];
+    public sortedData: IIndexLeafStatistics[];
 
-    public constructor() {
-
-    }
+    public constructor() { }
 
     public ngOnChanges(changes: SimpleChanges): void {
         const data = changes["data"];
         if (data.currentValue !== data.previousValue) {
             console.debug("Tabling new data");
+            this.sortedData = (data.currentValue as IIndexLeafStatistics[])
+                .sort((a, b) => a.leafID - b.leafID);
         }
     }
 
-
+    public printLeaf(leaf: IIndexLeafStatistics): void {
+        console.debug(leaf);
+    }
 }
