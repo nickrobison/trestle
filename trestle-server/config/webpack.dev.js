@@ -4,8 +4,10 @@
 const webpackMerge = require("webpack-merge");
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const DefinePlugin = require('webpack/lib/DefinePlugin');
+const CSPWebpackPlugin = require("csp-webpack-plugin");
 const commonConfig = require("./webpack.common");
 const helpers = require("./helpers");
+const env = require("./env");
 
 var devOptions = {
     entry: {
@@ -46,7 +48,11 @@ var devOptions = {
         new ExtractTextPlugin("[name].css"),
         new DefinePlugin({
             ENV: JSON.stringify("development")
-        })
+        }),
+        // Merge the common CSP configuration along with the script settings to allow dynamic execution
+        new CSPWebpackPlugin(Object.assign(env.csp, {
+            "script-src": ["'self'", "'nonce-YLMZop38Ktla8/hmmA=='", "'unsafe-inline'", "'unsafe-eval'"]
+        }))
     ]
 };
 

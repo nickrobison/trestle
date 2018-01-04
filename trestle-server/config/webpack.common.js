@@ -111,11 +111,7 @@ var options = {
         new webpack.optimize.ModuleConcatenationPlugin(),
         new HtmlWebpackPlugin({
             template: "./src/main/webapp/app/index.html"
-        }),
-        new webpack.ContextReplacementPlugin(
-            /(.+)?angular(\\|\/)core(.+)?/,
-            helper.root("/src/main/webapp/")
-        )
+        })
     ]
 };
 module.exports = options;

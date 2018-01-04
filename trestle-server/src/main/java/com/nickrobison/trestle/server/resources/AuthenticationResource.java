@@ -4,6 +4,10 @@ import com.nickrobison.trestle.server.auth.UserCredentials;
 import com.nickrobison.trestle.server.models.User;
 import com.nickrobison.trestle.server.models.UserDAO;
 import io.dropwizard.hibernate.UnitOfWork;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import jwt4j.JWTHandler;
 import org.mindrot.BCrypt;
 import org.slf4j.Logger;
@@ -27,11 +31,13 @@ import static javax.ws.rs.core.Response.*;
  * Created by nrobison on 1/19/17.
  */
 @Path("/auth")
+@Api(value = "auth")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class AuthenticationResource {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationResource.class);
+    public static final String USER_IS_NOT_AUTHORIZED = "User is not authorized";
     private final UserDAO userDAO;
     private final JWTHandler<User> jwtHandler;
 
@@ -45,6 +51,12 @@ public class AuthenticationResource {
     @POST
     @UnitOfWork
     @Path("/login")
+    @ApiOperation(value = "Authorize user, returning JWT token",
+            notes = "Authorize user and return a new JWT token, if the username/password is correct",
+            response = String.class)
+    @ApiResponses({
+            @ApiResponse(code = 401, message = USER_IS_NOT_AUTHORIZED)
+    })
     public Response login(@Context ContainerRequestContext context, @Valid UserCredentials user) {
         final String name = user.getUsername();
         final Optional<User> userOptional = userDAO.findByUsername(name);
@@ -57,15 +69,16 @@ public class AuthenticationResource {
                 return ok(jwtToken).build();
             } else {
                 logger.warn("Wrong password for user {}", name);
-                return status(Status.UNAUTHORIZED).build();
+                return status(Status.UNAUTHORIZED).entity(USER_IS_NOT_AUTHORIZED).build();
             }
         }
         logger.warn("Unauthorized user {}", name);
-        return status(Status.UNAUTHORIZED).build();
+        return status(Status.UNAUTHORIZED).entity(USER_IS_NOT_AUTHORIZED).build();
     }
 
     @POST
     @Path("/logout")
+    @ApiOperation(value = "Logout user", notes = "Log user out of the system")
     public Response logout(@Context ContainerRequestContext context) {
         return ok().build();
     }

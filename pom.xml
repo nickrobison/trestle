@@ -424,6 +424,11 @@
             <url>file://${user.dir}/src/main/resources/repo</url>
         </repository>
         <repository>
+            <id>central-bintray</id>
+            <name>bintray</name>
+            <url>http://jcenter.bintray.com</url>
+        </repository>
+        <repository>
             <id>central</id>
             <name>maven</name>
             <url>http://repo1.maven.org/maven2/</url>
