@@ -74,6 +74,8 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
     }
 
     private plotData(data: IGraphHeader): void {
+        // Nuke everything, because I can't figure out the update pattern
+        this.svg.selectAll("*").remove();
         // Calculate the max time, which need to adjust from the cache values
         this.maxTime = moment(data.maxValue - data.offsetValue);
 

@@ -22,13 +22,7 @@ export class IndexComponent implements AfterViewInit {
     }
 
     public ngAfterViewInit(): void {
-        this.is.getIndexStatistics()
-            .subscribe((data) => {
-                console.debug("Data:", data);
-                this.stats = data;
-                this.validStats = data.validLeafStats;
-                this.dbStats = data.dbLeafStats;
-            });
+        this.loadStatistics();
     }
 
     public updateSelected(event: string, updateVariable: string): void {
@@ -51,12 +45,32 @@ export class IndexComponent implements AfterViewInit {
                     const indexName = object.split(" ")[0];
                     this.is.rebuildIndex(indexName)
                         .subscribe(() => {
-                            console.debug("%s is rebuilt", indexName);
+                            console.debug("%s Index is rebuilt", indexName);
+                            //    Finally, reload the data on the page
+                            this.loadStatistics();
                         });
                 // Purge the cache, which drops the index
+                } else {
+                    const cacheName = object.split(" ")[0];
+                    this.is.purgeCache(cacheName)
+                        .subscribe(() => {
+                            console.debug("%s Cache has been purged", cacheName);
+                            //    Finally, reload the data on the page
+                            this.loadStatistics();
+                        });
                 }
             }
         });
 
+    }
+
+    private loadStatistics(): void {
+        this.is.getIndexStatistics()
+            .subscribe((data) => {
+                console.debug("Data:", data);
+                this.stats = data;
+                this.validStats = data.validLeafStats;
+                this.dbStats = data.dbLeafStats;
+            });
     }
 }

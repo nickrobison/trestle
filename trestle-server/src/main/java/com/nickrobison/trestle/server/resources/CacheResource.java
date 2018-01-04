@@ -60,4 +60,17 @@ public class CacheResource {
             default: return Response.status(Response.Status.NOT_IMPLEMENTED).entity("Not a recognized cache").build();
         }
     }
+
+    @GET
+    @Path("/purge/{cache}")
+    public Response purgeCache(@PathParam("cache") String cacheToPurge) {
+        if (cacheToPurge.equals("individual")) {
+            this.cache.purgeIndividualCache();
+            return Response.ok().entity("Successfully purged Individual cache").build();
+        } else if (cacheToPurge.equals("object")) {
+            this.cache.purgeObjectCache();
+            return Response.ok().entity("Successfully purged Object cache").build();
+        }
+        return Response.status(Response.Status.NOT_IMPLEMENTED).entity("Not a recognized cache").build();
+    }
 }

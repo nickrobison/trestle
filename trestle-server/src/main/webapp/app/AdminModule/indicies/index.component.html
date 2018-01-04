@@ -11,5 +11,5 @@
                 (hovered)="updateSelected($event, dbHover)"></tree-graph>
     <button mat-raised-button color="accent" (click)="openDialog('Rebuild', 'DB Index')">REBUILD INDEX</button>
     <index-table #db_table [data]="stats.dbLeafStats"></index-table>
-    <button mat-raised-button color="warn">PURGE CACHE</button>
+    <button mat-raised-button color="warn" (click)="openDialog('Purge', 'Object Cache')">PURGE CACHE</button>
 </div>

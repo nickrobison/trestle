@@ -216,6 +216,12 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     }
 
     @Override
+    public void dropIndex() {
+        this.leafs = new ArrayList<>();
+        this.leafs.add(new SplittableLeaf<>(1, rootTuple, this.blockSize));
+    }
+
+    @Override
     public double calculateFragmentation() {
         return this.leafs
                 .stream()

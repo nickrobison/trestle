@@ -80,6 +80,16 @@ public class TrestleCacheNoop implements TrestleCache {
     }
 
     @Override
+    public void purgeIndividualCache() {
+//        Not implemented
+    }
+
+    @Override
+    public void purgeObjectCache() {
+//        Not implemented
+    }
+
+    @Override
     public void shutdown(boolean drop) {
 //        Not implemented
     }

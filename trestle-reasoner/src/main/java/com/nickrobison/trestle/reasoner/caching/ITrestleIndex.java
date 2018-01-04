@@ -106,6 +106,11 @@ public interface ITrestleIndex<Value> {
     void rebuildIndex();
 
     /**
+     * Drop index, which removes all values
+     */
+    void dropIndex();
+
+    /**
      * Compute statistics on index leafs
      *
      * @return - {@link List} of {@link LeafStatistics}

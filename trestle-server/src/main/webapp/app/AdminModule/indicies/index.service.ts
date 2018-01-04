@@ -43,4 +43,10 @@ export class IndexService {
             .get("/cache/rebuild/" + index.toLocaleLowerCase())
             .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
+
+    public purgeCache(cache: string): Observable<void> {
+        return this.http
+            .get("/cache/purge/" + cache.toLocaleLowerCase())
+            .catch((error: Error) => Observable.throw(error || "Server Error"));
+    }
 }

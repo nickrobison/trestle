@@ -112,5 +112,15 @@ public interface TrestleCache {
      */
     void rebuildDBIndex();
 
+    /**
+     * Purge individual cache
+     */
+    void purgeIndividualCache();
+
+    /**
+     * Purge Object cache and drop indexes
+     */
+    void purgeObjectCache();
+
     void shutdown(boolean drop);
 }

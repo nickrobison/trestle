@@ -46,6 +46,7 @@ public class TrestleCacheImpl implements TrestleCache {
     private final @GuardedBy("cacheLock") Cache<IRI, TrestleIndividual> trestleIndividualCache;
     private final @GuardedBy("cacheLock") ITrestleIndex<TrestleIRI> validIndex;
     private final @GuardedBy("cacheLock") ITrestleIndex<TrestleIRI> dbIndex;
+    private final MutableCacheEntryListenerConfiguration<IRI, Object> objectEvictionListener;
 
     @Inject
     @SuppressWarnings({"argument.type.incompatible"})
@@ -71,8 +72,8 @@ public class TrestleCacheImpl implements TrestleCache {
         logger.debug("Creating cache {}", TRESTLE_OBJECT_CACHE);
         this.trestleObjectCache = cacheManager.getCache(TRESTLE_OBJECT_CACHE, IRI.class, Object.class);
 
-        final MutableCacheEntryListenerConfiguration<IRI, Object> config = new MutableCacheEntryListenerConfiguration<>(FactoryBuilder.factoryOf(listener), null, false, cacheConfig.getBoolean("synchronous"));
-        trestleObjectCache.registerCacheEntryListener(config);
+        objectEvictionListener = new MutableCacheEntryListenerConfiguration<>(FactoryBuilder.factoryOf(listener), null, false, cacheConfig.getBoolean("synchronous"));
+        trestleObjectCache.registerCacheEntryListener(objectEvictionListener);
 
 //        Create the trestle individual cache
         logger.debug("Creating cache {}", TRESTLE_INDIVIDUAL_CACHE);
@@ -331,6 +332,33 @@ public class TrestleCacheImpl implements TrestleCache {
             Thread.currentThread().interrupt();
         } finally {
             cacheLock.unlockWrite();
+        }
+    }
+
+    @Override
+    public void purgeIndividualCache() {
+        logger.debug("Purging individual cache");
+        this.trestleIndividualCache.removeAll();
+    }
+
+    @Override
+    public void purgeObjectCache() {
+        logger.debug("Purging object cache");
+        try {
+            cacheLock.lockWrite();
+//            Remove the listener and do everything
+            this.trestleObjectCache.deregisterCacheEntryListener(this.objectEvictionListener);
+            this.trestleObjectCache.removeAll();
+            this.validIndex.dropIndex();
+            this.dbIndex.dropIndex();
+//            Purge indexes
+        } catch (InterruptedException e) {
+            logger.error("Cannot get write lock to Purge object cache", e);
+            Thread.currentThread().interrupt();
+        } finally {
+            cacheLock.unlockWrite();
+//            Re-enable the listener
+            this.trestleObjectCache.registerCacheEntryListener(this.objectEvictionListener);
         }
     }
 
