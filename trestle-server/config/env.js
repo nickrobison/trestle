@@ -6,12 +6,11 @@ var configure = function () {
 };
 
 var cspData = {
-    "default-src": ["'self'"],
+    "default-src": ["'self'", "blob:"],
     "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
     "img-src": ["'self'", "data:", "blob:", "https://www.gravatar.com"],
     "font-src": ["'self'", "https://fonts.gstatic.com"],
-    "connect-src": ["'self'", "https://*.mapbox.com"],
-    "worker-src": ["'self'","blob:"]
+    "connect-src": ["'self'", "https://*.mapbox.com"]
 };
 
 exports.configure = configure;

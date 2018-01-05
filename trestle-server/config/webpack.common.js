@@ -110,7 +110,7 @@ var options = {
         }),
         new webpack.optimize.ModuleConcatenationPlugin(),
         new HtmlWebpackPlugin({
-            template: "./src/main/webapp/app/index.html"
+            template: "./src/main/webapp/workspace/index.html"
         })
     ]
 };

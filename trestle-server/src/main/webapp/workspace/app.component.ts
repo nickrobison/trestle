@@ -21,7 +21,7 @@ interface MySideNav {
 @Component({
     selector: "app-root",
     templateUrl: "./app.component.html",
-    styleUrls: ["../theme.scss", "./app.component.css"],
+    styleUrls: ["./theme.scss", "./app.component.css"],
     encapsulation: ViewEncapsulation.None
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {

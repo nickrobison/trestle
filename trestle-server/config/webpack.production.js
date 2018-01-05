@@ -18,7 +18,7 @@ var prodOptions = {
     entry: {
         "polyfills": "./src/main/webapp/polyfills.ts",
         "vendor": "./src/main/webapp/vendor.ts",
-        "app": "./src/main/webapp/bootstrap.ts"
+        "app": "./src/main/webapp/workspace/bootstrap.ts"
     },
     devtool: "source-map",
     output: {
@@ -41,7 +41,7 @@ var prodOptions = {
     plugins: [
         new ngtools.AngularCompilerPlugin({
             tsConfigPath: helpers.root("tsconfig.json"),
-            entryModule: helpers.root("src/main/webapp/app/app.module#AppModule")
+            entryModule: helpers.root("src/main/webapp/workspace/app.module#AppModule")
         }),
         new ExtractTextPlugin("[name].css"),
         new DefinePlugin({
@@ -71,7 +71,7 @@ var prodOptions = {
         }),
         // Merge the common CSP configuration along with the script settings that disallow inline execution, since we're all AOT now
         new CSPWebpackPlugin(Object.assign(env.csp, {
-            "script-src": ["'self'", "'nonce-YLMZop38Ktla8/hmmA=='"]
+            "script-src": ["'self'"]
         }))
     ]
 };

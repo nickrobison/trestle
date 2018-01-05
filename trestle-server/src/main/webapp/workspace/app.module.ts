@@ -14,7 +14,7 @@ import { NavigationModule } from "./NavigationModule/navigation.module";
 import { UIModule } from "./UIModule/ui.module";
 import { MaterialModule } from "./MaterialModule/material.module";
 import { SharedModule } from "./SharedModule/shared.module";
-import "./rxjs-operators";
+import "../rxjs-operators";
 
 @NgModule({
     imports: [
