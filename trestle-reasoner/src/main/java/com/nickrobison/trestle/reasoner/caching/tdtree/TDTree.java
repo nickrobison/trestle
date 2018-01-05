@@ -37,8 +37,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
 
     private static final Logger logger = LoggerFactory.getLogger(TDTree.class);
     private static final String EMPTY_LEAF_VALUE = "Leaf {} does not have {}@{}";
-    static long maxValue = Duration.between(LocalDate.of(0, 1, 1).atStartOfDay(),
-            LocalDate.of(5000, 1, 1).atStartOfDay()).toMillis();
+    static long maxValue;
     static final TupleSchema leafSchema = buildLeafSchema();
 
     private final int blockSize;
@@ -47,6 +46,17 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     private final FastTuple rootTuple;
     private final AtomicLong cacheSize = new AtomicLong();
 
+    static {
+        TDTree.resetMaxValue();
+    }
+
+    /**
+     * Resets TDTree max value to what it's supposed to be, this is handle the funky unit tests and should NOT be called during normal operation
+     */
+    static void resetMaxValue() {
+        maxValue = Duration.between(LocalDate.of(0, 1, 1).atStartOfDay(),
+                LocalDate.of(5000, 1, 1).atStartOfDay()).toMillis();
+    }
 
     public TDTree(int blockSize) throws Exception {
         logger.debug("Creating TD-Tree index");

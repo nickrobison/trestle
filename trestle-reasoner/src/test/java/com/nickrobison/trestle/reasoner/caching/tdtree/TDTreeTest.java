@@ -1,8 +1,11 @@
 package com.nickrobison.trestle.reasoner.caching.tdtree;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+import java.time.LocalDate;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -93,5 +96,14 @@ public class TDTreeTest {
         final TDTree<String> tdTree = new TDTree<>(2);
         assertAll(() -> assertThrows(IllegalArgumentException.class, () -> tdTree.insertValue("hello", 1, 12347, "overflow")),
                 () -> assertThrows(IllegalArgumentException.class, () -> tdTree.insertValue("hello", -1, 5, "overflow")));
+    }
+
+    /**
+     * We need this because other tests rely on the max value being something reasonable, not this funky small value that we use here
+     * Yes, this is gross, but it works.
+     */
+    @AfterAll
+    public static void resetMaxValue() {
+        TDTree.resetMaxValue();
     }
 }
