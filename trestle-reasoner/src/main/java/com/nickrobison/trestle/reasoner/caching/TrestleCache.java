@@ -95,5 +95,32 @@ public interface TrestleCache {
      */
     void deleteTrestleIndividual(OWLNamedIndividual individual);
 
+    /**
+     * Get statistics for the underlying caches
+     *
+     * @return - {@link TrestleCacheStatistics}
+     */
+    @Nullable TrestleCacheStatistics getCacheStatistics();
+
+    /**
+     * Rebuild valid index, does not remove data, but reorganizes it
+     */
+    void rebuildValidIndex();
+
+    /**
+     * Rebuild DB index, does not remove data, but reorganizes it
+     */
+    void rebuildDBIndex();
+
+    /**
+     * Purge individual cache
+     */
+    void purgeIndividualCache();
+
+    /**
+     * Purge Object cache and drop indexes
+     */
+    void purgeObjectCache();
+
     void shutdown(boolean drop);
 }

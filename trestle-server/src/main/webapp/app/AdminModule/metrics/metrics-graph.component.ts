@@ -1,16 +1,13 @@
 /**
  * Created by nrobison on 4/4/17.
  */
-import {
-    AfterViewInit, Component, ElementRef, Input, OnChanges, SimpleChange, SimpleChanges,
-    ViewChild
-} from "@angular/core";
-import { Selection, select, BaseType } from "d3-selection";
+import { AfterViewInit, Component, ElementRef, Input, OnChanges, SimpleChange, ViewChild } from "@angular/core";
+import { BaseType, select, Selection } from "d3-selection";
 import { scaleLinear, scaleOrdinal, scaleTime, ScaleTime, schemeCategory10 } from "d3-scale";
 import { curveBasis, line } from "d3-shape";
 import { max, min } from "d3-array";
 import { axisBottom, axisLeft } from "d3-axis";
-import { IMetricsData, IMetricsValue } from "./metrics.service";
+import { IMetricsData } from "./metrics.service";
 
 interface ID3Margin {
     top: number;
@@ -114,7 +111,7 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
         y.domain([
             (min(this.graphData,
                 (d) => min(d.values,
-                    (d) => d.value) || 0)  || 0),
+                    (mv) => mv.value) || 0) || 0),
             (max(this.graphData,
                 (d) => max(d.values,
                     (mv) => mv.value) || 0) || 0)

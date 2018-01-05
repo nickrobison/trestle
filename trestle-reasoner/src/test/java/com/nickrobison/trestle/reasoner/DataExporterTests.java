@@ -98,6 +98,10 @@ public class DataExporterTests extends AbstractReasonerTest {
 //        Should have 197 features, because some don't exist
         assertEquals(197, featuresNode.size(), "Should have 197 features");
 
+//        Remove the file
+        assertTrue(file.delete(), "Should be able to delete file");
+
+
 //        Check for Shapefile
         final File shapeZip = reasoner.exportDataSetObjects(SimpleGAULObject.class, ids, LocalDate.of(1993, 1, 1), null, ITrestleExporter.DataType.SHAPEFILE);
 

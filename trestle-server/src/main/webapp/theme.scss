@@ -54,3 +54,8 @@ $theme: mat-light-theme($primary, $accent, $warn);
   font-style: italic;
   color: gray;
 }
+
+.disabled_text {
+  text-align: center;
+  vertical-align: center;
+}

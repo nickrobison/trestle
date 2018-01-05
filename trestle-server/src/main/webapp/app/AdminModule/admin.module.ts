@@ -16,7 +16,13 @@ import { UserModule } from "../UserModule/user.module";
 import { AdminRoutes } from "../admin.routing";
 import { UIModule } from "../UIModule/ui.module";
 import { MaterialModule } from "../MaterialModule/material.module";
-import {SharedModule} from "../SharedModule/shared.module";
+import { SharedModule } from "../SharedModule/shared.module";
+import { IndexComponent } from "./indicies/index.component";
+import { TreeGraphComponent } from "./indicies/tree-graph/tree-graph.component";
+import { IndexService } from "./indicies/index.service";
+import { IndexTableComponent } from "./indicies/index-table/index-table.component";
+import { MatDialogModule } from "@angular/material";
+import { WarningDialogComponent } from "./indicies/warning-dialog/warning-dialog-component";
 
 @NgModule({
     declarations: [DashboardComponent,
@@ -24,7 +30,11 @@ import {SharedModule} from "../SharedModule/shared.module";
         UsersComponent,
         UserAddDialog,
         MetricsComponent,
-        MetricsGraph],
+        MetricsGraph,
+        IndexComponent,
+        TreeGraphComponent,
+        IndexTableComponent,
+        WarningDialogComponent],
     imports: [
         CommonModule,
         FormsModule,
@@ -35,8 +45,8 @@ import {SharedModule} from "../SharedModule/shared.module";
         MaterialModule,
         SharedModule
     ],
-    providers: [MetricsService],
-    entryComponents: [UserAddDialog],
+    providers: [MetricsService, IndexService],
+    entryComponents: [UserAddDialog, WarningDialogComponent],
     bootstrap: [AdminComponent]
 })
 

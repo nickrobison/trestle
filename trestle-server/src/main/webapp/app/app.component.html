@@ -35,6 +35,10 @@
                     <mat-icon>show_chart</mat-icon>METRICS</a>
                 <a id="users" mat-list-item [routerLink]="['admin/users']" aria-label="users link">
                     <mat-icon>supervisor_account</mat-icon>USERS</a>
+                <div *ngIf="userHasRequiredPermissions([Privileges.DBA])">
+                    <a id="index" mat-list-item [routerLink]="['admin/index']" aria-label="index link">
+                        <mat-icon>supervisor_account</mat-icon>INDICIES</a>
+                </div>
             </div>
             <mat-divider></mat-divider>
         </mat-nav-list>

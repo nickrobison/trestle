@@ -8,6 +8,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,6 +52,11 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
     }
 
     @Override
+    public String getLeafType() {
+        return this.getClass().getSimpleName();
+    }
+
+    @Override
     @Nullable Value getValue(String objectID, long atTime) {
         final TupleExpressionGenerator.BooleanTupleExpression eval = buildFindExpression(objectID, atTime);
         return getValue(eval);
@@ -82,7 +89,7 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
 //                If we don't have any more space, time to split
             final double parentStart = this.leafMetadata.getDouble(1);
             final double parentEnd = this.leafMetadata.getDouble(2);
-            final short parentDirection = this.leafMetadata.getShort(3);
+            final int parentDirection = this.leafMetadata.getInt(3);
             final int idLength = getIDLength(this.leafID);
             final TDTreeHelpers.TriangleApex childApex = TDTreeHelpers.calculateChildApex(idLength + 1,
                     parentDirection,
@@ -114,18 +121,18 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
                     lowerChild = TDTree.leafSchema.createTuple();
                     lowerChild.setDouble(1, childApex.start);
                     lowerChild.setDouble(2, childApex.end);
-                    lowerChild.setShort(3, (short) childDirection.lowerChild);
+                    lowerChild.setInt(3, childDirection.lowerChild);
                     higherChild = TDTree.leafSchema.createTuple();
                     higherChild.setDouble(1, childApex.start);
                     higherChild.setDouble(2, childApex.end);
-                    higherChild.setShort(3, (short) childDirection.higherChild);
+                    higherChild.setInt(3, childDirection.higherChild);
                 } catch (Exception e) {
                     throw new RuntimeException("Unable to build tuples for child triangles", e);
                 }
 
                 lowerChildLeaf = new SplittableLeaf<>(leafID << 1, lowerChild, this.blockSize);
                 higherChildLeaf = new SplittableLeaf<>((leafID << 1) | 1, higherChild, this.blockSize);
-                logger.trace("Splitting {} into {} and {}", this.getBinaryStringID(), lowerChildLeaf.getBinaryStringID(), lowerChildLeaf.getBinaryStringID());
+                logger.trace("Splitting {} into {} and {}", this.getBinaryStringID(), lowerChildLeaf.getBinaryStringID(), higherChildLeaf.getBinaryStringID());
             }
             final LeafSplit leafSplit = new LeafSplit(this.leafID, lowerChildLeaf, higherChildLeaf);
 //            Divide values into children, by testing to see if they belong to the lower child
@@ -134,11 +141,13 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
                 FastTuple key = keys[i];
                 if (key != null) {
                     if (TDTreeHelpers.pointInTriangle(key.getLong(2), key.getLong(3), lowerChildVerticies)) {
+                        logger.trace("Inserting {} into lower child", key);
                         final LeafSplit lowerChildSplit = lowerChildLeaf.insert(key, values[i]);
                         if (lowerChildSplit != null) {
                             leafSplit.lowerSplit = lowerChildSplit;
                         }
                     } else {
+                        logger.trace("Inserting {} into higher child", key);
                         final LeafSplit higherChildSplit = higherChildLeaf.insert(key, values[i]);
                         if (higherChildSplit != null) {
                             leafSplit.higherSplit = higherChildSplit;
@@ -238,5 +247,16 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
             records++;
         }
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return "SplittableLeaf{" +
+                "binaryID='" + binaryID + '\'' +
+                ", records=" + records +
+                ", start=" + Instant.ofEpochMilli(Double.valueOf(leafMetadata.getDouble(1)).longValue()).atOffset(ZoneOffset.UTC) +
+                ", end=" + Instant.ofEpochMilli(Double.valueOf(leafMetadata.getDouble(2)).longValue()).atOffset(ZoneOffset.UTC) +
+                ", direction=" + leafMetadata.getInt(3) +
+                '}';
     }
 }

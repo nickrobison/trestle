@@ -342,6 +342,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
+    public TrestleCache getCache() {
+        return this.trestleCache;
+    }
+
+    @Override
     public Map<String, String> getReasonerPrefixes() {
         Map<String, String> prefixes = new HashMap<>();
         prefixes.put(":", this.REASONER_PREFIX);
@@ -846,7 +851,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         if (individual != null) {
             return individual;
         }
-        logger.debug("Individual is null, continuing");
+        logger.debug("Individual is not in cache, continuing");
 
 //        final Optional<@NonNull T> constructedObject = readTrestleObjectImpl(clazz, individualIRI, validTemporal, databaseTemporal);
         final Optional<TrestleObjectResult<@NonNull T>> constructedObject = readTrestleObjectImpl(clazz, individualIRI, validTemporal, databaseTemporal);
