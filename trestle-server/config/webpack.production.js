@@ -18,7 +18,7 @@ var prodOptions = {
     entry: {
         "polyfills": "./src/main/webapp/polyfills.ts",
         "vendor": "./src/main/webapp/vendor.ts",
-        "app": "./src/main/webapp/workspace/bootstrap.ts"
+        "workspace": "./src/main/webapp/workspace/workspace.bootstrap.ts"
     },
     devtool: "source-map",
     output: {
@@ -41,7 +41,7 @@ var prodOptions = {
     plugins: [
         new ngtools.AngularCompilerPlugin({
             tsConfigPath: helpers.root("tsconfig.json"),
-            entryModule: helpers.root("src/main/webapp/workspace/app.module#AppModule")
+            entryModule: helpers.root("src/main/webapp/workspace/workspace.module#WorkspaceModule")
         }),
         new ExtractTextPlugin("[name].css"),
         new DefinePlugin({

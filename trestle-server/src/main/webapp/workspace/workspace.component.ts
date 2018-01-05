@@ -20,11 +20,11 @@ interface MySideNav {
 
 @Component({
     selector: "app-root",
-    templateUrl: "./app.component.html",
-    styleUrls: ["./theme.scss", "./app.component.css"],
+    templateUrl: "./workspace.component.html",
+    styleUrls: ["./theme.scss", "./workspace.component.css"],
     encapsulation: ViewEncapsulation.None
 })
-export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
+export class WorkspaceComponent implements OnInit, AfterViewInit, OnDestroy {
     public userLoggedIn: Subject<boolean> = new BehaviorSubject<boolean>(false);
     public gravatarURL: string;
     // We need this in order to access the Privileges enum from the template

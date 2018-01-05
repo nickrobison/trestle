@@ -5,8 +5,8 @@ import { NgModule } from "@angular/core";
 import { HttpModule } from "@angular/http";
 import { BrowserModule } from "@angular/platform-browser";
 import { RouterModule } from "@angular/router";
-import { AppRoutes } from "./app.routes";
-import { AppComponent } from "./app.component";
+import { AppRoutes } from "./workspace.routes";
+import { WorkspaceComponent } from "./workspace.component";
 import { MaterializeModule } from "angular2-materialize";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { UserModule } from "./UserModule/user.module";
@@ -29,9 +29,9 @@ import "../rxjs-operators";
         UIModule,
         SharedModule
     ],
-    declarations: [AppComponent],
-    bootstrap: [AppComponent]
+    declarations: [WorkspaceComponent],
+    bootstrap: [WorkspaceComponent]
 
 })
-export class AppModule {
+export class WorkspaceModule {
 }

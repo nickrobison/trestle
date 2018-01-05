@@ -85,7 +85,7 @@
     "webpack-merge": "^4.1.0"
   },
   "scripts": {
-    "watch": "webpack --colors --progress --watch",
+    "watch": "webpack --colors --progress --watch --config config/webpack.production.js",
     "prepare": "webdriver-manager update",
     "test": "protractor protractor.conf.js"
   },

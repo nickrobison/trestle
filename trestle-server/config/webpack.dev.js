@@ -13,7 +13,7 @@ var devOptions = {
     entry: {
         "polyfills": "./src/main/webapp/polyfills.ts",
         "vendor": "./src/main/webapp/vendor.ts",
-        "workspace": "./src/main/webapp/workspace/bootstrap.ts"
+        "workspace": "./src/main/webapp/workspace/workspace.bootstrap.ts"
     },
     devtool: "source-map",
     output: {
