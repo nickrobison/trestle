@@ -1,3 +1,6 @@
+<div class="disabled_text light_gray_text" *ngIf="!stats">
+    Caching is disabled
+</div>
 <div *ngIf="stats">
     <h4>Valid Index</h4>
     <tree-graph #valid_graph

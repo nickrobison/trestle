@@ -11,17 +11,6 @@
     max-width: 100%;
 }
 
-.disabled_text {
-    text-align: center;
-    vertical-align: center;
-}
-
-/*.disabled_text {*/
-    /*font-style: italic;*/
-    /*color: gray;*/
-
-/*}*/
-
 .mat-progress-spinner {
     height: 30px;
     width: 30px;
