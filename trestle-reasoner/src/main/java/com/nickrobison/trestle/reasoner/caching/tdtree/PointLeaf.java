@@ -146,7 +146,7 @@ public class PointLeaf<Value> extends LeafNode<Value> {
                 ", records=" + records +
                 ", start=" + Instant.ofEpochMilli(Double.valueOf(leafMetadata.getDouble(1)).longValue()).atOffset(ZoneOffset.UTC) +
                 ", end=" + Instant.ofEpochMilli(Double.valueOf(leafMetadata.getDouble(2)).longValue()).atOffset(ZoneOffset.UTC) +
-                ", direction=" + leafMetadata.getShort(3) +
+                ", direction=" + leafMetadata.getInt(3) +
                 '}';
     }
 }

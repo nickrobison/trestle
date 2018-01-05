@@ -9,10 +9,10 @@ public class LeafStatistics implements Serializable {
     private final String binaryID;
     private final String type;
     private final double[] coordinates;
-    private final short direction;
+    private final int direction;
     private final int records;
 
-    public LeafStatistics(int leafID, String binaryID, String type, double[] coordinates, short direction, int records) {
+    public LeafStatistics(int leafID, String binaryID, String type, double[] coordinates, int direction, int records) {
         this.leafID = leafID;
         this.binaryID = binaryID;
         this.type = type;
@@ -37,7 +37,7 @@ public class LeafStatistics implements Serializable {
         return coordinates;
     }
 
-    public short getDirection() {
+    public int getDirection() {
         return direction;
     }
 

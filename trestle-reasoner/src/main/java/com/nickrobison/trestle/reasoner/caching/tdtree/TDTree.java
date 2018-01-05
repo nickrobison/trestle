@@ -67,7 +67,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         rootTuple = leafSchema.createTuple();
         rootTuple.setDouble(1, 0);
         rootTuple.setDouble(2, maxValue);
-        rootTuple.setShort(3, (short) 7);
+        rootTuple.setInt(3, 7);
         leafs.add(new SplittableLeaf<>(1, rootTuple, this.blockSize));
     }
 
@@ -251,7 +251,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
                         leaf.getBinaryStringID(),
                         leaf.getLeafType(),
                         leaf.getLeafVerticies(),
-                        leaf.leafMetadata.getShort(3),
+                        leaf.leafMetadata.getInt(3),
                         leaf.getRecordCount()))
                 .collect(Collectors.toList());
     }
@@ -429,7 +429,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
                     .builder()
                     .addField("start", Double.TYPE)
                     .addField("end", Double.TYPE)
-                    .addField("direction", Short.TYPE)
+                    .addField("direction", Integer.TYPE)
                     .implementInterface(LeafSchema.class)
                     .heapMemory()
                     .build();

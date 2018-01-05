@@ -44,7 +44,7 @@ public abstract class LeafNode<Value> {
 
     public double[] getLeafVerticies() {
         return TDTreeHelpers.getTriangleVerticies(TDTreeHelpers.adjustedLength[getIDLength(this.leafID)],
-                this.leafMetadata.getShort(3),
+                this.leafMetadata.getInt(3),
                 this.leafMetadata.getDouble(1),
                 this.leafMetadata.getDouble(2));
     }

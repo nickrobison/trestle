@@ -89,7 +89,7 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
 //                If we don't have any more space, time to split
             final double parentStart = this.leafMetadata.getDouble(1);
             final double parentEnd = this.leafMetadata.getDouble(2);
-            final short parentDirection = this.leafMetadata.getShort(3);
+            final int parentDirection = this.leafMetadata.getInt(3);
             final int idLength = getIDLength(this.leafID);
             final TDTreeHelpers.TriangleApex childApex = TDTreeHelpers.calculateChildApex(idLength + 1,
                     parentDirection,
@@ -121,11 +121,11 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
                     lowerChild = TDTree.leafSchema.createTuple();
                     lowerChild.setDouble(1, childApex.start);
                     lowerChild.setDouble(2, childApex.end);
-                    lowerChild.setShort(3, (short) childDirection.lowerChild);
+                    lowerChild.setInt(3, childDirection.lowerChild);
                     higherChild = TDTree.leafSchema.createTuple();
                     higherChild.setDouble(1, childApex.start);
                     higherChild.setDouble(2, childApex.end);
-                    higherChild.setShort(3, (short) childDirection.higherChild);
+                    higherChild.setInt(3, childDirection.higherChild);
                 } catch (Exception e) {
                     throw new RuntimeException("Unable to build tuples for child triangles", e);
                 }
@@ -256,7 +256,7 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
                 ", records=" + records +
                 ", start=" + Instant.ofEpochMilli(Double.valueOf(leafMetadata.getDouble(1)).longValue()).atOffset(ZoneOffset.UTC) +
                 ", end=" + Instant.ofEpochMilli(Double.valueOf(leafMetadata.getDouble(2)).longValue()).atOffset(ZoneOffset.UTC) +
-                ", direction=" + leafMetadata.getShort(3) +
+                ", direction=" + leafMetadata.getInt(3) +
                 '}';
     }
 }

@@ -37,7 +37,7 @@ public class TrestleCacheImpl implements TrestleCache {
     private static final String TRESTLE_OBJECT_CACHE = "trestle-object-cache";
     private static final String TRESTLE_INDIVIDUAL_CACHE = "trestle-individual-cache";
     //    Offset value to adjust for the fact that the cache can only support positive temporal values
-    private static final long offsetMillis = Duration.between(LocalDate.of(0, 1, 1)
+    private static final long OFFSET_MILLIS = Duration.between(LocalDate.of(0, 1, 1)
                     .atStartOfDay().toInstant(ZoneOffset.UTC),
             Instant.ofEpochMilli(0)).toMillis();
     private final TrestleUpgradableReadWriteLock cacheLock;
@@ -140,7 +140,7 @@ public class TrestleCacheImpl implements TrestleCache {
                 endTemporalMillis = adjustOffsetDateTime(endTemporal);
             }
             if (dbEndTemporal == null) {
-//                Make sure to add the offsetMillis
+//                Make sure to add the OFFSET_MILLIS
                 dbEndTemporalMillis = dbIndex.getMaxValue();
             } else {
                 dbEndTemporalMillis = adjustOffsetDateTime(dbEndTemporal);
@@ -284,7 +284,7 @@ public class TrestleCacheImpl implements TrestleCache {
         try {
             cacheLock.lockRead();
             final TrestleCacheStatistics cacheStats = new TrestleCacheStatistics(
-                    offsetMillis,
+                    OFFSET_MILLIS,
 //                    These are currently the same value, so we can ignore them
                     validIndex.getMaxValue(),
                     this.validIndex.getIndexSize(),
@@ -375,13 +375,13 @@ public class TrestleCacheImpl implements TrestleCache {
 
     /**
      * Adjusts a given {@link OffsetDateTime} by adding the number of milliseconds between 0000-01-01 and the Unix epoch
-     * Provided by {@link TrestleCacheImpl#offsetMillis}
+     * Provided by {@link TrestleCacheImpl#OFFSET_MILLIS}
      *
      * @param odt - {@link OffsetDateTime} to adjust
-     * @return - {@link Long} milliseconds from {@link TrestleCacheImpl#offsetMillis}
+     * @return - {@link Long} milliseconds from {@link TrestleCacheImpl#OFFSET_MILLIS}
      */
     private static long adjustOffsetDateTime(OffsetDateTime odt) {
         return odt.atZoneSameInstant(ZoneOffset.UTC)
-                .toInstant().toEpochMilli() + offsetMillis;
+                .toInstant().toEpochMilli() + OFFSET_MILLIS;
     }
 }
