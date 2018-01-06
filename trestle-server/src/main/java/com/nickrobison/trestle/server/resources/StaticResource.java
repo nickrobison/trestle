@@ -22,7 +22,7 @@ public class StaticResource {
     public Response serveJS(@PathParam("seg") List<PathSegment> segments) {
         if (segments.size() == 1) {
             final String jsPath = String.format("%s/%s", "build", segments.get(segments.size() - 1).getPath());
-            final InputStream jsStream = ServerSPAResource.class.getClassLoader().getResourceAsStream(jsPath);
+            final InputStream jsStream = WorkspaceSPAResource.class.getClassLoader().getResourceAsStream(jsPath);
             return Response.ok(jsStream).build();
         }
         StringBuilder resourcePath = new StringBuilder();
@@ -31,7 +31,7 @@ public class StaticResource {
             resourcePath.append(seg.getPath());
         });
         final String jsPath = String.format("%s%s", "build", resourcePath.toString());
-        final InputStream jsStream = ServerSPAResource.class.getClassLoader().getResourceAsStream(jsPath);
+        final InputStream jsStream = WorkspaceSPAResource.class.getClassLoader().getResourceAsStream(jsPath);
         return Response.ok(jsStream).build();
     }
 }

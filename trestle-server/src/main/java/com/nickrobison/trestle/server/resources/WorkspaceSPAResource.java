@@ -12,15 +12,15 @@ import java.util.List;
  */
 @Path("/workspace/{seg: .*}")
 @Produces(MediaType.TEXT_HTML)
-public class ServerSPAResource {
-    private static final String ASSETS_INDEX_HTML = "build/index.html";
+public class WorkspaceSPAResource {
+    private static final String ASSETS_INDEX_HTML = "build/workspace.index.html";
 
-    public ServerSPAResource() {
+    public WorkspaceSPAResource() {
     }
 
     @GET
     public Response serveMainPage(@PathParam("seg") List<PathSegment> segments) {
-        final InputStream webpage = ServerSPAResource.class.getClassLoader().getResourceAsStream(ASSETS_INDEX_HTML);
+        final InputStream webpage = WorkspaceSPAResource.class.getClassLoader().getResourceAsStream(ASSETS_INDEX_HTML);
         if (webpage == null) {
             final String errorMessage = String.format("Unable to load webpage from %s", ASSETS_INDEX_HTML);
             throw new WebApplicationException(new Throwable(errorMessage), Response.Status.NOT_FOUND);

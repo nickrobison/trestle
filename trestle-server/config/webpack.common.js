@@ -105,12 +105,32 @@ var options = {
         ]
     },
     plugins: [
-        new webpack.optimize.CommonsChunkPlugin({
-            name: ["app", "vendor", "polyfills"]
-        }),
+        // new webpack.optimize.CommonsChunkPlugin({
+        //     name: ["workspace", "vendor", "polyfills", "evaluation"]
+        // }),
+        // new webpack.optimize.CommonsChunkPlugin({
+        //     name: "common"
+        // }),
+        // new webpack.optimize.CommonsChunkPlugin({
+        //     name: "vendor"
+        // }),
+        // new webpack.optimize.CommonsChunkPlugin({
+        //     name: "pollyfill"
+        // }),
         new webpack.optimize.ModuleConcatenationPlugin(),
         new HtmlWebpackPlugin({
-            template: "./src/main/webapp/workspace/workspace.index.html"
+            inject: true,
+            chunks: ["polyfills", "vendor", "workspace"],
+            chunksSortMode: "manual",
+            template: "./src/main/webapp/workspace/workspace.index.html",
+            filename: "workspace.index.html"
+        }),
+        new HtmlWebpackPlugin({
+            inject: true,
+            chunks: ["vendor", "polyfills", "evaluation"],
+            chunksSortMode: "manual",
+            template: "./src/main/webapp/evaluation/evaluation.index.html",
+            filename: "evaluation.index.html"
         })
     ]
 };
