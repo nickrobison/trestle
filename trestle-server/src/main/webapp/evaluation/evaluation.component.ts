@@ -4,7 +4,7 @@ import { Component } from "@angular/core";
 @Component({
     selector: "evaluation-root",
     templateUrl: "./evaluation.component.html",
-    styleUrls: ["./evaluation.component.css"]
+    styleUrls: ["../theme.scss", "./evaluation.component.css"]
 })
 export class EvaluationComponent {
 

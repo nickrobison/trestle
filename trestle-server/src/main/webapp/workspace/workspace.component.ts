@@ -21,7 +21,7 @@ interface MySideNav {
 @Component({
     selector: "app-root",
     templateUrl: "./workspace.component.html",
-    styleUrls: ["./theme.scss", "./workspace.component.css"],
+    styleUrls: ["../theme.scss", "./workspace.component.css"],
     encapsulation: ViewEncapsulation.None
 })
 export class WorkspaceComponent implements OnInit, AfterViewInit, OnDestroy {
