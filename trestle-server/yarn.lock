@@ -457,6 +457,10 @@
   version "0.0.0"
   resolved "https://registry.yarnpkg.com/@types/file-saver/-/file-saver-0.0.0.tgz#1d954502619862d4354444d43385fb8a8fa4478a"
 
+"@types/fingerprintjs2@^1.5.1":
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/@types/fingerprintjs2/-/fingerprintjs2-1.5.1.tgz#bd4a3f59692824f1d781307d35414d8591ac61e0"
+
 "@types/geojson@*", "@types/geojson@^1.0.2":
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/@types/geojson/-/geojson-1.0.2.tgz#b02d10ab028e2928ac592a051aaa4981a1941d03"
@@ -3550,6 +3554,10 @@ find-versions@^1.0.0:
     get-stdin "^4.0.1"
     meow "^3.5.0"
     semver-regex "^1.0.0"
+
+fingerprintjs2@^1.5.1:
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/fingerprintjs2/-/fingerprintjs2-1.5.1.tgz#010691d425bc37fa0b5a7ec1ae85404bb3f934cb"
 
 first-chunk-stream@^1.0.0:
   version "1.0.0"
