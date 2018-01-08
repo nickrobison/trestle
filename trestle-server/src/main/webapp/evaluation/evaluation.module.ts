@@ -7,6 +7,11 @@ import { EvaluationComponent } from "./evaluation.component";
 import { IntroductionComponent } from "./introduction/introduction.component";
 import { RouterModule } from "@angular/router";
 import { EvaluationRoutes } from "./evaluation.routes";
+import { DemographicsComponent } from "./introduction/demographics/demographics.component";
+import { EvaluationService } from "./eval-service/evaluation.service";
+import { FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { ExperimentComponent } from "./experiment/experiment.component";
+import { UIModule } from "../workspace/UIModule/ui.module";
 
 @NgModule({
     imports: [
@@ -14,11 +19,19 @@ import { EvaluationRoutes } from "./evaluation.routes";
         HttpClientModule,
         BrowserModule,
         BrowserAnimationsModule,
-        MaterialModule
+        MaterialModule,
+        FormsModule,
+        ReactiveFormsModule,
+        UIModule
     ],
     declarations: [
         EvaluationComponent,
-        IntroductionComponent
+        IntroductionComponent,
+        DemographicsComponent,
+        ExperimentComponent
+    ],
+    providers: [
+        EvaluationService
     ],
     bootstrap: [EvaluationComponent]
 })

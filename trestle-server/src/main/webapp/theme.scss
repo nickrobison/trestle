@@ -60,3 +60,12 @@ $theme: mat-light-theme($primary, $accent, $warn);
   text-align: center;
   vertical-align: center;
 }
+
+.bottom {
+  position: absolute;
+  bottom: 10px;
+}
+
+.float-right {
+  float: right;
+}
