@@ -1,42 +1,45 @@
-<h3>Demographic Questions:</h3>
-<form [formGroup]="demographics" (ngSubmit)="onSubmit(demographics)">
-    <div class="example-container">
-        <mat-form-field [floatLabel]="'never'">
-            <label>Age:</label>
-            <input matInput formControlName="age">
-        </mat-form-field>
+<div class="example-container">
 
-        <mat-form-field [floatLabel]="'never'">
-            <label>Highest Level of Education:</label>
-            <mat-select [formControl]="education">
-                <mat-option value="sHS">Some High School</mat-option>
-                <mat-option value="cHS">Completed High School</mat-option>
-                <mat-option value="sCollege">Some College</mat-option>
-                <mat-option value="cCollege">Completed College</mat-option>
-                <mat-option value="sGrad">Some Graduate School</mat-option>
-                <mat-option value="cGrad">Completed Graduate School</mat-option>
-            </mat-select>
-        </mat-form-field>
-        <mat-form-field
-                [floatLabel]="'never'">
-            <label>Do you work in public health?</label>
-            <mat-select [formControl]="publicHealth">
-                <mat-option value="true">Yes</mat-option>
-                <mat-option value="false">No</mat-option>
-            </mat-select>
-        </mat-form-field>
-        <mat-form-field
-                [floatLabel]="'never'">
-            <label>Do you have Geospatial Experience?</label>
-            <mat-select [formControl]="geospatial">
-                <mat-option value="true">Yes</mat-option>
-                <mat-option value="false">No</mat-option>
-            </mat-select>
-        </mat-form-field>
-    </div>
-    <button mat-raised-button
-            class="float-right"
-            [disabled]="demographics.invalid"
-            color="primary" type="submit">Begin
-    </button>
-</form>
+    <h3>Demographic Questions:</h3>
+    <form [formGroup]="demographics" (ngSubmit)="onSubmit(demographics)">
+        <div class="example-container">
+            <mat-form-field [floatLabel]="'never'">
+                <label>Age:</label>
+                <input matInput formControlName="age">
+            </mat-form-field>
+
+            <mat-form-field [floatLabel]="'never'">
+                <label>Highest Level of Education:</label>
+                <mat-select [formControl]="education">
+                    <mat-option value="sHS">Some High School</mat-option>
+                    <mat-option value="cHS">Completed High School</mat-option>
+                    <mat-option value="sCollege">Some College</mat-option>
+                    <mat-option value="cCollege">Completed College</mat-option>
+                    <mat-option value="sGrad">Some Graduate School</mat-option>
+                    <mat-option value="cGrad">Completed Graduate School</mat-option>
+                </mat-select>
+            </mat-form-field>
+            <mat-form-field
+                    [floatLabel]="'never'">
+                <label>Do you work in public health?</label>
+                <mat-select [formControl]="publicHealth">
+                    <mat-option value="true">Yes</mat-option>
+                    <mat-option value="false">No</mat-option>
+                </mat-select>
+            </mat-form-field>
+            <mat-form-field
+                    [floatLabel]="'never'">
+                <label>Do you have Geospatial Experience?</label>
+                <mat-select [formControl]="geospatial">
+                    <mat-option value="true">Yes</mat-option>
+                    <mat-option value="false">No</mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+        <button mat-raised-button
+                class="float-right"
+                [disabled]="demographics.invalid"
+                color="primary" type="submit">Begin
+        </button>
+    </form>
+</div>

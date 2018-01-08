@@ -1,6 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import { Form, FormBuilder, FormControl, FormGroup, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
+import { EvaluationService, IUserDemographics } from "../../eval-service/evaluation.service";
 
 @Component({
     selector: "demographic",
@@ -15,11 +16,12 @@ export class DemographicsComponent implements OnInit {
     public publicHealth: FormControl;
     public geospatial: FormControl;
 
-    public constructor(private fb: FormBuilder, private router: Router) {
+    public constructor(private es: EvaluationService,
+                       private fb: FormBuilder, private router: Router) {
     }
 
     public ngOnInit(): void {
-        // this.es.createUser();
+        this.es.createUser();
         this.age = new FormControl("", Validators.required);
         this.education = new FormControl("", Validators.required);
         this.publicHealth = new FormControl("", Validators.required);
@@ -32,8 +34,9 @@ export class DemographicsComponent implements OnInit {
         });
     }
 
-    public onSubmit(form: Form): void {
+    public onSubmit(form: FormGroup): void {
         console.debug("Submitted", form);
+        this.es.setDemographics((form.value as IUserDemographics));
         //    Submit demographic data to the service
         this.router.navigate(["/experiment"]);
     }

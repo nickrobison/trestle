@@ -2,6 +2,23 @@
     Experiment things
 </section>
 <section>
+    <div class="map-container">
+        <trestle-map [single]="false"
+                     [multiSelect]="false"
+                     [zoomOnLoad]="zoomMap"
+                     [config]="mapConfig"
+                     [dataChanges]="dataChanges"
+                     [attributeChanges]="layerChanges"></trestle-map>
+    </div>
+</section>
+<section>
+    Is _____ a union of _____
+    <mat-radio-group>
+        <mat-radio-button [value]="yes">Yes</mat-radio-button>
+        <mat-radio-button [value]="no">No</mat-radio-button>
+    </mat-radio-group>
+</section>
+<section class="bottom thin-width">
     <mat-progress-bar [color]="'accent'"
                       [mode]="'determinate'"
                       [value]="30">
