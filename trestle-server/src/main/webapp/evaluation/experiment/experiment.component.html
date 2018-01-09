@@ -13,15 +13,23 @@
 </section>
 <section>
     Is _____ a union of _____
-    <mat-radio-group>
-        <mat-radio-button [value]="yes">Yes</mat-radio-button>
-        <mat-radio-button [value]="no">No</mat-radio-button>
+    <mat-radio-group [(ngModel)]="answered">
+        <mat-radio-button [value]="'yes'">Yes</mat-radio-button>
+        <mat-radio-button [value]="'no'">No</mat-radio-button>
     </mat-radio-group>
+    <div [ngSwitch]="experimentValue">
+        <button *ngSwitchCase="2" mat-raised-button
+                [disabled]="!answered"
+                (click)="next()">Finish</button>
+        <button *ngSwitchDefault mat-raised-button
+                [disabled]="!answered"
+                (click)="next()">Next</button>
+    </div>
 </section>
 <section class="bottom thin-width">
     <mat-progress-bar [color]="'accent'"
                       [mode]="'determinate'"
-                      [value]="30">
+                      [value]="experimentValue * 10">
     </mat-progress-bar>
     1/10
 </section>

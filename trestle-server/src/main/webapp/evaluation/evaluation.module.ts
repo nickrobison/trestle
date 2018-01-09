@@ -12,6 +12,8 @@ import { EvaluationService } from "./eval-service/evaluation.service";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { ExperimentComponent } from "./experiment/experiment.component";
 import { UIModule } from "../workspace/UIModule/ui.module";
+import "../rxjs-operators";
+import { CommonModule } from "@angular/common";
 
 @NgModule({
     imports: [
@@ -19,6 +21,7 @@ import { UIModule } from "../workspace/UIModule/ui.module";
         HttpClientModule,
         BrowserModule,
         BrowserAnimationsModule,
+        CommonModule,
         MaterialModule,
         FormsModule,
         ReactiveFormsModule,
@@ -35,4 +38,5 @@ import { UIModule } from "../workspace/UIModule/ui.module";
     ],
     bootstrap: [EvaluationComponent]
 })
-export class EvaluationModule { }
+export class EvaluationModule {
+}
