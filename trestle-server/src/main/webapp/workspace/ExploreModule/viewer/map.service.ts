@@ -124,7 +124,7 @@ export class MapService {
 
         console.debug("Intersecting individuals with", postBody);
 
-        return this.http.post("/visualize/intersect-individuals", postBody)
+        return this.http.post("/individual/intersect-individuals", postBody)
             .map(MapService.parseResponseToIndividuals);
     }
 

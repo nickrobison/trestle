@@ -43,7 +43,7 @@ export class IndividualService {
     private getIndividualAPI(name: string): Observable<TrestleIndividual> {
         const params = new URLSearchParams();
         params.set("name", name);
-        return this.trestleHttp.get("/visualize/retrieve", {
+        return this.trestleHttp.get("/individual/retrieve", {
             search: params
         })
             .map((res: Response) => {
