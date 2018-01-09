@@ -1,7 +1,9 @@
 import { Injectable } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpParams } from "@angular/common/http";
 import "clientjs";
 import { Observable } from "rxjs/Observable";
+import { ITrestleIndividual, TrestleIndividual } from "../../workspace/SharedModule/individual/TrestleIndividual/trestle-individual";
+import { CacheService } from "../../workspace/SharedModule/cache/cache.service";
 
 export enum MapState {
     OVERLAY = 1,
@@ -17,6 +19,7 @@ export interface IExperimentResponse {
     state: number;
     union: string;
     unionOf: string[];
+    individuals: TrestleIndividual[];
 }
 
 @Injectable()
@@ -25,7 +28,8 @@ export class EvaluationService {
     private userId: string;
     private demographics: IUserDemographics;
 
-    public constructor(private http: HttpClient) {
+    public constructor(private http: HttpClient,
+                       private individualCache: CacheService<string, TrestleIndividual>,) {
 
     }
 
@@ -46,7 +50,22 @@ export class EvaluationService {
 
     public loadExperiment(experimentNumber: number): Observable<IExperimentResponse> {
         return this.http.get<IExperimentResponse>("/experiment/" + experimentNumber)
-            .do(console.debug);
+            .do(console.debug)
+            .switchMap((response) => {
+                console.debug("Response");
+                const unions = response.unionOf.map((union: string) => {
+                    return this.getTrestleIndividual(union);
+                });
+                unions.push(this.getTrestleIndividual(response.union));
+                return Observable.forkJoin(unions);
+            }, (first, second: TrestleIndividual[]) => {
+                return {
+                    union: first.union,
+                    unionOf: first.unionOf,
+                    state: first.state,
+                    individuals: second
+                };
+            });
     }
 
     public isOverlay(mapState: number): boolean {
@@ -62,5 +81,24 @@ export class EvaluationService {
     public noContext(mapState: number): boolean {
         // tslint:disable-next-line:no-bitwise
         return (mapState & MapState.NO_CONTEXT) > 0;
+    }
+
+
+    private getTrestleIndividual(name: string): Observable<TrestleIndividual> {
+        return this.individualCache.get(name, this.getIndividualAPI(name));
+    }
+
+    private getIndividualAPI(name: string): Observable<TrestleIndividual> {
+        const params = new HttpParams()
+            .set("name", name);
+        return this.http.get<ITrestleIndividual>("/individual/retrieve", {
+            params
+        })
+            .map((res) => {
+                // const response = res.json();
+                console.debug("Has response, building object", res);
+                return new TrestleIndividual(res);
+            })
+            .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
 }

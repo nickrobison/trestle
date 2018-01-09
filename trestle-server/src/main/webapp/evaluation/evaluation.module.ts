@@ -14,17 +14,19 @@ import { ExperimentComponent } from "./experiment/experiment.component";
 import { UIModule } from "../workspace/UIModule/ui.module";
 import "../rxjs-operators";
 import { CommonModule } from "@angular/common";
+import { SharedModule } from "../workspace/SharedModule/shared.module";
 
 @NgModule({
     imports: [
-        RouterModule.forRoot(EvaluationRoutes),
-        HttpClientModule,
         BrowserModule,
         BrowserAnimationsModule,
         CommonModule,
-        MaterialModule,
         FormsModule,
+        HttpClientModule,
+        MaterialModule,
         ReactiveFormsModule,
+        RouterModule.forRoot(EvaluationRoutes),
+        SharedModule,
         UIModule
     ],
     declarations: [

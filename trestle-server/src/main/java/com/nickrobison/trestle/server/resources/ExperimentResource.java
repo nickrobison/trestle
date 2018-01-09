@@ -45,23 +45,75 @@ public class ExperimentResource {
     private static Map<Integer, List<String>> buildExperimentMap() {
         final Map<Integer, List<String>> experimentMap = new HashMap<>();
 //        For each individual, build a map of all its potential unionOf values
-//        1
 
-        List<String> values1 = ImmutableList.of("hello", "value1", "value2", "value3", "value4");
+//        1 (Incorrect)
+        List<String> values1 = ImmutableList.of("14449-Divenie-1000-2011",
+                "190465-Divenie-2011-3001",
+                "190466-Nyanga-2011-3001");
         experimentMap.put(1, values1);
-//        2
-        List<String> values2 = ImmutableList.of("next", "v2", "v3", "v4");
+
+//        2 (Correct)
+        List<String> values2 = ImmutableList.of("22916-Edu-1000-1999",
+                "191411-Edu-1999-3001",
+                "191157-Pategi-1999-3001");
         experimentMap.put(2, values2);
 
-//        3
+//        3 (Correct)
+        List<String> values3 = ImmutableList.of("14439-Loandjili_(pointe_Noire)-1000-2011",
+                "190476-Tchiamba_Nzassi-2011-3001",
+                "190474-Hinda-2011-3001");
+        experimentMap.put(3, values3);
+
+//        4 (Incorrect)
+        List<String> values4 = ImmutableList.of("22718-Calabar-1000-1999",
+                "191378-Calabar_Municipal-1999-3001",
+                "191376-Akpabuyo-1999-3001");
+        experimentMap.put(4, values4);
+
+//        5 (Correct)
+        List<String> values5 = ImmutableList.of("41374-Cidade_de_Maputo-2013-3001",
+                "65253-Aeroporto-1000-2013",
+                "65254-Distrito_Municipal_1-1000-2013",
+                "65257-Distrito_Municipal_4-1000-2013",
+                "65256-Distrito_Municipal_3-1000-2013",
+                "65255-Distrito_Municipal_2-1000-2013",
+                "65258-Distrito_Municipal_5-1000-2013");
+        experimentMap.put(5, values5);
+
+//        6 (Incorrect)
+        List<String> values6 = ImmutableList.of("22709-Mobbar-1000-1999",
+                "190951-Lake_chad-1999-3001",
+                "190950-Abadam-1999-3001",
+                "90969-Gubio-1999-3001",
+                "191407-Mobbar-1999-300");
+        experimentMap.put(6, values6);
+
+//        7 (Incorrect)
+        List<String> values7 = ImmutableList.of("14438-Kakameoka-1000-2011",
+                "190471-Kakameoka-2011-3001",
+                "190472-Madingo_Kayes-2011-3001");
+        experimentMap.put(7, values7);
+
+//        8 (Correct)
+        List<String> values8 = ImmutableList.of("22617-Song-1000-1999",
+                "191126-Gombi-1999-3001",
+                "191111-Song-1999-3001");
+        experimentMap.put(8, values8);
 
 
-//        4
+//        9 (Correct)
+//        TODO(nickrobison): Find the one with the hole in the middle
+        List<String> values9 = ImmutableList.of("22589-Aba-1000-1999",
+                "191375-Aba_South-1999-3001",
+                "91375-Aba_South-1999-3001");
+        experimentMap.put(9, values9);
 
-
-//        5
-
-//        6
+//        10 (Incorrect)
+        List<String> values0 = ImmutableList.of("22657-Oyi-1000-1999",
+                "191283-Ayamelum-1999-3001",
+                "191304-Anambra_East-1999-3001",
+                "191316-Oyi-1999-3001");
+        experimentMap.put(10, values0);
 
         return experimentMap;
     }

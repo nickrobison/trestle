@@ -30,7 +30,8 @@ export class ExperimentComponent implements AfterViewInit {
     public loadNextMatch(): void {
         this.es.loadExperiment(this.experimentValue)
             .subscribe((experiment) => {
-                console.debug("Overlay?", this.es.isOverlay(experiment.state));
+                console.debug("has it:", experiment);
+                // console.debug("Overlay?", this.es.isOverlay(experiment.state));
             });
     }
 }
