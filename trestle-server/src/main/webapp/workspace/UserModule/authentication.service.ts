@@ -131,7 +131,7 @@ export class AuthService {
         return false;
     }
 
-    private buildRoleValue(roles: Array<Privileges>): number {
+    private buildRoleValue(roles: Privileges[]): number {
         let roleValue = 0;
         roles.forEach((role) => {
             // tslint:disable-next-line:no-bitwise
