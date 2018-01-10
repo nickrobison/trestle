@@ -1,5 +1,7 @@
 import { AfterViewInit, Component } from "@angular/core";
 import { EvaluationService } from "../eval-service/evaluation.service";
+import { BehaviorSubject } from "rxjs/BehaviorSubject";
+import { MapSource } from "../../workspace/UIModule/map/trestle-map.component";
 
 @Component({
     selector: "experiment",
@@ -10,11 +12,12 @@ export class ExperimentComponent implements AfterViewInit {
 
     public experimentValue: number;
     public answered: string | undefined;
+    public dataChanges: BehaviorSubject<MapSource | undefined>;
 
     public constructor(private es: EvaluationService) {
-        // Start with 10, because the bar to goes to 100.
         this.experimentValue = 1;
-        // this.progressValue = 10;
+
+        this.dataChanges = new BehaviorSubject(undefined);
     }
 
     public ngAfterViewInit(): void {
@@ -31,7 +34,7 @@ export class ExperimentComponent implements AfterViewInit {
         this.es.loadExperiment(this.experimentValue)
             .subscribe((experiment) => {
                 console.debug("has it:", experiment);
-                // console.debug("Overlay?", this.es.isOverlay(experiment.state));
+                console.debug("Overlay?", this.es.isOverlay(experiment.state));
             });
     }
 }

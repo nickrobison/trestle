@@ -68,7 +68,6 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
     private mapRef: ElementRef;
     private disabledFocusIndividuals: string[];
 
-
     constructor(private is: IndividualService,
                 private vs: MapService,
                 private spinner: LoadingSpinnerService,
@@ -515,7 +514,8 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
                     "fill-extrusion-base": baseHeight,
                     "fill-extrusion-opacity": 0.7
                 }
-            }
+            },
+            labelField: "adm2_name"
         });
 
         const compare = {

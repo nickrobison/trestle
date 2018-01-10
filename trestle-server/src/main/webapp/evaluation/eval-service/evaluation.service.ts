@@ -52,7 +52,6 @@ export class EvaluationService {
         return this.http.get<IExperimentResponse>("/experiment/" + experimentNumber)
             .do(console.debug)
             .switchMap((response) => {
-                console.debug("Response");
                 const unions = response.unionOf.map((union: string) => {
                     return this.getTrestleIndividual(union);
                 });

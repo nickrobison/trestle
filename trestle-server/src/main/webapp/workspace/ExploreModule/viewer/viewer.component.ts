@@ -106,6 +106,7 @@ export class DatsetViewerComponent implements OnInit {
                     this.dataChanges.next({
                         id: "intersection-query",
                         idField: "id",
+                        labelField: "objectName",
                         data
                     });
                 }, (error) => {

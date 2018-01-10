@@ -19,7 +19,6 @@ import {
 import {BehaviorSubject} from "rxjs/BehaviorSubject";
 import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
 import {Subject} from "rxjs/Subject";
-import {isNullOrUndefined} from "util";
 import FillPaint = mapboxgl.FillPaint;
 
 export interface IMapFillLayer extends mapboxgl.Layer {
@@ -46,6 +45,8 @@ export interface ITrestleMapSource {
     idField?: string;
     data: FeatureCollection<GeometryObject> | Feature<GeometryObject>;
     layers?: ITrestleMapLayers;
+    labelField?: string;
+    labelFunction?: (label: string) => string;
 }
 
 export interface I3DMapSource extends ITrestleMapSource {
@@ -424,11 +425,13 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             data: inputLayer.data
         });
 
+        const attributeLayers: string[] = [];
+
         // If it's a 3D layer, add the extrusion, otherwise add the normal layers
         if (TrestleMapComponent.is3D(inputLayer)) {
             console.debug("Adding 3D layer:", inputLayer.extrude);
             this.map.addLayer(inputLayer.extrude);
-            this.mapSources.set(inputLayer.id, [inputLayer.extrude.id]);
+            attributeLayers.push(inputLayer.extrude.id);
         } else {
             // Add fill layer
             const fillID = inputLayer.id + "-fill";
@@ -465,8 +468,73 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                 } as FillPaint),
                 filter: ["==", "name", ""]
             });
-            this.mapSources.set(inputLayer.id, [fillID, lineId, hoverID]);
+            attributeLayers.push(fillID, lineId, hoverID);
         }
+
+        // Labels
+        // Add the labels
+        const labelField = inputLayer.labelField;
+        if (labelField) {
+            // If it's a collection for each entity, add the label
+            const iData = inputLayer.data;
+            if (TrestleMapComponent.isCollection(iData)) {
+                iData.features.forEach((feature) => {
+                    const labelLayerID = "label-" + feature.id;
+                    // This is terrible, but so is the web, so who blinks first?
+                    const labelText: string = (feature.properties as any)[(labelField as any)];
+                    if (labelText) {
+                        this.map.addLayer({
+                            id: labelLayerID,
+                            type: "symbol",
+                            source: inputLayer.id,
+                            layout: {
+                                // For the text field, if the label function exists, call it, otherwise just place the label
+                                "text-field": inputLayer.labelFunction ? inputLayer.labelFunction(labelText) : labelText,
+                                "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+                                "text-size": 11,
+                                "text-transform": "uppercase",
+                                "text-letter-spacing": 0.05,
+                                "text-offset": [0, 1.5]
+                            },
+                            paint: {
+                                "text-color": "#202",
+                                "text-halo-color": "#fff",
+                                "text-halo-width": 2
+                            }
+                        });
+                        attributeLayers.push(labelLayerID);
+                    }
+                });
+            } else {
+                const labelLayerID = "label-" + iData.id;
+                // This is terrible, but so is the web, so who blinks first?
+                const labelText: string = (iData.properties as any)[(labelField as any)];
+                if (labelText) {
+                    this.map.addLayer({
+                        id: labelLayerID,
+                        type: "symbol",
+                        source: inputLayer.id,
+                        layout: {
+                            // For the text field, if the label function exists, call it, otherwise just place the label
+                            "text-field": inputLayer.labelFunction ? inputLayer.labelFunction(labelText) : labelText,
+                            "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+                            "text-size": 11,
+                            "text-transform": "uppercase",
+                            "text-letter-spacing": 0.05,
+                            "text-offset": [0, 1.5]
+                        },
+                        paint: {
+                            "text-color": "#202",
+                            "text-halo-color": "#fff",
+                            "text-halo-width": 2
+                        }
+                    });
+                    attributeLayers.push(labelLayerID);
+                }
+            }
+        }
+        // Add the map sources
+        this.mapSources.set(inputLayer.id, attributeLayers);
 
         //    Center map
         if (this.centerMapOnLoad.getValue()) {
