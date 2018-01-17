@@ -15,12 +15,14 @@ import { UIModule } from "../workspace/UIModule/ui.module";
 import "../rxjs-operators";
 import { CommonModule } from "@angular/common";
 import { SharedModule } from "../workspace/SharedModule/shared.module";
+import { FlexLayoutModule } from "@angular/flex-layout";
 
 @NgModule({
     imports: [
         BrowserModule,
         BrowserAnimationsModule,
         CommonModule,
+        FlexLayoutModule,
         FormsModule,
         HttpClientModule,
         MaterialModule,

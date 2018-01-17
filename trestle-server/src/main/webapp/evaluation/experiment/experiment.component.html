@@ -1,32 +1,49 @@
-<section>
-    <div class="map-container">
-        <trestle-map [single]="false"
-                     [multiSelect]="false"
-                     [zoomOnLoad]="zoomMap"
-                     [config]="mapConfig"
-                     [dataChanges]="dataChanges"
-                     [attributeChanges]="layerChanges"></trestle-map>
+<div fxLayout="column" fxLayoutGap="50px">
+    <div fxLayout="row" class="map-container" fxLayoutGap="10px">
+            <trestle-map fxFlex="90%"
+                            [single]="false"
+                         [multiSelect]="false"
+                         [zoomOnLoad]="zoomMap"
+                         [config]="mapConfig"
+                         [dataChanges]="dataChanges"
+                         [attributeChanges]="layerChanges"
+                         class="map-container"></trestle-map>
+        <div>
+            <h6 class="light_gray_text">Explode</h6>
+            <mat-slider
+                    [vertical]="true"
+                    [min]="0"
+                    [max]="500"></mat-slider>
+            <!--<mat-slider-->
+                    <!--[vertical]="true"-->
+                    <!--[min]="0"-->
+                    <!--[max]="500"-->
+                    <!--[(ngModel)]="currentSliderValue"-->
+                    <!--(input)="sliderUpdate($event)"></mat-slider>-->
+        </div>
     </div>
-</section>
-<section>
-    Is a spatial union present?
-    <mat-radio-group [(ngModel)]="answered">
-        <mat-radio-button [value]="'yes'">Yes</mat-radio-button>
-        <mat-radio-button [value]="'no'">No</mat-radio-button>
-    </mat-radio-group>
-    <div [ngSwitch]="experimentValue">
+    <div fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="20px">
+        <div>
+            Is there a spatial union?
+        </div>
+        <div>
+            <mat-radio-group [(ngModel)]="answered">
+                <mat-radio-button [value]="true">Yes</mat-radio-button>
+                <mat-radio-button [value]="false">No</mat-radio-button>
+            </mat-radio-group>
+        </div>
+        <div>
+            <div [hidden]="!(answered === true)">
+                What?
+            </div>
+        </div>
+    </div>
+    <div *ngIf="answered === false" [ngSwitch]="experimentValue" fxFlexAlign="end">
         <button *ngSwitchCase="10" mat-raised-button
-                [disabled]="!answered"
-                (click)="next()">Finish</button>
+                (click)="next()">Finish
+        </button>
         <button *ngSwitchDefault mat-raised-button
-                [disabled]="!answered"
-                (click)="next()">Next</button>
+                (click)="next()">Next
+        </button>
     </div>
-</section>
-<section class="bottom thin-width">
-    <mat-progress-bar [color]="'accent'"
-                      [mode]="'determinate'"
-                      [value]="experimentValue * 10">
-    </mat-progress-bar>
-    {{experimentValue}}/10
-</section>
+</div>

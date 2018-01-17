@@ -8,13 +8,13 @@ reasoner:
 #  connectionString: "http://141.142.170.88:7200/"
 #  username: ""
 #  password: ""
-  ontology: "hadoop_gaul_expanded_equality"
-  prefix: "http://nickrobison.com/test/gaul/"
+#  ontology: "hadoop_gaul_expanded_equality"
+#  prefix: "http://nickrobison.com/test/gaul/"
 #  prefix: "http://nickrobison.com/test/hadoop.owl#"
 #  ontology: "tigercounties3"
 #  prefix: "http://nickrobison.com/demonstration/tigercounty#"
-#  ontology: "gaul_hadoop_world_bank"
-#  prefix: "http://nickrobison.com/gaul/"
+  ontology: "gaul_hadoop_world_bank"
+  prefix: "http://nickrobison.com/gaul/"
   location: "file:////Users/nickrobison/Developer/git/dissertation/trestle-ontology/trestle.owl"
 
 logging:

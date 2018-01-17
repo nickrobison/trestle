@@ -74,7 +74,6 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
                 private route: ActivatedRoute,
                 private cdRef: ChangeDetectorRef) {
 
-
         this.mapConfig = {
             style: "mapbox://styles/nrobison/cj3n7if3q000s2sutls5a1ny7",
             center: [32.3558991, -25.6854313],

@@ -6,3 +6,7 @@
     margin-left: 5%;
     width: 90%;
 }
+
+.mat-slider-vertical {
+    height: 250px;
+}
