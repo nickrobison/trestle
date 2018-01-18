@@ -7,6 +7,7 @@ const helper = require("./helpers");
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const rxPaths = require("rxjs/_esm5/path-mapping");
+const Jarvis = require("webpack-jarvis");
 
 var options = {
     resolve: {
@@ -131,7 +132,8 @@ var options = {
             chunksSortMode: "manual",
             template: "./src/main/webapp/evaluation/evaluation.index.html",
             filename: "evaluation.index.html"
-        })
+        }),
+        new Jarvis()
     ]
 };
 module.exports = options;
