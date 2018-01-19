@@ -34,7 +34,8 @@
         </div>
         <div>
             <div [hidden]="!(answered === true)">
-                What?
+                Which enitities contribute to the union?
+                <selection-table [data]="tableData"></selection-table>
             </div>
         </div>
     </div>

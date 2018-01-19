@@ -3,7 +3,7 @@ import {
     MatAutocompleteModule,
     MatButtonModule,
     MatButtonToggleModule,
-    MatCardModule,
+    MatCardModule, MatCheckboxModule,
     MatChipsModule,
     MatDialogModule,
     MatExpansionModule,
@@ -20,17 +20,20 @@ import {
     MatSelectModule,
     MatSidenavModule,
     MatSliderModule,
-    MatSlideToggleModule,
+    MatSlideToggleModule, MatTableModule,
     MatTabsModule,
     MatToolbarModule, MatTooltipModule
 } from "@angular/material";
+import { CdkTableModule } from "@angular/cdk/table";
 
 @NgModule({
     imports: [
+        CdkTableModule,
         MatAutocompleteModule,
         MatButtonModule,
         MatButtonToggleModule,
         MatCardModule,
+        MatCheckboxModule,
         MatChipsModule,
         MatDialogModule,
         MatExpansionModule,
@@ -48,14 +51,17 @@ import {
         MatSidenavModule,
         MatSliderModule,
         MatSlideToggleModule,
+        MatTableModule,
         MatTabsModule,
         MatToolbarModule,
         MatTooltipModule],
     exports: [
+        CdkTableModule,
         MatAutocompleteModule,
         MatButtonModule,
         MatButtonToggleModule,
         MatCardModule,
+        MatCheckboxModule,
         MatChipsModule,
         MatDialogModule,
         MatExpansionModule,
@@ -73,6 +79,7 @@ import {
         MatSidenavModule,
         MatSliderModule,
         MatSlideToggleModule,
+        MatTableModule,
         MatTabsModule,
         MatToolbarModule,
         MatTooltipModule]

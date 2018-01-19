@@ -1,8 +1,9 @@
-import { AfterViewInit, Component } from "@angular/core";
+import { AfterViewInit, Component, ViewChild } from "@angular/core";
 import { EvaluationService } from "../eval-service/evaluation.service";
 import { BehaviorSubject } from "rxjs/BehaviorSubject";
 import { MapSource } from "../../workspace/UIModule/map/trestle-map.component";
 import { TrestleTemporal } from "../../workspace/SharedModule/individual/TrestleIndividual/trestle-temporal";
+import { SelectionTableComponent } from "./selection-table/selection-table.component";
 
 @Component({
     selector: "experiment",
@@ -12,8 +13,11 @@ import { TrestleTemporal } from "../../workspace/SharedModule/individual/Trestle
 export class ExperimentComponent implements AfterViewInit {
 
     public experimentValue: number;
-    public answered: string | undefined;
+    public answered: boolean | undefined;
     public dataChanges: BehaviorSubject<MapSource | undefined>;
+    public tableData: string[];
+    @ViewChild(SelectionTableComponent)
+    public selectionTable: SelectionTableComponent;
 
     private maxHeight: number;
 
@@ -29,6 +33,7 @@ export class ExperimentComponent implements AfterViewInit {
     }
 
     public next(): void {
+        console.debug("Selected:", this.selectionTable.getSelectedRows());
         this.answered = undefined;
         this.experimentValue += 1;
         this.loadNextMatch();
@@ -39,6 +44,10 @@ export class ExperimentComponent implements AfterViewInit {
             .subscribe((experiment) => {
                 console.debug("has it:", experiment);
                 console.debug("Overlay?", this.es.isOverlay(experiment.state));
+
+                // Add to table
+                this.tableData = experiment.unionOf;
+
                 experiment.individuals.forEach((individual) => {
 
                     const height = this.getHeight(individual.getTemporal());

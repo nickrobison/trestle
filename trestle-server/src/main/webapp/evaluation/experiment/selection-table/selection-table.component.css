@@ -1,0 +1,13 @@
+.selection-container {
+    max-height: 900px;
+    min-width: 400px;
+}
+
+.mat-table {
+    overflow: auto;
+    max-height: auto;
+}
+
+.mat-column-select {
+    overflow: visible;
+}
