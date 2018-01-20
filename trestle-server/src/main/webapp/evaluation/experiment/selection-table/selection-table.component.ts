@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges, SimpleChanges } from "@angular/core";
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from "@angular/core";
 import { BehaviorSubject } from "rxjs/BehaviorSubject";
 import { MatTableDataSource } from "@angular/material";
 import { SelectionModel } from "@angular/cdk/collections";
@@ -12,24 +12,31 @@ export class SelectionTableComponent implements OnChanges, AfterViewInit {
 
     @Input()
     public data: string[];
+    @Output()
+    public minimalSelection: EventEmitter<boolean>;
     public displayedColumns: string[];
     public tableData: MatTableDataSource<string>;
     public selection: SelectionModel<string>;
 
     private dataSubject: BehaviorSubject<undefined | string[]>;
+    private minimalSelectionValue: boolean;
 
     public constructor() {
         this.displayedColumns = ["select", "number"];
         this.selection = new SelectionModel<string>(true, []);
         this.tableData = new MatTableDataSource<string>();
         this.dataSubject = new BehaviorSubject(undefined);
+
+        this.minimalSelection = new EventEmitter<boolean>();
+        this.minimalSelectionValue = false;
     }
 
     public ngAfterViewInit(): void {
         this.dataSubject.subscribe((data) => {
             if (data) {
                 console.debug("Has new data from subject");
-                this.tableData = new MatTableDataSource<string>(data);
+                // Strip out the names and only return the index in the list
+                this.tableData = new MatTableDataSource<string>(data.map((value, idx) => idx.toString()));
             }
         });
     }
@@ -68,6 +75,10 @@ export class SelectionTableComponent implements OnChanges, AfterViewInit {
     }
 
     public toggleRow(row: string): void {
+        if (!this.rowSelected(row) && !this.minimalSelectionValue) {
+            this.minimalSelection.next(true);
+            this.minimalSelectionValue = true;
+        }
         this.selection.toggle(row);
     }
 }

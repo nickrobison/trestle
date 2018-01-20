@@ -35,16 +35,18 @@
         <div>
             <div [hidden]="!(answered === true)">
                 Which enitities contribute to the union?
-                <selection-table [data]="tableData"></selection-table>
+                <selection-table [data]="tableData"
+                                 (minimalSelection)="minimalSelectionHandler()"></selection-table>
             </div>
         </div>
-    </div>
-    <div *ngIf="answered === false" [ngSwitch]="experimentValue" fxFlexAlign="end">
-        <button *ngSwitchCase="10" mat-raised-button
-                (click)="next()">Finish
-        </button>
-        <button *ngSwitchDefault mat-raised-button
-                (click)="next()">Next
-        </button>
+        <div *ngIf="answered === false || minimalSelection === true"
+             [ngSwitch]="experimentValue" fxFlexAlign="start">
+            <button *ngSwitchCase="10" mat-raised-button
+                    (click)="next()">Finish
+            </button>
+            <button *ngSwitchDefault mat-raised-button
+                    (click)="next()">Next
+            </button>
+        </div>
     </div>
 </div>

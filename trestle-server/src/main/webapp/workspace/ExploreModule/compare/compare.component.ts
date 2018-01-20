@@ -335,6 +335,7 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
                     moment(),
                     0)
                 .subscribe((results) => {
+                    console.debug("IDs", results.map((indv) => indv.withoutHostname()));
                     // If we have results, turn off the loading bar
                     this.loading.visible = false;
                     results

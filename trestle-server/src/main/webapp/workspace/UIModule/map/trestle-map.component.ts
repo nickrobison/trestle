@@ -2,9 +2,9 @@
  * Created by nrobison on 6/11/17.
  */
 import * as mapboxgl from "mapbox-gl";
-import {GeoJSONSource, LngLatBounds, MapMouseEvent, VectorSource} from "mapbox-gl";
+import { GeoJSONSource, LngLatBounds, MapMouseEvent, VectorSource } from "mapbox-gl";
 import extent from "@mapbox/geojson-extent";
-import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange} from "@angular/core";
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange } from "@angular/core";
 import {
     Feature,
     FeatureCollection,
@@ -16,9 +16,9 @@ import {
     Point,
     Polygon
 } from "geojson";
-import {BehaviorSubject} from "rxjs/BehaviorSubject";
-import {TrestleIndividual} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
-import {Subject} from "rxjs/Subject";
+import { BehaviorSubject } from "rxjs/BehaviorSubject";
+import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
+import { Subject } from "rxjs/Subject";
 import FillPaint = mapboxgl.FillPaint;
 
 export interface IMapFillLayer extends mapboxgl.Layer {
@@ -47,6 +47,7 @@ export interface ITrestleMapSource {
     layers?: ITrestleMapLayers;
     labelField?: string;
     labelFunction?: (label: string) => string;
+    labelValue?: string;
 }
 
 export interface I3DMapSource extends ITrestleMapSource {
@@ -64,7 +65,7 @@ interface MapDataChange {
 
 export interface IMapAttributeChange {
     individual: string;
-    changes: Array<{attribute: string, value: any}>;
+    changes: Array<{ attribute: string, value: any }>;
     // attribute: string;
     // value: any;
 }
@@ -114,8 +115,6 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         } else {
             this.centerMapOnLoad = new BehaviorSubject(this.zoomOnLoad);
         }
-
-
 
         console.debug("Creating map, " +
             "singleSelect?", this.single,
@@ -190,6 +189,10 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         }
     }
 
+    public getMapBounds(): LngLatBounds {
+        return this.map.getBounds();
+    }
+
     public removeIndividual(individual: string): void {
         console.debug("Removing selection %s from the map", individual);
 
@@ -204,18 +207,19 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     public changeIndividualAttribute(attributeChange: IMapAttributeChange): void {
         console.debug("Changing attribute:", attributeChange);
 
-    //    Try to get the source first
+        //    Try to get the source first
         const layers = this.mapSources.get(attributeChange.individual);
         if (layers !== undefined) {
             console.debug("Changing layers:", layers);
-            layers.forEach((layer) => {
-                attributeChange.changes.forEach((change) => {
-                    this.map.setPaintProperty(layer, change.attribute, change.value);
-                });
+            layers.filter((layer) => !layer.startsWith("label"))
+                .forEach((layer) => {
+                    attributeChange.changes.forEach((change) => {
+                        this.map.setPaintProperty(layer, change.attribute, change.value);
+                    });
 
-            });
+                });
         }
-    //    I don't think we can do this with individuals yet, but maybe?
+        //    I don't think we can do this with individuals yet, but maybe?
     }
 
     public toggleIndividualVisibility(individual: string, setVisible: boolean): void {
@@ -443,7 +447,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                     "fill-color": "#627BC1",
                     "fill-opacity": 0.7,
                 } as FillPaint)
-            } );
+            });
             // Add polygon line changes
             const lineId = inputLayer.id + "-line";
             this.map.addLayer({
@@ -472,44 +476,17 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         }
 
         // Labels
-        // Add the labels
         const labelField = inputLayer.labelField;
-        if (labelField) {
+        const labelValue = inputLayer.labelValue;
+        if (labelField || labelValue) {
             // If it's a collection for each entity, add the label
             const iData = inputLayer.data;
             if (TrestleMapComponent.isCollection(iData)) {
                 iData.features.forEach((feature) => {
                     const labelLayerID = "label-" + feature.id;
                     // This is terrible, but so is the web, so who blinks first?
-                    const labelText: string = (feature.properties as any)[(labelField as any)];
-                    if (labelText) {
-                        this.map.addLayer({
-                            id: labelLayerID,
-                            type: "symbol",
-                            source: inputLayer.id,
-                            layout: {
-                                // For the text field, if the label function exists, call it, otherwise just place the label
-                                "text-field": inputLayer.labelFunction ? inputLayer.labelFunction(labelText) : labelText,
-                                "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
-                                "text-size": 11,
-                                "text-transform": "uppercase",
-                                "text-letter-spacing": 0.05,
-                                "text-offset": [0, 1.5]
-                            },
-                            paint: {
-                                "text-color": "#202",
-                                "text-halo-color": "#fff",
-                                "text-halo-width": 2
-                            }
-                        });
-                        attributeLayers.push(labelLayerID);
-                    }
-                });
-            } else {
-                const labelLayerID = "label-" + iData.id;
-                // This is terrible, but so is the web, so who blinks first?
-                const labelText: string = (iData.properties as any)[(labelField as any)];
-                if (labelText) {
+                    // If we have a field, use it, otherwise, use the provided value
+                    const labelText: string = labelField ? (feature.properties as any)[(labelField as any)] : labelValue;
                     this.map.addLayer({
                         id: labelLayerID,
                         type: "symbol",
@@ -530,7 +507,31 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                         }
                     });
                     attributeLayers.push(labelLayerID);
-                }
+                });
+            } else {
+                const labelLayerID = "label-" + iData.id;
+                // This is terrible, but so is the web, so who blinks first?
+                const labelText: string = labelField ? (iData.properties as any)[(labelField as any)] : labelValue;
+                this.map.addLayer({
+                    id: labelLayerID,
+                    type: "symbol",
+                    source: inputLayer.id,
+                    layout: {
+                        // For the text field, if the label function exists, call it, otherwise just place the label
+                        "text-field": inputLayer.labelFunction ? inputLayer.labelFunction(labelText) : labelText,
+                        "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+                        "text-size": 11,
+                        "text-transform": "uppercase",
+                        "text-letter-spacing": 0.05,
+                        "text-offset": [0, 1.5]
+                    },
+                    paint: {
+                        "text-color": "#202",
+                        "text-halo-color": "#fff",
+                        "text-halo-width": 2
+                    }
+                });
+                attributeLayers.push(labelLayerID);
             }
         }
         // Add the map sources

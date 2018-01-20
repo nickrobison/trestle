@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ViewChild } from "@angular/core";
 import { EvaluationService } from "../eval-service/evaluation.service";
 import { BehaviorSubject } from "rxjs/BehaviorSubject";
-import { MapSource } from "../../workspace/UIModule/map/trestle-map.component";
+import { MapSource, TrestleMapComponent } from "../../workspace/UIModule/map/trestle-map.component";
 import { TrestleTemporal } from "../../workspace/SharedModule/individual/TrestleIndividual/trestle-temporal";
 import { SelectionTableComponent } from "./selection-table/selection-table.component";
 
@@ -16,8 +16,11 @@ export class ExperimentComponent implements AfterViewInit {
     public answered: boolean | undefined;
     public dataChanges: BehaviorSubject<MapSource | undefined>;
     public tableData: string[];
+    @ViewChild(TrestleMapComponent)
+    public map: TrestleMapComponent;
     @ViewChild(SelectionTableComponent)
     public selectionTable: SelectionTableComponent;
+    public minimalSelection: boolean;
 
     private maxHeight: number;
 
@@ -26,6 +29,8 @@ export class ExperimentComponent implements AfterViewInit {
 
         this.dataChanges = new BehaviorSubject(undefined);
         this.maxHeight = 2016;
+
+        this.minimalSelection = false;
     }
 
     public ngAfterViewInit(): void {
@@ -48,7 +53,8 @@ export class ExperimentComponent implements AfterViewInit {
                 // Add to table
                 this.tableData = experiment.unionOf;
 
-                experiment.individuals.forEach((individual) => {
+                experiment.individuals.forEach((individual, idx) => {
+                    console.debug("Individual:", individual, idx);
 
                     const height = this.getHeight(individual.getTemporal());
                     const baseHeight = ExperimentComponent.getBase(individual.getTemporal());
@@ -71,10 +77,15 @@ export class ExperimentComponent implements AfterViewInit {
                                 "fill-extrusion-opacity": 0.7
                             }
                         },
-                        labelField: "adm2_name"
+                        labelValue: idx.toString()
+                        // labelField: "adm2_name"
                     });
                 });
             });
+    }
+
+    public minimalSelectionHandler(): void {
+        this.minimalSelection = true;
     }
 
     private getHeight(temporal: TrestleTemporal): number {
