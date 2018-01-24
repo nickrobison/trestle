@@ -1,6 +1,7 @@
 <div fxLayout="column" fxLayoutGap="50px">
     <div fxLayout="row" class="map-container" fxLayoutGap="10px">
             <trestle-map fxFlex="90%"
+                         [style.visibility]="mapVisible"
                             [single]="false"
                          [multiSelect]="false"
                          [zoomOnLoad]="zoomMap"

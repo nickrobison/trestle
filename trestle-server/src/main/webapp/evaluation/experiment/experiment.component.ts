@@ -1,36 +1,39 @@
-import { AfterViewInit, Component, ViewChild } from "@angular/core";
+import { AfterViewInit, Component, OnInit, ViewChild } from "@angular/core";
 import { EvaluationService } from "../eval-service/evaluation.service";
-import { BehaviorSubject } from "rxjs/BehaviorSubject";
 import { MapSource, TrestleMapComponent } from "../../workspace/UIModule/map/trestle-map.component";
 import { TrestleTemporal } from "../../workspace/SharedModule/individual/TrestleIndividual/trestle-temporal";
 import { SelectionTableComponent } from "./selection-table/selection-table.component";
+import { ReplaySubject } from "rxjs/ReplaySubject";
 
 @Component({
     selector: "experiment",
     templateUrl: "./experiment.component.html",
     styleUrls: ["./experiment.component.css"]
 })
-export class ExperimentComponent implements AfterViewInit {
+export class ExperimentComponent implements OnInit, AfterViewInit {
 
     public experimentValue: number;
     public answered: boolean | undefined;
-    public dataChanges: BehaviorSubject<MapSource | undefined>;
+    public dataChanges: ReplaySubject<MapSource>;
     public tableData: string[];
     @ViewChild(TrestleMapComponent)
     public map: TrestleMapComponent;
     @ViewChild(SelectionTableComponent)
     public selectionTable: SelectionTableComponent;
     public minimalSelection: boolean;
+    public mapVisible: "visible" | "hidden";
 
     private maxHeight: number;
 
     public constructor(private es: EvaluationService) {
         this.experimentValue = 1;
-
-        this.dataChanges = new BehaviorSubject(undefined);
+        this.dataChanges = new ReplaySubject<MapSource>(50);
         this.maxHeight = 2016;
-
         this.minimalSelection = false;
+    }
+
+    public ngOnInit(): void {
+        this.mapVisible = "hidden";
     }
 
     public ngAfterViewInit(): void {
@@ -44,7 +47,11 @@ export class ExperimentComponent implements AfterViewInit {
         this.loadNextMatch();
     }
 
-    public loadNextMatch(): void {
+    public loadNextMatch() {
+        // Make the map invisible and remove everything
+        this.mapVisible = "hidden";
+        this.map.clearMap();
+
         this.es.loadExperiment(this.experimentValue)
             .subscribe((experiment) => {
                 console.debug("has it:", experiment);
@@ -58,29 +65,37 @@ export class ExperimentComponent implements AfterViewInit {
 
                     const height = this.getHeight(individual.getTemporal());
                     const baseHeight = ExperimentComponent.getBase(individual.getTemporal());
+                    const filteredID = individual.getFilteredID();
+                    const isBase = ExperimentComponent.isBaseIndividual(experiment.union, filteredID);
                     this.dataChanges.next({
-                        id: individual.getID(),
+                        id: filteredID,
                         data: {
                             type: "Feature",
                             geometry: individual.getSpatialValue(),
-                            id: individual.getFilteredID(),
+                            id: filteredID,
                             properties: individual.getFactValues()
                         },
                         extrude: {
-                            id: individual.getID() + "-extrude",
+                            id: filteredID + "-extrude",
                             type: "fill-extrusion",
-                            source: individual.getID(),
+                            source: filteredID,
                             paint: {
-                                "fill-extrusion-color": "blue",
-                                "fill-extrusion-height": height,
-                                "fill-extrusion-base": baseHeight,
-                                "fill-extrusion-opacity": 0.7
+                                // If we're the base individual, make us red and put us on top of everything else
+                                "fill-extrusion-color": isBase ? "red" : "blue",
+                                "fill-extrusion-height": isBase ? height + 3001 : height,
+                                "fill-extrusion-base": isBase ? baseHeight + 3001 : baseHeight,
+                                "fill-extrusion-opacity": isBase ? 1.0 : 0.7
                             }
                         },
                         labelValue: idx.toString()
-                        // labelField: "adm2_name"
                     });
                 });
+                //    Sleep a couple of seconds and then set the map visible again
+                //    This is really gross, but who cares?
+                this.sleep(4000)
+                    .then(() => {
+                        this.mapVisible = "visible";
+                    });
             });
     }
 
@@ -95,6 +110,16 @@ export class ExperimentComponent implements AfterViewInit {
         } else {
             return to.get("year");
         }
+    }
+
+    private sleep(ms: number) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    public static isBaseIndividual(baseIndividualID: string, individualID: string): boolean {
+        console.debug("Base:", baseIndividualID, "Individual:", individualID, "Match?:", individualID === baseIndividualID);
+        // Strip off GAUL
+        return individualID === baseIndividualID;
     }
 
     private static getBase(temporal: TrestleTemporal): number {
