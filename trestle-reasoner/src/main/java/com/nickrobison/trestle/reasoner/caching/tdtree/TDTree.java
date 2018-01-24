@@ -1,13 +1,13 @@
 package com.nickrobison.trestle.reasoner.caching.tdtree;
 
-import com.boundary.tuple.FastTuple;
-import com.boundary.tuple.TupleSchema;
-import com.boundary.tuple.codegen.TupleExpressionGenerator;
 import com.codahale.metrics.annotation.Gauge;
 import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.trestle.reasoner.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.ITrestleIndex;
+import com.nickrobison.tuple.FastTuple;
+import com.nickrobison.tuple.TupleSchema;
+import com.nickrobison.tuple.codegen.TupleExpressionGenerator;
 import org.apache.commons.math3.util.FastMath;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;

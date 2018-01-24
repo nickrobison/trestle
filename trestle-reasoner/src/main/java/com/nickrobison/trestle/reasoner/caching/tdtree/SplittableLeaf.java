@@ -1,7 +1,7 @@
 package com.nickrobison.trestle.reasoner.caching.tdtree;
 
-import com.boundary.tuple.FastTuple;
-import com.boundary.tuple.codegen.TupleExpressionGenerator;
+import com.nickrobison.tuple.FastTuple;
+import com.nickrobison.tuple.codegen.TupleExpressionGenerator;
 import org.apache.commons.lang3.ArrayUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;

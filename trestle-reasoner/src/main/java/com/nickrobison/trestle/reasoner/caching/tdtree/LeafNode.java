@@ -1,8 +1,8 @@
 package com.nickrobison.trestle.reasoner.caching.tdtree;
 
-import com.boundary.tuple.FastTuple;
-import com.boundary.tuple.TupleSchema;
-import com.boundary.tuple.codegen.TupleExpressionGenerator;
+import com.nickrobison.tuple.FastTuple;
+import com.nickrobison.tuple.TupleSchema;
+import com.nickrobison.tuple.codegen.TupleExpressionGenerator;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -98,7 +98,7 @@ public abstract class LeafNode<Value> {
 
     /**
      * Delete key/value pair from leaf
-     * @param expression - Pre-compiled {@link com.boundary.tuple.codegen.TupleExpressionGenerator.BooleanTupleExpression} to evaluate
+     * @param expression - Pre-compiled {@link TupleExpressionGenerator.BooleanTupleExpression} to evaluate
      * @return - <code>true</code> matching key was deleted in this leaf. <code>false</code> no keys were removed
      */
     abstract boolean delete(TupleExpressionGenerator.BooleanTupleExpression expression);
@@ -126,7 +126,7 @@ public abstract class LeafNode<Value> {
     /**
      * Retrieve a value from the Leaf that matches the given ObjectID and is valid at the specified timestamp
      * Returns null if no matching object is found
-     * @param expression - Pre-compiled {@link com.boundary.tuple.codegen.TupleExpressionGenerator.BooleanTupleExpression} to evaluate
+     * @param expression - Pre-compiled {@link TupleExpressionGenerator.BooleanTupleExpression} to evaluate
      * @return - Nullable {@link Value}
      */
     abstract @Nullable Value getValue(TupleExpressionGenerator.BooleanTupleExpression expression);
@@ -174,7 +174,7 @@ public abstract class LeafNode<Value> {
      *
      * @param objectID - ObjectID to match
      * @param atTime   - Temporal to find valid value
-     * @return - {@link com.boundary.tuple.codegen.TupleExpressionGenerator.BooleanTupleExpression} to evaluate against tuples
+     * @return - {@link TupleExpressionGenerator.BooleanTupleExpression} to evaluate against tuples
      */
     static TupleExpressionGenerator.BooleanTupleExpression buildFindExpression(String objectID, long atTime) {
         try {

@@ -424,6 +424,14 @@
             <url>file://${user.dir}/src/main/resources/repo</url>
         </repository>
         <repository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>bintray-nickrobison-maven</id>
+            <name>bintray</name>
+            <url>https://dl.bintray.com/nickrobison/maven</url>
+        </repository>
+        <repository>
             <id>central-bintray</id>
             <name>bintray</name>
             <url>http://jcenter.bintray.com</url>

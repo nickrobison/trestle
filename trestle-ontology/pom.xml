@@ -149,12 +149,17 @@
                                     <include>com.ontotext.graphdb:*</include>
                                     <include>net.sf.trove4j:trove4j2</include>
                                     <include>org.apache.httpcomponents:*</include>
+                                    <include>org.codehaus.janino:*</include>
                                 </includes>
                             </artifactSet>
                             <relocations>
                                 <relocation>
                                     <pattern>org.apache.http</pattern>
                                     <shadedPattern>embedded.org.apache.http</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.codehaus.janino</pattern>
+                                    <shadedPattern>embedded.org.codehaus.janino</shadedPattern>
                                 </relocation>
                             </relocations>
                             <filters>

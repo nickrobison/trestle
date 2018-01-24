@@ -1,7 +1,7 @@
 package com.nickrobison.trestle.reasoner.caching.tdtree;
 
-import com.boundary.tuple.FastTuple;
-import com.boundary.tuple.codegen.TupleExpressionGenerator;
+import com.nickrobison.tuple.FastTuple;
+import com.nickrobison.tuple.codegen.TupleExpressionGenerator;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -129,8 +129,7 @@ public class PointLeaf<Value> extends LeafNode<Value> {
     }
     @Override
     Map<FastTuple, @NonNull Value> dumpLeaf() {
-        Map<FastTuple, @NonNull Value> leafRecords = new HashMap<>();
-        leafRecords.putAll(this.values);
+        Map<FastTuple, @NonNull Value> leafRecords = new HashMap<>(this.values);
         return leafRecords;
     }
 
