@@ -20,6 +20,7 @@ import { BehaviorSubject } from "rxjs/BehaviorSubject";
 import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
 import { Subject } from "rxjs/Subject";
 import FillPaint = mapboxgl.FillPaint;
+import Layer = mapboxgl.Layer;
 
 export interface IMapFillLayer extends mapboxgl.Layer {
     type: "fill";

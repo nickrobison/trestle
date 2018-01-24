@@ -4,6 +4,7 @@ import { MapSource, TrestleMapComponent } from "../../workspace/UIModule/map/tre
 import { TrestleTemporal } from "../../workspace/SharedModule/individual/TrestleIndividual/trestle-temporal";
 import { SelectionTableComponent } from "./selection-table/selection-table.component";
 import { ReplaySubject } from "rxjs/ReplaySubject";
+import { MatSliderChange } from "@angular/material";
 
 @Component({
     selector: "experiment",
@@ -22,8 +23,12 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
     public selectionTable: SelectionTableComponent;
     public minimalSelection: boolean;
     public mapVisible: "visible" | "hidden";
+    public currentSliderValue: number;
 
     private maxHeight: number;
+    private currentHeight: number;
+    private oldSliderValue: number;
+    private baseIndividualID: string;
 
     public constructor(private es: EvaluationService) {
         this.experimentValue = 1;
@@ -33,6 +38,9 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
     }
 
     public ngOnInit(): void {
+        this.currentSliderValue = 0;
+        this.oldSliderValue = 0;
+        this.currentHeight = 3001;
         this.mapVisible = "hidden";
     }
 
@@ -52,6 +60,11 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
         this.mapVisible = "hidden";
         this.map.clearMap();
 
+        // Reset the slider values
+        this.currentSliderValue = 0;
+        this.oldSliderValue = 0;
+        this.currentHeight = 3001;
+
         this.es.loadExperiment(this.experimentValue)
             .subscribe((experiment) => {
                 console.debug("has it:", experiment);
@@ -67,6 +80,9 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
                     const baseHeight = ExperimentComponent.getBase(individual.getTemporal());
                     const filteredID = individual.getFilteredID();
                     const isBase = ExperimentComponent.isBaseIndividual(experiment.union, filteredID);
+                    if (isBase) {
+                        this.baseIndividualID = filteredID;
+                    }
                     this.dataChanges.next({
                         id: filteredID,
                         data: {
@@ -101,6 +117,18 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
 
     public minimalSelectionHandler(): void {
         this.minimalSelection = true;
+    }
+
+    public sliderUpdate(event: MatSliderChange): void {
+        if (event.value) {
+            console.debug("Changed:", event);
+            const newOffset = (event.value - this.oldSliderValue) * 50;
+            this.map.change3DOffset(this.currentHeight,
+                newOffset,
+                this.baseIndividualID);
+            this.oldSliderValue = event.value;
+            this.currentHeight = this.currentHeight + newOffset;
+        }
     }
 
     private getHeight(temporal: TrestleTemporal): number {

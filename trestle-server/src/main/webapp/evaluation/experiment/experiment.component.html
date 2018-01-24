@@ -14,13 +14,9 @@
             <mat-slider
                     [vertical]="true"
                     [min]="0"
-                    [max]="500"></mat-slider>
-            <!--<mat-slider-->
-                    <!--[vertical]="true"-->
-                    <!--[min]="0"-->
-                    <!--[max]="500"-->
-                    <!--[(ngModel)]="currentSliderValue"-->
-                    <!--(input)="sliderUpdate($event)"></mat-slider>-->
+                    [max]="500"
+                    [(ngModel)]="currentSliderValue"
+                    (input)="sliderUpdate($event)"></mat-slider>
         </div>
     </div>
     <div fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="20px">
