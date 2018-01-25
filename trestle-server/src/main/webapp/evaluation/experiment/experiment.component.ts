@@ -24,6 +24,7 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
     public minimalSelection: boolean;
     public mapVisible: "visible" | "hidden";
     public currentSliderValue: number;
+    public mapConfig: mapboxgl.MapboxOptions;
 
     private maxHeight: number;
     private currentHeight: number;
@@ -35,6 +36,14 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
         this.dataChanges = new ReplaySubject<MapSource>(50);
         this.maxHeight = 2016;
         this.minimalSelection = false;
+
+        this.mapConfig = {
+            style: "mapbox://styles/nrobison/cj3n7if3q000s2sutls5a1ny7",
+            center: [32.3558991, -25.6854313],
+            zoom: 8,
+            pitch: 40,
+            bearing: 20
+        };
     }
 
     public ngOnInit(): void {
