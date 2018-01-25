@@ -1,0 +1,30 @@
+reasoner:
+  connectionString: "http://db:7200"
+  username: ""
+  password: ""
+  ontology: "gaul_hadoop_world_bank"
+  prefix: "http://nickrobison.com/gaul/"
+  location: "file:///opt/trestle/trestle.owl"
+
+logging:
+  level: INFO
+  appenders:
+    - type: console
+      logFormat: "[%-5p | %t | %X{test}] %d %c:%L %X{transaction} - %m%n"
+      includeCallerData: true
+
+database:
+  driverClass: org.h2.Driver
+  user: sa
+  url: jdbc:h2:/opt/trestle/trestle.db
+  properties:
+    charSet: UTF-8
+    hibernate.dialect: org.hibernate.dialect.H2Dialect
+
+jwt:
+  authHeader: "Authorization"
+  authSalt: "test-salt"
+  expirationTime: 7200
+
+swagger:
+  resourcePackage: com.nickrobison.trestle.server.resources

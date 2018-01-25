@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  db:
+    image: ontotext/graphdb:8.3.1-free
+    ports:
+      - "7200:7200"
+  server:
+    depends_on:
+      - db
+    image: nickrobison/trestle-server:0.8.0-SNAPSHOT
+    environment:
+      CS: http://db:7200
+    ports:
+      - "88:8080"
