@@ -72,7 +72,7 @@
     "html-webpack-plugin": "^2.30.1",
     "image-webpack-loader": "^3.4.2",
     "karma": "^1.7.0",
-    "node-sass": "^4.5.3",
+    "node-sass": "^4.7.2",
     "protractor": "^5.1.2",
     "protractor-cucumber-framework": "^3.1.0",
     "resolve-url-loader": "^2.2.0",
@@ -89,7 +89,7 @@
     "webpack-merge": "^4.1.0"
   },
   "scripts": {
-    "watch": "webpack --colors --progress --watch",
+    "watch": "webpack --colors --progress --watch --config config/webpack.production.js",
     "prepare": "webdriver-manager update",
     "test": "protractor protractor.conf.js"
   },

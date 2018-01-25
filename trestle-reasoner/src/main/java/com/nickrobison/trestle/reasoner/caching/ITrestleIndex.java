@@ -114,7 +114,6 @@ public interface ITrestleIndex<Value> {
      * Compute statistics on index leafs
      *
      * @return - {@link List} of {@link LeafStatistics}
-     * @exception - {@link UnsupportedOperationException} if the underlying index is not of type {@link com.nickrobison.trestle.reasoner.caching.tdtree.TDTree}
      */
     List<LeafStatistics> getLeafStatistics();
 
