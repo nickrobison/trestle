@@ -12,13 +12,12 @@ const commonConfig = require("./webpack.common");
 const helpers = require("./helpers");
 const env = require("./env");
 
-const AOT = process.env.AOT;
-
 var prodOptions = {
     entry: {
         "polyfills": "./src/main/webapp/polyfills.ts",
         "vendor": "./src/main/webapp/vendor.ts",
-        "workspace": "./src/main/webapp/workspace/workspace.bootstrap.ts"
+        "workspace": "./src/main/webapp/workspace/workspace.bootstrap.ts",
+        "evaluation": "./src/main/webapp/evaluation/evaluation.bootstrap.ts"
     },
     devtool: "source-map",
     output: {
@@ -71,8 +70,11 @@ var prodOptions = {
         }),
         // Merge the common CSP configuration along with the script settings that disallow inline execution, since we're all AOT now
         new CSPWebpackPlugin(Object.assign(env.csp, {
-            "script-src": ["'self'"]
+            "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "blob:"]
         }))
+        // new CSPWebpackPlugin(Object.assign(env.csp, {
+        //     "script-src": ["'self'"]
+        // }))
     ]
 };
 
