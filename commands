@@ -7,9 +7,8 @@ case ${1} in
   cloc --exclude-dir=$(tr '\n' ',' < ./.clocignore) .
   ;;
   "docker")
-  #  Build trestle-server
+#  Build trestle-server
   echo "Building Java project"
-#  Remove the node modules, since it doesn't always build the native packages correctly
   mvn clean package -DskipTests -pl trestle-server -am -T3
 #  Build the docker images
   echo "Building GraphDB Docker image"

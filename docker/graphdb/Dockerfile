@@ -1,11 +1,11 @@
 FROM openjdk:8-jdk
 
 # Build time arguments
-ARG version=8.3.1
+ARG version=8.4.0
 
-LABEL name="graphdb" \
- maintainer="Nick Robison <nick@nickrobison.com>" \
- description="GraphDB Docker image, copied from the Ontotext Github"
+LABEL name="graphdb"
+LABEL maintainer="Nick Robison <nick@nickrobison.com>"
+LABEL description="GraphDB Docker image, copied from the Ontotext Github"
 
 ENV GRAPHDB_PARENT_DIR=/opt/graphdb
 ENV GRAPHDB_HOME=${GRAPHDB_PARENT_DIR}/home
@@ -26,6 +26,6 @@ ENV PATH=${GRAPHDB_INSTALL_DIR}/bin:$PATH
 
 CMD ["-Dgraphdb.home=/opt/graphdb/home"]
 
-ENTRYPOINT ["/opt/graphdb/dist/bin/graphdb"]
+ENTRYPOINT ["graphdb"]
 
 EXPOSE 7200

@@ -3,9 +3,9 @@ FROM openjdk:8-jdk
 # Build time arguments
 ARG version="0.8.0-SNAPSHOT"
 
-LABEL name="trestle-server" \
- maintainer="Nick Robison <nick@nickrobison.com>" \
- description="Trestle Server image"
+LABEL name="trestle-server"
+LABEL maintainer="Nick Robison <nick@nickrobison.com>"
+LABEL description="Trestle Server image"
 
 ENV TRESTLE_HOME=/opt/trestle
 
