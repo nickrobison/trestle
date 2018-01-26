@@ -3,7 +3,7 @@
  */
 "use strict";
 
-const helper = require("./helpers");
+const helpers = require("./helpers");
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const rxPaths = require("rxjs/_esm5/path-mapping");
@@ -106,31 +106,24 @@ var options = {
         ]
     },
     plugins: [
-        // new webpack.optimize.CommonsChunkPlugin({
-        //     name: ["workspace", "vendor", "polyfills", "evaluation"]
-        // }),
-        // new webpack.optimize.CommonsChunkPlugin({
-        //     name: "common"
-        // }),
-        // new webpack.optimize.CommonsChunkPlugin({
-        //     name: "vendor"
-        // }),
-        // new webpack.optimize.CommonsChunkPlugin({
-        //     name: "pollyfill"
-        // }),
+        // Extract the common code from both main application
+        new webpack.optimize.CommonsChunkPlugin({
+            name: "common",
+            chunks: ["workspace", "evaluation"]
+        }),
         new webpack.optimize.ModuleConcatenationPlugin(),
         new HtmlWebpackPlugin({
             inject: true,
-            chunks: ["polyfills", "vendor", "workspace"],
+            chunks: ["polyfills", "vendor", "common", "workspace"],
             chunksSortMode: "manual",
-            template: "./src/main/webapp/workspace/workspace.index.html",
+            template: helpers.root("src/main/webapp/workspace/workspace.index.html"),
             filename: "workspace.index.html"
         }),
         new HtmlWebpackPlugin({
             inject: true,
-            chunks: ["vendor", "polyfills", "evaluation"],
+            chunks: ["vendor", "polyfills", "common", "evaluation"],
             chunksSortMode: "manual",
-            template: "./src/main/webapp/evaluation/evaluation.index.html",
+            template: helpers.root("src/main/webapp/evaluation/evaluation.index.html"),
             filename: "evaluation.index.html"
         }),
         new Jarvis()
