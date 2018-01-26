@@ -38,7 +38,7 @@
         <div *ngIf="answered === false || minimalSelection === true"
              [ngSwitch]="experimentValue" fxFlexAlign="start">
             <button *ngSwitchCase="10" mat-raised-button
-                    (click)="next()">Finish
+                    (click)="finish()">Finish
             </button>
             <button *ngSwitchDefault mat-raised-button
                     (click)="next()">Next

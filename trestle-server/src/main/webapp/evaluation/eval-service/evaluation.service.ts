@@ -11,6 +11,12 @@ export enum MapState {
     NO_CONTEXT = 4
 }
 
+export interface IResultSet {
+    expState: MapState;
+    union: boolean;
+    unionOf?: string[];
+}
+
 export interface IUserDemographics {
     test: number;
 }
@@ -27,10 +33,11 @@ export class EvaluationService {
 
     private userId: string;
     private demographics: IUserDemographics;
+    private resultMap: Map<number, IResultSet>;
 
     public constructor(private http: HttpClient,
-                       private individualCache: CacheService<string, TrestleIndividual>,) {
-
+                       private individualCache: CacheService<string, TrestleIndividual>) {
+        this.resultMap = new Map();
     }
 
     public createUser(): void {
@@ -44,8 +51,16 @@ export class EvaluationService {
         this.demographics = demographics;
     }
 
-    public submitResults(): void {
+    public submitResults(experimentNumber: number, state: MapState, union: boolean, unionOf?: string[]): void {
+        this.resultMap.set(experimentNumber, {
+            expState: state,
+            union,
+            unionOf
+        });
+    }
 
+    public finishExperiment(): void {
+        console.debug("Results:", this.resultMap.valueOf());
     }
 
     public loadExperiment(experimentNumber: number): Observable<IExperimentResponse> {
@@ -81,7 +96,6 @@ export class EvaluationService {
         // tslint:disable-next-line:no-bitwise
         return (mapState & MapState.NO_CONTEXT) > 0;
     }
-
 
     private getTrestleIndividual(name: string): Observable<TrestleIndividual> {
         return this.individualCache.get(name, this.getIndividualAPI(name));

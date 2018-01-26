@@ -58,10 +58,23 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
     }
 
     public next(): void {
-        console.debug("Selected:", this.selectionTable.getSelectedRows());
+        const selectedRows = this.selectionTable.getSelectedRows();
+        // Figure out what individuals the rows correspond to
+        const selectedIndividuals: string[] = [];
+        selectedRows.forEach((row) => {
+            selectedIndividuals.push(this.tableData[Number.parseInt(row)]);
+        });
+        console.debug("Selected:", selectedIndividuals);
+        // Add results
+        this.es.submitResults(this.experimentValue, 1, this.answered === true, selectedIndividuals);
+
         this.answered = undefined;
         this.experimentValue += 1;
         this.loadNextMatch();
+    }
+
+    public finish(): void {
+        this.es.finishExperiment();
     }
 
     public loadNextMatch() {
