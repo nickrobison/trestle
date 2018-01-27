@@ -71,6 +71,12 @@ export interface IMapAttributeChange {
     // value: any;
 }
 
+export interface IMapEventHandler {
+    event: MapEvent;
+    handler: (event: any) => void;
+}
+
+export type MapEvent = "mousemove" | "mouseleave" | "click" | "moveend";
 export type MapSource = I3DMapSource | ITrestleMapSource;
 
 @Component({
@@ -88,6 +94,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     @Input() public config?: mapboxgl.MapboxOptions;
     @Input() public dataChanges: Subject<MapSource | undefined>;
     @Input() public attributeChanges: Subject<IMapAttributeChange>;
+    @Input() public handlers: IMapEventHandler[];
     @Output() public mapBounds: EventEmitter<LngLatBounds> = new EventEmitter();
     @Output() public clicked: EventEmitter<string> = new EventEmitter();
     private centerMapOnLoad: BehaviorSubject<boolean>;
@@ -130,6 +137,11 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         this.map.on("mouseover", this.mouseOver);
         this.map.on("mouseleave", this.mouseOut);
         this.map.on("moveend", this.moveHandler);
+
+        // Register any additional handlers
+        this.handlers.forEach((h) => {
+            this.map.on(h.event, h.handler);
+        });
 
         // Once the map is loaded, setup the subscriptions
         this.map.on("style.load", () => {
@@ -188,6 +200,16 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             console.debug("Changing zoom value");
             this.centerMapOnLoad.next(zoomChanges.currentValue);
         }
+
+        // Event handlers
+        // const handlerChanges = changes["handlers"];
+        // if (handlerChanges != null
+        //     && (handlerChanges.currentValue !== handlerChanges.previousValue)) {
+        //     console.debug("Registering event handlers");
+        //     (handlerChanges.currentValue as IMapEventHandler[]).forEach((e) => {
+        //         this.map.on(e.event, e.handler);
+        //     });
+        // }
     }
 
     public getMapBounds(): LngLatBounds {

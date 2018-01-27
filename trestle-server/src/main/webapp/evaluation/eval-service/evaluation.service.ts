@@ -4,6 +4,7 @@ import "clientjs";
 import { Observable } from "rxjs/Observable";
 import { ITrestleIndividual, TrestleIndividual } from "../../workspace/SharedModule/individual/TrestleIndividual/trestle-individual";
 import { CacheService } from "../../workspace/SharedModule/cache/cache.service";
+import { start } from "repl";
 
 export enum MapState {
     OVERLAY = 1,
@@ -13,8 +14,11 @@ export enum MapState {
 
 export interface IResultSet {
     expState: MapState;
+    expTime: number;
     union: boolean;
     unionOf?: string[];
+    sliderEvents: number;
+    mapMoves: number;
 }
 
 export interface IUserDemographics {
@@ -34,10 +38,14 @@ export class EvaluationService {
     private userId: string;
     private demographics: IUserDemographics;
     private resultMap: Map<number, IResultSet>;
+    private sliderEvents: number;
+    private mapMoves: number;
 
     public constructor(private http: HttpClient,
                        private individualCache: CacheService<string, TrestleIndividual>) {
         this.resultMap = new Map();
+        this.sliderEvents = 0;
+        this.mapMoves = 0;
     }
 
     public createUser(): void {
@@ -51,12 +59,33 @@ export class EvaluationService {
         this.demographics = demographics;
     }
 
-    public submitResults(experimentNumber: number, state: MapState, union: boolean, unionOf?: string[]): void {
+    public addSliderChange(): void {
+        this.sliderEvents++;
+    }
+
+    public addMapMove(): void {
+        this.mapMoves++;
+    }
+
+    public submitResults(experimentNumber: number,
+                         startTime: number,
+                         state: MapState, union: boolean,
+                         unionOf?: string[]): void {
+
+        const expDuration = Date.now() - startTime;
+
+        console.debug("Took %s ms", expDuration);
         this.resultMap.set(experimentNumber, {
             expState: state,
+            expTime: expDuration,
             union,
-            unionOf
+            unionOf,
+            sliderEvents: this.sliderEvents,
+            mapMoves: this.mapMoves
         });
+    //    Reset everything
+        this.sliderEvents = 0;
+        this.mapMoves = 0;
     }
 
     public finishExperiment(): void {

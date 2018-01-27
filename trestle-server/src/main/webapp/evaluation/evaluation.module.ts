@@ -16,7 +16,7 @@ import "../rxjs-operators";
 import { CommonModule } from "@angular/common";
 import { SharedModule } from "../workspace/SharedModule/shared.module";
 import { FlexLayoutModule } from "@angular/flex-layout";
-import { SelectionTableComponent } from "./experiment/selection-table/selection-table.component";
+import { CounterPipe, SelectionTableComponent } from "./experiment/selection-table/selection-table.component";
 
 @NgModule({
     imports: [
@@ -37,7 +37,8 @@ import { SelectionTableComponent } from "./experiment/selection-table/selection-
         IntroductionComponent,
         DemographicsComponent,
         ExperimentComponent,
-        SelectionTableComponent
+        SelectionTableComponent,
+        CounterPipe
     ],
     providers: [
         EvaluationService

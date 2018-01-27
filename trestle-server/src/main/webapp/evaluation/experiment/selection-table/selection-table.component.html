@@ -17,7 +17,8 @@
 
         <ng-container matColumnDef="number">
             <mat-header-cell *matHeaderCellDef> No. </mat-header-cell>
-            <mat-cell *matCellDef="let element"> {{element}}</mat-cell>
+            <!--We need to offset the values because they're index counted-->
+            <mat-cell *matCellDef="let element"> {{element | counter}} </mat-cell>
         </ng-container>
 
         <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>

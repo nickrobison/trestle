@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from "@angular/core";
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, Pipe, PipeTransform, SimpleChanges } from "@angular/core";
 import { BehaviorSubject } from "rxjs/BehaviorSubject";
 import { MatTableDataSource } from "@angular/material";
 import { SelectionModel } from "@angular/cdk/collections";
@@ -48,6 +48,11 @@ export class SelectionTableComponent implements OnChanges, AfterViewInit {
         }
     }
 
+    public reset(): void {
+        this.data = [];
+        this.selection.clear();
+    }
+
     public isAllSelected(): boolean {
         const numSelected = this.selection.selected.length;
         const numRows = this.tableData.data.length;
@@ -82,3 +87,12 @@ export class SelectionTableComponent implements OnChanges, AfterViewInit {
         this.selection.toggle(row);
     }
 }
+
+@Pipe({name: "counter"})
+export class CounterPipe implements PipeTransform {
+    public transform(value: string): number {
+        return Number.parseInt(value) + 1;
+    }
+
+}
+

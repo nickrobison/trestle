@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, OnInit, ViewChild } from "@angular/core";
-import { EvaluationService } from "../eval-service/evaluation.service";
-import { MapSource, TrestleMapComponent } from "../../workspace/UIModule/map/trestle-map.component";
+import { EvaluationService, MapState } from "../eval-service/evaluation.service";
+import { IMapEventHandler, MapEvent, MapSource, TrestleMapComponent } from "../../workspace/UIModule/map/trestle-map.component";
 import { TrestleTemporal } from "../../workspace/SharedModule/individual/TrestleIndividual/trestle-temporal";
 import { SelectionTableComponent } from "./selection-table/selection-table.component";
 import { ReplaySubject } from "rxjs/ReplaySubject";
@@ -25,11 +25,14 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
     public mapVisible: "visible" | "hidden";
     public currentSliderValue: number;
     public mapConfig: mapboxgl.MapboxOptions;
+    public mapEventHandlers: IMapEventHandler[];
 
+    private experimentState: MapState;
     private maxHeight: number;
     private currentHeight: number;
     private oldSliderValue: number;
     private baseIndividualID: string;
+    private startTime: number;
 
     public constructor(private es: EvaluationService) {
         this.experimentValue = 1;
@@ -51,7 +54,17 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
         this.oldSliderValue = 0;
         this.currentHeight = 3001;
         this.mapVisible = "hidden";
+        // Register map handlers
+        this.mapEventHandlers = [{
+            event: "moveend",
+            handler: this.moveHandler
+        }];
     }
+
+    public moveHandler = (event: any) => {
+        console.debug("MapMoved", event);
+        this.es.addMapMove();
+    };
 
     public ngAfterViewInit(): void {
         this.loadNextMatch();
@@ -66,10 +79,11 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
         });
         console.debug("Selected:", selectedIndividuals);
         // Add results
-        this.es.submitResults(this.experimentValue, 1, this.answered === true, selectedIndividuals);
+        this.es.submitResults(this.experimentValue, this.startTime, this.experimentState, this.answered === true, selectedIndividuals);
 
         this.answered = undefined;
         this.experimentValue += 1;
+        this.selectionTable.reset();
         this.loadNextMatch();
     }
 
@@ -91,6 +105,7 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
             .subscribe((experiment) => {
                 console.debug("has it:", experiment);
                 console.debug("Overlay?", this.es.isOverlay(experiment.state));
+                this.experimentState = experiment.state;
 
                 // Add to table
                 this.tableData = experiment.unionOf;
@@ -133,6 +148,7 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
                 this.sleep(4000)
                     .then(() => {
                         this.mapVisible = "visible";
+                        this.startTime = Date.now();
                     });
             });
     }
@@ -141,15 +157,20 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
         this.minimalSelection = true;
     }
 
+    public showNext(): boolean {
+        return (this.answered === true && this.minimalSelection === true) ||
+            (this.answered === false && this.answered !== undefined);
+    }
+
     public sliderUpdate(event: MatSliderChange): void {
         if (event.value) {
-            console.debug("Changed:", event);
             const newOffset = (event.value - this.oldSliderValue) * 50;
             this.map.change3DOffset(this.currentHeight,
                 newOffset,
                 this.baseIndividualID);
             this.oldSliderValue = event.value;
             this.currentHeight = this.currentHeight + newOffset;
+            this.es.addSliderChange();
         }
     }
 

@@ -7,6 +7,7 @@
                          [zoomOnLoad]="true"
                          [config]="mapConfig"
                          [dataChanges]="dataChanges"
+                         [handlers]="mapEventHandlers"
                          class="map-container"></trestle-map>
         <div>
             <h6 class="light_gray_text">Explode</h6>
@@ -35,7 +36,7 @@
                                  (minimalSelection)="minimalSelectionHandler()"></selection-table>
             </div>
         </div>
-        <div *ngIf="answered === false || minimalSelection === true"
+        <div *ngIf="showNext()"
              [ngSwitch]="experimentValue" fxFlexAlign="start">
             <button *ngSwitchCase="10" mat-raised-button
                     (click)="finish()">Finish
