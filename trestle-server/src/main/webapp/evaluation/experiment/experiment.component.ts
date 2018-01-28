@@ -1,10 +1,11 @@
 import { AfterViewInit, Component, OnInit, ViewChild } from "@angular/core";
 import { EvaluationService, MapState } from "../eval-service/evaluation.service";
-import { IMapEventHandler, MapEvent, MapSource, TrestleMapComponent } from "../../workspace/UIModule/map/trestle-map.component";
+import { IMapEventHandler, MapSource, TrestleMapComponent } from "../../workspace/UIModule/map/trestle-map.component";
 import { TrestleTemporal } from "../../workspace/SharedModule/individual/TrestleIndividual/trestle-temporal";
 import { SelectionTableComponent } from "./selection-table/selection-table.component";
 import { ReplaySubject } from "rxjs/ReplaySubject";
 import { MatSliderChange } from "@angular/material";
+import { ColorService } from "../../workspace/SharedModule/color/color.service";
 
 @Component({
     selector: "experiment",
@@ -34,7 +35,7 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
     private baseIndividualID: string;
     private startTime: number;
 
-    public constructor(private es: EvaluationService) {
+    public constructor(private es: EvaluationService, private cs: ColorService) {
         this.experimentValue = 1;
         this.dataChanges = new ReplaySubject<MapSource>(50);
         this.maxHeight = 2016;
@@ -134,7 +135,7 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
                             source: filteredID,
                             paint: {
                                 // If we're the base individual, make us red and put us on top of everything else
-                                "fill-extrusion-color": isBase ? "red" : "blue",
+                                "fill-extrusion-color": isBase ? "red" : this.cs.getColor(idx),
                                 "fill-extrusion-height": isBase ? height + 3001 : height,
                                 "fill-extrusion-base": isBase ? baseHeight + 3001 : baseHeight,
                                 "fill-extrusion-opacity": isBase ? 1.0 : 0.7

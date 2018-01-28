@@ -17,6 +17,8 @@ import { CommonModule } from "@angular/common";
 import { SharedModule } from "../workspace/SharedModule/shared.module";
 import { FlexLayoutModule } from "@angular/flex-layout";
 import { CounterPipe, SelectionTableComponent } from "./experiment/selection-table/selection-table.component";
+import { COLOR_SERVICE_CONFIG } from "../workspace/SharedModule/color/color-service.config";
+import { COLOR_EVAL_CONFIG } from "./evaluation.config";
 
 @NgModule({
     imports: [
@@ -41,8 +43,10 @@ import { CounterPipe, SelectionTableComponent } from "./experiment/selection-tab
         CounterPipe
     ],
     providers: [
-        EvaluationService
-    ],
+        EvaluationService,
+        {
+            provide: COLOR_SERVICE_CONFIG, useValue: COLOR_EVAL_CONFIG
+        }],
     bootstrap: [EvaluationComponent]
 })
 export class EvaluationModule {
