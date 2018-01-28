@@ -4,7 +4,6 @@ import "clientjs";
 import { Observable } from "rxjs/Observable";
 import { ITrestleIndividual, TrestleIndividual } from "../../workspace/SharedModule/individual/TrestleIndividual/trestle-individual";
 import { CacheService } from "../../workspace/SharedModule/cache/cache.service";
-import { start } from "repl";
 
 export enum MapState {
     OVERLAY = 1,
@@ -37,13 +36,13 @@ export class EvaluationService {
 
     private userId: string;
     private demographics: IUserDemographics;
-    private resultMap: Map<number, IResultSet>;
+    private resultMap: { [expNumber: number]: IResultSet };
     private sliderEvents: number;
     private mapMoves: number;
 
     public constructor(private http: HttpClient,
                        private individualCache: CacheService<string, TrestleIndividual>) {
-        this.resultMap = new Map();
+        this.resultMap = {};
         this.sliderEvents = 0;
         this.mapMoves = 0;
     }
@@ -75,21 +74,21 @@ export class EvaluationService {
         const expDuration = Date.now() - startTime;
 
         console.debug("Took %s ms", expDuration);
-        this.resultMap.set(experimentNumber, {
+        this.resultMap[experimentNumber] = {
             expState: state,
             expTime: expDuration,
             union,
             unionOf,
             sliderEvents: this.sliderEvents,
             mapMoves: this.mapMoves
-        });
-    //    Reset everything
+        };
+        //    Reset everything
         this.sliderEvents = 0;
         this.mapMoves = 0;
     }
 
     public finishExperiment(): void {
-        console.debug("Results:", this.resultMap.valueOf());
+        console.debug("Results:", this.resultMap);
     }
 
     public loadExperiment(experimentNumber: number): Observable<IExperimentResponse> {
