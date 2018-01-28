@@ -21,16 +21,16 @@ import java.util.stream.Collectors;
  */
 public class PointLeaf<Value> extends LeafNode<Value> {
     private static final Logger logger = LoggerFactory.getLogger(PointLeaf.class);
-    private final Map<FastTuple, Value> values = new Object2ObjectOpenHashMap<>(100, .7f);
+    private final Map<LeafKeySchema, Value> values = new Object2ObjectOpenHashMap<>(100, .7f);
     private int records = 0;
 
     @SuppressWarnings({"method.invocation.invalid"})
-    PointLeaf(int leafID, FastTuple leafMetadata) {
+    PointLeaf(int leafID, LeafSchema leafMetadata) {
         super(leafID, leafMetadata);
         logger.trace("Creating Point Node {}", this.getBinaryStringID());
     }
 
-    void copyInitialValues(@Nullable FastTuple[] keys, @Nullable Value[] vals) {
+    void copyInitialValues(@Nullable LeafKeySchema[] keys, @Nullable Value[] vals) {
         for (int i = 0; i < keys.length; i++) {
             if (keys[i] != null && vals[i] != null) {
                 this.values.put(keys[i], vals[i]);
@@ -65,7 +65,7 @@ public class PointLeaf<Value> extends LeafNode<Value> {
     @Nullable Value getValue(TupleExpressionGenerator.BooleanTupleExpression expression) {
         final Optional<Value> value = this.values.entrySet()
                 .stream()
-                .filter(entry -> expression.evaluate(entry.getKey()))
+                .filter(entry -> expression.evaluate((FastTuple) entry.getKey()))
                 .map(Map.Entry::getValue)
                 .findAny();
         return value.orElse(null);
@@ -77,7 +77,7 @@ public class PointLeaf<Value> extends LeafNode<Value> {
     }
 
     @Override
-    @Nullable LeafSplit insert(FastTuple newKey, @NonNull Value value) {
+    @Nullable LeafSplit insert(LeafKeySchema newKey, @NonNull Value value) {
         if (!this.values.containsKey(newKey)) {
             this.values.put(newKey, value);
             this.records++;
@@ -93,9 +93,9 @@ public class PointLeaf<Value> extends LeafNode<Value> {
 
     @Override
     boolean delete(TupleExpressionGenerator.BooleanTupleExpression expression) {
-        final Optional<FastTuple> matchingKey = this.values.entrySet()
+        final Optional<LeafKeySchema> matchingKey = this.values.entrySet()
                 .stream()
-                .filter(entry -> expression.evaluate(entry.getKey()))
+                .filter(entry -> expression.evaluate((FastTuple) entry.getKey()))
                 .map(Map.Entry::getKey)
                 .findAny();
         if (matchingKey.isPresent()) {
@@ -108,7 +108,7 @@ public class PointLeaf<Value> extends LeafNode<Value> {
 
     @Override
     long deleteKeysWithValue(@NonNull Value value) {
-        final List<FastTuple> list = this.values.entrySet()
+        final List<LeafKeySchema> list = this.values.entrySet()
                 .stream()
                 .filter(entry -> value.equals(entry.getValue()))
                 .map(Map.Entry::getKey)
@@ -120,7 +120,7 @@ public class PointLeaf<Value> extends LeafNode<Value> {
 
     @Override
     boolean update(String objectID, long atTime, @NonNull Value value) {
-        final FastTuple key = buildObjectKey(objectID, atTime, atTime);
+        final LeafKeySchema key = buildObjectKey(objectID, atTime, atTime);
         if (this.values.containsKey(key)) {
             this.values.replace(key, value);
             return true;
@@ -128,9 +128,8 @@ public class PointLeaf<Value> extends LeafNode<Value> {
         return false;
     }
     @Override
-    Map<FastTuple, @NonNull Value> dumpLeaf() {
-        Map<FastTuple, @NonNull Value> leafRecords = new HashMap<>(this.values);
-        return leafRecords;
+    Map<LeafKeySchema, @NonNull Value> dumpLeaf() {
+        return new HashMap<>(this.values);
     }
 
     @Override
@@ -143,9 +142,9 @@ public class PointLeaf<Value> extends LeafNode<Value> {
         return "PointLeaf{" +
                 "binaryID='" + binaryID + '\'' +
                 ", records=" + records +
-                ", start=" + Instant.ofEpochMilli(Double.valueOf(leafMetadata.getDouble(1)).longValue()).atOffset(ZoneOffset.UTC) +
-                ", end=" + Instant.ofEpochMilli(Double.valueOf(leafMetadata.getDouble(2)).longValue()).atOffset(ZoneOffset.UTC) +
-                ", direction=" + leafMetadata.getInt(3) +
+                ", start=" + Instant.ofEpochMilli(Double.valueOf(leafMetadata.start()).longValue()).atOffset(ZoneOffset.UTC) +
+                ", end=" + Instant.ofEpochMilli(Double.valueOf(leafMetadata.end()).longValue()).atOffset(ZoneOffset.UTC) +
+                ", direction=" + leafMetadata.direction() +
                 '}';
     }
 }

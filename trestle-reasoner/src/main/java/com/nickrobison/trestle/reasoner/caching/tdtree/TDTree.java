@@ -43,7 +43,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     private final int blockSize;
     private List<LeafNode<Value>> leafs = new ArrayList<>();
     private int maxDepth;
-    private final FastTuple rootTuple;
+    private final LeafSchema rootTuple;
     private final AtomicLong cacheSize = new AtomicLong();
 
     static {
@@ -64,10 +64,10 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         this.maxDepth = 0;
 
 //        Init the root node
-        rootTuple = leafSchema.createTuple();
-        rootTuple.setDouble(1, 0);
-        rootTuple.setDouble(2, maxValue);
-        rootTuple.setInt(3, 7);
+        rootTuple = (LeafSchema) leafSchema.createTuple();
+        rootTuple.start(0);
+        rootTuple.end(maxValue);
+        rootTuple.direction(7);
         leafs.add(new SplittableLeaf<>(1, rootTuple, this.blockSize));
     }
 
@@ -216,9 +216,9 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
                 .stream()
                 .filter(leaf -> leaf.getRecordCount() > 0)
                 .map(LeafNode::dumpLeaf)
-                .forEach(values -> values.forEach((key, value) -> this.insertValue(key.getLong(1),
-                        key.getLong(2),
-                        key.getLong(3),
+                .forEach(values -> values.forEach((key, value) -> this.insertValue(key.objectID(),
+                        key.start(),
+                        key.end(),
                         value)));
 
         final Instant end = Instant.now();
@@ -251,7 +251,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
                         leaf.getBinaryStringID(),
                         leaf.getLeafType(),
                         leaf.getLeafVerticies(),
-                        leaf.leafMetadata.getInt(3),
+                        leaf.leafMetadata.direction(),
                         leaf.getRecordCount()))
                 .collect(Collectors.toList());
     }
