@@ -139,9 +139,11 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         this.map.on("moveend", this.moveHandler);
 
         // Register any additional handlers
-        this.handlers.forEach((h) => {
-            this.map.on(h.event, h.handler);
-        });
+        if (this.handlers) {
+            this.handlers.forEach((h) => {
+                this.map.on(h.event, h.handler);
+            });
+        }
 
         // Once the map is loaded, setup the subscriptions
         this.map.on("style.load", () => {
