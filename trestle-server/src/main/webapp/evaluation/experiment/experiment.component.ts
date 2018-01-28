@@ -6,6 +6,7 @@ import { SelectionTableComponent } from "./selection-table/selection-table.compo
 import { ReplaySubject } from "rxjs/ReplaySubject";
 import { MatSliderChange } from "@angular/material";
 import { ColorService } from "../../workspace/SharedModule/color/color.service";
+import { Feature, FeatureCollection, GeometryObject } from "geojson";
 
 @Component({
     selector: "experiment",
@@ -111,6 +112,9 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
                 // Add to table
                 this.tableData = experiment.unionOf;
 
+                // Build the geojson feature collection, so we know what to zoom to.
+                const features: Array<Feature<GeometryObject>> = [];
+
                 experiment.individuals.forEach((individual, idx) => {
                     console.debug("Individual:", individual, idx);
 
@@ -121,14 +125,18 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
                     if (isBase) {
                         this.baseIndividualID = filteredID;
                     }
+
+                    const feature: Feature<GeometryObject> = {
+                        type: "Feature",
+                        geometry: individual.getSpatialValue(),
+                        id: filteredID,
+                        properties: individual.getFactValues()
+                    };
+                    features.push(feature);
+
                     this.dataChanges.next({
                         id: filteredID,
-                        data: {
-                            type: "Feature",
-                            geometry: individual.getSpatialValue(),
-                            id: filteredID,
-                            properties: individual.getFactValues()
-                        },
+                        data: feature,
                         extrude: {
                             id: filteredID + "-extrude",
                             type: "fill-extrusion",
@@ -144,6 +152,13 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
                         labelValue: idx.toString()
                     });
                 });
+
+                // Build the feature collection and zoom the map
+                this.map.centerMap({
+                    type: "FeatureCollection",
+                    features
+                });
+
                 //    Sleep a couple of seconds and then set the map visible again
                 //    This is really gross, but who cares?
                 this.sleep(4000)

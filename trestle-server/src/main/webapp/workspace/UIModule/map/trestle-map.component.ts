@@ -308,6 +308,21 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         });
     }
 
+    public centerMap(geom: FeatureCollection<GeometryObject> | Feature<GeometryObject>): void {
+        // We have to lock the map in order to avoid sending out a notice that the move happened.
+        if (geom.bbox) {
+            // FIXME(nrobison): This is garbage. Fix it.
+            this.map.fitBounds(LngLatBounds.convert(geom.bbox as any));
+        } else {
+            const bbox = extent(geom);
+            console.debug("Extent", bbox);
+            if (bbox) {
+                // This works, but it seems to confuse the type system, so any for the win!
+                this.map.fitBounds(LngLatBounds.convert(bbox as any));
+            }
+        }
+    }
+
     public change3DOffset(height: number, offset: number, individual?: string): void {
 
         if (individual) {
@@ -643,21 +658,6 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     private moveHandler = () => {
         this.mapBounds.emit(this.map.getBounds());
     };
-
-    private centerMap(geom: FeatureCollection<GeometryObject> | Feature<GeometryObject>): void {
-        // We have to lock the map in order to avoid sending out a notice that the move happened.
-        if (geom.bbox) {
-            // FIXME(nrobison): This is garbage. Fix it.
-            this.map.fitBounds(LngLatBounds.convert(geom.bbox as any));
-        } else {
-            const bbox = extent(geom);
-            console.debug("Extent", bbox);
-            if (bbox) {
-                // This works, but it seems to confuse the type system, so any for the win!
-                this.map.fitBounds(LngLatBounds.convert(bbox as any));
-            }
-        }
-    }
 
     private setupDefaults(): void {
         this.baseConfig = {
