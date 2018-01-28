@@ -15,6 +15,7 @@ import { parse } from "wellknown";
 import { MultiPolygon } from "geojson";
 import { ActivatedRoute } from "@angular/router";
 import { BehaviorSubject } from "rxjs/BehaviorSubject";
+import { ColorService } from "../../SharedModule/color/color.service";
 
 interface ICompareIndividual {
     individual: TrestleIndividual;
@@ -59,9 +60,6 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
     private layerDepth: number;
     private maxHeight: number;
     private layerNumber: number;
-    private colorScale: string[];
-    // When we delete a layer, we need to recycle its color
-    private availableColors: string[];
     @ViewChild(TrestleMapComponent)
     private mapComponent: TrestleMapComponent;
     @ViewChild("loadable")
@@ -72,7 +70,9 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
                 private vs: MapService,
                 private spinner: LoadingSpinnerService,
                 private route: ActivatedRoute,
-                private cdRef: ChangeDetectorRef) {
+                private cdRef: ChangeDetectorRef,
+                private cs: ColorService
+    ) {
 
         this.mapConfig = {
             style: "mapbox://styles/nrobison/cj3n7if3q000s2sutls5a1ny7",
@@ -86,9 +86,6 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
         this.selectedIndividuals = new Map();
         // Setup layer coloring
         this.layerNumber = 0;
-        this.availableColors = [];
-        // Use this to pull out colors for the map
-        this.colorScale = schemeCategory20b;
         this.currentSliderValue = 0;
         this.dataChanges = new BehaviorSubject(undefined);
         this.layerChanges = new Subject();
@@ -226,7 +223,7 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
         this.baseIndividual = null;
         this.layerNumber = 0;
         this.currentSliderValue = 0;
-        this.availableColors = [];
+        this.cs.reset();
 
         //    Should we add the given individual to the compare?
         if (individual) {
@@ -300,6 +297,9 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
         if (idx > -1) {
             this.exportValues[0].individuals.splice(idx);
         }
+
+    //    Return the color to reuse
+        this.cs.returnColor(individual.color);
     }
 
     public sliderUpdate(event: MatSliderChange, selection = this.baseIndividual) {
@@ -493,7 +493,7 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
 
         // This is one way to filter out the base individual
         console.debug("Adding %s to map", individual.getFilteredID());
-        const color = this.getColor(this.layerNumber);
+        const color = this.cs.getColor(this.layerNumber);
         const height = this.getHeight(individual.getTemporal());
         const baseHeight = CompareComponent.getBase(individual.getTemporal());
         this.dataChanges.next({
@@ -552,19 +552,6 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
         } else {
             return to.get("year");
         }
-    }
-
-    private getColor(layer: number): string {
-        // See if we have a color available
-        const aColor = this.availableColors.pop();
-        if (aColor === undefined) {
-            const color = this.colorScale[layer];
-            if (color === null) {
-                return "white";
-            }
-            return color;
-        }
-        return aColor;
     }
 
     private static getBase(temporal: TrestleTemporal): number {
