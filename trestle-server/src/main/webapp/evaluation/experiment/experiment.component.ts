@@ -72,7 +72,7 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
         this.loadNextMatch();
     }
 
-    public next(): void {
+    public next(finish = false): void {
         const selectedRows = this.selectionTable.getSelectedRows();
         // Figure out what individuals the rows correspond to
         const selectedIndividuals: string[] = [];
@@ -81,16 +81,14 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
         });
         console.debug("Selected:", selectedIndividuals);
         // Add results
-        this.es.submitResults(this.experimentValue, this.startTime, this.experimentState, this.answered === true, selectedIndividuals);
+        this.es.submitResults(finish, this.experimentValue, this.startTime, this.experimentState, this.answered === true, selectedIndividuals);
 
-        this.answered = undefined;
-        this.experimentValue += 1;
-        this.selectionTable.reset();
-        this.loadNextMatch();
-    }
-
-    public finish(): void {
-        this.es.finishExperiment();
+        if (!finish) {
+            this.answered = undefined;
+            this.experimentValue += 1;
+            this.selectionTable.reset();
+            this.loadNextMatch();
+        }
     }
 
     public loadNextMatch() {

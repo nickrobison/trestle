@@ -3,9 +3,12 @@ package com.nickrobison.trestle.server.resources;
 import com.google.common.collect.ImmutableList;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
@@ -18,6 +21,7 @@ import java.util.stream.Stream;
  */
 @Path("/experiment")
 public class ExperimentResource {
+    private static final Logger logger = LoggerFactory.getLogger(ExperimentResource.class);
     private static final Random randomGenerator = new Random(12345);
     private static final Map<Integer, List<String>> experimentMap = buildExperimentMap();
     private final TrestleReasoner reasoner;
@@ -26,6 +30,13 @@ public class ExperimentResource {
     @Inject
     public ExperimentResource(ReasonerModule reasonerModule) {
         this.reasoner = reasonerModule.getReasoner();
+    }
+
+    @POST
+    @Path("/submit")
+    public Response submitResults(Map<String, Object> results) {
+        logger.debug("Results:", results);
+        return Response.ok().build();
     }
 
     @GET

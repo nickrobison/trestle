@@ -66,7 +66,8 @@ export class EvaluationService {
         this.mapMoves++;
     }
 
-    public submitResults(experimentNumber: number,
+    public submitResults(finish: boolean,
+                         experimentNumber: number,
                          startTime: number,
                          state: MapState, union: boolean,
                          unionOf?: string[]): void {
@@ -85,10 +86,16 @@ export class EvaluationService {
         //    Reset everything
         this.sliderEvents = 0;
         this.mapMoves = 0;
-    }
 
-    public finishExperiment(): void {
-        console.debug("Results:", this.resultMap);
+        if (finish) {
+            console.debug("Results:", this.resultMap);
+            this.http.post("/experiment/submit", this.resultMap)
+                .subscribe((res) => {
+                    console.debug("Result:", res);
+                }, (err) => {
+                    console.error("Error:", err);
+                });
+        }
     }
 
     public loadExperiment(experimentNumber: number): Observable<IExperimentResponse> {

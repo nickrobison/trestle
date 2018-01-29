@@ -38,8 +38,8 @@
         </div>
         <div *ngIf="showNext()"
              [ngSwitch]="experimentValue" fxFlexAlign="start">
-            <button *ngSwitchCase="10" mat-raised-button
-                    (click)="finish()">Finish
+            <button *ngSwitchCase="2" mat-raised-button
+                    (click)="next(true)">Finish
             </button>
             <button *ngSwitchDefault mat-raised-button
                     (click)="next()">Next
