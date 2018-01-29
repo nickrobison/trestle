@@ -158,7 +158,7 @@ public abstract class LeafNode<Value> {
     static LeafKeySchema buildObjectKey(long objectID, long startTime, long endTime) {
         final LeafKeySchema newKey;
         try {
-            newKey = (LeafKeySchema) splittableKeySchema.createTuple();
+            newKey = splittableKeySchema.createTypedTuple(LeafKeySchema.class);
             newKey.objectID(objectID);
             newKey.start(startTime);
             newKey.end(endTime);

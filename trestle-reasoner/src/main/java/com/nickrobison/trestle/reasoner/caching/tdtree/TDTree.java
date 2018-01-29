@@ -64,7 +64,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         this.maxDepth = 0;
 
 //        Init the root node
-        rootTuple = (LeafSchema) leafSchema.createTuple();
+        rootTuple = leafSchema.createTypedTuple(LeafSchema.class);
         rootTuple.start(0);
         rootTuple.end(maxValue);
         rootTuple.direction(7);

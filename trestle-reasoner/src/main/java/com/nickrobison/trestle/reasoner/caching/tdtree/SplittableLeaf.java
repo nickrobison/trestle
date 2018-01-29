@@ -33,12 +33,7 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
         this.blockSize = blockSize;
 //            Allocate Key array
         try {
-//            Allocate the key array
-            keys = (LeafKeySchema[]) new Object[blockSize];
-            for (int i = 0; i < blockSize; i++) {
-                keys[i] = (LeafKeySchema) splittableKeySchema.createTuple();
-            }
-//            keys = splittableKeySchema.createArray(blockSize);
+            keys = splittableKeySchema.createTypedTupleArray(LeafKeySchema.class, blockSize);
             //noinspection unchecked
             values = (Value[]) new Object[blockSize];
         } catch (Exception e) {
@@ -124,11 +119,11 @@ class SplittableLeaf<Value> extends LeafNode<Value> {
             } else {
 //            Create the lower and higher leafs
                 try {
-                    lowerChild = (LeafSchema) TDTree.leafSchema.createTuple();
+                    lowerChild = TDTree.leafSchema.createTypedTuple(LeafSchema.class);
                     lowerChild.start(childApex.start);
                     lowerChild.end(childApex.end);
                     lowerChild.direction(childDirection.lowerChild);
-                    higherChild = (LeafSchema) TDTree.leafSchema.createTuple();
+                    higherChild = TDTree.leafSchema.createTypedTuple(LeafSchema.class);
                     higherChild.start(childApex.start);
                     higherChild.end(childApex.end);
                     higherChild.direction(childDirection.higherChild);
