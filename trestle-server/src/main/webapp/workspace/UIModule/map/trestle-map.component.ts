@@ -330,21 +330,25 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                 // If we have the individual's source, change its layers
                 if (key === individual) {
                     layers.forEach((layer) => {
-                        const layerHeight = this.map.getPaintProperty(layer,
-                            "fill-extrusion-height");
-                        if (layerHeight) {
-                            this.map.setPaintProperty(layer,
-                                "fill-extrusion-height",
-                                layerHeight + offset);
-                            const layerBase = this.map.getPaintProperty(layer,
-                                "fill-extrusion-base");
-                            if (layerBase) {
+                        // You can't get properties that don't exist on layers,
+                        // that's an error not a null, because of course
+                        // But I'm sure it'll still return a null
+                        if (!layer.startsWith("label")) {
+                            const layerHeight = this.map.getPaintProperty(layer,
+                                "fill-extrusion-height");
+                            if (layerHeight) {
                                 this.map.setPaintProperty(layer,
-                                    "fill-extrusion-base",
-                                    layerBase + offset);
+                                    "fill-extrusion-height",
+                                    layerHeight + offset);
+                                const layerBase = this.map.getPaintProperty(layer,
+                                    "fill-extrusion-base");
+                                if (layerBase) {
+                                    this.map.setPaintProperty(layer,
+                                        "fill-extrusion-base",
+                                        layerBase + offset);
+                                }
                             }
                         }
-
                     });
                 }
             });

@@ -172,8 +172,8 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
     }
 
     public showNext(): boolean {
-        return (this.answered === true && this.minimalSelection === true) ||
-            (this.answered === false && this.answered !== undefined);
+        return (this.answered === true && this.minimalSelection === true && this.mapVisible === "visible") ||
+            (this.answered === false && this.answered !== undefined  && this.mapVisible === "visible");
     }
 
     public sliderUpdate(event: MatSliderChange): void {
