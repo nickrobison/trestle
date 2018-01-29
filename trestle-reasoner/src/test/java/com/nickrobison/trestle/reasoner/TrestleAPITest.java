@@ -45,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TrestleAPITest extends AbstractReasonerTest {
 
     @Test
-    public void testClasses() throws TrestleClassException, MissingOntologyEntity, ParseException, TransformException {
+    public void testClasses() throws ParseException {
 
 //        Spatial/Complex objects
         final TestClasses.GAULComplexClassTest gaulComplexClassTest = new TestClasses.GAULComplexClassTest();
@@ -123,7 +123,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
     }
 
     @Test
-    public void eventTest() throws TrestleClassException, MissingOntologyEntity {
+    public void eventTest() {
 //        Split event
 //        Create test events
         final OffsetDateTime earlyStart = LocalDate.of(1990, 1, 1).atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
@@ -181,7 +181,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
 
     @Test
     @Disabled
-    public void gaulLoader() throws IOException, TrestleClassException, MissingOntologyEntity, OWLOntologyStorageException {
+    public void gaulLoader() throws IOException, TrestleClassException, MissingOntologyEntity {
 
 
 //        Write the objects

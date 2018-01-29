@@ -110,11 +110,20 @@
         <dependency>
             <groupId>com.ontotext.graphdb</groupId>
             <artifactId>graphdb-free-runtime</artifactId>
-            <version>8.4.0</version>
+            <version>8.4.1</version>
             <exclusions>
                 <exclusion>
                     <artifactId>logback-classic</artifactId>
                     <groupId>ch.qos.logback</groupId>
+                </exclusion>
+                <!--This feels really bad, but seems to work, we bundle a newer version of Janino in the Reasoner package-->
+                <exclusion>
+                    <groupId>org.codehaus.janino</groupId>
+                    <artifactId>janino</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.codehaus.janino</groupId>
+                    <artifactId>commons-compiler</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

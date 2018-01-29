@@ -13,6 +13,7 @@
     </properties>
 
     <artifactId>trestle-reasoner</artifactId>
+    
     <dependencies>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
@@ -116,9 +117,9 @@
             <version>1.0.0</version>
         </dependency>
         <dependency>
-            <groupId>com.boundary</groupId>
+            <groupId>com.nickrobison</groupId>
             <artifactId>fasttuple-core</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.3.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>

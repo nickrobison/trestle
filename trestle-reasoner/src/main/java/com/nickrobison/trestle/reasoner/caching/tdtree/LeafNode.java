@@ -1,8 +1,7 @@
 package com.nickrobison.trestle.reasoner.caching.tdtree;
 
-import com.boundary.tuple.FastTuple;
-import com.boundary.tuple.TupleSchema;
-import com.boundary.tuple.codegen.TupleExpressionGenerator;
+import com.nickrobison.tuple.TupleSchema;
+import com.nickrobison.tuple.codegen.TupleExpressionGenerator;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -26,9 +25,9 @@ public abstract class LeafNode<Value> {
     static final TupleSchema splittableKeySchema = buildSplittableKeySchema();
     final int leafID;
     final String binaryID;
-    final FastTuple leafMetadata;
+    final LeafSchema leafMetadata;
 
-    LeafNode(int leafID, FastTuple leafMetadata) {
+    LeafNode(int leafID, LeafSchema leafMetadata) {
         this.leafID = leafID;
         this.leafMetadata = leafMetadata;
         this.binaryID = Integer.toBinaryString(leafID);
@@ -44,9 +43,9 @@ public abstract class LeafNode<Value> {
 
     public double[] getLeafVerticies() {
         return TDTreeHelpers.getTriangleVerticies(TDTreeHelpers.adjustedLength[getIDLength(this.leafID)],
-                this.leafMetadata.getInt(3),
-                this.leafMetadata.getDouble(1),
-                this.leafMetadata.getDouble(2));
+                this.leafMetadata.direction(),
+                this.leafMetadata.start(),
+                this.leafMetadata.end());
     }
 
     public abstract String getLeafType();
@@ -79,13 +78,13 @@ public abstract class LeafNode<Value> {
     abstract @Nullable LeafSplit insert(long objectID, long startTime, long endTime, @NonNull Value value);
 
     /**
-     * Insert a {@link FastTuple} key/value pair into the leaf
+     * Insert a {@link LeafKeySchema} key/value pair into the leaf
      *
-     * @param newKey - {@link FastTuple} key which contains the ObjectID, and valid ranges for the value
+     * @param newKey - {@link LeafKeySchema} key which contains the ObjectID, and valid ranges for the value
      * @param value  - {@link Value} to insert
      * @return - {@link LeafSplit} if the insert forced the leaf to split. Null value if not
      */
-    abstract @Nullable LeafSplit insert(FastTuple newKey, @NonNull Value value);
+    abstract @Nullable LeafSplit insert(LeafKeySchema newKey, @NonNull Value value);
 
     /**
      * Delete key/value pair from leaf
@@ -98,7 +97,7 @@ public abstract class LeafNode<Value> {
 
     /**
      * Delete key/value pair from leaf
-     * @param expression - Pre-compiled {@link com.boundary.tuple.codegen.TupleExpressionGenerator.BooleanTupleExpression} to evaluate
+     * @param expression - Pre-compiled {@link TupleExpressionGenerator.BooleanTupleExpression} to evaluate
      * @return - <code>true</code> matching key was deleted in this leaf. <code>false</code> no keys were removed
      */
     abstract boolean delete(TupleExpressionGenerator.BooleanTupleExpression expression);
@@ -126,7 +125,7 @@ public abstract class LeafNode<Value> {
     /**
      * Retrieve a value from the Leaf that matches the given ObjectID and is valid at the specified timestamp
      * Returns null if no matching object is found
-     * @param expression - Pre-compiled {@link com.boundary.tuple.codegen.TupleExpressionGenerator.BooleanTupleExpression} to evaluate
+     * @param expression - Pre-compiled {@link TupleExpressionGenerator.BooleanTupleExpression} to evaluate
      * @return - Nullable {@link Value}
      */
     abstract @Nullable Value getValue(TupleExpressionGenerator.BooleanTupleExpression expression);
@@ -134,9 +133,9 @@ public abstract class LeafNode<Value> {
     /**
      * Dump the key/value pairs for the given leaf
      *
-     * @return Map of {@link FastTuple} and {@link Value} pairs for the node
+     * @return Map of {@link LeafKeySchema} and {@link Value} pairs for the node
      */
-    abstract Map<FastTuple, @NonNull Value> dumpLeaf();
+    abstract Map<LeafKeySchema, @NonNull Value> dumpLeaf();
 
     /**
      * Calculates the fragmentation of the leaf-node, which is the number of null records in the storage array with indexes less than the record count
@@ -144,25 +143,25 @@ public abstract class LeafNode<Value> {
      */
     abstract double calculateFragmentation();
 
-    static FastTuple buildObjectKey(String objectID, long startTime, long endTime) {
+    static LeafKeySchema buildObjectKey(String objectID, long startTime, long endTime) {
         return buildObjectKey(longHashCode(objectID), startTime, endTime);
     }
 
     /**
-     * Build {@link FastTuple} Object key from provided values
+     * Build {@link LeafKeySchema} Object key from provided values
      *
      * @param objectID  - String objectID
      * @param startTime - Long start time
      * @param endTime   - Long end time
      * @return - Object key
      */
-    static FastTuple buildObjectKey(long objectID, long startTime, long endTime) {
-        final FastTuple newKey;
+    static LeafKeySchema buildObjectKey(long objectID, long startTime, long endTime) {
+        final LeafKeySchema newKey;
         try {
-            newKey = splittableKeySchema.createTuple();
-            newKey.setLong(1, objectID);
-            newKey.setLong(2, startTime);
-            newKey.setLong(3, endTime);
+            newKey = splittableKeySchema.createTypedTuple(LeafKeySchema.class);
+            newKey.objectID(objectID);
+            newKey.start(startTime);
+            newKey.end(endTime);
             return newKey;
         } catch (Exception e) {
             throw new RuntimeException("Unable to create new Key tuple", e);
@@ -174,7 +173,7 @@ public abstract class LeafNode<Value> {
      *
      * @param objectID - ObjectID to match
      * @param atTime   - Temporal to find valid value
-     * @return - {@link com.boundary.tuple.codegen.TupleExpressionGenerator.BooleanTupleExpression} to evaluate against tuples
+     * @return - {@link TupleExpressionGenerator.BooleanTupleExpression} to evaluate against tuples
      */
     static TupleExpressionGenerator.BooleanTupleExpression buildFindExpression(String objectID, long atTime) {
         try {

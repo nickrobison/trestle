@@ -1,13 +1,13 @@
 package com.nickrobison.trestle.reasoner.caching.tdtree;
 
-import com.boundary.tuple.FastTuple;
-import com.boundary.tuple.TupleSchema;
-import com.boundary.tuple.codegen.TupleExpressionGenerator;
 import com.codahale.metrics.annotation.Gauge;
 import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.trestle.reasoner.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.ITrestleIndex;
+import com.nickrobison.tuple.FastTuple;
+import com.nickrobison.tuple.TupleSchema;
+import com.nickrobison.tuple.codegen.TupleExpressionGenerator;
 import org.apache.commons.math3.util.FastMath;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -43,7 +43,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     private final int blockSize;
     private List<LeafNode<Value>> leafs = new ArrayList<>();
     private int maxDepth;
-    private final FastTuple rootTuple;
+    private final LeafSchema rootTuple;
     private final AtomicLong cacheSize = new AtomicLong();
 
     static {
@@ -64,10 +64,10 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         this.maxDepth = 0;
 
 //        Init the root node
-        rootTuple = leafSchema.createTuple();
-        rootTuple.setDouble(1, 0);
-        rootTuple.setDouble(2, maxValue);
-        rootTuple.setInt(3, 7);
+        rootTuple = leafSchema.createTypedTuple(LeafSchema.class);
+        rootTuple.start(0);
+        rootTuple.end(maxValue);
+        rootTuple.direction(7);
         leafs.add(new SplittableLeaf<>(1, rootTuple, this.blockSize));
     }
 
@@ -216,9 +216,9 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
                 .stream()
                 .filter(leaf -> leaf.getRecordCount() > 0)
                 .map(LeafNode::dumpLeaf)
-                .forEach(values -> values.forEach((key, value) -> this.insertValue(key.getLong(1),
-                        key.getLong(2),
-                        key.getLong(3),
+                .forEach(values -> values.forEach((key, value) -> this.insertValue(key.objectID(),
+                        key.start(),
+                        key.end(),
                         value)));
 
         final Instant end = Instant.now();
@@ -251,7 +251,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
                         leaf.getBinaryStringID(),
                         leaf.getLeafType(),
                         leaf.getLeafVerticies(),
-                        leaf.leafMetadata.getInt(3),
+                        leaf.leafMetadata.direction(),
                         leaf.getRecordCount()))
                 .collect(Collectors.toList());
     }
