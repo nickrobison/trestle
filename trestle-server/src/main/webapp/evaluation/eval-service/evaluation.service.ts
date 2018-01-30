@@ -62,12 +62,12 @@ export class EvaluationService {
     public createUser(): void {
         if (ENV === "production") {
             const fingerprint = new ClientJS().getFingerprint();
-            console.debug("FP:", fingerprint);
             this.userId = fingerprint;
         } else {
             console.warn("Development mode, randomly generating user ID");
-            this.userId = Math.random().toString();
+            this.userId = Math.floor(Math.random() * 1000000).toString();
         }
+        console.debug("FP:", this.userId);
     }
 
     public setDemographics(demographics: IUserDemographics): void {
