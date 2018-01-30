@@ -37,6 +37,8 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
     private startTime: number;
 
     public constructor(private es: EvaluationService, private cs: ColorService) {
+        // If we directly navigated to the page, redirect to the intro
+        this.es.isRegistered();
         this.experimentValue = 1;
         this.dataChanges = new ReplaySubject<MapSource>(50);
         this.maxHeight = 2016;

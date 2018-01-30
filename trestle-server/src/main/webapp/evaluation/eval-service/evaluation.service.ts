@@ -4,6 +4,7 @@ import "clientjs";
 import { Observable } from "rxjs/Observable";
 import { ITrestleIndividual, TrestleIndividual } from "../../workspace/SharedModule/individual/TrestleIndividual/trestle-individual";
 import { CacheService } from "../../workspace/SharedModule/cache/cache.service";
+import { Router } from "@angular/router";
 
 export enum MapState {
     OVERLAY = 1,
@@ -46,31 +47,38 @@ export class EvaluationService {
 
     private userId: string;
     private demographics: IUserDemographics;
-    // private resultMap: { [expNumber: number]: IResultSet };
     private results: IResultSet[];
     private sliderEvents: number;
     private mapMoves: number;
 
     public constructor(private http: HttpClient,
-                       private individualCache: CacheService<string, TrestleIndividual>) {
-        // this.resultMap = {};
+                       private individualCache: CacheService<string, TrestleIndividual>,
+                       private router: Router) {
         this.sliderEvents = 0;
         this.mapMoves = 0;
         this.results = [];
-
-    //    Remove this
-        this.createUser();
     }
 
     public createUser(): void {
-        const fingerprint = new ClientJS().getFingerprint();
-        console.debug("FP:", fingerprint);
-        this.userId = fingerprint;
+        if (ENV === "production") {
+            const fingerprint = new ClientJS().getFingerprint();
+            console.debug("FP:", fingerprint);
+            this.userId = fingerprint;
+        } else {
+            console.warn("Development mode, randomly generating user ID");
+            this.userId = Math.random().toString();
+        }
     }
 
     public setDemographics(demographics: IUserDemographics): void {
         console.debug("Setting demographics", demographics);
         this.demographics = demographics;
+    }
+
+    public isRegistered(): void {
+        if (this.userId === undefined) {
+            this.router.navigate(["/"]);
+        }
     }
 
     public addSliderChange(): void {
@@ -90,7 +98,6 @@ export class EvaluationService {
         const expDuration = Date.now() - startTime;
 
         console.debug("Took %s ms", expDuration);
-        // this.resultMap[experimentNumber] = ;
         this.results.push({
             expNumber: experimentNumber,
             expState: state,
