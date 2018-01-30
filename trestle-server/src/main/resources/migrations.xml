@@ -26,4 +26,28 @@
             <column name="PRIVILEGES" value="7"/>
         </insert>
     </changeSet>
+    <changeSet id="tag-test-tables" author="nickrobison">
+        <tagDatabase tag="test-tables"/>
+    </changeSet>
+    <changeSet id="evaluation-tables" author="nickrobison">
+        <createTable tableName="EVALUATION_USERS" remarks="Evaluation Users">
+            <column name="ID" type="BIGINT(19)"/>
+        </createTable>
+        <createTable tableName="EVALUATION_RESULTS" remarks="Results from user evaluation">
+            <column autoIncrement="true" name="ID" type="BIGINT(19)">
+                <constraints primaryKey="true" primaryKeyName="pk_EVALUATION_RESULTS"/>
+            </column>
+            <column name="USER_ID" type="BIGINT(19)"/>
+            <column name="expNumber" type="INTEGER"/>
+            <column name="expState" type="INTEGER"/>
+            <column name="expTime" type="BIGINT(19)"/>
+            <column name="has_union" type="BIT"/>
+            <column name="union_of" type="VARCHAR(150)"/>
+            <column name="sliderEvents" type="INTEGER"/>
+            <column name="mapMoves" type="INTEGER"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="EVALUATION_RESULTS" baseColumnNames="USER_ID" constraintName="fk_results_user"
+                                 referencedTableName="EVALUATION_USERS"
+                                 referencedColumnNames="ID"/>
+    </changeSet>
 </databaseChangeLog>

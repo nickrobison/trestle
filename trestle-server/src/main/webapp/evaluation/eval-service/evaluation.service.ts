@@ -12,10 +12,11 @@ export enum MapState {
 }
 
 export interface IResultSet {
+    expNumber: number;
     expState: MapState;
     expTime: number;
     union: boolean;
-    unionOf?: string[];
+    unionOf: string;
     sliderEvents: number;
     mapMoves: number;
 }
@@ -31,20 +32,30 @@ export interface IExperimentResponse {
     individuals: TrestleIndividual[];
 }
 
+export interface IExperimentResults {
+    userId: string;
+    experimentResults: IResultSet[];
+}
+
 @Injectable()
 export class EvaluationService {
 
     private userId: string;
     private demographics: IUserDemographics;
-    private resultMap: { [expNumber: number]: IResultSet };
+    // private resultMap: { [expNumber: number]: IResultSet };
+    private results: IResultSet[];
     private sliderEvents: number;
     private mapMoves: number;
 
     public constructor(private http: HttpClient,
                        private individualCache: CacheService<string, TrestleIndividual>) {
-        this.resultMap = {};
+        // this.resultMap = {};
         this.sliderEvents = 0;
         this.mapMoves = 0;
+        this.results = [];
+
+    //    Remove this
+        this.createUser();
     }
 
     public createUser(): void {
@@ -70,26 +81,32 @@ export class EvaluationService {
                          experimentNumber: number,
                          startTime: number,
                          state: MapState, union: boolean,
-                         unionOf?: string[]): void {
+                         unionOf: string[]): void {
 
         const expDuration = Date.now() - startTime;
 
         console.debug("Took %s ms", expDuration);
-        this.resultMap[experimentNumber] = {
+        // this.resultMap[experimentNumber] = ;
+        this.results.push({
+            expNumber: experimentNumber,
             expState: state,
             expTime: expDuration,
             union,
-            unionOf,
+            unionOf: unionOf.join(","),
             sliderEvents: this.sliderEvents,
             mapMoves: this.mapMoves
-        };
+        });
         //    Reset everything
         this.sliderEvents = 0;
         this.mapMoves = 0;
 
+        const body: IExperimentResults =  {
+            userId: this.userId,
+            experimentResults: this.results
+        };
         if (finish) {
-            console.debug("Results:", this.resultMap);
-            this.http.post("/experiment/submit", this.resultMap)
+            console.debug("Results:", body);
+            this.http.post("/experiment/submit", body)
                 .subscribe((res) => {
                     console.debug("Result:", res);
                 }, (err) => {

@@ -2,15 +2,16 @@ package com.nickrobison.trestle.server.resources;
 
 import com.google.common.collect.ImmutableList;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
+import com.nickrobison.trestle.server.models.UserExperimentResultDAO;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
+import com.nickrobison.trestle.server.models.UserExperimentResult;
+import io.dropwizard.hibernate.UnitOfWork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,23 +21,30 @@ import java.util.stream.Stream;
  * Created by nickrobison on 1/9/18.
  */
 @Path("/experiment")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class ExperimentResource {
     private static final Logger logger = LoggerFactory.getLogger(ExperimentResource.class);
     private static final Random randomGenerator = new Random(12345);
     private static final Map<Integer, List<String>> experimentMap = buildExperimentMap();
     private final TrestleReasoner reasoner;
+    private final UserExperimentResultDAO userExperimentResultDAO;
 
 
     @Inject
-    public ExperimentResource(ReasonerModule reasonerModule) {
+    public ExperimentResource(ReasonerModule reasonerModule,
+                              UserExperimentResultDAO userExperimentResultDAO) {
         this.reasoner = reasonerModule.getReasoner();
+        this.userExperimentResultDAO = userExperimentResultDAO;
     }
 
     @POST
     @Path("/submit")
-    public Response submitResults(Map<String, Object> results) {
+    @UnitOfWork
+    public Response submitResults(UserExperimentResult results) {
         logger.debug("Results:", results);
-        return Response.ok().build();
+        final Long aLong = this.userExperimentResultDAO.create(results);
+        return Response.ok().entity(aLong).build();
     }
 
     @GET
