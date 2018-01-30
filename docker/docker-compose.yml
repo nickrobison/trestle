@@ -1,15 +1,22 @@
 version: '3'
 
 services:
-  db:
-    image: ontotext/graphdb:8.3.1-free
+  graphdb:
+    image: ontotext/graphdb:8.4.1-free
     ports:
       - "7200:7200"
+
+  db:
+    image: postgres:10.1
+    ports:
+      - "5432:5432"
+
   server:
     depends_on:
+      - graphdb
       - db
     image: nickrobison/trestle-server:0.8.0-SNAPSHOT
     environment:
-      CS: http://db:7200
+      CS: http://graphdb:7200
     ports:
       - "88:8080"

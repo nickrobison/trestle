@@ -9,10 +9,11 @@ case ${1} in
   "docker")
 #  Build trestle-server
   echo "Building Java project"
+  rm -rf trestle-server/node_modules
   mvn clean package -DskipTests -pl trestle-server -am -T3
 #  Build the docker images
   echo "Building GraphDB Docker image"
-  docker build --build-arg version=8.4.0 -t ontotext/graphdb:8.3.1-free docker/graphdb
+  docker build --build-arg version=8.4.1 -t ontotext/graphdb:8.4.1-free docker/graphdb
   echo "Building Trestle Server docker image"
 #  Copy the ontology file into the trestle-server directory
   cp ././../trestle-ontology/trestle.owl ./trestle-server/trestle.owl

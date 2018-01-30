@@ -20,7 +20,6 @@ RUN mkdir -p ${TRESTLE_HOME} && \
  mv /tmp/trestle-server-${version}.jar . && \
  mv trestle-server-${version}.jar trestle.jar && \
  mv /tmp/config.prod.yml . && \
- java -jar trestle.jar db migrate config.prod.yml && \
  mv /tmp/trestle.owl .
 
 CMD ["-jar", "/opt/trestle/trestle.jar", "server", "/opt/trestle/config.prod.yml"]
