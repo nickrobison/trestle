@@ -16,7 +16,6 @@ public class UserExperimentResultDAO extends AbstractDAO<UserExperimentResult> {
     }
 
     public Long create(UserExperimentResult result) {
-//        return result.getUserId();
         return persist(result).getUserId();
     }
 }

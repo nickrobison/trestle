@@ -4,7 +4,7 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
     <changeSet author="nrobison (generated)" id="1484942448470-1" objectQuotingStrategy="QUOTE_ALL_OBJECTS">
-        <createTable catalogName="TEST" remarks="User table" schemaName="PUBLIC" tableName="USERS">
+        <createTable catalogName="TEST" remarks="User table" tableName="USERS">
             <column autoIncrement="true" name="ID" type="BIGINT(19)">
                 <constraints primaryKey="true" primaryKeyName="CONSTRAINT_4"/>
             </column>
@@ -13,11 +13,11 @@
             <column name="USERNAME" type="VARCHAR(50)"/>
             <column name="EMAIL" type="VARCHAR(50)"/>
             <column name="PASSWORD" type="VARCHAR(255)"/>
-            <column name="PRIVILEGES" type="INT(10)"/>
+            <column name="PRIVILEGES" type="SMALLINT"/>
         </createTable>
     </changeSet>
     <changeSet author="nrobison" id="insert-dba" objectQuotingStrategy="QUOTE_ALL_OBJECTS">
-        <insert catalogName="TEST" schemaName="PUBLIC" tableName="USERS">
+        <insert catalogName="TEST" tableName="USERS">
             <column name="FIRST_NAME" value="Database"/>
             <column name="LAST_NAME" value="Administrator"/>
             <column name="USERNAME" value="dba"/>
@@ -31,24 +31,26 @@
     </changeSet>
     <changeSet id="evaluation-tables" author="nickrobison">
         <createTable tableName="EVALUATION_USERS" remarks="Evaluation Users">
-            <column name="ID" type="BIGINT(19)"/>
+            <column name="ID" type="BIGINT">
+                <constraints primaryKey="true" primaryKeyName="pk_EVALUATION_USERS"/>
+            </column>
             <column name="age" type="INTEGER"/>
             <column name="education" type="VARCHAR(50)"/>
-            <column name="geospatial" type="BIT"/>
-            <column name="publicHealth" type="BIT"/>
+            <column name="geospatial" type="BOOLEAN"/>
+            <column name="public_health" type="BOOLEAN"/>
         </createTable>
         <createTable tableName="EVALUATION_RESULTS" remarks="Results from user evaluation">
             <column autoIncrement="true" name="ID" type="BIGINT(19)">
                 <constraints primaryKey="true" primaryKeyName="pk_EVALUATION_RESULTS"/>
             </column>
-            <column name="USER_ID" type="BIGINT(19)"/>
-            <column name="expNumber" type="INTEGER"/>
-            <column name="expState" type="INTEGER"/>
-            <column name="expTime" type="BIGINT(19)"/>
-            <column name="has_union" type="BIT"/>
+            <column name="USER_ID" type="BIGINT"/>
+            <column name="exp_number" type="INTEGER"/>
+            <column name="exp_state" type="INTEGER"/>
+            <column name="exp_time" type="BIGINT"/>
+            <column name="has_union" type="BOOLEAN"/>
             <column name="union_of" type="VARCHAR(150)"/>
-            <column name="sliderEvents" type="INTEGER"/>
-            <column name="mapMoves" type="INTEGER"/>
+            <column name="slider_events" type="INTEGER"/>
+            <column name="map_moves" type="INTEGER"/>
         </createTable>
         <addForeignKeyConstraint baseTableName="EVALUATION_RESULTS" baseColumnNames="USER_ID" constraintName="fk_results_user"
                                  referencedTableName="EVALUATION_USERS"

@@ -58,14 +58,19 @@ public class UserExperimentResult {
         private Long id;
         @Column(name = "USER_ID")
         private Long userId;
+        @Column(name = "exp_number")
         private Integer expNumber;
+        @Column(name = "exp_state")
         private Integer expState;
+        @Column(name = "exp_time")
         private Long expTime;
-        @Column(name = "HAS_UNION")
+        @Column(name = "has_union")
         private Boolean union;
-        @Column(name = "UNION_OF")
+        @Column(name = "union_of")
         private String unionOf;
+        @Column(name = "slider_events")
         private Integer sliderEvents;
+        @Column(name = "map_moves")
         private Integer mapMoves;
 
         public ExperimentResult() {
@@ -151,6 +156,7 @@ public class UserExperimentResult {
         private Integer age;
         private String education;
         private Boolean geospatial;
+        @Column(name = "public_health")
         private Boolean publicHealth;
 
 

@@ -22,18 +22,28 @@ logging:
   loggers:
     "com.nickrobison.metrician": DEBUG
     "com.nickrobison.trestle": DEBUG
+    "org.hibernate.SQL": DEBUG
+    "org.hibernate.type": DEBUG
   appenders:
     - type: console
       logFormat: "[%-5p | %t | %X{test}] %d %c:%L %X{transaction} - %m%n"
       includeCallerData: true
 
 database:
+# Embedded H2
   driverClass: org.h2.Driver
   user: sa
   url: jdbc:h2:./trestle.db
   properties:
     charSet: UTF-8
     hibernate.dialect: org.hibernate.dialect.H2Dialect
+# Postgres
+#  driverClass: org.postgresql.Driver
+#  user: nickrobison
+#  url: jdbc:postgresql://localhost:5432/nickrobison
+#  properties:
+#      charSet: UTF-8
+#      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
 
 jwt:
   authHeader: "Authorization"
