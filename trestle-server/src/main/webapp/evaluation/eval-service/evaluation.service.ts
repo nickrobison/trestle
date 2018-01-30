@@ -22,7 +22,10 @@ export interface IResultSet {
 }
 
 export interface IUserDemographics {
-    test: number;
+    age: number;
+    education: string;
+    geospatial: boolean;
+    publicHealth: boolean;
 }
 
 export interface IExperimentResponse {
@@ -35,6 +38,7 @@ export interface IExperimentResponse {
 export interface IExperimentResults {
     userId: string;
     experimentResults: IResultSet[];
+    demographics: IUserDemographics;
 }
 
 @Injectable()
@@ -102,7 +106,8 @@ export class EvaluationService {
 
         const body: IExperimentResults =  {
             userId: this.userId,
-            experimentResults: this.results
+            experimentResults: this.results,
+            demographics: this.demographics
         };
         if (finish) {
             console.debug("Results:", body);

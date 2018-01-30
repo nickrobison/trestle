@@ -32,6 +32,10 @@
     <changeSet id="evaluation-tables" author="nickrobison">
         <createTable tableName="EVALUATION_USERS" remarks="Evaluation Users">
             <column name="ID" type="BIGINT(19)"/>
+            <column name="age" type="INTEGER"/>
+            <column name="education" type="VARCHAR(50)"/>
+            <column name="geospatial" type="BIT"/>
+            <column name="publicHealth" type="BIT"/>
         </createTable>
         <createTable tableName="EVALUATION_RESULTS" remarks="Results from user evaluation">
             <column autoIncrement="true" name="ID" type="BIGINT(19)">
