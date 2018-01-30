@@ -207,12 +207,12 @@
             <dependency>
                 <groupId>oracle.spatial.rdf.client</groupId>
                 <artifactId>sdordf</artifactId>
-                <version>2016.12</version>
+                <version>2017.01</version>
             </dependency>
             <dependency>
                 <groupId>oracle.spatial.rdf.client</groupId>
                 <artifactId>sdordfclient</artifactId>
-                <version>2016.12</version>
+                <version>2017.01</version>
             </dependency>
             <dependency>
                 <groupId>oracle.spatial.geometry</groupId>
