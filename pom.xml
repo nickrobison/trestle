@@ -207,12 +207,12 @@
             <dependency>
                 <groupId>oracle.spatial.rdf.client</groupId>
                 <artifactId>sdordf</artifactId>
-                <version>2016.12</version>
+                <version>2017.01</version>
             </dependency>
             <dependency>
                 <groupId>oracle.spatial.rdf.client</groupId>
                 <artifactId>sdordfclient</artifactId>
-                <version>2016.12</version>
+                <version>2017.01</version>
             </dependency>
             <dependency>
                 <groupId>oracle.spatial.geometry</groupId>
@@ -418,26 +418,6 @@
         </dependency>
     </dependencies>
     <repositories>
-        <repository>
-            <id>resource</id>
-            <name>Resource Repository</name>
-            <url>file://${user.dir}/src/main/resources/repo</url>
-        </repository>
-        <repository>
-            <id>central-bintray</id>
-            <name>bintray</name>
-            <url>http://jcenter.bintray.com</url>
-        </repository>
-        <repository>
-            <id>central</id>
-            <name>maven</name>
-            <url>http://repo1.maven.org/maven2/</url>
-        </repository>
-        <repository>
-            <id>maven2-repository.dev.java.net</id>
-            <name>Java.net repository</name>
-            <url>http://download.java.net/maven/2</url>
-        </repository>
         <repository>
             <id>osgeo</id>
             <name>Open Source Geospatial Foundation Repository</name>
