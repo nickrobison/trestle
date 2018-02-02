@@ -3,6 +3,11 @@ import { BehaviorSubject } from "rxjs/BehaviorSubject";
 import { MatTableDataSource } from "@angular/material";
 import { SelectionModel } from "@angular/cdk/collections";
 
+export interface ITableData {
+    idxValue: number;
+    color: string;
+}
+
 @Component({
     selector: "selection-table",
     templateUrl: "./selection-table.component.html",
@@ -11,20 +16,20 @@ import { SelectionModel } from "@angular/cdk/collections";
 export class SelectionTableComponent implements OnChanges, AfterViewInit {
 
     @Input()
-    public data: string[];
+    public data: ITableData[];
     @Output()
     public minimalSelection: EventEmitter<boolean>;
     public displayedColumns: string[];
-    public tableData: MatTableDataSource<string>;
-    public selection: SelectionModel<string>;
+    public tableData: MatTableDataSource<ITableData>;
+    public selection: SelectionModel<ITableData>;
 
-    private dataSubject: BehaviorSubject<undefined | string[]>;
+    private dataSubject: BehaviorSubject<undefined | ITableData[]>;
     private minimalSelectionValue: boolean;
 
     public constructor() {
-        this.displayedColumns = ["select", "number"];
-        this.selection = new SelectionModel<string>(true, []);
-        this.tableData = new MatTableDataSource<string>();
+        this.displayedColumns = ["select", "number", "color"];
+        this.selection = new SelectionModel<ITableData>(true, []);
+        this.tableData = new MatTableDataSource<ITableData>();
         this.dataSubject = new BehaviorSubject(undefined);
 
         this.minimalSelection = new EventEmitter<boolean>();
@@ -36,7 +41,7 @@ export class SelectionTableComponent implements OnChanges, AfterViewInit {
             if (data) {
                 console.debug("Has new data from subject");
                 // Strip out the names and only return the index in the list
-                this.tableData = new MatTableDataSource<string>(data.map((value, idx) => idx.toString()));
+                this.tableData = new MatTableDataSource<ITableData>(data);
             }
         });
     }
@@ -65,7 +70,7 @@ export class SelectionTableComponent implements OnChanges, AfterViewInit {
             this.tableData.data.forEach((row) => this.selection.select(row));
     }
 
-    public getSelectedRows(): string[] {
+    public getSelectedRows(): ITableData[] {
         return this.selection.selected;
     }
 
@@ -75,11 +80,11 @@ export class SelectionTableComponent implements OnChanges, AfterViewInit {
         return this.selection.hasValue();
     }
 
-    public rowSelected(row: string): boolean {
+    public rowSelected(row: ITableData): boolean {
         return this.selection.isSelected(row);
     }
 
-    public toggleRow(row: string): void {
+    public toggleRow(row: ITableData): void {
         if (!this.rowSelected(row) && !this.minimalSelectionValue) {
             this.minimalSelection.next(true);
             this.minimalSelectionValue = true;

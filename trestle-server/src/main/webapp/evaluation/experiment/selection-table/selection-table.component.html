@@ -4,21 +4,26 @@
         <ng-container matColumnDef="select">
             <mat-header-cell *matHeaderCellDef>
                 <mat-checkbox (change)="$event ? masterToggle() : null"
-                [checked]="hasValue() && isAllSelected()"
-                [indeterminate]="hasValue() && !isAllSelected()"></mat-checkbox>
+                              [checked]="hasValue() && isAllSelected()"
+                              [indeterminate]="hasValue() && !isAllSelected()"></mat-checkbox>
             </mat-header-cell>
             <mat-cell *matCellDef="let row">
                 <mat-checkbox
-                (click)="$event.stopPropagation()"
-                (change)="$event ? toggleRow(row) : null"
-                [checked]="rowSelected(row)"></mat-checkbox>
+                        (click)="$event.stopPropagation()"
+                        (change)="$event ? toggleRow(row) : null"
+                        [checked]="rowSelected(row)"></mat-checkbox>
             </mat-cell>
         </ng-container>
 
         <ng-container matColumnDef="number">
-            <mat-header-cell *matHeaderCellDef> No. </mat-header-cell>
+            <mat-header-cell *matHeaderCellDef> No.</mat-header-cell>
             <!--We need to offset the values because they're index counted-->
-            <mat-cell *matCellDef="let element"> {{element | counter}} </mat-cell>
+            <mat-cell *matCellDef="let element"> {{element.idxValue}}</mat-cell>
+        </ng-container>
+
+        <ng-container matColumnDef="color">
+            <mat-header-cell *matHeaderCellDef> Color</mat-header-cell>
+            <mat-cell *matCellDef="let element"><div class="legend" [style.background]="element.color"></div></mat-cell>
         </ng-container>
 
         <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>

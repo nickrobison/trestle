@@ -76,7 +76,7 @@ export class EvaluationService {
     }
 
     public isRegistered(): void {
-        if (this.userId === undefined) {
+        if (this.userId === undefined && ENV === "production") {
             this.router.navigate(["/"]);
         }
     }

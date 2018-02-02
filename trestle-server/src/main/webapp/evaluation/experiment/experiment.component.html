@@ -30,7 +30,7 @@
             </mat-radio-group>
         </div>
         <div>
-            <div [hidden]="!(answered === true)">
+            <div [hidden]="!showOptions()">
                 Which enitities contribute to the union?
                 <selection-table [data]="tableData"
                                  (minimalSelection)="minimalSelectionHandler()"></selection-table>

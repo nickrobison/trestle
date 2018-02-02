@@ -2,7 +2,7 @@ import { AfterViewInit, Component, OnInit, ViewChild } from "@angular/core";
 import { EvaluationService, MapState } from "../eval-service/evaluation.service";
 import { IMapEventHandler, MapSource, TrestleMapComponent } from "../../workspace/UIModule/map/trestle-map.component";
 import { TrestleTemporal } from "../../workspace/SharedModule/individual/TrestleIndividual/trestle-temporal";
-import { SelectionTableComponent } from "./selection-table/selection-table.component";
+import { ITableData, SelectionTableComponent } from "./selection-table/selection-table.component";
 import { ReplaySubject } from "rxjs/ReplaySubject";
 import { MatSliderChange } from "@angular/material";
 import { ColorService } from "../../workspace/SharedModule/color/color.service";
@@ -18,7 +18,7 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
     public experimentValue: number;
     public answered: boolean | undefined;
     public dataChanges: ReplaySubject<MapSource>;
-    public tableData: string[];
+    public tableData: ITableData[];
     @ViewChild(TrestleMapComponent)
     public map: TrestleMapComponent;
     @ViewChild(SelectionTableComponent)
@@ -35,6 +35,7 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
     private oldSliderValue: number;
     private baseIndividualID: string;
     private startTime: number;
+    private unionIndividuals: string[];
 
     public constructor(private es: EvaluationService, private cs: ColorService) {
         // If we directly navigated to the page, redirect to the intro
@@ -43,6 +44,7 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
         this.dataChanges = new ReplaySubject<MapSource>(50);
         this.maxHeight = 2016;
         this.minimalSelection = false;
+        this.unionIndividuals = [];
 
         this.mapConfig = {
             style: "mapbox://styles/nrobison/cj3n7if3q000s2sutls5a1ny7",
@@ -79,7 +81,8 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
         // Figure out what individuals the rows correspond to
         const selectedIndividuals: string[] = [];
         selectedRows.forEach((row) => {
-            selectedIndividuals.push(this.tableData[Number.parseInt(row)]);
+            // These idx values need to be decremented, because they start at 1
+            selectedIndividuals.push(this.unionIndividuals[row.idxValue - 1]);
         });
         console.debug("Selected:", selectedIndividuals);
         // Add results
@@ -105,23 +108,31 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
 
         this.es.loadExperiment(this.experimentValue)
             .subscribe((experiment) => {
-                console.debug("has it:", experiment);
                 console.debug("Overlay?", this.es.isOverlay(experiment.state));
                 this.experimentState = experiment.state;
 
                 // Add to table
-                this.tableData = experiment.unionOf;
+                this.unionIndividuals = experiment.unionOf;
 
                 // Build the geojson feature collection, so we know what to zoom to.
                 const features: Array<Feature<GeometryObject>> = [];
+                const individualsForTable: ITableData[] = [];
 
                 experiment.individuals.forEach((individual, idx) => {
                     console.debug("Individual:", individual, idx);
+                    // Increment the offset because people hate counting by zero
+                    const idxOffset = idx + 1;
+                    const filteredID = individual.getFilteredID();
+                    const isBase = ExperimentComponent.isBaseIndividual(experiment.union, filteredID);
+                    const color = this.cs.getColor(idx);
+                    if (!isBase) {
+                        individualsForTable.push({
+                            idxValue: idxOffset,
+                            color});
+                    }
 
                     const height = this.getHeight(individual.getTemporal());
                     const baseHeight = ExperimentComponent.getBase(individual.getTemporal());
-                    const filteredID = individual.getFilteredID();
-                    const isBase = ExperimentComponent.isBaseIndividual(experiment.union, filteredID);
                     if (isBase) {
                         this.baseIndividualID = filteredID;
                     }
@@ -143,15 +154,17 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
                             source: filteredID,
                             paint: {
                                 // If we're the base individual, make us red and put us on top of everything else
-                                "fill-extrusion-color": isBase ? "red" : this.cs.getColor(idx),
+                                "fill-extrusion-color": isBase ? "red" : color,
                                 "fill-extrusion-height": isBase ? height + 3001 : height,
                                 "fill-extrusion-base": isBase ? baseHeight + 3001 : baseHeight,
                                 "fill-extrusion-opacity": isBase ? 1.0 : 0.7
                             }
                         },
-                        labelValue: idx.toString()
+                        labelValue: isBase ? undefined : idxOffset.toString()
                     });
                 });
+
+                this.tableData = individualsForTable;
 
                 // Build the feature collection and zoom the map
                 this.map.centerMap({
@@ -171,6 +184,10 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
 
     public minimalSelectionHandler(): void {
         this.minimalSelection = true;
+    }
+
+    public showOptions(): boolean {
+        return this.answered === true && this.mapVisible === "visible";
     }
 
     public showNext(): boolean {
@@ -204,8 +221,6 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
     }
 
     public static isBaseIndividual(baseIndividualID: string, individualID: string): boolean {
-        console.debug("Base:", baseIndividualID, "Individual:", individualID, "Match?:", individualID === baseIndividualID);
-        // Strip off GAUL
         return individualID === baseIndividualID;
     }
 
