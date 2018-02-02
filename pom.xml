@@ -52,6 +52,7 @@
         <sonar.jacoco.reportPaths>${maven.multiModuleProjectDirectory}/target/jacoco_analysis/jacoco.exec</sonar.jacoco.reportPaths>
         <dependency.check.reportPath>target/dependency-check</dependency.check.reportPath>
         <sonar.dependencyCheck.reportPath>${dependency.check.reportPath}/dependency-check-report.xml</sonar.dependencyCheck.reportPath>
+        <docker.image.prefix>docker.nickrobison.com:5000</docker.image.prefix>
     </properties>
 
     <dependencyManagement>
