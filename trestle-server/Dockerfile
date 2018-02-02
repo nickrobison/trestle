@@ -10,7 +10,7 @@ WORKDIR /opt/trestle
 
 # Copy in server UberJar
 ADD target/${JAR_FILE} ./trestle.jar
-ADD src/main/resources/config.prod.yml /
+ADD src/main/resources/config.prod.yml .
 ADD target/trestle.owl .
 
 CMD ["-jar", "/opt/trestle/trestle.jar", "server", "/opt/trestle/config.prod.yml"]
