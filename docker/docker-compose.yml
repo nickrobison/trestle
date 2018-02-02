@@ -2,21 +2,40 @@ version: '3'
 
 services:
   graphdb:
-    image: ontotext/graphdb:8.4.1-free
+    image: docker.nickrobison.com:5000/evaluation-data
     ports:
       - "7200:7200"
+    networks:
+      - nginxproxy_default
 
   db:
     image: postgres:10.1
     ports:
       - "5432:5432"
+    networks:
+      - nginxproxy_default
 
-  server:
+  trestle:
     depends_on:
       - graphdb
       - db
-    image: nickrobison/trestle-server:0.8.0-SNAPSHOT
+    image: docker.nickrobison.com:5000/trestle-server:0.8.0-SNAPSHOT
     environment:
       CS: http://graphdb:7200
+#    ports:
+#      - "88:8080"
+    networks:
+      - nginxproxy_default
+
+  nginx:
+#      depends_on:
+#        - trestle
+    image: docker.nickrobison.com:5000/nginx-proxy
     ports:
-      - "88:8080"
+      - "443:4443"
+    networks:
+      - nginxproxy_default
+
+networks:
+  nginxproxy_default:
+    external: true
