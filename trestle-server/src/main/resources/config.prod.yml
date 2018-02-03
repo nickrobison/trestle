@@ -10,7 +10,7 @@ logging:
   level: INFO
   appenders:
     - type: console
-      logFormat: "[%-5p | %t | %X{test}] %d %c:%L %X{transaction} - %m%n"
+      logFormat: "[%-5p | %t] %d %c:%L %X{transaction} - %m%n"
 
 database:
     driverClass: org.postgresql.Driver

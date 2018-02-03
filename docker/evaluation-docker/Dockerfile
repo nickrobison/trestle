@@ -9,4 +9,5 @@ WORKDIR /opt
 ADD statements.rdf .
 ADD gaul_hadoop_world_bank-config.ttl ./config.ttl
 
-RUN loadrdf -vm parallel -c config.ttl statements.rdf
+RUN loadrdf -vm parallel -c config.ttl statements.rdf && \
+    rm statements.rdf config.ttl
