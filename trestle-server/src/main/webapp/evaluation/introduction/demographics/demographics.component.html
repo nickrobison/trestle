@@ -21,7 +21,7 @@
             </mat-form-field>
             <mat-form-field
                     [floatLabel]="'never'">
-                <label>Do you work in public health?</label>
+                <label>Do you work or study in the field of public health?</label>
                 <mat-select [formControl]="publicHealth">
                     <mat-option value="true">Yes</mat-option>
                     <mat-option value="false">No</mat-option>
@@ -29,11 +29,12 @@
             </mat-form-field>
             <mat-form-field
                     [floatLabel]="'never'">
-                <label>Do you have Geospatial Experience?</label>
+                <label>Have you worked in the past with geospatial software?</label>
                 <mat-select [formControl]="geospatial">
                     <mat-option value="true">Yes</mat-option>
                     <mat-option value="false">No</mat-option>
                 </mat-select>
+                <mat-hint align="start">e.g. ArcGIS, QGIS, GRASS, R spatial</mat-hint>
             </mat-form-field>
         </div>
         <button mat-raised-button
