@@ -20,6 +20,11 @@ var options = {
     module: {
         rules: [
             {
+                test: /\.js$/,
+                use: ["source-map-loader"],
+                enforce: "pre"
+            },
+            {
                 test: /\.html$/,
                 loader: "html-loader"
             },
@@ -125,8 +130,8 @@ var options = {
             chunksSortMode: "manual",
             template: helpers.root("src/main/webapp/evaluation/evaluation.index.html"),
             filename: "evaluation.index.html"
-        }),
-        new Jarvis()
+        })
+        // new Jarvis()
     ]
 };
 module.exports = options;

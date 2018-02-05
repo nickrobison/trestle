@@ -3,6 +3,7 @@
  */
 import "@angular/core";
 import "@angular/http";
+import "@angular/common/http";
 import "@angular/forms";
 import "@angular/animations";
 import "@angular/material";

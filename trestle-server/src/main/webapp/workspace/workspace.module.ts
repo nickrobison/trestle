@@ -16,10 +16,12 @@ import { MaterialModule } from "./MaterialModule/material.module";
 import { SharedModule } from "./SharedModule/shared.module";
 import "../rxjs-operators";
 import { ErrorService } from "./SharedModule/errors/error.service";
+import { HttpClientModule } from "@angular/common/http";
 
 @NgModule({
     imports: [
         HttpModule,
+        HttpClientModule,
         BrowserModule,
         BrowserAnimationsModule,
         RouterModule.forRoot(AppRoutes),

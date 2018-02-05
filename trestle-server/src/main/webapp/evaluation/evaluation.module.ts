@@ -1,4 +1,4 @@
-import { NgModule } from "@angular/core";
+import { ErrorHandler, NgModule } from "@angular/core";
 import { BrowserModule } from "@angular/platform-browser";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { MaterialModule } from "../workspace/MaterialModule/material.module";
@@ -19,6 +19,7 @@ import { FlexLayoutModule } from "@angular/flex-layout";
 import { CounterPipe, SelectionTableComponent } from "./experiment/selection-table/selection-table.component";
 import { COLOR_SERVICE_CONFIG } from "../workspace/SharedModule/color/color-service.config";
 import { COLOR_EVAL_CONFIG } from "./evaluation.config";
+import { ErrorService } from "../workspace/SharedModule/errors/error.service";
 
 @NgModule({
     imports: [
@@ -46,6 +47,10 @@ import { COLOR_EVAL_CONFIG } from "./evaluation.config";
         EvaluationService,
         {
             provide: COLOR_SERVICE_CONFIG, useValue: COLOR_EVAL_CONFIG
+        },
+        {
+            provide: ErrorHandler,
+            useClass: ErrorService
         }],
     bootstrap: [EvaluationComponent]
 })

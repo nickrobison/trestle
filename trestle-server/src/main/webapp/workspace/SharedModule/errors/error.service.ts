@@ -1,7 +1,7 @@
 import { ErrorHandler, Injectable, Injector } from "@angular/core";
 import { LocationStrategy, PathLocationStrategy } from "@angular/common";
 import { fromError, StackFrame } from "stacktrace-js";
-import { Http } from "@angular/http";
+import { HttpClient } from "@angular/common/http";
 
 interface IErrorReport {
     timestamp: number;
@@ -20,7 +20,7 @@ export class ErrorService extends ErrorHandler {
     public handleError(error: any): void {
 
         const location = this.injector.get(LocationStrategy);
-        const http = this.injector.get(Http);
+        const http = this.injector.get(HttpClient);
 
         const message = error.message ? error.message : error.toString();
         let url = "";
