@@ -176,7 +176,7 @@ public class ExperimentResource {
 
 
     public enum ExperimentState {
-        OVERLAY(1),
+        BEARING(1),
         OPAQUE(2),
         NO_CONTEXT(4);
 

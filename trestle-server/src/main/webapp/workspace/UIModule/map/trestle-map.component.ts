@@ -324,6 +324,20 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         }
     }
 
+    public setMapStyle(style: mapboxgl.Style): void {
+        this.map.setStyle(style);
+    }
+
+    public setPitchBearing(pitch?: number, bearing?: number): void {
+        if (pitch) {
+            this.map.setPitch(pitch);
+        }
+
+        if (bearing) {
+            this.map.setBearing(bearing);
+        }
+    }
+
     public change3DOffset(height: number, offset: number, individual?: string): void {
 
         if (individual) {
@@ -624,7 +638,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             return;
         }
         console.debug("Filtered features", features);
-        
+
         const feature: any = features[0];
         let layerID = features[0].layer.id;
         // Emit the clicked layer

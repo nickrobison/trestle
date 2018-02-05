@@ -7,7 +7,7 @@ import { CacheService } from "../../workspace/SharedModule/cache/cache.service";
 import { Router } from "@angular/router";
 
 export enum MapState {
-    OVERLAY = 1,
+    BEARING = 1,
     OPAQUE = 2,
     NO_CONTEXT = 4
 }
@@ -146,19 +146,19 @@ export class EvaluationService {
             });
     }
 
-    public isOverlay(mapState: number): boolean {
+    public isBearing(mapState: number): boolean {
         // tslint:disable-next-line:no-bitwise
-        return (mapState & MapState.OVERLAY) > 0;
+        return (mapState & MapState.BEARING) !== 0;
     }
 
     public isOpaque(mapState: number): boolean {
         // tslint:disable-next-line:no-bitwise
-        return (mapState & MapState.OPAQUE) > 0;
+        return (mapState & MapState.OPAQUE) !== 0;
     }
 
     public noContext(mapState: number): boolean {
         // tslint:disable-next-line:no-bitwise
-        return (mapState & MapState.NO_CONTEXT) > 0;
+        return (mapState & MapState.NO_CONTEXT) !== 0;
     }
 
     private getTrestleIndividual(name: string): Observable<TrestleIndividual> {
@@ -171,11 +171,7 @@ export class EvaluationService {
         return this.http.get<ITrestleIndividual>("/individual/retrieve", {
             params
         })
-            .map((res) => {
-                // const response = res.json();
-                console.debug("Has response, building object", res);
-                return new TrestleIndividual(res);
-            })
+            .map((res) => new TrestleIndividual(res))
             .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
 }

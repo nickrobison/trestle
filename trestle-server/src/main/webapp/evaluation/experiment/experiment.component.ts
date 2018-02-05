@@ -49,9 +49,7 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
         this.mapConfig = {
             style: "mapbox://styles/nrobison/cj3n7if3q000s2sutls5a1ny7",
             center: [32.3558991, -25.6854313],
-            zoom: 8,
-            pitch: 40,
-            bearing: 20
+            zoom: 8
         };
     }
 
@@ -108,8 +106,12 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
 
         this.es.loadExperiment(this.experimentValue)
             .subscribe((experiment) => {
-                console.debug("Overlay?", this.es.isOverlay(experiment.state));
                 this.experimentState = experiment.state;
+
+                // Do we need to offset the bearing, or keep it overhead?
+                if (this.es.isBearing(this.experimentState)) {
+                    this.map.setPitchBearing(40, 20);
+                }
 
                 // Add to table
                 this.unionIndividuals = experiment.unionOf;
@@ -145,6 +147,13 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
                     };
                     features.push(feature);
 
+                    // // If we're no-context, reset the base layer
+                    // if (this.es.noContext(this.experimentState)) {
+                    //     console.debug("Setting no context");
+                    //     // this.map.setMapBaseLayer("mapbox://styles/nrobison/cjd9tp9o8aa7a2rke3l4i9esq");
+                    //     this.map.setMapBaseLayer("mapbox://styles/nrobison/cjbi444d201s52rp3lbxsm0uq");
+                    // }
+
                     this.dataChanges.next({
                         id: filteredID,
                         data: feature,
@@ -157,7 +166,7 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
                                 "fill-extrusion-color": isBase ? "red" : color,
                                 "fill-extrusion-height": isBase ? height + 3001 : height,
                                 "fill-extrusion-base": isBase ? baseHeight + 3001 : baseHeight,
-                                "fill-extrusion-opacity": isBase ? 1.0 : 0.7
+                                "fill-extrusion-opacity": this.getLayerOpacity(isBase)
                             }
                         },
                         labelValue: isBase ? undefined : idxOffset.toString()
@@ -207,6 +216,24 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
         }
     }
 
+    /**
+     * If we're the base individual, or the experiment state is OPAQUE, set the Opacity to 1,
+     * otherwise, 0.7
+     * @param {boolean} isBase - Are we the base individual?
+     * @returns {number} - Opacity from 0 - 1.0
+     */
+    private getLayerOpacity(isBase: boolean): number {
+        if (isBase || this.es.isOpaque(this.experimentState)) {
+            return 1.0;
+        }
+        return 0.7;
+    }
+
+    /**
+     * Gets the offset height of the polygon, based on its end temporal
+     * @param {TrestleTemporal} temporal - End temporal of individual
+     * @returns {number} - Offset height
+     */
     private getHeight(temporal: TrestleTemporal): number {
         const to = temporal.getTo();
         if (to === undefined) {
