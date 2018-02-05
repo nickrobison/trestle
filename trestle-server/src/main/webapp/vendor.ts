@@ -30,3 +30,4 @@ import "moment";
 import "moment-timezone";
 import "file-saver";
 import "wellknown";
+import "stacktrace-js";

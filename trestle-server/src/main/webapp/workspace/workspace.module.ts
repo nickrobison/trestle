@@ -1,7 +1,7 @@
 /**
  * Created by nrobison on 1/17/17.
  */
-import { NgModule } from "@angular/core";
+import { ErrorHandler, NgModule } from "@angular/core";
 import { HttpModule } from "@angular/http";
 import { BrowserModule } from "@angular/platform-browser";
 import { RouterModule } from "@angular/router";
@@ -15,6 +15,7 @@ import { UIModule } from "./UIModule/ui.module";
 import { MaterialModule } from "./MaterialModule/material.module";
 import { SharedModule } from "./SharedModule/shared.module";
 import "../rxjs-operators";
+import { ErrorService } from "./SharedModule/errors/error.service";
 
 @NgModule({
     imports: [
@@ -30,7 +31,13 @@ import "../rxjs-operators";
         SharedModule
     ],
     declarations: [WorkspaceComponent],
-    bootstrap: [WorkspaceComponent]
+    bootstrap: [WorkspaceComponent],
+    providers: [
+        {
+            provide: ErrorHandler,
+            useClass: ErrorService
+        }
+    ]
 
 })
 export class WorkspaceModule {
