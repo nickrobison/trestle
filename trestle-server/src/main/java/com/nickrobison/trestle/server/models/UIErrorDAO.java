@@ -5,6 +5,7 @@ import org.hibernate.SessionFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.UUID;
 
 /**
  * Created by nickrobison on 2/5/18.
@@ -17,7 +18,7 @@ public class UIErrorDAO extends AbstractDAO<UIError> {
         super(factory);
     }
 
-    public Long create(UIError error) {
+    public UUID create(UIError error) {
         return this.persist(error).getId();
     }
 }

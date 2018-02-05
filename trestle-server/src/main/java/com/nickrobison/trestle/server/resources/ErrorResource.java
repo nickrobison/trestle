@@ -11,6 +11,7 @@ import javax.validation.Valid;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
+import java.util.UUID;
 
 /**
  * Created by nickrobison on 2/5/18.
@@ -31,7 +32,7 @@ public class ErrorResource {
     @Path("/report")
     @UnitOfWork
     public Response reportError(@Valid UIError error) throws Exception {
-        final Long errorID = this.errorDAO.create(error);
+        final UUID errorID = this.errorDAO.create(error);
         logger.error("UI Error logged at {} with message: {}", error.getLocation(), error.getMessage());
         return Response.ok().entity(errorID).build();
     }

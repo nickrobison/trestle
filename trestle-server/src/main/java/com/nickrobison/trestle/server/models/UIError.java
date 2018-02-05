@@ -1,10 +1,13 @@
 package com.nickrobison.trestle.server.models;
 
+import org.hibernate.annotations.GenericGenerator;
+
 import javax.persistence.*;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by nickrobison on 2/5/18.
@@ -14,9 +17,12 @@ import java.util.List;
 public class UIError {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ID", unique = true, nullable = false)
-    private Long Id;
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(
+            name = "UUID",
+            strategy = "org.hibernate.id.UUIDGenerator")
+    @Column(name = "ID", updatable = false, nullable = false)
+    private UUID Id;
     private OffsetDateTime timestamp;
     private String message;
     private String location;
@@ -28,11 +34,11 @@ public class UIError {
 //        Not used
     }
 
-    public Long getId() {
+    public UUID getId() {
         return Id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         Id = id;
     }
 
@@ -73,11 +79,14 @@ public class UIError {
     public static class StackFrame {
 
         @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        @Column(name = "ID", unique = true, nullable = false)
-        private Long id;
+        @GeneratedValue(generator = "UUID")
+        @GenericGenerator(
+                name = "UUID",
+                strategy = "org.hibernate.id.UUIDGenerator")
+        @Column(name = "ID", updatable = false, nullable = false)
+        private UUID id;
         @Column(name = "ERROR_ID")
-        private Long errorId;
+        private UUID errorId;
         @Column(name = "column_number")
         private Integer columnNumber;
         @Column(name = "file_name")
@@ -90,22 +99,22 @@ public class UIError {
 
 
         public StackFrame() {
-
+//            Not used
         }
 
-        public Long getId() {
+        public UUID getId() {
             return id;
         }
 
-        public void setId(Long id) {
+        public void setId(UUID id) {
             this.id = id;
         }
 
-        public Long getErrorId() {
+        public UUID getErrorId() {
             return errorId;
         }
 
-        public void setErrorId(Long errorId) {
+        public void setErrorId(UUID errorId) {
             this.errorId = errorId;
         }
 
