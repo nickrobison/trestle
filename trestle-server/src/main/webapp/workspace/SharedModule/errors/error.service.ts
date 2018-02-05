@@ -1,7 +1,14 @@
 import { ErrorHandler, Injectable, Injector } from "@angular/core";
 import { LocationStrategy, PathLocationStrategy } from "@angular/common";
-import { fromError } from "stacktrace-js";
+import { fromError, StackFrame } from "stacktrace-js";
 import { Http } from "@angular/http";
+
+interface IErrorReport {
+    timestamp: number;
+    location: string;
+    message: string;
+    stackTrace: StackFrame[];
+}
 
 @Injectable()
 export class ErrorService extends ErrorHandler {
@@ -27,11 +34,13 @@ export class ErrorService extends ErrorHandler {
             offline: true
         })
             .then((frames) => {
+                console.debug("Frames:", frames);
                 http.post("/error/report", {
+                    timestamp: Date.now(),
                     message,
                     location: url,
-                    stack: JSON.stringify(frames)
-                })
+                    stackTrace: frames
+                } as IErrorReport)
                     .subscribe((success) => {
                             console.debug("Error logged as:", success);
                         },

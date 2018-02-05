@@ -26,6 +26,33 @@
             <column name="PRIVILEGES" value="7"/>
         </insert>
     </changeSet>
+    <changeSet id="tag-error-tables" author="nickrobison">
+        <tagDatabase tag="error-tables"/>
+    </changeSet>
+    <changeSet id="error-tables" author="nickrobison">
+        <createTable tableName="UI_ERRORS">
+            <column autoIncrement="true" name="ID" type="BIGINT(19)">
+                <constraints primaryKey="true" primaryKeyName="pk_UI_ERRORS"/>
+            </column>
+            <column name="timestamp" type="TIMESTAMP"/>
+            <column name="message" type="VARCHAR(150)"/>
+            <column name="location" type="VARCHAR(50)"/>
+        </createTable>
+        <createTable tableName="STACK_FRAMES">
+            <column autoIncrement="true" name="ID" type="BIGINT(19)">
+                <constraints primaryKey="true" primaryKeyName="pk_STACK_FRAMES"/>
+            </column>
+            <column name="ERROR_ID" type="BIGINT"/>
+            <column name="file_name" type="VARCHAR(150)"/>
+            <column name="column_number" type="Integer"/>
+            <column name="line_number" type="Integer"/>
+            <column name="function_name" type="VARCHAR(50)"/>
+            <column name="source" type="VARCHAR(150)"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="STACK_FRAMES" baseColumnNames="ERROR_ID" constraintName="fk_stack_errors"
+                                 referencedTableName="UI_ERRORS"
+                                 referencedColumnNames="ID"/>
+    </changeSet>
     <changeSet id="tag-test-tables" author="nickrobison">
         <tagDatabase tag="test-tables"/>
     </changeSet>
