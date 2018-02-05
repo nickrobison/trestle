@@ -90,6 +90,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     @Input() public data: MapSource;
     @Input() public single: boolean;
     @Input() public multiSelect: boolean;
+    @Input() public clickLayerSuffix: string;
     @Input() public zoomOnLoad?: boolean;
     @Input() public config?: mapboxgl.MapboxOptions;
     @Input() public dataChanges: Subject<MapSource | undefined>;
@@ -595,7 +596,8 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         this.mapSources.forEach((values) => {
             fillLayers = fillLayers
                 .concat((values
-                    .filter((val) => val.includes("-fill"))));
+                // If we have a clickLayerSuffix, filter on that, otherwise, just find the fill ¬layers
+                    .filter((val) => val.includes(this.clickLayerSuffix ? this.clickLayerSuffix : "-fill"))));
         });
         console.debug("Querying on fillLayers:", fillLayers);
         const features: any[] = this.map.queryRenderedFeatures(e.point, {
@@ -622,6 +624,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             return;
         }
         console.debug("Filtered features", features);
+        
         const feature: any = features[0];
         let layerID = features[0].layer.id;
         // Emit the clicked layer
