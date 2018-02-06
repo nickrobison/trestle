@@ -8,11 +8,9 @@ import { Router } from "@angular/router";
 })
 export class IntroductionComponent implements OnInit {
 
-    private gotoDemographics: boolean;
     public introductionState: "intro" | "context" | "instructions";
 
     public constructor(private router: Router) {
-        this.gotoDemographics = false;
     }
 
     public ngOnInit(): void {

@@ -2,7 +2,7 @@
  * Created by nrobison on 6/11/17.
  */
 import * as mapboxgl from "mapbox-gl";
-import { GeoJSONSource, LngLatBounds, MapMouseEvent, VectorSource } from "mapbox-gl";
+import { GeoJSONSource, VectorSource, GeoJSONSourceRaw, ImageSource, RasterSource, VideoSource, LngLatBounds, MapMouseEvent, Source, Layer, Style, FillPaint } from "mapbox-gl";
 import extent from "@mapbox/geojson-extent";
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange } from "@angular/core";
 import {
@@ -19,8 +19,6 @@ import {
 import { BehaviorSubject } from "rxjs/BehaviorSubject";
 import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
 import { Subject } from "rxjs/Subject";
-import FillPaint = mapboxgl.FillPaint;
-import Layer = mapboxgl.Layer;
 
 export interface IMapFillLayer extends mapboxgl.Layer {
     type: "fill";
@@ -78,6 +76,7 @@ export interface IMapEventHandler {
 
 export type MapEvent = "mousemove" | "mouseleave" | "click" | "moveend";
 export type MapSource = I3DMapSource | ITrestleMapSource;
+export type MapBoxSource = GeoJSONSource | VectorSource | RasterSource | ImageSource | VideoSource | GeoJSONSourceRaw;
 
 @Component({
     selector: "trestle-map",
@@ -324,7 +323,13 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         }
     }
 
-    public setMapStyle(style: mapboxgl.Style): void {
+    /**
+     * Change the map base layer
+     * WARNING: This will cause all the sources and layers to be removed and added again, which is slow
+     * @param {string} style - New base layer URL
+     */
+    public setMapStyle(style: string): void {
+        this.clearMap();
         this.map.setStyle(style);
     }
 

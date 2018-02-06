@@ -147,13 +147,6 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
                     };
                     features.push(feature);
 
-                    // // If we're no-context, reset the base layer
-                    // if (this.es.noContext(this.experimentState)) {
-                    //     console.debug("Setting no context");
-                    //     // this.map.setMapBaseLayer("mapbox://styles/nrobison/cjd9tp9o8aa7a2rke3l4i9esq");
-                    //     this.map.setMapBaseLayer("mapbox://styles/nrobison/cjbi444d201s52rp3lbxsm0uq");
-                    // }
-
                     this.dataChanges.next({
                         id: filteredID,
                         data: feature,
@@ -174,6 +167,12 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
                 });
 
                 this.tableData = individualsForTable;
+
+                // If we're no-context, reset the base layer with our empty one
+                if (this.es.noContext(this.experimentState)) {
+                console.debug("Setting no context");
+                this.map.setMapStyle("mapbox://styles/nrobison/cjd9tp9o8aa7a2rke3l4i9esq");
+                }
 
                 // Build the feature collection and zoom the map
                 this.map.centerMap({
