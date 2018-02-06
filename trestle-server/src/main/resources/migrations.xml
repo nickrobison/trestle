@@ -35,7 +35,7 @@
                 <constraints primaryKey="true" primaryKeyName="pk_UI_ERRORS"/>
             </column>
             <column name="timestamp" type="TIMESTAMP"/>
-            <column name="message" type="VARCHAR(150)"/>
+            <column name="message" type="VARCHAR(250)"/>
             <column name="location" type="VARCHAR(50)"/>
         </createTable>
         <createTable tableName="STACK_FRAMES">
@@ -46,7 +46,7 @@
             <column name="file_name" type="VARCHAR(150)"/>
             <column name="column_number" type="Integer"/>
             <column name="line_number" type="Integer"/>
-            <column name="function_name" type="VARCHAR(50)"/>
+            <column name="function_name" type="VARCHAR(150)"/>
             <column name="source" type="VARCHAR(150)"/>
         </createTable>
         <addForeignKeyConstraint baseTableName="STACK_FRAMES" baseColumnNames="ERROR_ID" constraintName="fk_stack_errors"

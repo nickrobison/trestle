@@ -39,7 +39,7 @@ export class ErrorService extends ErrorHandler {
                     timestamp: Date.now(),
                     message,
                     location: url,
-                    stackTrace: frames
+                    stackTrace: frames.slice(0, 10)
                 } as IErrorReport)
                     .subscribe((success) => {
                             console.debug("Error logged as:", success);
