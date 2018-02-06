@@ -8,7 +8,7 @@ import { Router } from "@angular/router";
 })
 export class IntroductionComponent implements OnInit {
 
-    public introductionState: "intro" | "context" | "instructions";
+    public introductionState: "intro" | "context" | "zoom" | "select";
 
     public constructor(private router: Router) {
     }
@@ -17,14 +17,15 @@ export class IntroductionComponent implements OnInit {
         this.introductionState = "intro";
     }
 
-
     public next(): void {
-        if (this.introductionState === "instructions") {
+        if (this.introductionState === "select") {
             this.router.navigate(["/demographics"]);
         } else if (this.introductionState === "intro") {
             this.introductionState = "context";
         } else if (this.introductionState === "context") {
-            this.introductionState = "instructions";
+            this.introductionState = "zoom";
+        } else if (this.introductionState === "zoom") {
+            this.introductionState = "select";
         }
     }
 }
