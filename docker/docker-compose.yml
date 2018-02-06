@@ -10,6 +10,8 @@ services:
     image: postgres:10.1
     ports:
       - "5432:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
 
   trestle:
     depends_on:
@@ -25,3 +27,6 @@ services:
     image: docker.nickrobison.com:5000/nginx-proxy
     ports:
       - "443:4443"
+
+volumes:
+  dbdata:
