@@ -60,10 +60,9 @@ var prodOptions = {
                     comments: false,
                     beautify: false  // debug true
                 },
+                // Below are the only options we change from their default settings
                 compress: {
-                    unused: true,
-                    dead_code: true,
-                    drop_debugger: true,
+                    drop_console: true,
                     comparisons: true
                 }
             }
