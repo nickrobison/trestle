@@ -7,6 +7,7 @@ import { ReplaySubject } from "rxjs/ReplaySubject";
 import { MatSliderChange } from "@angular/material";
 import { ColorService } from "../../workspace/SharedModule/color/color.service";
 import { Feature, FeatureCollection, GeometryObject } from "geojson";
+import { Router } from "@angular/router";
 
 @Component({
     selector: "experiment",
@@ -37,7 +38,9 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
     private startTime: number;
     private unionIndividuals: string[];
 
-    public constructor(private es: EvaluationService, private cs: ColorService) {
+    public constructor(private es: EvaluationService,
+                       private cs: ColorService,
+                       private router: Router) {
         // If we directly navigated to the page, redirect to the intro
         this.es.isRegistered();
         this.experimentValue = 1;
@@ -91,6 +94,8 @@ export class ExperimentComponent implements OnInit, AfterViewInit {
             this.experimentValue += 1;
             this.selectionTable.reset();
             this.loadNextMatch();
+        } else {
+            this.router.navigate(["/conclusion"])
         }
     }
 

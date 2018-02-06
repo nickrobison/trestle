@@ -20,6 +20,7 @@ import { CounterPipe, SelectionTableComponent } from "./experiment/selection-tab
 import { COLOR_SERVICE_CONFIG } from "../workspace/SharedModule/color/color-service.config";
 import { COLOR_EVAL_CONFIG } from "./evaluation.config";
 import { ErrorService } from "../workspace/SharedModule/errors/error.service";
+import { ConclusionComponent } from "./conclusion/conclusion.component";
 
 @NgModule({
     imports: [
@@ -41,6 +42,7 @@ import { ErrorService } from "../workspace/SharedModule/errors/error.service";
         DemographicsComponent,
         ExperimentComponent,
         SelectionTableComponent,
+        ConclusionComponent,
         CounterPipe
     ],
     providers: [
