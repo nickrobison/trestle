@@ -1,16 +1,18 @@
 <div fxLayout="column" fxLayoutGap="50px">
     <div fxLayout="row" class="map-container" fxLayoutGap="10px">
-            <trestle-map fxFlex="90%"
-                         [style.visibility]="mapVisible"
-                            [single]="false"
+        <div fxFlex="90%">
+            <div *ngIf="mapVisible !== 'visible'" class="loading-text">Loading experiment, please wait....</div>
+            <trestle-map [style.visibility]="mapVisible"
+                         [single]="false"
                          [multiSelect]="true"
                          [zoomOnLoad]="false"
                          [config]="mapConfig"
                          [dataChanges]="dataChanges"
                          [handlers]="mapEventHandlers"
                          class="map-container"></trestle-map>
+        </div>
         <div>
-            <h6 class="light_gray_text">Explode</h6>
+            <h6 class="light_gray_text">Change height</h6>
             <mat-slider
                     [vertical]="true"
                     [min]="0"
@@ -31,7 +33,7 @@
         </div>
         <div>
             <div [hidden]="!showOptions()">
-                Which enitities contribute to the union?
+                Which entities contribute to the union?
                 <selection-table [data]="tableData"
                                  (minimalSelection)="minimalSelectionHandler()"></selection-table>
             </div>

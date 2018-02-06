@@ -10,3 +10,10 @@
 .mat-slider-vertical {
     height: 250px;
 }
+
+.loading-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
