@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.server.models;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -12,6 +13,7 @@ public class UserExperimentResult {
 
     @Id
     @Column(name = "ID", unique = true, nullable = false)
+    @NotNull
     private Long userId;
 
     @OneToMany(cascade = CascadeType.ALL)

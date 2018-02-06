@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -41,7 +42,7 @@ public class ExperimentResource {
     @POST
     @Path("/submit")
     @UnitOfWork
-    public Response submitResults(UserExperimentResult results) {
+    public Response submitResults(@Valid UserExperimentResult results) {
         logger.debug("Results:", results);
         final Long aLong = this.userExperimentResultDAO.create(results);
         return Response.ok().entity(aLong).build();
