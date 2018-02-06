@@ -1,7 +1,7 @@
-FROM openjdk:8-jdk
+FROM openjdk:8-jdk-alpine
 
 # Build time arguments
-ARG version=8.4.0
+ARG version=8.4.1
 
 LABEL name="graphdb"
 LABEL maintainer="Nick Robison <nick@nickrobison.com>"
@@ -11,6 +11,10 @@ ENV GRAPHDB_PARENT_DIR=/opt/graphdb
 ENV GRAPHDB_HOME=${GRAPHDB_PARENT_DIR}/home
 
 ENV GRAPHDB_INSTALL_DIR=${GRAPHDB_PARENT_DIR}/dist
+
+# We need to install bash for the startup scripts
+RUN apk update && \
+    apk add bash
 
 ADD graphdb-free-${version}-dist.zip /tmp
 

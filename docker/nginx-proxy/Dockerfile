@@ -1,11 +1,11 @@
-FROM nginx:1.13.8
+FROM nginx:1.13.8-alpine
 
 LABEL name="nginx-proxy"
 LABEL maintainer="Nick Robison <nick@nickrobison.com>"
 LABEL description="Nginx image for proxying connections to Trestle Server"
 
-RUN apt-get update && \
-    apt-get install openssl
+RUN apk update && \
+    apk add openssl
 
 WORKDIR /opt
 
@@ -13,8 +13,8 @@ ADD entrypoint.sh .
 ADD nginx.conf .
 
 RUN chmod u+rx,g+rx,o+rx,a-w /opt/entrypoint.sh && \
-    usermod -u 10777 -d /opt nginx && \
-    groupmod -g 10777 nginx && \
+#    adduser -u 10777 -h /opt nginx && \
+#    addgroup -g 10777 nginx && \
 #            mkdir -p /opt/www && \
     mkdir -p /opt/ssl && \
     chown -R nginx:nginx /opt/ && \
