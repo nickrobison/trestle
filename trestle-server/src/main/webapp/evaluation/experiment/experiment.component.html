@@ -40,12 +40,19 @@
         </div>
         <div *ngIf="showNext()"
              [ngSwitch]="experimentValue" fxFlexAlign="start">
-            <button *ngSwitchCase="2" mat-raised-button
+            <button *ngSwitchCase="10" mat-raised-button
                     (click)="next(true)">Finish
             </button>
             <button *ngSwitchDefault mat-raised-button
                     (click)="next()">Next
             </button>
         </div>
+    </div>
+    <div>
+        <em class="float-right">{{experimentValue  + "/ 10"}}</em>
+        <mat-progress-bar
+                [color]="'accent'"
+                [mode]="'determinate'"
+                [value]="experimentValue * 10"></mat-progress-bar>
     </div>
 </div>
