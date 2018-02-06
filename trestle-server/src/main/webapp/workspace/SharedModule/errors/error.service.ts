@@ -13,8 +13,15 @@ interface IErrorReport {
 @Injectable()
 export class ErrorService extends ErrorHandler {
 
+    private sourceCache: {[file: string]: string};
+
     public constructor(private injector: Injector) {
         super();
+
+        this.sourceCache = {
+            "ng:///WorkspaceModule/WorkspaceComponent.ngfactory.js": "{}",
+            "http://localhost:8080/static/toSubscriber.js.map": '{"version": 3, "sources": []}'
+        };
     }
 
     public handleError(error: any): void {
@@ -31,6 +38,7 @@ export class ErrorService extends ErrorHandler {
         console.debug("Location: %s, Message: %s", url, message);
 
         fromError(error, {
+            sourceCache: this.sourceCache,
             offline: true
         })
             .then((frames) => {
