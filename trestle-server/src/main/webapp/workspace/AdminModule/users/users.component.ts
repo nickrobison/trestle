@@ -40,7 +40,7 @@ export class UsersComponent implements OnInit {
         return (user.privileges & Privileges.DBA) > 0;
     }
 
-    public openUserModal(user: ITrestleUser) {
+    public openUserModal(user: ITrestleUser | null) {
         const config = new MatDialogConfig();
         config.viewContainerRef = this.viewContainerRef;
         this.dialogRef = this.dialog.open(UserAddDialog, config);
