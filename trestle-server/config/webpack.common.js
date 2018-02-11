@@ -20,11 +20,6 @@ var options = {
     module: {
         rules: [
             {
-                test: /\.js$/,
-                use: ["source-map-loader"],
-                enforce: "pre"
-            },
-            {
                 test: /\.html$/,
                 loader: "html-loader"
             },
