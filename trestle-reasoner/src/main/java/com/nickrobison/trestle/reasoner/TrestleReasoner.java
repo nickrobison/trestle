@@ -27,6 +27,7 @@ import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
@@ -56,10 +57,11 @@ public interface TrestleReasoner {
     void shutdown(boolean delete);
 
     /**
-     * Register custom constructor function for a given java class/OWLDataType intersection
+     * * Register custom constructor function for a given java class/OWLDataType intersection
      * Note: It's advisable to use the {@link java.util.ServiceLoader} functionality instead of manually registering constructors
      *
-     * @param typeConstructor - {@link TypeConstructor} to register with the Reasoner
+     * @param typeConstructor - {@link TypeConstructor} to register with reasoner
+     * @param <C> - generic type parameter
      */
     <C extends TypeConstructor> void registerTypeConstructor(C typeConstructor);
 

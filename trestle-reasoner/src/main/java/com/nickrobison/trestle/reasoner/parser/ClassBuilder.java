@@ -145,11 +145,11 @@ public class ClassBuilder implements IClassBuilder {
     /**
      * Determines if a given argument name/type pair matches the declared TrestleConstructor
      *
-     * @param clazz        - Java class to aprse
+     * @param clazz        - Java class to parse
      * @param argumentName - Argument name to match
      * @param argumentType - Nullable argument type to match
      * @return - Boolean if name/type pair matches
-     * @throws MissingConstructorException
+     * @throws MissingConstructorException - throws if cannot match class constructor with provided argument
      */
     public static boolean isConstructorArgument(Class<?> clazz, String argumentName, @Nullable Class<?> argumentType) throws MissingConstructorException {
         final Optional<Constructor<?>> trestleConstructor = findTrestleConstructor(clazz);
