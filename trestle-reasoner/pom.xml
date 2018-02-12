@@ -145,5 +145,63 @@
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-generator-annprocess</artifactId>
         </dependency>
+        <!--Clojure Dependencies-->
+        <dependency>
+            <groupId>org.clojure</groupId>
+            <artifactId>clojure</artifactId>
+            <version>1.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.clojure</groupId>
+            <artifactId>core.match</artifactId>
+            <version>0.3.0-alpha5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.clojure</groupId>
+            <artifactId>tools.logging</artifactId>
+            <version>0.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>clj-fuzzy</groupId>
+            <artifactId>clj-fuzzy</artifactId>
+            <version>0.4.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.clojure</groupId>
+            <artifactId>tools.nrepl</artifactId>
+            <version>0.2.13</version>
+            <scope>test</scope>
+        </dependency>
+        <!--Test Dependencies-->
     </dependencies>
+    <build>
+            <plugins>
+                <plugin>
+                    <groupId>com.theoryinpractise</groupId>
+                    <artifactId>clojure-maven-plugin</artifactId>
+                    <version>1.8.1</version>
+                    <executions>
+                        <execution>
+                            <id>default-clojure</id>
+                            <goals>
+                                <goal>add-source</goal>
+                                <goal>compile</goal>
+                                <goal>add-test-source</goal>
+                                <goal>testCompile</goal>
+                                <goal>test</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <copyAllCompiledNamespaces>true</copyAllCompiledNamespaces>
+                        <sourceDirectories>
+                            <sourceDirectory>src/main/clojure</sourceDirectory>
+                        </sourceDirectories>
+                        <testSourceDirectories>
+                            <testSourceDirectory>src/test/clojure</testSourceDirectory>
+                        </testSourceDirectories>
+                    </configuration>
+                </plugin>
+            </plugins>
+    </build>
 </project>

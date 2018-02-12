@@ -37,7 +37,7 @@ public abstract class AbstractReasonerTest {
                 .build();
 
         df = OWLManager.getOWLDataFactory();
-        tp = new TrestleParser(df, AbstractReasonerTest.OVERRIDE_PREFIX, false, "en");
+        tp = reasoner.getUnderlyingParser();
 
 //        Set the logging context
         MDC.put(LOGGING_CONTEXT, getTestName());

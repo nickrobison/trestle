@@ -14,6 +14,7 @@ import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -73,6 +74,8 @@ public class DataExporterTests extends AbstractReasonerTest {
     }
 
     @Test
+    @Disabled
+//    Disabled until TRESTLE-384 is resolved
     public void testExport() throws IOException {
 
         gaulObjects

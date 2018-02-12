@@ -4,8 +4,7 @@ import com.google.inject.AbstractModule;
 import com.nickrobison.metrician.MetricianModule;
 import com.nickrobison.trestle.reasoner.caching.TrestleCacheModule;
 import com.nickrobison.trestle.reasoner.engines.EngineModule;
-import com.nickrobison.trestle.reasoner.parser.TrestleParser;
-import com.nickrobison.trestle.reasoner.parser.TrestleParserProvider;
+import com.nickrobison.trestle.reasoner.parser.TrestleParserModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,13 +29,9 @@ public class TrestleModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        install(new TrestleParserModule(true, "en-US"));
         install(new MetricianModule(metricsEnabled));
         install(new TrestleCacheModule(cachingEnabled));
         install(new EngineModule(mergeEnabled, eventEnabled));
-
-//        Bind the parser
-        bind(TrestleParser.class)
-                .toProvider(TrestleParserProvider.class)
-                .asEagerSingleton();
     }
 }

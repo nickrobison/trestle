@@ -7,6 +7,8 @@ import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
+import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
@@ -15,8 +17,8 @@ import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqua
 import com.nickrobison.trestle.reasoner.engines.temporal.TemporalEngine;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
-import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
-import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
+import com.nickrobison.trestle.reasoner.parser.TrestleParser;
+import com.nickrobison.trestle.reasoner.parser.TypeConstructor;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
@@ -24,7 +26,10 @@ import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLDataProperty;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 
 /**
  * Created by nrobison on 1/30/17.
@@ -53,13 +57,13 @@ public interface TrestleReasoner {
     void shutdown(boolean delete);
 
     /**
-     * Register custom constructor function for a given java class/OWLDataType intersection
+     * * Register custom constructor function for a given java class/OWLDataType intersection
+     * Note: It's advisable to use the {@link java.util.ServiceLoader} functionality instead of manually registering constructors
      *
-     * @param clazz           - Java class to construct
-     * @param datatype        - OWLDatatype to match with Java class
-     * @param constructorFunc - Function lambda function to take OWLLiteral and generate given java class
+     * @param typeConstructor - {@link TypeConstructor} to register with reasoner
+     * @param <C> - generic type parameter
      */
-    void registerTypeConstructor(Class<?> clazz, OWLDatatype datatype, Function constructorFunc);
+    <C extends TypeConstructor> void registerTypeConstructor(C typeConstructor);
 
     //    When you get the ontology, the ownership passes away, so then the reasoner can't perform any more queries.
     ITrestleOntology getUnderlyingOntology();
@@ -94,6 +98,7 @@ public interface TrestleReasoner {
 
     /**
      * Return the underlying {@link TemporalEngine}
+     *
      * @return - {@link TemporalEngine}
      */
     TemporalEngine getTemporalEngine();
@@ -118,6 +123,13 @@ public interface TrestleReasoner {
      * @return - {@link Map} of prefixes and their corresponding URIs
      */
     Map<String, String> getReasonerPrefixes();
+
+    /**
+     * Get the underlying parser used by the reasoner
+     *
+     * @return - {@link TrestleParser}
+     */
+    public TrestleParser getUnderlyingParser();
 
     /**
      * Execute SPARQL select query
@@ -583,7 +595,21 @@ public interface TrestleReasoner {
 //    TODO(nrobison): Correctly implement this
     void writeTemporalOverlap(Object subject, Object object, String temporalOverlap);
 
+    /**
+     * Register dataset class with Reasoner
+     *
+     * @param inputClass - {@link Class} class to parse and register
+     * @throws TrestleClassException - throws if class definition is ¬invalid
+     */
     void registerClass(Class inputClass) throws TrestleClassException;
+
+    /**
+     * Remove class from registry
+     * This will no longer allow read/write access to the class and will throw a {@link UnregisteredClassException} on future access
+     *
+     * @param inputClass - {@link Class} to deregister
+     */
+    void deregisterClass(Class inputClass);
 
     /**
      * Get a list of currently registered datasets

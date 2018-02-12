@@ -19,34 +19,21 @@ import static com.nickrobison.trestle.reasoner.parser.ClassParser.*;
  * Created by nrobison on 7/28/16.
  */
 @SuppressWarnings("Duplicates")
-public class ClassBuilder {
+public class ClassBuilder implements IClassBuilder {
 
     private static final Logger logger = LoggerFactory.getLogger(ClassBuilder.class);
 
-    private ClassBuilder() {
-
+    ClassBuilder() {
+//        Not used
     }
 
-    /**
-     * Get a list of data properties from a given class
-     * Returns all Facts (including spatial ones) and sets the prefixes to the default TrestlePrefix
-     *
-     * @param clazz - Class to parse for data property members
-     * @return - Optional list of {@link OWLDataProperty} for given class
-     */
-    public static Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz) {
+    @Override
+    public Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz) {
         return getPropertyMembers(clazz, false, TRESTLE_PREFIX);
     }
 
-    /**
-     * Get a list of data properties from a given class
-     * Sets the Fact prefixes to the default TrestlePrefix
-     *
-     * @param clazz         - Class to parse for data property members
-     * @param filterSpatial - filter spatial?
-     * @return - Optional list of {@link OWLDataProperty} for given class
-     */
-    public static Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz, boolean filterSpatial) {
+    @Override
+    public Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz, boolean filterSpatial) {
         return getPropertyMembers(clazz, filterSpatial, TRESTLE_PREFIX);
     }
 
@@ -59,7 +46,7 @@ public class ClassBuilder {
      * @param prefix        - Prefix to use when building the data properties
      * @return - Optional list of {@link OWLDataProperty} for given class
      */
-    public static Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz, boolean filterSpatial, String prefix) {
+    private static Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz, boolean filterSpatial, String prefix) {
 
         List<OWLDataProperty> classFields = new ArrayList<>();
         Arrays.stream(clazz.getDeclaredFields())
@@ -98,7 +85,8 @@ public class ClassBuilder {
 
     //    FIXME(nrobison): I think these warnings are important.
     @SuppressWarnings({"type.argument.type.incompatible", "assignment.type.incompatible", "method.invocation.invalid", "argument.type.incompatible"})
-    public static <T> T constructObject(Class<T> clazz, ConstructorArguments arguments) throws MissingConstructorException {
+    @Override
+    public <T> T constructObject(Class<T> clazz, ConstructorArguments arguments) throws MissingConstructorException {
         Constructor<?> declaredConstructor = findTrestleConstructor(clazz).orElseThrow(MissingConstructorException::new);
 
 //        Get the list of parameters
@@ -157,13 +145,13 @@ public class ClassBuilder {
     /**
      * Determines if a given argument name/type pair matches the declared TrestleConstructor
      *
-     * @param clazz        - Java class to aprse
+     * @param clazz        - Java class to parse
      * @param argumentName - Argument name to match
      * @param argumentType - Nullable argument type to match
      * @return - Boolean if name/type pair matches
-     * @throws MissingConstructorException
+     * @throws MissingConstructorException - throws if cannot match class constructor with provided argument
      */
-    static boolean isConstructorArgument(Class<?> clazz, String argumentName, @Nullable Class<?> argumentType) throws MissingConstructorException {
+    public static boolean isConstructorArgument(Class<?> clazz, String argumentName, @Nullable Class<?> argumentType) throws MissingConstructorException {
         final Optional<Constructor<?>> trestleConstructor = findTrestleConstructor(clazz);
 
         final Optional<Parameter> matchingParam = Arrays.stream(trestleConstructor.orElseThrow(MissingConstructorException::new).getParameters())

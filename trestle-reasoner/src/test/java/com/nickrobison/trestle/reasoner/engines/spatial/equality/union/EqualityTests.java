@@ -273,7 +273,7 @@ public class EqualityTests extends AbstractReasonerTest {
         assertAll(() -> assertTrue(unionResult.isPresent(), "Should have equality"),
                 () -> assertEquals(northSeattle, unionResult.get().getUnionObject(), "Should be a union of North Seattle"),
                 () -> assertEquals(TrestleEventType.MERGED, unionResult.get().getType(), "Should be split"),
-                () -> assertTrue(unionResult.get().getStrength() < 0.99, "Should be really equal"));
+                () -> assertTrue(unionResult.get().getStrength() > 0.99, "Should be really equal"));
 
 //        Try for a split
         List<TestClasses.ESRIPolygonTest> fakeSplitObjects = new ArrayList<>();
