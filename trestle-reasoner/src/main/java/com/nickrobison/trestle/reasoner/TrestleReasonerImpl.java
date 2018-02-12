@@ -13,6 +13,7 @@ import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.common.LambdaUtils;
 import com.nickrobison.trestle.common.StaticIRI;
+import com.nickrobison.trestle.common.TemporalUtils;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingFactException;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.exporter.*;
@@ -58,7 +59,6 @@ import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -990,12 +990,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     }
 //                Get the temporal ranges
 //                Valid first
-                    Comparator<Temporal> temporalComparator = (t1, t2) -> ((Comparable) t1).compareTo((Comparable) t2);
+
                     final Optional<Temporal> validStart = facts
                             .stream()
                             .map(TrestleFact::getValidTemporal)
                             .map(TemporalObject::getIdTemporal)
-                            .max(temporalComparator);
+                            .max(TemporalUtils::compareTemporals);
+
 
                     final Optional<Temporal> validEnd = facts
                             .stream()
@@ -1007,14 +1008,14 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                                     return (Temporal) valid.asInterval().getToTime().orElse(TEMPORAL_MAX_VALUE);
                                 }
                             })
-                            .min(temporalComparator)
+                            .min(TemporalUtils::compareTemporals)
                             .map(Temporal.class::cast);
 //                Database temporal, next
                     final Optional<Temporal> dbStart = facts
                             .stream()
                             .map(TrestleFact::getDatabaseTemporal)
                             .map(TemporalObject::getIdTemporal)
-                            .max(temporalComparator)
+                            .max(TemporalUtils::compareTemporals)
                             .map(Temporal.class::cast);
 
                     final Optional<Temporal> dbEnd = facts
@@ -1027,7 +1028,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                                     return (Temporal) db.asInterval().getToTime().orElse(TEMPORAL_MAX_VALUE);
                                 }
                             })
-                            .min(temporalComparator)
+                            .min(TemporalUtils::compareTemporals)
                             .map(Temporal.class::cast);
 
                     return new TrestleObjectState(constructorArguments, validStart.get(), validEnd.get(), dbStart.get(), dbEnd.get());
