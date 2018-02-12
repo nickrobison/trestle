@@ -316,7 +316,7 @@
           (fn [^OWLDataFactory df individual member inputObject] (:type member)))
 (defmethod build-assertion-axiom ::pred/spatial
   [^OWLDataFactory df ^OWLNamedIndividual individual member inputObject]
-  (let [wktOptional (SpatialParser/parseWKTFromGeom
+  (let [wktOptional (SpatialParser/parseOWLLiteralFromGeom
                       (invoker (get member :handle) inputObject))]
     (if (.isPresent wktOptional)
       (.getOWLDataPropertyAssertionAxiom df
@@ -349,7 +349,6 @@
   [member languageCode classMember]
   (let [iri (.getShortForm ^IRI (get member :iri))
         position (get member :position)
-        ttype (get member :temporal-type)
         name (get member :name)]
     (log/warnf "Matching against temporal %s" classMember iri)
     (condp = classMember
@@ -464,7 +463,7 @@
         (Optional/empty))))
 
   (matchWithClassMember ^String [this clazz classMember]
-    (.matchWithClassMember this clazz classMember nil))
+    (.matchWithClassMember this clazz classMember defaultLanguageCode))
   (matchWithClassMember ^String [this clazz classMember languageCode]
     (let [parsedClass (.getRegisteredClass this clazz)]
       (log/debugf "Trying to match %s with language %s" classMember languageCode)

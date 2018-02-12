@@ -1,15 +1,20 @@
 package com.nickrobison.trestle.reasoner.engines.temporal;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.nickrobison.trestle.reasoner.annotations.DatasetClass;
 import com.nickrobison.trestle.reasoner.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
-import com.nickrobison.trestle.reasoner.parser.TrestleParserProvider;
+import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import com.nickrobison.trestle.reasoner.parser.TrestleParser;
+import com.nickrobison.trestle.reasoner.parser.TrestleParserModule;
 import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.semanticweb.owlapi.model.OWLClass;
 
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -27,9 +32,16 @@ public class TemporalEngineTest {
 
 
     @BeforeEach
-    public void setup() {
+    public void setup() throws TrestleClassException {
 //        Setup the mock values
-        engine = new TemporalEngine(new TrestleParserProvider("http://test-prefix.com/").get());
+//        engine = new TemporalEngine(new TrestleParserProvider("http://test-prefix.com/").get());
+        final Injector injector = Guice.createInjector(new TemporalTestModule(), new TrestleParserModule(true, "en"));
+        final TrestleParser parser = injector.getInstance(TrestleParser.class);
+        final OWLClass intervalClass = parser.classParser.getObjectClass(IntervalTestObject.class);
+        parser.classRegistry.registerClass(intervalClass, IntervalTestObject.class);
+        parser.classRegistry.registerClass(parser.classParser.getObjectClass(ContinuingIntervalObject.class), ContinuingIntervalObject.class);
+        parser.classRegistry.registerClass(parser.classParser.getObjectClass(PointTestObject.class), PointTestObject.class);
+        engine = new TemporalEngine(parser);
     }
 
 
@@ -127,7 +139,7 @@ public class TemporalEngineTest {
 //        Equals
         final PointTestObject equalsPoint = new PointTestObject("equals-point", LocalDate.of(1988, 3, 11).atStartOfDay().atOffset(ZoneOffset.UTC).withOffsetSameInstant(ZoneOffset.MAX));
         final TemporalComparisonReport equalsReport = engine.compareObjects(before, equalsPoint);
-         assertAll(() -> assertEquals(1, equalsReport.getRelations().size(), "Should have 1 relation"),
+        assertAll(() -> assertEquals(1, equalsReport.getRelations().size(), "Should have 1 relation"),
                 () -> assertTrue(equalsReport.getRelations().contains(ObjectRelation.EQUALS), "Should have EQUALS"));
     }
 

@@ -58,6 +58,7 @@ import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -850,7 +851,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             final TrestleObjectResult<@NonNull T> value = constructedObject.get();
             if (isCacheable) {
                 try {
-                    this.trestleCache.writeTrestleObject(trestleIRI, value.getValidFrom().toInstant().toEpochMilli(), value.getValidTo().toInstant().toEpochMilli(), value.getObject());
+                    this.trestleCache.writeTrestleObject(trestleIRI, value.getValidFrom().toInstant().atOffset(ZoneOffset.UTC), value.getValidTo().toInstant().atOffset(ZoneOffset.UTC), value.getObject());
                 } catch (Exception e) {
                     logger.error("Unable to write Trestle Object {} to cache", individualIRI, e);
                 }
@@ -957,47 +958,36 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 }, objectThreadPool)
                         .thenApply(temporalProperties -> TemporalObjectBuilder.buildTemporalFromProperties(temporalProperties, baseTemporalType, clazz));
 //            Constructor arguments
-            final CompletableFuture<TrestleObjectState> argumentsFuture = factsFuture.thenCombineAsync(temporalFuture, (facts, temporals) -> {
-                logger.debug("In the arguments future");
-                final ConstructorArguments constructorArguments = new ConstructorArguments();
-                facts.forEach(fact -> constructorArguments.addArgument(
-                        this.trestleParser.classParser.matchWithClassMember(clazz, fact.getName(), fact.getLanguage()),
-                        fact.getJavaClass(),
-                        fact.getValue()));
-                if (!temporals.isPresent()) {
-                    throw new RuntimeException(String.format("Cannot restore temporal from ontology for %s", individualIRI));
-                }
+                final CompletableFuture<TrestleObjectState> argumentsFuture = factsFuture.thenCombineAsync(temporalFuture, (facts, temporals) -> {
+                    logger.debug("In the arguments future");
+                    final ConstructorArguments constructorArguments = new ConstructorArguments();
+                    facts.forEach(fact -> constructorArguments.addArgument(
+                            this.trestleParser.classParser.matchWithClassMember(clazz, fact.getName(), fact.getLanguage()),
+                            fact.getJavaClass(),
+                            fact.getValue()));
+                    if (!temporals.isPresent()) {
+                        throw new RuntimeException(String.format("Cannot restore temporal from ontology for %s", individualIRI));
+                    }
 //            Add the temporal to the constructor args
-                final TemporalObject temporal = temporals.get();
-                if (temporal.isInterval()) {
-                    final IntervalTemporal intervalTemporal = temporal.asInterval();
-                    constructorArguments.addArgument(
-                            this.trestleParser.classParser.matchWithClassMember(clazz, intervalTemporal.getStartName()),
-                            intervalTemporal.getBaseTemporalType(),
-                            intervalTemporal.getFromTime());
-                    if (!intervalTemporal.isDefault() && intervalTemporal.getToTime().isPresent()) {
+                    final TemporalObject temporal = temporals.get();
+                    if (temporal.isInterval()) {
+                        final IntervalTemporal intervalTemporal = temporal.asInterval();
                         constructorArguments.addArgument(
-                                this.trestleParser.classParser.matchWithClassMember(clazz, intervalTemporal.getEndName()),
+                                this.trestleParser.classParser.matchWithClassMember(clazz, intervalTemporal.getStartName()),
                                 intervalTemporal.getBaseTemporalType(),
                                 intervalTemporal.getFromTime());
                         if (!intervalTemporal.isDefault() && intervalTemporal.getToTime().isPresent()) {
                             constructorArguments.addArgument(
-                                    ClassParser.matchWithClassMember(clazz, intervalTemporal.getEndName()),
+                                    this.trestleParser.classParser.matchWithClassMember(clazz, intervalTemporal.getEndName()),
                                     intervalTemporal.getBaseTemporalType(),
                                     intervalTemporal.getToTime().get());
                         }
                     } else {
                         constructorArguments.addArgument(
-                                ClassParser.matchWithClassMember(clazz, temporal.asPoint().getParameterName()),
+                                this.trestleParser.classParser.matchWithClassMember(clazz, temporal.asPoint().getParameterName()),
                                 temporal.asPoint().getBaseTemporalType(),
                                 temporal.asPoint().getPointTime());
                     }
-                } else {
-                    constructorArguments.addArgument(
-                            this.trestleParser.classParser.matchWithClassMember(clazz, temporal.asPoint().getParameterName()),
-                            temporal.asPoint().getBaseTemporalType(),
-                            temporal.asPoint().getPointTime());
-                }
 //                Get the temporal ranges
 //                Valid first
                     Comparator<Temporal> temporalComparator = (t1, t2) -> ((Comparable) t1).compareTo((Comparable) t2);
@@ -1048,7 +1038,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     this.ontology.returnAndAbortTransaction(trestleTransaction);
                     return Optional.empty();
                 }
-                final @NonNull T constructedObject = ClassBuilder.constructObject(clazz, objectState.getArguments());
+                final @NonNull T constructedObject = this.trestleParser.classBuilder.constructObject(clazz, objectState.getArguments());
                 return Optional.of(new TrestleObjectResult<>(individualIRI, constructedObject, objectState.getMinValidFrom(), objectState.getMinValidTo(), objectState.getMinDatabaseFrom(), objectState.getMinDatabaseTo()));
             } catch (InterruptedException e) {
                 ontology.returnAndAbortTransaction(trestleTransaction);
@@ -2091,6 +2081,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         } finally {
             this.ontology.returnAndCommitTransaction(tt);
         }
+    }
+
     @Override
     public void registerClass(Class inputClass) throws TrestleClassException {
         final OWLClass owlClass = this.trestleParser.classParser.getObjectClass(inputClass);
@@ -2478,17 +2470,22 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private Class<?> getRegisteredClass(String datasetClassID) {
         //        Lookup class
         final OWLClass individualClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, datasetClassID));
-        final Optional<@KeyFor("this.registeredClasses") OWLClass> matchingClass = this.registeredClasses
-                .keySet()
-                .stream()
-                .filter(owlclass -> owlclass.equals(individualClass))
-                .findFirst();
-
-        if (!matchingClass.isPresent()) {
+//        final Optional<@KeyFor("this.registeredClasses") OWLClass> matchingClass = this.registeredClasses
+//                .keySet()
+//                .stream()
+//                .filter(owlclass -> owlclass.equals(individualClass))
+//                .findFirst();
+        try {
+            return this.trestleParser.classRegistry.lookupClass(individualClass);
+        } catch (UnregisteredClassException e) {
             throw new IllegalArgumentException(String.format("Cannot find matching class for: %s", individualClass));
         }
-
-        return this.registeredClasses.get(matchingClass.get());
+//
+//        if (!matchingClass.isPresent()) {
+//            throw new IllegalArgumentException(String.format("Cannot find matching class for: %s", individualClass));
+//        }
+//
+//        return this.registeredClasses.get(matchingClass.get());
     }
 
     /**

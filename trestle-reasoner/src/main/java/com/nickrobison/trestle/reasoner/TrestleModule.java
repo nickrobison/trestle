@@ -33,10 +33,5 @@ public class TrestleModule extends AbstractModule {
         install(new MetricianModule(metricsEnabled));
         install(new TrestleCacheModule(cachingEnabled));
         install(new EngineModule(mergeEnabled, eventEnabled));
-
-//        Bind the parser
-        bind(TrestleParser.class)
-                .toProvider(TrestleParserProvider.class)
-                .asEagerSingleton();
     }
 }
