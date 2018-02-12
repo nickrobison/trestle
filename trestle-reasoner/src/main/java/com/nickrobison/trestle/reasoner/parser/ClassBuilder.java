@@ -27,25 +27,12 @@ public class ClassBuilder implements IClassBuilder {
 //        Not used
     }
 
-    /**
-     * Get a list of data properties from a given class
-     * Returns all Facts (including spatial ones) and sets the prefixes to the default TrestlePrefix
-     *
-     * @param clazz - Class to parse for data property members
-     * @return - Optional list of {@link OWLDataProperty} for given class
-     */
+    @Override
     public Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz) {
         return getPropertyMembers(clazz, false, TRESTLE_PREFIX);
     }
 
-    /**
-     * Get a list of data properties from a given class
-     * Sets the Fact prefixes to the default TrestlePrefix
-     *
-     * @param clazz         - Class to parse for data property members
-     * @param filterSpatial - filter spatial?
-     * @return - Optional list of {@link OWLDataProperty} for given class
-     */
+    @Override
     public Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz, boolean filterSpatial) {
         return getPropertyMembers(clazz, filterSpatial, TRESTLE_PREFIX);
     }
@@ -59,7 +46,7 @@ public class ClassBuilder implements IClassBuilder {
      * @param prefix        - Prefix to use when building the data properties
      * @return - Optional list of {@link OWLDataProperty} for given class
      */
-    public static Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz, boolean filterSpatial, String prefix) {
+    private static Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz, boolean filterSpatial, String prefix) {
 
         List<OWLDataProperty> classFields = new ArrayList<>();
         Arrays.stream(clazz.getDeclaredFields())
@@ -98,6 +85,7 @@ public class ClassBuilder implements IClassBuilder {
 
     //    FIXME(nrobison): I think these warnings are important.
     @SuppressWarnings({"type.argument.type.incompatible", "assignment.type.incompatible", "method.invocation.invalid", "argument.type.incompatible"})
+    @Override
     public <T> T constructObject(Class<T> clazz, ConstructorArguments arguments) throws MissingConstructorException {
         Constructor<?> declaredConstructor = findTrestleConstructor(clazz).orElseThrow(MissingConstructorException::new);
 

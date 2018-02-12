@@ -19,14 +19,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.function.Function;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 import static com.nickrobison.trestle.common.StaticIRI.WKTDatatypeIRI;
 import static com.nickrobison.trestle.common.StaticIRI.dateDatatypeIRI;
-import static com.nickrobison.trestle.reasoner.parser.ClassParser.dfStatic;
-import static com.nickrobison.trestle.reasoner.parser.ClassParser.getFieldName;
-import static com.nickrobison.trestle.reasoner.parser.ClassParser.getMethodName;
+import static com.nickrobison.trestle.reasoner.parser.ClassParser.*;
 
 /**
  * Created by nrobison on 8/24/16.
@@ -60,9 +60,10 @@ public class TypeConverter {
     /**
      * Extracts a java object of type T from a given OWL Literal
      * Also handles the object/primitive conversion
+     *
      * @param javaClass - Java class to cast literal into
-     * @param literal - OWLLiteral to extract
-     * @param <T> - Java type
+     * @param literal   - OWLLiteral to extract
+     * @param <T>       - Java type
      * @return Java type of type T
      */
     //    I need the unchecked casts in order to get the correct primitives for the constructor generation
@@ -218,8 +219,9 @@ public class TypeConverter {
 
     /**
      * Get the java type for the class member matching the OWLDataProperty
-     * @param clazz - Input class to parse
-     * @param property - OWLDataProperty to match with the class
+     *
+     * @param clazz     - Input class to parse
+     * @param property  - OWLDataProperty to match with the class
      * @param inputType - Previously determined type
      * @return - Nullable java type
      */
@@ -249,8 +251,9 @@ public class TypeConverter {
 
     /**
      * Inspect Java class to determine correct datatype for a given OWLDataProperty
+     *
      * @param classToVerify - Class to verify type against
-     * @param property - OWLDataProperty to lookup
+     * @param property      - OWLDataProperty to lookup
      * @return - Java class of corresponding data property
      */
     public static Class<?> lookupJavaClassFromOWLDataProperty(Class<?> classToVerify, OWLDataProperty property) {
@@ -339,7 +342,8 @@ public class TypeConverter {
         }
     }
 
-    public static @NotNull OWLDatatype getDatatypeFromJavaClass(Class<?> javaTypeClass) {
+    public static @NotNull
+    OWLDatatype getDatatypeFromJavaClass(Class<?> javaTypeClass) {
         OWLDatatype owlDatatype = owlDatatypeMap.get(javaTypeClass);
         if (owlDatatype == null) {
             logger.error("Unsupported Java type {}", javaTypeClass);

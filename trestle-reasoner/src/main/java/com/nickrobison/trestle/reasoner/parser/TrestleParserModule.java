@@ -8,7 +8,6 @@ import com.nickrobison.trestle.reasoner.parser.clojure.ClojureClassParserProvide
 import com.nickrobison.trestle.reasoner.parser.clojure.ClojureClassRegistryProvider;
 import com.nickrobison.trestle.reasoner.parser.clojure.ClojureProvider;
 import com.typesafe.config.ConfigFactory;
-import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

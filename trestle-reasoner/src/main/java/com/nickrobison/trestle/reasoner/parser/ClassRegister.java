@@ -441,7 +441,7 @@ public class ClassRegister implements IClassRegister {
 
     @Override
     public boolean isCacheable(Class<?> clazz) {
-        return clazz.isInstance(Serializable.class);
+        return Serializable.class.isAssignableFrom(clazz);
     }
 
     @Override
