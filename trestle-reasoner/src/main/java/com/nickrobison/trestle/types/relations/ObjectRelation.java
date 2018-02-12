@@ -3,6 +3,7 @@ package com.nickrobison.trestle.types.relations;
 import org.semanticweb.owlapi.model.HasIRI;
 import org.semanticweb.owlapi.model.IRI;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
@@ -10,7 +11,7 @@ import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 /**
  * Created by nrobison on 12/19/16.
  */
-public enum ObjectRelation implements HasIRI {
+public enum ObjectRelation implements HasIRI, Serializable {
     //    Spatial
     /**
      * Exists if Object fully encompassed within the Subject
@@ -56,25 +57,27 @@ public enum ObjectRelation implements HasIRI {
      */
     BEFORE("before"),
     /**
-     * exists if subject and object share the same temporal start point.
+     * exists if subject and object share the same temporal start point
+     * and the subject occurs {@link ObjectRelation#DURING} the object
      */
     STARTS("starts"),
     /**
      * Inverse relationship of {@link ObjectRelation#STARTS}
-     * exists if subject and object share the same temporal start point.
      */
     STARTED_BY("started_by"),
     /**
      * exists if subject temporal period exists entirely within the period of the object.
+     * Note: Normal temporal equality uses standard [) annotation; however, for the purposes of this relationship,
+     * the [] annotation is used. Otherwise we can never have a {@link ObjectRelation#FINISHES} relation
      */
     DURING("during"),
     /**
-     * exists if subject and object share the same temporal end point.
+     * exists if subject and object share the same temporal end point
+     * and the subject occurs {@link ObjectRelation#DURING} the object
      */
     FINISHES("finishes"),
     /**
      * Inverse relationship of {@link ObjectRelation#FINISHES}
-     * exists if subject and object share the same temporal end point.
      */
     FINISHED_BY("finished_by"),
     /**
@@ -82,15 +85,22 @@ public enum ObjectRelation implements HasIRI {
      */
     TEMPORAL_OVERLAPS("temporal_overlaps"),
     /**
-     * Symmetric relationship that exists if the end temporal of the subject equals the start temporal of object.
+     * Exists if the end temporal of the subject equals the start temporal of object
+     * and the the subject does not occur {@link ObjectRelation#DURING} the object
      */
     TEMPORAL_MEETS("temporal_meets"),
-//    Event
+    /**
+     * Inverse relationship of {@link ObjectRelation#TEMPORAL_MEETS}
+     */
+    MET_BY("met_by"),
+    //    Event
     MERGED_INTO("merged_into"),
     MERGED_FROM("merged_from"),
     SPLIT_INTO("split_into"),
     SPLIT_FROM("split_from"),
-//    Fuzzy equals relation
+    COMPONENT_OF("component_of"),
+    COMPONENT_WITH("component_with"),
+    //    Fuzzy equals relation
     EQUALS("equals");
 
 

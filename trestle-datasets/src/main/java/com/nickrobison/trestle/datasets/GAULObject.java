@@ -21,7 +21,7 @@ public class GAULObject {
 
     private static final int ESRID = 4326;
 
-//    private final ObjectID objectID;
+    //    private final ObjectID objectID;
     private final String objectID;
     private final long gaulCode;
     private final String objectName;
@@ -85,7 +85,7 @@ public class GAULObject {
     @IndividualIdentifier
     @Ignore
     public String getID() {
-        return String.format("%s:%s:%s:%s", this.gaulCode, this.objectName.replace(" ", "-"), this.getStartDate().getYear(), this.getEndDate().getYear());
+        return String.format("%s-%s-%s-%s", this.gaulCode, this.objectName.replace(" ", "_"), this.getStartDate().getYear(), this.getEndDate().getYear());
     }
 
     @Fact(name = "adm2_name")

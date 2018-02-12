@@ -1,0 +1,21 @@
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Binary ID</th>
+        <th>Type</th>
+        <th>Direction</th>
+        <th>Coordinates</th>
+        <th>Fill Factor</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let leaf of sortedData" (click)="printLeaf(leaf)">
+        <td>{{leaf.leafID}}</td>
+        <td>{{leaf.binaryID}}</td>
+        <td>{{leaf.type}}</td>
+        <td>{{leaf.direction}}</td>
+        <td>{{leaf.records / 20 }}</td>
+    </tr>
+    </tbody>
+</table>

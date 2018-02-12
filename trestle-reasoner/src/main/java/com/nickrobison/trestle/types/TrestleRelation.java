@@ -50,4 +50,29 @@ public class TrestleRelation implements Serializable {
     public String getType() {
         return type.toString();
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s--%s--%s", getSubject(), getType(), getObject());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TrestleRelation that = (TrestleRelation) o;
+
+        if (!subject.equals(that.subject)) return false;
+        if (!object.equals(that.object)) return false;
+        return type == that.type;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = subject.hashCode();
+        result = 31 * result + object.hashCode();
+        result = 31 * result + type.hashCode();
+        return result;
+    }
 }

@@ -67,10 +67,13 @@ tmp/
 test-result
 server.pid
 *.eml
-/dist/
-.cache
+/dist
 src/test/resources/intersection.csv
 src/test/resources/SELECT___adm2_name____adm2_code____recor.csv
 
-trestle-integrations/src/test/resources/shapefiles/sudan/
-!/trestle-reasoner/src/main/clojure/com/nickrobison/trestle/reasoner/parser.clj
+
+# Ignore Docker resources
+docker/evaluation-docker/*.ttl
+docker/evaluation-docker/*.rdf
+docker/graphdb/*.zip
+

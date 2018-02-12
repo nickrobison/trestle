@@ -43,7 +43,7 @@ public class JWTModule extends AbstractModule {
                 .withSecret(jwtConfig.getAuthSalt().getBytes(Charset.defaultCharset()))
                 .withDataClass(User.class)
                 .withIssuedAtEnabled(true)
-                .withExpirationSeconds(600)
+                .withExpirationSeconds(jwtConfig.getExpirationTime())
                 .build();
     }
 }

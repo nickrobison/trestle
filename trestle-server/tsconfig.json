@@ -3,25 +3,35 @@
     "declaration": false,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "noImplicitAny": true,
-    "noImplicitThis": true,
-    "noImplicitReturns": true,
-    "lib": ["es6", "dom"],
-    "module": "commonjs",
+    "alwaysStrict": true,
+    "strict": true,
+//    "noImplicitAny": true,
+//    "noImplicitThis": true,
+//    "noImplicitReturns": true,
+    "lib": [
+      "es6",
+      "dom"
+    ],
+    "module": "es2015",
     "moduleResolution": "node",
     "sourceMap": true,
-    "target": "es5"
+    "target": "es5",
+    "typeRoots": [
+      "./typings",
+      "./node_modules/@types"
+    ]
   },
   "exclude": [
     "node_modules",
     "dist",
     "**/*.ngfactory.ts",
     "**/*.shim.ts",
-    "src/main/webapp/polyfills.ts",
-    "src/main/webapp/vendor.ts",
-    "src/main/webapp/app/app.module.ts"
-
+    "target"
   ],
   "compileOnSave": true,
-  "buildOnSave": false
+  "buildOnSave": false,
+  "angularCompilerOptions": {
+    "genDir": "./compiled",
+    "skipMetadataEmit": true
+  }
 }

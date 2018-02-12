@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.server.modules;
 
+import com.nickrobison.trestle.datasets.GAULObject;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.server.config.TrestleReasonerConfiguration;
@@ -34,7 +35,7 @@ public class ReasonerModule implements Managed {
     }
 
     @Override
-    public void start() throws Exception {
+    public void start() {
         logger.info("Starting Trestle Reasoner");
         this.reasoner = new TrestleBuilder()
                 .withDBConnection(configuration.getConnectionString(),
@@ -43,6 +44,8 @@ public class ReasonerModule implements Managed {
                 .withName(configuration.getOntology())
                 .withPrefix(configuration.getPrefix())
                 .withOntology(configuration.getLocation())
+                .withInputClasses(GAULObject.class)
+                .withoutMetrics()
                 .build();
 
         logger.info("Reasoner started");

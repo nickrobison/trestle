@@ -23,7 +23,7 @@ public class UserDAO extends AbstractDAO<User> {
         return Optional.ofNullable(get(id));
     }
 
-    public long create(User user) {
+    public Long create(User user) {
         return persist(user).getId();
     }
 

@@ -57,4 +57,5 @@ public class TrestleIRIV1 extends TrestleIRI {
     private static long parseToEpochMilli(OffsetDateTime temporal) {
         return temporal.atZoneSameInstant(ZoneOffset.UTC).toInstant().toEpochMilli();
     }
+
 }

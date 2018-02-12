@@ -2,11 +2,12 @@ package com.nickrobison.trestle.reasoner.caching;
 
 import com.nickrobison.trestle.iri.TrestleIRI;
 import com.nickrobison.trestle.types.TrestleIndividual;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.OffsetDateTime;
 
 /**
  * Created by nrobison on 5/1/17.
@@ -24,16 +25,28 @@ public class TrestleCacheNoop implements TrestleCache {
     }
 
     @Override
-    public void writeTrestleObject(TrestleIRI individualIRI, long startTemporal, long endTemporal, Object value) {
+    public void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime startTemporal, OffsetDateTime endTemporal, OffsetDateTime dbStartTemporal, OffsetDateTime dbEndTemporal, Object value) {
+//        Not implemented
     }
 
     @Override
-    public void writeTrestleObject(TrestleIRI individualIRI, long atTemporal, @NonNull Object value) {
+    public void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime atTemporal, OffsetDateTime dbStartTemporal, OffsetDateTime dbEndTemporal, Object value) {
+//        Not implemented
+    }
+
+    @Override
+    public void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal, Object value) {
+//        Not implemented
+    }
+
+    @Override
+    public void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime atTemporal, Object value) {
+//        Not implemented
     }
 
     @Override
     public void deleteTrestleObject(TrestleIRI trestleIRI) {
-
+//        Not implemented
     }
 
     @Override
@@ -43,16 +56,41 @@ public class TrestleCacheNoop implements TrestleCache {
 
     @Override
     public void writeTrestleIndividual(OWLNamedIndividual key, TrestleIndividual value) {
-
+//        Not implemented
     }
 
     @Override
     public void deleteTrestleIndividual(OWLNamedIndividual individual) {
+//        Not implemented
+    }
 
+    @Override
+    public @Nullable TrestleCacheStatistics getCacheStatistics() {
+        return null;
+    }
+
+    @Override
+    public void rebuildValidIndex() {
+//        Not implemented
+    }
+
+    @Override
+    public void rebuildDBIndex() {
+//        Not implemented
+    }
+
+    @Override
+    public void purgeIndividualCache() {
+//        Not implemented
+    }
+
+    @Override
+    public void purgeObjectCache() {
+//        Not implemented
     }
 
     @Override
     public void shutdown(boolean drop) {
-
+//        Not implemented
     }
 }

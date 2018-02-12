@@ -1,6 +1,8 @@
 package com.nickrobison.trestle.reasoner;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
@@ -8,8 +10,10 @@ import com.nickrobison.trestle.reasoner.annotations.*;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import org.geotools.data.DataStore;
+import org.geotools.data.DataStoreFinder;
+import org.geotools.data.simple.SimpleFeatureSource;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -18,16 +22,19 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by nrobison on 9/15/16.
  */
 @SuppressWarnings("Duplicates")
 @Tag("integration")
-@Disabled
 public class DataExporterTests extends AbstractReasonerTest {
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
@@ -69,7 +76,7 @@ public class DataExporterTests extends AbstractReasonerTest {
     public void testExport() throws IOException {
 
         gaulObjects
-                .stream()
+                .parallelStream()
                 .forEach(object -> {
                     try {
                         reasoner.writeTrestleObject(object);
@@ -79,8 +86,49 @@ public class DataExporterTests extends AbstractReasonerTest {
                 });
 
         reasoner.getUnderlyingOntology().runInference();
-        final File file = reasoner.exportDataSetObjects(SimpleGAULObject.class, ids, LocalDate.of(1993, 1, 1), null, ITrestleExporter.DataType.SHAPEFILE);
+
+//        Verify GeoJSON
+        final File file = reasoner.exportDataSetObjects(SimpleGAULObject.class, ids, LocalDate.of(1993, 1, 1), null, ITrestleExporter.DataType.GEOJSON);
         assertTrue(file.length() > 0, "Should have non-zero length");
+
+//        Verify that we actually have something approaching the correct number of values
+        final ObjectMapper mapper = new ObjectMapper();
+        final JsonNode jsonNode = mapper.readTree(file);
+        final JsonNode featuresNode = jsonNode.get("features");
+//        Should have 197 features, because some don't exist
+        assertEquals(197, featuresNode.size(), "Should have 197 features");
+
+//        Remove the file
+        assertTrue(file.delete(), "Should be able to delete file");
+
+
+//        Check for Shapefile
+        final File shapeZip = reasoner.exportDataSetObjects(SimpleGAULObject.class, ids, LocalDate.of(1993, 1, 1), null, ITrestleExporter.DataType.SHAPEFILE);
+
+//        We don't actually have to unzip anything, because the files still exist in the directory
+//        So that's nice.
+        ZipInputStream zis = new ZipInputStream(new FileInputStream(shapeZip));
+        ZipEntry zipEntry = zis.getNextEntry();
+        String shapeName = "nothing";
+//        Go through them and find the shp file
+        while (zipEntry != null) {
+//            If it's the shp file, try to read it
+            final String name = zipEntry.getName();
+            if (name.endsWith("shp")) {
+                shapeName = name;
+            }
+            zipEntry = zis.getNextEntry();
+        }
+        zis.closeEntry();
+        zis.close();
+
+        assertNotEquals("nothing", shapeName, "Should have found the shapefile");
+        Map<String, Object> map = new HashMap<>();
+        map.put("url", new File(shapeName).toURI().toURL());
+        final DataStore dataStore = DataStoreFinder.getDataStore(map);
+        final String typeName = dataStore.getTypeNames()[0];
+        final SimpleFeatureSource featureSource = dataStore.getFeatureSource(typeName);
+        assertEquals(197, featureSource.getFeatures().size(), "Should have 197 features");
     }
 
     @Override

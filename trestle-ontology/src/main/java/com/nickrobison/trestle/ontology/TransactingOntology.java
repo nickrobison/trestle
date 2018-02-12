@@ -8,7 +8,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -20,7 +22,8 @@ import java.util.concurrent.atomic.AtomicLong;
 abstract class TransactingOntology implements ITrestleOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(TransactingOntology.class);
-    private final String ontologyName;
+    public static final String OPEN_READ_WRITE_TRANSACTIONS = "{}/{} open read/write transactions";
+    public static final String TRANSACTION = "transaction";
     protected final AtomicInteger openWriteTransactions = new AtomicInteger();
     protected final AtomicInteger openReadTransactions = new AtomicInteger();
     protected final AtomicLong openedTransactions = new AtomicLong();
@@ -28,11 +31,11 @@ abstract class TransactingOntology implements ITrestleOntology {
     protected final AtomicLong abortedTransactions = new AtomicLong();
     protected static boolean singleWriterOntology = false;
 
-    TransactingOntology(String ontologyName) {
-        this.ontologyName = ontologyName;
+    TransactingOntology() {
+//        Unused
     }
 
-//    Thread locals
+    //    Thread locals
     private ThreadLocal<Boolean> threadLocked = ThreadLocal.withInitial(() -> false);
 
     private ThreadLocal<Boolean> threadInTransaction = ThreadLocal.withInitial(() -> false);
@@ -47,33 +50,53 @@ abstract class TransactingOntology implements ITrestleOntology {
      * Set the current thread transaction state, using the information inherited from the TrestleTransaction object
      *
      * @param transactionObject - Transaction Object to take ownership of thread transaction
-     * @param write - {@code true} Writable transaction
+     * @param write             - {@code true} Writable transaction
      * @return - {@link TrestleTransaction}
      */
     @Override
-    public TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject, boolean write) {
-        logger.trace("Inheriting transaction from existing transaction object {}, setting flags, but not opening new transaction", transactionObject.getTransactionID());
-        this.threadLocked.set(true);
-        this.threadInTransaction.set(true);
-        threadTransactionObject.set(transactionObject);
-        threadTransactionInherited.set(true);
-        this.setOntologyConnection();
-        return transactionObject;
+    public TrestleTransaction createandOpenNewTransaction(@Nullable TrestleTransaction transactionObject, boolean write) {
+        if (transactionObject == null) {
+            logger.trace("Passed null transaction object, opening a new transaction. Write? {}", write);
+            return createandOpenNewTransaction(write);
+        } else {
+//            Inherit logging context
+            final Map<String, String> context = MDC.getCopyOfContextMap();
+            if (context == null) {
+                logger.debug("Got empty logging context from inherited transaction {}", transactionObject.getTransactionID());
+                MDC.put(TRANSACTION, Long.toString(transactionObject.getTransactionID()));
+            } else {
+                MDC.setContextMap(context);
+            }
+            logger.trace("Inheriting transaction from existing transaction object {}, setting flags, but not opening new transaction", transactionObject.getTransactionID());
+            this.threadLocked.set(true);
+            this.threadInTransaction.set(true);
+            threadTransactionObject.set(transactionObject);
+            threadTransactionInherited.set(true);
+            this.setOntologyConnection();
+            return transactionObject;
+        }
     }
 
     /**
      * Set the current thread transaction state as a read transaction, using the information inherited from the TrestleTransaction object
+     *
      * @param transactionObject - Existing TrestleTransactionObject
      * @return - TrestleTransaction object inheriting from parent transaction
      */
     @Override
-    public TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject) {
-        return createandOpenNewTransaction(transactionObject, transactionObject.isWriteTransaction());
+    public TrestleTransaction createandOpenNewTransaction(@Nullable TrestleTransaction transactionObject) {
+        if (transactionObject == null) {
+            logger.warn("Null transaction object. Creating new read-only transaction, as nothing is specified");
+            return createandOpenNewTransaction(false);
+        } else {
+            return createandOpenNewTransaction(transactionObject, transactionObject.isWriteTransaction());
+        }
     }
 
     /**
      * Create and open a new transaction.
      * If the thread is already in an open transaction, we return an empty {@link TrestleTransaction} object
+     *
      * @param write - {@code true} this a write transaction
      * @return - {@link TrestleTransaction}
      */
@@ -81,16 +104,19 @@ abstract class TransactingOntology implements ITrestleOntology {
 //    We can suppress this, because the first call is to check whether the transaction object is null or not
     @SuppressWarnings({"dereference.of.nullable"})
     public TrestleTransaction createandOpenNewTransaction(boolean write) {
-        if (threadTransactionObject.get() == null) {
+        final TrestleTransaction threadTransaction = threadTransactionObject.get();
+        if (threadTransaction == null) {
             final long transactionID = System.nanoTime();
+//            Add the logging context
             logger.debug("Unowned transaction, opening new transaction {}", transactionID);
+            MDC.put(TRANSACTION, Long.toString(transactionID));
             final TrestleTransaction trestleTransaction = new TrestleTransaction(transactionID, write);
             trestleTransaction.setConnection(this.getOntologyConnection());
             threadTransactionObject.set(trestleTransaction);
             this.openAndLock(write, true);
             return trestleTransaction;
         } else {
-            logger.trace("Thread transaction owned by {}, returning empty object", threadTransactionObject.get().getTransactionID());
+            logger.trace("Thread transaction owned by {}, returning empty object", threadTransaction.getTransactionID());
             final TrestleTransaction trestleTransaction = new TrestleTransaction(write);
             trestleTransaction.setConnection(this.getOntologyConnection());
             return trestleTransaction;
@@ -100,6 +126,7 @@ abstract class TransactingOntology implements ITrestleOntology {
     /**
      * Return a TrestleTransaction object and attempt to commit the current Transaction
      * If the TrestleTransaction object does not own the current transaction, we continue without committing
+     *
      * @param transaction - Transaction object to try to commit current transaction with
      */
     @Override
@@ -112,14 +139,16 @@ abstract class TransactingOntology implements ITrestleOntology {
                     logger.trace("Owns transaction, committing transaction {}", transaction.getTransactionID());
                     this.unlockAndCommit(transaction.isWriteTransaction(), true);
                     threadTransactionObject.set(null);
+//                    Clear the logging context
+                    MDC.remove(TRANSACTION);
                 } else {
-                    logger.trace("Doesn't own transaction, continuing");
+                    logger.trace("Transaction {} doesn't own transaction, continuing", transaction.getTransactionID());
                 }
             } else {
                 logger.warn("Null thread transaction object, transaction {} continuing", transaction.getTransactionID());
             }
         } else {
-            logger.trace("Transaction state is inherited, continuing");
+            logger.trace("Transaction {} inherited state, continuing", transaction.getTransactionID());
         }
     }
 
@@ -134,14 +163,21 @@ abstract class TransactingOntology implements ITrestleOntology {
                     this.unlockAndAbort(transaction.isWriteTransaction(), true);
                     threadTransactionObject.set(null);
                 } else {
-                    logger.trace("Doesn't own transaction, continuing");
+                    logger.trace("Transaction {} doesn't own transaction, not aborting",transaction.getTransactionID());
                 }
             } else {
-                logger.warn("Null transaction object, transaction {} continuing", transaction.getTransactionID());
+                logger.warn("Null transaction object, transaction {} not aborting", transaction.getTransactionID());
             }
         } else {
-            logger.trace("Transaction state is inherited, continuing");
+            logger.trace("Transaction {} inherited state, not aborting", transaction.getTransactionID());
         }
+    }
+
+    @Override
+    public void returnAndAbortWithForce(TrestleTransaction trestleTransaction) {
+        logger.error("Force aborting the transaction!");
+        this.unlockAndAbort(trestleTransaction.isWriteTransaction(), true);
+        threadTransactionObject.set(null);
     }
 
     /**
@@ -172,6 +208,7 @@ abstract class TransactingOntology implements ITrestleOntology {
      * Open a transaction and lock it
      * Optionally force the transaction, even if an existing transaction object is set
      * Used to initially lock a transaction when a new transaction object is created
+     *
      * @param write - Open writable transaction?
      * @param force - Force open transaction?
      */
@@ -210,6 +247,7 @@ abstract class TransactingOntology implements ITrestleOntology {
      * Unlock the transaction and commit it
      * Optionally, for the transaction to unlock, even if there's an existing transaction object
      * Used to close the transaction when the transaction object is returned
+     *
      * @param write - Writable transaction?
      * @param force - Force transaction to commit?
      */
@@ -231,6 +269,7 @@ abstract class TransactingOntology implements ITrestleOntology {
 
     /**
      * Unlock the transaction and abort it
+     *
      * @param write - Is this a write transaction?
      */
     public void unlockAndAbort(boolean write) {
@@ -241,6 +280,7 @@ abstract class TransactingOntology implements ITrestleOntology {
      * Unlock the transaction and abort it
      * Optionally, for the transaction to unlock, even if there's an existing transaction object
      * Used to rollback the transaction when the transaction object is returned with an error
+     *
      * @param write - Writable transaction?
      * @param force - Force transaction to rollback?
      */
@@ -262,6 +302,7 @@ abstract class TransactingOntology implements ITrestleOntology {
 
     /**
      * Open transaction
+     *
      * @param write - Open a writable transaction
      */
     @Override
@@ -272,6 +313,7 @@ abstract class TransactingOntology implements ITrestleOntology {
 
     /**
      * Open transaction, optionally force it open, even if an existing transaction object is present
+     *
      * @param write - Open a writable transaction
      * @param force - Force open transaction
      */
@@ -293,12 +335,12 @@ abstract class TransactingOntology implements ITrestleOntology {
                     this.threadInTransaction.set(true);
                     this.openedTransactions.incrementAndGet();
 //                Track read/write transactions
-                        if (write) {
-                            this.openWriteTransactions.incrementAndGet();
-                        } else {
-                            this.openReadTransactions.incrementAndGet();
-                        }
-                        logger.debug("{}/{} open read/write transactions", this.openReadTransactions.get(), this.openWriteTransactions.get());
+                    if (write) {
+                        this.openWriteTransactions.incrementAndGet();
+                    } else {
+                        this.openReadTransactions.incrementAndGet();
+                    }
+                    logger.debug(OPEN_READ_WRITE_TRANSACTIONS, this.openReadTransactions.get(), this.openWriteTransactions.get());
                     if (write) {
                         this.threadInWriteTransaction.set(true);
                     }
@@ -315,6 +357,7 @@ abstract class TransactingOntology implements ITrestleOntology {
 
     /**
      * Commit transaction
+     *
      * @param write - Is this a write transaction?
      */
     @Override
@@ -324,6 +367,7 @@ abstract class TransactingOntology implements ITrestleOntology {
 
     /**
      * Commit transaction, optionally force closing it
+     *
      * @param write - Is this a writable transaction?
      * @param force - Force commit transaction?
      */
@@ -340,12 +384,12 @@ abstract class TransactingOntology implements ITrestleOntology {
                     this.threadInTransaction.set(false);
                     this.threadTransactionInherited.set(false);
                     this.committedTransactions.incrementAndGet();
-                        if (write) {
-                            this.openWriteTransactions.decrementAndGet();
-                        } else {
-                            this.openReadTransactions.decrementAndGet();
-                        }
-                        logger.debug("{}/{} open read/write transactions", this.openReadTransactions.get(), this.openWriteTransactions.get());
+                    if (write) {
+                        this.openWriteTransactions.decrementAndGet();
+                    } else {
+                        this.openReadTransactions.decrementAndGet();
+                    }
+                    logger.debug(OPEN_READ_WRITE_TRANSACTIONS, this.openReadTransactions.get(), this.openWriteTransactions.get());
                 } else {
                     logger.trace("Thread unlocked, but not in transaction");
                 }
@@ -375,7 +419,7 @@ abstract class TransactingOntology implements ITrestleOntology {
                     } else {
                         this.openReadTransactions.decrementAndGet();
                     }
-                    logger.debug("{}/{} open read/write transactions", this.openReadTransactions.get(), this.openWriteTransactions.get());
+                    logger.debug(OPEN_READ_WRITE_TRANSACTIONS, this.openReadTransactions.get(), this.openWriteTransactions.get());
                 } else {
                     logger.trace("Thread unlocked, but not in transaction");
                 }
@@ -437,6 +481,7 @@ abstract class TransactingOntology implements ITrestleOntology {
 
     /**
      * Get the thread repository connection to use with the TrestleTransaction object
+     *
      * @return - RepositoryConnection for transaction
      */
     public abstract RepositoryConnection getOntologyConnection();

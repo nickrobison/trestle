@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.common;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
 
@@ -14,40 +13,43 @@ import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
  */
 public class IRIUtils {
 
-    private static final Pattern remainderRegex = Pattern.compile("[^#]*$");
+    private static final Pattern suffixRegex = Pattern.compile(".*[/#]([^(/#)].*)$");
+    private static final Pattern prefixRegex = Pattern.compile(".*[/#]");
+
+    private IRIUtils() {
+//        Not used
+    }
 
     /**
      * Determines if a given string represents a full IRI
      *
-     * @param inputString - Inputstring to verify
+     * @param inputString - Input string to verify
      * @return - Boolean whether the String represents a full IRI
      */
     public static boolean isFullIRI(String inputString) {
-        if (inputString.contains("//")) {
-            return true;
-        }
+        return inputString.contains("//");
 
-        return false;
     }
 
     /**
      * Parse an input string and return a fully expanded IRI
-     * Automatically uses the TRESTLE_PREFIX as part of the full expansion
+     * Automatically uses {@link StaticIRI#TRESTLE_PREFIX} as part of the full expansion
+     *
      * @param inputString - Input string to expand
      * @return - Fully expanded IRI, using the TRESTLE_PREFIX
      */
-//    TODO(nrobison): Add some sanitation processes
-    public static IRI parseStringToIRI(@NonNull String inputString) {
+    public static IRI parseStringToIRI(String inputString) {
         return parseStringToIRI(TRESTLE_PREFIX, inputString);
     }
 
     /**
      * Parse an input string and prefix and return a fully expanded IRI
-     * @param prefix - Prefix to expand string with
+     *
+     * @param prefix      - Prefix to expand string with
      * @param inputString - Input string to expand
      * @return - Fully expanded IRI, using the provided prefix
      */
-    public static IRI parseStringToIRI(@NonNull String prefix, @NonNull String inputString) {
+    public static IRI parseStringToIRI(String prefix, String inputString) {
 //        Check to see if the inputString is an expanded IRI
         if (isFullIRI(inputString)) {
             return IRI.create(inputString);
@@ -61,17 +63,23 @@ public class IRIUtils {
     }
 
     /**
-     * Extract the prefix from a given {@link IRI}, everything up to, and including the #
+     * Extract the prefix from a given {@link IRI}, everything up to, and including the last \ or #
+     *
      * @param iri - {@link IRI to parse}
      * @return - String of prefix
      */
     public static String extractPrefix(IRI iri) {
-        return iri.toString().split("#")[0] + "#";
+        final Matcher matcher = prefixRegex.matcher(iri.toString());
+        if (matcher.find() && matcher.groupCount() > 0) {
+            return matcher.group(0);
+        }
+        return "";
     }
 
     /**
      * Takes an {@link IRI} and returns the individual name from the full string
-     * Returns everything after the # character in the IRI, or returns an empty string
+     * Returns everything after the last / or # character in the IRI, or returns an empty string
+     *
      * @param iri - {@link IRI} to extract name from
      * @return - String of individual name
      */
@@ -81,19 +89,26 @@ public class IRIUtils {
 
     /**
      * Takes an IRI string and returns the individual name from the full string
-     * Returns everything after the # character in the IRI, or returns an empty string
-     * @param iriString - IRI to extract name from
+     * Returns everything after the last / or # character in the IRI, or returns an empty string
+     *
+     * @param iriString - IRI string to extract name from
      * @return - String of individual name
      */
     public static String extractTrestleIndividualName(@Nullable String iriString) {
+
+//        If it's null, return the empty string
         if (iriString == null) {
             return "";
         }
-        final Matcher matcher = remainderRegex.matcher(iriString);
-        if (matcher.find()) {
-            return matcher.group();
-        } else {
-            return "";
+
+//        If it's not expanded, return it as is
+        if (!isFullIRI(iriString)) {
+            return iriString;
         }
+        final Matcher matcher = suffixRegex.matcher(iriString);
+        if (matcher.matches() && matcher.groupCount() > 0) {
+            return matcher.group(1);
+        }
+        return "";
     }
 }

@@ -1,32 +1,48 @@
 package com.nickrobison.trestle.server.resources;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
+import com.nickrobison.trestle.reasoner.engines.AbstractComparisonReport;
+import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
+import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
+import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
+import com.nickrobison.trestle.server.resources.requests.ComparisonRequest;
+import com.nickrobison.trestle.server.resources.requests.IntersectRequest;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
 import com.nickrobison.trestle.types.TrestleIndividual;
+import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
+import com.vividsolutions.jts.geom.Geometry;
 import io.dropwizard.jersey.params.NonEmptyStringParam;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wololo.jts2geojson.GeoJSONReader;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.Response.ok;
 
@@ -37,22 +53,32 @@ import static javax.ws.rs.core.Response.ok;
 @Path("/visualize")
 @AuthRequired({Privilege.USER})
 @Produces(MediaType.APPLICATION_JSON)
+@Api(value = "visualize")
 public class VisualizationResource {
 
     private static final Logger logger = LoggerFactory.getLogger(VisualizationResource.class);
-    private static final DateTimeFormatter LocalDateTimeToJavascriptFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    private static final GeoJSONReader reader = new GeoJSONReader();
+    private static final ObjectMapper mapper = new ObjectMapper();
+    //    This should be a config parameter
+    public static final double MATCH_THRESHOLD = 0.95;
+    public static final String VALID_FROM = "validFrom";
+    public static final String VALID_TO = "validTo";
+    public static final String VALID_ID = "validID";
+    private final DateTimeFormatter localDateTimeToJavascriptFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
     private final TrestleReasoner reasoner;
-    private final ObjectMapper mapper;
 
     @Inject
     public VisualizationResource(ReasonerModule reasonerModule) {
         this.reasoner = reasonerModule.getReasoner();
-        mapper = new ObjectMapper();
         mapper.registerModule(new JtsModule());
     }
 
     @GET
     @Path("/search")
+    @ApiOperation(value = "Search for individual matching query string",
+            notes = "Performs a search against the database for any individuals with an id matching the query string",
+            response = String.class,
+            responseContainer = "List")
     public Response searchForIndividual(@NotNull @QueryParam("name") String name, @QueryParam("dataset") NonEmptyStringParam dataset, @QueryParam("limit") Optional<Integer> limit) {
         if (!name.equals("")) {
             final List<String> individuals = this.reasoner.searchForIndividual(name, dataset.get().orElse(null), limit.orElse(null));
@@ -61,74 +87,106 @@ public class VisualizationResource {
         return ok(new ArrayList<String>()).build();
     }
 
-
     @GET
-    @Path("/retrieve")
-    public Response getIndividual(@NotNull @QueryParam("name") String individualName) {
-        final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(individualName);
-
-//        Build a simplified JSON implementation
-        final ObjectNode individualNode = mapper.createObjectNode();
-        final ArrayNode factArrayNode = mapper.createArrayNode();
-        final ArrayNode relationArrayNode = mapper.createArrayNode();
-        individualNode.put("individualID", trestleIndividual.getIndividualID());
-        trestleIndividual.getFacts()
-                .forEach(fact -> {
-                    final ObjectNode factNode = mapper.createObjectNode();
-                    final ObjectNode validTemporal = mapper.createObjectNode();
-                    final ObjectNode databaseTemporal = mapper.createObjectNode();
-                    factNode.put("identifier", fact.getIdentifier());
-                    factNode.put("name", fact.getName());
-                    factNode.put("value", fact.getValue().toString());
-                    factNode.put("type", fact.getValue().getClass().getName());
-
-//                                Now the temporals
-//                                FIXME(nrobison): This is disgusting. Fix it.
-                    final TemporalObject validTemporalObject = fact.getValidTemporal();
-                    validTemporal.put("validID", validTemporalObject.getID());
-                    validTemporal.put("validFrom", LocalDateTimeToJavascriptFormatter.format(validTemporalObject.asInterval().getFromTime()));
-                    if (validTemporalObject.asInterval().isContinuing()) {
-                        validTemporal.put("validTo", "");
-                    } else {
-                        validTemporal.put("validTo", LocalDateTimeToJavascriptFormatter.format(((Temporal) validTemporalObject.asInterval().getToTime().get())));
-                    }
-
-                    final TemporalObject databaseTemporalObject = fact.getDatabaseTemporal();
-                    databaseTemporal.put("validID", databaseTemporalObject.getID());
-                    databaseTemporal.put("validFrom", LocalDateTimeToJavascriptFormatter.format(databaseTemporalObject.asInterval().getFromTime()));
-                    if (databaseTemporalObject.asInterval().isContinuing()) {
-                        databaseTemporal.put("validTo", "");
-                    } else {
-                        databaseTemporal.put("validTo", LocalDateTimeToJavascriptFormatter.format(((Temporal) databaseTemporalObject.asInterval().getToTime().get())));
-                    }
-
-                    factNode.set("validTemporal", validTemporal);
-                    factNode.set("databaseTemporal", databaseTemporal);
-                    factArrayNode.add(factNode);
-                });
-
-        individualNode.set("facts", factArrayNode);
-//        Relationships
-        trestleIndividual.getRelations().forEach(relation -> {
-           ObjectNode relationNode = mapper.createObjectNode();
-           relationNode.put("subject", relation.getSubject());
-           relationNode.put("object", relation.getObject());
-           relationNode.put("relation", relation.getType());
-           relationArrayNode.add(relationNode);
-        });
-        individualNode.set("relations", relationArrayNode);
-//        Now the individual temporal
-        final ObjectNode individualTemporal = mapper.createObjectNode();
-        final TemporalObject individualTemporalObject = trestleIndividual.getExistsTemporal();
-        individualTemporal.put("validID", individualTemporalObject.getID());
-        individualTemporal.put("validFrom", LocalDateTimeToJavascriptFormatter.format(individualTemporalObject.asInterval().getFromTime()));
-        if (individualTemporalObject.asInterval().isContinuing()) {
-            individualTemporal.put("validTo", "");
-        } else {
-            individualTemporal.put("validTo", LocalDateTimeToJavascriptFormatter.format(((Temporal) individualTemporalObject.asInterval().getToTime().get())));
-        }
-        individualNode.set("individualTemporal", individualTemporal);
-        return ok(individualNode).build();
+    @Path("/datasets")
+    @ApiOperation(value = "Retrieve all currently registered datasets",
+            notes = "Retrieves a Set of all available datasets currently registered with the database",
+            response = String.class,
+            responseContainer = "Set")
+    public Response getDatasets() {
+        final Set<String> availableDatasets = this.reasoner.getAvailableDatasets();
+        return ok(availableDatasets).build();
     }
 
+    @POST
+    @Path("/intersect")
+    @ApiOperation(value = "Retrieve all objects, from a specified dataset, valid at the specified time point, that intersects the provided GeoJSON object",
+            notes = "Performs a spatial-temporal intersection for all matching objects for the given dataset. " +
+                    "Allows the user to specify both valid temporal and database temporal intersection points. " +
+                    "This method returns a specific object state, not the entirety of the object properties",
+            response = Object.class,
+            responseContainer = "List")
+    @ApiResponses({
+            @ApiResponse(code = 440, message = "Object class is not registered with the database"),
+            @ApiResponse(code = 500, message = "Problem while performing spatial intersection")
+    })
+    public Response intersect(@NotNull IntersectRequest request) {
+
+        final Class<?> datasetClass;
+        try {
+            datasetClass = this.getClassFromRequest(request);
+        } catch (UnregisteredClassException e) {
+            logger.error("Unable to find class", e);
+            return Response.status(Response.Status.BAD_REQUEST).entity("Class does not exist").build();
+        }
+
+        final Geometry read;
+        try {
+            read = this.getGeometryFromRequest(request);
+        } catch (JsonProcessingException e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e).build();
+        }
+
+        final Optional<? extends List<?>> intersectedObjects = this.reasoner.spatialIntersect(datasetClass,
+                read.buffer(request.getBuffer()).toString(),
+                request.getBuffer(),
+                request.getValidAt());
+        return intersectedObjects.map(list -> Response.ok(list).build()).orElseGet(() -> Response
+                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity("Empty response from server, something went wrong")
+                .build());
+    }
+
+    @POST
+    @Path("/compare")
+    @ApiOperation(value = "Performs a spatial comparison between a set of individuals",
+            notes = "Compares the specified individual against the given set of individuals",
+            response = ComparisonReport.class)
+    @ApiResponses({
+            @ApiResponse(code = 500, message = "Error while performing comparison")
+    })
+    public Response compareIndividuals(@NotNull ComparisonRequest request) {
+
+        final ComparisonReport comparisonReport = new ComparisonReport();
+        try {
+//                Do a piecewise comparison for each individual
+            logger.debug("Beginning piecewise comparison");
+            final Instant compareStart = Instant.now();
+            final Optional<List<SpatialComparisonReport>> spatialComparisonReports = this.reasoner.compareTrestleObjects("gaul-test", request.getCompare(), request.getCompareAgainst(), 4326, MATCH_THRESHOLD);
+            logger.debug("Comparison took {} ms", Duration.between(compareStart, Instant.now()).toMillis());
+            spatialComparisonReports.ifPresent(comparisonReport::addAllReports);
+
+//            Filter out objects that don't overlap with the base individual, and do the union calculation
+            final List<String> compareIndividuals = comparisonReport.getReports()
+                    .stream()
+                    .filter(report -> report.getRelations().contains(ObjectRelation.SPATIAL_OVERLAPS))
+                    .map(AbstractComparisonReport::getObjectBID)
+                    .collect(Collectors.toList());
+
+            compareIndividuals.add(request.getCompare());
+
+
+            //        Look for spatial union
+            logger.debug("Executing union");
+            final Instant unionStart = Instant.now();
+            final Optional<UnionContributionResult> objectUnionEqualityResult = this.reasoner.calculateSpatialUnionWithContribution("gaul-test", compareIndividuals, 4326, MATCH_THRESHOLD);
+            logger.debug("Union computation took {} ms", Duration.between(unionStart, Instant.now()).toMillis());
+            objectUnionEqualityResult.ifPresent(comparisonReport::setUnion);
+
+
+            return Response.ok(comparisonReport).build();
+
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e).build();
+        }
+    }
+
+
+    private Class<?> getClassFromRequest(IntersectRequest request) throws UnregisteredClassException {
+        return this.reasoner.getDatasetClass(request.getDataset());
+    }
+
+    private Geometry getGeometryFromRequest(IntersectRequest request) throws JsonProcessingException {
+        return reader.read(mapper.writeValueAsString(request.getGeojson()));
+    }
 }

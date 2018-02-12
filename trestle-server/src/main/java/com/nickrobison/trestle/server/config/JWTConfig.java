@@ -12,6 +12,8 @@ public class JWTConfig {
     private String authHeader;
     @NotNull
     private String authSalt;
+    @NotNull
+    private Integer expirationTime;
 
     public String getAuthHeader() {
         return authHeader;
@@ -27,5 +29,13 @@ public class JWTConfig {
 
     public void setAuthSalt(String authSalt) {
         this.authSalt = authSalt;
+    }
+
+    public Integer getExpirationTime() {
+        return expirationTime;
+    }
+
+    public void setExpirationTime(Integer expirationTime) {
+        this.expirationTime = expirationTime;
     }
 }

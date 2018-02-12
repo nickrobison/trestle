@@ -139,7 +139,7 @@ public class OracleOntology extends JenaOntology {
         } catch (SQLException e) {
             throw new RuntimeException("Cannot disconnect from oracle database");
         }
-        logger.debug("Opened {} transaction, committed {}", this.openedTransactions.get(), this.committedTransactions.get());
+        logger.debug("Opened {} transaction, committed {}, aborted {}", this.getOpenedTransactionCount(), this.getCommittedTransactionCount(), this.getAbortedTransactionCount());
     }
 
     @Override

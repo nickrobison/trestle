@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.reasoner.parser;
 
+import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.reasoner.annotations.*;
 import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
@@ -21,7 +22,7 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 
 import static com.nickrobison.trestle.common.StaticIRI.GEOSPARQLPREFIX;
-import static com.nickrobison.trestle.reasoner.parser.SpatialParser.parseWKTFromGeom;
+import static com.nickrobison.trestle.reasoner.parser.SpatialParser.parseOWLLiteralFromGeom;
 import static com.nickrobison.trestle.reasoner.parser.StringParser.fieldValueToMultiLangString;
 import static com.nickrobison.trestle.reasoner.parser.StringParser.methodValueToMultiLangString;
 
@@ -42,7 +43,7 @@ public class ClassParser implements IClassParser {
     }
 
     private static final Logger logger = LoggerFactory.getLogger(ClassParser.class);
-//    TODO(nrobison): Move all of this into a non-static context
+    //    TODO(nrobison): Move all of this into a non-static context
     static final OWLDataFactory dfStatic = OWLManager.getOWLDataFactory();
 
     private final OWLDataFactory df;
@@ -69,7 +70,7 @@ public class ClassParser implements IClassParser {
     @Override
     public @Nullable String getDefaultLanguageCode() {
         if (this.defaultLanguageCode.equals("")) {
-             return null;
+            return null;
         }
         return this.defaultLanguageCode;
     }
@@ -236,29 +237,29 @@ public class ClassParser implements IClassParser {
                         logger.warn("Cannot access field {}", classField.getName(), e);
                         continue;
                     }
-                    final Optional<OWLLiteral> owlLiteral = parseWKTFromGeom(fieldValue);
+                    final Optional<OWLLiteral> owlLiteral = parseOWLLiteralFromGeom(fieldValue);
                     owlLiteral.ifPresent(owlLiteral1 -> axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, owlLiteral1)));
                 } else {
-                        final IRI iri = IRI.create(ReasonerPrefix, classField.getName());
-                        final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
-                        Object fieldValue = null;
-                        try {
-                            fieldValue = classField.get(inputObject);
-                        } catch (IllegalAccessException e) {
-                            logger.warn("Cannot access field {}", classField.getName(), e);
-                            continue;
-                        }
-                        if (fieldValue != null) {
+                    final IRI iri = IRI.create(ReasonerPrefix, classField.getName());
+                    final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
+                    Object fieldValue = null;
+                    try {
+                        fieldValue = classField.get(inputObject);
+                    } catch (IllegalAccessException e) {
+                        logger.warn("Cannot access field {}", classField.getName(), e);
+                        continue;
+                    }
+                    if (fieldValue != null) {
 //                            If the field type is a String, we need to handle any multi-lang modifications
-                                final OWLLiteral owlLiteral = fieldValueToMultiLangString(fieldValue,
-                                        classField,
-                                        isMultiLangEnabled(),
-                                        getDefaultLanguageCode())
-                                        .orElse(df.getOWLLiteral(fieldValue.toString(),
-                                                TypeConverter.getDatatypeFromJavaClass(classField.getType())));
+                        final OWLLiteral owlLiteral = fieldValueToMultiLangString(fieldValue,
+                                classField,
+                                isMultiLangEnabled(),
+                                getDefaultLanguageCode())
+                                .orElse(df.getOWLLiteral(fieldValue.toString(),
+                                        TypeConverter.getDatatypeFromJavaClass(classField.getType())));
 
-                            axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, owlLiteral));
-                        }
+                        axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, owlLiteral));
+                    }
                 }
             }
         }
@@ -292,7 +293,7 @@ public class ClassParser implements IClassParser {
                     final Optional<Object> methodValue = accessMethodValue(classMethod, inputObject);
 
                     if (methodValue.isPresent()) {
-                        final Optional<OWLLiteral> owlLiteral = parseWKTFromGeom(methodValue.get());
+                        final Optional<OWLLiteral> owlLiteral = parseOWLLiteralFromGeom(methodValue.get());
 //                    Since it's a literal, we need to strip out the double quotes.
                         owlLiteral.ifPresent(owlLiteral1 -> axioms.add(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, owlLiteral1)));
                     }
@@ -336,7 +337,7 @@ public class ClassParser implements IClassParser {
             final Optional<Object> methodValue = accessMethodValue(method.get(), inputObject);
 
             if (methodValue.isPresent()) {
-                final Optional<OWLLiteral> owlLiteral = parseWKTFromGeom(methodValue.get());
+                final Optional<OWLLiteral> owlLiteral = parseOWLLiteralFromGeom(methodValue.get());
                 if (owlLiteral.isPresent()) {
 ////                    Since it's a literal, we need to strip out the double quotes.
 //                        final OWLLiteral wktLiteral = dfStatic.getOWLLiteral(methodValue.get().toString().replace("\"", ""), wktDatatype);
@@ -359,7 +360,7 @@ public class ClassParser implements IClassParser {
                 logger.warn("Cannot access field {}", field.get().getName(), e);
                 return Optional.empty();
             }
-            final Optional<OWLLiteral> owlLiteral = parseWKTFromGeom(fieldValue);
+            final Optional<OWLLiteral> owlLiteral = parseOWLLiteralFromGeom(fieldValue);
             if (owlLiteral.isPresent()) {
                 return Optional.of(df.getOWLDataPropertyAssertionAxiom(spatialDataProperty, owlNamedIndividual, owlLiteral.get()));
             }
@@ -371,7 +372,7 @@ public class ClassParser implements IClassParser {
         String name = classMethod.getName();
 //        remove get and lowercase the first letter
         if (name.startsWith("get")) {
-            final String firstLetter = name.substring(3,4).toLowerCase();
+            final String firstLetter = name.substring(3, 4).toLowerCase();
             final String restOfLetters = name.substring(4);
             return firstLetter + restOfLetters;
         }
@@ -557,7 +558,7 @@ public class ClassParser implements IClassParser {
                     .findFirst();
 
             if (!fieldArgName.orElse("").equals("")) {
-                return  fieldArgName.orElse("");
+                return fieldArgName.orElse("");
             }
 
 //            TODO(nrobison): I think these things can go away.
@@ -669,13 +670,7 @@ public class ClassParser implements IClassParser {
     @Override
     public Optional<Class<@NonNull ?>> getFactDatatype(Class<?> clazz, String factName) {
 //        Split String to get the actual fact name
-        final String name;
-        final String[] splitName = factName.split("#");
-        if (splitName.length < 2) {
-            name = factName;
-        } else {
-            name = splitName[1];
-        }
+        final String name = IRIUtils.extractTrestleIndividualName(factName);
         final String classMember;
         try {
             classMember = this.matchWithClassMember(clazz, name);
@@ -770,6 +765,7 @@ public class ClassParser implements IClassParser {
 
     /**
      * Parse the name of a given field and return either the name, or the one declared in the annotation
+     *
      * @param field - Field to parse name from
      * @return - String of parsed field name
      */
@@ -818,6 +814,7 @@ public class ClassParser implements IClassParser {
 
     /**
      * Parse the name of a given method and return either the filtered name, or the one declared in the annotation
+     *
      * @param method - Method to parse name from
      * @return - String of filtered method name
      */

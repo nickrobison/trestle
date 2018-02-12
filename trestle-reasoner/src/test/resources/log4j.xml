@@ -4,7 +4,7 @@
 
     <appender name="CA" class="org.apache.log4j.ConsoleAppender">
         <layout class="org.apache.log4j.PatternLayout">
-            <param name="ConversionPattern" value="[%-5p | %t] %d %c:%L - %m%n"/>
+            <param name="ConversionPattern" value="[%-5p | %t | %X{test}] %d %c:%L %X{transaction} - %m%n"/>
         </layout>
     </appender>
 
@@ -15,6 +15,12 @@
         <priority value="OFF"/>
     </category>
     <category name="org.apache.http">
+        <priority value="OFF"/>
+    </category>
+    <category name="com.nickrobison.trestle.ontology">
+        <priority value="TRACE"/>
+    </category>
+    <category name="org.eclipse.rdf4j.repository">
         <priority value="OFF"/>
     </category>
 

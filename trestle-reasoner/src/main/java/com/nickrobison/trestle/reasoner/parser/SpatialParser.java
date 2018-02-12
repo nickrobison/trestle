@@ -7,6 +7,7 @@ import com.nickrobison.trestle.reasoner.parser.spatial.ESRIParser;
 import com.nickrobison.trestle.reasoner.parser.spatial.GeotoolsParser;
 import com.nickrobison.trestle.reasoner.parser.spatial.JTSParser;
 import com.vividsolutions.jts.io.ParseException;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLLiteral;
@@ -33,28 +34,55 @@ public class SpatialParser {
 
     }
 
-    public static Optional<OWLLiteral> parseWKTFromGeom(Object spatialObject) {
+
+    /**
+     * Parse WKT {@link String} representation from Spatial Object
+     * If we don't understand the object, we return an {@link Optional#empty()}
+     * @param spatialObject - {@link Object} Spatial Object
+     * @return - {@link Optional} of {@link String}
+     */
+    public static Optional<String> parseWKTFromGeom(Object spatialObject) {
+        final String typeName = spatialObject.getClass().getTypeName();
+        @Nullable String wktString = null;
+        if (typeName.contains("java.lang.String")) {
+            wktString = spatialObject.toString().replace("\"", "");
+        } else if (typeName.contains("com.vividsolutions")) {
+            wktString = JTSParser.parseJTSToWKT(spatialObject);
+        } else if (typeName.contains("com.esri.core.geometry")) {
+            wktString = ESRIParser.parseESRIToWKT((Geometry) spatialObject);
+        } else if (typeName.contains("org.opengis.geometry")) {
+            wktString = GeotoolsParser.parseGeotoolsToWKT((org.opengis.geometry.Geometry) spatialObject);
+        }
+        return Optional.ofNullable(wktString);
+    }
+
+    static Optional<OWLLiteral> parseOWLLiteralFromGeom(Object spatialObject) {
 
         final OWLDatatype wktDatatype = dfStatic.getOWLDatatype(WKTDatatypeIRI);
-        final OWLLiteral wktLiteral;
-        final String typeName = spatialObject.getClass().getTypeName();
-        if (typeName.contains("java.lang.String")) {
-            wktLiteral = dfStatic.getOWLLiteral(spatialObject.toString().replace("\"", ""), wktDatatype);
-        } else if (typeName.contains("com.vividsolutions")) {
-            String jtsWKT = JTSParser.parseJTSToWKT(spatialObject);
-            wktLiteral = dfStatic.getOWLLiteral(jtsWKT, wktDatatype);
-        } else if (typeName.contains("com.esri.core.geometry")) {
-            final String esriWKT = ESRIParser.parseESRIToWKT((Geometry) spatialObject);
-            wktLiteral = dfStatic.getOWLLiteral(esriWKT, wktDatatype);
-        } else if (typeName.contains("org.opengis.geometry")) {
-            final String geoToolsWKT = GeotoolsParser.parseGeotoolsToWKT((org.opengis.geometry.Geometry) spatialObject);
-            wktLiteral = dfStatic.getOWLLiteral(geoToolsWKT, wktDatatype);
-        } else {
-            return Optional.empty();
+        final Optional<String> wktOptional = parseWKTFromGeom(spatialObject);
+        if (wktOptional.isPresent()) {
+            return Optional.of(dfStatic.getOWLLiteral(wktOptional.get(), wktDatatype));
         }
-//                ESRI
-//                Geotools
-        return Optional.of(wktLiteral);
+        return Optional.empty();
+//        final OWLLiteral wktLiteral;
+//        final String typeName = spatialObject.getClass().getTypeName();
+//        if (typeName.contains("java.lang.String")) {
+//            wktLiteral = dfStatic.getOWLLiteral(spatialObject.toString().replace("\"", ""), wktDatatype);
+//        } else if (typeName.contains("com.vividsolutions")) {
+//            String jtsWKT = JTSParser.parseJTSToWKT(spatialObject);
+//            wktLiteral = dfStatic.getOWLLiteral(jtsWKT, wktDatatype);
+//        } else if (typeName.contains("com.esri.core.geometry")) {
+//            final String esriWKT = ESRIParser.parseESRIToWKT((Geometry) spatialObject);
+//            wktLiteral = dfStatic.getOWLLiteral(esriWKT, wktDatatype);
+//        } else if (typeName.contains("org.opengis.geometry")) {
+//            final String geoToolsWKT = GeotoolsParser.parseGeotoolsToWKT((org.opengis.geometry.Geometry) spatialObject);
+//            wktLiteral = dfStatic.getOWLLiteral(geoToolsWKT, wktDatatype);
+//        } else {
+//            return Optional.empty();
+//        }
+////                ESRI
+////                Geotools
+//        return Optional.of(wktLiteral);
     }
 
     static Optional<Object> parseWKTtoGeom(String wkt, Class<?> geomClass) {
