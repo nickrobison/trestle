@@ -12,13 +12,12 @@ const commonConfig = require("./webpack.common");
 const helpers = require("./helpers");
 const env = require("./env");
 
-const AOT = process.env.AOT;
-
 var prodOptions = {
     entry: {
         "polyfills": "./src/main/webapp/polyfills.ts",
         "vendor": "./src/main/webapp/vendor.ts",
-        "app": "./src/main/webapp/bootstrap.ts"
+        "workspace": "./src/main/webapp/workspace/workspace.bootstrap.ts",
+        "evaluation": "./src/main/webapp/evaluation/evaluation.bootstrap.ts"
     },
     devtool: "source-map",
     output: {
@@ -41,7 +40,7 @@ var prodOptions = {
     plugins: [
         new ngtools.AngularCompilerPlugin({
             tsConfigPath: helpers.root("tsconfig.json"),
-            entryModule: helpers.root("src/main/webapp/app/app.module#AppModule")
+            entryModule: helpers.root("src/main/webapp/workspace/workspace.module#WorkspaceModule")
         }),
         new ExtractTextPlugin("[name].css"),
         new DefinePlugin({
@@ -61,18 +60,20 @@ var prodOptions = {
                     comments: false,
                     beautify: false  // debug true
                 },
+                // Below are the only options we change from their default settings
                 compress: {
-                    unused: true,
-                    dead_code: true,
-                    drop_debugger: true,
+                    drop_console: true,
                     comparisons: true
                 }
             }
         }),
         // Merge the common CSP configuration along with the script settings that disallow inline execution, since we're all AOT now
         new CSPWebpackPlugin(Object.assign(env.csp, {
-            "script-src": ["'self'", "'nonce-YLMZop38Ktla8/hmmA=='"]
+            "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "blob:"]
         }))
+        // new CSPWebpackPlugin(Object.assign(env.csp, {
+        //     "script-src": ["'self'"]
+        // }))
     ]
 };
 

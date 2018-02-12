@@ -4,9 +4,10 @@
 @import "~mapbox-gl/dist/mapbox-gl";
 @import "~materialize-css/dist/css/materialize";
 @import "~font-awesome/scss/font-awesome.scss";
-@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 @import url('https://fonts.googleapis.com/css?family=Roboto');
+
 @include mat-core();
 
 $primary: mat-palette($mat-indigo);
@@ -58,4 +59,13 @@ $theme: mat-light-theme($primary, $accent, $warn);
 .disabled_text {
   text-align: center;
   vertical-align: center;
+}
+
+.bottom {
+  position: absolute;
+  bottom: 10px;
+}
+
+.float-right {
+  float: right;
 }

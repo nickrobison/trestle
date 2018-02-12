@@ -3,10 +3,11 @@
  */
 "use strict";
 
-const helper = require("./helpers");
+const helpers = require("./helpers");
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const rxPaths = require("rxjs/_esm5/path-mapping");
+const Jarvis = require("webpack-jarvis");
 
 var options = {
     resolve: {
@@ -105,13 +106,27 @@ var options = {
         ]
     },
     plugins: [
+        // Extract the common code from both main application
         new webpack.optimize.CommonsChunkPlugin({
-            name: ["app", "vendor", "polyfills"]
+            name: "common",
+            chunks: ["workspace", "evaluation"]
         }),
         new webpack.optimize.ModuleConcatenationPlugin(),
         new HtmlWebpackPlugin({
-            template: "./src/main/webapp/app/index.html"
+            inject: true,
+            chunks: ["polyfills", "vendor", "common", "workspace"],
+            chunksSortMode: "manual",
+            template: helpers.root("src/main/webapp/workspace/workspace.index.html"),
+            filename: "workspace.index.html"
+        }),
+        new HtmlWebpackPlugin({
+            inject: true,
+            chunks: ["vendor", "polyfills", "common", "evaluation"],
+            chunksSortMode: "manual",
+            template: helpers.root("src/main/webapp/evaluation/evaluation.index.html"),
+            filename: "evaluation.index.html"
         })
+        // new Jarvis()
     ]
 };
 module.exports = options;

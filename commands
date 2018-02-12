@@ -6,6 +6,18 @@ case ${1} in
   "cloc")
   cloc --exclude-dir=$(tr '\n' ',' < ./.clocignore) .
   ;;
+  "docker")
+#  Build trestle-server
+  echo "Building Java project"
+  mvn clean package -DskipTests -pl trestle-server -am -T3
+#  Build the docker images
+  echo "Building GraphDB Docker image"
+  docker build --build-arg version=8.4.1 -t docker.nickrobison.com:5000/graphdb:8.4.1-free docker/graphdb
+  echo "Building Evaluation images"
+  docker build -t docker.nickrobison.com:5000/evaluation-data docker/evaluation-docker
+  docker build -t docker.nickrobison.com:5000/nginx-proxy docker/nginx-proxy
+  echo "Finished!"
+  ;;
 esac
 shift
 done

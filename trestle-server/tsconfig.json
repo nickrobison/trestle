@@ -25,7 +25,8 @@
     "node_modules",
     "dist",
     "**/*.ngfactory.ts",
-    "**/*.shim.ts"
+    "**/*.shim.ts",
+    "target"
   ],
   "compileOnSave": true,
   "buildOnSave": false,

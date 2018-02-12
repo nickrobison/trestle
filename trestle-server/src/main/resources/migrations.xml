@@ -3,8 +3,8 @@
                    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
-    <changeSet author="nrobison (generated)" id="1484942448470-1" objectQuotingStrategy="QUOTE_ALL_OBJECTS">
-        <createTable catalogName="TEST" remarks="User table" schemaName="PUBLIC" tableName="USERS">
+    <changeSet author="nrobison (generated)" id="1484942448470-1">
+        <createTable catalogName="TEST" remarks="User table" tableName="USERS">
             <column autoIncrement="true" name="ID" type="BIGINT(19)">
                 <constraints primaryKey="true" primaryKeyName="CONSTRAINT_4"/>
             </column>
@@ -13,11 +13,11 @@
             <column name="USERNAME" type="VARCHAR(50)"/>
             <column name="EMAIL" type="VARCHAR(50)"/>
             <column name="PASSWORD" type="VARCHAR(255)"/>
-            <column name="PRIVILEGES" type="INT(10)"/>
+            <column name="PRIVILEGES" type="SMALLINT"/>
         </createTable>
     </changeSet>
-    <changeSet author="nrobison" id="insert-dba" objectQuotingStrategy="QUOTE_ALL_OBJECTS">
-        <insert catalogName="TEST" schemaName="PUBLIC" tableName="USERS">
+    <changeSet author="nrobison" id="insert-dba">
+        <insert catalogName="TEST" tableName="USERS">
             <column name="FIRST_NAME" value="Database"/>
             <column name="LAST_NAME" value="Administrator"/>
             <column name="USERNAME" value="dba"/>
@@ -25,5 +25,62 @@
             <column name="PASSWORD" value="$2a$10$x8s46RPuyAzOQTS2IN0K1..RoAulbtvBpMsqAJ642Hd/KznBAOcL6"/>
             <column name="PRIVILEGES" value="7"/>
         </insert>
+    </changeSet>
+    <changeSet id="tag-error-tables" author="nickrobison">
+        <tagDatabase tag="error-tables"/>
+    </changeSet>
+    <changeSet id="error-tables" author="nickrobison">
+        <createTable tableName="UI_ERRORS">
+            <column name="ID" type="BINARY(16)">
+                <constraints primaryKey="true" primaryKeyName="pk_UI_ERRORS"/>
+            </column>
+            <column name="timestamp" type="TIMESTAMP"/>
+            <column name="message" type="VARCHAR(250)"/>
+            <column name="location" type="VARCHAR(50)"/>
+        </createTable>
+        <createTable tableName="STACK_FRAMES">
+            <column name="ID" type="BINARY(16)">
+                <constraints primaryKey="true" primaryKeyName="pk_STACK_FRAMES"/>
+            </column>
+            <column name="ERROR_ID" type="BINARY(16)"/>
+            <column name="file_name" type="VARCHAR(150)"/>
+            <column name="column_number" type="Integer"/>
+            <column name="line_number" type="Integer"/>
+            <column name="function_name" type="VARCHAR(150)"/>
+            <column name="source" type="VARCHAR(150)"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="STACK_FRAMES" baseColumnNames="ERROR_ID" constraintName="fk_stack_errors"
+                                 referencedTableName="UI_ERRORS"
+                                 referencedColumnNames="ID"/>
+    </changeSet>
+    <changeSet id="tag-test-tables" author="nickrobison">
+        <tagDatabase tag="test-tables"/>
+    </changeSet>
+    <changeSet id="evaluation-tables" author="nickrobison">
+        <createTable tableName="EVALUATION_USERS" remarks="Evaluation Users">
+            <column name="ID" type="BIGINT">
+                <constraints primaryKey="true" primaryKeyName="pk_EVALUATION_USERS"/>
+            </column>
+            <column name="age" type="INTEGER"/>
+            <column name="education" type="VARCHAR(50)"/>
+            <column name="geospatial" type="BOOLEAN"/>
+            <column name="public_health" type="BOOLEAN"/>
+        </createTable>
+        <createTable tableName="EVALUATION_RESULTS" remarks="Results from user evaluation">
+            <column autoIncrement="true" name="ID" type="BIGINT(19)">
+                <constraints primaryKey="true" primaryKeyName="pk_EVALUATION_RESULTS"/>
+            </column>
+            <column name="USER_ID" type="BIGINT"/>
+            <column name="exp_number" type="INTEGER"/>
+            <column name="exp_state" type="INTEGER"/>
+            <column name="exp_time" type="BIGINT"/>
+            <column name="has_union" type="BOOLEAN"/>
+            <column name="union_of" type="VARCHAR(150)"/>
+            <column name="slider_events" type="INTEGER"/>
+            <column name="map_moves" type="INTEGER"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="EVALUATION_RESULTS" baseColumnNames="USER_ID" constraintName="fk_results_user"
+                                 referencedTableName="EVALUATION_USERS"
+                                 referencedColumnNames="ID"/>
     </changeSet>
 </databaseChangeLog>

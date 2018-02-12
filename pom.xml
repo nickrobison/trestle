@@ -38,7 +38,7 @@
         <geotools.version>18.0</geotools.version>
         <metrics.version>3.2.4</metrics.version>
         <httpcomponents.version>4.5.3</httpcomponents.version>
-        <owasp.version>2.1.1</owasp.version>
+        <owasp.version>3.1.1</owasp.version>
         <maven.enforcer.version>1.4.1</maven.enforcer.version>
         <caffeine.version>2.6.0</caffeine.version>
         <!--This will probably need to get bumped each time we upgrade Dropwizard-->
@@ -52,6 +52,7 @@
         <sonar.jacoco.reportPaths>${maven.multiModuleProjectDirectory}/target/jacoco_analysis/jacoco.exec</sonar.jacoco.reportPaths>
         <dependency.check.reportPath>target/dependency-check</dependency.check.reportPath>
         <sonar.dependencyCheck.reportPath>${dependency.check.reportPath}/dependency-check-report.xml</sonar.dependencyCheck.reportPath>
+        <docker.image.prefix>docker.nickrobison.com:5000</docker.image.prefix>
     </properties>
 
     <dependencyManagement>

@@ -13,7 +13,9 @@ var devOptions = {
     entry: {
         "polyfills": "./src/main/webapp/polyfills.ts",
         "vendor": "./src/main/webapp/vendor.ts",
-        "app": "./src/main/webapp/bootstrap.ts"
+        "workspace": "./src/main/webapp/workspace/workspace.bootstrap.ts",
+        "evaluation": "./src/main/webapp/evaluation/evaluation.bootstrap.ts"
+
     },
     devtool: "source-map",
     output: {
@@ -51,7 +53,7 @@ var devOptions = {
         }),
         // Merge the common CSP configuration along with the script settings to allow dynamic execution
         new CSPWebpackPlugin(Object.assign(env.csp, {
-            "script-src": ["'self'", "'nonce-YLMZop38Ktla8/hmmA=='", "'unsafe-inline'", "'unsafe-eval'"]
+            "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "blob:"]
         }))
     ]
 };

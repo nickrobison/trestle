@@ -1,7 +1,9 @@
 package com.nickrobison.trestle.exporter;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -28,5 +30,7 @@ public class TestGeoJSONWriter {
         tsIndividual.addAllProperties(properties);
 
         new KMLExporter(false).writePropertiesToByteBuffer(Collections.singletonList(tsIndividual), "test-out.kml");
+        final File file = FileUtils.getFile("Trestle_test-out.kml");
+        FileUtils.deleteQuietly(file);
     }
 }

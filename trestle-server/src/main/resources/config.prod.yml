@@ -1,0 +1,30 @@
+reasoner:
+  connectionString: "http://graphdb:7200"
+  username: ""
+  password: ""
+  ontology: "gaul_hadoop_world_bank"
+  prefix: "http://nickrobison.com/gaul/"
+  location: "file:///opt/trestle/trestle.owl"
+
+logging:
+  level: INFO
+  appenders:
+    - type: console
+      logFormat: "[%-5p | %t] %d %c:%L %X{transaction} - %m%n"
+
+database:
+    driverClass: org.postgresql.Driver
+    user: postgres
+    password: postgresUser1
+    url: jdbc:postgresql://db:5432/postgres
+    properties:
+        charSet: UTF-8
+        hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+
+jwt:
+  authHeader: "Authorization"
+  authSalt: "test-salt"
+  expirationTime: 7200
+
+swagger:
+  resourcePackage: com.nickrobison.trestle.server.resources
