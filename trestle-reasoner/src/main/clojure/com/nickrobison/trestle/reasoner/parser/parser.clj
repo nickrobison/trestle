@@ -549,8 +549,8 @@
     (set (keys @owlClassMap)))
   (deregisterClass [this clazz]
     (log/debugf "Deregistering %s" clazz)
-    (swap! @classRegistry dissoc clazz)
-    (swap! @owlClassMap remove clazz))
+    (swap! classRegistry dissoc clazz)
+    (swap! owlClassMap dissoc clazz))
   (isCacheable [this clazz]
     (if-let [parsedClass (get @classRegistry clazz)]
       (:serializable parsedClass)

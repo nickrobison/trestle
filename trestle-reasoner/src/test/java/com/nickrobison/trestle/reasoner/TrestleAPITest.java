@@ -121,6 +121,19 @@ public class TrestleAPITest extends AbstractReasonerTest {
     }
 
     @Test
+    public void testClassRegistration() throws TrestleClassException, MissingOntologyEntity {
+        final TestClasses.GAULComplexClassTest gaulComplexClassTest = new TestClasses.GAULComplexClassTest();
+//        De register the class
+        this.reasoner.deregisterClass(TestClasses.GAULComplexClassTest.class);
+//        Try to write the indvidual
+        assertThrows(TrestleClassException.class, () -> this.reasoner.writeTrestleObject(gaulComplexClassTest));
+//        Register the class again
+        this.reasoner.registerClass(TestClasses.GAULComplexClassTest.class);
+//        Try again
+        this.reasoner.writeTrestleObject(gaulComplexClassTest);
+    }
+
+    @Test
     public void eventTest() throws TrestleClassException, MissingOntologyEntity {
 //        Split event
 //        Create test events

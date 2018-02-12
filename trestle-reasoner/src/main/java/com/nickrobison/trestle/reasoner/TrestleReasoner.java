@@ -498,6 +498,14 @@ public interface TrestleReasoner {
     void registerClass(Class inputClass) throws TrestleClassException;
 
     /**
+     * Remove class from registry
+     * This will no longer allow read/write access to the class and will throw a {@link UnregisteredClassException} on future access
+     *
+     * @param inputClass - {@link Class} to deregister
+     */
+    void deregisterClass(Class inputClass);
+
+    /**
      * Get a list of currently registered datasets
      * Only returns datasets currently registered with the reasoner.
      *

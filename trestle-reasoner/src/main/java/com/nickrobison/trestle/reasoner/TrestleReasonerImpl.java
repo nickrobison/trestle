@@ -1525,7 +1525,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         logger.debug("Building trestle individual {}", individual);
         @Nullable final TrestleIndividual cacheIndividual = this.trestleCache.getTrestleIndividual(individual);
         if (cacheIndividual != null) {
-            logger.debug("Retrieved {} from cache");
+            logger.debug("Retrieved {} from cache", cacheIndividual);
             return cacheIndividual;
         }
 
@@ -2041,6 +2041,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     public void registerClass(Class inputClass) throws TrestleClassException {
         final OWLClass owlClass = this.trestleParser.classParser.getObjectClass(inputClass);
         this.trestleParser.classRegistry.registerClass(owlClass, inputClass);
+    }
+
+    @Override
+    public void deregisterClass(Class inputClass) {
+        this.trestleParser.classRegistry.deregisterClass(inputClass);
     }
 
     /**
