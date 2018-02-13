@@ -241,7 +241,7 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
      * @param objectB        - {@link Object} to compare with
      * @param inputSR        - {@link SpatialReference} input spatial reference
      * @param matchThreshold - {@link Double} cutoff for all fuzzy matches
-     * @param <T extends @NonNull Object>            - Type parameter
+     * @param <T>            - Type parameter
      * @return - {@link SpatialComparisonReport}
      */
     @Timed
