@@ -3,6 +3,7 @@ package com.nickrobison.trestle.exporter.kml;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @JacksonXmlRootElement(localName = "LinearRing")
@@ -13,7 +14,7 @@ public class KMLLinearRing extends KMLGeometry {
 
 
     public KMLLinearRing() {
-//        Not Used
+        this.coordinates = new ArrayList<>();
     }
 
     public List<KMLCoordinate> getCoordinates() {

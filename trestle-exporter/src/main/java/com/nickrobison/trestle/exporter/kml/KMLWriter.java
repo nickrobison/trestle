@@ -2,6 +2,8 @@ package com.nickrobison.trestle.exporter.kml;
 
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.util.StringUtil;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -80,19 +82,18 @@ public class KMLWriter {
     private static final String COORDINATE_SEPARATOR = ",";
     private static final String TUPLE_SEPARATOR = " ";
 
-    private String linePrefix;
+    private @MonotonicNonNull String linePrefix;
     private int maxCoordinatesPerLine = 5;
     private double zVal = Double.NaN;
     private boolean extrude;
     private boolean tesselate;
-    private String altitudeMode;
-    private DecimalFormat numberFormatter;
+    private @MonotonicNonNull String altitudeMode;
+    private @MonotonicNonNull DecimalFormat numberFormatter;
 
     /**
      * Creates a new writer.
      */
     public KMLWriter() {
-//        Not used
     }
 
     /**
@@ -214,14 +215,14 @@ public class KMLWriter {
             throw new IllegalArgumentException("Geometry type not supported: " + g.getGeometryType());
     }
 
-    private void startLine(String text, int level, StringBuilder buf) {
+    private void startLine(@Nullable String text, int level, StringBuilder buf) {
         if (linePrefix != null)
             buf.append(linePrefix);
         buf.append(StringUtil.spaces(INDENT_SIZE * level));
         buf.append(text);
     }
 
-    private String geometryTag(String geometryName, String attributes) {
+    private String geometryTag(String geometryName, @Nullable String attributes) {
         StringBuilder buf = new StringBuilder();
         buf.append("<")
                 .append(geometryName);
@@ -263,7 +264,7 @@ public class KMLWriter {
         startLine("</LineString>\n", level, buf);
     }
 
-    private void writeLinearRing(LinearRing lr, String attributes,
+    private void writeLinearRing(LinearRing lr, @Nullable String attributes,
                                  boolean writeModifiers, int level,
                                  StringBuilder buf) {
         // <LinearRing><coordinates>...</coordinates></LinearRing>
@@ -273,7 +274,7 @@ public class KMLWriter {
         startLine("</LinearRing>\n", level, buf);
     }
 
-    private void writePolygon(Polygon p, String attributes, int level,
+    private void writePolygon(Polygon p, @Nullable String attributes, int level,
                               StringBuilder buf) {
         startLine(geometryTag("Polygon", attributes) + "\n", level, buf);
         writeModifiers(level, buf);
