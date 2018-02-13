@@ -162,7 +162,11 @@ public class IndividualEngine {
                     return ontology.executeSPARQLResults(query);
                 } catch (Exception e) {
                     this.ontology.returnAndAbortTransaction(tt);
-                    throw new CompletionException(e.getCause());
+                    final Throwable cause = e.getCause();
+                    if (cause == null) {
+                        throw new CompletionException("Unable to get cause", e);
+                    }
+                    throw new CompletionException(cause);
                 } finally {
                     this.ontology.returnAndCommitTransaction(tt);
                 }
@@ -192,7 +196,11 @@ public class IndividualEngine {
                     return this.ontology.executeSPARQLResults(query);
                 } catch (Exception e) {
                     this.ontology.returnAndAbortTransaction(tt);
-                    throw new CompletionException(e.getCause());
+                    final Throwable cause = e.getCause();
+                    if (cause == null) {
+                        throw new CompletionException("Unable to get cause", e);
+                    }
+                    throw new CompletionException(cause);
                 } finally {
                     this.ontology.returnAndCommitTransaction(tt);
                 }
@@ -229,7 +237,11 @@ public class IndividualEngine {
         } catch (InterruptedException | ExecutionException e) {
             logger.error("Interruption exception building Trestle Individual {}", individual, e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
-            return ExceptionUtils.rethrow(e.getCause());
+            final Throwable cause = e.getCause();
+            if (cause == null) {
+                throw new CompletionException("Unable to get cause", e);
+            }
+            return ExceptionUtils.rethrow(cause);
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
@@ -331,6 +343,8 @@ public class IndividualEngine {
 
                     final OWLDataPropertyAssertionAxiom assertion = dataPropertyAssertion.orElseThrow(() -> new TrestleMissingFactException(factIndividual));
                     final Class<?> datatype = TypeConverter.lookupJavaClassFromOWLDatatype(assertion, null);
+//                    I don't know why this is throwing an error, so I'm going to ignore it for now
+                    @SuppressWarnings("type.argument.type.incompatible")
                     final Object literalObject = TypeConverter.extractOWLLiteral(datatype, assertion.getObject());
 //            Get valid time
                     final Set<OWLDataPropertyAssertionAxiom> validTemporals = dataProperties
@@ -347,6 +361,9 @@ public class IndividualEngine {
                                     property.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseToIRI))
                             .collect(Collectors.toSet());
                     final Optional<TemporalObject> dbTemporal = TemporalObjectBuilder.buildTemporalFromProperties(dbTemporals, null, "blank");
+                    if (literalObject == null) {
+                        throw new IllegalStateException(String.format("Fact object cannot be null for {}", factIndividual));
+                    }
                     return new TrestleFact<>(
                             factIndividual.getIRI().toString(),
                             assertion.getProperty().asOWLDataProperty().getIRI().getShortForm(),

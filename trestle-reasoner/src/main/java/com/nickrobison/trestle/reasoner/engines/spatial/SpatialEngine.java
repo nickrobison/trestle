@@ -245,7 +245,7 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
      * @return - {@link SpatialComparisonReport}
      */
     @Timed
-    public <T> SpatialComparisonReport compareObjects(T objectA, T objectB, SpatialReference inputSR, double matchThreshold) {
+    public <T extends Object> SpatialComparisonReport compareObjects(T objectA, T objectB, SpatialReference inputSR, double matchThreshold) {
 
         final OWLNamedIndividual objectAID = this.tp.classParser.getIndividual(objectA);
         final OWLNamedIndividual objectBID = this.tp.classParser.getIndividual(objectB);
@@ -311,8 +311,9 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
 
     /**
      * Get the object {@link Geometry} from the cache, computing if absent
+     *
      * @param object - {@link Object inputObject}
-     * @param srid - {@link Integer} srid
+     * @param srid   - {@link Integer} srid
      * @return - {@link Geometry}
      */
     private Geometry getGeomFromCache(Object object, int srid) {
@@ -333,36 +334,36 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
 
     @Override
     @Timed
-    public <T> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
+    public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
         return this.equalityEngine.calculateSpatialUnion(inputObjects, inputSR, matchThreshold);
     }
 
     @Override
-    public <T> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR) {
+    public <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR) {
         return this.equalityEngine.calculateUnionContribution(result, inputSR);
     }
 
     @Override
     @Timed
-    public <T> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold) {
+    public <T extends @NonNull Object> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold) {
         return this.equalityEngine.isApproximatelyEqual(inputObject, matchObject, inputSR, threshold);
     }
 
     @Override
     @Timed
-    public <T> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR) {
+    public <T extends @NonNull Object> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR) {
         return this.equalityEngine.calculateSpatialEquals(inputObject, matchObject, inputSR);
     }
 
     @Override
     @Timed
-    public <T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
+    public <T extends @NonNull Object> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
         return this.equalityEngine.getEquivalentIndividuals(clazz, individual, queryTemporal);
     }
 
     @Override
     @Timed
-    public <T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal) {
+    public <T extends @NonNull Object> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal) {
         return this.equalityEngine.getEquivalentIndividuals(clazz, individual, queryTemporal);
     }
 
@@ -372,7 +373,7 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
 
     @Override
     @Timed
-    public <T> ContainmentDirection getApproximateContainment(T objectA, T objectB, SpatialReference inputSR, double threshold) {
+    public <T extends @NonNull Object> ContainmentDirection getApproximateContainment(T objectA, T objectB, SpatialReference inputSR, double threshold) {
         return this.containmentEngine.getApproximateContainment(objectA, objectB, inputSR, threshold);
     }
     /**

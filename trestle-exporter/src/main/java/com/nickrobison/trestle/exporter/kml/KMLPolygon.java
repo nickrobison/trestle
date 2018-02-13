@@ -4,6 +4,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @JacksonXmlRootElement(localName = "Polygon")
@@ -18,7 +19,8 @@ public class KMLPolygon extends KMLGeometry {
 
 
     public KMLPolygon() {
-//        Not used
+        this.innerBoundaries = new ArrayList<>();
+        this.outerBoundaries = new ArrayList<>();
     }
 
     public List<KMLLinearRing> getOuterBoundaries() {

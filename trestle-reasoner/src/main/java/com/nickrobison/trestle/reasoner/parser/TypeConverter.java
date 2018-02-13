@@ -68,12 +68,15 @@ public class TypeConverter {
      */
     //    I need the unchecked casts in order to get the correct primitives for the constructor generation
     @SuppressWarnings({"unchecked", "return.type.incompatible", "squid:S1199"})
-    public static <@NonNull T> @NonNull T extractOWLLiteral(Class<@NonNull T> javaClass, OWLLiteral literal) {
+    public static <T extends @NonNull Object> T extractOWLLiteral(Class<T> javaClass, @Nullable OWLLiteral literal) {
+        if (literal == null) {
+            throw new IllegalStateException("Cannot have null literal");
+        }
 
         switch (javaClass.getTypeName()) {
 
             case "int": {
-                return (@NonNull T) (Object) Integer.parseInt(literal.getLiteral());
+                return (T) (Object) Integer.parseInt(literal.getLiteral());
             }
 
             case "java.lang.Integer": {
@@ -81,7 +84,7 @@ public class TypeConverter {
             }
 
             case "short": {
-                return (@NonNull T) (Object) Short.parseShort(literal.getLiteral());
+                return (T) (Object) Short.parseShort(literal.getLiteral());
             }
 
             case "java.lang.Short": {
@@ -89,7 +92,7 @@ public class TypeConverter {
             }
 
             case "long": {
-                return (@NonNull T) (Object) Long.parseLong(literal.getLiteral());
+                return (T) (Object) Long.parseLong(literal.getLiteral());
             }
 
             case "java.lang.Long": {
@@ -117,7 +120,7 @@ public class TypeConverter {
             }
 
             case "float": {
-                return (@NonNull T) (Object) Float.parseFloat(literal.getLiteral());
+                return (T) (Object) Float.parseFloat(literal.getLiteral());
             }
 
             case "java.lang.Float": {
@@ -125,7 +128,7 @@ public class TypeConverter {
             }
 
             case "double": {
-                return (@NonNull T) (Object) Double.parseDouble(literal.getLiteral());
+                return (T) (Object) Double.parseDouble(literal.getLiteral());
             }
 
             case "java.lang.Double": {
@@ -133,7 +136,7 @@ public class TypeConverter {
             }
 
             case "boolean": {
-                return (@NonNull T) (Object) Boolean.getBoolean(literal.getLiteral());
+                return (T) (Object) Boolean.getBoolean(literal.getLiteral());
             }
 
             case "java.lang.Boolean": {
@@ -141,11 +144,11 @@ public class TypeConverter {
             }
 
             case "java.math.BigInteger": {
-                return (@NonNull T) new BigInteger(literal.getLiteral());
+                return (T) new BigInteger(literal.getLiteral());
             }
 
             case "java.math.BigDecimal": {
-                return (@NonNull T) new BigDecimal(literal.getLiteral());
+                return (T) new BigDecimal(literal.getLiteral());
             }
 
             default: {

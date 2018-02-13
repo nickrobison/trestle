@@ -5,6 +5,7 @@ import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import javax.inject.Inject;
@@ -21,7 +22,7 @@ public class TemporalEngine {
     }
 
     @Timed
-    public <A, B> TemporalComparisonReport compareObjects(A objectA, B objectB) {
+    public <A extends @NonNull Object, B extends @NonNull Object> TemporalComparisonReport compareObjects(A objectA, B objectB) {
 
         final OWLNamedIndividual objectAID = this.tp.classParser.getIndividual(objectA);
         final OWLNamedIndividual objectBID = this.tp.classParser.getIndividual(objectB);

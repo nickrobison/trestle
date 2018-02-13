@@ -201,7 +201,7 @@ public interface TrestleReasoner {
      * @throws TrestleClassException - exception
      * @throws MissingOntologyEntity - exception
      */
-    <T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull String objectID) throws TrestleClassException, MissingOntologyEntity;
+    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID) throws TrestleClassException, MissingOntologyEntity;
 
     /**
      * Returns an object, from the database, looking up the class definition from the registry
@@ -213,7 +213,7 @@ public interface TrestleReasoner {
      * @throws MissingOntologyEntity - exception
      * @throws TrestleClassException - exception
      */
-    <T> @NonNull T readTrestleObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException;
+    <T extends @NonNull Object> T readTrestleObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException;
 
     /**
      * Returns an object, from the database, using the provided class definition.
@@ -229,7 +229,7 @@ public interface TrestleReasoner {
      * @throws MissingOntologyEntity - exception
      */
     @SuppressWarnings({"argument.type.incompatible", "dereference.of.nullable"})
-    <T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull String objectID, Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity;
+    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID, Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity;
 
     /**
      * Returns an object, from the database, looking up the class definition from the registry
@@ -243,8 +243,7 @@ public interface TrestleReasoner {
      * @throws MissingOntologyEntity - exception
      * @throws TrestleClassException - exception
      */
-    @SuppressWarnings("unchecked")
-    <T> @NonNull T readTrestleObject(String datasetClassID, String objectID, Temporal validTemporal, @Nullable Temporal databaseTemporal) throws MissingOntologyEntity, TrestleClassException;
+    <T extends @NonNull Object> T readTrestleObject(String datasetClassID, String objectID, Temporal validTemporal, @Nullable Temporal databaseTemporal) throws MissingOntologyEntity, TrestleClassException;
 
     /**
      * Retrieve historical states of a given Fact
@@ -340,7 +339,7 @@ public interface TrestleReasoner {
      * @return - An Optional List of Object T
      */
     @SuppressWarnings("return.type.incompatible")
-    <T> Optional<List<T>> spatialIntersectObject(@NonNull T inputObject, double buffer);
+    <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer);
 
     /**
      * Spatial Intersect Object with records in the database valid at that given time
@@ -353,7 +352,7 @@ public interface TrestleReasoner {
      * @return - An Optional List of Object T
      */
     @SuppressWarnings("unchecked")
-    <T> Optional<List<T>> spatialIntersectObject(@NonNull T inputObject, double buffer, @Nullable Temporal temporalAt);
+    <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt);
 
     /**
      * Find objects of a given class that intersect with a specific WKT boundary.
@@ -365,7 +364,7 @@ public interface TrestleReasoner {
      * @param <T>    - Type to specialize method
      * @return - An Optional List of Object T
      */
-    <T> Optional<List<T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer);
+    <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer);
 
     /**
      * Find objects of a given class that intersect with a specific WKT boundary.
@@ -379,7 +378,7 @@ public interface TrestleReasoner {
      * @return - An Optional List of Object T.
      */
     @SuppressWarnings("return.type.incompatible")
-    <T> Optional<List<T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal atTemporal);
+    <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal atTemporal);
 
     /**
      * Get a map of related objects and their relative strengths
@@ -394,7 +393,7 @@ public interface TrestleReasoner {
     //    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
     @SuppressWarnings("return.type.incompatible")
     @Deprecated
-    <T> Optional<Map<@NonNull T, Double>> getRelatedObjects(Class<@NonNull T> clazz, String objectID, double cutoff);
+    <T extends @NonNull Object> Optional<Map<T, Double>> getRelatedObjects(Class<T> clazz, String objectID, double cutoff);
 
     /**
      * For a given individual, get all related concepts and the IRIs of all members of those concepts,
@@ -441,7 +440,7 @@ public interface TrestleReasoner {
      * @param <T>           - Type parameter
      * @return - {@link Optional} {@link List} of {@link T} objects
      */
-    <@NonNull T> Optional<List<T>> getEquivalentObjects(Class<T> clazz, IRI individual, Temporal queryTemporal);
+    <T extends @NonNull Object> Optional<List<T>> getEquivalentObjects(Class<T> clazz, IRI individual, Temporal queryTemporal);
 
     /**
      * Get a {@link List} of objects that are equivalent to given {@link List} of individuals at the given time point
@@ -453,7 +452,7 @@ public interface TrestleReasoner {
      * @param <T>           - Type parameter
      * @return - {@link Optional} {@link List} of {@link T} objects
      */
-    <@NonNull T> Optional<List<T>> getEquivalentObjects(Class<T> clazz, List<IRI> individuals, Temporal queryTemporal);
+    <T extends @NonNull Object> Optional<List<T>> getEquivalentObjects(Class<T> clazz, List<IRI> individuals, Temporal queryTemporal);
 
     /**
      * Search the ontology for individuals with IRIs that match the given search string

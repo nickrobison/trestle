@@ -7,6 +7,8 @@ import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.zaxxer.hikari.HikariDataSource;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
+import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,9 +50,9 @@ public abstract class RDBMSBackend implements IMetricianBackend {
         eventThread.start();
     }
 
-    abstract HikariDataSource setupDataSource();
+    abstract HikariDataSource setupDataSource(@UnderInitialization(RDBMSBackend.class) RDBMSBackend this);
 
-    protected Connection getConnection() {
+    protected Connection getConnection(@UnknownInitialization(RDBMSBackend.class) RDBMSBackend this) {
         try {
             return this.ds.getConnection();
         } catch (SQLException e) {

@@ -2,6 +2,7 @@ package com.nickrobison.trestle.reasoner.engines.spatial.containment;
 
 import com.codahale.metrics.annotation.Timed;
 import com.esri.core.geometry.SpatialReference;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 public interface ContainmentEngine {
     /**
@@ -18,7 +19,7 @@ public interface ContainmentEngine {
      * equal to the threshold. ContainmentDirection.NONE if neither is true.
      */
     @Timed
-    <T> ContainmentDirection getApproximateContainment(T objectA, T objectB, SpatialReference inputSR, double threshold);
+    <T extends @NonNull Object> ContainmentDirection getApproximateContainment(T objectA, T objectB, SpatialReference inputSR, double threshold);
 
     public enum ContainmentDirection {
         CONTAINS, WITHIN, NONE

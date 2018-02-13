@@ -1,5 +1,7 @@
 package com.nickrobison.trestle.reasoner.engines.spatial.equality.union;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.io.Serializable;
@@ -67,7 +69,7 @@ public class UnionContributionResult implements Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
@@ -118,7 +120,7 @@ public class UnionContributionResult implements Serializable {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 

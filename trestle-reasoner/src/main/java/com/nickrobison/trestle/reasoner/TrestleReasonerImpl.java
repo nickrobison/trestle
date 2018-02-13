@@ -59,6 +59,7 @@ import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -282,7 +283,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <C extends TypeConstructor> void registerTypeConstructor(C typeConstructor) {
+    public <C extends TypeConstructor> void registerTypeConstructor(TrestleReasonerImpl this, C typeConstructor) {
         TypeConverter.registerTypeConstructor(typeConstructor);
     }
 
@@ -754,27 +755,27 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //    ----------------------------
 
     @Override
-    public <T> @NonNull T readTrestleObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException {
+    public <T extends @NonNull Object> T readTrestleObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException {
         return readTrestleObject(datasetClassID, objectID, null, null);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> @NonNull T readTrestleObject(String datasetClassID, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws MissingOntologyEntity, TrestleClassException {
+    public <T extends @NonNull Object> T readTrestleObject(String datasetClassID, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws MissingOntologyEntity, TrestleClassException {
 //        Lookup class
-        final Class<@NonNull T> aClass = (Class<@NonNull T>) this.getRegisteredClass(datasetClassID);
+        final Class<T> aClass = (Class<T>) this.getRegisteredClass(datasetClassID);
         return readTrestleObject(aClass, objectID, validTemporal, databaseTemporal);
     }
 
     @Override
-    public <T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull String objectID) throws TrestleClassException, MissingOntologyEntity {
+    public <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID) throws TrestleClassException, MissingOntologyEntity {
         return readTrestleObject(clazz, objectID, null, null);
     }
 
 
     @Override
     @SuppressWarnings({"argument.type.incompatible", "dereference.of.nullable"})
-    public <@NonNull T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity {
+    public <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity {
 
         final IRI individualIRI = parseStringToIRI(REASONER_PREFIX, objectID);
         return readTrestleObject(clazz, individualIRI, false, validTemporal, databaseTemporal);
@@ -794,7 +795,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @param <T>           - Java class to return
      * @return - Java object of type T
      */
-    <T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache) {
+    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache) {
         return readTrestleObject(clazz, individualIRI, bypassCache, null, null);
     }
 
@@ -811,7 +812,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @return - Java object of type T
      */
     @SuppressWarnings({"return.type.incompatible", "argument.type.incompatible", "unchecked"})
-    <@NonNull T> @NonNull T readTrestleObject(Class<@NonNull T> clazz, @NonNull IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt) {
+    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt) {
         logger.debug("Reading {}", individualIRI);
 
         final PointTemporal validTemporal;
@@ -843,12 +844,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
         logger.debug("Individual is not in cache, continuing");
 
-//        final Optional<@NonNull T> constructedObject = readTrestleObjectImpl(clazz, individualIRI, validTemporal, databaseTemporal);
-        final Optional<TrestleObjectResult<@NonNull T>> constructedObject = readTrestleObjectImpl(clazz, individualIRI, validTemporal, databaseTemporal);
+        final Optional<TrestleObjectResult<T>> constructedObject = readTrestleObjectImpl(clazz, individualIRI, validTemporal, databaseTemporal);
         if (constructedObject.isPresent()) {
             logger.debug("Finished reading {}", individualIRI);
 //            Write back to index
-            final TrestleObjectResult<@NonNull T> value = constructedObject.get();
+            final TrestleObjectResult<T> value = constructedObject.get();
             if (isCacheable) {
                 try {
                     this.trestleCache.writeTrestleObject(trestleIRI, value.getValidFrom().toInstant().atOffset(ZoneOffset.UTC), value.getValidTo().toInstant().atOffset(ZoneOffset.UTC), value.getObject());
@@ -875,7 +875,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Timed
     @Metered(name = "read-trestle-object", absolute = true)
     @SuppressWarnings({"method.invocation.invalid"})
-    private <@NonNull T> Optional<TrestleObjectResult<@NonNull T>> readTrestleObjectImpl(Class<@NonNull T> clazz, @NonNull IRI individualIRI, PointTemporal<?> validTemporal, PointTemporal<?> databaseTemporal) {
+    private <T extends @NonNull Object> Optional<TrestleObjectResult<T>> readTrestleObjectImpl(Class<T> clazz, IRI individualIRI, PointTemporal<?> validTemporal, PointTemporal<?> databaseTemporal) {
         logger.trace("Reading individual {} at {}/{}", individualIRI, validTemporal, databaseTemporal);
 
 //        Contains class?
@@ -1039,7 +1039,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     this.ontology.returnAndAbortTransaction(trestleTransaction);
                     return Optional.empty();
                 }
-                final @NonNull T constructedObject = this.trestleParser.classBuilder.constructObject(clazz, objectState.getArguments());
+                final T constructedObject = this.trestleParser.classBuilder.constructObject(clazz, objectState.getArguments());
                 return Optional.of(new TrestleObjectResult<>(individualIRI, constructedObject, objectState.getMinValidFrom(), objectState.getMinValidTo(), objectState.getMinDatabaseFrom(), objectState.getMinDatabaseTo()));
             } catch (InterruptedException e) {
                 ontology.returnAndAbortTransaction(trestleTransaction);
@@ -1108,6 +1108,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
         final String historyQuery = this.qb.buildFactHistoryQuery(individual, factName, start, end, db);
         final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(historyQuery);
+//        Optional::isPresent works fine, Checker is wrong
+        @SuppressWarnings("methodref.receiver.invalid")
         final List<Object> factValues = resultSet.getResults()
                 .stream()
                 .map(result -> result.getLiteral("value"))
@@ -1195,18 +1197,18 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     @SuppressWarnings("return.type.incompatible")
-    public <T> Optional<List<T>> spatialIntersectObject(@NonNull T inputObject, double buffer) {
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer) {
         return spatialIntersectObject(inputObject, buffer, null);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <@NonNull T> Optional<List<T>> spatialIntersectObject(@NonNull T inputObject, double buffer, @Nullable Temporal temporalAt) {
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt) {
         final OWLNamedIndividual owlNamedIndividual = trestleParser.classParser.getIndividual(inputObject);
         final Optional<String> wktString = SpatialParser.getSpatialValueAsString(inputObject);
 
         if (wktString.isPresent()) {
-            return spatialIntersect((Class<@NonNull T>) inputObject.getClass(), wktString.get(), buffer, temporalAt);
+            return spatialIntersect((Class<T>) inputObject.getClass(), wktString.get(), buffer, temporalAt);
         }
 
         logger.info("{} doesn't have a spatial component", owlNamedIndividual);
@@ -1215,7 +1217,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     @SuppressWarnings({"override.return.invalid"})
-    public <@NonNull T> Optional<List<@NonNull T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer) {
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer) {
         return spatialIntersect(clazz, wkt, buffer, null);
     }
 
@@ -1223,7 +1225,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Timed(name = "spatial-intersect-timer")
     @Metered(name = "spatial-intersect-meter")
     @SuppressWarnings({"override.return.invalid"})
-    public <@NonNull T> Optional<List<@NonNull T>> spatialIntersect(Class<@NonNull T> clazz, String wkt, double buffer, @Nullable Temporal validAt) {
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt) {
         final OWLClass owlClass = trestleParser.classParser.getObjectClass(clazz);
 
         final OffsetDateTime atTemporal;
@@ -1244,7 +1246,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
             final String finalSpatialIntersection = spatialIntersection;
-            final CompletableFuture<List<@NonNull T>> objectsFuture = CompletableFuture.supplyAsync(() -> {
+            final CompletableFuture<List<T>> objectsFuture = CompletableFuture.supplyAsync(() -> {
                 logger.debug("Executing async spatial query");
                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                 logger.debug("Transaction opened");
@@ -1290,7 +1292,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     @SuppressWarnings("return.type.incompatible")
     @Deprecated
-    public <T> Optional<Map<@NonNull T, Double>> getRelatedObjects(Class<@NonNull T> clazz, String objectID, double cutoff) {
+    public <T extends @NonNull Object> Optional<Map<T, Double>> getRelatedObjects(Class<T> clazz, String objectID, double cutoff) {
 //
 //
 //        final OWLClass owlClass = trestleParser.classParser.getObjectClass(clazz);
@@ -1364,7 +1366,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @param inputObject - Individual to remove
      * @param <T>         - Type of individual to remove
      */
-    public <T> void removeIndividual(@NonNull T... inputObject) {
+    public <T extends @NonNull Object> void removeIndividual(T... inputObject) {
         final List<CompletableFuture<Void>> completableFutures = Arrays.stream(inputObject)
                 .map(object -> CompletableFuture.supplyAsync(() -> trestleParser.classParser.getIndividual(object), trestleThreadPool))
                 .map(idFuture -> idFuture.thenApply(ontology::getAllObjectPropertiesForIndividual))
@@ -1523,12 +1525,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <@NonNull T> Optional<List<T>> getEquivalentObjects(Class<T> clazz, IRI individual, Temporal queryTemporal) {
+    public <T extends @NonNull Object> Optional<List<T>> getEquivalentObjects(Class<T> clazz, IRI individual, Temporal queryTemporal) {
         return getEquivalentObjects(clazz, Collections.singletonList(individual), queryTemporal);
     }
 
     @Override
-    public <@NonNull T> Optional<List<T>> getEquivalentObjects(Class<T> clazz, List<IRI> individuals, Temporal queryTemporal) {
+    public <T extends @NonNull Object> Optional<List<T>> getEquivalentObjects(Class<T> clazz, List<IRI> individuals, Temporal queryTemporal) {
         final List<OWLNamedIndividual> individualSubjects = individuals
                 .stream()
                 .map(df::getOWLNamedIndividual)
@@ -2324,7 +2326,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 .map(id -> CompletableFuture.supplyAsync(() -> {
                     final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                     try {
-                        final @NonNull T object = readTrestleObject(inputClass, id, false, validAt, databaseAt);
+                        final T object = readTrestleObject(inputClass, id, false, validAt, databaseAt);
                         return Optional.of(object);
                     } catch (NoValidStateException e) {
                         this.ontology.returnAndAbortTransaction(tt);
@@ -2379,11 +2381,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private <T> Optional<TSIndividual> parseIndividualToShapefile(Optional<@NonNull T> objectOptional, ShapefileSchema shapefileSchema) {
+    private <T extends @NonNull Object> Optional<TSIndividual> parseIndividualToShapefile(Optional<T> objectOptional, ShapefileSchema shapefileSchema) {
         if (!objectOptional.isPresent()) {
             return Optional.empty();
         }
-        final @NonNull T object = objectOptional.get();
+        final T object = objectOptional.get();
 //        if (objectOptional.isPresent()) {
 //            final T object = objectOptional.get();
         final Class<?> inputClass = object.getClass();

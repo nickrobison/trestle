@@ -2,6 +2,7 @@ package com.nickrobison.trestle.types.temporal;
 
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.io.Serializable;
@@ -131,7 +132,7 @@ public abstract class TemporalObject implements Serializable {
     public abstract boolean meets(TemporalObject comparingObject);
 
     @Override
-    public abstract boolean equals(Object obj);
+    public abstract boolean equals(@Nullable Object obj);
 
     @Override
     public abstract int hashCode();

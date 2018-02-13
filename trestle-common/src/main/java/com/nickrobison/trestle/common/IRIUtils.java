@@ -71,7 +71,11 @@ public class IRIUtils {
     public static String extractPrefix(IRI iri) {
         final Matcher matcher = prefixRegex.matcher(iri.toString());
         if (matcher.find() && matcher.groupCount() > 0) {
-            return matcher.group(0);
+            final String group = matcher.group(0);
+            if (group == null) {
+                return "";
+            }
+            return group;
         }
         return "";
     }
@@ -107,7 +111,11 @@ public class IRIUtils {
         }
         final Matcher matcher = suffixRegex.matcher(iriString);
         if (matcher.matches() && matcher.groupCount() > 0) {
-            return matcher.group(1);
+            final String group = matcher.group(1);
+            if (group == null) {
+                return "";
+            }
+            return group;
         }
         return "";
     }
