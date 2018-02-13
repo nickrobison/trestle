@@ -12,7 +12,9 @@
     <artifactId>trestle-actor</artifactId>
     <properties>
         <sonar.skip>true</sonar.skip>
-        <logback.version>1.1.8</logback.version>
+        <logback.version>1.2.3</logback.version>
+        <!--Can't upgrade this yet, -->
+        <akka.version>2.4.9</akka.version>
     </properties>
 
     <dependencies>
@@ -43,17 +45,17 @@
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-actor_2.11</artifactId>
-            <version>2.4.9</version>
+            <version>${akka.version}</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-remote_2.11</artifactId>
-            <version>2.4.9</version>
+            <version>${akka.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.romix.akka</groupId>
-            <artifactId>akka-kryo-serialization_2.11</artifactId>
-            <version>0.4.1</version>
+            <artifactId>akka-kryo-serialization_2.12</artifactId>
+            <version>0.5.2</version>
         </dependency>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
