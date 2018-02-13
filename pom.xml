@@ -36,7 +36,7 @@
         <junit.platform.version>1.0.3</junit.platform.version>
         <jmh.version>1.20</jmh.version>
         <geotools.version>18.2</geotools.version>
-        <metrics.version>4.0.2</metrics.version>
+        <metrics.version>3.2.6</metrics.version>
         <httpcomponents.version>4.5.3</httpcomponents.version>
         <owasp.version>3.1.1</owasp.version>
         <maven.enforcer.version>1.4.1</maven.enforcer.version>
