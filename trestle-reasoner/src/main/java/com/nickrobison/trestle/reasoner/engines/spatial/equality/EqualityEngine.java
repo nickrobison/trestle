@@ -30,7 +30,7 @@ public interface EqualityEngine {
      * @param inputSR - {@link SpatialReference} of objects
      * @return - {@link UnionContributionResult}
      */
-    <T> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR);
+    <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR);
 
     /**
      * Determines if two objects are approximately equal, in spatial area, to each other, given a threshold value.
@@ -52,7 +52,7 @@ public interface EqualityEngine {
      * @param <T> - Type parameter
      * @return - {@link Double} percent spatial equality between the objects
      */
-    <T> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR);
+    <T extends @NonNull Object> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR);
 
     /**
      * Return a {@link List} of {@link OWLNamedIndividual} that are equivalent to the given individual at the specific point in time

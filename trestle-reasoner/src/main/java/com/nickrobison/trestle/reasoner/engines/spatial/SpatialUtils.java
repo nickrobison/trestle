@@ -62,6 +62,8 @@ public class SpatialUtils {
         final Object spatial = spatialValue.orElseThrow(() -> new IllegalStateException("Cannot get spatial value for object"));
         try {
             if (spatial instanceof Polygon) {
+//                Progress tracker can be null, so this is an error
+                @SuppressWarnings("argument.type.incompatible")
                 final ByteBuffer wkbBuffer = operatorExport.execute(0, (Polygon) spatial, null);
                 return wkbReader.read(wkbBuffer.array());
             } else if (spatial instanceof String) {

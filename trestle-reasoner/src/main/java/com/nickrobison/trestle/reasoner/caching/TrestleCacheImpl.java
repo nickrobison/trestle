@@ -130,7 +130,7 @@ public class TrestleCacheImpl implements TrestleCache {
         //        Write to the cache and the index
         try {
             cacheLock.lockWrite();
-            logger.debug("Adding {} to cache from {} to {}", individualIRI, startTemporal, endTemporal);
+            logger.debug("Adding {} to cache from {} to {}", individualIRI, startTemporal, endTemporal == null ? "" : endTemporal);
             trestleObjectCache.put(individualIRI.getIRI(), value);
             logger.debug("Added to cache");
             final long endTemporalMillis;

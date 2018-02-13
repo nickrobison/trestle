@@ -102,6 +102,8 @@ public class ClassBuilder implements IClassBuilder {
             logger.error("Wrong number of constructor arguments, need {} have {}", parameterNames.size(), sortedValues.length);
             logger.error("Constructor for class {} has parameters {}, but we have {}", clazz.getSimpleName(), parameterNames, arguments.getNames());
 
+//            Class::getTypeName works fine here
+            @SuppressWarnings("methodref.receiver.invalid")
             final List<? extends Class<?>> types = Arrays.stream(parameters)
                     .map(Parameter::getType)
                     .sorted(Comparator.comparing(Class::getTypeName))

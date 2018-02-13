@@ -27,6 +27,7 @@ import java.util.Optional;
 
 import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 import static com.nickrobison.trestle.common.StaticIRI.dateTimeDatatypeIRI;
+import static com.nickrobison.trestle.common.TrestleExceptionUtils.*;
 import static com.nickrobison.trestle.reasoner.parser.ClassParser.dfStatic;
 import static com.nickrobison.trestle.reasoner.parser.ClassParser.filterMethodName;
 import static com.nickrobison.trestle.reasoner.parser.temporal.JavaTimeParser.parseDateTimeToJavaTemporal;
@@ -667,7 +668,7 @@ public class TemporalParser {
      * @param destinationType - Java destination temporal type
      * @return - Java temporal
      */
-    public static Temporal parseToTemporal(OWLLiteral literal, Class<? extends Temporal> destinationType) {
+    public static Temporal parseToTemporal(OWLLiteral literal, @Nullable Class<? extends Temporal> destinationType) {
         return parseToTemporal(literal, destinationType, ZoneOffset.UTC);
     }
 
@@ -679,19 +680,25 @@ public class TemporalParser {
      * @param timeZone        - Zone ID to adjust temporal to
      * @return - Java temporal (adjusted to the given timezone
      */
-    public static Temporal parseToTemporal(OWLLiteral literal, Class<? extends Temporal> destinationType, ZoneId timeZone) {
+    public static Temporal parseToTemporal(OWLLiteral literal, @Nullable Class<? extends Temporal> destinationType, ZoneId timeZone) {
+        if (destinationType == null) {
+            throw new IllegalStateException("Cannot parse temporal with null type");
+        }
         final Temporal parsedTemporal;
         final OWLDatatype datatype = literal.getDatatype();
         if (datatype.getIRI().equals(dateTimeDatatypeIRI)) {
             if (destinationType.getTypeName().contains("java.time")) {
                 final Optional<Temporal> optionalJavaTemporal = parseDateTimeToJavaTemporal(destinationType.getTypeName(), literal, timeZone);
-                parsedTemporal = optionalJavaTemporal.orElseThrow(() -> new RuntimeException(String.format(UNSUPPORTED_TEMPORAL_PARSING, literal.getDatatype(), destinationType.getTypeName())));
+                parsedTemporal = optionalJavaTemporal.orElseThrow(() -> new RuntimeException(String.format(UNSUPPORTED_TEMPORAL_PARSING, literal.getDatatype(),
+                        handleNullOrEmptyString(destinationType.getTypeName()))));
             } else if (destinationType.getTypeName().contains("org.joda.time")) {
                 Optional<Temporal> optionalJodaTemporal = parseDateTimeToJodaTemporal(destinationType.getTypeName(), literal);
-                parsedTemporal = optionalJodaTemporal.orElseThrow(() -> new RuntimeException(String.format(UNSUPPORTED_TEMPORAL_PARSING, literal.getDatatype(), destinationType.getTypeName())));
+                parsedTemporal = optionalJodaTemporal.orElseThrow(() -> new RuntimeException(String.format(UNSUPPORTED_TEMPORAL_PARSING, literal.getDatatype(),
+                        handleNullOrEmptyString(destinationType.getTypeName()))));
             } else {
                 logger.error("Unsupported parsing of temporal {} to {}", literal.getDatatype(), destinationType.getTypeName());
-                throw new IllegalArgumentException(String.format(UNSUPPORTED_TEMPORAL_PARSING, literal.getDatatype(), destinationType.getTypeName()));
+                throw new IllegalArgumentException(String.format(UNSUPPORTED_TEMPORAL_PARSING, literal.getDatatype(),
+                        handleNullOrEmptyString(destinationType.getTypeName())));
             }
         } else {
             logger.error("Unsupported parsing of XSD type {}", datatype);

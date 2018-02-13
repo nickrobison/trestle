@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.types;
 
 import com.nickrobison.trestle.types.relations.ObjectRelation;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.Serializable;
 
@@ -57,7 +58,7 @@ public class TrestleRelation implements Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 

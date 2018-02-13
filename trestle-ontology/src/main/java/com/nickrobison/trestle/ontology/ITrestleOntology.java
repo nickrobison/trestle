@@ -5,6 +5,7 @@ import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
@@ -386,14 +387,14 @@ public interface ITrestleOntology {
      * @param write - Writable transaction?
      * @return - Transaction Object passed in as argument
      */
-    TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject, boolean write);
+    TrestleTransaction createandOpenNewTransaction(@Nullable TrestleTransaction transactionObject, boolean write);
 
     /**
      * Takes an existing transaction object and inherits from it
      * @param transactionObject - Existing TrestleTransactionObject
      * @return - Transaction Object passed in as argument
      */
-    TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject);
+    TrestleTransaction createandOpenNewTransaction(@Nullable TrestleTransaction transactionObject);
 
     TrestleTransaction createandOpenNewTransaction(boolean write);
 

@@ -36,11 +36,7 @@ public class SpatialComparisonReport extends AbstractComparisonReport {
      * @return - {@link Optional} of {@link Double} if the relation exists. {@link Optional#empty()} if not
      */
     public Optional<Double> getEquality() {
-        if (this.relations.contains(ObjectRelation.EQUALS)) {
-            return Optional.of(equality);
-        } else {
-            return Optional.empty();
-        }
+        return Optional.ofNullable(this.equality);
     }
 
     /**

@@ -68,7 +68,10 @@ public class TypeConverter {
      */
     //    I need the unchecked casts in order to get the correct primitives for the constructor generation
     @SuppressWarnings({"unchecked", "return.type.incompatible", "squid:S1199"})
-    public static <@NonNull T> @NonNull T extractOWLLiteral(Class<@NonNull T> javaClass, OWLLiteral literal) {
+    public static <T extends @NonNull Object> T extractOWLLiteral(Class<T> javaClass, @Nullable OWLLiteral literal) {
+        if (literal == null) {
+            throw new IllegalStateException("Cannot have null literal");
+        }
 
         switch (javaClass.getTypeName()) {
 

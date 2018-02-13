@@ -418,8 +418,12 @@ public class SpatialUnionBuilder {
      * @param <T>        - {@link T} type parameter
      * @return - {@link T} object from map
      */
-    private static <T> T getSetFirstFromMap(Map<Geometry, T> objectMap, Set<Geometry> polygonSet) {
-        return objectMap.get(polygonSet.stream().findFirst().orElseThrow(() -> new IllegalStateException("Cannot get first polygon from set")));
+    private static <T extends @NonNull Object> T getSetFirstFromMap(Map<Geometry, T> objectMap, Set<Geometry> polygonSet) {
+        final T first = objectMap.get(polygonSet.stream().findFirst().orElseThrow(() -> new IllegalStateException("Cannot get first polygon from set")));
+        if (first == null) {
+            throw new IllegalStateException("Cannot have empty map from Set");
+        }
+        return first;
     }
 
     /**
@@ -430,7 +434,9 @@ public class SpatialUnionBuilder {
      * @param <T>        - {@link T} type parameter
      * @return - {@link T} object fromm map
      */
-    private static <T> Set<T> getMapValuesFromSet(Map<Geometry, T> objectMap, Set<Geometry> polygonSet) {
+    //        We know that this is non-null, so we can supress this
+    @SuppressWarnings("methodref.return.invalid")
+    private static <T extends @NonNull Object> Set<T> getMapValuesFromSet(Map<Geometry, T> objectMap, Set<Geometry> polygonSet) {
         return polygonSet
                 .stream()
                 .map(objectMap::get)

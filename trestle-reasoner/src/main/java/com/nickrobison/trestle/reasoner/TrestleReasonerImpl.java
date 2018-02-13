@@ -59,6 +59,7 @@ import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -282,7 +283,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <C extends TypeConstructor> void registerTypeConstructor(C typeConstructor) {
+    public <C extends TypeConstructor> void registerTypeConstructor(TrestleReasonerImpl this, C typeConstructor) {
         TypeConverter.registerTypeConstructor(typeConstructor);
     }
 
@@ -1108,6 +1109,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
         final String historyQuery = this.qb.buildFactHistoryQuery(individual, factName, start, end, db);
         final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(historyQuery);
+//        Optional::isPresent works fine, Checker is wrong
+        @SuppressWarnings("methodref.receiver.invalid")
         final List<Object> factValues = resultSet.getResults()
                 .stream()
                 .map(result -> result.getLiteral("value"))

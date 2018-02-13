@@ -5,6 +5,7 @@ import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.reasoner.exceptions.*;
+import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.semanticweb.owlapi.model.OWLClass;
 
 import java.io.Serializable;
@@ -426,10 +427,12 @@ public class ClassRegister implements IClassRegister {
 
     @Override
     public Object getRegisteredClass(Class<?> clazz) throws UnregisteredClassException {
-        return null;
+        throw new UnsupportedOperationException("Java parser cannot get registered classes");
     }
 
     @Override
+//    I have no idea why Checker says this is KeySet istead of just set, but it is, so we supress it. Like always
+    @SuppressWarnings({"return.type.incompatible"})
     public Set<OWLClass> getRegisteredOWLClasses() {
         return this.registeredClasses.keySet();
     }
