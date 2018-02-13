@@ -4,11 +4,11 @@ import com.nickrobison.trestle.reasoner.annotations.*;
 import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
-import com.nickrobison.trestle.reasoner.exceptions.InvalidClassException;
-import com.nickrobison.trestle.reasoner.exceptions.MissingConstructorException;
-import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
-import com.nickrobison.trestle.reasoner.exceptions.UnsupportedTypeException;
+import com.nickrobison.trestle.reasoner.exceptions.*;
+import org.checkerframework.checker.nullness.qual.KeyFor;
+import org.semanticweb.owlapi.model.OWLClass;
 
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -16,10 +16,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.time.DateTimeException;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.LanguageUtils.checkLanguageCodeIsValid;
@@ -28,9 +25,12 @@ import static com.nickrobison.trestle.reasoner.parser.ClassParser.filterMethodNa
 /**
  * Created by nrobison on 7/26/16.
  */
-public class ClassRegister {
+public class ClassRegister implements IClassRegister {
 
-    private ClassRegister() {
+    private final Map<OWLClass, Class<?>> registeredClasses;
+
+    ClassRegister() {
+        this.registeredClasses = new HashMap<>();
     }
 
     public static void ValidateClass(Class<?> clazz) throws TrestleClassException {
@@ -412,5 +412,47 @@ public class ClassRegister {
                 .filter(n -> n.equals(argName))
                 .findFirst();
         matchingArgument.orElseThrow(() -> new InvalidClassException(clazz, InvalidClassException.State.MISSING));
+    }
+
+    @Override
+    public void registerClass(OWLClass owlClass, Class<?> clazz) throws TrestleClassException {
+        ClassRegister.ValidateClass(clazz);
+        this.registeredClasses.put(owlClass, clazz);
+    }
+
+    @Override
+    public void deregisterClass(Class<?> clazz) {
+//        Not implemented
+    }
+
+    @Override
+    public Object getRegisteredClass(Class<?> clazz) throws UnregisteredClassException {
+        throw new UnsupportedOperationException("Java parser cannot get registered classes");
+    }
+
+    @Override
+//    I have no idea why Checker says this is KeySet istead of just set, but it is, so we supress it. Like always
+    @SuppressWarnings({"return.type.incompatible"})
+    public Set<OWLClass> getRegisteredOWLClasses() {
+        return this.registeredClasses.keySet();
+    }
+
+    @Override
+    public boolean isRegistered(Class<?> clazz) {
+        return this.registeredClasses.containsValue(clazz);
+    }
+
+    @Override
+    public boolean isCacheable(Class<?> clazz) {
+        return Serializable.class.isAssignableFrom(clazz);
+    }
+
+    @Override
+    public Class<?> lookupClass(OWLClass owlClass) throws UnregisteredClassException {
+        final Class<?> aClass = this.registeredClasses.get(owlClass);
+        if (aClass == null) {
+            throw new UnregisteredClassException(owlClass);
+        }
+        return aClass;
     }
 }

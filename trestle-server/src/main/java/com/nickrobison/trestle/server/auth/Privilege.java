@@ -1,6 +1,8 @@
 package com.nickrobison.trestle.server.auth;
 
+import java.util.EnumSet;
 import java.util.Set;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -12,19 +14,19 @@ public enum Privilege {
     ADMIN(2),
     DBA(4);
 
-    private int _val;
+    private int value;
     Privilege(int val) {
-        _val = val;
+        value = val;
     }
 
     public int getValue() {
-        return _val;
+        return value;
     }
 
     public static Set<Privilege> parsePrivileges(int val) {
         return Stream.of(values())
                 .filter(priv -> (val & priv.getValue()) != 0)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(Privilege.class)));
     }
 
     public static int buildPrivilageMask(Set<Privilege> privileges) {

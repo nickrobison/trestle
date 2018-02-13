@@ -1,9 +1,9 @@
 /**
  * Created by nrobison on 1/17/17.
  */
-import "@angular/platform-browser-dynamic";
 import "@angular/core";
 import "@angular/http";
+import "@angular/common/http";
 import "@angular/forms";
 import "@angular/animations";
 import "@angular/material";
@@ -17,15 +17,18 @@ import "crypto-js";
 import "codemirror";
 import "codemirror/mode/javascript/javascript.js";
 import "codemirror/mode/sparql/sparql.js";
-import "d3-selection";
-import "d3-scale";
-import "d3-force";
-import "d3-shape";
 import "d3-array";
 import "d3-axis";
-import "d3-transition";
+import "d3-force";
+import "d3-interpolate";
+import "d3-scale";
 import "d3-scale-chromatic";
+import "d3-selection";
+import "d3-shape";
+import "d3-time-format";
+import "d3-transition";
 import "moment";
 import "moment-timezone";
 import "file-saver";
 import "wellknown";
+import "stacktrace-js";

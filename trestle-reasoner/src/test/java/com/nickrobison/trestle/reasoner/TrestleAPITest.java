@@ -18,10 +18,8 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.opengis.referencing.operation.TransformException;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TrestleAPITest extends AbstractReasonerTest {
 
     @Test
-    public void testClasses() throws TrestleClassException, MissingOntologyEntity, ParseException, TransformException {
+    public void testClasses() throws ParseException {
 
 //        Spatial/Complex objects
         final TestClasses.GAULComplexClassTest gaulComplexClassTest = new TestClasses.GAULComplexClassTest();
@@ -123,6 +121,19 @@ public class TrestleAPITest extends AbstractReasonerTest {
     }
 
     @Test
+    public void testClassRegistration() throws TrestleClassException, MissingOntologyEntity {
+        final TestClasses.GAULComplexClassTest gaulComplexClassTest = new TestClasses.GAULComplexClassTest();
+//        De register the class
+        this.reasoner.deregisterClass(TestClasses.GAULComplexClassTest.class);
+//        Try to write the indvidual
+        assertThrows(TrestleClassException.class, () -> this.reasoner.writeTrestleObject(gaulComplexClassTest));
+//        Register the class again
+        this.reasoner.registerClass(TestClasses.GAULComplexClassTest.class);
+//        Try again
+        this.reasoner.writeTrestleObject(gaulComplexClassTest);
+    }
+
+    @Test
     public void eventTest() throws TrestleClassException, MissingOntologyEntity {
 //        Split event
 //        Create test events
@@ -168,7 +179,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
                 () -> assertEquals(5, splitStartIndividual.getRelations().stream().filter(relation -> relation.getType().equals("SPLIT_INTO")).collect(Collectors.toList()).size(), "Should have 5 split_into events"));
         final Optional<TrestleRelation> split_from = this.reasoner.getTrestleIndividual(split1.adm0_code.toString()).getRelations().stream().filter(relation -> relation.getType().equals("SPLIT_FROM")).findFirst();
         assertAll(() -> assertTrue(split_from.isPresent()),
-                () -> assertEquals("http://nickrobison.com/test-owl#100", split_from.get().getObject(), "Should point to starting split"));
+                () -> assertEquals("http://nickrobison.com/test-owl/100", split_from.get().getObject(), "Should point to starting split"));
 
 //        Now merged
         final TrestleIndividual mergeSubjectIndividual = this.reasoner.getTrestleIndividual(merge_subject.adm0_code.toString());
@@ -176,13 +187,12 @@ public class TrestleAPITest extends AbstractReasonerTest {
                 () -> assertEquals(5, mergeSubjectIndividual.getRelations().stream().filter(relation -> relation.getType().equals("MERGED_FROM")).collect(Collectors.toList()).size(), "Should have 5 merged objects"));
         final Optional<TrestleRelation> merged_into = this.reasoner.getTrestleIndividual(merge5.adm0_code.toString()).getRelations().stream().filter(relation -> relation.getType().equals("MERGED_INTO")).findFirst();
         assertAll(() -> assertTrue(merged_into.isPresent()),
-                () -> assertEquals("http://nickrobison.com/test-owl#200", merged_into.get().getObject(), "Should point to merged subject"));
+                () -> assertEquals("http://nickrobison.com/test-owl/200", merged_into.get().getObject(), "Should point to merged subject"));
     }
 
     @Test
-//    Disable this because it keeps failing. No idea why, but it does. But only on branches.
     @Disabled
-    public void gaulLoader() throws IOException, TrestleClassException, MissingOntologyEntity, OWLOntologyStorageException {
+    public void gaulLoader() throws IOException, TrestleClassException, MissingOntologyEntity {
 
 
 //        Write the objects

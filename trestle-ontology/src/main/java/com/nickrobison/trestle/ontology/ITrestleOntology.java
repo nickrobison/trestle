@@ -5,6 +5,7 @@ import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
@@ -386,14 +387,14 @@ public interface ITrestleOntology {
      * @param write - Writable transaction?
      * @return - Transaction Object passed in as argument
      */
-    TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject, boolean write);
+    TrestleTransaction createandOpenNewTransaction(@Nullable TrestleTransaction transactionObject, boolean write);
 
     /**
      * Takes an existing transaction object and inherits from it
      * @param transactionObject - Existing TrestleTransactionObject
      * @return - Transaction Object passed in as argument
      */
-    TrestleTransaction createandOpenNewTransaction(TrestleTransaction transactionObject);
+    TrestleTransaction createandOpenNewTransaction(@Nullable TrestleTransaction transactionObject);
 
     TrestleTransaction createandOpenNewTransaction(boolean write);
 
@@ -410,6 +411,15 @@ public interface ITrestleOntology {
      * @param transaction - Transaction object to try to abort current transaction with
      */
     void returnAndAbortTransaction(TrestleTransaction transaction);
+
+    /**
+     * Returns {@link TrestleTransaction} and forces the transaction to abort
+     * This is a stop-gap solution to deal with the fact that sometimes quickly executed operations will fail to clear the thread transaction state
+     * Shouldn't really be used, but maybe in a pinch
+     *
+     * @param trestleTransaction - {@link TrestleTransaction} to abort
+     */
+    void returnAndAbortWithForce(TrestleTransaction trestleTransaction);
 
     /**
      * Open a transaction and lock it

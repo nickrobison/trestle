@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.reasoner.engines.spatial;
 
-import com.codahale.metrics.annotation.Gauge;
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
 import com.esri.core.geometry.SpatialReference;
@@ -17,7 +16,6 @@ import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionCont
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
 import com.nickrobison.trestle.reasoner.parser.SpatialParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
-import com.nickrobison.trestle.reasoner.parser.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TrestleIndividual;
@@ -32,20 +30,20 @@ import com.vividsolutions.jts.io.WKTReader;
 import com.vividsolutions.jts.io.WKTWriter;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.eclipse.rdf4j.query.QueryEvaluationException;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.cache.Cache;
 import javax.inject.Inject;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -62,8 +60,7 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
     private final EqualityEngine equalityEngine;
     private final ContainmentEngine containmentEngine;
     private final TrestleExecutorService spatialPool;
-    //    TODO(nickrobison): Move this into TrestleCache, once it's done
-    private final Map<Integer, Geometry> geometryCache;
+    private final Cache<Integer, Geometry> geometryCache;
     private WKTReader reader;
     private WKTWriter writer;
 
@@ -75,7 +72,8 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
                          IndividualEngine individualEngine,
                          EqualityEngine equalityEngine,
                          ContainmentEngine containmentEngine,
-                         Metrician metrician) {
+                         Metrician metrician,
+                         Cache<Integer, Geometry> cache) {
         final Config trestleConfig = ConfigFactory.load().getConfig("trestle");
         this.tp = trestleParser;
         this.qb = qb;
@@ -91,7 +89,7 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
         this.writer = new WKTWriter();
 
 //        Setup object caches
-        this.geometryCache = new ConcurrentHashMap<>();
+        geometryCache = cache;
     }
 
 
@@ -153,36 +151,67 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
             intersectQuery = this.qb.buildTemporalSpatialIntersection(owlClass, wktBuffer, buffer, QueryBuilder.Units.METER, atTemporal, dbTemporal);
         }
 
-//        Do the intersection
+//        Do the intersection on the main thread, to try and avoid other weirdness
+        logger.debug("Beginning spatial intersection, should not have any transactions");
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        final CompletableFuture<List<TrestleIndividual>> individualList = CompletableFuture.supplyAsync(() -> {
-            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-            try {
-                return this.ontology.executeSPARQLResults(intersectQuery);
-            } finally {
-                this.ontology.returnAndCommitTransaction(tt);
-            }
-        }, this.spatialPool)
-//                From the results, get all the individuals
-                .thenApply(trestleResultSet -> trestleResultSet
-                        .getResults()
-                        .stream()
-                        .map(result -> result.unwrapIndividual("m"))
-                        .collect(Collectors.toSet()))
-                .thenApply(intersectedIndividuals -> intersectedIndividuals
-                        .stream()
-                        .map(individual -> CompletableFuture.supplyAsync(() -> {
-                            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-                            try {
-                                return this.individualEngine.getTrestleIndividual(individual.asOWLNamedIndividual(), tt);
-                            } finally {
-                                this.ontology.returnAndCommitTransaction(tt);
-                            }
-                        }))
-                        .collect(Collectors.toList()))
-                .thenCompose(LambdaUtils::sequenceCompletableFutures);
-
         try {
+//            CompletableFuture.supplyAsync(() -> {
+//                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+//                try {
+//                    return this.ontology.executeSPARQLResults(intersectQuery);
+//                } finally {
+//                    this.ontology.returnAndCommitTransaction(tt`);
+//                }
+//            }, this.spatialPool)
+//                    .thenCompose((results) -> {
+//                        return results
+//                                .getResults()
+//                                .stream()
+//                                .map(result -> result.unwrapIndividual("m"))
+//                                .map(owlIndividual -> CompletableFuture.supplyAsync(() -> {
+//                                    final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+//                                    try {
+//                                        return this.individualEngine.getTrestleIndividual(owlIndividual.asOWLNamedIndividual(), tt);
+//                                    } finally {
+//                                        this.ontology.returnAndCommitTransaction(tt);
+//                                    }
+//                                }))
+//                                .collect(Collectors.toList())
+//                    })
+////            final List<CompletableFuture<TrestleIndividual>> individualFutures = trestleResultSet
+////                    ;
+//
+//            final CompletableFuture<List<TrestleIndividual>> sequencedFuture = LambdaUtils.sequenceCompletableFutures(individualFutures);
+
+//
+            final CompletableFuture<List<TrestleIndividual>> individualList = CompletableFuture.supplyAsync(() -> {
+                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                try {
+                    return this.ontology.executeSPARQLResults(intersectQuery);
+                } finally {
+                    this.ontology.returnAndCommitTransaction(tt);
+                }
+            }, this.spatialPool)
+//                From the results, get all the individuals
+                    .thenApply(trestleResultSet -> trestleResultSet
+                            .getResults()
+                            .stream()
+                            .map(result -> result.unwrapIndividual("m"))
+                            .collect(Collectors.toSet()))
+                    .thenApply(intersectedIndividuals -> intersectedIndividuals
+                            .stream()
+                            .map(individual -> CompletableFuture.supplyAsync(() -> {
+                                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                                try {
+                                    return this.individualEngine.getTrestleIndividual(individual.asOWLNamedIndividual(), tt);
+                                } finally {
+                                    this.ontology.returnAndCommitTransaction(tt);
+                                }
+                            }))
+                            .collect(Collectors.toList()))
+                    .thenCompose(LambdaUtils::sequenceCompletableFutures);
+
+
             return Optional.of(individualList.get());
         } catch (InterruptedException e) {
             logger.error("Spatial intersection interrupted", e);
@@ -191,6 +220,10 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
             return Optional.empty();
         } catch (ExecutionException e) {
             logger.error("Execution exception while intersecting", e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+            return Optional.empty();
+        } catch (QueryEvaluationException e) {
+            logger.error("You broke it, Nick!", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
         } finally {
@@ -204,15 +237,15 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
      * Perform spatial comparison between two input objects
      * Object relations unidirectional are A -&gt; B. e.g. contains(A,B)
      *
-     * @param objectA        - {@link Object} to comapare against
-     * @param objectB        - {@link Object} to compre with
+     * @param objectA        - {@link Object} to compare against
+     * @param objectB        - {@link Object} to compare with
      * @param inputSR        - {@link SpatialReference} input spatial reference
      * @param matchThreshold - {@link Double} cutoff for all fuzzy matches
      * @param <T>            - Type parameter
      * @return - {@link SpatialComparisonReport}
      */
     @Timed
-    public <T> SpatialComparisonReport compareObjects(T objectA, T objectB, SpatialReference inputSR, double matchThreshold) {
+    public <T extends Object> SpatialComparisonReport compareObjects(T objectA, T objectB, SpatialReference inputSR, double matchThreshold) {
 
         final OWLNamedIndividual objectAID = this.tp.classParser.getIndividual(objectA);
         final OWLNamedIndividual objectBID = this.tp.classParser.getIndividual(objectB);
@@ -224,8 +257,10 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
 
         //        Build the geometries
         final int srid = inputSR.getID();
-        final Geometry aPolygon = this.geometryCache.computeIfAbsent(objectA.hashCode(), key -> computeGeometry(objectA, srid));
-        final Geometry bPolygon = this.geometryCache.computeIfAbsent(objectB.hashCode(), key -> computeGeometry(objectB, srid));
+//        final Geometry aPolygon = this.geometryCache.get(objectA.hashCode(), key -> computeGeometry(objectA, srid));
+        final Geometry aPolygon = this.getGeomFromCache(objectA, srid);
+//        final Geometry bPolygon = this.geometryCache.get(objectB.hashCode(), key -> computeGeometry(objectB, srid));
+        final Geometry bPolygon = this.getGeomFromCache(objectB, srid);
 
         //        If they're disjoint, return
         if (aPolygon.disjoint(bPolygon)) {
@@ -275,41 +310,60 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
     }
 
     /**
+     * Get the object {@link Geometry} from the cache, computing if absent
+     *
+     * @param object - {@link Object inputObject}
+     * @param srid   - {@link Integer} srid
+     * @return - {@link Geometry}
+     */
+    private Geometry getGeomFromCache(Object object, int srid) {
+        final int hashCode = object.hashCode();
+        final Geometry value = this.geometryCache.get(hashCode);
+
+        if (value == null) {
+            final Geometry geometry = computeGeometry(object, srid);
+            this.geometryCache.put(hashCode, geometry);
+            return geometry;
+        }
+        return value;
+    }
+
+    /**
      * EQUALITY
      */
 
     @Override
     @Timed
-    public <T> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
+    public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
         return this.equalityEngine.calculateSpatialUnion(inputObjects, inputSR, matchThreshold);
     }
 
     @Override
-    public <T> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR) {
+    public <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR) {
         return this.equalityEngine.calculateUnionContribution(result, inputSR);
     }
 
     @Override
     @Timed
-    public <T> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold) {
+    public <T extends @NonNull Object> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold) {
         return this.equalityEngine.isApproximatelyEqual(inputObject, matchObject, inputSR, threshold);
     }
 
     @Override
     @Timed
-    public <T> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR) {
+    public <T extends @NonNull Object> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR) {
         return this.equalityEngine.calculateSpatialEquals(inputObject, matchObject, inputSR);
     }
 
     @Override
     @Timed
-    public <T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
+    public <T extends @NonNull Object> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
         return this.equalityEngine.getEquivalentIndividuals(clazz, individual, queryTemporal);
     }
 
     @Override
     @Timed
-    public <T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal) {
+    public <T extends @NonNull Object> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal) {
         return this.equalityEngine.getEquivalentIndividuals(clazz, individual, queryTemporal);
     }
 
@@ -319,22 +373,22 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
 
     @Override
     @Timed
-    public <T> ContainmentDirection getApproximateContainment(T objectA, T objectB, SpatialReference inputSR, double threshold) {
+    public <T extends @NonNull Object> ContainmentDirection getApproximateContainment(T objectA, T objectB, SpatialReference inputSR, double threshold) {
         return this.containmentEngine.getApproximateContainment(objectA, objectB, inputSR, threshold);
     }
     /**
      * HELPER FUNCTIONS
      */
 
-    /**
-     * Get the current size of the geometry cache
-     *
-     * @return - {@link Integer}
-     */
-    @Gauge(name = "geometry-cache-size")
-    public int getSize() {
-        return this.geometryCache.size();
-    }
+//    /**
+//     * Get the current size of the geometry geometryCache
+//     *
+//     * @return - {@link Integer}
+//     */
+//    @Gauge(name = "geometry-geometryCache-size")
+//    public long getSize() {
+//        return this.geometryCache.get
+//    }
 
     /**
      * Compute {@link Geometry} for the given {@link Object}

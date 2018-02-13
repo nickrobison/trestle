@@ -10,14 +10,23 @@ import com.nickrobison.trestle.server.modules.TrestleServerModule;
 import io.dropwizard.Application;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.db.ManagedDataSource;
+import io.dropwizard.db.ManagedPooledDataSource;
 import io.dropwizard.db.PooledDataSourceFactory;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import io.federecio.dropwizard.swagger.SwaggerBundle;
+import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import liquibase.Liquibase;
+import liquibase.database.Database;
+import liquibase.database.DatabaseFactory;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.resource.ClassLoaderResourceAccessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
 import java.util.stream.Stream;
 
 /**
@@ -25,7 +34,6 @@ import java.util.stream.Stream;
  */
 public class TrestleServer extends Application<TrestleServerConfiguration> {
     private static final Logger logger = LoggerFactory.getLogger(TrestleServer.class);
-
     private final MigrationsBundle<TrestleServerConfiguration> migrations = new MigrationsBundle<TrestleServerConfiguration>() {
         @Override
         public PooledDataSourceFactory getDataSourceFactory(TrestleServerConfiguration configuration) {
@@ -62,6 +70,14 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
                 .build();
 
         bootstrap.addBundle(guiceBundle);
+
+//        Add Swagger
+        bootstrap.addBundle(new SwaggerBundle<TrestleServerConfiguration>() {
+            @Override
+            protected SwaggerBundleConfiguration getSwaggerBundleConfiguration(TrestleServerConfiguration trestleServerConfiguration) {
+                return trestleServerConfiguration.getSwaggerBundleConfiguration();
+            }
+        });
     }
 
     @Override
@@ -75,26 +91,30 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
 //        environment.getApplicationContext().addFilter(new FilterHolder(new URLRewriter()), "/workspace/*", EnumSet.allOf(DispatcherType.class));
 
         //    database migration?
-//        final ManagedDataSource migrationDataSource = createMigrationDataSource(trestleServerConfiguration, environment);
-//        try (Connection connection = migrationDataSource.getConnection()) {
-//            final JdbcConnection conn = new JdbcConnection(connection);
-//            final Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(conn);
-//            final Liquibase liquibase = new Liquibase("migrations.xml", new ClassLoaderResourceAccessor(), database);
-//            liquibase.update("");
-//            logger.info("Migration complete");
-//        } catch(Exception ex) {
-//            throw new IllegalStateException("Unable to migrate database", ex);
-//        } finally {
-//            try {
-//                migrationDataSource.stop();
-//            } catch (Exception ex) {
-//                logger.error("Unable to stop migration data source", ex);
-//            }
-//        }
+        final ManagedPooledDataSource migrationDataSource = createMigrationDataSource(trestleServerConfiguration, environment);
+        try {
+            if (migrationDataSource.getUrl().contains("./")) {
+                logger.warn("Using local H2 file database, cannot perform migration");
+            } else {
+                logger.info("Performing Database migration");
+                try (Connection connection = migrationDataSource.getConnection()) {
+                    final JdbcConnection conn = new JdbcConnection(connection);
+                    final Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(conn);
+                    final Liquibase liquibase = new Liquibase("migrations.xml", new ClassLoaderResourceAccessor(), database);
+                    liquibase.update("");
+                    logger.info("Migration complete");
+                } catch (Exception ex) {
+                    throw new IllegalStateException("Unable to migrate database", ex);
+                }
+            }
+        } finally {
+            migrationDataSource.stop();
+        }
+
     }
 
-    private ManagedDataSource createMigrationDataSource(TrestleServerConfiguration trestleServerConfiguration, Environment environment) {
+    private ManagedPooledDataSource createMigrationDataSource(TrestleServerConfiguration trestleServerConfiguration, Environment environment) {
         final DataSourceFactory dataSourceFactory = trestleServerConfiguration.getDataSourceFactory();
-        return dataSourceFactory.build(environment.metrics(), "migration-ds");
+        return (ManagedPooledDataSource) dataSourceFactory.build(environment.metrics(), "migration-ds");
     }
 }

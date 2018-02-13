@@ -190,6 +190,10 @@ public class MapperOutput implements WritableComparable<MapperOutput> {
         return dateField;
     }
 
+    public LongWritable getAdm0Code() {
+        return adm0Code;
+    }
+
     /**
      * Checks whether the object is valid at a given time instant. Inclusive of start date and exclusive of expiration date
      *

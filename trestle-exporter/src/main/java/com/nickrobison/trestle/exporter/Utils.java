@@ -11,6 +11,10 @@ import java.util.UUID;
 @SuppressWarnings("Duplicates")
 class Utils {
 
+    private Utils() {
+//        Not used
+    }
+
     private static Class<?> parsePrimitiveClass(Class<?> returnClass) {
         if (returnClass.isPrimitive()) {
             switch (returnClass.getTypeName()) {
@@ -27,7 +31,7 @@ class Utils {
                     return Long.class;
                 }
                 default: {
-                    throw new RuntimeException(String.format("Unsupported cast of %s to primitive type", returnClass.getTypeName()));
+                    throw new IllegalArgumentException(String.format("Unsupported cast of %s to primitive type", returnClass.getTypeName()));
                 }
             }
         }
@@ -37,8 +41,9 @@ class Utils {
 
     /**
      * Parse the incoming types to make sure they're valid inputs for the DBF file
-     * @param typeClass -
-     * @return
+     *
+     * @param typeClass - Java {@link Class} to verify
+     * @return - {@link Class} to safely cast to
      */
     static Class<?> parseShapefileClass(Class<?> typeClass) {
         if (typeClass.isPrimitive()) {
@@ -64,12 +69,11 @@ class Utils {
             return typeClass;
         } else if (typeClass == byte[].class) {
             return typeClass;
-        } else  if (String.class.isAssignableFrom(typeClass)) {
+        } else if (String.class.isAssignableFrom(typeClass)) {
 //            When in doubt, return a string class
             return typeClass;
         } else {
             return String.class;
-//            throw new RuntimeException(String.format("DBF does not support type %s", typeClass));
         }
     }
 }

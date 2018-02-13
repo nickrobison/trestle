@@ -13,7 +13,9 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.Temporal;
 import java.time.temporal.TemporalQueries;
 import java.time.temporal.TemporalUnit;
-import java.util.*;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Created by nrobison on 6/30/16.
@@ -141,7 +143,30 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         }
 
 //        If we're continuing and they're not, we're not within them
-        return !this.asInterval().isContinuing() && TemporalUtils.compareTemporals(this.toTime, (Temporal) comparingObject.asInterval().getToTime().get()) == -1;
+        return !this.asInterval().isContinuing() && TemporalUtils.compareTemporals(this.toTime, (Temporal) comparingObject.asInterval().getToTime().get()) != 1;
+    }
+
+    @Override
+    public boolean meets(TemporalObject comparingObject) {
+        return !this.during(comparingObject) &&
+                !this.isContinuing()
+                && TemporalUtils.compareTemporals(this.toTime, comparingObject.getIdTemporal()) == 0;
+    }
+
+    @Override
+    public boolean starts(TemporalObject comparingObject) {
+        return this.during(comparingObject)
+                && TemporalUtils.compareTemporals(this.fromTime, comparingObject.getIdTemporal()) == 0;
+    }
+
+    @Override
+    @SuppressWarnings({"squid:S3655"}) // We can suppress this because we call .isContinuing() earlier
+    public boolean finishes(TemporalObject comparingObject) {
+        return this.during(comparingObject)
+                && !this.isContinuing()
+                && !comparingObject.isContinuing()
+                && comparingObject.isInterval()
+                && TemporalUtils.compareTemporals(this.toTime, (Temporal) comparingObject.asInterval().getToTime().get()) == 0;
     }
 
     @Override
@@ -181,6 +206,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
      * @param amount - amount to add/subtract from the ending temporal
      * @return - Optional temporal of type {@link T}
      */
+    @SuppressWarnings({"squid:S3516"}) // I think we can suppress this because we don't actually return the same value. I think?
     public Optional<T> getAdjustedToTime(int amount) {
         if (isContinuing()) return Optional.empty();
         @SuppressWarnings({"ConstantConditions", "squid:S3655"}) final T end = this.getToTime().get();
@@ -236,7 +262,7 @@ public class IntervalTemporal<T extends Temporal> extends TemporalObject {
         if (toTime != null ? !toTime.equals(that.toTime) : that.toTime != null) return false;
         if (startName != null ? !startName.equals(that.startName) : that.startName != null) return false;
         if (endName != null ? !endName.equals(that.endName) : that.endName != null) return false;
-        if (!(temporalType == that.temporalType)) return false;
+        if (temporalType != that.temporalType) return false;
         if (!startTimeZone.equals(that.startTimeZone)) return false;
         return endTimeZone.equals(that.endTimeZone);
     }

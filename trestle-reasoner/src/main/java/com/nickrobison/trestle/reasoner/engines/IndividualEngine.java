@@ -25,6 +25,7 @@ import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
@@ -46,8 +47,6 @@ import java.util.stream.Collectors;
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
 import static com.nickrobison.trestle.common.LambdaUtils.sequenceCompletableFutures;
 import static com.nickrobison.trestle.common.StaticIRI.*;
-import static com.nickrobison.trestle.common.StaticIRI.componentRelationIRI;
-import static com.nickrobison.trestle.common.StaticIRI.trestleEventIRI;
 import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseToTemporal;
 
 @SuppressWarnings("Duplicates")
@@ -130,106 +129,119 @@ public class IndividualEngine {
         logger.debug("Building trestle individual {}", individual);
         @Nullable final TrestleIndividual cacheIndividual = this.trestleCache.getTrestleIndividual(individual);
         if (cacheIndividual != null) {
-            logger.debug("Retrieved {} from cache");
+            logger.debug("Retrieved {} from cache", individual);
             return cacheIndividual;
         }
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(transaction, false);
 
-        final CompletableFuture<TrestleIndividual> temporalFuture = CompletableFuture.supplyAsync(() -> {
-            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-            final Set<OWLDataPropertyAssertionAxiom> individualDataProperties = ontology.getAllDataPropertiesForIndividual(individual);
-            this.ontology.returnAndCommitTransaction(tt);
-            return new TemporalPropertiesPair(individual, individualDataProperties);
-        })
-                .thenApply(temporalPair -> TemporalObjectBuilder.buildTemporalFromProperties(temporalPair.getTemporalProperties(), null, temporalPair.getTemporalID()))
-                .thenApply(temporalObject -> new TrestleIndividual(individual.toStringID(), temporalObject.orElseThrow(() -> new CompletionException(new TrestleMissingIndividualException(individual)))));
+        try {
+            final CompletableFuture<TrestleIndividual> temporalFuture = CompletableFuture.supplyAsync(() -> {
+                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                final Set<OWLDataPropertyAssertionAxiom> individualDataProperties = ontology.getAllDataPropertiesForIndividual(individual);
+                this.ontology.returnAndCommitTransaction(tt);
+                return new TemporalPropertiesPair(individual, individualDataProperties);
+            })
+                    .thenApply(temporalPair -> TemporalObjectBuilder.buildTemporalFromProperties(temporalPair.getTemporalProperties(), null, temporalPair.getTemporalID()))
+                    .thenApply(temporalObject -> new TrestleIndividual(individual.toStringID(), temporalObject.orElseThrow(() -> new CompletionException(new TrestleMissingIndividualException(individual)))));
 
 //                Get all the facts
-        final Optional<List<OWLObjectPropertyAssertionAxiom>> individualFacts = ontology.getIndividualObjectProperty(individual, hasFactIRI);
-        final List<CompletableFuture<TrestleFact>> factFutureList = individualFacts.orElse(new ArrayList<>())
-                .stream()
-                .map(fact -> buildTrestleFact(fact.getObject().asOWLNamedIndividual(), trestleTransaction))
-                .collect(Collectors.toList());
+            final Optional<List<OWLObjectPropertyAssertionAxiom>> individualFacts = ontology.getIndividualObjectProperty(individual, hasFactIRI);
+            final List<CompletableFuture<TrestleFact>> factFutureList = individualFacts.orElse(new ArrayList<>())
+                    .stream()
+                    .map(fact -> buildTrestleFact(fact.getObject().asOWLNamedIndividual(), trestleTransaction))
+                    .collect(Collectors.toList());
 
-        CompletableFuture<List<TrestleFact>> factsFuture = sequenceCompletableFutures(factFutureList);
+            CompletableFuture<List<TrestleFact>> factsFuture = sequenceCompletableFutures(factFutureList);
 
 //                Get the relations
-        final CompletableFuture<List<TrestleRelation>> relationsFuture = CompletableFuture.supplyAsync(() -> {
-            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-            String query = this.qb.buildIndividualRelationQuery(individual);
-            try {
-                return ontology.executeSPARQLResults(query);
-            } catch (Exception e) {
-                this.ontology.returnAndAbortTransaction(tt);
-                throw new CompletionException(e.getCause());
-            } finally {
-                this.ontology.returnAndCommitTransaction(tt);
-            }
-        }, individualThreadPool)
-                .thenApply(sparqlResults -> {
-                    List<TrestleRelation> relations = new ArrayList<>();
-                    sparqlResults.getResults()
-                            .stream()
+            final CompletableFuture<List<TrestleRelation>> relationsFuture = CompletableFuture.supplyAsync(() -> {
+                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                String query = this.qb.buildIndividualRelationQuery(individual);
+                try {
+                    return ontology.executeSPARQLResults(query);
+                } catch (Exception e) {
+                    this.ontology.returnAndAbortTransaction(tt);
+                    final Throwable cause = e.getCause();
+                    if (cause == null) {
+                        throw new CompletionException("Unable to get cause", e);
+                    }
+                    throw new CompletionException(cause);
+                } finally {
+                    this.ontology.returnAndCommitTransaction(tt);
+                }
+            }, individualThreadPool)
+                    .thenApply(sparqlResults -> {
+                        List<TrestleRelation> relations = new ArrayList<>();
+                        sparqlResults.getResults()
+                                .stream()
 //                            We want the subProperties of Temporal/Spatial/Event relations. So we filter them out
-                            .filter(result -> !result.unwrapIndividual("o").asOWLNamedIndividual().getIRI().equals(temporalRelationIRI))
-                            .filter(result -> !result.unwrapIndividual("o").asOWLNamedIndividual().getIRI().equals(spatialRelationIRI))
-                            .filter(result -> !result.unwrapIndividual("o").asOWLNamedIndividual().getIRI().equals(eventRelationIRI))
-                            .filter(result -> !result.unwrapIndividual("o").asOWLNamedIndividual().getIRI().equals(componentRelationIRI))
+                                .filter(result -> !result.unwrapIndividual("o").asOWLNamedIndividual().getIRI().equals(temporalRelationIRI))
+                                .filter(result -> !result.unwrapIndividual("o").asOWLNamedIndividual().getIRI().equals(spatialRelationIRI))
+                                .filter(result -> !result.unwrapIndividual("o").asOWLNamedIndividual().getIRI().equals(eventRelationIRI))
+                                .filter(result -> !result.unwrapIndividual("o").asOWLNamedIndividual().getIRI().equals(componentRelationIRI))
 //                            Filter out self
-                            .filter(result -> !result.unwrapIndividual("p").asOWLNamedIndividual().equals(individual))
-                            .forEach(result -> relations.add(new TrestleRelation(result.unwrapIndividual("m").toStringID(),
-                                    ObjectRelation.getRelationFromIRI(IRI.create(result.unwrapIndividual("o").toStringID())),
-                                    result.unwrapIndividual("p").toStringID())));
-                    return relations;
-                });
+                                .filter(result -> !result.unwrapIndividual("p").asOWLNamedIndividual().equals(individual))
+                                .forEach(result -> relations.add(new TrestleRelation(result.unwrapIndividual("m").toStringID(),
+                                        ObjectRelation.getRelationFromIRI(IRI.create(result.unwrapIndividual("o").toStringID())),
+                                        result.unwrapIndividual("p").toStringID())));
+                        return relations;
+                    });
 
 //        Get the events
-        final CompletableFuture<List<TrestleEvent>> eventsFuture = CompletableFuture.supplyAsync(() -> {
-            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-            final String query = this.qb.buildIndividualEventQuery(individual);
-            try {
-                return this.ontology.executeSPARQLResults(query);
-            } catch (Exception e) {
-                this.ontology.returnAndAbortTransaction(tt);
-                throw new CompletionException(e.getCause());
-            } finally {
-                this.ontology.returnAndCommitTransaction(tt);
-            }
-        }, this.individualThreadPool)
-                .thenApply(results -> results.getResults()
-                        .stream()
-                        .filter(result -> !result.unwrapIndividual("type").asOWLNamedIndividual().getIRI().equals(trestleEventIRI))
-                        .map(result -> {
-                            final OWLNamedIndividual eventIndividual = result.unwrapIndividual("r").asOWLNamedIndividual();
-                            final IRI typeIRI = result.unwrapIndividual("type").asOWLNamedIndividual().getIRI();
-                            final TrestleEventType eventType = TrestleEventType.getEventClassFromIRI(typeIRI);
-                            final Temporal temporal = parseToTemporal(result.unwrapLiteral("t"), OffsetDateTime.class);
-                            return new TrestleEvent(eventType, individual, eventIndividual, temporal);
-                        })
-                        .collect(Collectors.toList()));
+            final CompletableFuture<List<TrestleEvent>> eventsFuture = CompletableFuture.supplyAsync(() -> {
+                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                final String query = this.qb.buildIndividualEventQuery(individual);
+                try {
+                    return this.ontology.executeSPARQLResults(query);
+                } catch (Exception e) {
+                    this.ontology.returnAndAbortTransaction(tt);
+                    final Throwable cause = e.getCause();
+                    if (cause == null) {
+                        throw new CompletionException("Unable to get cause", e);
+                    }
+                    throw new CompletionException(cause);
+                } finally {
+                    this.ontology.returnAndCommitTransaction(tt);
+                }
+            }, this.individualThreadPool)
+                    .thenApply(results -> results.getResults()
+                            .stream()
+                            .filter(result -> !result.unwrapIndividual("type").asOWLNamedIndividual().getIRI().equals(trestleEventIRI))
+                            .map(result -> {
+                                final OWLNamedIndividual eventIndividual = result.unwrapIndividual("r").asOWLNamedIndividual();
+                                final IRI typeIRI = result.unwrapIndividual("type").asOWLNamedIndividual().getIRI();
+                                final TrestleEventType eventType = TrestleEventType.getEventClassFromIRI(typeIRI);
+                                final Temporal temporal = parseToTemporal(result.unwrapLiteral("t"), OffsetDateTime.class);
+                                return new TrestleEvent(eventType, individual, eventIndividual, temporal);
+                            })
+                            .collect(Collectors.toList()));
 
-        final CompletableFuture<TrestleIndividual> individualFuture = temporalFuture.thenCombine(relationsFuture, (trestleIndividual, relations) -> {
-            relations.forEach(trestleIndividual::addRelation);
-            return trestleIndividual;
-        })
-                .thenCombine(factsFuture, (trestleIndividual, trestleFacts) -> {
-                    trestleFacts.forEach(trestleIndividual::addFact);
-                    return trestleIndividual;
-                })
-                .thenCombine(eventsFuture, (trestleIndividual, events) -> {
-                    events.forEach(trestleIndividual::addEvent);
-                    return trestleIndividual;
-                });
+            final CompletableFuture<TrestleIndividual> individualFuture = temporalFuture.thenCombine(relationsFuture, (trestleIndividual, relations) -> {
+                relations.forEach(trestleIndividual::addRelation);
+                return trestleIndividual;
+            })
+                    .thenCombine(factsFuture, (trestleIndividual, trestleFacts) -> {
+                        trestleFacts.forEach(trestleIndividual::addFact);
+                        return trestleIndividual;
+                    })
+                    .thenCombine(eventsFuture, (trestleIndividual, events) -> {
+                        events.forEach(trestleIndividual::addEvent);
+                        return trestleIndividual;
+                    });
 
-        try {
+
             TrestleIndividual trestleIndividual = individualFuture.get();
             this.trestleCache.writeTrestleIndividual(individual, trestleIndividual);
             return trestleIndividual;
         } catch (InterruptedException | ExecutionException e) {
             logger.error("Interruption exception building Trestle Individual {}", individual, e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
-            throw new IllegalStateException(e);
+            final Throwable cause = e.getCause();
+            if (cause == null) {
+                throw new CompletionException("Unable to get cause", e);
+            }
+            return ExceptionUtils.rethrow(cause);
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
@@ -331,6 +343,8 @@ public class IndividualEngine {
 
                     final OWLDataPropertyAssertionAxiom assertion = dataPropertyAssertion.orElseThrow(() -> new TrestleMissingFactException(factIndividual));
                     final Class<?> datatype = TypeConverter.lookupJavaClassFromOWLDatatype(assertion, null);
+//                    I don't know why this is throwing an error, so I'm going to ignore it for now
+                    @SuppressWarnings("type.argument.type.incompatible")
                     final Object literalObject = TypeConverter.extractOWLLiteral(datatype, assertion.getObject());
 //            Get valid time
                     final Set<OWLDataPropertyAssertionAxiom> validTemporals = dataProperties
@@ -347,6 +361,9 @@ public class IndividualEngine {
                                     property.getProperty().asOWLDataProperty().getIRI().equals(temporalDatabaseToIRI))
                             .collect(Collectors.toSet());
                     final Optional<TemporalObject> dbTemporal = TemporalObjectBuilder.buildTemporalFromProperties(dbTemporals, null, "blank");
+                    if (literalObject == null) {
+                        throw new IllegalStateException(String.format("Fact object cannot be null for {}", factIndividual));
+                    }
                     return new TrestleFact<>(
                             factIndividual.getIRI().toString(),
                             assertion.getProperty().asOWLDataProperty().getIRI().getShortForm(),

@@ -8,7 +8,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -21,6 +23,7 @@ abstract class TransactingOntology implements ITrestleOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(TransactingOntology.class);
     public static final String OPEN_READ_WRITE_TRANSACTIONS = "{}/{} open read/write transactions";
+    public static final String TRANSACTION = "transaction";
     protected final AtomicInteger openWriteTransactions = new AtomicInteger();
     protected final AtomicInteger openReadTransactions = new AtomicInteger();
     protected final AtomicLong openedTransactions = new AtomicLong();
@@ -56,6 +59,14 @@ abstract class TransactingOntology implements ITrestleOntology {
             logger.trace("Passed null transaction object, opening a new transaction. Write? {}", write);
             return createandOpenNewTransaction(write);
         } else {
+//            Inherit logging context
+            final Map<String, String> context = MDC.getCopyOfContextMap();
+            if (context == null) {
+                logger.debug("Got empty logging context from inherited transaction {}", transactionObject.getTransactionID());
+                MDC.put(TRANSACTION, Long.toString(transactionObject.getTransactionID()));
+            } else {
+                MDC.setContextMap(context);
+            }
             logger.trace("Inheriting transaction from existing transaction object {}, setting flags, but not opening new transaction", transactionObject.getTransactionID());
             this.threadLocked.set(true);
             this.threadInTransaction.set(true);
@@ -93,16 +104,19 @@ abstract class TransactingOntology implements ITrestleOntology {
 //    We can suppress this, because the first call is to check whether the transaction object is null or not
     @SuppressWarnings({"dereference.of.nullable"})
     public TrestleTransaction createandOpenNewTransaction(boolean write) {
-        if (threadTransactionObject.get() == null) {
+        final TrestleTransaction threadTransaction = threadTransactionObject.get();
+        if (threadTransaction == null) {
             final long transactionID = System.nanoTime();
+//            Add the logging context
             logger.debug("Unowned transaction, opening new transaction {}", transactionID);
+            MDC.put(TRANSACTION, Long.toString(transactionID));
             final TrestleTransaction trestleTransaction = new TrestleTransaction(transactionID, write);
             trestleTransaction.setConnection(this.getOntologyConnection());
             threadTransactionObject.set(trestleTransaction);
             this.openAndLock(write, true);
             return trestleTransaction;
         } else {
-            logger.trace("Thread transaction owned by {}, returning empty object", threadTransactionObject.get().getTransactionID());
+            logger.trace("Thread transaction owned by {}, returning empty object", threadTransaction.getTransactionID());
             final TrestleTransaction trestleTransaction = new TrestleTransaction(write);
             trestleTransaction.setConnection(this.getOntologyConnection());
             return trestleTransaction;
@@ -125,6 +139,8 @@ abstract class TransactingOntology implements ITrestleOntology {
                     logger.trace("Owns transaction, committing transaction {}", transaction.getTransactionID());
                     this.unlockAndCommit(transaction.isWriteTransaction(), true);
                     threadTransactionObject.set(null);
+//                    Clear the logging context
+                    MDC.remove(TRANSACTION);
                 } else {
                     logger.trace("Transaction {} doesn't own transaction, continuing", transaction.getTransactionID());
                 }
@@ -155,6 +171,13 @@ abstract class TransactingOntology implements ITrestleOntology {
         } else {
             logger.trace("Transaction {} inherited state, not aborting", transaction.getTransactionID());
         }
+    }
+
+    @Override
+    public void returnAndAbortWithForce(TrestleTransaction trestleTransaction) {
+        logger.error("Force aborting the transaction!");
+        this.unlockAndAbort(trestleTransaction.isWriteTransaction(), true);
+        threadTransactionObject.set(null);
     }
 
     /**

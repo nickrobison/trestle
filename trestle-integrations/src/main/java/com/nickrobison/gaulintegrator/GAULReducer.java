@@ -1,21 +1,21 @@
 package com.nickrobison.gaulintegrator;
 
-import com.esri.core.geometry.*;
-import com.esri.core.geometry.Geometry;
-import com.esri.core.geometry.Polygon;
-import com.nickrobison.trestle.common.TemporalUtils;
+import com.esri.core.geometry.OperatorExportToWkb;
+import com.esri.core.geometry.SpatialReference;
 import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.datasets.GAULObject;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
+import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
+import com.nickrobison.trestle.reasoner.engines.temporal.TemporalComparisonReport;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
-import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
-import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.io.ParseException;
+import com.vividsolutions.jts.geom.GeometryCollection;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.PrecisionModel;
 import com.vividsolutions.jts.io.WKBReader;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
@@ -41,23 +41,21 @@ import java.util.stream.Collectors;
  * Created by nrobison on 5/5/16.
  */
 @SuppressWarnings({"argument.type.incompatible", "initialization.fields.uninitialized", "squid:S2068", "pmd:LawOfDemeter", "pmd:DataflowAnomalyAnalysis "})
-public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritable, Text> {
+public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritable, Text> {
 
     private static final Logger logger = LoggerFactory.getLogger(GAULReducer.class);
     private static final String STARTDATE = "temporal.startdate";
     private static final String ENDDATE = "temporal.enddate";
 
     //    Setup the spatial stuff
-    private static final OperatorIntersection operatorIntersection = OperatorIntersection.local();
-    private static final OperatorWithin operatorWithin = OperatorWithin.local();
-    private static final OperatorTouches operatorTouches = OperatorTouches.local();
-    private static final OperatorExportToWkt operatorWKTExport = OperatorExportToWkt.local();
     private static final OperatorExportToWkb operatorWKBExport = OperatorExportToWkb.local();
     private static final int INPUTSRS = 4326;
     private static final SpatialReference inputSR = SpatialReference.create(INPUTSRS);
 
     private static final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
     private static final WKBReader wkbReader = new WKBReader(geometryFactory);
+//    Controls the granularity of the union matcher
+    private static final double THRESHOLD = 0.95;
 
     private LocalDate configStartDate;
     private LocalDate configEndDate;
@@ -107,9 +105,9 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
     }
 
     @Override
-    public void reduce(LongWritable key, Iterable<MapperOutput> values, Context context) throws IOException, InterruptedException {
+    public void reduce(GAULMapperKey key, Iterable<MapperOutput> values, Context context) throws IOException, InterruptedException {
 
-        final Optional<Queue<MapperOutput>> inputRecordsOptional = this.processInputSet(key, values, context);
+        final Optional<Queue<MapperOutput>> inputRecordsOptional = this.processInputSet(values, context);
 //        If we have an object returned from the above function, we need to look for any other overlapping objects
         if (inputRecordsOptional.isPresent()) {
             final Queue<MapperOutput> inputRecords = inputRecordsOptional.get();
@@ -130,6 +128,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 
 //            If true, get all the concept members
+                final String conceptIRI = String.format("%s:concept", newGAULObject.getObjectID());
                 if (!conceptIRIs.orElse(new HashSet<>()).isEmpty()) {
                     logger.warn("{}-{}-{} has concept members", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
                     conceptIRIs.get().forEach(concept -> processConceptMembers(newGAULObject, matchedObjects, concept));
@@ -141,7 +140,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
 //                Go ahead the create the new concept
                     logger.info("{}-{}-{} creating new concept", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-                    reasoner.addObjectToConcept(String.format("%s:concept", newGAULObject.getObjectName()), newGAULObject, ConceptRelationType.SPATIAL, 1.0);
+                    reasoner.addObjectToConcept(conceptIRI, newGAULObject, ConceptRelationType.SPATIAL, 1.0);
                 }
 
                 // test of approx equal union
@@ -152,7 +151,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 if (matchedObjects.isEmpty()) {
 //                Go ahead the create the new concept
                     logger.info("{}-{}-{} creating new concept", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-                    reasoner.addObjectToConcept(String.format("%s:concept", newGAULObject.getObjectName()), newGAULObject, ConceptRelationType.SPATIAL, 1.0);//                If we don't have any matches, create a new concept
+                    reasoner.addObjectToConcept(conceptIRI, newGAULObject, ConceptRelationType.SPATIAL, 1.0);//                If we don't have any matches, create a new concept
                 }
 
 
@@ -189,7 +188,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 logger.error("Unable to process object {}-{}-{}", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate(), e);
             }
             logger.warn("{}-{}-{} finished", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-            context.write(key, new Text(String.format("%s:%s:%s:%s:%s", newGAULObject.getAdm0Code(), newGAULObject.getAdm0Name(), newGAULObject.getObjectID(), newGAULObject.getStartDate(), newGAULObject.getEndDate())));
+            context.write(key.getRegionID(), new Text(String.format("%s:%s:%s:%s:%s", newGAULObject.getAdm0Code(), newGAULObject.getAdm0Name(), newGAULObject.getObjectID(), newGAULObject.getStartDate(), newGAULObject.getEndDate())));
         }
     }
 
@@ -198,7 +197,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
         logger.warn("{}-{}-{} calculating equality", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
         final Instant start = Instant.now();
-        final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(matchedObjects, inputSR, 0.9);
+        final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(matchedObjects, inputSR, THRESHOLD);
         logger.warn("{}-{}-{} calculating equality took {} ms", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate(), Duration.between(start, Instant.now()).toMillis());
         if (matchOptional.isPresent()) {
             // do something here
@@ -298,7 +297,7 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
                 matchedObject.getObjectName(),
                 matchedObject.getStartDate());
         // test of approx equality
-        if (this.reasoner.getEqualityEngine().isApproximatelyEqual(newGAULObject, matchedObject, inputSR, 0.9) && !newGAULObject.equals(matchedObject)) {
+        if (this.reasoner.getEqualityEngine().isApproximatelyEqual(newGAULObject, matchedObject, inputSR, THRESHOLD) && !newGAULObject.equals(matchedObject)) {
             // do something here
             logger.info("found approximate equality between GAULObjects {} and {}", newGAULObject.getID(), matchedObject.getID());
 //            Write a spatial equals
@@ -309,67 +308,73 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 //        Spatial interactions are exhaustive
 
 //                    newGAUL within matchedObject? Covers, or Contains? IF Covers, also contains
-        if (operatorTouches.execute(newGAULObject.getShapePolygon(), matchedObject.getShapePolygon(), inputSR, null) && operatorWithin.execute(newGAULObject.getShapePolygon(), matchedObject.getShapePolygon(), inputSR, null)) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.COVERS);
-        } else if (operatorWithin.execute(newGAULObject.getShapePolygon(), matchedObject.getShapePolygon(), inputSR, null)) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.CONTAINS);
-        }
+        final SpatialComparisonReport spatialComparisonReport = this.reasoner.getSpatialEngine().compareObjects(newGAULObject, matchedObject, inputSR, THRESHOLD);
 
-//        What about in the other direction?
-        if (operatorTouches.execute(matchedObject.getShapePolygon(), newGAULObject.getShapePolygon(), inputSR, null) && operatorWithin.execute(matchedObject.getShapePolygon(), newGAULObject.getShapePolygon(), inputSR, null)) {
-            reasoner.writeObjectRelationship(matchedObject, newGAULObject, ObjectRelation.COVERS);
-        } else if (operatorWithin.execute(matchedObject.getShapePolygon(), newGAULObject.getShapePolygon(), inputSR, null)) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.INSIDE);
-        }
+//        Write all the relations from the spatial report
+//        Overlaps?
+        spatialComparisonReport.getSpatialOverlap().ifPresent(s -> {
+            if (spatialComparisonReport.getSpatialOverlapPercentage().orElseThrow(() -> new IllegalStateException("Should not have overlaps with percentage")) > 0.001) {
+                reasoner.writeSpatialOverlap(newGAULObject, matchedObject, s);
+            }
+        });
 
-//                    Meets
-        if (operatorTouches.execute(newGAULObject.getShapePolygon(), matchedObject.getShapePolygon(), inputSR, null)) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.SPATIAL_MEETS);
-        }
+//        Others, if they're not overlaps
+        spatialComparisonReport
+                .getRelations()
+                .stream()
+                .filter(relation -> !relation.equals(ObjectRelation.SPATIAL_EQUALS))
+                .forEach(relation -> reasoner.writeObjectRelationship(newGAULObject, matchedObject, relation));
 
-//                    Overlaps
-//                    Compute the total area intersection
-        Polygon intersectedPolygon = new Polygon();
-        final Geometry computedGeometry = operatorIntersection.execute(matchedObject.getShapePolygon(), newGAULObject.getShapePolygon(), inputSR, null);
-        if (computedGeometry.getType() == Geometry.Type.Polygon) {
-            intersectedPolygon = (Polygon) computedGeometry;
-        } else {
-            logger.error("Incorrectly computed geometry, assuming 0 intersection");
-        }
-        if (computedGeometry.calculateArea2D() > 0.0) {
-            final String wktBoundary = operatorWKTExport.execute(0, intersectedPolygon, null);
-            reasoner.writeSpatialOverlap(newGAULObject, matchedObject, wktBoundary);
-        }
+//        Try it in the other direction
+        final SpatialComparisonReport inverseSpatialReport = this.reasoner.getSpatialEngine().compareObjects(matchedObject, newGAULObject, inputSR, THRESHOLD);
+
+//        Do all the non-overlaps relations
+        inverseSpatialReport
+                .getRelations()
+                .stream()
+                .filter(relation -> !relation.equals(ObjectRelation.SPATIAL_EQUALS))
+                .forEach(relation -> reasoner.writeObjectRelationship(matchedObject, newGAULObject, relation));
 
 //        Temporals?
+        final TemporalComparisonReport temporalComparisonReport = this.reasoner.getTemporalEngine().compareObjects(newGAULObject, matchedObject);
+        temporalComparisonReport
+                .getRelations()
+                .forEach(relation -> reasoner.writeObjectRelationship(newGAULObject, matchedObject, relation));
 
-//        Does one start the other?
-        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getStartDate()) == 0) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.STARTS);
-        }
+//        Try in the other direction
 
-        if (TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getEndDate()) == 0) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.FINISHES);
-        }
+        final TemporalComparisonReport inverseTemporalRelations = this.reasoner.getTemporalEngine().compareObjects(matchedObject, newGAULObject);
+        inverseTemporalRelations
+                .getRelations()
+                .forEach(relation -> reasoner.writeObjectRelationship(matchedObject, newGAULObject, relation));
 
-//            Meets?
-        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getEndDate()) == 0 ||
-                TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getStartDate()) == 0) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.TEMPORAL_MEETS);
-        }
+////        Does one start the other?
+//        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getStartDate()) == 0) {
+//            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.STARTS);
+//        }
+//
+//        if (TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getEndDate()) == 0) {
+//            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.FINISHES);
+//        }
+//
+////            Meets?
+//        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getEndDate()) == 0 ||
+//                TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getStartDate()) == 0) {
+//            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.TEMPORAL_MEETS);
+//        }
+//
+////        Before? (Including meets)
+//        if (TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getStartDate()) != 1) {
+//            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.BEFORE);
+//        }
+//
+////        After? (Including meets)
+//        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getEndDate()) != -1) {
+//            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.AFTER);
+//        }
 
-//        Before? (Including meets)
-        if (TemporalUtils.compareTemporals(newGAULObject.getEndDate(), matchedObject.getStartDate()) != 1) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.BEFORE);
-        }
-
-//        After? (Including meets)
-        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getEndDate()) != -1) {
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.AFTER);
-        }
-
-        double intersectedArea = intersectedPolygon.calculateArea2D() / newGAULObject.getShapePolygon().calculateArea2D();
-        objectWeight += (1 - objectWeight) * intersectedArea;
+//        double intersectedArea = intersectedPolygon.calculateArea2D() / newGAULObject.getShapePolygon().calculateArea2D();
+//        objectWeight += (1 - objectWeight) * intersectedArea;
         return objectWeight;
     }
 
@@ -377,17 +382,16 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
      * Process input set to determine if we actually have all the possible values for a given input set, if so write them and return a null.
      * If not, return the first copy of the object to process further
      *
-     * @param key     - {@link LongWritable} input Key
      * @param values  - {@link Iterable} of {@link MapperOutput} representing all key values
-     * @param context - {@link org.apache.hadoop.mapreduce.Reducer.Context} Hadoop context
+     * @param context - {@link Context} Hadoop context
      * @return - {@link GAULObject}, null if all the input set is present.
      */
     @SuppressWarnings({"squid:S1172"}) // We can't break the method signature, so we need to suppress this warning
-    private Optional<Queue<MapperOutput>> processInputSet(LongWritable key, Iterable<MapperOutput> values, Context context) {
+    private Optional<Queue<MapperOutput>> processInputSet(Iterable<MapperOutput> values, Context context) {
         final Configuration configuration = context.getConfiguration();
 //        Copy from the iterator into a simple array list, we can't run through the iterator more than once
 //        This is a bit of a disaster, but since the set is relatively bounded, it should be ok.
-        Queue<MapperOutput> inputRecords = new ArrayDeque<>();
+        Queue<MapperOutput> inputRecords = new PriorityQueue<>(Comparator.comparingInt(MapperOutput::getDatasetYear));
         for (MapperOutput record : values) {
             inputRecords.add(WritableUtils.clone(record, configuration));
         }
@@ -395,7 +399,6 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 //        Do my records cover the entirety of the input space?
         final int maxDate = inputRecords
                 .stream()
-//                .mapToInt(MapperOutput::getDatasetYear)
                 .map(MapperOutput::getExpirationDate)
                 .mapToInt(LocalDate::getYear)
                 .max()
@@ -403,7 +406,6 @@ public class GAULReducer extends Reducer<LongWritable, MapperOutput, LongWritabl
 
         final int minDate = inputRecords
                 .stream()
-//                .mapToInt(MapperOutput::getDatasetYear)
                 .map(MapperOutput::getStartDate)
                 .mapToInt(LocalDate::getYear)
                 .min()

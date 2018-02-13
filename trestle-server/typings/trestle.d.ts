@@ -22,3 +22,8 @@ declare module "wellknown" {
 
     export { stringify, parse };
 }
+
+declare class ClientJS {
+    public constructor();
+    public getFingerprint(): string;
+}

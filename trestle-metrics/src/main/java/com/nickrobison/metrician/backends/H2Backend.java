@@ -36,7 +36,7 @@ public class H2Backend extends RDBMSBackend {
     }
 
     @Override
-    HikariDataSource setupDataSource() {
+    HikariDataSource setupDataSource(@UnderInitialization(RDBMSBackend.class) H2Backend this) {
         final String connectionString = config.getString("connectionString");
         if (connectionString.contains("mem")) {
             logger.warn("In-memory backend not recommended for production use");
@@ -49,7 +49,7 @@ public class H2Backend extends RDBMSBackend {
     }
 
     @SuppressWarnings({"squid:S1172"}) // We suppress this because Checker needs this annotated param
-    private void initializeDatabase(@UnderInitialization(H2Backend.class)H2Backend this) {
+    private void initializeDatabase(@UnderInitialization(RDBMSBackend.class) H2Backend this) {
         logger.debug("Creating tables");
         try (final Connection connection = getConnection()) {
 //            Create the tables

@@ -1,0 +1,13 @@
+<form class="search-form">
+    <mat-form-field class="full-width app-input-no-underline">
+        <input matInput placeholder="Search for Individual"
+               aria-label="Search for Individual"
+               [matAutocomplete]="auto"
+               [formControl]="individualName">
+        <mat-autocomplete #auto="matAutocomplete" (optionSelected)="selectHandler($event)">
+            <mat-option *ngFor="let option of options | async" [value]="option">
+                {{displayFn(option)}}
+            </mat-option>
+        </mat-autocomplete>
+    </mat-form-field>
+</form>

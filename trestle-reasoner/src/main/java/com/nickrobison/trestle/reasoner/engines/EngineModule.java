@@ -12,6 +12,7 @@ import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentE
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngineImpl;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngineImpl;
+import com.nickrobison.trestle.reasoner.engines.temporal.TemporalEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,11 +27,13 @@ public class EngineModule extends PrivateModule {
         this.mergedEnabled = mergeEnabled;
         this.eventEnabled = eventEnabled;
     }
+
     @Override
     protected void configure() {
         logger.debug("Configuring Engine Module");
         bind(IndividualEngine.class).asEagerSingleton();
         bind(SpatialEngine.class).asEagerSingleton();
+        bind(TemporalEngine.class).asEagerSingleton();
         bind(EqualityEngine.class).to(EqualityEngineImpl.class).asEagerSingleton();
         bind(ContainmentEngine.class).to(ContainmentEngineImpl.class).asEagerSingleton();
 
@@ -51,6 +54,7 @@ public class EngineModule extends PrivateModule {
 
 //        Expose some things
         expose(SpatialEngine.class);
+        expose(TemporalEngine.class);
         expose(IndividualEngine.class);
         expose(TrestleEventEngine.class);
         expose(TrestleMergeEngine.class);

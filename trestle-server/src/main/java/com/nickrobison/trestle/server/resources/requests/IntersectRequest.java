@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.server.resources.requests;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.geojson.GeoJsonObject;
 import org.hibernate.validator.constraints.NotEmpty;
 
@@ -10,8 +9,6 @@ import java.time.OffsetDateTime;
  * Created by nrobison on 6/30/17.
  */
 public class IntersectRequest {
-    private static final ObjectMapper mapper = new ObjectMapper();
-
     @NotEmpty
     private String dataset;
     private OffsetDateTime validAt;
@@ -20,7 +17,8 @@ public class IntersectRequest {
     private GeoJsonObject geojson;
     private Double buffer;
 
-    public IntersectRequest() {}
+    public IntersectRequest() {
+    }
 
     public IntersectRequest(String dataset, String validAt, String databaseAt, GeoJsonObject geojson, Double buffer) {
         this.dataset = dataset;
@@ -60,7 +58,6 @@ public class IntersectRequest {
 
     public void setGeojson(GeoJsonObject geojson) {
         this.geojson = geojson;
-//        this.geojson = mapper.convertValue(geojson, GeoJsonObject.class);
     }
 
     public Double getBuffer() {

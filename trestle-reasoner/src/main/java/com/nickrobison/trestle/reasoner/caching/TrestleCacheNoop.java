@@ -25,12 +25,12 @@ public class TrestleCacheNoop implements TrestleCache {
     }
 
     @Override
-    public void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime startTemporal, OffsetDateTime endTemporal, OffsetDateTime dbStartTemporal, OffsetDateTime dbEndTemporal, Object value) {
+    public void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime startTemporal, @Nullable OffsetDateTime endTemporal, OffsetDateTime dbStartTemporal, @Nullable OffsetDateTime dbEndTemporal, Object value) {
 //        Not implemented
     }
 
     @Override
-    public void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime atTemporal, OffsetDateTime dbStartTemporal, OffsetDateTime dbEndTemporal, Object value) {
+    public void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime atTemporal, OffsetDateTime dbStartTemporal, @Nullable OffsetDateTime dbEndTemporal, Object value) {
 //        Not implemented
     }
 
@@ -43,14 +43,6 @@ public class TrestleCacheNoop implements TrestleCache {
     public void writeTrestleObject(TrestleIRI individualIRI, OffsetDateTime atTemporal, Object value) {
 //        Not implemented
     }
-
-    //    @Override
-//    public void writeTrestleObject(TrestleIRI individualIRI, long startTemporal, long endTemporal, Object value) {
-//    }
-
-//    @Override
-//    public void writeTrestleObject(TrestleIRI individualIRI, long atTemporal, @NonNull Object value) {
-//    }
 
     @Override
     public void deleteTrestleObject(TrestleIRI trestleIRI) {
@@ -69,6 +61,31 @@ public class TrestleCacheNoop implements TrestleCache {
 
     @Override
     public void deleteTrestleIndividual(OWLNamedIndividual individual) {
+//        Not implemented
+    }
+
+    @Override
+    public @Nullable TrestleCacheStatistics getCacheStatistics() {
+        return null;
+    }
+
+    @Override
+    public void rebuildValidIndex() {
+//        Not implemented
+    }
+
+    @Override
+    public void rebuildDBIndex() {
+//        Not implemented
+    }
+
+    @Override
+    public void purgeIndividualCache() {
+//        Not implemented
+    }
+
+    @Override
+    public void purgeObjectCache() {
 //        Not implemented
     }
 

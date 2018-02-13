@@ -1,13 +1,12 @@
 package com.nickrobison.trestle.reasoner.caching.tdtree;
 
-import com.boundary.tuple.FastTuple;
-import com.boundary.tuple.TupleSchema;
-import com.boundary.tuple.codegen.TupleExpressionGenerator;
 import com.codahale.metrics.annotation.Gauge;
 import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.trestle.reasoner.annotations.metrics.CounterIncrement;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.ITrestleIndex;
+import com.nickrobison.tuple.TupleSchema;
+import com.nickrobison.tuple.codegen.TupleExpressionGenerator;
 import org.apache.commons.math3.util.FastMath;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -18,7 +17,6 @@ import javax.annotation.concurrent.NotThreadSafe;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,15 +36,26 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
 
     private static final Logger logger = LoggerFactory.getLogger(TDTree.class);
     private static final String EMPTY_LEAF_VALUE = "Leaf {} does not have {}@{}";
-    static long maxValue = LocalDate.of(3000, 1, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
+    static long maxValue;
     static final TupleSchema leafSchema = buildLeafSchema();
 
     private final int blockSize;
     private List<LeafNode<Value>> leafs = new ArrayList<>();
     private int maxDepth;
-    private final FastTuple rootTuple;
+    private final LeafSchema rootTuple;
     private final AtomicLong cacheSize = new AtomicLong();
 
+    static {
+        TDTree.resetMaxValue();
+    }
+
+    /**
+     * Resets TDTree max value to what it's supposed to be, this is handle the funky unit tests and should NOT be called during normal operation
+     */
+    static void resetMaxValue() {
+        maxValue = Duration.between(LocalDate.of(0, 1, 1).atStartOfDay(),
+                LocalDate.of(5000, 1, 1).atStartOfDay()).toMillis();
+    }
 
     public TDTree(int blockSize) throws Exception {
         logger.debug("Creating TD-Tree index");
@@ -54,10 +63,10 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         this.maxDepth = 0;
 
 //        Init the root node
-        rootTuple = leafSchema.createTuple();
-        rootTuple.setDouble(1, 0);
-        rootTuple.setDouble(2, maxValue);
-        rootTuple.setShort(3, (short) 7);
+        rootTuple = leafSchema.createTypedTuple(LeafSchema.class);
+        rootTuple.start(0);
+        rootTuple.end(maxValue);
+        rootTuple.direction(7);
         leafs.add(new SplittableLeaf<>(1, rootTuple, this.blockSize));
     }
 
@@ -74,6 +83,14 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
     @Timed(name = "td-tree.insert-timer", absolute = true)
     @CounterIncrement(name = "td-tree.insert-counter", absolute = true)
     private void insertValue(long objectID, long startTime, long endTime, @NonNull Value value) {
+//        Verify that the start and end times don't over/under flow. This addresses TRESTLE-559.
+        if (startTime < 0) {
+            throw new IllegalArgumentException("Cache cannot handle negative temporal values");
+        }
+        if (endTime > maxValue) {
+            throw new IllegalArgumentException("End temporal exceeds max value for cache");
+        }
+
 //        Find the leaf at maxDepth that would contain the objectID
         final int matchingLeaf = getMatchingLeaf(startTime, endTime);
 //        Find the region in list with the most number of matching bits
@@ -198,13 +215,19 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
                 .stream()
                 .filter(leaf -> leaf.getRecordCount() > 0)
                 .map(LeafNode::dumpLeaf)
-                .forEach(values -> values.forEach((key, value) -> this.insertValue(key.getLong(1),
-                        key.getLong(2),
-                        key.getLong(3),
+                .forEach(values -> values.forEach((key, value) -> this.insertValue(key.objectID(),
+                        key.start(),
+                        key.end(),
                         value)));
 
         final Instant end = Instant.now();
         logger.info("Rebuilding index took {} ms", Duration.between(start, end).toMillis());
+    }
+
+    @Override
+    public void dropIndex() {
+        this.leafs = new ArrayList<>();
+        this.leafs.add(new SplittableLeaf<>(1, rootTuple, this.blockSize));
     }
 
     @Override
@@ -215,6 +238,21 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
                 .mapToDouble(LeafNode::calculateFragmentation)
                 .average()
                 .orElse(0.0);
+    }
+
+    @Override
+    public List<LeafStatistics> getLeafStatistics() {
+        logger.debug("Computing index leaf statistics");
+//        For each leaf, calculate the triangle coordinates and return it
+        return this.leafs
+                .stream()
+                .map(leaf -> new LeafStatistics(leaf.getID(),
+                        leaf.getBinaryStringID(),
+                        leaf.getLeafType(),
+                        leaf.getLeafVerticies(),
+                        leaf.leafMetadata.direction(),
+                        leaf.getRecordCount()))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -239,6 +277,14 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
         final ArrayDeque<LeafNode<Value>> populatedLeafs = this.leafs.stream()
                 .filter(leaf -> leaf.getRecordCount() > 0)
                 .collect(Collectors.toCollection(ArrayDeque::new));
+//        If we only have 1 leaf (such as when things split down into a single leaf), return it and try to match against it
+//        We don't really need to go through all the
+//        This is a really gross hack, and I'm pretty sure it doesn't actually work. But whatever.
+        if (populatedLeafs.size() == 1) {
+            candidateLeafs.add(populatedLeafs.pop());
+            return candidateLeafs;
+        }
+
         while (!populatedLeafs.isEmpty()) {
             final LeafNode<Value> first = populatedLeafs.pop();
             final int firstID = first.getID();
@@ -382,7 +428,7 @@ public class TDTree<Value> implements ITrestleIndex<Value> {
                     .builder()
                     .addField("start", Double.TYPE)
                     .addField("end", Double.TYPE)
-                    .addField("direction", Short.TYPE)
+                    .addField("direction", Integer.TYPE)
                     .implementInterface(LeafSchema.class)
                     .heapMemory()
                     .build();

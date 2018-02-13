@@ -16,10 +16,7 @@ import org.semanticweb.owlapi.model.IRI;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.OffsetTime;
-import java.time.ZoneOffset;
+import java.time.*;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.ArgumentMatchers.any;

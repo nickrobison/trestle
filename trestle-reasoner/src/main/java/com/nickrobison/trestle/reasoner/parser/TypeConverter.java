@@ -6,10 +6,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.NotNull;
 import org.joda.time.DateTime;
-import org.semanticweb.owlapi.model.OWLDataProperty;
-import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLDatatype;
-import org.semanticweb.owlapi.model.OWLLiteral;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,14 +19,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.function.Function;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 import static com.nickrobison.trestle.common.StaticIRI.WKTDatatypeIRI;
 import static com.nickrobison.trestle.common.StaticIRI.dateDatatypeIRI;
-import static com.nickrobison.trestle.reasoner.parser.ClassParser.dfStatic;
-import static com.nickrobison.trestle.reasoner.parser.ClassParser.getFieldName;
-import static com.nickrobison.trestle.reasoner.parser.ClassParser.getMethodName;
+import static com.nickrobison.trestle.reasoner.parser.ClassParser.*;
 
 /**
  * Created by nrobison on 8/24/16.
@@ -40,35 +37,46 @@ public class TypeConverter {
     private static final Logger logger = LoggerFactory.getLogger(TypeConverter.class);
     private static final Map<OWLDatatype, Class<?>> datatypeMap = buildDatatype2ClassMap();
     private static final Map<Class<?>, OWLDatatype> owlDatatypeMap = buildClassMap();
-    private static final Map<String, Function> javaClassConstructors = new HashMap<>();
+    private static final Map<String, TypeConstructor> javaClassConstructors = new HashMap<>();
 
     private TypeConverter() {
-
+//        Not used
     }
 
-    public static void registerTypeConstructor(Class<?> clazz, OWLDatatype datatype, Function constructorFunc) {
-            logger.debug("Registering java class {} with OWLDatatype {}", clazz.getName(), datatype.getIRI());
-        datatypeMap.put(datatype, clazz);
-        owlDatatypeMap.put(clazz, datatype);
-        javaClassConstructors.put(clazz.getTypeName(), constructorFunc);
+    public static void registerTypeConstructor(TypeConstructor constructor) {
+        final Class javaClass = constructor.getJavaType();
+        if (owlDatatypeMap.containsKey(javaClass)) {
+            logger.warn("Overwriting mapping of Java Class {} with {}", javaClass, constructor.getConstructorName());
+        } else {
+            logger.info("Registering Type Constructor {} for {} and {}", constructor.getConstructorName(),
+                    javaClass, constructor.getOWLDatatype());
+        }
+        final OWLDatatype owlDatatype = dfStatic.getOWLDatatype(IRI.create(constructor.getOWLDatatype()));
+        datatypeMap.put(owlDatatype, javaClass);
+        owlDatatypeMap.put(javaClass, owlDatatype);
+        javaClassConstructors.put(javaClass.getTypeName(), constructor);
     }
 
     /**
      * Extracts a java object of type T from a given OWL Literal
      * Also handles the object/primitive conversion
+     *
      * @param javaClass - Java class to cast literal into
-     * @param literal - OWLLiteral to extract
-     * @param <T> - Java type
+     * @param literal   - OWLLiteral to extract
+     * @param <T>       - Java type
      * @return Java type of type T
      */
     //    I need the unchecked casts in order to get the correct primitives for the constructor generation
-    @SuppressWarnings({"unchecked", "return.type.incompatible"})
-    public static <@NonNull T> @NonNull T extractOWLLiteral(Class<@NonNull T> javaClass, OWLLiteral literal) {
+    @SuppressWarnings({"unchecked", "return.type.incompatible", "squid:S1199"})
+    public static <T extends @NonNull Object> T extractOWLLiteral(Class<T> javaClass, @Nullable OWLLiteral literal) {
+        if (literal == null) {
+            throw new IllegalStateException("Cannot have null literal");
+        }
 
         switch (javaClass.getTypeName()) {
 
             case "int": {
-                return (@NonNull T) (Object) Integer.parseInt(literal.getLiteral());
+                return (T) (Object) Integer.parseInt(literal.getLiteral());
             }
 
             case "java.lang.Integer": {
@@ -76,7 +84,7 @@ public class TypeConverter {
             }
 
             case "short": {
-                return (@NonNull T) (Object) Short.parseShort(literal.getLiteral());
+                return (T) (Object) Short.parseShort(literal.getLiteral());
             }
 
             case "java.lang.Short": {
@@ -84,7 +92,7 @@ public class TypeConverter {
             }
 
             case "long": {
-                return (@NonNull T) (Object) Long.parseLong(literal.getLiteral());
+                return (T) (Object) Long.parseLong(literal.getLiteral());
             }
 
             case "java.lang.Long": {
@@ -112,7 +120,7 @@ public class TypeConverter {
             }
 
             case "float": {
-                return (@NonNull T) (Object) Float.parseFloat(literal.getLiteral());
+                return (T) (Object) Float.parseFloat(literal.getLiteral());
             }
 
             case "java.lang.Float": {
@@ -120,7 +128,7 @@ public class TypeConverter {
             }
 
             case "double": {
-                return (@NonNull T) (Object) Double.parseDouble(literal.getLiteral());
+                return (T) (Object) Double.parseDouble(literal.getLiteral());
             }
 
             case "java.lang.Double": {
@@ -128,7 +136,7 @@ public class TypeConverter {
             }
 
             case "boolean": {
-                return (@NonNull T) (Object) Boolean.getBoolean(literal.getLiteral());
+                return (T) (Object) Boolean.getBoolean(literal.getLiteral());
             }
 
             case "java.lang.Boolean": {
@@ -136,11 +144,11 @@ public class TypeConverter {
             }
 
             case "java.math.BigInteger": {
-                return (@NonNull T) new BigInteger(literal.getLiteral());
+                return (T) new BigInteger(literal.getLiteral());
             }
 
             case "java.math.BigDecimal": {
-                return (@NonNull T) new BigDecimal(literal.getLiteral());
+                return (T) new BigDecimal(literal.getLiteral());
             }
 
             default: {
@@ -150,12 +158,12 @@ public class TypeConverter {
                     return javaClass.cast(geomObject.get());
                 }
 //                    Try to get a match from the custom constructor registry
-                final Function constructorFunction = javaClassConstructors.get(javaClass.getTypeName());
-                if (constructorFunction == null) {
-                    throw new IllegalArgumentException(String.format("Unsupported cast %s", javaClass));
+                final TypeConstructor constructor = javaClassConstructors.get(javaClass.getTypeName());
+                if (constructor == null) {
+                    throw new ClassCastException(String.format("Unsupported cast %s", javaClass));
                 }
 
-                return javaClass.cast(constructorFunction.apply(literal.getLiteral()));
+                return javaClass.cast(constructor.constructType(literal.getLiteral()));
             }
         }
     }
@@ -214,8 +222,9 @@ public class TypeConverter {
 
     /**
      * Get the java type for the class member matching the OWLDataProperty
-     * @param clazz - Input class to parse
-     * @param property - OWLDataProperty to match with the class
+     *
+     * @param clazz     - Input class to parse
+     * @param property  - OWLDataProperty to match with the class
      * @param inputType - Previously determined type
      * @return - Nullable java type
      */
@@ -245,8 +254,9 @@ public class TypeConverter {
 
     /**
      * Inspect Java class to determine correct datatype for a given OWLDataProperty
+     *
      * @param classToVerify - Class to verify type against
-     * @param property - OWLDataProperty to lookup
+     * @param property      - OWLDataProperty to lookup
      * @return - Java class of corresponding data property
      */
     public static Class<?> lookupJavaClassFromOWLDataProperty(Class<?> classToVerify, OWLDataProperty property) {
@@ -326,7 +336,7 @@ public class TypeConverter {
         return types;
     }
 
-    static OWLDatatype getDatatypeFromAnnotation(Fact annotation, Class<?> objectClass) {
+    public static OWLDatatype getDatatypeFromAnnotation(Fact annotation, Class<?> objectClass) {
 //        I don't think this will ever be true
         if (annotation.datatype().toString().equals("") || annotation.datatype() == OWL2Datatype.XSD_NMTOKEN) {
             return getDatatypeFromJavaClass(objectClass);
@@ -335,18 +345,18 @@ public class TypeConverter {
         }
     }
 
-    public static @NotNull OWLDatatype getDatatypeFromJavaClass(Class<?> javaTypeClass) {
+    public static @NotNull
+    OWLDatatype getDatatypeFromJavaClass(Class<?> javaTypeClass) {
         OWLDatatype owlDatatype = owlDatatypeMap.get(javaTypeClass);
         if (owlDatatype == null) {
             logger.error("Unsupported Java type {}", javaTypeClass);
-//            throw new RuntimeException(String.format("Unsupported Java type %s", javaTypeClass));
             owlDatatype = OWL2Datatype.XSD_STRING.getDatatype(dfStatic);
         }
         return owlDatatype;
     }
 
-    @SuppressWarnings("Duplicates")
-    static Class<?> parsePrimitiveClass(Class<?> returnClass) {
+    @SuppressWarnings({"Duplicates", "squid:S1199"})
+    public static Class<?> parsePrimitiveClass(Class<?> returnClass) {
         if (returnClass.isPrimitive()) {
             logger.trace("Converting primitive type {} to object", returnClass.getTypeName());
             switch (returnClass.getTypeName()) {
@@ -366,7 +376,7 @@ public class TypeConverter {
                     return Long.class;
                 }
                 default: {
-                    throw new RuntimeException(String.format("Unsupported cast of %s to primitive type", returnClass.getTypeName()));
+                    throw new ClassCastException(String.format("Unsupported cast of %s to primitive type", returnClass.getTypeName()));
                 }
             }
         }

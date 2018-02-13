@@ -14,6 +14,7 @@ import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.EqualityTests;
 import com.vividsolutions.jts.io.ParseException;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
@@ -28,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Created by detwiler on 8/31/17.
  */
+@Tag("integration")
 public class ContainmentTests extends AbstractReasonerTest {
     public static final SpatialReference INPUT_SR = SpatialReference.create(4296);
 

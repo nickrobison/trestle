@@ -1,0 +1,86 @@
+<div [ngSwitch]="introductionState">
+    <div *ngSwitchCase="'intro'" fxLayout="column" fxLayoutAlign="start center">
+        <div fxLayout="column" fxLayoutAlign="start center">
+            <p>
+                Hello, welcome, we' re going to do some things, is that ok?
+            </p>
+            <p>
+                We're trying to see if we can make spatial matching a bit better,
+                but it's probably a fools errand.
+            </p>
+        </div>
+        <div>
+            <p>
+                By clicking the button, you agree to the terms described above
+            </p>
+        </div>
+        <div>
+            <button mat-raised-button
+                    color="accent"
+                    (click)="next()">Next
+            </button>
+        </div>
+    </div>
+    <div *ngSwitchCase="'context'" fxLayout="column">
+        <p>Before we begin, let's go over a few key concepts.
+            The goal of this experiment is to evaluate the effectiveness of a novel geospatial visualization to help
+            improve the process of identifying district reorganization in the global health context.
+            Consider the two images below:
+        </p>
+        <div fxLayout="row">
+            <div fxLayout="column" fxFlex="50%">
+                <img class="context-image" src="../../public/images/evaluation/Maputo-1990.jpg">
+                <div>Maputo, 1990</div>
+            </div>
+            <div fxLayout="column" fxFlex="50%">
+                <img class="context-image" src="../../public/images/evaluation/Maputo-2014.jpg">
+                <div>Maputo, 2014</div>
+            </div>
+        </div>
+        <p>
+            Here we can see 2 different views of the administrative districts of the city of <i>Cidade de Maputo</i> in
+            Mozambique.
+            What immediately stands out is that the administrative districts have been modified in the intervening
+            years.
+            This poses a challenge for longitudal research projects in that data collected from one district in 1990 may
+            no be directly comparable in 2014.
+        </p>
+        <p>One solution to this problem is to identify <i>spatial unions</i> between different sets of districts. A <i> spatial union</i> is when one district divides evenly into a number of separate districts, such that the new districts cover exactly the same area of the original district, no more, no less.</p>
+        <p>In this experiment, you'll be asked to look at 10 different collections of administrative districts and determine whether or not there exists a spatial union between a given district (marked in red) and any set of labeled districts on the map. If a union exists, you'll be asked to list which districts make up the union with the given object. If no union exists, you'll proceed to the next collection.</p>
+        <p>The following page will give a brief set of instructions on how to use the map.</p>
+        <div fxLayoutAlign="end end">
+            <button mat-raised-button
+                    color="accent"
+                    (click)="next()">Next
+            </button>
+        </div>
+    </div>
+    <div *ngSwitchCase="'zoom'" fxLayout="column">
+        <p>Instructions:</p>
+        <p>
+            Use the zoom handle on the right side of the map to raise and lower the test entity.
+            Pan and zoom the map by using the right mouse button and the scroll wheel
+        </p>
+        <img src="../../public/images/evaluation/zoom.gif">
+        <div fxLayoutAlign="end end">
+            <button mat-raised-button
+                    color="accent"
+                    (click)="next()">Next
+            </button>
+        </div>
+    </div>
+    <div *ngSwitchCase="'select'" fxLayout="column">
+        <p>Instructions:</p>
+        <p>
+            If no union exists, click the <i>No</i> option and continue.
+            If a union does exist, click the <i>Yes</i> option and then select all the contributing entitiies.
+        </p>
+        <img src="../../public/images/evaluation/select.gif">
+        <div fxLayoutAlign="end end">
+            <button mat-raised-button
+                    color="accent"
+                    (click)="next()">Next
+            </button>
+        </div>
+    </div>
+</div>

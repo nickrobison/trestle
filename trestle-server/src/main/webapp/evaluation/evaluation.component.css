@@ -1,0 +1,12 @@
+/*This min-height thing (using vh not %) is necessary to get full height components*/
+html {
+    min-height: 100vh;
+    height: auto;
+}
+.app-content {
+    height: 100vh;
+    margin-left: 20px;
+    margin-top: 10px;
+    margin-bottom: 50px;
+    margin-right: 10px;
+}

@@ -34,7 +34,7 @@ public class PostgresBackend extends RDBMSBackend {
     }
 
     @Override
-    HikariDataSource setupDataSource() {
+    HikariDataSource setupDataSource(@UnderInitialization(RDBMSBackend.class) PostgresBackend this) {
         final String connectionString = config.getString("connectionString");
         logger.debug("Connecting to {}", connectionString);
         final HikariConfig hikariConfig = new HikariConfig();
@@ -47,7 +47,7 @@ public class PostgresBackend extends RDBMSBackend {
 
 //    TODO(nrobison): Implement table creation
     @SuppressWarnings({"squid:S1172"}) // Checker needs this annotated param
-    private void initializeDatabase(@UnderInitialization(PostgresBackend.class) PostgresBackend this) {
+    private void initializeDatabase(@UnderInitialization(RDBMSBackend.class) PostgresBackend this) {
         logger.debug("Checking for tables, creating if non-existent");
         logger.warn("Table creation not implemented yet");
 //        final Connection connection;

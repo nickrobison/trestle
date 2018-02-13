@@ -1,0 +1,59 @@
+<div class="section">
+    <h4>Dataset Viewer</h4>
+    <div class="row">
+        <div class="col s10 map-container">
+            <trestle-map #map [single]="true"
+                         [dataChanges]="dataChanges"
+                         [multiSelect]="false"
+                         [zoomOnLoad]="false"
+                         (mapBounds)="updateBounds($event)" (clicked)="mapClicked($event)"></trestle-map>
+        </div>
+        <div class="col s2 z-depth-2 dataset-container">
+            <h6>Available Datasets</h6>
+            <ul class="collection">
+                <li class="collection-item" *ngFor="let ds of availableDatasets" (click)="loadDataset(ds)">
+                    <mat-icon *ngIf="(ds.state == DatasetState.UNLOADED)" [@fadeInOut]>check_circle</mat-icon>
+                    <mat-spinner class="loading-spinner" *ngIf="ds.state == DatasetState.LOADING"
+                                 [@fadeInOut] [diameter]="24" [strokeWidth]="3"></mat-spinner>
+                    <mat-icon *ngIf="(ds.state == DatasetState.LOADED)" class="selected" [@fadeInOut]>check_circle
+                    </mat-icon>
+                    <mat-icon *ngIf="(ds.state == DatasetState.ERROR)"
+                              class="orange600"
+                              [matTooltip]="getError(ds)"
+                              [@fadeInOut]>error
+                    </mat-icon>
+                    {{ds.name}}
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="section">
+        <div class="row light_gray_text">
+            Select year to map
+        </div>
+        <div class="row">
+            <div class="col s10 horizontal">
+                {{minTime.year()}}
+                <mat-slider thumbLabel tickInterval="1" [max]="maxTime.year()" [min]="minTime.year()"
+                            [value]="sliderValue"
+                            (change)="sliderChanged($event)">
+                </mat-slider>
+                {{maxTime.year()}}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col s7 l4">
+                <data-exporter [dataExport]="exportIndividuals"></data-exporter>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="section">
+    <h4>Event History</h4>
+    <div class="row">
+        <spatial-union
+                [minDate]="minTime"
+                [maxDate]="maxTime"
+                [individual]="selectedIndividual"></spatial-union>
+    </div>
+</div>
