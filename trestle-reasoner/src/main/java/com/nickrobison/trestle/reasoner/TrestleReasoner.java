@@ -8,6 +8,8 @@ import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
+import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
+import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
@@ -43,7 +45,7 @@ import java.util.Set;
 /**
  * Created by nrobison on 1/30/17.
  */
-public interface TrestleReasoner {
+public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWriter {
     /**
      * Shutdown the reasoner
      */
@@ -143,137 +145,135 @@ public interface TrestleReasoner {
 
     void writeOntology(URI filePath, boolean validate);
 
-    /**
-     * Write a Java object as a Trestle_Object
-     *
-     * @param inputObject - Input object to write as fact
-     * @throws TrestleClassException - Throws an exception if the class doesn't exist or is invalid
-     * @throws MissingOntologyEntity - Throws if the individual doesn't exist in the ontology
-     */
-    void writeTrestleObject(Object inputObject) throws TrestleClassException, MissingOntologyEntity;
+//    /**
+//     * Write a Java object as a Trestle_Object
+//     *
+//     * @param inputObject - Input object to write as fact
+//     * @throws TrestleClassException - Throws an exception if the class doesn't exist or is invalid
+//     * @throws MissingOntologyEntity - Throws if the individual doesn't exist in the ontology
+//     */
+//    void writeTrestleObject(Object inputObject) throws TrestleClassException, MissingOntologyEntity;
 
-    /**
-     * Write a Java object as a Trestle_Object
-     * Use the provided temporals to setup the database time
-     *
-     * @param inputObject   - Object to write into the ontology
-     * @param startTemporal - Start {@link Temporal} of database time interval
-     * @param endTemporal   - Nullable {@link Temporal} of ending interval time
-     * @throws MissingOntologyEntity      - Throws if the individual doesn't exist in the ontology
-     * @throws UnregisteredClassException - Throws if the object class isn't registered with the reasoner
-     */
-    @SuppressWarnings("unchecked")
-    void writeTrestleObject(Object inputObject, Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, UnregisteredClassException;
+//    /**
+//     * Write a Java object as a Trestle_Object
+//     * Use the provided temporals to setup the database time
+//     *
+//     * @param inputObject   - Object to write into the ontology
+//     * @param startTemporal - Start {@link Temporal} of database time interval
+//     * @param endTemporal   - Nullable {@link Temporal} of ending interval time
+//     * @throws MissingOntologyEntity      - Throws if the individual doesn't exist in the ontology
+//     * @throws UnregisteredClassException - Throws if the object class isn't registered with the reasoner
+//     */
+//    void writeTrestleObject(Object inputObject, Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, UnregisteredClassException;
 
-    /**
-     * Manually add a Fact to a TrestleObject, along with a specified validity point
-     *
-     * @param clazz        - Java class to parse
-     * @param individual   - Individual ID
-     * @param factName     - Fact name
-     * @param value        - Fact value
-     * @param validAt      - validAt Temporal
-     * @param databaseFrom - Optional databaseFrom Temporal
-     */
-    void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validAt, @Nullable Temporal databaseFrom);
+//    /**
+//     * Manually add a Fact to a TrestleObject, along with a specified validity point
+//     *
+//     * @param clazz        - Java class to parse
+//     * @param individual   - Individual ID
+//     * @param factName     - Fact name
+//     * @param value        - Fact value
+//     * @param validAt      - validAt Temporal
+//     * @param databaseFrom - Optional databaseFrom Temporal
+//     */
+//    void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validAt, @Nullable Temporal databaseFrom);
 
-    /**
-     * Manually add a Fact to a TrestleObject, along with a specified validity interval
-     *
-     * @param clazz        - Java class to parse
-     * @param individual   - Individual ID
-     * @param factName     - Fact name
-     * @param value        - Fact value
-     * @param validFrom    - validFrom Temporal
-     * @param validTo      - validTo Temporal
-     * @param databaseFrom - Optional databaseFrom Temporal
-     */
-    void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom);
+//    /**
+//     * Manually add a Fact to a TrestleObject, along with a specified validity interval
+//     *
+//     * @param clazz        - Java class to parse
+//     * @param individual   - Individual ID
+//     * @param factName     - Fact name
+//     * @param value        - Fact value
+//     * @param validFrom    - validFrom Temporal
+//     * @param validTo      - validTo Temporal
+//     * @param databaseFrom - Optional databaseFrom Temporal
+//     */
+//    void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom);
 
-    /**
-     * Returns an object, from the database, using the provided class definition.
-     * Returns the currently valid facts, at the current database time
-     *
-     * @param clazz    - Java class definition of return object
-     * @param objectID - IRI string of individual
-     * @param <T>      - Java class to return
-     * @return - Java object of type T
-     * @throws TrestleClassException - exception
-     * @throws MissingOntologyEntity - exception
-     */
-    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID) throws TrestleClassException, MissingOntologyEntity;
+//    /**
+//     * Returns an object, from the database, using the provided class definition.
+//     * Returns the currently valid facts, at the current database time
+//     *
+//     * @param clazz    - Java class definition of return object
+//     * @param objectID - IRI string of individual
+//     * @param <T>      - Java class to return
+//     * @return - Java object of type T
+//     * @throws TrestleClassException - exception
+//     * @throws MissingOntologyEntity - exception
+//     */
+//    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID) throws TrestleClassException, MissingOntologyEntity;
 
-    /**
-     * Returns an object, from the database, looking up the class definition from the registry
-     *
-     * @param datasetClassID - String of class name to retrieve from the class registry
-     * @param objectID       - IRI string of individual
-     * @param <T>            - Java class to return
-     * @return - Java object of type T
-     * @throws MissingOntologyEntity - exception
-     * @throws TrestleClassException - exception
-     */
-    <T extends @NonNull Object> T readTrestleObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException;
+//    /**
+//     * Returns an object, from the database, looking up the class definition from the registry
+//     *
+//     * @param datasetClassID - String of class name to retrieve from the class registry
+//     * @param objectID       - IRI string of individual
+//     * @param <T>            - Java class to return
+//     * @return - Java object of type T
+//     * @throws MissingOntologyEntity - exception
+//     * @throws TrestleClassException - exception
+//     */
+//    <T extends @NonNull Object> T readTrestleObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException;
 
-    /**
-     * Returns an object, from the database, using the provided class definition.
-     * Allows the user to specify a valid/database pair to specified desired object state
-     *
-     * @param clazz            - Java class definition of return object
-     * @param objectID         - IRI string of individual
-     * @param validTemporal    - Temporal to denote the ValidAt point
-     * @param databaseTemporal - Optional Temporal to denote the DatabaseAt point
-     * @param <T>              - Java class to return
-     * @return - Java object of type T
-     * @throws TrestleClassException - exception
-     * @throws MissingOntologyEntity - exception
-     */
-    @SuppressWarnings({"argument.type.incompatible", "dereference.of.nullable"})
-    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID, Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity;
+//    /**
+//     * Returns an object, from the database, using the provided class definition.
+//     * Allows the user to specify a valid/database pair to specified desired object state
+//     *
+//     * @param clazz            - Java class definition of return object
+//     * @param objectID         - IRI string of individual
+//     * @param validTemporal    - Temporal to denote the ValidAt point
+//     * @param databaseTemporal - Optional Temporal to denote the DatabaseAt point
+//     * @param <T>              - Java class to return
+//     * @return - Java object of type T
+//     * @throws TrestleClassException - exception
+//     * @throws MissingOntologyEntity - exception
+//     */
+//    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID, Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity;
 
-    /**
-     * Returns an object, from the database, looking up the class definition from the registry
-     *
-     * @param <T>              - Java class to return
-     * @param datasetClassID   - String of class name to retrieve from the class registry
-     * @param objectID         - IRI string of individual
-     * @param validTemporal    - Temporal to denote the ValidAt point
-     * @param databaseTemporal - Optional Temporal to denote the DatabaseAt point
-     * @return - Java object of type T
-     * @throws MissingOntologyEntity - exception
-     * @throws TrestleClassException - exception
-     */
-    <T extends @NonNull Object> T readTrestleObject(String datasetClassID, String objectID, Temporal validTemporal, @Nullable Temporal databaseTemporal) throws MissingOntologyEntity, TrestleClassException;
+//    /**
+//     * Returns an object, from the database, looking up the class definition from the registry
+//     *
+//     * @param <T>              - Java class to return
+//     * @param datasetClassID   - String of class name to retrieve from the class registry
+//     * @param objectID         - IRI string of individual
+//     * @param validTemporal    - Temporal to denote the ValidAt point
+//     * @param databaseTemporal - Optional Temporal to denote the DatabaseAt point
+//     * @return - Java object of type T
+//     * @throws MissingOntologyEntity - exception
+//     * @throws TrestleClassException - exception
+//     */
+//    <T extends @NonNull Object> T readTrestleObject(String datasetClassID, String objectID, Temporal validTemporal, @Nullable Temporal databaseTemporal) throws MissingOntologyEntity, TrestleClassException;
 
-    /**
-     * Retrieve historical states of a given Fact
-     * Returns an optional list of Java Objects that match the datatype of the given Fact
-     * Allows for optional temporal filter to restrict results to only Fact states valid during the provided temporal window
-     *
-     * @param clazz            - Java class to parse
-     * @param individual       - Individual ID
-     * @param factName         - Name of Fact
-     * @param validStart       - Optional Temporal setting the start of the temporal filter
-     * @param validEnd         - Optional Temporal setting the end of the temporal filter
-     * @param databaseTemporal - Optional temporal filtering results to only certain fact versions
-     * @return - Optional list of Java Objects
-     */
-    Optional<List<Object>> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal);
+//    /**
+//     * Retrieve historical states of a given Fact
+//     * Returns an optional list of Java Objects that match the datatype of the given Fact
+//     * Allows for optional temporal filter to restrict results to only Fact states valid during the provided temporal window
+//     *
+//     * @param clazz            - Java class to parse
+//     * @param individual       - Individual ID
+//     * @param factName         - Name of Fact
+//     * @param validStart       - Optional Temporal setting the start of the temporal filter
+//     * @param validEnd         - Optional Temporal setting the end of the temporal filter
+//     * @param databaseTemporal - Optional temporal filtering results to only certain fact versions
+//     * @return - Optional list of Java Objects
+//     */
+//    Optional<List<Object>> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal);
 
-    /**
-     * Retrieve historical states of a given Fact
-     * Returns an optional list of Java Objects that match the datatype of the given Fact
-     * Allows for optional temporal filter to restrict results to only Fact states valid during the provided temporal window
-     *
-     * @param clazz            - Java class to parse
-     * @param individual       - {@link OWLNamedIndividual} of individual ID
-     * @param factName         - {@link OWLDataProperty}
-     * @param validStart       - Optional Temporal setting the start of the temporal filter
-     * @param validEnd         - Optional Temporal setting the end of the temporal filter
-     * @param databaseTemporal - Optional temporal filtering results to only certain fact versions
-     * @return - Optional List of Java Objects
-     */
-    Optional<List<Object>> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal);
+//    /**
+//     * Retrieve historical states of a given Fact
+//     * Returns an optional list of Java Objects that match the datatype of the given Fact
+//     * Allows for optional temporal filter to restrict results to only Fact states valid during the provided temporal window
+//     *
+//     * @param clazz            - Java class to parse
+//     * @param individual       - {@link OWLNamedIndividual} of individual ID
+//     * @param factName         - {@link OWLDataProperty}
+//     * @param validStart       - Optional Temporal setting the start of the temporal filter
+//     * @param validEnd         - Optional Temporal setting the end of the temporal filter
+//     * @param databaseTemporal - Optional temporal filtering results to only certain fact versions
+//     * @return - Optional List of Java Objects
+//     */
+//    Optional<List<Object>> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal);
 
     /**
      * Get all {@link TrestleEvent} for the given individual

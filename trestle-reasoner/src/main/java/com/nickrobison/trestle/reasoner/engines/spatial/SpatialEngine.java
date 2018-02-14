@@ -81,7 +81,9 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
         this.individualEngine = individualEngine;
         this.equalityEngine = equalityEngine;
         this.containmentEngine = containmentEngine;
-        this.spatialPool = TrestleExecutorService.executorFactory("spatial-pool", trestleConfig.getInt("threading.spatial-pool.size"), metrician);
+        this.spatialPool = TrestleExecutorService.executorFactory("spatial-pool",
+                trestleConfig.getInt("threading.spatial-pool.size"),
+                metrician);
 
 //        Setup the WKT stuff
         final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
@@ -155,35 +157,6 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
         logger.debug("Beginning spatial intersection, should not have any transactions");
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
-//            CompletableFuture.supplyAsync(() -> {
-//                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-//                try {
-//                    return this.ontology.executeSPARQLResults(intersectQuery);
-//                } finally {
-//                    this.ontology.returnAndCommitTransaction(tt`);
-//                }
-//            }, this.spatialPool)
-//                    .thenCompose((results) -> {
-//                        return results
-//                                .getResults()
-//                                .stream()
-//                                .map(result -> result.unwrapIndividual("m"))
-//                                .map(owlIndividual -> CompletableFuture.supplyAsync(() -> {
-//                                    final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-//                                    try {
-//                                        return this.individualEngine.getTrestleIndividual(owlIndividual.asOWLNamedIndividual(), tt);
-//                                    } finally {
-//                                        this.ontology.returnAndCommitTransaction(tt);
-//                                    }
-//                                }))
-//                                .collect(Collectors.toList())
-//                    })
-////            final List<CompletableFuture<TrestleIndividual>> individualFutures = trestleResultSet
-////                    ;
-//
-//            final CompletableFuture<List<TrestleIndividual>> sequencedFuture = LambdaUtils.sequenceCompletableFutures(individualFutures);
-
-//
             final CompletableFuture<List<TrestleIndividual>> individualList = CompletableFuture.supplyAsync(() -> {
                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                 try {
@@ -270,7 +243,7 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
 //        Are they equal?
         final double equality = this.equalityEngine.calculateSpatialEquals(objectA, objectB, inputSR);
         if (equality >= matchThreshold) {
-            logger.debug("Found {} equality between {} and {}", objectA, objectB);
+            logger.debug("Found {} equality between {} and {}", equality, objectA, objectB);
             spatialComparisonReport.addApproximateEquality(equality);
         }
 
