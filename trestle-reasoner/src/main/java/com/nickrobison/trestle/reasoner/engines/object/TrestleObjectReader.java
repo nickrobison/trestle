@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.time.*;
 import java.time.temporal.Temporal;
 import java.util.List;
@@ -83,7 +84,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                                ITrestleOntology ontology,
                                QueryBuilder qb,
                                TrestleCache trestleCache,
-                               String reasonerPrefix) {
+                               @Named("reasonerPrefix") String reasonerPrefix) {
         this.eventEngine = eventEngine;
         this.metrician = metrician;
         this.engineUtils = engineUtils;
@@ -286,7 +287,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                             fact.getJavaClass(),
                             fact.getValue()));
                     if (!temporals.isPresent()) {
-                        throw new RuntimeException(String.format("Cannot restore temporal from ontology for %s", individualIRI));
+                        throw new IllegalStateException(String.format("Cannot restore temporal from ontology for %s", individualIRI));
                     }
 //            Add the temporal to the constructor args
                     final TemporalObject temporal = temporals.get();

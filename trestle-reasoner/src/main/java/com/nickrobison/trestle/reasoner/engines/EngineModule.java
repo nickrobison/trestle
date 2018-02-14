@@ -20,6 +20,8 @@ import com.nickrobison.trestle.reasoner.engines.temporal.TemporalEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Singleton;
+
 public class EngineModule extends PrivateModule {
 
     private static final Logger logger = LoggerFactory.getLogger(EngineModule.class);
@@ -35,26 +37,42 @@ public class EngineModule extends PrivateModule {
     @Override
     protected void configure() {
         logger.debug("Configuring Engine Module");
-        bind(ITrestleObjectReader.class).to(TrestleObjectReader.class).asEagerSingleton();
-        bind(ITrestleObjectWriter.class).to(TrestleObjectWriter.class).asEagerSingleton();
+        bind(ITrestleObjectReader.class)
+                .to(TrestleObjectReader.class)
+                .asEagerSingleton();
+        bind(ITrestleObjectWriter.class)
+                .to(TrestleObjectWriter.class)
+                .asEagerSingleton();
         bind(IndividualEngine.class).asEagerSingleton();
-        bind(SpatialEngine.class).asEagerSingleton();
         bind(TemporalEngine.class).asEagerSingleton();
-        bind(EqualityEngine.class).to(EqualityEngineImpl.class).asEagerSingleton();
-        bind(ContainmentEngine.class).to(ContainmentEngineImpl.class).asEagerSingleton();
+        bind(SpatialEngine.class).in(Singleton.class);
+        bind(EqualityEngine.class)
+                .to(EqualityEngineImpl.class)
+                .in(Singleton.class);
+        bind(ContainmentEngine.class)
+                .to(ContainmentEngineImpl.class)
+                .in(Singleton.class);
 
         //        Event Engine
         if (eventEnabled) {
-            bind(TrestleEventEngine.class).to(EventEngineImpl.class);
+            bind(TrestleEventEngine.class)
+                    .to(EventEngineImpl.class)
+                    .asEagerSingleton();
         } else {
-            bind(TrestleEventEngine.class).to(EventEngineNoOp.class);
+            bind(TrestleEventEngine.class)
+                    .to(EventEngineNoOp.class)
+                    .asEagerSingleton();
         }
 
         //        Merge Engine
         if (this.mergedEnabled) {
-            bind(TrestleMergeEngine.class).to(MergeEngineImpl.class);
+            bind(TrestleMergeEngine.class)
+                    .to(MergeEngineImpl.class)
+                    .asEagerSingleton();
         } else {
-            bind(TrestleMergeEngine.class).to(MergeEngineNoOp.class);
+            bind(TrestleMergeEngine.class)
+                    .to(MergeEngineNoOp.class)
+                    .asEagerSingleton();
         }
 
 

@@ -80,7 +80,7 @@ public class MergeEngineImpl implements TrestleMergeEngine {
         } else {
             eStrategy = existenceStrategy;
         }
-        logger.debug("Merging facts using the {} strategy", strategy);
+        logger.debug("Merging facts using the {} strategy and {} existence", methodStrategy, eStrategy);
 
         switch (methodStrategy) {
             case ContinuingFacts:
