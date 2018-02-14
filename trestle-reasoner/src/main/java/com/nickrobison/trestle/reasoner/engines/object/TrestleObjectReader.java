@@ -78,10 +78,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
     public TrestleObjectReader(TrestleEventEngine eventEngine,
                                Metrician metrician,
                                ObjectEngineUtils engineUtils,
-                               IClassParser classParser,
-                               IClassRegister classRegister,
-                               IClassBuilder classBuilder,
-                               TemporalParser temporalParser,
+                               TrestleParser trestleParser,
                                TrestleMergeEngine mergeEngine,
                                ITrestleOntology ontology,
                                QueryBuilder qb,
@@ -90,10 +87,10 @@ public class TrestleObjectReader implements ITrestleObjectReader {
         this.eventEngine = eventEngine;
         this.metrician = metrician;
         this.engineUtils = engineUtils;
-        this.classParser = classParser;
-        this.classRegister = classRegister;
-        this.classBuilder = classBuilder;
-        this.temporalParser = temporalParser;
+        this.classParser = trestleParser.classParser;
+        this.classRegister = trestleParser.classRegistry;
+        this.classBuilder = trestleParser.classBuilder;
+        this.temporalParser = trestleParser.temporalParser;
         this.mergeEngine = mergeEngine;
         this.ontology = ontology;
         this.qb = qb;
@@ -127,40 +124,17 @@ public class TrestleObjectReader implements ITrestleObjectReader {
 
     @Override
     public <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity {
-
         final IRI individualIRI = parseStringToIRI(this.reasonerPrefix, objectID);
         return readTrestleObject(clazz, individualIRI, false, validTemporal, databaseTemporal);
     }
 
-    /**
-     * ReadAsObject interface, builds the default database temporal, optionally returns the object from the cache
-     * Returns the currently valid facts, at the current database time
-     *
-     * @param clazz         - Java class of type T to return
-     * @param individualIRI - IRI of individual
-     * @param bypassCache   - Bypass cache?
-     * @param <T>           - Java class to return
-     * @return - Java object of type T
-     */
-    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache) {
+    @Override
+    public <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache) {
         return readTrestleObject(clazz, individualIRI, bypassCache, null, null);
     }
 
-    /**
-     * /**
-     * ReadAsObject interface, (optionally) building the database temporal and retrieving from the cache
-     * Returns the state of the object at the specified valid/database point
-     * If no valid or database times are specified, returns the currently valid facts at the current database time
-     *
-     * @param clazz         - Java class of type T to return
-     * @param individualIRI - IRI of individual to return
-     * @param bypassCache   - Bypass cache access?
-     * @param validAt - Optional temporal to specify a validAt time
-     * @param databaseAt - Optiona temporal to spe
-     * @param <T> - Java class to return
-     * @return - Java object of type T
-     */
-    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt) {
+    @Override
+    public <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt) {
         logger.debug("Reading {}", individualIRI);
 
         //        Contains class?

@@ -4,6 +4,7 @@ import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
@@ -68,6 +69,34 @@ public interface ITrestleObjectReader {
      * @throws TrestleClassException - throws if the class isn't registered with the Reasoner
      */
     <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity;
+
+    /**
+     * ReadAsObject interface, builds the default database temporal, optionally returns the object from the cache
+     * Returns the currently valid facts, at the current database time
+     *
+     * @param clazz         - Java class of type T to return
+     * @param individualIRI - IRI of individual
+     * @param bypassCache   - Bypass cache?
+     * @param <T>           - Java class to return
+     * @return - Java object of type T
+     */
+    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache);
+
+    /**
+     * /**
+     * ReadAsObject interface, (optionally) building the database temporal and retrieving from the cache
+     * Returns the state of the object at the specified valid/database point
+     * If no valid or database times are specified, returns the currently valid facts at the current database time
+     *
+     * @param clazz         - Java class of type T to return
+     * @param individualIRI - IRI of individual to return
+     * @param bypassCache   - Bypass cache access?
+     * @param validAt - Optional temporal to specify a validAt time
+     * @param databaseAt - Optiona temporal to spe
+     * @param <T> - Java class to return
+     * @return - Java object of type T
+     */
+    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt);
 
     /**
      * Retrieve historical states of a given Fact

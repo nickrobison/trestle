@@ -33,6 +33,9 @@ import com.nickrobison.trestle.reasoner.engines.events.TrestleEventEngine;
 import com.nickrobison.trestle.reasoner.engines.events.TrestleEventException;
 import com.nickrobison.trestle.reasoner.engines.merge.MergeScript;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
+import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
+import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
+import com.nickrobison.trestle.reasoner.engines.object.TrestleObjectWriter;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
@@ -107,6 +110,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final QueryBuilder qb;
     private final QueryBuilder.Dialect spatialDalect;
     private final TrestleParser trestleParser;
+    private final ITrestleObjectWriter objectWriter;
+    private final ITrestleObjectReader objectReader;
     private final TrestleMergeEngine mergeEngine;
     private final TrestleEventEngine eventEngine;
     private final IndividualEngine individualEngine;
@@ -220,6 +225,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         trestleParser = injector.getInstance(TrestleParser.class);
 
 //      Engines on
+        this.objectReader = injector.getInstance(ITrestleObjectReader.class);
+        this.objectWriter = injector.getInstance(TrestleObjectWriter.class);
         this.mergeEngine = injector.getInstance(TrestleMergeEngine.class);
         this.eventEngine = injector.getInstance(TrestleEventEngine.class);
         this.individualEngine = injector.getInstance(IndividualEngine.class);
@@ -388,12 +395,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public void writeTrestleObject(Object inputObject) throws TrestleClassException, MissingOntologyEntity {
-//        writeTrestleObject(inputObject, null);
+        this.objectWriter.writeTrestleObject(inputObject);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public void writeTrestleObject(Object inputObject, Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, UnregisteredClassException {
+        this.objectWriter.writeTrestleObject(inputObject, startTemporal, endTemporal);
 
 //        final TemporalObject databaseTemporal;
 //        if (endTemporal == null) {
@@ -559,11 +567,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validAt, @Nullable Temporal databaseFrom) {
+        this.objectWriter.addFactToTrestleObject(clazz, individual, factName, value, validAt, databaseFrom);
 //        addFactToTrestleObjectImpl(clazz, individual, factName, value, validAt, null, null, databaseFrom);
     }
 
     @Override
     public void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom) {
+        this.objectWriter.addFactToTrestleObject(clazz, individual, factName, value, validFrom, validTo, databaseFrom);
 //        addFactToTrestleObjectImpl(clazz, individual, factName, value, null, validFrom, validTo, databaseFrom);
     }
 //
@@ -755,7 +765,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public <T extends @NonNull Object> T readTrestleObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException {
 //        return readTrestleObject(datasetClassID, objectID, null, null);
-        throw new UnsupportedOperationException("Migrating");
+        return this.objectReader.readTrestleObject(datasetClassID, objectID);
     }
 
     @Override
@@ -764,42 +774,32 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 ////        Lookup class
 //        final Class<T> aClass = (Class<T>) this.getRegisteredClass(datasetClassID);
 //        return readTrestleObject(aClass, objectID, validTemporal, databaseTemporal);
-        throw new UnsupportedOperationException("Migrating");
+        return this.objectReader.readTrestleObject(datasetClassID, objectID, validTemporal, databaseTemporal);
     }
 
     @Override
     public <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID) throws TrestleClassException, MissingOntologyEntity {
 //        return readTrestleObject(clazz, objectID, null, null);
-        throw new UnsupportedOperationException("Migrating");
+        return this.objectReader.readTrestleObject(clazz, objectID);
     }
 
 
     @Override
-    @SuppressWarnings({"argument.type.incompatible", "dereference.of.nullable"})
     public <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity {
 //
 //        final IRI individualIRI = parseStringToIRI(REASONER_PREFIX, objectID);
 //        return readTrestleObject(clazz, individualIRI, false, validTemporal, databaseTemporal);
-        throw new UnsupportedOperationException("Migrating");
+        return this.objectReader.readTrestleObject(clazz, objectID, validTemporal, databaseTemporal);
     }
 
 //    ----------------------------
 //    IRI Methods
 //    ----------------------------
 
-    /**
-     * ReadAsObject interface, builds the default database temporal, optionally returns the object from the cache
-     * Returns the currently valid facts, at the current database time
-     *
-     * @param clazz         - Java class of type T to return
-     * @param individualIRI - IRI of individual
-     * @param bypassCache   - Bypass cache?
-     * @param <T>           - Java class to return
-     * @return - Java object of type T
-     */
-    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache) {
+    @Override
+    public <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache) {
 //        return readTrestleObject(clazz, individualIRI, bypassCache, null, null);
-        throw new UnsupportedOperationException("Migrating");
+        return this.objectReader.readTrestleObject(clazz, individualIRI, bypassCache);
     }
 //
 //    /**
@@ -815,8 +815,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //     * @return - Java object of type T
 //     */
 //    @SuppressWarnings({"return.type.incompatible", "argument.type.incompatible", "unchecked"})
-    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt) {
-        throw new UnsupportedOperationException("Migrating");
+    @Override
+    public <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt) {
+        return this.objectReader.readTrestleObject(clazz, individualIRI, bypassCache, validAt, databaseAt);
+//        return this.objectReader.
 //        logger.debug("Reading {}", individualIRI);
 //
 //        final PointTemporal validTemporal;
@@ -864,7 +866,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //        } else {
 //            throw new NoValidStateException(individualIRI, validTemporal.getIdTemporal(), databaseTemporal.getIdTemporal());
 //        }
-//    }
+    }
 //
 //    /**
 //     * Read object implementation, going to straight to the database, completely bypassing the cache
@@ -1065,11 +1067,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //            ontology.returnAndAbortTransaction(trestleTransaction);
 //            throw new IllegalStateException("No data properties, not even trying");
 //        }
-    }
+//    }
 
     @Override
     public Optional<List<Object>> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
-        throw new UnsupportedOperationException("Migrating");
+        return this.objectReader.getFactValues(clazz, individual, factName, validStart, validEnd, databaseTemporal);
 //        Parse String to Fact IRI
 //        final Optional<IRI> factIRI = this.trestleParser.classParser.getFactIRI(clazz, factName);
 //        if (!factIRI.isPresent()) {
@@ -1084,7 +1086,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public Optional<List<Object>> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
-        throw new UnsupportedOperationException("Migrating");
+        return this.getFactValues(clazz, individual, factName, validStart, validEnd, databaseTemporal);
 
 //        final Optional<Class<@NonNull ?>> datatypeOptional = this.trestleParser.classParser.getFactDatatype(clazz, factName.getIRI().toString());
 //
@@ -1150,7 +1152,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public <T extends @NonNull Object> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength) {
-        throw new UnsupportedOperationException("Migrating");
+        this.objectWriter.addTrestleObjectSplitMerge(type, subject, objects, strength);
 //        if (!(type == TrestleEventType.SPLIT) && !(type == TrestleEventType.MERGED)) {
 //            throw new IllegalArgumentException("Only MERGED and SPLIT types are valid");
 //        }
@@ -1555,7 +1557,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     .map(individual -> CompletableFuture.supplyAsync(() -> {
                         final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                         try {
-                            return this.readTrestleObject(clazz, individual.getIRI(), false, queryTemporal, null);
+                            return this.objectReader.readTrestleObject(clazz, individual.getIRI(), false, queryTemporal, null);
                         } finally {
                             this.ontology.returnAndCommitTransaction(tt);
                         }

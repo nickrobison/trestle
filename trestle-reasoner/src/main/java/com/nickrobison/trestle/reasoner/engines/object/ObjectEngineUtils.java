@@ -5,6 +5,7 @@ import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.parser.IClassRegister;
+import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -31,8 +32,8 @@ public class ObjectEngineUtils {
     private final String reasonerPrefix;
 
     @Inject
-    public ObjectEngineUtils(IClassRegister registry, ITrestleOntology ontology, @Named("reasonerPrefix") String reasonerPrefix) {
-        this.registry = registry;
+    public ObjectEngineUtils(TrestleParser trestleParser, ITrestleOntology ontology, @Named("reasonerPrefix") String reasonerPrefix) {
+        this.registry = trestleParser.classRegistry;
         this.ontology = ontology;
         this.reasonerPrefix = reasonerPrefix;
     }
