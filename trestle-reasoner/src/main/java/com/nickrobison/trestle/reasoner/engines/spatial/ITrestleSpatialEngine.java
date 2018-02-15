@@ -1,7 +1,11 @@
 package com.nickrobison.trestle.reasoner.engines.spatial;
 
+import com.codahale.metrics.annotation.Timed;
+import com.esri.core.geometry.SpatialReference;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
+import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -15,6 +19,34 @@ import java.util.Optional;
  * Created by nickrobison on 2/14/18.
  */
 public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine {
+    /**
+     * Performs a spatial intersection on a given dataset without considering any temporal constraints
+     * This will return all intersecting individuals, in their latest DB state
+     * Returns an optional list of {@link TrestleIndividual}s
+     * This method will return the individual represented by the input WKT, so it may need to be filtered out
+     *
+     * @param datasetClassID - {@link String} ID of dataset {@link OWLClass}
+     * @param wkt            - {@link String} WKT boundary
+     * @param buffer         - {@link Double} buffer to extend around buffer. 0 is no buffer
+     * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
+     */
+    Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer);
+
+    /**
+     * Performs a spatial intersection on a given dataset with a specified spatio-temporal restriction
+     * Returns an optional list of {@link TrestleIndividual}s
+     * If no valid temporal is specified, performs a spatial intersection with no temporal constraints
+     * This method will return the individual represented by the input WKT, so it may need to be filtered out
+     *
+     * @param datasetClassID - {@link String} ID of dataset {@link OWLClass}
+     * @param wkt            - {@link String} WKT boundary
+     * @param buffer         - {@link Double} buffer to extend around buffer. 0 is no buffer
+     * @param atTemporal     - {@link Temporal} valid at restriction
+     * @param dbTemporal     - {@link Temporal} database at restriction
+     * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
+     */
+    Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal);
+
     /**
      * Performs a spatial intersection on a given dataset with a specified spatio-temporal restriction
      * Returns an optional list of {@link TrestleIndividual}s
@@ -75,4 +107,29 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @return - An Optional List of Object T
      */
     <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt);
+
+    /**
+     * Calculate {@link UnionEqualityResult} for the given {@link List} of individual IRIs
+     *
+     * @param datasetClassID - {@link String} {@link OWLClass} string reference
+     * @param individualIRIs - {@link List} of Individual IRIs
+     * @param inputSR        - EPSG code to determine union projection
+     * @param matchThreshold - {@link Double} cutoff to determine minimum match percentage
+     * @return - {@link Optional} {@link UnionEqualityResult}
+     */
+    Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold);
+
+    /**
+     * Perform spatial comparison between two input objects
+     * Object relations unidirectional are A -&gt; B. e.g. contains(A,B)
+     *
+     * @param datasetID           - {@link String} representation of {@link OWLClass}
+     * @param objectAID           - {@link String} ID of ObjectA
+     * @param comparisonObjectIDs - @{link List} of {@link String} IDs of comparison objects
+     * @param inputSR             - {@link SpatialReference} input spatial reference
+     * @param matchThreshold      - {@link Double} cutoff for all fuzzy matches
+     * @return - {@link Optional} {@link List} of {@link SpatialComparisonReport}
+     */
+    @Timed
+    Optional<List<SpatialComparisonReport>> compareTrestleObjects(String datasetID, String objectAID, List<String> comparisonObjectIDs, int inputSR, double matchThreshold);
 }
