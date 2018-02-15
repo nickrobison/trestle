@@ -10,6 +10,7 @@ import com.nickrobison.trestle.reasoner.caching.TrestleCache;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
+import com.nickrobison.trestle.reasoner.engines.spatial.ITrestleSpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
@@ -45,7 +46,7 @@ import java.util.Set;
 /**
  * Created by nrobison on 1/30/17.
  */
-public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWriter {
+public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWriter, ITrestleSpatialEngine {
     /**
      * Shutdown the reasoner
      */
@@ -95,7 +96,9 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * Get underlying {@link SpatialEngine}
      *
      * @return - {@link SpatialEngine}
+     * @deprecated - As of 0.8.1 all applicable methods can be called directly from the {@link TrestleReasoner} interface
      */
+    @Deprecated
     SpatialEngine getSpatialEngine();
 
     /**
@@ -199,56 +202,56 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      */
     <T extends @NonNull Object> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength);
 
-    /**
-     * Spatial Intersect Object with most recent records in the database
-     * An empty Optional means an error, an Optional of an empty List means no intersected objects
-     *
-     * @param inputObject - Object to intersect
-     * @param buffer      - Additional buffer (in meters)
-     * @param <T>         - Type to specialize method
-     * @return - An Optional List of Object T
-     */
-    @SuppressWarnings("return.type.incompatible")
-    <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer);
-
-    /**
-     * Spatial Intersect Object with records in the database valid at that given time
-     * An empty Optional means an error, an Optional of an empty List means no intersected objects
-     *
-     * @param inputObject - Object to intersect
-     * @param buffer      - Additional buffer to build around object (in meters)
-     * @param temporalAt  - Temporal of intersecting time point
-     * @param <T>         - Type to specialize method
-     * @return - An Optional List of Object T
-     */
-    @SuppressWarnings("unchecked")
-    <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt);
-
-    /**
-     * Find objects of a given class that intersect with a specific WKT boundary.
-     * An empty Optional means an error, an Optional of an empty List means no intersected objects
-     *
-     * @param clazz  - Class of object to return
-     * @param wkt    - WKT of spatial boundary to intersect with
-     * @param buffer - Double buffer to build around wkt (in meters)
-     * @param <T>    - Type to specialize method
-     * @return - An Optional List of Object T
-     */
-    <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer);
-
-    /**
-     * Find objects of a given class that intersect with a specific WKT boundary.
-     * An empty Optional means an error, an Optional of an empty List means no intersected objects
-     *
-     * @param clazz      - Class of object to return
-     * @param wkt        - WKT of spatial boundary to intersect with
-     * @param buffer     - Double buffer to build around wkt
-     * @param atTemporal - Temporal to filter results to specific valid time point
-     * @param <T>        - Class to specialize method with.
-     * @return - An Optional List of Object T.
-     */
-    @SuppressWarnings("return.type.incompatible")
-    <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal atTemporal);
+//    /**
+//     * Spatial Intersect Object with most recent records in the database
+//     * An empty Optional means an error, an Optional of an empty List means no intersected objects
+//     *
+//     * @param inputObject - Object to intersect
+//     * @param buffer      - Additional buffer (in meters)
+//     * @param <T>         - Type to specialize method
+//     * @return - An Optional List of Object T
+//     */
+//    @SuppressWarnings("return.type.incompatible")
+//    <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer);
+//
+//    /**
+//     * Spatial Intersect Object with records in the database valid at that given time
+//     * An empty Optional means an error, an Optional of an empty List means no intersected objects
+//     *
+//     * @param inputObject - Object to intersect
+//     * @param buffer      - Additional buffer to build around object (in meters)
+//     * @param temporalAt  - Temporal of intersecting time point
+//     * @param <T>         - Type to specialize method
+//     * @return - An Optional List of Object T
+//     */
+//    @SuppressWarnings("unchecked")
+//    <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt);
+//
+//    /**
+//     * Find objects of a given class that intersect with a specific WKT boundary.
+//     * An empty Optional means an error, an Optional of an empty List means no intersected objects
+//     *
+//     * @param clazz  - Class of object to return
+//     * @param wkt    - WKT of spatial boundary to intersect with
+//     * @param buffer - Double buffer to build around wkt (in meters)
+//     * @param <T>    - Type to specialize method
+//     * @return - An Optional List of Object T
+//     */
+//    <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer);
+//
+//    /**
+//     * Find objects of a given class that intersect with a specific WKT boundary.
+//     * An empty Optional means an error, an Optional of an empty List means no intersected objects
+//     *
+//     * @param clazz      - Class of object to return
+//     * @param wkt        - WKT of spatial boundary to intersect with
+//     * @param buffer     - Double buffer to build around wkt
+//     * @param atTemporal - Temporal to filter results to specific valid time point
+//     * @param <T>        - Class to specialize method with.
+//     * @return - An Optional List of Object T.
+//     */
+//    @SuppressWarnings("return.type.incompatible")
+//    <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal atTemporal);
 
     /**
      * Get a map of related objects and their relative strengths

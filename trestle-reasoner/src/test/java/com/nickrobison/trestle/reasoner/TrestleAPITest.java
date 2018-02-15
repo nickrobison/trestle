@@ -191,7 +191,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
     }
 
     @Test
-    @Disabled
+//    @Disabled
     public void gaulLoader() throws IOException, TrestleClassException, MissingOntologyEntity {
 
 

@@ -483,13 +483,15 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer) {
-        return spatialIntersectObject(inputObject, buffer, null);
+//        return spatialIntersectObject(inputObject, buffer, null);
+        return this.spatialEngine.spatialIntersectObject(inputObject, buffer);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt) {
-        final OWLNamedIndividual owlNamedIndividual = trestleParser.classParser.getIndividual(inputObject);
+        return this.spatialEngine.spatialIntersectObject(inputObject, buffer, temporalAt);
+        /*final OWLNamedIndividual owlNamedIndividual = trestleParser.classParser.getIndividual(inputObject);
         final Optional<String> wktString = SpatialParser.getSpatialValueAsString(inputObject);
 
         if (wktString.isPresent()) {
@@ -497,13 +499,14 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
 
         logger.info("{} doesn't have a spatial component", owlNamedIndividual);
-        return Optional.empty();
+        return Optional.empty();*/
     }
 
     @Override
     public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer) {
-        throw new UnsupportedOperationException("Migrating");
+//        throw new UnsupportedOperationException("Migrating");
 //        return spatialIntersect(clazz, wkt, buffer, null);
+        return this.spatialEngine.spatialIntersect(clazz, wkt, buffer);
     }
 
     @Override
@@ -511,7 +514,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Metered(name = "spatial-intersect-meter")
     @SuppressWarnings({"override.return.invalid"})
     public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt) {
-        throw new UnsupportedOperationException("Migrating");
+        return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, validAt);
 //        final OWLClass owlClass = trestleParser.classParser.getObjectClass(clazz);
 //
 //        final OffsetDateTime atTemporal;
@@ -572,6 +575,31 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //        } finally {
 //            this.ontology.returnAndCommitTransaction(trestleTransaction);
 //        }
+    }
+
+    @Override
+    public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
+        return this.spatialEngine.calculateSpatialUnion(inputObjects, inputSR, matchThreshold);
+    }
+
+    @Override
+    public <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR) {
+        return this.spatialEngine.calculateUnionContribution(result, inputSR);
+    }
+
+    @Override
+    public <T extends @NonNull Object> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold) {
+        return this.spatialEngine.isApproximatelyEqual(inputObject, matchObject, inputSR, threshold);
+    }
+
+    @Override
+    public <T extends @NonNull Object> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR) {
+        return this.spatialEngine.calculateSpatialEquals(inputObject, matchObject, inputSR);
+    }
+
+    @Override
+    public <T> ContainmentDirection getApproximateContainment(T objectA, T objectB, SpatialReference inputSR, double threshold) {
+        return this.spatialEngine.getApproximateContainment(objectA, objectB, inputSR, threshold);
     }
 
     //    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
@@ -811,6 +839,16 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //            logger.error("Spatial comparison was excepted", e.getCause());
 //            return Optional.empty();
 //        }
+    }
+
+    @Override
+    public <T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
+        return this.spatialEngine.getEquivalentIndividuals(clazz, individual, queryTemporal);
+    }
+
+    @Override
+    public <T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal) {
+        return this.spatialEngine.getEquivalentIndividuals(clazz, individual, queryTemporal);
     }
 
     @Override
