@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -53,9 +52,9 @@ public class ClassParser implements IClassParser {
 
 
     @Inject
-    ClassParser(@Named("reasonerPrefix") String reasonerPrefix,
-                @Named("multiLang") boolean multiLangEnabled,
-                @Named("default-code") String defaultLanguageCode) {
+    ClassParser(@com.nickrobison.trestle.ontology.ReasonerPrefix String reasonerPrefix,
+                @MultiLangEnabled boolean multiLangEnabled,
+                @DefaultLanguageCode String defaultLanguageCode) {
         this.df = OWLManager.getOWLDataFactory();
         this.ReasonerPrefix = reasonerPrefix;
         this.multiLangEnabled = multiLangEnabled;

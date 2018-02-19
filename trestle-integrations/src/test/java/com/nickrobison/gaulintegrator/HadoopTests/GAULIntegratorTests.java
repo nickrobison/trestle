@@ -123,7 +123,7 @@ public class GAULIntegratorTests {
     public void testReducer() throws IOException, ClassNotFoundException, InterruptedException, SQLException, URISyntaxException {
 
 //        URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/sudan/");
-                URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("out/");
+                URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/gates-test");
         URL OUT_DIR = GAULIntegratorTests.class.getClassLoader().getResource("out/");
 
         Path inDir = new Path(IN_DIR.toString());
@@ -168,12 +168,12 @@ public class GAULIntegratorTests {
                 .withoutMetrics()
                 .build();
 
-        final Optional<List<GAULObject>> manhicaMembers = reasoner.getConceptMembers(GAULObject.class, "Manhica:concept", 0.01, null, null);
+        final Optional<List<GAULObject>> manhicaMembers = reasoner.getConceptMembers(GAULObject.class, "21884-Manhica:concept", 0.01, null, null);
         assertAll(() -> assertTrue(manhicaMembers.isPresent(), "Should have Manhica concept members"),
                 () -> assertEquals(3, manhicaMembers.get().size(), "Wrong number of members for Manhica"));
 
 //        Try for Cidade
-        final Optional<List<GAULObject>> cidadeMembers = reasoner.getConceptMembers(GAULObject.class, "Cidade_de_Maputo:concept", 0.01, null, null);
+        final Optional<List<GAULObject>> cidadeMembers = reasoner.getConceptMembers(GAULObject.class, "41374-Cidade_de_Maputo:concept", 0.01, null, null);
         assertAll(() -> assertTrue(manhicaMembers.isPresent(), "Should have Cidade concept members"),
                 () -> assertEquals(7, cidadeMembers.get().size(), "Wrong number of members for Cidade"));
 

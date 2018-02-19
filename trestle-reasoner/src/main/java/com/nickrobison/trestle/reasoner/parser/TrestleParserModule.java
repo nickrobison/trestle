@@ -60,19 +60,14 @@ public class TrestleParserModule extends PrivateModule {
                     .in(Singleton.class);
         }
 
+        bind(Boolean.class)
+                .annotatedWith(MultiLangEnabled.class)
+                .toInstance(this.multiLangEnabled);
+        bind(String.class)
+                .annotatedWith(DefaultLanguageCode.class)
+                .toInstance(this.defaultLanguageCode);
+
         bind(TrestleParser.class).in(Singleton.class);
         expose(TrestleParser.class);
-    }
-
-    @Provides
-    @Named("default-code")
-    public String getDefaultLanguageCode() {
-        return this.defaultLanguageCode;
-    }
-
-    @Provides
-    @Named("multiLang")
-    public boolean isMultiLangEnabled() {
-        return this.multiLangEnabled;
     }
 }

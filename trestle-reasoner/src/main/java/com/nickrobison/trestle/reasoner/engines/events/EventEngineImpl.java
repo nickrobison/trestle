@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.reasoner.engines.events;
 
 import com.nickrobison.trestle.ontology.ITrestleOntology;
+import com.nickrobison.trestle.ontology.ReasonerPrefix;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.parser.TemporalParser;
@@ -12,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.time.OffsetDateTime;
 import java.time.temporal.Temporal;
 import java.util.ArrayList;
@@ -31,7 +31,9 @@ public class EventEngineImpl implements TrestleEventEngine {
     private final String prefix;
 
     @Inject
-    public EventEngineImpl(ITrestleOntology ontology, QueryBuilder qb, @Named("reasonerPrefix") String prefix) {
+    public EventEngineImpl(ITrestleOntology ontology,
+                           QueryBuilder qb,
+                           @ReasonerPrefix String prefix) {
         logger.info("Creating Event Engine");
         this.ontology = ontology;
         this.prefix = prefix;
