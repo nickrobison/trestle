@@ -4,6 +4,7 @@ import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.exporter.*;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
+import com.nickrobison.trestle.ontology.ReasonerPrefix;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.exceptions.NoValidStateException;
 import com.nickrobison.trestle.reasoner.parser.*;
@@ -24,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.File;
 import java.io.IOException;
 import java.time.temporal.Temporal;
@@ -52,7 +52,7 @@ public class DataExportEngine implements ITrestleDataExporter {
     private final TrestleExecutorService dataExporterPool;
 
     @Inject
-    public DataExportEngine(@Named("reasonerPrefix") String reasonerPrefix,
+    public DataExportEngine(@ReasonerPrefix String reasonerPrefix,
                             ITrestleOntology ontology,
                             ITrestleObjectReader objectReader,
                             TrestleParser trestleParser,

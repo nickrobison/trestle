@@ -8,7 +8,6 @@ import org.semanticweb.owlapi.model.PrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Named;
 import javax.inject.Singleton;
 
 public class TrestleOntologyModule extends AbstractModule {
@@ -29,7 +28,10 @@ public class TrestleOntologyModule extends AbstractModule {
 
     @Override
     protected void configure() {
-//        Not used. I think?
+        bind(String.class)
+                .annotatedWith(ReasonerPrefix.class)
+                .toInstance(this.prefix);
+
     }
 
     @Provides
@@ -48,11 +50,5 @@ public class TrestleOntologyModule extends AbstractModule {
     @Singleton
     public PrefixManager providePrefixManager() {
         return this.ontology.getUnderlyingPrefixManager();
-    }
-
-    @Provides
-    @Named("reasonerPrefix")
-    public String providePrefix() {
-        return this.prefix;
     }
 }

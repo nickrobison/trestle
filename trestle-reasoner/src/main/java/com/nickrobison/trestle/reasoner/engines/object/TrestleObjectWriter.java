@@ -9,6 +9,7 @@ import com.nickrobison.trestle.common.exceptions.TrestleMissingFactException;
 import com.nickrobison.trestle.iri.IRIBuilder;
 import com.nickrobison.trestle.iri.TrestleIRI;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
+import com.nickrobison.trestle.ontology.ReasonerPrefix;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
@@ -44,7 +45,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -59,7 +59,6 @@ import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
 import static com.nickrobison.trestle.common.StaticIRI.*;
-import static com.nickrobison.trestle.common.StaticIRI.factOfIRI;
 import static com.nickrobison.trestle.iri.IRIVersion.V1;
 import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
 
@@ -94,7 +93,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                                ITrestleOntology ontology,
                                QueryBuilder queryBuilder,
                                TrestleCache trestleCache,
-                               @Named("reasonerPrefix") String reasonerPrefix) {
+                               @ReasonerPrefix String reasonerPrefix) {
         this.eventEngine = eventEngine;
         this.metrician = metrician;
         this.engineUtils = engineUtils;

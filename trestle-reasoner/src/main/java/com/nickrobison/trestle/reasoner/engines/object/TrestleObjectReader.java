@@ -7,6 +7,7 @@ import com.nickrobison.trestle.common.TemporalUtils;
 import com.nickrobison.trestle.iri.IRIBuilder;
 import com.nickrobison.trestle.iri.TrestleIRI;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
+import com.nickrobison.trestle.ontology.ReasonerPrefix;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
@@ -37,7 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.time.*;
 import java.time.temporal.Temporal;
 import java.util.List;
@@ -84,7 +84,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                                ITrestleOntology ontology,
                                QueryBuilder qb,
                                TrestleCache trestleCache,
-                               @Named("reasonerPrefix") String reasonerPrefix) {
+                               @ReasonerPrefix String reasonerPrefix) {
         this.eventEngine = eventEngine;
         this.metrician = metrician;
         this.engineUtils = engineUtils;

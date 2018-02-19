@@ -6,6 +6,7 @@ import com.google.common.collect.Multimaps;
 import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
+import com.nickrobison.trestle.ontology.ReasonerPrefix;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
@@ -30,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
@@ -47,8 +47,6 @@ import static com.nickrobison.trestle.common.IRIUtils.extractTrestleIndividualNa
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
 import static com.nickrobison.trestle.common.LambdaUtils.sequenceCompletableFutures;
 import static com.nickrobison.trestle.common.StaticIRI.*;
-import static com.nickrobison.trestle.common.StaticIRI.relatedToIRI;
-import static com.nickrobison.trestle.common.StaticIRI.trestleConceptIRI;
 import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
 
 /**
@@ -69,7 +67,7 @@ public class ConceptEngine implements ITrestleConceptEngine {
     private final TrestleExecutorService conceptPool;
 
     @Inject
-    public ConceptEngine(@Named("reasonerPrefix") String reasonerPrefix,
+    public ConceptEngine(@ReasonerPrefix String reasonerPrefix,
                          ITrestleOntology ontology,
                          QueryBuilder queryBuilder,
                          ITrestleObjectReader objectReader,

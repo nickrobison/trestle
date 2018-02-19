@@ -2,6 +2,7 @@ package com.nickrobison.trestle.reasoner.engines.object;
 
 import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
+import com.nickrobison.trestle.ontology.ReasonerPrefix;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.parser.IClassRegister;
@@ -19,9 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
-
 import java.time.OffsetDateTime;
 import java.time.temporal.Temporal;
 import java.util.Optional;
@@ -45,7 +44,9 @@ public class ObjectEngineUtils {
     private final String reasonerPrefix;
 
     @Inject
-    public ObjectEngineUtils(TrestleParser trestleParser, ITrestleOntology ontology, @Named("reasonerPrefix") String reasonerPrefix) {
+    public ObjectEngineUtils(TrestleParser trestleParser,
+                             ITrestleOntology ontology,
+                             @ReasonerPrefix String reasonerPrefix) {
         this.registry = trestleParser.classRegistry;
         this.ontology = ontology;
         this.reasonerPrefix = reasonerPrefix;
@@ -117,6 +118,7 @@ public class ObjectEngineUtils {
 
     /**
      * Determine if a given individual exists in the {@link com.nickrobison.trestle.ontology.ITrestleOntology}
+     *
      * @param individualIRI - {@link IRI} resource to check for
      * @return - {@code true} individual exists in ontology. {@code false} individual does not exist
      */
