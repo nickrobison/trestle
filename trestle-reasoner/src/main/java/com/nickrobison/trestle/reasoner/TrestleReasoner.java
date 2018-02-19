@@ -21,8 +21,6 @@ import com.nickrobison.trestle.reasoner.parser.TypeConstructor;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
-import com.nickrobison.trestle.types.relations.ConceptRelationType;
-import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
@@ -211,17 +209,6 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
     @Deprecated
     <T extends @NonNull Object> Optional<Map<T, Double>> getRelatedObjects(Class<T> clazz, String objectID, double cutoff);
 
-//    /**
-//     * For a given individual, get all related concepts and the IRIs of all members of those concepts,
-//     * that have a relation strength above the given cutoff value
-//     *
-//     * @param individual       - String of individual IRI to return relations for
-//     * @param conceptID        - Nullable String of concept IRI to filter members of
-//     * @param relationStrength - Cutoff value of minimum relation strength
-//     * @return - {@link Optional} {@link Map} of String IRI representations of related concepts
-//     */
-//    Optional<Map<String, List<String>>> getRelatedConcepts(String individual, @Nullable String conceptID, double relationStrength);
-
     /**
      * Get a {@link List} of objects that are equivalent to given individual at the given time point
      * If no objects satisfy the equality constraints and an empty {@link List} is returned
@@ -272,75 +259,6 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @return - {@link TrestleIndividual}
      */
     TrestleIndividual getTrestleIndividual(String individualIRI);
-
-//    /**
-//     * Return a set of Trestle_Concepts that intersect with the given WKT
-//     * The temporal parameters allow for additional specificity on the spatio-temporal intersection
-//     *
-//     * @param wkt      - String of WKT to intersect with
-//     * @param buffer   - double buffer to draw around WKT
-//     * @param strength - strength parameter to filter weak associations
-//     * @param validAt  - {@link Temporal} of validAt time
-//     * @param dbAt     - Optional {@link Temporal} of dbAt time   @return - Optional Set of String URIs for intersected concepts
-//     * @return - {@link Optional} {@link Set} of {@link String} Concept IDs
-//     */
-//    Optional<Set<String>> STIntersectConcept(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt);
-
-//    /**
-//     * Retrieve all members of a specified concept that match a given class
-//     * If the {@code spatialIntersection} parameter occurs outside of the exists range of the target TrestleObjects, the intersection point is adjusted, in order to return a valid object
-//     * If the intersection point occurs before the TrestleObject, the earliest version of that object is returned
-//     * If the intersection point occurs after the TrestleObject, the latest version of the object is returned
-//     *
-//     * @param <T>                  - Generic type T of returned object
-//     * @param clazz                - Input class to retrieve from concept
-//     * @param conceptID            - String ID of concept to retrieve
-//     * @param strength             - Strength parameter to filter weak associations
-//     * @param spatialIntersection  - Optional spatial intersection to restrict results
-//     * @param temporalIntersection - Optional temporal intersection to restrict results   @return - Optional Set of T objects
-//     * @return - {@link Optional} {@link List} of Objects
-//     */
-//    <T> Optional<List<T>> getConceptMembers(Class<T> clazz, String conceptID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection);
-
-//    /**
-//     * Write an object into the database, as a member of a given concept
-//     *
-//     * @param conceptIRI   - String of
-//     * @param inputObject  - Object to write into databse
-//     * @param relationType - ConceptRelationType
-//     * @param strength     - Strength parameter of relation
-//     */
-//    void addObjectToConcept(String conceptIRI, Object inputObject, ConceptRelationType relationType, double strength);
-
-//    /**
-//     * Write a relationship between two objects.
-//     * If one or both of those objects do not exist, create them.
-//     *
-//     * @param subject  - Java object to write as subject of relationship
-//     * @param object   - Java object to write as object of relationship
-//     * @param relation - ObjectRelation between the two object
-//     */
-//    void writeObjectRelationship(Object subject, Object object, ObjectRelation relation);
-
-//    /**
-//     * Create a spatial overlap association between two objects.
-//     * If one or both of the object do not exist, create them.
-//     *
-//     * @param subject - Java object to write as subject of relationship
-//     * @param object  - Java object to write as object of relationship
-//     * @param wkt     - String of wkt boundary of spatial overlap
-//     */
-//    void writeSpatialOverlap(Object subject, Object object, String wkt);
-
-//    /**
-//     * Create a spatial overlap association between two objects.
-//     * If one or both of the object do not exist, create them.
-//     *
-//     * @param subject         - Java object to write as subject of relationship
-//     * @param object          - Java object to write as object of relationship
-//     * @param temporalOverlap - String of temporal overlap between two objects (Not implemented yet)
-//     */
-//    void writeTemporalOverlap(Object subject, Object object, String temporalOverlap);
 
     /**
      * Register dataset class with Reasoner
