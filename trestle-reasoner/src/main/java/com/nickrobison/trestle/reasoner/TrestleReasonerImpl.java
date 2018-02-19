@@ -651,6 +651,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
+    public <T> SpatialComparisonReport compareTrestleObjects(T objectA, T objectB, SpatialReference inputSR, double matchThreshold) {
+        return this.spatialEngine.compareTrestleObjects(objectA, objectB, inputSR, matchThreshold);
+    }
+
+    @Override
     public <T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
         return this.spatialEngine.getEquivalentIndividuals(clazz, individual, queryTemporal);
     }
@@ -773,98 +778,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public void deregisterClass(Class inputClass) {
         this.trestleParser.classRegistry.deregisterClass(inputClass);
-    }
-
-    /**
-     * Write temporal object into the database, optionally override given scope
-     * If no OWLNamedIndividual is given, don't write any association
-     *
-     * @param temporal-                   TemporalObject to create
-     * @param individual                  - Optional OWLNamedIndividual to associate with temporal
-     * @param overrideTemporalScope       - Optionally override scope of temporal object
-     * @param overrideTemporalAssociation - Optionally override temporal association
-     * @throws MissingOntologyEntity - Throws if it can't find the temporal to write properties on
-     */
-    @Deprecated
-    private void writeTemporal(TemporalObject temporal, @Nullable OWLNamedIndividual individual, @Nullable TemporalScope overrideTemporalScope, @Nullable IRI overrideTemporalAssociation) throws MissingOntologyEntity {
-//        Write the object
-        final IRI temporalIRI = IRI.create(REASONER_PREFIX, temporal.getID());
-        ontology.createIndividual(temporalIRI, temporalClassIRI);
-        TemporalScope scope = temporal.getScope();
-        TemporalType type = temporal.getType();
-
-        if (overrideTemporalScope != null) {
-            scope = overrideTemporalScope;
-        }
-
-//        Write the properties using the scope and type variables set above
-        if (type == TemporalType.INTERVAL) {
-            if (scope == TemporalScope.VALID) {
-//                Write from
-                ontology.writeIndividualDataProperty(
-                        temporalIRI,
-                        temporalValidFromIRI,
-                        parseTemporalToOntologyDateTime(temporal.asInterval().getFromTime(), temporal.asInterval().getStartTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                        dateTimeDatatypeIRI);
-
-//                Write to, if exists
-                final Optional<Temporal> toTime = temporal.asInterval().getToTime();
-                if (toTime.isPresent()) {
-                    ontology.writeIndividualDataProperty(
-                            temporalIRI,
-                            temporalValidToIRI,
-                            parseTemporalToOntologyDateTime(toTime.get(), temporal.asInterval().getEndTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                            dateTimeDatatypeIRI);
-                }
-            } else {
-//                Write from
-                ontology.writeIndividualDataProperty(
-                        temporalIRI,
-                        StaticIRI.temporalExistsFromIRI,
-                        parseTemporalToOntologyDateTime(temporal.asInterval().getFromTime(), temporal.asInterval().getStartTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                        dateTimeDatatypeIRI);
-
-//                Write to, if exists
-                final Optional<Temporal> toTime = temporal.asInterval().getToTime();
-                if (toTime.isPresent()) {
-                    ontology.writeIndividualDataProperty(
-                            temporalIRI,
-                            StaticIRI.temporalExistsToIRI,
-                            parseTemporalToOntologyDateTime(toTime.get(), temporal.asInterval().getEndTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                            dateTimeDatatypeIRI);
-                }
-            }
-        } else {
-//            Is point
-            if (scope == TemporalScope.VALID) {
-                ontology.writeIndividualDataProperty(
-                        temporalIRI,
-                        StaticIRI.temporalValidAtIRI,
-                        parseTemporalToOntologyDateTime(temporal.asPoint().getPointTime(), temporal.asPoint().getTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                        dateTimeDatatypeIRI);
-            } else {
-                ontology.writeIndividualDataProperty(
-                        temporalIRI,
-                        StaticIRI.temporalExistsAtIRI,
-                        parseTemporalToOntologyDateTime(temporal.asPoint().getPointTime(), temporal.asPoint().getTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                        dateTimeDatatypeIRI);
-            }
-        }
-
-//        Associate with individual
-        if (individual != null) {
-            if (overrideTemporalAssociation == null) {
-                ontology.writeIndividualObjectProperty(
-                        individual.getIRI(),
-                        StaticIRI.hasTemporalIRI,
-                        temporalIRI);
-            } else {
-                ontology.writeIndividualObjectProperty(
-                        individual.getIRI(),
-                        overrideTemporalAssociation,
-                        temporalIRI);
-            }
-        }
     }
 
     @Override

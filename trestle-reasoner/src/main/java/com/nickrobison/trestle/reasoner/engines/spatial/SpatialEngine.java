@@ -311,19 +311,9 @@ public class SpatialEngine implements ITrestleSpatialEngine {
     }
 
 
-    /**
-     * Perform spatial comparison between two input objects
-     * Object relations unidirectional are A -&gt; B. e.g. contains(A,B)
-     *
-     * @param objectA        - {@link Object} to compare against
-     * @param objectB        - {@link Object} to compare with
-     * @param inputSR        - {@link SpatialReference} input spatial reference
-     * @param matchThreshold - {@link Double} cutoff for all fuzzy matches
-     * @param <T>            - Type parameter
-     * @return - {@link SpatialComparisonReport}
-     */
+    @Override
     @Timed
-    public <T extends Object> SpatialComparisonReport compareObjects(T objectA, T objectB, SpatialReference inputSR, double matchThreshold) {
+    public <T extends Object> SpatialComparisonReport compareTrestleObjects(T objectA, T objectB, SpatialReference inputSR, double matchThreshold) {
 
         final OWLNamedIndividual objectAID = this.tp.classParser.getIndividual(objectA);
         final OWLNamedIndividual objectBID = this.tp.classParser.getIndividual(objectB);
@@ -500,7 +490,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
                 .thenCombineAsync(sequencedFutures,
                         (objectA, comparisonObjects) -> comparisonObjects
                                 .stream()
-                                .map(objectB -> this.compareObjects(objectA, objectB, spatialReference, matchThreshold))
+                                .map(objectB -> this.compareTrestleObjects(objectA, objectB, spatialReference, matchThreshold))
                                 .collect(Collectors.toList()), this.spatialPool);
 
         try {

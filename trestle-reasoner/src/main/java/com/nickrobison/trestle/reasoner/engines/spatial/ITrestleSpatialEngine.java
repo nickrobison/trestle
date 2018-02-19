@@ -123,6 +123,19 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * Perform spatial comparison between two input objects
      * Object relations unidirectional are A -&gt; B. e.g. contains(A,B)
      *
+     * @param objectA        - {@link Object} to compare against
+     * @param objectB        - {@link Object} to compare with
+     * @param inputSR        - {@link SpatialReference} input spatial reference
+     * @param matchThreshold - {@link Double} cutoff for all fuzzy matches
+     * @param <T>            - Type parameter
+     * @return - {@link SpatialComparisonReport}
+     */
+    <T extends Object> SpatialComparisonReport compareTrestleObjects(T objectA, T objectB, SpatialReference inputSR, double matchThreshold);
+
+    /**
+     * Perform spatial comparison between two input objects
+     * Object relations unidirectional are A -&gt; B. e.g. contains(A,B)
+     *
      * @param datasetID           - {@link String} representation of {@link OWLClass}
      * @param objectAID           - {@link String} ID of ObjectA
      * @param comparisonObjectIDs - @{link List} of {@link String} IDs of comparison objects
@@ -130,6 +143,5 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @param matchThreshold      - {@link Double} cutoff for all fuzzy matches
      * @return - {@link Optional} {@link List} of {@link SpatialComparisonReport}
      */
-    @Timed
     Optional<List<SpatialComparisonReport>> compareTrestleObjects(String datasetID, String objectAID, List<String> comparisonObjectIDs, int inputSR, double matchThreshold);
 }
