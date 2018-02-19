@@ -4,6 +4,7 @@ import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.types.events.TrestleEventType;
+import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -76,4 +77,35 @@ public interface ITrestleObjectWriter {
      * @param <T>      - Java {@link Class} of underlying objects, registered with the reasoner
      */
     <T extends @NonNull Object> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength);
+
+    /**
+     * Write a relationship between two objects.
+     * If one or both of those objects do not exist, create them.
+     *
+     * @param subject  - Java {@link Object} to write as subject of relationship
+     * @param object   - Java {@link Object} to write as object of relationship
+     * @param relation - {@link ObjectRelation} between the two object
+     */
+    void writeObjectRelationship(Object subject, Object object, ObjectRelation relation);
+
+    /**
+     * Create a spatial overlap association between two objects.
+     * If one or both of the object do not exist, create them.
+     *
+     * @param subject - Java {@link Object} to write as subject of relationship
+     * @param object  - Java {@link Object} to write as object of relationship
+     * @param wkt     - {@link String} of wkt boundary of spatial overlap
+     */
+    void writeSpatialOverlap(Object subject, Object object, String wkt);
+
+    /**
+     * Create a spatial overlap association between two objects.
+     * If one or both of the object do not exist, create them.
+     *
+     * @param subject         - Java {@link Object} to write as subject of relationship
+     * @param object          - Java {@link Object} to write as object of relationship
+     * @param temporalOverlap - {@link String} of temporal overlap between two objects (Not implemented yet)
+     */
+    //    TODO(nrobison): Correctly implement this
+    void writeTemporalOverlap(Object subject, Object object, String temporalOverlap);
 }
