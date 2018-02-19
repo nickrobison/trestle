@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.Temporal;
@@ -32,6 +33,7 @@ import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
  * Created by nickrobison on 2/13/18.
  */
 @Metriced
+@Singleton
 public class ObjectEngineUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(ObjectEngineUtils.class);

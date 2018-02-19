@@ -6,6 +6,8 @@ import com.nickrobison.trestle.reasoner.engines.concept.ITrestleConceptEngine;
 import com.nickrobison.trestle.reasoner.engines.events.EventEngineImpl;
 import com.nickrobison.trestle.reasoner.engines.events.EventEngineNoOp;
 import com.nickrobison.trestle.reasoner.engines.events.TrestleEventEngine;
+import com.nickrobison.trestle.reasoner.engines.exporter.DataExportEngine;
+import com.nickrobison.trestle.reasoner.engines.exporter.ITrestleDataExporter;
 import com.nickrobison.trestle.reasoner.engines.merge.MergeEngineImpl;
 import com.nickrobison.trestle.reasoner.engines.merge.MergeEngineNoOp;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
@@ -45,7 +47,12 @@ public class EngineModule extends PrivateModule {
         bind(ITrestleObjectWriter.class)
                 .to(TrestleObjectWriter.class)
                 .asEagerSingleton();
-        bind(ITrestleConceptEngine.class).to(ConceptEngine.class);
+        bind(ITrestleConceptEngine.class)
+                .to(ConceptEngine.class)
+                .in(Singleton.class);
+        bind(ITrestleDataExporter.class)
+                .to(DataExportEngine.class)
+                .in(Singleton.class);
         bind(IndividualEngine.class).asEagerSingleton();
         bind(TemporalEngine.class).asEagerSingleton();
         bind(SpatialEngine.class).in(Singleton.class);
@@ -83,6 +90,7 @@ public class EngineModule extends PrivateModule {
         expose(ITrestleObjectWriter.class);
         expose(ITrestleObjectReader.class);
         expose(ITrestleConceptEngine.class);
+        expose(ITrestleDataExporter.class);
         expose(SpatialEngine.class);
         expose(TemporalEngine.class);
         expose(IndividualEngine.class);

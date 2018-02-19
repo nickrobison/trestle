@@ -4,9 +4,7 @@ import com.esri.core.geometry.SpatialReference;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.nickrobison.metrician.Metrician;
-import com.nickrobison.trestle.common.IRIUtils;
-import com.nickrobison.trestle.common.StaticIRI;
-import com.nickrobison.trestle.exporter.*;
+import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
 import com.nickrobison.trestle.ontology.TrestleOntologyModule;
@@ -18,6 +16,7 @@ import com.nickrobison.trestle.reasoner.caching.TrestleCache;
 import com.nickrobison.trestle.reasoner.engines.IndividualEngine;
 import com.nickrobison.trestle.reasoner.engines.concept.ITrestleConceptEngine;
 import com.nickrobison.trestle.reasoner.engines.events.TrestleEventEngine;
+import com.nickrobison.trestle.reasoner.engines.exporter.ITrestleDataExporter;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
@@ -30,7 +29,6 @@ import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionCont
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
 import com.nickrobison.trestle.reasoner.engines.temporal.TemporalEngine;
 import com.nickrobison.trestle.reasoner.exceptions.InvalidOntologyName;
-import com.nickrobison.trestle.reasoner.exceptions.NoValidStateException;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
@@ -38,19 +36,13 @@ import com.nickrobison.trestle.reasoner.parser.TypeConstructor;
 import com.nickrobison.trestle.reasoner.parser.TypeConverter;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
-import com.nickrobison.trestle.types.TemporalScope;
-import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
 import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
-import com.nickrobison.trestle.types.temporal.IntervalTemporal;
-import com.nickrobison.trestle.types.temporal.PointTemporal;
-import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import com.vividsolutions.jts.geom.MultiPolygon;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -65,7 +57,6 @@ import java.net.URI;
 import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -77,7 +68,6 @@ import java.util.stream.Collectors;
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
 import static com.nickrobison.trestle.common.LambdaUtils.sequenceCompletableFutures;
 import static com.nickrobison.trestle.common.StaticIRI.*;
-import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
 import static com.nickrobison.trestle.reasoner.utils.ConfigValidator.ValidateConfig;
 
 /**
@@ -103,6 +93,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final ITrestleObjectWriter objectWriter;
     private final ITrestleObjectReader objectReader;
     private final ITrestleConceptEngine conceptEngine;
+    private final ITrestleDataExporter dataExporter;
     private final TrestleMergeEngine mergeEngine;
     private final TrestleEventEngine eventEngine;
     private final IndividualEngine individualEngine;
@@ -219,6 +210,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         this.objectReader = injector.getInstance(ITrestleObjectReader.class);
         this.objectWriter = injector.getInstance(TrestleObjectWriter.class);
         this.conceptEngine = injector.getInstance(ITrestleConceptEngine.class);
+        this.dataExporter = injector.getInstance(ITrestleDataExporter.class);
         this.mergeEngine = injector.getInstance(TrestleMergeEngine.class);
         this.eventEngine = injector.getInstance(TrestleEventEngine.class);
         this.individualEngine = injector.getInstance(IndividualEngine.class);
@@ -807,143 +799,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, ITrestleExporter.DataType exportType) throws IOException {
-        return exportDataSetObjects(inputClass, objectID, null, null, exportType);
+        return this.dataExporter.exportDataSetObjects(inputClass, objectID, exportType);
     }
 
     @Override
     public <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, @Nullable Temporal validAt, @Nullable Temporal databaseAt, ITrestleExporter.DataType exportType) throws IOException {
-
-//        Build shapefile schema
-//        TODO(nrobison): Extract type from wkt
-//        FIXME(nrobison): Shapefile schema doesn't support multiple languages. Need to figure out how to flatten
-        final ShapefileSchema shapefileSchema = new ShapefileSchema(MultiPolygon.class);
-        final Optional<List<OWLDataProperty>> propertyMembers = this.trestleParser.classBuilder.getPropertyMembers(inputClass, true);
-        propertyMembers.ifPresent(owlDataProperties -> owlDataProperties.forEach(property -> shapefileSchema.addProperty(this.trestleParser.classParser.matchWithClassMember(inputClass, property.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property))));
-
-//        Now the temporals
-        final Optional<List<OWLDataProperty>> temporalProperties = trestleParser.temporalParser.getTemporalsAsDataProperties(inputClass);
-        temporalProperties.ifPresent(owlDataProperties -> owlDataProperties.forEach(temporal -> shapefileSchema.addProperty(this.trestleParser.classParser.matchWithClassMember(inputClass, temporal.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, temporal))));
-
-
-        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        final List<CompletableFuture<Optional<TSIndividual>>> completableFutures = objectID
-                .stream()
-                .map(id -> IRIUtils.parseStringToIRI(REASONER_PREFIX, id))
-                .map(id -> CompletableFuture.supplyAsync(() -> {
-                    final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-                    try {
-                        final T object = readTrestleObject(inputClass, id, false, validAt, databaseAt);
-                        return Optional.of(object);
-                    } catch (NoValidStateException e) {
-                        this.ontology.returnAndAbortTransaction(tt);
-                        return Optional.empty();
-                    } finally {
-                        this.ontology.returnAndCommitTransaction(tt);
-                    }
-                }, trestleThreadPool))
-                .map(objectFuture -> objectFuture.thenApply(object -> parseIndividualToShapefile(object, shapefileSchema)))
-                .collect(Collectors.toList());
-
-        final CompletableFuture<List<Optional<TSIndividual>>> sequencedFutures = sequenceCompletableFutures(completableFutures);
-
-        try {
-            final List<TSIndividual> individuals = sequencedFutures
-                    .get()
-                    .stream()
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(Collectors.toList());
-
-            switch (exportType) {
-                case SHAPEFILE: {
-                    final ShapefileExporter shapeFileExporter = new ShapefileExporter.ShapefileExporterBuilder(shapefileSchema.getGeomName(), shapefileSchema.getGeomType(), shapefileSchema).build();
-                    return shapeFileExporter.writePropertiesToByteBuffer(individuals, null);
-                }
-                case GEOJSON: {
-                    return new GeoJsonExporter().writePropertiesToByteBuffer(individuals, null);
-                }
-                case KML: {
-                    return new KMLExporter(false).writePropertiesToByteBuffer(individuals, null);
-                }
-                case KMZ: {
-                    return new KMLExporter(true).writePropertiesToByteBuffer(individuals, null);
-                }
-                default: {
-                    throw new IllegalArgumentException(String.format("Cannot export to %s format", exportType.toString()));
-                }
-            }
-
-
-        } catch (ExecutionException e) {
-            logger.error("Error constructing object", e.getCause());
-            return ExceptionUtils.rethrow(e.getCause());
-        } catch (InterruptedException e) {
-            logger.error("Object construction excepted", e.getCause());
-            Thread.currentThread().interrupt();
-            return ExceptionUtils.rethrow(e.getCause());
-        } finally {
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
-        }
-    }
-
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private <T extends @NonNull Object> Optional<TSIndividual> parseIndividualToShapefile(Optional<T> objectOptional, ShapefileSchema shapefileSchema) {
-        if (!objectOptional.isPresent()) {
-            return Optional.empty();
-        }
-        final T object = objectOptional.get();
-//        if (objectOptional.isPresent()) {
-//            final T object = objectOptional.get();
-        final Class<?> inputClass = object.getClass();
-        final Optional<OWLDataPropertyAssertionAxiom> spatialProperty = trestleParser.classParser.getSpatialFact(object);
-        if (!spatialProperty.isPresent()) {
-            logger.error("Individual is not a spatial object");
-            return Optional.empty();
-        }
-        final TSIndividual individual = new TSIndividual(spatialProperty.get().getObject().getLiteral(), shapefileSchema);
-//                    Data properties, filtering out the spatial members
-        final Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = trestleParser.classParser.getFacts(object, true);
-        owlDataPropertyAssertionAxioms.ifPresent(owlDataPropertyAssertionAxioms1 -> owlDataPropertyAssertionAxioms1.forEach(property -> {
-            final Class<@NonNull ?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, object.getClass());
-            final Object literal = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
-            individual.addProperty(this.trestleParser.classParser.matchWithClassMember(inputClass, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
-                    literal);
-        }));
-//                    Temporals
-        final Optional<List<TemporalObject>> temporalObjects = trestleParser.temporalParser.getTemporalObjects(object);
-        if (temporalObjects.isPresent()) {
-            final TemporalObject temporalObject = temporalObjects.get().get(0);
-            if (temporalObject.isInterval()) {
-                final IntervalTemporal intervalTemporal = temporalObject.asInterval();
-                final String startName = intervalTemporal.getStartName();
-                individual.addProperty(this.trestleParser.classParser.matchWithClassMember(inputClass, intervalTemporal.getStartName()), intervalTemporal.getFromTime().toString());
-                final Optional toTime = intervalTemporal.getToTime();
-                if (toTime.isPresent()) {
-                    final Temporal to = (Temporal) toTime.get();
-                    individual.addProperty(this.trestleParser.classParser.matchWithClassMember(inputClass, intervalTemporal.getEndName()), to.toString());
-                }
-            } else {
-                final PointTemporal pointTemporal = temporalObject.asPoint();
-                individual.addProperty(pointTemporal.getParameterName(), pointTemporal.getPointTime().toString());
-            }
-        }
-        return Optional.of(individual);
-    }
-
-    private boolean checkObjectRelation(OWLNamedIndividual firstIndividual, OWLNamedIndividual secondIndividual) {
-
-//        This should get all the Concept Relations and the individuals related to the first individual, and it's symmetric
-        final Optional<List<OWLObjectPropertyAssertionAxiom>> relatedToProperties = ontology.getIndividualObjectProperty(firstIndividual, hasRelationIRI);
-        if (relatedToProperties.isPresent()) {
-            final Optional<OWLIndividual> isRelated = relatedToProperties.get()
-                    .stream()
-                    .map(OWLPropertyAssertionAxiom::getObject)
-                    .filter(p -> p.equals(secondIndividual))
-                    .findFirst();
-
-            return isRelated.isPresent();
-        }
-        return false;
+        return this.dataExporter.exportDataSetObjects(inputClass, objectID, validAt, databaseAt, exportType);
     }
 
     /**

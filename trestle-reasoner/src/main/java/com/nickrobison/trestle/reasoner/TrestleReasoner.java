@@ -1,11 +1,11 @@
 package com.nickrobison.trestle.reasoner;
 
 import com.nickrobison.metrician.Metrician;
-import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
 import com.nickrobison.trestle.reasoner.engines.concept.ITrestleConceptEngine;
+import com.nickrobison.trestle.reasoner.engines.exporter.ITrestleDataExporter;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
@@ -26,8 +26,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.time.temporal.Temporal;
 import java.util.List;
@@ -38,7 +36,7 @@ import java.util.Set;
 /**
  * Created by nrobison on 1/30/17.
  */
-public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWriter, ITrestleSpatialEngine, ITrestleConceptEngine {
+public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWriter, ITrestleSpatialEngine, ITrestleConceptEngine, ITrestleDataExporter {
     /**
      * Shutdown the reasoner
      */
@@ -285,20 +283,4 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
     Set<String> getAvailableDatasets();
 
     Class<?> getDatasetClass(String owlClassString) throws UnregisteredClassException;
-
-    <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, ITrestleExporter.DataType exportType) throws IOException;
-
-    /**
-     * Export TrestleObject at the specified valid/database temporal
-     *
-     * @param inputClass - Class to parse
-     * @param objectID   - {@link List} of objectID strings to return
-     * @param validAt    - {@link Temporal} of validAt time
-     * @param databaseAt - {@link Temporal} of databaseAt time
-     * @param exportType - {@link ITrestleExporter.DataType} export datatype of file
-     * @param <T>        - Generic type parameter
-     * @return - {@link File} of type {@link ITrestleExporter.DataType}
-     * @throws IOException - Throws if it can't create the file
-     */
-    <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, @Nullable Temporal validAt, @Nullable Temporal databaseAt, ITrestleExporter.DataType exportType) throws IOException;
 }
