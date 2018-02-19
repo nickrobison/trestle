@@ -13,24 +13,30 @@ import java.util.List;
 /**
  * Created by nickrobison on 2/13/18.
  */
+
+/**
+ * Base interface for providing methods for writing an object to the underlying database
+ * All methods require that the given Java classes be previously registered with the reasoner by calling {@link com.nickrobison.trestle.reasoner.TrestleReasoner#registerClass(Class)}
+ * If methods are called with a non-registered class a {@link TrestleClassException} will be thrown
+ */
 public interface ITrestleObjectWriter {
     /**
-     * Write a Java object as a Trestle_Object
+     * Write a Java {@link Object} as a Trestle_Object
      *
-     * @param inputObject - Input object to write as fact
+     * @param inputObject - Input {@link Object} to write to the database
      * @throws TrestleClassException - Throws an exception if the class doesn't exist or is invalid
-     * @throws MissingOntologyEntity - Throws if the individual doesn't exist in the ontology
+     * @throws MissingOntologyEntity - Throws if the individual doesn't exist in the database
      */
     void writeTrestleObject(Object inputObject) throws TrestleClassException, MissingOntologyEntity;
 
     /**
-     * Write a Java object as a Trestle_Object
-     * Use the provided temporals to setup the database time
+     * Write a Java {@link Object} as a Trestle_Object
+     * Use the provided temporals to manually set the database time
      *
-     * @param inputObject   - Object to write into the ontology
+     * @param inputObject   - {@link Object} to write to the database
      * @param startTemporal - Start {@link Temporal} of database time interval
      * @param endTemporal   - Nullable {@link Temporal} of ending interval time
-     * @throws MissingOntologyEntity      - Throws if the individual doesn't exist in the ontology
+     * @throws MissingOntologyEntity      - Throws if the individual doesn't exist in the database
      * @throws UnregisteredClassException - Throws if the object class isn't registered with the reasoner
      */
     void writeTrestleObject(Object inputObject, Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, UnregisteredClassException;
@@ -38,27 +44,36 @@ public interface ITrestleObjectWriter {
     /**
      * Manually add a Fact to a TrestleObject, along with a specified validity point
      *
-     * @param clazz        - Java class to parse
-     * @param individual   - Individual ID
-     * @param factName     - Fact name
-     * @param value        - Fact value
-     * @param validAt      - validAt Temporal
-     * @param databaseFrom - Optional databaseFrom Temporal
+     * @param clazz        - Java {@link Class} to retrieve from the class registry
+     * @param individual   - {@link String} ID of individual
+     * @param factName     - {@link String} name of fact
+     * @param value        - {@link Object} value of fact
+     * @param validAt      - {@link Temporal} to denote the ValidAt time
+     * @param databaseFrom - Optional {@link Temporal} to denote the DatabaseAt time
      */
     void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validAt, @Nullable Temporal databaseFrom);
 
     /**
      * Manually add a Fact to a TrestleObject, along with a specified validity interval
      *
-     * @param clazz        - Java class to parse
-     * @param individual   - Individual ID
-     * @param factName     - Fact name
-     * @param value        - Fact value
-     * @param validFrom    - validFrom Temporal
-     * @param validTo      - validTo Temporal
-     * @param databaseFrom - Optional databaseFrom Temporal
+     * @param clazz        - Java {@link Class} to retrieve from the class registry
+     * @param individual   - {@link String} ID of individual
+     * @param factName     - {@link String} name of Fact
+     * @param value        - {@link Object} value of Fact
+     * @param validFrom    - {@link Temporal} to denote validFrom time
+     * @param validTo      - {@link Temporal} to denote validTo time
+     * @param databaseFrom - Optional {@link Temporal} to denote databaseFrom time
      */
     void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom);
 
+    /**
+     * Add a {@link TrestleEventType} between the given <i>Subject</i> object and the collection of <i>Object</i> objects
+     *
+     * @param type     - {@link TrestleEventType} to add to object collection
+     * @param subject  - {@link Object} of type {@link T} as event Subject
+     * @param objects  - {@link List} of {@link Object} of type {@link T} as event Objects
+     * @param strength - {@link double} strength of event association
+     * @param <T>      - Java {@link Class} of underlying objects, registered with the reasoner
+     */
     <T extends @NonNull Object> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength);
 }
