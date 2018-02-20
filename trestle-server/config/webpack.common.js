@@ -111,6 +111,9 @@ var options = {
             name: "common",
             chunks: ["workspace", "evaluation"]
         }),
+        new webpack.optimize.CommonsChunkPlugin({
+            name: ["common", "vendor", "polyfills"]
+        }),
         new webpack.optimize.ModuleConcatenationPlugin(),
         new HtmlWebpackPlugin({
             inject: true,
@@ -121,7 +124,7 @@ var options = {
         }),
         new HtmlWebpackPlugin({
             inject: true,
-            chunks: ["vendor", "polyfills", "common", "evaluation"],
+            chunks: ["polyfills", "vendor", "common", "evaluation"],
             chunksSortMode: "manual",
             template: helpers.root("src/main/webapp/evaluation/evaluation.index.html"),
             filename: "evaluation.index.html"
