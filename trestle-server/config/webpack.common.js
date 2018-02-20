@@ -7,7 +7,6 @@ const helpers = require("./helpers");
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const rxPaths = require("rxjs/_esm5/path-mapping");
-const Jarvis = require("webpack-jarvis");
 
 var options = {
     resolve: {
@@ -106,6 +105,8 @@ var options = {
         ]
     },
     plugins: [
+        // Workaround for https://github.com/angular/angular/issues/20357
+        new webpack.ContextReplacementPlugin(/\@angular(\\|\/)core(\\|\/)esm5/, helpers.root("src/main/webapp")),
         // Extract the common code from both main application
         new webpack.optimize.CommonsChunkPlugin({
             name: "common",
@@ -129,7 +130,6 @@ var options = {
             template: helpers.root("src/main/webapp/evaluation/evaluation.index.html"),
             filename: "evaluation.index.html"
         })
-        // new Jarvis()
     ]
 };
 module.exports = options;

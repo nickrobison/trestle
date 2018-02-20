@@ -6,9 +6,29 @@ const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const DefinePlugin = require('webpack/lib/DefinePlugin');
 const CSPWebpackPlugin = require("csp-webpack-plugin");
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const Jarvis = require("webpack-jarvis");
 const commonConfig = require("./webpack.common");
 const helpers = require("./helpers");
 const env = require("./env");
+
+var plugins = [
+    new ExtractTextPlugin("[name].css"),
+    new DefinePlugin({
+        ENV: JSON.stringify("development")
+    }),
+    // Merge the common CSP configuration along with the script settings to allow dynamic execution
+    new CSPWebpackPlugin(Object.assign(env.csp, {
+        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "blob:"]
+    }))
+];
+
+// If analyze is enabled, enable the bundle analyzer and Jarvis
+if (env.analyze) {
+    plugins.push([
+        new Jarvis(),
+        new BundleAnalyzerPlugin()
+    ]);
+}
 
 var devOptions = {
     entry: {
@@ -47,17 +67,7 @@ var devOptions = {
             }
         ]
     },
-    plugins: [
-        new ExtractTextPlugin("[name].css"),
-        new DefinePlugin({
-            ENV: JSON.stringify("development")
-        }),
-        // Merge the common CSP configuration along with the script settings to allow dynamic execution
-        new CSPWebpackPlugin(Object.assign(env.csp, {
-            "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "blob:"]
-        })),
-        new BundleAnalyzerPlugin()
-    ]
+    plugins: plugins
 };
 
 module.exports = webpackMerge(commonConfig, devOptions);

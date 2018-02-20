@@ -17,7 +17,6 @@ import "@angular/platform-browser-dynamic";
 import "@angular/router";
 import "@mapbox/geojson-extent";
 import "angular2-jwt";
-import "check-browser";
 import "codemirror";
 import "codemirror/mode/javascript/javascript.js";
 import "codemirror/mode/sparql/sparql.js";
