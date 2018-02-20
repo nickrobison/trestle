@@ -102,9 +102,6 @@ public class IntegrationRunner extends Configured implements Tool {
         }
 
 //        Add the cache files
-//        final URL resource = IntegrationRunner.class.getClassLoader().getResource("trestle.owl");
-//        logger.debug("Loading: {}", URI.create(resource.toString() + "#trestle"));
-//        job.addCacheFile(URI.create(resource.toString() + "#trestle"));
         job.waitForCompletion(true);
 
         reasoner.getUnderlyingOntology().runInference();

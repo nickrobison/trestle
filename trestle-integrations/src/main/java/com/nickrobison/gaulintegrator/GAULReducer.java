@@ -54,7 +54,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
 
     private static final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
     private static final WKBReader wkbReader = new WKBReader(geometryFactory);
-//    Controls the granularity of the union matcher
+    //    Controls the granularity of the union matcher
     private static final double THRESHOLD = 0.95;
 
     private LocalDate configStartDate;
@@ -96,7 +96,6 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
                 .withOntology(IRI.create(conf.get("reasoner.ontology.location")))
                 .withPrefix(conf.get("reasoner.ontology.prefix"))
                 .withName(conf.get("reasoner.ontology.name"))
-                .withoutCaching()
                 .withoutMetrics()
                 .build();
 

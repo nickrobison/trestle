@@ -20,8 +20,6 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.junit.jupiter.api.*;
 import org.semanticweb.owlapi.model.IRI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,8 +44,6 @@ public class GAULIntegratorTests {
     private static FileSystem fileSystem;
     private static HdfsConfiguration conf;
     private static MiniDFSCluster cluster;
-
-    private static final Logger logger = LoggerFactory.getLogger(GAULIntegratorTests.class);
     private static TrestleReasoner reasoner;
     private static String connectionString;
     private static String userName;
@@ -74,16 +70,11 @@ public class GAULIntegratorTests {
         }
 
         fileSystem = FileSystem.get(conf);
+//        Uncomment for running aginst the output of GAUL Subsetter
 //        fileSystem = FileSystem.getLocal(conf);
         final YarnConfiguration clusterConf = new YarnConfiguration();
         cluster = new MiniDFSCluster.Builder(conf).build();
 
-//        connectionString = "jdbc:virtuoso://localhost:1111";
-//        userName = "dba";
-//        password = "dba";
-//        connectionString = "jdbc:oracle:thin:@//oracle7.hobbithole.local:1521/spatial";
-//        userName = "spatialUser";
-//        password = "spatial1";
         connectionString = "http://localhost:7200";
         userName = "";
         password = "";
@@ -99,6 +90,7 @@ public class GAULIntegratorTests {
         conf.set("reasoner.ontology.prefix", ontologyPrefix);
         conf.set("reasoner.ontology.location", ontologyPath);
 
+//        Uncomment to restrict Mapper to a subset of GAUL codes
 //        conf.set("gaulcode.restriction", "59");
 
 //        Setup reasoner
@@ -109,26 +101,23 @@ public class GAULIntegratorTests {
                 .withPrefix(ontologyPrefix)
                 .initialize()
                 .withName(ontologyName)
-//                FIXME(nrobison): Caching just doesn't work, so we should disable it until we merge TRESTLE-206
                 .withoutCaching()
                 .withoutMetrics()
                 .build();
 
-        File outputFile = new File("/Users/nrobison/Desktop/hadoop.owl");
-        reasoner.writeOntology(outputFile.toURI(), true);
         reasoner.shutdown(false);
     }
 
     @Test
     public void testReducer() throws IOException, ClassNotFoundException, InterruptedException, SQLException, URISyntaxException {
 
-//        URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/sudan/");
-                URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/gates-test");
-        URL OUT_DIR = GAULIntegratorTests.class.getClassLoader().getResource("out/");
+        URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/gates-test");
 
         Path inDir = new Path(IN_DIR.toString());
+//        Uncomment to use GAUL subsetter
 //        Path inDir = fileSystem.makeQualified(new Path("/Volumes/LaCie/gaul/"));
 //        Path inDir = fileSystem.makeQualified(new Path("/Volumes/Macintosh HD/gaul/"));
+        //        URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/sudan/");
         Path outDir = new Path("./target/out/");
 
         fileSystem.delete(outDir, true);
@@ -163,7 +152,6 @@ public class GAULIntegratorTests {
                 .withOntology(IRI.create(ontologyPath))
                 .withPrefix(ontologyPrefix)
                 .withName(ontologyName)
-//                FIXME(nrobison): Caching just doesn't work, so we should disable it until we merge TRESTLE-206
                 .withoutCaching()
                 .withoutMetrics()
                 .build();
@@ -180,7 +168,7 @@ public class GAULIntegratorTests {
     }
 
     @AfterAll
-    public static void close() throws IOException {
+    public static void close() {
         cluster.shutdown();
         reasoner.shutdown(false);
     }
