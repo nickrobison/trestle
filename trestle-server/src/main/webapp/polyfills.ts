@@ -20,4 +20,14 @@ import "core-js/es6/typed";
 import "core-js/es6/reflect";
 import "core-js/es7/reflect";
 import "zone.js/dist/zone";
-import "zone.js/dist/long-stack-trace-zone";
+
+declare const System: any;
+
+if (process.env.ENV === "production") {
+    // Production
+} else {
+    // Development and test
+    Error["stackTraceLimit"] = Infinity;
+    System.import("zone.js/dist/long-stack-trace-zone");
+    console.debug("Loading long stack trace for development");
+}
