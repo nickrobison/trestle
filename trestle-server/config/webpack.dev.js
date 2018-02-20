@@ -5,6 +5,7 @@ const webpackMerge = require("webpack-merge");
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const DefinePlugin = require('webpack/lib/DefinePlugin');
 const CSPWebpackPlugin = require("csp-webpack-plugin");
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const commonConfig = require("./webpack.common");
 const helpers = require("./helpers");
 const env = require("./env");
@@ -54,7 +55,8 @@ var devOptions = {
         // Merge the common CSP configuration along with the script settings to allow dynamic execution
         new CSPWebpackPlugin(Object.assign(env.csp, {
             "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "blob:"]
-        }))
+        })),
+        new BundleAnalyzerPlugin()
     ]
 };
 
