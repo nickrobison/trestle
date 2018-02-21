@@ -22,6 +22,7 @@
     ]
   },
   "exclude": [
+    "test/e2e",
     "node_modules",
     "dist",
     "**/*.ngfactory.ts",

@@ -5,9 +5,11 @@ import { binding, given, then, when } from "cucumber-tsflow";
 import { DashboardPageObject } from "../page_objects/main.page";
 import { LoginPageObject } from "../page_objects/login.page";
 import { by } from "protractor";
+import { expect } from "chai";
+import * as chai from "chai";
+import * as chaiAsPromised from "chai-as-promised";
 
-const chai = require("chai").use(require("chai-as-promised"));
-const expect = chai.expect;
+chai.use(chaiAsPromised);
 
 @binding()
 class LoginSteps {
@@ -41,7 +43,7 @@ class LoginSteps {
     }
 
     @when(/^I login and submit with "([^"]*)" and "([^"]*)"$/)
-    private loginSubmit(username: sring, password: string) {
+    private loginSubmit(username: string, password: string) {
         return this.login.loginUser(username, password, true);
     }
 

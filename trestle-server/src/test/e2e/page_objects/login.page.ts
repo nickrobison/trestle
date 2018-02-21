@@ -2,6 +2,7 @@
  * Created by nrobison on 5/31/17.
  */
 import { browser, by, element, ElementFinder, Locator } from "protractor";
+import { promise } from "selenium-webdriver";
 
 export class LoginPageObject {
 
@@ -55,7 +56,7 @@ export class LoginPageObject {
      * @param {Locator} selector - Selector to use
      * @returns {Promise<string>} - Element text
      */
-    public getElementText(selector: Locator): Promise<string> {
+    public getElementText(selector: Locator): promise.Promise<string> {
         return element(selector).getText();
     }
 
