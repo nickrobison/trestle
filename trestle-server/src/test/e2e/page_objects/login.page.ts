@@ -30,11 +30,10 @@ export class LoginPageObject {
     public async loginUser(username: string, password: string, login?: boolean): Promise<void> {
         console.log("Logging in", username, password);
         this.usernameField.sendKeys(username);
-        this.passwordField.sendKeys(password);
+        await this.passwordField.sendKeys(password);
         if (login) {
             return element(by.buttonText("Login")).click();
         }
-        return browser.sleep(1000);
     }
 
     /**

@@ -6,24 +6,28 @@ import {browser, element, by} from "protractor";
 export class DashboardPageObject {
 
     private pages: {[key: string]: string} = {
-        "dashboard": "",
-        "login": "login/"
+        dashboard: "",
+        login: "login/"
     };
 
     constructor() {
     }
 
-
-    async goToLoginPage() {
+    public async goToLoginPage() {
         return browser.get("/login/");
     }
 
-    async navigateToPage(page: string) {
+    public async navigateToPage(page: string) {
         browser.get(`${this.pages[page]}`);
         return browser.sleep(3000);
     }
 
-    async clickButton(button: string) {
+    public async clickButton(button: string) {
         return element(by.id(button)).click();
+    }
+
+    public async getPageOptions(type: number): Promise<number> {
+        const adminDiv = await element(by.id("admin-options"));
+        return adminDiv.all(by.tagName("a")).count();
     }
 }

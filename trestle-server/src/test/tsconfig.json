@@ -13,8 +13,10 @@
     "moduleResolution": "node",
     "target": "es6",
     "typeRoots": [
-      "./typings",
-      "./node_modules/@types"
-    ]
+      "../../node_modules/@types"
+    ],
   },
+  "include": [
+    "e2e/**/*"
+  ]
 }

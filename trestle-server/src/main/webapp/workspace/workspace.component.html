@@ -25,7 +25,7 @@
                 <mat-icon>query_builder</mat-icon>QUERY</a>
             <a id="compare" mat-list-item [routerLink]="['explore/compare']" aria-label="compare links">
                 <mat-icon>compare</mat-icon>COMPARE</a>
-            <div *ngIf="userHasRequiredPermissions([Privileges.ADMIN])">
+            <div *ngIf="userHasRequiredPermissions([Privileges.ADMIN])" id="admin-options">
                 <mat-divider></mat-divider>
                 <h5 mat-list-subheader>Admin</h5>
                 <mat-divider></mat-divider>

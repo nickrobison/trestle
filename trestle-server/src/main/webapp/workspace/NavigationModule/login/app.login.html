@@ -3,7 +3,7 @@
         <mat-card-header>
             <mat-card-title><h4>Login to Trestle</h4></mat-card-title>
         </mat-card-header>
-        <form #login-form [formGroup]="loginForm" (ngSubmit)="login(loginForm.value)">
+        <form id="login-form" [formGroup]="loginForm" (ngSubmit)="login(loginForm.value)">
             <mat-card-content>
                 <table class="input-full-width" cellspacing="0">
                     <tr>
