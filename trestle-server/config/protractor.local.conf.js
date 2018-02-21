@@ -1,7 +1,6 @@
 /**
  * Created by nrobison on 5/31/17.
  */
-require("ts-node/register");
 const helper = require("./helpers");
 exports.config = {
     baseUrl: "http://localhost:8080/workspace/",
@@ -23,6 +22,10 @@ exports.config = {
             helper.root('src/test/e2e/**/*.steps.ts'),
             helper.root('config/env.js')
         ],
-        format: 'pretty'
+    },
+    onPrepare() {
+        require('ts-node').register({
+            project: helper.root("tsconfig.e2e.json")
+        });
     }
 };
