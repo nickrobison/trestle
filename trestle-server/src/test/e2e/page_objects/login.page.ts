@@ -1,7 +1,7 @@
 /**
  * Created by nrobison on 5/31/17.
  */
-import { by, element, ElementFinder, Locator } from "protractor";
+import { browser, by, element, ElementFinder, Locator } from "protractor";
 
 export class LoginPageObject {
 
@@ -33,7 +33,7 @@ export class LoginPageObject {
         if (login) {
             return element(by.buttonText("Login")).click();
         }
-        return Promise.resolve();
+        return browser.sleep(1000);
     }
 
     /**
