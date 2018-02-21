@@ -19,7 +19,7 @@ if (!evergreenBrowser) {
     System.import("./polyfills.target");
 }
 
-if (process.env.ENV === "production") {
+if (ENV === "production") {
     // Production
 } else {
     // Development and test

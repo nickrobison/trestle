@@ -105,8 +105,6 @@ var options = {
         ]
     },
     plugins: [
-        // Workaround for https://github.com/angular/angular/issues/20357
-        new webpack.ContextReplacementPlugin(/\@angular(\\|\/)core(\\|\/)esm5/, helpers.root("src/main/webapp")),
         // Extract the common code from both main application
         new webpack.optimize.CommonsChunkPlugin({
             name: "common",
