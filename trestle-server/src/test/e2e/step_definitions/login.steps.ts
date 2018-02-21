@@ -1,16 +1,16 @@
 /**
  * Created by nrobison on 5/31/17.
  */
-import {binding, given, then, when} from "cucumber-tsflow";
-import {DashboardPageObject} from "../page_objects/main.page";
-import {LoginPageObject} from "../page_objects/login.page";
-import {and} from "@angular/router/src/utils/collection";
-let chai = require('chai').use(require('chai-as-promised'));
-let expect = chai.expect;
+import { binding, given, then, when } from "cucumber-tsflow";
+import { DashboardPageObject } from "../page_objects/main.page";
+import { LoginPageObject } from "../page_objects/login.page";
+import { by } from "protractor";
+
+const chai = require("chai").use(require("chai-as-promised"));
+const expect = chai.expect;
 
 @binding()
 class LoginSteps {
-
 
     private dashboard = new DashboardPageObject();
     private login = new LoginPageObject();
@@ -40,12 +40,22 @@ class LoginSteps {
         return this.login.loginUser(username, password);
     }
 
+    @when(/^I login and submit with "([^"]*)" and "([^"]*)"$/)
+    private loginSubmit(username: sring, password: string) {
+        return this.login.loginUser(username, password, true);
+    }
+
     @then(/^The login form is validated (.*)$/)
     private formIsValid(valid: string) {
-        let isValid = valid === "true";
+        const isValid = valid === "true";
         console.log("Form should be valid?", isValid);
-        return expect(this.login.isValid()).to.become(isValid);
+        return expect(this.login.formValidState(isValid))
+            .to.become(true);
+    }
+
+    @then(/^The error message should be "([^"]*)"$/)
+    private validateErrorMessage(message: string) {
+        return expect(this.login.getElementText(by.css("mat-card-footer")))
+            .to.become(message);
     }
 }
-
-module.exports = LoginSteps;
