@@ -93,7 +93,7 @@
             <column name="USERNAME" value="admin"/>
             <column name="EMAIL" value="admin@test.com"/>
             <column name="PASSWORD" value="$2a$10$.yoGPm0XRCu1ifPQaiQb7.NQfoeRwsqsnBzowTkDXPjgMtHjlYJw6"/>
-            <column name="PRIVILEGES" value="5"/>
+            <column name="PRIVILEGES" value="3"/>
         </insert>
         <insert catalogName="TEST" tableName="USERS">
             <column name="FIRST_NAME" value="Test"/>
@@ -101,7 +101,7 @@
             <column name="USERNAME" value="user"/>
             <column name="EMAIL" value="user@test.com"/>
             <column name="PASSWORD" value="$2a$10$zm6jraD6rxvQi63RiMGZDuydEtgwqnex0mqlaOAA41V1LIWpEcgV."/>
-            <column name="PRIVILEGES" value="3"/>
+            <column name="PRIVILEGES" value="1"/>
         </insert>
     </changeSet>
 </databaseChangeLog>
