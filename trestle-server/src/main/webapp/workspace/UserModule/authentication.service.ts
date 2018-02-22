@@ -71,18 +71,15 @@ export class AuthService {
 
     public logout(): void {
         if (this.loggedIn()) {
-            console.debug("Logging out");
             this.http.post("/auth/logout", null);
             localStorage.removeItem(_key);
-            console.log("Logged out user");
+            console.debug("Logged out user");
             this.router.navigate(["/"]);
         }
     }
 
     public loggedIn(): boolean {
         const token = localStorage.getItem(_key);
-        console.debug("Is user logged in?");
-        console.debug("has token", token);
         if (token) {
             console.debug(
                 this.jwtHelper.decodeToken(token),
@@ -117,18 +114,23 @@ export class AuthService {
     /**
      * Determines if the logged-in user has the necessary roles to perform a certain function
      * @param roles - Array of required Privileges
+     * @param {ITrestleUser} user - user object to verify permissions on
      * @returns {boolean} - has all the required roles
      */
-    public hasRequiredRoles(roles: Privileges[]): boolean {
-        const token = this.getToken();
-        if (token == null) {
-            return false;
+    public hasRequiredRoles(roles: Privileges[], user?: ITrestleUser | null): boolean {
+        let userPrivs = 0;
+        // if the user is null, get the token
+        if (user == null) {
+            const token = this.getToken();
+            if (token == null) {
+                return false;
+            }
+            userPrivs = token.getUser().privileges;
+        } else {
+            userPrivs = user.privileges;
         }
-        if (token) {
-            // tslint:disable-next-line:no-bitwise
-            return (token.getUser().privileges & this.buildRoleValue(roles)) > 0;
-        }
-        return false;
+        // tslint:disable-next-line:no-bitwise
+        return (userPrivs & this.buildRoleValue(roles)) > 0;
     }
 
     private buildRoleValue(roles: Privileges[]): number {
