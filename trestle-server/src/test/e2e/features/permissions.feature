@@ -14,6 +14,6 @@ Feature: User permissions feature
 
     Examples:
       | username | password | adminActions | dbaActions |
-#      | dba      | dba      | 3            | 1          |
+      | dba      | dba      | 3            | 1          |
       | admin    | admin1   | 3            | 0          |
       | user     | user1    | 0            | 0          |

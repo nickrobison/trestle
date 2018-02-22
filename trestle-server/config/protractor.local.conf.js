@@ -23,10 +23,10 @@ exports.config = {
         require: [
             helper.root('src/test/e2e/**/*.steps.ts'),
             helper.root('config/env.js')
-        ],
-        tags: [
-            '@Permissions'
         ]
+        // tags: [
+        //     '@Permissions'
+        // ]
     },
     onPrepare() {
         require('ts-node').register({
