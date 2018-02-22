@@ -15,6 +15,7 @@
 <mat-sidenav-container>
     <mat-sidenav #sidenav class="z-depth-3" mode="side" color="'accent'">
         <mat-nav-list>
+            <div id="user-actions">
             <h5 mat-list-subheader>Explore</h5>
             <mat-divider></mat-divider>
             <a id="viewer" mat-list-item [routerLink]="['explore/viewer']" aria-label="dataset viewer link">
@@ -25,7 +26,8 @@
                 <mat-icon>query_builder</mat-icon>QUERY</a>
             <a id="compare" mat-list-item [routerLink]="['explore/compare']" aria-label="compare links">
                 <mat-icon>compare</mat-icon>COMPARE</a>
-            <div *ngIf="userHasRequiredPermissions([Privileges.ADMIN])" id="admin-options">
+            </div>
+            <div id="admin-actions" *ngIf="userHasRequiredPermissions([Privileges.ADMIN])">
                 <mat-divider></mat-divider>
                 <h5 mat-list-subheader>Admin</h5>
                 <mat-divider></mat-divider>
@@ -35,10 +37,10 @@
                     <mat-icon>show_chart</mat-icon>METRICS</a>
                 <a id="users" mat-list-item [routerLink]="['admin/users']" aria-label="users link">
                     <mat-icon>supervisor_account</mat-icon>USERS</a>
-                <div *ngIf="userHasRequiredPermissions([Privileges.DBA])">
-                    <a id="index" mat-list-item [routerLink]="['admin/index']" aria-label="index link">
-                        <mat-icon>supervisor_account</mat-icon>INDICIES</a>
-                </div>
+            </div>
+            <div id="dba-actions" *ngIf="userHasRequiredPermissions([Privileges.DBA])">
+                <a id="index" mat-list-item [routerLink]="['admin/index']" aria-label="index link">
+                    <mat-icon>supervisor_account</mat-icon>INDICIES</a>
             </div>
             <mat-divider></mat-divider>
         </mat-nav-list>
