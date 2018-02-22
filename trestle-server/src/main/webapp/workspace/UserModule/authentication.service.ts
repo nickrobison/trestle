@@ -3,11 +3,11 @@
  */
 import { Injectable } from "@angular/core";
 import { Router } from "@angular/router";
-import { Http, URLSearchParams, Response } from "@angular/http";
-import { tokenNotExpired, JwtHelper } from "angular2-jwt";
-import { Observable } from "rxjs";
+import { Http } from "@angular/http";
+import { JwtHelper, tokenNotExpired } from "angular2-jwt";
+import { TrestleUser } from "./trestle-user";
+import { Observable } from "rxjs/Observable";
 
-// const _key: string = "id_token";
 const _key: string = "token";
 
 export enum Privileges {
@@ -61,7 +61,7 @@ export class AuthService {
     }
 
     public login(username: string, password: string): Observable<void> {
-        return this.http.post("/auth/login", {username: username, password: password})
+        return this.http.post("/auth/login", {username, password: password})
             .map((response) => {
                 console.debug("has token");
                 console.log(response);
@@ -100,11 +100,11 @@ export class AuthService {
         return false;
     }
 
-    public getUser(): ITrestleUser | null {
+    public getUser(): TrestleUser | null {
         if (this.loggedIn()) {
             const token = this.getToken();
             if (token) {
-                return token.getUser();
+                return new TrestleUser(token.getUser());
             }
         }
         console.error("User is not logged in");
@@ -114,32 +114,15 @@ export class AuthService {
     /**
      * Determines if the logged-in user has the necessary roles to perform a certain function
      * @param roles - Array of required Privileges
-     * @param {ITrestleUser} user - user object to verify permissions on
      * @returns {boolean} - has all the required roles
      */
-    public hasRequiredRoles(roles: Privileges[], user?: ITrestleUser | null): boolean {
-        let userPrivs = 0;
-        // if the user is null, get the token
+    public hasRequiredRoles(roles: Privileges[]): boolean {
+        const user = this.getUser();
         if (user == null) {
-            const token = this.getToken();
-            if (token == null) {
-                return false;
-            }
-            userPrivs = token.getUser().privileges;
-        } else {
-            userPrivs = user.privileges;
+            return false;
         }
-        // tslint:disable-next-line:no-bitwise
-        return (userPrivs & this.buildRoleValue(roles)) > 0;
-    }
 
-    private buildRoleValue(roles: Privileges[]): number {
-        let roleValue = 0;
-        roles.forEach((role) => {
-            // tslint:disable-next-line:no-bitwise
-            roleValue = roleValue | role;
-        });
-        return roleValue;
+        return user.hasRequiredPrivileges(roles);
     }
 
     private getToken(): TrestleToken | null {

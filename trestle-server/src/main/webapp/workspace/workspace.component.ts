@@ -8,6 +8,7 @@ import * as CryptoJS from "crypto-js";
 import { EventBus, UserLoginEvent } from "./UIModule/eventBus/eventBus.service";
 import { Subscription } from "rxjs/Subscription";
 import { MatSidenav } from "@angular/material";
+import { TrestleUser } from "./UserModule/trestle-user";
 
 @Component({
     selector: "app-root",
@@ -22,7 +23,7 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
 
     @ViewChild("sidenav") public sideNav: MatSidenav;
     private loginSubscription: Subscription;
-    private user: ITrestleUser | null;
+    private user: TrestleUser | null;
 
     constructor(private authService: AuthService,
                 private router: Router,
@@ -53,8 +54,11 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
         }
     }
 
-    public userHasRequiredPermissions(requiredPrivs: Privileges[]) {
-        return this.authService.hasRequiredRoles(requiredPrivs, this.user);
+    public userHasRequiredPermissions(requiredPrivs: Privileges[]): boolean {
+        if (this.user == null) {
+            return false;
+        }
+        return this.user.hasRequiredPrivileges(requiredPrivs);
     }
 
     public getGravatarURL(): string {
