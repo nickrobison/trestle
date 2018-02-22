@@ -19,7 +19,7 @@ class LoginSteps {
 
     @given(/^I am viewing the dashboard$/)
     private viewDashboard() {
-        return this.dashboard.navigateToPage("dashboard");
+        return this.dashboard.navigateToPage("");
     }
 
     @given(/^I am viewing the "([^"]*)" page$/)
@@ -50,7 +50,6 @@ class LoginSteps {
     @then(/^The login form is validated (.*)$/)
     private formIsValid(valid: string) {
         const isValid = valid === "true";
-        console.log("Form should be valid?", isValid);
         return expect(this.login.formValidState(isValid))
             .to.become(true);
     }

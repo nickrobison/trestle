@@ -7,11 +7,6 @@ export type PageActionType = "admin" | "dba";
 
 export class DashboardPageObject {
 
-    private pages: { [key: string]: string } = {
-        dashboard: "",
-        login: "login/"
-    };
-
     constructor() {
     }
 
@@ -20,8 +15,8 @@ export class DashboardPageObject {
     }
 
     public async navigateToPage(page: string) {
-        browser.get(`${this.pages[page]}`);
-        return browser.sleep(3000);
+        return browser.get(page);
+        // return browser.sleep(3000);
     }
 
     public async clickButton(button: string) {
