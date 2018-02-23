@@ -28,7 +28,6 @@ export class LoginPageObject {
      * @returns {Promise<void>}
      */
     public async loginUser(username: string, password: string, login?: boolean): Promise<void> {
-        console.log("Logging in", username, password);
         this.usernameField.sendKeys(username);
         await this.passwordField.sendKeys(password);
         if (login) {

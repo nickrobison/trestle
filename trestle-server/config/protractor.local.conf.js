@@ -5,12 +5,16 @@ const helper = require("./helpers");
 exports.config = {
     baseUrl: "http://localhost:8080/workspace/",
     directConnect: true,
-    capabilities: {
-        "browserName": "firefox",
+    multiCapabilities: [{
+        'browserName': 'firefox',
         marionette: true,
-        // shardTestFiles: true,
-        // maxInstances: 2
-    },
+        shardTestFiles: true,
+        maxInstances: 2
+    }, {
+        'browserName': 'chrome',
+        shardTestFiles: true,
+        maxInstances: 2
+    }],
     useAllAngular2AppRoots: true,
     allScriptsTimeout: 110000,
     noGlobals: true,

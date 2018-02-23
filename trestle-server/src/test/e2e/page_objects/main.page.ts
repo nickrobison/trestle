@@ -1,7 +1,7 @@
 /**
  * Created by nrobison on 5/31/17.
  */
-import { browser, element, by, ExpectedConditions } from "protractor";
+import { browser, by, element } from "protractor";
 
 export type PageActionType = "admin" | "dba";
 
@@ -16,14 +16,10 @@ export class DashboardPageObject {
 
     public async navigateToPage(page: string) {
         return browser.get(page);
-        // return browser.sleep(3000);
     }
 
     public async clickButton(button: string) {
-        const buttonElement = element(by.id(button));
-        const until = ExpectedConditions;
-        await browser.wait(until.presenceOf(buttonElement), 5000, "Cannot click button");
-        return buttonElement.click();
+        return element(by.id(button)).click();
     }
 
     public async getPageActions(optionType: PageActionType): Promise<number> {
