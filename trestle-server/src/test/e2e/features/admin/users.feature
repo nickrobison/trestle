@@ -11,6 +11,6 @@ Feature: User Admin Feature
     Then I create a new "user" with the following properties:
       | username | password        | first_name | last_name | email        |
       | newUser1 | newUserPassword | New        | User      | new@test.com |
-    Then The users table should have 4 users
+#    Then The users table should have 4 users
     When I delete user "newUser1"
-    Then The users table should have 3 users
+#    Then The users table should have 3 users

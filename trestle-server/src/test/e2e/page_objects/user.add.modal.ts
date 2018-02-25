@@ -34,7 +34,6 @@ export class UserAddModal {
         this.dbaPermission = element(by.id("mat-button-toggle-2"));
     }
 
-
     public async createUser(userType: UserType, user: IUserTable) {
         await this.userNameInput.sendKeys(user.username);
         await this.passwordInput.sendKeys(user.password);
