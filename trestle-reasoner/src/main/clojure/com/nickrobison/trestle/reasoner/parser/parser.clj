@@ -362,8 +362,7 @@
 (defmethod member-matches? ::pred/language
   [member languageCode classMember]
   (let [iri (.getShortForm ^IRI (get member :iri))]
-    (log/debugf "Matching against %s with language %s" iri (get member :language)
-                classMember languageCode)
+    (log/debugf "Matching %s against %s with language %s" classMember iri (get member :language))
     ; Match against IRI and language code (ignoring case)
     (log/spyf "Matches? %s" (and (= iri classMember) (.equalsIgnoreCase ^String languageCode (get member :language))))))
 (defmethod member-matches? :default
