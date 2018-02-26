@@ -445,7 +445,7 @@
              ; Filter spatial
              (r/filter (fn [member]
                          (if (true? filterSpatial)
-                           (complement (= (get member :type) ::pred/spatial))
+                           (not= (get member :type) ::pred/spatial)
                            true)))
              ; Build the assertion axiom
              (r/map (fn [member]
@@ -506,8 +506,7 @@
     (let [parsedClass (.getRegisteredClass this clazz)]
       (Optional/ofNullable (->> (:members parsedClass)
                                 (filter #(if filterSpatial
-                                           (complement
-                                             (= (:type %) ::pred/spatial))
+                                           (not= (:type %) ::pred/spatial)
                                            true))
                                 (map #(.getOWLDataProperty df ^IRI (:iri %)))))))
   (getPropertyMembers ^Optional [this clazz]

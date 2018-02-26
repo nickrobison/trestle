@@ -74,8 +74,6 @@ public class DataExporterTests extends AbstractReasonerTest {
     }
 
     @Test
-    @Disabled
-//    Disabled until TRESTLE-384 is resolved
     public void testExport() throws IOException {
 
         gaulObjects
@@ -165,12 +163,12 @@ public class DataExporterTests extends AbstractReasonerTest {
 
 
         @TrestleCreator
-        public SimpleGAULObject(long gaulCode, String objectname, LocalDate startDate, LocalDate endDate, String wkt) {
-            this.gaulcode = gaulCode;
+        public SimpleGAULObject(long gaulcode, String objectname, LocalDate startdate, LocalDate enddate, String geom) {
+            this.gaulcode = gaulcode;
             this.objectname = objectname;
-            this.startdate = startDate;
-            this.enddate = endDate;
-            this.geom = wkt;
+            this.startdate = startdate;
+            this.enddate = enddate;
+            this.geom = geom;
             this.edgeWeight = 1.0;
         }
 
