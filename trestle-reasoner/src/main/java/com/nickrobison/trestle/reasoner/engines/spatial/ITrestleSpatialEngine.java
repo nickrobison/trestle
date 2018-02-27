@@ -86,25 +86,27 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
     <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt);
 
     /**
-     * Spatial Intersect Object with most recent records in the database
+     * * Spatial Intersect Object with most recent records in the database
      * An empty Optional means an error, an Optional of an empty List means no intersected objects
      *
-     * @param inputObject - Object to intersect
-     * @param buffer      - Additional buffer (in meters)
-     * @param <T>         - Type to specialize method
-     * @return - An Optional List of Object T
+     * @param clazz- Input {@link Class} of type {@link T}
+     * @param wkt    - WKT {@link String} to intersect objects with
+     * @param buffer - {@link Double} of buffer around WKT string
+     * @param <T>    - {@link T} generic type parameter
+     * @return - {@link Optional} {@link List} of intersected objects of type {@link T}
      */
     <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer);
 
     /**
-     * Spatial Intersect Object with records in the database valid at that given time
+     * * Spatial Intersect Object with most recent records in the database
      * An empty Optional means an error, an Optional of an empty List means no intersected objects
      *
-     * @param inputObject - Object to intersect
-     * @param buffer      - Additional buffer to build around object (in meters)
-     * @param temporalAt  - Temporal of intersecting time point
-     * @param <T>         - Type to specialize method
-     * @return - An Optional List of Object T
+     * @param clazz-  Input {@link Class} of type {@link T}
+     * @param wkt     - WKT {@link String} to intersect objects with
+     * @param buffer  - {@link Double} of buffer around WKT string
+     * @param validAt - Optional {@link Temporal} to specify intersection time
+     * @param <T>     - {@link T} generic type parameter
+     * @return - {@link Optional} {@link List} of intersected objects of type {@link T}
      */
     <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt);
 
