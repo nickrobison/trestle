@@ -122,7 +122,7 @@
           "Filter the member to determine the appropriate name for the constructor
           This allows us to to special casing for mult-lang members, since we can't use the fact name due to language overloading"
           (fn [member type] type))
-(defmethod filter-constructor-name ::language
+(defmethod filter-constructor-name ::pred/language
   [member type]
   ; If we're a language, we need to use the java member name
   (filter-java-member-name member))

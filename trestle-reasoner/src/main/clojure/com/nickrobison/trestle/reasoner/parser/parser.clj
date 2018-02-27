@@ -341,7 +341,8 @@
                                                     (get member :owl-datatype))))
 
 (defmulti member-matches?
-          "Match the string IRI name with a member in the given set"
+          "Predicate for determining if the given classmember matches the string IRI name of a member in the given set
+          Specializes on the member type in order to handle special casing of temporals and multi-lang strings"
           (fn [member languageCode classMember]
             (:type member)))
 (defmethod member-matches? ::pred/temporal
@@ -372,7 +373,8 @@
 
 
 (defn match-class-member
-  "Match the string IRI name with a member in the given set"
+  "Iterates through the provided member list (which can be members or temporals).
+  Try to match the string IRI name with a member in the given set"
   [members languageCode classMember]
   (->> members
        (filter (fn [member]
@@ -471,7 +473,7 @@
         (and (nil? languageCode) (ClassBuilder/isConstructorArgument clazz classMember nil))
         classMember
         (if-let
-          ; Try for a classMember first, if it doesn't match, go for temporals
+          ; Try to match against the members lists first, if it doesn't match, go for temporals
           [classMember (match-class-member (get parsedClass :members)
                                            languageCode classMember)]
           classMember
