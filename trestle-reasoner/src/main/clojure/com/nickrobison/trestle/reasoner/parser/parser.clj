@@ -350,7 +350,7 @@
   (let [iri (.getShortForm ^IRI (get member :iri))
         position (get member :position)
         name (get member :name)]
-    (log/warnf "Matching against temporal %s" classMember iri)
+    (log/debugf "Matching %s against temporal %s" classMember iri)
     (condp = classMember
       ; Can we match directly against the class member?
       name true

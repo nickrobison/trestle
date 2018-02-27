@@ -150,6 +150,16 @@
        (filter #(.isAnnotationPresent (.annotationType %) annotation))
        (first)))
 
+(defn trim-method-name
+  "Filter the method name by removing extra characters"
+  [method]
+  (let [name (.getName method)]
+    (if (string/starts-with? name "get")
+      ; Strip off the get and lower case the first letter
+      (str (string/lower-case (subs name 3 4)) (subs name 4))
+      ; If not, just return the name
+      name)))
+
 ; Filter member name to strip out unwanted characters
 (defmulti filter-member-name
           "Filter name of class member.
@@ -163,7 +173,8 @@
   ; If we have an annotation, look to see if we've overridden the Fact name
   (if-let [data-annotation (get-common-annotation field TrestleDataProperty)]
     (if (not= "" (.name data-annotation))
-      (.name data-annotation))
+      (.name data-annotation)
+      (.getName field))
     ; Just return the field name
     (.getName field)))
 (defmethod filter-member-name Method [^Method method]
@@ -171,14 +182,9 @@
   (if-let [data-annotation (get-common-annotation method TrestleDataProperty)]
     ; If we've overridden the fact name, use that
     (if (not= "" (.name data-annotation))
-      (.name data-annotation))
-    ; Otherwise, filter the method name and return that
-    (let [name (.getName method)]
-      (if (string/starts-with? name "get")
-        ; Strip off the get and lower case the first letter
-        (str (string/lower-case (subs name 3 4)) (subs name 4))
-        ; If not, just return the name
-        name))))
+      (.name data-annotation)
+      (trim-method-name method))
+    (trim-method-name method)))
 
 ; Temporal utils
 (defn get-temporal-position
