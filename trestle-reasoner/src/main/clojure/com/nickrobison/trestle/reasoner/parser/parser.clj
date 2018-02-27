@@ -1,11 +1,10 @@
 (ns com.nickrobison.trestle.reasoner.parser.parser
   (:import [IClassParser]
-           (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter StringParser ClassBuilder SpatialParser IClassBuilder IClassRegister)
+           (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter SpatialParser IClassBuilder IClassRegister ClassBuilder)
            (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom OWLDataProperty OWLLiteral OWLDatatype)
-           (java.lang.annotation Annotation)
-           (java.lang.reflect InvocationTargetException Field Method Modifier Constructor Parameter)
-           (java.lang.invoke MethodHandles MethodHandle)
-           (com.nickrobison.trestle.reasoner.annotations IndividualIdentifier DatasetClass Fact NoMultiLanguage Language)
+           (java.lang.reflect Constructor Parameter)
+           (java.lang.invoke MethodHandle)
+           (com.nickrobison.trestle.reasoner.annotations DatasetClass Fact Language)
            (java.util Optional List)
            (com.nickrobison.trestle.common StaticIRI LanguageUtils)
            (com.nickrobison.trestle.reasoner.exceptions MissingConstructorException InvalidClassException InvalidClassException$State UnregisteredClassException)
@@ -13,7 +12,6 @@
   (:require [clojure.core.match :refer [match]]
             [clojure.core.reducers :as r]
             [clojure.tools.logging :as log]
-            [clojure.string :as string]
             [clojure.set :as set]
             [com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]
             [com.nickrobison.trestle.reasoner.parser.utils.members :as m])
@@ -183,12 +181,13 @@
 
 (defn default-member-keys
   [acc member defaultLanguageCode]
-  (merge acc {
-              :name        (pred/filter-member-name member)
-              :member-name (pred/get-member-name member)
-              :handle      (m/make-handle member)
-              :type        (pred/member-type member defaultLanguageCode)
-              }))
+  (let [type (pred/member-type member defaultLanguageCode)]
+    (merge acc {
+                :name        (m/filter-constructor-name member type)
+                :member-name (pred/get-member-name member)
+                :handle      (m/make-handle member)
+                :type        type
+                })))
 
 (defn ignore-fact
   [acc member]
@@ -342,7 +341,8 @@
                                                     (get member :owl-datatype))))
 
 (defmulti member-matches?
-          "Match the string IRI name with a member in the given set"
+          "Predicate for determining if the given classmember matches the string IRI name of a member in the given set
+          Specializes on the member type in order to handle special casing of temporals and multi-lang strings"
           (fn [member languageCode classMember]
             (:type member)))
 (defmethod member-matches? ::pred/temporal
@@ -350,7 +350,7 @@
   (let [iri (.getShortForm ^IRI (get member :iri))
         position (get member :position)
         name (get member :name)]
-    (log/warnf "Matching against temporal %s" classMember iri)
+    (log/debugf "Matching %s against temporal %s" classMember iri)
     (condp = classMember
       ; Can we match directly against the class member?
       name true
@@ -362,8 +362,7 @@
 (defmethod member-matches? ::pred/language
   [member languageCode classMember]
   (let [iri (.getShortForm ^IRI (get member :iri))]
-    (log/debugf "Matching against %s with language %s" iri (get member :language)
-                classMember languageCode)
+    (log/debugf "Matching %s against %s with language %s" classMember iri (get member :language))
     ; Match against IRI and language code (ignoring case)
     (log/spyf "Matches? %s" (and (= iri classMember) (.equalsIgnoreCase ^String languageCode (get member :language))))))
 (defmethod member-matches? :default
@@ -374,7 +373,8 @@
 
 
 (defn match-class-member
-  "Match the string IRI name with a member in the given set"
+  "Iterates through the provided member list (which can be members or temporals).
+  Try to match the string IRI name with a member in the given set"
   [members languageCode classMember]
   (->> members
        (filter (fn [member]
@@ -417,7 +417,7 @@
                                                                        clazz df reasonerPrefix)
                                                        :java-class   (.getSimpleName clazz)
                                                        :constructor  (build-constructor clazz)
-                                                        ;Does the class implement Serializable, and is thus cachable?
+                                                       ;Does the class implement Serializable, and is thus cachable?
                                                        :serializable (instance? Serializable clazz)
                                                        }))]
         (if (contains? parsedClass :identifier)
@@ -446,7 +446,7 @@
              ; Filter spatial
              (r/filter (fn [member]
                          (if (true? filterSpatial)
-                           (complement (= (get member :type) ::pred/spatial))
+                           (not= (get member :type) ::pred/spatial)
                            true)))
              ; Build the assertion axiom
              (r/map (fn [member]
@@ -473,7 +473,7 @@
         (and (nil? languageCode) (ClassBuilder/isConstructorArgument clazz classMember nil))
         classMember
         (if-let
-          ; Try for a classMember first, if it doesn't match, go for temporals
+          ; Try to match against the members lists first, if it doesn't match, go for temporals
           [classMember (match-class-member (get parsedClass :members)
                                            languageCode classMember)]
           classMember
@@ -507,8 +507,7 @@
     (let [parsedClass (.getRegisteredClass this clazz)]
       (Optional/ofNullable (->> (:members parsedClass)
                                 (filter #(if filterSpatial
-                                           (complement
-                                             (= (:type %) ::pred/spatial))
+                                           (not= (:type %) ::pred/spatial)
                                            true))
                                 (map #(.getOWLDataProperty df ^IRI (:iri %)))))))
   (getPropertyMembers ^Optional [this clazz]

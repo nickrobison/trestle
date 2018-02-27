@@ -541,24 +541,32 @@ public class ClassParser implements IClassParser {
 //        Spatial
         if (classMember.equals("asWKT")) {
 
-//            Check for specified argument name
-            final Optional<String> methodArgName = Arrays.stream(clazz.getDeclaredMethods())
-                    .filter(m -> m.isAnnotationPresent(Spatial.class))
-                    .map(m -> m.getAnnotation(Spatial.class).name())
-                    .findFirst();
+////            Check for specified argument name
+//            final Optional<Method> spatialMethod = Arrays.stream(clazz.getDeclaredMethods())
+//                    .filter(m -> m.isAnnotationPresent(Spatial.class))
+////                    .map(m -> m.getAnnotation(Spatial.class).name())
+//                    .findFirst();
+//
+//            if (spatialMethod.isPresent()) {
+//                return filterMethodName(spatialMethod.get());
+//            }
+//
+////            if (!spatialMethod.orElse("").equals("")) {
+////                return spatialMethod.orElse("");
+////            }
+//
+//            final Optional<Field> spatialField = Arrays.stream(clazz.getDeclaredFields())
+//                    .filter(f -> f.isAnnotationPresent(Spatial.class))
+////                    .map(f -> f.getAnnotation(Spatial.class).name())
+//                    .findFirst();
+//
+//            if (spatialField.isPresent()) {
+//                return spatialField.get().getName();
+//            }
 
-            if (!methodArgName.orElse("").equals("")) {
-                return methodArgName.orElse("");
-            }
-
-            final Optional<String> fieldArgName = Arrays.stream(clazz.getDeclaredFields())
-                    .filter(f -> f.isAnnotationPresent(Spatial.class))
-                    .map(f -> f.getAnnotation(Spatial.class).name())
-                    .findFirst();
-
-            if (!fieldArgName.orElse("").equals("")) {
-                return fieldArgName.orElse("");
-            }
+//            if (!spatialField.orElse("").equals("")) {
+//                return spatialField.orElse("");
+//            }
 
 //            TODO(nrobison): I think these things can go away.
             final Optional<Field> spatialField = Arrays.stream(clazz.getDeclaredFields())
@@ -591,7 +599,8 @@ public class ClassParser implements IClassParser {
                 if (annotationName.equals("")) {
                     return temporalField.get().getName();
                 } else {
-                    return annotationName;
+                    return temporalField.get().getName();
+//                    return annotationName;
                 }
             }
 
@@ -605,7 +614,8 @@ public class ClassParser implements IClassParser {
                 if (annotationName.equals("")) {
                     return filterMethodName(temporalMethod.get());
                 } else {
-                    return annotationName;
+                    return filterMethodName(temporalMethod.get());
+//                    return annotationName;
                 }
             }
 //        TODO(nrobison): This should be better. String matching is nasty.
@@ -620,7 +630,8 @@ public class ClassParser implements IClassParser {
                 if (annotationName.equals("")) {
                     return temporalField.get().getName();
                 } else {
-                    return annotationName;
+                    return temporalField.get().getName();
+//                    return annotationName;
                 }
             }
 
@@ -632,7 +643,8 @@ public class ClassParser implements IClassParser {
                 if (annotationName.equals("")) {
                     return filterMethodName(temporalMethod.get());
                 } else {
-                    return annotationName;
+                    return filterMethodName(temporalMethod.get());
+//                    return annotationName;
                 }
             }
 
@@ -646,7 +658,8 @@ public class ClassParser implements IClassParser {
                 if (annotationName.equals("")) {
                     return temporalField.get().getName();
                 } else {
-                    return annotationName;
+                    return temporalField.get().getName();
+//                    return annotationName;
                 }
             }
 
@@ -658,7 +671,9 @@ public class ClassParser implements IClassParser {
                 if (annotationName.equals("")) {
                     return filterMethodName(temporalMethod.get());
                 } else {
-                    return annotationName;
+                    return filterMethodName(temporalMethod.get());
+//                    return temporalField.get().getName();
+//                    return annotationName;
                 }
             }
         }

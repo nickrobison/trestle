@@ -188,7 +188,7 @@ public class TestClasses {
     public static class GAULTestClass implements Serializable {
         private static final long serialVersionUID = 42L;
 
-        @Fact(name="ADM0_Code", datatype= OWL2Datatype.XSD_INTEGER)
+        @Fact(name="adm0_code", datatype= OWL2Datatype.XSD_INTEGER)
         public int adm0_code;
         public String adm0_name;
         @IndividualIdentifier

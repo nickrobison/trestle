@@ -29,7 +29,7 @@ public class TrestleModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        install(new TrestleParserModule(true, "en-US"));
+        install(new TrestleParserModule());
         install(new MetricianModule(metricsEnabled));
         install(new TrestleCacheModule(cachingEnabled));
         install(new EngineModule(mergeEnabled, eventEnabled));

@@ -1,10 +1,8 @@
 (ns com.nickrobison.trestle.reasoner.parser.utils.predicates
   (:import (java.lang.reflect Modifier Method Field Constructor)
            (com.nickrobison.trestle.reasoner.annotations Ignore Fact Spatial Language NoMultiLanguage IndividualIdentifier TrestleCreator)
-           (org.semanticweb.owlapi.model IRI)
-           (com.nickrobison.trestle.common StaticIRI)
            (com.nickrobison.trestle.reasoner.annotations.temporal DefaultTemporal StartTemporal EndTemporal)
-           (com.nickrobison.trestle.types TemporalScope TemporalType))
+           (com.nickrobison.trestle.types TemporalType))
   (:require [clojure.string :as string]
             [clojure.core.match :refer [match]]))
 ; We can disable reflection warning, because Reflection is what we want
@@ -104,15 +102,10 @@
 (defn member-type [member defaultLanguageCode]
   (let [
         s (spatial? member)
-        ; Is a language code if multilang is enabled and not no-multilang
-        ; or is annotated as language
+        ; Is a language code if is annotated as language
         ; But only if it's a string type
         l (and (string-return? member)
-               (or
-                 (and
-                   (not (nil? defaultLanguageCode))
-                   (not (noMultiLanguage? member)))
-                 (language? member)))
+               (language? member))
         i (identifier? member)
         t (temporal? member)]
     (match [s t i l]
@@ -142,20 +135,13 @@
      (complement ebean?)
      (complement void-return?)) method))
 
-; Filter member name to strip out unwanted characters
-(defmulti filter-member-name
-          "Filter name of class member"
-          class)
-(defmethod filter-member-name Field [^Field field]
-  ; Just return the field name
-  (.getName field))
-(defmethod filter-member-name Method [^Method method]
-  (let [name (.getName method)]
-    (if (string/starts-with? name "get")
-      ; Strip off the get and lower case the first letter
-      (str (string/lower-case (subs name 3 4)) (subs name 4))
-      ; If not, just return the name
-      name)))
+(defn get-common-annotation
+  "We use a common annotation type to normalize handling facts, spatials and temporals.
+  This allows us to return that underlying annotation and do things with it."
+  [member annotation]
+  (->> (.getDeclaredAnnotations member)
+       (filter #(.isAnnotationPresent (.annotationType %) annotation))
+       (first)))
 
 ; Temporal utils
 (defn get-temporal-position

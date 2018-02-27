@@ -42,7 +42,7 @@ public class TSIndividual {
     public Map<String, Object> getProperties() {
         if (this.schema.isPresent()) {
             Map<String, Object> sortedProperties = new LinkedHashMap<>();
-            schema.get().getSchema().entrySet().forEach(entry -> sortedProperties.put(entry.getKey(), entry.getValue().cast(this.properties.get(entry.getKey()))));
+            this.schema.get().getSchema().entrySet().forEach(entry -> sortedProperties.put(entry.getKey(), entry.getValue().cast(this.properties.get(entry.getKey()))));
             return sortedProperties;
         }
         return this.properties;

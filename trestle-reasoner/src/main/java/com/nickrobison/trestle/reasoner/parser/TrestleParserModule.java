@@ -7,6 +7,7 @@ import com.nickrobison.trestle.reasoner.parser.clojure.ClojureClassBuilderProvid
 import com.nickrobison.trestle.reasoner.parser.clojure.ClojureClassParserProvider;
 import com.nickrobison.trestle.reasoner.parser.clojure.ClojureClassRegistryProvider;
 import com.nickrobison.trestle.reasoner.parser.clojure.ClojureProvider;
+import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,13 @@ public class TrestleParserModule extends PrivateModule {
     private final String defaultLanguageCode;
     private final boolean multiLangEnabled;
     private final boolean useClojure;
+
+    public TrestleParserModule() {
+        final Config config = ConfigFactory.load().getConfig("trestle");
+        this.useClojure = config.getBoolean("useClojureParser");
+        this.defaultLanguageCode = config.getString("defaultLanguage");
+        this.multiLangEnabled = config.getBoolean("enableMultiLanguage");
+    }
 
     public TrestleParserModule(boolean multiLangEnabled, String defaultLanguageCode) {
         this.useClojure = ConfigFactory.load().getConfig("trestle").getBoolean("useClojureParser");
