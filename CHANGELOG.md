@@ -38,6 +38,18 @@ we default to using the Java member name via the filtering rules specified above
 
 In 0.9, we plan to add the ability to specify the constructor parameter name, see [this ticket](https://development.nickrobison.com:2096/jira/browse/TRESTLE-654) for details.
 
+### Completed tickets
+
+<h4>        Bug
+</h4>
+<ul>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-384'>TRESTLE-384</a>] -         ClassParser is getting confused with fact and getter names
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-640'>TRESTLE-640</a>] -         Clojure Parser is causing Hadoop Integration Tests to fail
+</li>
+</ul>
+            
+
 ## 0.8.0
 
 Everything before 0.8 should be considered pre-alpha and left to wither in the sands of time.
