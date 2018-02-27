@@ -163,12 +163,12 @@ public class DataExporterTests extends AbstractReasonerTest {
 
 
         @TrestleCreator
-        public SimpleGAULObject(long gaulcode, String objectname, LocalDate startdate, LocalDate enddate, String geom) {
-            this.gaulcode = gaulcode;
-            this.objectname = objectname;
-            this.startdate = startdate;
-            this.enddate = enddate;
-            this.geom = geom;
+        public SimpleGAULObject(long gaulCode, String objectName, LocalDate startDate, LocalDate endDate, String wkt) {
+            this.gaulcode = gaulCode;
+            this.objectname = objectName;
+            this.startdate = startDate;
+            this.enddate = endDate;
+            this.geom = wkt;
             this.edgeWeight = 1.0;
         }
 
