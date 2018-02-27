@@ -58,18 +58,18 @@ public class GAULObject {
     }
 
     @TrestleCreator
-    public GAULObject(String id, long gaulCode, String objectName, LocalDate startDate, LocalDate endDate, String wkt, long adm1Code, String adm1Name, String status, boolean dispArea, long adm0Code, String adm0Name) {
+    public GAULObject(String id, long adm2_code, String adm2_name, LocalDate startDate, LocalDate endDate, String wkt, long adm1_code, String adm1_name, String status, boolean disp_area, long adm0_code, String adm0_name) {
         this.objectID = id;
-        this.gaulCode = gaulCode;
-        this.objectName = objectName;
+        this.gaulCode = adm2_code;
+        this.objectName = adm2_name;
         this.validRange = DateFieldUtils.writeDateField(startDate, endDate);
         this.shapePolygon = (Polygon) GeometryEngine.geometryFromWkt(wkt, 0, Geometry.Type.Polygon);
-        this.adm0Code = adm0Code;
-        this.adm0Name = adm0Name;
-        this.adm1Code = adm1Code;
-        this.adm1Name = adm1Name;
+        this.adm0Code = adm0_code;
+        this.adm0Name = adm0_name;
+        this.adm1Code = adm1_code;
+        this.adm1Name = adm1_name;
         this.status = status;
-        this.dispArea = dispArea;
+        this.dispArea = disp_area;
     }
 
     @Ignore
