@@ -1,7 +1,7 @@
 (ns com.nickrobison.trestle.reasoner.parser.utils.members
   (:import (org.semanticweb.owlapi.model IRI OWLDataFactory)
            (com.nickrobison.trestle.common StaticIRI)
-           (com.nickrobison.trestle.reasoner.annotations Spatial Fact)
+           (com.nickrobison.trestle.reasoner.annotations Spatial Fact TrestleDataProperty)
            (java.lang.invoke MethodHandles)
            (java.lang.reflect Constructor Method Field)
            (com.nickrobison.trestle.reasoner.exceptions InvalidClassException InvalidClassException$State))
@@ -25,6 +25,7 @@
        (map #(get % key))
        first))
 
+(declare filter-java-member-name)
 (defn ^IRI build-iri
   "Build the property IRI for the Member"
   [member prefix]
@@ -35,7 +36,7 @@
       ; If spatial, use the GEOSPARQL prefix
       (IRI/create StaticIRI/GEOSPARQLPREFIX "asWKT")
       ; Otherwise, use the member-name
-      (IRI/create prefix (pred/filter-member-name member)))))
+      (IRI/create prefix (filter-java-member-name member)))))
 
 ; Reflection helpers
 
@@ -86,3 +87,49 @@
     member
     (throw (InvalidClassException.
              class-name state message))))
+
+; Member name and constructor parameter methods
+
+(defn trim-method-name
+  "Filter the method name by removing extra characters"
+  [method]
+  (let [name (.getName method)]
+    (if (string/starts-with? name "get")
+      ; Strip off the get and lower case the first letter
+      (str (string/lower-case (subs name 3 4)) (subs name 4))
+      ; If not, just return the name
+      name)))
+
+
+; Filter member name to strip out unwanted characters
+(defmulti filter-java-member-name
+          "Filter name of Java class member.
+          If the member annotation has the name() property set, we use that,
+          otherwise we use the filtered name from the member.
+
+          For fields, we just return the field name, as is.
+          For method, we strip of the 'get' and lowercase the first letter."
+          class)
+(defmethod filter-java-member-name Field [^Field field]
+  ;Just return the field name
+  (.getName field))
+(defmethod filter-java-member-name Method [^Method method]
+  ; Trim the method name and return it
+  (trim-method-name method))
+
+
+(defmulti filter-constructor-name
+          "Filter the member to determine the appropriate name for the constructor
+          This allows us to to special casing for mult-lang members, since we can't use the fact name due to language overloading"
+          (fn [member type] type))
+(defmethod filter-constructor-name ::language
+  [member type]
+  ; If we're a language, we need to use the java member name
+  (filter-java-member-name member))
+(defmethod filter-constructor-name :default
+  [member type]
+  (if-let [data-annotation (pred/get-common-annotation member TrestleDataProperty)]
+    (if (not= "" (.name data-annotation))
+      (.name data-annotation)
+      (filter-java-member-name member))
+    (filter-java-member-name member)))

@@ -1,10 +1,8 @@
 (ns com.nickrobison.trestle.reasoner.parser.utils.predicates
   (:import (java.lang.reflect Modifier Method Field Constructor)
-           (com.nickrobison.trestle.reasoner.annotations Ignore Fact Spatial Language NoMultiLanguage IndividualIdentifier TrestleCreator TrestleDataProperty)
-           (org.semanticweb.owlapi.model IRI)
-           (com.nickrobison.trestle.common StaticIRI)
+           (com.nickrobison.trestle.reasoner.annotations Ignore Fact Spatial Language NoMultiLanguage IndividualIdentifier TrestleCreator)
            (com.nickrobison.trestle.reasoner.annotations.temporal DefaultTemporal StartTemporal EndTemporal)
-           (com.nickrobison.trestle.types TemporalScope TemporalType))
+           (com.nickrobison.trestle.types TemporalType))
   (:require [clojure.string :as string]
             [clojure.core.match :refer [match]]))
 ; We can disable reflection warning, because Reflection is what we want
@@ -104,15 +102,10 @@
 (defn member-type [member defaultLanguageCode]
   (let [
         s (spatial? member)
-        ; Is a language code if multilang is enabled and not no-multilang
-        ; or is annotated as language
+        ; Is a language code if is annotated as language
         ; But only if it's a string type
         l (and (string-return? member)
-               (or
-                 (and
-                   (not (nil? defaultLanguageCode))
-                   (not (noMultiLanguage? member)))
-                 (language? member)))
+               (language? member))
         i (identifier? member)
         t (temporal? member)]
     (match [s t i l]
@@ -149,42 +142,6 @@
   (->> (.getDeclaredAnnotations member)
        (filter #(.isAnnotationPresent (.annotationType %) annotation))
        (first)))
-
-(defn trim-method-name
-  "Filter the method name by removing extra characters"
-  [method]
-  (let [name (.getName method)]
-    (if (string/starts-with? name "get")
-      ; Strip off the get and lower case the first letter
-      (str (string/lower-case (subs name 3 4)) (subs name 4))
-      ; If not, just return the name
-      name)))
-
-; Filter member name to strip out unwanted characters
-(defmulti filter-member-name
-          "Filter name of class member.
-          If the member annotation has the name() property set, we use that,
-          otherwise we use the filtered name from the member.
-
-          For fields, we just return the field name, as is.
-          For method, we strip of the 'get' and lowercase the first letter."
-          class)
-(defmethod filter-member-name Field [^Field field]
-  ; If we have an annotation, look to see if we've overridden the Fact name
-  (if-let [data-annotation (get-common-annotation field TrestleDataProperty)]
-    (if (not= "" (.name data-annotation))
-      (.name data-annotation)
-      (.getName field))
-    ; Just return the field name
-    (.getName field)))
-(defmethod filter-member-name Method [^Method method]
-  ; If we have an annotation, look to see if we've overridden the Fact name
-  (if-let [data-annotation (get-common-annotation method TrestleDataProperty)]
-    ; If we've overridden the fact name, use that
-    (if (not= "" (.name data-annotation))
-      (.name data-annotation)
-      (trim-method-name method))
-    (trim-method-name method)))
 
 ; Temporal utils
 (defn get-temporal-position

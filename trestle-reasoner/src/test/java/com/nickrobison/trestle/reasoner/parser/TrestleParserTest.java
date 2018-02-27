@@ -87,7 +87,7 @@ public class TrestleParserTest {
 
 //        Test the data property parser
 //        Code
-        final IRI code_iri = IRI.create(TRESTLE_PREFIX, "ADM0_Code");
+        final IRI code_iri = IRI.create(TRESTLE_PREFIX, "adm0_code");
         final OWLDataProperty adm0_code = df.getOWLDataProperty(code_iri);
         final OWLLiteral adm0_code_literal = df.getOWLLiteral("1234", OWL2Datatype.XSD_INTEGER);
         Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = cp.getFacts(gaulTestClass);
