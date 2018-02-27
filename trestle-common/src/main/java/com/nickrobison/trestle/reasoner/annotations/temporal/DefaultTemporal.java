@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.reasoner.annotations.temporal;
 
+import com.nickrobison.trestle.reasoner.annotations.TrestleDataProperty;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TemporalType;
 
@@ -15,6 +16,7 @@ import java.time.temporal.ChronoUnit;
 @TemporalProperty
 @Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
+@TrestleDataProperty
 public @interface DefaultTemporal {
     String name() default "";
     TemporalType type();

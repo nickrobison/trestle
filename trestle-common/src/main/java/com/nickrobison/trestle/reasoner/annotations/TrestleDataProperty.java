@@ -6,11 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Created by nrobison on 7/1/16.
+ * Created by nickrobison on 2/26/18.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.METHOD})
-@TrestleDataProperty
-public @interface Spatial {
-    String name() default "";
+@Target(ElementType.ANNOTATION_TYPE)
+public @interface TrestleDataProperty {
 }
