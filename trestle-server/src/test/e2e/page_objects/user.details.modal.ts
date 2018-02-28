@@ -1,4 +1,4 @@
-import { by, element, ElementFinder } from "protractor";
+import { browser, by, element, ElementFinder } from "protractor";
 
 export interface IUserTable {
     username: string,
@@ -8,9 +8,9 @@ export interface IUserTable {
     email: string;
 }
 
-export type UserType = "user" | "admin" | "dba"
+export type UserType = "user" | "admin" | "dba";
 
-export class UserAddModal {
+export class UserDetailsModal {
 
     private userNameInput: ElementFinder;
     private passwordInput: ElementFinder;
@@ -60,8 +60,9 @@ export class UserAddModal {
             }
         }
 
-        return element(by.buttonText("Add User")).click();
-
+        await element(by.buttonText("Add User")).click();
+        // Sleep for 500 ms to let the modal close
+        return browser.sleep(500);
     }
 
     public deleteUser() {

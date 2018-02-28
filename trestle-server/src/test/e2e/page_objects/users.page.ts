@@ -1,15 +1,14 @@
 import { browser, by, element } from "protractor";
-import { IUserTable, UserAddModal, UserType } from "./user.add.modal";
+import { IUserTable, UserDetailsModal, UserType } from "./user.details.modal";
 
 export class UsersPage {
 
-    private userModal = new UserAddModal();
+    private userModal = new UserDetailsModal();
 
     public async createUser(userType: UserType, user: IUserTable) {
         //    Click the button
-        await browser.sleep(500);
         await element(by.id("add-user")).click();
-        await this.userModal.createUser(userType, user);
+        return this.userModal.createUser(userType, user);
     }
 
     public async countUsers(): Promise<number> {
@@ -22,9 +21,11 @@ export class UsersPage {
         const xpathString = "//table[@id='users-table']/tbody/tr[td//text()[contains(.,'"
             + username
             + "')]]";
+        await element(by.xpath(xpathString)).click();
+        // Wait 500ms for the modal to open
         await browser.sleep(500);
-        const useRow = element(by.xpath(xpathString));
-        return useRow.click();
+
+        return this.userModal.deleteUser();
         // const userRows = await element(by.id("users-table"))
         //     .all(by.css("tbody tr"));
         //

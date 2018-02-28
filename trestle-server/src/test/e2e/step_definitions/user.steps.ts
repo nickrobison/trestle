@@ -1,6 +1,6 @@
 import { binding, then, when } from "cucumber-tsflow";
 import { expect } from "chai";
-import { IUserTable, UserType } from "../page_objects/user.add.modal";
+import { IUserTable, UserType } from "../page_objects/user.details.modal";
 import { UsersPage } from "../page_objects/users.page";
 import {element, by} from "protractor";
 
