@@ -1,4 +1,4 @@
-import { browser, by, element } from "protractor";
+import { browser, by, element, ExpectedConditions } from "protractor";
 import { IUserTable, UserDetailsModal, UserType } from "./user.details.modal";
 
 export class UsersPage {
@@ -21,24 +21,11 @@ export class UsersPage {
         const xpathString = "//table[@id='users-table']/tbody/tr[td//text()[contains(.,'"
             + username
             + "')]]";
-        await element(by.xpath(xpathString)).click();
+        const rowElement = element(by.xpath(xpathString));
+        // We need to use the JS click method, otherwise Firefox complains it can't scroll to the table row
+        await browser.executeScript("arguments[0].click()", rowElement);
         // Wait 500ms for the modal to open
         await browser.sleep(500);
-
         return this.userModal.deleteUser();
-        // const userRows = await element(by.id("users-table"))
-        //     .all(by.css("tbody tr"));
-        //
-        // for (const row of userRows) {
-        //     const cols = await row.all(by.css("td"));
-        //     const colText = await cols[2].getText();
-        //     console.log("Text:", colText);
-        //     if (colText === username) {
-        //         console.log("Found");
-        //         await row.click();
-        //         return this.userModal.deleteUser();
-        //     }
-        // }
-        // return Promise.reject("Cannot find user!");
     }
 }
