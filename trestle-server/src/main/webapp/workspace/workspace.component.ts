@@ -3,8 +3,8 @@
  */
 import { Component, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { Router } from "@angular/router";
-import { AuthService, ITrestleUser, Privileges } from "./UserModule/authentication.service";
-import * as CryptoJS from "crypto-js";
+import { AuthService, Privileges } from "./UserModule/authentication.service";
+import { MD5 } from "crypto-js";
 import { EventBus, UserLoginEvent } from "./UIModule/eventBus/eventBus.service";
 import { Subscription } from "rxjs/Subscription";
 import { MatSidenav } from "@angular/material";
@@ -65,7 +65,7 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
         if (this.gravatarURL == null) {
             const user = this.authService.getUser();
             if (user !== null) {
-                const hash = CryptoJS.MD5(user.email.trim().toLowerCase()).toString();
+                const hash = MD5(user.email.trim().toLowerCase()).toString();
                 this.gravatarURL = "https://www.gravatar.com/avatar/" + hash + "?d=identicon" + "&s=36";
                 return this.gravatarURL;
             }
