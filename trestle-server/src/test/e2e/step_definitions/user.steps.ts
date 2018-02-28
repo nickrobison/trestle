@@ -2,7 +2,6 @@ import { binding, then, when } from "cucumber-tsflow";
 import { expect } from "chai";
 import { IUserTable, UserType } from "../page_objects/user.details.modal";
 import { UsersPage } from "../page_objects/users.page";
-import {element, by} from "protractor";
 
 export interface CucumberTable<T> {
     hashes(): T[];
@@ -16,8 +15,12 @@ export class UserSteps {
 
     @then(/^I create a new "([^"]*)" with the following properties:$/)
     public createUser(userType: UserType, userData: CucumberTable<IUserTable>) {
-        console.debug("User", userData);
         return this.userPage.createUser(userType, userData.hashes()[0]);
+    }
+
+    @then(/^I edit user "([^"]*)" properties:$/)
+    public editUser(user: string, userData: CucumberTable<IUserTable>) {
+        return this.userPage.editUser(user, userData.hashes()[0]);
     }
 
     @then(/^The users table should have (\d+) users$/)

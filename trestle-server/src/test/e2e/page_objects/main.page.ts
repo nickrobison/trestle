@@ -15,7 +15,7 @@ export class DashboardPageObject {
     }
 
     public async navigateToPage(page: string) {
-        return browser.get(page);
+        return element(by.css("a[ng-reflect-router-link='" + page + "']")).click();
     }
 
     public async clickButton(button: string) {

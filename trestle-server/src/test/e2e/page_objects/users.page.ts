@@ -11,6 +11,11 @@ export class UsersPage {
         return this.userModal.createUser(userType, user);
     }
 
+    public async editUser(username: string, userData: IUserTable) {
+        await this.selectUserRow(username);
+        return this.userModal.editUser(userData);
+    }
+
     public async countUsers(): Promise<number> {
         await browser.sleep(1000);
         return element(by.id("users-table"))
@@ -18,6 +23,11 @@ export class UsersPage {
     }
 
     public async deleteUser(username: string) {
+        await this.selectUserRow(username);
+        return this.userModal.deleteUser();
+    }
+
+    private async selectUserRow(username: string) {
         const xpathString = "//table[@id='users-table']/tbody/tr[td//text()[contains(.,'"
             + username
             + "')]]";
@@ -25,7 +35,6 @@ export class UsersPage {
         // We need to use the JS click method, otherwise Firefox complains it can't scroll to the table row
         await browser.executeScript("arguments[0].click()", rowElement);
         // Wait 500ms for the modal to open
-        await browser.sleep(500);
-        return this.userModal.deleteUser();
+        return browser.sleep(500);
     }
 }

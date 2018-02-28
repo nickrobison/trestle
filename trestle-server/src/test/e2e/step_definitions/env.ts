@@ -5,13 +5,12 @@ const {
     Before, // jshint ignore:line
     BeforeAll, // jshint ignore:line
     After, // jshint ignore:line
-    AfterStep // jshint ignore:line
 } = require('cucumber');
 
 let firstLoad = true;
 
 console.log("Setting env");
-setDefaultTimeout(60 * 1000);
+setDefaultTimeout(10 * 1000);
 
 Before(() => {
     if (firstLoad) {

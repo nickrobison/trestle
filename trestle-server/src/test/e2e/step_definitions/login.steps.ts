@@ -12,30 +12,10 @@ import * as chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 
 @binding()
-class LoginSteps {
+export class LoginSteps {
 
     private dashboard = new DashboardPageObject();
     private login = new LoginPageObject();
-
-    @given(/^I am viewing the dashboard$/)
-    private viewDashboard() {
-        return this.dashboard.navigateToPage("");
-    }
-
-    @given(/^I am viewing the "([^"]*)" page$/)
-    private viewPage(page: string) {
-        return this.dashboard.navigateToPage(page);
-    }
-
-    @then(/^Login page appears$/)
-    private loginValid() {
-        return expect(this.login.getTitle()).to.become("Login to Trestle");
-    }
-
-    @when(/^I click the "([^"]*)" button$/)
-    private clickButton(button: string) {
-        return this.dashboard.clickButton(button);
-    }
 
     @given(/^I login with (.*) and (.*)$/)
     private loginUser(username: string, password: string) {
@@ -58,5 +38,10 @@ class LoginSteps {
     private validateErrorMessage(message: string) {
         return expect(this.login.getElementText(by.css("mat-card-footer")))
             .to.become(message);
+    }
+
+    @then(/^I logout$/)
+    public logout() {
+        return this.dashboard.clickButton("logout");
     }
 }

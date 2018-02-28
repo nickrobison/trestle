@@ -28,10 +28,24 @@ export class LoginPageObject {
      * @returns {Promise<void>}
      */
     public async loginUser(username: string, password: string, login?: boolean): Promise<void> {
-        this.usernameField.sendKeys(username);
+        // Try to click the login button, if it doesn't exist, click logout
+        const loginButton = element(by.css("[routerLink='/login']"));
+        const isPresent = await loginButton.isPresent();
+        if (isPresent) {
+            await loginButton.click();
+        } else {
+            // Logout and log in again
+            await element(by.id("logout")).click();
+            await loginButton.click();
+        }
+        await this.usernameField.clear();
+        await this.usernameField.sendKeys(username);
+        await this.passwordField.clear();
         await this.passwordField.sendKeys(password);
+
         if (login) {
-            return element(by.buttonText("Login")).click();
+            element(by.buttonText("Login")).click();
+            return browser.sleep(500);
         }
     }
 
