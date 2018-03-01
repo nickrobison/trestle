@@ -43,6 +43,8 @@ export class UserDetailsModal {
      * @returns {Promise<any>} - Returns when the modal closes (waits 500ms)
      */
     public async createUser(userType: UserType, user: IUserTable) {
+        // Wait for the modal to load
+        await browser.sleep(500);
         await this.userNameInput.sendKeys(user.username || "");
         await this.passwordInput.sendKeys(user.password || "");
         await this.firstNameInput.sendKeys(user.first_name || "");
@@ -81,6 +83,8 @@ export class UserDetailsModal {
      * @returns {Promise<any>} - returns when the modal is closed (waits 500ms)
      */
     public async editUser(user: IUserTable) {
+        // Wait for the modal to load
+        await browser.sleep(500);
         // We have to clear the input fields before
         if (user.username) {
             await this.userNameInput.clear();
@@ -118,8 +122,9 @@ export class UserDetailsModal {
      *
      * @returns {any} - Returns when the modal closes
      */
-    public deleteUser() {
+    public async deleteUser() {
+        // Wait for the modal to load
+        await browser.sleep(500);
         return element(by.buttonText("Delete User")).click();
     }
-
 }

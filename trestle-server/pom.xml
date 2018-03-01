@@ -220,6 +220,17 @@
                             <arguments>--config config/webpack.production.js</arguments>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>protractor ci tests</id>
+                        <goals>
+                            <goal>yarn</goal>
+                        </goals>
+                        <phase>integration-test</phase>
+                        <configuration>
+                            <arguments>test:ci</arguments>
+                            <maven.test.failure.ignore>true</maven.test.failure.ignore>
+                        </configuration>
+                    </execution>
                 </executions>
                 <configuration>
                     <installDirectory>binaries</installDirectory>

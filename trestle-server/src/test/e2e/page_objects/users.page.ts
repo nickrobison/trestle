@@ -1,4 +1,4 @@
-import { browser, by, element, ExpectedConditions } from "protractor";
+import { browser, by, element } from "protractor";
 import { IUserTable, UserDetailsModal, UserType } from "./user.details.modal";
 
 export class UsersPage {
