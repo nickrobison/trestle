@@ -228,7 +228,6 @@
                         <phase>integration-test</phase>
                         <configuration>
                             <arguments>test:ci</arguments>
-                            <maven.test.failure.ignore>true</maven.test.failure.ignore>
                         </configuration>
                     </execution>
                 </executions>

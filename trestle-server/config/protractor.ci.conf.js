@@ -3,7 +3,7 @@
  */
 const helper = require("./helpers");
 exports.config = {
-    baseUrl: "http://localhost:8080/workspace/",
+    baseUrl: "http://trestle:8080/workspace/",
     seleniumAddress: "http://localhost:4444/wd/hub",
     capabilities: {
         "browserName": "chrome",
