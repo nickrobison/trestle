@@ -1,5 +1,5 @@
 reasoner:
-  connectionString: "http://localhost:7200"
+  connectionString: "http://graphdb:7200"
   username: ""
   password: ""
   ontology: "gaul_hadoop_world_bank"
