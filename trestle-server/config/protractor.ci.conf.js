@@ -1,27 +1,15 @@
 /**
- * Created by nrobison on 5/31/17.
+ * Created by nickrobison on 2/28/18.
  */
 const helper = require("./helpers");
 exports.config = {
     baseUrl: "http://vbox:8080/workspace/",
     seleniumAddress: "http://vbox:4444/wd/hub",
-    // directConnect: true,
     capabilities: {
         "browserName": "chrome",
-        // marionette: true,
         shardTestFiles: true,
         maxInstances: 1
     },
-    // multiCapabilities: [{
-    //     'browserName': 'firefox',
-    //     marionette: true,
-    //     shardTestFiles: true,
-    //     maxInstances: 2
-    // }, {
-    //     'browserName': 'chrome',
-    //     shardTestFiles: true,
-    //     maxInstances: 2
-    // }],
     useAllAngular2AppRoots: true,
     allScriptsTimeout: 110000,
     noGlobals: true,
@@ -36,9 +24,6 @@ exports.config = {
             helper.root('src/test/e2e/**/*.steps.ts'),
             helper.root('src/test/e2e/step_definitions/env.ts')
         ]
-        // tags: [
-        //     '@Permissions'
-        // ]
     },
     onPrepare() {
         require('ts-node').register({

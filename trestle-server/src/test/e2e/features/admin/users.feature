@@ -6,7 +6,7 @@ Feature: User Admin Feature
 
   Scenario: Create User
     Given I login and submit with "dba" and "dba"
-    When I am viewing the "admin/users" page
+    When I am viewing the "users" page
     Then I create a new "user" with the following properties:
       | username | password        | first_name | last_name | email        |
       | newUser1 | newUserPassword | New        | User      | new@test.com |

@@ -20,10 +20,10 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
     public gravatarURL: string;
     // We need this in order to access the Privileges enum from the template
     public Privileges = Privileges;
+    public user: TrestleUser | null;
 
     @ViewChild("sidenav") public sideNav: MatSidenav;
     private loginSubscription: Subscription;
-    private user: TrestleUser | null;
 
     constructor(private authService: AuthService,
                 private router: Router,

@@ -1,7 +1,7 @@
 import { binding, then } from "cucumber-tsflow";
 import { DashboardPageObject, PageActionType } from "../page_objects/main.page";
 import { expect } from "chai";
-import { browser, ElementFinder } from "protractor";
+import { browser } from "protractor";
 
 @binding()
 class PermissionSteps {
@@ -17,7 +17,6 @@ class PermissionSteps {
     @then(/^I can navigate to "([^"]*)"$/)
     private async testCanNavigate(page: string) {
         await browser.get(page);
-        // await this.dashboard.navigateToPage(page);
         return expect(browser.getCurrentUrl())
             .to.become(browser.baseUrl + page);
     }
@@ -25,7 +24,6 @@ class PermissionSteps {
     @then(/^I can not navigate to "([^"]*)"$/)
     private async testCanNotNavigate(page: string) {
         await browser.get(page);
-        // await this.dashboard.navigateToPage(page);
         return expect(browser.getCurrentUrl())
             .to.not.become(browser.baseUrl + page);
     }

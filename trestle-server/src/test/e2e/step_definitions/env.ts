@@ -10,7 +10,7 @@ const {
 let firstLoad = true;
 
 console.log("Setting env");
-setDefaultTimeout(10 * 1000);
+setDefaultTimeout(50 * 1000);
 
 Before(() => {
     if (firstLoad) {

@@ -102,7 +102,8 @@
   "scripts": {
     "watch": "webpack --colors --progress --watch --config config/webpack.dev.js",
     "prepare": "webdriver-manager update",
-    "test": "protractor protractor.conf.js"
+    "test": "protractor protractor.conf.js",
+    "test:ci": "protractor config/protractor.ci.conf.js"
   },
   "repository": {
     "type": "git",
