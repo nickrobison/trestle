@@ -8,11 +8,6 @@ reasoner:
 
 logging:
   level: INFO
-  loggers:
-    "com.nickrobison.metrician": DEBUG
-    "com.nickrobison.trestle": DEBUG
-    "org.hibernate.SQL": DEBUG
-    "org.hibernate.type": DEBUG
   appenders:
     - type: console
       logFormat: "[%-5p | %t | %X{test}] %d %c:%L %X{transaction} - %m%n"

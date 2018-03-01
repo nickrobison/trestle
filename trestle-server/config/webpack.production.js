@@ -54,7 +54,6 @@ var prodOptions = {
             uglifyOptions: {
                 ie8: false,
                 ecma: 5,
-                warnings: true,
                 mangle: true, // debug false
                 output: {
                     comments: false,
