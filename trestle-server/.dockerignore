@@ -3,3 +3,4 @@
 !/src/main/resources
 !trestle.owl
 !Dockerfile
+!entrypoint.sh

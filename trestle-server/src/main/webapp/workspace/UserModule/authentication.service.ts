@@ -3,11 +3,11 @@
  */
 import { Injectable } from "@angular/core";
 import { Router } from "@angular/router";
-import { Http, URLSearchParams, Response } from "@angular/http";
-import { tokenNotExpired, JwtHelper } from "angular2-jwt";
-import { Observable } from "rxjs";
+import { Http } from "@angular/http";
+import { JwtHelper, tokenNotExpired } from "angular2-jwt";
+import { TrestleUser } from "./trestle-user";
+import { Observable } from "rxjs/Observable";
 
-// const _key: string = "id_token";
 const _key: string = "token";
 
 export enum Privileges {
@@ -61,7 +61,7 @@ export class AuthService {
     }
 
     public login(username: string, password: string): Observable<void> {
-        return this.http.post("/auth/login", {username: username, password: password})
+        return this.http.post("/auth/login", {username, password: password})
             .map((response) => {
                 console.debug("has token");
                 console.log(response);
@@ -71,18 +71,15 @@ export class AuthService {
 
     public logout(): void {
         if (this.loggedIn()) {
-            console.debug("Logging out");
             this.http.post("/auth/logout", null);
             localStorage.removeItem(_key);
-            console.log("Logged out user");
+            console.debug("Logged out user");
             this.router.navigate(["/"]);
         }
     }
 
     public loggedIn(): boolean {
         const token = localStorage.getItem(_key);
-        console.debug("Is user logged in?");
-        console.debug("has token", token);
         if (token) {
             console.debug(
                 this.jwtHelper.decodeToken(token),
@@ -103,11 +100,11 @@ export class AuthService {
         return false;
     }
 
-    public getUser(): ITrestleUser | null {
+    public getUser(): TrestleUser | null {
         if (this.loggedIn()) {
             const token = this.getToken();
             if (token) {
-                return token.getUser();
+                return new TrestleUser(token.getUser());
             }
         }
         console.error("User is not logged in");
@@ -120,24 +117,12 @@ export class AuthService {
      * @returns {boolean} - has all the required roles
      */
     public hasRequiredRoles(roles: Privileges[]): boolean {
-        const token = this.getToken();
-        if (token == null) {
+        const user = this.getUser();
+        if (user == null) {
             return false;
         }
-        if (token) {
-            // tslint:disable-next-line:no-bitwise
-            return (token.getUser().privileges & this.buildRoleValue(roles)) > 0;
-        }
-        return false;
-    }
 
-    private buildRoleValue(roles: Privileges[]): number {
-        let roleValue = 0;
-        roles.forEach((role) => {
-            // tslint:disable-next-line:no-bitwise
-            roleValue = roleValue | role;
-        });
-        return roleValue;
+        return user.hasRequiredPrivileges(roles);
     }
 
     private getToken(): TrestleToken | null {

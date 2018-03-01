@@ -2,19 +2,20 @@
     <h4 (click)="sidenav.toggle()">TRESTLE</h4>
     <span class="toolbar-spacer"></span>
     <!--User login specific functions-->
-    <div class="action-buttons" *ngIf="userLoggedIn | async">
+    <div class="action-buttons" *ngIf="user">
         <img class="img-circle" [src]="getGravatarURL()">
         <button id="logout" mat-button class="toolbar-button" (click)="logout()" aria-label="Logout">
             <i class="fa fa-sign-out fa-2x" aria-hidden="true"></i>
         </button>
     </div>
-    <button id="login" mat-button class="toolbar-button" *ngIf="!(userLoggedIn | async)" routerLink="/login" aria-label="Login">
+    <button id="login" mat-button class="toolbar-button" *ngIf="!user" routerLink="/login" aria-label="Login">
         <i class="fa fa-sign-in fa-2x" aria-hidden="true"></i>
     </button>
 </mat-toolbar>
 <mat-sidenav-container>
     <mat-sidenav #sidenav class="z-depth-3" mode="side" color="'accent'">
         <mat-nav-list>
+            <div id="user-actions">
             <h5 mat-list-subheader>Explore</h5>
             <mat-divider></mat-divider>
             <a id="viewer" mat-list-item [routerLink]="['explore/viewer']" aria-label="dataset viewer link">
@@ -25,7 +26,8 @@
                 <mat-icon>query_builder</mat-icon>QUERY</a>
             <a id="compare" mat-list-item [routerLink]="['explore/compare']" aria-label="compare links">
                 <mat-icon>compare</mat-icon>COMPARE</a>
-            <div *ngIf="userHasRequiredPermissions([Privileges.ADMIN])">
+            </div>
+            <div id="admin-actions" *ngIf="userHasRequiredPermissions([Privileges.ADMIN])">
                 <mat-divider></mat-divider>
                 <h5 mat-list-subheader>Admin</h5>
                 <mat-divider></mat-divider>
@@ -35,10 +37,10 @@
                     <mat-icon>show_chart</mat-icon>METRICS</a>
                 <a id="users" mat-list-item [routerLink]="['admin/users']" aria-label="users link">
                     <mat-icon>supervisor_account</mat-icon>USERS</a>
-                <div *ngIf="userHasRequiredPermissions([Privileges.DBA])">
-                    <a id="index" mat-list-item [routerLink]="['admin/index']" aria-label="index link">
-                        <mat-icon>supervisor_account</mat-icon>INDICIES</a>
-                </div>
+            </div>
+            <div id="dba-actions" *ngIf="userHasRequiredPermissions([Privileges.DBA])">
+                <a id="index" mat-list-item [routerLink]="['admin/index']" aria-label="index link">
+                    <mat-icon>supervisor_account</mat-icon>INDICIES</a>
             </div>
             <mat-divider></mat-divider>
         </mat-nav-list>
