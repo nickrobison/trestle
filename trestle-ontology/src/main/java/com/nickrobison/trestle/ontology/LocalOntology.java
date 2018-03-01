@@ -66,6 +66,8 @@ public class LocalOntology extends JenaOntology {
 //        };
     }
 
+    //    I'm suppressing this because I think we need the resource, and this is going away in 0.10
+    @SuppressWarnings({"squid:S2095"})
     private static Model constructJenaModel() {
         tdbDataset = initialiseTDB();
         //        spatial stuff

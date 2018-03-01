@@ -109,19 +109,19 @@ public class OracleRasterManager implements ITrestleRasterManager {
         final long rasterID;
         final SdoGeoRaster sdoGeoRaster;
         final JGeoRaster jGeor;
-        try {
-            final CallableStatement createRasterStatement = connection.prepareCall("DECLARE gr SDO_GEORASTER;\n" +
-                    "BEGIN\n" +
-                    "gr := sdo_geor.init('trestle_rdt_1');\n" +
-                    "INSERT INTO TRESTLE_GEORASTER (GEORID, TYPE, GEORASTER) VALUES(gr.rasterid, 'TIFF', gr) RETURNING GEORASTER INTO ?;\n" +
-                    "END;");
+        try (final CallableStatement createRasterStatement = connection.prepareCall("DECLARE gr SDO_GEORASTER;\n" +
+                "BEGIN\n" +
+                "gr := sdo_geor.init('trestle_rdt_1');\n" +
+                "INSERT INTO TRESTLE_GEORASTER (GEORID, TYPE, GEORASTER) VALUES(gr.rasterid, 'TIFF', gr) RETURNING GEORASTER INTO ?;\n" +
+                "END;")){
             createRasterStatement.registerOutParameter(1, OracleTypes.STRUCT, "MDSYS.SDO_GEORASTER");
-            final ResultSet resultSet = createRasterStatement.executeQuery();
-//            resultSet.next();
-            final STRUCT rasterStruct = (STRUCT) createRasterStatement.getObject(1);
-            sdoGeoRaster = new SdoGeoRaster(rasterStruct);
-            rasterID = sdoGeoRaster.getRasterID().longValue();
-            jGeor = new JGeoRaster(connection, sdoGeoRaster.getRasterDataTable(), sdoGeoRaster.getRasterID());
+            try (final ResultSet resultSet = createRasterStatement.executeQuery()) {
+                //            resultSet.next();
+                final STRUCT rasterStruct = (STRUCT) createRasterStatement.getObject(1);
+                sdoGeoRaster = new SdoGeoRaster(rasterStruct);
+                rasterID = sdoGeoRaster.getRasterID().longValue();
+                jGeor = new JGeoRaster(connection, sdoGeoRaster.getRasterDataTable(), sdoGeoRaster.getRasterID());
+            }
         } catch (Exception e) {
             throw new TrestleDatabaseException(e);
         }

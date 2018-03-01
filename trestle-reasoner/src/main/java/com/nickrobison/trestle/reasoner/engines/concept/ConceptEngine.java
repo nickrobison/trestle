@@ -116,7 +116,7 @@ public class ConceptEngine implements ITrestleConceptEngine {
                     .forEach(result -> conceptIndividuals.put(result.getIndividual("concept").orElseThrow(() -> new RuntimeException("concept is null")).toStringID(), result.getIndividual("individual").orElseThrow(() -> new RuntimeException("individual is null")).toStringID()));
 
             if (conceptIndividuals.keySet().size() == 0) {
-                logger.info("Individual {} has no related concepts");
+                logger.info("Individual {} has no related concepts", individual);
                 return Optional.empty();
             }
             return Optional.of(Multimaps.asMap(conceptIndividuals));
