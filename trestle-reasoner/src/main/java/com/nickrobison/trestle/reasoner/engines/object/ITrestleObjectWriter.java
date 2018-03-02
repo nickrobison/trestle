@@ -7,9 +7,11 @@ import com.nickrobison.trestle.types.events.TrestleEventType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.time.temporal.Temporal;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by nickrobison on 2/13/18.
@@ -68,13 +70,16 @@ public interface ITrestleObjectWriter {
     void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom);
 
     /**
-     * Add a {@link TrestleEventType} between the given <i>Subject</i> object and the collection of <i>Object</i> objects
+     * Add a SPLIT or MERGE {@link TrestleEventType} to a given {@link OWLNamedIndividual}
+     * Events are oriented subject to object, so A splits_into [B,C,D] and H merged_from [E,F,G]
+     * Individuals are not created if they don't already exist
+     * throws {@link IllegalArgumentException} if something other than {@link TrestleEventType#MERGED} or {@link TrestleEventType#SPLIT} is passed
      *
-     * @param type     - {@link TrestleEventType} to add to object collection
-     * @param subject  - {@link Object} of type {@link T} as event Subject
-     * @param objects  - {@link List} of {@link Object} of type {@link T} as event Objects
-     * @param strength - {@link double} strength of event association
-     * @param <T>      - Java {@link Class} of underlying objects, registered with the reasoner
+     * @param <T>      - Generic type parameter of Trestle Object
+     * @param type     {@link TrestleEventType} to add
+     * @param subject  - {@link OWLNamedIndividual} subject of Event
+     * @param objects  - {@link Set} of {@link OWLNamedIndividual} that are the objects of the event
+     * @param strength - {@link Double} Strength of union association
      */
     <T extends @NonNull Object> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength);
 

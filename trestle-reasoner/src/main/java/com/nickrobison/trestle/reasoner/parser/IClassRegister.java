@@ -2,7 +2,6 @@ package com.nickrobison.trestle.reasoner.parser;
 
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
-import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.semanticweb.owlapi.model.OWLClass;
 
 import java.util.Set;

@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.reasoner.engines.spatial.equality.union;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 

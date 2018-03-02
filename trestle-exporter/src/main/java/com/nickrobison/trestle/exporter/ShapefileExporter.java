@@ -2,7 +2,6 @@ package com.nickrobison.trestle.exporter;
 
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
-import jdk.internal.util.xml.impl.Input;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.geotools.data.DefaultTransaction;
 import org.geotools.data.Transaction;

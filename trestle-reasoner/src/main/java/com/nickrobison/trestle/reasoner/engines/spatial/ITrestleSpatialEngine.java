@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.reasoner.engines.spatial;
 
-import com.codahale.metrics.annotation.Timed;
 import com.esri.core.geometry.SpatialReference;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
