@@ -104,7 +104,7 @@ public class MetricianReporter extends ScheduledReporter {
         });
     }
 
-    public class DataAccumulator {
+    public static class DataAccumulator {
         private final Map<String, Double> gauges = new HashMap<>();
         private final Map<String, Long> counters = new HashMap<>();
         private final Optional<String> prefix;

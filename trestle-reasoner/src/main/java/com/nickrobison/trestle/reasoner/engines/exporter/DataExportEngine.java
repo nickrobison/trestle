@@ -182,7 +182,6 @@ public class DataExportEngine implements ITrestleDataExporter {
             final TemporalObject temporalObject = temporalObjects.get().get(0);
             if (temporalObject.isInterval()) {
                 final IntervalTemporal intervalTemporal = temporalObject.asInterval();
-                final String startName = intervalTemporal.getStartName();
                 individual.addProperty(this.classParser.matchWithClassMember(inputClass, intervalTemporal.getStartName()), intervalTemporal.getFromTime().toString());
                 final Optional toTime = intervalTemporal.getToTime();
                 if (toTime.isPresent()) {

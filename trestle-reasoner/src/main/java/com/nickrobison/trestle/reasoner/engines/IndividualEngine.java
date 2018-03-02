@@ -362,7 +362,7 @@ public class IndividualEngine {
                             .collect(Collectors.toSet());
                     final Optional<TemporalObject> dbTemporal = TemporalObjectBuilder.buildTemporalFromProperties(dbTemporals, null, "blank");
                     if (literalObject == null) {
-                        throw new IllegalStateException(String.format("Fact object cannot be null for {}", factIndividual));
+                        throw new IllegalStateException(String.format("Fact object cannot be null for %s", factIndividual));
                     }
                     return new TrestleFact<>(
                             factIndividual.getIRI().toString(),

@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.MalformedURLException;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -136,7 +137,7 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
 
 //        Now, zip it
         final File zipFile = new File(directory, String.format("%s.zip", exportName));
-        final FileOutputStream fos = new FileOutputStream(zipFile);
+        final OutputStream fos = Files.newOutputStream(zipFile.toPath());
         final ZipOutputStream zos = new ZipOutputStream(fos);
         try {
             addToZipArchive(zos,
@@ -161,10 +162,10 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
     private static void addToZipArchive(ZipOutputStream zos, String... fileName) {
         Arrays.stream(fileName).forEach(fn -> {
             final File file = new File(fn);
-            final FileInputStream fileInputStream;
+            final InputStream fileInputStream;
             final ZipEntry zipEntry = new ZipEntry(fn);
             try {
-                fileInputStream = new FileInputStream(file);
+                fileInputStream = Files.newInputStream(file.toPath());
                 try {
                     zos.putNextEntry(zipEntry);
                     final byte[] bytes = new byte[1024];
@@ -177,7 +178,7 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
                 } catch (IOException e) {
                     logger.error("Error closing zip entry", e);
                 }
-            } catch (FileNotFoundException e) {
+            } catch (IOException e) {
                 logger.error("Cannot find file", e);
             }
         });

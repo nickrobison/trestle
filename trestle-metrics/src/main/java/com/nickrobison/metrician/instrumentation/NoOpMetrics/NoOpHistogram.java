@@ -17,10 +17,12 @@ public class NoOpHistogram extends Histogram {
 
     @Override
     public void update(int value) {
+        //        No-op
     }
 
     @Override
     public void update(long value) {
+        //        No-op
     }
 
     @Override

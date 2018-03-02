@@ -79,8 +79,8 @@ public class KMLWriter {
     }
 
     private static final int INDENT_SIZE = 2;
-    private static final String COORDINATE_SEPARATOR = ",";
-    private static final String TUPLE_SEPARATOR = " ";
+    private static final char COORDINATE_SEPARATOR = ',';
+    private static final char TUPLE_SEPARATOR = ' ';
 
     private @MonotonicNonNull String linePrefix;
     private int maxCoordinatesPerLine = 5;
@@ -94,6 +94,7 @@ public class KMLWriter {
      * Creates a new writer.
      */
     public KMLWriter() {
+//        Not used
     }
 
     /**
@@ -162,8 +163,9 @@ public class KMLWriter {
      * @param precision the number of decimal places to output
      */
     public void setPrecision(int precision) {
-        if (precision >= 0)
+        if (precision >= 0) {
             numberFormatter = createFormatter(precision);
+        }
     }
 
     /**
@@ -211,26 +213,28 @@ public class KMLWriter {
             writePolygon((Polygon) g, attributes, level, buf);
         } else if (g instanceof GeometryCollection) {
             writeGeometryCollection((GeometryCollection) g, level, buf);
-        } else
+        } else {
             throw new IllegalArgumentException("Geometry type not supported: " + g.getGeometryType());
+        }
     }
 
     private void startLine(@Nullable String text, int level, StringBuilder buf) {
-        if (linePrefix != null)
+        if (linePrefix != null) {
             buf.append(linePrefix);
+        }
         buf.append(StringUtil.spaces(INDENT_SIZE * level));
         buf.append(text);
     }
 
     private String geometryTag(String geometryName, @Nullable String attributes) {
         StringBuilder buf = new StringBuilder();
-        buf.append("<")
+        buf.append('<')
                 .append(geometryName);
         if (attributes != null && attributes.length() > 0) {
             buf.append(" ")
                     .append(attributes);
         }
-        buf.append(">");
+        buf.append('>');
         return buf.toString();
     }
 
@@ -269,7 +273,9 @@ public class KMLWriter {
                                  StringBuilder buf) {
         // <LinearRing><coordinates>...</coordinates></LinearRing>
         startLine(geometryTag("LinearRing", attributes) + "\n", level, buf);
-        if (writeModifiers) writeModifiers(level, buf);
+        if (writeModifiers) {
+            writeModifiers(level, buf);
+        }
         write(lr.getCoordinates(), level + 1, buf);
         startLine("</LinearRing>\n", level, buf);
     }
@@ -325,7 +331,7 @@ public class KMLWriter {
 
             // break output lines to prevent them from getting too long
             if ((i + 1) % maxCoordinatesPerLine == 0 && i < coords.length - 1) {
-                buf.append("\n");
+                buf.append('\n');
                 isNewLine = true;
             }
         }
@@ -339,8 +345,9 @@ public class KMLWriter {
 
         double z = p.z;
         // if altitude was specified directly, use it
-        if (!Double.isNaN(zVal))
+        if (!Double.isNaN(zVal)) {
             z = zVal;
+        }
 
         // only write if Z present
         // MD - is this right? Or should it always be written?
@@ -351,17 +358,18 @@ public class KMLWriter {
     }
 
     private void write(double num, StringBuilder buf) {
-        if (numberFormatter != null)
+        if (numberFormatter != null) {
             buf.append(numberFormatter.format(num));
-        else
+        } else {
             buf.append(num);
+        }
     }
 
     /**
      * Creates the <code>DecimalFormat</code> used to write <code>double</code>s
      * with a sufficient number of decimal places.
      *
-     * @param precisionModel the <code>PrecisionModel</code> used to determine the number of
+     * @param precision the <code>PrecisionModel</code> used to determine the number of
      *                       decimal places to write.
      * @return a <code>DecimalFormat</code> that write <code>double</code> s
      * without scientific notation.

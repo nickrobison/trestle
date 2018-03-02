@@ -15,7 +15,8 @@ import java.util.Arrays;
 /**
  * Created by nrobison on 5/6/16.
  */
-@SuppressWarnings({"pmd:LawOfDemeter", "pmd:BooleanGetMethodName"})
+// I like my inline if's, so let's leave them be
+@SuppressWarnings({"pmd:LawOfDemeter", "pmd:BooleanGetMethodName", "squid:S00121"})
 @DatasetClass(name = "gaul-test")
 public class GAULObject {
 
@@ -85,7 +86,7 @@ public class GAULObject {
     @IndividualIdentifier
     @Ignore
     public String getID() {
-        return String.format("%s-%s-%s-%s", this.gaulCode, this.objectName.replace(" ", "_"), this.getStartDate().getYear(), this.getEndDate().getYear());
+        return String.format("%s-%s-%s-%s", this.gaulCode, this.objectName.replace(' ', '_'), this.getStartDate().getYear(), this.getEndDate().getYear());
     }
 
     @Fact(name = "adm2_name")

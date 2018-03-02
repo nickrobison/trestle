@@ -52,7 +52,7 @@ class MetricsListener implements MetricRegistryListener {
     }
 
     @SuppressWarnings({"methodref.receiver.bound.invalid", "argument.type.incompatible"})
-    private void initializeMetrics(@UnderInitialization(MetricsListener.class) MetricsListener this, MetricRegistry registry) {
+    private void initializeMetrics(@UnderInitialization(MetricsListener.class)MetricsListener this, MetricRegistry registry) {
         //        Initialize
         registry.getGauges().forEach(this::onGaugeAdded);
         registry.getCounters().forEach(this::onCounterAdded);
@@ -72,7 +72,7 @@ class MetricsListener implements MetricRegistryListener {
 
     @Override
     public void onGaugeRemoved(String name) {
-
+//        We don't support removing metrics, yet
     }
 
     @Override
@@ -84,7 +84,7 @@ class MetricsListener implements MetricRegistryListener {
 
     @Override
     public void onCounterRemoved(String name) {
-
+        //        We don't support removing metrics, yet
     }
 
     @Override
@@ -98,7 +98,7 @@ class MetricsListener implements MetricRegistryListener {
 
     @Override
     public void onHistogramRemoved(String name) {
-
+        //        We don't support removing metrics, yet
     }
 
     @Override
@@ -112,7 +112,7 @@ class MetricsListener implements MetricRegistryListener {
 
     @Override
     public void onMeterRemoved(String name) {
-
+        //        We don't support removing metrics, yet
     }
 
     @Override
@@ -127,6 +127,6 @@ class MetricsListener implements MetricRegistryListener {
 
     @Override
     public void onTimerRemoved(String name) {
-
+        //        We don't support removing metrics, yet
     }
 }

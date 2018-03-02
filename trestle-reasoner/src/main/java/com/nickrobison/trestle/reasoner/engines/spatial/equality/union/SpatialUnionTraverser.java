@@ -90,7 +90,7 @@ public class SpatialUnionTraverser {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
 //            TemporalDirection temporalDirection = null;
-            Set<STObjectWrapper> stObjects = new HashSet<>();
+            Set<STObjectWrapper> stObjects = new HashSet<>(subjects.size());
             for (OWLNamedIndividual subject : subjects) {
                 //        Get the existence temporals for the object
                 final Set<OWLDataPropertyAssertionAxiom> individualExistenceProperties = this.ontology.getAllDataPropertiesForIndividual(subject);
