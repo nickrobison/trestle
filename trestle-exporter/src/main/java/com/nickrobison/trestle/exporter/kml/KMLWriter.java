@@ -94,6 +94,7 @@ public class KMLWriter {
      * Creates a new writer.
      */
     public KMLWriter() {
+//        Not used
     }
 
     /**
@@ -162,8 +163,9 @@ public class KMLWriter {
      * @param precision the number of decimal places to output
      */
     public void setPrecision(int precision) {
-        if (precision >= 0)
+        if (precision >= 0) {
             numberFormatter = createFormatter(precision);
+        }
     }
 
     /**
@@ -211,13 +213,15 @@ public class KMLWriter {
             writePolygon((Polygon) g, attributes, level, buf);
         } else if (g instanceof GeometryCollection) {
             writeGeometryCollection((GeometryCollection) g, level, buf);
-        } else
+        } else {
             throw new IllegalArgumentException("Geometry type not supported: " + g.getGeometryType());
+        }
     }
 
     private void startLine(@Nullable String text, int level, StringBuilder buf) {
-        if (linePrefix != null)
+        if (linePrefix != null) {
             buf.append(linePrefix);
+        }
         buf.append(StringUtil.spaces(INDENT_SIZE * level));
         buf.append(text);
     }

@@ -15,7 +15,8 @@ import java.util.Arrays;
 /**
  * Created by nrobison on 5/6/16.
  */
-@SuppressWarnings({"pmd:LawOfDemeter", "pmd:BooleanGetMethodName"})
+// I like my inline if's, so let's leave them be
+@SuppressWarnings({"pmd:LawOfDemeter", "pmd:BooleanGetMethodName", "squid:S00121"})
 @DatasetClass(name = "gaul-test")
 public class GAULObject {
 

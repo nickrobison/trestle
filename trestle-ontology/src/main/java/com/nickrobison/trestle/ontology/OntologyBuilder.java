@@ -32,6 +32,7 @@ import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 @SuppressWarnings({"nullness", "OptionalUsedAsFieldOrParameterType"})
 public class OntologyBuilder {
     private static final Logger logger = LoggerFactory.getLogger(OntologyBuilder.class);
+    public static final String LOCAL_ONTOLOGY = "local_ontology";
     //private static Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
     private static Config config = ConfigFactory.load(ConfigFactory.parseResources("reference.conf"));
 
@@ -44,6 +45,7 @@ public class OntologyBuilder {
     private Optional<DefaultPrefixManager> pm = Optional.empty();
 
     public OntologyBuilder() {
+//        Not needed
     }
 
     /**
@@ -143,7 +145,7 @@ public class OntologyBuilder {
         if (connectionString.isPresent() && connectionString.get().contains("oracle")&&owlOntology!=null) {
             logger.info("Connecting to Oracle database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
             return new OracleOntology(
-                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
+                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
                     owlOntology,
                     pm.orElse(createDefaultPrefixManager()),
 //                    classify(owlOntology, new ConsoleProgressMonitor()),
@@ -164,7 +166,7 @@ public class OntologyBuilder {
         } else if (connectionString.isPresent() && connectionString.get().contains("virtuoso")) {
             logger.info("Connecting to Virtuoso database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
             return new VirtuosoOntology(
-                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
+                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
                     owlOntology,
                     pm.orElse(createDefaultPrefixManager()),
                     connectionString.get(),
@@ -184,21 +186,21 @@ public class OntologyBuilder {
         } else if (connectionString.isPresent() && connectionString.get().contains("tdb")) {
             logger.info("Connecting to Local TDB {}", this.ontologyName.orElse(""));
             return new LocalOntology(
-                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
+                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
                     owlOntology,
                     pm.orElse(createDefaultPrefixManager())
             );
         } else if (connectionString.isPresent() && connectionString.get().contains("http")) {
             logger.info("Connecting to remote GraphDB instance {} at: {}", this.ontologyName.orElse(""), this.connectionString.get());
             return new GraphDBOntology(
-                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
+                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
                     connectionString.get(),username.orElse(""), password.orElse(""), owlOntology,
                     pm.orElse(createDefaultPrefixManager())
             );
         } else {
             logger.info("Connect to embedded GraphDB instance {}", this.ontologyName.orElse(""));
             return new GraphDBOntology(
-                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
+                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
                     null, "", "", owlOntology,
                     pm.orElse(createDefaultPrefixManager())
             );

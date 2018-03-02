@@ -15,6 +15,8 @@ import java.time.LocalDate;
  * Years that overlap between shapefiles and census data 2011-2015
  */
 @DatasetClass(name = "TigerCountyCensus")
+// I like my inline if's so let's leave them
+@SuppressWarnings({"squid:S00121"})
 public class TigerCountyObject {
 
     /*

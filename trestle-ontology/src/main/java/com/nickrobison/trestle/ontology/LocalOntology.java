@@ -169,7 +169,7 @@ public class LocalOntology extends JenaOntology {
 
     @Override
     public void runInference() {
-
+//        Not needed
     }
 
     @Override

@@ -92,12 +92,9 @@ public abstract class AbstractMetricianTransformer {
     }
 
 
-
     public static abstract class MetricianDynamicValue<T extends Annotation> {
         public abstract Class<T> getAnnotationClass();
     }
-
-
 
 
 //    Other garbage
@@ -106,7 +103,7 @@ public abstract class AbstractMetricianTransformer {
         @Nullable T metric(String name, boolean absolute);
     }
 
-//    Because if .isPresent() returns true, .getAnnotation is obviously null. Obviously
+    //    Because if .isPresent() returns true, .getAnnotation is obviously null. Obviously
     @SuppressWarnings({"argument.type.incompatible"})
     protected static <T extends Metric> AnnotatedMetric<T> metricAnnotation(Method method, Class<? extends Annotation> clazz, MetricFactory<T> factory) {
         if (method.isAnnotationPresent(clazz)) {
@@ -138,19 +135,21 @@ public abstract class AbstractMetricianTransformer {
     }
 
     private static boolean metricAnnotationAbsolute(Annotation annotation) {
-        if (Gauge.class.isInstance(annotation))
+        if (Gauge.class.isInstance(annotation)) {
             return ((Gauge) annotation).absolute();
-        else if (ExceptionMetered.class.isInstance(annotation))
+        } else if (ExceptionMetered.class.isInstance(annotation)) {
             return ((ExceptionMetered) annotation).absolute();
-        else if (Metered.class.isInstance(annotation))
+        } else if (Metered.class.isInstance(annotation)) {
             return ((Metered) annotation).absolute();
-        else if (Timed.class.isInstance(annotation))
+        } else if (Timed.class.isInstance(annotation)) {
             return ((Timed) annotation).absolute();
-        else if (CounterIncrement.class.isInstance(annotation))
+        } else if (CounterIncrement.class.isInstance(annotation)) {
             return ((CounterIncrement) annotation).absolute();
-        else if (CounterDecrement.class.isInstance(annotation))
+        } else if (CounterDecrement.class.isInstance(annotation)) {
             return ((CounterDecrement) annotation).absolute();
-        else
+        } else {
             throw new IllegalArgumentException("Unsupported Metrics annotation (" + annotation.annotationType().getName() + ")");
+        }
+
     }
 }

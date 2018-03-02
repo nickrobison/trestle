@@ -14,7 +14,7 @@ class NoOpReservoir implements Reservoir {
 
     @Override
     public void update(long value) {
-
+        //        No-op
     }
 
     @Override
