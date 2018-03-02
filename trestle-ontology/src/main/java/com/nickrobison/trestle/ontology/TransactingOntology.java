@@ -22,6 +22,14 @@ import java.util.concurrent.atomic.AtomicLong;
 abstract class TransactingOntology implements ITrestleOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(TransactingOntology.class);
+    //    Thread locals
+    private static ThreadLocal<Boolean> threadLocked = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private static ThreadLocal<Boolean> threadInTransaction = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private static ThreadLocal<Boolean> threadInWriteTransaction = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private static ThreadLocal<Boolean> threadTransactionInherited = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private static ThreadLocal<@Nullable TrestleTransaction> threadTransactionObject = new ThreadLocal<>();
+
+
     public static final String OPEN_READ_WRITE_TRANSACTIONS = "{}/{} open read/write transactions";
     public static final String TRANSACTION = "transaction";
     protected final AtomicInteger openWriteTransactions = new AtomicInteger();
@@ -34,17 +42,6 @@ abstract class TransactingOntology implements ITrestleOntology {
     TransactingOntology() {
 //        Unused
     }
-
-    //    Thread locals
-    private ThreadLocal<Boolean> threadLocked = ThreadLocal.withInitial(() -> Boolean.FALSE);
-
-    private ThreadLocal<Boolean> threadInTransaction = ThreadLocal.withInitial(() -> Boolean.FALSE);
-
-    private ThreadLocal<Boolean> threadInWriteTransaction = ThreadLocal.withInitial(() -> Boolean.FALSE);
-
-    private ThreadLocal<Boolean> threadTransactionInherited = ThreadLocal.withInitial(() -> Boolean.FALSE);
-
-    private ThreadLocal<@Nullable TrestleTransaction> threadTransactionObject = new ThreadLocal<>();
 
     /**
      * Set the current thread transaction state, using the information inherited from the TrestleTransaction object
@@ -164,7 +161,7 @@ abstract class TransactingOntology implements ITrestleOntology {
                     this.unlockAndAbort(transaction.isWriteTransaction(), Boolean.TRUE);
                     threadTransactionObject.set(null);
                 } else {
-                    logger.trace("Transaction {} doesn't own transaction, not aborting",transaction.getTransactionID());
+                    logger.trace("Transaction {} doesn't own transaction, not aborting", transaction.getTransactionID());
                 }
             } else {
                 logger.warn("Null transaction object, transaction {} not aborting", transaction.getTransactionID());
