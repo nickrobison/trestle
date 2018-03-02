@@ -33,8 +33,9 @@ public class GeoJsonWriter {
     }
 
     /**
-     * Constructs a GeoJsonWriter instance specifying the number of decimals to
+     * * Constructs a GeoJsonWriter instance specifying the number of decimals to
      * use when encoding floating point numbers.
+     * @param decimals - {@link Integer} number of decimals to encode
      */
     public GeoJsonWriter(int decimals) {
         this.scale = Math.pow(TEN_VALUE, decimals);
@@ -47,7 +48,7 @@ public class GeoJsonWriter {
     /**
      * Writes a {@link Geometry} in GeoJson format to a String.
      *
-     * @param geometry
+     * @param geometry - {@link Geometry} to write
      * @return String GeoJson Encoded Geometry
      */
     public String write(Geometry geometry) {

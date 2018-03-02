@@ -196,6 +196,7 @@ public class QueryBuilder {
      * @param filterTemporals        - filter temporal assertions from the resultset?
      * @param filteredFactProperties - Optional filtered list of {@link OWLDataProperty} facts to return
      * @param individual             - {@link OWLNamedIndividual} to retrieve results for  @return - SPARQL query string
+     * @return - {@link String} SPARQL query
      */
     public String buildObjectFactRetrievalQuery(OffsetDateTime validTemporal, OffsetDateTime databaseTemporal, boolean filterTemporals, @Nullable List<OWLDataProperty> filteredFactProperties, OWLNamedIndividual... individual) {
         final ParameterizedSparqlString ps = buildBaseString();
