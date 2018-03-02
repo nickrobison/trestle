@@ -279,11 +279,11 @@ public class OracleRasterManager implements ITrestleRasterManager {
         final SpatialReferenceInfo spatialReferenceInfo = jGeor.getMetadataObject().getSpatialReferenceInfo();
         final Optional<ReferenceIdentifier> first = coverage.getCoordinateReferenceSystem().getIdentifiers().stream().findFirst();
         if (first.isPresent()) {
-            spatialReferenceInfo.setModelSRID(Integer.parseInt(first.get().getCode()));
+            spatialReferenceInfo.setModelSRID(Integer.valueOf(first.get().getCode()));
         }
 
         spatialReferenceInfo.setModelType(SpatialReferenceInfo.MDGRX_SRM_FUNCFITTING);
-        spatialReferenceInfo.setReferenced(true);
+        spatialReferenceInfo.setReferenced(Boolean.TRUE);
         spatialReferenceInfo.setWorldFile(30.0, 0.0, 0.0, -30.0, 572100.0, -1971900.0);
     }
 

@@ -55,6 +55,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.Temporal;
@@ -122,15 +123,16 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final URL ontologyResource;
         final InputStream ontologyIS;
         if (builder.ontologyIRI.isPresent()) {
+            final IRI ontologyIRI = builder.ontologyIRI.get();
             try {
-                ontologyResource = builder.ontologyIRI.get().toURI().toURL();
-                ontologyIS = new FileInputStream(new File(builder.ontologyIRI.get().toURI()));
+                ontologyResource = ontologyIRI.toURI().toURL();
+                ontologyIS = Files.newInputStream(new File(ontologyIRI.toURI()).toPath());
             } catch (MalformedURLException e) {
-                logger.error("Unable to parse IRI to URI", builder.ontologyIRI.get(), e);
-                throw new IllegalArgumentException(String.format("Unable to parse IRI %s to URI", builder.ontologyIRI.get()), e);
-            } catch (FileNotFoundException e) {
-                logger.error("Cannot find ontology file {}", builder.ontologyIRI.get(), e);
-                throw new MissingResourceException("File not found", this.getClass().getName(), builder.ontologyIRI.get().getIRIString());
+                logger.error("Unable to parse IRI to URI", ontologyIRI, e);
+                throw new IllegalArgumentException(String.format("Unable to parse IRI %s to URI", ontologyIRI), e);
+            } catch (IOException e) {
+                logger.error("Cannot find ontology file {}", ontologyIRI, e);
+                throw new MissingResourceException("File not found", this.getClass().getName(), ontologyIRI.getIRIString());
             }
         } else {
 //            Load with the class loader

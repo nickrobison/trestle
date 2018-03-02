@@ -411,7 +411,9 @@ public class ClassRegister implements IClassRegister {
                 .map(Parameter::getName)
                 .filter(n -> n.equals(argName))
                 .findFirst();
-        matchingArgument.orElseThrow(() -> new InvalidClassException(clazz, InvalidClassException.State.MISSING));
+        if (!matchingArgument.isPresent()) {
+            throw new InvalidClassException(clazz, InvalidClassException.State.MISSING);
+        }
     }
 
     @Override

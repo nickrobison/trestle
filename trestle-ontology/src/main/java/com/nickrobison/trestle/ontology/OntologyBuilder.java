@@ -247,7 +247,7 @@ public class OntologyBuilder {
 
                             FileUtils.copyURLToFile(fileURL, externalFile);
                             documentIRI = IRI.create(externalFile);
-                            logger.info("creating external ontology file " + documentIRI);
+                            logger.info("creating external ontology file: {}", documentIRI);
                         } catch (IOException e) {
                             e.printStackTrace();
                         } catch (URISyntaxException e) {

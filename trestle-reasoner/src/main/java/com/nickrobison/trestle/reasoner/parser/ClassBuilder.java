@@ -160,7 +160,7 @@ public class ClassBuilder implements IClassBuilder {
                 .filter(p -> p.getName().equals(argumentName))
                 .findFirst();
 
-        return matchingParam.map(parameter -> argumentType == null || parameter.getType() == argumentType).orElse(false);
+        return matchingParam.map(parameter -> argumentType == null || parameter.getType() == argumentType).orElse(Boolean.FALSE);
     }
 
 

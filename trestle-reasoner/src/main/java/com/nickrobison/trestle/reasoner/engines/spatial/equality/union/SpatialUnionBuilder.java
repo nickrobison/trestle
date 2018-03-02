@@ -95,24 +95,26 @@ public class SpatialUnionBuilder {
         final TemporallyDividedObjects<T> dividedObjects = divideObjects(inputObjects);
 
         //        If we don't have early or late polygons, then there can't be a Union, so just return
-        if (dividedObjects.getEarlyObjects().isEmpty()
-                || dividedObjects.getLateObjects().isEmpty()) {
+        final Set<T> earlyObjects = dividedObjects.getEarlyObjects();
+        final Set<T> lateObjects = dividedObjects.getLateObjects();
+        if (earlyObjects.isEmpty()
+                || lateObjects.isEmpty()) {
             return Optional.empty();
         }
 
 //        Extract the JTS polygons for each early object
-        final Map<Geometry, T> earlyObjectMap = new HashMap<>();
-        final Set<Geometry> earlyPolygons = new HashSet<>(dividedObjects.getEarlyObjects().size());
-        for (T earlyObject : dividedObjects.getEarlyObjects()) {
+        final Map<Geometry, T> earlyObjectMap = new HashMap<>(earlyObjects.size());
+        final Set<Geometry> earlyPolygons = new HashSet<>(earlyObjects.size());
+        for (T earlyObject : earlyObjects) {
             final Geometry earlyGeom = getGeomFromCache(earlyObject, wktReader, wkbReader);
             earlyObjectMap.put(earlyGeom, earlyObject);
             earlyPolygons.add(earlyGeom);
         }
 
         //        Extract the JTS polygons for each late object
-        final Map<Geometry, T> lateObjectMap = new HashMap<>();
-        final Set<Geometry> latePolygons = new HashSet<>(dividedObjects.getLateObjects().size());
-        for (T lateObject : dividedObjects.getLateObjects()) {
+        final Map<Geometry, T> lateObjectMap = new HashMap<>(lateObjects.size());
+        final Set<Geometry> latePolygons = new HashSet<>(lateObjects.size());
+        for (T lateObject : lateObjects) {
             final Geometry lateGeom = getGeomFromCache(lateObject, wktReader, wkbReader);
             lateObjectMap.put(lateGeom, lateObject);
             latePolygons.add(lateGeom);
@@ -125,7 +127,7 @@ public class SpatialUnionBuilder {
         switch (matchDirection) {
 //            If we're a merge, allocate the priority queue using the number of late polygons
             case MERGE: {
-                matchSetQueue = new PriorityQueue<>(dividedObjects.getLateObjects().size(), strengthComparator);
+                matchSetQueue = new PriorityQueue<>(lateObjects.size(), strengthComparator);
                 latePolygons
                         .forEach(latePoly -> {
                             final Optional<PolygonMatchSet> match = getApproxEqualUnion(geometryFactory, earlyPolygons, Collections.singleton(latePoly), matchThreshold);
@@ -134,7 +136,7 @@ public class SpatialUnionBuilder {
                 break;
             }
             case SPLIT: {
-                matchSetQueue = new PriorityQueue<>(dividedObjects.getEarlyObjects().size(), strengthComparator);
+                matchSetQueue = new PriorityQueue<>(earlyObjects.size(), strengthComparator);
                 earlyPolygons
                         .forEach(earlyPoly -> {
                             final Optional<PolygonMatchSet> match = getApproxEqualUnion(geometryFactory, Collections.singleton(earlyPoly), latePolygons, matchThreshold);
@@ -145,7 +147,7 @@ public class SpatialUnionBuilder {
 //            If we don't know, we need to do it in both directions
             default: {
 //                Merged first
-                matchSetQueue = new PriorityQueue<>(dividedObjects.getLateObjects().size() + dividedObjects.getEarlyObjects().size(), strengthComparator);
+                matchSetQueue = new PriorityQueue<>(lateObjects.size() + earlyObjects.size(), strengthComparator);
                 latePolygons
                         .forEach(latePoly -> {
                             final Optional<PolygonMatchSet> match = getApproxEqualUnion(geometryFactory, earlyPolygons, Collections.singleton(latePoly), matchThreshold);

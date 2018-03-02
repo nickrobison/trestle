@@ -19,7 +19,8 @@ import java.util.Map;
  */
 public class GeoJsonWriter {
 
-    public static final String EPSG_PREFIX = "EPSG:";
+    private static final String EPSG_PREFIX = "EPSG:";
+    private static final int TEN_VALUE = 10;
 
     private double scale;
     private boolean isEncodeCRS = true;
@@ -36,7 +37,7 @@ public class GeoJsonWriter {
      * use when encoding floating point numbers.
      */
     public GeoJsonWriter(int decimals) {
-        this.scale = Math.pow(10, decimals);
+        this.scale = Math.pow(TEN_VALUE, decimals);
     }
 
     public void setEncodeCRS(boolean isEncodeCRS) {
@@ -196,31 +197,31 @@ public class GeoJsonWriter {
         final StringBuilder result = new StringBuilder();
 
         if (coordinateSequence.size() > 1) {
-            result.append("[");
+            result.append('[');
         }
         for (int i = 0; i < coordinateSequence.size(); i++) {
             if (i > 0) {
                 result.append(",");
             }
-            result.append("[");
+            result.append('[');
             result.append(formatOrdinate(coordinateSequence.getOrdinate(i, CoordinateSequence.X)));
-            result.append(",");
+            result.append(',');
             result.append(formatOrdinate(coordinateSequence.getOrdinate(i, CoordinateSequence.Y)));
 
             if (coordinateSequence.getDimension() > 2) {
                 final double z = coordinateSequence.getOrdinate(i, CoordinateSequence.Z);
                 if (!Double.isNaN(z)) {
-                    result.append(",");
+                    result.append(',');
                     result.append(formatOrdinate(z));
                 }
             }
 
-            result.append("]");
+            result.append(']');
 
         }
 
         if (coordinateSequence.size() > 1) {
-            result.append("]");
+            result.append(']');
         }
 
         return result.toString();
@@ -229,7 +230,7 @@ public class GeoJsonWriter {
     private String formatOrdinate(double x) {
         String result;
 
-        if (Math.abs(x) >= Math.pow(10, -3) && x < Math.pow(10, 7)) {
+        if (Math.abs(x) >= Math.pow(TEN_VALUE, -3) && x < Math.pow(TEN_VALUE, 7)) {
             x = Math.floor(x * scale + 0.5) / scale;
             final long lx = (long) x;
             if (lx == x) {

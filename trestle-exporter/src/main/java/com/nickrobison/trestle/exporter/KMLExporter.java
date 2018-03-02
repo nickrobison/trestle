@@ -11,10 +11,8 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -54,7 +52,7 @@ public class KMLExporter implements ITrestleExporter {
         final File file = new File(exportName);
         final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
 //        Try to write the values
-        try (FileOutputStream fos = new FileOutputStream(file)) {
+        try (OutputStream fos = Files.newOutputStream(file.toPath())) {
             final XMLStreamWriter sw = xmlOutputFactory.createXMLStreamWriter(fos);
             sw.writeStartDocument();
             sw.writeStartElement("kml");
@@ -79,10 +77,10 @@ public class KMLExporter implements ITrestleExporter {
             if (compress) {
                 final String kmzFileLocation = exportName.replace(".kml", ".kmz");
                 final File kmzFile = new File(kmzFileLocation);
-                try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(kmzFile))) {
+                try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(kmzFile.toPath()))) {
                     final ZipEntry zipEntry = new ZipEntry(exportName);
                     zos.putNextEntry(zipEntry);
-                    final FileInputStream fis = new FileInputStream(file);
+                    final InputStream fis = Files.newInputStream(file.toPath());
                     IOUtils.copy(fis, zos);
                     zos.closeEntry();
                     IOUtils.closeQuietly(fis);
