@@ -660,6 +660,10 @@ amdefine@>=0.0.4:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/amdefine/-/amdefine-1.0.1.tgz#4a5282ac164729e93619bcfd3ad151f817ce91f5"
 
+amounts@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/amounts/-/amounts-0.4.0.tgz#e5b45ace158b1fcfea4bda3a31ed5d3f5649faec"
+
 angular-router-loader@^0.6.0:
   version "0.6.0"
   resolved "https://registry.yarnpkg.com/angular-router-loader/-/angular-router-loader-0.6.0.tgz#6c7caf7f1ea6acc6e2bc682cef91a343e9a7f3b5"
@@ -9336,6 +9340,12 @@ tough-cookie@~2.3.0, tough-cookie@~2.3.3:
   resolved "https://registry.yarnpkg.com/tough-cookie/-/tough-cookie-2.3.3.tgz#0b618a5565b6dea90bf3425d04d55edc475a7561"
   dependencies:
     punycode "^1.4.1"
+
+transitory@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/transitory/-/transitory-1.2.0.tgz#d926d0e14e2ac3d0d9ce83d4dd4fc74bfbfd3983"
+  dependencies:
+    amounts "^0.4.0"
 
 traverse@~0.6.6:
   version "0.6.6"
