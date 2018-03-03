@@ -7,12 +7,16 @@ import { TrestleHttp } from "../../UserModule/trestle-http.provider";
 import { TrestleIndividual } from "./TrestleIndividual/trestle-individual";
 import { CacheService } from "../cache/cache.service";
 import { Observable } from "rxjs/Observable";
+import * as Worker from "worker-loader!./individual.worker";
 
 @Injectable()
 export class IndividualService {
+    private worker: Worker;
 
     constructor(private trestleHttp: TrestleHttp,
                 private individualCache: CacheService<string, TrestleIndividual>) {
+        this.worker = new Worker();
+        this.worker.postMessage("Hi from service!");
     }
 
     public searchForIndividual(name: string, dataset = "", limit = 10): Observable<string[]> {

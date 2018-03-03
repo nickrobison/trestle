@@ -98,7 +98,8 @@
     "webpack-bundle-analyzer": "^2.10.0",
     "webpack-dev-server": "^2.11.0",
     "webpack-jarvis": "^0.2.2",
-    "webpack-merge": "^4.1.0"
+    "webpack-merge": "^4.1.0",
+    "worker-loader": "^1.1.1"
   },
   "scripts": {
     "watch": "webpack --colors --progress --watch --config config/webpack.dev.js",
