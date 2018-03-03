@@ -26,7 +26,8 @@ import { ExporterComponent } from "./exporter/exporter.component";
 import { ExporterService } from "./exporter/exporter.service";
 import { SpatialUnionComponent } from "./spatial-union/spatial-union.component";
 import { COLOR_SERVICE_CONFIG } from "../SharedModule/color/color-service.config";
-import { COLOR_DI_CONFIG } from "./explore.config";
+import { CACHE_DI_CONFIG, COLOR_DI_CONFIG } from "./explore.config";
+import { CACHE_SERVICE_CONFIG } from "../SharedModule/cache/cache.service.config";
 
 @NgModule({
     imports: [
@@ -58,6 +59,9 @@ import { COLOR_DI_CONFIG } from "./explore.config";
         ExporterService,
         {
             provide: COLOR_SERVICE_CONFIG, useValue: COLOR_DI_CONFIG
+        },
+        {
+            provide: CACHE_SERVICE_CONFIG, useValue: CACHE_DI_CONFIG
         }],
     entryComponents: [IndividualValueDialog]
 })

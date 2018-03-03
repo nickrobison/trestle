@@ -1,7 +1,8 @@
-import { Injectable } from "@angular/core";
+import { Inject, Injectable } from "@angular/core";
 import transitory, { RemovalCause, TransitoryCache } from "transitory";
 import { Observable } from "rxjs/Observable";
 import { Subject } from "rxjs/Subject";
+import { CACHE_SERVICE_CONFIG, ICacheServiceConfig } from "./cache.service.config";
 
 /**
  * HTTP cache based on:
@@ -10,15 +11,12 @@ import { Subject } from "rxjs/Subject";
 @Injectable()
 export class CacheService<K, V> {
     private cache: TransitoryCache<K, V>;
-
     private inFlightObservables: Map<K, Subject<V>> = new Map<K, Subject<V>>();
-    private readonly DEFAULT_MAX_AGE = 30000;
-    private readonly CACHE_SIZE = 1000;
 
-    public constructor() {
+    public constructor(@Inject(CACHE_SERVICE_CONFIG) private config: ICacheServiceConfig) {
         this.cache = transitory<K, V>()
-            .expireAfterRead(this.DEFAULT_MAX_AGE)
-            .maxSize(this.CACHE_SIZE)
+            .expireAfterRead(this.config.maxAge)
+            .maxSize(this.config.maxSize)
             .withRemovalListener(this.evictionHandler)
             .build();
     }

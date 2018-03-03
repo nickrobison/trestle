@@ -18,9 +18,10 @@ import { SharedModule } from "../workspace/SharedModule/shared.module";
 import { FlexLayoutModule } from "@angular/flex-layout";
 import { CounterPipe, SelectionTableComponent } from "./experiment/selection-table/selection-table.component";
 import { COLOR_SERVICE_CONFIG } from "../workspace/SharedModule/color/color-service.config";
-import { COLOR_EVAL_CONFIG } from "./evaluation.config";
+import { CACHE_EVAL_CONFIG, COLOR_EVAL_CONFIG } from "./evaluation.config";
 import { ErrorService } from "../workspace/SharedModule/errors/error.service";
 import { ConclusionComponent } from "./conclusion/conclusion.component";
+import { CACHE_SERVICE_CONFIG } from "../workspace/SharedModule/cache/cache.service.config";
 
 @NgModule({
     imports: [
@@ -49,6 +50,9 @@ import { ConclusionComponent } from "./conclusion/conclusion.component";
         EvaluationService,
         {
             provide: COLOR_SERVICE_CONFIG, useValue: COLOR_EVAL_CONFIG
+        },
+        {
+            provide: CACHE_SERVICE_CONFIG, useValue: CACHE_EVAL_CONFIG
         },
         {
             provide: ErrorHandler,
