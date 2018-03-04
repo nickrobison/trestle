@@ -13,14 +13,16 @@ declare module "@mapbox/geojson-extent" {
 
     function extent(geojson: GeoJsonObject): number[];
 
-    // function polygon(geojson: GeoJsonObject): Polygon;
-    // function bboxify(geojson: GeoJsonObject): void;
-    // export {polygon, bboxify};
+    function polygon(geojson: GeoJsonObject): Polygon;
+
+    function bboxify(geojson: GeoJsonObject): void;
+
+    export { polygon, bboxify };
     export default extent;
 }
 
 declare module "wellknown" {
-    import { GeoJsonObject, GeometryObject } from "geojson";
+    import { GeometryObject } from "geojson";
 
     function parse(input: string): GeometryObject;
 
@@ -31,11 +33,12 @@ declare module "wellknown" {
 
 declare class ClientJS {
     public constructor();
+
     public getFingerprint(): string;
 }
 
 declare module "check-browser" {
-    function checkBrowser(options: {[browser: string]: number}): boolean;
+    function checkBrowser(options: { [browser: string]: number }): boolean;
 
     export default checkBrowser;
 }

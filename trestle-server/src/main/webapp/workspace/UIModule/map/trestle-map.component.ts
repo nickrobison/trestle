@@ -2,20 +2,10 @@
  * Created by nrobison on 6/11/17.
  */
 import * as mapboxgl from "mapbox-gl";
-import { GeoJSONSource, VectorSource, GeoJSONSourceRaw, ImageSource, RasterSource, VideoSource, LngLatBounds, MapMouseEvent, Source, Layer, Style, FillPaint } from "mapbox-gl";
+import { FillPaint, GeoJSONSource, GeoJSONSourceRaw, ImageSource, LngLat, LngLatBounds, Map as MapboxMap, MapMouseEvent, RasterSource, VectorSource, VideoSource } from "mapbox-gl";
 import extent from "@mapbox/geojson-extent";
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange } from "@angular/core";
-import {
-    Feature,
-    FeatureCollection,
-    GeometryObject,
-    LineString,
-    MultiLineString,
-    MultiPoint,
-    MultiPolygon,
-    Point,
-    Polygon
-} from "geojson";
+import { Feature, FeatureCollection, GeometryObject, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon } from "geojson";
 import { BehaviorSubject } from "rxjs/BehaviorSubject";
 import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
 import { Subject } from "rxjs/Subject";
@@ -107,7 +97,8 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     private previousValue: MapSource;
 
     constructor() {
-        // FIXME(nrobison): Fix this
+        // I can't figure out how to avoid importing the mapbox namespace, just to set the access token.
+        // But whatever
         (mapboxgl as any).accessToken = "pk.eyJ1IjoibnJvYmlzb24iLCJhIjoiY2ozdDd5dmd2MDA3bTMxcW1kdHZrZ3ppMCJ9.YcJMRphQAfmZ0H8X9HnoKA";
 
         this.mapSources = new Map();
@@ -131,7 +122,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
 
         // Merge the map configs together
         const mergedConfig = Object.assign(this.baseConfig, this.config);
-        this.map = new mapboxgl.Map(mergedConfig);
+        this.map = new MapboxMap(mergedConfig);
 
         this.map.on("click", this.layerClick);
         this.map.on("mouseover", this.mouseOver);
@@ -315,7 +306,6 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             this.map.fitBounds(LngLatBounds.convert(geom.bbox as any));
         } else {
             const bbox = extent(geom);
-            console.debug("Extent", bbox);
             if (bbox) {
                 // This works, but it seems to confuse the type system, so any for the win!
                 this.map.fitBounds(LngLatBounds.convert(bbox as any));
@@ -689,7 +679,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         this.baseConfig = {
             container: "map",
             style: "mapbox://styles/mapbox/light-v9",
-            center: new mapboxgl.LngLat(32.3558991, -25.6854313),
+            center: new LngLat(32.3558991, -25.6854313),
             zoom: 8
         };
     }
