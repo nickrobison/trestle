@@ -536,6 +536,10 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             // If it's a collection for each entity, add the label
             const iData = inputLayer.data;
             if (TrestleMapComponent.isCollection(iData)) {
+                // Collections only support field labels, since we need to know how to filter each one
+                if (labelField == null) {
+                    throw new Error("Geometry collections only support label Fields, not values");
+                }
                 iData.features.forEach((feature) => {
                     const labelLayerID = "label-" + feature.id;
                     // This is terrible, but so is the web, so who blinks first?
@@ -552,13 +556,16 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                             "text-size": 11,
                             "text-transform": "uppercase",
                             "text-letter-spacing": 0.05,
-                            "text-offset": [0, 1.5]
+                            "text-offset": [0, 1.5],
+                            "text-allow-overlap": true
+                            // "text-ignore-placement": true
                         },
                         paint: {
                             "text-color": "#202",
                             "text-halo-color": "#fff",
                             "text-halo-width": 2
-                        }
+                        },
+                        filter: ["==", labelField, labelText]
                     });
                     attributeLayers.push(labelLayerID);
                 });
