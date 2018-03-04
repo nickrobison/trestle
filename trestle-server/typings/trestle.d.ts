@@ -20,11 +20,11 @@ declare module "@mapbox/geojson-extent" {
 }
 
 declare module "wellknown" {
-    import { GeoJsonObject } from "geojson";
+    import { GeoJsonObject, GeometryObject } from "geojson";
 
-    function parse(input: string): GeoJsonObject;
+    function parse(input: string): GeometryObject;
 
-    function stringify(input: GeoJsonObject): string;
+    function stringify(input: GeometryObject): string;
 
     export { stringify, parse };
 }
