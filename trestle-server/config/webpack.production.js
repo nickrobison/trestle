@@ -8,6 +8,8 @@ const OptimizeJsPlugin = require('optimize-js-plugin');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const DefinePlugin = require('webpack/lib/DefinePlugin');
 const CSPWebpackPlugin = require("csp-webpack-plugin");
+const CompressionPlugin = require("compression-webpack-plugin");
+const BrotliPlugin = require("brotli-webpack-plugin");
 const commonConfig = require("./webpack.common");
 const helpers = require("./helpers");
 const env = require("./env");
@@ -69,10 +71,23 @@ var prodOptions = {
         // Merge the common CSP configuration along with the script settings that disallow inline execution, since we're all AOT now
         new CSPWebpackPlugin(Object.assign(env.csp, {
             "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "blob:"]
-        }))
+        })),
         // new CSPWebpackPlugin(Object.assign(env.csp, {
         //     "script-src": ["'self'"]
         // }))
+        new CompressionPlugin({
+            asset: "[path].gz[query]",
+            algorithm: "gzip",
+            test: /\.js$|\.css$|\.html$/,
+            threshold: 10240,
+            minRatio: 0.8
+        }),
+        new BrotliPlugin({
+            asset: "[path].br[query]",
+            test: /\.js$|\.css$|\.html$/,
+            threshold: 10240,
+            minRatio: 0.8
+        })
     ]
 };
 
