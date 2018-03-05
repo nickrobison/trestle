@@ -32,9 +32,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.*;
+import java.nio.file.Files;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -267,11 +266,11 @@ public abstract class SesameOntology extends TransactingOntology {
 
     @Override
     public void writeOntology(IRI path, boolean validate) throws OWLOntologyStorageException {
-        final FileOutputStream fso;
+        final OutputStream fso;
         try {
-            fso = new FileOutputStream(new File(path.toURI()));
-        } catch (FileNotFoundException e) {
-            logger.error("Cannot open file path", e);
+            fso = Files.newOutputStream(new File(path.toURI()).toPath());
+        } catch (IOException e) {
+            logger.error("Cannot open file path: {}",path, e);
             return;
         }
         final RDFWriter writer = Rio.createWriter(RDFFormat.RDFXML, fso);

@@ -21,7 +21,11 @@ export class QueryService {
 
     constructor(private trestleHttp: TrestleHttp) {}
 
-    getPrefixes(): Observable<any> {
+    /**
+     * Get currently registered prefixes from the database
+     * @returns {Observable<any>}
+     */
+    public getPrefixes(): Observable<any> {
         return this.trestleHttp.get("/query")
             .map((res: Response) => {
             console.debug("Prefix response:", res.json());
@@ -30,7 +34,12 @@ export class QueryService {
             .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
 
-    executeQuery(queryString: string): Observable<ITrestleResultSet> {
+    /**
+     * Execute SPARQL query and return the results
+     * @param {string} queryString
+     * @returns {Observable<ITrestleResultSet>}
+     */
+    public executeQuery(queryString: string): Observable<ITrestleResultSet> {
         console.debug("Query string:", queryString);
         return this.trestleHttp.post("/query", queryString)
             .map((res: Response) => res.json())

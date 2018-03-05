@@ -12,6 +12,7 @@ import java.util.Optional;
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class TrestleIRIV1 extends TrestleIRI {
+    public static final long serialVersionUID = 42L;
 
     private final Optional<String> objectFact;
     private final Optional<OffsetDateTime> objectTemporal;

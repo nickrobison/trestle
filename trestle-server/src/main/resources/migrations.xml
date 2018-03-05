@@ -83,4 +83,25 @@
                                  referencedTableName="EVALUATION_USERS"
                                  referencedColumnNames="ID"/>
     </changeSet>
+    <changeSet id="tag-integration-data" author="nickrobison">
+        <tagDatabase tag="integration-data"/>
+    </changeSet>
+    <changeSet id="insert-integration-data" author="nickrobison">
+        <insert catalogName="TEST" tableName="USERS">
+            <column name="FIRST_NAME" value="Test"/>
+            <column name="LAST_NAME" value="Administrator"/>
+            <column name="USERNAME" value="admin"/>
+            <column name="EMAIL" value="admin@test.com"/>
+            <column name="PASSWORD" value="$2a$10$.yoGPm0XRCu1ifPQaiQb7.NQfoeRwsqsnBzowTkDXPjgMtHjlYJw6"/>
+            <column name="PRIVILEGES" value="3"/>
+        </insert>
+        <insert catalogName="TEST" tableName="USERS">
+            <column name="FIRST_NAME" value="Test"/>
+            <column name="LAST_NAME" value="User"/>
+            <column name="USERNAME" value="user"/>
+            <column name="EMAIL" value="user@test.com"/>
+            <column name="PASSWORD" value="$2a$10$zm6jraD6rxvQi63RiMGZDuydEtgwqnex0mqlaOAA41V1LIWpEcgV."/>
+            <column name="PRIVILEGES" value="1"/>
+        </insert>
+    </changeSet>
 </databaseChangeLog>

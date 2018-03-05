@@ -1,11 +1,8 @@
-import {Injectable} from "@angular/core";
-import {Subject} from "rxjs/Subject";
-import {Observable} from "rxjs/Observable";
-
-interface CacheContent<C> {
-    expiry: number;
-    value: C;
-}
+import { Inject, Injectable } from "@angular/core";
+import transitory, { RemovalCause, TransitoryCache } from "transitory";
+import { Observable } from "rxjs/Observable";
+import { Subject } from "rxjs/Subject";
+import { CACHE_SERVICE_CONFIG, ICacheServiceConfig } from "./cache.service.config";
 
 /**
  * HTTP cache based on:
@@ -13,39 +10,47 @@ interface CacheContent<C> {
  */
 @Injectable()
 export class CacheService<K, V> {
-    private cache: Map<K, CacheContent<V>> = new Map<K, CacheContent<V>>();
+    private cache: TransitoryCache<K, V>;
     private inFlightObservables: Map<K, Subject<V>> = new Map<K, Subject<V>>();
-    private readonly DEFAULT_MAX_AGE = 30000;
 
-    public constructor() {
-        // if (maxAge) {
-        //     this.DEFAULT_MAX_AGE = maxAge;
-        // } else {
-        //     this.DEFAULT_MAX_AGE = 30000;
-        // }
+    public constructor(@Inject(CACHE_SERVICE_CONFIG) private config: ICacheServiceConfig) {
+        this.cache = transitory<K, V>()
+            .expireAfterRead(this.config.maxAge)
+            .maxSize(this.config.maxSize)
+            .withRemovalListener(this.evictionHandler)
+            .build();
     }
 
-    public get(key: K, fallback?: Observable<V>, maxAge?: number): Observable<V> | Subject<V> {
-        if (this.hasValidCachedKey(key)) {
-            return Observable.of((this.cache.get(key) as CacheContent<V>).value);
-        }
-
-        if (!maxAge) {
-            maxAge = this.DEFAULT_MAX_AGE;
+    /**
+     * Attempt to get the individual from the Cache,
+     * if that fails, call the fallback value and return the result to both the subscriber and the cache
+     * @param {K} key to attempt to fetch from the cache
+     * @param {Observable<V>} fallback function to call if key is missing
+     * @returns {Observable<V> | Subject<V>} of result
+     */
+    public get(key: K, fallback?: Observable<V>): Observable<V> | Subject<V> {
+        const value = this.cache.get(key);
+        if (value) {
+            return Observable.of(value);
         }
 
         if (this.inFlightObservables.has(key)) {
             return (this.inFlightObservables.get(key) as Subject<V>);
         } else if (fallback && fallback instanceof Observable) {
             this.inFlightObservables.set(key, new Subject());
-            return fallback.do((value) => this.set(key, value, maxAge));
+            return fallback.do((oValue) => this.set(key, oValue));
         } else {
             return Observable.throw("Requested key is not available in Cache");
         }
     }
 
-    public set(key: K, value: V, maxAge: number = this.DEFAULT_MAX_AGE): void {
-        this.cache.set(key, {value, expiry: Date.now() + maxAge});
+    /**
+     * Add key/value pair to cache
+     * @param {K} key
+     * @param {V} value
+     */
+    public set(key: K, value: V): void {
+        this.cache.set(key, value);
         this.notifyInFlightObservers(key, value);
     }
 
@@ -61,22 +66,16 @@ export class CacheService<K, V> {
         }
     }
 
-    /**
-     * Does the cache has a valid key of type K?
-     * If so, is the key passed the expiry date?
-     * If so, delete it
-     * @param {K} key - Key to check for
-     * @returns {boolean} - Does the key exist and is it valid?
-     */
-    private hasValidCachedKey(key: K): boolean {
-        if (this.cache.has(key)) {
-            if ((this.cache.get(key) as CacheContent<V>).expiry < Date.now()) {
-                this.cache.delete(key);
-                return false;
+    private evictionHandler(key: K, value: V, reason: symbol): void {
+        switch (reason) {
+            case RemovalCause.EXPIRED: {
+                console.log("Key %s expire:", key);
+                break;
             }
-            return true;
-        } else {
-            return false;
+            case RemovalCause.EXPLICIT: {
+                console.log("Key %s was removed", key);
+                break;
+            }
         }
     }
 }

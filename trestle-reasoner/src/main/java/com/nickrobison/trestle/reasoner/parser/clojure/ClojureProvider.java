@@ -2,10 +2,12 @@ package com.nickrobison.trestle.reasoner.parser.clojure;
 
 import clojure.java.api.Clojure;
 import clojure.lang.IFn;
+import com.nickrobison.trestle.ontology.ReasonerPrefix;
+import com.nickrobison.trestle.reasoner.parser.DefaultLanguageCode;
+import com.nickrobison.trestle.reasoner.parser.MultiLangEnabled;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Provider;
 
 public class ClojureProvider implements Provider<Object> {
@@ -16,9 +18,9 @@ public class ClojureProvider implements Provider<Object> {
     private final String defaultLanguageCode;
 
     @Inject
-    ClojureProvider(@Named("reasonerPrefix") String reasonerPrefix,
-                    @Named("multiLang") boolean multiLangEnabled,
-                    @Named("default-code") String defaultLanguageCode) {
+    ClojureProvider(@ReasonerPrefix String reasonerPrefix,
+                    @MultiLangEnabled boolean multiLangEnabled,
+                    @DefaultLanguageCode String defaultLanguageCode) {
 
         this.reasonerPrefix = reasonerPrefix;
         this.multiLangEnabled = multiLangEnabled;

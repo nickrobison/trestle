@@ -28,10 +28,19 @@ export class SearchComponent implements OnInit {
             .retry(2);
     }
 
+    /**
+     * Function to filter individual ID by extracting the suffix
+     * @param {string} name
+     * @returns {string}
+     */
     public displayFn(name: string): string {
         return TrestleIndividual.extractSuffix(name);
     }
 
+    /**
+     * Selection handler
+     * @param {MatAutocompleteSelectedEvent} event
+     */
     public selectHandler = (event: MatAutocompleteSelectedEvent): void => {
         this.selected.next(event.option.value);
     }

@@ -11,14 +11,16 @@ import java.util.Map;
 /**
  * Created by nrobison on 2/21/17.
  */
+// Since this is kind of complicated, I don't really want to simplify anything
+@SuppressWarnings("SimplifiableIfStatement")
 public class TrestleUpgradableReadWriteLock {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleUpgradableReadWriteLock.class);
     private static final long WAIT_TIMEOUT = 50000;
     private final Map<Thread, Integer> readingThreads = new HashMap<>();
-    private int writeAccesses = 0;
-    private int writeRequests = 0;
-    private @Nullable Thread writingThread = null;
+    private int writeAccesses;
+    private int writeRequests;
+    private @Nullable Thread writingThread;
 
     /**
      * Take the Read lock
@@ -74,7 +76,7 @@ public class TrestleUpgradableReadWriteLock {
         final Thread callingThread = Thread.currentThread();
         while (!canGrantWriteAccess(callingThread)) {
             logger.trace("{} waiting {} ms for Write lock. {} write requests pending", callingThread.getName(), WAIT_TIMEOUT, writeRequests);
-            logger.trace("Tread {} holding write lock", this.writingThread == null ? "" :this.writingThread.getName());
+            logger.trace("Tread {} holding write lock", this.writingThread == null ? "" : this.writingThread.getName());
             long start = System.currentTimeMillis();
             wait(WAIT_TIMEOUT);
             if ((System.currentTimeMillis() - start) > WAIT_TIMEOUT) {
@@ -109,22 +111,36 @@ public class TrestleUpgradableReadWriteLock {
     }
 
     private boolean canGrantReadAccess(Thread callingThread) {
-        if (isWriter(callingThread)) return true;
-        if (hasWriter()) return false;
-        if (isReader(callingThread)) return true;
+        if (isWriter(callingThread)) {
+            return true;
+        }
+        if (hasWriter()) {
+            return false;
+        }
+        if (isReader(callingThread)) {
+            return true;
+        }
         return !hasWriteRequests();
     }
 
     private boolean canGrantWriteAccess(Thread callingThread) {
-        if (isOnlyReader(callingThread)) return true;
-        if (hasReaders()) return false;
-        if (writingThread == null) return true;
+        if (isOnlyReader(callingThread)) {
+            return true;
+        }
+        if (hasReaders()) {
+            return false;
+        }
+        if (writingThread == null) {
+            return true;
+        }
         return isWriter(callingThread);
     }
 
     private int getReadAccessCount(Thread callingThread) {
         final Integer accessCount = readingThreads.get(callingThread);
-        if (accessCount == null) return 0;
+        if (accessCount == null) {
+            return 0;
+        }
         return accessCount;
     }
 

@@ -7,7 +7,6 @@ const helpers = require("./helpers");
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const rxPaths = require("rxjs/_esm5/path-mapping");
-const Jarvis = require("webpack-jarvis");
 
 var options = {
     resolve: {
@@ -19,6 +18,10 @@ var options = {
     },
     module: {
         rules: [
+            {
+                test: /\.worker\.js$/,
+                use: { loader: "worker-loader" }
+            },
             {
                 test: /\.html$/,
                 loader: "html-loader"
@@ -111,6 +114,9 @@ var options = {
             name: "common",
             chunks: ["workspace", "evaluation"]
         }),
+        new webpack.optimize.CommonsChunkPlugin({
+            name: ["common", "vendor", "polyfills"]
+        }),
         new webpack.optimize.ModuleConcatenationPlugin(),
         new HtmlWebpackPlugin({
             inject: true,
@@ -121,12 +127,11 @@ var options = {
         }),
         new HtmlWebpackPlugin({
             inject: true,
-            chunks: ["vendor", "polyfills", "common", "evaluation"],
+            chunks: ["polyfills", "vendor", "common", "evaluation"],
             chunksSortMode: "manual",
             template: helpers.root("src/main/webapp/evaluation/evaluation.index.html"),
             filename: "evaluation.index.html"
         })
-        // new Jarvis()
     ]
 };
 module.exports = options;

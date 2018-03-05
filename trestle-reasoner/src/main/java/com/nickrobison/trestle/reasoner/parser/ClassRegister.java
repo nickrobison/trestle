@@ -5,7 +5,6 @@ import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.reasoner.exceptions.*;
-import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.semanticweb.owlapi.model.OWLClass;
 
 import java.io.Serializable;
@@ -378,7 +377,7 @@ public class ClassRegister implements IClassRegister {
     }
 
     private static void checkForDisabledMultiLanguage(Class<?> aClass) throws TrestleClassException {
-        for (Method method: aClass.getDeclaredMethods()) {
+        for (Method method : aClass.getDeclaredMethods()) {
             if (method.isAnnotationPresent(NoMultiLanguage.class)) {
                 if (method.getReturnType() != String.class) {
                     throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, method.getName());
@@ -386,7 +385,7 @@ public class ClassRegister implements IClassRegister {
             }
         }
 
-        for (Field field: aClass.getDeclaredFields()) {
+        for (Field field : aClass.getDeclaredFields()) {
             if (field.isAnnotationPresent(NoMultiLanguage.class)) {
                 if (field.getType() != String.class) {
                     throw new InvalidClassException(aClass, InvalidClassException.State.INVALID, field.getName());
@@ -411,7 +410,9 @@ public class ClassRegister implements IClassRegister {
                 .map(Parameter::getName)
                 .filter(n -> n.equals(argName))
                 .findFirst();
-        matchingArgument.orElseThrow(() -> new InvalidClassException(clazz, InvalidClassException.State.MISSING));
+        if (!matchingArgument.isPresent()) {
+            throw new InvalidClassException(clazz, InvalidClassException.State.MISSING);
+        }
     }
 
     @Override

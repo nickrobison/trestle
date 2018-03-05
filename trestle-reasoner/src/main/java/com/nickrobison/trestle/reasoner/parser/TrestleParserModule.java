@@ -1,7 +1,6 @@
 package com.nickrobison.trestle.reasoner.parser;
 
 import com.google.inject.PrivateModule;
-import com.google.inject.Provides;
 import com.google.inject.name.Names;
 import com.nickrobison.trestle.reasoner.parser.clojure.ClojureClassBuilderProvider;
 import com.nickrobison.trestle.reasoner.parser.clojure.ClojureClassParserProvider;
@@ -12,7 +11,6 @@ import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Named;
 import javax.inject.Singleton;
 
 /**
@@ -68,19 +66,14 @@ public class TrestleParserModule extends PrivateModule {
                     .in(Singleton.class);
         }
 
+        bind(Boolean.class)
+                .annotatedWith(MultiLangEnabled.class)
+                .toInstance(this.multiLangEnabled);
+        bind(String.class)
+                .annotatedWith(DefaultLanguageCode.class)
+                .toInstance(this.defaultLanguageCode);
+
         bind(TrestleParser.class).in(Singleton.class);
         expose(TrestleParser.class);
-    }
-
-    @Provides
-    @Named("default-code")
-    public String getDefaultLanguageCode() {
-        return this.defaultLanguageCode;
-    }
-
-    @Provides
-    @Named("multiLang")
-    public boolean isMultiLangEnabled() {
-        return this.multiLangEnabled;
     }
 }

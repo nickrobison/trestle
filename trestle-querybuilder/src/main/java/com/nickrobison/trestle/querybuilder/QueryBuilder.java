@@ -100,8 +100,9 @@ public class QueryBuilder {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT ?dataset" +
                 " WHERE { ?dataset rdfs:subClassOf trestle:Dataset }");
-        logger.trace(ps.toString());
-        return ps.toString();
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
     }
 
     /**
@@ -128,10 +129,11 @@ public class QueryBuilder {
         if (conceptFilter != null) {
             ps.append(String.format(". VALUES ?concept {%s}", String.format("<%s>", getFullIRIString(conceptFilter))));
         }
-        ps.append("}");
+        ps.append('}');
         ps.setLiteral("st", relationshipStrength);
-        logger.trace(ps.toString());
-        return ps.toString();
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
     }
 
     /**
@@ -180,8 +182,9 @@ public class QueryBuilder {
         }
         ps.setLiteral("st", relationshipStrength);
 
-        logger.trace(ps.toString());
-        return ps.toString();
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
     }
 
     /**
@@ -193,6 +196,7 @@ public class QueryBuilder {
      * @param filterTemporals        - filter temporal assertions from the resultset?
      * @param filteredFactProperties - Optional filtered list of {@link OWLDataProperty} facts to return
      * @param individual             - {@link OWLNamedIndividual} to retrieve results for  @return - SPARQL query string
+     * @return - {@link String} SPARQL query
      */
     public String buildObjectFactRetrievalQuery(OffsetDateTime validTemporal, OffsetDateTime databaseTemporal, boolean filterTemporals, @Nullable List<OWLDataProperty> filteredFactProperties, OWLNamedIndividual... individual) {
         final ParameterizedSparqlString ps = buildBaseString();
@@ -239,9 +243,10 @@ public class QueryBuilder {
         } else {
             ps.append(" FILTER EXISTS {?property rdfs:subPropertyOf trestle:Temporal_Property}");
         }
-        ps.append("}");
-        logger.trace(ps.toString());
-        return ps.toString();
+        ps.append('}');
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
     }
 
     /**
@@ -267,8 +272,9 @@ public class QueryBuilder {
                 " ?p rdf:type trestle:Trestle_Object} ." +
                 "VALUES ?m {<%s>}}", getFullIRIString(individual)));
 
-        logger.trace(ps.toString());
-        return ps.toString();
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
     }
 
     /**
@@ -288,8 +294,9 @@ public class QueryBuilder {
                 "?r trestle:exists_at ?t ." +
                 "VALUES ?m {<%s>}}", getFullIRIString(individual)));
 
-        logger.trace(ps.toString());
-        return ps.toString();
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
     }
 
     public String buildIndividualTemporalQuery(OWLNamedIndividual... individual) {
@@ -309,8 +316,9 @@ public class QueryBuilder {
                 " ?individual ?property ?object" +
                 " VALUES ?individual { %s } ." +
                 " FILTER(!isURI(?object) && !isBlank(?object)) .}", individualValues));
-        logger.trace(ps.toString());
-        return ps.toString();
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
     }
 
     /**
@@ -363,9 +371,10 @@ public class QueryBuilder {
             ps.append("FILTER(?df >= ?dbAt^^xsd:dateTime) .");
             ps.setLiteral("dbAt", dbTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         }
-        ps.append("}");
-        logger.trace(ps.toString());
-        return ps.toString();
+        ps.append('}');
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
     }
 
     /**
@@ -390,8 +399,9 @@ public class QueryBuilder {
         ps.setIri("type", getFullIRIString(datasetClass));
         buildDatabaseSString(ps, wktValue, buffer, dbAt);
 
-        logger.trace(ps.toString());
-        return ps.toString();
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
     }
 
     //    FIXME(nrobison): This needs to account for exists and valid times.
@@ -415,8 +425,9 @@ public class QueryBuilder {
 //        ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 //        ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
-        logger.trace(ps.toString());
-        return ps.toString();
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
     }
 
     /**
@@ -457,8 +468,9 @@ public class QueryBuilder {
             this.buildDatabaseTSString(ps, wktValue, buffer, atTime, dbAtTime);
         }
 
-        logger.trace(ps.toString());
-        return ps.toString();
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
     }
 
     /**
@@ -484,8 +496,9 @@ public class QueryBuilder {
         ps.setIri("type", getFullIRIString(datasetClass));
         ps.setLiteral("relationStrength", strength);
 
-        logger.trace(ps.toString());
-        return ps.toString();
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
     }
 
     /**
@@ -568,8 +581,9 @@ public class QueryBuilder {
         }
 
 
-        logger.trace(ps.toString());
-        return ps.toString();
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
     }
 
     /**
@@ -596,8 +610,9 @@ public class QueryBuilder {
 
         ps.setLiteral("newValue", temporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
-        logger.trace(ps.toString());
-        return ps.toString();
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
     }
 
     /**
@@ -621,8 +636,9 @@ public class QueryBuilder {
                 "FILTER(?m = <%s> && !bound(?vt)) }", getFullIRIString(property), getFullIRIString(individual)));
 
         ps.setLiteral("newValue", temporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        logger.trace(ps.toString());
-        return ps.toString();
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
     }
 
     /**
@@ -672,8 +688,9 @@ public class QueryBuilder {
                 "?m ?p ?o" +
                 "}", deleteAxioms, updateAxioms, restrictionIRI.getIRIString(), filterAxiom));
 
-        logger.trace(ps.toString());
-        return ps.toString();
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
     }
 
     /**
@@ -727,8 +744,9 @@ public class QueryBuilder {
                 "FILTER(?type=trestle:Trestle_Object||?type=trestle:SpatialUnion) ." +
                 "}", getFullIRIString(inputObject)));
 
-        logger.trace(ps.toString());
-        return ps.toString();
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
     }
 
     /**
@@ -746,8 +764,9 @@ public class QueryBuilder {
                 "?object trestle:exists_from ?start ." +
                 "OPTIONAL{?object trestle:exists_to ?end} }", getFullIRIString(unionIndividual)));
 
-        logger.trace(ps.toString());
-        return ps.toString();
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
     }
 
     /**

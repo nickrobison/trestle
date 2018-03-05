@@ -21,17 +21,22 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
     private static prefixRegex = /.*[\/#]/g;
     private static hostnameRegex = /\w+:\/\/[^\/]*/g;
     private id: string;
+    private filteredID?: string;
     private facts: Map<string, TrestleFact> = new Map();
+    private spatialFact?: TrestleFact;
     private relations: TrestleRelation[] = [];
     private events: TrestleEvent[] = [];
     private existsTemporal: TrestleTemporal;
-
 
     constructor(individual: ITrestleIndividual) {
         this.id = individual.individualID;
         this.existsTemporal = new TrestleTemporal(individual.existsTemporal);
         individual.facts.forEach((fact) => {
             const factClass = new TrestleFact(fact);
+            // Set as spatial fact, if that's the case
+            if (factClass.isSpatial()) {
+                this.spatialFact = factClass;
+            }
             this.facts.set(factClass.getName(), factClass);
         });
         individual.relations.forEach((relation) => {
@@ -40,6 +45,10 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
         individual.events.forEach((event) => this.events.push(new TrestleEvent(event)));
     }
 
+    /**
+     * Get Individual ID
+     * @returns {string}
+     */
     public getID(): string {
         return this.id;
     }
@@ -49,7 +58,11 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
      * @returns {string}
      */
     public getFilteredID(): string {
-        return TrestleIndividual.filterID(this.id);
+        if (this.filteredID) {
+            return this.filteredID;
+        }
+        this.filteredID = TrestleIndividual.filterID(this.id);
+        return this.filteredID;
     }
 
     /**
@@ -68,34 +81,54 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
         return TrestleIndividual.withoutHostname(this.id);
     }
 
+    /**
+     * Return the filtered individual ID as a hashed numeric value
+     * Currently using the SBDM algorithm
+     * @returns {number}
+     */
     public getIDAsInteger(): number {
         return TrestleIndividual.hashID(this.getFilteredID());
     }
 
+    /**
+     * Get the Existence temporal for the individual
+     * @returns {TrestleTemporal}
+     */
     public getTemporal(): TrestleTemporal {
         return this.existsTemporal;
     }
 
+    /**
+     * Get the spatial fact for the individual, parsed as a {GeometryObject}
+     * @returns {GeometryObject}
+     */
     public getSpatialValue(): GeometryObject {
-        let returnValue = null;
-        this.facts.forEach((fact) => {
-            if (fact.isSpatial()) {
-                console.debug("Fact is spatial", fact);
-                const geojson = parse(fact.getValue());
-                console.debug("GeoJSON value:", geojson);
-                if (geojson != null) {
-                    returnValue = geojson;
-                } else {
-                    console.error("Failed to parse:", fact.getValue());
-                }
+
+        if (this.spatialFact) {
+            const geojson = parse(this.spatialFact.getValue());
+            if (geojson !== null) {
+                return geojson;
             }
-        });
-        if (returnValue === null) {
-            throw new Error("Individual " + this.getID() + " is not spatial and should be");
+            console.error("Failed to parse:", this.spatialFact.getValue());
         }
-        return returnValue;
+        throw new Error("Individual " + this.getID() + " is not spatial and should be");
     }
 
+    /**
+     * Get the sptial fact for the indivdual, as a WKT string
+     * @returns {string}
+     */
+    public getSpatialValueAsWKT(): string {
+        if (this.spatialFact) {
+            return this.spatialFact.getValue();
+        }
+        throw new Error("Individual " + this.getID() + " is not spatial and should be");
+    }
+
+    /**
+     * Get an array of all facts for the individual
+     * @returns {TrestleFact[]}
+     */
     public getFacts(): TrestleFact[] {
         const facts: TrestleFact[] = [];
         this.facts.forEach((value) => {
@@ -105,6 +138,10 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
         return facts;
     }
 
+    /**
+     * Returns a collection of fact names and associated values
+     * @returns {{[p: string]: any}}
+     */
     public getFactValues(): { [name: string]: any } {
         const values: { [name: string]: any } = {};
         this.facts.forEach((value) => {
@@ -113,10 +150,18 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
         return values;
     }
 
+    /**
+     * Get all Individual relations
+     * @returns {TrestleRelation[]}
+     */
     public getRelations(): TrestleRelation[] {
         return this.relations;
     }
 
+    /**
+     * Get all individual events
+     * @returns {TrestleEvent[]}
+     */
     public getEvents(): TrestleEvent[] {
         return this.events;
     }
@@ -173,6 +218,10 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
         return this.relations.some((relation) => relation.isUnionType());
     }
 
+    /**
+     * Transform the individual back into its Interface type
+     * @returns {ITrestleIndividual}
+     */
     public asInterface(): ITrestleIndividual {
         const returnValue: ITrestleIndividual = {
             individualID: this.id,

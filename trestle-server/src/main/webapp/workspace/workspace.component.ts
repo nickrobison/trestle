@@ -1,22 +1,14 @@
 /**
  * Created by nrobison on 1/19/17.
  */
-import { AfterViewInit, Component, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
-import { BehaviorSubject } from "rxjs/BehaviorSubject";
-import { Subject } from "rxjs/Subject";
+import { Component, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { Router } from "@angular/router";
 import { AuthService, Privileges } from "./UserModule/authentication.service";
-import * as CryptoJS from "crypto-js";
+import { MD5 } from "crypto-js";
 import { EventBus, UserLoginEvent } from "./UIModule/eventBus/eventBus.service";
 import { Subscription } from "rxjs/Subscription";
-
-// Of some reason, MatSidenav doesn't work, so we have to default to any
-interface MySideNav {
-    open(): void;
-    close(): void;
-    toggle(): void;
-
-}
+import { MatSidenav } from "@angular/material";
+import { TrestleUser } from "./UserModule/trestle-user";
 
 @Component({
     selector: "app-root",
@@ -24,55 +16,68 @@ interface MySideNav {
     styleUrls: ["../theme.scss", "./workspace.component.css"],
     encapsulation: ViewEncapsulation.None
 })
-export class WorkspaceComponent implements OnInit, AfterViewInit, OnDestroy {
-    public userLoggedIn: Subject<boolean> = new BehaviorSubject<boolean>(false);
+export class WorkspaceComponent implements OnInit, OnDestroy {
     public gravatarURL: string;
     // We need this in order to access the Privileges enum from the template
     public Privileges = Privileges;
+    public user: TrestleUser | null;
 
-    @ViewChild("sidenav") public something: MySideNav;
+    @ViewChild("sidenav") public sideNav: MatSidenav;
     private loginSubscription: Subscription;
 
-    constructor(private authService: AuthService, private router: Router, private eventBus: EventBus) {
+    constructor(private authService: AuthService,
+                private router: Router,
+                private eventBus: EventBus) {
     }
 
     public ngOnInit(): void {
+        // Get the current user, if it exists
+        this.user = this.authService.getUser();
+        this.checkMenu();
         this.loginSubscription = this.eventBus.subscribe(UserLoginEvent).subscribe((event) => {
             console.debug("User event, is logged in?", event.isLoggedIn());
+            if (event.isLoggedIn()) {
+                this.user = this.authService.getUser();
+            } else {
+                this.user = null;
+            }
         });
-        this.userLoggedIn.next(this.authService.loggedIn());
-    }
-
-    public ngAfterViewInit(): void {
-        console.debug("Width:", window.innerWidth);
-        if (window.innerWidth <= 800) {
-            console.debug("Small");
-            this.something.close();
-        } else {
-            console.debug("Big opening it up");
-            this.something.open();
-        }
     }
 
     public ngOnDestroy(): void {
         this.loginSubscription.unsubscribe();
     }
 
+    /**
+     * Attempt to login the user
+     */
     public login(): void {
-        if (!this.userLoggedIn) {
+        if (this.user == null) {
             this.router.navigate(["/login"]);
         }
     }
 
-    public userHasRequiredPermissions(requiredPrivs: Array<Privileges>) {
-        return this.authService.hasRequiredRoles(requiredPrivs);
+    /**
+     * Does the user have the required permissions?
+     * @param {Privileges[]} requiredPrivs
+     * @returns {boolean}
+     */
+    public userHasRequiredPermissions(requiredPrivs: Privileges[]): boolean {
+        if (this.user == null) {
+            return false;
+        }
+        return this.user.hasRequiredPrivileges(requiredPrivs);
     }
 
+    /**
+     * Get the Gravitar URL of the user
+     * @returns {string}
+     */
     public getGravatarURL(): string {
         if (this.gravatarURL == null) {
-            let user = this.authService.getUser();
-            if (user != null) {
-                let hash = CryptoJS.MD5(user.email.trim().toLowerCase()).toString();
+            const user = this.authService.getUser();
+            if (user !== null) {
+                const hash = MD5(user.email.trim().toLowerCase()).toString();
                 this.gravatarURL = "https://www.gravatar.com/avatar/" + hash + "?d=identicon" + "&s=36";
                 return this.gravatarURL;
             }
@@ -80,18 +85,25 @@ export class WorkspaceComponent implements OnInit, AfterViewInit, OnDestroy {
         return this.gravatarURL;
     }
 
+    /**
+     * Logout the currently logged in user
+     */
     public logout(): void {
         this.authService.logout();
-        this.userLoggedIn.next(false);
+        this.user = null;
     }
 
 //    Resize function for sidenav
     @HostListener("window:resize", ["$event"])
     public onResize(event: any): void {
-        if (event.target.window.innerWidth <= 800) {
-            this.something.close();
+        this.checkMenu();
+    }
+
+    private checkMenu() {
+        if (window.innerWidth <= 800) {
+            this.sideNav.close();
         } else {
-            this.something.open();
+            this.sideNav.open();
         }
     }
 }

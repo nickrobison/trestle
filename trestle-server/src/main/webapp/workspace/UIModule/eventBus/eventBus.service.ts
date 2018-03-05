@@ -33,6 +33,10 @@ export class EventBus {
         this.messages = new ReplaySubject<IMessage>();
     }
 
+    /**
+     * Publish a message on the event bus
+     * @param {T} message
+     */
     public publish<T>(message: T): void {
         const channel = message.constructor;
         this.messages.next({
@@ -41,6 +45,11 @@ export class EventBus {
         });
     }
 
+    /**
+     * Subscribe to messages on the event bus
+     * @param {Constructable<T>} messageClass
+     * @returns {Observable<T>}
+     */
     public subscribe<T>(messageClass: Constructable<T>): Observable<T> {
         return this.messages.filter((m) => m.channel === messageClass).map((m) => m.data);
     }

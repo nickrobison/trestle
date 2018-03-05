@@ -31,7 +31,8 @@ import static com.nickrobison.trestle.reasoner.parser.ClassParser.*;
 /**
  * Created by nrobison on 8/24/16.
  */
-@SuppressWarnings({"argument.type.incompatible"})
+//I'm suppressing the boxing warning, becaus I think I need it in order to get the correct primitives out
+@SuppressWarnings({"argument.type.incompatible", "fb-contrib:NAB_NEEDLESS_BOXING_VALUEOF"})
 public class TypeConverter {
 
     private static final Logger logger = LoggerFactory.getLogger(TypeConverter.class);

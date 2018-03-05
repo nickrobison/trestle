@@ -45,6 +45,6 @@ public class NoOpSnapshot extends Snapshot {
 
     @Override
     public void dump(OutputStream output) {
-
+        //        No-op
     }
 }

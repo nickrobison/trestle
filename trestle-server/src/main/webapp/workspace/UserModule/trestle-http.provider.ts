@@ -16,6 +16,12 @@ export class TrestleHttp extends AuthHttp {
         super(new AuthConfig({noTokenScheme: true}), backend, defaultOptions);
     }
 
+    /**
+     * Perform the HTTP request with the provided JWT token
+     * @param {Request} req
+     * @param {string} token
+     * @returns {Observable<Response>}
+     */
     public requestWithToken(req: Request, token: string): Observable<Response> {
         return super.requestWithToken(req, token)
             .map((res: Response) => res)

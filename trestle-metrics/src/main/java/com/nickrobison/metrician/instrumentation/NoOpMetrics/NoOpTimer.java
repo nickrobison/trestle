@@ -23,6 +23,7 @@ public class NoOpTimer extends Timer {
 
     @Override
     public void time(Runnable event) {
+        //        No-op
     }
 
     @Override

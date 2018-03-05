@@ -19,7 +19,7 @@ services:
     depends_on:
       - graphdb
       - db
-    image: docker.nickrobison.com:5000/trestle-server:0.8.1
+    image: docker.nickrobison.com:5000/trestle-server:0.8.2
     environment:
       CS: http://graphdb:7200
 

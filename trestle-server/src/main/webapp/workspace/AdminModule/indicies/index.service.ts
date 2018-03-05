@@ -29,6 +29,10 @@ export class IndexService {
 
     }
 
+    /**
+     * Get statistics for both caches
+     * @returns {Observable<ICacheStatistics>}
+     */
     public getIndexStatistics(): Observable<ICacheStatistics> {
         return this.http
             .get("/cache/index")
@@ -38,12 +42,22 @@ export class IndexService {
             .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
 
+    /**
+     * Rebuild specified index
+     * @param {string} index to rebuild
+     * @returns {Observable<void>}
+     */
     public rebuildIndex(index: string): Observable<void> {
         return this.http
             .get("/cache/rebuild/" + index.toLocaleLowerCase())
             .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
 
+    /**
+     * Purge the specified index
+     * @param {string} cache to purge
+     * @returns {Observable<void>}
+     */
     public purgeCache(cache: string): Observable<void> {
         return this.http
             .get("/cache/purge/" + cache.toLocaleLowerCase())

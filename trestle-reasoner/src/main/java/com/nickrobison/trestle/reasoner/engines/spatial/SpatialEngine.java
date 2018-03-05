@@ -7,13 +7,18 @@ import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.LambdaUtils;
 import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
+import com.nickrobison.trestle.reasoner.TrestleReasonerImpl;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.engines.IndividualEngine;
+import com.nickrobison.trestle.reasoner.engines.object.ObjectEngineUtils;
+import com.nickrobison.trestle.reasoner.engines.object.TrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
+import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.parser.SpatialParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
@@ -31,6 +36,7 @@ import com.vividsolutions.jts.io.WKTWriter;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.query.QueryEvaluationException;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.slf4j.Logger;
@@ -44,18 +50,21 @@ import java.time.temporal.Temporal;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
 
 @Metriced
-public class SpatialEngine implements EqualityEngine, ContainmentEngine {
+public class SpatialEngine implements ITrestleSpatialEngine {
 
     private static final Logger logger = LoggerFactory.getLogger(SpatialEngine.class);
     private final TrestleParser tp;
     private final QueryBuilder qb;
     private final ITrestleOntology ontology;
+    private final TrestleObjectReader objectReader;
+    private final ObjectEngineUtils objectEngineUtils;
     private final IndividualEngine individualEngine;
     private final EqualityEngine equalityEngine;
     private final ContainmentEngine containmentEngine;
@@ -69,6 +78,8 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
     public SpatialEngine(TrestleParser trestleParser,
                          QueryBuilder qb,
                          ITrestleOntology ontology,
+                         TrestleObjectReader objectReader,
+                         ObjectEngineUtils objectEngineUtils,
                          IndividualEngine individualEngine,
                          EqualityEngine equalityEngine,
                          ContainmentEngine containmentEngine,
@@ -78,10 +89,14 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
         this.tp = trestleParser;
         this.qb = qb;
         this.ontology = ontology;
+        this.objectReader = objectReader;
+        this.objectEngineUtils = objectEngineUtils;
         this.individualEngine = individualEngine;
         this.equalityEngine = equalityEngine;
         this.containmentEngine = containmentEngine;
-        this.spatialPool = TrestleExecutorService.executorFactory("spatial-pool", trestleConfig.getInt("threading.spatial-pool.size"), metrician);
+        this.spatialPool = TrestleExecutorService.executorFactory("spatial-pool",
+                trestleConfig.getInt("threading.spatial-pool.size"),
+                metrician);
 
 //        Setup the WKT stuff
         final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
@@ -97,20 +112,20 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
      * INTERSECTIONS
      */
 
-    /**
-     * Performs a spatial intersection on a given dataset with a specified spatio-temporal restriction
-     * Returns an optional list of {@link TrestleIndividual}s
-     * If no valid temporal is specified, performs a spatial intersection with no temporal constraints
-     * This method will return the individual represented by the input WKT, so it may need to be filtered out
-     *
-     * @param clazz   - {@link Class} of dataset {@link OWLClass}
-     * @param wkt     - {@link String} WKT boundary
-     * @param buffer  - {@link Double} buffer to extend around buffer. 0 is no buffer
-     * @param validAt - {@link Temporal} valid at restriction
-     * @param dbAt    - {@link Temporal} database at restriction
-     * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
-     */
-    @Timed
+    @Override
+    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer) {
+        return this.spatialIntersectIndividuals(datasetClassID, wkt, buffer, null, null);
+    }
+
+    @Override
+    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal) {
+        final Class<?> registeredClass = this.objectEngineUtils.getRegisteredClass(datasetClassID);
+        return this.spatialIntersectIndividuals(registeredClass, wkt, buffer, atTemporal, dbTemporal);
+    }
+
+    @Override
+    @Timed(name = "spatial-intersect-timer")
+    @Metered(name = "spatial-intersect-meter")
     public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(Class<@NonNull ?> clazz, String wkt, double buffer, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
         final OWLClass owlClass = this.tp.classParser.getObjectClass(clazz);
 
@@ -155,35 +170,6 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
         logger.debug("Beginning spatial intersection, should not have any transactions");
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
-//            CompletableFuture.supplyAsync(() -> {
-//                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-//                try {
-//                    return this.ontology.executeSPARQLResults(intersectQuery);
-//                } finally {
-//                    this.ontology.returnAndCommitTransaction(tt`);
-//                }
-//            }, this.spatialPool)
-//                    .thenCompose((results) -> {
-//                        return results
-//                                .getResults()
-//                                .stream()
-//                                .map(result -> result.unwrapIndividual("m"))
-//                                .map(owlIndividual -> CompletableFuture.supplyAsync(() -> {
-//                                    final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-//                                    try {
-//                                        return this.individualEngine.getTrestleIndividual(owlIndividual.asOWLNamedIndividual(), tt);
-//                                    } finally {
-//                                        this.ontology.returnAndCommitTransaction(tt);
-//                                    }
-//                                }))
-//                                .collect(Collectors.toList())
-//                    })
-////            final List<CompletableFuture<TrestleIndividual>> individualFutures = trestleResultSet
-////                    ;
-//
-//            final CompletableFuture<List<TrestleIndividual>> sequencedFuture = LambdaUtils.sequenceCompletableFutures(individualFutures);
-
-//
             final CompletableFuture<List<TrestleIndividual>> individualList = CompletableFuture.supplyAsync(() -> {
                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                 try {
@@ -233,19 +219,101 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
     }
 
 
-    /**
-     * Perform spatial comparison between two input objects
-     * Object relations unidirectional are A -&gt; B. e.g. contains(A,B)
-     *
-     * @param objectA        - {@link Object} to compare against
-     * @param objectB        - {@link Object} to compare with
-     * @param inputSR        - {@link SpatialReference} input spatial reference
-     * @param matchThreshold - {@link Double} cutoff for all fuzzy matches
-     * @param <T>            - Type parameter
-     * @return - {@link SpatialComparisonReport}
-     */
+    @Override
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer) {
+        return spatialIntersectObject(inputObject, buffer, null);
+    }
+
+    @Override
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt) {
+        final OWLNamedIndividual owlNamedIndividual = this.tp.classParser.getIndividual(inputObject);
+        final Optional<String> wktString = SpatialParser.getSpatialValueAsString(inputObject);
+
+        if (wktString.isPresent()) {
+            return spatialIntersect((Class<T>) inputObject.getClass(), wktString.get(), buffer, temporalAt);
+        }
+
+        logger.info("{} doesn't have a spatial component", owlNamedIndividual);
+        return Optional.empty();
+    }
+
+    @Override
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer) {
+//        throw new UnsupportedOperationException("Migrating");
+        return spatialIntersect(clazz, wkt, buffer, null);
+    }
+
+    @Override
+    @Timed(name = "spatial-intersect-timer")
+    @Metered(name = "spatial-intersect-meter")
+    @SuppressWarnings({"override.return.invalid"})
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt) {
+        final OWLClass owlClass = this.tp.classParser.getObjectClass(clazz);
+
+        final OffsetDateTime atTemporal;
+        final OffsetDateTime dbTemporal;
+
+        if (validAt == null) {
+            atTemporal = OffsetDateTime.now();
+        } else {
+            atTemporal = parseTemporalToOntologyDateTime(validAt, ZoneOffset.UTC);
+        }
+
+//            TODO(nrobison): Implement DB intersection
+        dbTemporal = OffsetDateTime.now();
+
+        String spatialIntersection;
+        logger.debug("Running spatial intersection at time {}", atTemporal);
+        spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wkt, buffer, QueryBuilder.Units.METER, atTemporal, dbTemporal);
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+        try {
+            final String finalSpatialIntersection = spatialIntersection;
+            final CompletableFuture<List<T>> objectsFuture = CompletableFuture.supplyAsync(() -> {
+                logger.debug("Executing async spatial query");
+                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                logger.debug("Transaction opened");
+                try {
+                    return this.ontology.executeSPARQLResults(finalSpatialIntersection);
+                } finally {
+                    this.ontology.returnAndCommitTransaction(tt);
+                }
+            }, this.spatialPool)
+                    .thenApply(resultSet -> resultSet.getResults()
+                            .stream()
+                            .map(result -> IRI.create(result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID()))
+                            .collect(Collectors.toSet()))
+                    .thenApply(intersectedIRIs -> intersectedIRIs
+                            .stream()
+                            .map(iri -> CompletableFuture.supplyAsync(() -> {
+                                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                                try {
+                                    return this.objectReader.readTrestleObject(clazz, iri, false, atTemporal, dbTemporal);
+                                } finally {
+                                    this.ontology.returnAndCommitTransaction(tt);
+                                }
+                            }, this.spatialPool))
+                            .collect(Collectors.toList()))
+                    .thenCompose(LambdaUtils::sequenceCompletableFutures);
+
+            return Optional.of(objectsFuture.get());
+        } catch (InterruptedException e) {
+            logger.error("Spatial intersection interrupted", e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+            Thread.currentThread().interrupt();
+            return Optional.empty();
+        } catch (ExecutionException e) {
+            logger.error("Spatial intersection execution exception", e.getCause());
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+            return Optional.empty();
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+        }
+    }
+
+
+    @Override
     @Timed
-    public <T extends Object> SpatialComparisonReport compareObjects(T objectA, T objectB, SpatialReference inputSR, double matchThreshold) {
+    public <T extends Object> SpatialComparisonReport compareTrestleObjects(T objectA, T objectB, SpatialReference inputSR, double matchThreshold) {
 
         final OWLNamedIndividual objectAID = this.tp.classParser.getIndividual(objectA);
         final OWLNamedIndividual objectBID = this.tp.classParser.getIndividual(objectB);
@@ -270,7 +338,7 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
 //        Are they equal?
         final double equality = this.equalityEngine.calculateSpatialEquals(objectA, objectB, inputSR);
         if (equality >= matchThreshold) {
-            logger.debug("Found {} equality between {} and {}", objectA, objectB);
+            logger.debug("Found {} equality between {} and {}", equality, objectA, objectB);
             spatialComparisonReport.addApproximateEquality(equality);
         }
 
@@ -344,6 +412,102 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
     }
 
     @Override
+    public Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold) {
+
+        final SpatialReference spatialReference = SpatialReference.create(inputSR);
+        final OffsetDateTime atTemporal = OffsetDateTime.now();
+
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+
+//        For each of the input individuals, build the object
+        final List<CompletableFuture<Object>> individualFutures = individualIRIs
+                .stream()
+                .map(individual -> CompletableFuture.supplyAsync(() -> {
+//                    Figure out if (and how much) we need to adjust the query temporal to get the earliest/latest version of the object
+                    return this.objectEngineUtils.getAdjustedQueryTemporal(individual, atTemporal, trestleTransaction);
+
+                }, this.spatialPool)
+                        .thenApply(temporal -> {
+                            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                            try {
+                                return (Object) this.objectReader.readTrestleObject(datasetClassID, individual, temporal, null);
+                            } catch (MissingOntologyEntity | TrestleClassException e) {
+                                this.ontology.returnAndAbortTransaction(tt);
+                                throw new CompletionException(e);
+                            } finally {
+                                this.ontology.returnAndCommitTransaction(tt);
+                            }
+                        }))
+                .collect(Collectors.toList());
+        final CompletableFuture<Optional<UnionEqualityResult<Object>>> unionFuture = LambdaUtils.sequenceCompletableFutures(individualFutures)
+                .thenApply(individuals -> this.calculateSpatialUnion(individuals, spatialReference, matchThreshold));
+
+        try {
+            final Optional<UnionEqualityResult<Object>> objectUnionEqualityResult = unionFuture.get();
+//            Close the transaction before doing some intense computations
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+            if (objectUnionEqualityResult.isPresent()) {
+                return Optional.of(this.calculateUnionContribution(objectUnionEqualityResult.get(), spatialReference));
+            } else {
+                return Optional.empty();
+            }
+
+        } catch (InterruptedException e) {
+            logger.error("Union calculation was interrupted", e.getCause());
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+            Thread.currentThread().interrupt();
+            return Optional.empty();
+        } catch (ExecutionException e) {
+            logger.error("Union calculation excepted", e.getCause());
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    @Timed
+    public Optional<List<SpatialComparisonReport>> compareTrestleObjects(String datasetID, String objectAID, List<String> comparisonObjectIDs, int inputSR, double matchThreshold) {
+
+        final SpatialReference spatialReference = SpatialReference.create(inputSR);
+        final OffsetDateTime atTemporal = OffsetDateTime.now();
+
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+//        First, read object A
+        final CompletableFuture<Object> objectAFuture = CompletableFuture.supplyAsync(() -> this.objectEngineUtils.getAdjustedQueryTemporal(objectAID, atTemporal, trestleTransaction), this.spatialPool)
+                .thenCompose((temporal) -> this.getAdjustedIndividual(datasetID, objectAID, temporal, trestleTransaction));
+
+//        Read all the other objects
+        final List<CompletableFuture<Object>> objectFutures = comparisonObjectIDs
+                .stream()
+                .map(id -> CompletableFuture.supplyAsync(() -> this.objectEngineUtils.getAdjustedQueryTemporal(id, atTemporal, trestleTransaction),
+                        this.spatialPool)
+                        .thenCompose((temporal) -> this.getAdjustedIndividual(datasetID, id, temporal, trestleTransaction)))
+                .collect(Collectors.toList());
+        final CompletableFuture<List<Object>> sequencedFutures = LambdaUtils.sequenceCompletableFutures(objectFutures);
+
+//        Run the spatial comparison
+        final CompletableFuture<List<SpatialComparisonReport>> comparisonFuture = objectAFuture
+                .thenCombineAsync(sequencedFutures,
+                        (objectA, comparisonObjects) -> comparisonObjects
+                                .stream()
+                                .map(objectB -> this.compareTrestleObjects(objectA, objectB, spatialReference, matchThreshold))
+                                .collect(Collectors.toList()), this.spatialPool);
+
+        try {
+            return Optional.of(comparisonFuture.get());
+        } catch (InterruptedException e) {
+            logger.error("Spatial comparison is interrupted", e.getCause());
+            Thread.currentThread().interrupt();
+            return Optional.empty();
+        } catch (ExecutionException e) {
+            logger.error("Spatial comparison was excepted", e.getCause());
+            return Optional.empty();
+        }
+    }
+
+
+
+    @Override
     @Timed
     public <T extends @NonNull Object> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold) {
         return this.equalityEngine.isApproximatelyEqual(inputObject, matchObject, inputSR, threshold);
@@ -379,6 +543,29 @@ public class SpatialEngine implements EqualityEngine, ContainmentEngine {
     /**
      * HELPER FUNCTIONS
      */
+
+    /**
+     * Get an individual using an adjusted {@link Temporal} gathered from {@link TrestleReasonerImpl#getAdjustedQueryTemporal(String, OffsetDateTime, TrestleTransaction)}
+     *
+     * @param datasetID   - {@link String} datasetID
+     * @param id          - {@link String} individual ID
+     * @param temporal    - {@link Temporal} adjusted temporal
+     * @param transaction - {@link Nullable} {@link TrestleTransaction}
+     * @return - {@link CompletableFuture} of {@link Object}
+     */
+    private CompletableFuture<Object> getAdjustedIndividual(String datasetID, String id, Temporal temporal, @Nullable TrestleTransaction transaction) {
+        return CompletableFuture.supplyAsync(() -> {
+            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(transaction);
+            try {
+                return this.objectReader.readTrestleObject(datasetID, id, temporal, null);
+            } catch (MissingOntologyEntity | TrestleClassException e) {
+                this.ontology.returnAndAbortTransaction(tt);
+                throw new CompletionException(e);
+            } finally {
+                this.ontology.returnAndCommitTransaction(tt);
+            }
+        });
+    }
 
 //    /**
 //     * Get the current size of the geometry geometryCache

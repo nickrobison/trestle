@@ -1,5 +1,11 @@
 // Some environment variables
 declare const ENV: string;
+declare const System: SystemJS;
+
+interface SystemJS {
+    // noinspection ReservedWordAsName
+    import: (path?: string) => Promise<any>;
+}
 
 // GeoJson extent
 declare module "@mapbox/geojson-extent" {
@@ -7,23 +13,32 @@ declare module "@mapbox/geojson-extent" {
 
     function extent(geojson: GeoJsonObject): number[];
 
-    // function polygon(geojson: GeoJsonObject): Polygon;
-    // function bboxify(geojson: GeoJsonObject): void;
-    // export {polygon, bboxify};
+    function polygon(geojson: GeoJsonObject): Polygon;
+
+    function bboxify(geojson: GeoJsonObject): void;
+
+    export { polygon, bboxify };
     export default extent;
 }
 
 declare module "wellknown" {
-    import { GeoJsonObject } from "geojson";
+    import { GeometryObject } from "geojson";
 
-    function parse(input: string): GeoJsonObject;
+    function parse(input: string): GeometryObject;
 
-    function stringify(input: GeoJsonObject): string;
+    function stringify(input: GeometryObject): string;
 
     export { stringify, parse };
 }
 
 declare class ClientJS {
     public constructor();
+
     public getFingerprint(): string;
+}
+
+declare module "check-browser" {
+    function checkBrowser(options: { [browser: string]: number }): boolean;
+
+    export default checkBrowser;
 }

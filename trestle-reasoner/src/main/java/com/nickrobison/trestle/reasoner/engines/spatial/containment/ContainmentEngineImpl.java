@@ -14,6 +14,9 @@ import org.checkerframework.checker.nullness.qual.NonNull;
  */
 public class ContainmentEngineImpl implements ContainmentEngine {
 
+    ContainmentEngineImpl() {
+    }
+
     @Override
     public <T extends @NonNull Object> ContainmentDirection getApproximateContainment(T objectA, T objectB, SpatialReference inputSR, double threshold) {
         final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());

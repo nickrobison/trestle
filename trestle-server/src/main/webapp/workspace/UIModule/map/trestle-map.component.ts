@@ -2,20 +2,10 @@
  * Created by nrobison on 6/11/17.
  */
 import * as mapboxgl from "mapbox-gl";
-import { GeoJSONSource, VectorSource, GeoJSONSourceRaw, ImageSource, RasterSource, VideoSource, LngLatBounds, MapMouseEvent, Source, Layer, Style, FillPaint } from "mapbox-gl";
+import { FillPaint, GeoJSONSource, GeoJSONSourceRaw, ImageSource, LngLat, LngLatBounds, Map as MapboxMap, MapMouseEvent, RasterSource, VectorSource, VideoSource } from "mapbox-gl";
 import extent from "@mapbox/geojson-extent";
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange } from "@angular/core";
-import {
-    Feature,
-    FeatureCollection,
-    GeometryObject,
-    LineString,
-    MultiLineString,
-    MultiPoint,
-    MultiPolygon,
-    Point,
-    Polygon
-} from "geojson";
+import { Feature, FeatureCollection, GeometryObject, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon } from "geojson";
 import { BehaviorSubject } from "rxjs/BehaviorSubject";
 import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
 import { Subject } from "rxjs/Subject";
@@ -107,7 +97,8 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     private previousValue: MapSource;
 
     constructor() {
-        // FIXME(nrobison): Fix this
+        // I can't figure out how to avoid importing the mapbox namespace, just to set the access token.
+        // But whatever
         (mapboxgl as any).accessToken = "pk.eyJ1IjoibnJvYmlzb24iLCJhIjoiY2ozdDd5dmd2MDA3bTMxcW1kdHZrZ3ppMCJ9.YcJMRphQAfmZ0H8X9HnoKA";
 
         this.mapSources = new Map();
@@ -131,7 +122,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
 
         // Merge the map configs together
         const mergedConfig = Object.assign(this.baseConfig, this.config);
-        this.map = new mapboxgl.Map(mergedConfig);
+        this.map = new MapboxMap(mergedConfig);
 
         this.map.on("click", this.layerClick);
         this.map.on("mouseover", this.mouseOver);
@@ -214,10 +205,18 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         // }
     }
 
+    /**
+     * Get the current map bounds
+     * @returns {mapboxgl.LngLatBounds}
+     */
     public getMapBounds(): LngLatBounds {
         return this.map.getBounds();
     }
 
+    /**
+     * Remove individual from the map, which clears the source and linked layers
+     * @param {string} individual
+     */
     public removeIndividual(individual: string): void {
         console.debug("Removing selection %s from the map", individual);
 
@@ -229,6 +228,10 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         }
     }
 
+    /**
+     * Modify the specified attribute for the given individual
+     * @param {IMapAttributeChange} attributeChange
+     */
     public changeIndividualAttribute(attributeChange: IMapAttributeChange): void {
         console.debug("Changing attribute:", attributeChange);
 
@@ -247,6 +250,12 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         //    I don't think we can do this with individuals yet, but maybe?
     }
 
+    /**
+     * Toggle the visibility of the layers for the given individual
+     * This changes all registered layers for the given source
+     * @param {string} individual
+     * @param {boolean} setVisible
+     */
     public toggleIndividualVisibility(individual: string, setVisible: boolean): void {
         console.debug("setting visible?", setVisible);
         //    See if the data is a source
@@ -300,6 +309,9 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         }
     }
 
+    /**
+     * Clear all the layers and sources from the map
+     */
     public clearMap(): void {
         console.debug("Clearing map");
         this.mapSources.forEach((_, source) => {
@@ -308,6 +320,10 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         });
     }
 
+    /**
+     * Center the map on the given input set, computes the bounding box if one doesn't exist
+     * @param {FeatureCollection<GeometryObject> | Feature<GeometryObject>} geom
+     */
     public centerMap(geom: FeatureCollection<GeometryObject> | Feature<GeometryObject>): void {
         // We have to lock the map in order to avoid sending out a notice that the move happened.
         if (geom.bbox) {
@@ -315,7 +331,6 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             this.map.fitBounds(LngLatBounds.convert(geom.bbox as any));
         } else {
             const bbox = extent(geom);
-            console.debug("Extent", bbox);
             if (bbox) {
                 // This works, but it seems to confuse the type system, so any for the win!
                 this.map.fitBounds(LngLatBounds.convert(bbox as any));
@@ -333,6 +348,11 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         this.map.setStyle(style);
     }
 
+    /**
+     * Update the map view angle
+     * @param {number} pitch
+     * @param {number} bearing
+     */
     public setPitchBearing(pitch?: number, bearing?: number): void {
         if (pitch) {
             this.map.setPitch(pitch);
@@ -343,6 +363,12 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         }
     }
 
+    /**
+     * Change the 3D offset of the individual, or all sources that are currently at the input height
+     * @param {number} height
+     * @param {number} offset
+     * @param {string} individual
+     */
     public change3DOffset(height: number, offset: number, individual?: string): void {
 
         if (individual) {
@@ -546,6 +572,10 @@ export class TrestleMapComponent implements OnInit, OnChanges {
             // If it's a collection for each entity, add the label
             const iData = inputLayer.data;
             if (TrestleMapComponent.isCollection(iData)) {
+                // Collections only support field labels, since we need to know how to filter each one
+                if (labelField == null) {
+                    throw new Error("Geometry collections only support label Fields, not values");
+                }
                 iData.features.forEach((feature) => {
                     const labelLayerID = "label-" + feature.id;
                     // This is terrible, but so is the web, so who blinks first?
@@ -562,13 +592,16 @@ export class TrestleMapComponent implements OnInit, OnChanges {
                             "text-size": 11,
                             "text-transform": "uppercase",
                             "text-letter-spacing": 0.05,
-                            "text-offset": [0, 1.5]
+                            "text-offset": [0, 1.5],
+                            "text-allow-overlap": true
+                            // "text-ignore-placement": true
                         },
                         paint: {
                             "text-color": "#202",
                             "text-halo-color": "#fff",
                             "text-halo-width": 2
-                        }
+                        },
+                        filter: ["==", labelField, labelText]
                     });
                     attributeLayers.push(labelLayerID);
                 });
@@ -689,7 +722,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         this.baseConfig = {
             container: "map",
             style: "mapbox://styles/mapbox/light-v9",
-            center: new mapboxgl.LngLat(32.3558991, -25.6854313),
+            center: new LngLat(32.3558991, -25.6854313),
             zoom: 8
         };
     }

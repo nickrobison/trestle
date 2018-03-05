@@ -83,7 +83,7 @@ public class TemporalParser {
                 .filter(f -> f.isAnnotationPresent(DefaultTemporal.class))
                 .findFirst();
 
-        return field.map(f -> true).orElse(false);
+        return field.map(f -> Boolean.TRUE).orElse(Boolean.FALSE);
 
     }
 

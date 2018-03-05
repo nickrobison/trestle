@@ -66,6 +66,11 @@ export class VisualizeDetailsComponent implements AfterViewInit {
             });
     }
 
+    /**
+     * Display function to filter down individual IDs
+     * @param {string} name
+     * @returns {string}
+     */
     public displayFn(name: string): string {
         return TrestleIndividual.filterID(name);
     }
@@ -88,6 +93,10 @@ export class VisualizeDetailsComponent implements AfterViewInit {
         return TrestleIndividual.extractPrefix(object);
     }
 
+    /**
+     * Open the value Modal and display the given fact value
+     * @param {TrestleFact} fact
+     */
     public openValueModal(fact: TrestleFact): void {
         const config = new MatDialogConfig();
         config.viewContainerRef = this.viewContainerRef;

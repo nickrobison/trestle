@@ -2,7 +2,7 @@
  * Created by nrobison on 3/7/17.
  */
 import { Injectable } from "@angular/core";
-import { URLSearchParams, Response } from "@angular/http";
+import { Response, URLSearchParams } from "@angular/http";
 import { TrestleHttp } from "../../UserModule/trestle-http.provider";
 import { TrestleIndividual } from "./TrestleIndividual/trestle-individual";
 import { CacheService } from "../cache/cache.service";
@@ -15,6 +15,13 @@ export class IndividualService {
                 private individualCache: CacheService<string, TrestleIndividual>) {
     }
 
+    /**
+     * Searhc for an individual in the database
+     * @param {string} name of the individual to search for (partial value)
+     * @param {string} dataset to restrict queries to
+     * @param {number} limit number of return values
+     * @returns {Observable<string[]>}
+     */
     public searchForIndividual(name: string, dataset = "", limit = 10): Observable<string[]> {
         const params = new URLSearchParams();
         params.set("name", name);

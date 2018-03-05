@@ -1,19 +1,18 @@
 package com.nickrobison.trestle.reasoner;
 
-import com.esri.core.geometry.SpatialReference;
 import com.nickrobison.metrician.Metrician;
-import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
-import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
+import com.nickrobison.trestle.reasoner.engines.concept.ITrestleConceptEngine;
+import com.nickrobison.trestle.reasoner.engines.exporter.ITrestleDataExporter;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
-import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
+import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
+import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
+import com.nickrobison.trestle.reasoner.engines.spatial.ITrestleSpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
-import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
-import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
 import com.nickrobison.trestle.reasoner.engines.temporal.TemporalEngine;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
@@ -22,17 +21,11 @@ import com.nickrobison.trestle.reasoner.parser.TypeConstructor;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
-import com.nickrobison.trestle.types.relations.ConceptRelationType;
-import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.time.temporal.Temporal;
 import java.util.List;
@@ -43,7 +36,7 @@ import java.util.Set;
 /**
  * Created by nrobison on 1/30/17.
  */
-public interface TrestleReasoner {
+public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWriter, ITrestleSpatialEngine, ITrestleConceptEngine, ITrestleDataExporter {
     /**
      * Shutdown the reasoner
      */
@@ -61,7 +54,7 @@ public interface TrestleReasoner {
      * Note: It's advisable to use the {@link java.util.ServiceLoader} functionality instead of manually registering constructors
      *
      * @param typeConstructor - {@link TypeConstructor} to register with reasoner
-     * @param <C> - generic type parameter
+     * @param <C>             - generic type parameter
      */
     <C extends TypeConstructor> void registerTypeConstructor(C typeConstructor);
 
@@ -93,7 +86,9 @@ public interface TrestleReasoner {
      * Get underlying {@link SpatialEngine}
      *
      * @return - {@link SpatialEngine}
+     * @deprecated - As of 0.8.1 all applicable methods can be called directly from the {@link TrestleReasoner} interface
      */
+    @Deprecated
     SpatialEngine getSpatialEngine();
 
     /**
@@ -144,138 +139,6 @@ public interface TrestleReasoner {
     void writeOntology(URI filePath, boolean validate);
 
     /**
-     * Write a Java object as a Trestle_Object
-     *
-     * @param inputObject - Input object to write as fact
-     * @throws TrestleClassException - Throws an exception if the class doesn't exist or is invalid
-     * @throws MissingOntologyEntity - Throws if the individual doesn't exist in the ontology
-     */
-    void writeTrestleObject(Object inputObject) throws TrestleClassException, MissingOntologyEntity;
-
-    /**
-     * Write a Java object as a Trestle_Object
-     * Use the provided temporals to setup the database time
-     *
-     * @param inputObject   - Object to write into the ontology
-     * @param startTemporal - Start {@link Temporal} of database time interval
-     * @param endTemporal   - Nullable {@link Temporal} of ending interval time
-     * @throws MissingOntologyEntity      - Throws if the individual doesn't exist in the ontology
-     * @throws UnregisteredClassException - Throws if the object class isn't registered with the reasoner
-     */
-    @SuppressWarnings("unchecked")
-    void writeTrestleObject(Object inputObject, Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, UnregisteredClassException;
-
-    /**
-     * Manually add a Fact to a TrestleObject, along with a specified validity point
-     *
-     * @param clazz        - Java class to parse
-     * @param individual   - Individual ID
-     * @param factName     - Fact name
-     * @param value        - Fact value
-     * @param validAt      - validAt Temporal
-     * @param databaseFrom - Optional databaseFrom Temporal
-     */
-    void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validAt, @Nullable Temporal databaseFrom);
-
-    /**
-     * Manually add a Fact to a TrestleObject, along with a specified validity interval
-     *
-     * @param clazz        - Java class to parse
-     * @param individual   - Individual ID
-     * @param factName     - Fact name
-     * @param value        - Fact value
-     * @param validFrom    - validFrom Temporal
-     * @param validTo      - validTo Temporal
-     * @param databaseFrom - Optional databaseFrom Temporal
-     */
-    void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom);
-
-    /**
-     * Returns an object, from the database, using the provided class definition.
-     * Returns the currently valid facts, at the current database time
-     *
-     * @param clazz    - Java class definition of return object
-     * @param objectID - IRI string of individual
-     * @param <T>      - Java class to return
-     * @return - Java object of type T
-     * @throws TrestleClassException - exception
-     * @throws MissingOntologyEntity - exception
-     */
-    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID) throws TrestleClassException, MissingOntologyEntity;
-
-    /**
-     * Returns an object, from the database, looking up the class definition from the registry
-     *
-     * @param datasetClassID - String of class name to retrieve from the class registry
-     * @param objectID       - IRI string of individual
-     * @param <T>            - Java class to return
-     * @return - Java object of type T
-     * @throws MissingOntologyEntity - exception
-     * @throws TrestleClassException - exception
-     */
-    <T extends @NonNull Object> T readTrestleObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException;
-
-    /**
-     * Returns an object, from the database, using the provided class definition.
-     * Allows the user to specify a valid/database pair to specified desired object state
-     *
-     * @param clazz            - Java class definition of return object
-     * @param objectID         - IRI string of individual
-     * @param validTemporal    - Temporal to denote the ValidAt point
-     * @param databaseTemporal - Optional Temporal to denote the DatabaseAt point
-     * @param <T>              - Java class to return
-     * @return - Java object of type T
-     * @throws TrestleClassException - exception
-     * @throws MissingOntologyEntity - exception
-     */
-    @SuppressWarnings({"argument.type.incompatible", "dereference.of.nullable"})
-    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID, Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity;
-
-    /**
-     * Returns an object, from the database, looking up the class definition from the registry
-     *
-     * @param <T>              - Java class to return
-     * @param datasetClassID   - String of class name to retrieve from the class registry
-     * @param objectID         - IRI string of individual
-     * @param validTemporal    - Temporal to denote the ValidAt point
-     * @param databaseTemporal - Optional Temporal to denote the DatabaseAt point
-     * @return - Java object of type T
-     * @throws MissingOntologyEntity - exception
-     * @throws TrestleClassException - exception
-     */
-    <T extends @NonNull Object> T readTrestleObject(String datasetClassID, String objectID, Temporal validTemporal, @Nullable Temporal databaseTemporal) throws MissingOntologyEntity, TrestleClassException;
-
-    /**
-     * Retrieve historical states of a given Fact
-     * Returns an optional list of Java Objects that match the datatype of the given Fact
-     * Allows for optional temporal filter to restrict results to only Fact states valid during the provided temporal window
-     *
-     * @param clazz            - Java class to parse
-     * @param individual       - Individual ID
-     * @param factName         - Name of Fact
-     * @param validStart       - Optional Temporal setting the start of the temporal filter
-     * @param validEnd         - Optional Temporal setting the end of the temporal filter
-     * @param databaseTemporal - Optional temporal filtering results to only certain fact versions
-     * @return - Optional list of Java Objects
-     */
-    Optional<List<Object>> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal);
-
-    /**
-     * Retrieve historical states of a given Fact
-     * Returns an optional list of Java Objects that match the datatype of the given Fact
-     * Allows for optional temporal filter to restrict results to only Fact states valid during the provided temporal window
-     *
-     * @param clazz            - Java class to parse
-     * @param individual       - {@link OWLNamedIndividual} of individual ID
-     * @param factName         - {@link OWLDataProperty}
-     * @param validStart       - Optional Temporal setting the start of the temporal filter
-     * @param validEnd         - Optional Temporal setting the end of the temporal filter
-     * @param databaseTemporal - Optional temporal filtering results to only certain fact versions
-     * @return - Optional List of Java Objects
-     */
-    Optional<List<Object>> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal);
-
-    /**
      * Get all {@link TrestleEvent} for the given individual
      *
      * @param clazz      - Class of object to get events for
@@ -315,70 +178,8 @@ public interface TrestleReasoner {
      */
     void addTrestleObjectEvent(TrestleEventType type, OWLNamedIndividual individual, Temporal eventTemporal);
 
-    /**
-     * Add a SPLIT or MERGE {@link TrestleEventType} to a given {@link OWLNamedIndividual}
-     * Events are oriented subject to object, so A splits_into [B,C,D] and H merged_from [E,F,G]
-     * Individuals are not created if they don't already exist
-     * throws {@link IllegalArgumentException} if something other than {@link TrestleEventType#MERGED} or {@link TrestleEventType#SPLIT} is passed
-     *
-     * @param <T>      - Generic type parameter of Trestle Object
-     * @param type     {@link TrestleEventType} to add
-     * @param subject  - {@link OWLNamedIndividual} subject of Event
-     * @param objects  - {@link Set} of {@link OWLNamedIndividual} that are the objects of the event
-     * @param strength - {@link Double} Strength of union association
-     */
+    @Override
     <T extends @NonNull Object> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength);
-
-    /**
-     * Spatial Intersect Object with most recent records in the database
-     * An empty Optional means an error, an Optional of an empty List means no intersected objects
-     *
-     * @param inputObject - Object to intersect
-     * @param buffer      - Additional buffer (in meters)
-     * @param <T>         - Type to specialize method
-     * @return - An Optional List of Object T
-     */
-    @SuppressWarnings("return.type.incompatible")
-    <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer);
-
-    /**
-     * Spatial Intersect Object with records in the database valid at that given time
-     * An empty Optional means an error, an Optional of an empty List means no intersected objects
-     *
-     * @param inputObject - Object to intersect
-     * @param buffer      - Additional buffer to build around object (in meters)
-     * @param temporalAt  - Temporal of intersecting time point
-     * @param <T>         - Type to specialize method
-     * @return - An Optional List of Object T
-     */
-    @SuppressWarnings("unchecked")
-    <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt);
-
-    /**
-     * Find objects of a given class that intersect with a specific WKT boundary.
-     * An empty Optional means an error, an Optional of an empty List means no intersected objects
-     *
-     * @param clazz  - Class of object to return
-     * @param wkt    - WKT of spatial boundary to intersect with
-     * @param buffer - Double buffer to build around wkt (in meters)
-     * @param <T>    - Type to specialize method
-     * @return - An Optional List of Object T
-     */
-    <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer);
-
-    /**
-     * Find objects of a given class that intersect with a specific WKT boundary.
-     * An empty Optional means an error, an Optional of an empty List means no intersected objects
-     *
-     * @param clazz      - Class of object to return
-     * @param wkt        - WKT of spatial boundary to intersect with
-     * @param buffer     - Double buffer to build around wkt
-     * @param atTemporal - Temporal to filter results to specific valid time point
-     * @param <T>        - Class to specialize method with.
-     * @return - An Optional List of Object T.
-     */
-    @SuppressWarnings("return.type.incompatible")
-    <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal atTemporal);
 
     /**
      * Get a map of related objects and their relative strengths
@@ -394,41 +195,6 @@ public interface TrestleReasoner {
     @SuppressWarnings("return.type.incompatible")
     @Deprecated
     <T extends @NonNull Object> Optional<Map<T, Double>> getRelatedObjects(Class<T> clazz, String objectID, double cutoff);
-
-    /**
-     * For a given individual, get all related concepts and the IRIs of all members of those concepts,
-     * that have a relation strength above the given cutoff value
-     *
-     * @param individual       - String of individual IRI to return relations for
-     * @param conceptID        - Nullable String of concept IRI to filter members of
-     * @param relationStrength - Cutoff value of minimum relation strength
-     * @return - {@link Optional} {@link Map} of String IRI representations of related concepts
-     */
-    Optional<Map<String, List<String>>> getRelatedConcepts(String individual, @Nullable String conceptID, double relationStrength);
-
-    /**
-     * Calculate {@link UnionEqualityResult} for the given {@link List} of individual IRIs
-     *
-     * @param datasetClassID - {@link String} {@link OWLClass} string reference
-     * @param individualIRIs - {@link List} of Individual IRIs
-     * @param inputSR        - EPSG code to determine union projection
-     * @param matchThreshold - {@link Double} cutoff to determine minimum match percentage
-     * @return - {@link Optional} {@link UnionEqualityResult}
-     */
-    Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold);
-
-    /**
-     * Perform spatial comparison between two input objects
-     * Object relations unidirectional are A -&gt; B. e.g. contains(A,B)
-     *
-     * @param datasetID           - {@link String} representation of {@link OWLClass}
-     * @param objectAID           - {@link String} ID of ObjectA
-     * @param comparisonObjectIDs - @{link List} of {@link String} IDs of comparison objects
-     * @param inputSR             - {@link SpatialReference} input spatial reference
-     * @param matchThreshold      - {@link Double} cutoff for all fuzzy matches
-     * @return - {@link Optional} {@link List} of {@link SpatialComparisonReport}
-     */
-    Optional<List<SpatialComparisonReport>> compareTrestleObjects(String datasetID, String objectAID, List<String> comparisonObjectIDs, int inputSR, double matchThreshold);
 
     /**
      * Get a {@link List} of objects that are equivalent to given individual at the given time point
@@ -473,49 +239,6 @@ public interface TrestleReasoner {
     List<String> searchForIndividual(String individualIRI, @Nullable String datasetClass, @Nullable Integer limit);
 
     /**
-     * Performs a spatial intersection on a given dataset without considering any temporal constraints
-     * This will return all intersecting individuals, in their latest DB state
-     * Returns an optional list of {@link TrestleIndividual}s
-     * This method will return the individual represented by the input WKT, so it may need to be filtered out
-     *
-     * @param datasetClassID - {@link String} ID of dataset {@link OWLClass}
-     * @param wkt            - {@link String} WKT boundary
-     * @param buffer         - {@link Double} buffer to extend around buffer. 0 is no buffer
-     * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
-     */
-    Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer);
-
-    /**
-     * Performs a spatial intersection on a given dataset with a specified spatio-temporal restriction
-     * Returns an optional list of {@link TrestleIndividual}s
-     * If no valid temporal is specified, performs a spatial intersection with no temporal constraints
-     * This method will return the individual represented by the input WKT, so it may need to be filtered out
-     *
-     * @param datasetClassID - {@link String} ID of dataset {@link OWLClass}
-     * @param wkt            - {@link String} WKT boundary
-     * @param buffer         - {@link Double} buffer to extend around buffer. 0 is no buffer
-     * @param atTemporal     - {@link Temporal} valid at restriction
-     * @param dbTemporal     - {@link Temporal} database at restriction
-     * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
-     */
-    Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal);
-
-    /**
-     * Performs a spatial intersection on a given dataset with a specified spatio-temporal restriction
-     * Returns an optional list of {@link TrestleIndividual}s
-     * If no valid temporal is specified, performs a spatial intersection with no temporal constraints
-     * This method will return the individual represented by the input WKT, so it may need to be filtered out
-     *
-     * @param clazz      - {@link Class} of dataset {@link OWLClass}
-     * @param wkt        - {@link String} WKT boundary
-     * @param buffer     - {@link Double} buffer to extend around buffer. 0 is no buffer
-     * @param atTemporal - {@link Temporal} valid at restriction
-     * @param dbTemporal - {@link Temporal} database at restriction
-     * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
-     */
-    Optional<List<TrestleIndividual>> spatialIntersectIndividuals(Class<?> clazz, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal);
-
-    /**
      * Return a {@link TrestleIndividual} with all the available facts and properties
      * Attempts to retrieve from the cache, if enabled and present
      *
@@ -523,76 +246,6 @@ public interface TrestleReasoner {
      * @return - {@link TrestleIndividual}
      */
     TrestleIndividual getTrestleIndividual(String individualIRI);
-
-    /**
-     * Return a set of Trestle_Concepts that intersect with the given WKT
-     * The temporal parameters allow for additional specificity on the spatio-temporal intersection
-     *
-     * @param wkt      - String of WKT to intersect with
-     * @param buffer   - double buffer to draw around WKT
-     * @param strength - strength parameter to filter weak associations
-     * @param validAt  - {@link Temporal} of validAt time
-     * @param dbAt     - Optional {@link Temporal} of dbAt time   @return - Optional Set of String URIs for intersected concepts
-     * @return - {@link Optional} {@link Set} of {@link String} Concept IDs
-     */
-    Optional<Set<String>> STIntersectConcept(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt);
-
-    /**
-     * Retrieve all members of a specified concept that match a given class
-     * If the {@code spatialIntersection} parameter occurs outside of the exists range of the target TrestleObjects, the intersection point is adjusted, in order to return a valid object
-     * If the intersection point occurs before the TrestleObject, the earliest version of that object is returned
-     * If the intersection point occurs after the TrestleObject, the latest version of the object is returned
-     *
-     * @param <T>                  - Generic type T of returned object
-     * @param clazz                - Input class to retrieve from concept
-     * @param conceptID            - String ID of concept to retrieve
-     * @param strength             - Strength parameter to filter weak associations
-     * @param spatialIntersection  - Optional spatial intersection to restrict results
-     * @param temporalIntersection - Optional temporal intersection to restrict results   @return - Optional Set of T objects
-     * @return - {@link Optional} {@link List} of Objects
-     */
-    <T> Optional<List<T>> getConceptMembers(Class<T> clazz, String conceptID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection);
-
-    /**
-     * Write an object into the database, as a member of a given concept
-     *
-     * @param conceptIRI   - String of
-     * @param inputObject  - Object to write into databse
-     * @param relationType - ConceptRelationType
-     * @param strength     - Strength parameter of relation
-     */
-    void addObjectToConcept(String conceptIRI, Object inputObject, ConceptRelationType relationType, double strength);
-
-    /**
-     * Write a relationship between two objects.
-     * If one or both of those objects do not exist, create them.
-     *
-     * @param subject  - Java object to write as subject of relationship
-     * @param object   - Java object to write as object of relationship
-     * @param relation - ObjectRelation between the two object
-     */
-    void writeObjectRelationship(Object subject, Object object, ObjectRelation relation);
-
-    /**
-     * Create a spatial overlap association between two objects.
-     * If one or both of the object do not exist, create them.
-     *
-     * @param subject - Java object to write as subject of relationship
-     * @param object  - Java object to write as object of relationship
-     * @param wkt     - String of wkt boundary of spatial overlap
-     */
-    void writeSpatialOverlap(Object subject, Object object, String wkt);
-
-    /**
-     * Create a spatial overlap association between two objects.
-     * If one or both of the object do not exist, create them.
-     *
-     * @param subject         - Java object to write as subject of relationship
-     * @param object          - Java object to write as object of relationship
-     * @param temporalOverlap - String of temporal overlap between two objects (Not implemented yet)
-     */
-//    TODO(nrobison): Correctly implement this
-    void writeTemporalOverlap(Object subject, Object object, String temporalOverlap);
 
     /**
      * Register dataset class with Reasoner
@@ -619,20 +272,4 @@ public interface TrestleReasoner {
     Set<String> getAvailableDatasets();
 
     Class<?> getDatasetClass(String owlClassString) throws UnregisteredClassException;
-
-    <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, ITrestleExporter.DataType exportType) throws IOException;
-
-    /**
-     * Export TrestleObject at the specified valid/database temporal
-     *
-     * @param inputClass - Class to parse
-     * @param objectID   - {@link List} of objectID strings to return
-     * @param validAt    - {@link Temporal} of validAt time
-     * @param databaseAt - {@link Temporal} of databaseAt time
-     * @param exportType - {@link ITrestleExporter.DataType} export datatype of file
-     * @param <T>        - Generic type parameter
-     * @return - {@link File} of type {@link ITrestleExporter.DataType}
-     * @throws IOException - Throws if it can't create the file
-     */
-    <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, @Nullable Temporal validAt, @Nullable Temporal databaseAt, ITrestleExporter.DataType exportType) throws IOException;
 }

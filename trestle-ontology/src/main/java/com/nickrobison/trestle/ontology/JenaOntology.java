@@ -28,9 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.ThreadSafe;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.*;
+import java.nio.file.Files;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -350,11 +349,11 @@ public abstract class JenaOntology extends TransactingOntology {
             }
         }
 
-        final FileOutputStream fileOutputStream;
+        final OutputStream fileOutputStream;
         try {
-            fileOutputStream = new FileOutputStream(new File(path.toURI()));
-        } catch (FileNotFoundException e) {
-            logger.error("Cannot open to file path", e);
+            fileOutputStream = Files.newOutputStream(new File(path.toURI()).toPath());
+        } catch (IOException e) {
+            logger.error("Cannot open to file path: {}", path, e);
             return;
         }
         logger.info("Writing ontology to {}", path);
