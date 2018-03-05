@@ -23,11 +23,11 @@ abstract class TransactingOntology implements ITrestleOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(TransactingOntology.class);
     //    Thread locals
-    private static ThreadLocal<Boolean> threadLocked = ThreadLocal.withInitial(() -> Boolean.FALSE);
-    private static ThreadLocal<Boolean> threadInTransaction = ThreadLocal.withInitial(() -> Boolean.FALSE);
-    private static ThreadLocal<Boolean> threadInWriteTransaction = ThreadLocal.withInitial(() -> Boolean.FALSE);
-    private static ThreadLocal<Boolean> threadTransactionInherited = ThreadLocal.withInitial(() -> Boolean.FALSE);
-    private static ThreadLocal<@Nullable TrestleTransaction> threadTransactionObject = new ThreadLocal<>();
+    private ThreadLocal<Boolean> threadLocked = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private ThreadLocal<Boolean> threadInTransaction = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private ThreadLocal<Boolean> threadInWriteTransaction = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private ThreadLocal<Boolean> threadTransactionInherited = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private ThreadLocal<@Nullable TrestleTransaction> threadTransactionObject = new ThreadLocal<>();
 
 
     public static final String OPEN_READ_WRITE_TRANSACTIONS = "{}/{} open read/write transactions";
