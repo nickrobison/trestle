@@ -26,20 +26,40 @@ export class UsersComponent implements OnInit {
         this.loadUsers();
     }
 
+    /**
+     * Load all registered users
+     */
     public loadUsers() {
         this.userService.getUsers()
             .subscribe((users: ITrestleUser[]) => this.users = users,
                 (err: any) => console.error(err));
     };
 
+    /**
+     * Is the user an admin?
+     * @param {ITrestleUser} user
+     * @returns {boolean}
+     */
     public isAdmin(user: ITrestleUser): boolean {
+        // tslint:disable-next-line:no-bitwise
         return (user.privileges & Privileges.ADMIN) > 0;
     }
 
+    /**
+     * Is the user a DBA?
+     * @param {ITrestleUser} user
+     * @returns {boolean}
+     */
     public isDBA(user: ITrestleUser): boolean {
+        // tslint:disable-next-line:no-bitwise
         return (user.privileges & Privileges.DBA) > 0;
     }
 
+    /**
+     * Open the user modal and pass in the selected user
+     * When the modal closes, perform the required action against the database
+     * @param {ITrestleUser | null} user
+     */
     public openUserModal(user: ITrestleUser | null) {
         const config = new MatDialogConfig();
         config.viewContainerRef = this.viewContainerRef;

@@ -54,6 +54,10 @@ export class LoginComponent implements OnInit {
         this.errorState = "inactive";
     }
 
+    /**
+     * Attempt to login the given user
+     * @param {IUserLogin} user
+     */
     public login(user: IUserLogin) {
         console.debug("Logging in with", user.username, "and", user.password);
         this.authService.login(user.username, user.password).subscribe((data: any) => {

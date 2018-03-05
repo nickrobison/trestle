@@ -48,12 +48,20 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
         this.loginSubscription.unsubscribe();
     }
 
+    /**
+     * Attempt to login the user
+     */
     public login(): void {
         if (this.user == null) {
             this.router.navigate(["/login"]);
         }
     }
 
+    /**
+     * Does the user have the required permissions?
+     * @param {Privileges[]} requiredPrivs
+     * @returns {boolean}
+     */
     public userHasRequiredPermissions(requiredPrivs: Privileges[]): boolean {
         if (this.user == null) {
             return false;
@@ -61,6 +69,10 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
         return this.user.hasRequiredPrivileges(requiredPrivs);
     }
 
+    /**
+     * Get the Gravitar URL of the user
+     * @returns {string}
+     */
     public getGravatarURL(): string {
         if (this.gravatarURL == null) {
             const user = this.authService.getUser();
@@ -73,6 +85,9 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
         return this.gravatarURL;
     }
 
+    /**
+     * Logout the currently logged in user
+     */
     public logout(): void {
         this.authService.logout();
         this.user = null;

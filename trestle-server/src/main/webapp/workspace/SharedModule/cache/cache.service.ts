@@ -21,6 +21,13 @@ export class CacheService<K, V> {
             .build();
     }
 
+    /**
+     * Attempt to get the individual from the Cache,
+     * if that fails, call the fallback value and return the result to both the subscriber and the cache
+     * @param {K} key to attempt to fetch from the cache
+     * @param {Observable<V>} fallback function to call if key is missing
+     * @returns {Observable<V> | Subject<V>} of result
+     */
     public get(key: K, fallback?: Observable<V>): Observable<V> | Subject<V> {
         const value = this.cache.get(key);
         if (value) {
@@ -37,6 +44,11 @@ export class CacheService<K, V> {
         }
     }
 
+    /**
+     * Add key/value pair to cache
+     * @param {K} key
+     * @param {V} value
+     */
     public set(key: K, value: V): void {
         this.cache.set(key, value);
         this.notifyInFlightObservers(key, value);

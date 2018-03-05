@@ -16,6 +16,11 @@ export class ExporterService {
 
     }
 
+    /**
+     * Export indivduals and return the built result from the database
+     * @param {IExportRequest} request
+     * @returns {Observable<Blob>}
+     */
     public exportIndividuals(request: IExportRequest): Observable<Blob> {
         return this.http.post("/export", request, {
             responseType: ResponseContentType.Blob

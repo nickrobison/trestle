@@ -205,10 +205,18 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         // }
     }
 
+    /**
+     * Get the current map bounds
+     * @returns {mapboxgl.LngLatBounds}
+     */
     public getMapBounds(): LngLatBounds {
         return this.map.getBounds();
     }
 
+    /**
+     * Remove individual from the map, which clears the source and linked layers
+     * @param {string} individual
+     */
     public removeIndividual(individual: string): void {
         console.debug("Removing selection %s from the map", individual);
 
@@ -220,6 +228,10 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         }
     }
 
+    /**
+     * Modify the specified attribute for the given individual
+     * @param {IMapAttributeChange} attributeChange
+     */
     public changeIndividualAttribute(attributeChange: IMapAttributeChange): void {
         console.debug("Changing attribute:", attributeChange);
 
@@ -238,6 +250,12 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         //    I don't think we can do this with individuals yet, but maybe?
     }
 
+    /**
+     * Toggle the visibility of the layers for the given individual
+     * This changes all registered layers for the given source
+     * @param {string} individual
+     * @param {boolean} setVisible
+     */
     public toggleIndividualVisibility(individual: string, setVisible: boolean): void {
         console.debug("setting visible?", setVisible);
         //    See if the data is a source
@@ -291,6 +309,9 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         }
     }
 
+    /**
+     * Clear all the layers and sources from the map
+     */
     public clearMap(): void {
         console.debug("Clearing map");
         this.mapSources.forEach((_, source) => {
@@ -299,6 +320,10 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         });
     }
 
+    /**
+     * Center the map on the given input set, computes the bounding box if one doesn't exist
+     * @param {FeatureCollection<GeometryObject> | Feature<GeometryObject>} geom
+     */
     public centerMap(geom: FeatureCollection<GeometryObject> | Feature<GeometryObject>): void {
         // We have to lock the map in order to avoid sending out a notice that the move happened.
         if (geom.bbox) {
@@ -323,6 +348,11 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         this.map.setStyle(style);
     }
 
+    /**
+     * Update the map view angle
+     * @param {number} pitch
+     * @param {number} bearing
+     */
     public setPitchBearing(pitch?: number, bearing?: number): void {
         if (pitch) {
             this.map.setPitch(pitch);
@@ -333,6 +363,12 @@ export class TrestleMapComponent implements OnInit, OnChanges {
         }
     }
 
+    /**
+     * Change the 3D offset of the individual, or all sources that are currently at the input height
+     * @param {number} height
+     * @param {number} offset
+     * @param {string} individual
+     */
     public change3DOffset(height: number, offset: number, individual?: string): void {
 
         if (individual) {

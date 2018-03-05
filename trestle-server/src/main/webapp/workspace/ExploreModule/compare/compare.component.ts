@@ -128,6 +128,9 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
         this.cdRef.detectChanges();
     }
 
+    /**
+     * Compare the base individual against all the other currently visible objects
+     */
     public compareIndividuals(): void {
         // Get all the individuals
         if (this.baseIndividual) {
@@ -193,6 +196,10 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
         }
     }
 
+    /**
+     * Handler function to load the selected individual
+     * @param {string} individual
+     */
     public selectedHandler(individual: string): void {
         console.debug("Selected:", individual);
         this.loadSelectedIndividual(individual);
@@ -231,6 +238,10 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
         }
     }
 
+    /**
+     * Toggle the visibility of the given individual
+     * @param {ICompareIndividual} individual
+     */
     public toggleVisibility(individual: ICompareIndividual): void {
         individual.visible = !individual.visible;
         this.mapComponent
@@ -239,6 +250,10 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
                 individual.visible);
     }
 
+    /**
+     * Toggle the focus of a given individual, this will hide all other currently visible individuals
+     * @param {ICompareIndividual} individual
+     */
     public toggleFocus(individual: ICompareIndividual): void {
         individual.focused = !individual.focused;
 
@@ -285,6 +300,10 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
         }
     }
 
+    /**
+     * Remove the given individual from the comparison list
+     * @param {ICompareIndividual} individual
+     */
     public removeIndividual(individual: ICompareIndividual): void {
         console.debug("Remove:", individual);
         // Remove from the array first, then from the map
@@ -302,6 +321,11 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
         this.cs.returnColor(individual.color);
     }
 
+    /**
+     * Update explode slider and change the values on the map
+     * @param {MatSliderChange} event
+     * @param {ICompareIndividual | null} selection
+     */
     public sliderUpdate(event: MatSliderChange, selection = this.baseIndividual) {
         if ((event.value !== null) && (selection !== null)) {
             //     For now, let's just change the base individual,
@@ -316,10 +340,17 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
         }
     }
 
+    /**
+     * Filter compare results to only return objects which overlap in some way
+     * @param {MatSlideToggleChange} event
+     */
     public filterChanged(event: MatSlideToggleChange): void {
         this.filterCompareResults = event.checked;
     }
 
+    /**
+     * Perform spatial intersection with base individual
+     */
     public intersectBaseIndividual(): void {
         if (this.baseIndividual) {
             // this.spinner.reveal();
@@ -360,14 +391,26 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
         }
     };
 
+    /**
+     * Get all currently selected individuals
+     * @returns {ICompareIndividual[]}
+     */
     public getSelectedIndividuals(): ICompareIndividual[] {
         return Array.from(this.selectedIndividuals.values());
     }
 
+    /**
+     * Pipe function to enable the view to check for changes
+     * @returns {ICompareIndividual[]}
+     */
     public get mapValues(): ICompareIndividual[] {
         return Array.from(this.selectedIndividuals.values());
     }
 
+    /**
+     * Toggle overlap between the base individual and the selected individual
+     * @param {ISpatialComparisonReport} overlap
+     */
     public toggleOverlap(overlap: ISpatialComparisonReport): void {
         const id = TrestleIndividual.filterID(overlap.objectAID)
             + "-" + TrestleIndividual.filterID(overlap.objectBID);
@@ -466,11 +509,21 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
         }
     }
 
+    /**
+     * Load the selected individual by fetching its value from the database
+     * @param {string} individual
+     * @param {boolean} baseIndividual
+     */
     private loadSelectedIndividual(individual: string, baseIndividual = false): void {
         this.is.getTrestleIndividual(individual)
             .subscribe((result) => this.addIndividualToCompare(result, baseIndividual));
     }
 
+    /**
+     * Add individual to the comparison set and the map
+     * @param {TrestleIndividual} individual
+     * @param {boolean} baseIndividual
+     */
     private addIndividualToCompare(individual: TrestleIndividual, baseIndividual = false): void {
         console.debug("Adding individual:", individual);
         // Before we add any individuals to the map, we need to see if we're loading the base individual or not

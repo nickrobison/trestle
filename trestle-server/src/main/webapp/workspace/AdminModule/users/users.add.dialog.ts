@@ -53,14 +53,17 @@ export class UserAddDialog implements OnInit {
         console.debug("User to modify:", this.user);
     }
 
+    /**
+     * Are we currently set to update the user?
+     * @returns {boolean}
+     */
     public isUpdate(): boolean {
         return this.updateMode;
     }
 
-    public saveWithValid(model: ITrestleUser, isValid: boolean) {
-        console.debug("user:", model);
-    }
-
+    /**
+     * Save the new/updated user to the database
+     */
     public save() {
         console.log("user:", this.user);
         this.userService.modifyUser(this.user).subscribe((data: Response) => {
@@ -76,6 +79,9 @@ export class UserAddDialog implements OnInit {
         }, (err: Error) => console.error(err));
     }
 
+    /**
+     * Delete the specified user from the database
+     */
     public delete() {
         if (this.user.id !== undefined) {
             this.userService
@@ -90,12 +96,20 @@ export class UserAddDialog implements OnInit {
         }
     }
 
+    /**
+     * Change permission level of the user to the given values
+     * @param {Privileges} level
+     */
     public alterPermissionLevel(level: Privileges): void {
         // tslint:disable-next-line:no-bitwise
         this.user.privileges = this.user.privileges ^ level;
-        console.debug("User priv level:", this.user.privileges);
     }
 
+    /**
+     * Does the user currently have the given permission?
+     * @param {Privileges} privilage to check
+     * @returns {boolean}
+     */
     public isSelected(privilage: Privileges): boolean {
         // tslint:disable-next-line:no-bitwise
         return (this.user.privileges & privilage) > 0;

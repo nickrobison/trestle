@@ -33,6 +33,9 @@ export class ExporterComponent {
         this.loading = false;
     }
 
+    /**
+     * Click handler to export given dataset objects
+     */
     public click(): void {
         console.debug("Clicked export", this.dataExport);
         // If the input is undefined, or there are not individuals, skip

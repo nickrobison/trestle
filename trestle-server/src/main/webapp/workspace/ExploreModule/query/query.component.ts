@@ -23,23 +23,6 @@ export class QueryComponent implements OnInit {
 
     constructor(private queryService: QueryService) { }
 
-    public executeQuery(queryString: string) {
-        console.debug("Executing query:", queryString);
-        this.loading = true;
-        this.errorMessage = null;
-        this.queryService.executeQuery(queryString)
-            .subscribe((result: ITrestleResultSet) => {
-            console.debug("Results:", result);
-            this.loading = false;
-            this.results = result;
-            }, (error: Response) => {
-            console.error(error);
-            this.loading = false;
-            this.results = null;
-            this.errorMessage = error.toString();
-            });
-    }
-
     public ngOnInit(): void {
         this.queryService.getPrefixes()
             .subscribe((prefixObject) => {
@@ -54,6 +37,27 @@ export class QueryComponent implements OnInit {
                 });
                 console.debug("Built string:", prefixString.join(""));
                 this.prefixes = prefixString.join("");
+            });
+    }
+
+    /**
+     * Execute SPARQL query against the databse
+     * @param {string} queryString
+     */
+    public executeQuery(queryString: string) {
+        console.debug("Executing query:", queryString);
+        this.loading = true;
+        this.errorMessage = null;
+        this.queryService.executeQuery(queryString)
+            .subscribe((result: ITrestleResultSet) => {
+                console.debug("Results:", result);
+                this.loading = false;
+                this.results = result;
+            }, (error: Response) => {
+                console.error(error);
+                this.loading = false;
+                this.results = null;
+                this.errorMessage = error.toString();
             });
     }
 }

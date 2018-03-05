@@ -34,6 +34,11 @@ export class SpatialUnionComponent implements OnChanges {
         }
     }
 
+    /**
+     * Filter individual label and only return the suffix
+     * @param {IEventElement} input
+     * @returns {string}
+     */
     public filterLabel(input: IEventElement): string {
         return TrestleIndividual.extractSuffix(input.entity);
     }

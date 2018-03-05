@@ -15,6 +15,13 @@ export class IndividualService {
                 private individualCache: CacheService<string, TrestleIndividual>) {
     }
 
+    /**
+     * Searhc for an individual in the database
+     * @param {string} name of the individual to search for (partial value)
+     * @param {string} dataset to restrict queries to
+     * @param {number} limit number of return values
+     * @returns {Observable<string[]>}
+     */
     public searchForIndividual(name: string, dataset = "", limit = 10): Observable<string[]> {
         const params = new URLSearchParams();
         params.set("name", name);
