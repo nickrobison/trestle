@@ -117,6 +117,10 @@ export class DatsetViewerComponent implements OnInit {
         }
     }
 
+    /**
+     * Update map bounds, and fetch new data, if necessary
+     * @param {mapboxgl.LngLatBounds} bounds
+     */
     public updateBounds(bounds: LngLatBounds): void {
         console.debug("Moving, updating bounds", bounds);
         // If we've moved outside of the current bounds, get new data
@@ -132,6 +136,10 @@ export class DatsetViewerComponent implements OnInit {
         }
     }
 
+    /**
+     * Handler to update time slider, and fetch new data
+     * @param {MatSliderChange} event
+     */
     public sliderChanged = (event: MatSliderChange): void => {
         console.debug("Value changed to:", event);
         if (event.value) {
@@ -143,6 +151,10 @@ export class DatsetViewerComponent implements OnInit {
         }
     };
 
+    /**
+     * Map click handler, which currently fetches the object as a {TrestleIndividual}
+     * @param {string} event
+     */
     public mapClicked = (event: string): void => {
         console.debug("Clicked:", event);
         this.vs.getTrestleIndividual(event)
@@ -152,6 +164,11 @@ export class DatsetViewerComponent implements OnInit {
             });
     };
 
+    /**
+     * Get error from {IDatasetState}
+     * @param {IDatasetState} ds
+     * @returns {string}
+     */
     public getError(ds: IDatasetState): string {
         return ds.error === undefined ? "Error" : ds.error;
     }

@@ -64,6 +64,10 @@ export class MetricsComponent implements OnInit, DoCheck {
         }
     }
 
+    /**
+     * Add metrics data
+     * @param {string} metric
+     */
     public addData(metric: string): void {
         console.debug("Adding data:", metric);
         this.loadingData = true;
@@ -75,11 +79,17 @@ export class MetricsComponent implements OnInit, DoCheck {
             });
     }
 
+    /**
+     * Export all metrics as a CSV file
+     */
     public exportAllMetrics = (): void => {
         console.debug("Exporting all metrics");
         this.exportMetrics(null, this.startTime.valueOf(), this.nowTime.valueOf());
     };
 
+    /**
+     * Export the currently selected and filtered metrics to a CSV file
+     */
     public exportVisibleMetrics(): void {
         this.exportMetrics(this.graph.getVisibleMetrics(),
             this.startTime.valueOf(),

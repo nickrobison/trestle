@@ -82,6 +82,10 @@ export class MapService {
             .map((m: MessageEvent) => (m.data as IMapWorkerResponse));
     }
 
+    /**
+     * Returns the list of currently registered datasets from the database
+     * @returns {Observable<string[]>}
+     */
     public getAvailableDatasets(): Observable<string[]> {
         return this.http.get("/visualize/datasets")
             .map((res: Response) => {
@@ -125,6 +129,15 @@ export class MapService {
             .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
 
+    /**
+     * Performa a spatio-temporal intersection for the given WKT boundary, returning the results as a list of {TrestleIndividual}
+     * @param {string} dataset to use
+     * @param {wktValue} wkt boundary
+     * @param {moment.Moment} validTime of intersection
+     * @param {moment.Moment} dbTime of intersection
+     * @param {number} buffer (in meters) around boundary
+     * @returns {Observable<TrestleIndividual[]>}
+     */
     public stIntersectIndividual(dataset: string,
                                  wkt: wktValue,
                                  validTime?: Moment,
@@ -150,6 +163,11 @@ export class MapService {
             .map(MapService.parseResponseToIndividuals);
     }
 
+    /**
+     * Perform a spatio-temporal comparison between the input object and the given set of comparison objects
+     * @param {ICompareBody} request
+     * @returns {Observable<IComparisonReport>}
+     */
     public compareIndividuals(request: ICompareBody): Observable<IComparisonReport> {
         return this.http.post("/visualize/compare", request)
             .map((results) => results.json())

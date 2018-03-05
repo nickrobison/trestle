@@ -28,14 +28,26 @@ export class TrestleToken {
         this.user = JSON.parse(token["data4j"]);
     }
 
+    /**
+     * Get token expiration time (in ms from Unix epoch)
+     * @returns {number}
+     */
     public getExpiration() {
         return this.exp;
     }
 
+    /**
+     * Get issuance time (in ms from Unix epoch)
+     * @returns {number}
+     */
     public getIssue() {
         return this.iat;
     }
 
+    /**
+     * Get the user from the token
+     * @returns {ITrestleUser}
+     */
     public getUser() {
         return this.user;
     }
@@ -60,6 +72,12 @@ export class AuthService {
         this.jwtHelper = new JwtHelper();
     }
 
+    /**
+     * Attempt to login the given use
+     * @param {string} username
+     * @param {string} password
+     * @returns {Observable<void>}
+     */
     public login(username: string, password: string): Observable<void> {
         return this.http.post("/auth/login", {username, password: password})
             .map((response) => {
@@ -69,6 +87,9 @@ export class AuthService {
             }, (error: Error) => console.log(error));
     }
 
+    /**
+     * Logout the user
+     */
     public logout(): void {
         if (this.loggedIn()) {
             this.http.post("/auth/logout", null);
@@ -78,6 +99,10 @@ export class AuthService {
         }
     }
 
+    /**
+     * Is the user currently logged in?
+     * @returns {boolean}
+     */
     public loggedIn(): boolean {
         const token = localStorage.getItem(_key);
         if (token) {
@@ -91,6 +116,10 @@ export class AuthService {
         return tokenNotExpired();
     }
 
+    /**
+     * Does the user have AT LEAST Admin permissions?
+     * @returns {boolean}
+     */
     public isAdmin(): boolean {
         if (this.loggedIn()) {
             const token = this.getToken();
@@ -100,6 +129,10 @@ export class AuthService {
         return false;
     }
 
+    /**
+     * Get the user, if one exists
+     * @returns {TrestleUser | null}
+     */
     public getUser(): TrestleUser | null {
         if (this.loggedIn()) {
             const token = this.getToken();

@@ -28,6 +28,10 @@ export class MetricsService {
     constructor(private authHttp: TrestleHttp) {
     }
 
+    /**
+     * Get initial data about available metrics
+     * @returns {Observable<ITrestleMetricsHeader>}
+     */
     public getMetrics(): Observable<ITrestleMetricsHeader> {
         return this.authHttp.get("/metrics")
             .map((res) => {
@@ -37,6 +41,13 @@ export class MetricsService {
             .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
 
+    /**
+     * Get values for a specified metric ID that falls within the given range
+     * @param {string} metricID to fetch
+     * @param {number} start of temporal period for metrics data
+     * @param {number} end of temporal period for metrics data
+     * @returns {Observable<IMetricsData>}
+     */
     public getMetricValues(metricID: string, start: number, end: number): Observable<IMetricsData> {
         console.debug("Retrieving values for metric: " + metricID + " from: " + start + " to: " + end);
         const params = new URLSearchParams();
@@ -74,6 +85,13 @@ export class MetricsService {
             .catch((error: Error) => Observable.throw(error || "Sever Error"));
     }
 
+    /**
+     * Export the given metric values as a CSV file
+     * @param {string[] | null} metrics to export
+     * @param {number} start of temporal period
+     * @param {number} end of temporal period
+     * @returns {Observable<Blob>}
+     */
     public exportMetricValues(metrics: null | string[], start: number, end?: number): Observable<Blob> {
         return this.authHttp.post("/metrics/export", {
                 metrics,

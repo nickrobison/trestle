@@ -26,12 +26,19 @@ export class AdminComponent implements OnInit {
         this.userLoggedIn.next(this.authService.loggedIn());
     }
 
+    /**
+     * If the user is not logged in, send them to the login page
+     */
     public login(): void {
         if (!this.userLoggedIn) {
             this.router.navigate(["/login"]);
         }
     }
 
+    /**
+     * Get the Gravitar URL for the logged in user
+     * @returns {string}
+     */
     public getGravatarURL(): string {
         if (this.gravatarURL == null) {
             let user = this.authService.getUser();
@@ -44,6 +51,9 @@ export class AdminComponent implements OnInit {
         return this.gravatarURL;
     }
 
+    /**
+     * Logout the user
+     */
     public logout(): void {
         this.authService.logout();
         this.userLoggedIn.next(false);

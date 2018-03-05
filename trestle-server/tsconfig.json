@@ -5,9 +5,6 @@
     "experimentalDecorators": true,
     "alwaysStrict": true,
     "strict": true,
-//    "noImplicitAny": true,
-//    "noImplicitThis": true,
-//    "noImplicitReturns": true,
     "lib": [
       "es6",
       "dom"
@@ -30,9 +27,5 @@
     "target"
   ],
   "compileOnSave": true,
-  "buildOnSave": false,
-  "angularCompilerOptions": {
-    "genDir": "./compiled",
-    "skipMetadataEmit": true
-  }
+  "buildOnSave": false
 }

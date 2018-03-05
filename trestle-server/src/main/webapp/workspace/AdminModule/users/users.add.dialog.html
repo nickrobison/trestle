@@ -2,7 +2,7 @@
 <h3 *ngIf="isUpdate()" md-dialog-title>Modify {{user.username}}</h3>
 <mat-dialog-content>
     <div class="row">
-        <form #f="ngForm" novalidate (ngSubmit)="saveWithValid(f.value, f.valid)" class="col s12">
+        <form #f="ngForm" novalidate class="col s12">
             <div class="row">
                 <div class="input-field col s6">
                     <input id="first_name" type="text" [(ngModel)]="user.firstName" name="firstName">

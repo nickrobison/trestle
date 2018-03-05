@@ -61,6 +61,10 @@ export class MetricsGraph implements AfterViewInit, OnChanges {
         }
     }
 
+    /**
+     * Get all metrics that aren't currently disabled
+     * @returns {string[]}
+     */
     public getVisibleMetrics(): string[] {
         const metrics = Array<string>();
         this.visible.forEach((value, key) => {

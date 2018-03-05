@@ -37,7 +37,7 @@
     "moment": "^2.21.0",
     "moment-timezone": "^0.5.14",
     "optimize-js-plugin": "^0.0.4",
-    "rxjs": "5.5.6",
+    "rxjs": "5.5.2",
     "stacktrace-js": "^2.0.0",
     "transitory": "^1.2.0",
     "web-animations-js": "^2.3.1",

@@ -25,10 +25,20 @@ export class IndexComponent implements AfterViewInit {
         this.loadStatistics();
     }
 
+    /**
+     * Update the currently selected triangle, in case we want to do something with it
+     * @param {string} event
+     * @param {string} updateVariable
+     */
     public updateSelected(event: string, updateVariable: string): void {
         updateVariable = event;
     }
 
+    /**
+     * Open modal to perform index maintenance
+     * @param {"Rebuild" | "Purge"} action to perform
+     * @param {string} object which cache are we using
+     */
     public openDialog(action: "Rebuild" | "Purge", object: string): void {
         const dialogRef = this.dialog.open(WarningDialogComponent, {
             data: {
