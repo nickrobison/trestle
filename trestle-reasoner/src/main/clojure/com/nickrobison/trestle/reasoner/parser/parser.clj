@@ -3,7 +3,6 @@
            (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter SpatialParser IClassBuilder IClassRegister ClassBuilder)
            (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom OWLDataProperty OWLLiteral OWLDatatype)
            (java.lang.reflect Constructor Parameter)
-           (java.lang.invoke MethodHandle)
            (com.nickrobison.trestle.reasoner.annotations DatasetClass Fact Language)
            (java.util Optional List)
            (com.nickrobison.trestle.common StaticIRI LanguageUtils)
@@ -97,43 +96,6 @@
                                        clazz
                                        InvalidClassException$State/MISSING
                                        "OWL Class"))))))
-
-(defn invoker
-  "Invoke method handle"
-  ; We need to use invokeWithArguments to work around IDEA-154967
-  ([^MethodHandle handle object]
-   (try
-     (log/debugf "Invoking method handle %s on %s" handle object)
-     (.invokeWithArguments handle (object-array [object]))
-     (catch Exception e
-       (log/error "Problem invoking" e))))
-  ([^MethodHandle handle object & args]
-   (try
-     (log/debugf "Invoking method handle %s on %s with args %s"
-                 handle
-                 object
-                 args)
-     (.invokeWithArguments handle (object-array [object args]))
-     (catch Exception e
-       (log/error "Problem invoking %s on %s" handle object e)))))
-
-(defn invoke-constructor
-  "Invoke Constructor Method Handle"
-  ; We need to use invokeWithArguments to work around IDEA-154967
-  ([^MethodHandle handle]
-   (try
-     (log/debugf "Invoking constructor %s" handle)
-     (.invokeWithArguments handle (object-array []))
-     (catch Exception e
-       (log/error "Problem invoking" e))))
-  ([^MethodHandle handle & args]
-   (try
-     (log/debugf "Invoking constructor %s with args %s" handle args)
-     ; I honestly have no idea why we need to do first, but that's how it is
-     (.invokeWithArguments handle (object-array (first args)))
-     (catch Exception e
-       (log/error "Problem invoking" e))))
-  )
 
 (defn owl-return-type
   "Determine the OWLDatatype of the field/method"
@@ -316,7 +278,7 @@
 (defmethod build-assertion-axiom ::pred/spatial
   [^OWLDataFactory df ^OWLNamedIndividual individual member inputObject]
   (let [wktOptional (SpatialParser/parseOWLLiteralFromGeom
-                      (invoker (get member :handle) inputObject))]
+                      (m/invoker (get member :handle) inputObject))]
     (if (.isPresent wktOptional)
       (.getOWLDataPropertyAssertionAxiom df
                                          ^OWLDataProperty (get member :data-property)
@@ -328,7 +290,7 @@
                                      ^OWLDataProperty (get member :data-property)
                                      individual
                                      (build-literal df
-                                                    (invoker (get member :handle) inputObject)
+                                                    (m/invoker (get member :handle) inputObject)
                                                     (get member :owl-datatype)
                                                     (get member :language))))
 (defmethod build-assertion-axiom :default
@@ -337,7 +299,7 @@
                                      ^OWLDataProperty (get member :data-property)
                                      individual
                                      (build-literal df
-                                                    (invoker (get member :handle) inputObject)
+                                                    (m/invoker (get member :handle) inputObject)
                                                     (get member :owl-datatype))))
 
 (defmulti member-matches?
@@ -432,7 +394,7 @@
     (let [parsedClass (.getRegisteredClass this (.getClass inputObject))]
       (.getOWLNamedIndividual df
                               (IRI/create reasonerPrefix
-                                          (m/normalize-id (invoker (get
+                                          (m/normalize-id (m/invoker (get
                                                                      (get parsedClass :identifier)
                                                                      :handle)
                                                                    inputObject))))))
@@ -522,7 +484,7 @@
       ; Are we missing parameters?
       (if (empty? missingParams)
         ; If missingParams is empty, we have everything we need, so build the object
-        (invoke-constructor (:handle constructor) sortedValues)
+        (m/invoke-constructor (:handle constructor) sortedValues)
         ((log/errorf "Missing constructor arguments needs %s\n%s\n%s" missingParams parameterNames sortedValues)
           (throw (MissingConstructorException. "Missing parameters required for constructor generation"))))))
 

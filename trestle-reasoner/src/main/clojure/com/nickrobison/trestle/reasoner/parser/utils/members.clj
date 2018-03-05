@@ -2,12 +2,13 @@
   (:import (org.semanticweb.owlapi.model IRI OWLDataFactory)
            (com.nickrobison.trestle.common StaticIRI)
            (com.nickrobison.trestle.reasoner.annotations Spatial Fact TrestleDataProperty)
-           (java.lang.invoke MethodHandles)
+           (java.lang.invoke MethodHandles MethodHandle)
            (java.lang.reflect Constructor Method Field)
            (com.nickrobison.trestle.reasoner.exceptions InvalidClassException InvalidClassException$State))
   (:require [com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]
             [clojure.string :as string]
-            [clojure.core.reducers :as r]))
+            [clojure.core.reducers :as r]
+            [clojure.tools.logging :as log]))
 
 ; Filter functions
 (defn filter-member-name-iri
@@ -47,6 +48,42 @@
 (defmethod make-handle Field [field] (.unreflectGetter (MethodHandles/lookup) field))
 (defmethod make-handle Method [method] (.unreflect (MethodHandles/lookup) method))
 (defmethod make-handle Constructor [constructor] (.unreflectConstructor (MethodHandles/lookup) constructor))
+
+(defn invoker
+  "Invoke method handle"
+  ; We need to use invokeWithArguments to work around IDEA-154967
+  ([^MethodHandle handle object]
+   (try
+     (log/debugf "Invoking method handle %s on %s" handle object)
+     (.invokeWithArguments handle (object-array [object]))
+     (catch Exception e
+       (log/error "Problem invoking" e))))
+  ([^MethodHandle handle object & args]
+   (try
+     (log/debugf "Invoking method handle %s on %s with args %s"
+                 handle
+                 object
+                 args)
+     (.invokeWithArguments handle (object-array [object args]))
+     (catch Exception e
+       (log/error "Problem invoking %s on %s" handle object e)))))
+
+(defn invoke-constructor
+  "Invoke Constructor Method Handle"
+  ; We need to use invokeWithArguments to work around IDEA-154967
+  ([^MethodHandle handle]
+   (try
+     (log/debugf "Invoking constructor %s" handle)
+     (.invokeWithArguments handle (object-array []))
+     (catch Exception e
+       (log/error "Problem invoking" e))))
+  ([^MethodHandle handle & args]
+   (try
+     (log/debugf "Invoking constructor %s with args %s" handle args)
+     ; I honestly have no idea why we need to do first, but that's how it is
+     (.invokeWithArguments handle (object-array (first args)))
+     (catch Exception e
+       (log/error "Problem invoking" e)))))
 
 ; Build the OWLDataProperties
 
