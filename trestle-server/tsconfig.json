@@ -9,7 +9,6 @@
 //    "noImplicitThis": true,
 //    "noImplicitReturns": true,
     "lib": [
-      "webworker",
       "es6",
       "dom"
     ],
