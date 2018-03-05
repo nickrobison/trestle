@@ -3,16 +3,29 @@ package com.nickrobison.trestle;
 import com.nickrobison.trestle.reasoner.TestClasses;
 import com.nickrobison.trestle.reasoner.TestClasses.GAULTestClass;
 import com.nickrobison.trestle.reasoner.TrestleAPITest;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.Polygon;
+import org.geotools.data.DataStore;
+import org.geotools.data.DataStoreFinder;
+import org.geotools.data.FeatureSource;
+import org.geotools.feature.FeatureCollection;
+import org.geotools.feature.FeatureIterator;
+import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.filter.Filter;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SharedUtils {
 
@@ -55,5 +68,33 @@ public class SharedUtils {
         }
 
         return gaulObjects;
+    }
+
+
+    public static List<TestClasses.ProjectionTestClass> readProjectionClass(String fileName, String idField) throws IOException {
+
+        List<TestClasses.ProjectionTestClass> countyObjects = new ArrayList<>();
+        final URL resource = TestClasses.class.getClassLoader().getResource(fileName);
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("url", resource);
+
+        DataStore dataStore = DataStoreFinder.getDataStore(map);
+        String typeName = dataStore.getTypeNames()[0];
+
+        FeatureSource<SimpleFeatureType, SimpleFeature> source = dataStore
+                .getFeatureSource(typeName);
+        Filter filter = Filter.INCLUDE;
+
+        FeatureCollection<SimpleFeatureType, SimpleFeature> collection = source.getFeatures(filter);
+        try (FeatureIterator<SimpleFeature> features = collection.features()) {
+            while (features.hasNext()) {
+                SimpleFeature feature = features.next();
+                final Geometry defaultGeometry = (Geometry) feature.getDefaultGeometry();
+                countyObjects.add(new TestClasses.ProjectionTestClass(Long.parseLong(feature.getAttribute(idField).toString()),
+                        defaultGeometry));
+            }
+        }
+        return countyObjects;
     }
 }

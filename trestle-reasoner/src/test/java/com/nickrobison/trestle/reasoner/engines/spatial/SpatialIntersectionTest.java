@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.reasoner.engines.spatial;
 
+import com.esri.core.geometry.SpatialReference;
 import com.google.common.collect.ImmutableList;
 import com.nickrobison.trestle.SharedUtils;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
@@ -16,6 +17,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import static com.nickrobison.trestle.SharedUtils.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Tag("integration")
@@ -25,7 +27,7 @@ public class SpatialIntersectionTest extends AbstractReasonerTest {
     @Test
     @Disabled
     public void spatialIntersectionTest() throws IOException {
-        final List<TestClasses.GAULTestClass> gaulObjects = SharedUtils.readGAULObjects();
+        final List<TestClasses.GAULTestClass> gaulObjects = readGAULObjects();
         gaulObjects.parallelStream().forEach(gaul -> {
             try {
                 reasoner.writeTrestleObject(gaul);
@@ -79,6 +81,48 @@ public class SpatialIntersectionTest extends AbstractReasonerTest {
 
     }
 
+    @Test
+    public void testSpatialProjection() throws IOException {
+//        Load both of the test datasets
+//        Start with King County state plane
+        final List<TestClasses.ProjectionTestClass> kingCountyShapes = readProjectionClass("king_county/kc.shp", "OBJECTID");
+        kingCountyShapes
+                .parallelStream()
+                .forEach(county -> {
+                    try {
+                        this.reasoner.writeTrestleObject(county);
+                    } catch (TrestleClassException | MissingOntologyEntity e) {
+                        e.printStackTrace();
+                    }
+                });
+
+//        Now the US census data
+        readProjectionClass("tiger_kc/tiger_kc.shp", "GEOID10")
+                .parallelStream()
+                .forEach(census -> {
+                    try {
+                        this.reasoner.writeTrestleObject(census);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+
+//        Try to intersect with a WGS 84 point
+        final Optional<List<TestClasses.ProjectionTestClass>> intersectedClasses = this.reasoner.spatialIntersect(TestClasses.ProjectionTestClass.class
+                , "POINT(-122.3550465, 47.6754881)", 0);
+        assertAll(() -> assertTrue(intersectedClasses.isPresent(), "Should have intersected objects"),
+                () -> assertEquals(2, intersectedClasses.get().size(), "Should have intersected with 2 objects"));
+
+//        The 2 objects should be equal
+        final SpatialComparisonReport spatialComparisonReport = this.reasoner.compareTrestleObjects(intersectedClasses.get().get(0),
+                intersectedClasses.get().get(1),
+                SpatialReference.create(4326),
+                .9);
+        assertAll(() -> assertTrue(spatialComparisonReport.getEquality().isPresent(), "Should have equality"),
+                () -> assertTrue(spatialComparisonReport.getEquality().get() > 0.99, "Should be almost exactly equal"));
+
+    }
+
 
     @Override
     protected String getTestName() {
@@ -87,6 +131,7 @@ public class SpatialIntersectionTest extends AbstractReasonerTest {
 
     @Override
     protected ImmutableList<Class<?>> registerClasses() {
-        return ImmutableList.of(TestClasses.GAULTestClass.class);
+        return ImmutableList.of(TestClasses.GAULTestClass.class, TestClasses.ProjectionTestClass.class);
     }
+
 }

@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -184,11 +185,11 @@ public class TestClasses {
         }
     }
 
-    @DatasetClass(name ="GAUL_Test")
+    @DatasetClass(name = "GAUL_Test")
     public static class GAULTestClass implements Serializable {
         private static final long serialVersionUID = 42L;
 
-        @Fact(name="adm0_code", datatype= OWL2Datatype.XSD_INTEGER)
+        @Fact(name = "adm0_code", datatype = OWL2Datatype.XSD_INTEGER)
         public int adm0_code;
         public String adm0_name;
         @IndividualIdentifier
@@ -429,7 +430,7 @@ public class TestClasses {
         private final String frenchString;
         private final String englishGBString;
         private final LocalDate defaultTime;
-//        @Language(language = "kk")
+        //        @Language(language = "kk")
         public final String testString2;
         private final String testString2cs;
         @IndividualIdentifier
@@ -557,6 +558,53 @@ public class TestClasses {
             result = 31 * result + getWkt().hashCode();
             result = 31 * result + testValue.hashCode();
             return result;
+        }
+    }
+
+    @DatasetClass(name = "state-plane")
+    public static class ProjectionTestClass {
+        private static final long serialVersionUID = 42L;
+
+        private final LocalDate startTemporal;
+        private final Long objectid;
+        private final Geometry geom;
+
+
+        public ProjectionTestClass(Long objectid, Geometry geom) {
+            this.objectid = objectid;
+            this.geom = geom;
+            this.startTemporal = LocalDate.of(2010, 1, 1);
+        }
+
+        @DefaultTemporal(duration = 5, unit = ChronoUnit.YEARS, type = TemporalType.INTERVAL)
+        public LocalDate getStartTemporal() {
+            return startTemporal;
+        }
+
+        @IndividualIdentifier
+        public Long getObjectid() {
+            return objectid;
+        }
+
+        @Spatial
+        public Geometry getGeom() {
+            return geom;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ProjectionTestClass that = (ProjectionTestClass) o;
+            return Objects.equals(startTemporal, that.startTemporal) &&
+                    Objects.equals(objectid, that.objectid) &&
+                    Objects.equals(geom, that.geom);
+        }
+
+        @Override
+        public int hashCode() {
+
+            return Objects.hash(startTemporal, objectid, geom);
         }
     }
 }
