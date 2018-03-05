@@ -1,5 +1,129 @@
 # Trestle Changelog
 
+## 0.8.2
+
+This is a fairly small release with only minor changes to the Java backend, but some pretty significant improvements the web UI,
+we strongly recommend upgrading to this release if you depend on the UI to properly function.
+
+### Breaking changes
+There shouldn't be any breaking changes in this release; however, the ```TrestleReasoner``` interface was refactored any many of the existing methods are now located on domain specific interfaces, which the main interface extends.
+If you were relying on ```TrestleReasoner``` to directly declare those methods, you may have a problem. Otherwise, everything should work as expected.
+
+### Improvements
+
+#### Backend
+The backend code underwent a significant refactoring with most of the functionality extracted from ```TrestleReasonerImpl``` and moved into specified *engine* modules,
+which are the injected into reasoner as needed.
+
+Last month, we updated our Sonar instllation to the 7.0 branch, which generated a huge number of additional warnings and flags.
+So we took some time to clean those up and make some improvements.
+There weren't any radical changes, but we did address a number of auto-boxing warnings and improperly closed file handles.
+Always nice to tighten the screws.
+
+#### UI
+
+The web UI underwent a number of tweaks in this release. Aside some some squashed bugs, there shouldn't be much visible to the user, but behind the scenese, things are different.
+
+##### Testing
+
+We now have some simple *end-to-end* tests running on each pull request and development commit.
+We've already identified and addressed a number of really annoying bugs (such as the application not loading correctly on the first try) and hopefully this will help us keep things moving along.
+We're currently running the tests against Firefox on the CI server, since Chromium is having some problems.
+Which means we fixed some of the scaling issues in Firefox.
+
+#### Performance and build
+
+The biggest change in this release, is that we completely revamped the application bundling process to dramatic effect.
+Our development builds saw a 31.65% decrease in size (from 17.11MB to 11.69MB) and our production builds went down 42.86% (from 9.51MB to 5.43MB).
+That's still not great, but much better than it was.
+
+We also now do much better code splitting and only load polyfills as required by the brower, which we check at runtime. The final bundling improvement is that we now pre-build gzip and brotli compressed assets, and serve those based on the appropriate request headers.
+The Brotli files are 20% smaller than gzip for our production build (982.9K vs 1.24MB). Nice!
+
+
+Rounding out the UI changes are some small performance improvements. We now use a proper cache when stashing our individuals, instead of the homegrown ```Map``` implementation.
+We also employ some caching within the ```TrestleIndividual``` class to avoid having to constantly search for spatial members or recompute the IDs.
+
+Finally, we've implemented a simple web worker to handle some of the GeoJSON processing, so we don't block the main thread.
+Not really that useful right now, but a good start.  
+
+
+### Completed Tickets
+    
+<h4>        New Feature
+</h4>
+<ul>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-629'>TRESTLE-629</a>] -         Add permissions test
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-630'>TRESTLE-630</a>] -         Add user create/delete/modify test
+</li>
+</ul>
+    
+<h4>        Task
+</h4>
+<ul>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-619'>TRESTLE-619</a>] -         Resolve Sonar warnings
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-620'>TRESTLE-620</a>] -         Upgrade Hadoop to 3.0
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-627'>TRESTLE-627</a>] -         Implement E2E testing in Bamboo
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-662'>TRESTLE-662</a>] -         Improve UI build process
+</li>
+</ul>
+    
+<h4>        Improvement
+</h4>
+<ul>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-466'>TRESTLE-466</a>] -         Move Concept code into its own engine
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-480'>TRESTLE-480</a>] -         Migrate TrestleObject code to its own module
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-567'>TRESTLE-567</a>] -         Add jsondoc strings
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-568'>TRESTLE-568</a>] -         Address Javadoc warnings
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-616'>TRESTLE-616</a>] -         Optimize bundling
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-617'>TRESTLE-617</a>] -         Conditionally load pollyfills
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-632'>TRESTLE-632</a>] -         Move exporter code into its own engine
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-639'>TRESTLE-639</a>] -         Reasoner Prefix binding should be an annotation
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-647'>TRESTLE-647</a>] -         Individual Service should use a proper cache, not a Map
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-648'>TRESTLE-648</a>] -         IndividualService should be a worker
+</li>
+</ul>
+    
+<h4>        Bug
+</h4>
+<ul>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-626'>TRESTLE-626</a>] -         Login page tests are broken
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-642'>TRESTLE-642</a>] -         ExpressionChangedAfterItHasBeenCheckedError seems to be blocking window loading
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-644'>TRESTLE-644</a>] -         E2E tests are failing on Firefox
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-645'>TRESTLE-645</a>] -         Login/Logout status is not refreshing correctly
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-646'>TRESTLE-646</a>] -         Admin/DBA permissions are not working correctly
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-656'>TRESTLE-656</a>] -         Dataset viewer is not drawing map labels correctly.
+</li>
+</ul>
+            
+<h4>        Epic
+</h4>
+<ul>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-624'>TRESTLE-624</a>] -         Reorganize internal engines
+</li>
+<li>[<a href='https://development.nickrobison.com:2096/jira/browse/TRESTLE-625'>TRESTLE-625</a>] -         Implement some basic E2E testing
+</li>
+</ul>
+  
+
 
 ## 0.8.1
 
@@ -16,7 +140,7 @@ so one option going forward is to simply disable the Clojure parser until you're
 
 ```yaml
 trestle {
-  userClojureParser = false
+  useClojureParser: false
 }
 ```
 
