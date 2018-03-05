@@ -2,7 +2,7 @@
  * Created by nrobison on 3/7/17.
  */
 import { Injectable } from "@angular/core";
-import { URLSearchParams, Response } from "@angular/http";
+import { Response, URLSearchParams } from "@angular/http";
 import { TrestleHttp } from "../../UserModule/trestle-http.provider";
 import { TrestleIndividual } from "./TrestleIndividual/trestle-individual";
 import { CacheService } from "../cache/cache.service";

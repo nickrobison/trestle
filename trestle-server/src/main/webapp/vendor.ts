@@ -44,4 +44,5 @@ import "moment";
 import "moment-timezone";
 import "./rxjs-operators";
 import "stacktrace-js";
+import "transitory";
 import "wellknown";

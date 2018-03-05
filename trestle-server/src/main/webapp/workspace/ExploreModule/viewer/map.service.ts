@@ -1,22 +1,19 @@
 /**
  * Created by nrobison on 6/23/17.
  */
-import {Injectable} from "@angular/core";
-import {TrestleHttp} from "../../UserModule/trestle-http.provider";
-import {Response} from "@angular/http";
-import {Observable} from "rxjs/Observable";
-import {LngLatBounds} from "mapbox-gl";
-import {Feature, FeatureCollection, GeometryObject, MultiPolygon, Polygon} from "geojson";
-import {Moment} from "moment";
-import {
-    ITrestleIndividual,
-    TrestleIndividual
-} from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
-import {isNullOrUndefined} from "util";
+import { Injectable } from "@angular/core";
+import { TrestleHttp } from "../../UserModule/trestle-http.provider";
+import { Response } from "@angular/http";
+import { Observable } from "rxjs/Observable";
+import { LngLatBounds } from "mapbox-gl";
+import { FeatureCollection, GeometryObject, MultiPolygon, Polygon } from "geojson";
+import { Moment } from "moment";
+import { ITrestleIndividual, TrestleIndividual } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
+import { Subscriber } from "rxjs/Subscriber";
+import { isNullOrUndefined } from "util";
+import * as Worker from "worker-loader!./map.worker";
 
-var parse = require("wellknown");
-
-type wktType = "POINT" |
+export type wktType = "POINT" |
     "MULTIPOINT" |
     "LINESTRING" |
     "MULTILINESTRING" |
@@ -63,11 +60,26 @@ interface ICompareBody {
     compareAgainst: string[];
 }
 
+export interface IMapWorkerRequest {
+    id: number;
+    response: object[];
+}
+
+export interface IMapWorkerResponse {
+    id: number;
+    geom: FeatureCollection<GeometryObject>;
+}
+
 @Injectable()
 export class MapService {
+    private worker: Worker;
+    private workerStream: Observable<IMapWorkerResponse>;
 
     constructor(private http: TrestleHttp) {
-
+        //    Create the worker and register a stream for the results
+        this.worker = new Worker();
+        this.workerStream = Observable.fromEvent(this.worker, "message")
+            .map((m: MessageEvent) => (m.data as IMapWorkerResponse));
     }
 
     public getAvailableDatasets(): Observable<string[]> {
@@ -79,6 +91,15 @@ export class MapService {
             .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
 
+    /**
+     * Before a spatio-temporal interesction for the given WKT bounding box, returning a GeoJSON Feature Collection
+     * @param {string} dataset to use
+     * @param {wktValue} wkt boundary
+     * @param {moment.Moment} validTime of intersection
+     * @param {moment.Moment} dbTime of intersection
+     * @param {number} buffer (in meters) around boundary
+     * @returns {Observable<FeatureCollection<GeometryObject>>}
+     */
     public stIntersect(dataset: string,
                        wkt: wktValue,
                        validTime: Moment,
@@ -99,7 +120,8 @@ export class MapService {
         };
         console.debug("Post body", postBody);
         return this.http.post("/visualize/intersect", postBody)
-            .map(MapService.parseObjectToGeoJSON)
+            .map((res) => res.json())
+            .flatMap(this.parseToGeoJSONWorker)
             .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
 
@@ -134,50 +156,39 @@ export class MapService {
             .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
 
+    /**
+     * Parses an input set of generic objects, by sending them to a web worker to do the interesting stuff
+     * @param {object[]} objects
+     * @returns {Observable<FeatureCollection<GeometryObject>>}
+     */
+    private parseToGeoJSONWorker = (objects: object[]): Observable<FeatureCollection<GeometryObject>> => {
+        console.debug("Sending to worker");
+        const id = new Date().getTime();
+        const workerRequest: IMapWorkerRequest = {
+            id,
+            response: objects
+        };
+
+        //    Dispatch the event
+        this.worker.postMessage(workerRequest);
+
+        //    Subscribe to the event stream
+        return Observable.create((observer: Subscriber<FeatureCollection<GeometryObject>>) => {
+            this.workerStream
+                .filter((m) => m.id === id)
+                .subscribe((msg) => {
+                    console.debug("Has from worker:", msg);
+                    observer.next(msg.geom);
+                    observer.complete();
+                });
+        });
+    };
+
     private static parseResponseToIndividuals(res: Response): TrestleIndividual[] {
         const json = res.json();
         console.debug("Intersected result from server:", json);
         return json
             .map((individual: ITrestleIndividual) => new TrestleIndividual(individual));
-    }
-
-    private static parseObjectToGeoJSON(res: Response): FeatureCollection<GeometryObject> {
-        const features: Array<Feature<GeometryObject>> = [];
-        const responseObject: object[] = res.json();
-        responseObject.forEach((obj: any) => {
-            const properties: { [key: string]: {} } = {};
-            let geometry: GeometryObject | null = null;
-            let id = "";
-            Object.keys(obj).forEach((key: string) => {
-                const value: any = obj[key];
-                if (MapService.isSpatial(value)) {
-                    geometry = parse(value);
-                } else if (typeof value === "string") {
-                    if (MapService.isID(key)) {
-                        id = value;
-                        properties["id"] = value;
-                    } else {
-                        properties[key] = value;
-                    }
-                } else if (typeof value === "number" ||
-                    typeof value === "boolean") {
-                    properties[key] = value;
-                }
-            });
-            if (geometry) {
-                features.push({
-                    type: "Feature",
-                    id,
-                    geometry,
-                    properties
-                });
-            }
-        });
-
-        return {
-            type: "FeatureCollection",
-            features
-        };
     }
 
     private static normalizeToGeoJSON(geom: wktValue): Polygon | MultiPolygon {
@@ -201,44 +212,6 @@ export class MapService {
                 geom.getSouthWest().toArray()]]
             // crs: {type: "name", properties: {name: "EPSG:4326"}}
         };
-    }
-
-    /**
-     * Crummy regex function to determine if a provided value is a WKT literal
-     * @param x - any object at all
-     * @returns {boolean} is wkt
-     */
-    private static isSpatial(x: any): x is wktType {
-        if (typeof x === "string") {
-            const matches = x.match(/^([\w\-]+)/);
-            if (matches != null &&
-                (matches[0] === "MULTIPOLYGON" ||
-                    matches[0] === "POLYGON" ||
-                    matches[0] === "POINT" ||
-                    matches[0] === "MULTIPOINT" ||
-                    matches[0] === "LINESTRING" ||
-                    matches[0] === "MULTILINESTRING")) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Determines if a given {string} property name represents the object ID
-     * It does so by peaking at the last 2 characters to see if their lowercase representation equals 'id'
-     * @param x - Property name
-     * @returns {boolean} is id
-     */
-    private static isID(x: string): boolean {
-        if (x.toLowerCase() === "id") {
-            return true;
-        }
-        if (x.length >= 2) {
-            const sub = x.substring(x.length - 3, x.length - 1);
-            return sub.toLowerCase() === "id";
-        }
-        return false;
     }
 
     private static isGeometryObject(x: any): x is GeometryObject {

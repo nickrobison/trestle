@@ -19,6 +19,10 @@ var options = {
     module: {
         rules: [
             {
+                test: /\.worker\.js$/,
+                use: { loader: "worker-loader" }
+            },
+            {
                 test: /\.html$/,
                 loader: "html-loader"
             },

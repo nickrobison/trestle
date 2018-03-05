@@ -39,6 +39,7 @@
     "optimize-js-plugin": "^0.0.4",
     "rxjs": "5.5.2",
     "stacktrace-js": "^2.0.0",
+    "transitory": "^1.2.0",
     "web-animations-js": "^2.3.1",
     "wellknown": "^0.5.0",
     "zone.js": "0.8.20"
@@ -97,7 +98,8 @@
     "webpack-bundle-analyzer": "^2.10.0",
     "webpack-dev-server": "^2.11.0",
     "webpack-jarvis": "^0.2.2",
-    "webpack-merge": "^4.1.0"
+    "webpack-merge": "^4.1.0",
+    "worker-loader": "^1.1.1"
   },
   "scripts": {
     "watch": "webpack --colors --progress --watch --config config/webpack.dev.js",
