@@ -6,7 +6,6 @@ const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const DefinePlugin = require('webpack/lib/DefinePlugin');
 const CSPWebpackPlugin = require("csp-webpack-plugin");
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-const Jarvis = require("webpack-jarvis");
 const commonConfig = require("./webpack.common");
 const helpers = require("./helpers");
 const env = require("./env");
@@ -25,7 +24,6 @@ var plugins = [
 // If analyze is enabled, enable the bundle analyzer and Jarvis
 if (env.analyze) {
     plugins.push([
-        new Jarvis(),
         new BundleAnalyzerPlugin()
     ]);
 }
@@ -51,7 +49,20 @@ var devOptions = {
                 test: /\.tsx?$/,
                 use: [
                     {
-                        loader: "awesome-typescript-loader"
+                        loader: "cache-loader"
+                    },
+                    {
+                        loader: "thread-loader",
+                        options: {
+                            workers: require("os").cpus().length - 2
+                        }
+                    },
+                    {
+                        loader: "ts-loader",
+                        options: {
+                            happyPackMode: true,
+                            transpileOnly: true
+                        }
                     },
                     {
                         loader: "angular2-template-loader",

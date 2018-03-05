@@ -77,3 +77,6 @@ docker/evaluation-docker/*.ttl
 docker/evaluation-docker/*.rdf
 docker/graphdb/*.zip
 
+# Cache for UI build
+trestle-server/.cache-loader
+
