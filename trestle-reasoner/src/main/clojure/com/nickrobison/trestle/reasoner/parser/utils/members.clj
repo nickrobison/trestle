@@ -6,6 +6,7 @@
            (java.lang.reflect Constructor Method Field)
            (com.nickrobison.trestle.reasoner.exceptions InvalidClassException InvalidClassException$State))
   (:require [com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]
+            [com.nickrobison.trestle.reasoner.parser.utils.spatial :as spatial]
             [clojure.string :as string]
             [clojure.core.reducers :as r]
             [clojure.tools.logging :as log]))
@@ -130,7 +131,7 @@
 (defn trim-method-name
   "Filter the method name by removing extra characters"
   [method]
-  (let [name (.getName method)]
+  (let [name (.getName ^Method method)]
     (if (string/starts-with? name "get")
       ; Strip off the get and lower case the first letter
       (str (string/lower-case (subs name 3 4)) (subs name 4))
@@ -166,7 +167,21 @@
 (defmethod filter-constructor-name :default
   [member type]
   (if-let [data-annotation (pred/get-common-annotation member TrestleDataProperty)]
+    ; Reflection is ok here, we're trying to paper over annotation differences
     (if (not= "" (.name data-annotation))
       (.name data-annotation)
       (filter-java-member-name member))
     (filter-java-member-name member)))
+
+; Spatial methods
+(defn get-projection
+  "Get the Projection from the spatial member, or use the default"
+  [member defaultProjection]
+  (let [annotation (pred/get-annotation member Spatial)
+        projection (.projection ^Spatial annotation)]
+    (spatial/validate-spatial-projection
+                              (if (= projection 0)
+                                ; If we haven't specified a projection, use the default
+                                defaultProjection
+                                ; Otherwise, return the annotated projection
+                                projection))))

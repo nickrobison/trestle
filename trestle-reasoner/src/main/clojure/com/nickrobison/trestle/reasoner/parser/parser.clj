@@ -178,9 +178,22 @@
                   })
       acc)))
 
+; Process the spatial member, if it actually is one
+(defn build-spatial
+  "If we're a spatial member, get the projection"
+  [acc member defaultProjection]
+  (let [type (:type acc)]
+    (if (= type ::pred/spatial)
+      (merge acc {
+                  :projection (m/get-projection member defaultProjection)
+                  })
+      ; Return the member if we're not spatial
+      acc))
+  )
+
 (defn build-member
   "Build member from class methods/fields"
-  [member ^OWLDataFactory df prefix defaultLang]
+  [member ^OWLDataFactory df prefix defaultLang defaultProjection]
   (let [iri (m/build-iri member prefix)]
     (merge (build-member-map member
                              ; Apply all these transformations to build up the member map
@@ -191,7 +204,9 @@
                               ignore-fact
                               (fn [acc member]
                                 (build-multi-lang acc member defaultLang))
-                              build-temporal])
+                              build-temporal
+                              (fn [acc member]
+                                (build-spatial acc member defaultProjection))])
            {
             :iri           iri
             :data-property (.getOWLDataProperty df iri)
@@ -354,6 +369,7 @@
                                ^String reasonerPrefix,
                                ^boolean multiLangEnabled,
                                ^String defaultLanguageCode
+                               ^Integer defaultProjection
                                classRegistry
                                owlClassMap]
   IClassParser
@@ -372,7 +388,7 @@
                              ; Filter out non-necessary members
                              (r/filter pred/filter-member)
                              ; Build members
-                             (r/map #(build-member % df reasonerPrefix (if (true? multiLangEnabled) defaultLanguageCode nil)))
+                             (r/map #(build-member % df reasonerPrefix (if (true? multiLangEnabled) defaultLanguageCode nil) defaultProjection))
                              ; Combine everything into a map
                              (r/reduce member-reducer {
                                                        :class-name   (get-class-name
@@ -525,8 +541,9 @@
 
 (defn make-parser
   "Creates a new ClassParser"
-  [df reasonerPrefix multiLangEnabled defaultLanguageCode]
+  [df reasonerPrefix multiLangEnabled defaultLanguageCode defaultProjection]
   (->ClojureClassParser df reasonerPrefix
-                        multiLangEnabled defaultLanguageCode
+                        multiLangEnabled
+                        defaultLanguageCode defaultProjection
                         (atom {})
                         (atom {})))

@@ -21,6 +21,7 @@ public class TrestleParserModule extends PrivateModule {
     private static final Logger logger = LoggerFactory.getLogger(TrestleParserModule.class);
 
     private final String defaultLanguageCode;
+    private final Integer defaultProjection;
     private final boolean multiLangEnabled;
     private final boolean useClojure;
 
@@ -28,12 +29,15 @@ public class TrestleParserModule extends PrivateModule {
         final Config config = ConfigFactory.load().getConfig("trestle");
         this.useClojure = config.getBoolean("useClojureParser");
         this.defaultLanguageCode = config.getString("defaultLanguage");
+        this.defaultProjection = config.getInt("defaultProjection");
         this.multiLangEnabled = config.getBoolean("enableMultiLanguage");
     }
 
     public TrestleParserModule(boolean multiLangEnabled, String defaultLanguageCode) {
-        this.useClojure = ConfigFactory.load().getConfig("trestle").getBoolean("useClojureParser");
+        final Config config = ConfigFactory.load().getConfig("trestle");
+        this.useClojure = config.getBoolean("useClojureParser");
         this.defaultLanguageCode = defaultLanguageCode;
+        this.defaultProjection = config.getInt("defaultProjection");
         this.multiLangEnabled = multiLangEnabled;
     }
 
@@ -72,6 +76,9 @@ public class TrestleParserModule extends PrivateModule {
         bind(String.class)
                 .annotatedWith(DefaultLanguageCode.class)
                 .toInstance(this.defaultLanguageCode);
+        bind(Integer.class)
+                .annotatedWith(DefaultProjection.class)
+                .toInstance(this.defaultProjection);
 
         bind(TrestleParser.class).in(Singleton.class);
         expose(TrestleParser.class);

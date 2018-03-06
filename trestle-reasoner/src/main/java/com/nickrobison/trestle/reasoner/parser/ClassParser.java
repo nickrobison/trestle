@@ -49,16 +49,19 @@ public class ClassParser implements IClassParser {
     private final String ReasonerPrefix;
     private final boolean multiLangEnabled;
     private final String defaultLanguageCode;
+    private final Integer defaultProjection;
 
 
     @Inject
     ClassParser(@com.nickrobison.trestle.ontology.ReasonerPrefix String reasonerPrefix,
                 @MultiLangEnabled boolean multiLangEnabled,
-                @DefaultLanguageCode String defaultLanguageCode) {
+                @DefaultLanguageCode String defaultLanguageCode,
+                @DefaultProjection Integer defaultProjection) {
         this.df = OWLManager.getOWLDataFactory();
         this.ReasonerPrefix = reasonerPrefix;
         this.multiLangEnabled = multiLangEnabled;
         this.defaultLanguageCode = defaultLanguageCode;
+        this.defaultProjection = defaultProjection;
     }
 
     @Override

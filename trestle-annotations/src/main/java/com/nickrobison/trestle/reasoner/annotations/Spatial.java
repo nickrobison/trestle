@@ -13,4 +13,5 @@ import java.lang.annotation.Target;
 @TrestleDataProperty
 public @interface Spatial {
     String name() default "";
+    int projection() default 0;
 }
