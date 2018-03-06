@@ -25,27 +25,21 @@ public class FactFactory {
         this.parser = parser;
     }
 
-
-//    /**
-//     * Construct an {@link TrestleFact}
-//     *
-//     * @param identifier       - {@link String} ID of Fact
-//     * @param name             - {@link String} name of Fact
-//     * @param value            - Value of type {@link T}
-//     * @param validTemporal    - {@link TemporalObject} valid temporal
-//     * @param databaseTemporal - {@link TemporalObject} database temporal
-//     * @param <T>              - Generic type parameter
-//     * @return - {@link TrestleFact}
-//     */
-//    public <T extends @NonNull Object> TrestleFact<T> createFact(String identifier, String name, T value, TemporalObject validTemporal, TemporalObject databaseTemporal) {
-//        return new TrestleFact<>(identifier, name, value, null, null, validTemporal, databaseTemporal);
-//    }
-
+    /**
+     * Construct a {@link TrestleFact}
+     *
+     * @param clazz            - {@link Class} type of Fact
+     * @param propertyAxiom    - {@link OWLDataPropertyAssertionAxiom} of literal value and type
+     * @param validTemporal    - {@link TemporalObject} valid temporal
+     * @param databaseTemporal - {@link TemporalObject} of database temporal
+     * @param <T>              - {@link T} generic type parameter
+     * @return - {@link TrestleFact}
+     */
     public <T extends @NonNull Object> TrestleFact<T> createFact(@Nullable Class<?> clazz, OWLDataPropertyAssertionAxiom propertyAxiom, TemporalObject validTemporal, TemporalObject databaseTemporal) {
         final OWLDataProperty factName = propertyAxiom.getProperty().asOWLDataProperty();
         final Optional<Class<?>> factDatatype = this.parser.getFactDatatype(clazz, factName.toStringID());
         //noinspection unchecked
-        final Class<T> factClass = (Class<T>)this.typeConverter.lookupJavaClassFromOWLDatatype(propertyAxiom, factDatatype.orElseThrow(() ->
+        final Class<T> factClass = (Class<T>) this.typeConverter.lookupJavaClassFromOWLDatatype(propertyAxiom, factDatatype.orElseThrow(() ->
                 new IllegalStateException(String.format("Cannot have null datatype for fact %s on Individual %s",
                         factName, propertyAxiom.getSubject()))));
         final OWLLiteral literal = propertyAxiom.getObject();
