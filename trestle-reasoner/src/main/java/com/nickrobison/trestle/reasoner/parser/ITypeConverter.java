@@ -12,40 +12,6 @@ import org.semanticweb.owlapi.model.OWLLiteral;
  * Created by nickrobison on 3/5/18.
  */
 public interface ITypeConverter {
-    /**
-     * Convert the {@link Class} into its corresponding primitive, if it is a primitive type
-     * This is required to handle the auto-boxing of the Reflection APIs
-     *
-     * @param returnClass - {@link Class} to parse
-     * @return - Primitive {@link Class}, or original class if the input is not primitive
-     */
-    @SuppressWarnings({"Duplicates", "squid:S1199"})
-    static Class<?> parsePrimitiveClass(Class<?> returnClass) {
-        if (returnClass.isPrimitive()) {
-            switch (returnClass.getTypeName()) {
-                case "int": {
-                    return Integer.class;
-                }
-                case "float": {
-                    return Float.class;
-                }
-                case "double": {
-                    return Double.class;
-                }
-                case "boolean": {
-                    return Boolean.class;
-                }
-                case "long": {
-                    return Long.class;
-                }
-                default: {
-                    throw new ClassCastException(String.format("Unsupported cast of %s to primitive type", returnClass.getTypeName()));
-                }
-            }
-        }
-
-        return returnClass;
-    }
 
     /**
      * Register {@link TypeConstructor} class with the reasoner

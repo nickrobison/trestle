@@ -10,15 +10,12 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -62,103 +59,24 @@ public class TypeConverter implements ITypeConverter {
     @Override
     @SuppressWarnings({"unchecked", "return.type.incompatible", "squid:S1199"})
     public <T extends @NonNull Object> T extractOWLLiteral(Class<T> javaClass, @Nullable OWLLiteral literal) {
-        if (literal == null) {
-            throw new IllegalStateException("Cannot have null literal");
-        }
 
-        switch (javaClass.getTypeName()) {
-
-            case "int": {
-                return (T) (Object) Integer.parseInt(literal.getLiteral());
+        final T extractedLiteral = TypeUtils.rawLiteralConversion(javaClass, literal);
+        if (extractedLiteral == null) {
+            //                    Is it a geom type?
+            final Optional<Object> geomObject = SpatialParser.parseWKTtoGeom(literal.getLiteral(), javaClass);
+            if (geomObject.isPresent()) {
+                return javaClass.cast(geomObject.get());
             }
-
-            case "java.lang.Integer": {
-                return javaClass.cast(Integer.parseInt(literal.getLiteral()));
-            }
-
-            case "short": {
-                return (T) (Object) Short.parseShort(literal.getLiteral());
-            }
-
-            case "java.lang.Short": {
-                return javaClass.cast(Short.parseShort(literal.getLiteral()));
-            }
-
-            case "long": {
-                return (T) (Object) Long.parseLong(literal.getLiteral());
-            }
-
-            case "java.lang.Long": {
-                return javaClass.cast(Long.parseLong(literal.getLiteral()));
-            }
-
-            case "java.time.LocalDateTime": {
-                return javaClass.cast(LocalDateTime.parse(literal.getLiteral()));
-            }
-
-            case "java.time.LocalDate": {
-                return javaClass.cast(LocalDate.parse(literal.getLiteral()));
-            }
-
-            case "java.time.OffsetDateTime": {
-                return javaClass.cast(OffsetDateTime.parse(literal.getLiteral()));
-            }
-
-            case "java.time.ZonedDateTime": {
-                return javaClass.cast(ZonedDateTime.parse(literal.getLiteral()));
-            }
-
-            case "java.lang.String": {
-                return javaClass.cast(literal.getLiteral());
-            }
-
-            case "float": {
-                return (T) (Object) Float.parseFloat(literal.getLiteral());
-            }
-
-            case "java.lang.Float": {
-                return javaClass.cast(literal.parseFloat());
-            }
-
-            case "double": {
-                return (T) (Object) Double.parseDouble(literal.getLiteral());
-            }
-
-            case "java.lang.Double": {
-                return javaClass.cast(literal.parseDouble());
-            }
-
-            case "boolean": {
-                return (T) (Object) Boolean.getBoolean(literal.getLiteral());
-            }
-
-            case "java.lang.Boolean": {
-                return javaClass.cast(literal.parseBoolean());
-            }
-
-            case "java.math.BigInteger": {
-                return (T) new BigInteger(literal.getLiteral());
-            }
-
-            case "java.math.BigDecimal": {
-                return (T) new BigDecimal(literal.getLiteral());
-            }
-
-            default: {
-//                    Is it a geom type?
-                final Optional<Object> geomObject = SpatialParser.parseWKTtoGeom(literal.getLiteral(), javaClass);
-                if (geomObject.isPresent()) {
-                    return javaClass.cast(geomObject.get());
-                }
 //                    Try to get a match from the custom constructor registry
-                final TypeConstructor constructor = javaClassConstructors.get(javaClass.getTypeName());
-                if (constructor == null) {
-                    throw new ClassCastException(String.format("Unsupported cast %s", javaClass));
-                }
-
-                return javaClass.cast(constructor.constructType(literal.getLiteral()));
+            final TypeConstructor constructor = javaClassConstructors.get(javaClass.getTypeName());
+            if (constructor == null) {
+                throw new ClassCastException(String.format("Unsupported cast %s", javaClass));
             }
+
+            return javaClass.cast(constructor.constructType(literal.getLiteral()));
         }
+
+        return extractedLiteral;
     }
 
     @Override
