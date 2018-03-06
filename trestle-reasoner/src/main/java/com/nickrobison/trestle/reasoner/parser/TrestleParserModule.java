@@ -2,10 +2,7 @@ package com.nickrobison.trestle.reasoner.parser;
 
 import com.google.inject.PrivateModule;
 import com.google.inject.name.Names;
-import com.nickrobison.trestle.reasoner.parser.clojure.ClojureClassBuilderProvider;
-import com.nickrobison.trestle.reasoner.parser.clojure.ClojureClassParserProvider;
-import com.nickrobison.trestle.reasoner.parser.clojure.ClojureClassRegistryProvider;
-import com.nickrobison.trestle.reasoner.parser.clojure.ClojureProvider;
+import com.nickrobison.trestle.reasoner.parser.clojure.*;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
@@ -46,6 +43,9 @@ public class TrestleParserModule extends PrivateModule {
 //        If we're using the Clojure parser, bind to that provider
         if (useClojure) {
             logger.info("Creating Parser with Clojure backend");
+            bind(ITypeConverter.class)
+                    .toProvider(ClojureTypeConverterProvider.class)
+                    .in(Singleton.class);
             bind(Object.class)
                     .annotatedWith(Names.named("clojureParser"))
                     .toProvider(ClojureProvider.class)
@@ -68,11 +68,12 @@ public class TrestleParserModule extends PrivateModule {
             bind(IClassBuilder.class)
                     .to(ClassBuilder.class)
                     .in(Singleton.class);
+            bind(ITypeConverter.class)
+                    .to(TypeConverter.class)
+                    .in(Singleton.class);
         }
 
-        bind(ITypeConverter.class)
-                .to(TypeConverter.class)
-                .in(Singleton.class);
+
 
         bind(Boolean.class)
                 .annotatedWith(MultiLangEnabled.class)

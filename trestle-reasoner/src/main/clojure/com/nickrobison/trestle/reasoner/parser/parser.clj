@@ -1,6 +1,6 @@
 (ns com.nickrobison.trestle.reasoner.parser.parser
   (:import [IClassParser]
-           (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter IClassBuilder IClassRegister ClassBuilder)
+           (com.nickrobison.trestle.reasoner.parser IClassParser IClassBuilder IClassRegister ClassBuilder ITypeConverter)
            (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom OWLDataProperty OWLLiteral OWLDatatype)
            (java.lang.reflect Constructor Parameter)
            (com.nickrobison.trestle.reasoner.annotations DatasetClass Fact Language)
@@ -103,13 +103,10 @@
 
 (defn owl-return-type
   "Determine the OWLDatatype of the field/method"
-  [member rtype typeConverter]
+  [member rtype ^ITypeConverter typeConverter]
   (if (pred/hasAnnotation? member Fact)
     (.getDatatypeFromAnnotation typeConverter (pred/get-annotation member Fact) rtype)
-    ;(TypeConverter/getDatatypeFromAnnotation (pred/get-annotation member Fact) rtype)
-    (.getDatatypeFromJavaClass typeConverter rtype)
-    ;(TypeConverter/getDatatypeFromJavaClass rtype)
-    ))
+    (.getDatatypeFromJavaClass typeConverter rtype)))
 
 (defn get-member-language
   "Get the language tag, if one exists"
@@ -376,7 +373,7 @@
                                ^boolean multiLangEnabled,
                                ^String defaultLanguageCode
                                ^Integer defaultProjection
-                               typeConverter
+                               ^ITypeConverter typeConverter
                                classRegistry
                                owlClassMap]
   IClassParser

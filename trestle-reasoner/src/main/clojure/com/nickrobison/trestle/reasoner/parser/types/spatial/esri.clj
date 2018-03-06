@@ -16,7 +16,7 @@
   (GeometryEngine/geometryFromWkt wkt 0 geomClass))
 
 (defn- to-literal
-  [spatialObject df]
+  [spatialObject ^OWLDataFactory df]
   (.getOWLLiteral df
                   (to-wkt spatialObject)
                   (.getOWLDatatype df StaticIRI/WKTDatatypeIRI)))

@@ -206,38 +206,6 @@ public class TypeConverter implements ITypeConverter {
         return javaClass;
     }
 
-    /**
-     * Get the java type for the class member matching the OWLDataProperty
-     *
-     * @param clazz     - Input class to parse
-     * @param property  - OWLDataProperty to match with the class
-     * @param inputType - Previously determined type
-     * @return - Nullable java type
-     */
-    private @Nullable Class<?> getJavaMemberType(@Nullable Class<?> clazz, OWLDataProperty property, Class<?> inputType) {
-        if (clazz == null) {
-            return inputType;
-        }
-        final String classMember = property.asOWLDataProperty().getIRI().getShortForm();
-
-        //        Check to see if it matches any annotated data methods
-        final Optional<Method> matchedMethod = Arrays.stream(clazz.getDeclaredMethods())
-                .filter(m -> getMethodName(m).equals(classMember))
-                .findFirst();
-
-        if (matchedMethod.isPresent()) {
-            return matchedMethod.get().getReturnType();
-        }
-
-        //        Fields
-        final Optional<Field> matchedField = Arrays.stream(clazz.getDeclaredFields())
-                .filter(f -> getFieldName(f).equals(classMember))
-                .findFirst();
-
-        return matchedField.map(Field::getType).orElse(null);
-
-    }
-
     @Override
     public Class<?> lookupJavaClassFromOWLDataProperty(Class<?> classToVerify, OWLDataProperty property) {
         final @Nullable OWLDatatype owlDatatype = verifyOWLType(classToVerify, property);
@@ -279,12 +247,44 @@ public class TypeConverter implements ITypeConverter {
         return owlDatatype;
     }
 
+    /**
+     * Get the java type for the class member matching the OWLDataProperty
+     *
+     * @param clazz     - Input class to parse
+     * @param property  - OWLDataProperty to match with the class
+     * @param inputType - Previously determined type
+     * @return - Nullable java type
+     */
+    private @Nullable Class<?> getJavaMemberType(@Nullable Class<?> clazz, OWLDataProperty property, Class<?> inputType) {
+        if (clazz == null) {
+            return inputType;
+        }
+        final String classMember = property.asOWLDataProperty().getIRI().getShortForm();
+
+        //        Check to see if it matches any annotated data methods
+        final Optional<Method> matchedMethod = Arrays.stream(clazz.getDeclaredMethods())
+                .filter(m -> getMethodName(m).equals(classMember))
+                .findFirst();
+
+        if (matchedMethod.isPresent()) {
+            return matchedMethod.get().getReturnType();
+        }
+
+        //        Fields
+        final Optional<Field> matchedField = Arrays.stream(clazz.getDeclaredFields())
+                .filter(f -> getFieldName(f).equals(classMember))
+                .findFirst();
+
+        return matchedField.map(Field::getType).orElse(null);
+
+    }
+
     private @Nullable OWLDatatype verifyOWLType(Class<?> classToVerify, OWLDataProperty property) {
 
         return getDatatypeFromJavaClass(getJavaMemberType(classToVerify, property, null));
     }
 
-    private static Map<OWLDatatype, Class<?>> buildDatatype2ClassMap() {
+    public static Map<OWLDatatype, Class<?>> buildDatatype2ClassMap() {
         Map<OWLDatatype, Class<?>> datatypeMap = new HashMap<>();
 
         datatypeMap.put(OWL2Datatype.XSD_INTEGER.getDatatype(dfStatic), BigInteger.class);
@@ -304,7 +304,7 @@ public class TypeConverter implements ITypeConverter {
         return datatypeMap;
     }
 
-    private static Map<Class<?>, OWLDatatype> buildClassMap() {
+    public static Map<Class<?>, OWLDatatype> buildClassMap() {
         Map<Class<?>, OWLDatatype> types = new HashMap<>();
         types.put(Integer.class, OWL2Datatype.XSD_INT.getDatatype(dfStatic));
         types.put(int.class, OWL2Datatype.XSD_INT.getDatatype(dfStatic));
