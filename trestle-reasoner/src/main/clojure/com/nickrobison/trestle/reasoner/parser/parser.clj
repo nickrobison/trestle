@@ -13,7 +13,11 @@
             [clojure.tools.logging :as log]
             [clojure.set :as set]
             [com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]
-            [com.nickrobison.trestle.reasoner.parser.utils.members :as m])
+            [com.nickrobison.trestle.reasoner.parser.utils.members :as m]
+            ; We have to require the methods we're overloading, as well as namespaces where we did the overloading
+            [com.nickrobison.trestle.reasoner.parser.utils.spatial :refer  [literal-from-geom]]
+            [com.nickrobison.trestle.reasoner.parser.modules.spatial.esri]
+            [com.nickrobison.trestle.reasoner.parser.modules.spatial.jts])
   (:use clj-fuzzy.metrics))
 
 ; Class related helpers
@@ -292,8 +296,7 @@
           (fn [^OWLDataFactory df individual member inputObject] (:type member)))
 (defmethod build-assertion-axiom ::pred/spatial
   [^OWLDataFactory df ^OWLNamedIndividual individual member inputObject]
-  (let [wktOptional (SpatialParser/parseOWLLiteralFromGeom
-                      (m/invoker (get member :handle) inputObject))]
+  (let [wktOptional (Optional/of (literal-from-geom (m/invoker (get member :handle) inputObject) df))]
     (if (.isPresent wktOptional)
       (.getOWLDataPropertyAssertionAxiom df
                                          ^OWLDataProperty (get member :data-property)

@@ -1,7 +1,15 @@
 (ns com.nickrobison.trestle.reasoner.parser.utils.spatial
   (:import (org.opengis.referencing NoSuchAuthorityCodeException)
            (com.nickrobison.trestle.reasoner.exceptions InvalidClassException InvalidClassException$State)
-           (org.geotools.referencing CRS)))
+           (org.geotools.referencing CRS)
+           (org.semanticweb.owlapi.model OWLDataFactory)
+           (com.nickrobison.trestle.common StaticIRI)))
+
+(defprotocol SpatialParserProtocol
+  "Protocol for registering various spatial object modals"
+  (wkt-from-geom [spatialObject] "Something")
+  (literal-from-geom [spatialObject ^OWLDataFactory df] "Something else")
+  (wkt-to-geom [wkt] "Last thing"))
 
 (defn validate-spatial-projection
   "Validate the given Projection to make sure it matches something we can understand"
@@ -16,3 +24,10 @@
                  "This Class"
                  InvalidClassException$State/INVALID
                  "Spatial"))))))
+
+(extend-type java.lang.String
+  SpatialParserProtocol
+  (wkt-from-geom [spatialObject] spatialObject)
+  (literal-from-geom [spatialObject ^OWLDataFactory df] (.getOWLLiteral df
+                                                                        spatialObject
+                                                                        (.getOWLDatatype df StaticIRI/WKTDatatypeIRI))))
