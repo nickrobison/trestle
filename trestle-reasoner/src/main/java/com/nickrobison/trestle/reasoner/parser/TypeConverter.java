@@ -163,15 +163,15 @@ public class TypeConverter implements ITypeConverter {
 
     @Override
     @SuppressWarnings({"dereference.of.nullable", "return.type.incompatible"})
-    public Class<?> lookupJavaClassFromOWLDatatype(OWLDataPropertyAssertionAxiom dataproperty, @Nullable Class<?> classToVerify) {
+    public Class<?> lookupJavaClassFromOWLDatatype(OWLDataPropertyAssertionAxiom dataProperty, @Nullable Class<?> classToVerify) {
         Class<?> javaClass;
-        final OWLDatatype datatype = dataproperty.getObject().getDatatype();
+        final OWLDatatype datatype = dataProperty.getObject().getDatatype();
         if (datatype.isBuiltIn()) {
 
 //            Check with the class to make sure the types are correct. Sometimes the ontologies give us the wrong type
             OWLDatatype dataTypeToLookup = null;
             if (classToVerify != null) {
-                dataTypeToLookup = verifyOWLType(classToVerify, dataproperty.getProperty().asOWLDataProperty());
+                dataTypeToLookup = verifyOWLType(classToVerify, dataProperty.getProperty().asOWLDataProperty());
             }
             if (dataTypeToLookup == null) {
                 dataTypeToLookup = datatype.getBuiltInDatatype().getDatatype(dfStatic);
@@ -182,7 +182,7 @@ public class TypeConverter implements ITypeConverter {
             }
 //            If it comes back as a primitive, check if we need the full class
             if (javaClass.isPrimitive()) {
-                javaClass = getJavaMemberType(classToVerify, dataproperty.getProperty().asOWLDataProperty(), javaClass);
+                javaClass = getJavaMemberType(classToVerify, dataProperty.getProperty().asOWLDataProperty(), javaClass);
             }
 //            If it's from the geosparql group, we need to figure out the correct return class
 //                Virtuoso smashes everything into its own Geometry class, so geosparql isn't sufficient.
@@ -227,10 +227,10 @@ public class TypeConverter implements ITypeConverter {
     }
 
     @Override
-    public OWLDatatype getDatatypeFromAnnotation(Fact annotation, Class<?> objectClass) {
+    public OWLDatatype getDatatypeFromAnnotation(Fact annotation, Class<?> returnType) {
 //        I don't think this will ever be true
         if (annotation.datatype().toString().equals("") || annotation.datatype() == OWL2Datatype.XSD_NMTOKEN) {
-            return getDatatypeFromJavaClass(objectClass);
+            return getDatatypeFromJavaClass(returnType);
         } else {
             return annotation.datatype().getDatatype(dfStatic);
         }
@@ -255,7 +255,7 @@ public class TypeConverter implements ITypeConverter {
      * @param inputType - Previously determined type
      * @return - Nullable java type
      */
-    private @Nullable Class<?> getJavaMemberType(@Nullable Class<?> clazz, OWLDataProperty property, Class<?> inputType) {
+    private static @Nullable Class<?> getJavaMemberType(@Nullable Class<?> clazz, OWLDataProperty property, Class<?> inputType) {
         if (clazz == null) {
             return inputType;
         }
