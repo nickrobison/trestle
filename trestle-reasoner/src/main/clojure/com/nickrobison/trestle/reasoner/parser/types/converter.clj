@@ -1,5 +1,6 @@
 (ns com.nickrobison.trestle.reasoner.parser.types.converter
-  (:require [clojure.tools.logging :as log])
+  (:require [clojure.tools.logging :as log]
+            [com.nickrobison.trestle.reasoner.parser.spatial :refer  [wkt-to-geom]])
   (:import (com.nickrobison.trestle.reasoner.parser ITypeConverter TypeUtils TypeConstructor)
            (org.semanticweb.owlapi.model IRI OWLDataFactory OWLLiteral)
            (java.util Map Optional)
@@ -65,7 +66,7 @@
             (if (nil? javaReturnType)
               (class String)
               ; Get spatial class
-              (class Integer))
+              javaReturnType)
             ; If we're not spatial, try to lookup the class from the registry,
             ;otherwise, use a string as a last resort
             (if-let [matchedClass (get owl-to-java-map datatype)]
@@ -84,11 +85,10 @@
     [_ javaClass literal]
     (if-let [extractedLiteral (TypeUtils/rawLiteralConversion javaClass literal)]
       extractedLiteral
-      ; Check to see if we have a spatial value
-      ; Fix this
-      (let [spatialOptional (Optional/ofNullable nil)]
-        (if (.isPresent spatialOptional)
-          (.cast javaClass (.get spatialOptional))
+      (let [extractedLiteral (.getLiteral literal)]
+        ; Check to see if we have a spatial value
+        (if-let [spatialValue (wkt-to-geom javaClass extractedLiteral)]
+          spatialValue
           ; If we don't have a spatial value, check for something from our type constructors
           (if-let [constructor ^TypeConstructor (get class-constructors (.getTypeName javaClass))]
             (.cast javaClass (.constructType constructor (.getLiteral literal)))

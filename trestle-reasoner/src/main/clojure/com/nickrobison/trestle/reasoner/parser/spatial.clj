@@ -5,11 +5,16 @@
            (org.semanticweb.owlapi.model OWLDataFactory)
            (com.nickrobison.trestle.common StaticIRI)))
 
+(defmulti wkt-to-geom
+          "Convert a WKT representation to the underlying javaClass
+          We can't use Protocols for this, because we can't call them on classes,
+          so we have to switch on the class type using multi-dispatch"
+          (fn [type ^String wkt] type))
+
 (defprotocol SpatialParserProtocol
-  "Protocol for registering various spatial object modals"
-  (wkt-from-geom [spatialObject] "Something")
-  (literal-from-geom [spatialObject ^OWLDataFactory df] "Something else")
-  (wkt-to-geom [wkt] "Last thing"))
+  "Protocol for registering various spatial object models"
+  (wkt-from-geom [spatialObject] "Get the WKT representation from the spatial object")
+  (literal-from-geom [spatialObject ^OWLDataFactory df] "Create an OWL literal from the WKT representation of the spatial object"))
 
 (defn validate-spatial-projection
   "Validate the given Projection to make sure it matches something we can understand"
