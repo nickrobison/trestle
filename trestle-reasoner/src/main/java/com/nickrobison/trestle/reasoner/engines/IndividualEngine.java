@@ -10,6 +10,7 @@ import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
+import com.nickrobison.trestle.reasoner.parser.IClassParser;
 import com.nickrobison.trestle.reasoner.parser.ITypeConverter;
 import com.nickrobison.trestle.reasoner.parser.TemporalParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
@@ -58,6 +59,7 @@ public class IndividualEngine {
     private static final Logger logger = LoggerFactory.getLogger(IndividualEngine.class);
     private final ITrestleOntology ontology;
     private final QueryBuilder qb;
+    private final IClassParser parser;
     private final ITypeConverter typeConverter;
     private final TrestleCache trestleCache;
     private final TrestleExecutorService individualThreadPool;
@@ -73,6 +75,7 @@ public class IndividualEngine {
         final Config trestleConfig = ConfigFactory.load().getConfig("trestle");
         this.ontology = ontology;
         this.qb = qb;
+        this.parser = parser.classParser;
         this.typeConverter = parser.typeConverter;
         this.trestleCache = trestleCache;
         individualThreadPool = TrestleExecutorService.executorFactory("individual-pool",
@@ -372,6 +375,7 @@ public class IndividualEngine {
                             factIndividual.getIRI().toString(),
                             assertion.getProperty().asOWLDataProperty().getIRI().getShortForm(),
                             literalObject,
+                            null,
                             null, validTemporal.orElseThrow(() -> new TrestleMissingFactException(factIndividual)),
                             dbTemporal.orElseThrow(() -> new TrestleMissingFactException(factIndividual)));
                 });

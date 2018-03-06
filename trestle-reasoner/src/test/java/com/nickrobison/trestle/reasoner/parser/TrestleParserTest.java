@@ -314,7 +314,7 @@ public class TrestleParserTest {
 
 //        Properties
         testProperties.forEach(property -> {
-            final Class<?> javaClass = this.typeConverter.lookupJavaClassFromOWLDatatype(property, TestClasses.GAULMethodTest.class);
+            final Class<?> javaClass = this.typeConverter.lookupJavaClassFromOWLDatatype(property, cp.getFactDatatype(TestClasses.GAULMethodTest.class, property.getProperty().asOWLDataProperty().getIRI().getShortForm()).get());
             inputClasses.add(javaClass);
             final Object literalValue = this.typeConverter.extractOWLLiteral(javaClass, property.getObject());
 //            final Object literalValue = javaClass.cast(property.getObject().getLiteral());

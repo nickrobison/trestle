@@ -163,15 +163,15 @@ public class TypeConverter implements ITypeConverter {
 
     @Override
     @SuppressWarnings({"dereference.of.nullable", "return.type.incompatible"})
-    public Class<?> lookupJavaClassFromOWLDatatype(OWLDataPropertyAssertionAxiom dataProperty, @Nullable Class<?> classToVerify) {
+    public Class<?> lookupJavaClassFromOWLDatatype(OWLDataPropertyAssertionAxiom dataProperty, @Nullable Class<?> javaReturnType) {
         Class<?> javaClass;
         final OWLDatatype datatype = dataProperty.getObject().getDatatype();
         if (datatype.isBuiltIn()) {
 
 //            Check with the class to make sure the types are correct. Sometimes the ontologies give us the wrong type
             OWLDatatype dataTypeToLookup = null;
-            if (classToVerify != null) {
-                dataTypeToLookup = verifyOWLType(classToVerify, dataProperty.getProperty().asOWLDataProperty());
+            if (javaReturnType != null) {
+                dataTypeToLookup = verifyOWLType(javaReturnType, dataProperty.getProperty().asOWLDataProperty());
             }
             if (dataTypeToLookup == null) {
                 dataTypeToLookup = datatype.getBuiltInDatatype().getDatatype(dfStatic);
@@ -182,15 +182,16 @@ public class TypeConverter implements ITypeConverter {
             }
 //            If it comes back as a primitive, check if we need the full class
             if (javaClass.isPrimitive()) {
-                javaClass = getJavaMemberType(classToVerify, dataProperty.getProperty().asOWLDataProperty(), javaClass);
+                javaClass = getJavaMemberType(javaReturnType, dataProperty.getProperty().asOWLDataProperty(), javaClass);
             }
 //            If it's from the geosparql group, we need to figure out the correct return class
 //                Virtuoso smashes everything into its own Geometry class, so geosparql isn't sufficient.
         } else if (datatype.getIRI().getShortForm().equals("wktLiteral") || datatype.getIRI().getShortForm().equals("Geometry")) {
-            if (classToVerify == null) {
+//            This is special casing to handle the fact that we can't get correct return types from TrestleIndividuals yet
+            if (javaReturnType == null) {
                 javaClass = String.class;
             } else {
-                javaClass = SpatialParser.getSpatialClass(classToVerify);
+                javaClass = javaReturnType;
             }
         } else {
 //            Look it up from the datatype map, else return a string
@@ -259,29 +260,32 @@ public class TypeConverter implements ITypeConverter {
         if (clazz == null) {
             return inputType;
         }
-        final String classMember = property.asOWLDataProperty().getIRI().getShortForm();
-
-        //        Check to see if it matches any annotated data methods
-        final Optional<Method> matchedMethod = Arrays.stream(clazz.getDeclaredMethods())
-                .filter(m -> getMethodName(m).equals(classMember))
-                .findFirst();
-
-        if (matchedMethod.isPresent()) {
-            return matchedMethod.get().getReturnType();
-        }
-
-        //        Fields
-        final Optional<Field> matchedField = Arrays.stream(clazz.getDeclaredFields())
-                .filter(f -> getFieldName(f).equals(classMember))
-                .findFirst();
-
-        return matchedField.map(Field::getType).orElse(null);
+        return clazz;
+//        return inputType;
+//        final String classMember = property.asOWLDataProperty().getIRI().getShortForm();
+//
+//        //        Check to see if it matches any annotated data methods
+//        final Optional<Method> matchedMethod = Arrays.stream(clazz.getDeclaredMethods())
+//                .filter(m -> getMethodName(m).equals(classMember))
+//                .findFirst();
+//
+//        if (matchedMethod.isPresent()) {
+//            return matchedMethod.get().getReturnType();
+//        }
+//
+//        //        Fields
+//        final Optional<Field> matchedField = Arrays.stream(clazz.getDeclaredFields())
+//                .filter(f -> getFieldName(f).equals(classMember))
+//                .findFirst();
+//
+//        return matchedField.map(Field::getType).orElse(null);
 
     }
 
-    private @Nullable OWLDatatype verifyOWLType(Class<?> classToVerify, OWLDataProperty property) {
+    private OWLDatatype verifyOWLType(Class<?> returnTypeToVerify, OWLDataProperty property) {
+        return getDatatypeFromJavaClass(returnTypeToVerify);
 
-        return getDatatypeFromJavaClass(getJavaMemberType(classToVerify, property, null));
+//        return getDatatypeFromJavaClass(getJavaMemberType(returnTypeToVerify, property, null));
     }
 
     public static Map<OWLDatatype, Class<?>> buildDatatype2ClassMap() {

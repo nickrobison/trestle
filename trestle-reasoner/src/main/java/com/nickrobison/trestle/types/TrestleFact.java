@@ -20,14 +20,14 @@ public class TrestleFact<T> implements Serializable {
     private final Class<?> javaClass;
 
     @SuppressWarnings({"dereference.of.nullable"})
-    public TrestleFact(String identifier, String name, T value, @Nullable String language, TemporalObject validTemporal, TemporalObject databaseTemporal) {
+    public TrestleFact(String identifier, String name, T value, @Nullable Class<T> clazz, @Nullable String language, TemporalObject validTemporal, TemporalObject databaseTemporal) {
         this.identifier = identifier;
         this.name = name;
         this.value = value;
         this.validTemporal = validTemporal;
         this.databaseTemporal = databaseTemporal;
         this.language = language;
-        this.javaClass = value.getClass();
+        this.javaClass = clazz == null ? value.getClass() : clazz;
     }
 
     public String getIdentifier() {

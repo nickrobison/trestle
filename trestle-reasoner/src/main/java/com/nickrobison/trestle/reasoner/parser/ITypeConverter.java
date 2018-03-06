@@ -72,11 +72,11 @@ public interface ITypeConverter {
      * If classToVerify is not null, check against the class in case the constructor requires a primitive
      *
      * @param dataProperty  - OWLDataPropertyAssertionAxiom to get java type from
-     * @param classToVerify - @Nullable Class to cross-check with to ensure we're parsing the correct boxed/unboxed type.
+     * @param javaReturnType - {@link Class} of Java member return type, to cross-check with to ensure we're parsing the correct boxed/unboxed type.
      * @return - Java Class corresponding to OWL Datatype and required Class constructor argument
      */
     @SuppressWarnings({"dereference.of.nullable", "return.type.incompatible"})
-    Class<?> lookupJavaClassFromOWLDatatype(OWLDataPropertyAssertionAxiom dataProperty, @Nullable Class<?> classToVerify);
+    Class<?> lookupJavaClassFromOWLDatatype(OWLDataPropertyAssertionAxiom dataProperty, @Nullable Class<?> javaReturnType);
 
     /**
      * Inspect Java class to determine correct datatype for a given OWLDataProperty
