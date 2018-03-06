@@ -35,7 +35,7 @@
   (getDatatypeFromAnnotation
     [this annotation returnType]
     (let [datatype (.datatype annotation)]
-      (if (.equals datatype OWL2Datatype/XSD_NMTOKEN))
+      (if (.equals datatype OWL2Datatype/XSD_ANY_URI))
       (.getDatatypeFromJavaClass this returnType)
       (.getDatatype datatype df)))
   (lookupJavaClassFromOWLDatatype

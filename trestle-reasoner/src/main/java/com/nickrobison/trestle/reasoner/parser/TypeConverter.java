@@ -229,7 +229,7 @@ public class TypeConverter implements ITypeConverter {
     @Override
     public OWLDatatype getDatatypeFromAnnotation(Fact annotation, Class<?> returnType) {
 //        I don't think this will ever be true
-        if (annotation.datatype().toString().equals("") || annotation.datatype() == OWL2Datatype.XSD_NMTOKEN) {
+        if (annotation.datatype().toString().equals("") || annotation.datatype() == OWL2Datatype.XSD_ANY_URI) {
             return getDatatypeFromJavaClass(returnType);
         } else {
             return annotation.datatype().getDatatype(dfStatic);
