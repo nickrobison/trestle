@@ -4,6 +4,7 @@ import com.nickrobison.trestle.types.TrestleFact;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLLiteral;
 
@@ -41,8 +42,8 @@ public class FactFactory {
 //    }
 
     public <T extends @NonNull Object> TrestleFact<T> createFact(@Nullable Class<?> clazz, OWLDataPropertyAssertionAxiom propertyAxiom, TemporalObject validTemporal, TemporalObject databaseTemporal) {
-        final String factName = propertyAxiom.getProperty().asOWLDataProperty().getIRI().getShortForm();
-        final Optional<Class<?>> factDatatype = this.parser.getFactDatatype(clazz, factName);
+        final OWLDataProperty factName = propertyAxiom.getProperty().asOWLDataProperty();
+        final Optional<Class<?>> factDatatype = this.parser.getFactDatatype(clazz, factName.toStringID());
         //noinspection unchecked
         final Class<T> factClass = (Class<T>)this.typeConverter.lookupJavaClassFromOWLDatatype(propertyAxiom, factDatatype.orElseThrow(() ->
                 new IllegalStateException(String.format("Cannot have null datatype for fact %s on Individual %s",
@@ -51,7 +52,7 @@ public class FactFactory {
         final T literalObject = this.typeConverter.extractOWLLiteral(factClass, literal);
 
         return new TrestleFact<>(propertyAxiom.getSubject().toStringID(),
-                factName,
+                factName.getIRI().getShortForm(),
                 literalObject,
                 factClass,
                 literal.hasLang() ? literal.getLang() : null,

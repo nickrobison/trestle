@@ -1,8 +1,8 @@
 (ns com.nickrobison.trestle.reasoner.parser.types.converter
   (:require [clojure.tools.logging :as log])
-  (:import (com.nickrobison.trestle.reasoner.parser ITypeConverter)
+  (:import (com.nickrobison.trestle.reasoner.parser ITypeConverter TypeUtils TypeConstructor)
            (org.semanticweb.owlapi.model IRI OWLDataFactory OWLLiteral)
-           (java.util Map)
+           (java.util Map Optional)
            (org.semanticweb.owlapi.vocab OWL2Datatype)))
 
 
@@ -10,7 +10,7 @@
   [^OWLDataFactory df
    owl-to-java-map
    java-to-owl-map
-   classConstructors]
+   class-constructors]
   ITypeConverter
   (registerTypeConstructor [_ constructor]
     (let [javaClass (.getJavaType constructor)
@@ -25,43 +25,74 @@
                    javaClass datatype)
         )
       (assoc owl-to-java-map owlDatatype javaClass)
-      (assoc java-to-owl-map javaClass owlDatatype)))
+      (assoc java-to-owl-map javaClass owlDatatype)
+      (assoc class-constructors (.getTypeName javaClass) constructor)))
   (getDatatypeFromJavaClass
     [_ javaTypeClass]
-    (if-let [datatype (get owl-to-java-map javaTypeClass)]
+    (if-let [datatype (get java-to-owl-map javaTypeClass)]
       datatype
-      (log/errorf "Unsupported Java type %s" javaTypeClass)
-      (.getDatatype (OWL2Datatype/XSD_STRING) df)))
+      (log/spyf :error (str "Unsupported Java type: " javaTypeClass)
+                (.getDatatype (OWL2Datatype/XSD_STRING) df))))
   (getDatatypeFromAnnotation
     [this annotation returnType]
     (let [datatype (.datatype annotation)]
-      (if (.equals datatype OWL2Datatype/XSD_ANY_URI))
-      (.getDatatypeFromJavaClass this returnType)
-      (.getDatatype datatype df)))
+      (if (.equals datatype OWL2Datatype/XSD_ANY_URI)
+        (.getDatatypeFromJavaClass this returnType)
+        (.getDatatype datatype df))))
   (lookupJavaClassFromOWLDatatype
-    [_ dataProperty classToVerify]
+    [this dataProperty javaReturnType]
     (let [datatype (.getDatatype ^OWLLiteral (.getObject dataProperty))]
-      ; If the datatype is built int
+      ; If the datatype is built-in
       (if (.isBuiltIn datatype)
-        ()
+        (if (nil? javaReturnType)
+          ; If we don't know what the return type is, try and lookup a registered mapping,
+          ; using the given datatype. Throw an exception if we can't match anything
+          (if-let [javaClass (get
+                               owl-to-java-map
+                               (.getDatatype (.getBuiltInDatatype datatype) df))]
+            javaClass
+            (throw (IllegalArgumentException. (str "Unsupported OWLDatatype: " datatype))))
+          ; If we know what the return type is, do the inverse lookup to make sure we get the correct primitive type
+          ; (I think this is wrong)
+          (if-let [registeredType (get owl-to-java-map (.getDatatypeFromJavaClass this javaReturnType))]
+            registeredType
+            (throw (IllegalArgumentException. (str "Unsupported OWLDatatype: " datatype))))
+          )
         ; Check to see if it's a spatial type, based on the IRI
         (let [iri (.getShortForm (.getIRI datatype))]
-          (if (or
-                (.equals iri "wktLiteral")
-                (.equals iri "Geometry"))
+          (if (.equals iri "wktLiteral")
             ; If we have a nil class, use String as the spatial type
-            (if (nil? classToVerify)
+            (if (nil? javaReturnType)
               (class String)
               ; Get spatial class
               (class Integer))
             ; If we're not spatial, try to lookup the class from the registry,
-            ;otherwise, use a string
+            ;otherwise, use a string as a last resort
             (if-let [matchedClass (get owl-to-java-map datatype)]
               matchedClass
-              (class String)))))))
+              String))))))
   (lookupJavaClassFromOWLDataProperty
-    [_ classToVerify property]
-    (let [datatype ()]))
+    [this classToVerify property]
+    (let [datatype (.getDatatypeFromJavaClass this classToVerify)
+          javaClass (get owl-to-java-map datatype)]
+      (if (nil? javaClass)
+        (if (.equals (.getShortForm (.getIRI (.asOWLDataProperty property))) "asWKT")
+          String
+          (throw (IllegalStateException. (str "Unsupported data property: " (.asOWLDataProperty property)))))
+        javaClass)))
+  (extractOWLLiteral
+    [_ javaClass literal]
+    (if-let [extractedLiteral (TypeUtils/rawLiteralConversion javaClass literal)]
+      extractedLiteral
+      ; Check to see if we have a spatial value
+      ; Fix this
+      (let [spatialOptional (Optional/ofNullable nil)]
+        (if (.isPresent spatialOptional)
+          (.cast javaClass (.get spatialOptional))
+          ; If we don't have a spatial value, check for something from our type constructors
+          (if-let [constructor ^TypeConstructor (get class-constructors (.getTypeName javaClass))]
+            (.cast javaClass (.constructType constructor (.getLiteral literal)))
+            (throw (ClassCastException. (str "Unsupported cast of: " javaClass))))))))
   )
 
 (defn make-type-converter
