@@ -8,6 +8,7 @@ import com.nickrobison.trestle.reasoner.annotations.Spatial;
 import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.parser.clojure.ClojureProvider;
+import com.nickrobison.trestle.reasoner.parser.clojure.ClojureTypeConverterProvider;
 import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
@@ -63,7 +64,7 @@ public class TrestleParserTest {
         LocalDate ld = LocalDate.of(1989, 3, 26);
         temporal = TemporalObjectBuilder.exists().from(dt).to(dt.plusYears(1)).build(); //.withRelations();
         temporalPoint = TemporalObjectBuilder.exists().at(ld).build(); // .withRelations();
-        this.typeConverter = new TypeConverter();
+        this.typeConverter = ClojureTypeConverterProvider.buildClojureTypeConverter(df);
         final Object clojureParser = ClojureProvider.buildClojureParser(TRESTLE_PREFIX, true, "", 4326, typeConverter);
         cb = (IClassBuilder) clojureParser;
         cp = (IClassParser) clojureParser;
@@ -314,7 +315,7 @@ public class TrestleParserTest {
 
 //        Properties
         testProperties.forEach(property -> {
-            final Class<?> javaClass = this.typeConverter.lookupJavaClassFromOWLDatatype(property, cp.getFactDatatype(TestClasses.GAULMethodTest.class, property.getProperty().asOWLDataProperty().getIRI().getShortForm()).get());
+            final Class<?> javaClass = this.typeConverter.lookupJavaClassFromOWLDatatype(property, cp.getFactDatatype(TestClasses.GAULMethodTest.class, property.getProperty().asOWLDataProperty().toStringID()).get());
             inputClasses.add(javaClass);
             final Object literalValue = this.typeConverter.extractOWLLiteral(javaClass, property.getObject());
 //            final Object literalValue = javaClass.cast(property.getObject().getLiteral());

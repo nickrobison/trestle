@@ -10,6 +10,9 @@
           We can't use Protocols for this, because we can't call them on classes,
           so we have to switch on the class type using multi-dispatch"
           (fn [type ^String wkt] type))
+; Default method for non spatial values
+(defmethod wkt-to-geom :default
+  [_ _] nil)
 
 (defprotocol SpatialParserProtocol
   "Protocol for registering various spatial object models"

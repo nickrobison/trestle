@@ -25,7 +25,7 @@ public class ClojureTypeConverterProvider implements Provider<ITypeConverter> {
         return buildClojureTypeConverter(this.df);
     }
 
-    private static ITypeConverter buildClojureTypeConverter(OWLDataFactory df) {
+    public static ITypeConverter buildClojureTypeConverter(OWLDataFactory df) {
         final IFn require = Clojure.var("clojure.core", "require");
 
         require.invoke(Clojure.read("com.nickrobison.trestle.reasoner.parser.types.converter"));

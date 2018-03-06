@@ -9,8 +9,7 @@
   SpatialParserProtocol
   (literal-from-geom [spatialObject ^OWLDataFactory df] (.getOWLLiteral df
                                                                         (.write (WKTWriter.) spatialObject)
-                                                                        (.getOWLDatatype df StaticIRI/WKTDatatypeIRI)))
-  )
+                                                                        (.getOWLDatatype df StaticIRI/WKTDatatypeIRI))))
 
 (defmethod wkt-to-geom Geometry
   [_ ^String wkt]
