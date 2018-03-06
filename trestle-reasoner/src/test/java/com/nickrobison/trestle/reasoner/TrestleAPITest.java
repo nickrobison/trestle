@@ -61,7 +61,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
         classObjects.add(offsetDateTimeTest);
         classObjects.add(multiLangTest);
 
-        classObjects.parallelStream().forEach(object -> {
+        classObjects.stream().forEach(object -> {
             try {
                 reasoner.writeTrestleObject(object);
             } catch (TrestleClassException | MissingOntologyEntity e) {

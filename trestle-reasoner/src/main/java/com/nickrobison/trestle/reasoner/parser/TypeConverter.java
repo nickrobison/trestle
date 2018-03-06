@@ -4,7 +4,6 @@ import com.nickrobison.trestle.reasoner.annotations.Fact;
 import com.vividsolutions.jts.geom.Geometry;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.jetbrains.annotations.NotNull;
 import org.joda.time.DateTime;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
@@ -33,18 +32,19 @@ import static com.nickrobison.trestle.reasoner.parser.ClassParser.*;
  */
 //I'm suppressing the boxing warning, becaus I think I need it in order to get the correct primitives out
 @SuppressWarnings({"argument.type.incompatible", "fb-contrib:NAB_NEEDLESS_BOXING_VALUEOF"})
-public class TypeConverter {
+public class TypeConverter implements ITypeConverter {
 
     private static final Logger logger = LoggerFactory.getLogger(TypeConverter.class);
-    private static final Map<OWLDatatype, Class<?>> datatypeMap = buildDatatype2ClassMap();
-    private static final Map<Class<?>, OWLDatatype> owlDatatypeMap = buildClassMap();
-    private static final Map<String, TypeConstructor> javaClassConstructors = new HashMap<>();
+    private final Map<OWLDatatype, Class<?>> datatypeMap = buildDatatype2ClassMap();
+    private final Map<Class<?>, OWLDatatype> owlDatatypeMap = buildClassMap();
+    private final Map<String, TypeConstructor> javaClassConstructors = new HashMap<>();
 
-    private TypeConverter() {
+    TypeConverter() {
 //        Not used
     }
 
-    public static void registerTypeConstructor(TypeConstructor constructor) {
+    @Override
+    public void registerTypeConstructor(TypeConstructor constructor) {
         final Class javaClass = constructor.getJavaType();
         if (owlDatatypeMap.containsKey(javaClass)) {
             logger.warn("Overwriting mapping of Java Class {} with {}", javaClass, constructor.getConstructorName());
@@ -58,18 +58,10 @@ public class TypeConverter {
         javaClassConstructors.put(javaClass.getTypeName(), constructor);
     }
 
-    /**
-     * Extracts a java object of type T from a given OWL Literal
-     * Also handles the object/primitive conversion
-     *
-     * @param javaClass - Java class to cast literal into
-     * @param literal   - OWLLiteral to extract
-     * @param <T>       - Java type
-     * @return Java type of type T
-     */
     //    I need the unchecked casts in order to get the correct primitives for the constructor generation
+    @Override
     @SuppressWarnings({"unchecked", "return.type.incompatible", "squid:S1199"})
-    public static <T extends @NonNull Object> T extractOWLLiteral(Class<T> javaClass, @Nullable OWLLiteral literal) {
+    public <T extends @NonNull Object> T extractOWLLiteral(Class<T> javaClass, @Nullable OWLLiteral literal) {
         if (literal == null) {
             throw new IllegalStateException("Cannot have null literal");
         }
@@ -169,16 +161,9 @@ public class TypeConverter {
         }
     }
 
-    /**
-     * Lookup java type from OWL Datatype
-     * If classToVerify is not null, check against the class in case the constructor requires a primitive
-     *
-     * @param dataproperty  - OWLDataPropertyAssertionAxiom to get java type from
-     * @param classToVerify - @Nullable Class to cross-check with to ensure we're parsing the correct boxed/unboxed type.
-     * @return - Java Class corresponding to OWL Datatype and required Class constructor argument
-     */
+    @Override
     @SuppressWarnings({"dereference.of.nullable", "return.type.incompatible"})
-    public static Class<@NonNull ?> lookupJavaClassFromOWLDatatype(OWLDataPropertyAssertionAxiom dataproperty, @Nullable Class<?> classToVerify) {
+    public Class<?> lookupJavaClassFromOWLDatatype(OWLDataPropertyAssertionAxiom dataproperty, @Nullable Class<?> classToVerify) {
         Class<?> javaClass;
         final OWLDatatype datatype = dataproperty.getObject().getDatatype();
         if (datatype.isBuiltIn()) {
@@ -229,7 +214,7 @@ public class TypeConverter {
      * @param inputType - Previously determined type
      * @return - Nullable java type
      */
-    private static @Nullable Class<?> getJavaMemberType(@Nullable Class<?> clazz, OWLDataProperty property, Class<?> inputType) {
+    private @Nullable Class<?> getJavaMemberType(@Nullable Class<?> clazz, OWLDataProperty property, Class<?> inputType) {
         if (clazz == null) {
             return inputType;
         }
@@ -253,14 +238,8 @@ public class TypeConverter {
 
     }
 
-    /**
-     * Inspect Java class to determine correct datatype for a given OWLDataProperty
-     *
-     * @param classToVerify - Class to verify type against
-     * @param property      - OWLDataProperty to lookup
-     * @return - Java class of corresponding data property
-     */
-    public static Class<?> lookupJavaClassFromOWLDataProperty(Class<?> classToVerify, OWLDataProperty property) {
+    @Override
+    public Class<?> lookupJavaClassFromOWLDataProperty(Class<?> classToVerify, OWLDataProperty property) {
         final @Nullable OWLDatatype owlDatatype = verifyOWLType(classToVerify, property);
         @Nullable Class<?> javaClass = null;
         if (owlDatatype != null) {
@@ -279,12 +258,33 @@ public class TypeConverter {
 
     }
 
-    private static @Nullable OWLDatatype verifyOWLType(Class<?> classToVerify, OWLDataProperty property) {
+    @Override
+    public OWLDatatype getDatatypeFromAnnotation(Fact annotation, Class<?> objectClass) {
+//        I don't think this will ever be true
+        if (annotation.datatype().toString().equals("") || annotation.datatype() == OWL2Datatype.XSD_NMTOKEN) {
+            return getDatatypeFromJavaClass(objectClass);
+        } else {
+            return annotation.datatype().getDatatype(dfStatic);
+        }
+    }
+
+
+    @Override
+    public OWLDatatype getDatatypeFromJavaClass(Class<?> javaTypeClass) {
+        OWLDatatype owlDatatype = owlDatatypeMap.get(javaTypeClass);
+        if (owlDatatype == null) {
+            logger.error("Unsupported Java type {}", javaTypeClass);
+            owlDatatype = OWL2Datatype.XSD_STRING.getDatatype(dfStatic);
+        }
+        return owlDatatype;
+    }
+
+    private @Nullable OWLDatatype verifyOWLType(Class<?> classToVerify, OWLDataProperty property) {
 
         return getDatatypeFromJavaClass(getJavaMemberType(classToVerify, property, null));
     }
 
-    static Map<OWLDatatype, Class<?>> buildDatatype2ClassMap() {
+    private static Map<OWLDatatype, Class<?>> buildDatatype2ClassMap() {
         Map<OWLDatatype, Class<?>> datatypeMap = new HashMap<>();
 
         datatypeMap.put(OWL2Datatype.XSD_INTEGER.getDatatype(dfStatic), BigInteger.class);
@@ -335,53 +335,5 @@ public class TypeConverter {
         types.put(Geometry.class, dfStatic.getOWLDatatype(WKTDatatypeIRI));
 
         return types;
-    }
-
-    public static OWLDatatype getDatatypeFromAnnotation(Fact annotation, Class<?> objectClass) {
-//        I don't think this will ever be true
-        if (annotation.datatype().toString().equals("") || annotation.datatype() == OWL2Datatype.XSD_NMTOKEN) {
-            return getDatatypeFromJavaClass(objectClass);
-        } else {
-            return annotation.datatype().getDatatype(dfStatic);
-        }
-    }
-
-    public static @NotNull
-    OWLDatatype getDatatypeFromJavaClass(Class<?> javaTypeClass) {
-        OWLDatatype owlDatatype = owlDatatypeMap.get(javaTypeClass);
-        if (owlDatatype == null) {
-            logger.error("Unsupported Java type {}", javaTypeClass);
-            owlDatatype = OWL2Datatype.XSD_STRING.getDatatype(dfStatic);
-        }
-        return owlDatatype;
-    }
-
-    @SuppressWarnings({"Duplicates", "squid:S1199"})
-    public static Class<?> parsePrimitiveClass(Class<?> returnClass) {
-        if (returnClass.isPrimitive()) {
-            logger.trace("Converting primitive type {} to object", returnClass.getTypeName());
-            switch (returnClass.getTypeName()) {
-                case "int": {
-                    return Integer.class;
-                }
-                case "float": {
-                    return Float.class;
-                }
-                case "double": {
-                    return Double.class;
-                }
-                case "boolean": {
-                    return Boolean.class;
-                }
-                case "long": {
-                    return Long.class;
-                }
-                default: {
-                    throw new ClassCastException(String.format("Unsupported cast of %s to primitive type", returnClass.getTypeName()));
-                }
-            }
-        }
-
-        return returnClass;
     }
 }

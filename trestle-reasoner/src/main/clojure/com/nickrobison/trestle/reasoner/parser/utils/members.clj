@@ -6,7 +6,7 @@
            (java.lang.reflect Constructor Method Field)
            (com.nickrobison.trestle.reasoner.exceptions InvalidClassException InvalidClassException$State))
   (:require [com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]
-            [com.nickrobison.trestle.reasoner.parser.utils.spatial :as spatial]
+            [com.nickrobison.trestle.reasoner.parser.spatial :as spatial]
             [clojure.string :as string]
             [clojure.core.reducers :as r]
             [clojure.tools.logging :as log]))

@@ -10,8 +10,9 @@ import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
+import com.nickrobison.trestle.reasoner.parser.ITypeConverter;
 import com.nickrobison.trestle.reasoner.parser.TemporalParser;
-import com.nickrobison.trestle.reasoner.parser.TypeConverter;
+import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.reasoner.utils.TemporalPropertiesPair;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
@@ -57,6 +58,7 @@ public class IndividualEngine {
     private static final Logger logger = LoggerFactory.getLogger(IndividualEngine.class);
     private final ITrestleOntology ontology;
     private final QueryBuilder qb;
+    private final ITypeConverter typeConverter;
     private final TrestleCache trestleCache;
     private final TrestleExecutorService individualThreadPool;
     private final TrestleExecutorService factThreadPool;
@@ -65,11 +67,13 @@ public class IndividualEngine {
     @Inject
     public IndividualEngine(ITrestleOntology ontology,
                             QueryBuilder qb,
+                            TrestleParser parser,
                             TrestleCache trestleCache,
                             Metrician metrician) {
         final Config trestleConfig = ConfigFactory.load().getConfig("trestle");
         this.ontology = ontology;
         this.qb = qb;
+        this.typeConverter = parser.typeConverter;
         this.trestleCache = trestleCache;
         individualThreadPool = TrestleExecutorService.executorFactory("individual-pool",
                 trestleConfig.getInt("threading.individual-pool.size"),
@@ -342,10 +346,10 @@ public class IndividualEngine {
                             .findFirst();
 
                     final OWLDataPropertyAssertionAxiom assertion = dataPropertyAssertion.orElseThrow(() -> new TrestleMissingFactException(factIndividual));
-                    final Class<?> datatype = TypeConverter.lookupJavaClassFromOWLDatatype(assertion, null);
+                    final Class<?> datatype = this.typeConverter.lookupJavaClassFromOWLDatatype(assertion, null);
 //                    I don't know why this is throwing an error, so I'm going to ignore it for now
                     @SuppressWarnings("type.argument.type.incompatible")
-                    final Object literalObject = TypeConverter.extractOWLLiteral(datatype, assertion.getObject());
+                    final Object literalObject = this.typeConverter.extractOWLLiteral(datatype, assertion.getObject());
 //            Get valid time
                     final Set<OWLDataPropertyAssertionAxiom> validTemporals = dataProperties
                             .stream()
@@ -368,7 +372,7 @@ public class IndividualEngine {
                             factIndividual.getIRI().toString(),
                             assertion.getProperty().asOWLDataProperty().getIRI().getShortForm(),
                             literalObject,
-                            validTemporal.orElseThrow(() -> new TrestleMissingFactException(factIndividual)),
+                            null, validTemporal.orElseThrow(() -> new TrestleMissingFactException(factIndividual)),
                             dbTemporal.orElseThrow(() -> new TrestleMissingFactException(factIndividual)));
                 });
     }

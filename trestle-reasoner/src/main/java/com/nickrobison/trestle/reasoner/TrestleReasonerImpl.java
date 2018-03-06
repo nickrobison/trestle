@@ -187,12 +187,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             throw new IllegalArgumentException("invalid ontology name", e);
         }
 
-//        Register type constructors from the service loader
-        final ServiceLoader<TypeConstructor> constructors = ServiceLoader.load(TypeConstructor.class);
-        for (final TypeConstructor constructor : constructors) {
-            this.registerTypeConstructor(constructor);
-        }
-
         ontology = injector.getInstance(ITrestleOntology.class);
         logger.debug("Ontology connected");
         if (builder.initialize) {
@@ -218,6 +212,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         this.individualEngine = injector.getInstance(IndividualEngine.class);
         this.spatialEngine = injector.getInstance(SpatialEngine.class);
         this.temporalEngine = injector.getInstance(TemporalEngine.class);
+
+//        Register type constructors from the service loader
+        final ServiceLoader<TypeConstructor> constructors = ServiceLoader.load(TypeConstructor.class);
+        for (final TypeConstructor constructor : constructors) {
+            this.registerTypeConstructor(constructor);
+        }
 
 //            validate the classes
         builder.inputClasses.forEach(clazz -> {
@@ -275,7 +275,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public <C extends TypeConstructor> void registerTypeConstructor(TrestleReasonerImpl this, C typeConstructor) {
-        TypeConverter.registerTypeConstructor(typeConstructor);
+        this.trestleParser.typeConverter.registerTypeConstructor(typeConstructor);
     }
 
     //    When you get the ontology, the ownership passes away, so then the reasoner can't perform any more queries.

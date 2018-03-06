@@ -49,6 +49,7 @@ public class TrestleParserTest {
     private IClassParser cp;
     private IClassBuilder cb;
     private IClassRegister cr;
+    private ITypeConverter typeConverter;
 
     @BeforeEach
     public void Setup() {
@@ -62,7 +63,8 @@ public class TrestleParserTest {
         LocalDate ld = LocalDate.of(1989, 3, 26);
         temporal = TemporalObjectBuilder.exists().from(dt).to(dt.plusYears(1)).build(); //.withRelations();
         temporalPoint = TemporalObjectBuilder.exists().at(ld).build(); // .withRelations();
-        final Object clojureParser = ClojureProvider.buildClojureParser(TRESTLE_PREFIX, true, "", 4326);
+        this.typeConverter = new TypeConverter();
+        final Object clojureParser = ClojureProvider.buildClojureParser(TRESTLE_PREFIX, true, "", 4326, typeConverter);
         cb = (IClassBuilder) clojureParser;
         cp = (IClassParser) clojureParser;
         cr = (IClassRegister) clojureParser;
@@ -312,9 +314,9 @@ public class TrestleParserTest {
 
 //        Properties
         testProperties.forEach(property -> {
-            final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, TestClasses.GAULMethodTest.class);
+            final Class<?> javaClass = this.typeConverter.lookupJavaClassFromOWLDatatype(property, TestClasses.GAULMethodTest.class);
             inputClasses.add(javaClass);
-            final Object literalValue = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
+            final Object literalValue = this.typeConverter.extractOWLLiteral(javaClass, property.getObject());
 //            final Object literalValue = javaClass.cast(property.getObject().getLiteral());
             inputObjects.add(literalValue);
             constructorArguments.addArgument(

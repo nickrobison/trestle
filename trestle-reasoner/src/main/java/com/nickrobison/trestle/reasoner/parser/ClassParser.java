@@ -46,6 +46,7 @@ public class ClassParser implements IClassParser {
     static final OWLDataFactory dfStatic = OWLManager.getOWLDataFactory();
 
     private final OWLDataFactory df;
+    private final ITypeConverter typeConverter;
     private final String ReasonerPrefix;
     private final boolean multiLangEnabled;
     private final String defaultLanguageCode;
@@ -54,10 +55,12 @@ public class ClassParser implements IClassParser {
 
     @Inject
     ClassParser(@com.nickrobison.trestle.ontology.ReasonerPrefix String reasonerPrefix,
+                ITypeConverter typeConverter,
                 @MultiLangEnabled boolean multiLangEnabled,
                 @DefaultLanguageCode String defaultLanguageCode,
                 @DefaultProjection Integer defaultProjection) {
         this.df = OWLManager.getOWLDataFactory();
+        this.typeConverter = typeConverter;
         this.ReasonerPrefix = reasonerPrefix;
         this.multiLangEnabled = multiLangEnabled;
         this.defaultLanguageCode = defaultLanguageCode;
@@ -226,7 +229,7 @@ public class ClassParser implements IClassParser {
                                 isMultiLangEnabled(),
                                 getDefaultLanguageCode())
                                 .orElse(df.getOWLLiteral(fieldValue.toString(),
-                                        TypeConverter.getDatatypeFromAnnotation(annotation, classField.getType())));
+                                        this.typeConverter.getDatatypeFromAnnotation(annotation, classField.getType())));
                         axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, owlLiteral));
                     }
                 } else if (classField.isAnnotationPresent(Spatial.class) && !filterSpatial) {
@@ -258,7 +261,7 @@ public class ClassParser implements IClassParser {
                                 isMultiLangEnabled(),
                                 getDefaultLanguageCode())
                                 .orElse(df.getOWLLiteral(fieldValue.toString(),
-                                        TypeConverter.getDatatypeFromJavaClass(classField.getType())));
+                                        this.typeConverter.getDatatypeFromJavaClass(classField.getType())));
 
                         axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, owlLiteral));
                     }
@@ -281,7 +284,7 @@ public class ClassParser implements IClassParser {
                                 classMethod,
                                 isMultiLangEnabled(),
                                 getDefaultLanguageCode())
-                                .orElse(df.getOWLLiteral(methodValue.get().toString(), TypeConverter.getDatatypeFromAnnotation(annotation, classMethod.getReturnType())));
+                                .orElse(df.getOWLLiteral(methodValue.get().toString(), this.typeConverter.getDatatypeFromAnnotation(annotation, classMethod.getReturnType())));
 
                         axioms.add(df.getOWLDataPropertyAssertionAxiom(
                                 owlDataProperty,
@@ -308,7 +311,7 @@ public class ClassParser implements IClassParser {
                                 classMethod,
                                 isMultiLangEnabled(),
                                 getDefaultLanguageCode())
-                                .orElse(df.getOWLLiteral(methodValue.get().toString(), TypeConverter.getDatatypeFromJavaClass(classMethod.getReturnType())));
+                                .orElse(df.getOWLLiteral(methodValue.get().toString(), this.typeConverter.getDatatypeFromJavaClass(classMethod.getReturnType())));
                         axioms.add(df.getOWLDataPropertyAssertionAxiom(
                                 owlDataProperty,
                                 owlNamedIndividual,
@@ -760,7 +763,7 @@ public class ClassParser implements IClassParser {
     static Optional<Object> accessMethodValue(Method classMethod, Object inputObject) {
         @Nullable Object castReturn = null;
         try {
-            final Class<?> returnType = TypeConverter.parsePrimitiveClass(classMethod.getReturnType());
+            final Class<?> returnType = ITypeConverter.parsePrimitiveClass(classMethod.getReturnType());
             final Object invokedObject;
             invokedObject = classMethod.invoke(inputObject);
             logger.trace("Method {} has return type {}", classMethod.getName(), returnType);

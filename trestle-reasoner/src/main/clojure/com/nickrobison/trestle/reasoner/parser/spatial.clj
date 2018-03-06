@@ -1,4 +1,4 @@
-(ns com.nickrobison.trestle.reasoner.parser.utils.spatial
+(ns com.nickrobison.trestle.reasoner.parser.spatial
   (:import (org.opengis.referencing NoSuchAuthorityCodeException)
            (com.nickrobison.trestle.reasoner.exceptions InvalidClassException InvalidClassException$State)
            (org.geotools.referencing CRS)

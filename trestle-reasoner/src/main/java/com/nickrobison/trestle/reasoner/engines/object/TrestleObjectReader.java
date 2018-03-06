@@ -11,6 +11,7 @@ import com.nickrobison.trestle.ontology.ReasonerPrefix;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
+import com.nickrobison.trestle.reasoner.annotations.Fact;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
 import com.nickrobison.trestle.reasoner.engines.events.TrestleEventEngine;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
@@ -68,6 +69,8 @@ public class TrestleObjectReader implements ITrestleObjectReader {
     private final IClassParser classParser;
     private final IClassRegister classRegister;
     private final IClassBuilder classBuilder;
+    private final ITypeConverter typeConverter;
+    private final FactFactory factFactory;
     private final TemporalParser temporalParser;
     private final TrestleMergeEngine mergeEngine;
     private final ITrestleOntology ontology;
@@ -80,6 +83,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                                Metrician metrician,
                                ObjectEngineUtils engineUtils,
                                TrestleParser trestleParser,
+                               FactFactory factFactory,
                                TrestleMergeEngine mergeEngine,
                                ITrestleOntology ontology,
                                QueryBuilder qb,
@@ -92,6 +96,8 @@ public class TrestleObjectReader implements ITrestleObjectReader {
         this.classRegister = trestleParser.classRegistry;
         this.classBuilder = trestleParser.classBuilder;
         this.temporalParser = trestleParser.temporalParser;
+        this.typeConverter = trestleParser.typeConverter;
+        this.factFactory = factFactory;
         this.mergeEngine = mergeEngine;
         this.ontology = ontology;
         this.qb = qb;
@@ -261,7 +267,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
 //                                    Get database temporal
                                         final Optional<TemporalObject> factDatabaseTemporal = TemporalObjectBuilder.buildTemporalFromResults(TemporalScope.DATABASE, Optional.empty(), result.getLiteral("df"), result.getLiteral("dt"));
                                         //noinspection unchecked
-                                        return new TrestleFact<>(
+                                        return this.factFactory.createFact(
                                                 clazz,
                                                 assertion,
                                                 factValidTemporal.orElseThrow(() -> new RuntimeException("Unable to build fact valid temporal")),
@@ -434,7 +440,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                 .stream()
                 .map(result -> result.getLiteral("value"))
                 .filter(Optional::isPresent)
-                .map(literal -> TypeConverter.extractOWLLiteral(datatype, literal.get()))
+                .map(literal -> this.typeConverter.extractOWLLiteral(datatype, literal.get()))
                 .collect(Collectors.toList());
         return Optional.of(factValues);
     }

@@ -1,5 +1,5 @@
-(ns com.nickrobison.trestle.reasoner.parser.modules.spatial.jts
-  (:require [com.nickrobison.trestle.reasoner.parser.utils.spatial :refer [SpatialParserProtocol]])
+(ns com.nickrobison.trestle.reasoner.parser.types.spatial.jts
+  (:require [com.nickrobison.trestle.reasoner.parser.spatial :refer [SpatialParserProtocol]])
   (:import (org.semanticweb.owlapi.model OWLDataFactory)
            (com.nickrobison.trestle.common StaticIRI)
            (com.vividsolutions.jts.io WKTWriter)

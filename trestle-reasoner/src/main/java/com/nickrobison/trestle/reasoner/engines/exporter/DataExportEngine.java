@@ -48,6 +48,7 @@ public class DataExportEngine implements ITrestleDataExporter {
     private final ITrestleObjectReader objectReader;
     private final IClassParser classParser;
     private final IClassBuilder classBuilder;
+    private final ITypeConverter typeConverter;
     private final TemporalParser temporalParser;
     private final TrestleExecutorService dataExporterPool;
 
@@ -63,6 +64,7 @@ public class DataExportEngine implements ITrestleDataExporter {
         this.classParser = trestleParser.classParser;
         this.classBuilder = trestleParser.classBuilder;
         this.temporalParser = trestleParser.temporalParser;
+        this.typeConverter = trestleParser.typeConverter;
 
         final Config config = ConfigFactory.load().getConfig("trestle");
 
@@ -85,11 +87,11 @@ public class DataExportEngine implements ITrestleDataExporter {
 //        FIXME(nrobison): Shapefile schema doesn't support multiple languages. Need to figure out how to flatten
         final ShapefileSchema shapefileSchema = new ShapefileSchema(MultiPolygon.class);
         final Optional<List<OWLDataProperty>> propertyMembers = this.classBuilder.getPropertyMembers(inputClass, true);
-        propertyMembers.ifPresent(owlDataProperties -> owlDataProperties.forEach(property -> shapefileSchema.addProperty(this.classParser.matchWithClassMember(inputClass, property.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property))));
+        propertyMembers.ifPresent(owlDataProperties -> owlDataProperties.forEach(property -> shapefileSchema.addProperty(this.classParser.matchWithClassMember(inputClass, property.asOWLDataProperty().getIRI().getShortForm()), this.typeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property))));
 
 //        Now the temporals
         final Optional<List<OWLDataProperty>> temporalProperties = this.temporalParser.getTemporalsAsDataProperties(inputClass);
-        temporalProperties.ifPresent(owlDataProperties -> owlDataProperties.forEach(temporal -> shapefileSchema.addProperty(this.classParser.matchWithClassMember(inputClass, temporal.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, temporal))));
+        temporalProperties.ifPresent(owlDataProperties -> owlDataProperties.forEach(temporal -> shapefileSchema.addProperty(this.classParser.matchWithClassMember(inputClass, temporal.asOWLDataProperty().getIRI().getShortForm()), this.typeConverter.lookupJavaClassFromOWLDataProperty(inputClass, temporal))));
 
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
@@ -171,8 +173,8 @@ public class DataExportEngine implements ITrestleDataExporter {
 //                    Data properties, filtering out the spatial members
         final Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = this.classParser.getFacts(object, true);
         owlDataPropertyAssertionAxioms.ifPresent(owlDataPropertyAssertionAxioms1 -> owlDataPropertyAssertionAxioms1.forEach(property -> {
-            final Class<@NonNull ?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, object.getClass());
-            final Object literal = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
+            final Class<@NonNull ?> javaClass = this.typeConverter.lookupJavaClassFromOWLDatatype(property, object.getClass());
+            final Object literal = this.typeConverter.extractOWLLiteral(javaClass, property.getObject());
             individual.addProperty(this.classParser.matchWithClassMember(inputClass, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
                     literal);
         }));

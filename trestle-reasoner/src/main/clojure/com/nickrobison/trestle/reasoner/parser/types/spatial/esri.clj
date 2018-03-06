@@ -1,5 +1,5 @@
-(ns com.nickrobison.trestle.reasoner.parser.modules.spatial.esri
-  (:require [com.nickrobison.trestle.reasoner.parser.utils.spatial :refer [SpatialParserProtocol]])
+(ns com.nickrobison.trestle.reasoner.parser.types.spatial.esri
+  (:require [com.nickrobison.trestle.reasoner.parser.spatial :refer [SpatialParserProtocol]])
   (:import (com.esri.core.geometry Geometry GeometryEngine Polygon Geometry$Type Polyline Point MultiPoint Line Envelope)
            (com.nickrobison.trestle.common StaticIRI)
            (org.semanticweb.owlapi.model OWLDataFactory)))

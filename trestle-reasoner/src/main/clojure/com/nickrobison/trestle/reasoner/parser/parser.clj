@@ -1,6 +1,6 @@
 (ns com.nickrobison.trestle.reasoner.parser.parser
   (:import [IClassParser]
-           (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter SpatialParser IClassBuilder IClassRegister ClassBuilder)
+           (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter IClassBuilder IClassRegister ClassBuilder)
            (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom OWLDataProperty OWLLiteral OWLDatatype)
            (java.lang.reflect Constructor Parameter)
            (com.nickrobison.trestle.reasoner.annotations DatasetClass Fact Language)
@@ -14,10 +14,10 @@
             [clojure.set :as set]
             [com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]
             [com.nickrobison.trestle.reasoner.parser.utils.members :as m]
-            ; We have to require the methods we're overloading, as well as namespaces where we did the overloading
-            [com.nickrobison.trestle.reasoner.parser.utils.spatial :refer  [literal-from-geom]]
-            [com.nickrobison.trestle.reasoner.parser.modules.spatial.esri]
-            [com.nickrobison.trestle.reasoner.parser.modules.spatial.jts])
+            ; We have to require the methods we're extending, as well as namespaces where we did the extension
+            [com.nickrobison.trestle.reasoner.parser.spatial :refer  [literal-from-geom]]
+            [com.nickrobison.trestle.reasoner.parser.types.spatial.esri]
+            [com.nickrobison.trestle.reasoner.parser.types.spatial.jts])
   (:use clj-fuzzy.metrics))
 
 ; Class related helpers
@@ -103,10 +103,13 @@
 
 (defn owl-return-type
   "Determine the OWLDatatype of the field/method"
-  [member rtype]
+  [member rtype typeConverter]
   (if (pred/hasAnnotation? member Fact)
-    (TypeConverter/getDatatypeFromAnnotation (pred/get-annotation member Fact) rtype)
-    (TypeConverter/getDatatypeFromJavaClass rtype)))
+    (.getDatatypeFromAnnotation typeConverter (pred/get-annotation member Fact) rtype)
+    ;(TypeConverter/getDatatypeFromAnnotation (pred/get-annotation member Fact) rtype)
+    (.getDatatypeFromJavaClass typeConverter rtype)
+    ;(TypeConverter/getDatatypeFromJavaClass rtype)
+    ))
 
 (defn get-member-language
   "Get the language tag, if one exists"
@@ -125,20 +128,20 @@
 
 (defmulti build-member-return-type
           "Specialized method to build return type for member"
-          (fn [acc member df] (:type acc)))
+          (fn [acc member df typeConverter] (:type acc)))
 (defmethod build-member-return-type ::pred/spatial
-  [acc member ^OWLDataFactory df]
+  [acc member ^OWLDataFactory df _]
   (let [rtype (pred/get-member-return-type member)]
     (merge acc {
                 :return-type  rtype
                 :owl-datatype (.getOWLDatatype df (StaticIRI/WKTDatatypeIRI))
                 })))
 (defmethod build-member-return-type :default
-  [acc member df]
+  [acc member _ typeConverter]
   (let [rtype (pred/get-member-return-type member)]
     (merge acc {
                 :return-type  rtype
-                :owl-datatype (owl-return-type member rtype)
+                :owl-datatype (owl-return-type member rtype typeConverter)
                 })))
 
 (defn build-member-map
@@ -197,14 +200,14 @@
 
 (defn build-member
   "Build member from class methods/fields"
-  [member ^OWLDataFactory df prefix defaultLang defaultProjection]
+  [member ^OWLDataFactory df prefix defaultLang defaultProjection typeConverter]
   (let [iri (m/build-iri member prefix)]
     (merge (build-member-map member
                              ; Apply all these transformations to build up the member map
                              [(fn [acc member]
                                 (default-member-keys acc member defaultLang))
                               (fn [acc member]
-                                (build-member-return-type acc member df))
+                                (build-member-return-type acc member df typeConverter))
                               ignore-fact
                               (fn [acc member]
                                 (build-multi-lang acc member defaultLang))
@@ -373,6 +376,7 @@
                                ^boolean multiLangEnabled,
                                ^String defaultLanguageCode
                                ^Integer defaultProjection
+                               typeConverter
                                classRegistry
                                owlClassMap]
   IClassParser
@@ -391,7 +395,11 @@
                              ; Filter out non-necessary members
                              (r/filter pred/filter-member)
                              ; Build members
-                             (r/map #(build-member % df reasonerPrefix (if (true? multiLangEnabled) defaultLanguageCode nil) defaultProjection))
+                             (r/map #(build-member % df
+                                                   reasonerPrefix (if (true? multiLangEnabled)
+                                                                    defaultLanguageCode nil)
+                                                   defaultProjection
+                                                   typeConverter))
                              ; Combine everything into a map
                              (r/reduce member-reducer {
                                                        :class-name   (get-class-name
@@ -544,9 +552,10 @@
 
 (defn make-parser
   "Creates a new ClassParser"
-  [df reasonerPrefix multiLangEnabled defaultLanguageCode defaultProjection]
+  [df reasonerPrefix multiLangEnabled defaultLanguageCode defaultProjection typeConverter]
   (->ClojureClassParser df reasonerPrefix
                         multiLangEnabled
                         defaultLanguageCode defaultProjection
+                        typeConverter
                         (atom {})
                         (atom {})))

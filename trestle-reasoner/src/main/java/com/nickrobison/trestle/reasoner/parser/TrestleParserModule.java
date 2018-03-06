@@ -70,6 +70,10 @@ public class TrestleParserModule extends PrivateModule {
                     .in(Singleton.class);
         }
 
+        bind(ITypeConverter.class)
+                .to(TypeConverter.class)
+                .in(Singleton.class);
+
         bind(Boolean.class)
                 .annotatedWith(MultiLangEnabled.class)
                 .toInstance(this.multiLangEnabled);
@@ -81,6 +85,8 @@ public class TrestleParserModule extends PrivateModule {
                 .toInstance(this.defaultProjection);
 
         bind(TrestleParser.class).in(Singleton.class);
+        bind(FactFactory.class).in(Singleton.class);
         expose(TrestleParser.class);
+        expose(FactFactory.class);
     }
 }
