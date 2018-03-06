@@ -763,7 +763,7 @@ public class ClassParser implements IClassParser {
     static Optional<Object> accessMethodValue(Method classMethod, Object inputObject) {
         @Nullable Object castReturn = null;
         try {
-            final Class<?> returnType = TypeUtils.parsePrimitiveClass(classMethod.getReturnType());
+            final Class<?> returnType = TypeConverter.parsePrimitiveClass(classMethod.getReturnType());
             final Object invokedObject;
             invokedObject = classMethod.invoke(inputObject);
             logger.trace("Method {} has return type {}", classMethod.getName(), returnType);

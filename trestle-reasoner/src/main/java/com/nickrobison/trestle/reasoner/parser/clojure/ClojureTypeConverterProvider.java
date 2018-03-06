@@ -3,7 +3,7 @@ package com.nickrobison.trestle.reasoner.parser.clojure;
 import clojure.java.api.Clojure;
 import clojure.lang.IFn;
 import com.nickrobison.trestle.reasoner.parser.ITypeConverter;
-import com.nickrobison.trestle.reasoner.parser.TypeConverter;
+import com.nickrobison.trestle.reasoner.parser.TypeUtils;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 
@@ -31,6 +31,6 @@ public class ClojureTypeConverterProvider implements Provider<ITypeConverter> {
         require.invoke(Clojure.read("com.nickrobison.trestle.reasoner.parser.types.converter"));
         final IFn newConverterFn = Clojure.var("com.nickrobison.trestle.reasoner.parser.types.converter", "make-type-converter");
 
-        return (ITypeConverter) newConverterFn.invoke(df, TypeConverter.buildDatatype2ClassMap(), TypeConverter.buildClassMap());
+        return (ITypeConverter) newConverterFn.invoke(df, TypeUtils.buildDatatype2ClassMap(), TypeUtils.buildClassMap());
     }
 }
