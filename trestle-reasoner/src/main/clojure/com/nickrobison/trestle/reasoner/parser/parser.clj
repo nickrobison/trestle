@@ -15,7 +15,7 @@
             [com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]
             [com.nickrobison.trestle.reasoner.parser.utils.members :as m]
             ; We have to require the methods we're extending, as well as namespaces where we did the extension
-            [com.nickrobison.trestle.reasoner.parser.spatial :refer  [literal-from-geom]]
+            [com.nickrobison.trestle.reasoner.parser.spatial :refer  [wkt-from-geom]]
             [com.nickrobison.trestle.reasoner.parser.types.spatial.esri]
             [com.nickrobison.trestle.reasoner.parser.types.spatial.jts])
   (:use clj-fuzzy.metrics))
@@ -296,12 +296,14 @@
           (fn [^OWLDataFactory df individual member inputObject] (:type member)))
 (defmethod build-assertion-axiom ::pred/spatial
   [^OWLDataFactory df ^OWLNamedIndividual individual member inputObject]
-  (let [wktOptional (Optional/of (literal-from-geom (m/invoker (get member :handle) inputObject) df))]
-    (if (.isPresent wktOptional)
-      (.getOWLDataPropertyAssertionAxiom df
-                                         ^OWLDataProperty (get member :data-property)
-                                         individual
-                                         ^OWLLiteral (.get wktOptional)))))
+  (if-let [literal (.getOWLLiteral df (wkt-from-geom
+                                        (m/invoker (get member :handle) inputObject))
+                                   (.getOWLDatatype df StaticIRI/WKTDatatypeIRI))]
+    (.getOWLDataPropertyAssertionAxiom df
+                                       ^OWLDataProperty (get member :data-property)
+                                       individual
+                                       literal)
+    nil))
 (defmethod build-assertion-axiom ::pred/language
   [^OWLDataFactory df ^OWLNamedIndividual individual member inputObject]
   (.getOWLDataPropertyAssertionAxiom df

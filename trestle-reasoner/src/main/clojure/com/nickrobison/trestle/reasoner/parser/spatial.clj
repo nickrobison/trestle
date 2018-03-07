@@ -16,8 +16,7 @@
 
 (defprotocol SpatialParserProtocol
   "Protocol for registering various spatial object models"
-  (wkt-from-geom [spatialObject] "Get the WKT representation from the spatial object")
-  (literal-from-geom [spatialObject ^OWLDataFactory df] "Create an OWL literal from the WKT representation of the spatial object"))
+  (wkt-from-geom ^String [spatialObject] "Get the WKT representation from the spatial object"))
 
 (defn validate-spatial-projection
   "Validate the given Projection to make sure it matches something we can understand"
