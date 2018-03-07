@@ -1,49 +1,47 @@
 (ns com.nickrobison.trestle.reasoner.parser.types.converter
   (:require [clojure.tools.logging :as log]
-            [com.nickrobison.trestle.reasoner.parser.spatial :refer  [wkt-to-geom]])
+            [com.nickrobison.trestle.reasoner.parser.spatial :refer [wkt-to-geom]])
   (:import (com.nickrobison.trestle.reasoner.parser ITypeConverter TypeUtils TypeConstructor)
            (org.semanticweb.owlapi.model IRI OWLDataFactory OWLLiteral)
            (java.util Map Optional)
            (org.semanticweb.owlapi.vocab OWL2Datatype)))
 
 
+(defn- update-type-map
+  [owlType javaType constructor]
+  )
+
+
 (defrecord ClojureTypeConverter
   [^OWLDataFactory df
-   owl-to-java-map
-   java-to-owl-map
-   class-constructors]
+   typeMap]
   ITypeConverter
   (registerTypeConstructor [_ constructor]
     (let [javaClass (.getJavaType constructor)
           name (.getConstructorName constructor)
           datatype (.getOWLDatatype constructor)
           owlDatatype (.getOWLDatatype df (IRI/create datatype))]
-      (if (contains? @java-to-owl-map javaClass)
+      (if (contains? (:java-to-owl @typeMap) javaClass)
         (do
           (log/warnf "Overwriting mapping of Java class %s with %s"
                      javaClass name)
-          (swap! owl-to-java-map assoc owlDatatype javaClass)
-          ;(assoc owl-to-java-map owlDatatype javaClass)
-          (swap! java-to-owl-map assoc javaClass owlDatatype)
-          ;(assoc java-to-owl-map javaClass owlDatatype)
-          (swap! class-constructors assoc (.getTypeName javaClass) constructor)
-          ;(assoc class-constructors (.getTypeName javaClass) constructor)
-          )
+          (swap! typeMap #(-> %
+                              (assoc-in [:owl-to-java owlDatatype] javaClass)
+                              (assoc-in [:java-to-owl javaClass] owlDatatype)
+                              (assoc-in [:constructors (.getTypeName javaClass)] constructor))))
         (do
           (log/infof "Registering Type Constructor %s for %s and %s"
                      name
                      javaClass datatype)
-          (swap! owl-to-java-map assoc owlDatatype javaClass)
-          ;(assoc owl-to-java-map owlDatatype javaClass)
-          (swap! java-to-owl-map assoc javaClass owlDatatype)
-          ;(assoc java-to-owl-map javaClass owlDatatype)
-          (swap! class-constructors assoc (.getTypeName javaClass) constructor)
-          )
+          (swap! typeMap #(-> %
+                              (assoc-in [:owl-to-java owlDatatype] javaClass)
+                              (assoc-in [:java-to-owl javaClass] owlDatatype)
+                              (assoc-in [:constructors (.getTypeName javaClass)] constructor))))
         )))
   (getDatatypeFromJavaClass
     [_ javaTypeClass]
     (log/warnf "Trying to get type %s" javaTypeClass)
-    (if-let [datatype (get @java-to-owl-map javaTypeClass)]
+    (if-let [datatype (get (:java-to-owl @typeMap) javaTypeClass)]
       datatype
       (log/spyf :error (str "Unsupported Java type: " javaTypeClass)
                 (.getDatatype (OWL2Datatype/XSD_STRING) df))))
@@ -62,13 +60,13 @@
           ; If we don't know what the return type is, try and lookup a registered mapping,
           ; using the given datatype. Throw an exception if we can't match anything
           (if-let [javaClass (get
-                               @owl-to-java-map
+                               (:owl-to-java @typeMap)
                                (.getDatatype (.getBuiltInDatatype datatype) df))]
             javaClass
             (throw (IllegalArgumentException. (str "Unsupported OWLDatatype: " datatype))))
           ; If we know what the return type is, do the inverse lookup to make sure we get the correct primitive type
           ; (I think this is wrong)
-          (if-let [registeredType (get @owl-to-java-map (.getDatatypeFromJavaClass this javaReturnType))]
+          (if-let [registeredType (get (:owl-to-java @typeMap) (.getDatatypeFromJavaClass this javaReturnType))]
             registeredType
             (throw (IllegalArgumentException. (str "Unsupported OWLDatatype: " datatype))))
           )
@@ -82,13 +80,13 @@
               javaReturnType)
             ; If we're not spatial, try to lookup the class from the registry,
             ;otherwise, use a string as a last resort
-            (if-let [matchedClass (get @owl-to-java-map datatype)]
+            (if-let [matchedClass (get (:owl-to-java @typeMap) datatype)]
               matchedClass
               String))))))
   (lookupJavaClassFromOWLDataProperty
     [this classToVerify property]
     (let [datatype (.getDatatypeFromJavaClass this classToVerify)
-          javaClass (get @owl-to-java-map datatype)]
+          javaClass (get (:owl-to-java @typeMap) datatype)]
       (if (nil? javaClass)
         (if (.equals (.getShortForm (.getIRI (.asOWLDataProperty property))) "asWKT")
           String
@@ -104,7 +102,7 @@
         (if-let [spatialValue (wkt-to-geom javaClass extractedLiteral)]
           spatialValue
           ; If we don't have a spatial value, check for something from our type constructors
-          (if-let [constructor ^TypeConstructor (get @class-constructors (.getTypeName javaClass))]
+          (if-let [constructor ^TypeConstructor (get (:constructors @typeMap) (.getTypeName javaClass))]
             (.cast javaClass (.constructType constructor (.getLiteral literal)))
             (throw (ClassCastException. (str "Unsupported cast of: " javaClass))))))))
   )
@@ -113,7 +111,8 @@
   [df ^Map owl-to-java-map ^Map java-to-owl-map]
   (->ClojureTypeConverter
     df
-    ; We have to convert our HashMaps into Associated maps
-    (atom (zipmap (.keySet owl-to-java-map) (.values owl-to-java-map)))
-    (atom (zipmap (.keySet java-to-owl-map) (.values java-to-owl-map)))
-    (atom {})))
+    (atom {
+           :owl-to-java  (zipmap (.keySet owl-to-java-map) (.values owl-to-java-map))
+           :java-to-owl  (zipmap (.keySet java-to-owl-map) (.values java-to-owl-map))
+           :constructors {}
+           })))
