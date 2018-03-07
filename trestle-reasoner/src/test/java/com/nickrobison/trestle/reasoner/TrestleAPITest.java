@@ -106,17 +106,6 @@ public class TrestleAPITest extends AbstractReasonerTest {
 
 //        reasoner.writeOntology(new File("/Users/nrobison/Desktop/trestle_test.owl").toURI(), false);
 
-//        Geotools
-//
-//        JTS.toGeometry()
-//        final Geometry geotoolsGeom = JTS.toGeographic(new WKTReader().read("POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))"), DefaultGeographicCRS.WGS84);
-//        JTS.toGeometry()
-//        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest = new TestClasses.GeotoolsPolygonTest(UUID.randomUUID(), (org.opengis.geometry.coordinate.Polygon) geotoolsGeom, LocalDate.now());
-//        final OWLNamedIndividual owlNamedIndividual = classParser.getTrestleObject(geotoolsPolygonTest);
-//        reasoner.writeTrestleObject(geotoolsPolygonTest);
-//        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest1 = reasoner.readTrestleObject(geotoolsPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
-//        assertEquals(geotoolsPolygonTest, geotoolsPolygonTest1, "Should be equal");
-
         reasoner.getMetricsEngine().exportData(new File("./target/api-test-metrics.csv"));
     }
 
