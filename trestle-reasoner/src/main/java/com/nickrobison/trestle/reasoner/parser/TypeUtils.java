@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.reasoner.parser;
 
-import com.vividsolutions.jts.geom.Geometry;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.DateTime;
 import org.semanticweb.owlapi.model.OWLDatatype;
@@ -16,7 +15,6 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.nickrobison.trestle.common.StaticIRI.WKTDatatypeIRI;
 import static com.nickrobison.trestle.common.StaticIRI.dateDatatypeIRI;
 import static com.nickrobison.trestle.reasoner.parser.ClassParser.dfStatic;
 
@@ -26,7 +24,7 @@ import static com.nickrobison.trestle.reasoner.parser.ClassParser.dfStatic;
 
 /**
  * Helper functions for typing conversions, that seemed easier to implement in Java than in Clojure
- * Not a lot to see, just some ugly casting through raws
+ * Not a lot to see, just some ugly casting through raw types
  */
 public final class TypeUtils {
 
@@ -92,6 +90,11 @@ public final class TypeUtils {
             }
 
             case "java.lang.String": {
+//                Since the String might be a WKT value, we need{
+//                final String stringLiteral = literal.getLiteral();
+//                if (wktRegex.matcher(stringLiteral).matches()) {
+//                    return null;
+//                }
                 return javaClass.cast(literal.getLiteral());
             }
 
@@ -130,6 +133,7 @@ public final class TypeUtils {
                 return null;
             }
         }
+
     }
 
     public static Map<OWLDatatype, Class<?>> buildDatatype2ClassMap() {
@@ -180,7 +184,7 @@ public final class TypeUtils {
         types.put(DateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(dfStatic));
         types.put(org.joda.time.LocalDateTime.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(dfStatic));
         types.put(org.joda.time.LocalDate.class, OWL2Datatype.XSD_DATE_TIME.getDatatype(dfStatic));
-        types.put(Geometry.class, dfStatic.getOWLDatatype(WKTDatatypeIRI));
+//        types.put(Geometry.class, dfStatic.getOWLDatatype(WKTDatatypeIRI));
 
         return types;
     }

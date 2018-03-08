@@ -1,7 +1,9 @@
 package com.nickrobison.trestle.reasoner.parser;
 
 import com.nickrobison.trestle.reasoner.exceptions.MissingConstructorException;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLDataProperty;
+import org.semanticweb.owlapi.model.OWLLiteral;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,4 +42,14 @@ public interface IClassBuilder {
      */
 
     <T> T constructObject(Class<T> clazz, ConstructorArguments arguments) throws MissingConstructorException;
+
+    /**
+     * Creates a projected WKT string using either the provided srid, or the projection specified by the class
+     *
+     * @param clazz         - {@link Class} registered with reasoner
+     * @param spatialObject - {@link Object} representing spatial value to parse
+     * @param srid          - {@link Integer} optional SRID to manually specify projection
+     * @return - {@link OWLLiteral} of projected WKT value
+     */
+    OWLLiteral getProjectedWKT(Class<?> clazz, Object spatialObject, @Nullable Integer srid);
 }

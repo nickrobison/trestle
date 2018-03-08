@@ -1,6 +1,7 @@
 (ns com.nickrobison.trestle.reasoner.parser.types.converter
   (:require [clojure.tools.logging :as log]
-            [com.nickrobison.trestle.reasoner.parser.spatial :refer [wkt-to-geom]])
+            [com.nickrobison.trestle.reasoner.parser.spatial :refer [wkt-to-geom]]
+            [com.nickrobison.trestle.reasoner.parser.spatial :as spatial])
   (:import (com.nickrobison.trestle.reasoner.parser ITypeConverter TypeUtils TypeConstructor)
            (org.semanticweb.owlapi.model IRI OWLDataFactory OWLLiteral)
            (java.util Map Optional)
@@ -94,18 +95,23 @@
         javaClass)))
   (extractOWLLiteral
     [_ javaClass literal]
+    ; Check to see if the literal is a built-in type that we understand
     (if-let [extractedLiteral (TypeUtils/rawLiteralConversion javaClass literal)]
-      extractedLiteral
+      ; If we have a String, it might be a WKT, so check if it's spatial and if so, parse it
+      (if (and (instance? String extractedLiteral)
+               (spatial/literal-is-spatial? df literal))
+        (wkt-to-geom javaClass extractedLiteral)
+        ; Otherwise, just return the built-in literal
+        extractedLiteral)
       (let [extractedLiteral (.getLiteral literal)]
-
-        ; Check to see if we have a spatial value
+        ; If we don't have a built-in it might be spatial
         (if-let [spatialValue (wkt-to-geom javaClass extractedLiteral)]
           spatialValue
           ; If we don't have a spatial value, check for something from our type constructors
           (if-let [constructor ^TypeConstructor (get (:constructors @typeMap) (.getTypeName javaClass))]
             (.cast javaClass (.constructType constructor (.getLiteral literal)))
-            (throw (ClassCastException. (str "Unsupported cast of: " javaClass))))))))
-  )
+            (throw (ClassCastException. (str "Unsupported cast of: " javaClass)))
+            ))))))
 
 (defn make-type-converter
   [df ^Map owl-to-java-map ^Map java-to-owl-map]

@@ -1,5 +1,5 @@
 (ns com.nickrobison.trestle.reasoner.parser.types.spatial.jts
-  (:require [com.nickrobison.trestle.reasoner.parser.spatial :refer [SpatialParserProtocol wkt-to-geom]]
+  (:require [com.nickrobison.trestle.reasoner.parser.spatial :refer [SpatialParserProtocol wkt-to-geom split-wkt]]
             [clojure.tools.logging :as log])
   (:import (org.semanticweb.owlapi.model OWLDataFactory)
            (com.nickrobison.trestle.common StaticIRI)
@@ -35,4 +35,5 @@
 
 (defmethod wkt-to-geom Geometry
   [_ ^String wkt]
-  (.read (get-reader 4326) wkt))
+  (let [wktProperties (split-wkt wkt)]
+    (.read (get-reader ^Integer (:srid wktProperties)) ^String (:wkt wktProperties))))

@@ -1,5 +1,5 @@
 (ns com.nickrobison.trestle.reasoner.parser.types.spatial.esri
-  (:require [com.nickrobison.trestle.reasoner.parser.spatial :refer [SpatialParserProtocol wkt-to-geom]])
+  (:require [com.nickrobison.trestle.reasoner.parser.spatial :refer [SpatialParserProtocol wkt-to-geom split-wkt]])
   (:import (com.esri.core.geometry Geometry GeometryEngine Polygon Geometry$Type Polyline Point MultiPoint Line Envelope)
            (com.nickrobison.trestle.common StaticIRI)
            (org.semanticweb.owlapi.model OWLDataFactory)))
@@ -13,7 +13,8 @@
 
 (defn- from-wkt
   [wkt geomClass]
-  (GeometryEngine/geometryFromWkt wkt 0 geomClass))
+  (let [wktProperties (split-wkt wkt)]
+    (GeometryEngine/geometryFromWkt (:wkt wktProperties) 0 geomClass)))
 
 (defmethod wkt-to-geom Polygon
           [_ wkt] (from-wkt wkt Geometry$Type/Polygon))

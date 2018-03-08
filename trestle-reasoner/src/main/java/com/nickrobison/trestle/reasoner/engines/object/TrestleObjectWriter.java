@@ -73,6 +73,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
     private final Metrician metrician;
     private final ObjectEngineUtils engineUtils;
     private final IClassParser classParser;
+    private final IClassBuilder classBuilder;
     private final ITypeConverter typeConverter;
     private final TemporalParser temporalParser;
     private final TrestleMergeEngine mergeEngine;
@@ -96,6 +97,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
         this.metrician = metrician;
         this.engineUtils = engineUtils;
         this.classParser = trestleParser.classParser;
+        this.classBuilder = trestleParser.classBuilder;
         this.temporalParser = trestleParser.temporalParser;
         this.typeConverter = trestleParser.typeConverter;
         this.mergeEngine = mergeEngine;
@@ -479,12 +481,14 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
 
 //        Ensure we handle spatial properties correctly
         final OWLDatatype datatypeFromJavaClass;
+        final OWLLiteral parsedLiteral;
         if (owlDataProperty.getIRI().toString().contains(GEOSPARQLPREFIX)) {
-            datatypeFromJavaClass = df.getOWLDatatype(WKTDatatypeIRI);
+            parsedLiteral = this.classBuilder.getProjectedWKT(clazz, value, null);
         } else {
             datatypeFromJavaClass = this.typeConverter.getDatatypeFromJavaClass(valueClass);
+            parsedLiteral = df.getOWLLiteral(value.toString(), datatypeFromJavaClass);
         }
-        final OWLDataPropertyAssertionAxiom newFactAxiom = df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, df.getOWLLiteral(value.toString(), datatypeFromJavaClass));
+        final OWLDataPropertyAssertionAxiom newFactAxiom = df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, parsedLiteral);
 
 //        Find existing facts
 //        final String validFactQuery = this.qb.buildCurrentlyValidFactQuery(owlNamedIndividual, owlDataProperty, parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC), parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC));

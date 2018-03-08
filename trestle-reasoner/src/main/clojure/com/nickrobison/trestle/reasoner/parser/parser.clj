@@ -14,10 +14,11 @@
             [clojure.set :as set]
             [com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]
             [com.nickrobison.trestle.reasoner.parser.utils.members :as m]
-            ; We have to require the methods we're extending, as well as namespaces where we did the extension
-            [com.nickrobison.trestle.reasoner.parser.spatial :refer  [wkt-from-geom]]
+    ; We have to require the methods we're extending, as well as namespaces where we did the extension
+            [com.nickrobison.trestle.reasoner.parser.spatial :refer [wkt-from-geom]]
             [com.nickrobison.trestle.reasoner.parser.types.spatial.esri]
-            [com.nickrobison.trestle.reasoner.parser.types.spatial.jts])
+            [com.nickrobison.trestle.reasoner.parser.types.spatial.jts]
+            [com.nickrobison.trestle.reasoner.parser.spatial :as spatial])
   (:use clj-fuzzy.metrics))
 
 ; Class related helpers
@@ -188,9 +189,11 @@
   [acc member defaultProjection]
   (let [type (:type acc)]
     (if (= type ::pred/spatial)
-      (merge acc {
-                  :projection (m/get-projection member defaultProjection)
-                  })
+      (let [projection (m/get-projection member defaultProjection)]
+        (merge acc {
+                    :projection projection
+                    :crs-uri    (spatial/projection-to-uri projection)
+                    }))
       ; Return the member if we're not spatial
       acc))
   )
@@ -296,8 +299,10 @@
           (fn [^OWLDataFactory df individual member inputObject] (:type member)))
 (defmethod build-assertion-axiom ::pred/spatial
   [^OWLDataFactory df ^OWLNamedIndividual individual member inputObject]
-  (if-let [literal (.getOWLLiteral df (wkt-from-geom
-                                        (m/invoker (get member :handle) inputObject))
+  (if-let [literal (.getOWLLiteral df (spatial/build-projected-wkt
+                                        (:crs-uri member)
+                                        (wkt-from-geom
+                                          (m/invoker (get member :handle) inputObject)))
                                    (.getOWLDatatype df StaticIRI/WKTDatatypeIRI))]
     (.getOWLDataPropertyAssertionAxiom df
                                        ^OWLDataProperty (get member :data-property)
@@ -421,9 +426,9 @@
       (.getOWLNamedIndividual df
                               (IRI/create reasonerPrefix
                                           (m/normalize-id (m/invoker (get
-                                                                     (get parsedClass :identifier)
-                                                                     :handle)
-                                                                   inputObject))))))
+                                                                       (get parsedClass :identifier)
+                                                                       :handle)
+                                                                     inputObject))))))
 
 
   (getFacts ^Optional ^List ^OWLDataPropertyAssertionAxiom [this inputObject filterSpatial]
@@ -513,6 +518,20 @@
         (m/invoke-constructor (:handle constructor) sortedValues)
         ((log/errorf "Missing constructor arguments needs %s\n%s\n%s" missingParams parameterNames sortedValues)
           (throw (MissingConstructorException. "Missing parameters required for constructor generation"))))))
+  (getProjectedWKT ^OWLLiteral [this clazz spatialObject srid]
+    (let [parsedClass (.getRegisteredClass this clazz)]
+      ; If the SRID is nil, use the one from the class definition
+      (if (nil? srid)
+        (.getOWLLiteral df
+                        (spatial/object-to-projected-wkt
+                          spatialObject
+                          (get-in parsedClass [:spatial :projection]))
+                        (.getOWLDatatype df StaticIRI/WKTDatatypeIRI))
+        (.getOWLLiteral df
+                        (spatial/object-to-projected-wkt
+                          spatialObject
+                          srid)
+                        (.getOWLDatatype df StaticIRI/WKTDatatypeIRI)))))
 
   ; ClassRegister methods
   IClassRegister
