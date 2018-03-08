@@ -8,10 +8,9 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.nickrobison.trestle.common.CommonSpatialUtils;
 import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.PrecisionModel;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -20,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +27,7 @@ public class GeoJsonExporter implements ITrestleExporter {
 
     private final String prefix;
     private final ObjectMapper mapper;
+    private final Map<Integer, WKTReader> readerMap;
 
 
     public GeoJsonExporter() {
@@ -35,6 +36,8 @@ public class GeoJsonExporter implements ITrestleExporter {
                 .registerModule(new JavaTimeModule())
                 .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
                 .configure(SerializationFeature.WRITE_DATES_WITH_ZONE_ID, true);
+
+        this.readerMap = new HashMap<>(1);
     }
 
 
@@ -45,8 +48,8 @@ public class GeoJsonExporter implements ITrestleExporter {
 
     @Override
     public File writePropertiesToByteBuffer(List<TSIndividual> individuals, @Nullable String fileName) throws IOException {
-        final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
-        final WKTReader wktReader = new WKTReader(geometryFactory);
+//        Create a map to hold our WKTReaders
+//        This way we can cache readers, but also support datasets with multiple projections, if those actually exist
         final GeoJsonWriter geoWriter = new GeoJsonWriter();
 
 //        Create the collection node
@@ -64,11 +67,17 @@ public class GeoJsonExporter implements ITrestleExporter {
         for (final TSIndividual individual : individuals) {
             final ObjectNode featureNode = this.mapper.createObjectNode();
             featureNode.put(GeoJsonConstants.NAME_TYPE, GeoJsonConstants.NAME_FEATURE);
+            final String individualGeom = individual.getGeom();
+            final int srid = CommonSpatialUtils.getProjectionFromLiteral(individualGeom);
+            final String wkt = CommonSpatialUtils.getWKTFromLiteral(individualGeom);
             try {
-                final Geometry geometry = wktReader.read(individual.getGeom());
+
+                final Geometry geometry = this.readerMap
+                        .computeIfAbsent(srid, Utils::createProjectedReader)
+                        .read(wkt);
                 final String coordinateString = geoWriter.write(geometry);
-                final JsonNode coordianteNode = mapper.readTree(coordinateString);
-                featureNode.set("geometry", coordianteNode);
+                final JsonNode coordinateNode = mapper.readTree(coordinateString);
+                featureNode.set("geometry", coordinateNode);
                 //                    Add all the properties
                 final ObjectNode propertiesNode = this.mapper.createObjectNode();
                 for (final Map.Entry<String, Object> entry : individual.getProperties().entrySet()) {
@@ -80,7 +89,7 @@ public class GeoJsonExporter implements ITrestleExporter {
                 featureNode.set(GeoJsonConstants.NAME_PROPERTIES, propertiesNode);
                 featuresNode.add(featureNode);
             } catch (ParseException | IOException e) {
-                throw new TrestleInvalidDataException("Cannot read wkt", individual.getGeom());
+                throw new TrestleInvalidDataException("Cannot read wkt", individualGeom);
             }
         }
 
@@ -93,4 +102,5 @@ public class GeoJsonExporter implements ITrestleExporter {
         writer.writeValue(file, collectionNode);
         return file;
     }
+
 }

@@ -103,4 +103,11 @@ public interface IClassParser {
      * @return - {@link Optional} {@link IRI} of fact
      */
     Optional<IRI> getFactIRI(Class<?> clazz, String factName);
+
+    /**
+     * Get the SRID projection of the class
+     * @param clazz - {@link Class} to parse
+     * @return - {@link Integer} SRID code
+     */
+    Integer getClassProjection(Class<?> clazz);
 }

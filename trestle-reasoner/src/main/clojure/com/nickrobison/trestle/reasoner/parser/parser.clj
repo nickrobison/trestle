@@ -493,6 +493,9 @@
                                  factName
                                  member))
                              :iri))))
+  (getClassProjection ^Integer [this clazz]
+    (let [parsedClass (.getRegisteredClass this clazz)]
+      (get-in parsedClass [:spatial :projection])))
 
   ; IClassBuilder methods
   IClassBuilder

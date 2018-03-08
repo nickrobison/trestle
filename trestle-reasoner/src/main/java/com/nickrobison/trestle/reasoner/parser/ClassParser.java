@@ -37,6 +37,11 @@ public class ClassParser implements IClassParser {
     }
 
     @Override
+    public Integer getClassProjection(Class<?> clazz) {
+        return 4326;
+    }
+
+    @Override
     public Object parseClass(Class<?> clazz) {
         return null;
     }

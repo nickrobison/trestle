@@ -125,7 +125,8 @@ public class DataExportEngine implements ITrestleDataExporter {
 
             switch (exportType) {
                 case SHAPEFILE: {
-                    final ShapefileExporter shapeFileExporter = new ShapefileExporter.ShapefileExporterBuilder(shapefileSchema.getGeomName(), shapefileSchema.getGeomType(), shapefileSchema).build();
+                    final Integer classProjection = this.classParser.getClassProjection(inputClass);
+                    final ShapefileExporter shapeFileExporter = new ShapefileExporter.ShapefileExporterBuilder(shapefileSchema.getGeomName(), shapefileSchema.getGeomType(), shapefileSchema).setSRID(classProjection).build();
                     return shapeFileExporter.writePropertiesToByteBuffer(individuals, null);
                 }
                 case GEOJSON: {
