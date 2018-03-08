@@ -3,13 +3,9 @@
            (com.nickrobison.trestle.reasoner.exceptions InvalidClassException InvalidClassException$State)
            (org.geotools.referencing CRS)
            (org.semanticweb.owlapi.model OWLDataFactory OWLLiteral)
-           (com.nickrobison.trestle.common StaticIRI)
+           (com.nickrobison.trestle.common StaticIRI CommonSpatialUtils)
            (com.nickrobison.trestle.reasoner.parser TypeUtils)))
 
-;  I think this Regex works. It first looks for the '<uri://' pattern.
-;  Then it skips ahead until it comes to the last part of the URI, filters out optional authorities (such as EPSG or AUTO) and grabs the SRID
-;  Finally, it grabs everything that's left (after the space) and uses that as the WKT value
-(def wkt-regex #"<[a-z]+://[^ ]*/(?:[A-Z]{3,4})?([0-9A-Z]+)>\s(.*)")
 ; More state in the file?
 (def crs-uri-map (atom {}))
 
@@ -23,7 +19,7 @@
   [_ wkt]
   ; If we can match against the WKT literal, return that.
   ; Otherwise, return nil
-  (if-let [matches (re-matches wkt-regex wkt)]
+  (if-let [matches (re-matches CommonSpatialUtils/wktRegex wkt)]
     (nth matches 2)
     nil))
 ; Default method for non spatial values
@@ -67,7 +63,7 @@
 (defn split-wkt
   "Split a WKT into its SRID and WKT Literal"
   [wkt]
-  (let [groups (re-find (re-matcher wkt-regex wkt))]
+  (let [groups (re-find (re-matcher CommonSpatialUtils/wktRegex wkt))]
     {
      :srid (Integer/parseInt (nth groups 1))
      :wkt  (nth groups 2)

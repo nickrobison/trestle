@@ -587,6 +587,6 @@ public class SpatialEngine implements ITrestleSpatialEngine {
     @Metered(name = "geometry-calculation-meter")
     public static Geometry computeGeometry(Object object, int inputSR) {
         logger.debug("Cache miss for {}, computing", object);
-        return SpatialUtils.buildObjectGeometry(object, inputSR);
+        return SpatialEngineUtils.buildObjectGeometry(object, inputSR);
     }
 }

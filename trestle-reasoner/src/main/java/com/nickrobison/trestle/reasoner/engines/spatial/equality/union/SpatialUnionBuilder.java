@@ -30,7 +30,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.TemporalUtils.compareTemporals;
-import static com.nickrobison.trestle.reasoner.engines.spatial.SpatialUtils.buildObjectGeometry;
+import static com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngineUtils.buildObjectGeometry;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Metriced

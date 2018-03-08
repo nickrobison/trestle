@@ -1,7 +1,7 @@
 package com.nickrobison.trestle.reasoner.engines.spatial.containment;
 
 import com.esri.core.geometry.SpatialReference;
-import com.nickrobison.trestle.reasoner.engines.spatial.SpatialUtils;
+import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngineUtils;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.PrecisionModel;
@@ -22,8 +22,8 @@ public class ContainmentEngineImpl implements ContainmentEngine {
         final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
         final WKTReader wktReader = new WKTReader(geometryFactory);
         final WKBReader wkbReader = new WKBReader(geometryFactory);
-        final Geometry polygonA = SpatialUtils.buildObjectGeometry(objectA, wktReader, wkbReader);
-        final Geometry polygonB = SpatialUtils.buildObjectGeometry(objectB, wktReader, wkbReader);
+        final Geometry polygonA = SpatialEngineUtils.buildObjectGeometry(objectA, wktReader, wkbReader);
+        final Geometry polygonB = SpatialEngineUtils.buildObjectGeometry(objectB, wktReader, wkbReader);
 
         final double areaA = polygonA.getArea();
         final double areaB = polygonB.getArea();
