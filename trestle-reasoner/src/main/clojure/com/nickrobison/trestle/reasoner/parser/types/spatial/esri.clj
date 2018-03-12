@@ -31,4 +31,8 @@
 
 (extend-type Geometry
   SpatialParserProtocol
-  (wkt-from-geom [spatialObject] (to-wkt spatialObject)))
+  (wkt-from-geom [spatialObject] (to-wkt spatialObject))
+  (wkt-from-geom [spatialObject srid]
+    (to-wkt spatialObject))
+  (reproject [spatialObject srid]
+    spatialObject))

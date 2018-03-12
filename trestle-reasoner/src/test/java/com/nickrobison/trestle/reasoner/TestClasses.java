@@ -76,7 +76,7 @@ public class TestClasses {
             return this.adm0_code;
         }
 
-        @Spatial
+        @Spatial(projection = 4269)
         public Geometry getGeom() {
             return this.geom;
         }
@@ -94,7 +94,7 @@ public class TestClasses {
             JTSGeometryTest that = (JTSGeometryTest) o;
 
             if (!getAdm0_code().equals(that.getAdm0_code())) return false;
-            return getGeom().equals(that.getGeom());
+            return getGeom().equalsExact(that.getGeom(), .01);
         }
 
         @Override
@@ -576,7 +576,7 @@ public class TestClasses {
             this.startTemporal = LocalDate.of(2010, 1, 1);
         }
 
-        @DefaultTemporal(duration = 5, unit = ChronoUnit.YEARS, type = TemporalType.INTERVAL)
+        @DefaultTemporal(duration = 20, unit = ChronoUnit.YEARS, type = TemporalType.INTERVAL)
         public LocalDate getStartTemporal() {
             return startTemporal;
         }
@@ -586,7 +586,7 @@ public class TestClasses {
             return objectid;
         }
 
-        @Spatial
+        @Spatial(projection = 4269)
         public Geometry getGeom() {
             return geom;
         }
