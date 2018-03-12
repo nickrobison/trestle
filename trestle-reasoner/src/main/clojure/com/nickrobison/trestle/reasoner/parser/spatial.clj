@@ -28,7 +28,8 @@
 
 (defprotocol SpatialParserProtocol
   "Protocol for registering various spatial object models"
-  (wkt-from-geom ^String [spatialObject] [spatialObject sourceSRID] "Get the WKT representation from the spatial object"))
+  (wkt-from-geom ^String [spatialObject] [spatialObject sourceSRID] "Get the WKT representation from the spatial object")
+  (reproject [spatialObject srid] "Re-project the spatial object into the given srid"))
 
 (defn validate-spatial-projection
   "Validate the given Projection to make sure it matches something we can understand"
@@ -74,7 +75,13 @@
   (wkt-from-geom [spatialObject]
     spatialObject)
   (wkt-from-geom [spatialObject _]
-    spatialObject))
+    spatialObject)
+  (reproject [spatialObject _] spatialObject))
+
+; Extend Object to avoid NPEs when called on non-spatial objects
+(extend-type Object
+  SpatialParserProtocol
+  (reproject [spatialObject _] spatialObject))
 
 (defn literal-is-spatial?
   "Is the literal value a Spatial value? Based on its datatype"

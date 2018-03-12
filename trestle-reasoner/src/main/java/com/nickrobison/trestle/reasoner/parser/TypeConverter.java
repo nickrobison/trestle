@@ -156,6 +156,11 @@ public class TypeConverter implements ITypeConverter {
         return owlDatatype;
     }
 
+    @Override
+    public <T> T reprojectSpatial(T inputObject, int srid) {
+        return inputObject;
+    }
+
     /**
      * Convert the {@link Class} into its corresponding primitive, if it is a primitive type
      * This is required to handle the auto-boxing of the Reflection APIs

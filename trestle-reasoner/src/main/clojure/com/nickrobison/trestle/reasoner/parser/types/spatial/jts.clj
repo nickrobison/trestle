@@ -1,5 +1,5 @@
 (ns com.nickrobison.trestle.reasoner.parser.types.spatial.jts
-  (:require [com.nickrobison.trestle.reasoner.parser.spatial :refer [SpatialParserProtocol wkt-to-geom split-wkt]]
+  (:require [com.nickrobison.trestle.reasoner.parser.spatial :refer [SpatialParserProtocol wkt-to-geom split-wkt reproject]]
             [clojure.tools.logging :as log])
   (:import (org.semanticweb.owlapi.model OWLDataFactory)
            (com.nickrobison.trestle.common StaticIRI)
@@ -18,7 +18,7 @@
   [srid]
   (GeometryFactory. (PrecisionModel.) srid))
 
-(defn- get-transformation
+(defn get-transformation
   "Gets a transformation between two SRIDs"
   ^MathTransform
   [source target]
@@ -35,7 +35,7 @@
 
 (extend-type Geometry
   SpatialParserProtocol
-  (wkt-from-geom [spatialObject] (.write writer spatialObject))
+  (wkt-from-geom [spatialObject] (.write (WKTWriter.) spatialObject))
   (wkt-from-geom [spatialObject sourceSRID]
     (let [srid (.getSRID spatialObject)]
       ; If the SRID is 0, use the provided srid, otherwise, use the one from the geom
@@ -44,7 +44,14 @@
                        (JTS/transform spatialObject (get-transformation sourceSRID 4326))
                        (JTS/transform spatialObject (get-transformation srid 4326))
                        ))))
-   )
+
+   (reproject [spatialObject srid]
+     (let [transformed (JTS/transform spatialObject
+                                      (get-transformation
+                                        (.getSRID spatialObject) srid))]
+       (do
+         (.setSRID transformed srid)
+         transformed))))
 
 (defmethod wkt-to-geom Geometry
   [_ ^String wkt]

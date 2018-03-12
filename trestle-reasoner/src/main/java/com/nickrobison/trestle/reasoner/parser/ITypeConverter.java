@@ -70,4 +70,14 @@ public interface ITypeConverter {
      * @return - {@link OWLDatatype} that relates to the {@link Class}
      */
     OWLDatatype getDatatypeFromJavaClass(Class<?> javaTypeClass);
+
+    /**
+     * Reproject the spatial object into the SRID of the given class
+     * If the input object is not spatial, simply returns the object as is
+     * @param inputObject - {@link T} object to reporoject, if spatial
+     * @param srid - {@link Integer} SRID to reproject to
+     * @param <T> - {@link T} generic type parameter
+     * @return - {@link T} original object, or reprojected one
+     */
+    <T extends @NonNull Object> T reprojectSpatial(T inputObject, int srid);
 }

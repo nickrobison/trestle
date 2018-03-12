@@ -1,6 +1,6 @@
 (ns com.nickrobison.trestle.reasoner.parser.types.converter
   (:require [clojure.tools.logging :as log]
-            [com.nickrobison.trestle.reasoner.parser.spatial :refer [wkt-to-geom]]
+            [com.nickrobison.trestle.reasoner.parser.spatial :refer [wkt-to-geom, reproject]]
             [com.nickrobison.trestle.reasoner.parser.spatial :as spatial])
   (:import (com.nickrobison.trestle.reasoner.parser ITypeConverter TypeUtils TypeConstructor)
            (org.semanticweb.owlapi.model IRI OWLDataFactory OWLLiteral)
@@ -111,7 +111,13 @@
           (if-let [constructor ^TypeConstructor (get (:constructors @typeMap) (.getTypeName javaClass))]
             (.cast javaClass (.constructType constructor (.getLiteral literal)))
             (throw (ClassCastException. (str "Unsupported cast of: " javaClass)))
-            ))))))
+            )))))
+  (reprojectSpatial
+    [_ spatialObject srid]
+    ; I guess it's possible for there to be non-spatial objects, so we have to to guard against that
+    (if (nil? srid)
+      spatialObject
+      (reproject spatialObject srid))))
 
 (defn make-type-converter
   [df ^Map owl-to-java-map ^Map java-to-owl-map]

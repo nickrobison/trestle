@@ -43,7 +43,16 @@ public class FactFactory {
                 new IllegalStateException(String.format("Cannot have null datatype for fact %s on Individual %s",
                         factName, propertyAxiom.getSubject()))));
         final OWLLiteral literal = propertyAxiom.getObject();
-        final T literalObject = this.typeConverter.extractOWLLiteral(factClass, literal);
+
+//        Get the projection of the class and re-project, if necessary
+        final Integer classProjection = this.parser.getClassProjection(clazz);
+//        Guard against null projections
+        final T literalObject;
+        if (classProjection == null) {
+            literalObject = this.typeConverter.extractOWLLiteral(factClass, literal);
+        } else {
+            literalObject = this.typeConverter.reprojectSpatial(this.typeConverter.extractOWLLiteral(factClass, literal), classProjection);
+        }
 
         return new TrestleFact<>(propertyAxiom.getSubject().toStringID(),
                 factName.getIRI().getShortForm(),
