@@ -300,9 +300,11 @@
 (defmethod build-assertion-axiom ::pred/spatial
   [^OWLDataFactory df ^OWLNamedIndividual individual member inputObject]
   (if-let [literal (.getOWLLiteral df (spatial/build-projected-wkt
-                                        (:crs-uri member)
+                                        "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+                                        ;(:crs-uri member)
                                         (wkt-from-geom
-                                          (m/invoker (get member :handle) inputObject)))
+                                          (m/invoker (get member :handle) inputObject)
+                                          (:projection member)))
                                    (.getOWLDatatype df StaticIRI/WKTDatatypeIRI))]
     (.getOWLDataPropertyAssertionAxiom df
                                        ^OWLDataProperty (get member :data-property)

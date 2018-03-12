@@ -28,7 +28,7 @@
 
 (defprotocol SpatialParserProtocol
   "Protocol for registering various spatial object models"
-  (wkt-from-geom ^String [spatialObject] "Get the WKT representation from the spatial object"))
+  (wkt-from-geom ^String [spatialObject] [spatialObject sourceSRID] "Get the WKT representation from the spatial object"))
 
 (defn validate-spatial-projection
   "Validate the given Projection to make sure it matches something we can understand"
@@ -49,7 +49,7 @@
   [projection]
   (if-let [uri (get @crs-uri-map projection)]
     uri
-    (let [uri (str "http://www.opengis.net/def/crs/EPSG/8.9.2/" projection)]
+    (let [uri (str "http://www.opengis.net/def/crs/EPSG/0/" projection)]
       (do
         (swap! crs-uri-map assoc projection uri)
         uri))))
@@ -72,6 +72,8 @@
 (extend-type String
   SpatialParserProtocol
   (wkt-from-geom [spatialObject]
+    spatialObject)
+  (wkt-from-geom [spatialObject _]
     spatialObject))
 
 (defn literal-is-spatial?

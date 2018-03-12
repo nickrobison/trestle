@@ -4,36 +4,50 @@
   (:import (org.semanticweb.owlapi.model OWLDataFactory)
            (com.nickrobison.trestle.common StaticIRI)
            (com.vividsolutions.jts.io WKTWriter WKTReader)
-           (com.vividsolutions.jts.geom Geometry PrecisionModel GeometryFactory)))
+           (com.vividsolutions.jts.geom Geometry PrecisionModel GeometryFactory)
+           (org.geotools.referencing CRS)
+           (org.geotools.geometry.jts JTS)
+           (org.opengis.referencing.operation MathTransform)))
 
 ; I'm not entirely sure this is the best way to manage sharing these objects.
 ; But seems ok for now.
-(def ^WKTWriter writer (WKTWriter.))
-(def readers (atom {}))
+(def transformations (atom {}))
 
 (defn- create-factory
   "Create Geometry factory with the default precision and the given SRID"
   [srid]
   (GeometryFactory. (PrecisionModel.) srid))
 
+(defn- get-transformation
+  "Gets a transformation between two SRIDs"
+  ^MathTransform
+  [source target]
+  (let [sourceCRS (CRS/decode (str "EPSG:" source) true)
+        targetCRS (CRS/decode (str "EPSG:" target) true)]
+    ^MathTransform
+    (CRS/findMathTransform sourceCRS targetCRS)))
+
 (defn- get-reader
   "Simple abstraction class for getting a cached WKT Reader from the atom"
   ^WKTReader
   [srid]
-  (if-let [reader (get @readers srid)]
-    reader
-    (let [factory (create-factory srid)
-          newReader (WKTReader. factory)]
-      (do
-        (log/debugf "Creating new reader for CRS %s", srid)
-        (swap! readers assoc srid newReader)
-        newReader))))
+  (WKTReader. (create-factory srid)))
 
 (extend-type Geometry
   SpatialParserProtocol
-  (wkt-from-geom [spatialObject] (.write writer spatialObject)))
+  (wkt-from-geom [spatialObject] (.write writer spatialObject))
+  (wkt-from-geom [spatialObject sourceSRID]
+    (let [srid (.getSRID spatialObject)]
+      ; If the SRID is 0, use the provided srid, otherwise, use the one from the geom
+
+      (.write (WKTWriter.) (if (= 0 srid)
+                       (JTS/transform spatialObject (get-transformation sourceSRID 4326))
+                       (JTS/transform spatialObject (get-transformation srid 4326))
+                       ))))
+   )
 
 (defmethod wkt-to-geom Geometry
   [_ ^String wkt]
   (let [wktProperties (split-wkt wkt)]
-    (.read (get-reader ^Integer (:srid wktProperties)) ^String (:wkt wktProperties))))
+    (.read (get-reader 4326) ^String (:wkt wktProperties))))
+    ;(.read (get-reader ^Integer (:srid wktProperties)) ^String (:wkt wktProperties))))

@@ -49,6 +49,15 @@ public class SpatialEngineUtils {
     }
 
     /**
+     * Returns a new {@link WKTReader} for the specified SRID
+     * @param srid - {@link Integer} SRID
+     * @return - {@link WKTReader} projected reader
+     */
+    public static WKTReader getProjectedReader(int srid) {
+        return new WKTReader(new GeometryFactory(new PrecisionModel(), srid));
+    }
+
+    /**
      * Build a {@link Geometry} from a given {@link Object} representing the spatial value
      *
      * @param spatialValue - {@link Optional} {@link Object} representing a spatialValue
