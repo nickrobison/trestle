@@ -23,6 +23,8 @@ public interface ITypeConverter {
     /**
      * Extracts a java object of type T from a given OWL Literal
      * Also handles the object/primitive conversion
+     * Note: When calling this method, if it's possible that the {@link OWLLiteral} represents a spatial value, you'll also need to call {@link ITypeConverter#reprojectSpatial(Object, int)},
+     * otherwise, you'll get the default projection of the database
      *
      * @param javaClass - Java class to cast literal into
      * @param literal   - OWLLiteral to extract

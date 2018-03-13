@@ -495,9 +495,11 @@
                                  factName
                                  member))
                              :iri))))
-  (getClassProjection ^Integer [this clazz]
+  (getClassProjection ^Long [this clazz]
     (let [parsedClass (.getRegisteredClass this clazz)]
-      (get-in parsedClass [:spatial :projection])))
+      (if-let [projection (get-in parsedClass [:spatial :projection])]
+        projection
+        (Integer/valueOf 0))))
 
   ; IClassBuilder methods
   IClassBuilder

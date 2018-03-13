@@ -46,13 +46,7 @@ public class FactFactory {
 
 //        Get the projection of the class and re-project, if necessary
         final Integer classProjection = this.parser.getClassProjection(clazz);
-//        Guard against null projections
-        final T literalObject;
-        if (classProjection == null) {
-            literalObject = this.typeConverter.extractOWLLiteral(factClass, literal);
-        } else {
-            literalObject = this.typeConverter.reprojectSpatial(this.typeConverter.extractOWLLiteral(factClass, literal), classProjection);
-        }
+        final T literalObject = this.typeConverter.reprojectSpatial(this.typeConverter.extractOWLLiteral(factClass, literal), classProjection);
 
         return new TrestleFact<>(propertyAxiom.getSubject().toStringID(),
                 factName.getIRI().getShortForm(),

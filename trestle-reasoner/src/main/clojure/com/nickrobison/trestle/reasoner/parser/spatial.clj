@@ -94,4 +94,4 @@
   [spatialObject srid]
   (build-projected-wkt
     (projection-to-uri srid)
-    (wkt-from-geom spatialObject)))
+    (wkt-from-geom spatialObject srid)))

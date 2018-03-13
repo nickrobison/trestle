@@ -114,10 +114,11 @@
             )))))
   (reprojectSpatial
     [_ spatialObject srid]
-    ; I guess it's possible for there to be non-spatial objects, so we have to to guard against that
-    (if (nil? srid)
+    ; If the SRID is 0, then we can't reproject, so just return
+    (if (= srid 0)
       spatialObject
-      (reproject spatialObject srid))))
+      (reproject spatialObject srid)))
+  )
 
 (defn make-type-converter
   [df ^Map owl-to-java-map ^Map java-to-owl-map]

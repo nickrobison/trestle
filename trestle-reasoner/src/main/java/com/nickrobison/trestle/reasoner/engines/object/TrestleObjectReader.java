@@ -440,7 +440,8 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                 .stream()
                 .map(result -> result.getLiteral("value"))
                 .filter(Optional::isPresent)
-                .map(literal -> this.typeConverter.extractOWLLiteral(datatype, literal.get()))
+                .map(literal -> this.typeConverter.reprojectSpatial(this.typeConverter.extractOWLLiteral(datatype, literal.get()),
+                        this.classParser.getClassProjection(clazz)))
                 .collect(Collectors.toList());
         return Optional.of(factValues);
     }

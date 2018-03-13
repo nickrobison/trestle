@@ -176,7 +176,7 @@ public class TrestleParserTest {
 //        Check spatial member access
         final Optional<OWLDataPropertyAssertionAxiom> spatialFact = cp.getSpatialFact(testMethod);
         assertAll(() -> assertTrue(spatialFact.isPresent(), "Should have spatial fact"),
-                () -> assertEquals("<http://www.opengis.net/def/crs/EPSG/8.9.2/4326> new_test", spatialFact.get().getObject().getLiteral(), "Spatial should match"));
+                () -> assertEquals("<http://www.opengis.net/def/crs/OGC/1.3/CRS84> new_test", spatialFact.get().getObject().getLiteral(), "Spatial should match"));
 
 
 //        Test the temporal
@@ -222,7 +222,7 @@ public class TrestleParserTest {
         assertTrue(asWKT.isPresent());
         assertEquals(OWL2Datatype.XSD_INT, adm0_code.get().getObject().getDatatype().getBuiltInDatatype(), "Should have integer datatype");
         assertEquals(testMethod.getAdm0_code1(), adm0_code.get().getObject().parseInteger(), "Invalid ADM0_Code");
-        assertEquals("<http://www.opengis.net/def/crs/EPSG/8.9.2/4326> " + testMethod.test_name, asWKT.get().getObject().getLiteral(), "Invalid Spatial");
+        assertEquals("<http://www.opengis.net/def/crs/OGC/1.3/CRS84> " + testMethod.test_name, asWKT.get().getObject().getLiteral(), "Invalid Spatial");
     }
 
     @Test

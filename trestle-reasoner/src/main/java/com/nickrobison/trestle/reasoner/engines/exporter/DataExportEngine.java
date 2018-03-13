@@ -175,7 +175,7 @@ public class DataExportEngine implements ITrestleDataExporter {
         final Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = this.classParser.getFacts(object, true);
         owlDataPropertyAssertionAxioms.ifPresent(owlDataPropertyAssertionAxioms1 -> owlDataPropertyAssertionAxioms1.forEach(property -> {
             final Class<@NonNull ?> javaClass = this.typeConverter.lookupJavaClassFromOWLDatatype(property, object.getClass());
-            final Object literal = this.typeConverter.extractOWLLiteral(javaClass, property.getObject());
+            final Object literal = this.typeConverter.reprojectSpatial(this.typeConverter.extractOWLLiteral(javaClass, property.getObject()), this.classParser.getClassProjection(inputClass));
             individual.addProperty(this.classParser.matchWithClassMember(inputClass, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
                     literal);
         }));
