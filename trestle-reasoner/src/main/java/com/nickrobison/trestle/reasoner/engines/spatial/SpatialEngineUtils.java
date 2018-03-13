@@ -12,7 +12,6 @@ import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKBReader;
 import com.vividsolutions.jts.io.WKTReader;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.eclipse.rdf4j.query.algebra.In;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
@@ -36,14 +35,13 @@ public class SpatialEngineUtils {
     }
 
     /**
-     * Reproject input {@link Geometry} into the given SRID
-     * Optionally, adding to the provided {@link Cache}
+     * Re-project input {@link Geometry} into the given SRID
+     * Adding to the provided {@link Cache}
      *
-     * @param inputGeom      - {@link Geometry} to reproject
+     * @param inputObject    - {@link Object} to reproject
      * @param inputSRID      - {@link Integer} SRID of input geometry
      * @param outputSRID     - {@link Integer} SRID to project into
      * @param geometryCache  - {@link Cache} cache to add value to
-     * @param objectHashCode - {@link Integer} hash code to use as key
      * @return - {@link Geometry} reprojected
      */
     public static Geometry reprojectObject(Object inputObject, int inputSRID, int outputSRID, Cache<Integer, Geometry> geometryCache) {

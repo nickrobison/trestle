@@ -114,11 +114,11 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      *
      * @param datasetClassID - {@link String} {@link OWLClass} string reference
      * @param individualIRIs - {@link List} of Individual IRIs
-     * @param inputSR        - EPSG code to determine union projection
+     * @param inputSRID        - EPSG code to determine union projection
      * @param matchThreshold - {@link Double} cutoff to determine minimum match percentage
      * @return - {@link Optional} {@link UnionEqualityResult}
      */
-    Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold);
+    Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSRID, double matchThreshold);
 
     /**
      * Perform spatial comparison between two input objects

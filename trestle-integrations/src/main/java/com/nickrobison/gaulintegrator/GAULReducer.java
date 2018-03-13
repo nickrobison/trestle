@@ -196,7 +196,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
 
         logger.warn("{}-{}-{} calculating equality", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
         final Instant start = Instant.now();
-        final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(matchedObjects, inputSR, THRESHOLD);
+        final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(matchedObjects, INPUTSRS, THRESHOLD);
         logger.warn("{}-{}-{} calculating equality took {} ms", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate(), Duration.between(start, Instant.now()).toMillis());
         if (matchOptional.isPresent()) {
             // do something here

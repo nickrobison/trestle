@@ -4,7 +4,6 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
 import com.esri.core.geometry.Polygon;
-import com.esri.core.geometry.SpatialReference;
 import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.TrestlePair;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
@@ -51,16 +50,13 @@ public class SpatialUnionBuilder {
         this.geometryCache = cache;
     }
 
-    public <T extends @NonNull Object> UnionContributionResult calculateContribution(UnionEqualityResult<T> equalityResult, SpatialReference inputSR) {
+    public <T extends @NonNull Object> UnionContributionResult calculateContribution(UnionEqualityResult<T> equalityResult, int inputSRID) {
         logger.debug("Calculating union contribution for input set");
         //        Setup the JTS components
-        final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
-        final WKBReader wkbReader = new WKBReader(geometryFactory);
-        final WKTReader wktReader = new WKTReader(geometryFactory);
 
 //        Determine the class of the object
         final T unionObject = equalityResult.getUnionObject();
-        final Geometry geometry = SpatialEngineUtils.getGeomFromCache(unionObject, inputSR.getID(), this.geometryCache);
+        final Geometry geometry = SpatialEngineUtils.getGeomFromCache(unionObject, inputSRID, this.geometryCache);
 
 //        Build the contribution object
         final UnionContributionResult result = new UnionContributionResult(this.tp.classParser.getIndividual(unionObject),
@@ -73,7 +69,7 @@ public class SpatialUnionBuilder {
 //                Build geometry object
                 .map(object -> new TrestlePair<>(this.tp.classParser.getIndividual(object),
                         SpatialEngineUtils.getGeomFromCache(object,
-                                inputSR.getID(), this.geometryCache)))
+                                inputSRID, this.geometryCache)))
                 .map(pair -> {
 //                    Calculate the proportion contribution
                     final double percentage = calculateEqualityPercentage(geometry, pair.getRight());
@@ -88,9 +84,9 @@ public class SpatialUnionBuilder {
 
     @SuppressWarnings({"ConstantConditions", "squid:S3655"})
     @Timed(name = "union-equality-timer", absolute = true)
-    public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> getApproximateEqualUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
+    public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> getApproximateEqualUnion(List<T> inputObjects, int inputSRID, double matchThreshold) {
 //        Setup the JTS components
-        final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
+        final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSRID);
         final WKBReader wkbReader = new WKBReader(geometryFactory);
         final WKTReader wktReader = new WKTReader(geometryFactory);
         final TemporallyDividedObjects<T> dividedObjects = divideObjects(inputObjects);
@@ -107,7 +103,7 @@ public class SpatialUnionBuilder {
         final Map<Geometry, T> earlyObjectMap = new HashMap<>(earlyObjects.size());
         final Set<Geometry> earlyPolygons = new HashSet<>(earlyObjects.size());
         for (T earlyObject : earlyObjects) {
-            final Geometry earlyGeom = SpatialEngineUtils.getGeomFromCache(earlyObject, inputSR.getID(), this.geometryCache);
+            final Geometry earlyGeom = SpatialEngineUtils.getGeomFromCache(earlyObject, inputSRID, this.geometryCache);
             earlyObjectMap.put(earlyGeom, earlyObject);
             earlyPolygons.add(earlyGeom);
         }
@@ -116,7 +112,7 @@ public class SpatialUnionBuilder {
         final Map<Geometry, T> lateObjectMap = new HashMap<>(lateObjects.size());
         final Set<Geometry> latePolygons = new HashSet<>(lateObjects.size());
         for (T lateObject : lateObjects) {
-            final Geometry lateGeom = SpatialEngineUtils.getGeomFromCache(lateObject, inputSR.getID(), this.geometryCache);
+            final Geometry lateGeom = SpatialEngineUtils.getGeomFromCache(lateObject, inputSRID, this.geometryCache);
             lateObjectMap.put(lateGeom, lateObject);
             latePolygons.add(lateGeom);
         }
@@ -263,26 +259,6 @@ public class SpatialUnionBuilder {
         }
         return 0.0;
     }
-
-
-//    /**
-//     * Retrieve {@link Geometry} from shared {@link Cache}, computing if missing
-//     *
-//     * @param keyObject - {@link Object} to get geom for
-//     * @param wktReader - {@link WKTReader} to use for building the {@link Geometry}
-//     * @param wkbReader - {@link WKBReader} to use for building the {@link Geometry}
-//     * @return - Object {@link Geometry}
-//     */
-//    private Geometry getGeomFromCache(Object keyObject, WKTReader wktReader, WKBReader wkbReader) {
-//        final int key = keyObject.hashCode();
-//        final Geometry cacheGeom = this.geometryCache.get(key);
-//        if (cacheGeom == null) {
-//            final Geometry geometry = buildObjectGeometry(keyObject, wktReader, wkbReader);
-//            this.geometryCache.put(key, geometry);
-//            return geometry;
-//        }
-//        return cacheGeom;
-//    }
 
     /**
      * Calculate the percent overlap of two {@link Polygon}

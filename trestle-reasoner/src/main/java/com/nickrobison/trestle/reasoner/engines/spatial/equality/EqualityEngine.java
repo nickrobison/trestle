@@ -14,23 +14,23 @@ public interface EqualityEngine {
     /**
      * Determine if a spatial union exists between any combination of the provided objects, which exceeds the given confidence threshold
      *
-     * @param inputObjects   - {@link List} of input objects to process
-     * @param inputSR        - {@link SpatialReference} of objects
-     * @param matchThreshold - {@link Double} confidence threshold to filter results on
      * @param <T>            - generic type parameter
+     * @param inputObjects   - {@link List} of input objects to process
+     * @param inputSRID        - {@link SpatialReference} of objects
+     * @param matchThreshold - {@link Double} confidence threshold to filter results on
      * @return - {@link Optional} {@link UnionEqualityResult} if a Spatial Union exists within the object set, above the given threshold
      */
-    <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold);
+    <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, int inputSRID, double matchThreshold);
 
     /**
      * Calculate the object contributions of the members of the given {@link UnionEqualityResult}
      *
      * @param <T> - generic type parameter
      * @param result - {@link UnionEqualityResult}
-     * @param inputSR - {@link SpatialReference} of objects
+     * @param inputSRID - {@link SpatialReference} of objects
      * @return - {@link UnionContributionResult}
      */
-    <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR);
+    <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, int inputSRID);
 
     /**
      * Determines if two objects are approximately equal, in spatial area, to each other, given a threshold value.
@@ -48,8 +48,8 @@ public interface EqualityEngine {
      * Calculate Spatial Equality between the two objects
      * @param inputObject - {@link Object} to match against
      * @param matchObject - {@link Object} to match
-     * @param inputSR - {@link SpatialReference}
-     * @param <T> - Type parameter
+     * @param <A> - Type parameter of input object
+     * @param <B> - Type parameter of match object
      * @return - {@link Double} percent spatial equality between the objects
      */
     <A extends @NonNull Object, B extends @NonNull Object> double calculateSpatialEquals(A inputObject, B matchObject);

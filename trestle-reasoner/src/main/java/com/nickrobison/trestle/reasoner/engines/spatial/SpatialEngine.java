@@ -36,13 +36,6 @@ import com.vividsolutions.jts.io.WKTWriter;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.query.QueryEvaluationException;
-import org.geotools.geometry.jts.JTS;
-import org.geotools.referencing.CRS;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
@@ -393,19 +386,18 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 
     @Override
     @Timed
-    public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
-        return this.equalityEngine.calculateSpatialUnion(inputObjects, inputSR, matchThreshold);
+    public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, int inputSRID, double matchThreshold) {
+        return this.equalityEngine.calculateSpatialUnion(inputObjects, inputSRID, matchThreshold);
     }
 
     @Override
-    public <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR) {
-        return this.equalityEngine.calculateUnionContribution(result, inputSR);
+    public <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, int inputSRID) {
+        return this.equalityEngine.calculateUnionContribution(result, inputSRID);
     }
 
     @Override
-    public Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold) {
+    public Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSRID, double matchThreshold) {
 
-        final SpatialReference spatialReference = SpatialReference.create(inputSR);
         final OffsetDateTime atTemporal = OffsetDateTime.now();
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
@@ -431,14 +423,14 @@ public class SpatialEngine implements ITrestleSpatialEngine {
                         }))
                 .collect(Collectors.toList());
         final CompletableFuture<Optional<UnionEqualityResult<Object>>> unionFuture = LambdaUtils.sequenceCompletableFutures(individualFutures)
-                .thenApply(individuals -> this.calculateSpatialUnion(individuals, spatialReference, matchThreshold));
+                .thenApply(individuals -> this.calculateSpatialUnion(individuals, inputSRID, matchThreshold));
 
         try {
             final Optional<UnionEqualityResult<Object>> objectUnionEqualityResult = unionFuture.get();
 //            Close the transaction before doing some intense computations
             this.ontology.returnAndCommitTransaction(trestleTransaction);
             if (objectUnionEqualityResult.isPresent()) {
-                return Optional.of(this.calculateUnionContribution(objectUnionEqualityResult.get(), spatialReference));
+                return Optional.of(this.calculateUnionContribution(objectUnionEqualityResult.get(), inputSRID));
             } else {
                 return Optional.empty();
             }

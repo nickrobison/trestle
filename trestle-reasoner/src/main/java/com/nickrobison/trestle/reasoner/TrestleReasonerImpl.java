@@ -33,7 +33,6 @@ import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.reasoner.parser.TypeConstructor;
-import com.nickrobison.trestle.reasoner.parser.TypeConverter;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TrestleIndividual;
@@ -493,13 +492,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
-        return this.spatialEngine.calculateSpatialUnion(inputObjects, inputSR, matchThreshold);
+    public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, int inputSRID, double matchThreshold) {
+        return this.spatialEngine.calculateSpatialUnion(inputObjects, inputSRID, matchThreshold);
     }
 
     @Override
-    public <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR) {
-        return this.spatialEngine.calculateUnionContribution(result, inputSR);
+    public <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, int inputSRID) {
+        return this.spatialEngine.calculateUnionContribution(result, inputSRID);
     }
 
     @Override
@@ -635,8 +634,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 
     @Override
-    public Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold) {
-        return this.spatialEngine.calculateSpatialUnionWithContribution(datasetClassID, individualIRIs, inputSR, matchThreshold);
+    public Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSRID, double matchThreshold) {
+        return this.spatialEngine.calculateSpatialUnionWithContribution(datasetClassID, individualIRIs, inputSRID, matchThreshold);
     }
 
     @Override

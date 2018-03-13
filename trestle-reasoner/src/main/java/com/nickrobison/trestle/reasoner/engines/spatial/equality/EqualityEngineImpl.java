@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.reasoner.engines.spatial.equality;
 
-import com.esri.core.geometry.SpatialReference;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.SpatialUnionBuilder;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.SpatialUnionTraverser;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
@@ -29,13 +28,13 @@ public class EqualityEngineImpl implements EqualityEngine {
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
-        return this.unionBuilder.getApproximateEqualUnion(inputObjects, inputSR, matchThreshold);
+    public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, int inputSRID, double matchThreshold) {
+        return this.unionBuilder.getApproximateEqualUnion(inputObjects, inputSRID, matchThreshold);
     }
 
     @Override
-    public <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR) {
-        return this.unionBuilder.calculateContribution(result, inputSR);
+    public <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, int inputSRID) {
+        return this.unionBuilder.calculateContribution(result, inputSRID);
     }
 
     @Override

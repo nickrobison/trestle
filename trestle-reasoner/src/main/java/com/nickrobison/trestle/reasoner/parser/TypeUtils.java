@@ -90,11 +90,6 @@ public final class TypeUtils {
             }
 
             case "java.lang.String": {
-//                Since the String might be a WKT value, we need{
-//                final String stringLiteral = literal.getLiteral();
-//                if (wktRegex.matcher(stringLiteral).matches()) {
-//                    return null;
-//                }
                 return javaClass.cast(literal.getLiteral());
             }
 

@@ -36,8 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Tag("integration")
 public class EqualityTests extends AbstractReasonerTest {
 
-
-    public static final SpatialReference INPUT_SR = SpatialReference.create(4296);
+    public static final int INPUT_SR = 4296;
     private EqualityTestClass obj1;
     private EqualityTestClass obj2;
     private EqualityTestClass obj3;
