@@ -4,13 +4,8 @@
             [com.nickrobison.trestle.reasoner.parser.spatial :as spatial])
   (:import (com.nickrobison.trestle.reasoner.parser ITypeConverter TypeUtils TypeConstructor)
            (org.semanticweb.owlapi.model IRI OWLDataFactory OWLLiteral)
-           (java.util Map Optional)
+           (java.util Map)
            (org.semanticweb.owlapi.vocab OWL2Datatype)))
-
-
-(defn- update-type-map
-  [owlType javaType constructor]
-  )
 
 
 (defrecord ClojureTypeConverter
@@ -41,7 +36,7 @@
         )))
   (getDatatypeFromJavaClass
     [_ javaTypeClass]
-    (log/warnf "Trying to get type %s" javaTypeClass)
+    (log/tracef "Trying to get type %s" javaTypeClass)
     (if-let [datatype (get (:java-to-owl @typeMap) javaTypeClass)]
       datatype
       (log/spyf :error (str "Unsupported Java type: " javaTypeClass)
@@ -96,22 +91,25 @@
   (extractOWLLiteral
     [_ javaClass literal]
     ; Check to see if the literal is a built-in type that we understand
-    (if-let [extractedLiteral (TypeUtils/rawLiteralConversion javaClass literal)]
-      ; If we have a String, it might be a WKT, so check if it's spatial and if so, parse it
-      (if (and (instance? String extractedLiteral)
-               (spatial/literal-is-spatial? df literal))
-        (wkt-to-geom javaClass extractedLiteral)
-        ; Otherwise, just return the built-in literal
-        extractedLiteral)
-      (let [extractedLiteral (.getLiteral literal)]
-        ; If we don't have a built-in it might be spatial
-        (if-let [spatialValue (wkt-to-geom javaClass extractedLiteral)]
-          spatialValue
-          ; If we don't have a spatial value, check for something from our type constructors
-          (if-let [constructor ^TypeConstructor (get (:constructors @typeMap) (.getTypeName javaClass))]
-            (.cast javaClass (.constructType constructor (.getLiteral literal)))
-            (throw (ClassCastException. (str "Unsupported cast of: " javaClass)))
-            )))))
+    (let [extractedLiteral (TypeUtils/rawLiteralConversion javaClass literal)]
+      ; We can't do if-let, because the result might be false, so we need to do an explicit nil check
+      (if (nil? extractedLiteral)
+        (let [extractedLiteral (.getLiteral literal)]
+          ; If we don't have a built-in it might be spatial
+          (if-let [spatialValue (wkt-to-geom javaClass extractedLiteral)]
+            spatialValue
+            ; If we don't have a spatial value, check for something from our type constructors
+            (if-let [constructor ^TypeConstructor (get (:constructors @typeMap) (.getTypeName javaClass))]
+              (.cast javaClass (.constructType constructor (.getLiteral literal)))
+              (throw (ClassCastException. (str "Unsupported cast of: " javaClass)))
+              )))
+        ; If we have a String, it might be a WKT, so check if it's spatial and if so, parse it
+        (if (and (instance? String extractedLiteral)
+                 (spatial/literal-is-spatial? df literal))
+          (wkt-to-geom javaClass extractedLiteral)
+          ; Otherwise, just return the built-in literal
+          extractedLiteral)
+        )))
   (reprojectSpatial
     [_ spatialObject srid]
     ; If the SRID is 0, then we can't reproject, so just return
