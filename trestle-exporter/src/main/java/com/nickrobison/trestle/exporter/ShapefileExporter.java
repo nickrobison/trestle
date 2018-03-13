@@ -100,17 +100,15 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
 //            Build the geometry
             try {
                 final String individualGeom = individual.getGeom();
-                final String wkt = CommonSpatialUtils.getWKTFromLiteral(individualGeom);
-                final int projection = CommonSpatialUtils.getProjectionFromLiteral(individualGeom);
 
-                final T geometry = type.cast(this.reader.read(wkt));
+                final T geometry = type.cast(this.reader.read(individualGeom));
                 simpleFeatureBuilder.add(geometry);
             } catch (ParseException e) {
                 logger.error("Cannot parse wkt {}", e);
             }
 
 //            Now the properties
-            individual.getProperties().entrySet().forEach(entry -> simpleFeatureBuilder.add(entry.getValue()));
+            individual.getProperties().forEach((key, value) -> simpleFeatureBuilder.add(value));
 
             final SimpleFeature simpleFeature = simpleFeatureBuilder.buildFeature(null);
             featureCollection.add(simpleFeature);

@@ -82,6 +82,8 @@ public class DataExportEngine implements ITrestleDataExporter {
     @Override
     public <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, @Nullable Temporal validAt, @Nullable Temporal databaseAt, ITrestleExporter.DataType exportType) throws IOException {
 
+        final Integer classProjection = this.classParser.getClassProjection(inputClass);
+
 //        Build shapefile schema
 //        TODO(nrobison): Extract type from wkt
 //        FIXME(nrobison): Shapefile schema doesn't support multiple languages. Need to figure out how to flatten
@@ -125,12 +127,11 @@ public class DataExportEngine implements ITrestleDataExporter {
 
             switch (exportType) {
                 case SHAPEFILE: {
-                    final Integer classProjection = this.classParser.getClassProjection(inputClass);
                     final ShapefileExporter shapeFileExporter = new ShapefileExporter.ShapefileExporterBuilder(shapefileSchema.getGeomName(), shapefileSchema.getGeomType(), shapefileSchema).setSRID(classProjection).build();
                     return shapeFileExporter.writePropertiesToByteBuffer(individuals, null);
                 }
                 case GEOJSON: {
-                    return new GeoJsonExporter().writePropertiesToByteBuffer(individuals, null);
+                    return new GeoJsonExporter(classProjection).writePropertiesToByteBuffer(individuals, null);
                 }
                 case KML: {
                     return new KMLExporter(false).writePropertiesToByteBuffer(individuals, null);

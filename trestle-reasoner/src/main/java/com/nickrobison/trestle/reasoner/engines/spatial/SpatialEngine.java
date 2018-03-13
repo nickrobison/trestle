@@ -9,7 +9,6 @@ import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
-import com.nickrobison.trestle.reasoner.TrestleReasonerImpl;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.engines.IndividualEngine;
 import com.nickrobison.trestle.reasoner.engines.object.ObjectEngineUtils;
@@ -380,6 +379,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
     private static double calculateOverlapPercentage(Geometry objectGeom, Geometry intersectionGeometry) {
         return intersectionGeometry.getArea() / objectGeom.getArea();
     }
+
     /**
      * EQUALITY
      */
@@ -489,7 +489,6 @@ public class SpatialEngine implements ITrestleSpatialEngine {
     }
 
 
-
     @Override
     @Timed
     public <A extends @NonNull Object, B extends @NonNull Object> boolean isApproximatelyEqual(A inputObject, B matchObject, double threshold) {
@@ -520,15 +519,15 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 
     @Override
     @Timed
-    public <T extends @NonNull Object> ContainmentDirection getApproximateContainment(T objectA, T objectB, SpatialReference inputSR, double threshold) {
-        return this.containmentEngine.getApproximateContainment(objectA, objectB, inputSR, threshold);
+    public <A extends @NonNull Object, B extends @NonNull Object> ContainmentDirection getApproximateContainment(A objectA, B objectB, double threshold) {
+        return this.containmentEngine.getApproximateContainment(objectA, objectB, threshold);
     }
     /**
      * HELPER FUNCTIONS
      */
 
     /**
-     * Get an individual using an adjusted {@link Temporal} gathered from {@link TrestleReasonerImpl#getAdjustedQueryTemporal(String, OffsetDateTime, TrestleTransaction)}
+     * Get an individual using an adjusted {@link Temporal} gathered from {@link ObjectEngineUtils#getAdjustedQueryTemporal(String, OffsetDateTime, TrestleTransaction)}
      *
      * @param datasetID   - {@link String} datasetID
      * @param id          - {@link String} individual ID

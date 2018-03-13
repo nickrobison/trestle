@@ -26,16 +26,18 @@ import java.util.Map;
 public class GeoJsonExporter implements ITrestleExporter {
 
     private final String prefix;
+    private final int srid;
     private final ObjectMapper mapper;
     private final Map<Integer, WKTReader> readerMap;
 
 
-    public GeoJsonExporter() {
+    public GeoJsonExporter(int srid) {
         this.prefix = "Trestle";
         this.mapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
                 .configure(SerializationFeature.WRITE_DATES_WITH_ZONE_ID, true);
+        this.srid = srid;
 
         this.readerMap = new HashMap<>(1);
     }
@@ -68,13 +70,13 @@ public class GeoJsonExporter implements ITrestleExporter {
             final ObjectNode featureNode = this.mapper.createObjectNode();
             featureNode.put(GeoJsonConstants.NAME_TYPE, GeoJsonConstants.NAME_FEATURE);
             final String individualGeom = individual.getGeom();
-            final int srid = CommonSpatialUtils.getProjectionFromLiteral(individualGeom);
-            final String wkt = CommonSpatialUtils.getWKTFromLiteral(individualGeom);
+//            final int srid = CommonSpatialUtils.getProjectionFromLiteral(individualGeom);
+//            final String wkt = CommonSpatialUtils.getWKTFromLiteral(individualGeom);
             try {
 
                 final Geometry geometry = this.readerMap
-                        .computeIfAbsent(srid, Utils::createProjectedReader)
-                        .read(wkt);
+                        .computeIfAbsent(this.srid, Utils::createProjectedReader)
+                        .read(individualGeom);
                 final String coordinateString = geoWriter.write(geometry);
                 final JsonNode coordinateNode = mapper.readTree(coordinateString);
                 featureNode.set("geometry", coordinateNode);
