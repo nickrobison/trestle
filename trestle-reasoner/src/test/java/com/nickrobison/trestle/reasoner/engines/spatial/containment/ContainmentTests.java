@@ -3,7 +3,6 @@ package com.nickrobison.trestle.reasoner.engines.spatial.containment;
 import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
-import com.esri.core.geometry.SpatialReference;
 import com.google.common.collect.ImmutableList;
 import com.nickrobison.trestle.reasoner.AbstractReasonerTest;
 import com.nickrobison.trestle.reasoner.TestClasses;
@@ -31,7 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @Tag("integration")
 public class ContainmentTests extends AbstractReasonerTest {
-    public static final SpatialReference INPUT_SR = SpatialReference.create(4296);
 
     @Test
     @SuppressWarnings({"dereference.of.nullable", "argument.type.incompatible"})
@@ -68,15 +66,15 @@ public class ContainmentTests extends AbstractReasonerTest {
 
         // test containment between original object and first split object
         ContainmentEngine engine = this.reasoner.getContainmentEngine();
-        ContainmentEngine.ContainmentDirection containmentDir = engine.getApproximateContainment(originalObject, splitObjects.get(0), INPUT_SR, 0.9);
+        ContainmentEngine.ContainmentDirection containmentDir = engine.getApproximateContainment(originalObject, splitObjects.get(0), 0.9);
         assertTrue(containmentDir.equals(ContainmentEngine.ContainmentDirection.CONTAINS), "Should have containment direction ContainmentDirection.CONTAINS");
 
         // test same two objects but in the opposite direction
-        containmentDir = engine.getApproximateContainment(splitObjects.get(0), originalObject, INPUT_SR, 0.9);
+        containmentDir = engine.getApproximateContainment(splitObjects.get(0), originalObject, 0.9);
         assertTrue(containmentDir.equals(ContainmentEngine.ContainmentDirection.WITHIN), "Should have containment direction ContainmentDirection.WITHIN");
 
         //test between two split objects (neither should contain the other)
-        containmentDir = engine.getApproximateContainment(splitObjects.get(0), splitObjects.get(1), INPUT_SR, 0.9);
+        containmentDir = engine.getApproximateContainment(splitObjects.get(0), splitObjects.get(1), 0.9);
         assertTrue(containmentDir.equals(ContainmentEngine.ContainmentDirection.NONE), "Should have containment direction ContainmentDirection.NONE");
     }
 

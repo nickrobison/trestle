@@ -1,29 +1,34 @@
 package com.nickrobison.trestle.reasoner.engines.spatial.containment;
 
-import com.esri.core.geometry.SpatialReference;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngineUtils;
+import com.nickrobison.trestle.reasoner.parser.IClassParser;
+import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.PrecisionModel;
-import com.vividsolutions.jts.io.WKBReader;
-import com.vividsolutions.jts.io.WKTReader;
 import org.checkerframework.checker.nullness.qual.NonNull;
+
+import javax.cache.Cache;
+import javax.inject.Inject;
 
 /**
  * Created by detwiler on 8/31/17.
  */
 public class ContainmentEngineImpl implements ContainmentEngine {
 
-    ContainmentEngineImpl() {
+    private final Cache<Integer, Geometry> geometryCache;
+    private final IClassParser parser;
+
+    @Inject
+    ContainmentEngineImpl(Cache<Integer, Geometry> geometryCache, TrestleParser trestleParser) {
+        this.geometryCache = geometryCache;
+        this.parser = trestleParser.classParser;
     }
 
     @Override
-    public <T extends @NonNull Object> ContainmentDirection getApproximateContainment(T objectA, T objectB, SpatialReference inputSR, double threshold) {
-        final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
-        final WKTReader wktReader = new WKTReader(geometryFactory);
-        final WKBReader wkbReader = new WKBReader(geometryFactory);
-        final Geometry polygonA = SpatialEngineUtils.buildObjectGeometry(objectA, wktReader, wkbReader);
-        final Geometry polygonB = SpatialEngineUtils.buildObjectGeometry(objectB, wktReader, wkbReader);
+    public <A extends @NonNull Object, B extends @NonNull Object> ContainmentDirection getApproximateContainment(A objectA, B objectB, double threshold) {
+        final Integer aSRID = this.parser.getClassProjection(objectA.getClass());
+        final Integer bSRID = this.parser.getClassProjection(objectB.getClass());
+        final Geometry polygonA = SpatialEngineUtils.getGeomFromCache(objectA, aSRID, this.geometryCache);
+        final Geometry polygonB = SpatialEngineUtils.reprojectObject(objectB, bSRID, aSRID, this.geometryCache);
 
         final double areaA = polygonA.getArea();
         final double areaB = polygonB.getArea();

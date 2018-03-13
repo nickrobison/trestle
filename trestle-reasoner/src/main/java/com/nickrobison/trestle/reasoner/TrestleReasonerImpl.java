@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.reasoner;
 
-import com.esri.core.geometry.SpatialReference;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.nickrobison.metrician.Metrician;
@@ -50,7 +49,9 @@ import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -512,8 +513,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <T> ContainmentDirection getApproximateContainment(T objectA, T objectB, SpatialReference inputSR, double threshold) {
-        return this.spatialEngine.getApproximateContainment(objectA, objectB, inputSR, threshold);
+    public <A extends @NonNull Object, B extends @NonNull Object> ContainmentDirection getApproximateContainment(A objectA, B objectB, double threshold) {
+        return this.spatialEngine.getApproximateContainment(objectA, objectB, threshold);
     }
 
     //    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
