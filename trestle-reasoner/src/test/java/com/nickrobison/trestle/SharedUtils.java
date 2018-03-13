@@ -4,7 +4,6 @@ import com.nickrobison.trestle.reasoner.TestClasses;
 import com.nickrobison.trestle.reasoner.TestClasses.GAULTestClass;
 import com.nickrobison.trestle.reasoner.TrestleAPITest;
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Polygon;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
 import org.geotools.data.FeatureSource;
@@ -71,9 +70,9 @@ public class SharedUtils {
     }
 
 
-    public static List<TestClasses.ProjectionTestClass> readProjectionClass(String fileName, String idField) throws IOException {
+    public static List<TestClasses.KCProjectionTestClass> readKCProjectionClass(String fileName, String idField) throws IOException {
 
-        List<TestClasses.ProjectionTestClass> countyObjects = new ArrayList<>();
+        List<TestClasses.KCProjectionTestClass> countyObjects = new ArrayList<>();
         final URL resource = TestClasses.class.getClassLoader().getResource(fileName);
 
         Map<String, Object> map = new HashMap<>();
@@ -91,7 +90,38 @@ public class SharedUtils {
             while (features.hasNext()) {
                 SimpleFeature feature = features.next();
                 final Geometry defaultGeometry = (Geometry) feature.getDefaultGeometry();
-                countyObjects.add(new TestClasses.ProjectionTestClass(Long.parseLong(feature.getAttribute(idField).toString()),
+                countyObjects.add(new TestClasses.KCProjectionTestClass(
+                        Long.parseLong(feature.getAttribute(idField).toString()),
+                        feature.getAttribute("NAMELSAD10").toString(),
+                        defaultGeometry));
+            }
+        }
+        return countyObjects;
+    }
+
+    public static List<TestClasses.CensusProjectionTestClass> readCensusProjectionClass(String fileName, String idField) throws IOException {
+
+        List<TestClasses.CensusProjectionTestClass> countyObjects = new ArrayList<>();
+        final URL resource = TestClasses.class.getClassLoader().getResource(fileName);
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("url", resource);
+
+        DataStore dataStore = DataStoreFinder.getDataStore(map);
+        String typeName = dataStore.getTypeNames()[0];
+
+        FeatureSource<SimpleFeatureType, SimpleFeature> source = dataStore
+                .getFeatureSource(typeName);
+        Filter filter = Filter.INCLUDE;
+
+        FeatureCollection<SimpleFeatureType, SimpleFeature> collection = source.getFeatures(filter);
+        try (FeatureIterator<SimpleFeature> features = collection.features()) {
+            while (features.hasNext()) {
+                SimpleFeature feature = features.next();
+                final Geometry defaultGeometry = (Geometry) feature.getDefaultGeometry();
+                countyObjects.add(new TestClasses.CensusProjectionTestClass(
+                        Long.parseLong(feature.getAttribute(idField).toString()),
+                        feature.getAttribute("NAMELSAD10").toString(),
                         defaultGeometry));
             }
         }

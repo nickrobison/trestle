@@ -8,6 +8,7 @@ import com.esri.core.geometry.SpatialReference;
 import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.TrestlePair;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
+import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngineUtils;
 import com.nickrobison.trestle.reasoner.parser.TemporalParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.types.events.TrestleEventType;
@@ -59,7 +60,7 @@ public class SpatialUnionBuilder {
 
 //        Determine the class of the object
         final T unionObject = equalityResult.getUnionObject();
-        final Geometry geometry = getGeomFromCache(unionObject, wktReader, wkbReader);
+        final Geometry geometry = SpatialEngineUtils.getGeomFromCache(unionObject, inputSR.getID(), this.geometryCache);
 
 //        Build the contribution object
         final UnionContributionResult result = new UnionContributionResult(this.tp.classParser.getIndividual(unionObject),
@@ -71,8 +72,8 @@ public class SpatialUnionBuilder {
                 .stream()
 //                Build geometry object
                 .map(object -> new TrestlePair<>(this.tp.classParser.getIndividual(object),
-                        getGeomFromCache(object,
-                                wktReader, wkbReader)))
+                        SpatialEngineUtils.getGeomFromCache(object,
+                                inputSR.getID(), this.geometryCache)))
                 .map(pair -> {
 //                    Calculate the proportion contribution
                     final double percentage = calculateEqualityPercentage(geometry, pair.getRight());
@@ -106,7 +107,7 @@ public class SpatialUnionBuilder {
         final Map<Geometry, T> earlyObjectMap = new HashMap<>(earlyObjects.size());
         final Set<Geometry> earlyPolygons = new HashSet<>(earlyObjects.size());
         for (T earlyObject : earlyObjects) {
-            final Geometry earlyGeom = getGeomFromCache(earlyObject, wktReader, wkbReader);
+            final Geometry earlyGeom = SpatialEngineUtils.getGeomFromCache(earlyObject, inputSR.getID(), this.geometryCache);
             earlyObjectMap.put(earlyGeom, earlyObject);
             earlyPolygons.add(earlyGeom);
         }
@@ -115,7 +116,7 @@ public class SpatialUnionBuilder {
         final Map<Geometry, T> lateObjectMap = new HashMap<>(lateObjects.size());
         final Set<Geometry> latePolygons = new HashSet<>(lateObjects.size());
         for (T lateObject : lateObjects) {
-            final Geometry lateGeom = getGeomFromCache(lateObject, wktReader, wkbReader);
+            final Geometry lateGeom = SpatialEngineUtils.getGeomFromCache(lateObject, inputSR.getID(), this.geometryCache);
             lateObjectMap.put(lateGeom, lateObject);
             latePolygons.add(lateGeom);
         }
@@ -194,16 +195,17 @@ public class SpatialUnionBuilder {
      *
      * @param inputObject - Input object
      * @param matchObject - Object to match against
-     * @param inputSR     - {@link SpatialReference} spatial reference of input objects
-     * @param <T>         - Generic type parameter
+     * @param <A>         - Generic type parameter of input object
+     * @param <B>         - Generic type parameter of match object
      * @return - {@link Double} percentage spatial match
      */
-    public <T extends @NonNull Object> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR) {
-        final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
-        final WKTReader wktReader = new WKTReader(geometryFactory);
-        final WKBReader wkbReader = new WKBReader(geometryFactory);
-        final Geometry inputPolygon = getGeomFromCache(inputObject, wktReader, wkbReader);
-        final Geometry matchPolygon = getGeomFromCache(matchObject, wktReader, wkbReader);
+    public <A extends @NonNull Object, B extends @NonNull Object> double calculateSpatialEquals(A inputObject, B matchObject) {
+        final Integer aSRID = this.tp.classParser.getClassProjection(inputObject.getClass());
+        final Integer bSRID = this.tp.classParser.getClassProjection(matchObject.getClass());
+        final Geometry inputPolygon = SpatialEngineUtils.getGeomFromCache(inputObject, aSRID, this.geometryCache);
+//        Re-project match object to input object SRID, unless we already have one in the cache
+        final Geometry matchPolygon = SpatialEngineUtils.reprojectObject(matchObject, bSRID, aSRID, this.geometryCache);
+
 
         return calculateEqualityPercentage(inputPolygon, matchPolygon);
     }
@@ -263,24 +265,24 @@ public class SpatialUnionBuilder {
     }
 
 
-    /**
-     * Retrieve {@link Geometry} from shared {@link Cache}, computing if missing
-     *
-     * @param keyObject - {@link Object} to get geom for
-     * @param wktReader - {@link WKTReader} to use for building the {@link Geometry}
-     * @param wkbReader - {@link WKBReader} to use for building the {@link Geometry}
-     * @return - Object {@link Geometry}
-     */
-    private Geometry getGeomFromCache(Object keyObject, WKTReader wktReader, WKBReader wkbReader) {
-        final int key = keyObject.hashCode();
-        final Geometry cacheGeom = this.geometryCache.get(key);
-        if (cacheGeom == null) {
-            final Geometry geometry = buildObjectGeometry(keyObject, wktReader, wkbReader);
-            this.geometryCache.put(key, geometry);
-            return geometry;
-        }
-        return cacheGeom;
-    }
+//    /**
+//     * Retrieve {@link Geometry} from shared {@link Cache}, computing if missing
+//     *
+//     * @param keyObject - {@link Object} to get geom for
+//     * @param wktReader - {@link WKTReader} to use for building the {@link Geometry}
+//     * @param wkbReader - {@link WKBReader} to use for building the {@link Geometry}
+//     * @return - Object {@link Geometry}
+//     */
+//    private Geometry getGeomFromCache(Object keyObject, WKTReader wktReader, WKBReader wkbReader) {
+//        final int key = keyObject.hashCode();
+//        final Geometry cacheGeom = this.geometryCache.get(key);
+//        if (cacheGeom == null) {
+//            final Geometry geometry = buildObjectGeometry(keyObject, wktReader, wkbReader);
+//            this.geometryCache.put(key, geometry);
+//            return geometry;
+//        }
+//        return cacheGeom;
+//    }
 
     /**
      * Calculate the percent overlap of two {@link Polygon}

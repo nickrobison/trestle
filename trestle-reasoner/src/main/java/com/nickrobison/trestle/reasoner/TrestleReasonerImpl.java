@@ -503,13 +503,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <T extends @NonNull Object> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold) {
-        return this.spatialEngine.isApproximatelyEqual(inputObject, matchObject, inputSR, threshold);
+    public <A extends @NonNull Object, B extends @NonNull Object> boolean isApproximatelyEqual(A inputObject, B matchObject, double threshold) {
+        return this.spatialEngine.isApproximatelyEqual(inputObject, matchObject, threshold);
     }
 
     @Override
-    public <T extends @NonNull Object> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR) {
-        return this.spatialEngine.calculateSpatialEquals(inputObject, matchObject, inputSR);
+    public <A extends @NonNull Object, B extends @NonNull Object> double calculateSpatialEquals(A inputObject, B matchObject) {
+        return this.spatialEngine.calculateSpatialEquals(inputObject, matchObject);
     }
 
     @Override
@@ -645,8 +645,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <T> SpatialComparisonReport compareTrestleObjects(T objectA, T objectB, SpatialReference inputSR, double matchThreshold) {
-        return this.spatialEngine.compareTrestleObjects(objectA, objectB, inputSR, matchThreshold);
+    public <A, B> SpatialComparisonReport compareTrestleObjects(A objectA, B objectB, double matchThreshold) {
+        return this.spatialEngine.compareTrestleObjects(objectA, objectB, matchThreshold);
     }
 
     @Override

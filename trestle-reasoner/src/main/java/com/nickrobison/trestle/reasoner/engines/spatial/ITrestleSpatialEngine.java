@@ -126,12 +126,12 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      *
      * @param objectA        - {@link Object} to compare against
      * @param objectB        - {@link Object} to compare with
-     * @param inputSR        - {@link SpatialReference} input spatial reference
      * @param matchThreshold - {@link Double} cutoff for all fuzzy matches
-     * @param <T>            - Type parameter
-     * @return - {@link SpatialComparisonReport}
+     * @param <A> - {@link A} type of object A
+     * @param <B> - {@link B} type of object B
+     @return - {@link SpatialComparisonReport}
      */
-    <T extends Object> SpatialComparisonReport compareTrestleObjects(T objectA, T objectB, SpatialReference inputSR, double matchThreshold);
+    <A extends @NonNull Object, B extends @NonNull Object> SpatialComparisonReport compareTrestleObjects(A objectA, B objectB, double matchThreshold);
 
     /**
      * Perform spatial comparison between two input objects

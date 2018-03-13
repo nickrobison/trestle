@@ -35,14 +35,14 @@ public interface EqualityEngine {
     /**
      * Determines if two objects are approximately equal, in spatial area, to each other, given a threshold value.
      *
-     * @param <T>         - Generic type parameter
+     * @param <A>         - Generic type parameter of input object
+     * @param <B>         - Generic type parameter of match object
      * @param inputObject - Input object
      * @param matchObject - Object to match against
-     * @param inputSR     - {@link SpatialReference} of objects
      * @param threshold   - threshold value which determines 'approximately equal'  @return - {@link boolean} {@code true} objects are approximately equal. {@code false} they are not.
      * @return - Whether or not the spatial equality of the objects exceeds the given threshold
      */
-    <T extends @NonNull Object> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold);
+    <A extends @NonNull Object, B extends @NonNull Object> boolean isApproximatelyEqual(A inputObject, B matchObject, double threshold);
 
     /**
      * Calculate Spatial Equality between the two objects
@@ -52,7 +52,7 @@ public interface EqualityEngine {
      * @param <T> - Type parameter
      * @return - {@link Double} percent spatial equality between the objects
      */
-    <T extends @NonNull Object> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR);
+    <A extends @NonNull Object, B extends @NonNull Object> double calculateSpatialEquals(A inputObject, B matchObject);
 
     /**
      * Return a {@link List} of {@link OWLNamedIndividual} that are equivalent to the given individual at the specific point in time
