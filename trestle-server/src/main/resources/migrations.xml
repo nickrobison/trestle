@@ -10,11 +10,14 @@
             </column>
             <column name="FIRST_NAME" type="VARCHAR(50)"/>
             <column name="LAST_NAME" type="VARCHAR(50)"/>
-            <column name="USERNAME" type="VARCHAR(50)"/>
+            <column name="USERNAME" type="VARCHAR(50)">
+                <constraints unique="true" uniqueConstraintName="uk_username"/>
+            </column>
             <column name="EMAIL" type="VARCHAR(50)"/>
             <column name="PASSWORD" type="VARCHAR(255)"/>
             <column name="PRIVILEGES" type="SMALLINT"/>
         </createTable>
+
     </changeSet>
     <changeSet author="nrobison" id="insert-dba">
         <insert catalogName="TEST" tableName="USERS">
