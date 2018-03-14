@@ -1,9 +1,11 @@
 package com.nickrobison.trestle.reasoner.parser;
 
+import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.reasoner.annotations.TrestleCreator;
 import com.nickrobison.trestle.reasoner.exceptions.MissingConstructorException;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,9 +24,16 @@ import static com.nickrobison.trestle.reasoner.parser.ClassParser.*;
 public class ClassBuilder implements IClassBuilder {
 
     private static final Logger logger = LoggerFactory.getLogger(ClassBuilder.class);
+    private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
 
     ClassBuilder() {
 //        Not used
+    }
+
+    @Override
+    public OWLLiteral getProjectedWKT(Class<?> clazz, Object spatialObject, @Nullable Integer srid) {
+        logger.warn("No fully implemented, returning toString value");
+        return df.getOWLLiteral(spatialObject.toString(), df.getOWLDatatype(StaticIRI.WKTDatatypeIRI));
     }
 
     @Override

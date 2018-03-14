@@ -1,11 +1,7 @@
 package com.nickrobison.trestle.types;
 
-import com.nickrobison.trestle.reasoner.parser.TypeConverter;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLLiteral;
 
 import java.io.Serializable;
 
@@ -24,39 +20,23 @@ public class TrestleFact<T> implements Serializable {
     private final Class<?> javaClass;
 
     @SuppressWarnings({"dereference.of.nullable"})
-    public TrestleFact(String identifier, String name, T value, TemporalObject validTemporal, TemporalObject databaseTemporal) {
+    public TrestleFact(String identifier, String name, T value, @Nullable Class<T> clazz, @Nullable String language, TemporalObject validTemporal, TemporalObject databaseTemporal) {
         this.identifier = identifier;
         this.name = name;
         this.value = value;
         this.validTemporal = validTemporal;
         this.databaseTemporal = databaseTemporal;
-        this.language = null;
-        this.javaClass = value.getClass();
-    }
-
-    public TrestleFact(@Nullable Class<?> clazz, OWLDataPropertyAssertionAxiom propertyAxiom, TemporalObject validTemporal, TemporalObject databaseTemporal) {
-        this.validTemporal = validTemporal;
-        this.databaseTemporal = databaseTemporal;
-        this.identifier = propertyAxiom.getSubject().toStringID();
-        this.name = propertyAxiom.getProperty().asOWLDataProperty().getIRI().getShortForm();
-        final Class<@NonNull ?> factClass = TypeConverter.lookupJavaClassFromOWLDatatype(propertyAxiom, clazz);
-        final OWLLiteral literal = propertyAxiom.getObject();
-        final Object literalObject = TypeConverter.extractOWLLiteral(factClass, literal);
-//        TODO(nrobison): This feels terrible, what else should I do?
-        this.value = (T) literalObject;
-        if (literal.hasLang()) {
-            this.language = literal.getLang();
-        } else {
-            this.language = null;
-        }
-        this.javaClass = factClass;
+        this.language = language;
+        this.javaClass = clazz == null ? value.getClass() : clazz;
     }
 
     public String getIdentifier() {
         return identifier;
     }
 
-    public String getName() { return name; }
+    public String getName() {
+        return name;
+    }
 
     public T getValue() {
         return value;
@@ -64,6 +44,7 @@ public class TrestleFact<T> implements Serializable {
 
     /**
      * Returns the language of the Fact, if its a multi-language string
+     *
      * @return - Optional of Fact language
      */
     public @Nullable String getLanguage() {

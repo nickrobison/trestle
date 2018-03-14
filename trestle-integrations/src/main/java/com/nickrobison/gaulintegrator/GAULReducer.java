@@ -196,7 +196,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
 
         logger.warn("{}-{}-{} calculating equality", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
         final Instant start = Instant.now();
-        final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(matchedObjects, inputSR, THRESHOLD);
+        final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(matchedObjects, INPUTSRS, THRESHOLD);
         logger.warn("{}-{}-{} calculating equality took {} ms", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate(), Duration.between(start, Instant.now()).toMillis());
         if (matchOptional.isPresent()) {
             // do something here
@@ -296,7 +296,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
                 matchedObject.getObjectName(),
                 matchedObject.getStartDate());
         // test of approx equality
-        if (this.reasoner.getEqualityEngine().isApproximatelyEqual(newGAULObject, matchedObject, inputSR, THRESHOLD) && !newGAULObject.equals(matchedObject)) {
+        if (this.reasoner.getEqualityEngine().isApproximatelyEqual(newGAULObject, matchedObject, THRESHOLD) && !newGAULObject.equals(matchedObject)) {
             // do something here
             logger.info("found approximate equality between GAULObjects {} and {}", newGAULObject.getID(), matchedObject.getID());
 //            Write a spatial equals
@@ -307,7 +307,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
 //        Spatial interactions are exhaustive
 
 //                    newGAUL within matchedObject? Covers, or Contains? IF Covers, also contains
-        final SpatialComparisonReport spatialComparisonReport = this.reasoner.compareTrestleObjects(newGAULObject, matchedObject, inputSR, THRESHOLD);
+        final SpatialComparisonReport spatialComparisonReport = this.reasoner.compareTrestleObjects(newGAULObject, matchedObject, THRESHOLD);
 
 //        Write all the relations from the spatial report
 //        Overlaps?
@@ -325,7 +325,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
                 .forEach(relation -> reasoner.writeObjectRelationship(newGAULObject, matchedObject, relation));
 
 //        Try it in the other direction
-        final SpatialComparisonReport inverseSpatialReport = this.reasoner.compareTrestleObjects(matchedObject, newGAULObject, inputSR, THRESHOLD);
+        final SpatialComparisonReport inverseSpatialReport = this.reasoner.compareTrestleObjects(matchedObject, newGAULObject, THRESHOLD);
 
 //        Do all the non-overlaps relations
         inverseSpatialReport

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
+import com.nickrobison.trestle.SharedTestUtils;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.annotations.*;
@@ -17,8 +18,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -48,13 +51,8 @@ public class DataExporterTests extends AbstractReasonerTest {
 
     @SuppressWarnings({"dereference.of.nullable", "argument.type.incompatible"})
     private static void loadData() throws IOException {
-        final InputStream is = TrestleAPITest.class.getClassLoader().getResourceAsStream("objects.csv");
 
-        final BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
-
-        String line;
-
-        while ((line = br.readLine()) != null) {
+        SharedTestUtils.ITestClassConstructor<SimpleGAULObject, String> simpleConstructor = (line -> {
 
 
             final String[] splitLine = line.split(";");
@@ -62,14 +60,21 @@ public class DataExporterTests extends AbstractReasonerTest {
             try {
                 code = Long.parseLong(splitLine[0]);
             } catch (NumberFormatException e) {
-                continue;
+                return null;
             }
-
-
             LocalDate date = LocalDate.parse(splitLine[2].replace("\"", ""), formatter);
-            gaulObjects.add(new SimpleGAULObject(code, splitLine[1].replace("\"", ""), date, date.plusYears(5), splitLine[4].replace("\"", "")));
-            ids.add(Long.toString(code));
-        }
+            return new SimpleGAULObject(code, splitLine[1].replace("\"", ""), date, date.plusYears(5), splitLine[4].replace("\"", ""));
+        });
+
+        final List<SimpleGAULObject> loadedGAULS = SharedTestUtils.readFromCSV("objects.csv", simpleConstructor);
+
+        loadedGAULS
+                .forEach(object -> {
+                    if (object != null) {
+                        gaulObjects.add(object);
+                        ids.add(object.getObjectID());
+                    }
+                });
     }
 
     @Test

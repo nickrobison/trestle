@@ -37,6 +37,11 @@ public class ClassParser implements IClassParser {
     }
 
     @Override
+    public Integer getClassProjection(Class<?> clazz) {
+        return 4326;
+    }
+
+    @Override
     public Object parseClass(Class<?> clazz) {
         return null;
     }
@@ -46,19 +51,25 @@ public class ClassParser implements IClassParser {
     static final OWLDataFactory dfStatic = OWLManager.getOWLDataFactory();
 
     private final OWLDataFactory df;
+    private final ITypeConverter typeConverter;
     private final String ReasonerPrefix;
     private final boolean multiLangEnabled;
     private final String defaultLanguageCode;
+    private final Integer defaultProjection;
 
 
     @Inject
     ClassParser(@com.nickrobison.trestle.ontology.ReasonerPrefix String reasonerPrefix,
+                ITypeConverter typeConverter,
                 @MultiLangEnabled boolean multiLangEnabled,
-                @DefaultLanguageCode String defaultLanguageCode) {
+                @DefaultLanguageCode String defaultLanguageCode,
+                @DefaultProjection Integer defaultProjection) {
         this.df = OWLManager.getOWLDataFactory();
+        this.typeConverter = typeConverter;
         this.ReasonerPrefix = reasonerPrefix;
         this.multiLangEnabled = multiLangEnabled;
         this.defaultLanguageCode = defaultLanguageCode;
+        this.defaultProjection = defaultProjection;
     }
 
     @Override
@@ -223,7 +234,7 @@ public class ClassParser implements IClassParser {
                                 isMultiLangEnabled(),
                                 getDefaultLanguageCode())
                                 .orElse(df.getOWLLiteral(fieldValue.toString(),
-                                        TypeConverter.getDatatypeFromAnnotation(annotation, classField.getType())));
+                                        this.typeConverter.getDatatypeFromAnnotation(annotation, classField.getType())));
                         axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, owlLiteral));
                     }
                 } else if (classField.isAnnotationPresent(Spatial.class) && !filterSpatial) {
@@ -255,7 +266,7 @@ public class ClassParser implements IClassParser {
                                 isMultiLangEnabled(),
                                 getDefaultLanguageCode())
                                 .orElse(df.getOWLLiteral(fieldValue.toString(),
-                                        TypeConverter.getDatatypeFromJavaClass(classField.getType())));
+                                        this.typeConverter.getDatatypeFromJavaClass(classField.getType())));
 
                         axioms.add(df.getOWLDataPropertyAssertionAxiom(owlDataProperty, owlNamedIndividual, owlLiteral));
                     }
@@ -278,7 +289,7 @@ public class ClassParser implements IClassParser {
                                 classMethod,
                                 isMultiLangEnabled(),
                                 getDefaultLanguageCode())
-                                .orElse(df.getOWLLiteral(methodValue.get().toString(), TypeConverter.getDatatypeFromAnnotation(annotation, classMethod.getReturnType())));
+                                .orElse(df.getOWLLiteral(methodValue.get().toString(), this.typeConverter.getDatatypeFromAnnotation(annotation, classMethod.getReturnType())));
 
                         axioms.add(df.getOWLDataPropertyAssertionAxiom(
                                 owlDataProperty,
@@ -305,7 +316,7 @@ public class ClassParser implements IClassParser {
                                 classMethod,
                                 isMultiLangEnabled(),
                                 getDefaultLanguageCode())
-                                .orElse(df.getOWLLiteral(methodValue.get().toString(), TypeConverter.getDatatypeFromJavaClass(classMethod.getReturnType())));
+                                .orElse(df.getOWLLiteral(methodValue.get().toString(), this.typeConverter.getDatatypeFromJavaClass(classMethod.getReturnType())));
                         axioms.add(df.getOWLDataPropertyAssertionAxiom(
                                 owlDataProperty,
                                 owlNamedIndividual,

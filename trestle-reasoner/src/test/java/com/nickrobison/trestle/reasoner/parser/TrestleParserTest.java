@@ -8,6 +8,7 @@ import com.nickrobison.trestle.reasoner.annotations.Spatial;
 import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.parser.clojure.ClojureProvider;
+import com.nickrobison.trestle.reasoner.parser.clojure.ClojureTypeConverterProvider;
 import com.nickrobison.trestle.types.TemporalType;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
@@ -49,6 +50,7 @@ public class TrestleParserTest {
     private IClassParser cp;
     private IClassBuilder cb;
     private IClassRegister cr;
+    private ITypeConverter typeConverter;
 
     @BeforeEach
     public void Setup() {
@@ -62,7 +64,8 @@ public class TrestleParserTest {
         LocalDate ld = LocalDate.of(1989, 3, 26);
         temporal = TemporalObjectBuilder.exists().from(dt).to(dt.plusYears(1)).build(); //.withRelations();
         temporalPoint = TemporalObjectBuilder.exists().at(ld).build(); // .withRelations();
-        final Object clojureParser = ClojureProvider.buildClojureParser(TRESTLE_PREFIX, true, "");
+        this.typeConverter = ClojureTypeConverterProvider.buildClojureTypeConverter(df);
+        final Object clojureParser = ClojureProvider.buildClojureParser(TRESTLE_PREFIX, true, "", 4326, typeConverter);
         cb = (IClassBuilder) clojureParser;
         cp = (IClassParser) clojureParser;
         cr = (IClassRegister) clojureParser;
@@ -173,7 +176,7 @@ public class TrestleParserTest {
 //        Check spatial member access
         final Optional<OWLDataPropertyAssertionAxiom> spatialFact = cp.getSpatialFact(testMethod);
         assertAll(() -> assertTrue(spatialFact.isPresent(), "Should have spatial fact"),
-                () -> assertEquals("new_test", spatialFact.get().getObject().getLiteral(), "Spatial should match"));
+                () -> assertEquals("<http://www.opengis.net/def/crs/OGC/1.3/CRS84> new_test", spatialFact.get().getObject().getLiteral(), "Spatial should match"));
 
 
 //        Test the temporal
@@ -219,7 +222,7 @@ public class TrestleParserTest {
         assertTrue(asWKT.isPresent());
         assertEquals(OWL2Datatype.XSD_INT, adm0_code.get().getObject().getDatatype().getBuiltInDatatype(), "Should have integer datatype");
         assertEquals(testMethod.getAdm0_code1(), adm0_code.get().getObject().parseInteger(), "Invalid ADM0_Code");
-        assertEquals(testMethod.test_name, asWKT.get().getObject().getLiteral(), "Invalid Spatial");
+        assertEquals("<http://www.opengis.net/def/crs/OGC/1.3/CRS84> " + testMethod.test_name, asWKT.get().getObject().getLiteral(), "Invalid Spatial");
     }
 
     @Test
@@ -312,9 +315,9 @@ public class TrestleParserTest {
 
 //        Properties
         testProperties.forEach(property -> {
-            final Class<?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, TestClasses.GAULMethodTest.class);
+            final Class<?> javaClass = this.typeConverter.lookupJavaClassFromOWLDatatype(property, cp.getFactDatatype(TestClasses.GAULMethodTest.class, property.getProperty().asOWLDataProperty().toStringID()).get());
             inputClasses.add(javaClass);
-            final Object literalValue = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
+            final Object literalValue = this.typeConverter.extractOWLLiteral(javaClass, property.getObject());
 //            final Object literalValue = javaClass.cast(property.getObject().getLiteral());
             inputObjects.add(literalValue);
             constructorArguments.addArgument(

@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.reasoner;
 
-import com.esri.core.geometry.SpatialReference;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.nickrobison.metrician.Metrician;
@@ -33,7 +32,6 @@ import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.reasoner.parser.TypeConstructor;
-import com.nickrobison.trestle.reasoner.parser.TypeConverter;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TrestleIndividual;
@@ -51,7 +49,9 @@ import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -187,12 +187,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             throw new IllegalArgumentException("invalid ontology name", e);
         }
 
-//        Register type constructors from the service loader
-        final ServiceLoader<TypeConstructor> constructors = ServiceLoader.load(TypeConstructor.class);
-        for (final TypeConstructor constructor : constructors) {
-            this.registerTypeConstructor(constructor);
-        }
-
         ontology = injector.getInstance(ITrestleOntology.class);
         logger.debug("Ontology connected");
         if (builder.initialize) {
@@ -218,6 +212,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         this.individualEngine = injector.getInstance(IndividualEngine.class);
         this.spatialEngine = injector.getInstance(SpatialEngine.class);
         this.temporalEngine = injector.getInstance(TemporalEngine.class);
+
+//        Register type constructors from the service loader
+        final ServiceLoader<TypeConstructor> constructors = ServiceLoader.load(TypeConstructor.class);
+        for (final TypeConstructor constructor : constructors) {
+            this.registerTypeConstructor(constructor);
+        }
 
 //            validate the classes
         builder.inputClasses.forEach(clazz -> {
@@ -275,7 +275,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public <C extends TypeConstructor> void registerTypeConstructor(TrestleReasonerImpl this, C typeConstructor) {
-        TypeConverter.registerTypeConstructor(typeConstructor);
+        this.trestleParser.typeConverter.registerTypeConstructor(typeConstructor);
     }
 
     //    When you get the ontology, the ownership passes away, so then the reasoner can't perform any more queries.
@@ -493,28 +493,28 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
-        return this.spatialEngine.calculateSpatialUnion(inputObjects, inputSR, matchThreshold);
+    public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, int inputSRID, double matchThreshold) {
+        return this.spatialEngine.calculateSpatialUnion(inputObjects, inputSRID, matchThreshold);
     }
 
     @Override
-    public <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR) {
-        return this.spatialEngine.calculateUnionContribution(result, inputSR);
+    public <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, int inputSRID) {
+        return this.spatialEngine.calculateUnionContribution(result, inputSRID);
     }
 
     @Override
-    public <T extends @NonNull Object> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold) {
-        return this.spatialEngine.isApproximatelyEqual(inputObject, matchObject, inputSR, threshold);
+    public <A extends @NonNull Object, B extends @NonNull Object> boolean isApproximatelyEqual(A inputObject, B matchObject, double threshold) {
+        return this.spatialEngine.isApproximatelyEqual(inputObject, matchObject, threshold);
     }
 
     @Override
-    public <T extends @NonNull Object> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR) {
-        return this.spatialEngine.calculateSpatialEquals(inputObject, matchObject, inputSR);
+    public <A extends @NonNull Object, B extends @NonNull Object> double calculateSpatialEquals(A inputObject, B matchObject) {
+        return this.spatialEngine.calculateSpatialEquals(inputObject, matchObject);
     }
 
     @Override
-    public <T> ContainmentDirection getApproximateContainment(T objectA, T objectB, SpatialReference inputSR, double threshold) {
-        return this.spatialEngine.getApproximateContainment(objectA, objectB, inputSR, threshold);
+    public <A extends @NonNull Object, B extends @NonNull Object> ContainmentDirection getApproximateContainment(A objectA, B objectB, double threshold) {
+        return this.spatialEngine.getApproximateContainment(objectA, objectB, threshold);
     }
 
     //    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
@@ -635,8 +635,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 
     @Override
-    public Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold) {
-        return this.spatialEngine.calculateSpatialUnionWithContribution(datasetClassID, individualIRIs, inputSR, matchThreshold);
+    public Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSRID, double matchThreshold) {
+        return this.spatialEngine.calculateSpatialUnionWithContribution(datasetClassID, individualIRIs, inputSRID, matchThreshold);
     }
 
     @Override
@@ -645,8 +645,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <T> SpatialComparisonReport compareTrestleObjects(T objectA, T objectB, SpatialReference inputSR, double matchThreshold) {
-        return this.spatialEngine.compareTrestleObjects(objectA, objectB, inputSR, matchThreshold);
+    public <A, B> SpatialComparisonReport compareTrestleObjects(A objectA, B objectB, double matchThreshold) {
+        return this.spatialEngine.compareTrestleObjects(objectA, objectB, matchThreshold);
     }
 
     @Override

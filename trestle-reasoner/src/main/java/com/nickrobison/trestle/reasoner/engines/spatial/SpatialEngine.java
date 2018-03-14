@@ -9,7 +9,6 @@ import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
-import com.nickrobison.trestle.reasoner.TrestleReasonerImpl;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.engines.IndividualEngine;
 import com.nickrobison.trestle.reasoner.engines.object.ObjectEngineUtils;
@@ -313,10 +312,12 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 
     @Override
     @Timed
-    public <T extends Object> SpatialComparisonReport compareTrestleObjects(T objectA, T objectB, SpatialReference inputSR, double matchThreshold) {
+    public <A extends @NonNull Object, B extends @NonNull Object> SpatialComparisonReport compareTrestleObjects(A objectA, B objectB, double matchThreshold) {
 
         final OWLNamedIndividual objectAID = this.tp.classParser.getIndividual(objectA);
+        final Integer aSRID = this.tp.classParser.getClassProjection(objectA.getClass());
         final OWLNamedIndividual objectBID = this.tp.classParser.getIndividual(objectB);
+        final Integer bSRID = this.tp.classParser.getClassProjection(objectB.getClass());
         logger.debug("Beginning comparison of {} with {}",
                 objectAID,
                 objectBID);
@@ -324,26 +325,28 @@ public class SpatialEngine implements ITrestleSpatialEngine {
         final SpatialComparisonReport spatialComparisonReport = new SpatialComparisonReport(objectAID, objectBID);
 
         //        Build the geometries
-        final int srid = inputSR.getID();
-//        final Geometry aPolygon = this.geometryCache.get(objectA.hashCode(), key -> computeGeometry(objectA, srid));
-        final Geometry aPolygon = this.getGeomFromCache(objectA, srid);
-//        final Geometry bPolygon = this.geometryCache.get(objectB.hashCode(), key -> computeGeometry(objectB, srid));
-        final Geometry bPolygon = this.getGeomFromCache(objectB, srid);
+        final Geometry aPolygon = SpatialEngineUtils.getGeomFromCache(objectA, aSRID, this.geometryCache);
+        final Geometry bPolygon = SpatialEngineUtils.getGeomFromCache(objectB, bSRID, this.geometryCache);
+
+//        Reproject to coordinate system of Geometry A
+        logger.debug("Reprojecting {} from {} to {}", objectBID, bSRID, aSRID);
+        final Geometry transformedB = SpatialEngineUtils.reprojectGeometry(bPolygon, bSRID, aSRID, this.geometryCache, objectB.hashCode());
+
 
         //        If they're disjoint, return
-        if (aPolygon.disjoint(bPolygon)) {
+        if (aPolygon.disjoint(transformedB)) {
             return spatialComparisonReport;
         }
 
 //        Are they equal?
-        final double equality = this.equalityEngine.calculateSpatialEquals(objectA, objectB, inputSR);
+        final double equality = this.equalityEngine.calculateSpatialEquals(objectA, objectB);
         if (equality >= matchThreshold) {
             logger.debug("Found {} equality between {} and {}", equality, objectA, objectB);
             spatialComparisonReport.addApproximateEquality(equality);
         }
 
 //        Meets
-        if (aPolygon.touches(bPolygon)) {
+        if (aPolygon.touches(transformedB)) {
             logger.debug("{} touches {}", objectA, objectB);
             spatialComparisonReport.addRelation(ObjectRelation.SPATIAL_MEETS);
 //            Contains means totally inside, without any touching of the perimeter
@@ -355,14 +358,14 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 //                            .orElseThrow(() -> new IllegalStateException("Can't parse Polygon")),
 //                    calculateOverlapPercentage(aPolygon, bPolygon));
 //            //            Covers catches all contains relationships that also allow for touching the perimeter
-        } else if (aPolygon.covers(bPolygon)) {
+        } else if (aPolygon.covers(transformedB)) {
             logger.debug("{} covers {}", objectA, objectB);
             spatialComparisonReport.addRelation(ObjectRelation.COVERS);
 //            Also add an overlap, since the overlap is total
             spatialComparisonReport.addSpatialOverlap(SpatialParser.parseWKTFromGeom(bPolygon)
                             .orElseThrow(() -> new IllegalStateException("Can't parse Polygon")),
                     calculateOverlapPercentage(aPolygon, bPolygon));
-        } else if (aPolygon.intersects(bPolygon)) { // Overlaps
+        } else if (aPolygon.intersects(transformedB)) { // Overlaps
             logger.debug("Found overlap between {} and {}", objectA, objectB);
             final Geometry intersection = aPolygon.intersection(bPolygon);
             spatialComparisonReport.addSpatialOverlap(SpatialParser.parseWKTFromGeom(intersection)
@@ -378,43 +381,23 @@ public class SpatialEngine implements ITrestleSpatialEngine {
     }
 
     /**
-     * Get the object {@link Geometry} from the cache, computing if absent
-     *
-     * @param object - {@link Object inputObject}
-     * @param srid   - {@link Integer} srid
-     * @return - {@link Geometry}
-     */
-    private Geometry getGeomFromCache(Object object, int srid) {
-        final int hashCode = object.hashCode();
-        final Geometry value = this.geometryCache.get(hashCode);
-
-        if (value == null) {
-            final Geometry geometry = computeGeometry(object, srid);
-            this.geometryCache.put(hashCode, geometry);
-            return geometry;
-        }
-        return value;
-    }
-
-    /**
      * EQUALITY
      */
 
     @Override
     @Timed
-    public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
-        return this.equalityEngine.calculateSpatialUnion(inputObjects, inputSR, matchThreshold);
+    public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, int inputSRID, double matchThreshold) {
+        return this.equalityEngine.calculateSpatialUnion(inputObjects, inputSRID, matchThreshold);
     }
 
     @Override
-    public <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR) {
-        return this.equalityEngine.calculateUnionContribution(result, inputSR);
+    public <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, int inputSRID) {
+        return this.equalityEngine.calculateUnionContribution(result, inputSRID);
     }
 
     @Override
-    public Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold) {
+    public Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSRID, double matchThreshold) {
 
-        final SpatialReference spatialReference = SpatialReference.create(inputSR);
         final OffsetDateTime atTemporal = OffsetDateTime.now();
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
@@ -440,14 +423,14 @@ public class SpatialEngine implements ITrestleSpatialEngine {
                         }))
                 .collect(Collectors.toList());
         final CompletableFuture<Optional<UnionEqualityResult<Object>>> unionFuture = LambdaUtils.sequenceCompletableFutures(individualFutures)
-                .thenApply(individuals -> this.calculateSpatialUnion(individuals, spatialReference, matchThreshold));
+                .thenApply(individuals -> this.calculateSpatialUnion(individuals, inputSRID, matchThreshold));
 
         try {
             final Optional<UnionEqualityResult<Object>> objectUnionEqualityResult = unionFuture.get();
 //            Close the transaction before doing some intense computations
             this.ontology.returnAndCommitTransaction(trestleTransaction);
             if (objectUnionEqualityResult.isPresent()) {
-                return Optional.of(this.calculateUnionContribution(objectUnionEqualityResult.get(), spatialReference));
+                return Optional.of(this.calculateUnionContribution(objectUnionEqualityResult.get(), inputSRID));
             } else {
                 return Optional.empty();
             }
@@ -490,7 +473,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
                 .thenCombineAsync(sequencedFutures,
                         (objectA, comparisonObjects) -> comparisonObjects
                                 .stream()
-                                .map(objectB -> this.compareTrestleObjects(objectA, objectB, spatialReference, matchThreshold))
+                                .map(objectB -> this.compareTrestleObjects(objectA, objectB, matchThreshold))
                                 .collect(Collectors.toList()), this.spatialPool);
 
         try {
@@ -506,17 +489,16 @@ public class SpatialEngine implements ITrestleSpatialEngine {
     }
 
 
-
     @Override
     @Timed
-    public <T extends @NonNull Object> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold) {
-        return this.equalityEngine.isApproximatelyEqual(inputObject, matchObject, inputSR, threshold);
+    public <A extends @NonNull Object, B extends @NonNull Object> boolean isApproximatelyEqual(A inputObject, B matchObject, double threshold) {
+        return this.equalityEngine.isApproximatelyEqual(inputObject, matchObject, threshold);
     }
 
     @Override
     @Timed
-    public <T extends @NonNull Object> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR) {
-        return this.equalityEngine.calculateSpatialEquals(inputObject, matchObject, inputSR);
+    public <A extends @NonNull Object, B extends @NonNull Object> double calculateSpatialEquals(A inputObject, B matchObject) {
+        return this.equalityEngine.calculateSpatialEquals(inputObject, matchObject);
     }
 
     @Override
@@ -537,15 +519,15 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 
     @Override
     @Timed
-    public <T extends @NonNull Object> ContainmentDirection getApproximateContainment(T objectA, T objectB, SpatialReference inputSR, double threshold) {
-        return this.containmentEngine.getApproximateContainment(objectA, objectB, inputSR, threshold);
+    public <A extends @NonNull Object, B extends @NonNull Object> ContainmentDirection getApproximateContainment(A objectA, B objectB, double threshold) {
+        return this.containmentEngine.getApproximateContainment(objectA, objectB, threshold);
     }
     /**
      * HELPER FUNCTIONS
      */
 
     /**
-     * Get an individual using an adjusted {@link Temporal} gathered from {@link TrestleReasonerImpl#getAdjustedQueryTemporal(String, OffsetDateTime, TrestleTransaction)}
+     * Get an individual using an adjusted {@link Temporal} gathered from {@link ObjectEngineUtils#getAdjustedQueryTemporal(String, OffsetDateTime, TrestleTransaction)}
      *
      * @param datasetID   - {@link String} datasetID
      * @param id          - {@link String} individual ID
@@ -576,17 +558,4 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 //    public long getSize() {
 //        return this.geometryCache.get
 //    }
-
-    /**
-     * Compute {@link Geometry} for the given {@link Object}
-     *
-     * @param object  - {@link Object} to get Geometry from
-     * @param inputSR - {@link Integer} input spatial reference
-     * @return - {@link Geometry}
-     */
-    @Metered(name = "geometry-calculation-meter")
-    public static Geometry computeGeometry(Object object, int inputSR) {
-        logger.debug("Cache miss for {}, computing", object);
-        return SpatialUtils.buildObjectGeometry(object, inputSR);
-    }
 }

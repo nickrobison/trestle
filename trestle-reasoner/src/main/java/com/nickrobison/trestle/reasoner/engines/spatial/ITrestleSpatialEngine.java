@@ -114,11 +114,11 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      *
      * @param datasetClassID - {@link String} {@link OWLClass} string reference
      * @param individualIRIs - {@link List} of Individual IRIs
-     * @param inputSR        - EPSG code to determine union projection
+     * @param inputSRID        - EPSG code to determine union projection
      * @param matchThreshold - {@link Double} cutoff to determine minimum match percentage
      * @return - {@link Optional} {@link UnionEqualityResult}
      */
-    Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold);
+    Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSRID, double matchThreshold);
 
     /**
      * Perform spatial comparison between two input objects
@@ -126,12 +126,12 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      *
      * @param objectA        - {@link Object} to compare against
      * @param objectB        - {@link Object} to compare with
-     * @param inputSR        - {@link SpatialReference} input spatial reference
      * @param matchThreshold - {@link Double} cutoff for all fuzzy matches
-     * @param <T>            - Type parameter
-     * @return - {@link SpatialComparisonReport}
+     * @param <A> - {@link A} type of object A
+     * @param <B> - {@link B} type of object B
+     @return - {@link SpatialComparisonReport}
      */
-    <T extends Object> SpatialComparisonReport compareTrestleObjects(T objectA, T objectB, SpatialReference inputSR, double matchThreshold);
+    <A extends @NonNull Object, B extends @NonNull Object> SpatialComparisonReport compareTrestleObjects(A objectA, B objectB, double matchThreshold);
 
     /**
      * Perform spatial comparison between two input objects
