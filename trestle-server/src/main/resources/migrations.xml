@@ -35,7 +35,7 @@
                 <constraints primaryKey="true" primaryKeyName="pk_UI_ERRORS"/>
             </column>
             <column name="timestamp" type="TIMESTAMP"/>
-            <column name="message" type="VARCHAR(250)"/>
+            <column name="message" type="TEXT"/>
             <column name="location" type="VARCHAR(50)"/>
         </createTable>
         <createTable tableName="STACK_FRAMES">
