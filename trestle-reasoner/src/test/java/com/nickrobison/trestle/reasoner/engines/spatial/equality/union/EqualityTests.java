@@ -3,8 +3,8 @@ package com.nickrobison.trestle.reasoner.engines.spatial.equality.union;
 import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
-import com.esri.core.geometry.SpatialReference;
 import com.google.common.collect.ImmutableList;
+import com.nickrobison.trestle.SharedTestUtils;
 import com.nickrobison.trestle.reasoner.AbstractReasonerTest;
 import com.nickrobison.trestle.reasoner.TestClasses;
 import com.nickrobison.trestle.reasoner.annotations.DatasetClass;
@@ -13,7 +13,6 @@ import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
 import com.nickrobison.trestle.types.events.TrestleEventType;
-import com.vividsolutions.jts.io.ParseException;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -202,10 +201,10 @@ public class EqualityTests extends AbstractReasonerTest {
 
     @Test
     @SuppressWarnings({"dereference.of.nullable", "argument.type.incompatible"})
-    public void unionTest() throws IOException, ParseException {
+    public void unionTest() throws IOException {
         final TestClasses.ESRIPolygonTest originalObject;
-//        Read in the individuals
         List<TestClasses.ESRIPolygonTest> splitObjects = new ArrayList<>();
+//        Read in the individuals
         final InputStream originalStream = EqualityTestClass.class.getClassLoader().getResourceAsStream("98103.csv");
         final BufferedReader originalReader = new BufferedReader(new InputStreamReader(originalStream, StandardCharsets.UTF_8));
         try {
@@ -218,18 +217,12 @@ public class EqualityTests extends AbstractReasonerTest {
         }
 
 //        Read in the dissolved ones
-        final InputStream splitIS = EqualityTestClass.class.getClassLoader().getResourceAsStream("98103_split.csv");
-        final BufferedReader splitReader = new BufferedReader(new InputStreamReader(splitIS, StandardCharsets.UTF_8));
-        try {
-            String line;
-            while ((line = splitReader.readLine()) != null) {
-                final String[] splitLine = line.split(";");
-                splitObjects.add(new TestClasses.ESRIPolygonTest(Integer.parseInt(splitLine[0]), (Polygon) GeometryEngine.geometryFromWkt(splitLine[1], 0, Geometry.Type.Polygon), LocalDate.of(2000, 1, 1)));
-            }
-        } finally {
-            splitReader.close();
-            splitIS.close();
-        }
+        final SharedTestUtils.ITestClassConstructor<TestClasses.ESRIPolygonTest, String> esriConstructor = (line -> {
+            final String[] splitLine = line.split(";");
+            return new TestClasses.ESRIPolygonTest(Integer.parseInt(splitLine[0]), (Polygon) GeometryEngine.geometryFromWkt(splitLine[1], 0, Geometry.Type.Polygon), LocalDate.of(2000, 1, 1));
+        });
+
+        splitObjects.addAll(SharedTestUtils.readFromCSV("98103_split.csv", esriConstructor));
         assertEquals(6, splitObjects.size(), "Should have 6 split objects");
 
 //        Calculate equality
@@ -240,8 +233,8 @@ public class EqualityTests extends AbstractReasonerTest {
                 () -> assertTrue(equalityResult.get().getStrength() > 0.99, "Should be perfectly equal"));
 
 //        Try for a union
-        List<TestClasses.ESRIPolygonTest> nsUnionObjects = new ArrayList<>();
         final TestClasses.ESRIPolygonTest northSeattle;
+        List<TestClasses.ESRIPolygonTest> nsUnionObjects = new ArrayList<>();
         final InputStream northSeattleIS = EqualityTestClass.class.getClassLoader().getResourceAsStream("northseattle.csv");
         final BufferedReader northSeattleReader = new BufferedReader(new InputStreamReader(northSeattleIS, StandardCharsets.UTF_8));
         try {
@@ -253,18 +246,12 @@ public class EqualityTests extends AbstractReasonerTest {
             northSeattleIS.close();
         }
 
-        final InputStream nsSplitIS = EqualityTestClass.class.getClassLoader().getResourceAsStream("northseattle_split.csv");
-        final BufferedReader nsSplitReader = new BufferedReader(new InputStreamReader(nsSplitIS, StandardCharsets.UTF_8));
-        try {
-            String line;
-            while ((line = nsSplitReader.readLine()) != null) {
-                final String[] splitLine = line.split(";");
-                nsUnionObjects.add(new TestClasses.ESRIPolygonTest(Integer.parseInt(splitLine[0]), (Polygon) GeometryEngine.geometryFromWkt(splitLine[1], 0, Geometry.Type.Polygon), LocalDate.of(2001, 1, 1)));
-            }
-        } finally {
-            nsSplitReader.close();
-            nsSplitIS.close();
-        }
+        final SharedTestUtils.ITestClassConstructor<TestClasses.ESRIPolygonTest, String> esriSplitConstructor = (line -> {
+            final String[] splitLine = line.split(";");
+            return new TestClasses.ESRIPolygonTest(Integer.parseInt(splitLine[0]), (Polygon) GeometryEngine.geometryFromWkt(splitLine[1], 0, Geometry.Type.Polygon), LocalDate.of(2001, 1, 1));
+        });
+
+        nsUnionObjects.addAll(SharedTestUtils.readFromCSV("northseattle_split.csv", esriSplitConstructor));
 
         assertEquals(6, nsUnionObjects.size(), "Should have 6 objects");
 
@@ -275,19 +262,13 @@ public class EqualityTests extends AbstractReasonerTest {
                 () -> assertTrue(unionResult.get().getStrength() > 0.99, "Should be really equal"));
 
 //        Try for a split
-        List<TestClasses.ESRIPolygonTest> fakeSplitObjects = new ArrayList<>();
-        final InputStream fakeSplitIS = EqualityTestClass.class.getClassLoader().getResourceAsStream("northseattle_fakesplit.csv");
-        final BufferedReader fakeSplitBR = new BufferedReader(new InputStreamReader(fakeSplitIS, StandardCharsets.UTF_8));
-        try {
-            String line;
-            while ((line = fakeSplitBR.readLine()) != null) {
-                final String[] split = line.split(";");
-                fakeSplitObjects.add(new TestClasses.ESRIPolygonTest(Integer.parseInt(split[0]), (Polygon) GeometryEngine.geometryFromWkt(split[1], 0, Geometry.Type.Polygon), LocalDate.of(2003, 1, 1)));
-            }
-        } finally {
-            fakeSplitBR.close();
-            fakeSplitIS.close();
-        }
+
+        final SharedTestUtils.ITestClassConstructor<TestClasses.ESRIPolygonTest, String> fakeSplitConstructor = (line -> {
+            final String[] split = line.split(";");
+            return new TestClasses.ESRIPolygonTest(Integer.parseInt(split[0]), (Polygon) GeometryEngine.geometryFromWkt(split[1], 0, Geometry.Type.Polygon), LocalDate.of(2003, 1, 1));
+        });
+        List<TestClasses.ESRIPolygonTest> fakeSplitObjects = SharedTestUtils.readFromCSV("northseattle_fakesplit.csv", fakeSplitConstructor);
+
         fakeSplitObjects.add(northSeattle);
 
         final Optional<UnionEqualityResult<TestClasses.ESRIPolygonTest>> nsSplitResult = this.reasoner.getEqualityEngine().calculateSpatialUnion(fakeSplitObjects, INPUT_SR, 0.9);

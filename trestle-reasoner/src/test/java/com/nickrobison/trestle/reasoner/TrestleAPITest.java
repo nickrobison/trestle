@@ -3,7 +3,7 @@ package com.nickrobison.trestle.reasoner;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
 import com.google.common.collect.ImmutableList;
-import com.nickrobison.trestle.SharedUtils;
+import com.nickrobison.trestle.SharedTestUtils;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.TrestleIndividual;
@@ -186,7 +186,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
 
 
 //        Write the objects
-        SharedUtils.readGAULObjects().parallelStream().forEach(gaul -> {
+        SharedTestUtils.readGAULObjects().parallelStream().forEach(gaul -> {
             try {
                 reasoner.writeTrestleObject(gaul);
             } catch (TrestleClassException e) {

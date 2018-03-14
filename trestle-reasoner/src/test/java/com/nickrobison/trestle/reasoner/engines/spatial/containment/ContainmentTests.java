@@ -4,6 +4,7 @@ import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
 import com.google.common.collect.ImmutableList;
+import com.nickrobison.trestle.SharedTestUtils;
 import com.nickrobison.trestle.reasoner.AbstractReasonerTest;
 import com.nickrobison.trestle.reasoner.TestClasses;
 import com.nickrobison.trestle.reasoner.annotations.DatasetClass;
@@ -11,7 +12,6 @@ import com.nickrobison.trestle.reasoner.annotations.IndividualIdentifier;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.EqualityTests;
-import com.vividsolutions.jts.io.ParseException;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -33,9 +33,8 @@ public class ContainmentTests extends AbstractReasonerTest {
 
     @Test
     @SuppressWarnings({"dereference.of.nullable", "argument.type.incompatible"})
-    public void containmentDirectionTest() throws IOException, ParseException {
+    public void containmentDirectionTest() throws IOException {
         final TestClasses.ESRIPolygonTest originalObject;
-        List<TestClasses.ESRIPolygonTest> splitObjects = new ArrayList<>();
 
         // Read in the individual
         final InputStream originalStream = EqualityTests.EqualityTestClass.class.getClassLoader().getResourceAsStream("98103.csv");
@@ -50,18 +49,12 @@ public class ContainmentTests extends AbstractReasonerTest {
         }
 
         // Read in the dissolved ones
-        final InputStream splitIS = EqualityTests.EqualityTestClass.class.getClassLoader().getResourceAsStream("98103_split.csv");
-        final BufferedReader splitReader = new BufferedReader(new InputStreamReader(splitIS, StandardCharsets.UTF_8));
-        try {
-            String line;
-            while ((line = splitReader.readLine()) != null) {
-                final String[] splitLine = line.split(";");
-                splitObjects.add(new TestClasses.ESRIPolygonTest(Integer.parseInt(splitLine[0]), (Polygon) GeometryEngine.geometryFromWkt(splitLine[1], 0, Geometry.Type.Polygon), LocalDate.of(2000, 1, 1)));
-            }
-        } finally {
-            splitReader.close();
-            splitIS.close();
-        }
+        final SharedTestUtils.ITestClassConstructor<TestClasses.ESRIPolygonTest, String> esriConstructor = (line -> {
+            final String[] splitLine = line.split(";");
+            return new TestClasses.ESRIPolygonTest(Integer.parseInt(splitLine[0]), (Polygon) GeometryEngine.geometryFromWkt(splitLine[1], 0, Geometry.Type.Polygon), LocalDate.of(2000, 1, 1));
+        });
+
+        List<TestClasses.ESRIPolygonTest> splitObjects = new ArrayList<>(SharedTestUtils.readFromCSV("98103_split.csv", esriConstructor));
         assertEquals(5, splitObjects.size(), "Should have 5 split objects");
 
         // test containment between original object and first split object

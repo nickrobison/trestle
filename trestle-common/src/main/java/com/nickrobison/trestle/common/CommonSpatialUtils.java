@@ -16,6 +16,7 @@ public class CommonSpatialUtils {
 
     /**
      * Parses a Spatial WKT value and extracts the WKT value and drops the CRS URI
+     * If the regex doesn't match against anything, it returns the literal as is
      *
      * @param literal - {@link String} literal to parse
      * @return - {@link String} WKT representation
@@ -28,7 +29,8 @@ public class CommonSpatialUtils {
                 return wktGroup;
             }
         }
-        throw new TrestleInvalidDataException("Cannot parse projected WKT value", literal);
+//        If we don't match on anything, assume that the literal is correct
+        return literal;
     }
 
     /**
@@ -45,6 +47,6 @@ public class CommonSpatialUtils {
                 return Integer.valueOf(wktGroup);
             }
         }
-        throw new TrestleInvalidDataException("Cannot parse projected WKT value", literal);
+        throw new TrestleInvalidDataException("Cannot get WKT projection", literal);
     }
 }

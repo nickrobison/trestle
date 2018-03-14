@@ -70,13 +70,12 @@ public class GeoJsonExporter implements ITrestleExporter {
             final ObjectNode featureNode = this.mapper.createObjectNode();
             featureNode.put(GeoJsonConstants.NAME_TYPE, GeoJsonConstants.NAME_FEATURE);
             final String individualGeom = individual.getGeom();
-//            final int srid = CommonSpatialUtils.getProjectionFromLiteral(individualGeom);
-//            final String wkt = CommonSpatialUtils.getWKTFromLiteral(individualGeom);
+            final String wkt = CommonSpatialUtils.getWKTFromLiteral(individualGeom);
             try {
 
                 final Geometry geometry = this.readerMap
                         .computeIfAbsent(this.srid, Utils::createProjectedReader)
-                        .read(individualGeom);
+                        .read(wkt);
                 final String coordinateString = geoWriter.write(geometry);
                 final JsonNode coordinateNode = mapper.readTree(coordinateString);
                 featureNode.set("geometry", coordinateNode);

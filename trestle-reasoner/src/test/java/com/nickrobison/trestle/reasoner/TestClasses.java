@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.reasoner;
 
 import com.esri.core.geometry.Polygon;
+import com.nickrobison.trestle.SharedTestUtils;
 import com.nickrobison.trestle.reasoner.annotations.*;
 import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
@@ -561,12 +562,8 @@ public class TestClasses {
         }
     }
 
-    public interface ICensusTract {
-        String getName();
-    }
-
     @DatasetClass(name = "census")
-    public static class CensusProjectionTestClass implements ICensusTract {
+    public static class CensusProjectionTestClass implements SharedTestUtils.ICensusTract {
         private static final long serialVersionUID = 42L;
 
         private final LocalDate startTemporal;
@@ -620,7 +617,7 @@ public class TestClasses {
     }
 
     @DatasetClass(name = "king-county")
-    public static class KCProjectionTestClass implements ICensusTract {
+    public static class KCProjectionTestClass implements SharedTestUtils.ICensusTract {
         private static final long serialVersionUID = 42L;
 
         private final LocalDate startTemporal;
