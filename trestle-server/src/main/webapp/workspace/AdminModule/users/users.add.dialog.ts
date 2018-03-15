@@ -48,8 +48,8 @@ export class UserAddDialog implements OnInit {
         // Merge the user object (which might be null) with a blank default
         const mergedUser = {
             ...{
-                firstname: "",
-                lastname: "",
+                firstName: "",
+                lastName: "",
                 username: "",
                 password: "",
                 email: "",
@@ -60,8 +60,8 @@ export class UserAddDialog implements OnInit {
         console.debug("Merged user:", mergedUser);
         //    Create the form
         this.registerForm = this.formBuilder.group({
-            firstname: mergedUser.firstName,
-            lastname: mergedUser.lastName,
+            firstName: mergedUser.firstName,
+            lastName: mergedUser.lastName,
             username: [mergedUser.username, undefined, this.validateUser],
             password: [mergedUser.password, this.validatePasswordLength],
             email: [mergedUser.email, Validators.email]
@@ -94,17 +94,20 @@ export class UserAddDialog implements OnInit {
      */
     public save() {
         if (this.registerForm.valid) {
-
-            console.log("user:", this.user);
-            this.userService.modifyUser(this.user).subscribe((data: Response) => {
+            // Construct a new user object
+            const mergedUser = {
+                ...this.user,
+                ...this.registerForm.value
+            };
+            this.userService.modifyUser(mergedUser).subscribe((data: Response) => {
                 console.debug("Response to add:", data);
                 const responseID = parseInt(data.text(), 10);
                 if (!this.isUpdate()) {
-                    this.user.id = responseID;
+                    mergedUser.id = responseID;
                 }
                 this.dialogRef.close({
                     type: UserDialogResponseType.ADD,
-                    user: this.user
+                    user: mergedUser
                 });
             }, (err: Error) => console.error(err));
         }
