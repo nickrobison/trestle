@@ -69,7 +69,17 @@ public class UserResource {
     }
 
     @GET
-    @Path(("/{id}"))
+    @Path("/exists/{username}")
+    @UnitOfWork
+    @ApiOperation(value = "Endpoint to determine if a user with the specified username already exists",
+    notes = "This method only returns a true/false value as to whether or not the user exists, it does not return the user object",
+    response = Boolean.class)
+    public Response userExists(@AuthRequired({Privilege.ADMIN}) User user, @PathParam("username") String username) {
+        return Response.ok(userDAO.findByUsername(username).isPresent()).build();
+    }
+
+    @GET
+    @Path("/{id}")
     @UnitOfWork
     @Valid
     @Produces(MediaType.APPLICATION_JSON)
@@ -88,7 +98,7 @@ public class UserResource {
     }
 
     @DELETE
-    @Path(("/{id}"))
+    @Path("/{id}")
     @UnitOfWork
     @ApiOperation(value = "Delete user from the database",
             notes = "Deletes the specified user from the database")
