@@ -2,10 +2,10 @@
  * Created by nrobison on 1/19/17.
  */
 import { Component, OnInit, ViewContainerRef } from "@angular/core";
-import { IUserDialogResponse, UserAddDialog, UserDialogResponseType } from "./users.add.dialog";
 import { AuthService, ITrestleUser, Privileges } from "../../UserModule/authentication.service";
 import { UserService } from "../../UserModule/users.service";
 import { MatDialog, MatDialogConfig, MatDialogRef } from "@angular/material";
+import { IUserDialogResponse, UserDialogComponent, UserDialogResponseType } from "./users.dialog.component";
 
 @Component({
     selector: "admin-users",
@@ -66,7 +66,7 @@ export class UsersComponent implements OnInit {
     public openUserModal(user: ITrestleUser | null) {
         const config = new MatDialogConfig();
         config.viewContainerRef = this.viewContainerRef;
-        this.dialogRef = this.dialog.open(UserAddDialog, config);
+        this.dialogRef = this.dialog.open(UserDialogComponent, config);
         // Clone the user so that we don't modify properties in the original table
         this.dialogRef.componentInstance.user = {...user};
         this.dialogRef.afterClosed().subscribe((result: IUserDialogResponse) => {

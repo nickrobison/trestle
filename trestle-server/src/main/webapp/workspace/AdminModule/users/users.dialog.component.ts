@@ -21,18 +21,18 @@ export interface IUserDialogResponse {
 
 @Component({
     selector: "user-add-dialog",
-    templateUrl: "./users.add.dialog.html",
-    styleUrls: ["./users.add.dialog.css"],
+    templateUrl: "./users.dialog.component.html",
+    styleUrls: ["./users.dialog.component.css"],
     providers: [UserService]
 })
-export class UserAddDialog implements OnInit {
+export class UserDialogComponent implements OnInit {
     public privileges: Map<string, number> = new Map();
     public user: ITrestleUser;
     public updateMode = true;
     public registerForm: FormGroup;
     public maxPasswordLength = 60;
 
-    constructor(public dialogRef: MatDialogRef<UserAddDialog>,
+    constructor(public dialogRef: MatDialogRef<UserDialogComponent>,
                 private userService: UserService,
                 private formBuilder: FormBuilder) {
 //    Try to list all the enum keys
