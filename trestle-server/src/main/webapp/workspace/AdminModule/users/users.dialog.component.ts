@@ -66,8 +66,7 @@ export class UserDialogComponent implements OnInit {
             password: [mergedUser.password, this.validatePasswordLength],
             email: [mergedUser.email, Validators.email]
         });
-
-        if (this.user === null) {
+        if (this.user.id === undefined) {
             this.updateMode = false;
             console.debug("Passed null user, creating blank instance");
             this.user = {
@@ -186,7 +185,6 @@ export class UserDialogComponent implements OnInit {
     }
 
     public getUsernameErrorMessage(): string {
-        console.debug("Error:", this.registerForm.controls["username"]);
         if (this.registerForm.controls["username"].hasError("required")) {
             return "Value is required";
         }
@@ -198,15 +196,19 @@ export class UserDialogComponent implements OnInit {
 
     public validateUser = (c: AbstractControl): Observable<ValidationErrors | null> => {
         if (this.isUpdate() || c.value === null || c.value === "") {
+            console.debug("Returning");
             return Observable.of(null);
         }
-        return this.userService.userExists(c.value)
-            .map((exists) => {
-                return exists ? ({
-                    userExists: {
-                        value: c.value
-                    }
-                } as ValidationErrors) : null;
+        return Observable.timer(500)
+            .switchMap(() => {
+                return this.userService.userExists(c.value)
+                    .map((exists) => {
+                        return exists ? ({
+                            userExists: {
+                                value: c.value
+                            }
+                        } as ValidationErrors) : null;
+                    });
             });
     };
 
@@ -225,6 +227,6 @@ export class UserDialogComponent implements OnInit {
             maxLength: {
                 value: true
             }
-        }
+        };
     }
 }
