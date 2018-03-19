@@ -63,7 +63,7 @@ public class TrestleRemoteActor extends AbstractActor {
                     } else {
                         datasetClass = tsIntersect.getClazz();
                     }
-                    objects = reasoner.spatialIntersect(datasetClass, tsIntersect.getWkt(), tsIntersect.getBuffer(), tsIntersect.getTemporal());
+                    objects = reasoner.spatialIntersect(datasetClass, tsIntersect.getWkt(), tsIntersect.getBuffer(), tsIntersect.getTemporal(), null);
                     sender().tell(objects, self());
                 })
                 .match(SpatialIntersect.class, intersect -> {

@@ -215,26 +215,26 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 
     @Override
     public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer) {
-        return spatialIntersectObject(inputObject, buffer, SI.METER, null);
+        return spatialIntersectObject(inputObject, buffer, SI.METER, null, null);
     }
 
     @Override
     public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit) {
-        return spatialIntersectObject(inputObject, buffer, bufferUnit, null);
+        return spatialIntersectObject(inputObject, buffer, bufferUnit, null, null);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt) {
-        return spatialIntersectObject(inputObject, buffer, SI.METER, temporalAt);
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt, @Nullable Temporal dbAt) {
+        return spatialIntersectObject(inputObject, buffer, SI.METER, temporalAt, null);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, @Nullable Temporal temporalAt) {
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, @Nullable Temporal temporalAt, @Nullable Temporal dbAt) {
         final OWLNamedIndividual owlNamedIndividual = this.tp.classParser.getIndividual(inputObject);
         final Optional<String> wktString = SpatialParser.getSpatialValueAsString(inputObject);
 
         if (wktString.isPresent()) {
-            return spatialIntersect((Class<T>) inputObject.getClass(), wktString.get(), buffer, bufferUnit, temporalAt);
+            return spatialIntersect((Class<T>) inputObject.getClass(), wktString.get(), buffer, bufferUnit, temporalAt, null);
         }
 
         logger.info("{} doesn't have a spatial component", owlNamedIndividual);
@@ -243,25 +243,25 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 
     @Override
     public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer) {
-        return spatialIntersect(clazz, wkt, buffer, SI.METER, null);
+        return spatialIntersect(clazz, wkt, buffer, SI.METER, null, null);
     }
 
 
     @Override
     public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit) {
-        return spatialIntersect(clazz, wkt, buffer, bufferUnit, null);
+        return spatialIntersect(clazz, wkt, buffer, bufferUnit, null, null);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt) {
-        return spatialIntersect(clazz, wkt, buffer, SI.METER, validAt);
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
+        return spatialIntersect(clazz, wkt, buffer, SI.METER, validAt, null);
     }
 
     @Override
     @Timed(name = "spatial-intersect-timer")
     @Metered(name = "spatial-intersect-meter")
     @SuppressWarnings({"override.return.invalid"})
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal validAt) {
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
         final OWLClass owlClass = this.tp.classParser.getObjectClass(clazz);
 
         final OffsetDateTime atTemporal;
@@ -275,21 +275,25 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 
         final String wktBuffer = SpatialEngineUtils.addWKTBuffer(wkt, buffer, bufferUnit);
 
-//            TODO(nrobison): Implement DB intersection
-        dbTemporal = OffsetDateTime.now();
 
-        String spatialIntersection;
+        if (dbAt == null) {
+            dbTemporal = OffsetDateTime.now();
+        } else {
+            dbTemporal = parseTemporalToOntologyDateTime(validAt, ZoneOffset.UTC);
+        }
+
+//        String spatialIntersection;
         logger.debug("Running spatial intersection at time {}", atTemporal);
-        spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wktBuffer, buffer, QueryBuilder.Units.METER, atTemporal, dbTemporal);
+        final String spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wktBuffer, buffer, QueryBuilder.Units.METER, atTemporal, dbTemporal);
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
-            final String finalSpatialIntersection = spatialIntersection;
+//            final String finalSpatialIntersection = spatialIntersection;
             final CompletableFuture<List<T>> objectsFuture = CompletableFuture.supplyAsync(() -> {
                 logger.debug("Executing async spatial query");
                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                 logger.debug("Transaction opened");
                 try {
-                    return this.ontology.executeSPARQLResults(finalSpatialIntersection);
+                    return this.ontology.executeSPARQLResults(spatialIntersection);
                 } finally {
                     this.ontology.returnAndCommitTransaction(tt);
                 }
@@ -565,14 +569,4 @@ public class SpatialEngine implements ITrestleSpatialEngine {
             }
         });
     }
-
-//    /**
-//     * Get the current size of the geometry geometryCache
-//     *
-//     * @return - {@link Integer}
-//     */
-//    @Gauge(name = "geometry-geometryCache-size")
-//    public long getSize() {
-//        return this.geometryCache.get
-//    }
 }

@@ -84,11 +84,11 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * If no valid temporal is specified, performs a spatial intersection with no temporal constraints
      * This method will return the individual represented by the input WKT, so it may need to be filtered out
      *
-     * @param clazz      - {@link Class} of dataset {@link OWLClass}
-     * @param wkt        - {@link String} WKT boundary
-     * @param buffer     - {@link Double} buffer to extend around buffer. 0 is no buffer (defaults to {@link javax.measure.unit.SI#METER}
-     * @param validAt    - {@link Temporal} valid at restriction
-     * @param dbAt       - {@link Temporal} database at restriction
+     * @param clazz   - {@link Class} of dataset {@link OWLClass}
+     * @param wkt     - {@link String} WKT boundary
+     * @param buffer  - {@link Double} buffer to extend around buffer. 0 is no buffer (defaults to {@link javax.measure.unit.SI#METER}
+     * @param validAt - {@link Temporal} valid at restriction
+     * @param dbAt    - {@link Temporal} database at restriction
      * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
      */
     Optional<List<TrestleIndividual>> spatialIntersectIndividuals(Class<@NonNull ?> clazz, String wkt, double buffer, @Nullable Temporal validAt, @Nullable Temporal dbAt);
@@ -140,9 +140,10 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @param inputObject - Object to intersect
      * @param buffer      - Additional buffer to build around object. 0 is no buffer (defaults to {@link javax.measure.unit.SI#METER}
      * @param temporalAt  - Temporal of intersecting time point
+     * @param dbAt        - Optional {@link Temporal} to specify database time
      * @return - {@link Optional} {@link List} of {@link T}
      */
-    <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt);
+    <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt, @Nullable Temporal dbAt);
 
     /**
      * Spatial Intersect Object with records in the database valid at that given time
@@ -153,9 +154,10 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @param buffer      - Additional buffer to build around object. 0 is no buffer (defaults to {@link javax.measure.unit.SI#METER}
      * @param bufferUnit  - {@link Unit} of {@link Length} buffer units
      * @param temporalAt  - Temporal of intersecting time point
+     * @param dbAt        - Optional {@link Temporal} to specify database time
      * @return - {@link Optional} {@link List} of {@link T}
      */
-    <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, @Nullable Temporal temporalAt);
+    <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, @Nullable Temporal temporalAt, @Nullable Temporal dbAt);
 
     /**
      * * Spatial Intersect Object with most recent records in the database
@@ -186,14 +188,15 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * * Spatial Intersect Object with most recent records in the database
      * An empty Optional means an error, an Optional of an empty List means no intersected objects
      *
-     * @param <T>        - {@link T} generic type parameter
-     * @param clazz      -  Input {@link Class} of type {@link T}
-     * @param wkt        - WKT {@link String} to intersect objects with
-     * @param buffer     - {@link Double} of buffer around WKT string
-     * @param validAt    - Optional {@link Temporal} to specify intersection time
+     * @param <T>     - {@link T} generic type parameter
+     * @param clazz   -  Input {@link Class} of type {@link T}
+     * @param wkt     - WKT {@link String} to intersect objects with
+     * @param buffer  - {@link Double} of buffer around WKT string
+     * @param validAt - Optional {@link Temporal} to specify intersection time
+     * @param dbAt    - Optional {@link Temporal} to specify database time
      * @return - {@link Optional} {@link List} of intersected objects of type {@link T}
      */
-    <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt);
+    <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt, @Nullable Temporal dbAt);
 
     /**
      * * Spatial Intersect Object with most recent records in the database
@@ -205,9 +208,10 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @param buffer     - {@link Double} of buffer around WKT string
      * @param bufferUnit - {@link Unit} of {@link Length} buffer units
      * @param validAt    - Optional {@link Temporal} to specify intersection time
+     * @param dbAt       - Optional {@link Temporal} to specify database time
      * @return - {@link Optional} {@link List} of intersected objects of type {@link T}
      */
-    <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal validAt);
+    <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal validAt, @Nullable Temporal dbAt);
 
     /**
      * Calculate {@link UnionEqualityResult} for the given {@link List} of individual IRIs

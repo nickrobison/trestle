@@ -480,8 +480,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt) {
-        return this.spatialEngine.spatialIntersectObject(inputObject, buffer, temporalAt);
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt, Temporal dbAt) {
+        return this.spatialEngine.spatialIntersectObject(inputObject, buffer, temporalAt, null);
     }
 
     @Override
@@ -490,8 +490,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, Temporal temporalAt) {
-        return this.spatialEngine.spatialIntersectObject(inputObject, buffer, bufferUnit, temporalAt);
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, Temporal temporalAt, Temporal dbAt) {
+        return this.spatialEngine.spatialIntersectObject(inputObject, buffer, bufferUnit, temporalAt, null);
     }
 
     @Override
@@ -505,13 +505,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit, Temporal validAt) {
-        return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, bufferUnit, validAt);
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit, Temporal validAt, Temporal dbAt) {
+        return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, bufferUnit, validAt, null);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt) {
-        return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, validAt);
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt, Temporal dbAt) {
+        return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, validAt, null);
     }
 
     @Override
