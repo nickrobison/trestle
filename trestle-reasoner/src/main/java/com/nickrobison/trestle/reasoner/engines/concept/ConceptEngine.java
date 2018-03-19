@@ -32,6 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.measure.quantity.Length;
+import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
@@ -49,6 +52,7 @@ import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
 import static com.nickrobison.trestle.common.LambdaUtils.sequenceCompletableFutures;
 import static com.nickrobison.trestle.common.StaticIRI.*;
 import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
+import static javax.measure.unit.SI.METER;
 
 /**
  * Created by nickrobison on 2/19/18.
@@ -132,6 +136,11 @@ public class ConceptEngine implements ITrestleConceptEngine {
 
     @Override
     public Optional<Set<String>> STIntersectConcept(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt) {
+        return STIntersectConcept(wkt, buffer, SI.METER, strength, validAt, dbAt);
+    }
+
+    @Override
+    public Optional<Set<String>> STIntersectConcept(String wkt, double buffer, Unit<Length> bufferUnit, double strength, Temporal validAt, @Nullable Temporal dbAt) {
         final String queryString;
         final OffsetDateTime atTemporal;
         final OffsetDateTime dbTemporal;
@@ -147,7 +156,7 @@ public class ConceptEngine implements ITrestleConceptEngine {
         }
 
 //        Apply buffer
-        final String wktBuffer = SpatialEngineUtils.addWKTBuffer(wkt, buffer);
+        final String wktBuffer = SpatialEngineUtils.addWKTBuffer(wkt, buffer, bufferUnit);
 
         try {
             queryString = qb.buildTemporalSpatialConceptIntersection(wktBuffer, buffer, strength, atTemporal, dbTemporal);

@@ -49,6 +49,8 @@ import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.measure.quantity.Length;
+import javax.measure.unit.Unit;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -483,8 +485,28 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit) {
+        return this.spatialEngine.spatialIntersectObject(inputObject, buffer, bufferUnit);
+    }
+
+    @Override
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, Temporal temporalAt) {
+        return this.spatialEngine.spatialIntersectObject(inputObject, buffer, bufferUnit, temporalAt);
+    }
+
+    @Override
     public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer) {
         return this.spatialEngine.spatialIntersect(clazz, wkt, buffer);
+    }
+
+    @Override
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit) {
+        return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, bufferUnit);
+    }
+
+    @Override
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit, Temporal validAt) {
+        return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, bufferUnit, validAt);
     }
 
     @Override
@@ -537,6 +559,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public Optional<Set<String>> STIntersectConcept(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt) {
         return this.conceptEngine.STIntersectConcept(wkt, buffer, strength, validAt, dbAt);
+    }
+
+    @Override
+    public Optional<Set<String>> STIntersectConcept(String wkt, double buffer, Unit<Length> bufferUnit, double strength, Temporal validAt, @Nullable Temporal dbAt) {
+        return this.conceptEngine.STIntersectConcept(wkt, buffer, bufferUnit, strength, validAt, dbAt);
     }
 
     @Override
@@ -750,8 +777,23 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
+    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, Unit<Length> bufferUnit) {
+        return this.spatialEngine.spatialIntersectIndividuals(datasetClassID, wkt, buffer, bufferUnit);
+    }
+
+    @Override
+    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal) {
+        return this.spatialEngine.spatialIntersectIndividuals(datasetClassID, wkt, buffer, bufferUnit, atTemporal, dbTemporal);
+    }
+
+    @Override
     public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(Class<?> clazz, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal) {
         return this.spatialEngine.spatialIntersectIndividuals(clazz, wkt, buffer, atTemporal, dbTemporal);
+    }
+
+    @Override
+    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(Class<@NonNull ?> clazz, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
+        return this.spatialEngine.spatialIntersectIndividuals(clazz, wkt, buffer, bufferUnit, validAt, dbAt);
     }
 
     @Override
