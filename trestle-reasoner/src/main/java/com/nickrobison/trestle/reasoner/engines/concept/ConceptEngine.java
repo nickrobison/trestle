@@ -13,6 +13,7 @@ import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
 import com.nickrobison.trestle.reasoner.engines.object.ObjectEngineUtils;
+import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngineUtils;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.parser.IClassParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
@@ -145,8 +146,11 @@ public class ConceptEngine implements ITrestleConceptEngine {
             dbTemporal = parseTemporalToOntologyDateTime(dbAt, ZoneOffset.UTC);
         }
 
+//        Apply buffer
+        final String wktBuffer = SpatialEngineUtils.addWKTBuffer(wkt, buffer);
+
         try {
-            queryString = qb.buildTemporalSpatialConceptIntersection(wkt, buffer, strength, atTemporal, dbTemporal);
+            queryString = qb.buildTemporalSpatialConceptIntersection(wktBuffer, buffer, strength, atTemporal, dbTemporal);
         } catch (UnsupportedFeatureException e) {
             logger.error("Database does not support spatial queries");
             return Optional.empty();

@@ -11,6 +11,7 @@ import com.vividsolutions.jts.geom.PrecisionModel;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKBReader;
 import com.vividsolutions.jts.io.WKTReader;
+import com.vividsolutions.jts.io.WKTWriter;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
@@ -134,6 +135,30 @@ public class SpatialEngineUtils {
             return geometry;
         }
         return value;
+    }
+
+    /**
+     * Add Buffer to WKT value
+     * If Buffer amount is 0, the original WKT is returned
+     * Buffer amount MUST be in meters
+     *
+     * @param wkt - {@link String} WKT string
+     * @param buffer - {@link Double} buffer amount, in meters
+     * @return - {@link String} WKT with buffer
+     */
+    public static String addWKTBuffer(String wkt, double buffer) {
+        if (buffer > 0.0) {
+            logger.debug("Adding {} buffer to WKT", buffer);
+            final WKTWriter writer = new WKTWriter();
+            final WKTReader reader = new WKTReader(new GeometryFactory(new PrecisionModel(), 4326));
+            try {
+                return writer.write(reader.read(wkt).buffer(buffer));
+            } catch (ParseException e) {
+                logger.error("Unable to parse wkt");
+                throw new TrestleInvalidDataException("Unable to parse WKT", wkt);
+            }
+        }
+        return wkt;
     }
 
     /**
