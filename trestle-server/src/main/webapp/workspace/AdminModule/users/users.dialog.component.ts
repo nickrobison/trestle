@@ -130,6 +130,13 @@ export class UserDialogComponent implements OnInit {
     }
 
     /**
+     * Dismiss modal, without saving any changes
+     */
+    public dismiss() {
+        this.dialogRef.close(null);
+    }
+
+    /**
      * Change permission level of the user to the given values
      * @param {Privileges} level
      */

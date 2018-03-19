@@ -60,4 +60,5 @@
     <button [disabled]="!registerForm.valid" mat-button type="submit" (click)="save()" *ngIf="isUpdate()">Update User
     </button>
     <button mat-button type="submit" (click)="delete()" *ngIf="isUpdate()" color="warn">Delete User</button>
+    <button mat-button type="cancel" (click)="dismiss()">Cancel</button>
 </mat-dialog-actions>
