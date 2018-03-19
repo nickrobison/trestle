@@ -18,20 +18,12 @@ export class UserDetailsModal {
     private lastNameInput: ElementFinder;
     private emailInput: ElementFinder;
 
-    private userPermission: ElementFinder;
-    private adminPermission: ElementFinder;
-    private dbaPermission: ElementFinder;
-
     public constructor() {
-        this.userNameInput = element(by.id("username"));
-        this.passwordInput = element(by.id("password"));
-        this.firstNameInput = element(by.id("first_name"));
-        this.lastNameInput = element(by.id("last_name"));
-        this.emailInput = element(by.id("email"));
-
-        this.userPermission = element(by.id("mat-button-toggle-0"));
-        this.adminPermission = element(by.id("mat-button-toggle-1"));
-        this.dbaPermission = element(by.id("mat-button-toggle-2"));
+        this.userNameInput = element(by.css("input[formcontrolname='username']"));
+        this.passwordInput = element(by.css("input[formcontrolname='password']"));
+        this.firstNameInput = element(by.css("input[formcontrolname='firstName']"));
+        this.lastNameInput = element(by.css("input[formcontrolname='lastName']"));
+        this.emailInput = element(by.css("input[formcontrolname='email']"));
     }
 
     /**
@@ -54,25 +46,22 @@ export class UserDetailsModal {
         //    Now the permissions, select everything lower
         switch (userType) {
             case "dba": {
-                await this.dbaPermission.click();
-                await this.adminPermission.click();
-                await this.userPermission.click();
+                await this.selectUserPermission("dba");
+                await this.selectUserPermission("admin");
+                await this.selectUserPermission("user");
                 break;
             }
             case "admin": {
-                await this.adminPermission.click();
-                await this.userPermission.click();
+                await this.selectUserPermission("admin");
+                await this.selectUserPermission("user");
                 break;
             }
             case "user": {
-                await this.userPermission.click();
+                await this.selectUserPermission("user");
                 break;
             }
         }
-
-        await element(by.buttonText("Add User")).click();
-        // Sleep for 500 ms to let the modal close
-        return browser.sleep(500);
+        return Promise.resolve(undefined);
     }
 
     /**
@@ -126,5 +115,29 @@ export class UserDetailsModal {
         // Wait for the modal to load
         await browser.sleep(500);
         return element(by.buttonText("Delete User")).click();
+    }
+
+    public async submit() {
+        await element(by.buttonText("Add User")).click();
+        // Sleep for 500 ms to let the modal close
+        return browser.sleep(500);
+    }
+
+    public async dismiss() {
+        await element(by.buttonText("Cancel")).click();
+        return browser.sleep(500);
+    }
+
+    /**
+     * Selects the mat-button-toggle that corresponds to the given permission.
+     * Automatically uppercases the input
+     *
+     * @param {string} permission
+     * @returns {Promise<any>}
+     */
+    private async selectUserPermission(permission: string) {
+        // We need to use contains, because the Text can have trailing whitespace
+        const xpathString = "//mat-button-toggle[./label/div[contains(text(), '" + permission.toUpperCase() + "')]]";
+        return element(by.xpath(xpathString)).click();
     }
 }

@@ -1,11 +1,12 @@
 import { browser, by, element } from "protractor";
 import { IUserTable, UserDetailsModal, UserType } from "./user.details.modal";
+import { Key } from "selenium-webdriver";
 
 export class UsersPage {
 
     private userModal = new UserDetailsModal();
 
-    public async createUser(userType: UserType, user: IUserTable) {
+    public async fillUserForm(userType: UserType, user: IUserTable) {
         //    Click the button
         await element(by.id("add-user")).click();
         return this.userModal.createUser(userType, user);
@@ -25,6 +26,20 @@ export class UsersPage {
     public async deleteUser(username: string) {
         await this.selectUserRow(username);
         return this.userModal.deleteUser();
+    }
+
+    public async submitModal() {
+        return this.userModal.submit();
+    }
+
+    public dismissModal() {
+        return this.userModal.dismiss();
+    }
+
+    public async getFieldMessage(field: string) {
+        const xpathString = "//form//mat-form-field[.//input[@formcontrolname='" + field + "']]//mat-error"
+        const matField = element(by.xpath(xpathString));
+        return matField.getText();
     }
 
     private async selectUserRow(username: string) {

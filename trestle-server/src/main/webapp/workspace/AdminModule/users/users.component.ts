@@ -85,7 +85,6 @@ export class UsersComponent implements OnInit {
                         }
                         break;
                     case UserDialogResponseType.DELETE:
-                        const index = this.users.indexOf(result.user);
                         if (userIdx > -1) {
                             console.debug("Splicing out user at location:", userIdx);
                             this.users.splice(userIdx, 1);
