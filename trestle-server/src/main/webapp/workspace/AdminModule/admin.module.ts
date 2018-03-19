@@ -8,7 +8,6 @@ import { AdminComponent } from "./admin.component";
 import { UsersComponent } from "./users/users.component";
 import { CommonModule } from "@angular/common";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
-import { UserAddDialog } from "./users/users.add.dialog";
 import { MetricsComponent } from "./metrics/metrics.component";
 import { MetricsService } from "./metrics/metrics.service";
 import { MetricsGraph } from "./metrics/metrics-graph.component";
@@ -22,12 +21,13 @@ import { TreeGraphComponent } from "./indicies/tree-graph/tree-graph.component";
 import { IndexService } from "./indicies/index.service";
 import { IndexTableComponent } from "./indicies/index-table/index-table.component";
 import { WarningDialogComponent } from "./indicies/warning-dialog/warning-dialog-component";
+import { UserDialogComponent } from "./users/users.dialog.component";
 
 @NgModule({
     declarations: [DashboardComponent,
         AdminComponent,
         UsersComponent,
-        UserAddDialog,
+        UserDialogComponent,
         MetricsComponent,
         MetricsGraph,
         IndexComponent,
@@ -45,7 +45,7 @@ import { WarningDialogComponent } from "./indicies/warning-dialog/warning-dialog
         SharedModule
     ],
     providers: [MetricsService, IndexService],
-    entryComponents: [UserAddDialog, WarningDialogComponent],
+    entryComponents: [UserDialogComponent, WarningDialogComponent],
     bootstrap: [AdminComponent]
 })
 

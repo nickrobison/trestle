@@ -13,9 +13,15 @@ export class UserSteps {
 
     private userPage = new UsersPage();
 
+    @then(/^I create and submit a new "([^"]*)" with the following properties:$/)
+    public async createAndSubmitUser(userType: UserType, userData: CucumberTable<IUserTable>) {
+        await this.userPage.fillUserForm(userType, userData.hashes()[0]);
+        return this.userPage.submitModal();
+    }
+
     @then(/^I create a new "([^"]*)" with the following properties:$/)
     public createUser(userType: UserType, userData: CucumberTable<IUserTable>) {
-        return this.userPage.createUser(userType, userData.hashes()[0]);
+        return this.userPage.fillUserForm(userType, userData.hashes()[0]);
     }
 
     @then(/^I edit user "([^"]*)" properties:$/)
@@ -30,7 +36,18 @@ export class UserSteps {
     }
 
     @when(/^I delete user "([^"]*)"$/)
-    public deleteUser(usename: string) {
-        return this.userPage.deleteUser(usename);
+    public deleteUser(username: string) {
+        return this.userPage.deleteUser(username);
+    }
+
+    @then(/^Form field "([^"]*)" should have error "([^"]*)"$/)
+    public formErrorMessage(field: string, message: string) {
+        return expect(this.userPage.getFieldMessage(field))
+            .to.become(message);
+    }
+
+    @then(/I dismiss the modal$/)
+    public async dismissModal() {
+        return this.userPage.dismissModal();
     }
 }
