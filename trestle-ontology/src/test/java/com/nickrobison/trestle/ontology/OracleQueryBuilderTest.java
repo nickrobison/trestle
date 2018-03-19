@@ -73,11 +73,11 @@ public class OracleQueryBuilderTest {
         final String wktString = "Point(39.5398864750001 -12.0671005249999)";
 
         assertAll(() -> {
-            final String generatedOracleTS = qb.buildTemporalSpatialIntersection(gaulClass, wktString, 0.0, QueryBuilder.Units.KM, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
+            final String generatedOracleTS = qb.buildTemporalSpatialIntersection(gaulClass, wktString, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
             assertEquals(oracleTSString, generatedOracleTS, "Oracle TS should be equal");
         },
                 () -> {
-                    final String generatedOracleTSConceptString = qb.buildTemporalSpatialConceptIntersection(wktString, 0.0, 0.0, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
+                    final String generatedOracleTSConceptString = qb.buildTemporalSpatialConceptIntersection(wktString, 0.0, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
                     assertEquals(tsOracleConceptString, generatedOracleTSConceptString, "TS Concept intersection be equal");
                 });
     }

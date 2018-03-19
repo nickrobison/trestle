@@ -52,7 +52,6 @@ import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
 import static com.nickrobison.trestle.common.LambdaUtils.sequenceCompletableFutures;
 import static com.nickrobison.trestle.common.StaticIRI.*;
 import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
-import static javax.measure.unit.SI.METER;
 
 /**
  * Created by nickrobison on 2/19/18.
@@ -159,7 +158,7 @@ public class ConceptEngine implements ITrestleConceptEngine {
         final String wktBuffer = SpatialEngineUtils.addWKTBuffer(wkt, buffer, bufferUnit);
 
         try {
-            queryString = qb.buildTemporalSpatialConceptIntersection(wktBuffer, buffer, strength, atTemporal, dbTemporal);
+            queryString = qb.buildTemporalSpatialConceptIntersection(wktBuffer, strength, atTemporal, dbTemporal);
         } catch (UnsupportedFeatureException e) {
             logger.error("Database does not support spatial queries");
             return Optional.empty();

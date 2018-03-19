@@ -206,12 +206,12 @@ public class QueryBuilderTest {
 
         assertAll(() -> {
                     //        Test st-intersection
-                    final String tsString = qb.buildTemporalSpatialIntersection(gaulClass, wktString, 0.0, QueryBuilder.Units.KM, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
+                    final String tsString = qb.buildTemporalSpatialIntersection(gaulClass, wktString, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
                     assertEquals(tsIntersectString, tsString, "TS should be equal");
                 },
                 () -> {
                     //        Test concept
-                    final String generatedTSConceptString = qb.buildTemporalSpatialConceptIntersection(wktString, 0.0, 0.0, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
+                    final String generatedTSConceptString = qb.buildTemporalSpatialConceptIntersection(wktString, 0.0, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
                     assertEquals(tsConceptString, generatedTSConceptString, "TS Concept intersection be equal");
                 });
     }

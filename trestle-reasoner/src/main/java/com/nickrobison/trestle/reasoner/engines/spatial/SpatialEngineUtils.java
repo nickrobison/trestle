@@ -153,10 +153,10 @@ public class SpatialEngineUtils {
      * @return - {@link String} WKT with buffer
      */
     public static String addWKTBuffer(String wkt, double buffer, Unit<Length> lengthUnit) {
-//        Convert from whatever it is, to Meters
-        final UnitConverter converterTo = lengthUnit.getConverterTo(METER);
-        final double meterBuffer = converterTo.convert(buffer);
         if (buffer > 0.0) {
+//            Convert from whatever it is, to Meters, which is the distance unit of the default WGS84 (4326) projection
+            final UnitConverter converterTo = lengthUnit.getConverterTo(METER);
+            final double meterBuffer = converterTo.convert(buffer);
             logger.debug("Adding {} buffer to WKT", buffer);
             final WKTWriter writer = new WKTWriter();
             final WKTReader reader = new WKTReader(new GeometryFactory(new PrecisionModel(), 4326));

@@ -155,9 +155,9 @@ public class SpatialEngine implements ITrestleSpatialEngine {
         final String intersectQuery;
 //        If the atTemporal is null, do a spatial intersection
         if (validAt == null) {
-            intersectQuery = this.qb.buildSpatialIntersection(owlClass, wktBuffer, buffer, QueryBuilder.Units.METER, dbTemporal);
+            intersectQuery = this.qb.buildSpatialIntersection(owlClass, wktBuffer, dbTemporal);
         } else {
-            intersectQuery = this.qb.buildTemporalSpatialIntersection(owlClass, wktBuffer, buffer, QueryBuilder.Units.METER, atTemporal, dbTemporal);
+            intersectQuery = this.qb.buildTemporalSpatialIntersection(owlClass, wktBuffer, atTemporal, dbTemporal);
         }
 
 //        Do the intersection on the main thread, to try and avoid other weirdness
@@ -284,7 +284,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 
 //        String spatialIntersection;
         logger.debug("Running spatial intersection at time {}", atTemporal);
-        final String spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wktBuffer, buffer, QueryBuilder.Units.METER, atTemporal, dbTemporal);
+        final String spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wktBuffer, atTemporal, dbTemporal);
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
 //            final String finalSpatialIntersection = spatialIntersection;
