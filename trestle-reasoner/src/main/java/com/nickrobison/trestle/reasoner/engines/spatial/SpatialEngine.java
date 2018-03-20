@@ -10,8 +10,8 @@ import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.engines.IndividualEngine;
+import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ObjectEngineUtils;
-import com.nickrobison.trestle.reasoner.engines.object.TrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
@@ -59,7 +59,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
     private final TrestleParser tp;
     private final QueryBuilder qb;
     private final ITrestleOntology ontology;
-    private final TrestleObjectReader objectReader;
+    private final ITrestleObjectReader objectReader;
     private final ObjectEngineUtils objectEngineUtils;
     private final IndividualEngine individualEngine;
     private final EqualityEngine equalityEngine;
@@ -72,7 +72,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
     public SpatialEngine(TrestleParser trestleParser,
                          QueryBuilder qb,
                          ITrestleOntology ontology,
-                         TrestleObjectReader objectReader,
+                         ITrestleObjectReader objectReader,
                          ObjectEngineUtils objectEngineUtils,
                          IndividualEngine individualEngine,
                          EqualityEngine equalityEngine,

@@ -206,7 +206,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 //      Engines on
         this.objectReader = injector.getInstance(ITrestleObjectReader.class);
-        this.objectWriter = injector.getInstance(TrestleObjectWriter.class);
+        this.objectWriter = injector.getInstance(ITrestleObjectWriter.class);
         this.conceptEngine = injector.getInstance(ITrestleConceptEngine.class);
         this.dataExporter = injector.getInstance(ITrestleDataExporter.class);
         this.mergeEngine = injector.getInstance(TrestleMergeEngine.class);
