@@ -12,6 +12,7 @@ import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
+import com.nickrobison.trestle.reasoner.debug.IDebugREPL;
 import com.nickrobison.trestle.reasoner.engines.IndividualEngine;
 import com.nickrobison.trestle.reasoner.engines.concept.ITrestleConceptEngine;
 import com.nickrobison.trestle.reasoner.engines.events.TrestleEventEngine;
@@ -108,6 +109,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final ExecutorService trestleThreadPool;
     private final TrestleExecutorService objectThreadPool;
     private final ExecutorService searchThreadPool;
+    private final IDebugREPL repl;
 
     @SuppressWarnings("dereference.of.nullable")
     TrestleReasonerImpl(TrestleBuilder builder) throws OWLOntologyCreationException {
@@ -172,6 +174,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         }
 
         final Injector injector = Guice.createInjector(new TrestleOntologyModule(ontologyBuilder, REASONER_PREFIX), new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled"), this.trestleConfig.getBoolean("events.enabled")));
+
+
+//        Start the debug repl
+        this.repl = injector.getInstance(IDebugREPL.class);
+        this.repl.start();
 
 //        Setup metrics engine
         metrician = injector.getInstance(Metrician.class);
@@ -273,6 +280,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         this.trestleCache.shutdown(delete);
         this.ontology.close(delete);
         this.metrician.shutdown();
+
+//        Shutdown REPL
+        logger.info("Stopping REPL");
+        this.repl.stop();
     }
 
     @Override

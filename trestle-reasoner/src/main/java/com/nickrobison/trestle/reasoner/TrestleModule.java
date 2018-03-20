@@ -3,6 +3,7 @@ package com.nickrobison.trestle.reasoner;
 import com.google.inject.AbstractModule;
 import com.nickrobison.metrician.MetricianModule;
 import com.nickrobison.trestle.reasoner.caching.TrestleCacheModule;
+import com.nickrobison.trestle.reasoner.debug.DebugModule;
 import com.nickrobison.trestle.reasoner.engines.EngineModule;
 import com.nickrobison.trestle.reasoner.parser.TrestleParserModule;
 import org.slf4j.Logger;
@@ -33,5 +34,6 @@ public class TrestleModule extends AbstractModule {
         install(new MetricianModule(metricsEnabled));
         install(new TrestleCacheModule(cachingEnabled));
         install(new EngineModule(mergeEnabled, eventEnabled));
+        install(new DebugModule());
     }
 }

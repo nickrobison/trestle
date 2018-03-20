@@ -14,6 +14,7 @@ import javax.inject.Provider;
  */
 public class ClojureTypeConverterProvider implements Provider<ITypeConverter> {
 
+    private static final String NAMESPACE = "com.nickrobison.trestle.reasoner.parser.types.converter";
     private final OWLDataFactory df;
 
     ClojureTypeConverterProvider() {
@@ -28,8 +29,8 @@ public class ClojureTypeConverterProvider implements Provider<ITypeConverter> {
     public static ITypeConverter buildClojureTypeConverter(OWLDataFactory df) {
         final IFn require = Clojure.var("clojure.core", "require");
 
-        require.invoke(Clojure.read("com.nickrobison.trestle.reasoner.parser.types.converter"));
-        final IFn newConverterFn = Clojure.var("com.nickrobison.trestle.reasoner.parser.types.converter", "make-type-converter");
+        require.invoke(Clojure.read(NAMESPACE));
+        final IFn newConverterFn = Clojure.var(NAMESPACE, "make-type-converter");
 
         return (ITypeConverter) newConverterFn.invoke(df, TypeUtils.buildDatatype2ClassMap(), TypeUtils.buildClassMap());
     }
