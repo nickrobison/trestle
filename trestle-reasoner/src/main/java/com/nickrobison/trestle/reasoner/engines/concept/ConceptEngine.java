@@ -13,6 +13,7 @@ import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
 import com.nickrobison.trestle.reasoner.engines.object.ObjectEngineUtils;
+import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngineUtils;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.parser.IClassParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
@@ -31,6 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.measure.quantity.Length;
+import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
@@ -131,6 +135,11 @@ public class ConceptEngine implements ITrestleConceptEngine {
 
     @Override
     public Optional<Set<String>> STIntersectConcept(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt) {
+        return STIntersectConcept(wkt, buffer, SI.METER, strength, validAt, dbAt);
+    }
+
+    @Override
+    public Optional<Set<String>> STIntersectConcept(String wkt, double buffer, Unit<Length> bufferUnit, double strength, Temporal validAt, @Nullable Temporal dbAt) {
         final String queryString;
         final OffsetDateTime atTemporal;
         final OffsetDateTime dbTemporal;
@@ -145,8 +154,11 @@ public class ConceptEngine implements ITrestleConceptEngine {
             dbTemporal = parseTemporalToOntologyDateTime(dbAt, ZoneOffset.UTC);
         }
 
+//        Apply buffer
+        final String wktBuffer = SpatialEngineUtils.addWKTBuffer(wkt, buffer, bufferUnit);
+
         try {
-            queryString = qb.buildTemporalSpatialConceptIntersection(wkt, buffer, strength, atTemporal, dbTemporal);
+            queryString = qb.buildTemporalSpatialConceptIntersection(wktBuffer, strength, atTemporal, dbTemporal);
         } catch (UnsupportedFeatureException e) {
             logger.error("Database does not support spatial queries");
             return Optional.empty();

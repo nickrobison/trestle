@@ -3,9 +3,6 @@ package com.nickrobison.trestle.server.resources;
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.reasoner.engines.AbstractComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
@@ -16,9 +13,7 @@ import com.nickrobison.trestle.server.auth.Privilege;
 import com.nickrobison.trestle.server.resources.requests.ComparisonRequest;
 import com.nickrobison.trestle.server.resources.requests.IntersectRequest;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
-import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
-import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.vividsolutions.jts.geom.Geometry;
 import io.dropwizard.jersey.params.NonEmptyStringParam;
 import io.swagger.annotations.Api;
@@ -37,7 +32,6 @@ import javax.ws.rs.core.Response;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -130,7 +124,7 @@ public class VisualizationResource {
         final Optional<? extends List<?>> intersectedObjects = this.reasoner.spatialIntersect(datasetClass,
                 read.buffer(request.getBuffer()).toString(),
                 request.getBuffer(),
-                request.getValidAt());
+                request.getValidAt(), null);
         return intersectedObjects.map(list -> Response.ok(list).build()).orElseGet(() -> Response
                 .status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity("Empty response from server, something went wrong")

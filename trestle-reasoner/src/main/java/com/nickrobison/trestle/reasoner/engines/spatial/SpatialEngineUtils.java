@@ -11,6 +11,7 @@ import com.vividsolutions.jts.geom.PrecisionModel;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKBReader;
 import com.vividsolutions.jts.io.WKTReader;
+import com.vividsolutions.jts.io.WKTWriter;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
@@ -22,8 +23,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.cache.Cache;
+import javax.measure.converter.UnitConverter;
+import javax.measure.quantity.Length;
+import javax.measure.unit.Unit;
 import java.nio.ByteBuffer;
 import java.util.Optional;
+
+import static javax.measure.unit.SI.METER;
 
 public class SpatialEngineUtils {
 
@@ -38,10 +44,10 @@ public class SpatialEngineUtils {
      * Re-project input {@link Geometry} into the given SRID
      * Adding to the provided {@link Cache}
      *
-     * @param inputObject    - {@link Object} to reproject
-     * @param inputSRID      - {@link Integer} SRID of input geometry
-     * @param outputSRID     - {@link Integer} SRID to project into
-     * @param geometryCache  - {@link Cache} cache to add value to
+     * @param inputObject   - {@link Object} to reproject
+     * @param inputSRID     - {@link Integer} SRID of input geometry
+     * @param outputSRID    - {@link Integer} SRID to project into
+     * @param geometryCache - {@link Cache} cache to add value to
      * @return - {@link Geometry} reprojected
      */
     public static Geometry reprojectObject(Object inputObject, int inputSRID, int outputSRID, Cache<Integer, Geometry> geometryCache) {
@@ -134,6 +140,34 @@ public class SpatialEngineUtils {
             return geometry;
         }
         return value;
+    }
+
+    /**
+     * Add Buffer to WKT value
+     * If Buffer amount is 0, the original WKT is returned
+     * Buffer amount is in the provided unit
+     *
+     * @param wkt        - {@link String} WKT string
+     * @param buffer     - {@link Double} buffer amount, in meters
+     * @param lengthUnit -{@link Unit} of {@link Length} units of buffer
+     * @return - {@link String} WKT with buffer
+     */
+    public static String addWKTBuffer(String wkt, double buffer, Unit<Length> lengthUnit) {
+        if (buffer > 0.0) {
+//            Convert from whatever it is, to Meters, which is the distance unit of the default WGS84 (4326) projection
+            final UnitConverter converterTo = lengthUnit.getConverterTo(METER);
+            final double meterBuffer = converterTo.convert(buffer);
+            logger.debug("Adding {} buffer to WKT", buffer);
+            final WKTWriter writer = new WKTWriter();
+            final WKTReader reader = new WKTReader(new GeometryFactory(new PrecisionModel(), 4326));
+            try {
+                return writer.write(reader.read(wkt).buffer(meterBuffer));
+            } catch (ParseException e) {
+                logger.error("Unable to parse wkt");
+                throw new TrestleInvalidDataException("Unable to parse WKT", wkt);
+            }
+        }
+        return wkt;
     }
 
     /**

@@ -382,12 +382,10 @@ public class QueryBuilder {
      *
      * @param datasetClass - {@link OWLClass} to restrict on
      * @param wktValue     - {@link String} representation of WKT value
-     * @param buffer       - {@link Double} buffer to build around WKT value
-     * @param unit         - {@link Units} used by subclasses to adjust buffer values
      * @param dbAt         - {@link OffsetDateTime} of database temporal
      * @return - {@link String} SPARQL query string
      */
-    public String buildSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, Units unit, OffsetDateTime dbAt) {
+    public String buildSpatialIntersection(OWLClass datasetClass, String wktValue, OffsetDateTime dbAt) {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m" +
                 " WHERE { " +
@@ -397,7 +395,7 @@ public class QueryBuilder {
                 "?f trestle:database_from ?df ." +
                 "OPTIONAL{?f trestle:database_to ?dt}");
         ps.setIri("type", getFullIRIString(datasetClass));
-        buildDatabaseSString(ps, wktValue, buffer, dbAt);
+        buildDatabaseSString(ps, wktValue, dbAt);
 
         final String stringValue = ps.toString();
         logger.trace(stringValue);
@@ -407,7 +405,7 @@ public class QueryBuilder {
     //    FIXME(nrobison): This needs to account for exists and valid times.
 //    We need the units parameter for one of the subclasses
     @SuppressWarnings({"squid:S1172"})
-    public String buildTemporalSpatialIntersection(OWLClass datasetClass, String wktValue, double buffer, Units unit, OffsetDateTime atTime, OffsetDateTime dbAtTime) {
+    public String buildTemporalSpatialIntersection(OWLClass datasetClass, String wktValue, OffsetDateTime atTime, OffsetDateTime dbAtTime) {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m" +
                 " WHERE { " +
@@ -420,7 +418,7 @@ public class QueryBuilder {
                 "OPTIONAL{?f trestle:valid_at ?va} ." +
                 "?f trestle:database_from ?df ." +
                 "OPTIONAL{?f trestle:database_to ?dt} .");
-        buildDatabaseTSString(ps, wktValue, buffer, atTime, dbAtTime);
+        buildDatabaseTSString(ps, wktValue, atTime, dbAtTime);
         ps.setIri("type", getFullIRIString(datasetClass));
 //        ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 //        ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
@@ -435,7 +433,6 @@ public class QueryBuilder {
      * If a validAt temporal is given, intersect at that point in time, otherwise, find anything that intersects, ever
      *
      * @param wktValue - WKT value
-     * @param buffer   - buffer value (in meters)
      * @param strength - Strength parameter to filter spurious results
      * @param atTime   - Temporal to select appropriate, valid fact
      * @param dbAtTime - Temporal to select currently valid version of the fact
@@ -443,7 +440,7 @@ public class QueryBuilder {
      * @throws UnsupportedFeatureException - Throws if we're running on a database that doesn't support all the features
      */
     // TODO(nrobison): Why does this throw? It'll never need to be caught
-    public String buildTemporalSpatialConceptIntersection(String wktValue, double buffer, double strength, @Nullable OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
+    public String buildTemporalSpatialConceptIntersection(String wktValue, double strength, @Nullable OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m" +
                 " WHERE { " +
@@ -463,9 +460,9 @@ public class QueryBuilder {
         ps.setLiteral("relationStrength", strength);
 
         if (atTime == null) {
-            this.buildDatabaseSString(ps, wktValue, buffer, dbAtTime);
+            this.buildDatabaseSString(ps, wktValue, dbAtTime);
         } else {
-            this.buildDatabaseTSString(ps, wktValue, buffer, atTime, dbAtTime);
+            this.buildDatabaseTSString(ps, wktValue, atTime, dbAtTime);
         }
 
         final String stringValue = ps.toString();
@@ -503,15 +500,12 @@ public class QueryBuilder {
 
     /**
      * Common method to build the spatio-temporal intersection component of the SPARQL query
-     *
-     * @param ps       - {@link ParameterizedSparqlString} to build on
+     *  @param ps       - {@link ParameterizedSparqlString} to build on
      * @param wktValue - {@link ParameterizedSparqlString} to build on
-     * @param buffer   - {@link Double} buffer (in meters) around the intersection
      * @param atTime   - {@link OffsetDateTime} to set intersection time to
      * @param dbAtTime - {@link OffsetDateTime} of database intersection time
      */
-    @SuppressWarnings({"squid:S1172"}) // We need the buffer param for the Oracle code
-    protected void buildDatabaseTSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime atTime, OffsetDateTime dbAtTime) {
+    protected void buildDatabaseTSString(ParameterizedSparqlString ps, String wktValue, OffsetDateTime atTime, OffsetDateTime dbAtTime) {
 //        Add DB intersection
         ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime)) .");
 //                We need to remove this, otherwise GraphDB substitutes geosparql for ogc
@@ -525,7 +519,6 @@ public class QueryBuilder {
                 "(?va = ?validAt^^xsd:dateTime))) .");
         ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }    ");
 
-//        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
         ps.setLiteral("wktString", wktValue);
         ps.setLiteral("validAt", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 //        ps.setLiteral("validEnd", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
@@ -534,14 +527,11 @@ public class QueryBuilder {
 
     /**
      * Common method for build the Spatial intersection component of the SPARQL query
-     *
-     * @param ps       - ParamaterizedSparqlString to build on
+     *  @param ps       - ParamaterizedSparqlString to build on
      * @param wktValue - ParamaterizedSparqlString to build on
-     * @param buffer   - double buffer (in meters) around the intersection
      * @param dbAt     - {@link OffsetDateTime} of database intersection
      */
-    @SuppressWarnings({"squid:S1172"}) // We need the buffer param for the Oracle code
-    protected void buildDatabaseSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime dbAt) {
+    protected void buildDatabaseSString(ParameterizedSparqlString ps, String wktValue, OffsetDateTime dbAt) {
         ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime)) .");
         ps.removeNsPrefix("geosparql");
         ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
@@ -801,10 +791,9 @@ public class QueryBuilder {
      *
      * @param wkt    - WKT string to simplify
      * @param factor - Initial starting simplification factor (If 0, reduce precision first)
-     * @param buffer - Buffer to add to WKT
      * @return - String of simplified WKT
      */
-    protected static String simplifyWkt(String wkt, double factor, double buffer) {
+    protected static String simplifyWkt(String wkt, double factor) {
 
         final Geometry geom;
         try {
@@ -819,11 +808,6 @@ public class QueryBuilder {
             throw new TrestleInvalidDataException("Invalid input geometry", geom);
         }
 
-//        If needed, add a buffer
-        if (buffer > 0.0) {
-            geom.buffer(buffer);
-        }
-
 
         if (wkt.length() < 3000) {
             return writer.write(geom);
@@ -834,13 +818,13 @@ public class QueryBuilder {
             logger.warn("String too long, reducing precision to {}", SCALE);
             return simplifyWkt(writer.write(GeometryPrecisionReducer.reduce(geom,
                     new PrecisionModel(SCALE))),
-                    factor + OFFSET,
-                    0);
+                    factor + OFFSET
+            );
         }
 
         logger.warn("String too long, simplifying with {}", factor);
 
         final Geometry simplified = TopologyPreservingSimplifier.simplify(geom, factor);
-        return simplifyWkt(writer.write(simplified), factor + OFFSET, 0);
+        return simplifyWkt(writer.write(simplified), factor + OFFSET);
     }
 }

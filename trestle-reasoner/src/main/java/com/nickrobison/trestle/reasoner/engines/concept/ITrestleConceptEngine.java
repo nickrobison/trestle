@@ -4,6 +4,8 @@ import com.nickrobison.trestle.types.relations.ConceptRelationType;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
 
+import javax.measure.quantity.Length;
+import javax.measure.unit.Unit;
 import java.time.temporal.Temporal;
 import java.util.List;
 import java.util.Map;
@@ -30,13 +32,27 @@ public interface ITrestleConceptEngine {
      * The temporal parameters allow for additional specificity on the spatio-temporal intersection
      *
      * @param wkt      - {@link String} of WKT to intersect with
-     * @param buffer   - {@link double} buffer to draw around WKT
+     * @param buffer   - {@link double} buffer to draw around WKT. 0 is no buffer (defaults to {@link javax.measure.unit.SI#METER}
      * @param strength - {@link double} strength parameter to filter weak associations
      * @param validAt  - {@link Temporal} of validAt time
      * @param dbAt     - Optional {@link Temporal} of dbAt time
      * @return - {@link Optional} {@link Set} of {@link String} Concept IDs
      */
     Optional<Set<String>> STIntersectConcept(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt);
+
+    /**
+     * Return a set of Trestle_Concepts that intersect with the given WKT
+     * The temporal parameters allow for additional specificity on the spatio-temporal intersection
+     *
+     * @param wkt        - {@link String} of WKT to intersect with
+     * @param buffer     - {@link double} buffer to draw around WKT
+     * @param bufferUnit - {@link Unit} of {@link Length} buffer units
+     * @param strength   - {@link double} strength parameter to filter weak associations
+     * @param validAt    - {@link Temporal} of validAt time
+     * @param dbAt       - Optional {@link Temporal} of dbAt time
+     * @return - {@link Optional} {@link Set} of {@link String} Concept IDs
+     */
+    Optional<Set<String>> STIntersectConcept(String wkt, double buffer, Unit<Length> bufferUnit, double strength, Temporal validAt, @Nullable Temporal dbAt);
 
     /**
      * Retrieve all members of a specified concept that match a given class

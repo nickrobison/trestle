@@ -14,7 +14,7 @@ public class OracleQueryBuilder extends QueryBuilder {
     }
 
     @Override
-    protected void buildDatabaseTSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime atTime, OffsetDateTime dbAtTime) {
+    protected void buildDatabaseTSString(ParameterizedSparqlString ps, String wktValue, OffsetDateTime atTime, OffsetDateTime dbAtTime) {
         ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime)) .");
 
         //                We need to remove this, otherwise Oracle substitutes geosparql for ogc
@@ -23,14 +23,14 @@ public class OracleQueryBuilder extends QueryBuilder {
         ps.setNsPrefix("ORACLE_SEM_HT_NS", "http://oracle.com/semtech#leading(?wkt)");
         ps.append("FILTER(((!bound(?tStart) || ?tStart <= ?startVariable^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > ?endVariable^^xsd:dateTime)) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
 
-        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
+        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00));
         ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         ps.setLiteral("dbAt", dbAtTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
     }
 
     @Override
-    protected void buildDatabaseSString(ParameterizedSparqlString ps, String wktValue, double buffer, OffsetDateTime dbAt) {
+    protected void buildDatabaseSString(ParameterizedSparqlString ps, String wktValue, OffsetDateTime dbAt) {
         ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime)) .");
 
         //                We need to remove this, otherwise Oracle substitutes geosparql for ogc
@@ -42,6 +42,6 @@ public class OracleQueryBuilder extends QueryBuilder {
         ps.setLiteral("dbAt", dbAt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
 //        We need to simplify the WKT to get under the 4000 character SQL limit.
-        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00, buffer));
+        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00));
     }
 }

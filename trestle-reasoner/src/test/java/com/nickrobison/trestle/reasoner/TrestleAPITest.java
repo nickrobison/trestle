@@ -15,7 +15,6 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.IRI;
@@ -181,7 +180,6 @@ public class TrestleAPITest extends AbstractReasonerTest {
     }
 
     @Test
-    @Disabled
     public void gaulLoader() throws IOException, TrestleClassException, MissingOntologyEntity {
 
 
@@ -221,13 +219,13 @@ public class TrestleAPITest extends AbstractReasonerTest {
         assertEquals(ancuabe, ancuabe2, "Should be equal");
 
 //        Check the spatial intersection
-        Optional<List<@NonNull Object>> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC));
+        Optional<List<@NonNull Object>> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
         assertTrue(intersectedObjects.isPresent(), "Should have objects");
         assertTrue(intersectedObjects.get().size() > 0, "Should have more than 1 object");
 
 //        Big intersection
         final String mozWKT = "POLYGON((30.21 -10.33, 41.05 -10.33, 41.05 -26.92, 30.21 -26.92, 30.21 -10.33))";
-        assertTimeoutPreemptively(Duration.ofSeconds(60), () -> reasoner.spatialIntersect(TestClasses.GAULTestClass.class, mozWKT, 100.0, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC)), "Should complete in less than 60 seconds");
+        assertTimeoutPreemptively(Duration.ofSeconds(60), () -> reasoner.spatialIntersect(TestClasses.GAULTestClass.class, mozWKT, 100.0, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null), "Should complete in less than 60 seconds");
 //        final Optional<List<TestClasses.@NonNull GAULTestClass>> mozClasses = reasoner.spatialIntersect(TestClasses.GAULTestClass.class, mozWKT, 100.0);
 //        assertAll(() -> assertTrue(intersectedObjects))
 //
