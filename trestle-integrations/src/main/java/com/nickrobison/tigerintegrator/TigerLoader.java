@@ -2,9 +2,9 @@ package com.nickrobison.tigerintegrator;
 
 import com.google.common.collect.ImmutableMap;
 import com.nickrobison.trestle.datasets.TigerCountyObject;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
-import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -12,11 +12,11 @@ import org.semanticweb.owlapi.model.IRI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.sql.*;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -63,16 +63,23 @@ public class TigerLoader {
             .put(9, "Pacific")
             .build();
 
-    private Config config = ConfigFactory.load("reference.conf");
-    private String connectStr = config.getString("trestle.graphdb.connection_string");
-    private String username = config.getString("trestle.graphdb.username");
-    private String password = config.getString("trestle.graphdb.password");
-    private String reponame = config.getString("trestle.graphdb.repo_name");
-    private String ontLocation = config.getString("trestle.ontology.location");
+    private Config config;
+    private String connectStr;
+    private String username;
+    private String password;
+    private String reponame;
+    private String ontLocation;
     private List<TigerCountyObject> tigerObjs;
 
     TigerLoader() throws SQLException
     {
+
+        config = ConfigFactory.load();
+        connectStr = config.getString("trestle.graphdb.connection_string");
+        username = config.getString("trestle.graphdb.username");
+        password = config.getString("trestle.graphdb.password");
+        reponame = config.getString("trestle.graphdb.repo_name");
+        ontLocation = config.getString("trestle.ontology.location");
         tigerObjs = buildObjects();
     }
 
@@ -88,9 +95,6 @@ public class TigerLoader {
                 .initialize()
                 .build();
 
-        // for testing
-        Temporal startTemporal = LocalDate.of(2017,1,1);
-
         for(int count=0; count<tigerObjs.size(); count++)
         {
             if(count%1000==0)
@@ -99,7 +103,8 @@ public class TigerLoader {
             TigerCountyObject tigerObj = tigerObjs.get(count);
             try {
                 final Instant start = Instant.now();
-                reasoner.writeTrestleObject(tigerObj,startTemporal,null);
+                reasoner.writeTrestleObject(tigerObj);
+//                reasoner.writeTrestleObject(tigerObj,startTemporal,null);
                 final Instant end = Instant.now();
                 logger.info("Writing object {} took {} ms", count, Duration.between(start, end).toMillis());
             } catch (TrestleClassException e) {
@@ -110,6 +115,8 @@ public class TigerLoader {
                 System.exit(-1);
             }
         }
+
+        reasoner.getMetricsEngine().exportData(new File("./tiger.csv"));
 
 
         reasoner.shutdown();
@@ -213,6 +220,7 @@ public class TigerLoader {
                 .withPrefix("http://nickrobison.com/demonstration/tigercounty#")
                 .withInputClasses(TigerCountyObject.class)
                 .withoutCaching()
+                .withoutMetrics()
                 .build();
 
         boolean allEquivalent = true;
