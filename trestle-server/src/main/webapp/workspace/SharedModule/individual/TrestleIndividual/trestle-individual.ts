@@ -5,7 +5,7 @@ import { ITrestleEvent, TrestleEvent } from "./trestle-event";
 import { GeometryObject } from "geojson";
 import { IInterfacable } from "../../interfacable";
 import { parse } from "wellknown";
-
+import SortedArray from "sorted-array";
 
 export interface ITrestleIndividual {
     individualID: string;
@@ -22,7 +22,7 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
     private static hostnameRegex = /\w+:\/\/[^\/]*/g;
     private id: string;
     private filteredID?: string;
-    private facts: Map<string, TrestleFact> = new Map();
+    private facts: SortedArray<TrestleFact>;
     private spatialFact?: TrestleFact;
     private relations: TrestleRelation[] = [];
     private events: TrestleEvent[] = [];
@@ -30,6 +30,7 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
 
     constructor(individual: ITrestleIndividual) {
         this.id = individual.individualID;
+        this.facts = new SortedArray<TrestleFact>([], TrestleIndividual.factSort);
         this.existsTemporal = new TrestleTemporal(individual.existsTemporal);
         individual.facts.forEach((fact) => {
             const factClass = new TrestleFact(fact);
@@ -37,7 +38,7 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
             if (factClass.isSpatial()) {
                 this.spatialFact = factClass;
             }
-            this.facts.set(factClass.getName(), factClass);
+            this.facts.insert(factClass);
         });
         individual.relations.forEach((relation) => {
             this.relations.push(new TrestleRelation(relation));
@@ -126,16 +127,11 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
     }
 
     /**
-     * Get an array of all facts for the individual
+     * Get an {Iterable} of {TrestleFact} of all facts for the individual
      * @returns {TrestleFact[]}
      */
     public getFacts(): TrestleFact[] {
-        const facts: TrestleFact[] = [];
-        this.facts.forEach((value) => {
-            facts.push(value);
-        });
-
-        return facts;
+        return this.facts.array;
     }
 
     /**
@@ -144,7 +140,7 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
      */
     public getFactValues(): { [name: string]: any } {
         const values: { [name: string]: any } = {};
-        this.facts.forEach((value) => {
+        this.facts.array.forEach((value) => {
             values[value.getName()] = value.getValue();
         });
         return values;
@@ -230,7 +226,7 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
             relations: [],
             events: []
         };
-        this.facts.forEach((value) => {
+        this.facts.array.forEach((value) => {
             returnValue.facts.push(value.asInterface());
         });
         this.relations.forEach((value) => {
@@ -323,5 +319,32 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
             hash = char + (hash << 6) + (hash << 16) - hash;
         }
         return hash;
+    }
+
+    /**
+     * Sorter for the Fact array which sorts by ID -> validFrom -> dbFrom
+     *
+     * @param {TrestleFact} a
+     * @param {TrestleFact} b
+     * @returns {number}
+     */
+    private static factSort(a: TrestleFact, b: TrestleFact): number {
+        const idCompare = a.getID().localeCompare(b.getID());
+        // If they're not equal, return
+        if (idCompare !== 0) {
+            return idCompare;
+        }
+        //    Next, compare on valid from
+        const vEqual = a.getValidTemporal().getFrom().isSame(b.getValidTemporal().getFrom());
+        // If they're not equal, is A before?
+        if (!vEqual) {
+            return a.getValidTemporal().getFrom().isBefore(b.getValidTemporal().getFrom()) ? -1 : 1;
+        }
+        //    Finally, db time
+        const dEqual = a.getDatabaseTemporal().getFrom().isSame(b.getDatabaseTemporal().getFrom());
+        if (!dEqual) {
+            return a.getDatabaseTemporal().getFrom().isBefore(b.getDatabaseTemporal().getFrom()) ? -1 : 1;
+        }
+        return 0;
     }
 }

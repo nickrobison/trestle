@@ -2,9 +2,9 @@ import { IInterfacable } from "../../interfacable";
 import * as moment from "moment";
 
 export interface ITrestleTemporal {
-    validID: string;
-    validFrom: Date;
-    validTo?: Date | string;
+    ID: string;
+    From: Date;
+    To?: Date | string;
 }
 
 export class TrestleTemporal implements IInterfacable<ITrestleTemporal> {
@@ -13,11 +13,11 @@ export class TrestleTemporal implements IInterfacable<ITrestleTemporal> {
     private to?: moment.Moment;
 
     constructor(temporal: ITrestleTemporal) {
-        this.id = temporal.validID;
-        this.from = moment(temporal.validFrom, moment.ISO_8601);
+        this.id = temporal.ID;
+        this.from = moment(temporal.From, moment.ISO_8601);
         // There's a problem with our serialization, which means these things might end up as strings, which is no good.
-        if (temporal.validTo !== null && temporal.validTo !== "") {
-            this.to = moment.utc(temporal.validTo, moment.ISO_8601);
+        if (temporal.To !== null && temporal.To !== "") {
+            this.to = moment.utc(temporal.To, moment.ISO_8601);
         }
     }
 
@@ -64,11 +64,11 @@ export class TrestleTemporal implements IInterfacable<ITrestleTemporal> {
 
     public asInterface(): ITrestleTemporal {
         const returnValue: ITrestleTemporal = {
-            validID: this.id,
-            validFrom: this.from.toDate()
+            ID: this.id,
+            From: this.from.toDate()
         };
         if (!this.isContinuing() && (this.to !== undefined)) {
-            returnValue.validTo = this.to.toDate();
+            returnValue.To = this.to.toDate();
         }
         return returnValue;
     }
