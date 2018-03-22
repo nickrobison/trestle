@@ -1,4 +1,4 @@
-package com.nickrobison.gaulintegrator;
+package com.nickrobison.trestle.tools;
 
 import me.tongfei.progressbar.ProgressBar;
 import org.apache.commons.io.FileUtils;
@@ -42,7 +42,7 @@ public class GAULSubsetEngine {
         dsFactory = FileDataStoreFinder.getDataStoreFactory("shp");
     }
 
-    public void subsetData() throws IOException, CQLException {
+    private void subsetData() throws IOException, CQLException {
 
 //        Empty the output directory
         FileUtils.cleanDirectory(this.outputDirectory);
