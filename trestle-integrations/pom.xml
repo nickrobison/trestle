@@ -109,6 +109,9 @@
                 <includes>
                     <include>gates_test/*</include>
                 </includes>
+                <excludes>
+                    <exclude>gates_test/.done</exclude>
+                </excludes>
             </testResource>
         </testResources>
         <plugins>

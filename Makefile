@@ -62,10 +62,14 @@ $(DATA_DIR)/tiger_kc/tl_2010_53033_tract10.shp: $(DATA_DIR)/tiger_kc/tiger_kc.zi
 
 # Census data
 .PHONY: census $(CENSUS_YEARS)
-census: $(CENSUS_YEARS)
+census: $(DATA_DIR)/tiger/.pop_loaded $(CENSUS_YEARS)
 
 .SECONDEXPANSION:
 $(CENSUS_YEARS): $(DATA_DIR)/census/acs_$$@.zip $(DATA_DIR)/tiger/.tl_$$@_us_county.loaded
+
+$(DATA_DIR)/tiger/.pop_loaded:
+	csvsql --db postgresql://$(DB_HOST):5432/$(DATABASE) --table population --insert -e latin1 trestle-integrations/src/test/resources/co-est2015-alldata.csv
+	@touch $@
 
 split_name = $(subst _, , $(basename $(notdir $@)))
 
@@ -83,7 +87,7 @@ county_file = $(subst .,, $(basename $@))
 $(DATA_DIR)/tiger/.tl_%_us_county.loaded: $(DATA_DIR)/tiger/tl_%_us_county.zip
 	@unzip $(county_file).zip -d $(dir $@)out/
 	@echo $(dir $@)out/$(notdir $(county_file))
-	@shp2pgsql -I -s 4269 -W LATIN1 $(dir $@)out/$(notdir $(county_file)).shp public.$(census_year) | psql -h $(DB_HOST) -t $(DATABASE) -U $(DB_USER)
+	@shp2pgsql -I -s 4269 -W LATIN1 $(dir $@)out/$(notdir $(county_file)).shp public.shp$(census_year) | psql -h $(DB_HOST) -t $(DATABASE) -U $(DB_USER)
 	@touch $@
 
 .PHONY: gaul $(GAUL_YEARS)
