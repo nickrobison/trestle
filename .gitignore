@@ -80,3 +80,6 @@ docker/graphdb/*.zip
 # Cache for UI build
 trestle-server/.cache-loader
 
+# Data directory
+data/
+
