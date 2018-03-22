@@ -26,6 +26,8 @@
     <packaging>pom</packaging>
 
     <properties>
+        <trestle.basedir></trestle.basedir>
+        <data.dir>data</data.dir>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <excludeTags>oracle,virtuoso,local,load</excludeTags>
         <owl.version>5.1.4</owl.version>
@@ -50,9 +52,11 @@
         <compiler.default.args>-parameters</compiler.default.args>
         <java.version>1.8</java.version>
         <!--Sonar-->
-        <sonar.jacoco.reportPaths>${maven.multiModuleProjectDirectory}/target/jacoco_analysis/jacoco.exec</sonar.jacoco.reportPaths>
+        <sonar.jacoco.reportPaths>${maven.multiModuleProjectDirectory}/target/jacoco_analysis/jacoco.exec
+        </sonar.jacoco.reportPaths>
         <dependency.check.reportPath>target/dependency-check</dependency.check.reportPath>
-        <sonar.dependencyCheck.reportPath>${dependency.check.reportPath}/dependency-check-report.xml</sonar.dependencyCheck.reportPath>
+        <sonar.dependencyCheck.reportPath>${dependency.check.reportPath}/dependency-check-report.xml
+        </sonar.dependencyCheck.reportPath>
         <docker.image.prefix>docker.nickrobison.com:5000</docker.image.prefix>
     </properties>
 
@@ -148,7 +152,7 @@
             <dependency>
                 <groupId>com.typesafe</groupId>
                 <artifactId>config</artifactId>
-                <version>1.3.3  </version>
+                <version>1.3.3</version>
             </dependency>
             <dependency>
                 <groupId>com.h2database</groupId>
@@ -620,9 +624,35 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.7.0</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.0.2</version>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
+            <plugin>
+                <groupId>org.commonjava.maven.plugins</groupId>
+                <artifactId>directory-maven-plugin</artifactId>
+                <version>0.1</version>
+                <executions>
+                    <execution>
+                        <id>directories</id>
+                        <goals>
+                            <goal>directory-of</goal>
+                        </goals>
+                        <phase>initialize</phase>
+                        <configuration>
+                            <property>trestle.basedir</property>
+                            <project>
+                                <groupId>com.nickrobison.trestle</groupId>
+                                <artifactId>trestle</artifactId>
+                            </project>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>

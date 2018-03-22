@@ -44,17 +44,6 @@
                         </goals>
                         <configuration>
                             <finalName>trestle-tools</finalName>
-                            <!--Older Hadoop Environments probably have the wrong version of Guice, so we need to relocate-->
-                            <relocations>
-                                <relocation>
-                                    <pattern>com.google.inject</pattern>
-                                    <shadedPattern>com.nickrobison.internal.google.inject</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.apache.http</pattern>
-                                    <shadedPattern>com.nickrobison.internal.apache.http</shadedPattern>
-                                </relocation>
-                            </relocations>
                             <transformers>
                                 <!--This requires one transformer per resource, you can't bundle them up-->
                                 <transformer

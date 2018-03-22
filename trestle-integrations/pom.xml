@@ -102,6 +102,15 @@
         </dependency>
     </dependencies>
     <build>
+        <testResources>
+            <testResource>
+                <!--Relative path, because.-->
+                <directory>${basedir}/../${data.dir}</directory>
+                <includes>
+                    <include>gates_test/*</include>
+                </includes>
+            </testResource>
+        </testResources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

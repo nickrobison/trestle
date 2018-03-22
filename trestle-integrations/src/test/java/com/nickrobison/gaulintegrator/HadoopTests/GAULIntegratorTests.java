@@ -111,7 +111,7 @@ public class GAULIntegratorTests {
     @Test
     public void testReducer() throws IOException, ClassNotFoundException, InterruptedException, SQLException, URISyntaxException {
 
-        URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/gates-test");
+        URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("gates_test/");
 
         Path inDir = new Path(IN_DIR.toString());
 //        Uncomment to use GAUL subsetter
