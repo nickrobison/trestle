@@ -1,13 +1,13 @@
 # Check for the necessary commands
-EXECUTABLES = wget unzip docker csvsql shp2pgsql
+EXECUTABLES = wget unzip docker csvsql shp2pgsql mvn
 K := $(foreach exec,$(EXECUTABLES),\
-		$(if $(shell which $(exec)),some string,$(error "No $(exec) in PATH)))
+		$(if $(shell which $(exec)),some string,$(error "No $(exec) in PATH")))
 
 DATA_DIR := data
-DATASETS := census king_county gaul
-CENSUS_YEARS := 2011 2012 2013 2014 2015
+DATASETS := census king_county gates_test
+CENSUS_YEARS := $(shell seq 2011 1 2015)
 GAUL_RELEASE := 2015
-GAUL_YEARS := $(shell seq 1990 1 2015)
+GAUL_YEARS := $(shell seq 1990 1 2014)
 DB_HOST := localhost
 DATABASE := tiger
 DB_USER := nickrobison
@@ -42,6 +42,7 @@ prep-dir:
 	-@mkdir -p $(DATA_DIR)/king_county
 	-@mkdir -p $(DATA_DIR)/tiger_kc
 	-@mkdir -p $(DATA_DIR)/gaul
+	-@mkdir -p $(DATA_DIR)/gates_test
 
 # Data for king county (Spatial Intersection Test)
 .PHONY: king_county
@@ -85,16 +86,37 @@ $(DATA_DIR)/tiger/.tl_%_us_county.loaded: $(DATA_DIR)/tiger/tl_%_us_county.zip
 	@shp2pgsql -I -s 4269 -W LATIN1 $(dir $@)out/$(notdir $(county_file)).shp public.$(census_year) | psql -h $(DB_HOST) -t $(DATABASE) -U $(DB_USER)
 	@touch $@
 
-# GAUL datasets
 .PHONY: gaul $(GAUL_YEARS)
 gaul: $(GAUL_YEARS)
 
+# Generate GAUL rules, since we have this nested folder structure
+gaul_simple = $(basename $(notdir $@))
+gaul_split = $(subst _, , $(gaul_simple))
+gaulr = $(subst g,, $(word 1, $(gaul_split)))
+gaul_year = $(word 2, $(gaul_split))
+
+define build_gaul
+$(DATA_DIR)/gaul/g$(GAUL_RELEASE)_$1_2/g$(GAUL_RELEASE)_$1_2.shp:
+#	We need the double $$ in order to prevent initial expansion when calling eval
+	$$(error "Unable to automatically get year $(1) for release $(GAUL_RELEASE)")
+endef
+
+$(foreach f,$(GAUL_YEARS),$(eval $(call build_gaul,$f)))
+
 .SECONDEXPANSION:
-$(GAUL_YEARS): $(DATA_DIR)/gaul/g$(GAUL_RELEASE)_$$@_2.shp
+$(GAUL_YEARS): $(DATA_DIR)/gaul/g$(GAUL_RELEASE)_$$@_2/g$(GAUL_RELEASE)_$$@_2.shp
 
-$(DATA_DIR)/gaul/g$(GAUL_RELEASE)_%_2.shp:
-	$(error "Missing $@ cannot download automatically")
+trestle-tools/target/trestle-tools.jar:
+	@mvn clean package -pl trestle-tools
 
+$(DATA_DIR)/gates_test/.done:
+	#	Run the subsetter to extract only Uganda and Mozambique
+	@java -jar trestle-tools/target/trestle-tools.jar $(DATA_DIR)/gaul $(DATA_DIR)/gates_test 253 170
+	@touch $@
+
+# GAUL datasets
+.PHONY: gates_test
+gates_test: gaul trestle-tools/target/trestle-tools.jar $(DATA_DIR)/gates_test/.done
 
 
 .PHONY: data
