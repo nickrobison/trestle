@@ -52,17 +52,18 @@ $(DATA_DIR)/king_county/kc.zip:
 	@wget https://www.seattle.gov/Documents/Departments/OPCD/Demographics/GeographicFilesandMaps/KingCountyTractsShapefiles.zip -O $@
 
 $(DATA_DIR)/king_county/kc_tract_10.shp: $(DATA_DIR)/king_county/kc.zip
-	@unzip -o $(DATA_DIR)/king_county/kc.zip -d $(dir $@)
+	@unzip -o $^ -d $(dir $@)
 
 $(DATA_DIR)/tiger_kc/tiger_kc.zip:
 	@wget ftp://ftp2.census.gov/geo/tiger/TIGER2010/TRACT/2010/tl_2010_53033_tract10.zip -O $@
 
 $(DATA_DIR)/tiger_kc/tl_2010_53033_tract10.shp: $(DATA_DIR)/tiger_kc/tiger_kc.zip
-	@unzip -o $(DATA_DIR)/tiger_kc/tiger_kc.zip -d $(dir $@)
+	@unzip -o $^ -d $(dir $@)
 
 # Census data
-.PHONY: census $(CENSUS_YEARS)
+.PHONY: census
 census: $(DATA_DIR)/tiger/.pop_loaded $(CENSUS_YEARS)
+	-@rm -rf data/tiger/out/
 
 .SECONDEXPANSION:
 $(CENSUS_YEARS): $(DATA_DIR)/census/acs_$$@.zip $(DATA_DIR)/tiger/.tl_$$@_us_county.loaded
@@ -79,14 +80,17 @@ census_year = $(word 2, $(split_name))
 $(DATA_DIR)/census/acs_%.zip:
 	@wget https://www2.census.gov/programs-surveys/acs/summary_file/$(census_year)/data/1_year_entire_sf/All_Geographies.zip -O $@
 
+# Save these files because they're really big, and the Census server is slow
+.PRECIOUS: $(DATA_DIR)/tiger/tl_%_us_county.zip
 $(DATA_DIR)/tiger/tl_%_us_county.zip:
 	@wget ftp://ftp2.census.gov/geo/tiger/TIGER$(census_year)/COUNTY/tl_$(census_year)_us_county.zip -O $@
 
+$(DATA_DIR)/tiger/out/tl_%_us_county.shp: $(DATA_DIR)/tiger/tl_%_us_county.zip
+	unzip $^ -d $(dir $@)
+
 county_file = $(subst .,, $(basename $@))
 
-$(DATA_DIR)/tiger/.tl_%_us_county.loaded: $(DATA_DIR)/tiger/tl_%_us_county.zip
-	@unzip $(county_file).zip -d $(dir $@)out/
-	@echo $(dir $@)out/$(notdir $(county_file))
+$(DATA_DIR)/tiger/.tl_%_us_county.loaded: $(DATA_DIR)/tiger/out/tl_%_us_county.shp
 	@shp2pgsql -I -s 4269 -W LATIN1 $(dir $@)out/$(notdir $(county_file)).shp public.shp$(census_year) | psql -h $(DB_HOST) -t $(DATABASE) -U $(DB_USER)
 	@touch $@
 
@@ -125,5 +129,3 @@ gates_test: gaul trestle-tools/target/trestle-tools.jar $(DATA_DIR)/gates_test/.
 
 .PHONY: data
 data: prep-dir $(DATASETS)
-#	Cleanup
-	-rm data/tiger/out/
