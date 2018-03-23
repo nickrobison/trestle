@@ -123,6 +123,11 @@ export class DatsetViewerComponent implements OnInit {
      */
     public updateBounds(bounds: LngLatBounds): void {
         console.debug("Moving, updating bounds", bounds);
+        // If we haven't loaded any datasets, keep resetting the map bounds
+        if (!this.availableDatasets.some((ds) => ds.state === DatasetState.LOADED)) {
+            this.mapBounds = bounds;
+        }
+
         // If we've moved outside of the current bounds, get new data
         if (this.needNewData(bounds)) {
             this.mapBounds = bounds;
