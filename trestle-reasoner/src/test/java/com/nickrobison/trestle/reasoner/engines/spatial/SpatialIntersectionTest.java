@@ -92,7 +92,7 @@ public class SpatialIntersectionTest extends AbstractReasonerTest {
                 feature.getAttribute("NAMELSAD10").toString(),
                 (Geometry) feature.getDefaultGeometry()));
 
-        final List<TestClasses.KCProjectionTestClass> kingCountyShapes = readFromShapeFiles("king_county/kc.shp", kcConstructor);
+        final List<TestClasses.KCProjectionTestClass> kingCountyShapes = readFromShapeFiles("king_county/kc_tract_10.shp", kcConstructor);
         kingCountyShapes
                 .parallelStream()
                 .forEach(county -> {
@@ -109,7 +109,7 @@ public class SpatialIntersectionTest extends AbstractReasonerTest {
                 feature.getAttribute("NAMELSAD10").toString(),
                 (Geometry) feature.getDefaultGeometry()));
 
-        readFromShapeFiles("tiger_kc/tiger_kc.shp", censusConstrutor)
+        readFromShapeFiles("tiger_kc/tl_2010_53033_tract10.shp", censusConstrutor)
                 .parallelStream()
                 .forEach(census -> {
                     try {
