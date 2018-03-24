@@ -1,0 +1,35 @@
+<div fxLayout="column" fxLayoutGap="50px">
+    <div>
+        Hi there, I'm the first row
+    </div>
+    <div>
+        I'm the second row
+    </div>
+    <div fxLayout="row" fxLayoutGap="20px">
+        <div fxFlex="30%">
+            Select a dataset:
+            <mat-select [(value)]="selectedDs" placeholder="Select available dataset">
+                <mat-option *ngFor="let ds of datasets" [value]="ds">
+                    {{ds}}
+                </mat-option>
+            </mat-select>
+        </div>
+        <div fxFlex="30%">
+            <div [hidden]="!selectedDs">
+                Select an Aggregation:
+                <mat-select [(value)]="selectedAggregation">
+                    <mat-option [value]="'EXISTENCE'">
+                        Existence
+                    </mat-option>
+                </mat-select>
+            </div>
+        </div>
+        <div>
+            <button mat-raised-button color="primary"
+                    [disabled]="!selectedAggregation || !selectedDs"
+            (click)="aggregate()">
+                AGGREGATE
+            </button>
+        </div>
+    </div>
+</div>

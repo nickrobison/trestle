@@ -26,6 +26,8 @@
                 <mat-icon>query_builder</mat-icon>QUERY</a>
             <a id="compare" mat-list-item [routerLink]="['explore/compare']" aria-label="compare links">
                 <mat-icon>compare</mat-icon>COMPARE</a>
+            <a id="aggregate" mat-list-item [routerLink]="['explore/aggregate']" aria-label="aggregate links">
+                <mat-icon>call_merge</mat-icon>AGGREGATE</a>
             </div>
             <div id="admin-actions" *ngIf="userHasRequiredPermissions([Privileges.ADMIN])">
                 <mat-divider></mat-divider>
