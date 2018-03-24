@@ -1,7 +1,7 @@
 /**
  * Created by nrobison on 6/23/17.
  */
-import { Injectable } from "@angular/core";
+import { Inject, Injectable, InjectionToken } from "@angular/core";
 import { TrestleHttp } from "../../UserModule/trestle-http.provider";
 import { Response } from "@angular/http";
 import { Observable } from "rxjs/Observable";
@@ -12,6 +12,7 @@ import { ITrestleIndividual, TrestleIndividual } from "../../SharedModule/indivi
 import { Subscriber } from "rxjs/Subscriber";
 import { isNullOrUndefined } from "util";
 import * as Worker from "worker-loader!./map.worker";
+import { CacheService } from "../../SharedModule/cache/cache.service";
 
 export type wktType = "POINT" |
     "MULTIPOINT" |
@@ -70,12 +71,15 @@ export interface IMapWorkerResponse {
     geom: FeatureCollection<GeometryObject>;
 }
 
+export const DATASET_CACHE = new InjectionToken<CacheService<string, string[]>>("dataset.cache");
+
 @Injectable()
 export class MapService {
     private worker: Worker;
     private workerStream: Observable<IMapWorkerResponse>;
 
-    constructor(private http: TrestleHttp) {
+    constructor(private http: TrestleHttp,
+                @Inject(DATASET_CACHE) private cache: CacheService<string, string[]>) {
         //    Create the worker and register a stream for the results
         this.worker = new Worker();
         this.workerStream = Observable.fromEvent(this.worker, "message")
@@ -87,12 +91,8 @@ export class MapService {
      * @returns {Observable<string[]>}
      */
     public getAvailableDatasets(): Observable<string[]> {
-        return this.http.get("/visualize/datasets")
-            .map((res: Response) => {
-                console.debug("Available datasets:", res.text());
-                return res.json();
-            })
-            .catch((error: Error) => Observable.throw(error || "Server Error"));
+        // Try from cache first, then hit the API
+        return this.cache.get("datasets", this.dsAPICall());
     }
 
     /**
@@ -201,6 +201,13 @@ export class MapService {
                 });
         });
     };
+
+    private dsAPICall(): Observable<string[]> {
+        return this.http.get("/visualize/datasets")
+            .do((res) => console.debug("Available datasets:", res.text()))
+            .map((res: Response) => res.json())
+            .catch((error: Error) => Observable.throw(error || "Server Error"));
+    }
 
     private static parseResponseToIndividuals(res: Response): TrestleIndividual[] {
         const json = res.json();
