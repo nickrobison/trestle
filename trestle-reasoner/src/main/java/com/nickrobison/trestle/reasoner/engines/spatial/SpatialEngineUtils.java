@@ -80,6 +80,19 @@ public class SpatialEngineUtils {
      * Reproject input {@link Geometry} into the given SRID
      * Optionally, adding to the provided {@link Cache}
      *
+     * @param inputGeom  - {@link Geometry} to reproject
+     * @param inputSRID  - {@link Integer} SRID of input geometry
+     * @param outputSRID - {@link Integer} SRID to project into
+     * @return - {@link Geometry} reprojected
+     */
+    public static Geometry reprojectGeometry(Geometry inputGeom, int inputSRID, int outputSRID) {
+        return reprojectGeometry(inputGeom, inputSRID, outputSRID, null, null);
+    }
+
+    /**
+     * Reproject input {@link Geometry} into the given SRID
+     * Optionally, adding to the provided {@link Cache}
+     *
      * @param inputGeom      - {@link Geometry} to reproject
      * @param inputSRID      - {@link Integer} SRID of input geometry
      * @param outputSRID     - {@link Integer} SRID to project into

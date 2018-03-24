@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.reasoner.engines.AbstractComparisonReport;
+import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngineUtils;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
@@ -15,6 +16,9 @@ import com.nickrobison.trestle.server.resources.requests.IntersectRequest;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.PrecisionModel;
+import com.vividsolutions.jts.io.WKTReader;
 import io.dropwizard.jersey.params.NonEmptyStringParam;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -51,7 +55,6 @@ import static javax.ws.rs.core.Response.ok;
 public class VisualizationResource {
 
     private static final Logger logger = LoggerFactory.getLogger(VisualizationResource.class);
-    private static final GeoJSONReader reader = new GeoJSONReader();
     private static final ObjectMapper mapper = new ObjectMapper();
     //    This should be a config parameter
     public static final double MATCH_THRESHOLD = 0.95;
@@ -181,6 +184,9 @@ public class VisualizationResource {
     }
 
     private Geometry getGeometryFromRequest(IntersectRequest request) throws JsonProcessingException {
+        final GeoJSONReader reader = new GeoJSONReader();
         return reader.read(mapper.writeValueAsString(request.getGeojson()));
+//        return SpatialEngineUtils.reprojectGeometry(geometry, 3857, 4326);
     }
+
 }
