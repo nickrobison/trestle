@@ -6,7 +6,7 @@ import com.nickrobison.metrician.MetricianModule;
 import com.nickrobison.trestle.reasoner.caching.TrestleCacheModule;
 import com.nickrobison.trestle.reasoner.engines.EngineModule;
 import com.nickrobison.trestle.reasoner.parser.TrestleParserModule;
-import com.nickrobison.trestle.reasoner.threading.ExecutorServiceFactory;
+import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +35,7 @@ public class TrestleModule extends AbstractModule {
 //        Bind the executor factory
         install(new FactoryModuleBuilder()
                 .implement(TrestleExecutorService.class, TrestleExecutorService.class)
-                .build(ExecutorServiceFactory.class));
+                .build(TrestleExecutorFactory.class));
         install(new TrestleParserModule());
         install(new MetricianModule(metricsEnabled));
         install(new TrestleCacheModule(cachingEnabled));

@@ -18,7 +18,7 @@ import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqua
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.parser.SpatialParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
-import com.nickrobison.trestle.reasoner.threading.ExecutorServiceFactory;
+import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TrestleIndividual;
@@ -75,7 +75,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
                          IndividualEngine individualEngine,
                          EqualityEngine equalityEngine,
                          ContainmentEngine containmentEngine,
-                         ExecutorServiceFactory factory,
+                         TrestleExecutorFactory factory,
                          Cache<Integer, Geometry> cache) {
         this.tp = trestleParser;
         this.qb = qb;
