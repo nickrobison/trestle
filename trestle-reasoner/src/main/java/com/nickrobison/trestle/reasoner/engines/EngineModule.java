@@ -15,6 +15,7 @@ import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
 import com.nickrobison.trestle.reasoner.engines.object.TrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.TrestleObjectWriter;
+import com.nickrobison.trestle.reasoner.engines.spatial.AggregationEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngineImpl;
@@ -62,6 +63,7 @@ public class EngineModule extends PrivateModule {
         bind(ContainmentEngine.class)
                 .to(ContainmentEngineImpl.class)
                 .in(Singleton.class);
+        bind(AggregationEngine.class).asEagerSingleton();
 
         //        Event Engine
         if (eventEnabled) {
@@ -92,6 +94,7 @@ public class EngineModule extends PrivateModule {
         expose(ITrestleConceptEngine.class);
         expose(ITrestleDataExporter.class);
         expose(SpatialEngine.class);
+        expose(AggregationEngine.class);
         expose(TemporalEngine.class);
         expose(IndividualEngine.class);
         expose(TrestleEventEngine.class);

@@ -20,6 +20,7 @@ import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
 import com.nickrobison.trestle.reasoner.engines.object.TrestleObjectWriter;
+import com.nickrobison.trestle.reasoner.engines.spatial.AggregationEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
@@ -101,6 +102,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final TrestleEventEngine eventEngine;
     private final IndividualEngine individualEngine;
     private final SpatialEngine spatialEngine;
+    private final AggregationEngine aggregationEngine;
     private final TemporalEngine temporalEngine;
     private final Config trestleConfig;
     private final TrestleCache trestleCache;
@@ -213,6 +215,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         this.eventEngine = injector.getInstance(TrestleEventEngine.class);
         this.individualEngine = injector.getInstance(IndividualEngine.class);
         this.spatialEngine = injector.getInstance(SpatialEngine.class);
+        this.aggregationEngine = injector.getInstance(AggregationEngine.class);
         this.temporalEngine = injector.getInstance(TemporalEngine.class);
 
 //        Register type constructors from the service loader
@@ -304,6 +307,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public SpatialEngine getSpatialEngine() {
         return this.spatialEngine;
+    }
+
+    public AggregationEngine getAggregationEngine() {
+        return this.aggregationEngine;
     }
 
     @Override

@@ -377,6 +377,24 @@ public class QueryBuilder {
         return stringValue;
     }
 
+    public String buildAggregationQuery(OWLClass datasetClass, OffsetDateTime existsFrom, OffsetDateTime existsTo) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText("SELECT DISTINCT ?m " +
+                "WHERE { " +
+                "?m rdf:type ?type ." +
+                "?m trestle:exists_from ?ef ." +
+                "OPTIONAL{?f trestle:exists_to ?et} ." +
+                "FILTER((?ef <= ?existsFrom^^xsd:dateTime) && " +
+                "(!bound(?et) || (?et > ?existsTo^^xsd:dateTime)))}");
+        ps.setIri("type", getFullIRIString(datasetClass));
+        ps.setLiteral("existsFrom", existsFrom.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        ps.setLiteral("existsTo", existsTo.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
+    }
+
     /**
      * Build spatial intersection
      *

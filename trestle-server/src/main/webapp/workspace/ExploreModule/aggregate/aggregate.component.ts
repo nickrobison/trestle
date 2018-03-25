@@ -28,6 +28,9 @@ export class AggregateComponent implements OnInit {
     }
 
     public aggregate(): void {
-        console.debug("Aggregating!");
+        this.as.performAggregation("gaul-test", "exists", "hi")
+            .subscribe((agg) => {
+                console.debug("Done", agg);
+            });
     }
 }

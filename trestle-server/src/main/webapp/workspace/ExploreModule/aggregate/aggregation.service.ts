@@ -2,20 +2,22 @@ import { Injectable } from "@angular/core";
 import { TrestleHttp } from "../../UserModule/trestle-http.provider";
 import { Observable } from "rxjs/Observable";
 
-
 @Injectable()
 export class AggregationService {
 
-    public constructor(private http: TrestleHttp) {
+    constructor(private http: TrestleHttp) {
 
     }
 
     public performAggregation(dataset: string, strategy: string, wkt: string): Observable<any> {
-        return this.http.post("/aggregate", {
-            dataset: dataset,
-            strategy: strategy,
-            wkt: wkt
-        })
-            .map((res) => res.json());
+        const postBody = {
+            dataset,
+            strategy,
+            wkt
+        };
+        console.debug("Aggregating!", postBody);
+        return this.http.post("/aggregate", postBody)
+            .map((res) => res.json())
+            .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
 }
