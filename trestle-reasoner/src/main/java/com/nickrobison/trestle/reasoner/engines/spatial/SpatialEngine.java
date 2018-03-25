@@ -3,7 +3,6 @@ package com.nickrobison.trestle.reasoner.engines.spatial;
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
 import com.esri.core.geometry.SpatialReference;
-import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.LambdaUtils;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
@@ -19,12 +18,11 @@ import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqua
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.parser.SpatialParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
+import com.nickrobison.trestle.reasoner.threading.ExecutorServiceFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.Geometry;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -77,9 +75,8 @@ public class SpatialEngine implements ITrestleSpatialEngine {
                          IndividualEngine individualEngine,
                          EqualityEngine equalityEngine,
                          ContainmentEngine containmentEngine,
-                         Metrician metrician,
+                         ExecutorServiceFactory factory,
                          Cache<Integer, Geometry> cache) {
-        final Config trestleConfig = ConfigFactory.load().getConfig("trestle");
         this.tp = trestleParser;
         this.qb = qb;
         this.ontology = ontology;
@@ -88,9 +85,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
         this.individualEngine = individualEngine;
         this.equalityEngine = equalityEngine;
         this.containmentEngine = containmentEngine;
-        this.spatialPool = TrestleExecutorService.executorFactory("spatial-pool",
-                trestleConfig.getInt("threading.spatial-pool.size"),
-                metrician);
+        this.spatialPool = factory.create("spatial-pool");
 
 //        Setup object caches
         geometryCache = cache;

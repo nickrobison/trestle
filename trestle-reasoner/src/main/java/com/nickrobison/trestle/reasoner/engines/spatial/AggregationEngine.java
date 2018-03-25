@@ -7,6 +7,8 @@ import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.parser.IClassParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
+import com.nickrobison.trestle.reasoner.threading.ExecutorServiceFactory;
+import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -30,17 +32,19 @@ public class AggregationEngine {
     private final IClassParser parser;
     private final QueryBuilder qb;
     private final ITrestleOntology ontology;
+    private final TrestleExecutorService aggregationPool;
 
     @Inject
     public AggregationEngine(ITrestleObjectReader objectReader,
                              QueryBuilder queryBuilder,
                              ITrestleOntology ontology,
-                             TrestleParser trestleParser) {
+                             TrestleParser trestleParser,
+                             ExecutorServiceFactory factory) {
         this.reader = objectReader;
         this.qb = queryBuilder;
         this.ontology = ontology;
         this.parser = trestleParser.classParser;
-//        this.aggregationPool = factory.create("aggregation-pool", 10);
+        this.aggregationPool = factory.create("aggregation-pool");
 
     }
 

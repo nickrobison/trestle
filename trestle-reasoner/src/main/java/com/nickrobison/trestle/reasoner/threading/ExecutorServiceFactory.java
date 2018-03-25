@@ -5,5 +5,5 @@ package com.nickrobison.trestle.reasoner.threading;
  */
 public interface ExecutorServiceFactory {
 
-    TrestleExecutorService create(String executorName, int executorSize);
+    TrestleExecutorService create(String executorName);
 }

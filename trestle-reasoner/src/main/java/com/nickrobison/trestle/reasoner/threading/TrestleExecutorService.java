@@ -6,6 +6,9 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.nickrobison.metrician.Metrician;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
+import com.typesafe.config.ConfigFactory;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,9 +34,41 @@ public class TrestleExecutorService implements ExecutorService {
     private final Timer executionTimer;
     private final Meter executionCount;
 
-    @Inject
-    public TrestleExecutorService(@Assisted String executorName, @Assisted int executorSize, Metrician metrician) {
+    public TrestleExecutorService(String executorName, int executorSize, Metrician metrician) {
 //        Setup the thread pool
+        final ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat(String.format("Trestle-%s-%%d", executorName))
+                .setDaemon(false)
+                .build();
+        final LinkedBlockingQueue<Runnable> backingQueue = new LinkedBlockingQueue<>();
+        logger.debug("Creating thread-pool {} with size {}", executorName, executorSize);
+        this.target = new ThreadPoolExecutor(executorSize,
+                executorSize,
+                0L,
+                TimeUnit.MILLISECONDS,
+                backingQueue,
+                threadFactory);
+
+//        Setup Metrician Timers
+        queueTimer = metrician.registerTimer(String.format("%s-queue-time", executorName));
+        executionTimer = metrician.registerTimer(String.format("%s-execution-time", executorName));
+        executionCount = metrician.registerMeter(String.format("%s-execution-count", executorName));
+        metrician.registerGauge(String.format("%s-queue-length", executorName), backingQueue::size);
+    }
+
+    @Inject
+    public TrestleExecutorService(@Assisted String executorName, Metrician metrician) {
+        final Config config = ConfigFactory.load().getConfig("trestle.threading");
+//        Try to get the config, otherwise, fallback to the default
+        int executorSize;
+        try {
+            executorSize = config.getInt(executorName + ".size");
+        } catch (ConfigException.Missing e) {
+            logger.warn("Unable to find configuration for {}. Falling back to defaults", executorName);
+            executorSize = config.getInt("default-pool.size");
+        }
+
+        //        Setup the thread pool
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setNameFormat(String.format("Trestle-%s-%%d", executorName))
                 .setDaemon(false)
