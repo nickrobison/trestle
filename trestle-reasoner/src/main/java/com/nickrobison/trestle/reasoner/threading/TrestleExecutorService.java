@@ -3,6 +3,8 @@ package com.nickrobison.trestle.reasoner.threading;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import com.nickrobison.metrician.Metrician;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -29,7 +31,8 @@ public class TrestleExecutorService implements ExecutorService {
     private final Timer executionTimer;
     private final Meter executionCount;
 
-    private TrestleExecutorService(String executorName, int executorSize, Metrician metrician) {
+    @Inject
+    public TrestleExecutorService(@Assisted String executorName, @Assisted int executorSize, Metrician metrician) {
 //        Setup the thread pool
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setNameFormat(String.format("Trestle-%s-%%d", executorName))
