@@ -19,7 +19,8 @@
             [com.nickrobison.trestle.reasoner.parser.types.spatial.esri]
             [com.nickrobison.trestle.reasoner.parser.types.spatial.jts]
             [com.nickrobison.trestle.reasoner.parser.spatial :as spatial])
-  (:use clj-fuzzy.metrics))
+  (:use [clj-fuzzy.metrics]
+        [else-let.core :refer :all]))
 
 ; Class related helpers
 (defn find-matching-constructors
@@ -528,17 +529,12 @@
   (getProjectedWKT ^OWLLiteral [this clazz spatialObject srid]
     (let [parsedClass (.getRegisteredClass this clazz)]
       ; If the SRID is nil, use the one from the class definition
-      (if (nil? srid)
-        (.getOWLLiteral df
-                        (spatial/object-to-projected-wkt
-                          spatialObject
-                          (get-in parsedClass [:spatial :projection]))
-                        (.getOWLDatatype df StaticIRI/WKTDatatypeIRI))
-        (.getOWLLiteral df
-                        (spatial/object-to-projected-wkt
-                          spatialObject
-                          srid)
-                        (.getOWLDatatype df StaticIRI/WKTDatatypeIRI)))))
+      (else-let [proj srid (get-in parsedClass [:spatial :projection])]
+                (.getOWLLiteral df
+                                (spatial/object-to-projected-wkt
+                                  spatialObject
+                                  proj)
+                                (.getOWLDatatype df StaticIRI/WKTDatatypeIRI)))))
 
   ; ClassRegister methods
   IClassRegister
