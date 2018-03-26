@@ -60,6 +60,7 @@ public class AggregationEngine {
 
         final OWLClass objectClass = this.parser.getObjectClass(clazz);
         final String aggregationQuery = this.qb.buildAggregationQuery(objectClass,
+                wkt,
                 LocalDate.of(1990, 1, 1).atStartOfDay(ZoneOffset.UTC).toOffsetDateTime(),
                 LocalDate.of(2015, 1, 1).atStartOfDay(ZoneOffset.UTC).toOffsetDateTime());
 

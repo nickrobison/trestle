@@ -209,14 +209,7 @@ export class MapService {
             .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
 
-    private static parseResponseToIndividuals(res: Response): TrestleIndividual[] {
-        const json = res.json();
-        console.debug("Intersected result from server:", json);
-        return json
-            .map((individual: ITrestleIndividual) => new TrestleIndividual(individual));
-    }
-
-    private static normalizeToGeoJSON(geom: wktValue): Polygon | MultiPolygon {
+    public static normalizeToGeoJSON(geom: wktValue): Polygon | MultiPolygon {
         if (MapService.isGeometryObject(geom)) {
             if (geom.type === "Polygon") {
                 return (geom as Polygon);
@@ -237,6 +230,13 @@ export class MapService {
                 geom.getSouthWest().toArray()]]
             // crs: {type: "name", properties: {name: "EPSG:4326"}}
         };
+    }
+
+    private static parseResponseToIndividuals(res: Response): TrestleIndividual[] {
+        const json = res.json();
+        console.debug("Intersected result from server:", json);
+        return json
+            .map((individual: ITrestleIndividual) => new TrestleIndividual(individual));
     }
 
     private static isGeometryObject(x: any): x is GeometryObject {

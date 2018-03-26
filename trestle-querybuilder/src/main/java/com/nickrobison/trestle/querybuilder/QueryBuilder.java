@@ -377,7 +377,7 @@ public class QueryBuilder {
         return stringValue;
     }
 
-    public String buildAggregationQuery(OWLClass datasetClass, OffsetDateTime existsFrom, OffsetDateTime existsTo) {
+    public String buildAggregationQuery(OWLClass datasetClass, String wkt, OffsetDateTime existsFrom, OffsetDateTime existsTo) {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m " +
                 "WHERE { " +
@@ -385,10 +385,12 @@ public class QueryBuilder {
                 "?m trestle:exists_from ?ef ." +
                 "OPTIONAL{?f trestle:exists_to ?et} ." +
                 "FILTER((?ef <= ?existsFrom^^xsd:dateTime) && " +
-                "(!bound(?et) || (?et > ?existsTo^^xsd:dateTime)))}");
+                "(!bound(?et) || (?et > ?existsTo^^xsd:dateTime))) ." +
+                "FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
         ps.setIri("type", getFullIRIString(datasetClass));
         ps.setLiteral("existsFrom", existsFrom.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         ps.setLiteral("existsTo", existsTo.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        ps.setLiteral("wktString", wkt);
 
         final String stringValue = ps.toString();
         logger.trace(stringValue);

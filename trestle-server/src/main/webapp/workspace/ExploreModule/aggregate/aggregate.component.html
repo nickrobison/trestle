@@ -1,6 +1,11 @@
 <div fxLayout="column" fxLayoutGap="50px">
-    <div>
-        Hi there, I'm the first row
+    <div class="map-container">
+        <trestle-map #map [single]="false"
+                     [multiSelect]="true"
+                     [zoomOnLoad]="false"
+                     [config]="mapConfig"
+                     [dataChanges]="dataChanges"
+                     class="map-container"></trestle-map>
     </div>
     <div>
         I'm the second row
