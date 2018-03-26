@@ -2,7 +2,6 @@ package com.nickrobison.trestle.reasoner.engines.object;
 
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
-import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.TemporalUtils;
 import com.nickrobison.trestle.iri.IRIBuilder;
 import com.nickrobison.trestle.iri.TrestleIRI;
@@ -12,12 +11,11 @@ import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
-import com.nickrobison.trestle.reasoner.engines.events.TrestleEventEngine;
-import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.reasoner.exceptions.MissingConstructorException;
 import com.nickrobison.trestle.reasoner.exceptions.NoValidStateException;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.parser.*;
+import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TemporalScope;
@@ -28,8 +26,6 @@ import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.PointTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -61,54 +57,39 @@ public class TrestleObjectReader implements ITrestleObjectReader {
     private static final String MISSING_INDIVIDUAL = "Unable to get individual";
     private static final OffsetDateTime TEMPORAL_MAX_VALUE = LocalDate.of(3000, 1, 1).atStartOfDay().atOffset(ZoneOffset.UTC);
 
-    private final TrestleEventEngine eventEngine;
     private final TrestleExecutorService objectReaderThreadPool;
-    private final Metrician metrician;
     private final ObjectEngineUtils engineUtils;
     private final IClassParser classParser;
     private final IClassRegister classRegister;
     private final IClassBuilder classBuilder;
     private final ITypeConverter typeConverter;
     private final FactFactory factFactory;
-    private final TemporalParser temporalParser;
-    private final TrestleMergeEngine mergeEngine;
     private final ITrestleOntology ontology;
     private final QueryBuilder qb;
     private final TrestleCache trestleCache;
     private final String reasonerPrefix;
 
     @Inject
-    public TrestleObjectReader(TrestleEventEngine eventEngine,
-                               Metrician metrician,
+    public TrestleObjectReader(@ReasonerPrefix String reasonerPrefix,
                                ObjectEngineUtils engineUtils,
                                TrestleParser trestleParser,
                                FactFactory factFactory,
-                               TrestleMergeEngine mergeEngine,
                                ITrestleOntology ontology,
                                QueryBuilder qb,
                                TrestleCache trestleCache,
-                               @ReasonerPrefix String reasonerPrefix) {
-        this.eventEngine = eventEngine;
-        this.metrician = metrician;
+                               TrestleExecutorFactory factory) {
         this.engineUtils = engineUtils;
         this.classParser = trestleParser.classParser;
         this.classRegister = trestleParser.classRegistry;
         this.classBuilder = trestleParser.classBuilder;
-        this.temporalParser = trestleParser.temporalParser;
         this.typeConverter = trestleParser.typeConverter;
         this.factFactory = factFactory;
-        this.mergeEngine = mergeEngine;
         this.ontology = ontology;
         this.qb = qb;
         this.trestleCache = trestleCache;
         this.reasonerPrefix = reasonerPrefix;
 
-        final Config config = ConfigFactory.load().getConfig("trestle");
-
-        this.objectReaderThreadPool = TrestleExecutorService.executorFactory(
-                "object-reader-pool",
-                config.getInt("threading.object-pool.size"),
-                this.metrician);
+        this.objectReaderThreadPool = factory.create("object-reader-pool");
     }
 
     @Override

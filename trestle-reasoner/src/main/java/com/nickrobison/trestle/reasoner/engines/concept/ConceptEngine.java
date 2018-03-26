@@ -3,7 +3,6 @@ package com.nickrobison.trestle.reasoner.engines.concept;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
-import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.ReasonerPrefix;
@@ -17,11 +16,10 @@ import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngineUtils;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.parser.IClassParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
+import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.relations.ConceptRelationType;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
@@ -67,7 +65,6 @@ public class ConceptEngine implements ITrestleConceptEngine {
     private final ITrestleObjectWriter objectWriter;
     private final IClassParser classParser;
     private final ObjectEngineUtils objectUtils;
-    private final Metrician metrician;
     private final TrestleExecutorService conceptPool;
 
     @Inject
@@ -78,8 +75,7 @@ public class ConceptEngine implements ITrestleConceptEngine {
                          ITrestleObjectWriter objectWriter,
                          TrestleParser trestleParser,
                          ObjectEngineUtils objectUtils,
-                         Metrician metrician) {
-        final Config config = ConfigFactory.load().getConfig("trestle");
+                         TrestleExecutorFactory factory) {
 
         this.reasonerPrefix = reasonerPrefix;
         this.ontology = ontology;
@@ -88,12 +84,8 @@ public class ConceptEngine implements ITrestleConceptEngine {
         this.objectWriter = objectWriter;
         this.classParser = trestleParser.classParser;
         this.objectUtils = objectUtils;
-        this.metrician = metrician;
 
-        this.conceptPool = TrestleExecutorService.executorFactory(
-                "concept-pool",
-                config.getInt("threading.object-pool.size"),
-                this.metrician);
+        this.conceptPool = factory.create("concept-pool");
     }
 
     @Override

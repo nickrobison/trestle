@@ -19,7 +19,6 @@ import com.nickrobison.trestle.reasoner.engines.exporter.ITrestleDataExporter;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
-import com.nickrobison.trestle.reasoner.engines.object.TrestleObjectWriter;
 import com.nickrobison.trestle.reasoner.engines.spatial.AggregationEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
@@ -33,6 +32,7 @@ import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.reasoner.parser.TypeConstructor;
+import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TrestleIndividual;
@@ -178,10 +178,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //        Setup metrics engine
         metrician = injector.getInstance(Metrician.class);
 
+        TrestleExecutorFactory factory = injector.getInstance(TrestleExecutorFactory.class);
+
 //        Create our own thread pools to help isolate processes
-        trestleThreadPool = TrestleExecutorService.executorFactory(builder.ontologyName.orElse("default"), trestleConfig.getInt("threading.default-pool.size"), this.metrician);
-        objectThreadPool = TrestleExecutorService.executorFactory("object-pool", trestleConfig.getInt("threading.object-pool.size"), this.metrician);
-        searchThreadPool = TrestleExecutorService.executorFactory("search-pool", trestleConfig.getInt("threading.search-pool.size"), this.metrician);
+        trestleThreadPool = factory.create(builder.ontologyName.orElse("default"));
+        objectThreadPool = factory.create("object-pool");
+        searchThreadPool = factory.create("search-pool");
 
 //        Validate ontology name
         try {
