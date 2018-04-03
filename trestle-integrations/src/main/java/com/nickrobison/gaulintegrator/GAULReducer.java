@@ -225,14 +225,14 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
 //            We need to convert to JTS, in order to properly handle the Union.
 //                Get the exterior rings, of the input objects, in order to handle any holes
             final List<com.vividsolutions.jts.geom.Polygon> exteriorRings = getExteriorRings(gaulObject);
-            final com.vividsolutions.jts.geom.Geometry inputGeometry = new GeometryCollection(exteriorRings.toArray(new com.vividsolutions.jts.geom.Geometry[exteriorRings.size()]), geometryFactory).union();
+            final com.vividsolutions.jts.geom.Geometry inputGeometry = new GeometryCollection(exteriorRings.toArray(new com.vividsolutions.jts.geom.Geometry[0]), geometryFactory).union();
 
 //            Create a new Geometry Collection, and union it
             List<com.vividsolutions.jts.geom.Polygon> exteriorPolygonsToUnion = new ArrayList<>();
             for (GAULObject object : conceptMembers.get()) {
                 getExteriorRings(exteriorPolygonsToUnion, object);
             }
-            final com.vividsolutions.jts.geom.Geometry conceptUnionGeom = new GeometryCollection(exteriorPolygonsToUnion.toArray(new com.vividsolutions.jts.geom.Geometry[exteriorPolygonsToUnion.size()]), geometryFactory)
+            final com.vividsolutions.jts.geom.Geometry conceptUnionGeom = new GeometryCollection(exteriorPolygonsToUnion.toArray(new com.vividsolutions.jts.geom.Geometry[0]), geometryFactory)
                     .union();
 
             final double unionArea = conceptUnionGeom.getArea();
