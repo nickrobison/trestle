@@ -40,12 +40,20 @@ export class AggregateComponent implements OnInit {
             });
     }
 
-
-
     public aggregate(): void {
         this.as.performAggregation("gaul-test", "exists", this.map.getMapBounds())
             .subscribe((agg) => {
                 console.debug("Done", agg);
+                this.dataChanges.next({
+                    id: "aggregation-query",
+                    idField: "id",
+                    data: {
+                        type: "Feature",
+                        geometry: agg,
+                        properties: null,
+                        id: "test"
+                    }
+                });
             });
     }
 }

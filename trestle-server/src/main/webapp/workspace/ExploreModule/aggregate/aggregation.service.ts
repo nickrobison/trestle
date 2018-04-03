@@ -3,6 +3,7 @@ import { TrestleHttp } from "../../UserModule/trestle-http.provider";
 import { Observable } from "rxjs/Observable";
 import { MapService, wktValue } from "../viewer/map.service";
 import { stringify } from "wellknown";
+import { GeometryObject } from "geojson";
 
 @Injectable()
 export class AggregationService {
@@ -11,7 +12,7 @@ export class AggregationService {
 
     }
 
-    public performAggregation(dataset: string, strategy: string, wkt: wktValue): Observable<any> {
+    public performAggregation(dataset: string, strategy: string, wkt: wktValue): Observable<GeometryObject> {
         const postBody = {
             dataset,
             strategy,
