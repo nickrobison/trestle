@@ -377,20 +377,28 @@ public class QueryBuilder {
         return stringValue;
     }
 
-    public String buildAggregationQuery(OWLClass datasetClass, String wkt, OffsetDateTime existsFrom, OffsetDateTime existsTo) {
+    public String buildAggregationQuery(List<OWLNamedIndividual> individuals, OffsetDateTime existsFrom, OffsetDateTime existsTo) {
+
+//        Join all the individuals
+        final String individualValues = individuals
+                .stream()
+                .map(OWLIndividual::toStringID)
+                .map(id -> String.format("<%s>", id))
+                .collect(Collectors.joining(" "));
+
+
         final ParameterizedSparqlString ps = buildBaseString();
-        ps.setCommandText("SELECT DISTINCT ?m " +
+        ps.setCommandText(String.format("SELECT DISTINCT ?m " +
                 "WHERE { " +
-                "?m rdf:type ?type ." +
                 "?m trestle:exists_from ?ef ." +
                 "OPTIONAL{?f trestle:exists_to ?et} ." +
                 "FILTER((?ef <= ?existsFrom^^xsd:dateTime) && " +
                 "(!bound(?et) || (?et > ?existsTo^^xsd:dateTime))) ." +
-                "FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
-        ps.setIri("type", getFullIRIString(datasetClass));
+                "VALUES ?m {%s}}", individualValues));
+//        ps.setIri("type", getFullIRIString(datasetClass));
         ps.setLiteral("existsFrom", existsFrom.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         ps.setLiteral("existsTo", existsTo.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        ps.setLiteral("wktString", wkt);
+//        ps.setLiteral("wktString", wkt);
 
         final String stringValue = ps.toString();
         logger.trace(stringValue);

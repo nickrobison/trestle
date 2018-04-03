@@ -27,6 +27,8 @@ import javax.measure.converter.UnitConverter;
 import javax.measure.quantity.Length;
 import javax.measure.unit.Unit;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static javax.measure.unit.SI.METER;
@@ -231,6 +233,31 @@ public class SpatialEngineUtils {
      */
     public static WKTReader getProjectedReader(int srid) {
         return new WKTReader(new GeometryFactory(new PrecisionModel(), srid));
+    }
+
+    /**
+     * Extract exterior Polygon rings from a given {@link Geometry}
+     * Implicitly expects either a {@link com.vividsolutions.jts.geom.MultiPolygon} or {@link com.vividsolutions.jts.geom.Polygon}
+     * otherwise, it will throw a {@link ClassCastException} when trying to cast the ring to a Polygon type
+     *
+     * @param inputGeoms - {@link List} of {@link Geometry} to extract exteriors from
+     * @param srid       - {@link Integer} input SRID of geometries
+     * @return - {@link List} of exterior {@link com.vividsolutions.jts.geom.Polygon}
+     */
+    public static List<com.vividsolutions.jts.geom.Polygon> getJTSExteriorRings(List<Geometry> inputGeoms, int srid) {
+//        Create a new Geometry factory
+        final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), srid);
+        List<com.vividsolutions.jts.geom.Polygon> polygonExteriors = new ArrayList<>();
+        for (Geometry inputGeom : inputGeoms) {
+            for (int i = 0; i < inputGeom.getNumGeometries(); i++) {
+                final com.vividsolutions.jts.geom.Polygon polygon = com.vividsolutions.jts.geom.Polygon.class.cast(inputGeom.getGeometryN(i));
+                polygonExteriors.add(geometryFactory
+                        .createPolygon(polygon
+                                .getExteriorRing()
+                                .getCoordinates()));
+            }
+        }
+        return polygonExteriors;
     }
 
     /**

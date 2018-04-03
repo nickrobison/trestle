@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.server.resources;
 
+import com.nickrobison.trestle.exporter.GeoJsonWriter;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.reasoner.TrestleReasonerImpl;
 import com.nickrobison.trestle.reasoner.engines.spatial.AggregationEngine;
@@ -8,6 +9,7 @@ import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
 import com.nickrobison.trestle.server.resources.requests.AggregationRequest;
+import com.vividsolutions.jts.geom.Geometry;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -16,7 +18,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -38,7 +39,14 @@ public class AggregationResource {
     public Response aggregateDataset(@Valid AggregationRequest request) throws UnregisteredClassException {
         final AggregationEngine aggregationEngine = ((TrestleReasonerImpl) reasoner).getAggregationEngine();
         final Class<?> dataset = this.reasoner.getDatasetClass(request.getDataset());
-        final Optional<? extends List<?>> objects = aggregationEngine.aggregateDataset(dataset, request.getWkt());
-        return Response.ok().build();
+        final Optional<Geometry> geometry = aggregationEngine.aggregateDataset(dataset, request.getWkt());
+        if (geometry.isPresent()) {
+            final String GeoJSONString = new GeoJsonWriter().write(geometry.get());
+            return Response.ok().entity(GeoJSONString).build();
+        }
+        return Response
+                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity("Unable to aggregate dataset")
+                .build();
     }
 }
