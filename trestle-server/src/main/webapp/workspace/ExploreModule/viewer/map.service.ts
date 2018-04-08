@@ -95,6 +95,16 @@ export class MapService {
         return this.cache.get("datasets", this.dsAPICall());
     }
 
+    public getDatasetFactValues(dataset: string, fact: string, limit: number): Observable<string[]> {
+        return this.http.post("/visualize/values", {
+            dataset,
+            fact,
+            limit
+        })
+            .map((res) => res.json())
+            .catch((error: Error) => Observable.throw(error || "Server Error"));
+    }
+
     /**
      * Before a spatio-temporal interesction for the given WKT bounding box, returning a GeoJSON Feature Collection
      * @param {string} dataset to use

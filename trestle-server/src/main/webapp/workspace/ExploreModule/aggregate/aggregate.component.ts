@@ -3,6 +3,7 @@ import { MapService, wktValue } from "../viewer/map.service";
 import { AggregationService } from "./aggregation.service";
 import { ReplaySubject } from "rxjs/ReplaySubject";
 import { MapSource, TrestleMapComponent } from "../../UIModule/map/trestle-map.component";
+import { MatSelectChange } from "@angular/material";
 
 
 @Component({
@@ -16,12 +17,15 @@ export class AggregateComponent implements OnInit {
     public map: TrestleMapComponent;
     public selectedAggregation: string;
     public datasets: string[];
+    public countries: string[];
     public selectedDs: string;
+    public selectedCountry: string;
     public mapConfig: mapboxgl.MapboxOptions;
     public dataChanges: ReplaySubject<MapSource>;
 
     public constructor(private ms: MapService, private as: AggregationService) {
         this.datasets = [];
+        this.countries = [];
 
         this.mapConfig = {
             style: "mapbox://styles/nrobison/cj3n7if3q000s2sutls5a1ny7",
@@ -54,6 +58,15 @@ export class AggregateComponent implements OnInit {
                         id: "test"
                     }
                 });
+            });
+    }
+
+    public datasetChanged = (change: MatSelectChange): void => {
+        console.debug("Changed to:", change);
+        this.ms
+            .getDatasetFactValues(change.value, "adm0_name", 100)
+            .subscribe((values) => {
+                this.countries = values;
             });
     }
 }

@@ -8,15 +8,25 @@
                      class="map-container"></trestle-map>
     </div>
     <div fxLayout="row" fxLayoutGap="20px">
-        <div fxFlex="30%">
+        <div>
             Select a dataset:
-            <mat-select [(value)]="selectedDs" placeholder="Select available dataset">
+            <mat-select [(value)]="selectedDs"
+                        placeholder="Select available dataset"
+                        (selectionChange)="datasetChanged($event)">
                 <mat-option *ngFor="let ds of datasets" [value]="ds">
                     {{ds}}
                 </mat-option>
             </mat-select>
         </div>
-        <div fxFlex="30%">
+        <div>
+            Country:
+            <mat-select [(value)]="selectedCountry" placeholder="Select country">
+                <mat-option *ngFor="let country of countries" [value]="country">
+                    {{country}}
+                </mat-option>
+            </mat-select>
+        </div>
+        <div>
             <div [hidden]="!selectedDs">
                 Select an Aggregation:
                 <mat-select [(value)]="selectedAggregation">

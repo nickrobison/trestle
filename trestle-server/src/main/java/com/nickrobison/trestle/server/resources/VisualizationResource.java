@@ -12,6 +12,7 @@ import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
 import com.nickrobison.trestle.server.resources.requests.ComparisonRequest;
+import com.nickrobison.trestle.server.resources.requests.DatasetValueRequest;
 import com.nickrobison.trestle.server.resources.requests.IntersectRequest;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
@@ -29,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.wololo.jts2geojson.GeoJSONReader;
 
 import javax.inject.Inject;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -93,6 +95,23 @@ public class VisualizationResource {
     public Response getDatasets() {
         final Set<String> availableDatasets = this.reasoner.getAvailableDatasets();
         return ok(availableDatasets).build();
+    }
+
+    @POST
+    @Path("/values")
+    public Response getDatasetValues(@Valid DatasetValueRequest request) {
+        final Class<?> datasetClass;
+        try {
+            datasetClass = this.reasoner.getDatasetClass(request.getDataset());
+        } catch (UnregisteredClassException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Class does not exist").build();
+        }
+        final Optional<List<Object>> factValues = this.reasoner.sampleFactValues(datasetClass, request.getFact(), request.getLimit());
+        if (factValues.isPresent()) {
+            return ok(factValues.get()).build();
+        } else {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Cannot get fact values").build();
+        }
     }
 
     @POST
