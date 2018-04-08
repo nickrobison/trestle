@@ -56,6 +56,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
     private static final String MISSING_INDIVIDUAL = "Unable to get individual";
     private static final OffsetDateTime TEMPORAL_MAX_VALUE = LocalDate.of(3000, 1, 1).atStartOfDay().atOffset(ZoneOffset.UTC);
+    public static final String MISSING_FACT_ERROR = "Fact {} does not exist on dataset {}";
 
     private final TrestleExecutorService objectReaderThreadPool;
     private final ObjectEngineUtils engineUtils;
@@ -375,7 +376,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
 //        Parse String to Fact IRI
         final Optional<IRI> factIRI = this.classParser.getFactIRI(clazz, factName);
         if (!factIRI.isPresent()) {
-            logger.error("Cannot parse {} for individual {}", individual, factName);
+            logger.error(MISSING_FACT_ERROR, factName, this.classParser.getObjectClass(clazz));
             return Optional.empty();
         }
 
@@ -390,7 +391,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
         final Optional<Class<@NonNull ?>> datatypeOptional = this.classParser.getFactDatatype(clazz, factName.getIRI().toString());
 
         if (!datatypeOptional.isPresent()) {
-            logger.warn("Individual {} has no Fact {}", individual, factName);
+            logger.warn(MISSING_FACT_ERROR, factName, this.classParser.getObjectClass(clazz));
             return Optional.empty();
         }
 
@@ -418,11 +419,76 @@ public class TrestleObjectReader implements ITrestleObjectReader {
 //        Optional::isPresent works fine, Checker is wrong
         @SuppressWarnings("methodref.receiver.invalid") final List<Object> factValues = resultSet.getResults()
                 .stream()
-                .map(result -> result.getLiteral("value"))
-                .filter(Optional::isPresent)
-                .map(literal -> this.typeConverter.reprojectSpatial(this.typeConverter.extractOWLLiteral(datatype, literal.get()),
-                        this.classParser.getClassProjection(clazz)))
+                .map(result -> result.unwrapLiteral("value"))
+                .map(literal -> this.handleLiteral(clazz, datatype, literal))
                 .collect(Collectors.toList());
         return Optional.of(factValues);
+    }
+
+    @Override
+    public Optional<List<Object>> sampleFactValues(Class<?> clazz, String factName, long sampleLimit) {
+        final Optional<IRI> factIRI = this.classParser.getFactIRI(clazz, factName);
+        if (!factIRI.isPresent()) {
+            logger.error(MISSING_FACT_ERROR, factName, this.classParser.getObjectClass(clazz));
+            return Optional.empty();
+        }
+
+        return sampleFactValues(clazz, df.getOWLDataProperty(factIRI.get()), sampleLimit);
+    }
+
+    @Override
+    public Optional<List<Object>> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit) {
+
+        final OWLClass datasetClass = this.classParser.getObjectClass(clazz);
+        final Optional<Class<?>> datatypeOptional = this.classParser.getFactDatatype(clazz, factName.getIRI().toString());
+        if (!datatypeOptional.isPresent()) {
+            logger.error(MISSING_FACT_ERROR, factName, datasetClass);
+            return Optional.empty();
+        }
+
+        final Class<?> datatype = datatypeOptional.get();
+
+        final String factValueQuery = this.qb.buildDatasetFactValueQuery(datasetClass, factName, sampleLimit);
+        final CompletableFuture<List<Object>> factValuesFuture = CompletableFuture.supplyAsync(() -> {
+            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(false);
+            try {
+                return this.ontology.executeSPARQLResults(factValueQuery);
+            } finally {
+                this.ontology.returnAndCommitTransaction(tt);
+            }
+        }, this.objectReaderThreadPool)
+                .thenApply(results -> results
+                        .getResults()
+                        .stream()
+                        .map((result) -> result.unwrapLiteral("o"))
+                        .map((literal) -> this.handleLiteral(clazz, datatype, literal))
+                        .collect(Collectors.toList()));
+
+        try {
+            final List<Object> factValues = factValuesFuture.get();
+            return Optional.of(factValues);
+        } catch (InterruptedException e) {
+            logger.error("Interrupted while getting values for fact {} on dataset {}", factName, datasetClass, e);
+            Thread.currentThread().interrupt();
+            return Optional.empty();
+        } catch (ExecutionException e) {
+            logger.error("Cannot get values for fact {} on dataset {}", factName, datasetClass, e);
+            return Optional.empty();
+        }
+    }
+
+
+    /**
+     * Handle extracting and reprojecting a given {@link OWLLiteral}
+     *
+     * @param datasetClass - {@link Class} of {@link OWLClass}
+     * @param datatype     - Java {@link Class} of given {@link OWLLiteral}
+     * @param literal      - {@link OWLLiteral} to process
+     * @return - {@link Object} of the given datatype
+     */
+    private Object handleLiteral(Class<?> datasetClass, Class<?> datatype, OWLLiteral literal) {
+        return this.typeConverter.reprojectSpatial(
+                this.typeConverter.extractOWLLiteral(datatype, literal),
+                this.classParser.getClassProjection(datasetClass));
     }
 }

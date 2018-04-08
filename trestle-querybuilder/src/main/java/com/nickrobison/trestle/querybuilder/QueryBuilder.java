@@ -405,6 +405,24 @@ public class QueryBuilder {
         return stringValue;
     }
 
+    public String buildDatasetFactValueQuery(OWLClass datasetClass, OWLDataProperty dataProperty, long limit) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText("SELECT DISTINCT ?o " +
+                "WHERE { " +
+                "?m rdf:type ?type ." +
+                "?m trestle:has_fact ?f ." +
+                "?f ?p ?o ." +
+                "VALUES ?p {?factValue}} " +
+                "LIMIT ?factLimit");
+        ps.setLiteral("factLimit", limit);
+        ps.setIri("type", getFullIRIString(datasetClass));
+        ps.setIri("factValue", getFullIRIString(dataProperty));
+
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
+    }
+
     /**
      * Build spatial intersection
      *

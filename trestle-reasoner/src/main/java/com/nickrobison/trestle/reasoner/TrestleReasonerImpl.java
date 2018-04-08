@@ -451,6 +451,16 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
+    public Optional<List<Object>> sampleFactValues(Class<?> clazz, String factName, long sampleLimit) {
+        return this.objectReader.sampleFactValues(clazz, factName, sampleLimit);
+    }
+
+    @Override
+    public Optional<List<Object>> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit) {
+        return this.objectReader.sampleFactValues(clazz, factName, sampleLimit);
+    }
+
+    @Override
     public Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, String individual) {
         return getIndividualEvents(clazz, df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual)));
     }
