@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -377,25 +378,59 @@ public class QueryBuilder {
         return stringValue;
     }
 
-    public String buildAggregationQuery(List<OWLNamedIndividual> individuals, OffsetDateTime existsFrom, OffsetDateTime existsTo) {
-
-//        Join all the individuals
-        final String individualValues = individuals
-                .stream()
-                .map(OWLIndividual::toStringID)
-                .map(id -> String.format("<%s>", id))
-                .collect(Collectors.joining(" "));
-
-
+    public String buildSpatialAggregationQuery(OWLClass datasetClass, String wkt, OffsetDateTime existsFrom, OffsetDateTime existsTo, OffsetDateTime atTemporal, OffsetDateTime dbTemporal) {
         final ParameterizedSparqlString ps = buildBaseString();
-        ps.setCommandText(String.format("SELECT DISTINCT ?m " +
+        ps.setCommandText("SELECT DISTINCT ?m " +
                 "WHERE { " +
+                "?m rdf:type ?owlClass ." +
                 "?m trestle:exists_from ?ef ." +
                 "OPTIONAL{?f trestle:exists_to ?et} ." +
+                "?m trestle:has_fact ?f ." +
+                "OPTIONAL{?f trestle:valid_from ?vf} ." +
+                "OPTIONAL{?f trestle_valid_to ?vt} ." +
+                "OPTIONAL{?f trestle_valid_at ?va} ." +
+                "?f trestle:database_from ?df ." +
+                "OPTIONAL{?f trestle:database_to ?dt } ." +
+                "?f ogc:sfOverlaps ?wktValue^^ogc:wktLiteral ." +
                 "FILTER((?ef <= ?existsFrom^^xsd:dateTime) && " +
-                "(!bound(?et) || (?et > ?existsTo^^xsd:dateTime))) ." +
-                "VALUES ?m {%s}}", individualValues));
-//        ps.setIri("type", getFullIRIString(datasetClass));
+                "(!bound(?et) || (?et > ?existsTo^^xsd:dateTime))) .");
+        ps.append("FILTER ((!bound(?vf) || " +
+                "(?vf <= ?validAt^^xsd:dateTime) && " +
+                "(!bound(?vt) || " +
+                "?vt > ?validAt^^xsd:dateTime)) && " +
+                "(!bound(?va) || " +
+                "(?va = ?validAt^^xsd:dateTime))) .");
+        ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime))");
+        ps.append("}");
+
+//        Set all the values
+        ps.setIri("owlClass", getFullIRIString(datasetClass));
+        ps.setLiteral("wktValue", wkt);
+        ps.setLiteral("existsFrom", existsFrom.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        ps.setLiteral("existsTo", existsTo.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        ps.setLiteral("validAt", atTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        ps.setLiteral("dbAt", dbTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+
+        final String queryString = ps.toString();
+        logger.trace(queryString);
+        return queryString;
+    }
+
+    public String buildAggregationQuery(OWLClass datasetClass, OWLDataProperty fact, OWLLiteral factValue, OffsetDateTime existsFrom, OffsetDateTime existsTo, OffsetDateTime atTemporal, OffsetDateTime dbTemporal) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText("SELECT DISTINCT ?m " +
+                "WHERE { " +
+                "?m rdf:type ?owlClass ." +
+                "?m trestle:exists_from ?ef ." +
+                "OPTIONAL{?m trestle:exists_to ?et} ." +
+                "?m trestle:has_fact ?f ." +
+                "?f ?fact ?o ." +
+                "VALUES ?o {?factValue} ." +
+                "FILTER((?ef <= ?existsFrom^^xsd:dateTime) && " +
+                "(!bound(?et) || (?et > ?existsTo^^xsd:dateTime)))}");
+        ps.setIri("owlClass", getFullIRIString(datasetClass));
+        ps.setIri("fact", getFullIRIString(fact));
+        ps.setLiteral("factValue", factValue.getLiteral(), "en");
         ps.setLiteral("existsFrom", existsFrom.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         ps.setLiteral("existsTo", existsTo.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 //        ps.setLiteral("wktString", wkt);

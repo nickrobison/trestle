@@ -5,15 +5,17 @@ import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
+import com.nickrobison.trestle.reasoner.parser.IClassBuilder;
 import com.nickrobison.trestle.reasoner.parser.IClassParser;
+import com.nickrobison.trestle.reasoner.parser.ITypeConverter;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.vividsolutions.jts.geom.*;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.semanticweb.owlapi.model.AsOWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,15 +27,20 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import static com.nickrobison.trestle.reasoner.engines.object.TrestleObjectReader.MISSING_FACT_ERROR;
+
 /**
  * Created by nickrobison on 3/24/18.
  */
 public class AggregationEngine {
 
     private static final Logger logger = LoggerFactory.getLogger(AggregationEngine.class);
+    private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
 
     private final ITrestleObjectReader reader;
     private final IClassParser parser;
+    private final IClassBuilder builder;
+    private final ITypeConverter typeConverter;
     private final QueryBuilder qb;
     private final ITrestleOntology ontology;
     private final TrestleExecutorService aggregationPool;
@@ -48,6 +55,8 @@ public class AggregationEngine {
         this.qb = queryBuilder;
         this.ontology = ontology;
         this.parser = trestleParser.classParser;
+        this.builder = trestleParser.classBuilder;
+        this.typeConverter = trestleParser.typeConverter;
         this.aggregationPool = factory.create("aggregation-pool");
 
     }
@@ -57,7 +66,7 @@ public class AggregationEngine {
 //        this.aggregateDataset(registeredClass, wkt);
 //    }
 
-    public <T extends @NonNull Object> Optional<Geometry> aggregateDataset(Class<T> clazz, String wkt) {
+    public <T extends @NonNull Object> Optional<Geometry> aggregateDataset(Class<T> clazz, AggregationRestriction restriction) {
         final OffsetDateTime atTemporal = OffsetDateTime.now();
         final OffsetDateTime dbTemporal = OffsetDateTime.now();
 
@@ -65,7 +74,14 @@ public class AggregationEngine {
         final OWLClass objectClass = this.parser.getObjectClass(clazz);
         final Integer classProjection = this.parser.getClassProjection(clazz);
 
-        final String intersectionQuery = this.qb.buildTemporalSpatialIntersection(objectClass, wkt, atTemporal, dbTemporal);
+        final IRI factIRI = this.parser.getFactIRI(clazz, restriction.getFact())
+                .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, restriction.getFact(), objectClass)));
+
+        final Class<?> factDatatype = this.parser.getFactDatatype(clazz, restriction.getFact())
+                .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, restriction.getFact(), objectClass)));
+
+
+        final String intersectionQuery = buildAggregationQuery(objectClass, factIRI, factDatatype, restriction, atTemporal, dbTemporal);
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
 //        We have to break this apart into 2 queries for a couple of reasons.
@@ -77,7 +93,7 @@ public class AggregationEngine {
                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                 final Instant start = Instant.now();
                 try {
-                    logger.debug("Performing spatial intersection for aggregation");
+                    logger.debug("Performing aggregation restriction query");
                     return this.ontology.executeSPARQLResults(intersectionQuery);
                 } finally {
                     logger.debug("Finished, took {} ms", Duration.between(start, Instant.now()).toMillis());
@@ -91,22 +107,21 @@ public class AggregationEngine {
                             .map(AsOWLNamedIndividual::asOWLNamedIndividual)
                             .collect(Collectors.toList()))
 //                    Now, do the aggregation query
-                    .thenApply(individuals -> {
-                        final String aggregationQuery = this.qb.buildAggregationQuery(individuals,
-                                LocalDate.of(1990, 1, 1).atStartOfDay(ZoneOffset.UTC).toOffsetDateTime(),
-                                LocalDate.of(2015, 1, 1).atStartOfDay(ZoneOffset.UTC).toOffsetDateTime());
-                        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-                        try {
-                            return this.ontology.executeSPARQLResults(aggregationQuery);
-                        } finally {
-                            this.ontology.returnAndCommitTransaction(tt);
-                        }
-                    })
-                    .thenApply((resultSet) -> resultSet
-                            .getResults()
+//                    .thenApply(individuals -> {
+//                        final String aggregationQuery = this.qb.buildAggregationQuery(individuals,
+//                                );
+//                        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+//                        try {
+//                            return this.ontology.executeSPARQLResults(aggregationQuery);
+//                        } finally {
+//                            this.ontology.returnAndCommitTransaction(tt);
+//                        }
+//                    })
+                    .thenApply(individuals -> individuals
+//                            .getResults()
                             .stream()
-                            .map(result -> result.unwrapIndividual("m"))
-                            .map(i -> i.asOWLNamedIndividual().getIRI())
+//                            .map(result -> result.unwrapIndividual("m"))
+                            .map(HasIRI::getIRI)
                             .map(individual -> CompletableFuture.supplyAsync(() -> {
                                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                                 try {
@@ -143,6 +158,55 @@ public class AggregationEngine {
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             e.printStackTrace();
             return Optional.empty();
+        }
+    }
+
+    private String buildAggregationQuery(OWLClass datasetClass, IRI factIRI, Class<?> factDatatype, AggregationRestriction restriction, OffsetDateTime atTemporal, OffsetDateTime dbTemporal) {
+
+
+        final OffsetDateTime existsFrom = LocalDate.of(1990, 1, 1).atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
+        final OffsetDateTime existsTo = LocalDate.of(2015, 1, 1).atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
+
+        final String query;
+//        Are we a spatial value? If so, parse it out
+        if (restriction.fact.equals("asWKT")) {
+            final String wkt = (String) this.typeConverter.reprojectSpatial(restriction.getValue(), 4326);
+            query = this.qb.buildSpatialAggregationQuery(datasetClass, wkt, existsFrom, existsTo, atTemporal, dbTemporal);
+        } else {
+            final OWLDatatype owlDatatype = this.typeConverter.getDatatypeFromJavaClass(factDatatype);
+            query = this.qb.buildAggregationQuery(datasetClass,
+                    df.getOWLDataProperty(factIRI),
+                    df.getOWLLiteral(restriction.getValue().toString(), owlDatatype),
+                    existsFrom, existsTo,
+                    atTemporal, dbTemporal);
+        }
+        return query;
+    }
+
+
+    public static class AggregationRestriction {
+
+        private String fact;
+        private Object value;
+
+        public AggregationRestriction() {
+//            Not used
+        }
+
+        public String getFact() {
+            return fact;
+        }
+
+        public void setFact(String fact) {
+            this.fact = fact;
+        }
+
+        public Object getValue() {
+            return value;
+        }
+
+        public void setValue(Object value) {
+            this.value = value;
         }
     }
 }

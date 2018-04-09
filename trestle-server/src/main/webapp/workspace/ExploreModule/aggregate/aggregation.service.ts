@@ -1,9 +1,12 @@
 import { Injectable } from "@angular/core";
 import { TrestleHttp } from "../../UserModule/trestle-http.provider";
 import { Observable } from "rxjs/Observable";
-import { MapService, wktValue } from "../viewer/map.service";
-import { stringify } from "wellknown";
 import { GeometryObject } from "geojson";
+
+export interface IAggregationRestriction<T> {
+    fact: string;
+    value: T;
+}
 
 @Injectable()
 export class AggregationService {
@@ -12,11 +15,11 @@ export class AggregationService {
 
     }
 
-    public performAggregation(dataset: string, strategy: string, wkt: wktValue): Observable<GeometryObject> {
+    public performAggregation<T>(dataset: string, strategy: string, restriction: IAggregationRestriction<T>): Observable<GeometryObject> {
         const postBody = {
             dataset,
             strategy,
-            wkt: stringify(MapService.normalizeToGeoJSON(wkt))
+            restriction
         };
         console.debug("Aggregating!", postBody);
         return this.http.post("/aggregate", postBody)

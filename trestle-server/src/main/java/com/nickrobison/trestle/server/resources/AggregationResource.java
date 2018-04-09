@@ -39,7 +39,7 @@ public class AggregationResource {
     public Response aggregateDataset(@Valid AggregationRequest request) throws UnregisteredClassException {
         final AggregationEngine aggregationEngine = ((TrestleReasonerImpl) reasoner).getAggregationEngine();
         final Class<?> dataset = this.reasoner.getDatasetClass(request.getDataset());
-        final Optional<Geometry> geometry = aggregationEngine.aggregateDataset(dataset, request.getWkt());
+        final Optional<Geometry> geometry = aggregationEngine.aggregateDataset(dataset, request.getRestriction());
         if (geometry.isPresent()) {
             final String GeoJSONString = new GeoJsonWriter().write(geometry.get());
             return Response.ok().entity(GeoJSONString).build();

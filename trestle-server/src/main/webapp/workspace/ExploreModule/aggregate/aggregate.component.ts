@@ -1,10 +1,10 @@
 import { AfterViewInit, Component, OnInit, ViewChild } from "@angular/core";
 import { MapService, wktValue } from "../viewer/map.service";
-import { AggregationService } from "./aggregation.service";
+import { AggregationService, IAggregationRestriction } from "./aggregation.service";
 import { ReplaySubject } from "rxjs/ReplaySubject";
 import { MapSource, TrestleMapComponent } from "../../UIModule/map/trestle-map.component";
 import { MatSelectChange } from "@angular/material";
-
+import { stringify } from "wellknown";
 
 @Component({
     selector: "aggregate",
@@ -45,7 +45,20 @@ export class AggregateComponent implements OnInit {
     }
 
     public aggregate(): void {
-        this.as.performAggregation("gaul-test", "exists", this.map.getMapBounds())
+        let restriction: IAggregationRestriction<string>;
+        if (this.selectedCountry) {
+            restriction = {
+                fact: "adm0_name",
+                value: this.selectedCountry
+            };
+        } else {
+            restriction = {
+                fact: "asWKT",
+                value: stringify(MapService.normalizeToGeoJSON(this.map.getMapBounds()))
+            };
+        }
+
+        this.as.performAggregation("gaul-test", "exists", restriction)
             .subscribe((agg) => {
                 console.debug("Done", agg);
                 this.dataChanges.next({
