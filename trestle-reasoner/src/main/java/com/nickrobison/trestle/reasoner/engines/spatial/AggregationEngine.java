@@ -3,7 +3,6 @@ package com.nickrobison.trestle.reasoner.engines.spatial;
 import com.nickrobison.trestle.common.LambdaUtils;
 import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
-import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.parser.IClassBuilder;
@@ -62,11 +61,6 @@ public class AggregationEngine {
 
     }
 
-//    public void aggregateDataset(String datasetClass, String wkt) {
-//        final Class<?> registeredClass = this.objectEngineUtils.getRegisteredClass(datasetClass);
-//        this.aggregateDataset(registeredClass, wkt);
-//    }
-
     public <T extends @NonNull Object> Optional<Geometry> aggregateDataset(Class<T> clazz, AggregationRestriction restriction) {
         final OffsetDateTime atTemporal = OffsetDateTime.now();
         final OffsetDateTime dbTemporal = OffsetDateTime.now();
@@ -91,9 +85,6 @@ public class AggregationEngine {
         final String intersectionQuery = buildAggregationQuery(objectClass, factIRI, factDatatype, restriction, atTemporal, dbTemporal);
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-//        We have to break this apart into 2 queries for a couple of reasons.
-//        1. GraphDB doesn't seem to support using spatial queries as a predicate, despite what their documentation says, so we need to use FILTER statements
-//        2. Using multiple FILTER statements is SLOW! We could probably do this using nested SPARQL queries, but this is good enough for now.
         try {
 //            First, do the TS intersection, to figure out a list of individuals to aggregate with
             final CompletableFuture<Geometry> unionGeomFuture = CompletableFuture.supplyAsync(() -> {
@@ -113,21 +104,8 @@ public class AggregationEngine {
                             .map(result -> result.unwrapIndividual("m"))
                             .map(AsOWLNamedIndividual::asOWLNamedIndividual)
                             .collect(Collectors.toList()))
-//                    Now, do the aggregation query
-//                    .thenApply(individuals -> {
-//                        final String aggregationQuery = this.qb.buildAggregationQuery(individuals,
-//                                );
-//                        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-//                        try {
-//                            return this.ontology.executeSPARQLResults(aggregationQuery);
-//                        } finally {
-//                            this.ontology.returnAndCommitTransaction(tt);
-//                        }
-//                    })
                     .thenApply(individuals -> individuals
-//                            .getResults()
                             .stream()
-//                            .map(result -> result.unwrapIndividual("m"))
                             .map(HasIRI::getIRI)
                             .map(individual -> CompletableFuture.supplyAsync(() -> {
                                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);

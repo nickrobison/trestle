@@ -5,21 +5,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.reasoner.engines.AbstractComparisonReport;
-import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngineUtils;
+import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
-import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
+import com.nickrobison.trestle.server.modules.ReasonerModule;
 import com.nickrobison.trestle.server.resources.requests.ComparisonRequest;
 import com.nickrobison.trestle.server.resources.requests.DatasetValueRequest;
 import com.nickrobison.trestle.server.resources.requests.IntersectRequest;
-import com.nickrobison.trestle.server.modules.ReasonerModule;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.PrecisionModel;
-import com.vividsolutions.jts.io.WKTReader;
 import io.dropwizard.jersey.params.NonEmptyStringParam;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -41,7 +37,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.Response.ok;
@@ -84,17 +79,6 @@ public class VisualizationResource {
             return ok(individuals).build();
         }
         return ok(new ArrayList<String>()).build();
-    }
-
-    @GET
-    @Path("/datasets")
-    @ApiOperation(value = "Retrieve all currently registered datasets",
-            notes = "Retrieves a Set of all available datasets currently registered with the database",
-            response = String.class,
-            responseContainer = "Set")
-    public Response getDatasets() {
-        final Set<String> availableDatasets = this.reasoner.getAvailableDatasets();
-        return ok(availableDatasets).build();
     }
 
     @POST
