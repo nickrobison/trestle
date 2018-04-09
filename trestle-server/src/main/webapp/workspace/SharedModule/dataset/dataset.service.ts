@@ -24,12 +24,27 @@ export class DatasetService {
         return this.cache.get("datasets", this.dsAPICall());
     }
 
+    /**
+     * Get all the data properties for the given dataset, returns them as a list with everything but the property name removed.
+     *
+     * @param {string} dataset - Dataset to query
+     * @returns {Observable<string[]>} - Filtered list of registered data properties
+     */
     public getDatasetProperties(dataset: string): Observable<string[]> {
         return this.http.get("/datasets/" + dataset)
             .map((res) => res.json())
             .map(DatasetService.filterPropertyNames);
     }
 
+    /**
+     * Get a sampling of unique values for the given dataset property
+     * Defaults to 100 values if no limit is provided.
+     *
+     * @param {string} dataset - Dataset to query
+     * @param {string} fact - Property to get values for
+     * @param {number} limit - Optional limit of values to return (defaults to 100)
+     * @returns {Observable<string[]>} - List of property values
+     */
     public getDatasetFactValues(dataset: string, fact: string, limit = 100): Observable<string[]> {
 
         const datsetURL = "/datasets/" + dataset + "/" + fact + "/values";

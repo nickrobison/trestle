@@ -19,7 +19,7 @@ export class AggregateComponent implements OnInit {
     public selectedAggregation: string;
     public datasets: string[];
     public properties: string[];
-    public countries: string[];
+    public values: string[];
     public selectedDs: string;
     public selectedProperty: string;
     public selectedValue: string;
@@ -33,7 +33,7 @@ export class AggregateComponent implements OnInit {
                        private ds: DatasetService) {
         this.datasets = [];
         this.properties = [];
-        this.countries = [];
+        this.values = [];
 
         this.mapConfig = {
             style: "mapbox://styles/nrobison/cj3n7if3q000s2sutls5a1ny7",
@@ -101,7 +101,7 @@ export class AggregateComponent implements OnInit {
         this.ds
             .getDatasetFactValues(this.selectedDs, change.value)
             .subscribe((values) => {
-                this.countries = values;
+                this.values = values;
             });
     };
 

@@ -30,8 +30,8 @@
             </div>
             <div [hidden]="!showPropertyValues()" fxFlex="33%">
                 <mat-select [(value)]="selectedValue" placeholder="Select value">
-                    <mat-option *ngFor="let country of countries" [value]="country">
-                        {{country}}
+                    <mat-option *ngFor="let pv of values | sort" [value]="pv">
+                        {{pv}}
                     </mat-option>
                 </mat-select>
             </div>
