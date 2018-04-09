@@ -387,8 +387,8 @@ public class QueryBuilder {
                 "OPTIONAL{?f trestle:exists_to ?et} ." +
                 "?m trestle:has_fact ?f ." +
                 "OPTIONAL{?f trestle:valid_from ?vf} ." +
-                "OPTIONAL{?f trestle_valid_to ?vt} ." +
-                "OPTIONAL{?f trestle_valid_at ?va} ." +
+                "OPTIONAL{?f trestle:valid_to ?vt} ." +
+                "OPTIONAL{?f trestle:valid_at ?va} ." +
                 "?f trestle:database_from ?df ." +
                 "OPTIONAL{?f trestle:database_to ?dt } ." +
                 "?f ogc:sfOverlaps ?wktValue^^ogc:wktLiteral ." +
