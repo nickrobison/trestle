@@ -26,6 +26,7 @@ import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.PointTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -56,7 +57,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
     private static final String MISSING_INDIVIDUAL = "Unable to get individual";
     private static final OffsetDateTime TEMPORAL_MAX_VALUE = LocalDate.of(3000, 1, 1).atStartOfDay().atOffset(ZoneOffset.UTC);
-    public static final String MISSING_FACT_ERROR = "Fact {} does not exist on dataset {}";
+    public static final String MISSING_FACT_ERROR = "Fact %s does not exist on dataset %s";
 
     private final TrestleExecutorService objectReaderThreadPool;
     private final ObjectEngineUtils engineUtils;
@@ -372,30 +373,22 @@ public class TrestleObjectReader implements ITrestleObjectReader {
     }
 
     @Override
-    public Optional<List<Object>> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
+    public List<Object> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
 //        Parse String to Fact IRI
-        final Optional<IRI> factIRI = this.classParser.getFactIRI(clazz, factName);
-        if (!factIRI.isPresent()) {
-            logger.error(MISSING_FACT_ERROR, factName, this.classParser.getObjectClass(clazz));
-            return Optional.empty();
-        }
+        final IRI factIRI = this.classParser.getFactIRI(clazz, factName)
+                .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, factName, this.classParser.getObjectClass(clazz))));
 
         return getFactValues(clazz,
                 df.getOWLNamedIndividual(parseStringToIRI(this.reasonerPrefix, individual)),
-                df.getOWLDataProperty(factIRI.get()), validStart, validEnd, databaseTemporal);
+                df.getOWLDataProperty(factIRI), validStart, validEnd, databaseTemporal);
     }
 
     @Override
-    public Optional<List<Object>> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
+    public List<Object> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
 
-        final Optional<Class<@NonNull ?>> datatypeOptional = this.classParser.getFactDatatype(clazz, factName.getIRI().toString());
+        final Class<?> datatype = this.classParser.getFactDatatype(clazz, factName.getIRI().toString())
+                .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, factName, this.classParser.getObjectClass(clazz))));
 
-        if (!datatypeOptional.isPresent()) {
-            logger.warn(MISSING_FACT_ERROR, factName, this.classParser.getObjectClass(clazz));
-            return Optional.empty();
-        }
-
-        Class<@NonNull ?> datatype = datatypeOptional.get();
 //        Parse the temporal to OffsetDateTime, if they're not null
         final OffsetDateTime start, end, db;
         if (validStart != null) {
@@ -417,36 +410,27 @@ public class TrestleObjectReader implements ITrestleObjectReader {
         final String historyQuery = this.qb.buildFactHistoryQuery(individual, factName, start, end, db);
         final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(historyQuery);
 //        Optional::isPresent works fine, Checker is wrong
-        @SuppressWarnings("methodref.receiver.invalid") final List<Object> factValues = resultSet.getResults()
+        return resultSet.getResults()
                 .stream()
                 .map(result -> result.unwrapLiteral("value"))
                 .map(literal -> this.handleLiteral(clazz, datatype, literal))
                 .collect(Collectors.toList());
-        return Optional.of(factValues);
     }
 
     @Override
-    public Optional<List<Object>> sampleFactValues(Class<?> clazz, String factName, long sampleLimit) {
-        final Optional<IRI> factIRI = this.classParser.getFactIRI(clazz, factName);
-        if (!factIRI.isPresent()) {
-            logger.error(MISSING_FACT_ERROR, factName, this.classParser.getObjectClass(clazz));
-            return Optional.empty();
-        }
+    public List<Object> sampleFactValues(Class<?> clazz, String factName, long sampleLimit) {
+        final IRI factIRI = this.classParser.getFactIRI(clazz, factName)
+                .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, factName, this.classParser.getObjectClass(clazz))));
 
-        return sampleFactValues(clazz, df.getOWLDataProperty(factIRI.get()), sampleLimit);
+        return sampleFactValues(clazz, df.getOWLDataProperty(factIRI), sampleLimit);
     }
 
     @Override
-    public Optional<List<Object>> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit) {
+    public List<Object> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit) {
 
         final OWLClass datasetClass = this.classParser.getObjectClass(clazz);
-        final Optional<Class<?>> datatypeOptional = this.classParser.getFactDatatype(clazz, factName.getIRI().toString());
-        if (!datatypeOptional.isPresent()) {
-            logger.error(MISSING_FACT_ERROR, factName, datasetClass);
-            return Optional.empty();
-        }
-
-        final Class<?> datatype = datatypeOptional.get();
+        final Class<?> datatype = this.classParser.getFactDatatype(clazz, factName.getIRI().toString())
+                .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, factName, datasetClass)));
 
         final String factValueQuery = this.qb.buildDatasetFactValueQuery(datasetClass, factName, sampleLimit);
         final CompletableFuture<List<Object>> factValuesFuture = CompletableFuture.supplyAsync(() -> {
@@ -465,15 +449,14 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                         .collect(Collectors.toList()));
 
         try {
-            final List<Object> factValues = factValuesFuture.get();
-            return Optional.of(factValues);
+            return factValuesFuture.get();
         } catch (InterruptedException e) {
             logger.error("Interrupted while getting values for fact {} on dataset {}", factName, datasetClass, e);
             Thread.currentThread().interrupt();
-            return Optional.empty();
+            return ExceptionUtils.rethrow(e.getCause());
         } catch (ExecutionException e) {
             logger.error("Cannot get values for fact {} on dataset {}", factName, datasetClass, e);
-            return Optional.empty();
+            return ExceptionUtils.rethrow(e.getCause());
         }
     }
 

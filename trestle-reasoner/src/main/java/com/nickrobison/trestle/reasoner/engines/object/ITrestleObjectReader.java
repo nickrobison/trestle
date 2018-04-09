@@ -120,7 +120,7 @@ public interface ITrestleObjectReader {
      * @return - {@link Optional} {@link List} of Java {@link Object}
      * @throws IllegalArgumentException - Throws if the given Fact name does not exist on the dataset
      */
-    Optional<List<Object>> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal);
+    List<Object> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal);
 
     /**
      * Retrieve historical states of a given Fact
@@ -134,8 +134,9 @@ public interface ITrestleObjectReader {
      * @param validEnd         - Optional {@link Temporal} setting the end of the temporal filter
      * @param databaseTemporal - Optional {@link Temporal} filtering results to only certain fact versions
      * @return - {@link Optional} {@link List} of Java {@link Object}
+     * @throws IllegalArgumentException - Throws if the given Fact name does not exist on the dataset
      */
-    Optional<List<Object>> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal);
+    List<Object> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal);
 
 
     /**
@@ -146,8 +147,7 @@ public interface ITrestleObjectReader {
      * @param sampleLimit - {@link Long} maximum number of unique values to return
      * @return - {@link Optional} {@link List} of Java {@link Object}
      */
-    Optional<List<Object>> sampleFactValues(Class<?> clazz, String factName, long sampleLimit);
+    List<Object> sampleFactValues(Class<?> clazz, String factName, long sampleLimit);
 
-    Optional<List<Object>> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit);
-
+    List<Object> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit);
 }

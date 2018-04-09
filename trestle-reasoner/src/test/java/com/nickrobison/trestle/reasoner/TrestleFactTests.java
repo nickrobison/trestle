@@ -94,14 +94,15 @@ public class TrestleFactTests extends AbstractReasonerTest {
         reasoner.addFactToTrestleObject(v3.getClass(), "test-object", "testValue", "test value three", LocalDate.of(2007, 3, 26), null, null);
         reasoner.addFactToTrestleObject(v3.getClass(), "test-object", "wkt", "POINT(1.71255092695307 -30.572028714467507)", LocalDate.of(2017, 1, 1), null);
 
-//        Try to get some fact values
-        final Optional<List<Object>> values = reasoner.getFactValues(v3.getClass(), "test-object", "testValue", null, null, null);
-        assertAll(() -> assertTrue(values.isPresent(), "Should have fact values"),
-                () -> assertEquals(5, values.get().size(), "Should have 5 fact values"));
+//        Try for invalid fact name
+        assertThrows(IllegalArgumentException.class, () -> reasoner.getFactValues(v3.getClass(), "test-object", "missing-fact", null, null, null));
 
-        final Optional<List<Object>> wktValues = reasoner.getFactValues(v3.getClass(), "test-object", "wkt", LocalDate.of(1988, 3, 26), LocalDate.of(1995, 3, 26), null);
-        assertAll(() -> assertTrue(wktValues.isPresent(), "Should have wkt values"),
-                () -> assertEquals(2, wktValues.get().size(), "Should only have 2 wkt values"));
+//        Try to get some fact values
+        final List<Object> values = reasoner.getFactValues(v3.getClass(), "test-object", "testValue", null, null, null);
+        assertEquals(5, values.size(), "Should have 5 fact values");
+
+        final List<Object> wktValues = reasoner.getFactValues(v3.getClass(), "test-object", "wkt", LocalDate.of(1988, 3, 26), LocalDate.of(1995, 3, 26), null);
+        assertEquals(2, wktValues.size(), "Should only have 2 wkt values");
 
 //        Test merging with overlapping (non-continuing facts)
         final TestClasses.GAULTestClass overlappingFactTest = new TestClasses.GAULTestClass(4115, "test-fact-object", LocalDate.of(1989, 3, 26).atStartOfDay(), LocalDate.of(1990, 3, 26).atStartOfDay(), "POINT(0.71255092695307 -25.572028714467507)");
@@ -111,17 +112,17 @@ public class TrestleFactTests extends AbstractReasonerTest {
         assertThrows(TrestleMergeConflict.class, () -> reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "adm0_code", 9944, LocalDate.of(1989, 5, 14).atStartOfDay(), null));
         assertThrows(TrestleMergeConflict.class, () -> reasoner.writeTrestleObject(updatedFactClass));
 //        Read out the same object
-        final TestClasses.@NonNull GAULTestClass originalObject = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 14), null);
+        final TestClasses.GAULTestClass originalObject = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 14), null);
         assertEquals(overlappingFactTest, originalObject, "Should match the original object");
 
 //        Change method and try again
         this.reasoner.getMergeEngine().changeDefaultMergeStrategy(MergeStrategy.ExistingFacts);
         reasoner.writeTrestleObject(updatedFactClass);
-        final TestClasses.@NonNull GAULTestClass updatedObject = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 15), null);
+        final TestClasses.GAULTestClass updatedObject = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 15), null);
         assertEquals(updatedFactClass, updatedObject);
         reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "wkt", "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", LocalDate.of(1989, 5, 14), null, null);
         final TestClasses.GAULTestClass newWKT = new TestClasses.GAULTestClass(9944, "test-fact-object", LocalDate.of(1989, 03, 26).atStartOfDay(), LocalDate.of(1990, 03, 26).atStartOfDay(),  "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))");
-        final TestClasses.@NonNull GAULTestClass updatedWKT = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 15), null);
+        final TestClasses.GAULTestClass updatedWKT = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 15), null);
         assertEquals(newWKT, updatedWKT);
 
 //        Try for no merge.
@@ -130,8 +131,8 @@ public class TrestleFactTests extends AbstractReasonerTest {
         assertThrows(TrestleMergeConflict.class, () -> reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "wkt", "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", LocalDate.of(1989, 5, 14), null, null));
 //        Try to add facts in the future.
         this.reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "adm0_code", 1234, LocalDate.of(1990, 5, 14).atStartOfDay(), null, null);
-        final Optional<List<Object>> factValues = reasoner.getFactValues(TestClasses.GAULTestClass.class, "test-fact-object", "adm0_code", null, null, null);
-        assertEquals(4, factValues.get().size(), "Should have 4 values for ADM0_Code");
+        final List<Object> factValues = reasoner.getFactValues(TestClasses.GAULTestClass.class, "test-fact-object", "adm0_code", null, null, null);
+        assertEquals(4, factValues.size(), "Should have 4 values for ADM0_Code");
 
 ////        Test database temporals
 //        reasoner.getMetricsEngine().exportData(new File("./target/api-test-fact-validity-metrics.csv"));

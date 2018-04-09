@@ -103,14 +103,12 @@ public class VisualizationResource {
         final Class<?> datasetClass;
         try {
             datasetClass = this.reasoner.getDatasetClass(request.getDataset());
+            final List<Object> factValues = this.reasoner.sampleFactValues(datasetClass, request.getFact(), request.getLimit());
+            return ok(factValues).build();
         } catch (UnregisteredClassException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Class does not exist").build();
-        }
-        final Optional<List<Object>> factValues = this.reasoner.sampleFactValues(datasetClass, request.getFact(), request.getLimit());
-        if (factValues.isPresent()) {
-            return ok(factValues.get()).build();
-        } else {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Cannot get fact values").build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity("Fact does not exist on dataset").build();
         }
     }
 

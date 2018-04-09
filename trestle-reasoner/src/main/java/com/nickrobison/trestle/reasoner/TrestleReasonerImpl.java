@@ -441,22 +441,22 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public Optional<List<Object>> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
+    public List<Object> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
         return this.objectReader.getFactValues(clazz, individual, factName, validStart, validEnd, databaseTemporal);
     }
 
     @Override
-    public Optional<List<Object>> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
+    public List<Object> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
         return this.objectReader.getFactValues(clazz, individual, factName, validStart, validEnd, databaseTemporal);
     }
 
     @Override
-    public Optional<List<Object>> sampleFactValues(Class<?> clazz, String factName, long sampleLimit) {
+    public List<Object> sampleFactValues(Class<?> clazz, String factName, long sampleLimit) {
         return this.objectReader.sampleFactValues(clazz, factName, sampleLimit);
     }
 
     @Override
-    public Optional<List<Object>> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit) {
+    public List<Object> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit) {
         return this.objectReader.sampleFactValues(clazz, factName, sampleLimit);
     }
 
