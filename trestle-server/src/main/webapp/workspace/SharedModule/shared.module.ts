@@ -4,6 +4,8 @@ import { IndividualService } from "./individual/individual.service";
 import { RoundingPipe } from "./pipes/rounding.pipe";
 import { MapValuesPipe } from "./pipes/map-values.pipe";
 import { ColorService } from "./color/color.service";
+import { DATASET_CACHE, DatasetService } from "./dataset/dataset.service";
+import { DATASET_CACHE_DI_CONFIG } from "./shared.config";
 
 @NgModule({
     declarations: [
@@ -12,7 +14,11 @@ import { ColorService } from "./color/color.service";
     providers: [
         CacheService,
         IndividualService,
-        ColorService],
+        ColorService,
+        DatasetService,
+        {
+            provide: DATASET_CACHE, useFactory: () => (new CacheService<string, string[]>(DATASET_CACHE_DI_CONFIG))
+        }],
     exports: [
         RoundingPipe,
         MapValuesPipe]

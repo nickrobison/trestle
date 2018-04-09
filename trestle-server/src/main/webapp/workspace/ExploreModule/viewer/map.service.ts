@@ -1,7 +1,7 @@
 /**
  * Created by nrobison on 6/23/17.
  */
-import { Inject, Injectable, InjectionToken } from "@angular/core";
+import { Injectable } from "@angular/core";
 import { TrestleHttp } from "../../UserModule/trestle-http.provider";
 import { Response } from "@angular/http";
 import { Observable } from "rxjs/Observable";
@@ -12,7 +12,6 @@ import { ITrestleIndividual, TrestleIndividual } from "../../SharedModule/indivi
 import { Subscriber } from "rxjs/Subscriber";
 import { isNullOrUndefined } from "util";
 import * as Worker from "worker-loader!./map.worker";
-import { CacheService } from "../../SharedModule/cache/cache.service";
 
 export type wktType = "POINT" |
     "MULTIPOINT" |
@@ -71,38 +70,17 @@ export interface IMapWorkerResponse {
     geom: FeatureCollection<GeometryObject>;
 }
 
-export const DATASET_CACHE = new InjectionToken<CacheService<string, string[]>>("dataset.cache");
 
 @Injectable()
 export class MapService {
     private worker: Worker;
     private workerStream: Observable<IMapWorkerResponse>;
 
-    constructor(private http: TrestleHttp,
-                @Inject(DATASET_CACHE) private cache: CacheService<string, string[]>) {
+    constructor(private http: TrestleHttp) {
         //    Create the worker and register a stream for the results
         this.worker = new Worker();
         this.workerStream = Observable.fromEvent(this.worker, "message")
             .map((m: MessageEvent) => (m.data as IMapWorkerResponse));
-    }
-
-    /**
-     * Returns the list of currently registered datasets from the database
-     * @returns {Observable<string[]>}
-     */
-    public getAvailableDatasets(): Observable<string[]> {
-        // Try from cache first, then hit the API
-        return this.cache.get("datasets", this.dsAPICall());
-    }
-
-    public getDatasetFactValues(dataset: string, fact: string, limit: number): Observable<string[]> {
-        return this.http.post("/visualize/values", {
-            dataset,
-            fact,
-            limit
-        })
-            .map((res) => res.json())
-            .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
 
     /**
@@ -211,13 +189,6 @@ export class MapService {
                 });
         });
     };
-
-    private dsAPICall(): Observable<string[]> {
-        return this.http.get("/visualize/datasets")
-            .do((res) => console.debug("Available datasets:", res.text()))
-            .map((res: Response) => res.json())
-            .catch((error: Error) => Observable.throw(error || "Server Error"));
-    }
 
     public static normalizeToGeoJSON(geom: wktValue): Polygon | MultiPolygon {
         if (MapService.isGeometryObject(geom)) {

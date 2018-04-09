@@ -13,6 +13,7 @@ import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividu
 import { Subject } from "rxjs/Subject";
 import { IDataExport } from "../exporter/exporter.component";
 import LngLatBounds = mapboxgl.LngLatBounds;
+import { DatasetService } from "../../SharedModule/dataset/dataset.service";
 
 enum DatasetState {
     UNLOADED,
@@ -54,7 +55,9 @@ export class DatsetViewerComponent implements OnInit {
     public map: TrestleMapComponent;
     private mapBounds: LngLatBounds;
 
-    constructor(private mapService: MapService, private vs: IndividualService) {
+    constructor(private mapService: MapService,
+                private is: IndividualService,
+                private ds: DatasetService) {
         this.dataChanges = new Subject();
         this.exportIndividuals = [];
     }
@@ -63,7 +66,7 @@ export class DatsetViewerComponent implements OnInit {
         this.objectHistory = {
             entities: []
         };
-        this.mapService.getAvailableDatasets()
+        this.ds.getAvailableDatasets()
             .subscribe((results: string[]) => {
                 results.forEach((ds) => {
                     this.availableDatasets.push({
@@ -162,7 +165,7 @@ export class DatsetViewerComponent implements OnInit {
      */
     public mapClicked = (event: string): void => {
         console.debug("Clicked:", event);
-        this.vs.getTrestleIndividual(event)
+        this.is.getTrestleIndividual(event)
             .subscribe((data) => {
                 console.debug("Has selection", data);
                 this.selectedIndividual = data;

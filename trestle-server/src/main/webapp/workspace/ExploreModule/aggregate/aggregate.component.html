@@ -7,26 +7,28 @@
                      [dataChanges]="dataChanges"
                      class="map-container"></trestle-map>
     </div>
-    <div fxLayout="row" fxLayoutGap="20px">
-        <div>
-            Select a dataset:
-            <mat-select [(value)]="selectedDs"
-                        placeholder="Select available dataset"
-                        (selectionChange)="datasetChanged($event)">
-                <mat-option *ngFor="let ds of datasets" [value]="ds">
-                    {{ds}}
-                </mat-option>
-            </mat-select>
+    <div fxLayout="column" fxLayoutGap="20px">
+        <h4>Aggregation Restriction</h4>
+        <div fxLayout="row">
+            <div>
+                <mat-select [(value)]="selectedDs"
+                            placeholder="Select available dataset"
+                            (selectionChange)="datasetChanged($event)">
+                    <mat-option *ngFor="let ds of datasets" [value]="ds">
+                        {{ds}}
+                    </mat-option>
+                </mat-select>
+            </div>
+            <div>
+                <mat-select [(value)]="selectedCountry" placeholder="Select country">
+                    <mat-option *ngFor="let country of countries" [value]="country">
+                        {{country}}
+                    </mat-option>
+                </mat-select>
+            </div>
         </div>
-        <div>
-            Country:
-            <mat-select [(value)]="selectedCountry" placeholder="Select country">
-                <mat-option *ngFor="let country of countries" [value]="country">
-                    {{country}}
-                </mat-option>
-            </mat-select>
-        </div>
-        <div>
+        <h4>Aggregation Strategy</h4>
+        <div fxLayout="row">
             <div [hidden]="!selectedDs">
                 Select an Aggregation:
                 <mat-select [(value)]="selectedAggregation">
@@ -35,13 +37,13 @@
                     </mat-option>
                 </mat-select>
             </div>
-        </div>
-        <div>
-            <button mat-raised-button color="primary"
-                    [disabled]="!selectedAggregation || !selectedDs"
-            (click)="aggregate()">
-                AGGREGATE
-            </button>
+            <div>
+                <button mat-raised-button color="primary"
+                        [disabled]="!selectedAggregation || !selectedDs"
+                        (click)="aggregate()">
+                    AGGREGATE
+                </button>
+            </div>
         </div>
     </div>
 </div>

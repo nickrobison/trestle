@@ -5,6 +5,7 @@ import { ReplaySubject } from "rxjs/ReplaySubject";
 import { MapSource, TrestleMapComponent } from "../../UIModule/map/trestle-map.component";
 import { MatSelectChange } from "@angular/material";
 import { stringify } from "wellknown";
+import { DatasetService } from "../../SharedModule/dataset/dataset.service";
 
 @Component({
     selector: "aggregate",
@@ -23,7 +24,9 @@ export class AggregateComponent implements OnInit {
     public mapConfig: mapboxgl.MapboxOptions;
     public dataChanges: ReplaySubject<MapSource>;
 
-    public constructor(private ms: MapService, private as: AggregationService) {
+    public constructor(private ms: MapService,
+                       private as: AggregationService,
+                       private ds: DatasetService) {
         this.datasets = [];
         this.countries = [];
 
@@ -36,7 +39,7 @@ export class AggregateComponent implements OnInit {
     }
 
     public ngOnInit(): void {
-        this.ms
+        this.ds
             .getAvailableDatasets()
             .do(console.log)
             .subscribe((ds) => {
@@ -76,7 +79,7 @@ export class AggregateComponent implements OnInit {
 
     public datasetChanged = (change: MatSelectChange): void => {
         console.debug("Changed to:", change);
-        this.ms
+        this.ds
             .getDatasetFactValues(change.value, "adm0_name", 100)
             .subscribe((values) => {
                 this.countries = values;
