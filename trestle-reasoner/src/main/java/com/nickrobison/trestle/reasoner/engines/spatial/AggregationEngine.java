@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.reasoner.engines.spatial;
 
 import com.nickrobison.trestle.common.LambdaUtils;
+import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
@@ -74,10 +75,16 @@ public class AggregationEngine {
         final OWLClass objectClass = this.parser.getObjectClass(clazz);
         final Integer classProjection = this.parser.getClassProjection(clazz);
 
-        final IRI factIRI = this.parser.getFactIRI(clazz, restriction.getFact())
-                .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, restriction.getFact(), objectClass)));
+//        Special handling of WKT values
+        final IRI factIRI;
+        if (restriction.getFact().equals("asWKT")) {
+            factIRI = IRI.create(StaticIRI.GEOSPARQLPREFIX, "asWKT");
+        } else {
+            factIRI = this.parser.getFactIRI(clazz, restriction.getFact())
+                    .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, restriction.getFact(), objectClass)));
+        }
 
-        final Class<?> factDatatype = this.parser.getFactDatatype(clazz, restriction.getFact())
+        final Class<?> factDatatype = this.parser.getFactDatatype(clazz, factIRI.toString())
                 .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, restriction.getFact(), objectClass)));
 
 

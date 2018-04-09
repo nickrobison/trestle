@@ -1,4 +1,4 @@
-<div fxLayout="column" fxLayoutGap="50px" class="aggregate-container">
+<div fxLayout="column" fxLayoutGap="50px">
     <div class="map-container">
         <trestle-map #map [single]="false"
                      [multiSelect]="true"
@@ -7,10 +7,10 @@
                      [dataChanges]="dataChanges"
                      class="map-container"></trestle-map>
     </div>
-    <div fxLayout="column" fxLayoutGap="20px">
+    <div fxLayout="column" fxLayoutGap="20px" class="aggregate-container">
         <h4>Aggregation Restriction</h4>
         <div fxLayout="row">
-            <div>
+            <div fxFlex="33%">
                 <mat-select [(value)]="selectedDs"
                             placeholder="Select available dataset"
                             (selectionChange)="datasetChanged($event)">
@@ -19,7 +19,7 @@
                     </mat-option>
                 </mat-select>
             </div>
-            <div>
+            <div fxFlex="33%">
                 <mat-select [(value)]="selectedProperty"
                             placeholder="Select data property"
                             (selectionChange)="propertyChanged($event)">
@@ -28,8 +28,8 @@
                     </mat-option>
                 </mat-select>
             </div>
-            <div>
-                <mat-select [(value)]="selectedCountry" placeholder="Select country">
+            <div [hidden]="!showPropertyValues()" fxFlex="33%">
+                <mat-select [(value)]="selectedValue" placeholder="Select value">
                     <mat-option *ngFor="let country of countries" [value]="country">
                         {{country}}
                     </mat-option>
@@ -37,10 +37,9 @@
             </div>
         </div>
         <h4>Aggregation Strategy</h4>
-        <div fxLayout="row">
-            <div [hidden]="!selectedDs">
-                Select an Aggregation:
-                <mat-select [(value)]="selectedAggregation">
+        <div fxLayout="row" fxLayoutAlign="space-between">
+            <div [hidden]="!selectedDs" fxFlex="22%">
+                <mat-select [(value)]="selectedAggregation" placeholder="Select an aggregation strategy">
                     <mat-option [value]="'EXISTENCE'">
                         Existence
                     </mat-option>

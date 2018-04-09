@@ -21,10 +21,12 @@ export class AggregateComponent implements OnInit {
     public properties: string[];
     public countries: string[];
     public selectedDs: string;
-    public selectedCountry: string;
     public selectedProperty: string;
+    public selectedValue: string;
     public mapConfig: mapboxgl.MapboxOptions;
     public dataChanges: ReplaySubject<MapSource>;
+
+    private readonly BBOX_PROPERTY = "BOUNDING_BOX";
 
     public constructor(private ms: MapService,
                        private as: AggregationService,
@@ -51,11 +53,13 @@ export class AggregateComponent implements OnInit {
     }
 
     public aggregate(): void {
+        // Reset the map
+        this.map.removeIndividual("aggregation-query");
         let restriction: IAggregationRestriction<string>;
-        if (this.selectedCountry) {
+        if (this.selectedProperty !== this.BBOX_PROPERTY) {
             restriction = {
-                fact: "adm0_name",
-                value: this.selectedCountry
+                fact: this.selectedProperty,
+                value: this.selectedValue
             };
         } else {
             restriction = {
@@ -64,7 +68,7 @@ export class AggregateComponent implements OnInit {
             };
         }
 
-        this.as.performAggregation("gaul-test", "exists", restriction)
+        this.as.performAggregation(this.selectedDs, "exists", restriction)
             .subscribe((agg) => {
                 console.debug("Done", agg);
                 this.dataChanges.next({
@@ -85,20 +89,23 @@ export class AggregateComponent implements OnInit {
         this.ds
             .getDatasetProperties(change.value)
             .subscribe((values) => {
-                this.properties = values;
+                this.properties = [this.BBOX_PROPERTY].concat(values);
             });
-        // this.ds
-        //     .getDatasetFactValues(change.value, "adm0_name", 100)
-        //     .subscribe((values) => {
-        //         this.countries = values;
-        //     });
     };
 
     public propertyChanged = (change: MatSelectChange): void => {
+        if (change.value === this.BBOX_PROPERTY) {
+            return;
+        }
+
         this.ds
             .getDatasetFactValues(this.selectedDs, change.value)
             .subscribe((values) => {
                 this.countries = values;
-            })
+            });
+    };
+
+    public showPropertyValues(): boolean {
+        return this.selectedProperty !== undefined && this.selectedProperty !== this.BBOX_PROPERTY;
     }
 }
