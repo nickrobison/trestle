@@ -861,6 +861,17 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
+    public List<String> getDatasetProperties(Class<?> clazz) {
+        final List<OWLDataProperty> owlDataProperties = this.trestleParser.classBuilder.getPropertyMembers(clazz)
+                .orElseThrow(() -> new IllegalStateException(String.format("Cannot get properties for %s", this.trestleParser.classParser.getObjectClass(clazz))));
+                return owlDataProperties
+                        .stream()
+                        .map(OWLEntity::toStringID)
+                        .sorted()
+                        .collect(Collectors.toList());
+    }
+
+    @Override
     public <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, ITrestleExporter.DataType exportType) throws IOException {
         return this.dataExporter.exportDataSetObjects(inputClass, objectID, exportType);
     }

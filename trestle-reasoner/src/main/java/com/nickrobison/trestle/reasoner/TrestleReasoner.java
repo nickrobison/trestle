@@ -24,6 +24,7 @@ import com.nickrobison.trestle.types.events.TrestleEventType;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.net.URI;
@@ -272,4 +273,13 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
     Set<String> getAvailableDatasets();
 
     Class<?> getDatasetClass(String owlClassString) throws UnregisteredClassException;
+
+    /**
+     * Get a sorted list of all data properties registered with the reasoner for the given {@link Class}
+     *
+     * @param clazz - {@link Class} to get properties for
+     * @return - {@link List} of {@link String} IDs of {@link OWLDataProperty}
+     * @throws IllegalStateException if unable to get properties for the given {@link Class}
+     */
+    List<String> getDatasetProperties(Class<?> clazz);
 }

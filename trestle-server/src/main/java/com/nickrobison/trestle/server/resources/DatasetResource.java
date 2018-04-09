@@ -10,7 +10,6 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
 import java.util.List;
 
 import static javax.ws.rs.core.Response.ok;
@@ -33,6 +32,19 @@ public class DatasetResource {
     @GET
     public Response getDatasets() {
       return ok(this.reasoner.getAvailableDatasets()).build();
+    }
+
+    @GET
+    @Path("/{dataset}")
+    public Response getDatasetProperties(@PathParam("dataset") String dataset) {
+        try {
+            final Class<?> datasetClass = this.reasoner.getDatasetClass(dataset);
+            return ok(this.reasoner.getDatasetProperties(datasetClass)).build();
+        } catch (UnregisteredClassException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Class does not exist").build();
+        } catch (IllegalStateException e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Cannot get properties for dataset").build();
+        }
     }
 
     @GET

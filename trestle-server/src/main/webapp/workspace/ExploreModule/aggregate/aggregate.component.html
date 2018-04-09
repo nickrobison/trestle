@@ -20,6 +20,15 @@
                 </mat-select>
             </div>
             <div>
+                <mat-select [(value)]="selectedProperty"
+                            placeholder="Select data property"
+                            (selectionChange)="propertyChanged($event)">
+                    <mat-option *ngFor="let property of properties" [value]="property">
+                        {{property}}
+                    </mat-option>
+                </mat-select>
+            </div>
+            <div>
                 <mat-select [(value)]="selectedCountry" placeholder="Select country">
                     <mat-option *ngFor="let country of countries" [value]="country">
                         {{country}}

@@ -18,9 +18,11 @@ export class AggregateComponent implements OnInit {
     public map: TrestleMapComponent;
     public selectedAggregation: string;
     public datasets: string[];
+    public properties: string[];
     public countries: string[];
     public selectedDs: string;
     public selectedCountry: string;
+    public selectedProperty: string;
     public mapConfig: mapboxgl.MapboxOptions;
     public dataChanges: ReplaySubject<MapSource>;
 
@@ -28,6 +30,7 @@ export class AggregateComponent implements OnInit {
                        private as: AggregationService,
                        private ds: DatasetService) {
         this.datasets = [];
+        this.properties = [];
         this.countries = [];
 
         this.mapConfig = {
@@ -80,9 +83,22 @@ export class AggregateComponent implements OnInit {
     public datasetChanged = (change: MatSelectChange): void => {
         console.debug("Changed to:", change);
         this.ds
-            .getDatasetFactValues(change.value, "adm0_name", 100)
+            .getDatasetProperties(change.value)
+            .subscribe((values) => {
+                this.properties = values;
+            });
+        // this.ds
+        //     .getDatasetFactValues(change.value, "adm0_name", 100)
+        //     .subscribe((values) => {
+        //         this.countries = values;
+        //     });
+    };
+
+    public propertyChanged = (change: MatSelectChange): void => {
+        this.ds
+            .getDatasetFactValues(this.selectedDs, change.value)
             .subscribe((values) => {
                 this.countries = values;
-            });
+            })
     }
 }
