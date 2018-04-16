@@ -7,3 +7,10 @@
     margin-right: 20px;
 }
 
+::ng-deep .mat-input-underline {
+    display: none;
+}
+::ng-deep .mat-form-field-underline {
+    display: none;
+}
+
