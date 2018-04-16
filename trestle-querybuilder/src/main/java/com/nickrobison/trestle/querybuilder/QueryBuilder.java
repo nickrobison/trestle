@@ -416,8 +416,35 @@ public class QueryBuilder {
         return queryString;
     }
 
-    public String buildAggregationQuery(OWLClass datasetClass, OWLDataProperty fact, OWLLiteral factValue, OffsetDateTime existsFrom, OffsetDateTime existsTo, OffsetDateTime atTemporal, OffsetDateTime dbTemporal, String filterStatement) {
+    public String buildAggregationQuery(String restrictionQuery, OWLDataProperty fact, OWLLiteral factValue, String aggregationOperation) {
         final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText(String.format("SELECT DISTINCT ?m " +
+                "WHERE { " +
+                "?m trestle:has_fact ?f ." +
+                "?f ?fact ?o ." +
+                "FILTER(?o %s %s) {", aggregationOperation, factValue.toString()));
+        ps.append(restrictionQuery);
+        ps.setIri("fact", getFullIRIString(fact));
+//        ps.setLiteral("op", aggregationOperation);
+//        ps.setLiteral("value", factValue.toString());
+        ps.append("}}");
+
+        final String queryString = ps.toString();
+        logger.trace(queryString);
+        return queryString;
+    }
+
+    public String prefixizeQuery(String rawQuery) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText(rawQuery);
+
+        final String queryString = ps.toString();
+        logger.trace(queryString);
+        return queryString;
+    }
+
+    public String buildRestrictionQuery(OWLClass datasetClass, OWLDataProperty fact, OWLLiteral factValue, OffsetDateTime existsFrom, OffsetDateTime existsTo, OffsetDateTime atTemporal, OffsetDateTime dbTemporal) {
+        final ParameterizedSparqlString ps = new ParameterizedSparqlString();
         ps.setCommandText("SELECT DISTINCT ?m " +
                 "WHERE { " +
                 "?m rdf:type ?owlClass ." +
@@ -425,10 +452,7 @@ public class QueryBuilder {
                 "OPTIONAL{?m trestle:exists_to ?et} ." +
                 "?m trestle:has_fact ?f ." +
                 "?f ?fact ?o ." +
-                "VALUES ?o {?factValue} .");
-//        Append Filter
-        ps.append(filterStatement);
-        ps.append("}");
+                "VALUES ?o {?factValue}}");
 
         ps.setIri("owlClass", getFullIRIString(datasetClass));
         ps.setIri("fact", getFullIRIString(fact));

@@ -84,7 +84,7 @@ public class AggregationEngine {
                 .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, restriction.getFact(), objectClass)));
 
 
-        final String intersectionQuery = buildAggregationQuery(objectClass, factIRI, factDatatype, restriction, operation, atTemporal, dbTemporal);
+        final String intersectionQuery = buildAggregationQuery(clazz, objectClass, factIRI, factDatatype, restriction, operation, atTemporal, dbTemporal);
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
@@ -148,34 +148,48 @@ public class AggregationEngine {
         }
     }
 
-    private String buildAggregationQuery(OWLClass datasetClass, IRI factIRI, Class<?> factDatatype, AggregationRestriction restriction, @Nullable AggregationOperation operation, OffsetDateTime atTemporal, OffsetDateTime dbTemporal) {
+    private String buildAggregationQuery(Class<?> clazz, OWLClass datasetClass, IRI factIRI, Class<?> factDatatype, AggregationRestriction restriction, @Nullable AggregationOperation operation, OffsetDateTime atTemporal, OffsetDateTime dbTemporal) {
 
-        final String filterStatement;
-        if (operation != null) {
-            filterStatement = operation.buildFilterString();
-        } else {
-            filterStatement = "FILTER((?ef <= ?existsFrom^^xsd:dateTime) && " +
-                    "(!bound(?et) || (?et > ?existsTo^^xsd:dateTime)))";
-        }
+//        final String filterStatement;
+//        if (operation != null) {
+//            filterStatement = operation.buildFilterString();
+//        } else {
+//            filterStatement = "FILTER((?ef <= ?existsFrom^^xsd:dateTime) && " +
+//                    "(!bound(?et) || (?et > ?existsTo^^xsd:dateTime)))";
+//        }
 
         final OffsetDateTime existsFrom = LocalDate.of(1990, 1, 1).atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
         final OffsetDateTime existsTo = LocalDate.of(2015, 1, 1).atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
 
-        final String query;
+        final String restrictionQuery;
 //        Are we a spatial value? If so, parse it out
         if (restriction.fact.equals("asWKT")) {
             final String wkt = (String) this.typeConverter.reprojectSpatial(restriction.getValue(), 4326);
-            query = this.qb.buildSpatialAggregationQuery(datasetClass, wkt, existsFrom, existsTo, atTemporal, dbTemporal);
+            restrictionQuery = this.qb.buildSpatialAggregationQuery(datasetClass, wkt, existsFrom, existsTo, atTemporal, dbTemporal);
         } else {
             final OWLDatatype owlDatatype = this.typeConverter.getDatatypeFromJavaClass(factDatatype);
-            query = this.qb.buildAggregationQuery(datasetClass,
+            restrictionQuery = this.qb.buildRestrictionQuery(datasetClass,
                     df.getOWLDataProperty(factIRI),
                     df.getOWLLiteral(restriction.getValue().toString(), owlDatatype),
                     existsFrom, existsTo,
-                    atTemporal, dbTemporal,
-                    filterStatement);
+                    atTemporal, dbTemporal);
         }
-        return query;
+//        Add the aggregation operations
+        final String fullQueryString;
+        if (operation == null) {
+            fullQueryString = this.qb.prefixizeQuery(restrictionQuery);
+        } else {
+//            Get the aggregation fact and data type
+            final IRI opFactIRI = this.parser.getFactIRI(clazz, operation.getProperty())
+                    .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, operation.getProperty(), clazz)));
+            final Class<?> opFactDataType = this.parser.getFactDatatype(clazz, opFactIRI.toString())
+                    .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, operation.getProperty(), clazz)));
+            fullQueryString = this.qb.buildAggregationQuery(restrictionQuery,
+                    df.getOWLDataProperty(opFactIRI),
+                    df.getOWLLiteral(operation.getValue().toString(), this.typeConverter.getDatatypeFromJavaClass(opFactDataType)),
+                    operation.getType().toString());
+        }
+        return fullQueryString;
     }
 
 

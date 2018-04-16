@@ -47,7 +47,7 @@ public class AggregationResource {
         final AggregationOperation ao = new AggregationOperation(request.getStrategy().getField(),
                 AggregationType.valueOf(request.getStrategy().getOperation()),
                 request.getStrategy().getValue());
-        final Optional<Geometry> geometry = aggregationEngine.aggregateDataset(dataset, ar, null);
+        final Optional<Geometry> geometry = aggregationEngine.aggregateDataset(dataset, ar, ao);
         if (geometry.isPresent()) {
             final String GeoJSONString = new GeoJsonWriter().write(geometry.get());
             return Response.ok().entity(GeoJSONString).build();

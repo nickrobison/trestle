@@ -15,6 +15,18 @@ public class AggregationOperation implements ITransformationOp {
         this.value = value;
     }
 
+    public String getProperty() {
+        return property;
+    }
+
+    public AggregationType getType() {
+        return type;
+    }
+
+    public Object getValue() {
+        return value;
+    }
+
     @Override
     public String buildFilterString() {
         return "FILTER(" + this.property +
