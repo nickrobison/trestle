@@ -3,7 +3,7 @@ package com.nickrobison.trestle.server.resources;
 import com.nickrobison.trestle.exporter.GeoJsonWriter;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.reasoner.TrestleReasonerImpl;
-import com.nickrobison.trestle.reasoner.engines.spatial.AggregationEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationEngine;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;

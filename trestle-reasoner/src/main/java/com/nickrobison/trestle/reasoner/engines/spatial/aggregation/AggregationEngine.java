@@ -1,10 +1,11 @@
-package com.nickrobison.trestle.reasoner.engines.spatial;
+package com.nickrobison.trestle.reasoner.engines.spatial.aggregation;
 
 import com.nickrobison.trestle.common.LambdaUtils;
 import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
+import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngineUtils;
 import com.nickrobison.trestle.reasoner.parser.IClassBuilder;
 import com.nickrobison.trestle.reasoner.parser.IClassParser;
 import com.nickrobison.trestle.reasoner.parser.ITypeConverter;

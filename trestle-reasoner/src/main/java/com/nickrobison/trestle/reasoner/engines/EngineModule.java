@@ -15,7 +15,7 @@ import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
 import com.nickrobison.trestle.reasoner.engines.object.TrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.TrestleObjectWriter;
-import com.nickrobison.trestle.reasoner.engines.spatial.AggregationEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngineImpl;
