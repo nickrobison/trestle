@@ -4,6 +4,8 @@ import com.nickrobison.trestle.exporter.GeoJsonWriter;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.reasoner.TrestleReasonerImpl;
 import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationOperation;
+import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationType;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
@@ -42,7 +44,10 @@ public class AggregationResource {
         final AggregationEngine.AggregationRestriction ar = new AggregationEngine.AggregationRestriction();
         ar.setFact(request.getRestriction().getProperty());
         ar.setValue(request.getRestriction().getValue());
-        final Optional<Geometry> geometry = aggregationEngine.aggregateDataset(dataset, ar);
+        final AggregationOperation ao = new AggregationOperation(request.getStrategy().getField(),
+                AggregationType.valueOf(request.getStrategy().getOperation()),
+                request.getStrategy().getValue());
+        final Optional<Geometry> geometry = aggregationEngine.aggregateDataset(dataset, ar, null);
         if (geometry.isPresent()) {
             final String GeoJSONString = new GeoJsonWriter().write(geometry.get());
             return Response.ok().entity(GeoJSONString).build();

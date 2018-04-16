@@ -416,7 +416,7 @@ public class QueryBuilder {
         return queryString;
     }
 
-    public String buildAggregationQuery(OWLClass datasetClass, OWLDataProperty fact, OWLLiteral factValue, OffsetDateTime existsFrom, OffsetDateTime existsTo, OffsetDateTime atTemporal, OffsetDateTime dbTemporal) {
+    public String buildAggregationQuery(OWLClass datasetClass, OWLDataProperty fact, OWLLiteral factValue, OffsetDateTime existsFrom, OffsetDateTime existsTo, OffsetDateTime atTemporal, OffsetDateTime dbTemporal, String filterStatement) {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m " +
                 "WHERE { " +
@@ -425,9 +425,11 @@ public class QueryBuilder {
                 "OPTIONAL{?m trestle:exists_to ?et} ." +
                 "?m trestle:has_fact ?f ." +
                 "?f ?fact ?o ." +
-                "VALUES ?o {?factValue} ." +
-                "FILTER((?ef <= ?existsFrom^^xsd:dateTime) && " +
-                "(!bound(?et) || (?et > ?existsTo^^xsd:dateTime)))}");
+                "VALUES ?o {?factValue} .");
+//        Append Filter
+        ps.append(filterStatement);
+        ps.append("}");
+
         ps.setIri("owlClass", getFullIRIString(datasetClass));
         ps.setIri("fact", getFullIRIString(fact));
         ps.setLiteral("factValue", factValue.getLiteral(), "en");

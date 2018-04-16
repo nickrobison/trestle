@@ -15,6 +15,7 @@ import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.vividsolutions.jts.geom.*;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
@@ -62,7 +63,7 @@ public class AggregationEngine {
 
     }
 
-    public <T extends @NonNull Object> Optional<Geometry> aggregateDataset(Class<T> clazz, AggregationRestriction restriction) {
+    public <T extends @NonNull Object> Optional<Geometry> aggregateDataset(Class<T> clazz, AggregationRestriction restriction, @Nullable AggregationOperation operation) {
         final OffsetDateTime atTemporal = OffsetDateTime.now();
         final OffsetDateTime dbTemporal = OffsetDateTime.now();
 
@@ -83,7 +84,7 @@ public class AggregationEngine {
                 .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, restriction.getFact(), objectClass)));
 
 
-        final String intersectionQuery = buildAggregationQuery(objectClass, factIRI, factDatatype, restriction, atTemporal, dbTemporal);
+        final String intersectionQuery = buildAggregationQuery(objectClass, factIRI, factDatatype, restriction, operation, atTemporal, dbTemporal);
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
@@ -147,8 +148,15 @@ public class AggregationEngine {
         }
     }
 
-    private String buildAggregationQuery(OWLClass datasetClass, IRI factIRI, Class<?> factDatatype, AggregationRestriction restriction, OffsetDateTime atTemporal, OffsetDateTime dbTemporal) {
+    private String buildAggregationQuery(OWLClass datasetClass, IRI factIRI, Class<?> factDatatype, AggregationRestriction restriction, @Nullable AggregationOperation operation, OffsetDateTime atTemporal, OffsetDateTime dbTemporal) {
 
+        final String filterStatement;
+        if (operation != null) {
+            filterStatement = operation.buildFilterString();
+        } else {
+            filterStatement = "FILTER((?ef <= ?existsFrom^^xsd:dateTime) && " +
+                    "(!bound(?et) || (?et > ?existsTo^^xsd:dateTime)))";
+        }
 
         final OffsetDateTime existsFrom = LocalDate.of(1990, 1, 1).atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
         final OffsetDateTime existsTo = LocalDate.of(2015, 1, 1).atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
@@ -164,7 +172,8 @@ public class AggregationEngine {
                     df.getOWLDataProperty(factIRI),
                     df.getOWLLiteral(restriction.getValue().toString(), owlDatatype),
                     existsFrom, existsTo,
-                    atTemporal, dbTemporal);
+                    atTemporal, dbTemporal,
+                    filterStatement);
         }
         return query;
     }
