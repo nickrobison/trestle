@@ -378,8 +378,8 @@ public class QueryBuilder {
         return stringValue;
     }
 
-    public String buildSpatialAggregationQuery(OWLClass datasetClass, String wkt, OffsetDateTime existsFrom, OffsetDateTime existsTo, OffsetDateTime atTemporal, OffsetDateTime dbTemporal) {
-        final ParameterizedSparqlString ps = buildBaseString();
+    public String buildSpatialRestrictionFragment(OWLClass datasetClass, String wkt, OffsetDateTime atTemporal, OffsetDateTime dbTemporal) {
+        final ParameterizedSparqlString ps = new ParameterizedSparqlString();
         ps.setCommandText("SELECT DISTINCT ?m " +
                 "WHERE { " +
                 "?m rdf:type ?owlClass ." +
@@ -391,25 +391,21 @@ public class QueryBuilder {
                 "OPTIONAL{?f trestle:valid_at ?va} ." +
                 "?f trestle:database_from ?df ." +
                 "OPTIONAL{?f trestle:database_to ?dt } ." +
-                "?f ogc:sfOverlaps ?wktValue^^ogc:wktLiteral ." +
-                "FILTER((?ef <= ?existsFrom^^xsd:dateTime) && " +
-                "(!bound(?et) || (?et > ?existsTo^^xsd:dateTime))) .");
-        ps.append("FILTER ((!bound(?vf) || " +
-                "(?vf <= ?validAt^^xsd:dateTime) && " +
-                "(!bound(?vt) || " +
-                "?vt > ?validAt^^xsd:dateTime)) && " +
-                "(!bound(?va) || " +
-                "(?va = ?validAt^^xsd:dateTime))) .");
-        ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime))");
+                "?f ogc:sfIntersects ?wktValue^^ogc:wktLiteral .");
+//        ps.append("FILTER ((!bound(?vf) || " +
+//                "(?vf <= ?validAt^^xsd:dateTime) && " +
+//                "(!bound(?vt) || " +
+//                "?vt > ?validAt^^xsd:dateTime)) && " +
+//                "(!bound(?va) || " +
+//                "(?va = ?validAt^^xsd:dateTime))) .");
+//        ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime))");
         ps.append("}");
 
 //        Set all the values
         ps.setIri("owlClass", getFullIRIString(datasetClass));
         ps.setLiteral("wktValue", wkt);
-        ps.setLiteral("existsFrom", existsFrom.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        ps.setLiteral("existsTo", existsTo.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        ps.setLiteral("validAt", atTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        ps.setLiteral("dbAt", dbTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+//        ps.setLiteral("validAt", atTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+//        ps.setLiteral("dbAt", dbTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
         final String queryString = ps.toString();
         logger.trace(queryString);
@@ -425,8 +421,6 @@ public class QueryBuilder {
                 "FILTER(?o %s %s) {", aggregationOperation, factValue.toString()));
         ps.append(restrictionQuery);
         ps.setIri("fact", getFullIRIString(fact));
-//        ps.setLiteral("op", aggregationOperation);
-//        ps.setLiteral("value", factValue.toString());
         ps.append("}}");
 
         final String queryString = ps.toString();
@@ -443,20 +437,19 @@ public class QueryBuilder {
         return queryString;
     }
 
-    public String buildRestrictionQuery(OWLClass datasetClass, OWLDataProperty fact, OWLLiteral factValue, OffsetDateTime existsFrom, OffsetDateTime existsTo, OffsetDateTime atTemporal, OffsetDateTime dbTemporal) {
+    public String buildPropertyRestrictionFragment(OWLClass datasetClass, OWLDataProperty fact, OWLLiteral factValue, OffsetDateTime existsFrom, OffsetDateTime existsTo, OffsetDateTime atTemporal, OffsetDateTime dbTemporal) {
         final ParameterizedSparqlString ps = new ParameterizedSparqlString();
-        ps.setCommandText("SELECT DISTINCT ?m " +
+        ps.setCommandText(String.format("SELECT DISTINCT ?m " +
                 "WHERE { " +
                 "?m rdf:type ?owlClass ." +
                 "?m trestle:exists_from ?ef ." +
                 "OPTIONAL{?m trestle:exists_to ?et} ." +
                 "?m trestle:has_fact ?f ." +
                 "?f ?fact ?o ." +
-                "VALUES ?o {?factValue}}");
+                "VALUES ?o {%s}}", factValue.toString()));
 
         ps.setIri("owlClass", getFullIRIString(datasetClass));
         ps.setIri("fact", getFullIRIString(fact));
-        ps.setLiteral("factValue", factValue.getLiteral(), "en");
         ps.setLiteral("existsFrom", existsFrom.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         ps.setLiteral("existsTo", existsTo.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 //        ps.setLiteral("wktString", wkt);
@@ -541,7 +534,7 @@ public class QueryBuilder {
      *
      * @param wktValue - WKT value
      * @param strength - Strength parameter to filter spurious results
-     * @param atTime   - Temporal to select appropriate, valid fact
+     * @param atTime   - Temporal to seGAULlect appropriate, valid fact
      * @param dbAtTime - Temporal to select currently valid version of the fact
      * @return - String of SPARQL query
      * @throws UnsupportedFeatureException - Throws if we're running on a database that doesn't support all the features
@@ -624,7 +617,7 @@ public class QueryBuilder {
                 "?vt > ?validAt^^xsd:dateTime)) && " +
                 "(!bound(?va) || " +
                 "(?va = ?validAt^^xsd:dateTime))) .");
-        ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }    ");
+        ps.append("?f ogc:sfIntersects ?wktString^^ogc:wktLiteral }");
 
         ps.setLiteral("wktString", wktValue);
         ps.setLiteral("validAt", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
@@ -641,7 +634,7 @@ public class QueryBuilder {
     protected void buildDatabaseSString(ParameterizedSparqlString ps, String wktValue, OffsetDateTime dbAt) {
         ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime)) .");
         ps.removeNsPrefix("geosparql");
-        ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
+        ps.append("?f ogc:sfIntersects ?wktString^^ogc:wktLiteral }");
         ps.setLiteral("dbAt", dbAt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
         ps.setLiteral("wktString", wktValue);

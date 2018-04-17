@@ -6,7 +6,8 @@ import { MapSource, TrestleMapComponent } from "../../UIModule/map/trestle-map.c
 import { MatSelectChange } from "@angular/material";
 import { stringify } from "wellknown";
 import { DatasetService } from "../../SharedModule/dataset/dataset.service";
-import { AbstractControl, FormBuilder, FormGroup, Validators } from "@angular/forms";
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from "@angular/forms";
+import { Observable } from "rxjs/Observable";
 
 @Component({
     selector: "aggregate",
@@ -64,7 +65,7 @@ export class AggregateComponent implements OnInit {
         const restrictionGroup = this.formBuilder.group({
             dataset: ["", Validators.required],
             property: ["", [Validators.required, Validators.minLength(1)]],
-            value: [undefined, Validators.required]
+            value: undefined
         });
 
         const strategyGroup = this.formBuilder.group({
@@ -84,7 +85,6 @@ export class AggregateComponent implements OnInit {
 
         // Reset the map
         this.map.removeIndividual("aggregation-query");
-        let restriction: IAggregationRestriction;
         if (this.getFormValue("restriction", "property") === BBOX_PROPERTY) {
             this.getFormControl("restriction", "property").setValue("asWKT");
             this.getFormControl("restriction", "value").setValue(stringify(MapService.normalizeToGeoJSON(this.map.getMapBounds())));

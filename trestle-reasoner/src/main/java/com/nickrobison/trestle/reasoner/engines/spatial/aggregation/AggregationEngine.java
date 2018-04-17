@@ -165,10 +165,10 @@ public class AggregationEngine {
 //        Are we a spatial value? If so, parse it out
         if (restriction.fact.equals("asWKT")) {
             final String wkt = (String) this.typeConverter.reprojectSpatial(restriction.getValue(), 4326);
-            restrictionQuery = this.qb.buildSpatialAggregationQuery(datasetClass, wkt, existsFrom, existsTo, atTemporal, dbTemporal);
+            restrictionQuery = this.qb.buildSpatialRestrictionFragment(datasetClass, wkt, atTemporal, dbTemporal);
         } else {
             final OWLDatatype owlDatatype = this.typeConverter.getDatatypeFromJavaClass(factDatatype);
-            restrictionQuery = this.qb.buildRestrictionQuery(datasetClass,
+            restrictionQuery = this.qb.buildPropertyRestrictionFragment(datasetClass,
                     df.getOWLDataProperty(factIRI),
                     df.getOWLLiteral(restriction.getValue().toString(), owlDatatype),
                     existsFrom, existsTo,
