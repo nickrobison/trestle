@@ -69,6 +69,7 @@ public class TigerLoader {
     private String password;
     private String reponame;
     private String ontLocation;
+    private String ontPrefix;
     private List<TigerCountyObject> tigerObjs;
 
     TigerLoader() throws SQLException
@@ -80,6 +81,7 @@ public class TigerLoader {
         password = config.getString("trestle.graphdb.password");
         reponame = config.getString("trestle.graphdb.repo_name");
         ontLocation = config.getString("trestle.ontology.location");
+        ontPrefix = config.getString("trestle.ontology.prefix");
         tigerObjs = buildObjects();
     }
 
@@ -89,9 +91,9 @@ public class TigerLoader {
                 .withDBConnection(connectStr, username, password)
                 .withName(reponame)
                 .withOntology(IRI.create(ontLocation))
-                .withPrefix("http://nickrobison.com/demonstration/tigercounty#")
+                .withPrefix(ontPrefix)
                 .withInputClasses(TigerCountyObject.class)
-                .withoutCaching()
+//                .withoutCaching()
                 .initialize()
                 .build();
 
@@ -217,7 +219,7 @@ public class TigerLoader {
                 .withDBConnection(connectStr, username, password)
                 .withName(reponame)
                 .withOntology(IRI.create(ontLocation))
-                .withPrefix("http://nickrobison.com/demonstration/tigercounty#")
+                .withPrefix(ontPrefix)
                 .withInputClasses(TigerCountyObject.class)
                 .withoutCaching()
                 .withoutMetrics()
