@@ -79,8 +79,8 @@ public class GAULIntegratorTests {
         userName = "";
         password = "";
         ontologyPath = "file:///Users/nickrobison/Developer/git/dissertation/trestle-ontology/trestle.owl";
-        ontologyPrefix = "http://nickrobison.com/test/gaul/";
-        ontologyName = "hadoop_gaul_expanded_equality";
+        ontologyPrefix = "http://trestle.nickrobison.com/demonstration/";
+        ontologyName = "trestle_demo";
         conf.set("reasoner.db.connection", connectionString);
         conf.set("reasoner.db.username", userName);
         conf.set("reasoner.db.password", password);
@@ -99,7 +99,7 @@ public class GAULIntegratorTests {
                 .withInputClasses(GAULObject.class)
                 .withOntology(IRI.create(ontologyPath))
                 .withPrefix(ontologyPrefix)
-                .initialize()
+//                .initialize()
                 .withName(ontologyName)
                 .withoutCaching()
                 .withoutMetrics()
