@@ -113,6 +113,9 @@
                     <exclude>gates_test/.done</exclude>
                 </excludes>
             </testResource>
+            <testResource>
+                <directory>src/test/resources</directory>
+            </testResource>
         </testResources>
         <plugins>
             <plugin>
