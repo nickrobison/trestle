@@ -21,7 +21,7 @@ cloc:
 
 .PHONY: graphdb
 graphdb:
-	docker build --build-arg version=8.4.1 -t docker.nickrobison.com:5000/graphdb:8.4.1-free docker/graphdb
+	docker build --build-arg version=8.5.0 -t docker.nickrobison.com:5000/graphdb:8.5.0-free docker/graphdb
 
 .PHONY: evaluation
 evaluation: graphdb

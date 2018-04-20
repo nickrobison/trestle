@@ -217,7 +217,7 @@
                             <goal>webpack</goal>
                         </goals>
                         <configuration>
-                            <arguments>--config config/webpack.production.js</arguments>
+                            <arguments>--config config/webpack.prod-temp.js</arguments>
                         </configuration>
                     </execution>
                     <execution>
