@@ -6,9 +6,10 @@ import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngineUtils;
-import com.nickrobison.trestle.reasoner.parser.IClassBuilder;
+import com.nickrobison.trestle.reasoner.exceptions.NoValidStateException;
 import com.nickrobison.trestle.reasoner.parser.IClassParser;
 import com.nickrobison.trestle.reasoner.parser.ITypeConverter;
+import com.nickrobison.trestle.reasoner.parser.TemporalParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
@@ -23,7 +24,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -41,7 +44,6 @@ public class AggregationEngine {
 
     private final ITrestleObjectReader reader;
     private final IClassParser parser;
-    private final IClassBuilder builder;
     private final ITypeConverter typeConverter;
     private final QueryBuilder qb;
     private final ITrestleOntology ontology;
@@ -57,7 +59,6 @@ public class AggregationEngine {
         this.qb = queryBuilder;
         this.ontology = ontology;
         this.parser = trestleParser.classParser;
-        this.builder = trestleParser.classBuilder;
         this.typeConverter = trestleParser.typeConverter;
         this.aggregationPool = factory.create("aggregation-pool");
 
@@ -112,7 +113,10 @@ public class AggregationEngine {
                             .map(individual -> CompletableFuture.supplyAsync(() -> {
                                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                                 try {
-                                    return this.reader.readTrestleObject(clazz, individual, false, atTemporal, dbTemporal);
+                                    return this.reader.readTrestleObject(clazz, individual, false, null, null);
+                                } catch (NoValidStateException e) {
+                                    logger.warn("Cannot read {}", individual, e);
+                                    return null;
                                 } finally {
                                     this.ontology.returnAndCommitTransaction(tt);
                                 }
@@ -123,6 +127,7 @@ public class AggregationEngine {
                         logger.debug("Intersection complete, performing union with {} objects", objects.size());
                         return objects
                                 .stream()
+                                .filter(Objects::nonNull)
                                 .map((obj) -> SpatialEngineUtils.buildObjectGeometry(obj, classProjection))
                                 .collect(Collectors.toList());
                     })
@@ -179,15 +184,21 @@ public class AggregationEngine {
         if (operation == null) {
             fullQueryString = this.qb.prefixizeQuery(restrictionQuery);
         } else {
-//            Get the aggregation fact and data type
-            final IRI opFactIRI = this.parser.getFactIRI(clazz, operation.getProperty())
-                    .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, operation.getProperty(), clazz)));
-            final Class<?> opFactDataType = this.parser.getFactDatatype(clazz, opFactIRI.toString())
-                    .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, operation.getProperty(), clazz)));
-            fullQueryString = this.qb.buildAggregationQuery(restrictionQuery,
-                    df.getOWLDataProperty(opFactIRI),
-                    df.getOWLLiteral(operation.getValue().toString(), this.typeConverter.getDatatypeFromJavaClass(opFactDataType)),
-                    operation.getType().toString());
+//            Special handling of existsFrom
+            if (operation.getProperty().equals("trestle:existsFrom")) {
+                final OffsetDateTime existsTemporal = TemporalParser.parseTemporalToOntologyDateTime(LocalDate.parse(operation.getValue().toString(), DateTimeFormatter.ISO_LOCAL_DATE), ZoneOffset.UTC);
+                fullQueryString = qb.buildExistenceAggregationQuery(restrictionQuery, existsTemporal, existsTo, operation.getType().toString());
+            } else {
+                //            Get the aggregation fact and data type
+                final IRI opFactIRI = this.parser.getFactIRI(clazz, operation.getProperty())
+                        .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, operation.getProperty(), clazz)));
+                final Class<?> opFactDataType = this.parser.getFactDatatype(clazz, opFactIRI.toString())
+                        .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, operation.getProperty(), clazz)));
+                fullQueryString = this.qb.buildAggregationQuery(restrictionQuery,
+                        df.getOWLDataProperty(opFactIRI),
+                        df.getOWLLiteral(operation.getValue().toString(), this.typeConverter.getDatatypeFromJavaClass(opFactDataType)),
+                        operation.getType().toString());
+            }
         }
         return fullQueryString;
     }

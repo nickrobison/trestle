@@ -1,13 +1,12 @@
 import { Component, OnInit, ViewChild } from "@angular/core";
 import { MapService } from "../viewer/map.service";
-import { AggregationOperation, AggregationService, BBOX_PROPERTY, IAggregationRestriction } from "./aggregation.service";
+import { AggregationOperation, AggregationService, BBOX_PROPERTY } from "./aggregation.service";
 import { ReplaySubject } from "rxjs/ReplaySubject";
 import { MapSource, TrestleMapComponent } from "../../UIModule/map/trestle-map.component";
 import { MatSelectChange } from "@angular/material";
 import { stringify } from "wellknown";
 import { DatasetService } from "../../SharedModule/dataset/dataset.service";
-import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from "@angular/forms";
-import { Observable } from "rxjs/Observable";
+import { AbstractControl, FormBuilder, FormGroup, Validators } from "@angular/forms";
 
 @Component({
     selector: "aggregate",
@@ -37,6 +36,7 @@ export class AggregateComponent implements OnInit {
         {name: "Less than", value: "LT"},
         {name: "Less than or equal to", value: "LTEQ"}
     ];
+    public inProgress = false;
 
     public constructor(private ms: MapService,
                        private as: AggregationService,
@@ -49,7 +49,7 @@ export class AggregateComponent implements OnInit {
         this.mapConfig = {
             style: "mapbox://styles/nrobison/cj3n7if3q000s2sutls5a1ny7",
             center: [32.3558991, -25.6854313],
-            zoom: 8
+            zoom: 1
         };
         this.dataChanges = new ReplaySubject<MapSource>(50);
     }
@@ -64,8 +64,9 @@ export class AggregateComponent implements OnInit {
 
         const restrictionGroup = this.formBuilder.group({
             dataset: ["", Validators.required],
-            property: ["", [Validators.required, Validators.minLength(1)]],
-            value: undefined
+            property: "",
+            value: undefined,
+            validator: this.restrictionValidation
         });
 
         const strategyGroup = this.formBuilder.group({
@@ -85,11 +86,17 @@ export class AggregateComponent implements OnInit {
 
         // Reset the map
         this.map.removeIndividual("aggregation-query");
+        // Special casing of WKT
         if (this.getFormValue("restriction", "property") === BBOX_PROPERTY) {
             this.getFormControl("restriction", "property").setValue("asWKT");
             this.getFormControl("restriction", "value").setValue(stringify(MapService.normalizeToGeoJSON(this.map.getMapBounds())));
         }
 
+        // Special casing of ExistsFrom
+        if (this.getFormValue("strategy", "field") === "EXISTENCE") {
+            this.getFormControl("strategy", "field").setValue("trestle:existsFrom");
+        }
+        this.inProgress = true;
         this.as.performAggregation(this.aggregationForm.value)
             .subscribe((agg) => {
                 console.debug("Done", agg);
@@ -103,7 +110,18 @@ export class AggregateComponent implements OnInit {
                         id: "test"
                     }
                 });
+                this.inProgress = false;
             });
+    //    Reset from the special casing
+        if (this.getFormValue("restriction", "property") === "asWKT") {
+            this.getFormControl("restriction", "property").setValue(BBOX_PROPERTY);
+            this.getFormControl("restriction", "value").setValue(undefined);
+        }
+
+        if (this.getFormValue("strategy", "field") === "trestle:existsFrom") {
+            this.getFormControl("strategy", "field").setValue("EXISTENCE");
+        }
+
     }
 
     public datasetChanged = (change: MatSelectChange): void => {
@@ -126,6 +144,25 @@ export class AggregateComponent implements OnInit {
             .subscribe((values) => {
                 this.values = values;
             });
+    };
+
+    private restrictionValidation(f: FormGroup): void {
+        const propertyControl = f.controls["property"];
+        const valueControl = f.controls["value"];
+        const value = valueControl.value;
+        if (propertyControl.value === BBOX_PROPERTY) {
+            valueControl.setErrors(null);
+        } else if (value === "") {
+            valueControl.setErrors({
+                minimumLength: true
+            });
+        } else if (value === undefined) {
+            valueControl.setErrors({
+                required: true
+            });
+        } else {
+            valueControl.setErrors(null);
+        }
     };
 
     private getFormValue(group: "restriction" | "strategy", control: string): any {

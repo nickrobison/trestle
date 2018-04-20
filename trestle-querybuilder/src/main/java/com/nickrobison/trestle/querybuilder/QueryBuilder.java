@@ -2,6 +2,7 @@ package com.nickrobison.trestle.querybuilder;
 
 import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
+import com.sun.scenario.effect.Offset;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.PrecisionModel;
 import com.vividsolutions.jts.io.ParseException;
@@ -380,7 +381,7 @@ public class QueryBuilder {
 
     public String buildSpatialRestrictionFragment(OWLClass datasetClass, String wkt, OffsetDateTime atTemporal, OffsetDateTime dbTemporal) {
         final ParameterizedSparqlString ps = new ParameterizedSparqlString();
-        ps.setCommandText("SELECT DISTINCT ?m " +
+        ps.setCommandText("SELECT DISTINCT ?m ?ef ?et " +
                 "WHERE { " +
                 "?m rdf:type ?owlClass ." +
                 "?m trestle:exists_from ?ef ." +
@@ -406,6 +407,21 @@ public class QueryBuilder {
         ps.setLiteral("wktValue", wkt);
 //        ps.setLiteral("validAt", atTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 //        ps.setLiteral("dbAt", dbTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+
+        final String queryString = ps.toString();
+        logger.trace(queryString);
+        return queryString;
+    }
+
+    public String buildExistenceAggregationQuery(String restrictionQuery, OffsetDateTime existsFrom, OffsetDateTime existsTo, String aggregationOperation) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText(String.format("SELECT DISTINCT ?m " +
+                "WHERE { " +
+                "FILTER((?ef %s ?existsValue^^xsd:dateTime) && (!bound(?et) || ?et >= ?existsTo^^xsd:dateTime)) {", aggregationOperation, existsFrom.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)));
+        ps.append(restrictionQuery);
+        ps.setLiteral("existsValue", existsFrom.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        ps.setLiteral("existsTo", existsTo.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        ps.append("}}");
 
         final String queryString = ps.toString();
         logger.trace(queryString);
@@ -439,7 +455,7 @@ public class QueryBuilder {
 
     public String buildPropertyRestrictionFragment(OWLClass datasetClass, OWLDataProperty fact, OWLLiteral factValue, OffsetDateTime existsFrom, OffsetDateTime existsTo, OffsetDateTime atTemporal, OffsetDateTime dbTemporal) {
         final ParameterizedSparqlString ps = new ParameterizedSparqlString();
-        ps.setCommandText(String.format("SELECT DISTINCT ?m " +
+        ps.setCommandText(String.format("SELECT DISTINCT ?m ?ef ?et " +
                 "WHERE { " +
                 "?m rdf:type ?owlClass ." +
                 "?m trestle:exists_from ?ef ." +

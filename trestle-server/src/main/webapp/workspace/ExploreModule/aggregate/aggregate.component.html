@@ -30,7 +30,7 @@
                     </mat-option>
                 </mat-select>
             </div>
-            <div [hidden]="!aggregationForm.controls.restriction.controls.property.valid" fxFlex="33%">
+            <div [hidden]="!aggregationForm.get(['restriction', 'property'])?.valid" fxFlex="33%">
                 <mat-select
                         matInput
                         placeholder="Select value"
@@ -71,6 +71,9 @@
                     AGGREGATE
                 </button>
             </div>
+        </div>
+        <div [hidden]="!inProgress">
+            Aggregating....
         </div>
     </form>
 </div>

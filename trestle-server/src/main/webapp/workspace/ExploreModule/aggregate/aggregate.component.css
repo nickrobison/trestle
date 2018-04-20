@@ -5,6 +5,7 @@
 .aggregate-container {
     margin-bottom: 50px;
     margin-right: 20px;
+    margin-left: 5px;
 }
 
 ::ng-deep .mat-input-underline {
