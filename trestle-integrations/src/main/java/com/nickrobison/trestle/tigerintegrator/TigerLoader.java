@@ -75,7 +75,8 @@ public class TigerLoader {
     TigerLoader() throws SQLException
     {
 
-        config = ConfigFactory.load();
+//        config = ConfigFactory.load();
+        config = ConfigFactory.parseResources("tiger-loader.conf");
         connectStr = config.getString("trestle.graphdb.connection_string");
         username = config.getString("trestle.graphdb.username");
         password = config.getString("trestle.graphdb.password");
@@ -94,7 +95,7 @@ public class TigerLoader {
                 .withPrefix(ontPrefix)
                 .withInputClasses(TigerCountyObject.class)
 //                .withoutCaching()
-                .initialize()
+//                .initialize()
                 .build();
 
         for(int count=0; count<tigerObjs.size(); count++)
