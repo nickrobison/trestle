@@ -50,6 +50,14 @@ public class ReasonerModule implements Managed {
                 .build();
 
         logger.info("Reasoner started");
+
+//        Enable GeoSPARQL
+//        FIXME(nickrobison): This needs to come out, it's a patch to get the demos working. Needs TRESTLE-694
+        this.reasoner.getUnderlyingOntology().executeUpdateSPARQL("PREFIX : <http://www.ontotext.com/plugins/geosparql#>\n" +
+                "\n" +
+                "INSERT DATA {\n" +
+                "  _:s :enabled \"true\" .\n" +
+                "}");
     }
 
     @Override
