@@ -43,7 +43,7 @@
         </div>
         <h4>Aggregation Strategy</h4>
         <div fxLayout="row" fxLayoutAlign="start" formGroupName="strategy">
-            <div>
+            <div fxFlex="30%">
                 <mat-select [(value)]="selectedAggregation" placeholder="Select an aggregation field"
                             formControlName="field">
                     <mat-option *ngFor="let aggregation of aggregationFields" [value]="aggregation">
@@ -51,7 +51,7 @@
                     </mat-option>
                 </mat-select>
             </div>
-            <div>
+            <div fxFlex="30%">
                 <mat-select placeholder="Select an aggregation operation"
                             formControlName="operation">
                     <mat-option *ngFor="let op of availableAggregations" [value]="op.value">
