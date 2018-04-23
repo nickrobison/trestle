@@ -13,7 +13,6 @@
             <div fxFlex="33%">
                 <mat-select matInput
                             placeholder="Select available dataset"
-                            (selectionChange)="datasetChanged($event)"
                             formControlName="dataset">
                     <mat-option *ngFor="let ds of datasets" [value]="ds">
                         {{ds}}
@@ -23,14 +22,13 @@
             <div fxFlex="33%">
                 <mat-select matInput
                             placeholder="Select data property"
-                            (selectionChange)="propertyChanged($event)"
                             formControlName="property">
                     <mat-option *ngFor="let property of properties" [value]="property">
                         {{property}}
                     </mat-option>
                 </mat-select>
             </div>
-            <div [hidden]="!aggregationForm.get(['restriction', 'property'])?.valid" fxFlex="33%">
+            <div [hidden]="restrictionValueHidden" fxFlex="33%">
                 <mat-select
                         matInput
                         placeholder="Select value"

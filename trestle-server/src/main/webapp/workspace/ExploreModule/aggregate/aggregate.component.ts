@@ -3,10 +3,19 @@ import { MapService } from "../viewer/map.service";
 import { AggregationOperation, AggregationService, BBOX_PROPERTY } from "./aggregation.service";
 import { ReplaySubject } from "rxjs/ReplaySubject";
 import { MapSource, TrestleMapComponent } from "../../UIModule/map/trestle-map.component";
-import { MatSelectChange } from "@angular/material";
 import { stringify } from "wellknown";
 import { DatasetService } from "../../SharedModule/dataset/dataset.service";
 import { AbstractControl, FormBuilder, FormGroup, Validators } from "@angular/forms";
+import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from "rxjs/operators";
+import { Observable } from "rxjs/Observable";
+
+const distinctTime = (ms: number) => <T>(source: Observable<T>) => {
+    return source
+        .pipe(
+            debounceTime(ms),
+            distinctUntilChanged()
+        );
+};
 
 @Component({
     selector: "aggregate",
@@ -37,6 +46,7 @@ export class AggregateComponent implements OnInit {
         {name: "Less than or equal to", value: "LTEQ"}
     ];
     public inProgress = false;
+    public restrictionValueHidden = true;
 
     public constructor(private ms: MapService,
                        private as: AggregationService,
@@ -66,7 +76,7 @@ export class AggregateComponent implements OnInit {
             dataset: ["", Validators.required],
             property: "",
             value: undefined,
-            validator: this.restrictionValidation
+            validator: AggregateComponent.restrictionValidation
         });
 
         const strategyGroup = this.formBuilder.group({
@@ -79,6 +89,49 @@ export class AggregateComponent implements OnInit {
             restriction: restrictionGroup,
             strategy: strategyGroup
         });
+
+        // Monitor Restriction dataset changes
+        this.getFormControl("restriction", "dataset")
+            .valueChanges
+            .pipe(
+                distinctTime(400),
+                // Reset form values
+                tap(() => this.getFormControl("restriction", "value").reset()),
+                // Fetch dataset properties
+                tap((value) => this.getFormControl("restriction", "dataset").setValue(value)),
+                switchMap((value) => this.ds.getDatasetProperties(value))
+            )
+            .subscribe((values) => {
+                this.properties = [BBOX_PROPERTY].concat(values);
+                this.aggregationFields = ["EXISTENCE"].concat(values);
+            });
+
+        // Monitor Restriction property changes
+        this.getFormControl("restriction", "property")
+            .valueChanges
+            .pipe(
+                distinctTime(400),
+                // Hide value selection if BBOX
+                tap((value) => {
+                    // If bounding box, hide the value, but give it a dummy value
+                    const valueControl = this.getFormControl("restriction", "property");
+                    if (!value || value === BBOX_PROPERTY) {
+                        this.restrictionValueHidden = true;
+                        valueControl.setValue("wktValue");
+                    } else {
+                        valueControl.reset();
+                        this.restrictionValueHidden = false;
+                    }
+                    this.getFormControl("restriction", "property").setValue(value)
+                }),
+                // Filter out BBOX and empty values
+                filter((value) => value && value !== BBOX_PROPERTY),
+                // Fetch Property values
+                switchMap((value) => this.ds
+                    .getDatasetFactValues(this.getFormValue("restriction", "dataset"), value)))
+            .subscribe((propertyValues) => {
+                this.values = propertyValues;
+            });
     }
 
     public aggregate(): void {
@@ -112,7 +165,7 @@ export class AggregateComponent implements OnInit {
                 });
                 this.inProgress = false;
             });
-    //    Reset from the special casing
+        //    Reset from the special casing
         if (this.getFormValue("restriction", "property") === "asWKT") {
             this.getFormControl("restriction", "property").setValue(BBOX_PROPERTY);
             this.getFormControl("restriction", "value").setValue(undefined);
@@ -124,29 +177,19 @@ export class AggregateComponent implements OnInit {
 
     }
 
-    public datasetChanged = (change: MatSelectChange): void => {
-        console.debug("Changed to:", change);
-        this.ds
-            .getDatasetProperties(change.value)
-            .subscribe((values) => {
-                this.properties = [BBOX_PROPERTY].concat(values);
-                this.aggregationFields = ["EXISTENCE"].concat(values);
-            });
-    };
+    private getFormValue(group: "restriction" | "strategy", control: string): any {
+        return this.getFormControl(group, control).value;
+    }
 
-    public propertyChanged = (change: MatSelectChange): void => {
-        if (change.value === BBOX_PROPERTY) {
-            return;
+    private getFormControl(group: "restriction" | "strategy", control: string): AbstractControl {
+        const fControl = this.aggregationForm.get([group, control]);
+        if (fControl) {
+            return fControl;
         }
+        throw new Error("Cannot get control");
+    }
 
-        this.ds
-            .getDatasetFactValues(this.getFormValue("restriction", "dataset"), change.value)
-            .subscribe((values) => {
-                this.values = values;
-            });
-    };
-
-    private restrictionValidation(f: FormGroup): void {
+    private static restrictionValidation(f: FormGroup): void {
         const propertyControl = f.controls["property"];
         const valueControl = f.controls["value"];
         const value = valueControl.value;
@@ -164,16 +207,4 @@ export class AggregateComponent implements OnInit {
             valueControl.setErrors(null);
         }
     };
-
-    private getFormValue(group: "restriction" | "strategy", control: string): any {
-        return this.getFormControl(group, control).value;
-    }
-
-    private getFormControl(group: "restriction" | "strategy", control: string): AbstractControl {
-        const fControl = this.aggregationForm.get([group, control]);
-        if (fControl) {
-            return fControl;
-        }
-        throw new Error("Cannot get control");
-    }
 }
