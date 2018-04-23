@@ -4,6 +4,7 @@
                aria-label="Search for Individual"
                [matAutocomplete]="auto"
                [formControl]="individualName">
+        <mat-hint class="search-error-text" *ngIf="showError && errorText !== ''">{{errorText}}</mat-hint>
         <mat-autocomplete #auto="matAutocomplete" (optionSelected)="selectHandler($event)">
             <mat-option *ngFor="let option of options | async" [value]="option">
                 {{displayFn(option)}}
