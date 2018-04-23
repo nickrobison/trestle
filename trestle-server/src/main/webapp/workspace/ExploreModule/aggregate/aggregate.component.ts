@@ -6,16 +6,8 @@ import { MapSource, TrestleMapComponent } from "../../UIModule/map/trestle-map.c
 import { stringify } from "wellknown";
 import { DatasetService } from "../../SharedModule/dataset/dataset.service";
 import { AbstractControl, FormBuilder, FormGroup, Validators } from "@angular/forms";
-import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from "rxjs/operators";
-import { Observable } from "rxjs/Observable";
-
-const distinctTime = (ms: number) => <T>(source: Observable<T>) => {
-    return source
-        .pipe(
-            debounceTime(ms),
-            distinctUntilChanged()
-        );
-};
+import { filter, switchMap, tap } from "rxjs/operators";
+import { distinctTime } from "../../SharedModule/operators/rxjs.operators";
 
 @Component({
     selector: "aggregate",
