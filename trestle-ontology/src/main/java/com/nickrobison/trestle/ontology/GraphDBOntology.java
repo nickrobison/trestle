@@ -171,18 +171,18 @@ public class GraphDBOntology extends SesameOntology {
             this.adminConnection.commit();
         }
 
-        logger.debug("Enabling Spatial support");
-        this.adminConnection.begin();
-        try {
-            final Update update = this.adminConnection.prepareUpdate(QueryLanguage.SPARQL, GEOSPARQL_ENABLE);
-            update.execute();
-        } catch (Exception e) {
-            logger.error("Cannot enable Geosparql", e);
-            this.adminConnection.rollback();
-            throw e;
-        } finally {
-            this.adminConnection.commit();
-        }
+//        logger.debug("Enabling Spatial support");
+//        this.adminConnection.begin();
+//        try {
+//            final Update update = this.adminConnection.prepareUpdate(QueryLanguage.SPARQL, GEOSPARQL_ENABLE);
+//            update.execute();
+//        } catch (Exception e) {
+//            logger.error("Cannot enable Geosparql", e);
+//            this.adminConnection.rollback();
+//            throw e;
+//        } finally {
+//            this.adminConnection.commit();
+//        }
         logger.info("Ontology {} ready to go", this.ontologyName);
     }
 

@@ -633,7 +633,9 @@ public class QueryBuilder {
                 "?vt > ?validAt^^xsd:dateTime)) && " +
                 "(!bound(?va) || " +
                 "(?va = ?validAt^^xsd:dateTime))) .");
-        ps.append("?f ogc:sfIntersects ?wktString^^ogc:wktLiteral }");
+//        This is really slow, but using the magic prefix breaks my code.
+        ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }    ");
+//        ps.append("?f ogc:sfIntersects ?wktString^^ogc:wktLiteral }");
 
         ps.setLiteral("wktString", wktValue);
         ps.setLiteral("validAt", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
@@ -650,7 +652,9 @@ public class QueryBuilder {
     protected void buildDatabaseSString(ParameterizedSparqlString ps, String wktValue, OffsetDateTime dbAt) {
         ps.append("FILTER(?df <= ?dbAt^^xsd:dateTime && (!bound(?dt) || ?dt > ?dbAt^^xsd:dateTime)) .");
         ps.removeNsPrefix("geosparql");
-        ps.append("?f ogc:sfIntersects ?wktString^^ogc:wktLiteral }");
+//        This is really slow, but using the magic prefix breaks my code.
+        ps.append("FILTER(ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
+//        ps.append("?f ogc:sfIntersects ?wktString^^ogc:wktLiteral }");
         ps.setLiteral("dbAt", dbAt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
         ps.setLiteral("wktString", wktValue);
