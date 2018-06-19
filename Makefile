@@ -13,29 +13,24 @@ DATABASE := tiger
 DB_USER := nickrobison
 DB_PASSWORD := ""
 
-.PHONY: cloc
+.PHONY: cloc graphdb evaluation docker prep-dir king_county census gaul gates_test data clean
 cloc:
 	cloc --exclude-dir=$(shell tr '\n' ',' < ./.clocignore) .
 
 # Docker commands
 
-.PHONY: graphdb
 graphdb:
 	docker build --build-arg version=8.5.0 -t docker.nickrobison.com:5000/graphdb:8.5.0-free docker/graphdb
 
-.PHONY: evaluation
 evaluation: graphdb
 	docker build -t docker.nickrobison.com:5000/evaluation-data docker/evaluation-docker
 
-.PHONY: nginx
 nginx:
 	docker build -t docker.nickrobison.com:5000/nginx-proxy docker/nginx-proxy
 
-.PHONY: docker
 docker: nginx evaluation
 
 # Build data directories
-.PHONY: prep-dir
 prep-dir:
 	-@mkdir -p $(DATA_DIR)/census
 	-@mkdir -p $(DATA_DIR)/tiger
@@ -45,7 +40,6 @@ prep-dir:
 	-@mkdir -p $(DATA_DIR)/gates_test
 
 # Data for king county (Spatial Intersection Test)
-.PHONY: king_county
 king_county: $(DATA_DIR)/king_county/kc_tract_10.shp $(DATA_DIR)/tiger_kc/tl_2010_53033_tract10.shp
 
 $(DATA_DIR)/king_county/kc.zip:
@@ -61,7 +55,6 @@ $(DATA_DIR)/tiger_kc/tl_2010_53033_tract10.shp: $(DATA_DIR)/tiger_kc/tiger_kc.zi
 	@unzip -o $^ -d $(dir $@)
 
 # Census data
-.PHONY: census
 census: $(DATA_DIR)/tiger/.pop_loaded $(CENSUS_YEARS)
 	-@rm -rf data/tiger/out/
 
@@ -94,7 +87,6 @@ $(DATA_DIR)/tiger/.tl_%_us_county.loaded: $(DATA_DIR)/tiger/out/tl_%_us_county.s
 	@shp2pgsql -I -s 4269 -W LATIN1 $(dir $@)out/$(notdir $(county_file)).shp public.shp$(census_year) | psql -h $(DB_HOST) -t $(DATABASE) -U $(DB_USER)
 	@touch $@
 
-.PHONY: gaul $(GAUL_YEARS)
 gaul: $(GAUL_YEARS)
 
 # Generate GAUL rules, since we have this nested folder structure
@@ -123,9 +115,10 @@ $(DATA_DIR)/gates_test/.done:
 	@touch $@
 
 # GAUL datasets
-.PHONY: gates_test
 gates_test: gaul trestle-tools/target/trestle-tools.jar $(DATA_DIR)/gates_test/.done
 
-
-.PHONY: data
 data: prep-dir $(DATASETS)
+
+clean:
+	@mvn clean
+	@rm -rf data/
