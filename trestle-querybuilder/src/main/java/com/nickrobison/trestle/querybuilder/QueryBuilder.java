@@ -2,7 +2,6 @@ package com.nickrobison.trestle.querybuilder;
 
 import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
-import com.sun.scenario.effect.Offset;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.PrecisionModel;
 import com.vividsolutions.jts.io.ParseException;
@@ -21,7 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -616,7 +614,8 @@ public class QueryBuilder {
 
     /**
      * Common method to build the spatio-temporal intersection component of the SPARQL query
-     *  @param ps       - {@link ParameterizedSparqlString} to build on
+     *
+     * @param ps       - {@link ParameterizedSparqlString} to build on
      * @param wktValue - {@link ParameterizedSparqlString} to build on
      * @param atTime   - {@link OffsetDateTime} to set intersection time to
      * @param dbAtTime - {@link OffsetDateTime} of database intersection time
@@ -645,7 +644,8 @@ public class QueryBuilder {
 
     /**
      * Common method for build the Spatial intersection component of the SPARQL query
-     *  @param ps       - ParamaterizedSparqlString to build on
+     *
+     * @param ps       - ParamaterizedSparqlString to build on
      * @param wktValue - ParamaterizedSparqlString to build on
      * @param dbAt     - {@link OffsetDateTime} of database intersection
      */
