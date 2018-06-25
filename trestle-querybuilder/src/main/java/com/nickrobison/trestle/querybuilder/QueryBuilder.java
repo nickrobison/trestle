@@ -415,7 +415,7 @@ public class QueryBuilder {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText(String.format("SELECT DISTINCT ?m " +
                 "WHERE { " +
-                "FILTER((?ef %s ?existsValue^^xsd:dateTime) && (!bound(?et) || ?et >= ?existsTo^^xsd:dateTime)) {", aggregationOperation, existsFrom.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)));
+                "FILTER((?ef %s ?existsValue^^xsd:dateTime) && (!bound(?et) || ?et >= ?existsTo^^xsd:dateTime)) {", aggregationOperation));
         ps.append(restrictionQuery);
         ps.setLiteral("existsValue", existsFrom.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         ps.setLiteral("existsTo", existsTo.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
