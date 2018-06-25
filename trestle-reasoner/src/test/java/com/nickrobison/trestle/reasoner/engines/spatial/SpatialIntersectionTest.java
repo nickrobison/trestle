@@ -6,6 +6,7 @@ import com.nickrobison.trestle.reasoner.AbstractReasonerTest;
 import com.nickrobison.trestle.reasoner.TestClasses;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.TrestleIndividual;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import static com.nickrobison.trestle.SharedTestUtils.readGAULObjects;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Tag("integration")
+@Disabled
 public class SpatialIntersectionTest extends AbstractReasonerTest {
 
 

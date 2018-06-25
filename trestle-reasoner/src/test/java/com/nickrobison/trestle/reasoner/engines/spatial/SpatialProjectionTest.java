@@ -7,6 +7,7 @@ import com.nickrobison.trestle.reasoner.AbstractReasonerTest;
 import com.nickrobison.trestle.reasoner.TestClasses;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.vividsolutions.jts.geom.Geometry;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.opengis.feature.simple.SimpleFeature;
@@ -24,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Created by nickrobison on 6/25/18.
  */
 @Tag("integration")
+@Disabled
 public class SpatialProjectionTest extends AbstractReasonerTest {
 
     @Test
