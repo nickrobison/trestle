@@ -19,7 +19,7 @@ import com.nickrobison.trestle.reasoner.engines.exporter.ITrestleDataExporter;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
-import com.nickrobison.trestle.reasoner.engines.object.TrestleObjectWriter;
+import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
@@ -32,6 +32,7 @@ import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.reasoner.parser.TypeConstructor;
+import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TrestleIndividual;
@@ -101,6 +102,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final TrestleEventEngine eventEngine;
     private final IndividualEngine individualEngine;
     private final SpatialEngine spatialEngine;
+    private final AggregationEngine aggregationEngine;
     private final TemporalEngine temporalEngine;
     private final Config trestleConfig;
     private final TrestleCache trestleCache;
@@ -176,10 +178,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //        Setup metrics engine
         metrician = injector.getInstance(Metrician.class);
 
+        TrestleExecutorFactory factory = injector.getInstance(TrestleExecutorFactory.class);
+
 //        Create our own thread pools to help isolate processes
-        trestleThreadPool = TrestleExecutorService.executorFactory(builder.ontologyName.orElse("default"), trestleConfig.getInt("threading.default-pool.size"), this.metrician);
-        objectThreadPool = TrestleExecutorService.executorFactory("object-pool", trestleConfig.getInt("threading.object-pool.size"), this.metrician);
-        searchThreadPool = TrestleExecutorService.executorFactory("search-pool", trestleConfig.getInt("threading.search-pool.size"), this.metrician);
+        trestleThreadPool = factory.create(builder.ontologyName.orElse("default"));
+        objectThreadPool = factory.create("object-pool");
+        searchThreadPool = factory.create("search-pool");
 
 //        Validate ontology name
         try {
@@ -206,13 +210,14 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 //      Engines on
         this.objectReader = injector.getInstance(ITrestleObjectReader.class);
-        this.objectWriter = injector.getInstance(TrestleObjectWriter.class);
+        this.objectWriter = injector.getInstance(ITrestleObjectWriter.class);
         this.conceptEngine = injector.getInstance(ITrestleConceptEngine.class);
         this.dataExporter = injector.getInstance(ITrestleDataExporter.class);
         this.mergeEngine = injector.getInstance(TrestleMergeEngine.class);
         this.eventEngine = injector.getInstance(TrestleEventEngine.class);
         this.individualEngine = injector.getInstance(IndividualEngine.class);
         this.spatialEngine = injector.getInstance(SpatialEngine.class);
+        this.aggregationEngine = injector.getInstance(AggregationEngine.class);
         this.temporalEngine = injector.getInstance(TemporalEngine.class);
 
 //        Register type constructors from the service loader
@@ -304,6 +309,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public SpatialEngine getSpatialEngine() {
         return this.spatialEngine;
+    }
+
+    public AggregationEngine getAggregationEngine() {
+        return this.aggregationEngine;
     }
 
     @Override
@@ -432,13 +441,23 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public Optional<List<Object>> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
+    public List<Object> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
         return this.objectReader.getFactValues(clazz, individual, factName, validStart, validEnd, databaseTemporal);
     }
 
     @Override
-    public Optional<List<Object>> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
+    public List<Object> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
         return this.objectReader.getFactValues(clazz, individual, factName, validStart, validEnd, databaseTemporal);
+    }
+
+    @Override
+    public List<Object> sampleFactValues(Class<?> clazz, String factName, long sampleLimit) {
+        return this.objectReader.sampleFactValues(clazz, factName, sampleLimit);
+    }
+
+    @Override
+    public List<Object> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit) {
+        return this.objectReader.sampleFactValues(clazz, factName, sampleLimit);
     }
 
     @Override
@@ -839,6 +858,17 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     public Class<?> getDatasetClass(String owlClassString) throws UnregisteredClassException {
         final OWLClass owlClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, owlClassString));
         return this.trestleParser.classRegistry.lookupClass(owlClass);
+    }
+
+    @Override
+    public List<String> getDatasetProperties(Class<?> clazz) {
+        final List<OWLDataProperty> owlDataProperties = this.trestleParser.classBuilder.getPropertyMembers(clazz)
+                .orElseThrow(() -> new IllegalStateException(String.format("Cannot get properties for %s", this.trestleParser.classParser.getObjectClass(clazz))));
+                return owlDataProperties
+                        .stream()
+                        .map(OWLEntity::toStringID)
+                        .sorted()
+                        .collect(Collectors.toList());
     }
 
     @Override

@@ -163,7 +163,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>3.0.2</version>
                 <executions>
                     <execution>
                         <id>copy-ontology</id>
@@ -218,7 +217,7 @@
                             <goal>webpack</goal>
                         </goals>
                         <configuration>
-                            <arguments>--config config/webpack.production.js</arguments>
+                            <arguments>--config config/webpack.prod-temp.js</arguments>
                         </configuration>
                     </execution>
                     <execution>

@@ -22,6 +22,7 @@ import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.parser.*;
+import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TemporalScope;
@@ -84,7 +85,8 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
 
 
     @Inject
-    public TrestleObjectWriter(TrestleEventEngine eventEngine,
+    public TrestleObjectWriter(@ReasonerPrefix String reasonerPrefix,
+                               TrestleEventEngine eventEngine,
                                Metrician metrician,
                                ObjectEngineUtils engineUtils,
                                TrestleParser trestleParser,
@@ -92,7 +94,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                                ITrestleOntology ontology,
                                QueryBuilder queryBuilder,
                                TrestleCache trestleCache,
-                               @ReasonerPrefix String reasonerPrefix) {
+                               TrestleExecutorFactory factory) {
         this.eventEngine = eventEngine;
         this.metrician = metrician;
         this.engineUtils = engineUtils;
@@ -108,10 +110,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
 
         final Config config = ConfigFactory.load().getConfig("trestle");
 
-        this.objectWriterThreadPool = TrestleExecutorService.executorFactory(
-                "object-writer-pool",
-                config.getInt("threading.object-pool.size"),
-                this.metrician);
+        this.objectWriterThreadPool = factory.create("object-writer-pool");
     }
 
     @Override

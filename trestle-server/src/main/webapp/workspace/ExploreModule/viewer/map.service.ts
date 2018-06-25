@@ -70,6 +70,7 @@ export interface IMapWorkerResponse {
     geom: FeatureCollection<GeometryObject>;
 }
 
+
 @Injectable()
 export class MapService {
     private worker: Worker;
@@ -80,19 +81,6 @@ export class MapService {
         this.worker = new Worker();
         this.workerStream = Observable.fromEvent(this.worker, "message")
             .map((m: MessageEvent) => (m.data as IMapWorkerResponse));
-    }
-
-    /**
-     * Returns the list of currently registered datasets from the database
-     * @returns {Observable<string[]>}
-     */
-    public getAvailableDatasets(): Observable<string[]> {
-        return this.http.get("/visualize/datasets")
-            .map((res: Response) => {
-                console.debug("Available datasets:", res.text());
-                return res.json();
-            })
-            .catch((error: Error) => Observable.throw(error || "Server Error"));
     }
 
     /**
@@ -202,14 +190,7 @@ export class MapService {
         });
     };
 
-    private static parseResponseToIndividuals(res: Response): TrestleIndividual[] {
-        const json = res.json();
-        console.debug("Intersected result from server:", json);
-        return json
-            .map((individual: ITrestleIndividual) => new TrestleIndividual(individual));
-    }
-
-    private static normalizeToGeoJSON(geom: wktValue): Polygon | MultiPolygon {
+    public static normalizeToGeoJSON(geom: wktValue): Polygon | MultiPolygon {
         if (MapService.isGeometryObject(geom)) {
             if (geom.type === "Polygon") {
                 return (geom as Polygon);
@@ -230,6 +211,13 @@ export class MapService {
                 geom.getSouthWest().toArray()]]
             // crs: {type: "name", properties: {name: "EPSG:4326"}}
         };
+    }
+
+    private static parseResponseToIndividuals(res: Response): TrestleIndividual[] {
+        const json = res.json();
+        console.debug("Intersected result from server:", json);
+        return json
+            .map((individual: ITrestleIndividual) => new TrestleIndividual(individual));
     }
 
     private static isGeometryObject(x: any): x is GeometryObject {

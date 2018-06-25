@@ -8,6 +8,7 @@ import {ITrestleRoute} from "../NavigationModule/navigation.module";
 import {DatsetViewerComponent} from "./viewer/viewer.component";
 import {CompareComponent} from "./compare/compare.component";
 import {VisualizeDetailsComponent} from "./visualize/details/visualize-details.component";
+import { AggregateComponent } from "./aggregate/aggregate.component";
 
 export const ExploreRoutes: ITrestleRoute[] = [
     {path: "", redirectTo: "viewer", pathMatch: "full"},
@@ -20,5 +21,6 @@ export const ExploreRoutes: ITrestleRoute[] = [
     },
     {path: "query", component: QueryComponent, canActivate: [LoggedInGuard]},
     {path: "viewer", component: DatsetViewerComponent, canActivate: [LoggedInGuard]},
-    {path: "compare", component: CompareComponent, canActivate: [LoggedInGuard]}
+    {path: "compare", component: CompareComponent, canActivate: [LoggedInGuard]},
+    {path: "aggregate", component: AggregateComponent, canActivate: [LoggedInGuard]}
 ];

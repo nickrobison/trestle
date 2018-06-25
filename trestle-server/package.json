@@ -38,6 +38,7 @@
     "moment-timezone": "^0.5.14",
     "optimize-js-plugin": "^0.0.4",
     "rxjs": "5.5.2",
+    "sorted-array": "^2.0.2",
     "stacktrace-js": "^2.0.0",
     "transitory": "^1.2.0",
     "web-animations-js": "^2.3.1",
@@ -48,7 +49,7 @@
     "@angular/cli": "^1.7.2",
     "@angular/compiler-cli": "5.2.7",
     "@angular/language-service": "5.2.7",
-    "@ngtools/webpack": "^1.9.3",
+    "@ngtools/webpack": "^1.10.2",
     "@types/chai": "^4.1.2",
     "@types/chai-as-promised": "^7.1.0",
     "@types/codemirror": "^0.0.55",
@@ -106,7 +107,8 @@
     "watch": "webpack --colors --progress --watch --config config/webpack.dev.js",
     "prepare": "webdriver-manager update",
     "test": "protractor protractor.conf.js",
-    "test:ci": "protractor config/protractor.ci.conf.js"
+    "test:ci": "protractor config/protractor.ci.conf.js",
+    "prod": "webpack --colors --progress --config config/webpack.prod-temp.js"
   },
   "repository": {
     "type": "git",

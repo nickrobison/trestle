@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.exporter;
 
-import com.nickrobison.trestle.common.CommonSpatialUtils;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.PrecisionModel;

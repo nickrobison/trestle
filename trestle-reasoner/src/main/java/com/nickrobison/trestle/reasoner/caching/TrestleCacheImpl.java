@@ -23,7 +23,6 @@ import javax.cache.configuration.MutableCacheEntryListenerConfiguration;
 import javax.cache.configuration.MutableConfiguration;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.inject.Singleton;
 import java.time.*;
 import java.util.Optional;
 
@@ -31,7 +30,6 @@ import java.util.Optional;
  * Created by nrobison on 8/18/16.
  */
 @SuppressWarnings({"squid:S2142"})
-@Singleton
 public class TrestleCacheImpl implements TrestleCache {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleCacheImpl.class);

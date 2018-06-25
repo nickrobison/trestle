@@ -81,7 +81,6 @@
         <dependency>
             <groupId>me.tongfei</groupId>
             <artifactId>progressbar</artifactId>
-            <version>0.5.5</version>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -103,6 +102,21 @@
         </dependency>
     </dependencies>
     <build>
+        <testResources>
+            <testResource>
+                <!--Relative path, because.-->
+                <directory>${basedir}/../${data.dir}</directory>
+                <includes>
+                    <include>gates_test/*</include>
+                </includes>
+                <excludes>
+                    <exclude>gates_test/.done</exclude>
+                </excludes>
+            </testResource>
+            <testResource>
+                <directory>src/test/resources</directory>
+            </testResource>
+        </testResources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -137,7 +151,7 @@
                                 </transformer>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.nickrobison.gaulintegrator.IntegrationRunner</mainClass>
+                                    <mainClass>com.nickrobison.trestle.gaulintegrator.IntegrationRunner</mainClass>
                                 </transformer>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer">

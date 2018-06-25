@@ -50,6 +50,8 @@ public class GraphDBOntology extends SesameOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(GraphDBOntology.class);
     private static final String DATA_DIRECTORY = "target/data";
+    private static final String GEOSPARQL_ENABLE = "PREFIX : <http://www.ontotext.com/plugins/geosparql#>\n" +
+            "INSERT DATA {_:s :enabled \"true\".}";
     private static RepositoryManager repositoryManager;
     //    private static RepositoryConnection connection;
 //    private static Repository repository;
@@ -155,6 +157,7 @@ public class GraphDBOntology extends SesameOntology {
     public void initializeOntology() {
         logger.info("Initializing new ontology {}", this.ontologyName);
         logger.info("Removing all statements from repository");
+
         this.adminConnection.begin();
         this.adminConnection.remove(WILDCARD, WILDCARD, WILDCARD);
         this.adminConnection.commit();
@@ -168,16 +171,18 @@ public class GraphDBOntology extends SesameOntology {
             this.adminConnection.commit();
         }
 
-        //        Enable GeoSPARQL support
-        logger.info("Enabling GeoSPARQL support");
-        final String enableGEOSPARQL = "PREFIX : <http://www.ontotext.com/plugins/geosparql#>\n" +
-                "\n" +
-                "INSERT DATA {\n" +
-                "  _:s :enabled 'true' .\n" +
-                "}";
-
-//        final Update update = connection.prepareUpdate(QueryLanguage.SPARQL, enableGEOSPARQL);
-//        update.execute();
+//        logger.debug("Enabling Spatial support");
+//        this.adminConnection.begin();
+//        try {
+//            final Update update = this.adminConnection.prepareUpdate(QueryLanguage.SPARQL, GEOSPARQL_ENABLE);
+//            update.execute();
+//        } catch (Exception e) {
+//            logger.error("Cannot enable Geosparql", e);
+//            this.adminConnection.rollback();
+//            throw e;
+//        } finally {
+//            this.adminConnection.commit();
+//        }
         logger.info("Ontology {} ready to go", this.ontologyName);
     }
 
@@ -211,9 +216,12 @@ public class GraphDBOntology extends SesameOntology {
     @Override
     public void executeUpdateSPARQL(String queryString) {
         this.openTransaction(true);
-        final Update update = this.getThreadConnection().prepareUpdate(QueryLanguage.SPARQL, queryString);
-        update.execute();
-        this.commitTransaction(true);
+        try {
+            final Update update = this.getThreadConnection().prepareUpdate(QueryLanguage.SPARQL, queryString);
+            update.execute();
+        } finally {
+            this.commitTransaction(true);
+        }
     }
 
     @Override

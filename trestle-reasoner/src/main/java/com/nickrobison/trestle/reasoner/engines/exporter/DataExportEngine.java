@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.reasoner.engines.exporter;
 
-import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.exporter.*;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
@@ -8,13 +7,12 @@ import com.nickrobison.trestle.ontology.ReasonerPrefix;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.exceptions.NoValidStateException;
 import com.nickrobison.trestle.reasoner.parser.*;
+import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.PointTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -57,7 +55,7 @@ public class DataExportEngine implements ITrestleDataExporter {
                             ITrestleOntology ontology,
                             ITrestleObjectReader objectReader,
                             TrestleParser trestleParser,
-                            Metrician metrician) {
+                            TrestleExecutorFactory factory) {
         this.reasonerPrefix = reasonerPrefix;
         this.ontology = ontology;
         this.objectReader = objectReader;
@@ -66,12 +64,7 @@ public class DataExportEngine implements ITrestleDataExporter {
         this.temporalParser = trestleParser.temporalParser;
         this.typeConverter = trestleParser.typeConverter;
 
-        final Config config = ConfigFactory.load().getConfig("trestle");
-
-        this.dataExporterPool = TrestleExecutorService.executorFactory(
-                "data-exporter-pool",
-                config.getInt("threading.object-pool.size"),
-                metrician);
+        this.dataExporterPool = factory.create("data-exporter-pool");
     }
 
     @Override

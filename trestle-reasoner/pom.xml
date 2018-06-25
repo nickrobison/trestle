@@ -13,7 +13,7 @@
     </properties>
 
     <artifactId>trestle-reasoner</artifactId>
-    
+
     <dependencies>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
@@ -178,33 +178,49 @@
         <!--Test Dependencies-->
     </dependencies>
     <build>
-            <plugins>
-                <plugin>
-                    <groupId>com.theoryinpractise</groupId>
-                    <artifactId>clojure-maven-plugin</artifactId>
-                    <version>1.8.1</version>
-                    <executions>
-                        <execution>
-                            <id>default-clojure</id>
-                            <goals>
-                                <goal>add-source</goal>
-                                <goal>compile</goal>
-                                <goal>add-test-source</goal>
-                                <goal>testCompile</goal>
-                                <goal>test</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                    <configuration>
-                        <copyAllCompiledNamespaces>true</copyAllCompiledNamespaces>
-                        <sourceDirectories>
-                            <sourceDirectory>src/main/clojure</sourceDirectory>
-                        </sourceDirectories>
-                        <testSourceDirectories>
-                            <testSourceDirectory>src/test/clojure</testSourceDirectory>
-                        </testSourceDirectories>
-                    </configuration>
-                </plugin>
-            </plugins>
+        <testResources>
+            <testResource>
+                <directory>${basedir}/../data</directory>
+                <includes>
+                    <include>king_county/*</include>
+                    <include>tiger_kc/*</include>
+                </includes>
+                <excludes>
+                    <exclude>tiger_kc/tiger_kc.zip</exclude>
+                    <exclude>king_county/kc.zip</exclude>
+                </excludes>
+            </testResource>
+            <testResource>
+                <directory>src/test/resources</directory>
+            </testResource>
+        </testResources>
+        <plugins>
+            <plugin>
+                <groupId>com.theoryinpractise</groupId>
+                <artifactId>clojure-maven-plugin</artifactId>
+                <version>1.8.1</version>
+                <executions>
+                    <execution>
+                        <id>default-clojure</id>
+                        <goals>
+                            <goal>add-source</goal>
+                            <goal>compile</goal>
+                            <goal>add-test-source</goal>
+                            <goal>testCompile</goal>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <copyAllCompiledNamespaces>true</copyAllCompiledNamespaces>
+                    <sourceDirectories>
+                        <sourceDirectory>src/main/clojure</sourceDirectory>
+                    </sourceDirectories>
+                    <testSourceDirectories>
+                        <testSourceDirectory>src/test/clojure</testSourceDirectory>
+                    </testSourceDirectories>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 </project>

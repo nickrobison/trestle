@@ -7,3 +7,11 @@
 .full-width {
     width: 100%;
 }
+
+.search-error-text {
+    color: red;
+}
+
+/deep/ .mat-form-field-wrapper {
+    padding-bottom: 0;
+}

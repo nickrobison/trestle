@@ -1,7 +1,6 @@
 package com.nickrobison.trestle.reasoner.engines;
 
 import com.codahale.metrics.annotation.Timed;
-import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingFactException;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
@@ -10,10 +9,10 @@ import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
-import com.nickrobison.trestle.reasoner.parser.IClassParser;
 import com.nickrobison.trestle.reasoner.parser.ITypeConverter;
 import com.nickrobison.trestle.reasoner.parser.TemporalParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
+import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.reasoner.utils.TemporalPropertiesPair;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
@@ -25,8 +24,6 @@ import com.nickrobison.trestle.types.events.TrestleEventType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -59,7 +56,6 @@ public class IndividualEngine {
     private static final Logger logger = LoggerFactory.getLogger(IndividualEngine.class);
     private final ITrestleOntology ontology;
     private final QueryBuilder qb;
-    private final IClassParser parser;
     private final ITypeConverter typeConverter;
     private final TrestleCache trestleCache;
     private final TrestleExecutorService individualThreadPool;
@@ -71,19 +67,13 @@ public class IndividualEngine {
                             QueryBuilder qb,
                             TrestleParser parser,
                             TrestleCache trestleCache,
-                            Metrician metrician) {
-        final Config trestleConfig = ConfigFactory.load().getConfig("trestle");
+                            TrestleExecutorFactory factory) {
         this.ontology = ontology;
         this.qb = qb;
-        this.parser = parser.classParser;
         this.typeConverter = parser.typeConverter;
         this.trestleCache = trestleCache;
-        individualThreadPool = TrestleExecutorService.executorFactory("individual-pool",
-                trestleConfig.getInt("threading.individual-pool.size"),
-                metrician);
-        factThreadPool = TrestleExecutorService.executorFactory("fact-pool",
-                trestleConfig.getInt("threading.individual-pool.size"),
-                metrician);
+        individualThreadPool = factory.create("individual-pool");
+        factThreadPool = factory.create("fact-pool");
     }
 
 
@@ -351,8 +341,7 @@ public class IndividualEngine {
                     final OWLDataPropertyAssertionAxiom assertion = dataPropertyAssertion.orElseThrow(() -> new TrestleMissingFactException(factIndividual));
                     final Class<?> datatype = this.typeConverter.lookupJavaClassFromOWLDatatype(assertion, null);
 //                    I don't know why this is throwing an error, so I'm going to ignore it for now
-                    @SuppressWarnings("type.argument.type.incompatible")
-                    final Object literalObject = this.typeConverter.extractOWLLiteral(datatype, assertion.getObject());
+                    @SuppressWarnings("type.argument.type.incompatible") final Object literalObject = this.typeConverter.extractOWLLiteral(datatype, assertion.getObject());
 //            Get valid time
                     final Set<OWLDataPropertyAssertionAxiom> validTemporals = dataProperties
                             .stream()

@@ -17,10 +17,8 @@ import java.util.Arrays;
  */
 // I like my inline if's, so let's leave them be
 @SuppressWarnings({"pmd:LawOfDemeter", "pmd:BooleanGetMethodName", "squid:S00121"})
-@DatasetClass(name = "gaul-test")
+@DatasetClass(name = "GAUL")
 public class GAULObject {
-
-    private static final int ESRID = 4326;
 
     //    private final ObjectID objectID;
     private final String objectID;
@@ -37,12 +35,13 @@ public class GAULObject {
 
     /**
      * Creates fully initialized GAUL Object Record
-     * @param id String - ID of GAUL Object
-     * @param gaulCode long - GAUL code of underlying object
+     *
+     * @param id         String - ID of GAUL Object
+     * @param gaulCode   long - GAUL code of underlying object
      * @param objectName String - Object Name
-     * @param startDate LocalDate - Start of object valid interval
-     * @param endDate LocalDate - End of object valid interval
-     * @param polygon Polygon - Object boundary
+     * @param startDate  LocalDate - Start of object valid interval
+     * @param endDate    LocalDate - End of object valid interval
+     * @param polygon    Polygon - Object boundary
      */
     public GAULObject(String id, long gaulCode, String objectName, LocalDate startDate, LocalDate endDate, Polygon polygon, long adm1Code, String adm1Name, String status, boolean dispArea, long adm0Code, String adm0Name) {
         this.objectID = id;
@@ -106,6 +105,7 @@ public class GAULObject {
 
     /**
      * Get the object polygon in WKT format
+     *
      * @return String - WKT formatted polygon
      */
     @Spatial(name = "wkt")

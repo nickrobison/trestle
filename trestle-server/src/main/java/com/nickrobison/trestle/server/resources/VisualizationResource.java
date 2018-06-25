@@ -5,14 +5,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.reasoner.engines.AbstractComparisonReport;
+import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
-import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
-import com.nickrobison.trestle.server.resources.requests.ComparisonRequest;
-import com.nickrobison.trestle.server.resources.requests.IntersectRequest;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
+import com.nickrobison.trestle.server.resources.requests.ComparisonRequest;
+import com.nickrobison.trestle.server.resources.requests.DatasetValueRequest;
+import com.nickrobison.trestle.server.resources.requests.IntersectRequest;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.vividsolutions.jts.geom.Geometry;
 import io.dropwizard.jersey.params.NonEmptyStringParam;
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.wololo.jts2geojson.GeoJSONReader;
 
 import javax.inject.Inject;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -35,7 +37,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.Response.ok;
@@ -51,7 +52,6 @@ import static javax.ws.rs.core.Response.ok;
 public class VisualizationResource {
 
     private static final Logger logger = LoggerFactory.getLogger(VisualizationResource.class);
-    private static final GeoJSONReader reader = new GeoJSONReader();
     private static final ObjectMapper mapper = new ObjectMapper();
     //    This should be a config parameter
     public static final double MATCH_THRESHOLD = 0.95;
@@ -81,15 +81,19 @@ public class VisualizationResource {
         return ok(new ArrayList<String>()).build();
     }
 
-    @GET
-    @Path("/datasets")
-    @ApiOperation(value = "Retrieve all currently registered datasets",
-            notes = "Retrieves a Set of all available datasets currently registered with the database",
-            response = String.class,
-            responseContainer = "Set")
-    public Response getDatasets() {
-        final Set<String> availableDatasets = this.reasoner.getAvailableDatasets();
-        return ok(availableDatasets).build();
+    @POST
+    @Path("/values")
+    public Response getDatasetValues(@Valid DatasetValueRequest request) {
+        final Class<?> datasetClass;
+        try {
+            datasetClass = this.reasoner.getDatasetClass(request.getDataset());
+            final List<Object> factValues = this.reasoner.sampleFactValues(datasetClass, request.getFact(), request.getLimit());
+            return ok(factValues).build();
+        } catch (UnregisteredClassException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Class does not exist").build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity("Fact does not exist on dataset").build();
+        }
     }
 
     @POST
@@ -181,6 +185,9 @@ public class VisualizationResource {
     }
 
     private Geometry getGeometryFromRequest(IntersectRequest request) throws JsonProcessingException {
+        final GeoJSONReader reader = new GeoJSONReader();
         return reader.read(mapper.writeValueAsString(request.getGeojson()));
+//        return SpatialEngineUtils.reprojectGeometry(geometry, 3857, 4326);
     }
+
 }

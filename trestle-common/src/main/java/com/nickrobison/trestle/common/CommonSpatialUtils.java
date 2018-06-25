@@ -11,8 +11,11 @@ import java.util.regex.Pattern;
 public class CommonSpatialUtils {
     //  I think this Regex works. It first looks for the '<uri://' pattern.
     //  Then it skips ahead until it comes to the last part of the URI, filters out optional authorities (such as EPSG or AUTO) and grabs the SRID
-    // Finally, it grabs everything that's left (after the space) and uses that as the WKT value
-    public static final Pattern wktRegex = Pattern.compile("<[a-z]+://[^ ]*/(?:[A-Z]{3,4})?([0-9A-Z]+)>\\s(.*)");
+    // Finally, it grabs everything that's left (after the space) and tries to use that as the WKT value
+    // If it can't find the URI, then it tries to match against and WKT value
+    // We don't really do WKT validation here, we leave that to the spatial libraries, but we do check that there aren't any invalid starting characters,
+    // such as numbers or brackets.
+    public static final Pattern wktRegex = Pattern.compile("(?:<[a-z]+://[^ ]*/(?:[A-Z]{3,4})?([0-9A-Z]+)>\\s?)?([a-zA-Z]+\\s?\\(.*)");
 
     /**
      * Parses a Spatial WKT value and extracts the WKT value and drops the CRS URI

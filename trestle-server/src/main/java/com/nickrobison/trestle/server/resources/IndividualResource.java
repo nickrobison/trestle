@@ -7,8 +7,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
-import com.nickrobison.trestle.server.annotations.AuthRequired;
-import com.nickrobison.trestle.server.auth.Privilege;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
 import com.nickrobison.trestle.server.resources.requests.IntersectRequest;
 import com.nickrobison.trestle.types.TrestleIndividual;
@@ -45,9 +43,9 @@ import static javax.ws.rs.core.Response.ok;
 public class IndividualResource {
 
     private static final Logger logger = LoggerFactory.getLogger(IndividualResource.class);
-    public static final String VALID_FROM = "validFrom";
-    public static final String VALID_TO = "validTo";
-    public static final String VALID_ID = "validID";
+    public static final String TEMPORAL_FROM = "From";
+    public static final String TEMPORAL_TO = "To";
+    public static final String TEMPORAL_ID = "ID";
     private static final GeoJSONReader reader = new GeoJSONReader();
     private static final ObjectMapper mapper = new ObjectMapper();
     private final DateTimeFormatter localDateTimeToJavascriptFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
@@ -152,21 +150,21 @@ public class IndividualResource {
 //                                Now the temporals
 //                                FIXME(nrobison): This is disgusting. Fix it.
                     final TemporalObject validTemporalObject = fact.getValidTemporal();
-                    validTemporal.put(VALID_ID, validTemporalObject.getID());
-                    validTemporal.put(VALID_FROM, localDateTimeToJavascriptFormatter.format(validTemporalObject.asInterval().getFromTime()));
+                    validTemporal.put(TEMPORAL_ID, validTemporalObject.getID());
+                    validTemporal.put(TEMPORAL_FROM, localDateTimeToJavascriptFormatter.format(validTemporalObject.asInterval().getFromTime()));
                     if (validTemporalObject.asInterval().isContinuing()) {
-                        validTemporal.put(VALID_TO, "");
+                        validTemporal.put(TEMPORAL_TO, "");
                     } else {
-                        validTemporal.put(VALID_TO, localDateTimeToJavascriptFormatter.format(((Temporal) validTemporalObject.asInterval().getToTime().get())));
+                        validTemporal.put(TEMPORAL_TO, localDateTimeToJavascriptFormatter.format(((Temporal) validTemporalObject.asInterval().getToTime().get())));
                     }
 
                     final TemporalObject databaseTemporalObject = fact.getDatabaseTemporal();
-                    databaseTemporal.put(VALID_ID, databaseTemporalObject.getID());
-                    databaseTemporal.put(VALID_FROM, localDateTimeToJavascriptFormatter.format(databaseTemporalObject.asInterval().getFromTime()));
+                    databaseTemporal.put(TEMPORAL_ID, databaseTemporalObject.getID());
+                    databaseTemporal.put(TEMPORAL_FROM, localDateTimeToJavascriptFormatter.format(databaseTemporalObject.asInterval().getFromTime()));
                     if (databaseTemporalObject.asInterval().isContinuing()) {
-                        databaseTemporal.put(VALID_TO, "");
+                        databaseTemporal.put(TEMPORAL_TO, "");
                     } else {
-                        databaseTemporal.put(VALID_TO, localDateTimeToJavascriptFormatter.format(((Temporal) databaseTemporalObject.asInterval().getToTime().get())));
+                        databaseTemporal.put(TEMPORAL_TO, localDateTimeToJavascriptFormatter.format(((Temporal) databaseTemporalObject.asInterval().getToTime().get())));
                     }
 
                     factNode.set("validTemporal", validTemporal);
@@ -197,12 +195,12 @@ public class IndividualResource {
 //        Now the individual temporal
         final ObjectNode existsTemporal = mapper.createObjectNode();
         final TemporalObject individualTemporalObject = trestleIndividual.getExistsTemporal();
-        existsTemporal.put(VALID_ID, individualTemporalObject.getID());
-        existsTemporal.put(VALID_FROM, localDateTimeToJavascriptFormatter.format(individualTemporalObject.asInterval().getFromTime()));
+        existsTemporal.put(TEMPORAL_ID, individualTemporalObject.getID());
+        existsTemporal.put(TEMPORAL_FROM, localDateTimeToJavascriptFormatter.format(individualTemporalObject.asInterval().getFromTime()));
         if (individualTemporalObject.asInterval().isContinuing()) {
-            existsTemporal.put(VALID_TO, "");
+            existsTemporal.put(TEMPORAL_TO, "");
         } else {
-            existsTemporal.put(VALID_TO, localDateTimeToJavascriptFormatter.format(((Temporal) individualTemporalObject.asInterval().getToTime().get())));
+            existsTemporal.put(TEMPORAL_TO, localDateTimeToJavascriptFormatter.format(((Temporal) individualTemporalObject.asInterval().getToTime().get())));
         }
         individualNode.set("existsTemporal", existsTemporal);
 

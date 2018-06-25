@@ -91,7 +91,7 @@ public class TigerCountyObject {
         this.record_start_date = start_date;
     }
 
-    @Spatial
+    @Spatial(projection = 4269)
     public String getGeom() {
         return geom;
     }
