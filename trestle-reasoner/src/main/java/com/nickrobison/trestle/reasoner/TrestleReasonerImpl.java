@@ -13,7 +13,7 @@ import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
 import com.nickrobison.trestle.reasoner.engines.IndividualEngine;
-import com.nickrobison.trestle.reasoner.engines.concept.ITrestleConceptEngine;
+import com.nickrobison.trestle.reasoner.engines.collection.ITrestleCollectionEngine;
 import com.nickrobison.trestle.reasoner.engines.events.TrestleEventEngine;
 import com.nickrobison.trestle.reasoner.engines.exporter.ITrestleDataExporter;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
@@ -38,7 +38,7 @@ import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
-import com.nickrobison.trestle.types.relations.ConceptRelationType;
+import com.nickrobison.trestle.types.relations.CollectionRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -96,7 +96,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final TrestleParser trestleParser;
     private final ITrestleObjectWriter objectWriter;
     private final ITrestleObjectReader objectReader;
-    private final ITrestleConceptEngine conceptEngine;
+    private final ITrestleCollectionEngine conceptEngine;
     private final ITrestleDataExporter dataExporter;
     private final TrestleMergeEngine mergeEngine;
     private final TrestleEventEngine eventEngine;
@@ -211,7 +211,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //      Engines on
         this.objectReader = injector.getInstance(ITrestleObjectReader.class);
         this.objectWriter = injector.getInstance(ITrestleObjectWriter.class);
-        this.conceptEngine = injector.getInstance(ITrestleConceptEngine.class);
+        this.conceptEngine = injector.getInstance(ITrestleCollectionEngine.class);
         this.dataExporter = injector.getInstance(ITrestleDataExporter.class);
         this.mergeEngine = injector.getInstance(TrestleMergeEngine.class);
         this.eventEngine = injector.getInstance(TrestleEventEngine.class);
@@ -571,28 +571,28 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //    ----------------------------
 
     @Override
-    public Optional<Map<String, List<String>>> getRelatedConcepts(String individual, @Nullable String conceptID, double relationStrength) {
-        return this.conceptEngine.getRelatedConcepts(individual, conceptID, relationStrength);
+    public Optional<Map<String, List<String>>> getRelatedCollections(String individual, @Nullable String collectionID, double relationStrength) {
+        return this.conceptEngine.getRelatedCollections(individual, collectionID, relationStrength);
     }
 
     @Override
-    public Optional<Set<String>> STIntersectConcept(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt) {
-        return this.conceptEngine.STIntersectConcept(wkt, buffer, strength, validAt, dbAt);
+    public Optional<Set<String>> STIntersectCollection(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt) {
+        return this.conceptEngine.STIntersectCollection(wkt, buffer, strength, validAt, dbAt);
     }
 
     @Override
-    public Optional<Set<String>> STIntersectConcept(String wkt, double buffer, Unit<Length> bufferUnit, double strength, Temporal validAt, @Nullable Temporal dbAt) {
-        return this.conceptEngine.STIntersectConcept(wkt, buffer, bufferUnit, strength, validAt, dbAt);
+    public Optional<Set<String>> STIntersectCollection(String wkt, double buffer, Unit<Length> bufferUnit, double strength, Temporal validAt, @Nullable Temporal dbAt) {
+        return this.conceptEngine.STIntersectCollection(wkt, buffer, bufferUnit, strength, validAt, dbAt);
     }
 
     @Override
-    public <T> Optional<List<T>> getConceptMembers(Class<T> clazz, String conceptID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection) {
-        return this.conceptEngine.getConceptMembers(clazz, conceptID, strength, spatialIntersection, temporalIntersection);
+    public <T> Optional<List<T>> getCollectionMembers(Class<T> clazz, String collectionID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection) {
+        return this.conceptEngine.getCollectionMembers(clazz, collectionID, strength, spatialIntersection, temporalIntersection);
     }
 
     @Override
-    public void addObjectToConcept(String conceptIRI, Object inputObject, ConceptRelationType relationType, double strength) {
-        this.conceptEngine.addObjectToConcept(conceptIRI, inputObject, relationType, strength);
+    public void addObjectToCollection(String collectionIRI, Object inputObject, CollectionRelationType relationType, double strength) {
+        this.conceptEngine.addObjectToCollection(collectionIRI, inputObject, relationType, strength);
     }
 
     @Override

@@ -4,7 +4,7 @@ import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
-import com.nickrobison.trestle.reasoner.engines.concept.ITrestleConceptEngine;
+import com.nickrobison.trestle.reasoner.engines.collection.ITrestleCollectionEngine;
 import com.nickrobison.trestle.reasoner.engines.exporter.ITrestleDataExporter;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
@@ -37,7 +37,7 @@ import java.util.Set;
 /**
  * Created by nrobison on 1/30/17.
  */
-public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWriter, ITrestleSpatialEngine, ITrestleConceptEngine, ITrestleDataExporter {
+public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWriter, ITrestleSpatialEngine, ITrestleCollectionEngine, ITrestleDataExporter {
     /**
      * Shutdown the reasoner
      */

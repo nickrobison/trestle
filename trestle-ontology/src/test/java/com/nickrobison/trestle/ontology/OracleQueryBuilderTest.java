@@ -77,7 +77,7 @@ public class OracleQueryBuilderTest {
             assertEquals(oracleTSString, generatedOracleTS, "Oracle TS should be equal");
         },
                 () -> {
-                    final String generatedOracleTSConceptString = qb.buildTemporalSpatialConceptIntersection(wktString, 0.0, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
+                    final String generatedOracleTSConceptString = qb.buildTemporalSpatialCollectionIntersection(wktString, 0.0, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
                     assertEquals(tsOracleConceptString, generatedOracleTSConceptString, "TS Concept intersection be equal");
                 });
     }

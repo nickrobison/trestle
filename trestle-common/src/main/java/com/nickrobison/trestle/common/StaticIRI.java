@@ -49,7 +49,7 @@ public class StaticIRI {
     public static final IRI splitFromIRI = IRI.create(TRESTLE_PREFIX, "split_from");
     public static final IRI splitIntoIRI = IRI.create(TRESTLE_PREFIX, "split_into");
 //    Classes
-    public static final IRI trestleConceptIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Concept");
+    public static final IRI trestleCollectionIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Concept");
     public static final IRI trestleObjectIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Object");
     public static final IRI trestleRelationIRI = IRI.create(TRESTLE_PREFIX, "Trestle_Relation");
     public static final IRI spatialRelationIRI = IRI.create(TRESTLE_PREFIX, "Spatial_Relation");

@@ -156,12 +156,12 @@ public class GAULIntegratorTests {
                 .withoutMetrics()
                 .build();
 
-        final Optional<List<GAULObject>> manhicaMembers = reasoner.getConceptMembers(GAULObject.class, "21884-Manhica:concept", 0.01, null, null);
+        final Optional<List<GAULObject>> manhicaMembers = reasoner.getCollectionMembers(GAULObject.class, "21884-Manhica:concept", 0.01, null, null);
         assertAll(() -> assertTrue(manhicaMembers.isPresent(), "Should have Manhica concept members"),
                 () -> assertEquals(3, manhicaMembers.get().size(), "Wrong number of members for Manhica"));
 
 //        Try for Cidade
-        final Optional<List<GAULObject>> cidadeMembers = reasoner.getConceptMembers(GAULObject.class, "41374-Cidade_de_Maputo:concept", 0.01, null, null);
+        final Optional<List<GAULObject>> cidadeMembers = reasoner.getCollectionMembers(GAULObject.class, "41374-Cidade_de_Maputo:concept", 0.01, null, null);
         assertAll(() -> assertTrue(manhicaMembers.isPresent(), "Should have Cidade concept members"),
                 () -> assertEquals(7, cidadeMembers.get().size(), "Wrong number of members for Cidade"));
 

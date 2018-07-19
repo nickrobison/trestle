@@ -190,11 +190,11 @@ public class QueryBuilderTest {
         final OWLClass gaulClass = df.getOWLClass(IRI.create("trestle:", "GAUL"));
 
         assertAll(() -> {
-                    final String nullConceptQuery = qb.buildConceptRetrievalQuery(test_muni4, null, 0.6);
+                    final String nullConceptQuery = qb.buildCollectionRetrievalQuery(test_muni4, null, 0.6);
                     assertEquals(conceptQueryNoFilter, nullConceptQuery, "Concept query, no filter");
                 },
                 () -> {
-                    final String filteredConceptQuery = qb.buildConceptRetrievalQuery(test_muni4, test_muni4, 0.6);
+                    final String filteredConceptQuery = qb.buildCollectionRetrievalQuery(test_muni4, test_muni4, 0.6);
                     assertEquals(conceptQueryFilter, filteredConceptQuery, "Concept query, filtered");
                 });
     }
@@ -211,7 +211,7 @@ public class QueryBuilderTest {
                 },
                 () -> {
                     //        Test concept
-                    final String generatedTSConceptString = qb.buildTemporalSpatialConceptIntersection(wktString, 0.0, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
+                    final String generatedTSConceptString = qb.buildTemporalSpatialCollectionIntersection(wktString, 0.0, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
                     assertEquals(tsConceptString, generatedTSConceptString, "TS Concept intersection be equal");
                 });
     }

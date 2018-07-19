@@ -11,7 +11,7 @@ import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
 import com.nickrobison.trestle.reasoner.engines.temporal.TemporalComparisonReport;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
-import com.nickrobison.trestle.types.relations.ConceptRelationType;
+import com.nickrobison.trestle.types.relations.CollectionRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.vividsolutions.jts.geom.GeometryCollection;
 import com.vividsolutions.jts.geom.GeometryFactory;
@@ -123,7 +123,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
 
 //            See if there's a concept that spatially intersects the object
             try {
-                final Optional<Set<String>> conceptIRIs = reasoner.STIntersectConcept(newGAULObject.getPolygonAsWKT(), 0, 0.7, null, null);
+                final Optional<Set<String>> conceptIRIs = reasoner.STIntersectCollection(newGAULObject.getPolygonAsWKT(), 0, 0.7, null, null);
 
 
 //            If true, get all the concept members
@@ -139,7 +139,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
 
 //                Go ahead the create the new concept
                     logger.info("{}-{}-{} creating new concept", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-                    reasoner.addObjectToConcept(conceptIRI, newGAULObject, ConceptRelationType.SPATIAL, 1.0);
+                    reasoner.addObjectToCollection(conceptIRI, newGAULObject, CollectionRelationType.SPATIAL, 1.0);
                 }
 
                 // test of approx equal union
@@ -150,7 +150,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
                 if (matchedObjects.isEmpty()) {
 //                Go ahead the create the new concept
                     logger.info("{}-{}-{} creating new concept", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-                    reasoner.addObjectToConcept(conceptIRI, newGAULObject, ConceptRelationType.SPATIAL, 1.0);//                If we don't have any matches, create a new concept
+                    reasoner.addObjectToCollection(conceptIRI, newGAULObject, CollectionRelationType.SPATIAL, 1.0);//                If we don't have any matches, create a new concept
                 }
 
 
@@ -216,7 +216,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
      */
     private void processConceptMembers(GAULObject gaulObject, List<GAULObject> matchCollection, String conceptIRI) {
         //                        Here, we want to grab all the conceptIRI members
-        final Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, conceptIRI, 0.0, null, gaulObject.getStartDate());
+        final Optional<List<GAULObject>> conceptMembers = reasoner.getCollectionMembers(GAULObject.class, conceptIRI, 0.0, null, gaulObject.getStartDate());
 
 //                        If we have concept members, process them to see if we need to check them for membership
         if (conceptMembers.isPresent()) {
@@ -242,7 +242,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
 //            final double intersectionArea = operatorIntersection.execute(gaulObject.getShapePolygon(), exteriorGeom, inputSR, null).calculateArea2D() / greaterArea;
             final double intersectionArea = conceptUnionGeom.intersection(inputGeometry).getArea() / greaterArea;
             if (intersectionArea > 0.0) {
-                reasoner.addObjectToConcept(conceptIRI, gaulObject, ConceptRelationType.SPATIAL, intersectionArea);
+                reasoner.addObjectToCollection(conceptIRI, gaulObject, CollectionRelationType.SPATIAL, intersectionArea);
                 matchCollection.addAll(conceptMembers.get());
             }
         }
