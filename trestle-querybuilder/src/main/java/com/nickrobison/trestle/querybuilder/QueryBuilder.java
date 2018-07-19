@@ -112,7 +112,7 @@ public class QueryBuilder {
      * @param individual           - OWLNamedIndividual
      * @param collectionFilter        - Nullable OWLNamedIndividual of Trestle_Collection to filter on
      * @param relationshipStrength - double of cutoff value of minimum relation strength to consider an individual a member of that collection
-     * @return - SPARQL Query with variables ?concept ?individual
+     * @return - SPARQL Query with variables ?collection ?individual
      */
     public String buildCollectionRetrievalQuery(OWLNamedIndividual individual, @Nullable OWLNamedIndividual collectionFilter, double relationshipStrength) {
         final ParameterizedSparqlString ps = buildBaseString();

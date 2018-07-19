@@ -96,7 +96,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final TrestleParser trestleParser;
     private final ITrestleObjectWriter objectWriter;
     private final ITrestleObjectReader objectReader;
-    private final ITrestleCollectionEngine conceptEngine;
+    private final ITrestleCollectionEngine collectionEngine;
     private final ITrestleDataExporter dataExporter;
     private final TrestleMergeEngine mergeEngine;
     private final TrestleEventEngine eventEngine;
@@ -211,7 +211,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //      Engines on
         this.objectReader = injector.getInstance(ITrestleObjectReader.class);
         this.objectWriter = injector.getInstance(ITrestleObjectWriter.class);
-        this.conceptEngine = injector.getInstance(ITrestleCollectionEngine.class);
+        this.collectionEngine = injector.getInstance(ITrestleCollectionEngine.class);
         this.dataExporter = injector.getInstance(ITrestleDataExporter.class);
         this.mergeEngine = injector.getInstance(TrestleMergeEngine.class);
         this.eventEngine = injector.getInstance(TrestleEventEngine.class);
@@ -567,32 +567,32 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
 //    ----------------------------
-//    Concept Methods
+//    Collection Methods
 //    ----------------------------
 
     @Override
     public Optional<Map<String, List<String>>> getRelatedCollections(String individual, @Nullable String collectionID, double relationStrength) {
-        return this.conceptEngine.getRelatedCollections(individual, collectionID, relationStrength);
+        return this.collectionEngine.getRelatedCollections(individual, collectionID, relationStrength);
     }
 
     @Override
     public Optional<Set<String>> STIntersectCollection(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt) {
-        return this.conceptEngine.STIntersectCollection(wkt, buffer, strength, validAt, dbAt);
+        return this.collectionEngine.STIntersectCollection(wkt, buffer, strength, validAt, dbAt);
     }
 
     @Override
     public Optional<Set<String>> STIntersectCollection(String wkt, double buffer, Unit<Length> bufferUnit, double strength, Temporal validAt, @Nullable Temporal dbAt) {
-        return this.conceptEngine.STIntersectCollection(wkt, buffer, bufferUnit, strength, validAt, dbAt);
+        return this.collectionEngine.STIntersectCollection(wkt, buffer, bufferUnit, strength, validAt, dbAt);
     }
 
     @Override
     public <T> Optional<List<T>> getCollectionMembers(Class<T> clazz, String collectionID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection) {
-        return this.conceptEngine.getCollectionMembers(clazz, collectionID, strength, spatialIntersection, temporalIntersection);
+        return this.collectionEngine.getCollectionMembers(clazz, collectionID, strength, spatialIntersection, temporalIntersection);
     }
 
     @Override
     public void addObjectToCollection(String collectionIRI, Object inputObject, CollectionRelationType relationType, double strength) {
-        this.conceptEngine.addObjectToCollection(collectionIRI, inputObject, relationType, strength);
+        this.collectionEngine.addObjectToCollection(collectionIRI, inputObject, relationType, strength);
     }
 
     @Override
