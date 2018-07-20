@@ -228,7 +228,7 @@ public class CollectionEngine implements ITrestleCollectionEngine {
             Thread.currentThread().interrupt();
             return Optional.empty();
         } catch (ExecutionException e) {
-            logger.error("Unable to retrieve all objects for colletion {}", collectionID, e.getCause());
+            logger.error("Unable to retrieve all objects for collection {}", collectionID, e.getCause());
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
         } finally {
