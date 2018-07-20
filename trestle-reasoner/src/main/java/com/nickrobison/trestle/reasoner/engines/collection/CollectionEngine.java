@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.reasoner.engines.concept;
+package com.nickrobison.trestle.reasoner.engines.collection;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
@@ -19,7 +19,7 @@ import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
-import com.nickrobison.trestle.types.relations.ConceptRelationType;
+import com.nickrobison.trestle.types.relations.CollectionRelationType;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
@@ -54,8 +54,8 @@ import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTempor
 /**
  * Created by nickrobison on 2/19/18.
  */
-public class ConceptEngine implements ITrestleConceptEngine {
-    private static final Logger logger = LoggerFactory.getLogger(ConceptEngine.class);
+public class CollectionEngine implements ITrestleCollectionEngine {
+    private static final Logger logger = LoggerFactory.getLogger(CollectionEngine.class);
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
 
     private final String reasonerPrefix;
@@ -65,17 +65,17 @@ public class ConceptEngine implements ITrestleConceptEngine {
     private final ITrestleObjectWriter objectWriter;
     private final IClassParser classParser;
     private final ObjectEngineUtils objectUtils;
-    private final TrestleExecutorService conceptPool;
+    private final TrestleExecutorService collectionPool;
 
     @Inject
-    public ConceptEngine(@ReasonerPrefix String reasonerPrefix,
-                         ITrestleOntology ontology,
-                         QueryBuilder queryBuilder,
-                         ITrestleObjectReader objectReader,
-                         ITrestleObjectWriter objectWriter,
-                         TrestleParser trestleParser,
-                         ObjectEngineUtils objectUtils,
-                         TrestleExecutorFactory factory) {
+    public CollectionEngine(@ReasonerPrefix String reasonerPrefix,
+                            ITrestleOntology ontology,
+                            QueryBuilder queryBuilder,
+                            ITrestleObjectReader objectReader,
+                            ITrestleObjectWriter objectWriter,
+                            TrestleParser trestleParser,
+                            ObjectEngineUtils objectUtils,
+                            TrestleExecutorFactory factory) {
 
         this.reasonerPrefix = reasonerPrefix;
         this.ontology = ontology;
@@ -85,39 +85,39 @@ public class ConceptEngine implements ITrestleConceptEngine {
         this.classParser = trestleParser.classParser;
         this.objectUtils = objectUtils;
 
-        this.conceptPool = factory.create("concept-pool");
+        this.collectionPool = factory.create("collection-pool");
     }
 
     @Override
-    public Optional<Map<String, List<String>>> getRelatedConcepts(String individual, @Nullable String conceptID, double relationStrength) {
-        final String conceptQuery;
+    public Optional<Map<String, List<String>>> getRelatedCollections(String individual, @Nullable String collectionID, double relationStrength) {
+        final String collectionQuery;
         final OWLNamedIndividual owlIndividual = df.getOWLNamedIndividual(parseStringToIRI(this.reasonerPrefix, individual));
-        if (conceptID != null) {
-            conceptQuery = this.qb.buildConceptRetrievalQuery(
+        if (collectionID != null) {
+            collectionQuery = this.qb.buildCollectionRetrievalQuery(
                     owlIndividual,
-                    df.getOWLNamedIndividual(parseStringToIRI(this.reasonerPrefix, conceptID)),
+                    df.getOWLNamedIndividual(parseStringToIRI(this.reasonerPrefix, collectionID)),
                     relationStrength);
         } else {
-            conceptQuery = this.qb.buildConceptRetrievalQuery(
+            collectionQuery = this.qb.buildCollectionRetrievalQuery(
                     owlIndividual,
                     null,
                     relationStrength);
         }
-        ListMultimap<String, String> conceptIndividuals = ArrayListMultimap.create();
+        ListMultimap<String, String> collectionIndividuals = ArrayListMultimap.create();
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
-            final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(conceptQuery);
+            final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(collectionQuery);
             resultSet.getResults()
-                    .forEach(result -> conceptIndividuals.put(result.getIndividual("concept").orElseThrow(() -> new RuntimeException("concept is null")).toStringID(), result.getIndividual("individual").orElseThrow(() -> new RuntimeException("individual is null")).toStringID()));
+                    .forEach(result -> collectionIndividuals.put(result.getIndividual("collection").orElseThrow(() -> new RuntimeException("collection is null")).toStringID(), result.getIndividual("individual").orElseThrow(() -> new RuntimeException("individual is null")).toStringID()));
 
-            if (conceptIndividuals.keySet().size() == 0) {
-                logger.info("Individual {} has no related concepts", individual);
+            if (collectionIndividuals.keySet().size() == 0) {
+                logger.info("Individual {} has no related collections", individual);
                 return Optional.empty();
             }
-            return Optional.of(Multimaps.asMap(conceptIndividuals));
+            return Optional.of(Multimaps.asMap(collectionIndividuals));
         } catch (RuntimeException e) {
-            logger.error("Problem getting concepts related to individual: {}", individual, e);
+            logger.error("Problem getting collections related to individual: {}", individual, e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
         } finally {
@@ -126,12 +126,12 @@ public class ConceptEngine implements ITrestleConceptEngine {
     }
 
     @Override
-    public Optional<Set<String>> STIntersectConcept(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt) {
-        return STIntersectConcept(wkt, buffer, SI.METER, strength, validAt, dbAt);
+    public Optional<Set<String>> STIntersectCollection(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt) {
+        return STIntersectCollection(wkt, buffer, SI.METER, strength, validAt, dbAt);
     }
 
     @Override
-    public Optional<Set<String>> STIntersectConcept(String wkt, double buffer, Unit<Length> bufferUnit, double strength, Temporal validAt, @Nullable Temporal dbAt) {
+    public Optional<Set<String>> STIntersectCollection(String wkt, double buffer, Unit<Length> bufferUnit, double strength, Temporal validAt, @Nullable Temporal dbAt) {
         final String queryString;
         final OffsetDateTime atTemporal;
         final OffsetDateTime dbTemporal;
@@ -150,7 +150,7 @@ public class ConceptEngine implements ITrestleConceptEngine {
         final String wktBuffer = SpatialEngineUtils.addWKTBuffer(wkt, buffer, bufferUnit);
 
         try {
-            queryString = qb.buildTemporalSpatialConceptIntersection(wktBuffer, strength, atTemporal, dbTemporal);
+            queryString = qb.buildTemporalSpatialCollectionIntersection(wktBuffer, strength, atTemporal, dbTemporal);
         } catch (UnsupportedFeatureException e) {
             logger.error("Database does not support spatial queries");
             return Optional.empty();
@@ -159,13 +159,13 @@ public class ConceptEngine implements ITrestleConceptEngine {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
             final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(queryString);
-            final Set<String> intersectedConceptURIs = resultSet.getResults()
+            final Set<String> intersectedCollectionURIs = resultSet.getResults()
                     .stream()
                     .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
                     .collect(Collectors.toSet());
-            return Optional.of(intersectedConceptURIs);
+            return Optional.of(intersectedCollectionURIs);
         } catch (RuntimeException e) {
-            logger.error("Problem intersecting spatial concept", e);
+            logger.error("Problem intersecting spatial collection", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
         } finally {
@@ -174,11 +174,11 @@ public class ConceptEngine implements ITrestleConceptEngine {
     }
 
     @Override
-    public <T> Optional<List<T>> getConceptMembers(Class<T> clazz, String conceptID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection) {
+    public <T> Optional<List<T>> getCollectionMembers(Class<T> clazz, String collectionID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection) {
 
 
         final OWLClass datasetClass = this.classParser.getObjectClass(clazz);
-        final String retrievalStatement = qb.buildConceptObjectRetrieval(datasetClass, parseStringToIRI(this.reasonerPrefix, conceptID), strength);
+        final String retrievalStatement = qb.buildCollectionObjectRetrieval(datasetClass, parseStringToIRI(this.reasonerPrefix, collectionID), strength);
 
         final OffsetDateTime atTemporal;
         if (temporalIntersection != null) {
@@ -216,19 +216,19 @@ public class ConceptEngine implements ITrestleConceptEngine {
                     } finally {
                         this.ontology.returnAndCommitTransaction(tt);
                     }
-                }, this.conceptPool))
+                }, this.collectionPool))
                 .collect(Collectors.toList());
-        final CompletableFuture<List<T>> conceptObjectsFuture = sequenceCompletableFutures(completableFutureList);
+        final CompletableFuture<List<T>> collectionObjectsFuture = sequenceCompletableFutures(completableFutureList);
         try {
-            List<T> objects = conceptObjectsFuture.get();
+            List<T> objects = collectionObjectsFuture.get();
             return Optional.of(objects);
         } catch (InterruptedException e) {
-            logger.error("Object retrieval for concept {}, interrupted", conceptID, e.getCause());
+            logger.error("Object retrieval for collection {}, interrupted", collectionID, e.getCause());
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             Thread.currentThread().interrupt();
             return Optional.empty();
         } catch (ExecutionException e) {
-            logger.error("Unable to retrieve all objects for concept {}", conceptID, e.getCause());
+            logger.error("Unable to retrieve all objects for collection {}", collectionID, e.getCause());
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             return Optional.empty();
         } finally {
@@ -237,14 +237,14 @@ public class ConceptEngine implements ITrestleConceptEngine {
     }
 
     @Override
-    public void addObjectToConcept(String conceptIRI, Object inputObject, ConceptRelationType relationType, double strength) {
+    public void addObjectToCollection(String collectionIRI, Object inputObject, CollectionRelationType relationType, double strength) {
 
-        //        Create the concept relation
-        final IRI concept = parseStringToIRI(this.reasonerPrefix, conceptIRI);
-        final OWLNamedIndividual conceptIndividual = df.getOWLNamedIndividual(concept);
+        //        Create the collection relation
+        final IRI collection = parseStringToIRI(this.reasonerPrefix, collectionIRI);
+        final OWLNamedIndividual collectionIndividual = df.getOWLNamedIndividual(collection);
         final OWLNamedIndividual individual = this.classParser.getIndividual(inputObject);
         final IRI relationIRI = IRI.create(String.format("relation:%s:%s",
-                extractTrestleIndividualName(concept),
+                extractTrestleIndividualName(collection),
                 extractTrestleIndividualName(individual.getIRI())));
         final OWLNamedIndividual relationIndividual = df.getOWLNamedIndividual(relationIRI);
         final OWLClass relationClass = df.getOWLClass(trestleRelationIRI);
@@ -265,10 +265,10 @@ public class ConceptEngine implements ITrestleConceptEngine {
 //                relationClass = df.getOWLClass(temporalRelationIRI);
 //                break;
 //            default:
-//                relationClass = df.getOWLClass(trestleConceptIRI);
+//                relationClass = df.getOWLClass(trestleCollectionIRI);
 //                break;
 //        }
-//        Write the concept properties
+//        Write the collection properties
             ontology.createIndividual(df.getOWLClassAssertionAxiom(relationClass, relationIndividual));
             ontology.writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
                     df.getOWLObjectProperty(relationOfIRI),
@@ -278,26 +278,26 @@ public class ConceptEngine implements ITrestleConceptEngine {
                     df.getOWLDataProperty(relationStrengthIRI),
                     df.getOWLLiteral(strength));
 
-//        Write the relation to the concept
+//        Write the relation to the collection
 //            TODO(nrobison): This is gross, catching exceptions is really expensive.
             try {
                 ontology.writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
                         df.getOWLObjectProperty(relatedToIRI),
                         relationIndividual,
-                        conceptIndividual
+                        collectionIndividual
                 ));
             } catch (MissingOntologyEntity missingOntologyEntity) {
-//            If the concept doesn't exist, create it.
-                logger.debug("Missing concept {}, creating", missingOntologyEntity.getIndividual());
-                ontology.createIndividual(df.getOWLClassAssertionAxiom(df.getOWLClass(trestleConceptIRI), conceptIndividual));
+//            If the collection doesn't exist, create it.
+                logger.debug("Missing collection {}, creating", missingOntologyEntity.getIndividual());
+                ontology.createIndividual(df.getOWLClassAssertionAxiom(df.getOWLClass(trestleCollectionIRI), collectionIndividual));
 //            Try again
                 ontology.writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
                         df.getOWLObjectProperty(relatedToIRI),
                         relationIndividual,
-                        conceptIndividual));
+                        collectionIndividual));
             }
         } catch (MissingOntologyEntity | TrestleClassException e) {
-            logger.error("Problem adding individual {} to concept {}", individual, conceptIndividual, e);
+            logger.error("Problem adding individual {} to collection {}", individual, collectionIndividual, e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);

@@ -106,28 +106,28 @@ public class QueryBuilder {
     }
 
     /**
-     * Build the SPARQL query to return the concepts and individual IRIs related to the given OWLNamedIndividual
-     * If the conceptFilter is specified, results are filtered to only return that concept, if the individual is a member of that concept
+     * Build the SPARQL query to return the collections and individual IRIs related to the given OWLNamedIndividual
+     * If the collectionFilter is specified, results are filtered to only return that collection, if the individual is a member of that collection
      *
      * @param individual           - OWLNamedIndividual
-     * @param conceptFilter        - Nullable OWLNamedIndividual of Trestle_Concept to filter on
-     * @param relationshipStrength - double of cutoff value of minimum relation strength to consider an individual a member of that concept
-     * @return - SPARQL Query with variables ?concept ?individual
+     * @param collectionFilter        - Nullable OWLNamedIndividual of Trestle_Collection to filter on
+     * @param relationshipStrength - double of cutoff value of minimum relation strength to consider an individual a member of that collection
+     * @return - SPARQL Query with variables ?collection ?individual
      */
-    public String buildConceptRetrievalQuery(OWLNamedIndividual individual, @Nullable OWLNamedIndividual conceptFilter, double relationshipStrength) {
+    public String buildCollectionRetrievalQuery(OWLNamedIndividual individual, @Nullable OWLNamedIndividual collectionFilter, double relationshipStrength) {
         final ParameterizedSparqlString ps = buildBaseString();
-        ps.setCommandText(String.format("SELECT DISTINCT ?concept ?individual" +
+        ps.setCommandText(String.format("SELECT DISTINCT ?collection ?individual" +
                 " WHERE " +
                 "{ ?i trestle:has_relation ?r ." +
                 "?r trestle:Relation_Strength ?strength ." +
-                "?r trestle:related_to ?concept ." +
-                "?concept trestle:related_by ?rc ." +
+                "?r trestle:related_to ?collection ." +
+                "?collection trestle:related_by ?rc ." +
                 "?rc trestle:Relation_Strength ?strength ." +
                 "?rc trestle:relation_of ?individual ." +
                 "VALUES ?i {%s} ." +
                 "FILTER(?strength >= ?st)", String.format("<%s>", getFullIRIString(individual))));
-        if (conceptFilter != null) {
-            ps.append(String.format(". VALUES ?concept {%s}", String.format("<%s>", getFullIRIString(conceptFilter))));
+        if (collectionFilter != null) {
+            ps.append(String.format(". VALUES ?collection {%s}", String.format("<%s>", getFullIRIString(collectionFilter))));
         }
         ps.append('}');
         ps.setLiteral("st", relationshipStrength);
@@ -543,7 +543,7 @@ public class QueryBuilder {
     }
 
     /**
-     * Build SPARQL query to find the concepts that intersect a given space/time pair
+     * Build SPARQL query to find the collections that intersect a given space/time pair
      * If a validAt temporal is given, intersect at that point in time, otherwise, find anything that intersects, ever
      *
      * @param wktValue - WKT value
@@ -554,11 +554,11 @@ public class QueryBuilder {
      * @throws UnsupportedFeatureException - Throws if we're running on a database that doesn't support all the features
      */
     // TODO(nrobison): Why does this throw? It'll never need to be caught
-    public String buildTemporalSpatialConceptIntersection(String wktValue, double strength, @Nullable OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
+    public String buildTemporalSpatialCollectionIntersection(String wktValue, double strength, @Nullable OffsetDateTime atTime, OffsetDateTime dbAtTime) throws UnsupportedFeatureException {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText("SELECT DISTINCT ?m" +
                 " WHERE { " +
-                "?m rdf:type trestle:Trestle_Concept ." +
+                "?m rdf:type trestle:Trestle_Collection ." +
                 "?m trestle:related_by ?r ." +
                 "?r trestle:Relation_Strength ?rs ." +
                 "?r trestle:relation_of ?object ." +
@@ -585,25 +585,25 @@ public class QueryBuilder {
     }
 
     /**
-     * Build SPARQL Query to retrieve all given members of a Trestle_Concept that are subclassed from the given OWLClass
+     * Build SPARQL Query to retrieve all given members of a Trestle_Collection that are subclassed from the given OWLClass
      *
      * @param datasetClass - OWLClass of individuals to return
-     * @param conceptID    - IRI of Trestle_Concept to query
+     * @param collectionID    - IRI of Trestle_Collection to query
      * @param strength     - relation strength parameter
      * @return - SPARQL Query String
      */
 //    TODO(nrobison): Implement spatio-temporal intersection
-    public String buildConceptObjectRetrieval(OWLClass datasetClass, IRI conceptID, double strength) {
+    public String buildCollectionObjectRetrieval(OWLClass datasetClass, IRI collectionID, double strength) {
         final ParameterizedSparqlString ps = buildBaseString();
         ps.setCommandText(String.format("SELECT DISTINCT ?m " +
                 "WHERE { " +
                 "?m rdf:type ?type . " +
                 "?m trestle:has_relation ?r ." +
                 "?r trestle:Relation_Strength ?rs ." +
-                "?r trestle:related_to ?concept ." +
+                "?r trestle:related_to ?collection ." +
                 "FILTER(?rs >= ?relationStrength) ." +
 //                "?m trestle:has_concept ?concept . " +
-                "VALUES ?concept { <%s> }}", getFullIRI(conceptID).toString()));
+                "VALUES ?collection { <%s> }}", getFullIRI(collectionID).toString()));
         ps.setIri("type", getFullIRIString(datasetClass));
         ps.setLiteral("relationStrength", strength);
 

@@ -1,8 +1,8 @@
 package com.nickrobison.trestle.reasoner.engines;
 
 import com.google.inject.PrivateModule;
-import com.nickrobison.trestle.reasoner.engines.concept.ConceptEngine;
-import com.nickrobison.trestle.reasoner.engines.concept.ITrestleConceptEngine;
+import com.nickrobison.trestle.reasoner.engines.collection.CollectionEngine;
+import com.nickrobison.trestle.reasoner.engines.collection.ITrestleCollectionEngine;
 import com.nickrobison.trestle.reasoner.engines.events.EventEngineImpl;
 import com.nickrobison.trestle.reasoner.engines.events.EventEngineNoOp;
 import com.nickrobison.trestle.reasoner.engines.events.TrestleEventEngine;
@@ -48,8 +48,8 @@ public class EngineModule extends PrivateModule {
         bind(ITrestleObjectWriter.class)
                 .to(TrestleObjectWriter.class)
                 .asEagerSingleton();
-        bind(ITrestleConceptEngine.class)
-                .to(ConceptEngine.class)
+        bind(ITrestleCollectionEngine.class)
+                .to(CollectionEngine.class)
                 .in(Singleton.class);
         bind(ITrestleDataExporter.class)
                 .to(DataExportEngine.class)
@@ -91,7 +91,7 @@ public class EngineModule extends PrivateModule {
 //        Expose some things
         expose(ITrestleObjectWriter.class);
         expose(ITrestleObjectReader.class);
-        expose(ITrestleConceptEngine.class);
+        expose(ITrestleCollectionEngine.class);
         expose(ITrestleDataExporter.class);
         expose(SpatialEngine.class);
         expose(AggregationEngine.class);

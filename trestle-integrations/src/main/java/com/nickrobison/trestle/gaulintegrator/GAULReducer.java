@@ -11,7 +11,7 @@ import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
 import com.nickrobison.trestle.reasoner.engines.temporal.TemporalComparisonReport;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
-import com.nickrobison.trestle.types.relations.ConceptRelationType;
+import com.nickrobison.trestle.types.relations.CollectionRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.vividsolutions.jts.geom.GeometryCollection;
 import com.vividsolutions.jts.geom.GeometryFactory;
@@ -121,25 +121,25 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
 //            List of objects to compare to given object
             final List<GAULObject> matchedObjects = new ArrayList<>();
 
-//            See if there's a concept that spatially intersects the object
+//            See if there's a collection that spatially intersects the object
             try {
-                final Optional<Set<String>> conceptIRIs = reasoner.STIntersectConcept(newGAULObject.getPolygonAsWKT(), 0, 0.7, null, null);
+                final Optional<Set<String>> collectionIRIs = reasoner.STIntersectCollection(newGAULObject.getPolygonAsWKT(), 0, 0.7, null, null);
 
 
-//            If true, get all the concept members
-                final String conceptIRI = String.format("%s:concept", newGAULObject.getObjectID());
-                if (!conceptIRIs.orElse(new HashSet<>()).isEmpty()) {
-                    logger.warn("{}-{}-{} has concept members", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-                    conceptIRIs.get().forEach(concept -> processConceptMembers(newGAULObject, matchedObjects, concept));
+//            If true, get all the collection members
+                final String collectionIRI = String.format("%s:collection", newGAULObject.getObjectID());
+                if (!collectionIRIs.orElse(new HashSet<>()).isEmpty()) {
+                    logger.warn("{}-{}-{} has collection members", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
+                    collectionIRIs.get().forEach(collection -> processCollectionMembers(newGAULObject, matchedObjects, collection));
                 } else {
                     logger.warn("{}-{}-{} getting intersected objects", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
 //            If no, find objects to intersect
                     reasoner.spatialIntersectObject(newGAULObject, 0)
                             .ifPresent(matchedObjects::addAll);
 
-//                Go ahead the create the new concept
-                    logger.info("{}-{}-{} creating new concept", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-                    reasoner.addObjectToConcept(conceptIRI, newGAULObject, ConceptRelationType.SPATIAL, 1.0);
+//                Go ahead the create the new collection
+                    logger.info("{}-{}-{} creating new collection", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
+                    reasoner.addObjectToCollection(collectionIRI, newGAULObject, CollectionRelationType.SPATIAL, 1.0);
                 }
 
                 // test of approx equal union
@@ -148,9 +148,9 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
                 }
 
                 if (matchedObjects.isEmpty()) {
-//                Go ahead the create the new concept
-                    logger.info("{}-{}-{} creating new concept", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-                    reasoner.addObjectToConcept(conceptIRI, newGAULObject, ConceptRelationType.SPATIAL, 1.0);//                If we don't have any matches, create a new concept
+//                Go ahead the create the new collection
+                    logger.info("{}-{}-{} creating new collection", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
+                    reasoner.addObjectToCollection(collectionIRI, newGAULObject, CollectionRelationType.SPATIAL, 1.0);//                If we don't have any matches, create a new collection
                 }
 
 
@@ -207,20 +207,20 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
     }
 
     /**
-     * Retrieve all the conceptIRI members and determine if the input object should be a member of this concept
+     * Retrieve all the collectionIRI members and determine if the input object should be a member of this collection
      * If so, add all the members to the matchCollection to look for a potential equality
      *
      * @param gaulObject      - input object to parse
-     * @param matchCollection - Match collection to add concept members to, if we should
-     * @param conceptIRI      - String IRI of concept to retrieve membership of
+     * @param matchCollection - Match collection to add collection members to, if we should
+     * @param collectionIRI      - String IRI of collection to retrieve membership of
      */
-    private void processConceptMembers(GAULObject gaulObject, List<GAULObject> matchCollection, String conceptIRI) {
-        //                        Here, we want to grab all the conceptIRI members
-        final Optional<List<GAULObject>> conceptMembers = reasoner.getConceptMembers(GAULObject.class, conceptIRI, 0.0, null, gaulObject.getStartDate());
+    private void processCollectionMembers(GAULObject gaulObject, List<GAULObject> matchCollection, String collectionIRI) {
+        //                        Here, we want to grab all the collectionIRI members
+        final Optional<List<GAULObject>> collectionMembers = reasoner.getCollectionMembers(GAULObject.class, collectionIRI, 0.0, null, gaulObject.getStartDate());
 
-//                        If we have concept members, process them to see if we need to check them for membership
-        if (conceptMembers.isPresent()) {
-//                      Now add the concept relations
+//                        If we have collection members, process them to see if we need to check them for membership
+        if (collectionMembers.isPresent()) {
+//                      Now add the collection relations
 //                      Union the existing members, and see if we have any overlap
 //            We need to convert to JTS, in order to properly handle the Union.
 //                Get the exterior rings, of the input objects, in order to handle any holes
@@ -229,21 +229,21 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
 
 //            Create a new Geometry Collection, and union it
             List<com.vividsolutions.jts.geom.Polygon> exteriorPolygonsToUnion = new ArrayList<>();
-            for (GAULObject object : conceptMembers.get()) {
+            for (GAULObject object : collectionMembers.get()) {
                 getExteriorRings(exteriorPolygonsToUnion, object);
             }
-            final com.vividsolutions.jts.geom.Geometry conceptUnionGeom = new GeometryCollection(exteriorPolygonsToUnion.toArray(new com.vividsolutions.jts.geom.Geometry[0]), geometryFactory)
+            final com.vividsolutions.jts.geom.Geometry collectionUnionGeom = new GeometryCollection(exteriorPolygonsToUnion.toArray(new com.vividsolutions.jts.geom.Geometry[0]), geometryFactory)
                     .union();
 
-            final double unionArea = conceptUnionGeom.getArea();
+            final double unionArea = collectionUnionGeom.getArea();
             final double inputArea = gaulObject.getShapePolygon().calculateArea2D();
             double greaterArea = inputArea >= unionArea ? inputArea : unionArea;
 
 //            final double intersectionArea = operatorIntersection.execute(gaulObject.getShapePolygon(), exteriorGeom, inputSR, null).calculateArea2D() / greaterArea;
-            final double intersectionArea = conceptUnionGeom.intersection(inputGeometry).getArea() / greaterArea;
+            final double intersectionArea = collectionUnionGeom.intersection(inputGeometry).getArea() / greaterArea;
             if (intersectionArea > 0.0) {
-                reasoner.addObjectToConcept(conceptIRI, gaulObject, ConceptRelationType.SPATIAL, intersectionArea);
-                matchCollection.addAll(conceptMembers.get());
+                reasoner.addObjectToCollection(collectionIRI, gaulObject, CollectionRelationType.SPATIAL, intersectionArea);
+                matchCollection.addAll(collectionMembers.get());
             }
         }
     }

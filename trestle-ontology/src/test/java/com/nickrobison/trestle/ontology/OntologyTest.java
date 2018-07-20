@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.nickrobison.trestle.common.StaticIRI.conceptOfIRI;
+import static com.nickrobison.trestle.common.StaticIRI.collectionOfIRI;
 import static com.nickrobison.trestle.common.StaticIRI.hasFactIRI;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -246,9 +246,9 @@ abstract public class OntologyTest {
 
 
 //        Try to read test objects
-        final Optional<List<OWLObjectPropertyAssertionAxiom>> conceptMembers = ontology.getIndividualObjectProperty(df.getOWLNamedIndividual("trestle:", "Cidade_de_maputo_concept"), df.getOWLObjectProperty(conceptOfIRI));
-        assertAll(() -> assertTrue(conceptMembers.isPresent()),
-                () -> assertTrue(conceptMembers.get().size() > 0),
-                () -> assertEquals(df.getOWLNamedIndividual(IRI.create("trestle:", "maputo:2013:3000")), conceptMembers.get().stream().findFirst().get().getSubject(), "Should have maputo object"));
+        final Optional<List<OWLObjectPropertyAssertionAxiom>> collectionMembers = ontology.getIndividualObjectProperty(df.getOWLNamedIndividual("trestle:", "Cidade_de_maputo_collection"), df.getOWLObjectProperty(collectionOfIRI));
+        assertAll(() -> assertTrue(collectionMembers.isPresent()),
+                () -> assertTrue(collectionMembers.get().size() > 0),
+                () -> assertEquals(df.getOWLNamedIndividual(IRI.create("trestle:", "maputo:2013:3000")), collectionMembers.get().stream().findFirst().get().getSubject(), "Should have maputo object"));
     }
 }

@@ -80,7 +80,7 @@ public class GAULIntegratorTests {
         password = "";
         ontologyPath = "file:///Users/nickrobison/Developer/git/dissertation/trestle-ontology/trestle.owl";
         ontologyPrefix = "http://trestle.nickrobison.com/demonstration/";
-        ontologyName = "trestle_demo";
+        ontologyName = "trestle_regionalization";
         conf.set("reasoner.db.connection", connectionString);
         conf.set("reasoner.db.username", userName);
         conf.set("reasoner.db.password", password);
@@ -99,7 +99,7 @@ public class GAULIntegratorTests {
                 .withInputClasses(GAULObject.class)
                 .withOntology(IRI.create(ontologyPath))
                 .withPrefix(ontologyPrefix)
-//                .initialize()
+                .initialize()
                 .withName(ontologyName)
                 .withoutCaching()
                 .withoutMetrics()
@@ -156,13 +156,13 @@ public class GAULIntegratorTests {
                 .withoutMetrics()
                 .build();
 
-        final Optional<List<GAULObject>> manhicaMembers = reasoner.getConceptMembers(GAULObject.class, "21884-Manhica:concept", 0.01, null, null);
-        assertAll(() -> assertTrue(manhicaMembers.isPresent(), "Should have Manhica concept members"),
+        final Optional<List<GAULObject>> manhicaMembers = reasoner.getCollectionMembers(GAULObject.class, "21884-Manhica:collection", 0.01, null, null);
+        assertAll(() -> assertTrue(manhicaMembers.isPresent(), "Should have Manhica collection members"),
                 () -> assertEquals(3, manhicaMembers.get().size(), "Wrong number of members for Manhica"));
 
 //        Try for Cidade
-        final Optional<List<GAULObject>> cidadeMembers = reasoner.getConceptMembers(GAULObject.class, "41374-Cidade_de_Maputo:concept", 0.01, null, null);
-        assertAll(() -> assertTrue(manhicaMembers.isPresent(), "Should have Cidade concept members"),
+        final Optional<List<GAULObject>> cidadeMembers = reasoner.getCollectionMembers(GAULObject.class, "41374-Cidade_de_Maputo:collection", 0.01, null, null);
+        assertAll(() -> assertTrue(manhicaMembers.isPresent(), "Should have Cidade collection members"),
                 () -> assertEquals(7, cidadeMembers.get().size(), "Wrong number of members for Cidade"));
 
     }
