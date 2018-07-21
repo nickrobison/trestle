@@ -115,5 +115,6 @@ public class EngineModule extends PrivateModule {
         expose(IndividualEngine.class);
         expose(TrestleEventEngine.class);
         expose(TrestleMergeEngine.class);
+        expose(RelationTracker.class);
     }
 }
