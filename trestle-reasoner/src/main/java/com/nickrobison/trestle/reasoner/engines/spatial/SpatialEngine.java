@@ -345,7 +345,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
         final Geometry bPolygon = SpatialEngineUtils.getGeomFromCache(objectB, bSRID, this.geometryCache);
 
 //        Reproject to coordinate system of Geometry A
-        logger.debug("Reprojecting {} from {} to {}", objectBID, bSRID, aSRID);
+        logger.debug("Potentially reprojecting {} from {} to {}", objectBID, bSRID, aSRID);
         final Geometry transformedB = SpatialEngineUtils.reprojectGeometry(bPolygon, bSRID, aSRID, this.geometryCache, objectB.hashCode());
 
 

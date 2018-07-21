@@ -104,6 +104,11 @@ public class SpatialEngineUtils {
      */
     public static Geometry reprojectGeometry(Geometry inputGeom, int inputSRID, int outputSRID, @Nullable Cache<Integer, Geometry> geometryCache, @Nullable Integer objectHashCode) {
 
+//        If we're the same, don't reproject
+        if (inputSRID == outputSRID) {
+            return inputGeom;
+        }
+
 //        See if we already have a reprojected geom
         if (geometryCache != null && objectHashCode != null) {
             final Geometry geometry = geometryCache.get(objectHashCode + outputSRID);
