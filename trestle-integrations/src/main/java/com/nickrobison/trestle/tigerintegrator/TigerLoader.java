@@ -97,7 +97,7 @@ public class TigerLoader {
                 .withPrefix(ontPrefix)
                 .withInputClasses(TigerCountyObject.class)
 //                .withoutCaching()
-//                .initialize()
+                .initialize()
                 .build();
 
         for(int count=0; count<tigerObjs.size(); count++)
@@ -255,7 +255,6 @@ public class TigerLoader {
                 .withOntology(IRI.create(ontLocation))
                 .withPrefix(ontPrefix)
                 .withInputClasses(TigerCountyObject.class)
-                .withoutCaching()
                 .withoutMetrics()
                 .build();
 
@@ -266,6 +265,7 @@ public class TigerLoader {
                 .collect(Collectors.toSet());
 
         for (String id : objectIDs) {
+            logger.info("Computing relationships for {}", id);
             reasoner.calculateSpatialAndTemporalRelationships(TigerCountyObject.class, id);
         }
     }
@@ -278,11 +278,7 @@ public class TigerLoader {
             loader.loadObjects();
             loader.computeRelations();
             loader.verifyObjects();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (MissingOntologyEntity e) {
-            e.printStackTrace();
-        } catch (TrestleClassException e) {
+        } catch (SQLException | MissingOntologyEntity | TrestleClassException e) {
             e.printStackTrace();
         }
         System.out.println("end time: "+Instant.now());
