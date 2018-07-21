@@ -55,13 +55,13 @@
   ; We need to use invokeWithArguments to work around IDEA-154967
   ([^MethodHandle handle object]
    (try
-     (log/debugf "Invoking method handle %s on %s" handle object)
+     (log/tracef "Invoking method handle %s on %s" handle object)
      (.invokeWithArguments handle (object-array [object]))
      (catch Exception e
        (log/error "Problem invoking" e))))
   ([^MethodHandle handle object & args]
    (try
-     (log/debugf "Invoking method handle %s on %s with args %s"
+     (log/tracef "Invoking method handle %s on %s with args %s"
                  handle
                  object
                  args)
@@ -74,13 +74,13 @@
   ; We need to use invokeWithArguments to work around IDEA-154967
   ([^MethodHandle handle]
    (try
-     (log/debugf "Invoking constructor %s" handle)
+     (log/tracef "Invoking constructor %s" handle)
      (.invokeWithArguments handle (object-array []))
      (catch Exception e
        (log/error "Problem invoking" e))))
   ([^MethodHandle handle & args]
    (try
-     (log/debugf "Invoking constructor %s with args %s" handle args)
+     (log/tracef "Invoking constructor %s with args %s" handle args)
      ; I honestly have no idea why we need to do first, but that's how it is
      (.invokeWithArguments handle (object-array (first args)))
      (catch Exception e

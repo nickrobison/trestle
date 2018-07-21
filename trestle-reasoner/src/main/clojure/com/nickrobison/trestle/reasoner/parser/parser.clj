@@ -167,7 +167,7 @@
   [acc member lang]
   (let [rtype (get acc :return-type
                    (pred/get-member-return-type member))]
-    (log/debugf "Called with lang type %s" rtype)
+    (log/tracef "Called with lang type %s" rtype)
     (if (and (complement (nil? lang)) (= String rtype))
       (merge acc {:language (get-member-language member lang)})
       acc)))
@@ -339,7 +339,7 @@
   (let [iri (.getShortForm ^IRI (get member :iri))
         position (get member :position)
         name (get member :name)]
-    (log/debugf "Matching %s against temporal %s" classMember iri)
+    (log/tracef "Matching %s against temporal %s" classMember iri)
     (condp = classMember
       ; Can we match directly against the class member?
       name true
@@ -351,12 +351,12 @@
 (defmethod member-matches? ::pred/language
   [member languageCode classMember]
   (let [iri (.getShortForm ^IRI (get member :iri))]
-    (log/debugf "Matching %s against %s with language %s" classMember iri (get member :language))
+    (log/tracef "Matching %s against %s with language %s" classMember iri (get member :language))
     ; Match against IRI and language code (ignoring case)
     (log/spyf "Matches? %s" (and (= iri classMember) (.equalsIgnoreCase ^String languageCode (get member :language))))))
 (defmethod member-matches? :default
   [member languageCode classMember]
-  (log/debugf "Matching %s against defaults" classMember)
+  (log/tracef "Matching %s against defaults" classMember)
   (let [iri (.getShortForm ^IRI (get member :iri))]
     (= iri classMember)))
 
@@ -461,7 +461,7 @@
     (.matchWithClassMember this clazz classMember defaultLanguageCode))
   (matchWithClassMember ^String [this clazz classMember languageCode]
     (let [parsedClass (.getRegisteredClass this clazz)]
-      (log/debugf "Trying to match %s with language %s" classMember languageCode)
+      (log/tracef "Trying to match %s with language %s" classMember languageCode)
       ; Figure out if we directly match against a constructor argument
       ; But only if we don't have a provided language code
       (if
