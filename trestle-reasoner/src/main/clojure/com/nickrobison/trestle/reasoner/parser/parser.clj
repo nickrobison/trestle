@@ -367,7 +367,7 @@
   [members languageCode classMember]
   (->> members
        (filter (fn [member]
-                 (log/debug "Matching")
+                 (log/trace "Matching")
                  (member-matches? member languageCode classMember)))
        (map (fn [member]
               (get member :name)))

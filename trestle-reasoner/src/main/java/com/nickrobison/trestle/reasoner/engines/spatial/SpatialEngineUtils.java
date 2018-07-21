@@ -177,7 +177,7 @@ public class SpatialEngineUtils {
 //            Convert from whatever it is, to Meters, which is the distance unit of the default WGS84 (4326) projection
             final UnitConverter converterTo = lengthUnit.getConverterTo(METER);
             final double meterBuffer = converterTo.convert(buffer);
-            logger.debug("Adding {} buffer to WKT", buffer);
+            logger.trace("Adding {} buffer to WKT", buffer);
             final WKTWriter writer = new WKTWriter();
             final WKTReader reader = new WKTReader(new GeometryFactory(new PrecisionModel(), 4326));
             try {
@@ -199,7 +199,7 @@ public class SpatialEngineUtils {
      */
     @Metered(name = "geometry-calculation-meter")
     private static Geometry computeGeometry(Object object, int inputSR) {
-        logger.debug("Cache miss for {}, computing", object);
+        logger.trace("Cache miss for {}, computing", object);
         return SpatialEngineUtils.buildObjectGeometry(object, inputSR);
     }
 
