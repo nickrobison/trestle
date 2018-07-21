@@ -20,6 +20,7 @@ import com.nickrobison.trestle.reasoner.engines.exporter.ITrestleDataExporter;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
+import com.nickrobison.trestle.reasoner.engines.relations.RelationTracker;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationEngine;
@@ -104,6 +105,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final SpatialEngine spatialEngine;
     private final AggregationEngine aggregationEngine;
     private final TemporalEngine temporalEngine;
+    private final RelationTracker relationTracker;
     private final Config trestleConfig;
     private final TrestleCache trestleCache;
     private final Metrician metrician;
@@ -111,15 +113,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final TrestleExecutorService objectThreadPool;
     private final ExecutorService searchThreadPool;
     private final TrestleExecutorService comparisonThreadPool;
-    //    FIXME(nickrobison): Garbage!
-    private final Set<Integer> computedRelations;
 
     @SuppressWarnings("dereference.of.nullable")
     TrestleReasonerImpl(TrestleBuilder builder) throws OWLOntologyCreationException {
-
-//        FIXME(nickrobison): Garbage!!!!
-        new ConcurrentHashMap<>();
-        this.computedRelations = ConcurrentHashMap.newKeySet();
 
 //        Read in the trestleConfig file and validate it
         trestleConfig = ConfigFactory.load().getConfig("trestle");
@@ -180,7 +176,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     builder.password);
         }
 
-        final Injector injector = Guice.createInjector(new TrestleOntologyModule(ontologyBuilder, REASONER_PREFIX), new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled"), this.trestleConfig.getBoolean("events.enabled")));
+        final Injector injector = Guice.createInjector(new TrestleOntologyModule(ontologyBuilder, REASONER_PREFIX),
+                new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled"), this.trestleConfig.getBoolean("events.enabled"), builder.tracking));
 
 //        Setup metrics engine
         metrician = injector.getInstance(Metrician.class);
@@ -227,6 +224,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         this.spatialEngine = injector.getInstance(SpatialEngine.class);
         this.aggregationEngine = injector.getInstance(AggregationEngine.class);
         this.temporalEngine = injector.getInstance(TemporalEngine.class);
+        this.relationTracker = injector.getInstance(RelationTracker.class);
 
 //        Register type constructors from the service loader
         final ServiceLoader<TypeConstructor> constructors = ServiceLoader.load(TypeConstructor.class);
@@ -751,7 +749,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public <T> void calculateSpatialAndTemporalRelationships(Class<T> clazz, String individual) throws TrestleClassException, MissingOntologyEntity {
-        final IRI iri = parseStringToIRI(this.REASONER_PREFIX, individual);
+        final IRI individualIRI = parseStringToIRI(this.REASONER_PREFIX, individual);
 //        this.trestleParser.classParser.getIndividual(object);
 //        final OWLLiteral projectedWKT = this.trestleParser.classBuilder.getProjectedWKT(object.getClass(), object, 4326);
 
@@ -765,14 +763,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     .stream()
                     .map(intersectedObject -> CompletableFuture.runAsync(() -> {
                         final IRI intersectedIRI = this.trestleParser.classParser.getIndividual(intersectedObject).getIRI();
-                        final Integer computed = iri.hashCode() + intersectedIRI.hashCode();
 //                        If we've already computed these two, don't do them again.
 //                        Or, if the objects are the same, skip them
-                        if (this.computedRelations.contains(computed) || intersectedIRI.equals(iri)) {
-                            logger.debug("Already computed relationships between {} and {}", iri, intersectedIRI);
+                        if (this.relationTracker.hasRelation(individualIRI, intersectedIRI) || intersectedIRI.equals(individualIRI)) {
+                            logger.debug("Already computed relationships between {} and {}", individualIRI, intersectedIRI);
                             return;
                         }
-                        logger.debug("Writing relationships between {} and {}", iri, this.trestleParser.classParser.getIndividual(intersectedObject));
+                        logger.debug("Writing relationships between {} and {}", individualIRI, this.trestleParser.classParser.getIndividual(intersectedObject));
                         final SpatialComparisonReport spatialComparisonReport = this.compareTrestleObjects(trestleObject, intersectedObject, 0.9);
                         final TemporalComparisonReport temporalComparisonReport = this.temporalEngine.compareObjects(trestleObject, intersectedObject);
 //                Write the relationships
@@ -792,7 +789,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                             logger.debug("Writing temporal relationship {}", tRelation);
                             this.writeObjectRelationship(trestleObject, intersectedObject, tRelation);
                         });
-                        this.computedRelations.add(computed);
+                        this.relationTracker.addRelation(individualIRI, intersectedIRI);
                     }, this.comparisonThreadPool))
                     .collect(Collectors.toList());
 
@@ -801,10 +798,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             try {
                 intersectionFuture.get();
             } catch (InterruptedException e) {
-                logger.error("Interrupted while computing relationships for {}", iri, e);
+                logger.error("Interrupted while computing relationships for {}", individualIRI, e);
                 Thread.currentThread().interrupt();
             } catch (ExecutionException e) {
-                logger.error("Cannot compute relationships for {}", iri, e);
+                logger.error("Cannot compute relationships for {}", individualIRI, e);
             }
         }
     }

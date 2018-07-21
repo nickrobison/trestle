@@ -21,13 +21,15 @@ public class TrestleModule extends AbstractModule {
     private final boolean cachingEnabled;
     private final boolean mergeEnabled;
     private final boolean eventEnabled;
+    private final boolean trackEnabled;
 
-    TrestleModule(boolean metricsEnabled, boolean cachingEnabled, boolean mergeEnabled, boolean eventEnabled) {
+    TrestleModule(boolean metricsEnabled, boolean cachingEnabled, boolean mergeEnabled, boolean eventEnabled, boolean trackEnabled) {
         logger.debug("Building Trestle Module");
         this.metricsEnabled = metricsEnabled;
         this.cachingEnabled = cachingEnabled;
         this.mergeEnabled = mergeEnabled;
         this.eventEnabled = eventEnabled;
+        this.trackEnabled = trackEnabled;
     }
 
     @Override
@@ -39,6 +41,6 @@ public class TrestleModule extends AbstractModule {
         install(new TrestleParserModule());
         install(new MetricianModule(metricsEnabled));
         install(new TrestleCacheModule(cachingEnabled));
-        install(new EngineModule(mergeEnabled, eventEnabled));
+        install(new EngineModule(mergeEnabled, eventEnabled, trackEnabled));
     }
 }
