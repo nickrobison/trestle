@@ -492,12 +492,12 @@ public class QueryBuilder {
     }
 
     /**
-     * Build spatial intersection
+     * Build spatial intersection to return Individuals that intersect with the given WKT value
      *
      * @param datasetClass - {@link OWLClass} to restrict on
      * @param wktValue     - {@link String} representation of WKT value
      * @param dbAt         - {@link OffsetDateTime} of database temporal
-     * @return - {@link String} SPARQL query string
+     * @return - {@link String} SPARQL query string with parameter ?m representing individuals
      */
     public String buildSpatialIntersection(OWLClass datasetClass, String wktValue, OffsetDateTime dbAt) {
         final ParameterizedSparqlString ps = buildBaseString();

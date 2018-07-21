@@ -20,6 +20,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Created by detwiler on 2/16/17.
@@ -246,12 +248,35 @@ public class TigerLoader {
         return allEquivalent;
     }
 
+    public void computeRelations() throws TrestleClassException, MissingOntologyEntity {
+        TrestleReasoner reasoner = new TrestleBuilder()
+                .withDBConnection(connectStr, username, password)
+                .withName(reponame)
+                .withOntology(IRI.create(ontLocation))
+                .withPrefix(ontPrefix)
+                .withInputClasses(TigerCountyObject.class)
+                .withoutCaching()
+                .withoutMetrics()
+                .build();
+
+//        Make a set of unique IDs
+        final Set<String> objectIDs = tigerObjs
+                .stream()
+                .map(TigerCountyObject::getGeoid)
+                .collect(Collectors.toSet());
+
+        for (String id : objectIDs) {
+            reasoner.calculateSpatialAndTemporalRelationships(TigerCountyObject.class, id);
+        }
+    }
+
     public static void main(String[] args)
     {
         System.out.println("start time: "+Instant.now());
         try {
             TigerLoader loader = new TigerLoader();
             loader.loadObjects();
+            loader.computeRelations();
             loader.verifyObjects();
         } catch (SQLException e) {
             e.printStackTrace();

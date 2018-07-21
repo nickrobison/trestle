@@ -26,6 +26,7 @@ import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentE
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
+import com.nickrobison.trestle.reasoner.engines.temporal.TemporalComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.temporal.TemporalEngine;
 import com.nickrobison.trestle.reasoner.exceptions.InvalidOntologyName;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
@@ -51,6 +52,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.measure.quantity.Length;
+import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 import java.io.File;
 import java.io.IOException;
@@ -742,6 +744,44 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
+    public <T> void calculateSpatialAndTemporalRelationships(Class<T> clazz, String individual) throws TrestleClassException, MissingOntologyEntity {
+        final IRI iri = parseStringToIRI(this.REASONER_PREFIX, individual);
+//        this.trestleParser.classParser.getIndividual(object);
+//        final OWLLiteral projectedWKT = this.trestleParser.classBuilder.getProjectedWKT(object.getClass(), object, 4326);
+
+//        Read the object first
+        final T trestleObject = this.objectReader.readTrestleObject(clazz, individual);
+//        Intersect it
+        final Optional<List<T>> intersectedObjects = this.spatialEngine.spatialIntersectObject(trestleObject, 50, SI.METER);
+//        Now, compute the relationships
+        intersectedObjects.ifPresent(iObjects -> {
+            iObjects.forEach(intersectedObject -> {
+                logger.debug("Writing relationships between {} and {}", iri, this.trestleParser.classParser.getIndividual(intersectedObject));
+                final SpatialComparisonReport spatialComparisonReport = this.compareTrestleObjects(trestleObject, intersectedObject, 0.9);
+                final TemporalComparisonReport temporalComparisonReport = this.temporalEngine.compareObjects(trestleObject, intersectedObject);
+//                Write the relationships
+                spatialComparisonReport.getRelations().forEach(relation -> {
+                    logger.trace("Writing spatial relationship {}", relation);
+                    this.writeObjectRelationship(trestleObject, intersectedObject, relation);
+                });
+
+//                Write overlaps
+                spatialComparisonReport.getSpatialOverlap().ifPresent(overlap -> {
+                    logger.debug("Writing spatial overlap");
+                    this.writeSpatialOverlap(trestleObject, intersectedObject, overlap);
+                });
+
+                //            Temporal relations
+                temporalComparisonReport.getRelations().forEach(tRelation -> {
+                    logger.debug("Writing temporal relationship {}");
+                    this.writeObjectRelationship(trestleObject, intersectedObject, tRelation);
+                });
+            });
+        });
+
+    }
+
+    @Override
     public List<String> searchForIndividual(String individualIRI) {
         return searchForIndividual(individualIRI, null, null);
     }
@@ -864,11 +904,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     public List<String> getDatasetProperties(Class<?> clazz) {
         final List<OWLDataProperty> owlDataProperties = this.trestleParser.classBuilder.getPropertyMembers(clazz)
                 .orElseThrow(() -> new IllegalStateException(String.format("Cannot get properties for %s", this.trestleParser.classParser.getObjectClass(clazz))));
-                return owlDataProperties
-                        .stream()
-                        .map(OWLEntity::toStringID)
-                        .sorted()
-                        .collect(Collectors.toList());
+        return owlDataProperties
+                .stream()
+                .map(OWLEntity::toStringID)
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     @Override

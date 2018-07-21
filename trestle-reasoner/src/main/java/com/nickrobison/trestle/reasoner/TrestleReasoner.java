@@ -2,6 +2,7 @@ package com.nickrobison.trestle.reasoner;
 
 import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
 import com.nickrobison.trestle.reasoner.engines.collection.ITrestleCollectionEngine;
@@ -220,6 +221,18 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @return - {@link Optional} {@link List} of {@link T} objects
      */
     <T extends @NonNull Object> Optional<List<T>> getEquivalentObjects(Class<T> clazz, List<IRI> individuals, Temporal queryTemporal);
+
+    /**
+     * Compute the spatial and temporal relationships between the given individual and any other individuals which intersect the individual.
+     * The intersection boundary is currently set to 50 meters.
+     *
+     * @param clazz      - Java {@link Class} of type {@link T} to query
+     * @param individual - {@link String} ID of individual
+     * @param <T>        - Java class to return
+     * @throws MissingOntologyEntity - throws if the given individual isn't in the Database
+     * @throws TrestleClassException - throws if the class isn't registered with the Reasoner
+     */
+    <T> void calculateSpatialAndTemporalRelationships(Class<T> clazz, String individual) throws TrestleClassException, MissingOntologyEntity;
 
     /**
      * Search the ontology for individuals with IRIs that match the given search string
