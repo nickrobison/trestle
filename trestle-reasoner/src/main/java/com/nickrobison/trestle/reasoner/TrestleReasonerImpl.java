@@ -3,6 +3,7 @@ package com.nickrobison.trestle.reasoner;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.nickrobison.metrician.Metrician;
+import com.nickrobison.trestle.common.LambdaUtils;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.OntologyBuilder;
@@ -19,9 +20,9 @@ import com.nickrobison.trestle.reasoner.engines.exporter.ITrestleDataExporter;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
-import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
@@ -65,10 +66,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.Temporal;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
@@ -112,9 +110,16 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final ExecutorService trestleThreadPool;
     private final TrestleExecutorService objectThreadPool;
     private final ExecutorService searchThreadPool;
+    private final TrestleExecutorService comparisonThreadPool;
+    //    FIXME(nickrobison): Garbage!
+    private final Set<Integer> computedRelations;
 
     @SuppressWarnings("dereference.of.nullable")
     TrestleReasonerImpl(TrestleBuilder builder) throws OWLOntologyCreationException {
+
+//        FIXME(nickrobison): Garbage!!!!
+        new ConcurrentHashMap<>();
+        this.computedRelations = ConcurrentHashMap.newKeySet();
 
 //        Read in the trestleConfig file and validate it
         trestleConfig = ConfigFactory.load().getConfig("trestle");
@@ -186,6 +191,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         trestleThreadPool = factory.create(builder.ontologyName.orElse("default"));
         objectThreadPool = factory.create("object-pool");
         searchThreadPool = factory.create("search-pool");
+        comparisonThreadPool = factory.create("comparison-pool");
 
 //        Validate ontology name
         try {
@@ -752,33 +758,55 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //        Read the object first
         final T trestleObject = this.objectReader.readTrestleObject(clazz, individual);
 //        Intersect it
-        final Optional<List<T>> intersectedObjects = this.spatialEngine.spatialIntersectObject(trestleObject, 50, SI.METER);
+        final Optional<List<T>> intersectedObjects = this.spatialEngine.spatialIntersectObject(trestleObject, 1, SI.METER);
 //        Now, compute the relationships
-        intersectedObjects.ifPresent(iObjects -> {
-            iObjects.forEach(intersectedObject -> {
-                logger.debug("Writing relationships between {} and {}", iri, this.trestleParser.classParser.getIndividual(intersectedObject));
-                final SpatialComparisonReport spatialComparisonReport = this.compareTrestleObjects(trestleObject, intersectedObject, 0.9);
-                final TemporalComparisonReport temporalComparisonReport = this.temporalEngine.compareObjects(trestleObject, intersectedObject);
+        if (intersectedObjects.isPresent()) {
+            final List<CompletableFuture<Void>> intersectionFutures = intersectedObjects.get()
+                    .stream()
+                    .map(intersectedObject -> CompletableFuture.runAsync(() -> {
+                        final IRI intersectedIRI = this.trestleParser.classParser.getIndividual(intersectedObject).getIRI();
+                        final Integer computed = iri.hashCode() + intersectedIRI.hashCode();
+//                        If we've already computed these two, don't do them again.
+//                        Or, if the objects are the same, skip them
+                        if (this.computedRelations.contains(computed) || intersectedIRI.equals(iri)) {
+                            logger.debug("Already computed relationships between {} and {}", iri, intersectedIRI);
+                            return;
+                        }
+                        logger.debug("Writing relationships between {} and {}", iri, this.trestleParser.classParser.getIndividual(intersectedObject));
+                        final SpatialComparisonReport spatialComparisonReport = this.compareTrestleObjects(trestleObject, intersectedObject, 0.9);
+                        final TemporalComparisonReport temporalComparisonReport = this.temporalEngine.compareObjects(trestleObject, intersectedObject);
 //                Write the relationships
-                spatialComparisonReport.getRelations().forEach(relation -> {
-                    logger.trace("Writing spatial relationship {}", relation);
-                    this.writeObjectRelationship(trestleObject, intersectedObject, relation);
-                });
+                        spatialComparisonReport.getRelations().forEach(relation -> {
+                            logger.trace("Writing spatial relationship {}", relation);
+                            this.writeObjectRelationship(trestleObject, intersectedObject, relation);
+                        });
 
 //                Write overlaps
-                spatialComparisonReport.getSpatialOverlap().ifPresent(overlap -> {
-                    logger.debug("Writing spatial overlap");
-                    this.writeSpatialOverlap(trestleObject, intersectedObject, overlap);
-                });
+                        spatialComparisonReport.getSpatialOverlap().ifPresent(overlap -> {
+                            logger.debug("Writing spatial overlap");
+                            this.writeSpatialOverlap(trestleObject, intersectedObject, overlap);
+                        });
 
-                //            Temporal relations
-                temporalComparisonReport.getRelations().forEach(tRelation -> {
-                    logger.debug("Writing temporal relationship {}");
-                    this.writeObjectRelationship(trestleObject, intersectedObject, tRelation);
-                });
-            });
-        });
+                        //            Temporal relations
+                        temporalComparisonReport.getRelations().forEach(tRelation -> {
+                            logger.debug("Writing temporal relationship {}", tRelation);
+                            this.writeObjectRelationship(trestleObject, intersectedObject, tRelation);
+                        });
+                        this.computedRelations.add(computed);
+                    }, this.comparisonThreadPool))
+                    .collect(Collectors.toList());
 
+            final CompletableFuture<List<Void>> intersectionFuture = LambdaUtils.sequenceCompletableFutures(intersectionFutures);
+
+            try {
+                intersectionFuture.get();
+            } catch (InterruptedException e) {
+                logger.error("Interrupted while computing relationships for {}", iri, e);
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException e) {
+                logger.error("Cannot compute relationships for {}", iri, e);
+            }
+        }
     }
 
     @Override

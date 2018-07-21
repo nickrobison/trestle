@@ -259,14 +259,18 @@ public class TigerLoader {
                 .build();
 
 //        Make a set of unique IDs
+//        But only for the pacific
         final Set<String> objectIDs = tigerObjs
                 .stream()
+                .filter(obj -> obj.getDivision().equals("Pacific"))
                 .map(TigerCountyObject::getGeoid)
                 .collect(Collectors.toSet());
 
         for (String id : objectIDs) {
+            final Instant computeStart = Instant.now();
             logger.info("Computing relationships for {}", id);
             reasoner.calculateSpatialAndTemporalRelationships(TigerCountyObject.class, id);
+            logger.info("Writing relations for object {} took {} ms", id, Duration.between(computeStart, Instant.now()).toMillis());
         }
     }
 
