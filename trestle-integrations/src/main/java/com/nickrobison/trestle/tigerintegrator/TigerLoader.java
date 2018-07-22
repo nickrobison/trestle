@@ -96,7 +96,7 @@ public class TigerLoader {
                 .withOntology(IRI.create(ontLocation))
                 .withPrefix(ontPrefix)
                 .withInputClasses(TigerCountyObject.class)
-//                .withoutCaching()
+                .withoutCaching()
                 .initialize()
                 .build();
 
@@ -255,6 +255,7 @@ public class TigerLoader {
                 .withOntology(IRI.create(ontLocation))
                 .withPrefix(ontPrefix)
                 .withInputClasses(TigerCountyObject.class)
+                .trackObjectRelations()
                 .withoutMetrics()
                 .build();
 
@@ -262,7 +263,7 @@ public class TigerLoader {
 //        But only for the pacific
         final Set<String> objectIDs = tigerObjs
                 .stream()
-                .filter(obj -> obj.getDivision().equals("Pacific"))
+                .filter(obj -> obj.getState().equals("Washington"))
                 .map(TigerCountyObject::getGeoid)
                 .collect(Collectors.toSet());
 
