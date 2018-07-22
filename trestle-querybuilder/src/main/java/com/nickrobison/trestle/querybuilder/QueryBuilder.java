@@ -151,14 +151,15 @@ public class QueryBuilder {
                 " WHERE {" +
                 "?c trestle:related_by ?r ." +
                 "?r trestle:Relation_Strength ?s ." +
-                "?r trestle:relation_of ?t:" +
-                "?t trestle:meets ?mt ." +
-                "?m trestle:has_relation ?rt ." +
+                "?r trestle:relation_of ?t ." +
+                "?t trestle:spatial_meets ?mt ." +
+                "?mt trestle:has_relation ?rt ." +
                 "?rt trestle:Relation_Strength ?st ." +
                 "?rt trestle:related_to ?collection ." +
                 "FILTER (?m != ?t && ?c != ?collection) ." +
-                "FILTER (?s >= ?strength && ?st >= ?strength) ." +
-                "VALUES ?i {<%s>} .}", String.format("<%s>", getFullIRIString(collection))));
+                "FILTER (?s >= ?strength) ." +
+                "FILTER(?st >= ?strength) ." +
+                "VALUES ?c {%s} .}", String.format("<%s>", getFullIRIString(collection))));
 
         ps.setLiteral("strength", strength);
         final String stringValue = ps.toString();

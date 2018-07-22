@@ -42,7 +42,7 @@ public enum ObjectRelation implements HasIRI, Serializable {
     /**
      * Exists if the exterior ring of the Subject and the Object are at any point equal
      */
-    SPATIAL_MEETS("meets"),
+    SPATIAL_MEETS("spatial_meets"),
     /**
      * Exists if the Subject and Object share only a portion of the same spatial area.
      */
