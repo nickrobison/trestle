@@ -38,10 +38,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.time.*;
 import java.time.temporal.Temporal;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -463,14 +460,14 @@ public class TrestleObjectReader implements ITrestleObjectReader {
     }
 
     @Override
-    public <T> Optional<List<T>> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
-        final IRI individualIRI = parseStringToIRI(identifier);
+    public <T> List<T> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
+        final IRI individualIRI = parseStringToIRI(this.reasonerPrefix, identifier);
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
 
 //        Be careful, there's an inference issue here. Java things the List is of type ?, not T.
 //        So we have to do the manual type assertion
-        final CompletableFuture<Optional<List<T>>> relatedFuture = CompletableFuture.supplyAsync(() -> {
+        final CompletableFuture<List<T>> relatedFuture = CompletableFuture.supplyAsync(() -> {
             final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
             try {
                 final Optional<List<OWLObjectPropertyAssertionAxiom>> objectProperties = this.ontology.getIndividualObjectProperty(individualIRI, relation.getIRI());
@@ -489,9 +486,9 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                             })
                             .filter(Objects::nonNull)
                             .collect(Collectors.toList());
-                    return Optional.of(relatedObjects);
+                    return relatedObjects;
                 } else {
-                    return Optional.empty();
+                    return Collections.emptyList();
                 }
             } finally {
                 this.ontology.returnAndCommitTransaction(tt);
@@ -503,11 +500,12 @@ public class TrestleObjectReader implements ITrestleObjectReader {
         } catch (InterruptedException e) {
             logger.error("Interrupted while get related objects for {}", individualIRI, e);
             Thread.currentThread().interrupt();
-            return Optional.empty();
+            return ExceptionUtils.rethrow(e.getCause());
+
         } catch (ExecutionException e) {
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
             logger.error("Error when getting related objects for {}", individualIRI, rootCause);
-            return Optional.empty();
+            return ExceptionUtils.rethrow(e.getCause());
         }
     }
 

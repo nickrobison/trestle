@@ -471,7 +471,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <T> Optional<List<T>> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
+    public <T> List<T> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
         return this.objectReader.getRelatedObjects(clazz, identifier, relation, validAt, dbAt);
     }
 

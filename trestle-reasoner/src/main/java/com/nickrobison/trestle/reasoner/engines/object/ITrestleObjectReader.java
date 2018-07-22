@@ -156,8 +156,6 @@ public interface ITrestleObjectReader {
      * Get Objects which satistify the given {@link ObjectRelation} for the specified individual
      * Note: This currently only works for objects of the same class
      * If either of the temporal values are missing, the current time is used.
-     * An empty optional indicates an error has occurred.
-     * An empty list indicates no matching objects could be found.
      *
      * @param clazz      - Java {@link Class} of the specified objects
      * @param identifier - {@link String} object Identifier
@@ -165,8 +163,8 @@ public interface ITrestleObjectReader {
      * @param validAt    - {@link Temporal} optional temporal to specify valid at intersection
      * @param dbAt       - {@link Temporal} optional temporal to specificy database at intersection
      * @param <T>        - {@link T} generic type parameter
-     * @return - {@link Optional} {@link List} of {@link T} objects which satisfy the given object relationship
+     * @return - {@link List} of {@link T} objects which satisfy the given object relationship
      * @since 0.9
      */
-    <T> Optional<List<T>> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt);
+    <T> List<T> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt);
 }
