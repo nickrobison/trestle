@@ -71,7 +71,8 @@ public class TrestleRemoteActor extends AbstractActor {
                     sender().tell(objects, self());
                 })
                 .match(GetRelatedObjects.class, related -> {
-                    final Optional relatedObjects = reasoner.getRelatedObjects(related.getClazz(), related.getId(), related.getCutoff());
+                    final Optional relatedObjects = Optional.empty();
+//                    final Optional relatedObjects = reasoner.getRelatedObjects(related.getClazz(), related.getId(), related.getCutoff());
                     sender().tell(relatedObjects, self());
                 })
                 .match(ExportData.class, export -> {
