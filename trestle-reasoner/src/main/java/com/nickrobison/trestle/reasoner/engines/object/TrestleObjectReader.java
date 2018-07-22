@@ -22,6 +22,7 @@ import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.TrestleFact;
 import com.nickrobison.trestle.types.TrestleObjectResult;
 import com.nickrobison.trestle.types.TrestleObjectState;
+import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.PointTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
@@ -38,6 +39,7 @@ import javax.inject.Inject;
 import java.time.*;
 import java.time.temporal.Temporal;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -457,6 +459,55 @@ public class TrestleObjectReader implements ITrestleObjectReader {
         } catch (ExecutionException e) {
             logger.error("Cannot get values for fact {} on dataset {}", factName, datasetClass, e);
             return ExceptionUtils.rethrow(e.getCause());
+        }
+    }
+
+    @Override
+    public <T> Optional<List<T>> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
+        final IRI individualIRI = parseStringToIRI(identifier);
+
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+
+//        Be careful, there's an inference issue here. Java things the List is of type ?, not T.
+//        So we have to do the manual type assertion
+        final CompletableFuture<Optional<List<T>>> relatedFuture = CompletableFuture.supplyAsync(() -> {
+            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+            try {
+                final Optional<List<OWLObjectPropertyAssertionAxiom>> objectProperties = this.ontology.getIndividualObjectProperty(individualIRI, relation.getIRI());
+                if (objectProperties.isPresent()) {
+                    final List<T> relatedObjects = objectProperties
+                            .get()
+                            .stream()
+                            .map(objectRelation -> {
+                                final OWLNamedIndividual objectIndividual = objectRelation.getObject().asOWLNamedIndividual();
+                                try {
+                                    return this.readTrestleObject(clazz, objectIndividual.getIRI(), false, validAt, dbAt);
+                                } catch (NoValidStateException e) {
+                                    logger.debug("Cannot read {} at {} and {}", objectIndividual, validAt, dbAt);
+                                    return null;
+                                }
+                            })
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList());
+                    return Optional.of(relatedObjects);
+                } else {
+                    return Optional.empty();
+                }
+            } finally {
+                this.ontology.returnAndCommitTransaction(tt);
+            }
+        }, this.objectReaderThreadPool);
+
+        try {
+            return relatedFuture.get();
+        } catch (InterruptedException e) {
+            logger.error("Interrupted while get related objects for {}", individualIRI, e);
+            Thread.currentThread().interrupt();
+            return Optional.empty();
+        } catch (ExecutionException e) {
+            final Throwable rootCause = ExceptionUtils.getRootCause(e);
+            logger.error("Error when getting related objects for {}", individualIRI, rootCause);
+            return Optional.empty();
         }
     }
 

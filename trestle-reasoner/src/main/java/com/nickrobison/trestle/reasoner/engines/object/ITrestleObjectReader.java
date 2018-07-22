@@ -2,6 +2,7 @@ package com.nickrobison.trestle.reasoner.engines.object;
 
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
@@ -150,4 +151,22 @@ public interface ITrestleObjectReader {
     List<Object> sampleFactValues(Class<?> clazz, String factName, long sampleLimit);
 
     List<Object> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit);
+
+    /**
+     * Get Objects which satistify the given {@link ObjectRelation} for the specified individual
+     * Note: This currently only works for objects of the same class
+     * If either of the temporal values are missing, the current time is used.
+     * An empty optional indicates an error has occurred.
+     * An empty list indicates no matching objects could be found.
+     *
+     * @param clazz      - Java {@link Class} of the specified objects
+     * @param identifier - {@link String} object Identifier
+     * @param relation   - {@link ObjectRelation} to use for retrieving objects
+     * @param validAt    - {@link Temporal} optional temporal to specify valid at intersection
+     * @param dbAt       - {@link Temporal} optional temporal to specificy database at intersection
+     * @param <T>        - {@link T} generic type parameter
+     * @return - {@link Optional} {@link List} of {@link T} objects which satisfy the given object relationship
+     * @since 0.9
+     */
+    <T> Optional<List<T>> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt);
 }
