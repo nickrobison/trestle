@@ -45,9 +45,9 @@ public interface ITrestleCollectionEngine {
      * The temporal parameters allow for additional specificity on the spatio-temporal intersection
      *
      * @param wkt        - {@link String} of WKT to intersect with
-     * @param buffer     - {@link double} buffer to draw around WKT
+     * @param buffer     - {@link Double} buffer to draw around WKT
      * @param bufferUnit - {@link Unit} of {@link Length} buffer units
-     * @param strength   - {@link double} strength parameter to filter weak associations
+     * @param strength   - {@link Double} strength parameter to filter weak associations
      * @param validAt    - {@link Temporal} of validAt time
      * @param dbAt       - Optional {@link Temporal} of dbAt time
      * @return - {@link Optional} {@link Set} of {@link String} Collection IDs
@@ -63,7 +63,7 @@ public interface ITrestleCollectionEngine {
      * @param <T>                  - Generic type {@link T} of returned object
      * @param clazz                - Input {@link Class} to retrieve from collection
      * @param collectionID            - {@link String} ID of collection to retrieve
-     * @param strength             - {@link double} Strength parameter to filter weak associations
+     * @param strength             - {@link Double} Strength parameter to filter weak associations
      * @param spatialIntersection  - Optional spatial intersection to restrict results
      * @param temporalIntersection - Optional temporal intersection to restrict results
      * @return - {@link Optional} {@link List} of Objects
@@ -76,7 +76,22 @@ public interface ITrestleCollectionEngine {
      * @param collectionIRI   - {@link String} ID of collection to add object to
      * @param inputObject  - {@link Object} to write into database
      * @param relationType - {@link CollectionRelationType}
-     * @param strength     - {@link double} Strength parameter of relation
+     * @param strength     - {@link Double} Strength parameter of relation
      */
     void addObjectToCollection(String collectionIRI, Object inputObject, CollectionRelationType relationType, double strength);
+
+    /**
+     * Determines whether or not two Collections are spatially adjacent to each other.
+     * Requires that Spatial and Temporal relationships be generated for the underlying Trestle_Objects.
+     * Specifically, looks for {@link com.nickrobison.trestle.types.relations.ObjectRelation#SPATIAL_MEETS} on any of the collection members.
+     * If relationships have not been generated, consider {@link ITrestleCollectionEngine#STIntersectCollection(String, double, double, Temporal, Temporal)}
+     *
+     * The associated strength parameter is applied symmetrically across both collections.
+     *
+     * @param subjectCollectionID - {@link String} ID of collection to query
+     * @param objectCollectionID - {@link String} ID collection to determine intersection with
+     * @param strength - {@link Double} strength parameter to filter weak associations
+     * @return - {@code true} Collections are adjacent. {@code false} Collections are not adjacent.
+     */
+    boolean collectionsAreAdjacent(String subjectCollectionID, String objectCollectionID, double strength);
 }

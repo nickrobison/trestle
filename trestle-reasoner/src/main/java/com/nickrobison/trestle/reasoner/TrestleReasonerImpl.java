@@ -603,9 +603,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
+    public boolean collectionsAreAdjacent(String subjectCollectionID, String objectCollectionID, double strength) {
+        return this.collectionEngine.collectionsAreAdjacent(subjectCollectionID, objectCollectionID, strength);
+    }
+
+    @Override
     public void writeObjectRelationship(Object subject, Object object, ObjectRelation relation) {
         this.objectWriter.writeObjectRelationship(subject, object, relation);
-//        this.writeObjectProperty(subject, object, df.getOWLObjectProperty(relation.getIRI()));
     }
 
     @Override

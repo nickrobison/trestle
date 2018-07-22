@@ -110,7 +110,7 @@ public class QueryBuilder {
      * If the collectionFilter is specified, results are filtered to only return that collection, if the individual is a member of that collection
      *
      * @param individual           - OWLNamedIndividual
-     * @param collectionFilter        - Nullable OWLNamedIndividual of Trestle_Collection to filter on
+     * @param collectionFilter     - Nullable OWLNamedIndividual of Trestle_Collection to filter on
      * @param relationshipStrength - double of cutoff value of minimum relation strength to consider an individual a member of that collection
      * @return - SPARQL Query with variables ?collection ?individual
      */
@@ -131,6 +131,36 @@ public class QueryBuilder {
         }
         ps.append('}');
         ps.setLiteral("st", relationshipStrength);
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
+    }
+
+    /**
+     * Build the SPARQL query to return the collections that are spatially adjacent to the specified colleciton.
+     * Note: This will only work if spatial relations have been generated for the underlying Trestle_Objects.
+     * If that's not the case, you'll need to use the {@link QueryBuilder#buildTemporalSpatialCollectionIntersection(String, double, OffsetDateTime, OffsetDateTime)}
+     *
+     * @param collection - {@link OWLNamedIndividual} of collection to query
+     * @param strength - {@link double} strength cutoff for collection association.
+     * @return - {@link String} SPARQL query with variables: ?collection
+     */
+    public String buildAdjecentCollectionQuery(OWLNamedIndividual collection, double strength) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText(String.format("SELECT distinct ?collection " +
+                " WHERE {" +
+                "?c trestle:related_by ?r ." +
+                "?r trestle:Relation_Strength ?s ." +
+                "?r trestle:relation_of ?t:" +
+                "?t trestle:meets ?mt ." +
+                "?m trestle:has_relation ?rt ." +
+                "?rt trestle:Relation_Strength ?st ." +
+                "?rt trestle:related_to ?collection ." +
+                "FILTER (?m != ?t && ?c != ?collection) ." +
+                "FILTER (?s >= ?strength && ?st >= ?strength) ." +
+                "VALUES ?i {<%s>} .}", String.format("<%s>", getFullIRIString(collection))));
+
+        ps.setLiteral("strength", strength);
         final String stringValue = ps.toString();
         logger.trace(stringValue);
         return stringValue;
@@ -588,7 +618,7 @@ public class QueryBuilder {
      * Build SPARQL Query to retrieve all given members of a Trestle_Collection that are subclassed from the given OWLClass
      *
      * @param datasetClass - OWLClass of individuals to return
-     * @param collectionID    - IRI of Trestle_Collection to query
+     * @param collectionID - IRI of Trestle_Collection to query
      * @param strength     - relation strength parameter
      * @return - SPARQL Query String
      */

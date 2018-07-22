@@ -303,4 +303,24 @@ public class CollectionEngine implements ITrestleCollectionEngine {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
     }
+
+    @Override
+    public boolean collectionsAreAdjacent(String subjectCollectionID, String objectCollectionID, double strength) {
+        final IRI iri1 = parseStringToIRI(this.reasonerPrefix, subjectCollectionID);
+        final OWLNamedIndividual matchingIndividual = df.getOWLNamedIndividual(parseStringToIRI(this.reasonerPrefix, objectCollectionID));
+
+        final String adjacentQuery = this.qb.buildAdjecentCollectionQuery(df.getOWLNamedIndividual(iri1), strength);
+
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+        try {
+            final TrestleResultSet trestleResultSet = this.ontology.executeSPARQLResults(adjacentQuery);
+            return trestleResultSet
+                    .getResults()
+                    .stream()
+                    .map(result -> result.unwrapIndividual("collection"))
+                    .anyMatch(collection -> collection.equals(matchingIndividual));
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+        }
+    }
 }
