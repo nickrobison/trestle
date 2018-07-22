@@ -184,21 +184,6 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
     <T extends @NonNull Object> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength);
 
     /**
-     * Get a map of related objects and their relative strengths
-     *
-     * @param clazz    - Java class of object to serialize to
-     * @param objectID - Object ID to retrieve related objects
-     * @param cutoff   - Double of relation strength cutoff
-     * @param <T>      - Type to specialize return with
-     * @return - Optional Map of related java objects and their corresponding relational strength
-     * @deprecated This is an old method, we don't use it anymore
-     */
-    //    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
-    @SuppressWarnings("return.type.incompatible")
-    @Deprecated
-    <T extends @NonNull Object> Optional<Map<T, Double>> getRelatedObjects(Class<T> clazz, String objectID, double cutoff);
-
-    /**
      * Get a {@link List} of objects that are equivalent to given individual at the given time point
      * If no objects satisfy the equality constraints and an empty {@link List} is returned
      *

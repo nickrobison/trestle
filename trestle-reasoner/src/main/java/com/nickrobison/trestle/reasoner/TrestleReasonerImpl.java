@@ -67,7 +67,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.Temporal;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
@@ -467,6 +470,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
+    public <T> Optional<List<T>> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
+        return this.objectReader.getRelatedObjects(clazz, identifier, relation, validAt, dbAt);
+    }
+
+    @Override
     public Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, String individual) {
         return getIndividualEvents(clazz, df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual)));
     }
@@ -562,14 +570,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public <A extends @NonNull Object, B extends @NonNull Object> ContainmentDirection getApproximateContainment(A objectA, B objectB, double threshold) {
         return this.spatialEngine.getApproximateContainment(objectA, objectB, threshold);
-    }
-
-    //    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
-    @Override
-    @SuppressWarnings("return.type.incompatible")
-    @Deprecated
-    public <T extends @NonNull Object> Optional<Map<T, Double>> getRelatedObjects(Class<T> clazz, String objectID, double cutoff) {
-        throw new UnsupportedOperationException("Migrating");
     }
 
 //    ----------------------------
