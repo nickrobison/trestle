@@ -62,19 +62,19 @@ public class TestClasses {
     public static class JTSGeometryTest implements Serializable {
         private static final long serialVersionUID = 42L;
 
-        private final Integer adm0_code;
+        private final Integer id;
         private final Geometry geom;
         private LocalDate date;
 
-        public JTSGeometryTest(Integer adm0_code, Geometry geom, LocalDate date) {
-            this.adm0_code = adm0_code;
+        public JTSGeometryTest(Integer id, Geometry geom, LocalDate date) {
+            this.id = id;
             this.geom = geom;
             this.date = date;
         }
 
         @IndividualIdentifier
-        public Integer getAdm0_code() {
-            return this.adm0_code;
+        public Integer getId() {
+            return this.id;
         }
 
         @Spatial(projection = 4269)
@@ -94,13 +94,13 @@ public class TestClasses {
 
             JTSGeometryTest that = (JTSGeometryTest) o;
 
-            if (!getAdm0_code().equals(that.getAdm0_code())) return false;
+            if (!getId().equals(that.getId())) return false;
             return getGeom().equalsExact(that.getGeom(), .01);
         }
 
         @Override
         public int hashCode() {
-            int result = getAdm0_code().hashCode();
+            int result = getId().hashCode();
             result = 31 * result + getGeom().hashCode();
             return result;
         }
@@ -190,7 +190,7 @@ public class TestClasses {
     public static class GAULTestClass implements Serializable {
         private static final long serialVersionUID = 42L;
 
-        @Fact(name = "adm0_code", datatype = OWL2Datatype.XSD_INTEGER)
+        @Fact(name = "id", datatype = OWL2Datatype.XSD_INTEGER)
         public int adm0_code;
         public String adm0_name;
         @IndividualIdentifier
