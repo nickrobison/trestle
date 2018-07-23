@@ -1,23 +1,26 @@
 package com.nickrobison.trestle.reasoner.engines.collection;
 
 import com.google.common.collect.ImmutableList;
-import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.reasoner.AbstractReasonerTest;
 import com.nickrobison.trestle.reasoner.TestClasses;
-import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.relations.CollectionRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static com.nickrobison.trestle.common.StaticIRI.hasRelationIRI;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by nickrobison on 7/22/18.
@@ -25,34 +28,76 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Tag("integration")
 public class CollectionEnginesTest extends AbstractReasonerTest {
 
-    @Test
-    public void testAdjacentCollections() throws TrestleClassException, MissingOntologyEntity, ParseException {
-//        Write two objects
+    private static final String THIRD_COLLECTION = "third-collection";
+    private static final String FIRST_COLLECTION = "first-collection";
+    private TestClasses.JTSGeometryTest third;
+    private TestClasses.JTSGeometryTest second;
+    private TestClasses.JTSGeometryTest first;
+
+    @BeforeEach
+    public void setupClasses() throws ParseException {
+        //        Write some objects
         final LocalDate date = LocalDate.of(2018, 1, 11);
         final Geometry jtsGeom = new WKTReader().read("POINT(4.0 6.0)");
-        final TestClasses.JTSGeometryTest first = new TestClasses.JTSGeometryTest(100111, jtsGeom, date);
+        first = new TestClasses.JTSGeometryTest(100111, jtsGeom, date);
         final Geometry jtsGeom2 = new WKTReader().read("POINT(27.0 91.0)");
-        final TestClasses.JTSGeometryTest second = new TestClasses.JTSGeometryTest(100112, jtsGeom2, date);
-        final TestClasses.JTSGeometryTest third = new TestClasses.JTSGeometryTest(100113, jtsGeom2, date);
+        second = new TestClasses.JTSGeometryTest(100112, jtsGeom2, date);
+        third = new TestClasses.JTSGeometryTest(100113, jtsGeom2, date);
+    }
 
+    @Test
+    public void testAdjacentCollections() {
 //        Add all to collections
-        this.reasoner.addObjectToCollection("first:collection", first, CollectionRelationType.SEMANTIC, 1.0);
+        this.reasoner.addObjectToCollection(FIRST_COLLECTION, first, CollectionRelationType.SEMANTIC, 1.0);
         this.reasoner.addObjectToCollection("second:collection", second, CollectionRelationType.SEMANTIC, 1.0);
-        this.reasoner.addObjectToCollection("third:collection", third, CollectionRelationType.SEMANTIC, 1.0);
+        this.reasoner.addObjectToCollection(THIRD_COLLECTION, third, CollectionRelationType.SEMANTIC, 1.0);
         //        Add a relation between one and two
         this.reasoner.writeObjectRelationship(first, second, ObjectRelation.SPATIAL_MEETS);
 //        And one and three
         this.reasoner.writeObjectRelationship(first, third, ObjectRelation.SPATIAL_MEETS);
 
 //        Check for adjacency
-        assertAll(() -> assertTrue(this.reasoner.collectionsAreAdjacent("first:collection", "second:collection", 0.5), "First and second should be adjacent"),
-                () -> assertTrue(this.reasoner.collectionsAreAdjacent("first:collection", "third:collection", 0.5), "First and third should not be adjacent"),
+        assertAll(() -> assertTrue(this.reasoner.collectionsAreAdjacent(FIRST_COLLECTION, "second:collection", 0.5), "First and second should be adjacent"),
+                () -> assertTrue(this.reasoner.collectionsAreAdjacent(FIRST_COLLECTION, "third:collection", 0.5), "First and third should not be adjacent"),
                 () -> assertFalse(this.reasoner.collectionsAreAdjacent("second:collection", "third:collection", 0.5), "Second and third should not be adjacent"));
     }
 
     @Test
     public void testCollectionRemoval() {
+        //        Add all to collections
+        this.reasoner.addObjectToCollection(FIRST_COLLECTION, first, CollectionRelationType.SEMANTIC, 1.0);
+        this.reasoner.addObjectToCollection(FIRST_COLLECTION, second, CollectionRelationType.SEMANTIC, 1.0);
+        this.reasoner.addObjectToCollection(THIRD_COLLECTION, third, CollectionRelationType.SEMANTIC, 1.0);
 
+//        Verify third collection
+        this.reasoner.removeObjectFromCollection(THIRD_COLLECTION, third, true);
+//        Verify that it's gone
+        final ITrestleOntology ontology = this.reasoner.getUnderlyingOntology();
+        final Optional<List<TestClasses.JTSGeometryTest>> thirdCollection = this.reasoner.getCollectionMembers(TestClasses.JTSGeometryTest.class, THIRD_COLLECTION, 0.1, null, null);
+        final Optional<List<OWLObjectPropertyAssertionAxiom>> relationRelations = ontology.getIndividualObjectProperty(IRI.create(OVERRIDE_PREFIX, "100113"), hasRelationIRI);
+//        Make sure the Object doesn't have the relationship
+        assertAll(() -> assertTrue(thirdCollection.isPresent(), "Should have results"),
+                () -> assertTrue(thirdCollection.get().isEmpty(), "Should not any members"),
+                () -> assertFalse(relationRelations.isPresent(), "Object should not have relationship relations"));
+
+//        Verify first collection
+        this.reasoner.removeObjectFromCollection(FIRST_COLLECTION, second, true);
+        Optional<List<TestClasses.JTSGeometryTest>> firstCollection = this.reasoner.getCollectionMembers(TestClasses.JTSGeometryTest.class, FIRST_COLLECTION, 0.1, null, null);
+        assertTrue(firstCollection.isPresent(), "First collection should be there.");
+
+//        First object should have relations
+        final Optional<List<OWLObjectPropertyAssertionAxiom>> firstRelations = ontology.getIndividualObjectProperty(df.getOWLNamedIndividual(IRI.create(OVERRIDE_PREFIX, "100111")), hasRelationIRI);
+        assertTrue(firstRelations.isPresent(), "First object should still have relation");
+        final Optional<List<OWLObjectPropertyAssertionAxiom>> secondRelations = ontology.getIndividualObjectProperty(df.getOWLNamedIndividual(IRI.create(OVERRIDE_PREFIX, "100112")), hasRelationIRI);
+        assertFalse(secondRelations.isPresent(), "Second object should not have relations");
+
+//        Try to remove, but leave collection
+        this.reasoner.removeObjectFromCollection(FIRST_COLLECTION, first, false);
+        final Optional<List<OWLObjectPropertyAssertionAxiom>> firstEmptyRelations = ontology.getIndividualObjectProperty(df.getOWLNamedIndividual(IRI.create(OVERRIDE_PREFIX, "100111")), hasRelationIRI);
+        assertFalse(firstEmptyRelations.isPresent(), "First object should not have relations");
+        firstCollection = this.reasoner.getCollectionMembers(TestClasses.JTSGeometryTest.class, FIRST_COLLECTION, 0.1, null, null);
+        assertTrue(firstCollection.isPresent(), "First collection should still exist");
+        assertTrue(firstCollection.get().isEmpty(), "Should have nothing in it");
     }
 
     @Override

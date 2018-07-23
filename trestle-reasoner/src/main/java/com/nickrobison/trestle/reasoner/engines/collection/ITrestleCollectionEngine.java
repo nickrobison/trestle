@@ -81,6 +81,15 @@ public interface ITrestleCollectionEngine {
     void addObjectToCollection(String collectionIRI, Object inputObject, CollectionRelationType relationType, double strength);
 
     /**
+     * Remove a given Trestle_Object from the Trestle_Collection
+     * Optionally, if removing the object causes the Collection to be empty, remove the collection.
+     *  @param collectionIRI - {@link String} Collection ID
+     * @param inputObject - {@link Object} Java object to add to collection
+     * @param removeEmptyCollection - {@code true} Remove Collection if it's empty. {@code false} Leave empty collection
+     */
+    void removeObjectFromCollection(String collectionIRI, Object inputObject, boolean removeEmptyCollection);
+
+    /**
      * Determines whether or not two Collections are spatially adjacent to each other.
      * Requires that Spatial and Temporal relationships be generated for the underlying Trestle_Objects.
      * Specifically, looks for {@link com.nickrobison.trestle.types.relations.ObjectRelation#SPATIAL_MEETS} on any of the collection members.

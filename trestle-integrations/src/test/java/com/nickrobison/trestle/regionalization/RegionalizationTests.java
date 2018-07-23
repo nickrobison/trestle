@@ -79,6 +79,39 @@ public class RegionalizationTests {
             computeEdges(entry.getValue().toString(), computedEdges);
         }
 
+        //        Put it all into a queue and sort by value
+        Queue<Edge> sortedEdges = new PriorityQueue<>(Comparator.comparing(edge -> edge.value));
+        List<Edge> clusterEdges = new ArrayList<>();
+        sortedEdges.addAll(computedEdges);
+
+        while (!sortedEdges.isEmpty()) {
+            final Edge shortest = sortedEdges.poll();
+            if (shortest == null) {
+                continue;
+            }
+
+//            Are the two objects in the same cluster?
+            final Map<String, List<String>> relatedCollections = reasoner.getRelatedCollections(shortest.Aid, null, 0.01)
+                    .orElseThrow(() -> new RuntimeException("Should have something"));
+
+//            If the map is empty, then they're in two separate clusters.
+            if (separateClusters(relatedCollections, shortest.Aid, shortest.Bid)) {
+
+            }
+
+//
+//            reasoner.co
+        }
+
+
+    }
+
+    private boolean separateClusters(Map<String, List<String>> collections, String A, String B) {
+        if (collections.isEmpty()) {
+            return true;
+        }
+
+        return false;
     }
 
     public void computeEdges(String county, Set<Edge> computedEdges) throws TrestleClassException, MissingOntologyEntity {
@@ -92,21 +125,25 @@ public class RegionalizationTests {
 
         for (final TigerCountyObject adjacentObject : spatiallyAdjacentObjects) {
             final int length = FastMath.abs(self_pop - adjacentObject.getPop_estimate());
-            computedEdges.add(new Edge(self.getCounty(), adjacentObject.getCounty(), length));
+            computedEdges.add(new Edge(self.getCounty(), self.getGeoid(), adjacentObject.getCounty(), adjacentObject.getGeoid(), length));
         }
     }
 
     public static class Edge {
 
         private final String A;
+        private final String Aid;
         private final String B;
+        private final String Bid;
 
         private final int id;
         private final int value;
 
-        public Edge(String A, String B, int value) {
+        public Edge(String A, String Aid, String B, String Bid, int value) {
             this.A = A;
             this.B = B;
+            this.Aid = Aid;
+            this.Bid = Bid;
             this.id = A.hashCode() ^ B.hashCode();
             this.value = value;
         }

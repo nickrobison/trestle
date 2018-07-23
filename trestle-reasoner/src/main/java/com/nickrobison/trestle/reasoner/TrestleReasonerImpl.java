@@ -603,6 +603,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
+    public void removeObjectFromCollection(String collectionIRI, Object inputObject, boolean removeEmptyCollection) {
+        this.collectionEngine.removeObjectFromCollection(collectionIRI, inputObject, removeEmptyCollection);
+    }
+
+    @Override
     public boolean collectionsAreAdjacent(String subjectCollectionID, String objectCollectionID, double strength) {
         return this.collectionEngine.collectionsAreAdjacent(subjectCollectionID, objectCollectionID, strength);
     }
