@@ -249,10 +249,16 @@ public abstract class SesameOntology extends TransactingOntology {
     }
 
     @Override
-    public void removeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property) {
-        final org.eclipse.rdf4j.model.IRI subjectIRI = vf.createIRI(getFullIRIString(property.getSubject().asOWLNamedIndividual()));
-        final org.eclipse.rdf4j.model.IRI objectIRI = vf.createIRI(getFullIRIString(property.getObject().asOWLNamedIndividual()));
-        final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(property.getProperty().asOWLObjectProperty()));
+    public void removeIndividualObjectProperty(OWLNamedIndividual subject, OWLObjectProperty property, @Nullable OWLNamedIndividual object) {
+        final org.eclipse.rdf4j.model.IRI subjectIRI = vf.createIRI(getFullIRIString(subject));
+        final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(property.getNamedProperty()));
+
+        final org.eclipse.rdf4j.model.@Nullable IRI objectIRI;
+        if (object == null) {
+            objectIRI = null;
+        } else {
+            objectIRI = vf.createIRI(getFullIRIString(object));
+        }
         this.openTransaction(true);
         try {
             getThreadConnection().remove(subjectIRI, propertyIRI, objectIRI);

@@ -320,7 +320,7 @@ public abstract class JenaOntology extends TransactingOntology {
     }
 
     @Override
-    public void removeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property) {
+    public void removeIndividualObjectProperty(OWLNamedIndividual subject, OWLObjectProperty property, @Nullable OWLNamedIndividual object) {
         logger.error("Object property removal not implemented yet!");
     }
 

@@ -29,13 +29,15 @@ public interface ITrestleOntology {
 
     /**
      * Checks whether or not the ontology is consistent
+     *
      * @return - Is the ontology consistent?
      */
     boolean isConsistent();
 
     /**
      * Returns an optional list of asserted property values from a given individual
-     * @param individual - OWLNamedIndividual to query
+     *
+     * @param individual  - OWLNamedIndividual to query
      * @param propertyIRI - IRI of property to retrieve
      * @return - Optional list of all asserted property values
      */
@@ -43,7 +45,8 @@ public interface ITrestleOntology {
 
     /**
      * Returns an optional list of asserted property values from a given individual
-     * @param individualIRI - IRI of individual to query
+     *
+     * @param individualIRI     - IRI of individual to query
      * @param objectPropertyIRI - IRI of property to retrieve
      * @return - Optional list of all asserted property values
      */
@@ -68,27 +71,31 @@ public interface ITrestleOntology {
 
     /**
      * Store an OWLNamedIndividual in the ontology associated with a given OWLClass.
+     *
      * @param individual - OWLNamedIndividual to store in ontology
-     * @param owlClass - OWLClass to associate individual with
+     * @param owlClass   - OWLClass to associate individual with
      */
     void createIndividual(OWLNamedIndividual individual, OWLClass owlClass);
 
     /**
      * Store an OWLNamedIndividual in the ontology from a given pair of IRIs
+     *
      * @param individualIRI - IRI of OWLIndividual
-     * @param classIRI - IRI of OWLClass
+     * @param classIRI      - IRI of OWLClass
      */
     void createIndividual(IRI individualIRI, IRI classIRI);
 
     /**
      * Create a subclass association from express sub/super pair
-     * @param subClass - OWLClass to associated with super-class
+     *
+     * @param subClass   - OWLClass to associated with super-class
      * @param superClass - OWLClass to assocate sub-class to
      */
     void associateOWLClass(OWLClass subClass, OWLClass superClass);
 
     /**
      * Create a subclass association directly from OWL Axiom
+     *
      * @param subClassOfAxiom - OWLSubClassOfAxiom to create in ontology
      */
     void associateOWLClass(OWLSubClassOfAxiom subClassOfAxiom);
@@ -104,10 +111,11 @@ public interface ITrestleOntology {
 
     /**
      * Write an individual data property axiom to the ontology from individual IRIs
-     * @param individualIRI - IRI of OWLNamedIndividual to associate property
-     * @param dataPropertyIRI - IRI of OWLDataProperty to associate with individual
+     *
+     * @param individualIRI    - IRI of OWLNamedIndividual to associate property
+     * @param dataPropertyIRI  - IRI of OWLDataProperty to associate with individual
      * @param owlLiteralString - String of raw data property value
-     * @param owlLiteralIRI - IRI of OWLDatatype of raw property value
+     * @param owlLiteralIRI    - IRI of OWLDatatype of raw property value
      * @throws MissingOntologyEntity - Throws if individual doesn't exist
      */
     void writeIndividualDataProperty(IRI individualIRI, IRI dataPropertyIRI, String owlLiteralString, IRI owlLiteralIRI) throws MissingOntologyEntity;
@@ -132,26 +140,28 @@ public interface ITrestleOntology {
     void writeIndividualDataProperty(OWLDataPropertyAssertionAxiom dataProperty) throws MissingOntologyEntity;
 
     /**
-     *
      * Create object association between two OWLNamedIndividuals using base IRIs
-     * @param owlSubject - OWLNamedIndividual subject
+     *
+     * @param owlSubject  - OWLNamedIndividual subject
      * @param propertyIRI - IRI of OWLObjectProperty
-     * @param owlObject - OWLNamedIndividual object
+     * @param owlObject   - OWLNamedIndividual object
      * @throws MissingOntologyEntity - Throws if individual doesn't exist
      */
     void writeIndividualObjectProperty(OWLNamedIndividual owlSubject, IRI propertyIRI, OWLNamedIndividual owlObject) throws MissingOntologyEntity;
 
     /**
      * Create object association between two OWLNamedIndividuals using base IRIs
-     * @param owlSubject - IRI of OWLNamedIndividual subject
+     *
+     * @param owlSubject  - IRI of OWLNamedIndividual subject
      * @param owlProperty - IRI of OWLObjectProperty
-     * @param owlObject - IRI of OWLNamedIndividual object
+     * @param owlObject   - IRI of OWLNamedIndividual object
      * @throws MissingOntologyEntity - Throws if individual doesn't exist
      */
     void writeIndividualObjectProperty(IRI owlSubject, IRI owlProperty, IRI owlObject) throws MissingOntologyEntity;
 
     /**
      * Create object association between two OWLNamedIndividuals
+     *
      * @param property - OWLObjectPropertyAssertionAxiom defining relationship between the two objects
      * @throws MissingOntologyEntity - Throws if individual doesn't exist
      */
@@ -159,16 +169,21 @@ public interface ITrestleOntology {
 
     /**
      * Removes a given OWL individual and all related assertions
+     *
      * @param individual - OWLNamedIndividual to remove
      */
     void removeIndividual(OWLNamedIndividual individual);
 
     /**
-     * Remove the given {@link OWLObjectPropertyAssertionAxiom} for the specified individual
+     * Remove the given {@link OWLObjectProperty} for the specified individual
+     * If a {@link OWLNamedIndividual} is provided as the object, only that assertion is remove.
+     * Otherwise, all matching assertions are removed.
      *
-     * @param property - {@link OWLObjectPropertyAssertionAxiom} to remove
+     * @param subject - {@link OWLNamedIndividual} subject
+     * @param property - {@link OWLObjectProperty} property
+     * @param object - {@link} optional object
      */
-    void removeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property);
+    void removeIndividualObjectProperty(OWLNamedIndividual subject, OWLObjectProperty property, @Nullable OWLNamedIndividual object);
 
     /**
      * Remove the given {@link OWLDataPropertyAssertionAxiom} for the specified individual
@@ -182,6 +197,7 @@ public interface ITrestleOntology {
 
     /**
      * Check whether the ontology contains an individual with the given IRI
+     *
      * @param individualIRI - IRI of individual to check
      * @return - boolean, individual exists?
      */
@@ -197,7 +213,8 @@ public interface ITrestleOntology {
 
     /**
      * Write underlying ontology to disk
-     * @param path - IRI of path to write ontology
+     *
+     * @param path     - IRI of path to write ontology
      * @param validate - Validate ontology before writing?
      * @throws OWLOntologyStorageException - Throws if it can't write the ontology
      */
@@ -205,6 +222,7 @@ public interface ITrestleOntology {
 
     /**
      * Close all the open resource handles. Disposes of the reasoner and disconnects from any databases.
+     *
      * @param drop - Drop the ontology on close?
      */
     void close(boolean drop);
@@ -225,12 +243,14 @@ public interface ITrestleOntology {
 
     /**
      * Open a transaction to facilitate rapid loading of ontology objects
+     *
      * @param write - Open a writable transaction
      */
     void openTransaction(boolean write);
 
     /**
      * Close open transaction
+     *
      * @param write - Is this a write transaction?
      */
     void commitTransaction(boolean write);
@@ -244,21 +264,23 @@ public interface ITrestleOntology {
      * Get all the instances of an OWL Class
      *
      * @param owlClass - OWLClass to retrieve members of
-     * @param inferred   - Return inferred class members?
+     * @param inferred - Return inferred class members?
      * @return - Set of OWLNamedIndividual(s) either directly related or inferred members of given class
      */
     Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean inferred);
 
     /**
      * Return data properties for a given individual
+     *
      * @param individualIRI - IRI of individual to retrieve properties of
-     * @param properties - List of OWLDataProperties to retrieve
+     * @param properties    - List of OWLDataProperties to retrieve
      * @return - Set of OWLDataPropertyAssertionAxioms from given individual
      */
     Set<OWLDataPropertyAssertionAxiom> getDataPropertiesForIndividual(IRI individualIRI, List<OWLDataProperty> properties);
 
     /**
      * Return all the data properties and values for a given individual
+     *
      * @param individual - OWLNamedIndividual to get properties for
      * @param properties - List of OWLDataProperties to retrieve for individual
      * @return - Set of OWLDataPropertyAssertionAxioms from individual
@@ -267,6 +289,7 @@ public interface ITrestleOntology {
 
     /**
      * Get all asserted properties for a given individual
+     *
      * @param individualIRI - IRI of individual to get properties for
      * @return Set of OWLDataPropertyAssertionAxioms
      */
@@ -274,6 +297,7 @@ public interface ITrestleOntology {
 
     /**
      * Get all asserted properties for a given individual
+     *
      * @param individual - OWLNamedIndividual to get properties for
      * @return - Set of OWLDataPropertyAssertionAxioms
      */
@@ -281,6 +305,7 @@ public interface ITrestleOntology {
 
     /**
      * Get all object properties for a given individual IRI
+     *
      * @param individual - IRI of individual to retrieve properties for
      * @return - Set of OWLObjectPropertyAssertionAxioms for a given individual IRI
      */
@@ -288,6 +313,7 @@ public interface ITrestleOntology {
 
     /**
      * Get all object properties for a given individual
+     *
      * @param individual - OWLNamedIndividual to retrieve properties for
      * @return - Set of OWLObjectPropertyAssertionAxioms for a given individual
      */
@@ -303,7 +329,8 @@ public interface ITrestleOntology {
 
     /**
      * Return a set of values for a given data property
-     * @param individual - OWLNamedIndividual to retrieve properties for
+     *
+     * @param individual  - OWLNamedIndividual to retrieve properties for
      * @param propertyIRI - IRI of dataproperty to retrieve
      * @return - Optional Set of OWLLiteral values for given property
      */
@@ -311,16 +338,18 @@ public interface ITrestleOntology {
 
     /**
      * Return a set of values for a given data property
+     *
      * @param individualIRI - IRI of individual to retrieve properties for
-     * @param property - OWLDataProperty to retrieve values from
+     * @param property      - OWLDataProperty to retrieve values from
      * @return - Optional Set of OWLLiteral values for given property of specific individual
      */
     Optional<Set<OWLLiteral>> getIndividualDataProperty(IRI individualIRI, OWLDataProperty property);
 
     /**
      * Return the set of data property values
+     *
      * @param individual - OWLNamedIndividual to get properties from
-     * @param property - OWLDataProperty to access
+     * @param property   - OWLDataProperty to access
      * @return - Optional set of OWLLiteral if a property exists on that member
      */
     Optional<Set<OWLLiteral>> getIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property);
@@ -328,16 +357,18 @@ public interface ITrestleOntology {
     /**
      * Get all the related facts for an individual, valid at a specific valid/database point
      * If no temporals are specified, we retrieve the currently valid facts
-     * @param individual - {@link OWLNamedIndividual} to get facts for
-     * @param validTemporal - Nullable {@link OffsetDateTime} representing valid-at temporal
+     *
+     * @param individual       - {@link OWLNamedIndividual} to get facts for
+     * @param validTemporal    - Nullable {@link OffsetDateTime} representing valid-at temporal
      * @param databaseTemporal - Nullable {@link OffsetDateTime} representing database-at temporal
-     * @param filterTemporals - {@code true} remove temporals from the result set
+     * @param filterTemporals  - {@code true} remove temporals from the result set
      * @return - {@link Set} of {@link OWLDataPropertyAssertionAxiom} which represent all asserted Facts on the individual
      */
     Set<OWLDataPropertyAssertionAxiom> getFactsForIndividual(OWLNamedIndividual individual, OffsetDateTime validTemporal, OffsetDateTime databaseTemporal, boolean filterTemporals);
 
     /**
      * Get data properties for temporal from given individuals
+     *
      * @param individual - Individual to retrieve temporal properties from
      * @return - Set of OWLDataPropertyAssertionAxioms representing temporal properties
      */
@@ -367,6 +398,7 @@ public interface ITrestleOntology {
 
     /**
      * Get the full IRI of the OWL Object expanded from the DefaultPrefixManager
+     *
      * @param owlNamedObject - OWL Object to extract IRI from
      * @return - IRI of OWL Object
      */
@@ -374,6 +406,7 @@ public interface ITrestleOntology {
 
     /**
      * Get the full IRI expanded from the DefaultPrefixManager as a String
+     *
      * @param owlNamedObject - OWL Object to extract IRI from
      * @return - String of OWL Object IRI
      */
@@ -381,6 +414,7 @@ public interface ITrestleOntology {
 
     /**
      * Excecute a raw SPARQL query against the ontology
+     *
      * @param queryString - String representing SPARQL query
      * @return - {@link TrestleResultSet} for given query
      */
@@ -388,6 +422,7 @@ public interface ITrestleOntology {
 
     /**
      * Execute a writing SPARQL query, without returning a {@link TrestleResultSet}
+     *
      * @param queryString - SPARQL Query String
      */
     void executeUpdateSPARQL(String queryString);
@@ -401,13 +436,14 @@ public interface ITrestleOntology {
      * Takes an existing transaction object and inherits from it
      *
      * @param transactionObject - Transaction Object to take ownership of thread transaction
-     * @param write - Writable transaction?
+     * @param write             - Writable transaction?
      * @return - Transaction Object passed in as argument
      */
     TrestleTransaction createandOpenNewTransaction(@Nullable TrestleTransaction transactionObject, boolean write);
 
     /**
      * Takes an existing transaction object and inherits from it
+     *
      * @param transactionObject - Existing TrestleTransactionObject
      * @return - Transaction Object passed in as argument
      */
@@ -425,6 +461,7 @@ public interface ITrestleOntology {
     /**
      * Return a TrestleTransaction object and attempt to abort the current Transaction
      * If the TrestleTransaction object does not own the current transaction, we continue without aborting
+     *
      * @param transaction - Transaction object to try to abort current transaction with
      */
     void returnAndAbortTransaction(TrestleTransaction transaction);
@@ -452,36 +489,42 @@ public interface ITrestleOntology {
 
     /**
      * Unlock the transaction and commit it
+     *
      * @param write - Is this a write transaction?
      */
     void unlockAndCommit(boolean write);
 
     /**
      * Get the current number of opened transactions, for the lifetime of the application
+     *
      * @return - long of opened transactions
      */
     long getOpenedTransactionCount();
 
     /**
      * Get the current number of committed transactions, for the lifetime of the application
+     *
      * @return - long of committed transactions
      */
     long getCommittedTransactionCount();
 
     /**
      * Get the current number of aborted transactions, for the lifetime of the application
+     *
      * @return - long of aborted transactions
      */
     long getAbortedTransactionCount();
 
     /**
      * Get the number of currently open read/write transactions
+     *
      * @return - {@link AtomicInteger} int of open read/write transactions
      */
     int getCurrentlyOpenTransactions();
 
     /**
      * Get the number of currently open write transactions
+     *
      * @return - {@link AtomicInteger} int of open write transactions
      */
     @Gauge(name = "trestle-open-write-transactions", absolute = true)
@@ -489,6 +532,7 @@ public interface ITrestleOntology {
 
     /**
      * Get the number of currently open read transactions
+     *
      * @return - {@link AtomicInteger} int of open read transactions
      */
     @Gauge(name = "trestle-open-read-transactions", absolute = true)

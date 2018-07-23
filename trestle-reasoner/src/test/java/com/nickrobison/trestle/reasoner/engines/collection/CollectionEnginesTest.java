@@ -13,13 +13,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static com.nickrobison.trestle.common.StaticIRI.hasRelationIRI;
+import static com.nickrobison.trestle.common.StaticIRI.trestleRelationIRI;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -58,12 +61,12 @@ public class CollectionEnginesTest extends AbstractReasonerTest {
 
 //        Check for adjacency
         assertAll(() -> assertTrue(this.reasoner.collectionsAreAdjacent(FIRST_COLLECTION, "second:collection", 0.5), "First and second should be adjacent"),
-                () -> assertTrue(this.reasoner.collectionsAreAdjacent(FIRST_COLLECTION, "third:collection", 0.5), "First and third should not be adjacent"),
+                () -> assertTrue(this.reasoner.collectionsAreAdjacent(FIRST_COLLECTION, THIRD_COLLECTION, 0.5), "First and third should be adjacent"),
                 () -> assertFalse(this.reasoner.collectionsAreAdjacent("second:collection", "third:collection", 0.5), "Second and third should not be adjacent"));
     }
 
     @Test
-    public void testCollectionRemoval() {
+    public void testObjectRemoval() {
         //        Add all to collections
         this.reasoner.addObjectToCollection(FIRST_COLLECTION, first, CollectionRelationType.SEMANTIC, 1.0);
         this.reasoner.addObjectToCollection(FIRST_COLLECTION, second, CollectionRelationType.SEMANTIC, 1.0);
@@ -98,6 +101,21 @@ public class CollectionEnginesTest extends AbstractReasonerTest {
         firstCollection = this.reasoner.getCollectionMembers(TestClasses.JTSGeometryTest.class, FIRST_COLLECTION, 0.1, null, null);
         assertTrue(firstCollection.isPresent(), "First collection should still exist");
         assertTrue(firstCollection.get().isEmpty(), "Should have nothing in it");
+    }
+
+    @Test
+    public void testCollectionRemoval() {
+        //        Add all to collections
+        this.reasoner.addObjectToCollection(FIRST_COLLECTION, first, CollectionRelationType.SEMANTIC, 1.0);
+        this.reasoner.addObjectToCollection(FIRST_COLLECTION, second, CollectionRelationType.SEMANTIC, 1.0);
+        this.reasoner.addObjectToCollection(FIRST_COLLECTION, third, CollectionRelationType.SEMANTIC, 1.0);
+
+//        Remove the collection
+        this.reasoner.removeCollection(FIRST_COLLECTION);
+
+//        Test that there are no relations left
+        final Set<OWLNamedIndividual> relations = this.reasoner.getUnderlyingOntology().getInstances(df.getOWLClass(trestleRelationIRI), true);
+        assertEquals(1, relations.size(), "Should only have the demo relation");
     }
 
     @Override

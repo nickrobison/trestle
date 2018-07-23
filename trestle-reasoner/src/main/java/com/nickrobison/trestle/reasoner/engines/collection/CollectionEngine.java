@@ -241,7 +241,7 @@ public class CollectionEngine implements ITrestleCollectionEngine {
         final IRI collection = parseStringToIRI(this.reasonerPrefix, collectionIRI);
         final OWLNamedIndividual collectionIndividual = df.getOWLNamedIndividual(collection);
         final OWLNamedIndividual individual = this.classParser.getIndividual(inputObject);
-        final IRI relationIRI = IRI.create(String.format("relation:%s:%s",
+        final IRI relationIRI = IRI.create(this.reasonerPrefix, String.format("relation:%s:%s",
                 extractTrestleIndividualName(collection),
                 extractTrestleIndividualName(individual.getIRI())));
         final OWLNamedIndividual relationIndividual = df.getOWLNamedIndividual(relationIRI);
@@ -303,42 +303,44 @@ public class CollectionEngine implements ITrestleCollectionEngine {
     }
 
     @Override
+    public void removeCollection(String collectionIRI) {
+        final IRI collection = parseStringToIRI(this.reasonerPrefix, collectionIRI);
+        final OWLNamedIndividual collectionIndividual = df.getOWLNamedIndividual(collection);
+
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
+        try {
+//            Get all the relations
+            final Optional<List<OWLObjectPropertyAssertionAxiom>> relationProperties = this.ontology.getIndividualObjectProperty(collectionIndividual, relatedByIRI);
+            //                Remove each of the relations
+            relationProperties.ifPresent(owlObjectPropertyAssertionAxioms -> owlObjectPropertyAssertionAxioms
+                    .forEach(relation -> {
+                        this.removeRelation(relation.getObject().asOWLNamedIndividual(),
+                                relation.getSubject().asOWLNamedIndividual(), trestleTransaction);
+                    }));
+
+//            Remove the collection
+            this.ontology.removeIndividual(collectionIndividual);
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+        } catch (Exception e) {
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+            throw e;
+        }
+    }
+
+    @Override
     public void removeObjectFromCollection(String collectionIRI, Object inputObject, boolean removeEmptyCollection) {
 //        Remove the relation
         final IRI collection = parseStringToIRI(this.reasonerPrefix, collectionIRI);
         final OWLNamedIndividual collectionIndividual = df.getOWLNamedIndividual(collection);
         final OWLNamedIndividual individual = this.classParser.getIndividual(inputObject);
-        final IRI relationIRI = IRI.create(String.format("relation:%s:%s",
+        final IRI relationIRI = IRI.create(this.reasonerPrefix, String.format("relation:%s:%s",
                 extractTrestleIndividualName(collection),
                 extractTrestleIndividualName(individual.getIRI())));
         final OWLNamedIndividual relationIndividual = df.getOWLNamedIndividual(relationIRI);
-//        Build the relation from relation -> collection
-        final OWLObjectPropertyAssertionAxiom relatedToAssertion = df.getOWLObjectPropertyAssertionAxiom(
-                df.getOWLObjectProperty(relatedToIRI),
-                relationIndividual,
-                collectionIndividual);
-//        Build the relation from relation -> object
-        final OWLObjectPropertyAssertionAxiom relationOfAssertion = df.getOWLObjectPropertyAssertionAxiom(
-                df.getOWLObjectProperty(relationOfIRI),
-                relationIndividual,
-                individual);
 
         logger.debug("Removing {} from {}", individual, collectionIndividual);
 
-        final TrestleTransaction removeTransaction = this.ontology.createandOpenNewTransaction(true);
-
-        try {
-//            Remove the from and two relations
-            this.ontology.removeIndividualObjectProperty(relatedToAssertion);
-            this.ontology.removeIndividualObjectProperty(relationOfAssertion);
-//            Remove the strength
-            this.ontology.removeIndividualDataProperty(relationIndividual, df.getOWLDataProperty(relationStrengthIRI), null);
-//            Remove the individual
-            this.ontology.removeIndividual(relationIndividual);
-            this.ontology.returnAndCommitTransaction(removeTransaction);
-        } catch (Exception e) {
-            this.ontology.returnAndAbortTransaction(removeTransaction);
-        }
+        this.removeRelation(relationIndividual, collectionIndividual, null);
 
         if (removeEmptyCollection) {
 
@@ -355,6 +357,7 @@ public class CollectionEngine implements ITrestleCollectionEngine {
                 this.ontology.returnAndCommitTransaction(emptyTransaction);
             } catch (Exception e) {
                 this.ontology.returnAndAbortTransaction(emptyTransaction);
+                throw e;
             }
         }
     }
@@ -376,6 +379,31 @@ public class CollectionEngine implements ITrestleCollectionEngine {
                     .anyMatch(collection -> collection.equals(matchingIndividual));
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
+        }
+    }
+
+    /**
+     * Remove the Trestle_Relation associated with the given Trestle_Collection
+     *
+     * @param relation           - {@link OWLNamedIndividual} Trestle_Relation
+     * @param collection         - {@link OWLNamedIndividual} Trestle_Collection
+     * @param trestleTransaction - {@link TrestleTransaction} optional transaction to use
+     */
+    private void removeRelation(OWLNamedIndividual relation, OWLNamedIndividual collection, @Nullable TrestleTransaction trestleTransaction) {
+
+        final TrestleTransaction removeTransaction = this.ontology.createandOpenNewTransaction(true);
+
+        try {
+//            Remove the from and two relations
+            this.ontology.removeIndividualObjectProperty(relation, df.getOWLObjectProperty(relatedToIRI), collection);
+            this.ontology.removeIndividualObjectProperty(relation, df.getOWLObjectProperty(relationOfIRI), null);
+//            Remove the strength
+            this.ontology.removeIndividualDataProperty(relation, df.getOWLDataProperty(relationStrengthIRI), null);
+//            Remove the individual
+            this.ontology.removeIndividual(relation);
+            this.ontology.returnAndCommitTransaction(removeTransaction);
+        } catch (Exception e) {
+            this.ontology.returnAndAbortTransaction(removeTransaction);
         }
     }
 }

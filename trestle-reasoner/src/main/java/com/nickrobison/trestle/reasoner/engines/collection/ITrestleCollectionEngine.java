@@ -81,6 +81,13 @@ public interface ITrestleCollectionEngine {
     void addObjectToCollection(String collectionIRI, Object inputObject, CollectionRelationType relationType, double strength);
 
     /**
+     * Remove the specified Trestle_Collection
+     *
+     * @param collectionIRI - {@link String} Collection ID
+     */
+    void removeCollection(String collectionIRI);
+
+    /**
      * Remove a given Trestle_Object from the Trestle_Collection
      * Optionally, if removing the object causes the Collection to be empty, remove the collection.
      *  @param collectionIRI - {@link String} Collection ID
