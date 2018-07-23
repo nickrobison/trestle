@@ -763,15 +763,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <T> void calculateSpatialAndTemporalRelationships(Class<T> clazz, String individual) throws TrestleClassException, MissingOntologyEntity {
+    public <T> void calculateSpatialAndTemporalRelationships(Class<T> clazz, String individual, @Nullable Temporal validAt) throws TrestleClassException, MissingOntologyEntity {
         final IRI individualIRI = parseStringToIRI(this.REASONER_PREFIX, individual);
-//        this.trestleParser.classParser.getIndividual(object);
-//        final OWLLiteral projectedWKT = this.trestleParser.classBuilder.getProjectedWKT(object.getClass(), object, 4326);
 
 //        Read the object first
         final T trestleObject = this.objectReader.readTrestleObject(clazz, individual);
 //        Intersect it
-        final Optional<List<T>> intersectedObjects = this.spatialEngine.spatialIntersectObject(trestleObject, 1, SI.METER);
+        final Optional<List<T>> intersectedObjects = this.spatialEngine.spatialIntersectObject(trestleObject, 1, validAt, null);
 //        Now, compute the relationships
         if (intersectedObjects.isPresent()) {
             final List<CompletableFuture<@Nullable TrestlePair<T, TrestlePair<SpatialComparisonReport, TemporalComparisonReport>>>> comparisonFutures = intersectedObjects.get()

@@ -209,15 +209,16 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
 
     /**
      * Compute the spatial and temporal relationships between the given individual and any other individuals which intersect the individual.
-     * The intersection boundary is currently set to 50 meters.
+     * The intersection boundary is currently set to 50 {@link javax.measure.unit.SI#METER}.
      *
+     * @param <T>        - Java class to return
      * @param clazz      - Java {@link Class} of type {@link T} to query
      * @param individual - {@link String} ID of individual
-     * @param <T>        - Java class to return
+     * @param validAt - {@link Temporal} optional temporal to specify when to compute the spatial relationships
      * @throws MissingOntologyEntity - throws if the given individual isn't in the Database
      * @throws TrestleClassException - throws if the class isn't registered with the Reasoner
      */
-    <T> void calculateSpatialAndTemporalRelationships(Class<T> clazz, String individual) throws TrestleClassException, MissingOntologyEntity;
+    <T> void calculateSpatialAndTemporalRelationships(Class<T> clazz, String individual, @Nullable Temporal validAt) throws TrestleClassException, MissingOntologyEntity;
 
     /**
      * Search the ontology for individuals with IRIs that match the given search string

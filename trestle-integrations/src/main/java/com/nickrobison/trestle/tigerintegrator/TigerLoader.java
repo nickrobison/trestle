@@ -267,10 +267,13 @@ public class TigerLoader {
                 .map(TigerCountyObject::getGeoid)
                 .collect(Collectors.toSet());
 
+//        Set the computation time
+        final LocalDate validAt = LocalDate.of(2013, 8, 1);
+
         for (String id : objectIDs) {
             final Instant computeStart = Instant.now();
             logger.info("Computing relationships for {}", id);
-            reasoner.calculateSpatialAndTemporalRelationships(TigerCountyObject.class, id);
+            reasoner.calculateSpatialAndTemporalRelationships(TigerCountyObject.class, id, validAt);
             logger.info("Writing relations for object {} took {} ms", id, Duration.between(computeStart, Instant.now()).toMillis());
         }
     }
