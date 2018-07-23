@@ -90,16 +90,16 @@ public class TrestleParserTest {
 
 //        Test the data property parser
 //        Code
-        final IRI code_iri = IRI.create(TRESTLE_PREFIX, "adm0_code");
-        final OWLDataProperty adm0_code = df.getOWLDataProperty(code_iri);
-        final OWLLiteral adm0_code_literal = df.getOWLLiteral("1234", OWL2Datatype.XSD_INTEGER);
+        final IRI id_iri = IRI.create(TRESTLE_PREFIX, "id");
+        final OWLDataProperty id = df.getOWLDataProperty(id_iri);
+        final OWLLiteral id_literal = df.getOWLLiteral("1234", OWL2Datatype.XSD_INTEGER);
         Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = cp.getFacts(gaulTestClass);
         assertTrue(owlDataPropertyAssertionAxioms.isPresent(), "Should have properties");
         assertEquals(3, owlDataPropertyAssertionAxioms.get().size(), "Wrong number of properties");
         final OWLDataPropertyAssertionAxiom parsed_code = owlDataPropertyAssertionAxioms.get().get(0);
         assertEquals(gaul_test, parsed_code.getSubject(), "Wrong named individual");
-        assertEquals(adm0_code, parsed_code.getProperty(), "Data property IRIs don't match");
-        assertEquals(adm0_code_literal, parsed_code.getObject(), "Data property values are wrong");
+        assertEquals(id, parsed_code.getProperty(), "Data property IRIs don't match");
+        assertEquals(id_literal, parsed_code.getObject(), "Data property values are wrong");
 
 //        Name
         final OWLDataProperty adm0_name = df.getOWLDataProperty(IRI.create(TRESTLE_PREFIX, "adm0_name"));
@@ -110,7 +110,7 @@ public class TrestleParserTest {
         assertEquals(adm0_name_literal, parsed_name.getObject(), "Data property values are wrong");
 
 //        Check for Fact name
-        final Optional<Class<?>> factDatatype = cp.getFactDatatype(TestClasses.GAULTestClass.class, code_iri.toString());
+        final Optional<Class<?>> factDatatype = cp.getFactDatatype(TestClasses.GAULTestClass.class, id_iri.toString());
         assertAll(() -> assertTrue(factDatatype.isPresent(), "Should have datatype"),
                 () -> assertEquals(int.class, factDatatype.get(), "Should equal primitive int"));
     }
