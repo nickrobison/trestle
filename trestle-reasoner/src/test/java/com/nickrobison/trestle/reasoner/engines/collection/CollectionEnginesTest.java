@@ -55,6 +55,10 @@ public class CollectionEnginesTest extends AbstractReasonerTest {
         this.reasoner.addObjectToCollection(FIRST_COLLECTION, first, CollectionRelationType.SEMANTIC, 1.0);
         this.reasoner.addObjectToCollection(SECOND_COLLECTION, second, CollectionRelationType.SEMANTIC, 1.0);
         this.reasoner.addObjectToCollection(THIRD_COLLECTION, third, CollectionRelationType.SEMANTIC, 1.0);
+
+//        Check that we have collections
+        assertEquals(4, this.reasoner.getCollections().size(), "Should have all the collections and the demo");
+
         //        Add a relation between one and two
         this.reasoner.writeObjectRelationship(first, second, ObjectRelation.SPATIAL_MEETS);
 //        And one and three

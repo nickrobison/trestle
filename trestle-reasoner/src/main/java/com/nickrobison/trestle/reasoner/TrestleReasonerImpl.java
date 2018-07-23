@@ -577,6 +577,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //    Collection Methods
 //    ----------------------------
 
+
+    @Override
+    public List<String> getCollections() {
+        return this.collectionEngine.getCollections();
+    }
+
     @Override
     public Optional<Map<String, List<String>>> getRelatedCollections(String individual, @Nullable String collectionID, double relationStrength) {
         return this.collectionEngine.getRelatedCollections(individual, collectionID, relationStrength);

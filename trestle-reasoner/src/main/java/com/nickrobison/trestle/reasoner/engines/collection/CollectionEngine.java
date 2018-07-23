@@ -86,6 +86,14 @@ public class CollectionEngine implements ITrestleCollectionEngine {
     }
 
     @Override
+    public List<String> getCollections() {
+        return this.ontology.getInstances(df.getOWLClass(trestleCollectionIRI), true)
+                .stream()
+                .map(OWLIndividual::toStringID)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public Optional<Map<String, List<String>>> getRelatedCollections(String individual, @Nullable String collectionID, double relationStrength) {
         final String collectionQuery;
         final OWLNamedIndividual owlIndividual = df.getOWLNamedIndividual(parseStringToIRI(this.reasonerPrefix, individual));

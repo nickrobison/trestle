@@ -17,6 +17,13 @@ import java.util.Set;
  */
 public interface ITrestleCollectionEngine {
     /**
+     * Get all Trestle_Collections currently in the repository
+     *
+     * @return - {@link List} of {@link String} Collection IDs
+     */
+    List<String> getCollections();
+
+    /**
      * For a given individual, get all related collections and the {@link IRI} of all members of those collections,
      * that have a relation strength above the given cutoff value
      *
