@@ -31,8 +31,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @Tag("integration")
 public class CollectionEnginesTest extends AbstractReasonerTest {
 
-    private static final String THIRD_COLLECTION = "third-collection";
-    private static final String FIRST_COLLECTION = "first-collection";
+    private static final String THIRD_COLLECTION = "third:collection";
+    private static final String FIRST_COLLECTION = "first:collection";
+    public static final String SECOND_COLLECTION = "second:collection";
     private TestClasses.JTSGeometryTest third;
     private TestClasses.JTSGeometryTest second;
     private TestClasses.JTSGeometryTest first;
@@ -52,7 +53,7 @@ public class CollectionEnginesTest extends AbstractReasonerTest {
     public void testAdjacentCollections() {
 //        Add all to collections
         this.reasoner.addObjectToCollection(FIRST_COLLECTION, first, CollectionRelationType.SEMANTIC, 1.0);
-        this.reasoner.addObjectToCollection("second:collection", second, CollectionRelationType.SEMANTIC, 1.0);
+        this.reasoner.addObjectToCollection(SECOND_COLLECTION, second, CollectionRelationType.SEMANTIC, 1.0);
         this.reasoner.addObjectToCollection(THIRD_COLLECTION, third, CollectionRelationType.SEMANTIC, 1.0);
         //        Add a relation between one and two
         this.reasoner.writeObjectRelationship(first, second, ObjectRelation.SPATIAL_MEETS);
@@ -60,9 +61,9 @@ public class CollectionEnginesTest extends AbstractReasonerTest {
         this.reasoner.writeObjectRelationship(first, third, ObjectRelation.SPATIAL_MEETS);
 
 //        Check for adjacency
-        assertAll(() -> assertTrue(this.reasoner.collectionsAreAdjacent(FIRST_COLLECTION, "second:collection", 0.5), "First and second should be adjacent"),
+        assertAll(() -> assertTrue(this.reasoner.collectionsAreAdjacent(FIRST_COLLECTION, SECOND_COLLECTION, 0.5), "First and second should be adjacent"),
                 () -> assertTrue(this.reasoner.collectionsAreAdjacent(FIRST_COLLECTION, THIRD_COLLECTION, 0.5), "First and third should be adjacent"),
-                () -> assertFalse(this.reasoner.collectionsAreAdjacent("second:collection", "third:collection", 0.5), "Second and third should not be adjacent"));
+                () -> assertFalse(this.reasoner.collectionsAreAdjacent(SECOND_COLLECTION, "third:collection", 0.5), "Second and third should not be adjacent"));
     }
 
     @Test
