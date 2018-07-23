@@ -164,6 +164,23 @@ public interface ITrestleOntology {
     void removeIndividual(OWLNamedIndividual individual);
 
     /**
+     * Remove the given {@link OWLObjectPropertyAssertionAxiom} for the specified individual
+     *
+     * @param property - {@link OWLObjectPropertyAssertionAxiom} to remove
+     */
+    void removeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property);
+
+    /**
+     * Remove the given {@link OWLDataPropertyAssertionAxiom} for the specified individual
+     * If no {@link OWLLiteral} is provided, all matching assertions will be removed.
+     *
+     * @param individual - {@link OWLNamedIndividual} of subject
+     * @param property   - {@link OWLDataProperty} of property
+     * @param literal    - {@link OWLLiteral} optional literal value to remove
+     */
+    void removeIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property, @Nullable OWLLiteral literal);
+
+    /**
      * Check whether the ontology contains an individual with the given IRI
      * @param individualIRI - IRI of individual to check
      * @return - boolean, individual exists?
