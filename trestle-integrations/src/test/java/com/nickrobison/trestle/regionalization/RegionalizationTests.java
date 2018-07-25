@@ -5,11 +5,13 @@ import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import com.nickrobison.trestle.types.relations.CollectionRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.commons.math3.util.FastMath;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.IRI;
 
@@ -17,12 +19,17 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Created by nickrobison on 7/21/18.
  */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+@Disabled
 public class RegionalizationTests {
 
+    public static final Supplier<RuntimeException> NOT_FOUND = () -> new RuntimeException("Not found");
     private static TrestleReasoner reasoner;
     //    Just the counties we care about
     private static Map<String, Integer> counties;
@@ -90,6 +97,8 @@ public class RegionalizationTests {
                 continue;
             }
 
+//            compareClusters(shortest)
+
 //            Are the two objects in the same cluster?
             final Map<String, List<String>> relatedCollections = reasoner.getRelatedCollections(shortest.Aid, null, 0.01)
                     .orElseThrow(() -> new RuntimeException("Should have something"));
@@ -119,15 +128,110 @@ public class RegionalizationTests {
         final TigerCountyObject self = reasoner.readTrestleObject(TigerCountyObject.class, county, VALID_AT, null);
         final List<TigerCountyObject> spatiallyAdjacentObjects = reasoner.getRelatedObjects(TigerCountyObject.class, county,
                 ObjectRelation.SPATIAL_MEETS,
-                VALID_AT, null);
+                VALID_AT, null)
+                .stream()
+                .filter(c -> counties.containsKey(c.getCounty()))
+                .collect(Collectors.toList());
 
         final int self_pop = self.getPop_estimate();
 
-        for (final TigerCountyObject adjacentObject : spatiallyAdjacentObjects) {
-            final int length = FastMath.abs(self_pop - adjacentObject.getPop_estimate());
-            computedEdges.add(new Edge(self.getCounty(), self.getGeoid(), adjacentObject.getCounty(), adjacentObject.getGeoid(), length));
+        for (final TigerCountyObject adjCounty : spatiallyAdjacentObjects) {
+            final int length = FastMath.abs(self_pop - adjCounty.getPop_estimate());
+            computedEdges.add(new Edge(self.getCounty(), self.getGeoid(), adjCounty.getCounty(), adjCounty.getGeoid(), length));
+
+//            Add it as its own cluster.
+
+            reasoner.addObjectToCollection(String.format("%s:collection", adjCounty.getCounty()),
+                    adjCounty, CollectionRelationType.SEMANTIC, 1.0);
         }
     }
+
+    public void compareClusters(Edge edge) throws TrestleClassException, MissingOntologyEntity {
+//        1.
+        String collectionA = getFirstCollection(reasoner.getRelatedCollections(edge.Aid, null, 0.1));
+        String collectionB = getFirstCollection(reasoner.getRelatedCollections(edge.Bid, null, 0.1));
+
+//        2.
+        if (!collectionA.equals(collectionB)) {
+            if (reasoner.collectionsAreAdjacent(collectionA, collectionB, 0.1)) {
+//                3.
+                if (edge.value >= getClusterAvgDistance(collectionA, collectionB)) {
+
+                    addShortestEdgeToCluster(collectionA, collectionB);
+
+                    final List<TigerCountyObject> collectionAObjects = getCollectionObjects(collectionA);
+                    final List<TigerCountyObject> collectionBObjects = getCollectionObjects(collectionB);
+
+                    final List<String> otherCollections = reasoner.getCollections()
+                            .stream()
+                            .filter(collection -> !(collection.equals(collectionA) || collection.equals(collectionB)))
+                            .collect(Collectors.toList());
+
+                    for (String collection : otherCollections) {
+//                        4.
+                        final List<TigerCountyObject> collectionObjects = getCollectionObjects(collection);
+                        final int avgDistance = (computeClusterAvgDistance(collectionObjects, collectionAObjects) * computeNumEdges(collectionObjects, collectionAObjects) +
+                                computeClusterAvgDistance(collectionObjects, collectionBObjects) * computeNumEdges(collectionObjects, collectionBObjects)) /
+                                (computeNumEdges(collectionObjects, collectionAObjects) + computeNumEdges(collectionObjects, collectionBObjects));
+                        setClusterAvgDistance(collection, collectionA, avgDistance);
+
+//                        5.
+                        removeEdges(collection, collectionB);
+                        removeEdges(collection, collectionA);
+                        addEdge(collection, collectionA, avgDistance);
+                    }
+
+//                6.
+                    for (TigerCountyObject bCounty : collectionBObjects) {
+                        reasoner.removeObjectFromCollection(collectionB, bCounty, true);
+                        reasoner.addObjectToCollection(collectionA, bCounty, CollectionRelationType.SEMANTIC, 1.0);
+                    }
+                }
+            }
+        }
+    }
+
+    public String getFirstCollection(Optional<Map<String, List<String>>> collections) {
+        return collections
+                .orElseThrow(NOT_FOUND)
+                .keySet()
+                .stream()
+                .findFirst()
+                .orElseThrow(NOT_FOUND);
+    }
+
+    public List<TigerCountyObject> getCollectionObjects(String collection) {
+        return reasoner.getCollectionMembers(TigerCountyObject.class, collection, 0.1, null, VALID_AT).orElseThrow(NOT_FOUND);
+    }
+
+    public int getClusterAvgDistance(String A, String B) {
+        return 0;
+    }
+
+    public void setClusterAvgDistance(String A, String B, int distance) {
+
+    }
+
+    public <T> int computeClusterAvgDistance(List<T> aObjects, List<T> bObjects) {
+        return 0;
+    }
+
+    public <T> int computeNumEdges(List<T> aObjects, List<T> bObjects) {
+        return 0;
+    }
+
+    public void removeEdges(String A, String B) {
+
+    }
+
+    public void addEdge(String A, String B, int value) {
+
+    }
+
+    public void addShortestEdgeToCluster(String A, String B) {
+
+    }
+
 
     public static class Edge {
 
