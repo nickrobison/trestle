@@ -190,9 +190,11 @@ public class AggregationEngine {
                 final T from = this.reader.readTrestleObject(clazz, fromID, validAt, dbAt);
 
 //            Get everything it touches
-                final List<Edge<T, B>> relatedEdges = this.reader.getRelatedObjects(clazz, objectID, ObjectRelation.SPATIAL_MEETS, validAt, dbAt)
+                final List<Edge<T, B>> relatedEdges = this.reader.getRelatedObjects(clazz, fromID, ObjectRelation.SPATIAL_MEETS, validAt, dbAt)
                         .stream()
                         .filter(filter::filter)
+//                        Remove self
+                        .filter(related -> !this.parser.getIndividual(related).toStringID().equals(startIRI.toString()))
                         .map(related -> new Edge<>(from, related, edgeCompute.compute(from, related)))
                         .collect(Collectors.toList());
 
@@ -310,6 +312,7 @@ public class AggregationEngine {
         }
 
         public void removeEdge(Edge<A, B> edge) {
+            this.edges.remove(edge);
             this.removeNodeEdge(edge.from, edge);
             this.removeNodeEdge(edge.to, edge);
         }
@@ -336,10 +339,24 @@ public class AggregationEngine {
         }
 
         public List<Edge<A, B>> getEdges(Comparator<Edge<A, B>> comparator) {
-            return edges
+            final List<Edge<A, B>> collect = edges
                     .stream()
                     .sorted(comparator)
                     .collect(Collectors.toList());
+//            Deduplicate it
+            final List<Edge<A, B>> output = new ArrayList<>();
+            Set<Integer> seen = new HashSet<>();
+            for (Edge<A, B> edge : collect) {
+                final int hash = edge.from.hashCode() ^ edge.to.hashCode();
+                if (seen.contains(hash)) {
+                    continue;
+                }
+
+                output.add(edge);
+                seen.add(hash);
+            }
+
+            return output;
         }
 
         private void updateNodeEdge(A node, Edge<A, B> edge) {
@@ -397,14 +414,13 @@ public class AggregationEngine {
             if (o == null || getClass() != o.getClass()) return false;
             Edge<?, ?> edge = (Edge<?, ?>) o;
             return Objects.equals(from, edge.from) &&
-                    Objects.equals(to, edge.to) &&
-                    Objects.equals(weight, edge.weight);
+                    Objects.equals(to, edge.to);
         }
 
         @Override
         public int hashCode() {
 
-            return Objects.hash(from, to, weight);
+            return from.hashCode() ^ to.hashCode();
         }
 
         @Override

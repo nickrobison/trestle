@@ -775,7 +775,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final IRI individualIRI = parseStringToIRI(this.REASONER_PREFIX, individual);
 
 //        Read the object first
-        final T trestleObject = this.objectReader.readTrestleObject(clazz, individual);
+        final T trestleObject = this.objectReader.readTrestleObject(clazz, individual, validAt, null);
 //        Intersect it
         final Optional<List<T>> intersectedObjects = this.spatialEngine.spatialIntersectObject(trestleObject, 1, validAt, null);
 //        Now, compute the relationships

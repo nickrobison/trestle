@@ -25,6 +25,8 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 /**
  * Created by nickrobison on 7/21/18.
  */
@@ -55,7 +57,6 @@ public class RegionalizationTests {
                 .withOntology(IRI.create(ontLocation))
                 .withPrefix(ontPrefix)
                 .withInputClasses(TigerCountyObject.class)
-                .withoutCaching()
                 .withoutMetrics()
                 .build();
 
@@ -81,42 +82,42 @@ public class RegionalizationTests {
     }
 
     @Test
-    public void buildGraph() throws TrestleClassException, MissingOntologyEntity {
-
-        Set<Edge> computedEdges = new HashSet<>();
+    public void buildGraph() {
 
         final AggregationEngine.AdjacencyGraph<TigerCountyObject, Integer> county_graph = reasoner.buildSpatialGraph(TigerCountyObject.class, counties.get("Douglas County").toString(),
                 new CountyCompute(), new CountyFilter(counties), VALID_AT, null);
 
-        for (Map.Entry<String, Integer> entry : counties.entrySet()) {
-            computeEdges(entry.getValue().toString(), computedEdges);
-        }
-
-        //        Put it all into a queue and sort by value
-        Queue<Edge> sortedEdges = new PriorityQueue<>(Comparator.comparing(edge -> edge.value));
-        List<Edge> clusterEdges = new ArrayList<>();
-        sortedEdges.addAll(computedEdges);
-
-        while (!sortedEdges.isEmpty()) {
-            final Edge shortest = sortedEdges.poll();
-            if (shortest == null) {
-                continue;
-            }
-
-//            compareClusters(shortest)
-
-//            Are the two objects in the same cluster?
-            final Map<String, List<String>> relatedCollections = reasoner.getRelatedCollections(shortest.Aid, null, 0.01)
-                    .orElseThrow(() -> new RuntimeException("Should have something"));
-
-//            If the map is empty, then they're in two separate clusters.
-            if (separateClusters(relatedCollections, shortest.Aid, shortest.Bid)) {
-
-            }
-
+//        for (Map.Entry<String, Integer> entry : counties.entrySet()) {
+//            computeEdges(entry.getValue().toString(), computedEdges);
+//        }
 //
-//            reasoner.co
-        }
+//        //        Put it all into a queue and sort by value
+//        Queue<Edge> sortedEdges = new PriorityQueue<>(Comparator.comparing(edge -> edge.value));
+//        List<Edge> clusterEdges = new ArrayList<>();
+//        sortedEdges.addAll(computedEdges);
+//
+//        while (!sortedEdges.isEmpty()) {
+//            final Edge shortest = sortedEdges.poll();
+//            if (shortest == null) {
+//                continue;
+//            }
+//
+////            compareClusters(shortest)
+//
+////            Are the two objects in the same cluster?
+//            final Map<String, List<String>> relatedCollections = reasoner.getRelatedCollections(shortest.Aid, null, 0.01)
+//                    .orElseThrow(() -> new RuntimeException("Should have something"));
+//
+////            If the map is empty, then they're in two separate clusters.
+//            if (separateClusters(relatedCollections, shortest.Aid, shortest.Bid)) {
+//
+//            }
+//
+////
+////            reasoner.co
+//        }
+
+        assertFalse(county_graph.getEdges().isEmpty(), "Should have edges");
 
 
     }
