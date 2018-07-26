@@ -3,6 +3,7 @@ package com.nickrobison.trestle.reasoner.engines.spatial.aggregation;
 import com.nickrobison.trestle.common.LambdaUtils;
 import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
+import com.nickrobison.trestle.ontology.ReasonerPrefix;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
@@ -45,6 +46,7 @@ public class AggregationEngine {
     private static final Logger logger = LoggerFactory.getLogger(AggregationEngine.class);
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
 
+    private final String reasonerPrefix;
     private final ITrestleObjectReader reader;
     private final IClassParser parser;
     private final ITypeConverter typeConverter;
@@ -53,11 +55,13 @@ public class AggregationEngine {
     private final TrestleExecutorService aggregationPool;
 
     @Inject
-    public AggregationEngine(ITrestleObjectReader objectReader,
+    public AggregationEngine(@ReasonerPrefix String reasonerPrefix,
+                             ITrestleObjectReader objectReader,
                              QueryBuilder queryBuilder,
                              ITrestleOntology ontology,
                              TrestleParser trestleParser,
                              TrestleExecutorFactory factory) {
+        this.reasonerPrefix = reasonerPrefix;
         this.reader = objectReader;
         this.qb = queryBuilder;
         this.ontology = ontology;
@@ -156,12 +160,26 @@ public class AggregationEngine {
         }
     }
 
+    /**
+     * Build the spatial adjacency graph for a given class.
+     *
+     * @param clazz       - Java {@link Class} of objects to retrieve
+     * @param objectID    - {@link String} ID of object to begin graph computation with
+     * @param edgeCompute - {@link Computable} function to use for computing edge weights
+     * @param filter      - {@link Filterable} function to use for determining whether or not to compute the given node
+     * @param validAt     - {@link Temporal} optional validAt restriction
+     * @param dbAt        - {@link Temporal} optional dbAt restriction
+     * @param <T>         - {@link T} type parameter for object class
+     * @param <B>         - {@link B} type parameter for return type from {@link Computable} function
+     * @return
+     */
     public <T extends @NonNull Object, B extends Number> AdjacencyGraph<T, B> buildSpatialGraph(Class<T> clazz, String objectID, Computable<T, T, B> edgeCompute, Filterable<T> filter, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
         final AdjacencyGraph<T, B> adjacencyGraph = new AdjacencyGraph<>();
+        final IRI startIRI = parseStringToIRI(this.reasonerPrefix, objectID);
 
         Set<String> visited = new HashSet<>();
         Queue<String> individualQueue = new ArrayDeque<>();
-        individualQueue.add(objectID);
+        individualQueue.add(startIRI.toString());
 
         while (!individualQueue.isEmpty()) {
             final String fromID = individualQueue.poll();
@@ -187,8 +205,8 @@ public class AggregationEngine {
                         .map(OWLIndividual::toStringID)
                         .filter(individual -> !visited.contains(individual))
                         .forEach(individualQueue::add);
-            } catch (TrestleClassException | MissingOntologyEntity e) {
-                e.printStackTrace();
+            } catch (TrestleClassException | MissingOntologyEntity | NoValidStateException e) {
+                logger.error("Can't read individual", e);
             }
         }
 
@@ -285,6 +303,8 @@ public class AggregationEngine {
         }
 
         public void addEdge(Edge<A, B> edge) {
+            this.nodes.add(edge.from);
+            this.edges.add(edge);
             this.updateNodeEdge(edge.from, edge);
             this.updateNodeEdge(edge.to, edge);
         }

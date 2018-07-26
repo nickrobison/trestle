@@ -4,6 +4,9 @@ import com.nickrobison.trestle.datasets.TigerCountyObject;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
+import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.Computable;
+import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.Filterable;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.relations.CollectionRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
@@ -81,6 +84,9 @@ public class RegionalizationTests {
     public void buildGraph() throws TrestleClassException, MissingOntologyEntity {
 
         Set<Edge> computedEdges = new HashSet<>();
+
+        final AggregationEngine.AdjacencyGraph<TigerCountyObject, Integer> county_graph = reasoner.buildSpatialGraph(TigerCountyObject.class, counties.get("Douglas County").toString(),
+                new CountyCompute(), new CountyFilter(counties), VALID_AT, null);
 
         for (Map.Entry<String, Integer> entry : counties.entrySet()) {
             computeEdges(entry.getValue().toString(), computedEdges);
@@ -284,6 +290,32 @@ public class RegionalizationTests {
                     ", B='" + B + '\'' +
                     ", value=" + value +
                     '}';
+        }
+    }
+
+    public static class CountyCompute implements Computable<TigerCountyObject, TigerCountyObject, Integer> {
+
+        CountyCompute() {
+//            Not used
+        }
+
+        @Override
+        public Integer compute(TigerCountyObject nodeA, TigerCountyObject nodeB) {
+            return FastMath.abs(nodeA.getPop_estimate() - nodeB.getPop_estimate());
+        }
+    }
+
+    public static class CountyFilter implements Filterable<TigerCountyObject> {
+
+        private final Map<String, Integer> counties;
+
+        CountyFilter(Map<String, Integer> counties) {
+            this.counties = counties;
+        }
+
+        @Override
+        public boolean filter(TigerCountyObject nodeA) {
+            return this.counties.containsKey(nodeA.getCounty());
         }
     }
 }

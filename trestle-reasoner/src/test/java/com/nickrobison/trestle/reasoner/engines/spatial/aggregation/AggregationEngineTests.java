@@ -37,7 +37,7 @@ public class AggregationEngineTests extends AbstractReasonerTest {
                 .forEach(county -> {
                     try {
                         this.reasoner.writeTrestleObject(county);
-                        this.reasoner.calculateSpatialAndTemporalRelationships(TestClasses.KCProjectionTestClass.class, Long.toString(county.getObjectid()), null);;
+                        this.reasoner.calculateSpatialAndTemporalRelationships(TestClasses.KCProjectionTestClass.class, Long.toString(county.getObjectid()), null);
                     } catch (TrestleClassException | MissingOntologyEntity e) {
                         e.printStackTrace();
                     }

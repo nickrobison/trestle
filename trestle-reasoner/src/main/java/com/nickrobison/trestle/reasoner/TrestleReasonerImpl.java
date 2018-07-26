@@ -25,6 +25,8 @@ import com.nickrobison.trestle.reasoner.engines.relations.RelationTracker;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.Computable;
+import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.Filterable;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
@@ -846,6 +848,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 this.ontology.returnAndAbortTransaction(trestleTransaction);
             }
         }
+    }
+
+    @Override
+    public <T extends @NonNull Object, B extends Number> AggregationEngine.AdjacencyGraph<T, B> buildSpatialGraph(Class<T> clazz, String objectID, Computable<T, T, B> edgeCompute, Filterable<T> filter, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
+        return this.aggregationEngine.buildSpatialGraph(clazz, objectID, edgeCompute, filter, validAt, dbAt);
     }
 
     @Override

@@ -12,6 +12,9 @@ import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
 import com.nickrobison.trestle.reasoner.engines.spatial.ITrestleSpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.Computable;
+import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.Filterable;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.engines.temporal.TemporalEngine;
@@ -219,6 +222,21 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @throws TrestleClassException - throws if the class isn't registered with the Reasoner
      */
     <T> void calculateSpatialAndTemporalRelationships(Class<T> clazz, String individual, @Nullable Temporal validAt) throws TrestleClassException, MissingOntologyEntity;
+
+    /**
+     * Build the spatial adjacency graph for a given class.
+     *
+     * @param clazz       - Java {@link Class} of objects to retrieve
+     * @param objectID    - {@link String} ID of object to begin graph computation with
+     * @param edgeCompute - {@link Computable} function to use for computing edge weights
+     * @param filter      - {@link Filterable} function to use for determining whether or not to compute the given node
+     * @param validAt     - {@link Temporal} optional validAt restriction
+     * @param dbAt        - {@link Temporal} optional dbAt restriction
+     * @param <T>         - {@link T} type parameter for object class
+     * @param <B>         - {@link B} type parameter for return type from {@link Computable} function
+     * @return - {@link com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationEngine.AdjacencyGraph} spatial adjacency graph
+     */
+    <T extends @NonNull Object, B extends Number> AggregationEngine.AdjacencyGraph<T, B> buildSpatialGraph(Class<T> clazz, String objectID, Computable<T, T, B> edgeCompute, Filterable<T> filter, @Nullable Temporal validAt, @Nullable Temporal dbAt);
 
     /**
      * Search the ontology for individuals with IRIs that match the given search string
