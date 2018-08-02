@@ -39,7 +39,7 @@ public class RegionalizationTests {
     //    Just the counties we care about
     private static Map<String, Integer> counties;
     //        Set to August 1st, 2013
-    public static final OffsetDateTime VALID_AT = LocalDate.of(2013, 8, 1).atStartOfDay().atOffset(ZoneOffset.UTC);
+    public static final OffsetDateTime VALID_AT = LocalDate.of(2015, 8, 1).atStartOfDay().atOffset(ZoneOffset.UTC);
 
     @BeforeAll
     public static void setup() {
@@ -84,8 +84,20 @@ public class RegionalizationTests {
     @Test
     public void buildGraph() {
 
-        final AggregationEngine.AdjacencyGraph<TigerCountyObject, Integer> county_graph = reasoner.buildSpatialGraph(TigerCountyObject.class, counties.get("Douglas County").toString(),
-                new CountyCompute(), new CountyFilter(counties), VALID_AT, null);
+        final AggregationEngine.AdjacencyGraph<TigerCountyObject, Integer> county_graph =
+                reasoner.buildSpatialGraph(
+//                        1.
+                        TigerCountyObject.class,
+//                        2.
+                        counties.get("Douglas County").toString(),
+//                        3.
+                        new CountyCompute(),
+//                        4.
+                        new CountyFilter(counties),
+//                        5.
+                        VALID_AT,
+//                        6.
+                        null);
 
 //        for (Map.Entry<String, Integer> entry : counties.entrySet()) {
 //            computeEdges(entry.getValue().toString(), computedEdges);
@@ -153,43 +165,41 @@ public class RegionalizationTests {
         }
     }
 
-    public void compareClusters(Edge edge) throws TrestleClassException, MissingOntologyEntity {
+    public void compareClusters(Edge edge) {
 //        1.
         String collectionA = getFirstCollection(reasoner.getRelatedCollections(edge.Aid, null, 0.1));
         String collectionB = getFirstCollection(reasoner.getRelatedCollections(edge.Bid, null, 0.1));
 
-//        2.
         if (!collectionA.equals(collectionB)) {
             if (reasoner.collectionsAreAdjacent(collectionA, collectionB, 0.1)) {
-//                3.
                 if (edge.value >= getClusterAvgDistance(collectionA, collectionB)) {
 
                     addShortestEdgeToCluster(collectionA, collectionB);
 
+//                    2.
                     final List<TigerCountyObject> collectionAObjects = getCollectionObjects(collectionA);
                     final List<TigerCountyObject> collectionBObjects = getCollectionObjects(collectionB);
 
+//                    3.
                     final List<String> otherCollections = reasoner.getCollections()
                             .stream()
                             .filter(collection -> !(collection.equals(collectionA) || collection.equals(collectionB)))
                             .collect(Collectors.toList());
 
                     for (String collection : otherCollections) {
-//                        4.
                         final List<TigerCountyObject> collectionObjects = getCollectionObjects(collection);
                         final int avgDistance = (computeClusterAvgDistance(collectionObjects, collectionAObjects) * computeNumEdges(collectionObjects, collectionAObjects) +
                                 computeClusterAvgDistance(collectionObjects, collectionBObjects) * computeNumEdges(collectionObjects, collectionBObjects)) /
                                 (computeNumEdges(collectionObjects, collectionAObjects) + computeNumEdges(collectionObjects, collectionBObjects));
                         setClusterAvgDistance(collection, collectionA, avgDistance);
 
-//                        5.
                         removeEdges(collection, collectionB);
                         removeEdges(collection, collectionA);
                         addEdge(collection, collectionA, avgDistance);
                     }
 
-//                6.
                     for (TigerCountyObject bCounty : collectionBObjects) {
+//                        4.
                         reasoner.removeObjectFromCollection(collectionB, bCounty, true);
                         reasoner.addObjectToCollection(collectionA, bCounty, CollectionRelationType.SEMANTIC, 1.0);
                     }
