@@ -18,10 +18,7 @@ import com.nickrobison.trestle.reasoner.parser.*;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
-import com.nickrobison.trestle.types.TemporalScope;
-import com.nickrobison.trestle.types.TrestleFact;
-import com.nickrobison.trestle.types.TrestleObjectResult;
-import com.nickrobison.trestle.types.TrestleObjectState;
+import com.nickrobison.trestle.types.*;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.PointTemporal;
@@ -46,6 +43,7 @@ import java.util.stream.Collectors;
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
 import static com.nickrobison.trestle.iri.IRIVersion.V1;
 import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
+import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseToTemporal;
 
 /**
  * Created by nickrobison on 2/13/18.
@@ -368,6 +366,37 @@ public class TrestleObjectReader implements ITrestleObjectReader {
         } else {
             ontology.returnAndAbortTransaction(trestleTransaction);
             throw new IllegalStateException("No data properties, not even trying");
+        }
+    }
+
+    @Override
+    public Optional<TrestleObjectHeader> readObjectHeader(Class<?> clazz, String individual) {
+        final OWLClass objectClass = this.classParser.getObjectClass(clazz);
+        final IRI individualIRI = parseStringToIRI(this.reasonerPrefix, individual);
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+        try {
+            final String headerQuery = this.qb.buildObjectHeaderQuery(objectClass, df.getOWLNamedIndividual(individualIRI));
+            final TrestleResultSet trestleResultSet = this.ontology.executeSPARQLResults(headerQuery);
+            return trestleResultSet
+                    .getResults()
+                    .stream()
+                    .map(result -> {
+                        final Optional<OWLLiteral> existsToLiteral = result.getLiteral("et");
+                        final @Nullable Temporal existsTo;
+                        //noinspection OptionalIsPresent
+                        if (existsToLiteral.isPresent()) {
+                            existsTo = parseToTemporal(existsToLiteral.get(), OffsetDateTime.class);
+                        } else {
+                            existsTo = null;
+                        }
+                        return new TrestleObjectHeader(
+                                result.unwrapIndividual("m").toStringID(),
+                                parseToTemporal(result.unwrapLiteral("ef"), OffsetDateTime.class),
+                                existsTo);
+                    })
+                    .findFirst();
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
     }
 

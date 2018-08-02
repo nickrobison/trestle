@@ -299,4 +299,13 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @throws IllegalStateException if unable to get properties for the given {@link Class}
      */
     List<String> getDatasetProperties(Class<?> clazz);
+
+    /**
+     * Get all the Individuals of the given dataset
+     * Class must be registered with the reasoner
+     *
+     * @param clazz - {@link Class} Java class to retrieve members of
+     * @return - {@link List} of {@link String} IDs of dataset class memberss
+     */
+    List<String> getDatasetMembers(Class<?> clazz);
 }

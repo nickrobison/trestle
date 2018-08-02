@@ -42,6 +42,7 @@ import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TrestleIndividual;
+import com.nickrobison.trestle.types.TrestleObjectHeader;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
 import com.nickrobison.trestle.types.relations.CollectionRelationType;
@@ -438,7 +439,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         return this.objectReader.readTrestleObject(clazz, objectID, validTemporal, databaseTemporal);
     }
 
-//    ----------------------------
+    @Override
+    public Optional<TrestleObjectHeader> readObjectHeader(Class<?> clazz, String individual) {
+        return this.objectReader.readObjectHeader(clazz, individual);
+    }
+
+    //    ----------------------------
 //    IRI Methods
 //    ----------------------------
 
@@ -982,6 +988,15 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 .stream()
                 .map(OWLEntity::toStringID)
                 .sorted()
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> getDatasetMembers(Class<?> clazz) {
+        final OWLClass objectClass = this.trestleParser.classParser.getObjectClass(clazz);
+        return this.ontology.getInstances(objectClass, true)
+                .stream()
+                .map(OWLIndividual::toStringID)
                 .collect(Collectors.toList());
     }
 

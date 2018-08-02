@@ -2,6 +2,7 @@ package com.nickrobison.trestle.reasoner.engines.object;
 
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import com.nickrobison.trestle.types.TrestleObjectHeader;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -106,6 +107,15 @@ public interface ITrestleObjectReader {
      * @return - Java object of type {@link T}
      */
     <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt);
+
+    /**
+     * Retrieve {@link TrestleObjectHeader} for the given Individual
+     *
+     * @param clazz      - {@link Class} Java class to retrieve
+     * @param individual - {@link String} individual to retrieve header for
+     * @return - {@link Optional} {@link TrestleObjectHeader}
+     */
+    Optional<TrestleObjectHeader> readObjectHeader(Class<?> clazz, String individual);
 
     /**
      * Retrieve historical states of a given Fact

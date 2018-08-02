@@ -142,7 +142,7 @@ public class QueryBuilder {
      * If that's not the case, you'll need to use the {@link QueryBuilder#buildTemporalSpatialCollectionIntersection(String, double, OffsetDateTime, OffsetDateTime)}
      *
      * @param collection - {@link OWLNamedIndividual} of collection to query
-     * @param strength - {@link double} strength cutoff for collection association.
+     * @param strength   - {@link double} strength cutoff for collection association.
      * @return - {@link String} SPARQL query with variables: ?collection
      */
     public String buildAdjecentCollectionQuery(OWLNamedIndividual collection, double strength) {
@@ -403,6 +403,27 @@ public class QueryBuilder {
             ps.setLiteral("dbAt", dbTemporal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         }
         ps.append('}');
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
+    }
+
+    /**
+     * Retrieves the object header for the given {@link OWLNamedIndividual}
+     *
+     * @param datasetClass - {@link OWLClass} dataset class to retrieve
+     * @param individual   - {@link OWLNamedIndividual} individual to retrieve header for
+     * @return - {@link String} SPARQL query string (?m - Individual, ?ef - Exists_from, ?et Exists_to (Optional))
+     */
+    public String buildObjectHeaderQuery(OWLClass datasetClass, OWLNamedIndividual individual) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText(String.format("SELECT ?m ?ef ?et WHERE {" +
+                "?m rdf:type ?owlClass ." +
+                "?m trestle:exists_from ?ef ." +
+                "OPTIONAL{?m trestle:exists_to ?et} ." +
+                "VALUES ?m {<%s>} ." +
+                "}", getFullIRIString(individual)));
+        ps.setIri("owlClass", getFullIRIString(datasetClass));
         final String stringValue = ps.toString();
         logger.trace(stringValue);
         return stringValue;
