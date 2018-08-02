@@ -1,23 +1,40 @@
 package com.nickrobison.trestle.gaulintegrator;
 
+import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.datasets.GAULObject;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.TrestleObjectHeader;
+import com.nickrobison.trestle.types.TrestleRelation;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.Point;
+import com.vividsolutions.jts.io.ParseException;
+import com.vividsolutions.jts.io.WKTReader;
 import me.tongfei.progressbar.ProgressBar;
 import org.apache.hadoop.conf.Configuration;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
+import org.geotools.geometry.jts.JTS;
+import org.geotools.referencing.CRS;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
+import org.opengis.referencing.operation.TransformException;
 import org.semanticweb.owlapi.model.IRI;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import javax.measure.Measure;
+import javax.measure.quantity.Area;
+import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by nickrobison on 8/1/18.
@@ -25,10 +42,12 @@ import java.util.Properties;
 @SuppressWarnings("Duplicates")
 public class GAULAnalyzer {
 
+    private static final Pattern codeNameRegex = Pattern.compile("([0-9]+)-(.*)");
+
     private final TrestleReasoner reasoner;
     private final String filePath;
 
-    GAULAnalyzer(String filePath) {
+    private GAULAnalyzer(String filePath) {
         this.reasoner = setupReasoner();
         this.filePath = filePath;
     }
@@ -63,7 +82,11 @@ public class GAULAnalyzer {
                 .build();
     }
 
-    private void evaluateSize() throws IOException, TrestleClassException, MissingOntologyEntity {
+    public void shutdown() {
+        this.reasoner.shutdown(false);
+    }
+
+    private void evaluateSize() throws IOException, TrestleClassException, MissingOntologyEntity, ParseException {
         final List<String> members = this.reasoner.getDatasetMembers(GAULObject.class);
 
         Map<String, Double> sizeDistribution = new HashMap<>();
@@ -74,8 +97,12 @@ public class GAULAnalyzer {
         for (final String member : members) {
             final TrestleObjectHeader header = this.reasoner.readObjectHeader(GAULObject.class, member).orElseThrow(() -> new IllegalStateException("Cannot not have object"));
             final GAULObject gaulObject = this.reasoner.readTrestleObject(GAULObject.class, member, header.getExistsFrom(), null);
-            final double area = gaulObject.getShapePolygon().calculateArea2D();
-            sizeDistribution.put(member, area);
+//            final double area = gaulObject.getShapePolygon().calculateArea2D();
+            final String wktValue = gaulObject.getPolygonAsWKT();
+            final Geometry read = new WKTReader().read(wktValue);
+            final Measure<Double, Area> area = GAULAnalyzer.calculatePolygonArea(read);
+            final Unit<Area> sq_km = (Unit<Area>) SI.KILOMETER.pow(2);
+            sizeDistribution.put(member, area.to(sq_km).getValue());
             pb.step();
         }
         pb.stop();
@@ -88,17 +115,177 @@ public class GAULAnalyzer {
         }
     }
 
-    public void shutdown() {
-        this.reasoner.shutdown(false);
+    private void evaluateAlgorithm() throws IOException {
+        //        Read in the input file
+        final FileInputStream inputStream = new FileInputStream(new File(this.filePath));
+        final BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+        Queue<GAULAnalyzer.AlgorithmResult> results = new ArrayDeque<>();
+        try {
+            String line;
+            while ((line = br.readLine()) != null) {
+//                Split the columns (\t)
+                final String[] splitLine = line.split("\t");
+
+//                Split the 2nd column into its pieces
+                final String[] resultSplit = splitLine[1].split(":");
+
+//                Split the adm2 code/name
+                final Matcher matchedCodeName = codeNameRegex.matcher(resultSplit[2]);
+                if (!matchedCodeName.matches()) {
+                    throw new IllegalStateException("Cannot match with Regex!");
+                }
+
+//                Create the new record
+                try {
+                    final GAULAnalyzer.AlgorithmResult result = new GAULAnalyzer.AlgorithmResult(
+                            Integer.parseInt(resultSplit[0]),
+                            resultSplit[1],
+                            Integer.parseInt(matchedCodeName.group(1)),
+                            matchedCodeName.group(2),
+                            LocalDate.parse(resultSplit[3]),
+                            LocalDate.parse(resultSplit[4]));
+                    results.add(result);
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    System.out.println(splitLine[1]);
+                }
+
+            }
+        } finally {
+            inputStream.close();
+            br.close();
+        }
+
+//        Create a progress base
+        final ProgressBar pb = new ProgressBar("Analyzing Individuals:", results.size());
+        pb.start();
+
+//        Now, process the results
+
+        Set<GAULAnalyzer.AlgorithmResult> orphanedResults = new HashSet<>();
+        Set<TrestleIndividual> orphanedIndividuals = new HashSet<>();
+
+        for (GAULAnalyzer.AlgorithmResult result : results) {
+            try {
+                final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(result.getID());
+                final Optional<String> anyRelation = trestleIndividual.getRelations()
+                        .stream()
+                        .map(TrestleRelation::getType)
+//                    Split Filter
+                        .filter(relation -> (relation.contains("SPLIT") || relation.contains("MERGE")))
+                        .findAny();
+                if (!anyRelation.isPresent()) {
+                    orphanedResults.add(result);
+                    orphanedIndividuals.add(trestleIndividual);
+                }
+            } catch (TrestleMissingIndividualException e) {
+                System.err.println(String.format("Could not find %s", e.getIndividual()));
+//                Just don't fail
+            }
+            pb.step();
+        }
+        pb.stop();
+
+        System.out.println(String.format("========== (%s) Orphaned ADM2 Entities=======", orphanedResults.size()));
+        orphanedResults
+                .stream()
+                .sorted(Comparator.comparing(GAULAnalyzer.AlgorithmResult::getAdm0Code)
+                        .thenComparing(GAULAnalyzer.AlgorithmResult::getAdm2Name))
+                .forEach(result -> System.out.println(result.getID()));
     }
 
-    public static void main(String[] args) throws IOException, TrestleClassException, MissingOntologyEntity {
+    public static void main(String[] args) throws IOException, TrestleClassException, MissingOntologyEntity, ParseException {
         final String method = args[0];
         final GAULAnalyzer analyzer = new GAULAnalyzer(args[1]);
         switch (method) {
             case "size":
                 analyzer.evaluateSize();
                 break;
+            case "evaluate":
+                analyzer.evaluateAlgorithm();
+                break;
+        }
+        System.exit(0);
+    }
+
+    private static Measure<Double, Area> calculatePolygonArea(Geometry jtsGeom) {
+        final Point centroid = jtsGeom.getCentroid();
+        try {
+            final String code = "AUTO:42001," + centroid.getX() + "," + centroid.getY();
+            final CoordinateReferenceSystem crs = CRS.decode(code);
+
+            final MathTransform transform = CRS.findMathTransform(DefaultGeographicCRS.WGS84, crs);
+            final Geometry transformed = JTS.transform(jtsGeom, transform);
+            return Measure.valueOf(transformed.getArea(), SI.SQUARE_METRE);
+        } catch (FactoryException | TransformException e) {
+            e.printStackTrace();
+        }
+        return Measure.valueOf(0.0, SI.SQUARE_METRE);
+    }
+
+    private static class AlgorithmResult {
+
+        private final int adm0Code;
+        private final String adm0Name;
+        private final int adm2Code;
+        private final String adm2Name;
+        private final LocalDate start;
+        private final LocalDate end;
+
+        public AlgorithmResult(int adm0Code, String adm0Name, int adm2Code, String adm2Name, LocalDate start, LocalDate end) {
+            this.adm0Code = adm0Code;
+            this.adm0Name = adm0Name;
+            this.adm2Code = adm2Code;
+            this.adm2Name = adm2Name;
+            this.start = start;
+            this.end = end;
+        }
+
+        public int getAdm0Code() {
+            return adm0Code;
+        }
+
+        public String getAdm0Name() {
+            return adm0Name;
+        }
+
+        public int getAdm2Code() {
+            return adm2Code;
+        }
+
+        public String getAdm2Name() {
+            return adm2Name;
+        }
+
+        public LocalDate getStart() {
+            return start;
+        }
+
+        public LocalDate getEnd() {
+            return end;
+        }
+
+        public String getID() {
+            return String.format("%s-%s-%s-%s", getAdm2Code(), getAdm2Name(), getStart().getYear(), getEnd().getYear());
+        }
+
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            AlgorithmResult that = (AlgorithmResult) o;
+            return adm0Code == that.adm0Code &&
+                    adm2Code == that.adm2Code &&
+                    Objects.equals(adm0Name, that.adm0Name) &&
+                    Objects.equals(adm2Name, that.adm2Name) &&
+                    Objects.equals(start, that.start) &&
+                    Objects.equals(end, that.end);
+        }
+
+        @Override
+        public int hashCode() {
+
+            return Objects.hash(adm0Code, adm0Name, adm2Code, adm2Name, start, end);
         }
     }
 }
