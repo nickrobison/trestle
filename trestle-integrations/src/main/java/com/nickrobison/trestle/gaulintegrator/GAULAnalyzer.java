@@ -32,6 +32,8 @@ import javax.measure.unit.Unit;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.temporal.ChronoField;
+import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -108,11 +110,27 @@ public class GAULAnalyzer {
         pb.stop();
         System.out.println("Done with size calc");
 
-        try (final FileWriter fileWriter = new FileWriter(this.filePath)) {
-            for (Map.Entry<String, Double> entry : sizeDistribution.entrySet()) {
-                fileWriter.write(String.format("%s,%f\n", entry.getKey(), entry.getValue()));
+        GAULAnalyzer.writeMapToFile(sizeDistribution, "%s,%f\n", this.filePath);
+    }
+
+    private void objectLifetimes() throws IOException {
+        final List<String> members = this.reasoner.getDatasetMembers(GAULObject.class);
+
+        Map<String, Integer> lifetimes = new HashMap<>();
+
+        final ProgressBar pb = new ProgressBar("Calculating object lifetime length", members.size());
+        pb.start();
+
+        for (String member : members) {
+            final TrestleObjectHeader header = this.reasoner.readObjectHeader(GAULObject.class, member).orElseThrow(() -> new IllegalStateException("Should have member header"));
+            if (!header.continuing()) {
+                final Integer yearsBetween = GAULAnalyzer.adjustedYearsBetween(header.getExistsFrom(), header.getExistsTo());
+                lifetimes.put(member, yearsBetween);
+                pb.step();
             }
         }
+        pb.stop();
+        GAULAnalyzer.writeMapToFile(lifetimes, "%s,%d\n", this.filePath);
     }
 
     private void evaluateAlgorithm() throws IOException {
@@ -189,20 +207,28 @@ public class GAULAnalyzer {
         orphanedResults
                 .stream()
                 .sorted(Comparator.comparing(GAULAnalyzer.AlgorithmResult::getAdm0Code)
-                        .thenComparing(GAULAnalyzer.AlgorithmResult::getAdm2Name))
+                        .thenComparing(GAULAnalyzer.AlgorithmResult::getAdm2Name)
+                .thenComparing(GAULAnalyzer.AlgorithmResult::getStart))
                 .forEach(result -> System.out.println(result.getID()));
     }
 
     public static void main(String[] args) throws IOException, TrestleClassException, MissingOntologyEntity, ParseException {
         final String method = args[0];
         final GAULAnalyzer analyzer = new GAULAnalyzer(args[1]);
-        switch (method) {
-            case "size":
-                analyzer.evaluateSize();
-                break;
-            case "evaluate":
-                analyzer.evaluateAlgorithm();
-                break;
+        try {
+            switch (method) {
+                case "size":
+                    analyzer.evaluateSize();
+                    break;
+                case "evaluate":
+                    analyzer.evaluateAlgorithm();
+                    break;
+                case "lifetimes":
+                    analyzer.objectLifetimes();
+                    break;
+            }
+        } finally {
+            analyzer.shutdown();
         }
         System.exit(0);
     }
@@ -220,6 +246,38 @@ public class GAULAnalyzer {
             e.printStackTrace();
         }
         return Measure.valueOf(0.0, SI.SQUARE_METRE);
+    }
+
+    /**
+     * Computes the years between the two {@link Temporal} values.
+     * Normalizes the values to be within the range of [1990, 2014]
+     *
+     * @param start - start {@link Temporal}
+     * @param end   - end {@link Temporal}
+     * @return - {@link Integer}
+     */
+    private static Integer adjustedYearsBetween(Temporal start, Temporal end) {
+        final int startYear = start.get(ChronoField.YEAR);
+        final int endYear = end.get(ChronoField.YEAR);
+
+        return Math.min(endYear, 2014) - Math.max(startYear, 1990);
+    }
+
+    /**
+     * Write the {@link Map#entrySet()} to a file.
+     * Format string should include newline character.
+     *
+     * @param map          - {@link Map} of values to write
+     * @param formatString - {@link String} format string to use for building lines.
+     * @param filePath     - {@link String} filepath to write to
+     * @throws IOException
+     */
+    private static void writeMapToFile(Map<String, ?> map, String formatString, String filePath) throws IOException {
+        try (final FileWriter fileWriter = new FileWriter(filePath)) {
+            for (Map.Entry<String, ?> entry : map.entrySet()) {
+                fileWriter.write(String.format(formatString, entry.getKey(), entry.getValue()));
+            }
+        }
     }
 
     private static class AlgorithmResult {
