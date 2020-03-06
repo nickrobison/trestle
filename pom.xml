@@ -15,7 +15,6 @@
         <module>trestle-common</module>
         <module>trestle-ontology</module>
         <module>trestle-querybuilder</module>
-        <module>trestle-actor</module>
         <module>trestle-server</module>
         <module>trestle-iri</module>
         <module>trestle-metrics</module>
