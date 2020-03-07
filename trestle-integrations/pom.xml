@@ -14,7 +14,6 @@
     </properties>
 
     <artifactId>trestle-integrations</artifactId>
-
     <dependencies>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
@@ -51,9 +50,17 @@
             <artifactId>guice-assistedinject</artifactId>
             <version>4.1.0</version>
         </dependency>
+        <!--        Use a custom JIT pack, rather than trying to bundle it ourselves-->
         <dependency>
-            <groupId>com.esri</groupId>
+            <groupId>com.github.nickrobison</groupId>
             <artifactId>Shapefile</artifactId>
+            <version>cabbd18957</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.esri.geometry</groupId>

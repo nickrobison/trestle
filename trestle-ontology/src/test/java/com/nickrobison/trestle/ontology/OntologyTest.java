@@ -12,6 +12,8 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -26,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization.fields.uninitialized"})
 @Tag("integration")
-abstract public class OntologyTest {
+public abstract class OntologyTest {
 
     protected OWLDataFactory df;
     protected ITrestleOntology ontology;
@@ -38,7 +40,14 @@ abstract public class OntologyTest {
         df = OWLManager.getOWLDataFactory();
         config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
         final IRI iri = IRI.create(config.getString("trestle.ontology.location"));
-        inputStream = iri.toURI().toURL().openConnection().getInputStream();
+        if (!iri.isAbsolute()) {
+            final Path cwd = Paths.get("");
+            final Path absPath = Paths.get(cwd.toAbsolutePath().toString(), config.getString("trestle.ontology.location"));
+            inputStream = absPath.toUri().toURL().openConnection().getInputStream();
+        } else {
+            inputStream = iri.toURI().toURL().openConnection().getInputStream();
+        }
+
         setupOntology();
     }
 

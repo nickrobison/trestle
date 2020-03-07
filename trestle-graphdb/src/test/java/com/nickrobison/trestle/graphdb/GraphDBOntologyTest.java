@@ -1,5 +1,6 @@
-package com.nickrobison.trestle.ontology;
+package com.nickrobison.trestle.graphdb;
 
+import com.nickrobison.trestle.ontology.OntologyBuilder;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.typesafe.config.Config;
 import org.junit.jupiter.api.Tag;

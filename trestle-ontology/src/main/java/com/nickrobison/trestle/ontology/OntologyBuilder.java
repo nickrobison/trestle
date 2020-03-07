@@ -154,21 +154,22 @@ public class OntologyBuilder {
 //                    password.orElse("")
 //            );
 //        }
-       if (connectionString.isPresent() && connectionString.get().contains("http")) {
-            logger.info("Connecting to remote GraphDB instance {} at: {}", this.ontologyName.orElse(""), this.connectionString.get());
-            return new GraphDBOntology(
-                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
-                    connectionString.get(),username.orElse(""), password.orElse(""), owlOntology,
-                    pm.orElse(createDefaultPrefixManager())
-            );
-        } else {
-            logger.info("Connect to embedded GraphDB instance {}", this.ontologyName.orElse(""));
-            return new GraphDBOntology(
-                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
-                    null, "", "", owlOntology,
-                    pm.orElse(createDefaultPrefixManager())
-            );
-        }
+//       if (connectionString.isPresent() && connectionString.get().contains("http")) {
+//            logger.info("Connecting to remote GraphDB instance {} at: {}", this.ontologyName.orElse(""), this.connectionString.get());
+//            return new GraphDBOntology(
+//                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
+//                    connectionString.get(),username.orElse(""), password.orElse(""), owlOntology,
+//                    pm.orElse(createDefaultPrefixManager())
+//            );
+//        } else {
+//            logger.info("Connect to embedded GraphDB instance {}", this.ontologyName.orElse(""));
+//            return new GraphDBOntology(
+//                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
+//                    null, "", "", owlOntology,
+//                    pm.orElse(createDefaultPrefixManager())
+//            );
+//        }
+        return null;
     }
 
     private OWLOntologyIRIMapper getImportsMapper() {
