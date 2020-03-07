@@ -187,7 +187,7 @@ public class H2Backend extends RDBMSBackend {
     @Override
     @Nullable Long registerMetric(String metricName) {
         try (final Connection connection = getConnection();
-             final PreparedStatement preparedStatement = connection.prepareStatement(String.format("INSERT INTO metrics (Metric) VALUES('%s')", metricName), Statement.RETURN_GENERATED_KEYS)) {
+             final PreparedStatement preparedStatement = connection.prepareStatement(String.format("INSERT INTO metrics (Metric) VALUES('%s')", metricName.replace("'", "")), Statement.RETURN_GENERATED_KEYS)) {
             preparedStatement.executeUpdate();
             try (final ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
                 if (generatedKeys.next()) {

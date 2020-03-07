@@ -108,38 +108,7 @@ public class OntologyBuilder {
      * @throws OWLOntologyCreationException - Throws if it can't create the ontology
      */
     public ITrestleOntology build() throws OWLOntologyCreationException {
-        final OWLOntologyManager owlOntologyManager = OWLManager.createOWLOntologyManager();
-        OWLOntology owlOntology = null;
-
-        // load ontology mapper (favors local files if present)
-        Set<OWLOntologyIRIMapper> mappers = new HashSet<>();
-        OWLOntologyIRIMapper mapper = getImportsMapper();
-        mappers.add(mapper);
-        owlOntologyManager.setIRIMappers(mappers);
-
-        OWLOntologyLoaderConfiguration loaderConfig = new OWLOntologyLoaderConfiguration();
-        loaderConfig.setMissingImportHandlingStrategy(MissingImportHandlingStrategy.THROW_EXCEPTION);
-
-        try {
-            if (this.iri.isPresent()) {
-                logger.debug("Loading ontology from: {}", this.iri.get());
-                owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument((new IRIDocumentSource(this.iri.get())),loaderConfig);
-                logger.info("Loaded version {} of ontology {}",
-                        owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
-                        owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
-            } else if (this.is.isPresent()){
-                logger.debug("Loading ontology from input stream");
-                owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument((new StreamDocumentSource(this.is.get())),loaderConfig);
-                logger.info("Loaded version {} of ontology {}",
-                        owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
-                        owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
-            }
-            else {
-                owlOntology = owlOntologyManager.createOntology();
-            }
-        } catch (OWLOntologyCreationException e) {
-            e.printStackTrace();
-        }
+        loadOntology(this.iri, this.is);
 
 //            If there's a connection string, then we need to return a database Ontology
 //        if (connectionString.isPresent() && connectionString.get().contains("oracle")&&owlOntology!=null) {
@@ -154,24 +123,62 @@ public class OntologyBuilder {
 //                    password.orElse("")
 //            );
 //        }
-       if (connectionString.isPresent() && connectionString.get().contains("http")) {
-            logger.info("Connecting to remote GraphDB instance {} at: {}", this.ontologyName.orElse(""), this.connectionString.get());
-            return new GraphDBOntology(
-                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
-                    connectionString.get(),username.orElse(""), password.orElse(""), owlOntology,
-                    pm.orElse(createDefaultPrefixManager())
-            );
-        } else {
-            logger.info("Connect to embedded GraphDB instance {}", this.ontologyName.orElse(""));
-            return new GraphDBOntology(
-                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
-                    null, "", "", owlOntology,
-                    pm.orElse(createDefaultPrefixManager())
-            );
-        }
+//       if (connectionString.isPresent() && connectionString.get().contains("http")) {
+//            logger.info("Connecting to remote GraphDB instance {} at: {}", this.ontologyName.orElse(""), this.connectionString.get());
+//            return new GraphDBOntology(
+//                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
+//                    connectionString.get(),username.orElse(""), password.orElse(""), owlOntology,
+//                    pm.orElse(createDefaultPrefixManager())
+//            );
+//        } else {
+//            logger.info("Connect to embedded GraphDB instance {}", this.ontologyName.orElse(""));
+//            return new GraphDBOntology(
+//                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
+//                    null, "", "", owlOntology,
+//                    pm.orElse(createDefaultPrefixManager())
+//            );
+//        }
+        return null;
     }
 
-    private OWLOntologyIRIMapper getImportsMapper() {
+    public static OWLOntology loadOntology(Optional<IRI> iri, Optional<InputStream> is) {
+        final OWLOntologyManager owlOntologyManager = OWLManager.createOWLOntologyManager();
+        OWLOntology owlOntology = null;
+
+        // load ontology mapper (favors local files if present)
+        Set<OWLOntologyIRIMapper> mappers = new HashSet<>();
+        OWLOntologyIRIMapper mapper = getImportsMapper();
+        mappers.add(mapper);
+        owlOntologyManager.setIRIMappers(mappers);
+
+        OWLOntologyLoaderConfiguration loaderConfig = new OWLOntologyLoaderConfiguration();
+        loaderConfig.setMissingImportHandlingStrategy(MissingImportHandlingStrategy.THROW_EXCEPTION);
+
+        try {
+            if (iri.isPresent()) {
+                logger.debug("Loading ontology from: {}", iri.get());
+                owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument((new IRIDocumentSource(iri.get())),loaderConfig);
+                logger.info("Loaded version {} of ontology {}",
+                        owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
+                        owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
+            } else if (is.isPresent()){
+                logger.debug("Loading ontology from input stream");
+                owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument((new StreamDocumentSource(is.get())),loaderConfig);
+                logger.info("Loaded version {} of ontology {}",
+                        owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
+                        owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
+            }
+            else {
+                owlOntology = owlOntologyManager.createOntology();
+            }
+        } catch (OWLOntologyCreationException e) {
+            e.printStackTrace();
+        }
+
+        return owlOntology;
+    }
+
+    private static OWLOntologyIRIMapper getImportsMapper() {
         OWLOntologyIRIMapper iriMapper = new OWLOntologyIRIMapper() {
             private Config importsConfig = config.getConfig("trestle.ontology.imports");
             private String importsDirPath = importsConfig.getString("importsDirectory");
@@ -243,7 +250,7 @@ public class OntologyBuilder {
         return iri.getShortForm();
     }
 
-    private DefaultPrefixManager createDefaultPrefixManager() {
+    public static DefaultPrefixManager createDefaultPrefixManager() {
         DefaultPrefixManager pm = new DefaultPrefixManager();
         pm.setDefaultPrefix(TRESTLE_PREFIX);
         pm.setPrefix("rdf:", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");

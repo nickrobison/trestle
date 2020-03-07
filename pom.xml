@@ -20,7 +20,9 @@
         <module>trestle-annotations</module>
         <module>trestle-datasets</module>
         <module>trestle-tools</module>
-<!--        <module>trestle-oracle</module>-->
+        <module>trestle-graphdb</module>
+        <module>trestle-ontology-testing</module>
+        <!--        <module>trestle-oracle</module>-->
     </modules>
     <packaging>pom</packaging>
 
@@ -32,7 +34,7 @@
         <owl.version>5.1.4</owl.version>
         <jena.version>3.1.0</jena.version>
         <!--This needs to be locked to the version provided by GraphDB-->
-        <rdf4j.version>2.2.4</rdf4j.version>
+        <rdf4j.version>3.0.1</rdf4j.version>
         <slf4j.version>1.7.25</slf4j.version>
         <junit.jupiter.version>5.0.3</junit.jupiter.version>
         <junit.platform.version>1.0.3</junit.platform.version>
@@ -81,17 +83,6 @@
                 <groupId>com.google.inject</groupId>
                 <artifactId>guice</artifactId>
                 <version>4.1.0</version>
-            </dependency>
-            <dependency>
-                <groupId>com.esri</groupId>
-                <artifactId>Shapefile</artifactId>
-                <version>1.4.2-SNAPSHOT</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.apache.hadoop</groupId>
-                        <artifactId>hadoop-core</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.vividsolutions</groupId>
@@ -180,6 +171,17 @@
                 <groupId>net.sourceforge.owlapi</groupId>
                 <artifactId>owlapi-apibinding</artifactId>
                 <version>${owl.version}</version>
+                <exclusions>
+                    <!--                I'm not sure why the jsonld packages aren't being found correctly, but we're not using them, so out they go-->
+                    <exclusion>
+                        <groupId>org.eclipse.rdf4j</groupId>
+                        <artifactId>rdf4j-rio-jsonld</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.github.jsonld-java</groupId>
+                        <artifactId>jsonld-java</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>net.sourceforge.owlapi</groupId>
@@ -436,6 +438,10 @@
             <id>osgeo</id>
             <name>Open Source Geospatial Foundation Repository</name>
             <url>http://download.osgeo.org/webdav/geotools/</url>
+        </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
         </repository>
     </repositories>
     <profiles>

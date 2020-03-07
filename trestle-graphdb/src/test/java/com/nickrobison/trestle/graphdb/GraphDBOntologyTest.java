@@ -1,6 +1,7 @@
-package com.nickrobison.trestle.ontology;
+package com.nickrobison.trestle.graphdb;
 
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.testing.OntologyTest;
 import com.typesafe.config.Config;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,8 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import java.util.Optional;
 import java.util.Set;
 
+import static com.nickrobison.trestle.ontology.OntologyBuilder.createDefaultPrefixManager;
+import static com.nickrobison.trestle.ontology.OntologyBuilder.loadOntology;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -18,19 +21,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Tag("integration")
 @Tag("GraphDB")
 public class GraphDBOntologyTest extends OntologyTest {
+
     @Override
-    void setupOntology() throws OWLOntologyCreationException {
-        final Config localConf = config.getConfig("trestle.ontology.graphdb");
-        ontology = new OntologyBuilder()
-                .fromInputStream(inputStream)
-                .withDBConnection(localConf.getString("connectionString"), localConf.getString("username"), localConf.getString("password"))
-                .name("trestle")
-                .build();
-        ontology.initializeOntology();
+    protected void setupOntology() {
+        final Config localConf = config.getConfig("trestle.graphdb");
+        ontology = new GraphDBOntology(
+                "trestle",
+                localConf.getString("connectionString"), localConf.getString("username"), localConf.getString("password"),
+                loadOntology(Optional.empty(), Optional.of(inputStream)),
+                createDefaultPrefixManager());
+
+
+                ontology.initializeOntology();
     }
 
     @Override
-    void shutdownOntology() {
+    protected void shutdownOntology() {
         ontology.close(true);
     }
 

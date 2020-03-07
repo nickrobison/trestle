@@ -1,6 +1,8 @@
-package com.nickrobison.trestle.ontology;
+package com.nickrobison.trestle.graphdb;
 
+import com.nickrobison.trestle.ontology.SesameOntology;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions;
 import com.ontotext.trree.config.OWLIMSailSchema;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -12,6 +14,7 @@ import org.eclipse.rdf4j.model.impl.TreeModel;
 import org.eclipse.rdf4j.model.util.Models;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
+import org.eclipse.rdf4j.model.vocabulary.SESAME;
 import org.eclipse.rdf4j.query.QueryLanguage;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
@@ -72,7 +75,7 @@ public class GraphDBOntology extends SesameOntology {
             repositoryManager = RemoteRepositoryManager.getInstance(connectionString, username, password);
         }
 
-        repositoryManager.initialize();
+        repositoryManager.init();
         final Repository repository = repositoryManager.getRepository(ontologyName);
 //        If the repository doesn't exist, create it
         if (repository == null) {
@@ -110,14 +113,14 @@ public class GraphDBOntology extends SesameOntology {
         }
 
         final Resource repositoryNode = Models.subject(graph.filter(null, RDF.TYPE, RepositoryConfigSchema.REPOSITORY)).orElse(null);
-        graph.add(repositoryNode, RepositoryConfigSchema.REPOSITORYID, vf.createLiteral(ontologyName));
-        graph.add(repositoryNode, RDFS.LABEL, vf.createLiteral(String.format("Trestle Ontology: %s", ontologyName)));
+        graph.add(repositoryNode, RepositoryConfigSchema.REPOSITORYID, SesameOntology.vf.createLiteral(ontologyName));
+        graph.add(repositoryNode, RDFS.LABEL, SesameOntology.vf.createLiteral(String.format("Trestle Ontology: %s", ontologyName)));
 
 //        Manually set some parameters
         final Resource configNode = (Resource) Models.object(graph.filter(null, SailRepositorySchema.SAILIMPL, null)).orElse(null);
 //        Set reasoner profile
-        final org.eclipse.rdf4j.model.IRI reasonerKey = vf.createIRI(OWLIMSailSchema.NAMESPACE, "ruleset");
-        final Literal reasonerValue = vf.createLiteral(config.getString("ruleset"));
+        final org.eclipse.rdf4j.model.IRI reasonerKey = SesameOntology.vf.createIRI(OWLIMSailSchema.NAMESPACE, "ruleset");
+        final Literal reasonerValue = SesameOntology.vf.createLiteral(config.getString("ruleset"));
         graph.remove(configNode, reasonerKey, null);
         graph.add(configNode, reasonerKey, reasonerValue);
 
@@ -159,11 +162,11 @@ public class GraphDBOntology extends SesameOntology {
         logger.info("Removing all statements from repository");
 
         this.adminConnection.begin();
-        this.adminConnection.remove(WILDCARD, WILDCARD, WILDCARD);
+        this.adminConnection.remove(SESAME.WILDCARD, SESAME.WILDCARD, SESAME.WILDCARD);
         this.adminConnection.commit();
         this.adminConnection.begin();
         try {
-            this.adminConnection.add(ontologytoIS(this.ontology), "urn:base", RDFFormat.RDFXML);
+            this.adminConnection.add(SharedOntologyFunctions.ontologytoIS(this.ontology), "urn:base", RDFFormat.RDFXML);
         } catch (IOException | OWLOntologyStorageException e) {
             logger.error("Cannot load ontology", e);
             throw new RuntimeException("Cannot load ontology", e);

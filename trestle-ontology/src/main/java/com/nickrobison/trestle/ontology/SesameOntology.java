@@ -61,7 +61,7 @@ public abstract class SesameOntology extends TransactingOntology {
     protected ThreadLocal<@Nullable RepositoryConnection> tc = ThreadLocal.withInitial(() -> null);
 
 
-    SesameOntology(String ontologyName, Repository repository, OWLOntology ontology, DefaultPrefixManager pm) {
+    protected SesameOntology(String ontologyName, Repository repository, OWLOntology ontology, DefaultPrefixManager pm) {
         super();
         this.ontologyName = ontologyName;
         this.repository = repository;
@@ -510,7 +510,7 @@ public abstract class SesameOntology extends TransactingOntology {
         return getFullIRI(owlNamedObject).toString();
     }
 
-    TrestleResultSet buildResultSet(TupleQueryResult resultSet) {
+    protected TrestleResultSet buildResultSet(TupleQueryResult resultSet) {
         final TrestleResultSet trestleResultSet = new TrestleResultSet(0, resultSet.getBindingNames());
         while (resultSet.hasNext()) {
             final BindingSet next = resultSet.next();
@@ -544,7 +544,7 @@ public abstract class SesameOntology extends TransactingOntology {
      *
      * @return - {@link RepositoryConnection} associated with the given transaction
      */
-    RepositoryConnection getThreadConnection() {
+    protected RepositoryConnection getThreadConnection() {
         @Nullable final RepositoryConnection repositoryConnection = this.tc.get();
         if (repositoryConnection == null) {
             throw new IllegalStateException("Thread has null repository connection, did a transaction not get opened?");
