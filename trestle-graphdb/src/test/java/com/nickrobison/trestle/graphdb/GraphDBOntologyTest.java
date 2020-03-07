@@ -2,6 +2,7 @@ package com.nickrobison.trestle.graphdb;
 
 import com.nickrobison.trestle.ontology.OntologyBuilder;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.testing.OntologyTest;
 import com.typesafe.config.Config;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -19,9 +20,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Tag("integration")
 @Tag("GraphDB")
 public class GraphDBOntologyTest extends OntologyTest {
+
     @Override
-    void setupOntology() throws OWLOntologyCreationException {
-        final Config localConf = config.getConfig("trestle.ontology.graphdb");
+    protected void setupOntology() throws OWLOntologyCreationException {
+        final Config localConf = config.getConfig("trestle.graphdb");
         ontology = new OntologyBuilder()
                 .fromInputStream(inputStream)
                 .withDBConnection(localConf.getString("connectionString"), localConf.getString("username"), localConf.getString("password"))
@@ -31,7 +33,7 @@ public class GraphDBOntologyTest extends OntologyTest {
     }
 
     @Override
-    void shutdownOntology() {
+    protected void shutdownOntology() {
         ontology.close(true);
     }
 

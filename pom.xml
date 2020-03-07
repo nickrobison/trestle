@@ -21,6 +21,7 @@
         <module>trestle-datasets</module>
         <module>trestle-tools</module>
         <module>trestle-graphdb</module>
+        <module>trestle-ontology-testing</module>
         <!--        <module>trestle-oracle</module>-->
     </modules>
     <packaging>pom</packaging>
