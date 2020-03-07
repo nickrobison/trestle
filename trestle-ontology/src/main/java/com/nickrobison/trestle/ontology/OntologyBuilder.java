@@ -153,43 +153,6 @@ public class OntologyBuilder {
                     username.orElse(""),
                     password.orElse("")
             );
-//        } else if (connectionString.isPresent() && connectionString.get().contains("postgresql")) {
-//            logger.info("Connecting to Postgres database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
-//            return Optional.of(new SesameOntology(
-//                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
-//                    owlOntology,
-//                    pm.orElse(createDefaultPrefixManager()),
-//                    connectionString.get(),
-//                    username.orElse(""),
-//                    password.orElse("")
-//            ));
-        } else if (connectionString.isPresent() && connectionString.get().contains("virtuoso")) {
-            logger.info("Connecting to Virtuoso database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
-            return new VirtuosoOntology(
-                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
-                    owlOntology,
-                    pm.orElse(createDefaultPrefixManager()),
-                    connectionString.get(),
-                    username.orElse(""),
-                    password.orElse("")
-            );
-//        } else if (connectionString.isPresent() && connectionString.get().contains("snarl")) {
-//            logger.info("Connecting to Stardog database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
-//            return Optional.of(new StardogOntology(
-//                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
-//                    owlOntology,
-//                    pm.orElse(createDefaultPrefixManager()),
-//                    connectionString.get(),
-//                    username.orElse(""),
-//                    password.orElse("")
-//            ));
-        } else if (connectionString.isPresent() && connectionString.get().contains("tdb")) {
-            logger.info("Connecting to Local TDB {}", this.ontologyName.orElse(""));
-            return new LocalOntology(
-                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
-                    owlOntology,
-                    pm.orElse(createDefaultPrefixManager())
-            );
         } else if (connectionString.isPresent() && connectionString.get().contains("http")) {
             logger.info("Connecting to remote GraphDB instance {} at: {}", this.ontologyName.orElse(""), this.connectionString.get());
             return new GraphDBOntology(
