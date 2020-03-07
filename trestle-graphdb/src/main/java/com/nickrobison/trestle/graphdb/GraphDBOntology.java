@@ -36,6 +36,7 @@ import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,7 +60,6 @@ public class GraphDBOntology extends SesameOntology {
     //    private static RepositoryConnection connection;
 //    private static Repository repository;
     private static final Config config = ConfigFactory.load().getConfig("trestle.ontology.graphdb");
-
 
     GraphDBOntology(String ontologyName, @Nullable String connectionString, String username, String password, OWLOntology ont, DefaultPrefixManager pm) {
         super(ontologyName, constructRepository(ontologyName, connectionString, username, password), ont, pm);
