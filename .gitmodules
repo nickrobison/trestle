@@ -2,3 +2,6 @@
 	path = ontology
 	url = ssh://git@bitbucket.org/nickrobison/trestle-ontology.git
 	branch = develop
+[submodule "trestle-ontology/src/main/resources/ontology"]
+	path = trestle-ontology/src/main/resources/ontology
+	url = ../trestle-ontology
