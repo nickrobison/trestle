@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.ontology;
+package com.nickrobison.trestle.oracle;
 
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import org.apache.jena.query.ParameterizedSparqlString;
@@ -23,7 +23,7 @@ public class OracleQueryBuilder extends QueryBuilder {
         ps.setNsPrefix("ORACLE_SEM_HT_NS", "http://oracle.com/semtech#leading(?wkt)");
         ps.append("FILTER(((!bound(?tStart) || ?tStart <= ?startVariable^^xsd:dateTime) && (!bound(?tEnd) || ?tEnd > ?endVariable^^xsd:dateTime)) && ogcf:sfIntersects(?wkt, ?wktString^^ogc:wktLiteral)) }");
 
-        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00));
+        ps.setLiteral("wktString", QueryBuilder.simplifyWkt(wktValue, 0.00));
         ps.setLiteral("startVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         ps.setLiteral("endVariable", atTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         ps.setLiteral("dbAt", dbAtTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
@@ -42,6 +42,6 @@ public class OracleQueryBuilder extends QueryBuilder {
         ps.setLiteral("dbAt", dbAt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
 //        We need to simplify the WKT to get under the 4000 character SQL limit.
-        ps.setLiteral("wktString", simplifyWkt(wktValue, 0.00));
+        ps.setLiteral("wktString", QueryBuilder.simplifyWkt(wktValue, 0.00));
     }
 }

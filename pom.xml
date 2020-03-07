@@ -20,7 +20,7 @@
         <module>trestle-annotations</module>
         <module>trestle-datasets</module>
         <module>trestle-tools</module>
-        <module>trestle-oracle</module>
+<!--        <module>trestle-oracle</module>-->
     </modules>
     <packaging>pom</packaging>
 

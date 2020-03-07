@@ -1,5 +1,6 @@
-package com.nickrobison.trestle.ontology;
+package com.nickrobison.trestle.oracle;
 
+import com.nickrobison.trestle.ontology.JenaOntology;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;

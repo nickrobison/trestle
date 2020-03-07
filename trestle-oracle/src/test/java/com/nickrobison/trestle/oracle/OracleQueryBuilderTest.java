@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.ontology;
+package com.nickrobison.trestle.oracle;
 
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
@@ -72,13 +72,13 @@ public class OracleQueryBuilderTest {
         final OWLClass gaulClass = df.getOWLClass(IRI.create("trestle:", "GAUL"));
         final String wktString = "Point(39.5398864750001 -12.0671005249999)";
 
-        assertAll(() -> {
+        Assertions.assertAll(() -> {
             final String generatedOracleTS = qb.buildTemporalSpatialIntersection(gaulClass, wktString, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
-            assertEquals(oracleTSString, generatedOracleTS, "Oracle TS should be equal");
+            Assertions.assertEquals(oracleTSString, generatedOracleTS, "Oracle TS should be equal");
         },
                 () -> {
                     final String generatedOracleTSCollectionString = qb.buildTemporalSpatialCollectionIntersection(wktString, 0.0, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
-                    assertEquals(tsOracleCollectionString, generatedOracleTSCollectionString, "TS Collection intersection be equal");
+                    Assertions.assertEquals(tsOracleCollectionString, generatedOracleTSCollectionString, "TS Collection intersection be equal");
                 });
     }
 }

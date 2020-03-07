@@ -142,18 +142,19 @@ public class OntologyBuilder {
         }
 
 //            If there's a connection string, then we need to return a database Ontology
-        if (connectionString.isPresent() && connectionString.get().contains("oracle")&&owlOntology!=null) {
-            logger.info("Connecting to Oracle database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
-            return new OracleOntology(
-                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
-                    owlOntology,
-                    pm.orElse(createDefaultPrefixManager()),
-//                    classify(owlOntology, new ConsoleProgressMonitor()),
-                    connectionString.get(),
-                    username.orElse(""),
-                    password.orElse("")
-            );
-        } else if (connectionString.isPresent() && connectionString.get().contains("http")) {
+//        if (connectionString.isPresent() && connectionString.get().contains("oracle")&&owlOntology!=null) {
+//            logger.info("Connecting to Oracle database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
+//            return new OracleOntology(
+//                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
+//                    owlOntology,
+//                    pm.orElse(createDefaultPrefixManager()),
+////                    classify(owlOntology, new ConsoleProgressMonitor()),
+//                    connectionString.get(),
+//                    username.orElse(""),
+//                    password.orElse("")
+//            );
+//        }
+       if (connectionString.isPresent() && connectionString.get().contains("http")) {
             logger.info("Connecting to remote GraphDB instance {} at: {}", this.ontologyName.orElse(""), this.connectionString.get());
             return new GraphDBOntology(
                     this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
