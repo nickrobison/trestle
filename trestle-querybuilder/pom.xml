@@ -24,13 +24,6 @@
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
             <artifactId>owlapi-apibinding</artifactId>
-            <exclusions>
-                <!--                I'm not sure why the jsonld packages aren't being found correctly, but we're not using them, so out they go-->
-                <exclusion>
-                    <artifactId>jsonld-java</artifactId>
-                    <groupId>com.github.jsonld-java</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.jena</groupId>
