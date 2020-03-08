@@ -72,6 +72,10 @@
                     <groupId>com.github.jsonld-java</groupId>
                     <artifactId>jsonld-java</artifactId>
                 </exclusion>
+                <exclusion>
+                    <artifactId>logback-classic</artifactId>
+                    <groupId>ch.qos.logback</groupId>
+                </exclusion>
             </exclusions>
         </dependency>
     </dependencies>
