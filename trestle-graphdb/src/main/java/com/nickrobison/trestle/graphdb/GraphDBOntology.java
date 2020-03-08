@@ -41,9 +41,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.MissingResourceException;
 
-import static com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions.ontologytoIS;
-import static org.eclipse.rdf4j.model.vocabulary.SESAME.WILDCARD;
-
 /**
  * Created by nrobison on 1/10/17.
  */
@@ -59,7 +56,6 @@ public class GraphDBOntology extends SesameOntology {
     //    private static RepositoryConnection connection;
 //    private static Repository repository;
     private static final Config config = ConfigFactory.load().getConfig("trestle.ontology.graphdb");
-
 
     GraphDBOntology(String ontologyName, @Nullable String connectionString, String username, String password, OWLOntology ont, DefaultPrefixManager pm) {
         super(ontologyName, constructRepository(ontologyName, connectionString, username, password), ont, pm);

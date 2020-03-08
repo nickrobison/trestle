@@ -2,11 +2,12 @@ package com.nickrobison.trestle.reasoner;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
-import com.nickrobison.trestle.ontology.OntologyBuilder;
-import com.nickrobison.trestle.ontology.TrestleOntologyModule;
+import com.nickrobison.trestle.ontology.ReasonerPrefix;
+import com.nickrobison.trestle.ontology.annotations.OntologyName;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
@@ -19,15 +20,14 @@ import com.nickrobison.trestle.reasoner.engines.exporter.ITrestleDataExporter;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
-import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
 import com.nickrobison.trestle.reasoner.engines.temporal.TemporalEngine;
-import com.nickrobison.trestle.reasoner.exceptions.InvalidOntologyName;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
@@ -54,11 +54,7 @@ import javax.measure.quantity.Length;
 import javax.measure.unit.Unit;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
-import java.nio.file.Files;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.Temporal;
@@ -84,15 +80,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleReasonerImpl.class);
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
-    public static final String DEFAULTNAME = "trestle";
-    public static final String ONTOLOGY_RESOURCE_NAME = "trestle.owl";
     public static final String BLANK_TEMPORAL_ID = "blank";
 
-    private final String REASONER_PREFIX;
+    private final String reasonerPrefix;
     private final ITrestleOntology ontology;
     //    Seems gross?
     private final QueryBuilder qb;
-    private final QueryBuilder.Dialect spatialDalect;
+    private final QueryBuilder.Dialect spatialDialect;
     private final TrestleParser trestleParser;
     private final ITrestleObjectWriter objectWriter;
     private final ITrestleObjectReader objectReader;
@@ -112,68 +106,16 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final ExecutorService searchThreadPool;
 
     @SuppressWarnings("dereference.of.nullable")
-    TrestleReasonerImpl(TrestleBuilder builder) throws OWLOntologyCreationException {
+    TrestleReasonerImpl(TrestleBuilder builder) {
 
 //        Read in the trestleConfig file and validate it
         trestleConfig = ConfigFactory.load().getConfig("trestle");
         ValidateConfig(trestleConfig);
 
+        final Injector injector = Guice.createInjector(new TrestleModule(builder, builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled"), this.trestleConfig.getBoolean("events.enabled")));
         //        Setup the reasoner prefix
-//        If not specified, use the default Trestle prefix
-        REASONER_PREFIX = builder.reasonerPrefix.orElse(TRESTLE_PREFIX);
-        logger.info("Setting up reasoner with prefix {}", REASONER_PREFIX);
-
-//        If we have a manually specified ontology, use that.
-        final URL ontologyResource;
-        final InputStream ontologyIS;
-        if (builder.ontologyIRI.isPresent()) {
-            final IRI ontologyIRI = builder.ontologyIRI.get();
-            try {
-                ontologyResource = ontologyIRI.toURI().toURL();
-                ontologyIS = Files.newInputStream(new File(ontologyIRI.toURI()).toPath());
-            } catch (MalformedURLException e) {
-                logger.error("Unable to parse IRI to URI", ontologyIRI, e);
-                throw new IllegalArgumentException(String.format("Unable to parse IRI %s to URI", ontologyIRI), e);
-            } catch (IOException e) {
-                logger.error("Cannot find ontology file {}", ontologyIRI, e);
-                throw new MissingResourceException("File not found", this.getClass().getName(), ontologyIRI.getIRIString());
-            }
-        } else {
-//            Load with the class loader
-            ontologyResource = TrestleReasoner.class.getClassLoader().getResource(ONTOLOGY_RESOURCE_NAME);
-            ontologyIS = TrestleReasoner.class.getClassLoader().getResourceAsStream(ONTOLOGY_RESOURCE_NAME);
-        }
-
-        if (ontologyIS == null) {
-            logger.error("Cannot load trestle ontology from resources");
-            throw new MissingResourceException("Cannot load ontology file", this.getClass().getName(), ONTOLOGY_RESOURCE_NAME);
-        }
-        try {
-            final int available = ontologyIS.available();
-            if (available == 0) {
-                throw new MissingResourceException("Ontology InputStream does not seem to be available", this.getClass().getName(), ontologyIS.toString());
-            }
-        } catch (IOException e) {
-            throw new MissingResourceException("Ontology InputStream does not seem to be available", this.getClass().getName(), ontologyIS.toString());
-        }
-        logger.info("Loading ontology from {}", ontologyResource == null ? "Null resource" : ontologyResource);
-
-        //        Setup the ontology builder
-        logger.info("Connecting to ontology {} at {}", builder.ontologyName.orElse(DEFAULTNAME), builder.connectionString.orElse("localhost"));
-        logger.debug("IS: {}", ontologyIS);
-        logger.debug("Resource: {}", ontologyResource == null ? "Null resource" : ontologyResource);
-        OntologyBuilder ontologyBuilder = new OntologyBuilder()
-//                .fromIRI(IRI.create(ontologyResource))
-                .fromInputStream(ontologyIS)
-                .withPrefixManager(builder.pm.getDefaultPrefixManager())
-                .name(builder.ontologyName.orElse(DEFAULTNAME));
-        if (builder.connectionString.isPresent()) {
-            ontologyBuilder = ontologyBuilder.withDBConnection(builder.connectionString.get(),
-                    builder.username,
-                    builder.password);
-        }
-
-        final Injector injector = Guice.createInjector(new TrestleOntologyModule(ontologyBuilder, REASONER_PREFIX), new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled"), this.trestleConfig.getBoolean("events.enabled")));
+        reasonerPrefix = injector.getInstance(Key.get(String.class, ReasonerPrefix.class));
+        logger.info("Setting up reasoner with prefix {}", reasonerPrefix);
 
 //        Setup metrics engine
         metrician = injector.getInstance(Metrician.class);
@@ -185,14 +127,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         objectThreadPool = factory.create("object-pool");
         searchThreadPool = factory.create("search-pool");
 
-//        Validate ontology name
-        try {
-            validateOntologyName(builder.ontologyName.orElse(DEFAULTNAME));
-        } catch (InvalidOntologyName e) {
-            logger.error("{} is an invalid ontology name", builder.ontologyName.orElse(DEFAULTNAME), e);
-            throw new IllegalArgumentException("invalid ontology name", e);
-        }
-
         ontology = injector.getInstance(ITrestleOntology.class);
         logger.debug("Ontology connected");
         if (builder.initialize) {
@@ -203,7 +137,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             logger.info("Updating inference model");
             ontology.runInference();
         }
-        logger.info("Ontology {} ready", builder.ontologyName.orElse(DEFAULTNAME));
+        logger.info("Ontology {} ready", injector.getInstance(Key.get(String.class, OntologyName.class)));
 
 //        Setup the Parser
         trestleParser = injector.getInstance(TrestleParser.class);
@@ -237,12 +171,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
         trestleCache = injector.getInstance(TrestleCache.class);
 
-////        Setup the query builder
+//        Setup the query builder
         this.qb = injector.getInstance(QueryBuilder.class);
-        this.spatialDalect = this.qb.getDialect();
-        logger.debug("Using SPARQL dialect {}", spatialDalect);
+        this.spatialDialect = this.qb.getDialect();
+        logger.debug("Using SPARQL dialect {}", spatialDialect);
 
-        logger.info("Trestle Reasoner ready");
+        logger.info("Trestle Reasoner is ready");
     }
 
     @Override
@@ -333,7 +267,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public Map<String, String> getReasonerPrefixes() {
         Map<String, String> prefixes = new HashMap<>();
-        prefixes.put(":", this.REASONER_PREFIX);
+        prefixes.put(":", this.reasonerPrefix);
         prefixes.putAll(this.getUnderlyingOntology().getUnderlyingPrefixManager().getPrefixName2PrefixMap());
         return prefixes;
     }
@@ -462,7 +396,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, String individual) {
-        return getIndividualEvents(clazz, df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual)));
+        return getIndividualEvents(clazz, df.getOWLNamedIndividual(parseStringToIRI(reasonerPrefix, individual)));
     }
 
     @Override
@@ -472,7 +406,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public void addTrestleObjectEvent(TrestleEventType type, String individual, Temporal eventTemporal) {
-        addTrestleObjectEvent(type, df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual)), eventTemporal);
+        addTrestleObjectEvent(type, df.getOWLNamedIndividual(parseStringToIRI(reasonerPrefix, individual)), eventTemporal);
     }
 
     @Override
@@ -750,7 +684,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     public List<String> searchForIndividual(String individualIRI, @Nullable String datasetClass, @Nullable Integer limit) {
         final OWLClass owlClass;
         if (datasetClass != null) {
-            owlClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, datasetClass));
+            owlClass = df.getOWLClass(parseStringToIRI(reasonerPrefix, datasetClass));
         } else {
             owlClass = null;
         }
@@ -817,7 +751,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public TrestleIndividual getTrestleIndividual(String individualIRI) {
-        return getTrestleIndividual(df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individualIRI)));
+        return getTrestleIndividual(df.getOWLNamedIndividual(parseStringToIRI(reasonerPrefix, individualIRI)));
     }
 
     private TrestleIndividual getTrestleIndividual(OWLNamedIndividual individual) {
@@ -856,7 +790,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public Class<?> getDatasetClass(String owlClassString) throws UnregisteredClassException {
-        final OWLClass owlClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, owlClassString));
+        final OWLClass owlClass = df.getOWLClass(parseStringToIRI(reasonerPrefix, owlClassString));
         return this.trestleParser.classRegistry.lookupClass(owlClass);
     }
 
@@ -864,11 +798,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     public List<String> getDatasetProperties(Class<?> clazz) {
         final List<OWLDataProperty> owlDataProperties = this.trestleParser.classBuilder.getPropertyMembers(clazz)
                 .orElseThrow(() -> new IllegalStateException(String.format("Cannot get properties for %s", this.trestleParser.classParser.getObjectClass(clazz))));
-                return owlDataProperties
-                        .stream()
-                        .map(OWLEntity::toStringID)
-                        .sorted()
-                        .collect(Collectors.toList());
+        return owlDataProperties
+                .stream()
+                .map(OWLEntity::toStringID)
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -879,19 +813,5 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, @Nullable Temporal validAt, @Nullable Temporal databaseAt, ITrestleExporter.DataType exportType) throws IOException {
         return this.dataExporter.exportDataSetObjects(inputClass, objectID, validAt, databaseAt, exportType);
-    }
-
-    /**
-     * Validates the ontology name to make sure it doesn't include unsupported characters
-     *
-     * @param ontologyName - String to validate
-     * @throws InvalidOntologyName - Exception thrown if the name is invalid
-     */
-    private static void validateOntologyName(String ontologyName) throws InvalidOntologyName {
-        if (ontologyName.contains("-")) {
-            throw new InvalidOntologyName("-");
-        } else if (ontologyName.length() > 90) {
-            throw new InvalidOntologyName(ontologyName.length());
-        }
     }
 }

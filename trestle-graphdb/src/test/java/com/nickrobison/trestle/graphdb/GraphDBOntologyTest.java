@@ -1,8 +1,13 @@
 package com.nickrobison.trestle.graphdb;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
+import com.google.inject.util.Types;
+import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.testing.OntologyTest;
-import com.typesafe.config.Config;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.*;
@@ -11,8 +16,6 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import java.util.Optional;
 import java.util.Set;
 
-import static com.nickrobison.trestle.ontology.OntologyBuilder.createDefaultPrefixManager;
-import static com.nickrobison.trestle.ontology.OntologyBuilder.loadOntology;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -24,15 +27,23 @@ public class GraphDBOntologyTest extends OntologyTest {
 
     @Override
     protected void setupOntology() {
-        final Config localConf = config.getConfig("trestle.graphdb");
-        ontology = new GraphDBOntology(
-                "trestle",
-                localConf.getString("connectionString"), localConf.getString("username"), localConf.getString("password"),
-                loadOntology(Optional.empty(), Optional.of(inputStream)),
-                createDefaultPrefixManager());
+        final Injector injector = Guice.createInjector(new TestModule());
+        ontology = getOntology(injector);
+        ontology.initializeOntology();
+    }
 
+    @SuppressWarnings("unchecked")
+    public static <T> TypeLiteral<Set<T>> setOf(Class<T> type) {
+        return (TypeLiteral<Set<T>>)TypeLiteral.get(Types.setOf(type));
+    }
 
-                ontology.initializeOntology();
+    private ITrestleOntology getOntology(Injector injector) {
+        final Set<ITrestleOntology> ontologies = injector.getInstance(Key.get(setOf(ITrestleOntology.class)));
+        return ontologies
+                .stream()
+                .filter(o -> o instanceof GraphDBOntology)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Cannot find underlying ontology"));
     }
 
     @Override
@@ -50,7 +61,7 @@ public class GraphDBOntologyTest extends OntologyTest {
         long negativeLong = -4321;
         long negativeBigLong = Long.MIN_VALUE;
         long bigLong = Long.MAX_VALUE;
-        Double bigFloat = 4321.43;
+        @SuppressWarnings("WrapperTypeMayBePrimitive") Double bigFloat = 4321.43;
 
         final OWLNamedIndividual long_test = df.getOWLNamedIndividual(IRI.create("trestle:", "long_test"));
         OWLDataProperty aLong = df.getOWLDataProperty(IRI.create("trestle:", "long_small"));

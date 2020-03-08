@@ -16,6 +16,12 @@
             <artifactId>trestle-ontology</artifactId>
             <version>0.9.0-SNAPSHOT</version>
             <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>rdf4j-runtime</artifactId>
+                    <groupId>org.eclipse.rdf4j</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -45,6 +51,10 @@
                 </exclusion>
                 <exclusion>
                     <artifactId>logback-classic</artifactId>
+                    <groupId>ch.qos.logback</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>logback-core</artifactId>
                     <groupId>ch.qos.logback</groupId>
                 </exclusion>
                 <!--This feels really bad, but seems to work, we bundle a newer version of Janino in the Reasoner package-->
