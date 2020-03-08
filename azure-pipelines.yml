@@ -3,7 +3,7 @@ pool:
 
 variables:
   MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
-  MAVEN_OPTS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+  YARN_CACHE_FOLDER: $(Pipeline.Workspace)/.yarn
 
 resources:
   containers:
@@ -13,7 +13,7 @@ resources:
       ports:
         - 7200:7200
     - container: chrome
-      image: elenium/standalone-chrome:3.141.59-zirconium
+      image: selenium/standalone-chrome:3.141.59-zirconium
       ports:
         - 4444
         - 4444
@@ -40,10 +40,18 @@ steps:
         maven
       path: $(MAVEN_CACHE_FOLDER)
     displayName: Cache Maven local repo
+  - task: Cache@2
+    inputs:
+      key: 'yarn | "$(Agent.OS)" | trestle-server/yarn.lock'
+      restoreKeys: |
+        yarn | "$(Agent.OS)"
+        yarn
+      path: $(YARN_CACHE_FOLDER)
+    displayName: Cache Yarn packages
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'
-      mavenOptions: '-Xmx3072m $(MAVEN_OPTS) -Dmaven.javadoc.skip=true -DskipDocker' # Temporarily disable javadoc building because we're hitting an NPE. Also, skip docker until we can migrate to jib
+      mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER) -Dmaven.javadoc.skip=true -DskipDocker' # Temporarily disable javadoc building because we're hitting an NPE. Also, skip docker until we can migrate to jib
       javaHomeOption: 'JDKVersion'
       jdkVersionOption: '1.11'
       jdkArchitectureOption: 'x64'
