@@ -161,7 +161,7 @@ public class TrestleBuilder {
      * @return - TrestleBuilder
      */
     public TrestleBuilder withName(String name) {
-//            FIXME(nrobison): Oracle seems to throw errors when using '-' in the name, so maybe parse that out?p
+//            FIXME(nrobison): Oracle seems to throw errors when using '-' in the name, so maybe parse that out?
         this.ontologyName = Optional.of(name);
         return this;
     }
@@ -182,11 +182,6 @@ public class TrestleBuilder {
      * @return - new TrestleReasoner
      */
     public TrestleReasoner build() {
-        try {
-            return new TrestleReasonerImpl(this);
-        } catch (OWLOntologyCreationException e) {
-            logger.error("Cannot build trestle", e);
-            throw new RuntimeException("Cannot build trestle", e);
-        }
+        return new TrestleReasonerImpl(this);
     }
 }
