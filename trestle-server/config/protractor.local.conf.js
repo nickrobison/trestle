@@ -3,8 +3,8 @@
  */
 const helper = require("./helpers");
 exports.config = {
-    baseUrl: "http://vbox:8080/workspace/",
-    seleniumAddress: "http://vbox:4444/wd/hub",
+    baseUrl: "http://host.docker.internal:8080/workspace/",
+    seleniumAddress: "http://localhost:4444/wd/hub",
     // directConnect: true,
     capabilities: {
         "browserName": "chrome",
