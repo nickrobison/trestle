@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.server.resources;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.nickrobison.trestle.server.auth.UserCredentials;
 import com.nickrobison.trestle.server.models.User;
 import com.nickrobison.trestle.server.models.UserDAO;
@@ -9,7 +10,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import jwt4j.JWTHandler;
-import org.mindrot.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +23,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 import static javax.ws.rs.core.Response.*;
@@ -63,7 +64,7 @@ public class AuthenticationResource {
         if (userOptional.isPresent()) {
             final User dbUser = userOptional.get();
 //            Validate password
-            if (BCrypt.checkpw(user.getPassword(), dbUser.getPassword())) {
+            if (BCrypt.verifyer().verify(user.getPassword().toCharArray(), dbUser.getPassword().toCharArray()).verified) {
                 logger.info("Logging in {}", name);
                 final String jwtToken = jwtHandler.encode(dbUser);
                 return ok(jwtToken).build();
