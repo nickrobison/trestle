@@ -3,7 +3,7 @@ pool:
 
 variables:
   MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
-  MAVEN_OPTS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+  YARN_CACHE_FOLDER: $(Pipeline.Workspace)/.yarn
 
 resources:
   containers:
@@ -12,13 +12,24 @@ resources:
       image: nickrobison/graphdb:8.2.0-free
       ports:
         - 7200:7200
+    - container: chrome
+      image: selenium/standalone-chrome:3.141.59-zirconium
+      ports:
+        - 4444
+        - 4444
+      volumes:
+        - /dev/shm:/dev/shm
 
 services:
   graphdb: graphdb
+  chrome: chrome
 
 steps:
   - checkout: self
     submodules: true
+  - script: |
+      sudo apt-get install libpng16-16
+    displayName: Install system dependencies
   - task: Docker@2
     displayName: Login for Private Docker Images
     inputs:
@@ -32,13 +43,21 @@ steps:
         maven
       path: $(MAVEN_CACHE_FOLDER)
     displayName: Cache Maven local repo
+  - task: Cache@2
+    inputs:
+      key: 'yarn | "$(Agent.OS)" | trestle-server/yarn.lock'
+      restoreKeys: |
+        yarn | "$(Agent.OS)"
+        yarn
+      path: $(YARN_CACHE_FOLDER)
+    displayName: Cache Yarn packages
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'
-      mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
+      mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER) -Dmaven.javadoc.skip=true -DskipDocker' # Temporarily disable javadoc building because we're hitting an NPE. Also, skip docker until we can migrate to jib
       javaHomeOption: 'JDKVersion'
       jdkVersionOption: '1.11'
       jdkArchitectureOption: 'x64'
       publishJUnitResults: true
       testResultsFiles: '**/TEST-*.xml'
-      goals: 'test -pl trestle-reasoner -am'
+      goals: 'package -pl trestle-server -am'

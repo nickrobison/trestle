@@ -112,9 +112,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@bitbucket.org/nickrobison/trestle.git"
+    "url": "git+ssh://git@github.com/nickrobison/trestle.git"
   },
   "author": "Nick Robison",
   "license": "ISC",
-  "homepage": "https://bitbucket.org/nickrobison/trestle#readme"
+  "homepage": "https://github.com/nickrobison/trestle#readme"
 }

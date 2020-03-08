@@ -49,20 +49,24 @@
             <groupId>org.apache.jena</groupId>
             <artifactId>jena-core</artifactId>
         </dependency>
-                <dependency>
-                    <groupId>org.apache.jena</groupId>
-                    <artifactId>jena-arq</artifactId>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>com.github.jsonld-java</groupId>
-                            <artifactId>jsonld-java</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.jena</groupId>
-                    <artifactId>jena-spatial</artifactId>
-                </dependency>
+        <dependency>
+            <groupId>org.apache.jena</groupId>
+            <artifactId>jena-arq</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.github.jsonld-java</groupId>
+                    <artifactId>jsonld-java</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jena</groupId>
+            <artifactId>jena-spatial</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jena</groupId>
+            <artifactId>jena-tdb</artifactId>
+        </dependency>
         <!--        RDF4j Dependencies-->
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>

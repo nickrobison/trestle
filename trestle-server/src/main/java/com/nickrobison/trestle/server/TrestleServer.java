@@ -93,7 +93,7 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
         //    database migration?
         final ManagedPooledDataSource migrationDataSource = createMigrationDataSource(trestleServerConfiguration, environment);
         try {
-            if (migrationDataSource.getUrl().contains("./")) {
+            if (migrationDataSource.getUrl().contains(".//////")) {
                 logger.warn("Using local H2 file database, cannot perform migration");
             } else {
                 logger.info("Performing Database migration");
