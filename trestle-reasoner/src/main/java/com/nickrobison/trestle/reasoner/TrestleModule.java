@@ -1,15 +1,28 @@
 package com.nickrobison.trestle.reasoner;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.nickrobison.metrician.MetricianModule;
+import com.nickrobison.trestle.graphdb.GraphDBOntology;
+import com.nickrobison.trestle.graphdb.GraphDBOntologyModule;
+import com.nickrobison.trestle.ontology.ITrestleOntology;
+import com.nickrobison.trestle.ontology.ReasonerPrefix;
+import com.nickrobison.trestle.ontology.TrestleOntologyModule;
+import com.nickrobison.trestle.ontology.annotations.OntologyName;
 import com.nickrobison.trestle.reasoner.caching.TrestleCacheModule;
 import com.nickrobison.trestle.reasoner.engines.EngineModule;
 import com.nickrobison.trestle.reasoner.parser.TrestleParserModule;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
+import static com.nickrobison.trestle.reasoner.utils.ConfigValidator.ValidateConfig;
 
 /**
  * Created by nrobison on 4/12/17.
@@ -40,5 +53,34 @@ public class TrestleModule extends AbstractModule {
         install(new MetricianModule(metricsEnabled));
         install(new TrestleCacheModule(cachingEnabled));
         install(new EngineModule(mergeEnabled, eventEnabled));
+
+        // install the ontologies
+        install(new TrestleOntologyModule());
+        install(new GraphDBOntologyModule());
+    }
+
+    @OntologyName
+    @Provides
+    public String ontologyName() {
+        return "trestle";
+    }
+
+    @Provides
+    @ReasonerPrefix
+    public String providePrefix() {
+        return TRESTLE_PREFIX;
+    }
+
+    @Provides
+    Class<? extends ITrestleOntology> provideOntologyClass() {
+        return GraphDBOntology.class;
+    }
+
+    @Provides
+    @Singleton
+    Config provideConfig() {
+        final Config trestleConfig = ConfigFactory.load().getConfig("trestle");
+        ValidateConfig(trestleConfig);
+        return trestleConfig;
     }
 }

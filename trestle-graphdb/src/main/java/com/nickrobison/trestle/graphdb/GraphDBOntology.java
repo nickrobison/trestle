@@ -36,14 +36,10 @@ import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.MissingResourceException;
-
-import static com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions.ontologytoIS;
-import static org.eclipse.rdf4j.model.vocabulary.SESAME.WILDCARD;
 
 /**
  * Created by nrobison on 1/10/17.

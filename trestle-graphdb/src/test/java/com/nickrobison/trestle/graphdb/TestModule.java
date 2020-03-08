@@ -31,7 +31,7 @@ public class TestModule extends AbstractModule {
 
     @Provides
     Config provideConfig() {
-        return ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
+        return ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf")).getConfig("trestle");
     }
 
     @Provides
@@ -46,12 +46,12 @@ public class TestModule extends AbstractModule {
     }
 
     private InputStream provideInputStream(Config config) {
-        final IRI iri = IRI.create(config.getString("trestle.ontology.location"));
+        final IRI iri = IRI.create(config.getString("ontology.location"));
         final InputStream inputStream;
         try {
             if (!iri.isAbsolute()) {
                 final Path cwd = Paths.get("");
-                final Path absPath = Paths.get(cwd.toAbsolutePath().toString(), config.getString("trestle.ontology.location"));
+                final Path absPath = Paths.get(cwd.toAbsolutePath().toString(), config.getString("ontology.location"));
                 inputStream = absPath.toUri().toURL().openConnection().getInputStream();
             } else {
                 inputStream = iri.toURI().toURL().openConnection().getInputStream();

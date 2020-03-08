@@ -85,7 +85,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private static final Logger logger = LoggerFactory.getLogger(TrestleReasonerImpl.class);
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
     public static final String DEFAULTNAME = "trestle";
-    public static final String ONTOLOGY_RESOURCE_NAME = "trestle.owl";
+//    public static final String ONTOLOGY_RESOURCE_NAME = "trestle.owl";
     public static final String BLANK_TEMPORAL_ID = "blank";
 
     private final String REASONER_PREFIX;
@@ -124,56 +124,56 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         logger.info("Setting up reasoner with prefix {}", REASONER_PREFIX);
 
 //        If we have a manually specified ontology, use that.
-        final URL ontologyResource;
-        final InputStream ontologyIS;
-        if (builder.ontologyIRI.isPresent()) {
-            final IRI ontologyIRI = builder.ontologyIRI.get();
-            try {
-                ontologyResource = ontologyIRI.toURI().toURL();
-                ontologyIS = Files.newInputStream(new File(ontologyIRI.toURI()).toPath());
-            } catch (MalformedURLException e) {
-                logger.error("Unable to parse IRI to URI", ontologyIRI, e);
-                throw new IllegalArgumentException(String.format("Unable to parse IRI %s to URI", ontologyIRI), e);
-            } catch (IOException e) {
-                logger.error("Cannot find ontology file {}", ontologyIRI, e);
-                throw new MissingResourceException("File not found", this.getClass().getName(), ontologyIRI.getIRIString());
-            }
-        } else {
-//            Load with the class loader
-            ontologyResource = TrestleReasoner.class.getClassLoader().getResource(ONTOLOGY_RESOURCE_NAME);
-            ontologyIS = TrestleReasoner.class.getClassLoader().getResourceAsStream(ONTOLOGY_RESOURCE_NAME);
-        }
+//        final URL ontologyResource;
+//        final InputStream ontologyIS;
+//        if (builder.ontologyIRI.isPresent()) {
+//            final IRI ontologyIRI = builder.ontologyIRI.get();
+//            try {
+//                ontologyResource = ontologyIRI.toURI().toURL();
+//                ontologyIS = Files.newInputStream(new File(ontologyIRI.toURI()).toPath());
+//            } catch (MalformedURLException e) {
+//                logger.error("Unable to parse IRI to URI", ontologyIRI, e);
+//                throw new IllegalArgumentException(String.format("Unable to parse IRI %s to URI", ontologyIRI), e);
+//            } catch (IOException e) {
+//                logger.error("Cannot find ontology file {}", ontologyIRI, e);
+//                throw new MissingResourceException("File not found", this.getClass().getName(), ontologyIRI.getIRIString());
+//            }
+//        } else {
+////            Load with the class loader
+//            ontologyResource = TrestleReasoner.class.getClassLoader().getResource(ONTOLOGY_RESOURCE_NAME);
+//            ontologyIS = TrestleReasoner.class.getClassLoader().getResourceAsStream(ONTOLOGY_RESOURCE_NAME);
+//        }
+//
+//        if (ontologyIS == null) {
+//            logger.error("Cannot load trestle ontology from resources");
+//            throw new MissingResourceException("Cannot load ontology file", this.getClass().getName(), ONTOLOGY_RESOURCE_NAME);
+//        }
+//        try {
+//            final int available = ontologyIS.available();
+//            if (available == 0) {
+//                throw new MissingResourceException("Ontology InputStream does not seem to be available", this.getClass().getName(), ontologyIS.toString());
+//            }
+//        } catch (IOException e) {
+//            throw new MissingResourceException("Ontology InputStream does not seem to be available", this.getClass().getName(), ontologyIS.toString());
+//        }
+//        logger.info("Loading ontology from {}", ontologyResource == null ? "Null resource" : ontologyResource);
+//
+//        //        Setup the ontology builder
+//        logger.info("Connecting to ontology {} at {}", builder.ontologyName.orElse(DEFAULTNAME), builder.connectionString.orElse("localhost"));
+//        logger.debug("IS: {}", ontologyIS);
+//        logger.debug("Resource: {}", ontologyResource == null ? "Null resource" : ontologyResource);
+//        OntologyBuilder ontologyBuilder = new OntologyBuilder()
+////                .fromIRI(IRI.create(ontologyResource))
+//                .fromInputStream(ontologyIS)
+//                .withPrefixManager(builder.pm.getDefaultPrefixManager())
+//                .name(builder.ontologyName.orElse(DEFAULTNAME));
+//        if (builder.connectionString.isPresent()) {
+//            ontologyBuilder = ontologyBuilder.withDBConnection(builder.connectionString.get(),
+//                    builder.username,
+//                    builder.password);
+//        }
 
-        if (ontologyIS == null) {
-            logger.error("Cannot load trestle ontology from resources");
-            throw new MissingResourceException("Cannot load ontology file", this.getClass().getName(), ONTOLOGY_RESOURCE_NAME);
-        }
-        try {
-            final int available = ontologyIS.available();
-            if (available == 0) {
-                throw new MissingResourceException("Ontology InputStream does not seem to be available", this.getClass().getName(), ontologyIS.toString());
-            }
-        } catch (IOException e) {
-            throw new MissingResourceException("Ontology InputStream does not seem to be available", this.getClass().getName(), ontologyIS.toString());
-        }
-        logger.info("Loading ontology from {}", ontologyResource == null ? "Null resource" : ontologyResource);
-
-        //        Setup the ontology builder
-        logger.info("Connecting to ontology {} at {}", builder.ontologyName.orElse(DEFAULTNAME), builder.connectionString.orElse("localhost"));
-        logger.debug("IS: {}", ontologyIS);
-        logger.debug("Resource: {}", ontologyResource == null ? "Null resource" : ontologyResource);
-        OntologyBuilder ontologyBuilder = new OntologyBuilder()
-//                .fromIRI(IRI.create(ontologyResource))
-                .fromInputStream(ontologyIS)
-                .withPrefixManager(builder.pm.getDefaultPrefixManager())
-                .name(builder.ontologyName.orElse(DEFAULTNAME));
-        if (builder.connectionString.isPresent()) {
-            ontologyBuilder = ontologyBuilder.withDBConnection(builder.connectionString.get(),
-                    builder.username,
-                    builder.password);
-        }
-
-        final Injector injector = Guice.createInjector(new TrestleOntologyModule(ontologyBuilder, REASONER_PREFIX), new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled"), this.trestleConfig.getBoolean("events.enabled")));
+        final Injector injector = Guice.createInjector(new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled"), this.trestleConfig.getBoolean("events.enabled")));
 
 //        Setup metrics engine
         metrician = injector.getInstance(Metrician.class);

@@ -10,7 +10,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 public class GraphDBOntologyModule extends AbstractModule {
-    public static final String CONFIG_PATH = "trestle.ontology.graphdb";
+    public static final String CONFIG_PATH = "ontology.graphdb";
 
     @Override
     protected void configure() {
