@@ -13,8 +13,10 @@ reasoner:
 #  prefix: "http://nickrobison.com/test/hadoop.owl#"
 #  ontology: "tigercounties3"
 #  prefix: "http://nickrobison.com/demonstration/tigercounty#"
-  ontology: "gaul_hadoop_world_bank"
-  prefix: "http://nickrobison.com/gaul/"
+#  ontology: "gaul_hadoop_world_bank"
+#  prefix: "http://nickrobison.com/gaul/"
+  ontology: "trestle_demo"
+  prefix: "http://trestle.nickrobison.com/demonstration/"
   location: "file:////Users/nickrobison/Developer/git/dissertation/trestle-ontology/trestle.owl"
 
 logging:

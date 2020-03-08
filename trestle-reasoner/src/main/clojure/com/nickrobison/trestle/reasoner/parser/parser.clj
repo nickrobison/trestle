@@ -1,9 +1,8 @@
 (ns com.nickrobison.trestle.reasoner.parser.parser
   (:import [IClassParser]
-           (com.nickrobison.trestle.reasoner.parser IClassParser TypeConverter SpatialParser IClassBuilder IClassRegister ClassBuilder)
+           (com.nickrobison.trestle.reasoner.parser IClassParser IClassBuilder IClassRegister ClassBuilder ITypeConverter)
            (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom OWLDataProperty OWLLiteral OWLDatatype)
            (java.lang.reflect Constructor Parameter)
-           (java.lang.invoke MethodHandle)
            (com.nickrobison.trestle.reasoner.annotations DatasetClass Fact Language)
            (java.util Optional List)
            (com.nickrobison.trestle.common StaticIRI LanguageUtils)
@@ -14,7 +13,12 @@
             [clojure.tools.logging :as log]
             [clojure.set :as set]
             [com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]
-            [com.nickrobison.trestle.reasoner.parser.utils.members :as m])
+            [com.nickrobison.trestle.reasoner.parser.utils.members :as m]
+    ; We have to require the methods we're extending, as well as namespaces where we did the extension
+            [com.nickrobison.trestle.reasoner.parser.spatial :refer [wkt-from-geom]]
+            [com.nickrobison.trestle.reasoner.parser.types.spatial.esri]
+            [com.nickrobison.trestle.reasoner.parser.types.spatial.jts]
+            [com.nickrobison.trestle.reasoner.parser.spatial :as spatial])
   (:use clj-fuzzy.metrics))
 
 ; Class related helpers
@@ -98,49 +102,12 @@
                                        InvalidClassException$State/MISSING
                                        "OWL Class"))))))
 
-(defn invoker
-  "Invoke method handle"
-  ; We need to use invokeWithArguments to work around IDEA-154967
-  ([^MethodHandle handle object]
-   (try
-     (log/debugf "Invoking method handle %s on %s" handle object)
-     (.invokeWithArguments handle (object-array [object]))
-     (catch Exception e
-       (log/error "Problem invoking" e))))
-  ([^MethodHandle handle object & args]
-   (try
-     (log/debugf "Invoking method handle %s on %s with args %s"
-                 handle
-                 object
-                 args)
-     (.invokeWithArguments handle (object-array [object args]))
-     (catch Exception e
-       (log/error "Problem invoking %s on %s" handle object e)))))
-
-(defn invoke-constructor
-  "Invoke Constructor Method Handle"
-  ; We need to use invokeWithArguments to work around IDEA-154967
-  ([^MethodHandle handle]
-   (try
-     (log/debugf "Invoking constructor %s" handle)
-     (.invokeWithArguments handle (object-array []))
-     (catch Exception e
-       (log/error "Problem invoking" e))))
-  ([^MethodHandle handle & args]
-   (try
-     (log/debugf "Invoking constructor %s with args %s" handle args)
-     ; I honestly have no idea why we need to do first, but that's how it is
-     (.invokeWithArguments handle (object-array (first args)))
-     (catch Exception e
-       (log/error "Problem invoking" e))))
-  )
-
 (defn owl-return-type
   "Determine the OWLDatatype of the field/method"
-  [member rtype]
+  [member rtype ^ITypeConverter typeConverter]
   (if (pred/hasAnnotation? member Fact)
-    (TypeConverter/getDatatypeFromAnnotation (pred/get-annotation member Fact) rtype)
-    (TypeConverter/getDatatypeFromJavaClass rtype)))
+    (.getDatatypeFromAnnotation typeConverter (pred/get-annotation member Fact) rtype)
+    (.getDatatypeFromJavaClass typeConverter rtype)))
 
 (defn get-member-language
   "Get the language tag, if one exists"
@@ -159,20 +126,20 @@
 
 (defmulti build-member-return-type
           "Specialized method to build return type for member"
-          (fn [acc member df] (:type acc)))
+          (fn [acc member df typeConverter] (:type acc)))
 (defmethod build-member-return-type ::pred/spatial
-  [acc member ^OWLDataFactory df]
+  [acc member ^OWLDataFactory df _]
   (let [rtype (pred/get-member-return-type member)]
     (merge acc {
                 :return-type  rtype
                 :owl-datatype (.getOWLDatatype df (StaticIRI/WKTDatatypeIRI))
                 })))
 (defmethod build-member-return-type :default
-  [acc member df]
+  [acc member _ typeConverter]
   (let [rtype (pred/get-member-return-type member)]
     (merge acc {
                 :return-type  rtype
-                :owl-datatype (owl-return-type member rtype)
+                :owl-datatype (owl-return-type member rtype typeConverter)
                 })))
 
 (defn build-member-map
@@ -216,20 +183,37 @@
                   })
       acc)))
 
+; Process the spatial member, if it actually is one
+(defn build-spatial
+  "If we're a spatial member, get the projection"
+  [acc member defaultProjection]
+  (let [type (:type acc)]
+    (if (= type ::pred/spatial)
+      (let [projection (m/get-projection member defaultProjection)]
+        (merge acc {
+                    :projection projection
+                    :crs-uri    (spatial/projection-to-uri projection)
+                    }))
+      ; Return the member if we're not spatial
+      acc))
+  )
+
 (defn build-member
   "Build member from class methods/fields"
-  [member ^OWLDataFactory df prefix defaultLang]
+  [member ^OWLDataFactory df prefix defaultLang defaultProjection typeConverter]
   (let [iri (m/build-iri member prefix)]
     (merge (build-member-map member
                              ; Apply all these transformations to build up the member map
                              [(fn [acc member]
                                 (default-member-keys acc member defaultLang))
                               (fn [acc member]
-                                (build-member-return-type acc member df))
+                                (build-member-return-type acc member df typeConverter))
                               ignore-fact
                               (fn [acc member]
                                 (build-multi-lang acc member defaultLang))
-                              build-temporal])
+                              build-temporal
+                              (fn [acc member]
+                                (build-spatial acc member defaultProjection))])
            {
             :iri           iri
             :data-property (.getOWLDataProperty df iri)
@@ -315,20 +299,25 @@
           (fn [^OWLDataFactory df individual member inputObject] (:type member)))
 (defmethod build-assertion-axiom ::pred/spatial
   [^OWLDataFactory df ^OWLNamedIndividual individual member inputObject]
-  (let [wktOptional (SpatialParser/parseOWLLiteralFromGeom
-                      (invoker (get member :handle) inputObject))]
-    (if (.isPresent wktOptional)
-      (.getOWLDataPropertyAssertionAxiom df
-                                         ^OWLDataProperty (get member :data-property)
-                                         individual
-                                         ^OWLLiteral (.get wktOptional)))))
+  (if-let [literal (.getOWLLiteral df (spatial/build-projected-wkt
+                                        "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+                                        ;(:crs-uri member)
+                                        (wkt-from-geom
+                                          (m/invoker (get member :handle) inputObject)
+                                          (:projection member)))
+                                   (.getOWLDatatype df StaticIRI/WKTDatatypeIRI))]
+    (.getOWLDataPropertyAssertionAxiom df
+                                       ^OWLDataProperty (get member :data-property)
+                                       individual
+                                       literal)
+    nil))
 (defmethod build-assertion-axiom ::pred/language
   [^OWLDataFactory df ^OWLNamedIndividual individual member inputObject]
   (.getOWLDataPropertyAssertionAxiom df
                                      ^OWLDataProperty (get member :data-property)
                                      individual
                                      (build-literal df
-                                                    (invoker (get member :handle) inputObject)
+                                                    (m/invoker (get member :handle) inputObject)
                                                     (get member :owl-datatype)
                                                     (get member :language))))
 (defmethod build-assertion-axiom :default
@@ -337,7 +326,7 @@
                                      ^OWLDataProperty (get member :data-property)
                                      individual
                                      (build-literal df
-                                                    (invoker (get member :handle) inputObject)
+                                                    (m/invoker (get member :handle) inputObject)
                                                     (get member :owl-datatype))))
 
 (defmulti member-matches?
@@ -392,6 +381,8 @@
                                ^String reasonerPrefix,
                                ^boolean multiLangEnabled,
                                ^String defaultLanguageCode
+                               ^Integer defaultProjection
+                               ^ITypeConverter typeConverter
                                classRegistry
                                owlClassMap]
   IClassParser
@@ -410,7 +401,11 @@
                              ; Filter out non-necessary members
                              (r/filter pred/filter-member)
                              ; Build members
-                             (r/map #(build-member % df reasonerPrefix (if (true? multiLangEnabled) defaultLanguageCode nil)))
+                             (r/map #(build-member % df
+                                                   reasonerPrefix (if (true? multiLangEnabled)
+                                                                    defaultLanguageCode nil)
+                                                   defaultProjection
+                                                   typeConverter))
                              ; Combine everything into a map
                              (r/reduce member-reducer {
                                                        :class-name   (get-class-name
@@ -432,10 +427,10 @@
     (let [parsedClass (.getRegisteredClass this (.getClass inputObject))]
       (.getOWLNamedIndividual df
                               (IRI/create reasonerPrefix
-                                          (m/normalize-id (invoker (get
-                                                                     (get parsedClass :identifier)
-                                                                     :handle)
-                                                                   inputObject))))))
+                                          (m/normalize-id (m/invoker (get
+                                                                       (get parsedClass :identifier)
+                                                                       :handle)
+                                                                     inputObject))))))
 
 
   (getFacts ^Optional ^List ^OWLDataPropertyAssertionAxiom [this inputObject filterSpatial]
@@ -500,6 +495,11 @@
                                  factName
                                  member))
                              :iri))))
+  (getClassProjection ^Long [this clazz]
+    (let [parsedClass (.getRegisteredClass this clazz)]
+      (if-let [projection (get-in parsedClass [:spatial :projection])]
+        projection
+        (Integer/valueOf 0))))
 
   ; IClassBuilder methods
   IClassBuilder
@@ -522,9 +522,23 @@
       ; Are we missing parameters?
       (if (empty? missingParams)
         ; If missingParams is empty, we have everything we need, so build the object
-        (invoke-constructor (:handle constructor) sortedValues)
+        (m/invoke-constructor (:handle constructor) sortedValues)
         ((log/errorf "Missing constructor arguments needs %s\n%s\n%s" missingParams parameterNames sortedValues)
           (throw (MissingConstructorException. "Missing parameters required for constructor generation"))))))
+  (getProjectedWKT ^OWLLiteral [this clazz spatialObject srid]
+    (let [parsedClass (.getRegisteredClass this clazz)]
+      ; If the SRID is nil, use the one from the class definition
+      (if (nil? srid)
+        (.getOWLLiteral df
+                        (spatial/object-to-projected-wkt
+                          spatialObject
+                          (get-in parsedClass [:spatial :projection]))
+                        (.getOWLDatatype df StaticIRI/WKTDatatypeIRI))
+        (.getOWLLiteral df
+                        (spatial/object-to-projected-wkt
+                          spatialObject
+                          srid)
+                        (.getOWLDatatype df StaticIRI/WKTDatatypeIRI)))))
 
   ; ClassRegister methods
   IClassRegister
@@ -563,8 +577,10 @@
 
 (defn make-parser
   "Creates a new ClassParser"
-  [df reasonerPrefix multiLangEnabled defaultLanguageCode]
+  [df reasonerPrefix multiLangEnabled defaultLanguageCode defaultProjection typeConverter]
   (->ClojureClassParser df reasonerPrefix
-                        multiLangEnabled defaultLanguageCode
+                        multiLangEnabled
+                        defaultLanguageCode defaultProjection
+                        typeConverter
                         (atom {})
                         (atom {})))

@@ -3,7 +3,6 @@ html {
 }
 .app-content {
     min-height: 100vh;
-    margin-left: 20px;
 }
 
 .mat-sidenav {

@@ -2,7 +2,6 @@ package com.nickrobison.trestle.reasoner.engines.object;
 
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
-import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.TemporalUtils;
 import com.nickrobison.trestle.iri.IRIBuilder;
 import com.nickrobison.trestle.iri.TrestleIRI;
@@ -12,12 +11,11 @@ import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
-import com.nickrobison.trestle.reasoner.engines.events.TrestleEventEngine;
-import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.reasoner.exceptions.MissingConstructorException;
 import com.nickrobison.trestle.reasoner.exceptions.NoValidStateException;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.parser.*;
+import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TemporalScope;
@@ -28,8 +26,7 @@ import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.PointTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -60,50 +57,41 @@ public class TrestleObjectReader implements ITrestleObjectReader {
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
     private static final String MISSING_INDIVIDUAL = "Unable to get individual";
     private static final OffsetDateTime TEMPORAL_MAX_VALUE = LocalDate.of(3000, 1, 1).atStartOfDay().atOffset(ZoneOffset.UTC);
+    public static final String MISSING_FACT_ERROR = "Fact %s does not exist on dataset %s";
 
-    private final TrestleEventEngine eventEngine;
     private final TrestleExecutorService objectReaderThreadPool;
-    private final Metrician metrician;
     private final ObjectEngineUtils engineUtils;
     private final IClassParser classParser;
     private final IClassRegister classRegister;
     private final IClassBuilder classBuilder;
-    private final TemporalParser temporalParser;
-    private final TrestleMergeEngine mergeEngine;
+    private final ITypeConverter typeConverter;
+    private final FactFactory factFactory;
     private final ITrestleOntology ontology;
     private final QueryBuilder qb;
     private final TrestleCache trestleCache;
     private final String reasonerPrefix;
 
     @Inject
-    public TrestleObjectReader(TrestleEventEngine eventEngine,
-                               Metrician metrician,
+    public TrestleObjectReader(@ReasonerPrefix String reasonerPrefix,
                                ObjectEngineUtils engineUtils,
                                TrestleParser trestleParser,
-                               TrestleMergeEngine mergeEngine,
+                               FactFactory factFactory,
                                ITrestleOntology ontology,
                                QueryBuilder qb,
                                TrestleCache trestleCache,
-                               @ReasonerPrefix String reasonerPrefix) {
-        this.eventEngine = eventEngine;
-        this.metrician = metrician;
+                               TrestleExecutorFactory factory) {
         this.engineUtils = engineUtils;
         this.classParser = trestleParser.classParser;
         this.classRegister = trestleParser.classRegistry;
         this.classBuilder = trestleParser.classBuilder;
-        this.temporalParser = trestleParser.temporalParser;
-        this.mergeEngine = mergeEngine;
+        this.typeConverter = trestleParser.typeConverter;
+        this.factFactory = factFactory;
         this.ontology = ontology;
         this.qb = qb;
         this.trestleCache = trestleCache;
         this.reasonerPrefix = reasonerPrefix;
 
-        final Config config = ConfigFactory.load().getConfig("trestle");
-
-        this.objectReaderThreadPool = TrestleExecutorService.executorFactory(
-                "object-reader-pool",
-                config.getInt("threading.object-pool.size"),
-                this.metrician);
+        this.objectReaderThreadPool = factory.create("object-reader-pool");
     }
 
     @Override
@@ -261,7 +249,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
 //                                    Get database temporal
                                         final Optional<TemporalObject> factDatabaseTemporal = TemporalObjectBuilder.buildTemporalFromResults(TemporalScope.DATABASE, Optional.empty(), result.getLiteral("df"), result.getLiteral("dt"));
                                         //noinspection unchecked
-                                        return new TrestleFact<>(
+                                        return this.factFactory.createFact(
                                                 clazz,
                                                 assertion,
                                                 factValidTemporal.orElseThrow(() -> new RuntimeException("Unable to build fact valid temporal")),
@@ -385,30 +373,22 @@ public class TrestleObjectReader implements ITrestleObjectReader {
     }
 
     @Override
-    public Optional<List<Object>> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
+    public List<Object> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
 //        Parse String to Fact IRI
-        final Optional<IRI> factIRI = this.classParser.getFactIRI(clazz, factName);
-        if (!factIRI.isPresent()) {
-            logger.error("Cannot parse {} for individual {}", individual, factName);
-            return Optional.empty();
-        }
+        final IRI factIRI = this.classParser.getFactIRI(clazz, factName)
+                .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, factName, this.classParser.getObjectClass(clazz))));
 
         return getFactValues(clazz,
                 df.getOWLNamedIndividual(parseStringToIRI(this.reasonerPrefix, individual)),
-                df.getOWLDataProperty(factIRI.get()), validStart, validEnd, databaseTemporal);
+                df.getOWLDataProperty(factIRI), validStart, validEnd, databaseTemporal);
     }
 
     @Override
-    public Optional<List<Object>> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
+    public List<Object> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
 
-        final Optional<Class<@NonNull ?>> datatypeOptional = this.classParser.getFactDatatype(clazz, factName.getIRI().toString());
+        final Class<?> datatype = this.classParser.getFactDatatype(clazz, factName.getIRI().toString())
+                .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, factName, this.classParser.getObjectClass(clazz))));
 
-        if (!datatypeOptional.isPresent()) {
-            logger.warn("Individual {} has no Fact {}", individual, factName);
-            return Optional.empty();
-        }
-
-        Class<@NonNull ?> datatype = datatypeOptional.get();
 //        Parse the temporal to OffsetDateTime, if they're not null
         final OffsetDateTime start, end, db;
         if (validStart != null) {
@@ -430,12 +410,68 @@ public class TrestleObjectReader implements ITrestleObjectReader {
         final String historyQuery = this.qb.buildFactHistoryQuery(individual, factName, start, end, db);
         final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(historyQuery);
 //        Optional::isPresent works fine, Checker is wrong
-        @SuppressWarnings("methodref.receiver.invalid") final List<Object> factValues = resultSet.getResults()
+        return resultSet.getResults()
                 .stream()
-                .map(result -> result.getLiteral("value"))
-                .filter(Optional::isPresent)
-                .map(literal -> TypeConverter.extractOWLLiteral(datatype, literal.get()))
+                .map(result -> result.unwrapLiteral("value"))
+                .map(literal -> this.handleLiteral(clazz, datatype, literal))
                 .collect(Collectors.toList());
-        return Optional.of(factValues);
+    }
+
+    @Override
+    public List<Object> sampleFactValues(Class<?> clazz, String factName, long sampleLimit) {
+        final IRI factIRI = this.classParser.getFactIRI(clazz, factName)
+                .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, factName, this.classParser.getObjectClass(clazz))));
+
+        return sampleFactValues(clazz, df.getOWLDataProperty(factIRI), sampleLimit);
+    }
+
+    @Override
+    public List<Object> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit) {
+
+        final OWLClass datasetClass = this.classParser.getObjectClass(clazz);
+        final Class<?> datatype = this.classParser.getFactDatatype(clazz, factName.getIRI().toString())
+                .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, factName, datasetClass)));
+
+        final String factValueQuery = this.qb.buildDatasetFactValueQuery(datasetClass, factName, sampleLimit);
+        final CompletableFuture<List<Object>> factValuesFuture = CompletableFuture.supplyAsync(() -> {
+            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(false);
+            try {
+                return this.ontology.executeSPARQLResults(factValueQuery);
+            } finally {
+                this.ontology.returnAndCommitTransaction(tt);
+            }
+        }, this.objectReaderThreadPool)
+                .thenApply(results -> results
+                        .getResults()
+                        .stream()
+                        .map((result) -> result.unwrapLiteral("o"))
+                        .map((literal) -> this.handleLiteral(clazz, datatype, literal))
+                        .collect(Collectors.toList()));
+
+        try {
+            return factValuesFuture.get();
+        } catch (InterruptedException e) {
+            logger.error("Interrupted while getting values for fact {} on dataset {}", factName, datasetClass, e);
+            Thread.currentThread().interrupt();
+            return ExceptionUtils.rethrow(e.getCause());
+        } catch (ExecutionException e) {
+            logger.error("Cannot get values for fact {} on dataset {}", factName, datasetClass, e);
+            return ExceptionUtils.rethrow(e.getCause());
+        }
+    }
+
+
+    /**
+     * Handle extracting and reprojecting a given {@link OWLLiteral}
+     *
+     * @param datasetClass - {@link Class} of {@link OWLClass}
+     * @param datatype     - Java {@link Class} of given {@link OWLLiteral}
+     * @param literal      - {@link OWLLiteral} to process
+     * @return - {@link Object} of the given datatype
+     */
+    private Object handleLiteral(Class<?> datasetClass, Class<?> datatype, OWLLiteral literal) {
+        return this.typeConverter.reprojectSpatial(
+                this.typeConverter.extractOWLLiteral(datatype, literal),
+                this.classParser.getClassProjection(datasetClass));
     }
 }

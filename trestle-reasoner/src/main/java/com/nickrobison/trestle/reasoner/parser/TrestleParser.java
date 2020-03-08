@@ -11,13 +11,15 @@ public class TrestleParser {
     public final IClassBuilder classBuilder;
     public final TemporalParser temporalParser;
     public final IClassRegister classRegistry;
+    public final ITypeConverter typeConverter;
 
     @Inject
-    public TrestleParser(IClassParser parser, IClassBuilder builder, IClassRegister registry) {
+    public TrestleParser(IClassParser parser, IClassBuilder builder, IClassRegister registry, ITypeConverter typeConverter) {
 //        Create the sub parsers
         this.classParser = parser;
         this.classBuilder = builder;
         this.classRegistry = registry;
         this.temporalParser = new TemporalParser(this.classParser);
+        this.typeConverter = typeConverter;
     }
 }

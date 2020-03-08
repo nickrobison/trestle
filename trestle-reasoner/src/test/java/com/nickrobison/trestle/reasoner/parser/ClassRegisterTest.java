@@ -40,6 +40,7 @@ public class ClassRegisterTest {
     private static Class<? extends LanguageTest> lClass;
     private static IClassRegister cr;
     private static IClassParser cp;
+    private static ITypeConverter typeConverter;
 
     @BeforeAll
     public static void setup() {
@@ -59,8 +60,8 @@ public class ClassRegisterTest {
         pClass = pTest.getClass();
         ftClass = ftTest.getClass();
         lClass = lTest.getClass();
-
-        final Object o = ClojureProvider.buildClojureParser("http://nickrobison.com/test/", true, "en-US");
+        typeConverter = new TypeConverter();
+        final Object o = ClojureProvider.buildClojureParser("http://nickrobison.com/test/", true, "en-US", 4326, typeConverter);
         cr = (IClassRegister) o;
         cp = (IClassParser) o;
     }
@@ -113,6 +114,10 @@ public class ClassRegisterTest {
 
         invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(cp.getObjectClass(sClass), sClass));
         assertEquals(MISSING, invalidClassException.getProblemState(), "Should be missing the spatial argument in the constructor");
+
+//        Test for invalid Projection
+        invalidClassException = assertThrows(InvalidClassException.class, () -> cr.registerClass(cp.getObjectClass(FailingSpatialTest.class), FailingSpatialTest.class));
+        assertEquals(INVALID, invalidClassException.getProblemState(), "Should have an invalid projection");
     }
 
     @Test
@@ -407,6 +412,22 @@ public class ClassRegisterTest {
         @Language(language = "en-Nick")
         public String getTestString2() {
             return this.testString2;
+        }
+    }
+
+    @DatasetClass(name = "test")
+    public static class FailingSpatialTest {
+        @IndividualIdentifier
+        public String id;
+        @Spatial(projection = -1)
+        public String wkt;
+        @StartTemporal
+        public LocalDate startTemporal;
+
+        public FailingSpatialTest(String id, String wkt, LocalDate startTemporal) {
+            this.id = id;
+            this.wkt = wkt;
+            this.startTemporal = startTemporal;
         }
     }
 }

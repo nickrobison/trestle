@@ -1,45 +1,44 @@
 package com.nickrobison.trestle.reasoner;
 
-import com.esri.core.geometry.SpatialReference;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
-import com.nickrobison.trestle.ontology.OntologyBuilder;
-import com.nickrobison.trestle.ontology.TrestleOntologyModule;
+import com.nickrobison.trestle.ontology.ReasonerPrefix;
+import com.nickrobison.trestle.ontology.annotations.OntologyName;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
 import com.nickrobison.trestle.reasoner.engines.IndividualEngine;
-import com.nickrobison.trestle.reasoner.engines.concept.ITrestleConceptEngine;
+import com.nickrobison.trestle.reasoner.engines.collection.ITrestleCollectionEngine;
 import com.nickrobison.trestle.reasoner.engines.events.TrestleEventEngine;
 import com.nickrobison.trestle.reasoner.engines.exporter.ITrestleDataExporter;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
-import com.nickrobison.trestle.reasoner.engines.object.TrestleObjectWriter;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
 import com.nickrobison.trestle.reasoner.engines.temporal.TemporalEngine;
-import com.nickrobison.trestle.reasoner.exceptions.InvalidOntologyName;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.reasoner.parser.TypeConstructor;
-import com.nickrobison.trestle.reasoner.parser.TypeConverter;
+import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
-import com.nickrobison.trestle.types.relations.ConceptRelationType;
+import com.nickrobison.trestle.types.relations.CollectionRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -51,11 +50,11 @@ import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.net.MalformedURLException;
+import javax.measure.quantity.Length;
+import javax.measure.unit.Unit;
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
-import java.nio.file.Files;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.Temporal;
@@ -81,24 +80,23 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleReasonerImpl.class);
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
-    public static final String DEFAULTNAME = "trestle";
-    public static final String ONTOLOGY_RESOURCE_NAME = "trestle.owl";
     public static final String BLANK_TEMPORAL_ID = "blank";
 
-    private final String REASONER_PREFIX;
+    private final String reasonerPrefix;
     private final ITrestleOntology ontology;
     //    Seems gross?
     private final QueryBuilder qb;
-    private final QueryBuilder.Dialect spatialDalect;
+    private final QueryBuilder.Dialect spatialDialect;
     private final TrestleParser trestleParser;
     private final ITrestleObjectWriter objectWriter;
     private final ITrestleObjectReader objectReader;
-    private final ITrestleConceptEngine conceptEngine;
+    private final ITrestleCollectionEngine collectionEngine;
     private final ITrestleDataExporter dataExporter;
     private final TrestleMergeEngine mergeEngine;
     private final TrestleEventEngine eventEngine;
     private final IndividualEngine individualEngine;
     private final SpatialEngine spatialEngine;
+    private final AggregationEngine aggregationEngine;
     private final TemporalEngine temporalEngine;
     private final Config trestleConfig;
     private final TrestleCache trestleCache;
@@ -108,90 +106,26 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final ExecutorService searchThreadPool;
 
     @SuppressWarnings("dereference.of.nullable")
-    TrestleReasonerImpl(TrestleBuilder builder) throws OWLOntologyCreationException {
+    TrestleReasonerImpl(TrestleBuilder builder) {
 
 //        Read in the trestleConfig file and validate it
         trestleConfig = ConfigFactory.load().getConfig("trestle");
         ValidateConfig(trestleConfig);
 
+        final Injector injector = Guice.createInjector(new TrestleModule(builder, builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled"), this.trestleConfig.getBoolean("events.enabled")));
         //        Setup the reasoner prefix
-//        If not specified, use the default Trestle prefix
-        REASONER_PREFIX = builder.reasonerPrefix.orElse(TRESTLE_PREFIX);
-        logger.info("Setting up reasoner with prefix {}", REASONER_PREFIX);
-
-//        If we have a manually specified ontology, use that.
-        final URL ontologyResource;
-        final InputStream ontologyIS;
-        if (builder.ontologyIRI.isPresent()) {
-            final IRI ontologyIRI = builder.ontologyIRI.get();
-            try {
-                ontologyResource = ontologyIRI.toURI().toURL();
-                ontologyIS = Files.newInputStream(new File(ontologyIRI.toURI()).toPath());
-            } catch (MalformedURLException e) {
-                logger.error("Unable to parse IRI to URI", ontologyIRI, e);
-                throw new IllegalArgumentException(String.format("Unable to parse IRI %s to URI", ontologyIRI), e);
-            } catch (IOException e) {
-                logger.error("Cannot find ontology file {}", ontologyIRI, e);
-                throw new MissingResourceException("File not found", this.getClass().getName(), ontologyIRI.getIRIString());
-            }
-        } else {
-//            Load with the class loader
-            ontologyResource = TrestleReasoner.class.getClassLoader().getResource(ONTOLOGY_RESOURCE_NAME);
-            ontologyIS = TrestleReasoner.class.getClassLoader().getResourceAsStream(ONTOLOGY_RESOURCE_NAME);
-        }
-
-        if (ontologyIS == null) {
-            logger.error("Cannot load trestle ontology from resources");
-            throw new MissingResourceException("Cannot load ontology file", this.getClass().getName(), ONTOLOGY_RESOURCE_NAME);
-        }
-        try {
-            final int available = ontologyIS.available();
-            if (available == 0) {
-                throw new MissingResourceException("Ontology InputStream does not seem to be available", this.getClass().getName(), ontologyIS.toString());
-            }
-        } catch (IOException e) {
-            throw new MissingResourceException("Ontology InputStream does not seem to be available", this.getClass().getName(), ontologyIS.toString());
-        }
-        logger.info("Loading ontology from {}", ontologyResource == null ? "Null resource" : ontologyResource);
-
-        //        Setup the ontology builder
-        logger.info("Connecting to ontology {} at {}", builder.ontologyName.orElse(DEFAULTNAME), builder.connectionString.orElse("localhost"));
-        logger.debug("IS: {}", ontologyIS);
-        logger.debug("Resource: {}", ontologyResource == null ? "Null resource" : ontologyResource);
-        OntologyBuilder ontologyBuilder = new OntologyBuilder()
-//                .fromIRI(IRI.create(ontologyResource))
-                .fromInputStream(ontologyIS)
-                .withPrefixManager(builder.pm.getDefaultPrefixManager())
-                .name(builder.ontologyName.orElse(DEFAULTNAME));
-        if (builder.connectionString.isPresent()) {
-            ontologyBuilder = ontologyBuilder.withDBConnection(builder.connectionString.get(),
-                    builder.username,
-                    builder.password);
-        }
-
-        final Injector injector = Guice.createInjector(new TrestleOntologyModule(ontologyBuilder, REASONER_PREFIX), new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled"), this.trestleConfig.getBoolean("events.enabled")));
+        reasonerPrefix = injector.getInstance(Key.get(String.class, ReasonerPrefix.class));
+        logger.info("Setting up reasoner with prefix {}", reasonerPrefix);
 
 //        Setup metrics engine
         metrician = injector.getInstance(Metrician.class);
 
+        TrestleExecutorFactory factory = injector.getInstance(TrestleExecutorFactory.class);
+
 //        Create our own thread pools to help isolate processes
-        trestleThreadPool = TrestleExecutorService.executorFactory(builder.ontologyName.orElse("default"), trestleConfig.getInt("threading.default-pool.size"), this.metrician);
-        objectThreadPool = TrestleExecutorService.executorFactory("object-pool", trestleConfig.getInt("threading.object-pool.size"), this.metrician);
-        searchThreadPool = TrestleExecutorService.executorFactory("search-pool", trestleConfig.getInt("threading.search-pool.size"), this.metrician);
-
-//        Validate ontology name
-        try {
-            validateOntologyName(builder.ontologyName.orElse(DEFAULTNAME));
-        } catch (InvalidOntologyName e) {
-            logger.error("{} is an invalid ontology name", builder.ontologyName.orElse(DEFAULTNAME), e);
-            throw new IllegalArgumentException("invalid ontology name", e);
-        }
-
-//        Register type constructors from the service loader
-        final ServiceLoader<TypeConstructor> constructors = ServiceLoader.load(TypeConstructor.class);
-        for (final TypeConstructor constructor : constructors) {
-            this.registerTypeConstructor(constructor);
-        }
+        trestleThreadPool = factory.create(builder.ontologyName.orElse("default"));
+        objectThreadPool = factory.create("object-pool");
+        searchThreadPool = factory.create("search-pool");
 
         ontology = injector.getInstance(ITrestleOntology.class);
         logger.debug("Ontology connected");
@@ -203,21 +137,28 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             logger.info("Updating inference model");
             ontology.runInference();
         }
-        logger.info("Ontology {} ready", builder.ontologyName.orElse(DEFAULTNAME));
+        logger.info("Ontology {} ready", injector.getInstance(Key.get(String.class, OntologyName.class)));
 
 //        Setup the Parser
         trestleParser = injector.getInstance(TrestleParser.class);
 
 //      Engines on
         this.objectReader = injector.getInstance(ITrestleObjectReader.class);
-        this.objectWriter = injector.getInstance(TrestleObjectWriter.class);
-        this.conceptEngine = injector.getInstance(ITrestleConceptEngine.class);
+        this.objectWriter = injector.getInstance(ITrestleObjectWriter.class);
+        this.collectionEngine = injector.getInstance(ITrestleCollectionEngine.class);
         this.dataExporter = injector.getInstance(ITrestleDataExporter.class);
         this.mergeEngine = injector.getInstance(TrestleMergeEngine.class);
         this.eventEngine = injector.getInstance(TrestleEventEngine.class);
         this.individualEngine = injector.getInstance(IndividualEngine.class);
         this.spatialEngine = injector.getInstance(SpatialEngine.class);
+        this.aggregationEngine = injector.getInstance(AggregationEngine.class);
         this.temporalEngine = injector.getInstance(TemporalEngine.class);
+
+//        Register type constructors from the service loader
+        final ServiceLoader<TypeConstructor> constructors = ServiceLoader.load(TypeConstructor.class);
+        for (final TypeConstructor constructor : constructors) {
+            this.registerTypeConstructor(constructor);
+        }
 
 //            validate the classes
         builder.inputClasses.forEach(clazz -> {
@@ -230,12 +171,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
         trestleCache = injector.getInstance(TrestleCache.class);
 
-////        Setup the query builder
+//        Setup the query builder
         this.qb = injector.getInstance(QueryBuilder.class);
-        this.spatialDalect = this.qb.getDialect();
-        logger.debug("Using SPARQL dialect {}", spatialDalect);
+        this.spatialDialect = this.qb.getDialect();
+        logger.debug("Using SPARQL dialect {}", spatialDialect);
 
-        logger.info("Trestle Reasoner ready");
+        logger.info("Trestle Reasoner is ready");
     }
 
     @Override
@@ -275,7 +216,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public <C extends TypeConstructor> void registerTypeConstructor(TrestleReasonerImpl this, C typeConstructor) {
-        TypeConverter.registerTypeConstructor(typeConstructor);
+        this.trestleParser.typeConverter.registerTypeConstructor(typeConstructor);
     }
 
     //    When you get the ontology, the ownership passes away, so then the reasoner can't perform any more queries.
@@ -304,6 +245,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         return this.spatialEngine;
     }
 
+    public AggregationEngine getAggregationEngine() {
+        return this.aggregationEngine;
+    }
+
     @Override
     public TemporalEngine getTemporalEngine() {
         return this.temporalEngine;
@@ -322,7 +267,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public Map<String, String> getReasonerPrefixes() {
         Map<String, String> prefixes = new HashMap<>();
-        prefixes.put(":", this.REASONER_PREFIX);
+        prefixes.put(":", this.reasonerPrefix);
         prefixes.putAll(this.getUnderlyingOntology().getUnderlyingPrefixManager().getPrefixName2PrefixMap());
         return prefixes;
     }
@@ -430,18 +375,28 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public Optional<List<Object>> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
+    public List<Object> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
         return this.objectReader.getFactValues(clazz, individual, factName, validStart, validEnd, databaseTemporal);
     }
 
     @Override
-    public Optional<List<Object>> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
+    public List<Object> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
         return this.objectReader.getFactValues(clazz, individual, factName, validStart, validEnd, databaseTemporal);
+    }
+
+    @Override
+    public List<Object> sampleFactValues(Class<?> clazz, String factName, long sampleLimit) {
+        return this.objectReader.sampleFactValues(clazz, factName, sampleLimit);
+    }
+
+    @Override
+    public List<Object> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit) {
+        return this.objectReader.sampleFactValues(clazz, factName, sampleLimit);
     }
 
     @Override
     public Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, String individual) {
-        return getIndividualEvents(clazz, df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual)));
+        return getIndividualEvents(clazz, df.getOWLNamedIndividual(parseStringToIRI(reasonerPrefix, individual)));
     }
 
     @Override
@@ -451,7 +406,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public void addTrestleObjectEvent(TrestleEventType type, String individual, Temporal eventTemporal) {
-        addTrestleObjectEvent(type, df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individual)), eventTemporal);
+        addTrestleObjectEvent(type, df.getOWLNamedIndividual(parseStringToIRI(reasonerPrefix, individual)), eventTemporal);
     }
 
     @Override
@@ -478,8 +433,18 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt) {
-        return this.spatialEngine.spatialIntersectObject(inputObject, buffer, temporalAt);
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt, Temporal dbAt) {
+        return this.spatialEngine.spatialIntersectObject(inputObject, buffer, temporalAt, null);
+    }
+
+    @Override
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit) {
+        return this.spatialEngine.spatialIntersectObject(inputObject, buffer, bufferUnit);
+    }
+
+    @Override
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, Temporal temporalAt, Temporal dbAt) {
+        return this.spatialEngine.spatialIntersectObject(inputObject, buffer, bufferUnit, temporalAt, null);
     }
 
     @Override
@@ -488,33 +453,43 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt) {
-        return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, validAt);
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit) {
+        return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, bufferUnit);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold) {
-        return this.spatialEngine.calculateSpatialUnion(inputObjects, inputSR, matchThreshold);
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit, Temporal validAt, Temporal dbAt) {
+        return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, bufferUnit, validAt, null);
     }
 
     @Override
-    public <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR) {
-        return this.spatialEngine.calculateUnionContribution(result, inputSR);
+    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt, Temporal dbAt) {
+        return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, validAt, null);
     }
 
     @Override
-    public <T extends @NonNull Object> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold) {
-        return this.spatialEngine.isApproximatelyEqual(inputObject, matchObject, inputSR, threshold);
+    public <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, int inputSRID, double matchThreshold) {
+        return this.spatialEngine.calculateSpatialUnion(inputObjects, inputSRID, matchThreshold);
     }
 
     @Override
-    public <T extends @NonNull Object> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR) {
-        return this.spatialEngine.calculateSpatialEquals(inputObject, matchObject, inputSR);
+    public <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, int inputSRID) {
+        return this.spatialEngine.calculateUnionContribution(result, inputSRID);
     }
 
     @Override
-    public <T> ContainmentDirection getApproximateContainment(T objectA, T objectB, SpatialReference inputSR, double threshold) {
-        return this.spatialEngine.getApproximateContainment(objectA, objectB, inputSR, threshold);
+    public <A extends @NonNull Object, B extends @NonNull Object> boolean isApproximatelyEqual(A inputObject, B matchObject, double threshold) {
+        return this.spatialEngine.isApproximatelyEqual(inputObject, matchObject, threshold);
+    }
+
+    @Override
+    public <A extends @NonNull Object, B extends @NonNull Object> double calculateSpatialEquals(A inputObject, B matchObject) {
+        return this.spatialEngine.calculateSpatialEquals(inputObject, matchObject);
+    }
+
+    @Override
+    public <A extends @NonNull Object, B extends @NonNull Object> ContainmentDirection getApproximateContainment(A objectA, B objectB, double threshold) {
+        return this.spatialEngine.getApproximateContainment(objectA, objectB, threshold);
     }
 
     //    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
@@ -526,27 +501,32 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
 //    ----------------------------
-//    Concept Methods
+//    Collection Methods
 //    ----------------------------
 
     @Override
-    public Optional<Map<String, List<String>>> getRelatedConcepts(String individual, @Nullable String conceptID, double relationStrength) {
-        return this.conceptEngine.getRelatedConcepts(individual, conceptID, relationStrength);
+    public Optional<Map<String, List<String>>> getRelatedCollections(String individual, @Nullable String collectionID, double relationStrength) {
+        return this.collectionEngine.getRelatedCollections(individual, collectionID, relationStrength);
     }
 
     @Override
-    public Optional<Set<String>> STIntersectConcept(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt) {
-        return this.conceptEngine.STIntersectConcept(wkt, buffer, strength, validAt, dbAt);
+    public Optional<Set<String>> STIntersectCollection(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt) {
+        return this.collectionEngine.STIntersectCollection(wkt, buffer, strength, validAt, dbAt);
     }
 
     @Override
-    public <T> Optional<List<T>> getConceptMembers(Class<T> clazz, String conceptID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection) {
-        return this.conceptEngine.getConceptMembers(clazz, conceptID, strength, spatialIntersection, temporalIntersection);
+    public Optional<Set<String>> STIntersectCollection(String wkt, double buffer, Unit<Length> bufferUnit, double strength, Temporal validAt, @Nullable Temporal dbAt) {
+        return this.collectionEngine.STIntersectCollection(wkt, buffer, bufferUnit, strength, validAt, dbAt);
     }
 
     @Override
-    public void addObjectToConcept(String conceptIRI, Object inputObject, ConceptRelationType relationType, double strength) {
-        this.conceptEngine.addObjectToConcept(conceptIRI, inputObject, relationType, strength);
+    public <T> Optional<List<T>> getCollectionMembers(Class<T> clazz, String collectionID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection) {
+        return this.collectionEngine.getCollectionMembers(clazz, collectionID, strength, spatialIntersection, temporalIntersection);
+    }
+
+    @Override
+    public void addObjectToCollection(String collectionIRI, Object inputObject, CollectionRelationType relationType, double strength) {
+        this.collectionEngine.addObjectToCollection(collectionIRI, inputObject, relationType, strength);
     }
 
     @Override
@@ -635,8 +615,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 
     @Override
-    public Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSR, double matchThreshold) {
-        return this.spatialEngine.calculateSpatialUnionWithContribution(datasetClassID, individualIRIs, inputSR, matchThreshold);
+    public Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSRID, double matchThreshold) {
+        return this.spatialEngine.calculateSpatialUnionWithContribution(datasetClassID, individualIRIs, inputSRID, matchThreshold);
     }
 
     @Override
@@ -645,8 +625,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <T> SpatialComparisonReport compareTrestleObjects(T objectA, T objectB, SpatialReference inputSR, double matchThreshold) {
-        return this.spatialEngine.compareTrestleObjects(objectA, objectB, inputSR, matchThreshold);
+    public <A, B> SpatialComparisonReport compareTrestleObjects(A objectA, B objectB, double matchThreshold) {
+        return this.spatialEngine.compareTrestleObjects(objectA, objectB, matchThreshold);
     }
 
     @Override
@@ -704,7 +684,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     public List<String> searchForIndividual(String individualIRI, @Nullable String datasetClass, @Nullable Integer limit) {
         final OWLClass owlClass;
         if (datasetClass != null) {
-            owlClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, datasetClass));
+            owlClass = df.getOWLClass(parseStringToIRI(reasonerPrefix, datasetClass));
         } else {
             owlClass = null;
         }
@@ -750,13 +730,28 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
+    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, Unit<Length> bufferUnit) {
+        return this.spatialEngine.spatialIntersectIndividuals(datasetClassID, wkt, buffer, bufferUnit);
+    }
+
+    @Override
+    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal) {
+        return this.spatialEngine.spatialIntersectIndividuals(datasetClassID, wkt, buffer, bufferUnit, atTemporal, dbTemporal);
+    }
+
+    @Override
     public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(Class<?> clazz, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal) {
         return this.spatialEngine.spatialIntersectIndividuals(clazz, wkt, buffer, atTemporal, dbTemporal);
     }
 
     @Override
+    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(Class<@NonNull ?> clazz, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
+        return this.spatialEngine.spatialIntersectIndividuals(clazz, wkt, buffer, bufferUnit, validAt, dbAt);
+    }
+
+    @Override
     public TrestleIndividual getTrestleIndividual(String individualIRI) {
-        return getTrestleIndividual(df.getOWLNamedIndividual(parseStringToIRI(REASONER_PREFIX, individualIRI)));
+        return getTrestleIndividual(df.getOWLNamedIndividual(parseStringToIRI(reasonerPrefix, individualIRI)));
     }
 
     private TrestleIndividual getTrestleIndividual(OWLNamedIndividual individual) {
@@ -795,8 +790,19 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public Class<?> getDatasetClass(String owlClassString) throws UnregisteredClassException {
-        final OWLClass owlClass = df.getOWLClass(parseStringToIRI(REASONER_PREFIX, owlClassString));
+        final OWLClass owlClass = df.getOWLClass(parseStringToIRI(reasonerPrefix, owlClassString));
         return this.trestleParser.classRegistry.lookupClass(owlClass);
+    }
+
+    @Override
+    public List<String> getDatasetProperties(Class<?> clazz) {
+        final List<OWLDataProperty> owlDataProperties = this.trestleParser.classBuilder.getPropertyMembers(clazz)
+                .orElseThrow(() -> new IllegalStateException(String.format("Cannot get properties for %s", this.trestleParser.classParser.getObjectClass(clazz))));
+        return owlDataProperties
+                .stream()
+                .map(OWLEntity::toStringID)
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -807,19 +813,5 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, @Nullable Temporal validAt, @Nullable Temporal databaseAt, ITrestleExporter.DataType exportType) throws IOException {
         return this.dataExporter.exportDataSetObjects(inputClass, objectID, validAt, databaseAt, exportType);
-    }
-
-    /**
-     * Validates the ontology name to make sure it doesn't include unsupported characters
-     *
-     * @param ontologyName - String to validate
-     * @throws InvalidOntologyName - Exception thrown if the name is invalid
-     */
-    private static void validateOntologyName(String ontologyName) throws InvalidOntologyName {
-        if (ontologyName.contains("-")) {
-            throw new InvalidOntologyName("-");
-        } else if (ontologyName.length() > 90) {
-            throw new InvalidOntologyName(ontologyName.length());
-        }
     }
 }

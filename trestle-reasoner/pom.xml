@@ -5,7 +5,7 @@
     <parent>
         <artifactId>trestle</artifactId>
         <groupId>com.nickrobison.trestle</groupId>
-        <version>0.8.2</version>
+        <version>0.9.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
@@ -13,37 +13,37 @@
     </properties>
 
     <artifactId>trestle-reasoner</artifactId>
-    
+
     <dependencies>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-exporter</artifactId>
-            <version>0.8.2</version>
+            <version>0.9.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-common</artifactId>
-            <version>0.8.2</version>
+            <version>0.9.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
-            <artifactId>trestle-ontology</artifactId>
-            <version>0.8.2</version>
+            <artifactId>trestle-graphdb</artifactId>
+            <version>0.9.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-querybuilder</artifactId>
-            <version>0.8.2</version>
+            <version>0.9.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-iri</artifactId>
-            <version>0.8.2</version>
+            <version>0.9.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-metrics</artifactId>
-            <version>0.8.2</version>
+            <version>0.9.0-SNAPSHOT</version>
         </dependency>
         <!--OWL Dependencies-->
         <dependency>
@@ -78,17 +78,15 @@
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-main</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-geotiff</artifactId>
-            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-epsg-hsql</artifactId>
-            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-shapefile</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -130,6 +128,11 @@
             <groupId>it.unimi.dsi</groupId>
             <artifactId>fastutil</artifactId>
             <version>8.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>net.java.dev.jsr-275</groupId>
+            <artifactId>jsr-275</artifactId>
+            <version>1.0-beta-2</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
@@ -175,33 +178,49 @@
         <!--Test Dependencies-->
     </dependencies>
     <build>
-            <plugins>
-                <plugin>
-                    <groupId>com.theoryinpractise</groupId>
-                    <artifactId>clojure-maven-plugin</artifactId>
-                    <version>1.8.1</version>
-                    <executions>
-                        <execution>
-                            <id>default-clojure</id>
-                            <goals>
-                                <goal>add-source</goal>
-                                <goal>compile</goal>
-                                <goal>add-test-source</goal>
-                                <goal>testCompile</goal>
-                                <goal>test</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                    <configuration>
-                        <copyAllCompiledNamespaces>true</copyAllCompiledNamespaces>
-                        <sourceDirectories>
-                            <sourceDirectory>src/main/clojure</sourceDirectory>
-                        </sourceDirectories>
-                        <testSourceDirectories>
-                            <testSourceDirectory>src/test/clojure</testSourceDirectory>
-                        </testSourceDirectories>
-                    </configuration>
-                </plugin>
-            </plugins>
+        <testResources>
+            <testResource>
+                <directory>${basedir}/../data</directory>
+                <includes>
+                    <include>king_county/*</include>
+                    <include>tiger_kc/*</include>
+                </includes>
+                <excludes>
+                    <exclude>tiger_kc/tiger_kc.zip</exclude>
+                    <exclude>king_county/kc.zip</exclude>
+                </excludes>
+            </testResource>
+            <testResource>
+                <directory>src/test/resources</directory>
+            </testResource>
+        </testResources>
+        <plugins>
+            <plugin>
+                <groupId>com.theoryinpractise</groupId>
+                <artifactId>clojure-maven-plugin</artifactId>
+                <version>1.8.1</version>
+                <executions>
+                    <execution>
+                        <id>default-clojure</id>
+                        <goals>
+                            <goal>add-source</goal>
+                            <goal>compile</goal>
+                            <goal>add-test-source</goal>
+                            <goal>testCompile</goal>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <copyAllCompiledNamespaces>true</copyAllCompiledNamespaces>
+                    <sourceDirectories>
+                        <sourceDirectory>src/main/clojure</sourceDirectory>
+                    </sourceDirectories>
+                    <testSourceDirectories>
+                        <testSourceDirectory>src/test/clojure</testSourceDirectory>
+                    </testSourceDirectories>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 </project>

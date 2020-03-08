@@ -13,7 +13,14 @@ export class CacheService<K, V> {
     private cache: TransitoryCache<K, V>;
     private inFlightObservables: Map<K, Subject<V>> = new Map<K, Subject<V>>();
 
+    /**
+     * We only ever call this constructor manually, and provide it the cache specific config settings.
+     * If it does get called by the Angular DI, it'll get some default config properties
+     *
+     * @param {ICacheServiceConfig} config
+     */
     public constructor(@Inject(CACHE_SERVICE_CONFIG) private config: ICacheServiceConfig) {
+        console.debug("Creating with config:", config);
         this.cache = transitory<K, V>()
             .expireAfterRead(this.config.maxAge)
             .maxSize(this.config.maxSize)

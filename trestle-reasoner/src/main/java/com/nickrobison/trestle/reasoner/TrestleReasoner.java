@@ -4,7 +4,7 @@ import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
-import com.nickrobison.trestle.reasoner.engines.concept.ITrestleConceptEngine;
+import com.nickrobison.trestle.reasoner.engines.collection.ITrestleCollectionEngine;
 import com.nickrobison.trestle.reasoner.engines.exporter.ITrestleDataExporter;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
@@ -24,6 +24,7 @@ import com.nickrobison.trestle.types.events.TrestleEventType;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.net.URI;
@@ -36,7 +37,7 @@ import java.util.Set;
 /**
  * Created by nrobison on 1/30/17.
  */
-public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWriter, ITrestleSpatialEngine, ITrestleConceptEngine, ITrestleDataExporter {
+public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWriter, ITrestleSpatialEngine, ITrestleCollectionEngine, ITrestleDataExporter {
     /**
      * Shutdown the reasoner
      */
@@ -272,4 +273,13 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
     Set<String> getAvailableDatasets();
 
     Class<?> getDatasetClass(String owlClassString) throws UnregisteredClassException;
+
+    /**
+     * Get a sorted list of all data properties registered with the reasoner for the given {@link Class}
+     *
+     * @param clazz - {@link Class} to get properties for
+     * @return - {@link List} of {@link String} IDs of {@link OWLDataProperty}
+     * @throws IllegalStateException if unable to get properties for the given {@link Class}
+     */
+    List<String> getDatasetProperties(Class<?> clazz);
 }

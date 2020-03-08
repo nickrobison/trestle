@@ -1,7 +1,6 @@
 package com.nickrobison.trestle.reasoner.engines.spatial;
 
 import com.google.common.collect.ImmutableList;
-import com.nickrobison.trestle.SharedUtils;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.AbstractReasonerTest;
 import com.nickrobison.trestle.reasoner.TestClasses;
@@ -16,16 +15,17 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import static com.nickrobison.trestle.SharedTestUtils.readGAULObjects;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Tag("integration")
+@Disabled
 public class SpatialIntersectionTest extends AbstractReasonerTest {
 
 
     @Test
-    @Disabled
     public void spatialIntersectionTest() throws IOException {
-        final List<TestClasses.GAULTestClass> gaulObjects = SharedUtils.readGAULObjects();
+        final List<TestClasses.GAULTestClass> gaulObjects = readGAULObjects();
         gaulObjects.parallelStream().forEach(gaul -> {
             try {
                 reasoner.writeTrestleObject(gaul);
@@ -43,15 +43,15 @@ public class SpatialIntersectionTest extends AbstractReasonerTest {
 
 //        Do a standard spatial intersection with it
 
-        final Optional<List<TrestleIndividual>> trestleIndividuals = this.reasoner.getSpatialEngine().spatialIntersectIndividuals(TestClasses.GAULTestClass.class,
+        final Optional<List<TrestleIndividual>> trestleIndividuals = this.reasoner.spatialIntersectIndividuals(TestClasses.GAULTestClass.class,
                 maputo.wkt, 0.0, null, null);
         assertAll(() -> assertTrue(trestleIndividuals.isPresent(), "Should have individuals"),
                 () -> assertEquals(10, trestleIndividuals.get().size(), "Should have all Distrito and Aeropuerto individuals"));
 
         //        Do a TS intersection with it
 
-        final Optional<List<TrestleIndividual>> individuals2015 = this.reasoner.getSpatialEngine().spatialIntersectIndividuals(TestClasses.GAULTestClass.class,
-                maputo.wkt, 0.0, LocalDate.of(2015, 01, 01), null);
+        final Optional<List<TrestleIndividual>> individuals2015 = this.reasoner.spatialIntersectIndividuals(TestClasses.GAULTestClass.class,
+                maputo.wkt, 0.0, LocalDate.of(2015, 1, 1), null);
 
         assertAll(() -> assertTrue(individuals2015.isPresent(), "Should have an optional"),
                 () -> assertEquals(1, individuals2015.get().size(), "Should only have itself"));
@@ -64,7 +64,7 @@ public class SpatialIntersectionTest extends AbstractReasonerTest {
                 .findFirst().orElseThrow(RuntimeException::new);
 
 //        Add a buffer and try a spatial intersection
-        final Optional<List<TrestleIndividual>> manhicaSpatial = this.reasoner.getSpatialEngine().spatialIntersectIndividuals(TestClasses.GAULTestClass.class
+        final Optional<List<TrestleIndividual>> manhicaSpatial = this.reasoner.spatialIntersectIndividuals(TestClasses.GAULTestClass.class
                 , manhica.wkt, 0.1, null, null);
 
         assertAll(() -> assertTrue(manhicaSpatial.isPresent(), "Should have optional"),
@@ -72,8 +72,8 @@ public class SpatialIntersectionTest extends AbstractReasonerTest {
 
 
 //        Now with the buffer, do a TS Intersection
-        final Optional<List<TrestleIndividual>> manhica2015 = this.reasoner.getSpatialEngine().spatialIntersectIndividuals(TestClasses.GAULTestClass.class,
-                manhica.wkt, 0.1, LocalDate.of(2015, 01, 01), null);
+        final Optional<List<TrestleIndividual>> manhica2015 = this.reasoner.spatialIntersectIndividuals(TestClasses.GAULTestClass.class,
+                manhica.wkt, 0.1, LocalDate.of(2015, 1, 1), null);
         assertAll(() -> assertTrue(manhica2015.isPresent(), "Should have optional"),
                 () -> assertEquals(2, manhica2015.get().size(), "Should not have old Manhica"));
 
@@ -82,11 +82,13 @@ public class SpatialIntersectionTest extends AbstractReasonerTest {
 
     @Override
     protected String getTestName() {
-        return "spatial_intersection_test";
+        return "spatial_intersection";
     }
 
     @Override
     protected ImmutableList<Class<?>> registerClasses() {
-        return ImmutableList.of(TestClasses.GAULTestClass.class);
+        return ImmutableList.of(TestClasses.GAULTestClass.class,
+                TestClasses.KCProjectionTestClass.class,
+                TestClasses.CensusProjectionTestClass.class);
     }
 }

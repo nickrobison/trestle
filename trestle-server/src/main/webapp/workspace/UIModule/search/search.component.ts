@@ -1,9 +1,11 @@
-import {Component, EventEmitter, OnInit, Output} from "@angular/core";
-import {MatAutocompleteSelectedEvent} from "@angular/material/autocomplete";
-import {IndividualService} from "../../SharedModule/individual/individual.service";
-import {Observable} from "rxjs/Observable";
-import {FormControl} from "@angular/forms";
+import { Component, EventEmitter, Input, OnInit, Output } from "@angular/core";
+import { MatAutocompleteSelectedEvent } from "@angular/material/autocomplete";
+import { IndividualService } from "../../SharedModule/individual/individual.service";
+import { Observable } from "rxjs/Observable";
+import { FormControl } from "@angular/forms";
 import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividual/trestle-individual";
+import { distinctTime } from "../../SharedModule/operators/rxjs.operators";
+import { catchError, switchMap, tap } from "rxjs/operators";
 
 @Component({
     selector: "search",
@@ -12,8 +14,11 @@ import { TrestleIndividual } from "../../SharedModule/individual/TrestleIndividu
 })
 export class SearchComponent implements OnInit {
 
+    @Input()
+    public showError: boolean = true;
     public options: Observable<string[]>;
     public individualName = new FormControl();
+    public errorText = "";
     @Output() public selected = new EventEmitter<string>();
 
     public constructor(private is: IndividualService) {
@@ -22,10 +27,15 @@ export class SearchComponent implements OnInit {
     public ngOnInit(): void {
         this.options = this.individualName
             .valueChanges
-            .debounceTime(400)
-            .distinctUntilChanged()
-            .switchMap((name) => this.is.searchForIndividual(name))
-            .retry(2);
+            .pipe(
+                distinctTime(400),
+                tap(() => this.errorText = ""),
+                switchMap((name) => this.is.searchForIndividual(name)
+                    .pipe(
+                        catchError(() => {
+                            this.errorText = "Cannot search for individual";
+                            return [];
+                        }))));
     }
 
     /**

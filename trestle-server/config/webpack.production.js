@@ -42,7 +42,8 @@ var prodOptions = {
     plugins: [
         new ngtools.AngularCompilerPlugin({
             tsConfigPath: helpers.root("tsconfig.json"),
-            entryModule: helpers.root("src/main/webapp/workspace/workspace.module#WorkspaceModule")
+            entryModule: helpers.root("src/main/webapp/workspace/workspace.module#WorkspaceModule"),
+            skipCodeGeneration: true
         }),
         new ExtractTextPlugin("[name].css"),
         new DefinePlugin({

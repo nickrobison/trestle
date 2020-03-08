@@ -1,18 +1,20 @@
 /**
  * Created by nrobison on 3/7/17.
  */
-import { Injectable } from "@angular/core";
+import { Inject, Injectable, InjectionToken } from "@angular/core";
 import { Response, URLSearchParams } from "@angular/http";
 import { TrestleHttp } from "../../UserModule/trestle-http.provider";
 import { TrestleIndividual } from "./TrestleIndividual/trestle-individual";
 import { CacheService } from "../cache/cache.service";
 import { Observable } from "rxjs/Observable";
 
+export const INDIVIDUAL_CACHE = new InjectionToken<CacheService<string, TrestleIndividual>>("individual.cache");
+
 @Injectable()
 export class IndividualService {
 
     constructor(private trestleHttp: TrestleHttp,
-                private individualCache: CacheService<string, TrestleIndividual>) {
+                @Inject(INDIVIDUAL_CACHE) private individualCache: CacheService<string, TrestleIndividual>) {
     }
 
     /**

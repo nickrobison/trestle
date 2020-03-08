@@ -1,7 +1,10 @@
 package com.nickrobison.trestle.exporter;
 
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.PrecisionModel;
 import com.vividsolutions.jts.io.ParseException;
+import com.vividsolutions.jts.io.WKTReader;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.geotools.data.DefaultTransaction;
 import org.geotools.data.Transaction;
@@ -12,10 +15,11 @@ import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
-import org.geotools.geometry.jts.WKTReader2;
-import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.geotools.referencing.CRS;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,11 +40,11 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
     private static final Logger logger = LoggerFactory.getLogger(ShapefileExporter.class);
     private final SimpleFeatureBuilder simpleFeatureBuilder;
     private final DefaultFeatureCollection featureCollection;
-    private final WKTReader2 wktReader;
     private final Class<T> type;
     private final SimpleFeatureType simpleFeatureType;
     private final File directory;
     private final String prefix;
+    private final WKTReader reader;
 
     private ShapefileExporter(ShapefileExporterBuilder builder) {
 
@@ -57,7 +61,18 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
         this.type = builder.type;
         final SimpleFeatureTypeBuilder typeBuilder = new SimpleFeatureTypeBuilder();
         typeBuilder.setName(builder.typeName);
-        typeBuilder.setCRS(DefaultGeographicCRS.WGS84);
+
+        final Integer srid = (Integer) builder.getSRID().orElse(4326);
+        final CoordinateReferenceSystem crs;
+        try {
+
+            crs = CRS.decode("EPSG:" + srid);
+        } catch (FactoryException e) {
+            final String error = String.format("Cannot get CRS for SRID %s", srid);
+            logger.error(error, e);
+            throw new IllegalArgumentException(error);
+        }
+        typeBuilder.setCRS(crs);
 
 //        Add the geometry type first
         typeBuilder.add(builder.typeName, builder.type);
@@ -68,7 +83,7 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
         simpleFeatureType = typeBuilder.buildFeatureType();
         simpleFeatureBuilder = new SimpleFeatureBuilder(simpleFeatureType);
         featureCollection = new DefaultFeatureCollection();
-        wktReader = new WKTReader2();
+        this.reader = new WKTReader(new GeometryFactory(new PrecisionModel(), srid));
     }
 
     @Override
@@ -83,14 +98,16 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
 
 //            Build the geometry
             try {
-                final T geometry = type.cast(wktReader.read(individual.getGeom()));
+                final String individualGeom = individual.getGeom();
+
+                final T geometry = type.cast(this.reader.read(individualGeom));
                 simpleFeatureBuilder.add(geometry);
             } catch (ParseException e) {
                 logger.error("Cannot parse wkt {}", e);
             }
 
 //            Now the properties
-            individual.getProperties().entrySet().forEach(entry -> simpleFeatureBuilder.add(entry.getValue()));
+            individual.getProperties().forEach((key, value) -> simpleFeatureBuilder.add(value));
 
             final SimpleFeature simpleFeature = simpleFeatureBuilder.buildFeature(null);
             featureCollection.add(simpleFeature);
@@ -194,6 +211,7 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
         private final Map<String, Object> properties = new LinkedHashMap<>();
         private Optional<File> path = Optional.empty();
         private Optional<String> prefix = Optional.empty();
+        private Optional<Integer> srid = Optional.empty();
 
         public ShapefileExporterBuilder(String typeName, Class<T> type, ShapefileSchema schema) {
             this.typeName = typeName;
@@ -209,6 +227,11 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
 
         public ShapefileExporterBuilder<T> setExportPrefix(String prefix) {
             this.prefix = Optional.of(prefix);
+            return this;
+        }
+
+        public ShapefileExporterBuilder<T> setSRID(Integer srid) {
+            this.srid = Optional.of(srid);
             return this;
         }
 
@@ -234,6 +257,10 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
 
         public Optional<String> getPrefix() {
             return prefix;
+        }
+
+        public Optional<Integer> getSRID() {
+            return this.srid;
         }
 
         public ShapefileExporter<T> build() {

@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.reasoner.engines.exporter;
 
-import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.exporter.*;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
@@ -8,13 +7,12 @@ import com.nickrobison.trestle.ontology.ReasonerPrefix;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.exceptions.NoValidStateException;
 import com.nickrobison.trestle.reasoner.parser.*;
+import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.PointTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -48,6 +46,7 @@ public class DataExportEngine implements ITrestleDataExporter {
     private final ITrestleObjectReader objectReader;
     private final IClassParser classParser;
     private final IClassBuilder classBuilder;
+    private final ITypeConverter typeConverter;
     private final TemporalParser temporalParser;
     private final TrestleExecutorService dataExporterPool;
 
@@ -56,20 +55,16 @@ public class DataExportEngine implements ITrestleDataExporter {
                             ITrestleOntology ontology,
                             ITrestleObjectReader objectReader,
                             TrestleParser trestleParser,
-                            Metrician metrician) {
+                            TrestleExecutorFactory factory) {
         this.reasonerPrefix = reasonerPrefix;
         this.ontology = ontology;
         this.objectReader = objectReader;
         this.classParser = trestleParser.classParser;
         this.classBuilder = trestleParser.classBuilder;
         this.temporalParser = trestleParser.temporalParser;
+        this.typeConverter = trestleParser.typeConverter;
 
-        final Config config = ConfigFactory.load().getConfig("trestle");
-
-        this.dataExporterPool = TrestleExecutorService.executorFactory(
-                "data-exporter-pool",
-                config.getInt("threading.object-pool.size"),
-                metrician);
+        this.dataExporterPool = factory.create("data-exporter-pool");
     }
 
     @Override
@@ -80,16 +75,18 @@ public class DataExportEngine implements ITrestleDataExporter {
     @Override
     public <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, @Nullable Temporal validAt, @Nullable Temporal databaseAt, ITrestleExporter.DataType exportType) throws IOException {
 
+        final Integer classProjection = this.classParser.getClassProjection(inputClass);
+
 //        Build shapefile schema
 //        TODO(nrobison): Extract type from wkt
 //        FIXME(nrobison): Shapefile schema doesn't support multiple languages. Need to figure out how to flatten
         final ShapefileSchema shapefileSchema = new ShapefileSchema(MultiPolygon.class);
         final Optional<List<OWLDataProperty>> propertyMembers = this.classBuilder.getPropertyMembers(inputClass, true);
-        propertyMembers.ifPresent(owlDataProperties -> owlDataProperties.forEach(property -> shapefileSchema.addProperty(this.classParser.matchWithClassMember(inputClass, property.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property))));
+        propertyMembers.ifPresent(owlDataProperties -> owlDataProperties.forEach(property -> shapefileSchema.addProperty(this.classParser.matchWithClassMember(inputClass, property.asOWLDataProperty().getIRI().getShortForm()), this.typeConverter.lookupJavaClassFromOWLDataProperty(inputClass, property))));
 
 //        Now the temporals
         final Optional<List<OWLDataProperty>> temporalProperties = this.temporalParser.getTemporalsAsDataProperties(inputClass);
-        temporalProperties.ifPresent(owlDataProperties -> owlDataProperties.forEach(temporal -> shapefileSchema.addProperty(this.classParser.matchWithClassMember(inputClass, temporal.asOWLDataProperty().getIRI().getShortForm()), TypeConverter.lookupJavaClassFromOWLDataProperty(inputClass, temporal))));
+        temporalProperties.ifPresent(owlDataProperties -> owlDataProperties.forEach(temporal -> shapefileSchema.addProperty(this.classParser.matchWithClassMember(inputClass, temporal.asOWLDataProperty().getIRI().getShortForm()), this.typeConverter.lookupJavaClassFromOWLDataProperty(inputClass, temporal))));
 
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
@@ -123,11 +120,11 @@ public class DataExportEngine implements ITrestleDataExporter {
 
             switch (exportType) {
                 case SHAPEFILE: {
-                    final ShapefileExporter shapeFileExporter = new ShapefileExporter.ShapefileExporterBuilder(shapefileSchema.getGeomName(), shapefileSchema.getGeomType(), shapefileSchema).build();
+                    final ShapefileExporter shapeFileExporter = new ShapefileExporter.ShapefileExporterBuilder(shapefileSchema.getGeomName(), shapefileSchema.getGeomType(), shapefileSchema).setSRID(classProjection).build();
                     return shapeFileExporter.writePropertiesToByteBuffer(individuals, null);
                 }
                 case GEOJSON: {
-                    return new GeoJsonExporter().writePropertiesToByteBuffer(individuals, null);
+                    return new GeoJsonExporter(classProjection).writePropertiesToByteBuffer(individuals, null);
                 }
                 case KML: {
                     return new KMLExporter(false).writePropertiesToByteBuffer(individuals, null);
@@ -171,8 +168,8 @@ public class DataExportEngine implements ITrestleDataExporter {
 //                    Data properties, filtering out the spatial members
         final Optional<List<OWLDataPropertyAssertionAxiom>> owlDataPropertyAssertionAxioms = this.classParser.getFacts(object, true);
         owlDataPropertyAssertionAxioms.ifPresent(owlDataPropertyAssertionAxioms1 -> owlDataPropertyAssertionAxioms1.forEach(property -> {
-            final Class<@NonNull ?> javaClass = TypeConverter.lookupJavaClassFromOWLDatatype(property, object.getClass());
-            final Object literal = TypeConverter.extractOWLLiteral(javaClass, property.getObject());
+            final Class<@NonNull ?> javaClass = this.typeConverter.lookupJavaClassFromOWLDatatype(property, object.getClass());
+            final Object literal = this.typeConverter.reprojectSpatial(this.typeConverter.extractOWLLiteral(javaClass, property.getObject()), this.classParser.getClassProjection(inputClass));
             individual.addProperty(this.classParser.matchWithClassMember(inputClass, property.getProperty().asOWLDataProperty().getIRI().getShortForm()),
                     literal);
         }));

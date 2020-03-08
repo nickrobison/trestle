@@ -41,9 +41,13 @@ public class TrestleCacheModule extends PrivateModule {
     @Override
     protected void configure() {
         if (cacheEnabled) {
-            bind(TrestleCache.class).to(TrestleCacheImpl.class);
+            bind(TrestleCache.class)
+                    .to(TrestleCacheImpl.class)
+                    .in(Singleton.class);
         } else {
-            bind(TrestleCache.class).to(TrestleCacheNoop.class);
+            bind(TrestleCache.class)
+                    .to(TrestleCacheNoop.class)
+                    .in(Singleton.class);
         }
         expose(TrestleCache.class);
 
@@ -51,7 +55,9 @@ public class TrestleCacheModule extends PrivateModule {
 //        This cannot currently be disabled, it's always watching, always
         final TypeLiteral<Cache<Integer, Geometry>> typeLiteral = new TypeLiteral<Cache<Integer, Geometry>>() {
         };
-        bind(typeLiteral).toProvider(GeometryCacheProvider.class).in(Singleton.class);
+        bind(typeLiteral)
+                .toProvider(GeometryCacheProvider.class)
+                .in(Singleton.class);
         expose(typeLiteral);
     }
 

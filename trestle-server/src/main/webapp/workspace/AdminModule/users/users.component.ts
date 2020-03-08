@@ -1,11 +1,11 @@
 /**
  * Created by nrobison on 1/19/17.
  */
-import {Component, OnInit, ViewContainerRef} from "@angular/core";
-import {UserAddDialog, IUserDialogResponse, UserDialogResponseType} from "./users.add.dialog";
-import {AuthService, ITrestleUser, Privileges} from "../../UserModule/authentication.service";
-import {UserService} from "../../UserModule/users.service";
+import { Component, OnInit, ViewContainerRef } from "@angular/core";
+import { AuthService, ITrestleUser, Privileges } from "../../UserModule/authentication.service";
+import { UserService } from "../../UserModule/users.service";
 import { MatDialog, MatDialogConfig, MatDialogRef } from "@angular/material";
+import { IUserDialogResponse, UserDialogComponent, UserDialogResponseType } from "./users.dialog.component";
 
 @Component({
     selector: "admin-users",
@@ -19,7 +19,10 @@ export class UsersComponent implements OnInit {
     public dialogRef: MatDialogRef<any> | null;
     public privileges: Privileges;
 
-    constructor(private userService: UserService, public dialog: MatDialog, public viewContainerRef: ViewContainerRef, public authService: AuthService) {
+    constructor(private userService: UserService,
+                public dialog: MatDialog,
+                public viewContainerRef: ViewContainerRef,
+                public authService: AuthService) {
     }
 
     public ngOnInit(): void {
@@ -63,24 +66,28 @@ export class UsersComponent implements OnInit {
     public openUserModal(user: ITrestleUser | null) {
         const config = new MatDialogConfig();
         config.viewContainerRef = this.viewContainerRef;
-        this.dialogRef = this.dialog.open(UserAddDialog, config);
-        this.dialogRef.componentInstance.user = user;
+        this.dialogRef = this.dialog.open(UserDialogComponent, config);
+        // Clone the user so that we don't modify properties in the original table
+        this.dialogRef.componentInstance.user = {...user};
         this.dialogRef.afterClosed().subscribe((result: IUserDialogResponse) => {
             console.debug("Dialog closed");
             console.debug("Result:", result);
             if (result != null) {
-                switch(result.type) {
+                const userIdx = this.users.findIndex((tableUser) => tableUser.id === result.user.id);
+                switch (result.type) {
                     case UserDialogResponseType.ADD:
-                        if (!(this.users.filter(
-                            (aUser) => aUser.id === result.user.id).length > 0)) {
+                        console.debug("User idx:", userIdx);
+                        if (userIdx < 0) {
                             this.users.push(result.user);
+                        } else {
+                            this.users[userIdx] = result.user;
+                            console.debug("Users:", this.users);
                         }
                         break;
                     case UserDialogResponseType.DELETE:
-                        const index = this.users.indexOf(result.user);
-                        console.debug("Splicing out user at location:", index);
-                        if (index > -1) {
-                            this.users.splice(index, 1);
+                        if (userIdx > -1) {
+                            console.debug("Splicing out user at location:", userIdx);
+                            this.users.splice(userIdx, 1);
                         }
                         break;
                 }

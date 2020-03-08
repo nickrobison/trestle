@@ -28,12 +28,11 @@ import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 /**
  * Created by nrobison on 6/21/16.
  */
+// TODO(nrobison): This class should go away, it's mostly useless, just a couple of remaining stragglers in the test code.
 // FIXME(nrobison): Work to remove this, I feel like my optionals should fix the nullness, right?
 @SuppressWarnings({"nullness", "OptionalUsedAsFieldOrParameterType"})
 public class OntologyBuilder {
     private static final Logger logger = LoggerFactory.getLogger(OntologyBuilder.class);
-    public static final String LOCAL_ONTOLOGY = "local_ontology";
-    //private static Config config = ConfigFactory.load(ConfigFactory.parseResources("test.configuration.conf"));
     private static Config config = ConfigFactory.load(ConfigFactory.parseResources("reference.conf"));
 
     private Optional<IRI> iri = Optional.empty();
@@ -50,6 +49,7 @@ public class OntologyBuilder {
 
     /**
      * Loads an initial base ontology from the given IRI
+     *
      * @param iri - IRI of the ontology to load
      * @return OntologyBuilder
      */
@@ -60,6 +60,7 @@ public class OntologyBuilder {
 
     /**
      * Loads an initial base ontology from a given InputStream
+     *
      * @param is - InputStream of the ontology to load
      * @return OntologyBuilder
      */
@@ -70,9 +71,10 @@ public class OntologyBuilder {
 
     /**
      * Connects to ontology database, if this isn't set, the Builder returns a LocalOntology, otherwise it returns the correct database ontology
+     *
      * @param connectionString - Connection string of database to load
-     * @param username - Username to connect with
-     * @param password - User password
+     * @param username         - Username to connect with
+     * @param password         - User password
      * @return - OntologyBuilder
      */
     public OntologyBuilder withDBConnection(String connectionString, String username, String password) {
@@ -84,6 +86,7 @@ public class OntologyBuilder {
 
     /**
      * Sets the name of the ontology model, if null, parses the IRI to get the base name
+     *
      * @param ontologyName - Name of the model
      * @return - OntologyBuilder
      */
@@ -94,6 +97,7 @@ public class OntologyBuilder {
 
     /**
      * Sets a custom prefix manager, otherwise a default one is generated
+     *
      * @param pm - DefaultPrefixManger, custom prefix manager
      * @return - OntologyBuilder
      */
@@ -104,10 +108,16 @@ public class OntologyBuilder {
 
     /**
      * Builds and returns the correct ontology (either local or database backed)
+     *
      * @return - ITrestleOntology for the correct underlying ontology configuration
      * @throws OWLOntologyCreationException - Throws if it can't create the ontology
      */
     public ITrestleOntology build() throws OWLOntologyCreationException {
+        loadOntology(this.iri, this.is);
+        return null;
+    }
+
+    public static OWLOntology loadOntology(Optional<IRI> iri, Optional<InputStream> is) {
         final OWLOntologyManager owlOntologyManager = OWLManager.createOWLOntologyManager();
         OWLOntology owlOntology = null;
 
@@ -121,97 +131,34 @@ public class OntologyBuilder {
         loaderConfig.setMissingImportHandlingStrategy(MissingImportHandlingStrategy.THROW_EXCEPTION);
 
         try {
-            if (this.iri.isPresent()) {
-                logger.debug("Loading ontology from: {}", this.iri.get());
-                owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument((new IRIDocumentSource(this.iri.get())),loaderConfig);
+            if (iri.isPresent()) {
+                logger.debug("Loading ontology from: {}", iri.get());
+                owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument((new IRIDocumentSource(iri.get())), loaderConfig);
                 logger.info("Loaded version {} of ontology {}",
                         owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
                         owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
-            } else if (this.is.isPresent()){
+            } else if (is.isPresent()) {
                 logger.debug("Loading ontology from input stream");
-                owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument((new StreamDocumentSource(this.is.get())),loaderConfig);
+                owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument((new StreamDocumentSource(is.get())), loaderConfig);
                 logger.info("Loaded version {} of ontology {}",
                         owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
                         owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
-            }
-            else {
+            } else {
                 owlOntology = owlOntologyManager.createOntology();
             }
         } catch (OWLOntologyCreationException e) {
             e.printStackTrace();
         }
 
-//            If there's a connection string, then we need to return a database Ontology
-        if (connectionString.isPresent() && connectionString.get().contains("oracle")&&owlOntology!=null) {
-            logger.info("Connecting to Oracle database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
-            return new OracleOntology(
-                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
-                    owlOntology,
-                    pm.orElse(createDefaultPrefixManager()),
-//                    classify(owlOntology, new ConsoleProgressMonitor()),
-                    connectionString.get(),
-                    username.orElse(""),
-                    password.orElse("")
-            );
-//        } else if (connectionString.isPresent() && connectionString.get().contains("postgresql")) {
-//            logger.info("Connecting to Postgres database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
-//            return Optional.of(new SesameOntology(
-//                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
-//                    owlOntology,
-//                    pm.orElse(createDefaultPrefixManager()),
-//                    connectionString.get(),
-//                    username.orElse(""),
-//                    password.orElse("")
-//            ));
-        } else if (connectionString.isPresent() && connectionString.get().contains("virtuoso")) {
-            logger.info("Connecting to Virtuoso database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
-            return new VirtuosoOntology(
-                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
-                    owlOntology,
-                    pm.orElse(createDefaultPrefixManager()),
-                    connectionString.get(),
-                    username.orElse(""),
-                    password.orElse("")
-            );
-//        } else if (connectionString.isPresent() && connectionString.get().contains("snarl")) {
-//            logger.info("Connecting to Stardog database {} at: {}", this.ontologyName.orElse(""), connectionString.get());
-//            return Optional.of(new StardogOntology(
-//                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create("local_ontology")))),
-//                    owlOntology,
-//                    pm.orElse(createDefaultPrefixManager()),
-//                    connectionString.get(),
-//                    username.orElse(""),
-//                    password.orElse("")
-//            ));
-        } else if (connectionString.isPresent() && connectionString.get().contains("tdb")) {
-            logger.info("Connecting to Local TDB {}", this.ontologyName.orElse(""));
-            return new LocalOntology(
-                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
-                    owlOntology,
-                    pm.orElse(createDefaultPrefixManager())
-            );
-        } else if (connectionString.isPresent() && connectionString.get().contains("http")) {
-            logger.info("Connecting to remote GraphDB instance {} at: {}", this.ontologyName.orElse(""), this.connectionString.get());
-            return new GraphDBOntology(
-                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
-                    connectionString.get(),username.orElse(""), password.orElse(""), owlOntology,
-                    pm.orElse(createDefaultPrefixManager())
-            );
-        } else {
-            logger.info("Connect to embedded GraphDB instance {}", this.ontologyName.orElse(""));
-            return new GraphDBOntology(
-                    this.ontologyName.orElse(extractNamefromIRI(this.iri.orElse(IRI.create(LOCAL_ONTOLOGY)))),
-                    null, "", "", owlOntology,
-                    pm.orElse(createDefaultPrefixManager())
-            );
-        }
+        return owlOntology;
     }
 
-    private OWLOntologyIRIMapper getImportsMapper() {
-        OWLOntologyIRIMapper iriMapper = new OWLOntologyIRIMapper() {
+    private static OWLOntologyIRIMapper getImportsMapper() {
+        return new OWLOntologyIRIMapper() {
             private Config importsConfig = config.getConfig("trestle.ontology.imports");
             private String importsDirPath = importsConfig.getString("importsDirectory");
             private Map<IRI, String> fileMap;
+
             {
 
                 fileMap = new HashMap<IRI, String>();
@@ -271,15 +218,9 @@ public class OntologyBuilder {
                 return documentIRI;
             }
         };
-
-        return iriMapper;
     }
 
-    private static String extractNamefromIRI(IRI iri) {
-        return iri.getShortForm();
-    }
-
-    private DefaultPrefixManager createDefaultPrefixManager() {
+    public static DefaultPrefixManager createDefaultPrefixManager() {
         DefaultPrefixManager pm = new DefaultPrefixManager();
         pm.setDefaultPrefix(TRESTLE_PREFIX);
         pm.setPrefix("rdf:", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");

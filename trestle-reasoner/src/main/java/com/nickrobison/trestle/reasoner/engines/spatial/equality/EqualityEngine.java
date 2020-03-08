@@ -14,45 +14,45 @@ public interface EqualityEngine {
     /**
      * Determine if a spatial union exists between any combination of the provided objects, which exceeds the given confidence threshold
      *
-     * @param inputObjects   - {@link List} of input objects to process
-     * @param inputSR        - {@link SpatialReference} of objects
-     * @param matchThreshold - {@link Double} confidence threshold to filter results on
      * @param <T>            - generic type parameter
+     * @param inputObjects   - {@link List} of input objects to process
+     * @param inputSRID        - {@link SpatialReference} of objects
+     * @param matchThreshold - {@link Double} confidence threshold to filter results on
      * @return - {@link Optional} {@link UnionEqualityResult} if a Spatial Union exists within the object set, above the given threshold
      */
-    <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, SpatialReference inputSR, double matchThreshold);
+    <T extends @NonNull Object> Optional<UnionEqualityResult<T>> calculateSpatialUnion(List<T> inputObjects, int inputSRID, double matchThreshold);
 
     /**
      * Calculate the object contributions of the members of the given {@link UnionEqualityResult}
      *
      * @param <T> - generic type parameter
      * @param result - {@link UnionEqualityResult}
-     * @param inputSR - {@link SpatialReference} of objects
+     * @param inputSRID - {@link SpatialReference} of objects
      * @return - {@link UnionContributionResult}
      */
-    <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, SpatialReference inputSR);
+    <T extends @NonNull Object> UnionContributionResult calculateUnionContribution(UnionEqualityResult<T> result, int inputSRID);
 
     /**
      * Determines if two objects are approximately equal, in spatial area, to each other, given a threshold value.
      *
-     * @param <T>         - Generic type parameter
+     * @param <A>         - Generic type parameter of input object
+     * @param <B>         - Generic type parameter of match object
      * @param inputObject - Input object
      * @param matchObject - Object to match against
-     * @param inputSR     - {@link SpatialReference} of objects
      * @param threshold   - threshold value which determines 'approximately equal'  @return - {@link boolean} {@code true} objects are approximately equal. {@code false} they are not.
      * @return - Whether or not the spatial equality of the objects exceeds the given threshold
      */
-    <T extends @NonNull Object> boolean isApproximatelyEqual(T inputObject, T matchObject, SpatialReference inputSR, double threshold);
+    <A extends @NonNull Object, B extends @NonNull Object> boolean isApproximatelyEqual(A inputObject, B matchObject, double threshold);
 
     /**
      * Calculate Spatial Equality between the two objects
      * @param inputObject - {@link Object} to match against
      * @param matchObject - {@link Object} to match
-     * @param inputSR - {@link SpatialReference}
-     * @param <T> - Type parameter
+     * @param <A> - Type parameter of input object
+     * @param <B> - Type parameter of match object
      * @return - {@link Double} percent spatial equality between the objects
      */
-    <T extends @NonNull Object> double calculateSpatialEquals(T inputObject, T matchObject, SpatialReference inputSR);
+    <A extends @NonNull Object, B extends @NonNull Object> double calculateSpatialEquals(A inputObject, B matchObject);
 
     /**
      * Return a {@link List} of {@link OWLNamedIndividual} that are equivalent to the given individual at the specific point in time

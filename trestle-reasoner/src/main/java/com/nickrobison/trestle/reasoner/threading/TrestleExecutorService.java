@@ -3,7 +3,12 @@ package com.nickrobison.trestle.reasoner.threading;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import com.nickrobison.metrician.Metrician;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
+import com.typesafe.config.ConfigFactory;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,8 +34,19 @@ public class TrestleExecutorService implements ExecutorService {
     private final Timer executionTimer;
     private final Meter executionCount;
 
-    private TrestleExecutorService(String executorName, int executorSize, Metrician metrician) {
-//        Setup the thread pool
+    @Inject
+    public TrestleExecutorService(@Assisted String executorName, Metrician metrician) {
+        final Config config = ConfigFactory.load().getConfig("trestle.threading");
+//        Try to get the config, otherwise, fallback to the default
+        int executorSize;
+        try {
+            executorSize = config.getInt(executorName + ".size");
+        } catch (ConfigException.Missing e) {
+            logger.warn("Unable to find configuration for {}. Falling back to defaults", executorName);
+            executorSize = config.getInt("default-pool.size");
+        }
+
+        //        Setup the thread pool
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setNameFormat(String.format("Trestle-%s-%%d", executorName))
                 .setDaemon(false)
@@ -154,19 +170,5 @@ public class TrestleExecutorService implements ExecutorService {
 
     private Exception clientTrace() {
         return new Exception("Client stack trace");
-    }
-
-
-    /**
-     * Returns a {@link TrestleExecutorService} with the specified parameters
-     *
-     * @param executorName - Name of Executor
-     *                     (will be propagated down to the individual threads)
-     * @param executorSize - Number of threads to spawn
-     * @param metrician    - {@link Metrician} instance to metric Executor performance
-     * @return - {@link TrestleExecutorService}
-     */
-    public static TrestleExecutorService executorFactory(String executorName, int executorSize, Metrician metrician) {
-        return new TrestleExecutorService(executorName, executorSize, metrician);
     }
 }

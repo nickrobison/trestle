@@ -43,6 +43,7 @@ import "angular2-materialize";
 import "moment";
 import "moment-timezone";
 import "./rxjs-operators";
+import "sorted-array";
 import "stacktrace-js";
 import "transitory";
 import "wellknown";

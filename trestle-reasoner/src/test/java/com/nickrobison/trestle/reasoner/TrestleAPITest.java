@@ -3,7 +3,7 @@ package com.nickrobison.trestle.reasoner;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Polygon;
 import com.google.common.collect.ImmutableList;
-import com.nickrobison.trestle.SharedUtils;
+import com.nickrobison.trestle.SharedTestUtils;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.TrestleIndividual;
@@ -15,7 +15,6 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.IRI;
@@ -48,6 +47,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
 //        Spatial/Complex objects
         final TestClasses.GAULComplexClassTest gaulComplexClassTest = new TestClasses.GAULComplexClassTest();
         final Geometry jtsGeom = new WKTReader().read("POINT(4.0 6.0)");
+        jtsGeom.setSRID(4269);
         final TestClasses.JTSGeometryTest jtsGeometryTest = new TestClasses.JTSGeometryTest(4326, jtsGeom, LocalDate.now());
         final Polygon geometry = (Polygon) GeometryEngine.geometryFromWkt("POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", 0, com.esri.core.geometry.Geometry.Type.Polygon);
         final TestClasses.ESRIPolygonTest esriPolygonTest = new TestClasses.ESRIPolygonTest(4792, geometry, LocalDate.now());
@@ -105,17 +105,6 @@ public class TrestleAPITest extends AbstractReasonerTest {
 //        reasoner.removeIndividual(classObjects.toArray(new Object[classObjects.size()]));
 
 //        reasoner.writeOntology(new File("/Users/nrobison/Desktop/trestle_test.owl").toURI(), false);
-
-//        Geotools
-//
-//        JTS.toGeometry()
-//        final Geometry geotoolsGeom = JTS.toGeographic(new WKTReader().read("POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))"), DefaultGeographicCRS.WGS84);
-//        JTS.toGeometry()
-//        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest = new TestClasses.GeotoolsPolygonTest(UUID.randomUUID(), (org.opengis.geometry.coordinate.Polygon) geotoolsGeom, LocalDate.now());
-//        final OWLNamedIndividual owlNamedIndividual = classParser.getTrestleObject(geotoolsPolygonTest);
-//        reasoner.writeTrestleObject(geotoolsPolygonTest);
-//        final TestClasses.GeotoolsPolygonTest geotoolsPolygonTest1 = reasoner.readTrestleObject(geotoolsPolygonTest.getClass(), owlNamedIndividual.getIRI(), false);
-//        assertEquals(geotoolsPolygonTest, geotoolsPolygonTest1, "Should be equal");
 
         reasoner.getMetricsEngine().exportData(new File("./target/api-test-metrics.csv"));
     }
@@ -191,12 +180,11 @@ public class TrestleAPITest extends AbstractReasonerTest {
     }
 
     @Test
-    @Disabled
     public void gaulLoader() throws IOException, TrestleClassException, MissingOntologyEntity {
 
 
 //        Write the objects
-        SharedUtils.readGAULObjects().parallelStream().forEach(gaul -> {
+        SharedTestUtils.readGAULObjects().parallelStream().forEach(gaul -> {
             try {
                 reasoner.writeTrestleObject(gaul);
             } catch (TrestleClassException e) {
@@ -231,13 +219,13 @@ public class TrestleAPITest extends AbstractReasonerTest {
         assertEquals(ancuabe, ancuabe2, "Should be equal");
 
 //        Check the spatial intersection
-        Optional<List<@NonNull Object>> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC));
+        Optional<List<@NonNull Object>> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
         assertTrue(intersectedObjects.isPresent(), "Should have objects");
         assertTrue(intersectedObjects.get().size() > 0, "Should have more than 1 object");
 
 //        Big intersection
         final String mozWKT = "POLYGON((30.21 -10.33, 41.05 -10.33, 41.05 -26.92, 30.21 -26.92, 30.21 -10.33))";
-        assertTimeoutPreemptively(Duration.ofSeconds(60), () -> reasoner.spatialIntersect(TestClasses.GAULTestClass.class, mozWKT, 100.0, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC)), "Should complete in less than 60 seconds");
+        assertTimeoutPreemptively(Duration.ofSeconds(60), () -> reasoner.spatialIntersect(TestClasses.GAULTestClass.class, mozWKT, 100.0, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null), "Should complete in less than 60 seconds");
 //        final Optional<List<TestClasses.@NonNull GAULTestClass>> mozClasses = reasoner.spatialIntersect(TestClasses.GAULTestClass.class, mozWKT, 100.0);
 //        assertAll(() -> assertTrue(intersectedObjects))
 //

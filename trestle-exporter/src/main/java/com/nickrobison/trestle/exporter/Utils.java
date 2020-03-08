@@ -1,6 +1,9 @@
 package com.nickrobison.trestle.exporter;
 
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.PrecisionModel;
+import com.vividsolutions.jts.io.WKTReader;
 
 import java.math.BigInteger;
 import java.util.UUID;
@@ -75,5 +78,15 @@ class Utils {
         } else {
             return String.class;
         }
+    }
+
+    /**
+     * Create a new {@link WKTReader} using the provided projection
+     * @param srid - {@link Integer} SRID to use
+     * @return - {@link WKTReader} for specified projection
+     */
+    static WKTReader createProjectedReader(Integer srid) {
+        final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), srid);
+        return new WKTReader(geometryFactory);
     }
 }

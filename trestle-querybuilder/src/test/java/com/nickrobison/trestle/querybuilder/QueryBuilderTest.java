@@ -25,7 +25,7 @@ public class QueryBuilderTest {
     private static OWLDataFactory df;
     private QueryBuilder qb;
 
-    private static final String conceptQueryNoFilter = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+    private static final String collectionQueryNoFilter = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
             "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
@@ -35,9 +35,9 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?concept ?individual WHERE { ?i trestle:has_relation ?r .?r trestle:Relation_Strength ?strength .?r trestle:related_to ?concept .?concept trestle:related_by ?rc .?rc trestle:Relation_Strength ?strength .?rc trestle:relation_of ?individual .VALUES ?i {<http://nickrobison.com/dissertation/trestle.owl#test_muni4>} .FILTER(?strength >= \"0.6\"^^xsd:double)}";
+            "SELECT DISTINCT ?collection ?individual WHERE { ?i trestle:has_relation ?r .?r trestle:Relation_Strength ?strength .?r trestle:related_to ?collection .?collection trestle:related_by ?rc .?rc trestle:Relation_Strength ?strength .?rc trestle:relation_of ?individual .VALUES ?i {<http://nickrobison.com/dissertation/trestle.owl#test_muni4>} .FILTER(?strength >= \"0.6\"^^xsd:double)}";
 
-    private static final String conceptQueryFilter = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+    private static final String collectionQueryFilter = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
             "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
@@ -47,7 +47,7 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?concept ?individual WHERE { ?i trestle:has_relation ?r .?r trestle:Relation_Strength ?strength .?r trestle:related_to ?concept .?concept trestle:related_by ?rc .?rc trestle:Relation_Strength ?strength .?rc trestle:relation_of ?individual .VALUES ?i {<http://nickrobison.com/dissertation/trestle.owl#test_muni4>} .FILTER(?strength >= \"0.6\"^^xsd:double). VALUES ?concept {<http://nickrobison.com/dissertation/trestle.owl#test_muni4>}}";
+            "SELECT DISTINCT ?collection ?individual WHERE { ?i trestle:has_relation ?r .?r trestle:Relation_Strength ?strength .?r trestle:related_to ?collection .?collection trestle:related_by ?rc .?rc trestle:Relation_Strength ?strength .?rc trestle:relation_of ?individual .VALUES ?i {<http://nickrobison.com/dissertation/trestle.owl#test_muni4>} .FILTER(?strength >= \"0.6\"^^xsd:double). VALUES ?collection {<http://nickrobison.com/dissertation/trestle.owl#test_muni4>}}";
 
     private static final String objectPropertyStartIntervalString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
@@ -132,7 +132,7 @@ public class QueryBuilderTest {
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
             "SELECT DISTINCT ?m WHERE { ?m rdf:type trestle:GAUL .?m trestle:has_fact ?f .?f ogc:asWKT ?wkt .OPTIONAL{?f trestle:valid_from ?vf} .OPTIONAL{?f trestle:valid_to ?vt} .OPTIONAL{?f trestle:valid_at ?va} .?f trestle:database_from ?df .OPTIONAL{?f trestle:database_to ?dt} .FILTER(?df <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime && (!bound(?dt) || ?dt > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) .FILTER ((!bound(?vf) || (?vf <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime) && (!bound(?vt) || ?vt > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) && (!bound(?va) || (?va = \"2014-01-01T00:00:00Z\"^^xsd:dateTime))) .FILTER(ogcf:sfIntersects(?wkt, \"Point(39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }    ";
 
-    private static final String tsConceptString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
+    private static final String tsCollectionString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
             "PREFIX trestle: <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
@@ -142,7 +142,7 @@ public class QueryBuilderTest {
             "PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX ogcf: <http://www.opengis.net/def/function/geosparql/>\n" +
-            "SELECT DISTINCT ?m WHERE { ?m rdf:type trestle:Trestle_Concept .?m trestle:related_by ?r .?r trestle:Relation_Strength ?rs .?r trestle:relation_of ?object .?object trestle:has_fact ?f .OPTIONAL {?f trestle:valid_from ?tStart }.OPTIONAL {?f trestle:valid_to ?tEnd }.OPTIONAL {?f trestle:valid_at ?tAt }.?f trestle:database_from ?df .OPTIONAL {?f trestle:database_to ?dt }.?f ogc:asWKT ?wkt .FILTER(?rs >= \"0.0\"^^xsd:double) .FILTER(?df <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime && (!bound(?dt) || ?dt > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) .FILTER ((!bound(?vf) || (?vf <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime) && (!bound(?vt) || ?vt > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) && (!bound(?va) || (?va = \"2014-01-01T00:00:00Z\"^^xsd:dateTime))) .FILTER(ogcf:sfIntersects(?wkt, \"Point(39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }    ";
+            "SELECT DISTINCT ?m WHERE { ?m rdf:type trestle:Trestle_Collection .?m trestle:related_by ?r .?r trestle:Relation_Strength ?rs .?r trestle:relation_of ?object .?object trestle:has_fact ?f .OPTIONAL {?f trestle:valid_from ?tStart }.OPTIONAL {?f trestle:valid_to ?tEnd }.OPTIONAL {?f trestle:valid_at ?tAt }.?f trestle:database_from ?df .OPTIONAL {?f trestle:database_to ?dt }.?f ogc:asWKT ?wkt .FILTER(?rs >= \"0.0\"^^xsd:double) .FILTER(?df <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime && (!bound(?dt) || ?dt > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) .FILTER ((!bound(?vf) || (?vf <= \"2014-01-01T00:00:00Z\"^^xsd:dateTime) && (!bound(?vt) || ?vt > \"2014-01-01T00:00:00Z\"^^xsd:dateTime)) && (!bound(?va) || (?va = \"2014-01-01T00:00:00Z\"^^xsd:dateTime))) .FILTER(ogcf:sfIntersects(?wkt, \"Point(39.5398864750001 -12.0671005249999)\"^^ogc:wktLiteral)) }    ";
 
     private static final String individualRelationString = "BASE <http://nickrobison.com/dissertation/trestle.owl#>\n" +
             "PREFIX : <http://nickrobison.com/test/trestle.owl#>\n" +
@@ -190,12 +190,12 @@ public class QueryBuilderTest {
         final OWLClass gaulClass = df.getOWLClass(IRI.create("trestle:", "GAUL"));
 
         assertAll(() -> {
-                    final String nullConceptQuery = qb.buildConceptRetrievalQuery(test_muni4, null, 0.6);
-                    assertEquals(conceptQueryNoFilter, nullConceptQuery, "Concept query, no filter");
+                    final String nullCollectionQuery = qb.buildCollectionRetrievalQuery(test_muni4, null, 0.6);
+                    assertEquals(collectionQueryNoFilter, nullCollectionQuery, "Collection query, no filter");
                 },
                 () -> {
-                    final String filteredConceptQuery = qb.buildConceptRetrievalQuery(test_muni4, test_muni4, 0.6);
-                    assertEquals(conceptQueryFilter, filteredConceptQuery, "Concept query, filtered");
+                    final String filteredCollectionQuery = qb.buildCollectionRetrievalQuery(test_muni4, test_muni4, 0.6);
+                    assertEquals(collectionQueryFilter, filteredCollectionQuery, "Collection query, filtered");
                 });
     }
 
@@ -206,13 +206,13 @@ public class QueryBuilderTest {
 
         assertAll(() -> {
                     //        Test st-intersection
-                    final String tsString = qb.buildTemporalSpatialIntersection(gaulClass, wktString, 0.0, QueryBuilder.Units.KM, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
+                    final String tsString = qb.buildTemporalSpatialIntersection(gaulClass, wktString, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
                     assertEquals(tsIntersectString, tsString, "TS should be equal");
                 },
                 () -> {
-                    //        Test concept
-                    final String generatedTSConceptString = qb.buildTemporalSpatialConceptIntersection(wktString, 0.0, 0.0, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
-                    assertEquals(tsConceptString, generatedTSConceptString, "TS Concept intersection be equal");
+                    //        Test collection
+                    final String generatedTSCollectionString = qb.buildTemporalSpatialCollectionIntersection(wktString, 0.0, OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC), OffsetDateTime.of(LocalDate.of(2014, 1, 1).atStartOfDay(), ZoneOffset.UTC));
+                    assertEquals(tsCollectionString, generatedTSCollectionString, "TS Collection intersection be equal");
                 });
     }
 
