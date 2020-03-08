@@ -173,7 +173,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //                    builder.password);
 //        }
 
-        final Injector injector = Guice.createInjector(new TrestleModule(builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled"), this.trestleConfig.getBoolean("events.enabled")));
+        final Injector injector = Guice.createInjector(new TrestleModule(builder.pm, builder.metrics, builder.caching, this.trestleConfig.getBoolean("merge.enabled"), this.trestleConfig.getBoolean("events.enabled")));
 
 //        Setup metrics engine
         metrician = injector.getInstance(Metrician.class);

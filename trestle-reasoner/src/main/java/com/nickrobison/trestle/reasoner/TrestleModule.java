@@ -18,10 +18,10 @@ import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.nickrobison.trestle.common.StaticIRI.TRESTLE_PREFIX;
 import static com.nickrobison.trestle.reasoner.utils.ConfigValidator.ValidateConfig;
 
 /**
@@ -34,9 +34,11 @@ public class TrestleModule extends AbstractModule {
     private final boolean cachingEnabled;
     private final boolean mergeEnabled;
     private final boolean eventEnabled;
+    private final TrestlePrefixManager prefixManager;
 
-    TrestleModule(boolean metricsEnabled, boolean cachingEnabled, boolean mergeEnabled, boolean eventEnabled) {
+    TrestleModule(TrestlePrefixManager prefixManager, boolean metricsEnabled, boolean cachingEnabled, boolean mergeEnabled, boolean eventEnabled) {
         logger.debug("Building Trestle Module");
+        this.prefixManager = prefixManager;
         this.metricsEnabled = metricsEnabled;
         this.cachingEnabled = cachingEnabled;
         this.mergeEnabled = mergeEnabled;
@@ -68,7 +70,12 @@ public class TrestleModule extends AbstractModule {
     @Provides
     @ReasonerPrefix
     public String providePrefix() {
-        return TRESTLE_PREFIX;
+        return this.prefixManager.getDefaultPrefix();
+    }
+
+    @Provides
+    public DefaultPrefixManager providePrefixManager() {
+        return this.prefixManager.getDefaultPrefixManager();
     }
 
     @Provides

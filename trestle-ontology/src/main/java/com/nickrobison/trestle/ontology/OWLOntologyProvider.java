@@ -1,10 +1,9 @@
-package com.nickrobison.trestle;
+package com.nickrobison.trestle.ontology;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import org.apache.commons.io.FileUtils;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.io.IRIDocumentSource;
 import org.semanticweb.owlapi.io.StreamDocumentSource;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
