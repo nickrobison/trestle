@@ -27,6 +27,9 @@ services:
 steps:
   - checkout: self
     submodules: true
+  - script: |
+      sudo apt-get install libpng16-16
+    displayName: Install system dependencies
   - task: Docker@2
     displayName: Login for Private Docker Images
     inputs:
