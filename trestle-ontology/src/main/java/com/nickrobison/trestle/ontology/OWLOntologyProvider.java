@@ -23,11 +23,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+/**
+ * Guice {@link Provider} for creating an {@link OWLOntology} for use by the {@link ITrestleOntology}.
+ * This handles loading the Protégé ontology from disk and mapping the import prefixes correctly.
+ * There's a lot to do in this class, it was mostly copy-pasted from other places, but now that it's encapsulated, some refactoring and testing should do nicely
+ */
 public class OWLOntologyProvider implements Provider<OWLOntology> {
 
     private static final Logger logger = LoggerFactory.getLogger(OWLOntologyProvider.class);
     public static final String ONTOLOGY_RESOURCE_NAME = "ontology/trestle.owl";
-    public static final String DEFAULT_NAME = "trestle";
     private static final String IMPORT_PREFIX = "ontology.imports";
 
     private final Config config;
@@ -60,11 +64,11 @@ public class OWLOntologyProvider implements Provider<OWLOntology> {
 //                    owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
 //                    owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
 //            } else if (is.isPresent()){
-                logger.debug("Loading ontology from input stream");
-                owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument((new StreamDocumentSource(is)),loaderConfig);
-                logger.info("Loaded version {} of ontology {}",
-                        owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
-                        owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
+            logger.debug("Loading ontology from input stream");
+            owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument((new StreamDocumentSource(is)), loaderConfig);
+            logger.info("Loaded version {} of ontology {}",
+                    owlOntology.getOntologyID().getVersionIRI().orElse(IRI.create("0.0")).getShortForm(),
+                    owlOntology.getOntologyID().getOntologyIRI().orElse(IRI.create("trestle")).getShortForm().replace(".owl", ""));
 //            }
 //            else {
 //                owlOntology = owlOntologyManager.createOntology();
@@ -77,7 +81,7 @@ public class OWLOntologyProvider implements Provider<OWLOntology> {
     }
 
     private OWLOntologyIRIMapper getImportsMapper() {
-        OWLOntologyIRIMapper iriMapper = new OWLOntologyIRIMapper() {
+        return new OWLOntologyIRIMapper() {
             private Config importsConfig = config.getConfig(IMPORT_PREFIX);
             private String importsDirPath = importsConfig.getString("importsDirectory");
             private Map<IRI, String> fileMap;
@@ -120,10 +124,8 @@ public class OWLOntologyProvider implements Provider<OWLOntology> {
                             FileUtils.copyURLToFile(fileURL, externalFile);
                             documentIRI = IRI.create(externalFile);
                             logger.info("creating external ontology file: {}", documentIRI);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        } catch (URISyntaxException e) {
-                            e.printStackTrace();
+                        } catch (IOException | URISyntaxException e) {
+                            logger.error("Cannot read ontology.", e);
                         }
                     } else {
                         File importOntFile = null;
@@ -133,7 +135,7 @@ public class OWLOntologyProvider implements Provider<OWLOntology> {
                                 documentIRI = IRI.create(importOntFile);
                             }
                         } catch (URISyntaxException e) {
-                            e.printStackTrace();
+                            logger.error("Cannot read ontology.", e);
                         }
                     }
                 }
@@ -141,8 +143,6 @@ public class OWLOntologyProvider implements Provider<OWLOntology> {
                 return documentIRI;
             }
         };
-
-        return iriMapper;
     }
 
     private InputStream getIRI(Optional<IRI> oIRI) {

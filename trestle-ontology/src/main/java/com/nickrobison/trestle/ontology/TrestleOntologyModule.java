@@ -11,12 +11,15 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Singleton;
 
+/**
+ * Guice module for providing the {@link ITrestleOntology}
+ * Also links in the {@link OWLOntologyProvider} to handle loading the Protégé ontology from disk.
+ */
 public class TrestleOntologyModule extends AbstractModule {
     private static final Logger logger = LoggerFactory.getLogger(TrestleOntologyModule.class);
 
-//    private final ITrestleOntology ontology;
-
     public TrestleOntologyModule() {
+        // Not used
     }
 
     @Override
