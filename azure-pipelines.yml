@@ -41,4 +41,4 @@ steps:
       jdkArchitectureOption: 'x64'
       publishJUnitResults: true
       testResultsFiles: '**/TEST-*.xml'
-      goals: 'test -pl trestle-reasoner -am'
+      goals: 'package -pl trestle-server -am'
