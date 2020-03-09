@@ -23,15 +23,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.cache.Cache;
-import javax.measure.converter.UnitConverter;
+import javax.measure.UnitConverter;
 import javax.measure.quantity.Length;
-import javax.measure.unit.Unit;
+import javax.measure.Unit;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static javax.measure.unit.SI.METER;
+import static si.uom.SI.METRE;
 
 public class SpatialEngineUtils {
 
@@ -170,7 +170,7 @@ public class SpatialEngineUtils {
     public static String addWKTBuffer(String wkt, double buffer, Unit<Length> lengthUnit) {
         if (buffer > 0.0) {
 //            Convert from whatever it is, to Meters, which is the distance unit of the default WGS84 (4326) projection
-            final UnitConverter converterTo = lengthUnit.getConverterTo(METER);
+            final UnitConverter converterTo = lengthUnit.getConverterTo(METRE);
             final double meterBuffer = converterTo.convert(buffer);
             logger.debug("Adding {} buffer to WKT", buffer);
             final WKTWriter writer = new WKTWriter();

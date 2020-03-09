@@ -36,8 +36,8 @@ import org.slf4j.LoggerFactory;
 import javax.cache.Cache;
 import javax.inject.Inject;
 import javax.measure.quantity.Length;
-import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
+import si.uom.SI;
+import javax.measure.Unit;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
@@ -98,7 +98,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 
     @Override
     public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer) {
-        return this.spatialIntersectIndividuals(datasetClassID, wkt, buffer, SI.METER, null, null);
+        return this.spatialIntersectIndividuals(datasetClassID, wkt, buffer, SI.METRE, null, null);
     }
 
     @Override
@@ -109,7 +109,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
     @Override
     public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal) {
         final Class<?> registeredClass = this.objectEngineUtils.getRegisteredClass(datasetClassID);
-        return this.spatialIntersectIndividuals(registeredClass, wkt, buffer, SI.METER, atTemporal, dbTemporal);
+        return this.spatialIntersectIndividuals(registeredClass, wkt, buffer, SI.METRE, atTemporal, dbTemporal);
     }
 
     @Override
@@ -120,7 +120,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 
     @Override
     public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(Class<@NonNull ?> clazz, String wkt, double buffer, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
-        return this.spatialIntersectIndividuals(clazz, wkt, buffer, SI.METER, validAt, dbAt);
+        return this.spatialIntersectIndividuals(clazz, wkt, buffer, SI.METRE, validAt, dbAt);
     }
 
     @Override
@@ -210,7 +210,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 
     @Override
     public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer) {
-        return spatialIntersectObject(inputObject, buffer, SI.METER, null, null);
+        return spatialIntersectObject(inputObject, buffer, SI.METRE, null, null);
     }
 
     @Override
@@ -220,7 +220,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 
     @Override
     public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt, @Nullable Temporal dbAt) {
-        return spatialIntersectObject(inputObject, buffer, SI.METER, temporalAt, null);
+        return spatialIntersectObject(inputObject, buffer, SI.METRE, temporalAt, null);
     }
 
     @Override
@@ -238,7 +238,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 
     @Override
     public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer) {
-        return spatialIntersect(clazz, wkt, buffer, SI.METER, null, null);
+        return spatialIntersect(clazz, wkt, buffer, SI.METRE, null, null);
     }
 
 
@@ -249,7 +249,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 
     @Override
     public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
-        return spatialIntersect(clazz, wkt, buffer, SI.METER, validAt, null);
+        return spatialIntersect(clazz, wkt, buffer, SI.METRE, validAt, null);
     }
 
     @Override
