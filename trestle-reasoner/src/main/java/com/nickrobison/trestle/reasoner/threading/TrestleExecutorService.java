@@ -9,7 +9,7 @@ import com.nickrobison.metrician.Metrician;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
 import com.typesafe.config.ConfigFactory;
-import org.jetbrains.annotations.NotNull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,7 +73,7 @@ public class TrestleExecutorService implements ExecutorService {
         this.target.shutdown();
     }
 
-    @NotNull
+    @NonNull
     @Override
     public List<Runnable> shutdownNow() {
         return this.target.shutdownNow();
@@ -90,13 +90,13 @@ public class TrestleExecutorService implements ExecutorService {
     }
 
     @Override
-    public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
+    public boolean awaitTermination(long timeout, @NonNull TimeUnit unit) throws InterruptedException {
         return this.target.awaitTermination(timeout, unit);
     }
 
-    @NotNull
+    @NonNull
     @Override
-    public <T> Future<T> submit(@NotNull Callable<T> task) {
+    public <T> Future<T> submit(@NonNull Callable<T> task) {
         final Instant taskSubmit = Instant.now();
         final Timer.Context time = this.queueTimer.time();
         return this.target.submit(() -> {
@@ -115,53 +115,53 @@ public class TrestleExecutorService implements ExecutorService {
         });
     }
 
-    @NotNull
+    @NonNull
     @Override
-    public <T> Future<T> submit(@NotNull Runnable task, T result) {
+    public <T> Future<T> submit(@NonNull Runnable task, T result) {
         return submit(() -> {
             task.run();
             return result;
         });
     }
 
-    @NotNull
+    @NonNull
     @Override
-    public Future<?> submit(@NotNull Runnable task) {
+    public Future<?> submit(@NonNull Runnable task) {
         return submit((Callable<Void>) () -> {
             task.run();
             return null;
         });
     }
 
-    @NotNull
+    @NonNull
     @Override
-    public <T> List<Future<T>> invokeAll(@NotNull Collection<? extends Callable<T>> tasks) throws InterruptedException {
+    public <T> List<Future<T>> invokeAll(@NonNull Collection<? extends Callable<T>> tasks) throws InterruptedException {
         return tasks.stream().map(this::submit).collect(Collectors.toList());
     }
 
-    @NotNull
+    @NonNull
     @Override
-    public <T> List<Future<T>> invokeAll(@NotNull Collection<? extends Callable<T>> tasks, long timeout, @NotNull TimeUnit unit) throws InterruptedException {
+    public <T> List<Future<T>> invokeAll(@NonNull Collection<? extends Callable<T>> tasks, long timeout, @NonNull TimeUnit unit) throws InterruptedException {
         logger.warn(THIS_CALL_IS_NOT_WRAPPED_BY_STACK_CLEANER_OR_TIMER);
         return this.target.invokeAll(tasks, timeout, unit);
     }
 
-    @NotNull
+    @NonNull
     @Override
-    public <T> T invokeAny(@NotNull Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
+    public <T> T invokeAny(@NonNull Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
         logger.warn(THIS_CALL_IS_NOT_WRAPPED_BY_STACK_CLEANER_OR_TIMER);
         return this.target.invokeAny(tasks);
     }
 
     @Override
-    public <T> T invokeAny(@NotNull Collection<? extends Callable<T>> tasks, long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public <T> T invokeAny(@NonNull Collection<? extends Callable<T>> tasks, long timeout, @NonNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         logger.warn(THIS_CALL_IS_NOT_WRAPPED_BY_STACK_CLEANER_OR_TIMER);
         return this.target.invokeAny(tasks, timeout, unit);
     }
 
     @Override
     @SuppressWarnings("FutureReturnValueIgnored") // I think we can ignore this
-    public void execute(@NotNull Runnable command) {
+    public void execute(@NonNull Runnable command) {
         submit((Callable<Void>) () -> {
             command.run();
             return null;

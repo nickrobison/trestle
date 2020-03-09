@@ -3,7 +3,7 @@ package com.nickrobison.trestle.gaulintegrator;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
-import org.jetbrains.annotations.NotNull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -48,7 +48,7 @@ public class GAULMapperKey implements WritableComparable<GAULMapperKey> {
     }
 
     @Override
-    public int compareTo(@NotNull GAULMapperKey o) {
+    public int compareTo(@NonNull GAULMapperKey o) {
 
         int result = this.getRegionID().compareTo(o.getRegionID());
         if (result == 0) {
