@@ -39,7 +39,7 @@
         <junit.jupiter.version>5.0.3</junit.jupiter.version>
         <junit.platform.version>1.0.3</junit.platform.version>
         <jmh.version>1.23</jmh.version>
-        <geotools.version>19.0</geotools.version>
+        <geotools.version>22.2</geotools.version>
         <metrics.version>3.2.6</metrics.version>
         <httpcomponents.version>4.5.12</httpcomponents.version>
         <owasp.version>3.1.1</owasp.version>
