@@ -13,10 +13,10 @@ import com.nickrobison.trestle.reasoner.engines.temporal.TemporalComparisonRepor
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.relations.CollectionRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
-import com.vividsolutions.jts.geom.GeometryCollection;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.PrecisionModel;
-import com.vividsolutions.jts.io.WKBReader;
+import org.locationtech.jts.geom.GeometryCollection;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.PrecisionModel;
+import org.locationtech.jts.io.WKBReader;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -224,15 +224,15 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
 //                      Union the existing members, and see if we have any overlap
 //            We need to convert to JTS, in order to properly handle the Union.
 //                Get the exterior rings, of the input objects, in order to handle any holes
-            final List<com.vividsolutions.jts.geom.Polygon> exteriorRings = getExteriorRings(gaulObject);
-            final com.vividsolutions.jts.geom.Geometry inputGeometry = new GeometryCollection(exteriorRings.toArray(new com.vividsolutions.jts.geom.Geometry[0]), geometryFactory).union();
+            final List<org.locationtech.jts.geom.Polygon> exteriorRings = getExteriorRings(gaulObject);
+            final org.locationtech.jts.geom.Geometry inputGeometry = new GeometryCollection(exteriorRings.toArray(new org.locationtech.jts.geom.Geometry[0]), geometryFactory).union();
 
 //            Create a new Geometry Collection, and union it
-            List<com.vividsolutions.jts.geom.Polygon> exteriorPolygonsToUnion = new ArrayList<>();
+            List<org.locationtech.jts.geom.Polygon> exteriorPolygonsToUnion = new ArrayList<>();
             for (GAULObject object : collectionMembers.get()) {
                 getExteriorRings(exteriorPolygonsToUnion, object);
             }
-            final com.vividsolutions.jts.geom.Geometry collectionUnionGeom = new GeometryCollection(exteriorPolygonsToUnion.toArray(new com.vividsolutions.jts.geom.Geometry[0]), geometryFactory)
+            final org.locationtech.jts.geom.Geometry collectionUnionGeom = new GeometryCollection(exteriorPolygonsToUnion.toArray(new org.locationtech.jts.geom.Geometry[0]), geometryFactory)
                     .union();
 
             final double unionArea = collectionUnionGeom.getArea();
@@ -248,18 +248,18 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
         }
     }
 
-    private List<com.vividsolutions.jts.geom.Polygon> getExteriorRings(GAULObject object) {
-        final List<com.vividsolutions.jts.geom.Polygon> polygons = new ArrayList<>();
+    private List<org.locationtech.jts.geom.Polygon> getExteriorRings(GAULObject object) {
+        final List<org.locationtech.jts.geom.Polygon> polygons = new ArrayList<>();
         getExteriorRings(polygons, object);
         return polygons;
     }
 
-    private void getExteriorRings(List<com.vividsolutions.jts.geom.Polygon> exteriorPolygonsToUnion, GAULObject object) {
+    private void getExteriorRings(List<org.locationtech.jts.geom.Polygon> exteriorPolygonsToUnion, GAULObject object) {
         final ByteBuffer polygonBuffer = operatorWKBExport.execute(0, object.getShapePolygon(), null);
         try {
-            final com.vividsolutions.jts.geom.Geometry geometry = wkbReader.read(polygonBuffer.array());
+            final org.locationtech.jts.geom.Geometry geometry = wkbReader.read(polygonBuffer.array());
             for (int i = 0; i < geometry.getNumGeometries(); i++) {
-                final com.vividsolutions.jts.geom.Polygon polygon = (com.vividsolutions.jts.geom.Polygon) geometry.getGeometryN(i);
+                final org.locationtech.jts.geom.Polygon polygon = (org.locationtech.jts.geom.Polygon) geometry.getGeometryN(i);
                 exteriorPolygonsToUnion.add(geometryFactory
                         .createPolygon(polygon
                                 .getExteriorRing()

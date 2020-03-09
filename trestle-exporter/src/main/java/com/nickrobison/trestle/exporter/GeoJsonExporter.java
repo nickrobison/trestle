@@ -10,9 +10,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nickrobison.trestle.common.CommonSpatialUtils;
 import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.File;

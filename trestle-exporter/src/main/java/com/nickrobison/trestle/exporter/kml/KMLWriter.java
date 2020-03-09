@@ -1,7 +1,7 @@
 package com.nickrobison.trestle.exporter.kml;
 
-import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.util.StringUtil;
+import org.locationtech.jts.geom.*;
+import org.locationtech.jts.util.StringUtil;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 

@@ -51,7 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.measure.quantity.Length;
-import javax.measure.unit.Unit;
+import javax.measure.Unit;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;

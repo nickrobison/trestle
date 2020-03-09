@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.exporter;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

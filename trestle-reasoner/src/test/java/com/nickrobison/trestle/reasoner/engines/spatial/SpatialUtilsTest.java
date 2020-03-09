@@ -1,24 +1,29 @@
 package com.nickrobison.trestle.reasoner.engines.spatial;
 
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
-import com.vividsolutions.jts.io.WKTWriter;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
+import org.locationtech.jts.io.WKTWriter;
+import tec.uom.se.unit.MetricPrefix;
 
-import static javax.measure.unit.NonSI.FOOT;
-import static javax.measure.unit.NonSI.INCH;
-import static javax.measure.unit.SI.CENTIMETER;
-import static javax.measure.unit.SI.KILOMETER;
-import static javax.measure.unit.SI.METER;
+import javax.measure.Unit;
+import javax.measure.quantity.Length;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static si.uom.SI.METRE;
+import static systems.uom.common.USCustomary.FOOT;
+import static systems.uom.common.USCustomary.INCH;
 
 /**
  * Created by nickrobison on 3/19/18.
  */
 public class SpatialUtilsTest {
+
+    private static final Unit<Length> CENTIMETER = MetricPrefix.CENTI(METRE);
+    private static final Unit<Length> KILOMETER = MetricPrefix.KILO(METRE);
 
     private static Geometry bufferedGeom;
     private static String wktInput;
@@ -28,7 +33,7 @@ public class SpatialUtilsTest {
 
     @BeforeAll
     public static void setup() throws ParseException {
-        wktInput =  "POLYGON((-122.374781 47.690612, -122.325515 47.690612, -122.325515 47.668884, -122.374781 47.668884, -122.374781 47.690612))";
+        wktInput = "POLYGON((-122.374781 47.690612, -122.325515 47.690612, -122.325515 47.668884, -122.374781 47.668884, -122.374781 47.690612))";
         Geometry wktGeom = WKT_READER.read(wktInput);
         bufferedGeom = wktGeom.buffer(50);
         bufferedWKT = wktWriter.write(bufferedGeom);
@@ -40,7 +45,7 @@ public class SpatialUtilsTest {
 //        Directly compare with buffer in meters
 
 //        Try to apply a buffer of 50 m
-        final String buff_m = SpatialEngineUtils.addWKTBuffer(wktInput, 50, METER);
+        final String buff_m = SpatialEngineUtils.addWKTBuffer(wktInput, 50, METRE);
         assertEquals(bufferedWKT, buff_m, "Should be equal when adding 50 m");
 
 //        Try for 5000cm

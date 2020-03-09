@@ -2,7 +2,7 @@ package com.nickrobison.trestle.reasoner.caching;
 
 import com.google.common.collect.ImmutableSet;
 import com.nickrobison.metrician.Metrician;
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

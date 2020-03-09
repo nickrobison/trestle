@@ -2,9 +2,9 @@ package com.nickrobison.trestle.exporter;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.nickrobison.trestle.exporter.kml.*;
-import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
+import org.locationtech.jts.geom.*;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 import org.apache.commons.io.IOUtils;
 
 import javax.xml.stream.XMLInputFactory;
