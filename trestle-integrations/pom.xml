@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
-        <hadoop.version>3.0.0</hadoop.version>
+        <hadoop.version>3.2.1</hadoop.version>
         <sonar.skip>true</sonar.skip>
     </properties>
 
