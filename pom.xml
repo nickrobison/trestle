@@ -6,7 +6,7 @@
 
     <groupId>com.nickrobison.trestle</groupId>
     <artifactId>trestle</artifactId>
-    <version>0.9.0-SNAPSHOT</version>
+    <version>0.9.1-SNAPSHOT</version>
     <modules>
         <module>trestle-reasoner</module>
         <module>trestle-integrations</module>
@@ -46,7 +46,7 @@
         <maven.enforcer.version>1.4.1</maven.enforcer.version>
         <caffeine.version>2.6.1</caffeine.version>
         <!--This will probably need to get bumped each time we upgrade Dropwizard-->
-        <jackson.version>2.9.1</jackson.version>
+        <jackson.version>2.10.3</jackson.version>
         <!--Checker properties-->
         <checker.version>2.3.2</checker.version>
         <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
