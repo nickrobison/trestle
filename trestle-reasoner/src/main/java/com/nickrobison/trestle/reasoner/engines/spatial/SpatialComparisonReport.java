@@ -2,7 +2,7 @@ package com.nickrobison.trestle.reasoner.engines.spatial;
 
 import com.nickrobison.trestle.reasoner.engines.AbstractComparisonReport;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 

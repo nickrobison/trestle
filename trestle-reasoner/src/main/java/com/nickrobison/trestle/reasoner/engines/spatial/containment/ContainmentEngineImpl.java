@@ -3,7 +3,7 @@ package com.nickrobison.trestle.reasoner.engines.spatial.containment;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngineUtils;
 import com.nickrobison.trestle.reasoner.parser.IClassParser;
 import com.nickrobison.trestle.reasoner.parser.TrestleParser;
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import javax.cache.Cache;

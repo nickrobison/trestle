@@ -140,7 +140,7 @@ public class ClassRegister implements IClassRegister {
             final String typeName = spatialField.getType().getTypeName();
 //            Ensure that the spatial field points to a supported type class
             if (!typeName.contains("java.lang.String")
-                    && !typeName.contains("com.vividsolutions.jts")
+                    && !typeName.contains("org.locationtech.jts")
                     && !typeName.contains("com.esri.core.geometry")
                     && !typeName.contains("org.opengis.geometry")) {
                 throw new UnsupportedTypeException(Spatial.class, spatialField.getGenericType());
@@ -166,7 +166,7 @@ public class ClassRegister implements IClassRegister {
                 final String typeName = spatialMethod.getReturnType().getTypeName();
                 //            Ensure that the spatial field points to a supported type class
                 if (!typeName.contains("java.lang.String")
-                        && !typeName.contains("com.vividsolutions.jts")
+                        && !typeName.contains("org.locationtech.jts")
                         && !typeName.contains("com.esri.core.geometry")
                         && !typeName.contains("org.opengis.geometry")) {
                     throw new UnsupportedTypeException(Spatial.class, spatialMethod.getGenericReturnType());

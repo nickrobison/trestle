@@ -2,16 +2,16 @@ package com.nickrobison.trestle.querybuilder;
 
 import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.PrecisionModel;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
-import com.vividsolutions.jts.io.WKTWriter;
-import com.vividsolutions.jts.precision.GeometryPrecisionReducer;
-import com.vividsolutions.jts.simplify.TopologyPreservingSimplifier;
 import org.apache.jena.query.ParameterizedSparqlString;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.PrecisionModel;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
+import org.locationtech.jts.io.WKTWriter;
+import org.locationtech.jts.precision.GeometryPrecisionReducer;
+import org.locationtech.jts.simplify.TopologyPreservingSimplifier;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
@@ -110,7 +110,7 @@ public class QueryBuilder {
      * If the collectionFilter is specified, results are filtered to only return that collection, if the individual is a member of that collection
      *
      * @param individual           - OWLNamedIndividual
-     * @param collectionFilter        - Nullable OWLNamedIndividual of Trestle_Collection to filter on
+     * @param collectionFilter     - Nullable OWLNamedIndividual of Trestle_Collection to filter on
      * @param relationshipStrength - double of cutoff value of minimum relation strength to consider an individual a member of that collection
      * @return - SPARQL Query with variables ?collection ?individual
      */
@@ -588,7 +588,7 @@ public class QueryBuilder {
      * Build SPARQL Query to retrieve all given members of a Trestle_Collection that are subclassed from the given OWLClass
      *
      * @param datasetClass - OWLClass of individuals to return
-     * @param collectionID    - IRI of Trestle_Collection to query
+     * @param collectionID - IRI of Trestle_Collection to query
      * @param strength     - relation strength parameter
      * @return - SPARQL Query String
      */

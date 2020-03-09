@@ -5,13 +5,13 @@ import com.esri.core.geometry.OperatorExportToWkb;
 import com.esri.core.geometry.Polygon;
 import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.reasoner.parser.SpatialParser;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.PrecisionModel;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKBReader;
-import com.vividsolutions.jts.io.WKTReader;
-import com.vividsolutions.jts.io.WKTWriter;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.PrecisionModel;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKBReader;
+import org.locationtech.jts.io.WKTReader;
+import org.locationtech.jts.io.WKTWriter;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
@@ -237,20 +237,20 @@ public class SpatialEngineUtils {
 
     /**
      * Extract exterior Polygon rings from a given {@link Geometry}
-     * Implicitly expects either a {@link com.vividsolutions.jts.geom.MultiPolygon} or {@link com.vividsolutions.jts.geom.Polygon}
+     * Implicitly expects either a {@link org.locationtech.jts.geom.MultiPolygon} or {@link org.locationtech.jts.geom.Polygon}
      * otherwise, it will throw a {@link ClassCastException} when trying to cast the ring to a Polygon type
      *
      * @param inputGeoms - {@link List} of {@link Geometry} to extract exteriors from
      * @param srid       - {@link Integer} input SRID of geometries
-     * @return - {@link List} of exterior {@link com.vividsolutions.jts.geom.Polygon}
+     * @return - {@link List} of exterior {@link org.locationtech.jts.geom.Polygon}
      */
-    public static List<com.vividsolutions.jts.geom.Polygon> getJTSExteriorRings(List<Geometry> inputGeoms, int srid) {
+    public static List<org.locationtech.jts.geom.Polygon> getJTSExteriorRings(List<Geometry> inputGeoms, int srid) {
 //        Create a new Geometry factory
         final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), srid);
-        List<com.vividsolutions.jts.geom.Polygon> polygonExteriors = new ArrayList<>();
+        List<org.locationtech.jts.geom.Polygon> polygonExteriors = new ArrayList<>();
         for (Geometry inputGeom : inputGeoms) {
             for (int i = 0; i < inputGeom.getNumGeometries(); i++) {
-                final com.vividsolutions.jts.geom.Polygon polygon = com.vividsolutions.jts.geom.Polygon.class.cast(inputGeom.getGeometryN(i));
+                final org.locationtech.jts.geom.Polygon polygon = org.locationtech.jts.geom.Polygon.class.cast(inputGeom.getGeometryN(i));
                 polygonExteriors.add(geometryFactory
                         .createPolygon(polygon
                                 .getExteriorRing()

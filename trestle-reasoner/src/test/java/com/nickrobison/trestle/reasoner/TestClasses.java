@@ -7,7 +7,7 @@ import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.types.TemporalType;
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 

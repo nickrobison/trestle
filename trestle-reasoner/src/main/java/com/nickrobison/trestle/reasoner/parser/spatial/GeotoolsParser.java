@@ -1,7 +1,7 @@
 package com.nickrobison.trestle.reasoner.parser.spatial;
 
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.opengis.geometry.Geometry;
@@ -21,7 +21,7 @@ public class GeotoolsParser {
     }
 
     public static Object wktToGeotoolsObject(String wkt, Class<?> geotoolsClass) throws ParseException, TransformException {
-        final com.vividsolutions.jts.geom.Geometry read = reader.read(wkt);
+        final org.locationtech.jts.geom.Geometry read = reader.read(wkt);
         return geotoolsClass.cast(JTS.toGeographic(read, crs));
     }
 }
