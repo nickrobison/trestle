@@ -43,12 +43,12 @@
         <dependency>
             <groupId>com.google.inject.extensions</groupId>
             <artifactId>guice-multibindings</artifactId>
-            <version>4.1.0</version>
+            <version>4.2.2</version>
         </dependency>
         <dependency>
             <groupId>com.google.inject.extensions</groupId>
             <artifactId>guice-assistedinject</artifactId>
-            <version>4.1.0</version>
+            <version>4.2.2</version>
         </dependency>
         <!--        Use a custom JIT pack, rather than trying to bundle it ourselves-->
         <dependency>
