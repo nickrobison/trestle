@@ -1,5 +1,5 @@
 (ns com.nickrobison.trestle.reasoner.parser.parser
-  (:import [IClassParser]
+  (:import
            (com.nickrobison.trestle.reasoner.parser IClassParser IClassBuilder IClassRegister ClassBuilder ITypeConverter)
            (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom OWLDataProperty OWLLiteral OWLDatatype)
            (java.lang.reflect Constructor Parameter)
@@ -7,7 +7,8 @@
            (java.util Optional List)
            (com.nickrobison.trestle.common StaticIRI LanguageUtils)
            (com.nickrobison.trestle.reasoner.exceptions MissingConstructorException InvalidClassException InvalidClassException$State UnregisteredClassException)
-           (java.io Serializable))
+           (java.io Serializable)
+   )
   (:require [clojure.core.match :refer [match]]
             [clojure.core.reducers :as r]
             [clojure.tools.logging :as log]
@@ -19,7 +20,8 @@
             [com.nickrobison.trestle.reasoner.parser.types.spatial.esri]
             [com.nickrobison.trestle.reasoner.parser.types.spatial.jts]
             [com.nickrobison.trestle.reasoner.parser.spatial :as spatial])
-  (:use clj-fuzzy.metrics))
+  (:use clj-fuzzy.metrics)
+  )
 
 ; Class related helpers
 (defn find-matching-constructors
