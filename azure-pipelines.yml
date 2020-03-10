@@ -46,29 +46,30 @@ stages:
               publishJUnitResults: true
               testResultsFiles: '**/TEST-*.xml'
               goals: 'compile'
-      - job: Compile_Checker
-        continueOnError: true
-        steps:
-          - checkout: self
-            submodules: true
-          - task: Cache@2
-            inputs:
-              key: 'maven | "$(Agent.OS)" | **/pom.xml'
-              restoreKeys: |
-                maven | "$(Agent.OS)"
-                maven
-              path: $(MAVEN_CACHE_FOLDER)
-            displayName: Cache Maven local repo
-          - task: Maven@3
-            inputs:
-              mavenPomFile: 'pom.xml'
-              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
-              javaHomeOption: 'JDKVersion'
-              jdkVersionOption: '1.11'
-              jdkArchitectureOption: 'x64'
-              publishJUnitResults: true
-              testResultsFiles: '**/TEST-*.xml'
-              goals: 'compile -Pchecker'
+          - task: PublishBuildArtifacts@1
+#      - job: Compile_Checker
+#        continueOnError: true
+#        steps:
+#          - checkout: self
+#            submodules: true
+#          - task: Cache@2
+#            inputs:
+#              key: 'maven | "$(Agent.OS)" | **/pom.xml'
+#              restoreKeys: |
+#                maven | "$(Agent.OS)"
+#                maven
+#              path: $(MAVEN_CACHE_FOLDER)
+#            displayName: Cache Maven local repo
+#          - task: Maven@3
+#            inputs:
+#              mavenPomFile: 'pom.xml'
+#              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+#              javaHomeOption: 'JDKVersion'
+#              jdkVersionOption: '1.11'
+#              jdkArchitectureOption: 'x64'
+#              publishJUnitResults: true
+#              testResultsFiles: '**/TEST-*.xml'
+#              goals: 'compile -Pchecker'
   - stage: Test
     displayName: Test Code
     pool:
@@ -81,14 +82,6 @@ stages:
         steps:
           - checkout: self
             submodules: true
-          - script: |
-              sudo apt-get install libpng16-16
-            displayName: Install system dependencies
-          - task: Docker@2
-            displayName: Login for Private Docker Images
-            inputs:
-              command: login
-              containerRegistry: dockerHub
           - task: Cache@2
             inputs:
               key: 'maven | "$(Agent.OS)" | **/pom.xml'
@@ -97,14 +90,6 @@ stages:
                 maven
               path: $(MAVEN_CACHE_FOLDER)
             displayName: Cache Maven local repo
-          - task: Cache@2
-            inputs:
-              key: 'yarn | "$(Agent.OS)" | trestle-server/yarn.lock'
-              restoreKeys: |
-                yarn | "$(Agent.OS)"
-                yarn
-              path: $(YARN_CACHE_FOLDER)
-            displayName: Cache Yarn packages
           - task: Maven@3
             inputs:
               mavenPomFile: 'pom.xml'
@@ -114,7 +99,7 @@ stages:
               jdkArchitectureOption: 'x64'
               publishJUnitResults: true
               testResultsFiles: '**/TEST-*.xml'
-              goals: 'package -pl trestle-server -am'
+              goals: 'test'
       - job: Tests_Integration
         displayName: Integration Tests
         services:
