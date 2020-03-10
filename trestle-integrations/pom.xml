@@ -48,7 +48,7 @@
         <dependency>
             <groupId>com.google.inject.extensions</groupId>
             <artifactId>guice-assistedinject</artifactId>
-            <version>${guice.version</version>
+            <version>${guice.version}</version>
         </dependency>
         <!--        Use a custom JIT pack, rather than trying to bundle it ourselves-->
         <dependency>
