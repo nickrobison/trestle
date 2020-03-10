@@ -18,12 +18,13 @@ resources:
         - /dev/shm:/dev/shm
 
 stages:
-  - stage: Compile Code
+  - stage: Compile
     displayName: Compile Code
     pool:
       vmImage: 'ubuntu-16.04'
     jobs:
-      - job: Normal compile
+      - job: Default-Compile
+        displayName: Normal Compile
         steps:
           - checkout: self
             submodules: true
@@ -53,13 +54,14 @@ stages:
               publishJUnitResults: true
               testResultsFiles: '**/TEST-*.xml'
               goals: 'compile'
-      - job: Compile with Checker
+      - job: Compile-Checker
   - stage: Test
     displayName: Test Code
     pool:
       vmImage: 'ubuntu-16.04'
     jobs:
-      - job: Unit tests
+      - job: Tests-Unit
+        displayName: Unit Tests
         services:
           graphdb: graphdb
         steps:
@@ -99,7 +101,8 @@ stages:
               publishJUnitResults: true
               testResultsFiles: '**/TEST-*.xml'
               goals: 'package -pl trestle-server -am'
-      - job: Integration tests
+      - job: Tests-Integration
+        displayName: Integration Tests
         services:
           graphdb: graphdb
         steps:
