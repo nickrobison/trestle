@@ -160,7 +160,7 @@ stages:
               jdkArchitectureOption: 'x64'
               publishJUnitResults: true
               testResultsFiles: '**/TEST-*.xml'
-              goals: 'package -pl trestle-server -am'
+              goals: 'package -Pintegration-tests -pl trestle-server -am'
 
 
 
