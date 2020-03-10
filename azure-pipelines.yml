@@ -27,8 +27,8 @@ stages:
         displayName: Normal Compile
         strategy:
           matrix:
-            java8:
-              jvm: 1.8
+#            java8:
+#              jvm: 1.8
             java11:
               jvm: 1.11
         steps:
@@ -86,8 +86,8 @@ stages:
       - job: Tests_Unit
         strategy:
           matrix:
-            java8:
-              jvm: 1.8
+#            java8:
+#              jvm: 1.8
             java11:
               jvm: 1.11
         displayName: Unit Tests
@@ -117,8 +117,8 @@ stages:
       - job: Tests_Integration
         strategy:
           matrix:
-            java8:
-              jvm: 1.8
+#            java8:
+#              jvm: 1.8
             java11:
               jvm: 1.11
         displayName: Integration Tests
