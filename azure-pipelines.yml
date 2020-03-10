@@ -1,6 +1,3 @@
-pool:
-  vmImage: 'ubuntu-16.04'
-
 variables:
   MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
   YARN_CACHE_FOLDER: $(Pipeline.Workspace)/.yarn
@@ -20,44 +17,131 @@ resources:
       volumes:
         - /dev/shm:/dev/shm
 
-services:
-  graphdb: graphdb
-  chrome: chrome
+stages:
+  - stage: Compile Code
+    displayName: Compile Code
+    pool:
+      vmImage: 'ubuntu-16.04'
+    jobs:
+      - job: Normal compile
+        steps:
+          - checkout: self
+            submodules: true
+          - script: |
+              sudo apt-get install libpng16-16
+            displayName: Install system dependencies
+          - task: Docker@2
+            displayName: Login for Private Docker Images
+            inputs:
+              command: login
+              containerRegistry: dockerHub
+          - task: Cache@2
+            inputs:
+              key: 'maven | "$(Agent.OS)" | **/pom.xml'
+              restoreKeys: |
+                maven | "$(Agent.OS)"
+                maven
+              path: $(MAVEN_CACHE_FOLDER)
+            displayName: Cache Maven local repo
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'pom.xml'
+              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '1.11'
+              jdkArchitectureOption: 'x64'
+              publishJUnitResults: true
+              testResultsFiles: '**/TEST-*.xml'
+              goals: 'compile'
+      - job: Compile with Checker
+  - stage: Test
+    displayName: Test Code
+    pool:
+      vmImage: 'ubuntu-16.04'
+    jobs:
+      - job: Unit tests
+        services:
+          graphdb: graphdb
+        steps:
+          - checkout: self
+            submodules: true
+          - script: |
+              sudo apt-get install libpng16-16
+            displayName: Install system dependencies
+          - task: Docker@2
+            displayName: Login for Private Docker Images
+            inputs:
+              command: login
+              containerRegistry: dockerHub
+          - task: Cache@2
+            inputs:
+              key: 'maven | "$(Agent.OS)" | **/pom.xml'
+              restoreKeys: |
+                maven | "$(Agent.OS)"
+                maven
+              path: $(MAVEN_CACHE_FOLDER)
+            displayName: Cache Maven local repo
+          - task: Cache@2
+            inputs:
+              key: 'yarn | "$(Agent.OS)" | trestle-server/yarn.lock'
+              restoreKeys: |
+                yarn | "$(Agent.OS)"
+                yarn
+              path: $(YARN_CACHE_FOLDER)
+            displayName: Cache Yarn packages
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'pom.xml'
+              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER) -Dmaven.javadoc.skip=true -DskipDocker' # Temporarily disable javadoc building because we're hitting an NPE. Also, skip docker until we can migrate to jib
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '1.11'
+              jdkArchitectureOption: 'x64'
+              publishJUnitResults: true
+              testResultsFiles: '**/TEST-*.xml'
+              goals: 'package -pl trestle-server -am'
+      - job: Integration tests
+        services:
+          graphdb: graphdb
+        steps:
+          - checkout: self
+            submodules: true
+          - script: |
+              sudo apt-get install libpng16-16
+            displayName: Install system dependencies
+          - task: Docker@2
+            displayName: Login for Private Docker Images
+            inputs:
+              command: login
+              containerRegistry: dockerHub
+          - task: Cache@2
+            inputs:
+              key: 'maven | "$(Agent.OS)" | **/pom.xml'
+              restoreKeys: |
+                maven | "$(Agent.OS)"
+                maven
+              path: $(MAVEN_CACHE_FOLDER)
+            displayName: Cache Maven local repo
+          - task: Cache@2
+            inputs:
+              key: 'yarn | "$(Agent.OS)" | trestle-server/yarn.lock'
+              restoreKeys: |
+                yarn | "$(Agent.OS)"
+                yarn
+              path: $(YARN_CACHE_FOLDER)
+            displayName: Cache Yarn packages
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'pom.xml'
+              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER) -Dmaven.javadoc.skip=true -DskipDocker -DskipTests' # Temporarily disable javadoc building because we're hitting an NPE. Also, skip docker until we can migrate to jib
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '1.11'
+              jdkArchitectureOption: 'x64'
+              publishJUnitResults: true
+              testResultsFiles: '**/TEST-*.xml'
+              goals: 'package -pl trestle-server -am'
 
-steps:
-  - checkout: self
-    submodules: true
-  - script: |
-      sudo apt-get install libpng16-16
-    displayName: Install system dependencies
-  - task: Docker@2
-    displayName: Login for Private Docker Images
-    inputs:
-      command: login
-      containerRegistry: dockerHub
-  - task: Cache@2
-    inputs:
-      key: 'maven | "$(Agent.OS)" | **/pom.xml'
-      restoreKeys: |
-        maven | "$(Agent.OS)"
-        maven
-      path: $(MAVEN_CACHE_FOLDER)
-    displayName: Cache Maven local repo
-  - task: Cache@2
-    inputs:
-      key: 'yarn | "$(Agent.OS)" | trestle-server/yarn.lock'
-      restoreKeys: |
-        yarn | "$(Agent.OS)"
-        yarn
-      path: $(YARN_CACHE_FOLDER)
-    displayName: Cache Yarn packages
-  - task: Maven@3
-    inputs:
-      mavenPomFile: 'pom.xml'
-      mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER) -Dmaven.javadoc.skip=true -DskipDocker' # Temporarily disable javadoc building because we're hitting an NPE. Also, skip docker until we can migrate to jib
-      javaHomeOption: 'JDKVersion'
-      jdkVersionOption: '1.11'
-      jdkArchitectureOption: 'x64'
-      publishJUnitResults: true
-      testResultsFiles: '**/TEST-*.xml'
-      goals: 'package -pl trestle-server -am'
+
+
+
+
+
