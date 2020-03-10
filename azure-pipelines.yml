@@ -71,12 +71,12 @@ stages:
               goals: 'compile -Pchecker'
   - stage: Test
     displayName: Test Code
-    dependsOn: Compile_Default
     pool:
       vmImage: 'ubuntu-16.04'
     jobs:
       - job: Tests_Unit
         displayName: Unit Tests
+        dependsOn: Compile_Default
         services:
           graphdb: graphdb
         steps:
@@ -118,6 +118,7 @@ stages:
               goals: 'package -pl trestle-server -am'
       - job: Tests_Integration
         displayName: Integration Tests
+        dependsOn: Compile_Default
         services:
           graphdb: graphdb
         steps:
