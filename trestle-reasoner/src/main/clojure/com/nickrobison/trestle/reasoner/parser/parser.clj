@@ -1,14 +1,14 @@
 (ns com.nickrobison.trestle.reasoner.parser.parser
   (:import
-           (com.nickrobison.trestle.reasoner.parser IClassParser IClassBuilder IClassRegister ClassBuilder ITypeConverter)
-           (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom OWLDataProperty OWLLiteral OWLDatatype)
-           (java.lang.reflect Constructor Parameter)
-           (com.nickrobison.trestle.reasoner.annotations DatasetClass Fact Language)
-           (java.util Optional List)
-           (com.nickrobison.trestle.common StaticIRI LanguageUtils)
-           (com.nickrobison.trestle.reasoner.exceptions MissingConstructorException InvalidClassException InvalidClassException$State UnregisteredClassException)
-           (java.io Serializable)
-   )
+    (com.nickrobison.trestle.reasoner.parser IClassParser IClassBuilder IClassRegister ClassBuilder ITypeConverter)
+    (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom OWLDataProperty OWLLiteral OWLDatatype)
+    (java.lang.reflect Constructor Parameter)
+    (com.nickrobison.trestle.reasoner.annotations DatasetClass Fact Language)
+    (java.util Optional List)
+    (com.nickrobison.trestle.common StaticIRI LanguageUtils)
+    (com.nickrobison.trestle.reasoner.exceptions MissingConstructorException InvalidClassException InvalidClassException$State UnregisteredClassException)
+    (java.io Serializable)
+    )
   (:require [clojure.core.match :refer [match]]
             [clojure.core.reducers :as r]
             [clojure.tools.logging :as log]
@@ -155,6 +155,7 @@
                 :name        (m/filter-constructor-name member type)
                 :member-name (pred/get-member-name member)
                 :handle      (m/make-handle member)
+                :related     (pred/related? member)
                 :type        type
                 })))
 
@@ -394,9 +395,9 @@
     (get-class-name clazz df reasonerPrefix))
   (^OWLClass getObjectClass [this ^Object inputObject] (.getObjectClass this (.getClass inputObject)))
   (parseClass ^Object [this ^Class clazz]
-    ; Parse input class
+              ; Parse input class
     (log/debugf "Parsing %s" clazz)
-    ; If the class is not public, throw an exception
+              ; If the class is not public, throw an exception
     (if (pred/public? clazz)
       ; Ensure it has an Identifier
       (let [parsedClass (->> (concat (.getDeclaredFields clazz) (.getDeclaredMethods clazz))
@@ -490,13 +491,21 @@
 
   (getFactIRI ^Optional [this clazz factName]
     (let [parsedClass (.getRegisteredClass this clazz)]
-      (Optional/ofNullable (m/filter-and-get
-                             (:members parsedClass)
-                             (fn [member]
-                               (m/filter-member-name-iri
-                                 factName
-                                 member))
-                             :iri))))
+      (Optional/ofNullable (m/member-field-get parsedClass (fn [member]
+                                                             (m/filter-member-name-iri
+                                                               factName
+                                                               member)) :iri))))
+
+  (isFactRelated [this clazz factName]
+    (let [parsedClass (.getRegisteredClass this clazz)]
+      (m/filter-and-get
+        (:members parsedClass)
+        (fn [member]
+          (m/filter-member-name-iri
+            factName
+            member))
+        :related)))
+
   (getClassProjection ^Long [this clazz]
     (let [parsedClass (.getRegisteredClass this clazz)]
       (if-let [projection (get-in parsedClass [:spatial :projection])]
@@ -526,7 +535,7 @@
         ; If missingParams is empty, we have everything we need, so build the object
         (m/invoke-constructor (:handle constructor) sortedValues)
         ((log/errorf "Missing constructor arguments needs %s\n%s\n%s" missingParams parameterNames sortedValues)
-          (throw (MissingConstructorException. "Missing parameters required for constructor generation"))))))
+         (throw (MissingConstructorException. "Missing parameters required for constructor generation"))))))
   (getProjectedWKT ^OWLLiteral [this clazz spatialObject srid]
     (let [parsedClass (.getRegisteredClass this clazz)]
       ; If the SRID is nil, use the one from the class definition
@@ -549,12 +558,12 @@
       (if (contains? @classRegistry clazz)
         ; Overwrite the class, if we already have it
         ((log/debugf "Already registered %s, rebuilding" (.getName clazz))
-          (swap! classRegistry
-                 assoc clazz parsedClass)
-          (swap! owlClassMap assoc owlClass clazz))
+         (swap! classRegistry
+                assoc clazz parsedClass)
+         (swap! owlClassMap assoc owlClass clazz))
         ; Otherwise, just create it
         ((swap! classRegistry assoc clazz parsedClass)
-          (swap! owlClassMap assoc owlClass clazz)))))
+         (swap! owlClassMap assoc owlClass clazz)))))
   (getRegisteredClass ^Object [this ^Class clazz]
     (if-let [parsedClass (get @classRegistry clazz)]
       parsedClass

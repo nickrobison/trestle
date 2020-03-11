@@ -174,13 +174,13 @@
             <artifactId>clj-fuzzy</artifactId>
             <version>0.4.1</version>
         </dependency>
+        <!--Test Dependencies-->
         <dependency>
             <groupId>org.clojure</groupId>
             <artifactId>tools.nrepl</artifactId>
             <version>0.2.13</version>
             <scope>test</scope>
         </dependency>
-        <!--Test Dependencies-->
     </dependencies>
     <build>
         <testResources>

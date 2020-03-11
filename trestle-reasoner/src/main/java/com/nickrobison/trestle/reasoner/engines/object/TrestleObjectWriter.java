@@ -405,6 +405,8 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
             }
         }
 
+        // Write any related_to relationships
+
 //        Invalidate the cache
         final TrestleIRI individualIRI = IRIBuilder.encodeIRI(V1, this.reasonerPrefix, owlNamedIndividual.toStringID(), null,
                 parseTemporalToOntologyDateTime(factTemporal.getIdTemporal(), ZoneOffset.UTC),

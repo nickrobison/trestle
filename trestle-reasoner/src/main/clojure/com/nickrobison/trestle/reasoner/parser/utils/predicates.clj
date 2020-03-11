@@ -1,6 +1,6 @@
 (ns com.nickrobison.trestle.reasoner.parser.utils.predicates
   (:import (java.lang.reflect Modifier Method Field Constructor)
-           (com.nickrobison.trestle.reasoner.annotations Ignore Fact Spatial Language NoMultiLanguage IndividualIdentifier TrestleCreator)
+           (com.nickrobison.trestle.reasoner.annotations Ignore Fact Spatial Language NoMultiLanguage IndividualIdentifier TrestleCreator Related)
            (com.nickrobison.trestle.reasoner.annotations.temporal DefaultTemporal StartTemporal EndTemporal)
            (com.nickrobison.trestle.types TemporalType))
   (:require [clojure.string :as string]
@@ -82,6 +82,7 @@
              (= (get-member-name entity) "notify")
              (= (get-member-name entity) "notifyAll")
              (= (get-member-name entity) "getClass")))
+(defn related? [entity] (hasAnnotation? entity Related))
 (defn void-return? [entity] (= (.getReturnType entity) Void))
 (defn string-return? [entity] (= (get-member-return-type entity) String))
 (defn include? [entity] ((some-fn fact?
@@ -89,6 +90,7 @@
                                   identifier?
                                   language?
                                   temporal?
+                                  related?
                                   noMultiLanguage?
                                   noAnnotations?) entity))
 
@@ -97,7 +99,7 @@
   ((every-pred
      ignore?
      (or spatial? identifier?))
-    entity))
+   entity))
 
 (defn member-type [member defaultLanguageCode]
   (let [
