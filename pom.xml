@@ -44,7 +44,7 @@
         <owasp.version>5.3.1</owasp.version>
         <maven.enforcer.version>1.4.1</maven.enforcer.version>
         <caffeine.version>2.8.1</caffeine.version>
-        <guice.version>4.2.2</guice.version>
+        <guice.version>4.2.3</guice.version>
         <!--This will probably need to get bumped each time we upgrade Dropwizard-->
         <jackson.version>2.10.3</jackson.version>
         <!--Checker properties-->
