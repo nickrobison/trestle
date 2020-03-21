@@ -1,8 +1,8 @@
 package com.nickrobison.trestle.reasoner.caching;
 
-import com.codahale.metrics.JmxAttributeGauge;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricSet;
+import com.codahale.metrics.jvm.JmxAttributeGauge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

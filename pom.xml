@@ -326,6 +326,16 @@
                 <artifactId>metrics-healthchecks</artifactId>
                 <version>${metrics.version}</version>
             </dependency>
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-jvm</artifactId>
+                <version>${metrics.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-jmx</artifactId>
+                <version>${metrics.version}</version>
+            </dependency>
             <!--Testing dependencies-->
             <dependency>
                 <groupId>org.openjdk.jmh</groupId>
