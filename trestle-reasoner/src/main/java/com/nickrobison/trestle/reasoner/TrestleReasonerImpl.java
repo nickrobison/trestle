@@ -735,7 +735,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     }, this.comparisonThreadPool))
                     .collect(Collectors.toList());
 
-            final CompletableFuture<List<@Nullable TrestlePair<T, TrestlePair<SpatialComparisonReport, TemporalComparisonReport>>>> comparisonFuture = LambdaUtils.sequenceCompletableFutures(comparisonFutures);
+            final CompletableFuture<List<@Nullable TrestlePair<T, TrestlePair<SpatialComparisonReport, TemporalComparisonReport>>>> comparisonFuture = sequenceCompletableFutures(comparisonFutures);
 
 
 //            Write all the relationships in a single transaction

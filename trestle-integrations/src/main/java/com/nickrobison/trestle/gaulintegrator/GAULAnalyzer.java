@@ -40,8 +40,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static tec.uom.se.unit.Units.METRE;
-
 /**
  * Created by nickrobison on 8/1/18.
  */
@@ -212,7 +210,7 @@ public class GAULAnalyzer {
                 .stream()
                 .sorted(Comparator.comparing(GAULAnalyzer.AlgorithmResult::getAdm0Code)
                         .thenComparing(GAULAnalyzer.AlgorithmResult::getAdm2Name)
-                .thenComparing(GAULAnalyzer.AlgorithmResult::getStart))
+                        .thenComparing(GAULAnalyzer.AlgorithmResult::getStart))
                 .forEach(result -> System.out.println(result.getID()));
     }
 
@@ -230,6 +228,8 @@ public class GAULAnalyzer {
                 case "lifetimes":
                     analyzer.objectLifetimes();
                     break;
+                default:
+                    throw new IllegalStateException(String.format("Unsupported operation: %s", method));
             }
         } finally {
             analyzer.shutdown();

@@ -25,11 +25,11 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import si.uom.SI;
 
 import javax.inject.Inject;
-import javax.measure.quantity.Length;
-import si.uom.SI;
 import javax.measure.Unit;
+import javax.measure.quantity.Length;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
@@ -399,7 +399,7 @@ public class CollectionEngine implements ITrestleCollectionEngine {
      */
     private void removeRelation(OWLNamedIndividual relation, OWLNamedIndividual collection, @Nullable TrestleTransaction trestleTransaction) {
 
-        final TrestleTransaction removeTransaction = this.ontology.createandOpenNewTransaction(true);
+        final TrestleTransaction removeTransaction = this.ontology.createandOpenNewTransaction(trestleTransaction);
 
         try {
 //            Remove the from and two relations
