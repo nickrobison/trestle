@@ -516,7 +516,7 @@
             </build>
         </profile>
         <profile>
-            <id>release</id>
+            <id>security</id>
             <build>
                 <plugins>
                     <plugin>
@@ -584,6 +584,27 @@
                                 <phase>verify</phase>
                                 <goals>
                                     <goal>report</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
                                 </goals>
                             </execution>
                         </executions>
@@ -736,4 +757,17 @@
             </plugin>
         </plugins>
     </build>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>bintray-nickrobison-maven</id>
+            <name>JFrog OSS Repository</name>
+            <url>http://oss.jfrog.org/artifactory/oss-snapshot-local</url>
+        </snapshotRepository>
+        <repository>
+            <id>bintray-nickrobison-maven</id>
+            <name>Bintray Maven Repository</name>
+            <url>https://api.bintray.com/maven/nickrobison/maven/trestle/</url>
+        </repository>
+    </distributionManagement>
 </project>
