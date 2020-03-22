@@ -54,6 +54,10 @@ public class TrestlePrefixManager {
         pm.setDefaultPrefix(defaultIRI);
     }
 
+    public String getDefaultPrefix() {
+        return pm.getDefaultPrefix();
+    }
+
     /**
      * Add a prefix to the manager
      * @param prefix - String of prefix

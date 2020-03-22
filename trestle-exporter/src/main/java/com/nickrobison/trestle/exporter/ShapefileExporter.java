@@ -1,10 +1,10 @@
 package com.nickrobison.trestle.exporter;
 
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.PrecisionModel;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.PrecisionModel;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.geotools.data.DefaultTransaction;
 import org.geotools.data.Transaction;
@@ -76,11 +76,13 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
 
 //        Add the geometry type first
         typeBuilder.add(builder.typeName, builder.type);
+        typeBuilder.setDefaultGeometry(builder.typeName);
 
 //        Now the rest of the properties
         builder.schema.getSchema().forEach(typeBuilder::add);
 
         simpleFeatureType = typeBuilder.buildFeatureType();
+        simpleFeatureType.getGeometryDescriptor();
         simpleFeatureBuilder = new SimpleFeatureBuilder(simpleFeatureType);
         featureCollection = new DefaultFeatureCollection();
         this.reader = new WKTReader(new GeometryFactory(new PrecisionModel(), srid));

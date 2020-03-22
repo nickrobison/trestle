@@ -11,7 +11,7 @@ import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
 import com.nickrobison.trestle.server.resources.requests.AggregationRequest;
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import javax.inject.Inject;
 import javax.validation.Valid;

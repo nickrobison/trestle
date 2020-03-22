@@ -28,8 +28,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.measure.quantity.Length;
-import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
+import si.uom.SI;
+import javax.measure.Unit;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
@@ -132,7 +132,7 @@ public class CollectionEngine implements ITrestleCollectionEngine {
 
     @Override
     public Optional<Set<String>> STIntersectCollection(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt) {
-        return STIntersectCollection(wkt, buffer, SI.METER, strength, validAt, dbAt);
+        return STIntersectCollection(wkt, buffer, SI.METRE, strength, validAt, dbAt);
     }
 
     @Override

@@ -15,7 +15,7 @@ import com.nickrobison.trestle.server.resources.requests.ComparisonRequest;
 import com.nickrobison.trestle.server.resources.requests.DatasetValueRequest;
 import com.nickrobison.trestle.server.resources.requests.IntersectRequest;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 import io.dropwizard.jersey.params.NonEmptyStringParam;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

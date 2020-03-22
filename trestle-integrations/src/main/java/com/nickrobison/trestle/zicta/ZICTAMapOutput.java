@@ -4,7 +4,7 @@ import com.esri.core.geometry.Polygon;
 import com.esri.io.PolygonFeatureWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
-import org.jetbrains.annotations.NotNull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -15,7 +15,7 @@ import java.io.IOException;
  */
 public class ZICTAMapOutput implements WritableComparable<ZICTAMapOutput> {
     private final Text zcta;
-//    private final Text affgeoid;
+    //    private final Text affgeoid;
 //    private final Text geoid;
 //    private final LongWritable aland;
 //    private final LongWritable awater;
@@ -55,7 +55,7 @@ public class ZICTAMapOutput implements WritableComparable<ZICTAMapOutput> {
     }
 
     @Override
-    public int compareTo(@NotNull ZICTAMapOutput o) {
+    public int compareTo(@NonNull ZICTAMapOutput o) {
         return this.zcta.compareTo(o.zcta);
     }
 

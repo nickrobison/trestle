@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.server.resources;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
 import com.nickrobison.trestle.server.models.User;
@@ -10,7 +11,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.mindrot.BCrypt;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -29,13 +29,14 @@ import static javax.ws.rs.core.Response.ok;
 @Api(value = "users")
 public class UserResource {
 
+    private static final int HASH_COST = 10;
     private final UserDAO userDAO;
-    private final String salt;
+    private final BCrypt.Hasher salt;
 
     @Inject
     public UserResource(UserDAO userDAO) {
         this.userDAO = userDAO;
-        this.salt = BCrypt.gensalt();
+        this.salt = BCrypt.withDefaults();
     }
 
     @GET
@@ -63,7 +64,7 @@ public class UserResource {
 //        If the length is 60, we know that it's an unhashed (and thus modified password)
 //        We enforce a maximum length of 59 for the passwords, at the UI level
         if (user.getPassword().length() != 60) {
-            user.setPassword(BCrypt.hashpw(user.getPassword(), this.salt));
+            user.setPassword(this.salt.hashToString(HASH_COST, user.getPassword().toCharArray()));
         }
         return ok(this.userDAO.create(user)).build();
     }
@@ -72,8 +73,8 @@ public class UserResource {
     @Path("/exists/{username}")
     @UnitOfWork
     @ApiOperation(value = "Endpoint to determine if a user with the specified username already exists",
-    notes = "This method only returns a true/false value as to whether or not the user exists, it does not return the user object",
-    response = Boolean.class)
+            notes = "This method only returns a true/false value as to whether or not the user exists, it does not return the user object",
+            response = Boolean.class)
     public Response userExists(@AuthRequired({Privilege.ADMIN}) User user, @PathParam("username") String username) {
         return Response.ok(userDAO.findByUsername(username).isPresent()).build();
     }

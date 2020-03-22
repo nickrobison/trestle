@@ -6,7 +6,7 @@ import com.nickrobison.trestle.reasoner.annotations.Spatial;
 import com.nickrobison.trestle.reasoner.parser.spatial.ESRIParser;
 import com.nickrobison.trestle.reasoner.parser.spatial.GeotoolsParser;
 import com.nickrobison.trestle.reasoner.parser.spatial.JTSParser;
-import com.vividsolutions.jts.io.ParseException;
+import org.locationtech.jts.io.ParseException;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDatatype;
@@ -47,7 +47,7 @@ public class SpatialParser {
         @Nullable String wktString = null;
         if (typeName.contains("java.lang.String")) {
             wktString = spatialObject.toString().replace("\"", "");
-        } else if (typeName.contains("com.vividsolutions")) {
+        } else if (typeName.contains("org.locationtech")) {
             wktString = JTSParser.parseJTSToWKT(spatialObject);
         } else if (typeName.contains("com.esri.core.geometry")) {
             wktString = ESRIParser.parseESRIToWKT((Geometry) spatialObject);
@@ -77,7 +77,7 @@ public class SpatialParser {
         final String typeName = geomClass.getTypeName();
         if (typeName.contains("java.lang.String")) {
             return Optional.of(wkt);
-        } else if (typeName.contains("com.vividsolutions")) {
+        } else if (typeName.contains("org.locationtech")) {
             try {
                 Object jtsGeom = JTSParser.wktToJTSObject(wkt, geomClass);
                 return Optional.of(geomClass.cast(jtsGeom));

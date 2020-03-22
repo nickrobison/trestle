@@ -5,7 +5,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
 
 import javax.measure.quantity.Length;
-import javax.measure.unit.Unit;
+import javax.measure.Unit;
 import java.time.temporal.Temporal;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +39,7 @@ public interface ITrestleCollectionEngine {
      * The temporal parameters allow for additional specificity on the spatio-temporal intersection
      *
      * @param wkt      - {@link String} of WKT to intersect with
-     * @param buffer   - {@link double} buffer to draw around WKT. 0 is no buffer (defaults to {@link javax.measure.unit.SI#METER}
+     * @param buffer   - {@link double} buffer to draw around WKT. 0 is no buffer (defaults to {@link si.uom.SI#METER}
      * @param strength - {@link double} strength parameter to filter weak associations
      * @param validAt  - {@link Temporal} of validAt time
      * @param dbAt     - Optional {@link Temporal} of dbAt time

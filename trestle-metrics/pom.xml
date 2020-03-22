@@ -5,20 +5,20 @@
     <parent>
         <artifactId>trestle</artifactId>
         <groupId>com.nickrobison.trestle</groupId>
-        <version>0.9.0-SNAPSHOT</version>
+        <version>0.9.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>trestle-metrics</artifactId>
     <properties>
-        <bytebuddy.version>1.7.10</bytebuddy.version>
+        <bytebuddy.version>1.10.8</bytebuddy.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-annotations</artifactId>
-            <version>0.9.0-SNAPSHOT</version>
+            <version>0.9.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard.metrics</groupId>
@@ -36,7 +36,7 @@
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
-            <version>2.7.7</version>
+            <version>3.4.2</version>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
