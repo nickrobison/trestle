@@ -57,9 +57,8 @@ import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.measure.Unit;
 import javax.measure.quantity.Length;
-import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -711,7 +710,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
     @Override
     public <T> void calculateSpatialAndTemporalRelationships(Class<T> clazz, String individual, @Nullable Temporal validAt) throws TrestleClassException, MissingOntologyEntity {
-        final IRI individualIRI = parseStringToIRI(this.REASONER_PREFIX, individual);
+        final IRI individualIRI = parseStringToIRI(this.reasonerPrefix, individual);
 
 //        Read the object first
         final T trestleObject = this.objectReader.readTrestleObject(clazz, individual, validAt, null);
@@ -755,7 +754,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                     final T intersectedObject = cPair.getLeft();
                     final SpatialComparisonReport spatialComparisonReport = cPair.getRight().getLeft();
                     final TemporalComparisonReport temporalComparisonReport = cPair.getRight().getRight();
-                    final IRI intersectedObjectID = parseStringToIRI(this.REASONER_PREFIX, spatialComparisonReport.getObjectBID());
+                    final IRI intersectedObjectID = parseStringToIRI(this.reasonerPrefix, spatialComparisonReport.getObjectBID());
 
                     //                Write the relationships
                     spatialComparisonReport.getRelations().forEach(relation -> {

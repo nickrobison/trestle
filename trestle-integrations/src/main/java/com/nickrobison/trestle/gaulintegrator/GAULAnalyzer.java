@@ -9,26 +9,28 @@ import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.TrestleObjectHeader;
 import com.nickrobison.trestle.types.TrestleRelation;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
 import me.tongfei.progressbar.ProgressBar;
 import org.apache.hadoop.conf.Configuration;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 import org.semanticweb.owlapi.model.IRI;
+import si.uom.SI;
+import tec.uom.se.quantity.Quantities;
+import tec.uom.se.unit.MetricPrefix;
 
-import javax.measure.Measure;
+import javax.measure.Quantity;
+import javax.measure.Unit;
 import javax.measure.quantity.Area;
-import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -37,6 +39,8 @@ import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static tec.uom.se.unit.Units.METRE;
 
 /**
  * Created by nickrobison on 8/1/18.
@@ -102,9 +106,9 @@ public class GAULAnalyzer {
 //            final double area = gaulObject.getShapePolygon().calculateArea2D();
             final String wktValue = gaulObject.getPolygonAsWKT();
             final Geometry read = new WKTReader().read(wktValue);
-            final Measure<Double, Area> area = GAULAnalyzer.calculatePolygonArea(read);
-            final Unit<Area> sq_km = (Unit<Area>) SI.KILOMETER.pow(2);
-            sizeDistribution.put(member, area.to(sq_km).getValue());
+            final Quantity<Area> area = GAULAnalyzer.calculatePolygonArea(read);
+            final Unit<Area> sq_km = (Unit<Area>) MetricPrefix.KILO(SI.METRE).multiply(MetricPrefix.KILO(SI.METRE));
+            sizeDistribution.put(member, area.to(sq_km).getValue().doubleValue());
             pb.step();
         }
         pb.stop();
@@ -233,7 +237,7 @@ public class GAULAnalyzer {
         System.exit(0);
     }
 
-    private static Measure<Double, Area> calculatePolygonArea(Geometry jtsGeom) {
+    private static Quantity<Area> calculatePolygonArea(Geometry jtsGeom) {
         final Point centroid = jtsGeom.getCentroid();
         try {
             final String code = "AUTO:42001," + centroid.getX() + "," + centroid.getY();
@@ -241,11 +245,13 @@ public class GAULAnalyzer {
 
             final MathTransform transform = CRS.findMathTransform(DefaultGeographicCRS.WGS84, crs);
             final Geometry transformed = JTS.transform(jtsGeom, transform);
-            return Measure.valueOf(transformed.getArea(), SI.SQUARE_METRE);
+//            return Measure.valueOf(transformed.getArea(), SI.SQUARE_METRE);
+            return Quantities.getQuantity(transformed.getArea(), SI.SQUARE_METRE);
         } catch (FactoryException | TransformException e) {
             e.printStackTrace();
         }
-        return Measure.valueOf(0.0, SI.SQUARE_METRE);
+
+        return Quantities.getQuantity(0.0, SI.SQUARE_METRE);
     }
 
     /**
