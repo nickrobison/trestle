@@ -72,12 +72,12 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
         bootstrap.addBundle(guiceBundle);
 
 //        Add Swagger
-        bootstrap.addBundle(new SwaggerBundle<TrestleServerConfiguration>() {
-            @Override
-            protected SwaggerBundleConfiguration getSwaggerBundleConfiguration(TrestleServerConfiguration trestleServerConfiguration) {
-                return trestleServerConfiguration.getSwaggerBundleConfiguration();
-            }
-        });
+//        bootstrap.addBundle(new SwaggerBundle<TrestleServerConfiguration>() {
+//            @Override
+//            protected SwaggerBundleConfiguration getSwaggerBundleConfiguration(TrestleServerConfiguration trestleServerConfiguration) {
+//                return trestleServerConfiguration.getSwaggerBundleConfiguration();
+//            }
+//        });
     }
 
     @Override
