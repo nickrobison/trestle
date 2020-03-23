@@ -2,6 +2,7 @@ package com.nickrobison.trestle.covidintegrator;
 
 import com.nickrobison.trestle.datasets.CensusCounty;
 import com.nickrobison.trestle.datasets.CovidCounty;
+import com.nickrobison.trestle.datasets.CensusState;
 import com.nickrobison.trestle.datasets.CovidState;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
@@ -49,8 +50,8 @@ public class CovidDataLoader {
     }
 
     public void load() throws IOException, TrestleClassException, MissingOntologyEntity {
-//        this.loadStates();
-//        this.loadCounties();
+        this.loadStates();
+        this.loadCounties();
         this.loadCases();
     }
 
@@ -108,6 +109,7 @@ public class CovidDataLoader {
         for (final File file : files) {
             importCSV(file);
         }
+        System.out.println("Finished loading cases");
     }
 
     private void importCSV(File file) throws IOException, TrestleClassException, MissingOntologyEntity {
@@ -119,7 +121,14 @@ public class CovidDataLoader {
                 if (row[0].equals("County Name")) {
                     continue;
                 }
-                reasoner.writeTrestleObject(ccSupplier(row));
+                try {
+                    final CovidCounty covidCounty = ccSupplier(row);
+                    reasoner.writeTrestleObject(covidCounty);
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    System.err.println(e.getMessage());
+                    System.err.println("Assigning values to state");
+                    reasoner.writeTrestleObject(csSupplier(row));
+                }
             }
         }
     }
@@ -148,7 +157,7 @@ public class CovidDataLoader {
                 .withName("covid")
 //                .withOntology(IRI.create(config.getString("trestle.ontology.location")))
                 .withPrefix("http://trestle.nickrobison.com/covid/")
-                .withInputClasses(CovidState.class, CensusCounty.class, CovidCounty.class)
+                .withInputClasses(CensusState.class, CensusCounty.class, CovidCounty.class, CovidState.class)
                 .withoutMetrics()
                 .withoutCaching()
                 .initialize()
@@ -159,13 +168,13 @@ public class CovidDataLoader {
 
     }
 
-    private static CovidState stateSupplier(SimpleFeature feature) {
+    private static CensusState stateSupplier(SimpleFeature feature) {
         final MultiPolygon geom = (MultiPolygon) feature.getDefaultGeometry();
         final String geoid = (String) feature.getAttribute("GEOID");
         final String name = (String) feature.getAttribute("NAME");
         final String abbreviation = (String) feature.getAttribute("STUSPS");
 
-        return new CovidState(geom, geoid, name, abbreviation, START_DATE);
+        return new CensusState(geom, geoid, name, abbreviation, START_DATE);
     }
 
     private static CensusCounty countySupplier(SimpleFeature feature) {
@@ -183,5 +192,12 @@ public class CovidDataLoader {
         final int confirmed = Integer.parseInt(row[2]);
         final LocalDate of = LocalDate.parse(row[8], fmt);
         return new CovidCounty(geoid, confirmed, of);
+    }
+
+    private static CovidState csSupplier(String[] row) {
+        final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm z");
+        final int confirmed = Integer.parseInt(row[2]);
+        final LocalDate of = LocalDate.parse(row[8], fmt);
+        return new CovidState(StringUtils.leftPad(row[9], 2, "0"), confirmed, of);
     }
 }
