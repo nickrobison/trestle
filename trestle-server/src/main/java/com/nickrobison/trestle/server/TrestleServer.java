@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.server;
 
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.hubspot.dropwizard.guice.GuiceBundle;
 import com.nickrobison.trestle.server.auth.AuthDynamicFeature;
 import com.nickrobison.trestle.server.auth.AuthValueFactoryProvider;
@@ -7,6 +8,7 @@ import com.nickrobison.trestle.server.config.TrestleServerConfiguration;
 import com.nickrobison.trestle.server.modules.HibernateModule;
 import com.nickrobison.trestle.server.modules.JWTModule;
 import com.nickrobison.trestle.server.modules.TrestleServerModule;
+import com.nickrobison.trestle.server.serializers.GeometrySerializer;
 import io.dropwizard.Application;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.db.ManagedDataSource;
@@ -23,6 +25,7 @@ import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.ClassLoaderResourceAccessor;
+import org.locationtech.jts.geom.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +55,9 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
 
     @Override
     public void initialize(Bootstrap<TrestleServerConfiguration> bootstrap) {
+        final SimpleModule m = new SimpleModule();
+        m.addSerializer(Geometry.class, new GeometrySerializer());
+        bootstrap.getObjectMapper().registerModule(m);
 //        bootstrap.addBundle(new FileAssetsBundle("src/main/resources/build/", "/static", "index.html"));
 //        bootstrap.addBundle(hibernate);
         bootstrap.addBundle(migrations);
