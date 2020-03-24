@@ -11,12 +11,12 @@ import com.nickrobison.trestle.types.TrestleRelation;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.io.ParseException;
-import org.locationtech.jts.io.WKTReader;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
@@ -236,6 +236,26 @@ public class TrestleAPITest extends AbstractReasonerTest {
         reasoner.getMetricsEngine().exportData(new File("./target/api-test-gaul-loader-metrics.csv"));
     }
 
+    @Test
+    void testContributesTo() throws TrestleClassException, MissingOntologyEntity {
+        final OffsetDateTime start = LocalDate.of(1990, 1, 1).atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
+        final OffsetDateTime end = LocalDate.of(2000, 1, 1).atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
+        final TestClasses.OffsetDateTimeTest timeTest = new TestClasses.OffsetDateTimeTest(12345, start, end);
+        final TestClasses.CountyRelated related = new TestClasses.CountyRelated("Test Related", LocalDate.of(1990, 5, 14), 12345, "Related Object", 1000);
+
+        // Write the two objects
+        reasoner.writeTrestleObject(timeTest);
+        reasoner.writeTrestleObject(related);
+
+        // Read back the facts
+        final List<Object> populationValues = reasoner.getFactValues(TestClasses.OffsetDateTimeTest.class, "12345", "population", LocalDate.of(1999, 1, 11), null, null);
+        assertAll(() -> assertFalse(populationValues.isEmpty(), "Should have fact values"),
+                () -> assertEquals(1000, populationValues.get(0), "Should have correct population value"));
+
+        // Related should NOT have root object facts
+
+    }
+
     @Override
     protected String getTestName() {
         return "api_test";
@@ -250,6 +270,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
                 TestClasses.GeotoolsPolygonTest.class,
                 TestClasses.OffsetDateTimeTest.class,
                 TestClasses.MultiLangTest.class,
-                TestClasses.FactVersionTest.class);
+                TestClasses.FactVersionTest.class,
+                TestClasses.CountyRelated.class);
     }
 }

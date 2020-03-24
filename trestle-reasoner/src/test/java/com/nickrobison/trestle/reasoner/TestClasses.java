@@ -671,4 +671,40 @@ public class TestClasses {
             return Objects.hash(startTemporal, objectid, geom);
         }
     }
+
+    @DatasetClass(name = "County_Related")
+    public static class CountyRelated {
+        @IndividualIdentifier
+        public final String id;
+        private final LocalDate startTemporal;
+        private final int adm0_code;
+        private final String name;
+        private final int population;
+
+        public CountyRelated(String id, LocalDate startTemporal, int adm0_code, String name, int population) {
+            this.id = id;
+            this.startTemporal = startTemporal;
+            this.adm0_code = adm0_code;
+            this.name = name;
+            this.population = population;
+        }
+
+        @StartTemporal
+        public LocalDate getStartTemporal() {
+            return startTemporal;
+        }
+
+        @Related
+        public int getAdm0_code() {
+            return adm0_code;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public int getPopulation() {
+            return population;
+        }
+    }
 }

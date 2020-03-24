@@ -268,7 +268,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
     @Timed
     @Metered(name = "trestle-object-write", absolute = true)
     private void writeTrestleObjectImpl(Object inputObject, @Nullable TemporalObject databaseTemporal) throws UnregisteredClassException, MissingOntologyEntity {
-        final Class aClass = inputObject.getClass();
+        final Class<?> aClass = inputObject.getClass();
         if (!this.engineUtils.checkRegisteredClass(aClass)) {
             throw new UnregisteredClassException(aClass);
         }
@@ -340,10 +340,10 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
 //                Write new versions of all the previously valid facts
                             mergeScript
                                     .getNewFactVersions()
-                                    .forEach(fact -> writeObjectFacts(owlNamedIndividual, Collections.singletonList(fact.getAxiom()), fact.getValidTemporal(), dTemporal));
+                                    .forEach(fact -> writeObjectFacts(aClass, owlNamedIndividual, Collections.singletonList(fact.getAxiom()), fact.getValidTemporal(), dTemporal));
 //                Write the new valid facts
                             final Timer.Context factsTimer = this.metrician.registerTimer("trestle-merge-facts-timer").time();
-                            writeObjectFacts(owlNamedIndividual, mergeScript.getNewFacts(), factTemporal, dTemporal);
+                            writeObjectFacts(aClass, owlNamedIndividual, mergeScript.getNewFacts(), factTemporal, dTemporal);
                             factsTimer.stop();
 
 //                    Write new individual existence axioms, if they exist
@@ -386,7 +386,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
 
 //        Write the data facts
                 final Optional<List<OWLDataPropertyAssertionAxiom>> individualFacts = this.classParser.getFacts(inputObject);
-                individualFacts.ifPresent(owlDataPropertyAssertionAxioms -> writeObjectFacts(owlNamedIndividual, owlDataPropertyAssertionAxioms, factTemporal, dTemporal));
+                individualFacts.ifPresent(owlDataPropertyAssertionAxioms -> writeObjectFacts(aClass, owlNamedIndividual, owlDataPropertyAssertionAxioms, factTemporal, dTemporal));
 
 //            Add object events
                 this.eventEngine.addEvent(TrestleEventType.CREATED, owlNamedIndividual, objectTemporal.getIdTemporal());
@@ -404,8 +404,6 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                 ontology.returnAndCommitTransaction(trestleTransaction);
             }
         }
-
-        // Write any related_to relationships
 
 //        Invalidate the cache
         final TrestleIRI individualIRI = IRIBuilder.encodeIRI(V1, this.reasonerPrefix, owlNamedIndividual.toStringID(), null,
@@ -522,10 +520,10 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
 //        Write the new versions
                 newFactMergeScript
                         .getNewFactVersions()
-                        .forEach(fact -> writeObjectFacts(owlNamedIndividual, Collections.singletonList(fact.getAxiom()), fact.getValidTemporal(), fact.getDbTemporal()));
+                        .forEach(fact -> writeObjectFacts(clazz, owlNamedIndividual, Collections.singletonList(fact.getAxiom()), fact.getValidTemporal(), fact.getDbTemporal()));
 
 //        Write the new fact versions
-                writeObjectFacts(owlNamedIndividual, newFactMergeScript.getNewFacts(), validTemporal, databaseTemporal);
+                writeObjectFacts(clazz, owlNamedIndividual, newFactMergeScript.getNewFacts(), validTemporal, databaseTemporal);
 
 //                Write the new existence axioms, if they exist
                 final List<OWLDataPropertyAssertionAxiom> individualExistenceAxioms = newFactMergeScript.getIndividualExistenceAxioms();
@@ -565,7 +563,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
      * @param databaseTemporal - Temporal representing database time
      */
     @Timed
-    private void writeObjectFacts(OWLNamedIndividual rootIndividual, List<OWLDataPropertyAssertionAxiom> properties, TemporalObject validTemporal, TemporalObject databaseTemporal) {
+    private void writeObjectFacts(Class<?> clazz, OWLNamedIndividual rootIndividual, List<OWLDataPropertyAssertionAxiom> properties, TemporalObject validTemporal, TemporalObject databaseTemporal) {
         final OWLClass factClass = df.getOWLClass(factClassIRI);
         properties.forEach(property -> {
             final TrestleIRI factIdentifier = IRIBuilder.encodeIRI(V1,
@@ -587,6 +585,14 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                 ontology.writeIndividualObjectProperty(propertyIndividual, factOfIRI, rootIndividual);
 //                Write the database time
                 writeTemporal(databaseTemporal, propertyIndividual);
+
+                // Write any contributes_to relationships
+                if (this.classParser.isFactRelated(clazz, property.getProperty().asOWLDataProperty().getIRI().getShortForm())) {
+
+                    final String contributesToQuery = this.qb.buildContributesToQuery(rootIndividual, property);
+                    this.ontology.executeUpdateSPARQL(contributesToQuery);
+                }
+
             } catch (MissingOntologyEntity missingOntologyEntity) {
                 logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
             }
