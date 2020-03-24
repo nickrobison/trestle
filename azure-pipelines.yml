@@ -51,6 +51,11 @@ steps:
         yarn
       path: $(YARN_CACHE_FOLDER)
     displayName: Cache Yarn packages
+  - task: SonarCloudPrepare@1
+    inputs:
+      SonarCloud: 'Sonar Cloud'
+      organization: 'nickrobison-github'
+      scannerMode: 'Other'
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'
@@ -61,3 +66,7 @@ steps:
       publishJUnitResults: true
       testResultsFiles: '**/TEST-*.xml'
       goals: 'package -pl trestle-server -am'
+      sonarQubeRunAnalysis: true
+  - task: SonarCloudPublish@1
+    inputs:
+      pollingTimeoutSec: '300'
