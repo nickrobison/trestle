@@ -13,6 +13,7 @@
             [clojure.core.reducers :as r]
             [clojure.tools.logging :as log]
             [clojure.set :as set]
+            [else-let.core :refer :all]
             [com.nickrobison.trestle.reasoner.parser.utils.predicates :as pred]
             [com.nickrobison.trestle.reasoner.parser.utils.members :as m]
     ; We have to require the methods we're extending, as well as namespaces where we did the extension
@@ -498,13 +499,14 @@
 
   (isFactRelated [this clazz factName]
     (let [parsedClass (.getRegisteredClass this clazz)]
-      (m/filter-and-get
-        (:members parsedClass)
-        (fn [member]
-          (m/filter-member-name-iri
-            factName
-            member))
-        :related)))
+      (else-let [related (m/filter-and-get
+                      (:members parsedClass)
+                      (fn [member]
+                        (m/filter-member-name-iri
+                          factName
+                          member))
+                      :related) false]
+                related)))
 
   (getClassProjection ^Long [this clazz]
     (let [parsedClass (.getRegisteredClass this clazz)]

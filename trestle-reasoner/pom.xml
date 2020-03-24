@@ -174,6 +174,11 @@
             <artifactId>clj-fuzzy</artifactId>
             <version>0.4.1</version>
         </dependency>
+        <dependency>
+            <groupId>else-let</groupId>
+            <artifactId>else-let</artifactId>
+            <version>0.1.0</version>
+        </dependency>
         <!--Test Dependencies-->
         <dependency>
             <groupId>org.clojure</groupId>
