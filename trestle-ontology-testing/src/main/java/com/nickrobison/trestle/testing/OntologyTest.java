@@ -205,7 +205,7 @@ public abstract class OntologyTest {
         final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(StaticIRI.hasFactIRI);
         final Optional<List<OWLObjectPropertyAssertionAxiom>> individualObjectProperty = ontology.getIndividualObjectProperty(testMaputo, owlObjectProperty);
         assertAll(() -> assertTrue(individualObjectProperty.isPresent(), "Should have related facts"),
-                () -> assertEquals(4, individualObjectProperty.get().size(), "Wrong number of facts"));
+                () -> assertEquals(6, individualObjectProperty.get().size(), "Wrong number of facts"));
 
 //        Now for the sparql query
         String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
@@ -217,7 +217,7 @@ public abstract class OntologyTest {
                 "FILTER(!isURI(?object) && !isBlank(?object) && ?object = 41374) }";
 
         final TrestleResultSet resultSet = ontology.executeSPARQLResults(queryString);
-        Assertions.assertEquals(1, resultSet.getResults().size(), "Wrong number of relations");
+        Assertions.assertEquals(2, resultSet.getResults().size(), "Wrong number of relations");
 
 //        Test for spatial/temporal object relations and that they're inferred correctly.
         queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
