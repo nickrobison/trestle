@@ -9,11 +9,11 @@ import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLLiteral;
 
 import javax.inject.Inject;
-import java.util.Optional;
 
 /**
  * Created by nickrobison on 3/5/18.
  */
+@SuppressWarnings("TypeParameterExplicitlyExtendsObject")
 public class FactFactory {
 
     private final IClassParser parser;
@@ -37,12 +37,18 @@ public class FactFactory {
      */
     public <T extends @NonNull Object> TrestleFact<T> createFact(@Nullable Class<?> clazz, OWLDataPropertyAssertionAxiom propertyAxiom, TemporalObject validTemporal, TemporalObject databaseTemporal) {
         final OWLDataProperty factName = propertyAxiom.getProperty().asOWLDataProperty();
-        final Optional<Class<?>> factDatatype = this.parser.getFactDatatype(clazz, factName.toStringID());
-        //noinspection unchecked
-        final Class<T> factClass = (Class<T>) this.typeConverter.lookupJavaClassFromOWLDatatype(propertyAxiom, factDatatype.orElseThrow(() ->
-                new IllegalStateException(String.format("Cannot have null datatype for fact %s on Individual %s",
-                        factName, propertyAxiom.getSubject()))));
+        final Class<?> factDatatype = this.parser.getFactDatatype(clazz, factName.toStringID())
+                .orElseGet(() -> this.typeConverter.lookupJavaClassFromOWLDatatype(propertyAxiom, null));
+
+        if (factDatatype == null) {
+            throw new IllegalStateException(String.format("Cannot have null datatype for fact %s on Individual %s",
+                    factName, propertyAxiom.getSubject()));
+        }
+
         final OWLLiteral literal = propertyAxiom.getObject();
+        //noinspection unchecked
+        final Class<T> factClass = (Class<T>) this.typeConverter.lookupJavaClassFromOWLDatatype(propertyAxiom, factDatatype);
+
 
 //        Get the projection of the class and re-project, if necessary
         final Integer classProjection = this.parser.getClassProjection(clazz);

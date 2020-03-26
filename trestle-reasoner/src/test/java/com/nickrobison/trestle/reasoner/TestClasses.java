@@ -707,4 +707,37 @@ public class TestClasses {
             return population;
         }
     }
+
+    @DatasetClass(name = "GAUL_JTS_Test")
+    public static class JTSExtended implements Serializable {
+
+        private static final long serialVersionUID = 42L;
+
+        private final Integer adm0_code;
+        private final Geometry geom;
+        private LocalDate date;
+        public final int population;
+
+        public JTSExtended(Integer adm0_code, Geometry geom, LocalDate date, int population) {
+            this.adm0_code = adm0_code;
+            this.geom = geom;
+            this.date = date;
+            this.population = population;
+        }
+
+        @IndividualIdentifier
+        public Integer getAdm0_code() {
+            return this.adm0_code;
+        }
+
+        @Spatial(projection = 4269)
+        public Geometry getGeom() {
+            return this.geom;
+        }
+
+        @DefaultTemporal(name = "date", type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        public LocalDate getDate() {
+            return this.date;
+        }
+    }
 }
