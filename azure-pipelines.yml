@@ -60,9 +60,6 @@ steps:
     inputs:
       mavenPomFile: 'pom.xml'
       mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER) -Dmaven.javadoc.skip=true -DskipDocker' # Temporarily disable javadoc building because we're hitting an NPE. Also, skip docker until we can migrate to jib
-#      codeCoverageToolOption: 'jaCoCo'
-#      codeCoverageFailIfEmpty: true
-#      codeCoverageClassFilter: "-:com.nickrobison.trestle.transactions"
       javaHomeOption: 'JDKVersion'
       jdkVersionOption: '1.11'
       jdkArchitectureOption: 'x64'
