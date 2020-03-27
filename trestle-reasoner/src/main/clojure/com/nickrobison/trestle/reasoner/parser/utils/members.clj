@@ -27,6 +27,13 @@
        (map #(get % key))
        first))
 
+(defn member-field-get [parsedClass fn field]
+  "Filter members by the given [factName] and extract the provided [field] from the map"
+  (filter-and-get
+    (:members parsedClass)
+    fn
+    field))
+
 (declare filter-java-member-name)
 (defn ^IRI build-iri
   "Build the property IRI for the Member"

@@ -321,6 +321,25 @@ public class QueryBuilder {
         return stringValue;
     }
 
+    public String buildContributesToQuery(OWLNamedIndividual individual, OWLDataPropertyAssertionAxiom dataProperty) {
+        final ParameterizedSparqlString ps = buildBaseString();
+
+        ps.setCommandText(String.format("INSERT { " +
+                        "<%s> trestle:contributes_to ?individual } " +
+                        "WHERE { " +
+                        "?individual trestle:has_fact ?f . " +
+//                        "MINUS {?individual rdf:type <%s>} . " +
+                        "?f <%s> %s }",
+                this.getFullIRIString(individual),
+                this.getFullIRIString(dataProperty.getProperty().asOWLDataProperty()),
+                // This should probably be replaced with an actual literal node
+                dataProperty.getObject().toString()));
+
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
+    }
+
     /**
      * Retrieve all Fact values for a given individual
      * If a temporal range is provided, the returned values will be valid within that range

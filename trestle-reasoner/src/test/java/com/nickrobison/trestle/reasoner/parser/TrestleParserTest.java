@@ -1,10 +1,7 @@
 package com.nickrobison.trestle.reasoner.parser;
 
 import com.nickrobison.trestle.reasoner.TestClasses;
-import com.nickrobison.trestle.reasoner.annotations.DatasetClass;
-import com.nickrobison.trestle.reasoner.annotations.Ignore;
-import com.nickrobison.trestle.reasoner.annotations.IndividualIdentifier;
-import com.nickrobison.trestle.reasoner.annotations.Spatial;
+import com.nickrobison.trestle.reasoner.annotations.*;
 import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.parser.clojure.ClojureProvider;
@@ -223,6 +220,9 @@ public class TrestleParserTest {
         assertEquals(OWL2Datatype.XSD_INT, adm0_code.get().getObject().getDatatype().getBuiltInDatatype(), "Should have integer datatype");
         assertEquals(testMethod.getAdm0_code1(), adm0_code.get().getObject().parseInteger(), "Invalid ADM0_Code");
         assertEquals("<http://www.opengis.net/def/crs/OGC/1.3/CRS84> " + testMethod.test_name, asWKT.get().getObject().getLiteral(), "Invalid Spatial");
+
+        // Check for related fields
+        assertTrue(this.cp.isFactRelated(ExpandedGAULTests.class, "adm0_code"), "Should be related");
     }
 
     @Test
@@ -233,7 +233,7 @@ public class TrestleParserTest {
         assertAll(() -> assertTrue(facts.isPresent(), "Should have facts"),
                 () -> assertEquals(7, facts.get().size(), "Should have lots of facts"));
 
-////        Try to match on a multilang lang fact
+//        Try to match on a multilang lang fact
         final IRI iri = IRI.create(TRESTLE_PREFIX, "testString");
         final String classMember = cp.matchWithClassMember(TestClasses.MultiLangTest.class, iri.getShortForm(), "en-GB");
         assertEquals("englishGBString", classMember, "Should match with en-GB method");
@@ -378,6 +378,7 @@ public class TrestleParserTest {
     @DatasetClass(name = "GAUL_Test")
     public static class ExpandedGAULTests {
 
+        @Related
         public int adm0_code;
         @IndividualIdentifier
         public String adm0_name;
