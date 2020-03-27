@@ -765,6 +765,11 @@ public class ClassParser implements IClassParser {
 
     }
 
+    @Override
+    public boolean isFactRelated(Class<?> clazz, String factName) {
+        return false;
+    }
+
     static Optional<Object> accessMethodValue(Method classMethod, Object inputObject) {
         @Nullable Object castReturn = null;
         try {

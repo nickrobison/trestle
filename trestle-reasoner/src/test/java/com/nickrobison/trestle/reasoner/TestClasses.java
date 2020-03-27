@@ -671,4 +671,73 @@ public class TestClasses {
             return Objects.hash(startTemporal, objectid, geom);
         }
     }
+
+    @DatasetClass(name = "County_Related")
+    public static class CountyRelated {
+        @IndividualIdentifier
+        public final String id;
+        private final LocalDate startTemporal;
+        private final int adm0_code;
+        private final String name;
+        private final int population;
+
+        public CountyRelated(String id, LocalDate startTemporal, int adm0_code, String name, int population) {
+            this.id = id;
+            this.startTemporal = startTemporal;
+            this.adm0_code = adm0_code;
+            this.name = name;
+            this.population = population;
+        }
+
+        @StartTemporal
+        public LocalDate getStartTemporal() {
+            return startTemporal;
+        }
+
+        @Related
+        public int getAdm0_code() {
+            return adm0_code;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public int getPopulation() {
+            return population;
+        }
+    }
+
+    @DatasetClass(name = "GAUL_JTS_Test")
+    public static class JTSExtended implements Serializable {
+
+        private static final long serialVersionUID = 42L;
+
+        private final Integer adm0_code;
+        private final Geometry geom;
+        private LocalDate date;
+        public final int population;
+
+        public JTSExtended(Integer adm0_code, Geometry geom, LocalDate date, int population) {
+            this.adm0_code = adm0_code;
+            this.geom = geom;
+            this.date = date;
+            this.population = population;
+        }
+
+        @IndividualIdentifier
+        public Integer getAdm0_code() {
+            return this.adm0_code;
+        }
+
+        @Spatial(projection = 4269)
+        public Geometry getGeom() {
+            return this.geom;
+        }
+
+        @DefaultTemporal(name = "date", type = TemporalType.INTERVAL, duration = 1, unit = ChronoUnit.YEARS)
+        public LocalDate getDate() {
+            return this.date;
+        }
+    }
 }
