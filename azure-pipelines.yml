@@ -5,6 +5,13 @@ variables:
   MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
   YARN_CACHE_FOLDER: $(Pipeline.Workspace)/.yarn
 
+resources:
+  containers:
+    - container: graphdb
+      endpoint: dockerHub
+      image: nickrobison/graphdb:8.2.0-free
+      ports:
+        - 7200:7200
 
 stages:
   - stage: Build
@@ -56,10 +63,57 @@ stages:
             displayName: Compile Prod build
           - task: CopyFiles@2
             inputs:
-              contents: "trestle-server/src/main/resources/build/*"
+              sourceFolder:  $(Build.SourcesDirectory)/trestle-server/src/main/resources
               targetFolder: $(Build.ArtifactStagingDirectory)
           - publish: $(Build.ArtifactStagingDirectory)
             artifact: ui
+
+  - stage: Test
+    displayName: Run tests
+    dependsOn: Build
+    pool:
+      vmImage: "ubuntu-latest"
+    jobs:
+      - job: Test_Java
+        displayName: Test Java
+        services:
+          graphdb: graphdb
+        steps:
+          - checkout: self
+            submodules: true
+          - download: current
+            artifact: java
+          - task: CopyFiles@2
+            inputs:
+              sourceFolder: $(Pipeline.Workspace)/java
+              targetFolder: $(Build.SourcesDirectory)
+          - task: Cache@2
+            inputs:
+              key: 'maven | "$(Agent.OS)" | **/pom.xml'
+              restoreKeys: |
+                maven | "$(Agent.OS)"
+                maven
+              path: $(MAVEN_CACHE_FOLDER)
+            displayName: Cache Maven local repo
+          - task: SonarCloudPrepare@1
+            inputs:
+              SonarCloud: 'Sonar Cloud'
+              organization: 'nickrobison-github'
+              scannerMode: 'Other'
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'pom.xml'
+              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '1.11'
+              jdkArchitectureOption: 'x64'
+              publishJUnitResults: true
+              testResultsFiles: '**/TEST-*.xml'
+              goals: 'test -pl trestle-server -am'
+              sonarQubeRunAnalysis: true
+          - task: SonarCloudPublish@1
+            inputs:
+              pollingTimeoutSec: '300'
 
 #
 #resources:
