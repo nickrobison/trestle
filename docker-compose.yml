@@ -13,3 +13,5 @@ services:
     environment:
       CS: http://graphdb:7200
       CONFIG_FILE: ${CONFIG_FILE:-/app/resources/config.ci.yml}
+    ports:
+      - "8080:8080"

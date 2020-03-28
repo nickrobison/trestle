@@ -142,6 +142,11 @@ stages:
                 maven
               path: $(MAVEN_CACHE_FOLDER)
             displayName: Cache Maven local repo
+          - task: Docker@2
+            displayName: Login for Private Docker Images
+            inputs:
+              command: login
+              containerRegistry: dockerHub
           - task: Maven@3
             displayName: Build Docker image
             inputs:
@@ -151,6 +156,12 @@ stages:
               jdkVersionOption: '1.11'
               jdkArchitectureOption: 'x64'
               goals: 'package -pl trestle-server -am -DskipTests' # Not sure why the skip has to be here
+          - task: DockerCompose@0
+            displayName: Run Stack
+            inputs:
+              action: Run services
+              dockerComposeFile: docker-compose.yml
+
 
 
 #
