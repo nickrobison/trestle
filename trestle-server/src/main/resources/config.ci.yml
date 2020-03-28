@@ -16,7 +16,7 @@ logging:
 database:
 # Embedded H2
   driverClass: org.h2.Driver
-  user: sa
+  user: sa${CMDLINE}
   url: jdbc:h2:/opt/trestle/trestle.db
   properties:
     charSet: UTF-8
