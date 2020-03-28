@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  graphdb:
+    image: nickrobison/graphdb:8.2.0-free
+    ports:
+      - "7200:7200"
+
+  trestle:
+    depends_on:
+      - graphdb
+    image: nickrobison/trestle-server
+    environment:
+      CS: http://graphdb:7200
+      CONFIG_FILE: ${CONFIG_FILE:-/app/resources/config.ci.yml}

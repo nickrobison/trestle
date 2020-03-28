@@ -297,14 +297,26 @@
                             <tag>latest</tag>
                         </tags>
                     </to>
+                    <from>
+                        <image>openjdk:11.0.6-jdk-slim-buster</image>
+                    </from>
                     <container>
-                        <args>
-                            <arg>server</arg>
-                        </args>
+                        <entrypoint>/entrypoint.sh</entrypoint>
                         <ports>
                             <port>8080</port>
                         </ports>
                     </container>
+                    <extraDirectories>
+                        <paths>
+                            <path>${project.basedir}/docker</path>
+                        </paths>
+                        <permissions>
+                            <permission>
+                                <file>/entrypoint.sh</file>
+                                <mode>755</mode>
+                            </permission>
+                        </permissions>
+                    </extraDirectories>
                 </configuration>
                 <executions>
                     <execution>

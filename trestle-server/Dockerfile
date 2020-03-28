@@ -13,7 +13,7 @@ WORKDIR /opt/trestle
 ADD target/${JAR_FILE} ./trestle.jar
 ADD src/main/resources/${CONFIG_FILE} config.yml
 ADD target/trestle.owl .
-ADD entrypoint.sh .
+ADD docker/entrypoint.sh .
 
 RUN chmod u+rx,g+rx,o+rx,a-w /opt/trestle/entrypoint.sh
 

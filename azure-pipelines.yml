@@ -36,11 +36,11 @@ stages:
             displayName: Maven test-compile
             inputs:
               mavenPomFile: 'pom.xml'
-              mavenOptions: '-Xmx3072m -DskipTests -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER) -Dmaven.javadoc.skip=true -Djib.skip=true' # Temporarily disable javadoc building because we're hitting an NPE. Also, skip docker until we can migrate to jib
+              mavenOptions: '-Xmx3072m -DskipTests -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)' # Temporarily disable javadoc building because we're hitting an NPE. Also, skip docker until we can migrate to jib
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '1.11'
               jdkArchitectureOption: 'x64'
-              goals: 'package -pl trestle-server -am -DskipTests' # Not sure why skipTests has to come here, but so be it.
+              goals: 'test-compile'
           - task: CopyFiles@2
             inputs:
               contents: "trestle-*/target/**"
@@ -145,12 +145,12 @@ stages:
           - task: Maven@3
             displayName: Build Docker image
             inputs:
-              mavenPomFile: 'trestle-server/pom.xml'
-              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+              mavenPomFile: 'pom.xml'
+              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER) -Dmaven.javadoc.skip=true'
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '1.11'
               jdkArchitectureOption: 'x64'
-              goals: ' compile jib:build'
+              goals: 'package -pl trestle-server -am -DskipTests' # Not sure why the skip has to be here
 
 
 #
