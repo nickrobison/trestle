@@ -36,11 +36,11 @@ stages:
             displayName: Maven test-compile
             inputs:
               mavenPomFile: 'pom.xml'
-              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER) -Dmaven.javadoc.skip=true -DskipDocker -DskipTests' # Temporarily disable javadoc building because we're hitting an NPE. Also, skip docker until we can migrate to jib
+              mavenOptions: '-Xmx3072m -DskipTests -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER) -Dmaven.javadoc.skip=true -Djib.skip=true' # Temporarily disable javadoc building because we're hitting an NPE. Also, skip docker until we can migrate to jib
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '1.11'
               jdkArchitectureOption: 'x64'
-              goals: 'package -pl trestle-server -am'
+              goals: 'package -pl trestle-server -am -DskipTests' # Not sure why skipTests has to come here, but so be it.
           - task: CopyFiles@2
             inputs:
               contents: "trestle-*/target/**"
@@ -114,6 +114,44 @@ stages:
           - task: SonarCloudPublish@1
             inputs:
               pollingTimeoutSec: '300'
+
+      - job: Test_UI
+        displayName: Test UI
+        services:
+          graphdb: graphdb
+        steps:
+          - checkout: self
+            submodules: true
+          - download: current
+            artifact: java
+          - download: current
+            artifact: ui
+          - task: CopyFiles@2
+            inputs:
+              sourceFolder: $(Pipeline.Workspace)/java
+              targetFolder: $(Build.SourcesDirectory)
+          - task: CopyFiles@2
+            inputs:
+              sourceFolder: $(Pipeline.Workspace)/ui
+              targetFolder: $(Build.SourcesDirectory)
+          - task: Cache@2
+            inputs:
+              key: 'maven | "$(Agent.OS)" | **/pom.xml'
+              restoreKeys: |
+                maven | "$(Agent.OS)"
+                maven
+              path: $(MAVEN_CACHE_FOLDER)
+            displayName: Cache Maven local repo
+          - task: Maven@3
+            displayName: Build Docker image
+            inputs:
+              mavenPomFile: 'trestle-server/pom.xml'
+              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '1.11'
+              jdkArchitectureOption: 'x64'
+              goals: ' compile jib:build'
+
 
 #
 #resources:
