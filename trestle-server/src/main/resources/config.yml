@@ -15,9 +15,12 @@ reasoner:
 #  prefix: "http://nickrobison.com/demonstration/tigercounty#"
 #  ontology: "gaul_hadoop_world_bank"
 #  prefix: "http://nickrobison.com/gaul/"
-  ontology: "trestle_demo"
-  prefix: "http://trestle.nickrobison.com/demonstration/"
-  location: "file:////Users/nickrobison/Developer/git/dissertation/trestle-ontology/trestle.owl"
+#  ontology: "trestle_demo"
+#  prefix: "http://trestle.nickrobison.com/demonstration/"
+#  location: "file:////Users/nickrobison/Developer/git/dissertation/trestle-ontology/trestle.owl"
+  ontology: "covid"
+  prefix: "http://trestle.nickrobison.com/covid/"
+  location: "file:////Users/nickrobison/Developer/git/dissertation/trestle/trestle-ontology/src/main/resources/ontology/trestle.owl"
 
 logging:
   level: INFO

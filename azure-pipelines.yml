@@ -12,52 +12,154 @@ resources:
       image: nickrobison/graphdb:8.2.0-free
       ports:
         - 7200:7200
-    - container: chrome
-      image: selenium/standalone-chrome:3.141.59-zirconium
-      ports:
-        - 4444
-        - 4444
-      volumes:
-        - /dev/shm:/dev/shm
 
-services:
-  graphdb: graphdb
-  chrome: chrome
+stages:
+  - stage: Build
+    displayName: Build Source Code
+    pool:
+      vmImage: "ubuntu-latest"
+    jobs:
+      - job: Compile_Java
+        displayName: Compile Java Sources
+        steps:
+          - checkout: self
+            submodules: true
+          - task: Cache@2
+            displayName: Cache Maven local repo
+            inputs:
+              key: 'maven | "$(Agent.OS)" | **/pom.xml'
+              restoreKeys: |
+                maven | "$(Agent.OS)"
+                maven
+              path: $(MAVEN_CACHE_FOLDER)
+          - task: Maven@3
+            displayName: Maven test-compile
+            inputs:
+              mavenPomFile: 'pom.xml'
+              mavenOptions: '-Xmx3072m -DskipTests -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)' # Temporarily disable javadoc building because we're hitting an NPE. Also, skip docker until we can migrate to jib
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '1.11'
+              jdkArchitectureOption: 'x64'
+              goals: 'test-compile'
+          - task: CopyFiles@2
+            inputs:
+              contents: "trestle-*/target/**"
+              targetFolder: $(Build.ArtifactStagingDirectory)
+          - publish: $(Build.ArtifactStagingDirectory)
+            artifact: java
+      - job:
+        displayName: Compile Yarn sources
+        steps:
+          - task: Cache@2
+            inputs:
+              key: 'yarn | "$(Agent.OS)" | trestle-server/yarn.lock'
+              restoreKeys: |
+                yarn | "$(Agent.OS)"
+                yarn
+              path: $(YARN_CACHE_FOLDER)
+          - script: yarn --cwd trestle-server/ install
+            displayName: Install Dependencies
+          - script: yarn --cwd trestle-server/ run prod
+            displayName: Compile Prod build
+          - task: CopyFiles@2
+            inputs:
+              sourceFolder:  $(Build.SourcesDirectory)/trestle-server/src/main/resources/build
+              targetFolder: $(Build.ArtifactStagingDirectory)
+          - publish: $(Build.ArtifactStagingDirectory)
+            artifact: ui
 
-steps:
-  - checkout: self
-    submodules: true
-  - script: |
-      sudo apt-get install libpng16-16
-    displayName: Install system dependencies
-  - task: Docker@2
-    displayName: Login for Private Docker Images
-    inputs:
-      command: login
-      containerRegistry: dockerHub
-  - task: Cache@2
-    inputs:
-      key: 'maven | "$(Agent.OS)" | **/pom.xml'
-      restoreKeys: |
-        maven | "$(Agent.OS)"
-        maven
-      path: $(MAVEN_CACHE_FOLDER)
-    displayName: Cache Maven local repo
-  - task: Cache@2
-    inputs:
-      key: 'yarn | "$(Agent.OS)" | trestle-server/yarn.lock'
-      restoreKeys: |
-        yarn | "$(Agent.OS)"
-        yarn
-      path: $(YARN_CACHE_FOLDER)
-    displayName: Cache Yarn packages
-  - task: Maven@3
-    inputs:
-      mavenPomFile: 'pom.xml'
-      mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER) -Dmaven.javadoc.skip=true -DskipDocker' # Temporarily disable javadoc building because we're hitting an NPE. Also, skip docker until we can migrate to jib
-      javaHomeOption: 'JDKVersion'
-      jdkVersionOption: '1.11'
-      jdkArchitectureOption: 'x64'
-      publishJUnitResults: true
-      testResultsFiles: '**/TEST-*.xml'
-      goals: 'package -pl trestle-server -am'
+  - stage: Test
+    displayName: Run tests
+    dependsOn: Build
+    pool:
+      vmImage: "ubuntu-latest"
+    jobs:
+      - job: Test_Java
+        displayName: Test Java
+        services:
+          graphdb: graphdb
+        steps:
+          - checkout: self
+            submodules: true
+          - download: current
+            artifact: java
+          - task: CopyFiles@2
+            inputs:
+              sourceFolder: $(Pipeline.Workspace)/java
+              targetFolder: $(Build.SourcesDirectory)
+          - task: Cache@2
+            inputs:
+              key: 'maven | "$(Agent.OS)" | **/pom.xml'
+              restoreKeys: |
+                maven | "$(Agent.OS)"
+                maven
+              path: $(MAVEN_CACHE_FOLDER)
+            displayName: Cache Maven local repo
+          - task: SonarCloudPrepare@1
+            inputs:
+              SonarCloud: 'Sonar Cloud'
+              organization: 'nickrobison-github'
+              scannerMode: 'Other'
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'pom.xml'
+              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '1.11'
+              jdkArchitectureOption: 'x64'
+              publishJUnitResults: true
+              testResultsFiles: '**/TEST-*.xml'
+              goals: 'test -pl trestle-server -am'
+              sonarQubeRunAnalysis: true
+          - task: SonarCloudPublish@1
+            inputs:
+              pollingTimeoutSec: '300'
+
+      - job: Test_UI
+        displayName: Test UI
+        steps:
+          - checkout: self
+            submodules: true
+          - download: current
+            artifact: java
+          - download: current
+            artifact: ui
+          - task: CopyFiles@2
+            inputs:
+              sourceFolder: $(Pipeline.Workspace)/java
+              targetFolder: $(Build.SourcesDirectory)
+          - task: CopyFiles@2
+            inputs:
+              sourceFolder: $(Pipeline.Workspace)/ui
+              targetFolder: $(Build.SourcesDirectory)/trestle-server/src/main/resources/build
+          - task: Cache@2
+            inputs:
+              key: 'maven | "$(Agent.OS)" | **/pom.xml'
+              restoreKeys: |
+                maven | "$(Agent.OS)"
+                maven
+              path: $(MAVEN_CACHE_FOLDER)
+            displayName: Cache Maven local repo
+          - task: Docker@2
+            displayName: Login for Private Docker Images
+            inputs:
+              command: login
+              containerRegistry: dockerHub
+          - task: Maven@3
+            displayName: Build Docker image
+            inputs:
+              mavenPomFile: 'pom.xml'
+              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER) -Dmaven.javadoc.skip=true'
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '1.11'
+              jdkArchitectureOption: 'x64'
+              goals: 'package -pl trestle-server -am -DskipTests' # Not sure why the skip has to be here
+          - task: DockerCompose@0
+            displayName: Run Stack
+            inputs:
+              action: Run services
+              dockerComposeFile: docker-compose.yml
+          - script: yarn --cwd trestle-server/ install
+            displayName: Install Dependencies
+          - script: yarn --cwd trestle-server/ run test:ci
+            displayName: Compile Prod build

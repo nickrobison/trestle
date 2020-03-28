@@ -48,6 +48,7 @@ import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseToTemp
 /**
  * Created by nickrobison on 2/13/18.
  */
+@SuppressWarnings("TypeParameterExplicitlyExtendsObject")
 public class TrestleObjectReader implements ITrestleObjectReader {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleObjectReader.class);
@@ -109,7 +110,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
     }
 
     @Override
-    public <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity {
+    public <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) {
         final IRI individualIRI = parseStringToIRI(this.reasonerPrefix, objectID);
         return readTrestleObject(clazz, individualIRI, false, validTemporal, databaseTemporal);
     }
@@ -220,7 +221,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
         if (dataProperties.isPresent()) {
             try {
 //            Facts
-                final CompletableFuture<List<TrestleFact>> factsFuture = CompletableFuture.supplyAsync(() -> {
+                final CompletableFuture<List<TrestleFact<?>>> factsFuture = CompletableFuture.supplyAsync(() -> {
                     final Instant individualRetrievalStart = Instant.now();
                     final TrestleTransaction tt = ontology.createandOpenNewTransaction(trestleTransaction);
                     TrestleResultSet resultSet = ontology.executeSPARQLResults(factQuery);
@@ -245,7 +246,6 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                                         final Optional<TemporalObject> factValidTemporal = TemporalObjectBuilder.buildTemporalFromResults(TemporalScope.VALID, result.getLiteral("va"), result.getLiteral("vf"), result.getLiteral("vt"));
 //                                    Get database temporal
                                         final Optional<TemporalObject> factDatabaseTemporal = TemporalObjectBuilder.buildTemporalFromResults(TemporalScope.DATABASE, Optional.empty(), result.getLiteral("df"), result.getLiteral("dt"));
-                                        //noinspection unchecked
                                         return this.factFactory.createFact(
                                                 clazz,
                                                 assertion,
@@ -337,6 +337,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                             .min(TemporalUtils::compareTemporals)
                             .map(Temporal.class::cast);
 
+                    //noinspection OptionalGetWithoutIsPresent // I think it's fine to throw an exception here, if we end up in a bad state
                     return new TrestleObjectState(constructorArguments, validStart.get(), validEnd.get(), dbStart.get(), dbEnd.get());
                 }, this.objectReaderThreadPool);
                 final TrestleObjectState objectState = argumentsFuture.get();
@@ -472,8 +473,8 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                 .thenApply(results -> results
                         .getResults()
                         .stream()
-                        .map((result) -> result.unwrapLiteral("o"))
-                        .map((literal) -> this.handleLiteral(clazz, datatype, literal))
+                        .map(result -> result.unwrapLiteral("o"))
+                        .map(literal -> this.handleLiteral(clazz, datatype, literal))
                         .collect(Collectors.toList()));
 
         try {

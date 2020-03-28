@@ -27,7 +27,5 @@ Feature: User permissions feature
     When I click the "login" button
     Then The "login" page appears
     When I login and submit with "user" and "user1"
-    Then I can see 0 "admin" options
-    And I can see 0 "dba" options
     Then I can not navigate to "admin/users"
     And I can not navigate to "admin/index"

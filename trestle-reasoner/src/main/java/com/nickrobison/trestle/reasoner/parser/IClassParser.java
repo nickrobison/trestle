@@ -118,6 +118,15 @@ public interface IClassParser {
     Optional<IRI> getFactIRI(Class<?> clazz, String factName);
 
     /**
+     * Determines whether or not the given fact is related to other datasets in the reasoner
+     *
+     * @param clazz    - {@link Class} to parse
+     * @param factName - {@link String} of fact name to determine if it's related other other datasets
+     * @return - {@code true} fact is related to other datasets. {@link false} fact is not related to other datasets.
+     */
+    boolean isFactRelated(Class<?> clazz, String factName);
+
+    /**
      * Get the SRID projection of the class
      * If the class doesn't have a spatial projection, will return 0
      *

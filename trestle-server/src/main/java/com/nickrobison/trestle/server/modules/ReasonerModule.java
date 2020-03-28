@@ -1,5 +1,7 @@
 package com.nickrobison.trestle.server.modules;
 
+import com.nickrobison.trestle.datasets.CensusCounty;
+import com.nickrobison.trestle.datasets.CensusState;
 import com.nickrobison.trestle.datasets.GAULObject;
 import com.nickrobison.trestle.datasets.TigerCountyObject;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
@@ -45,7 +47,7 @@ public class ReasonerModule implements Managed {
                 .withName(configuration.getOntology())
                 .withPrefix(configuration.getPrefix())
                 .withOntology(configuration.getLocation())
-                .withInputClasses(GAULObject.class, TigerCountyObject.class)
+                .withInputClasses(GAULObject.class, TigerCountyObject.class, CensusState.class, CensusCounty.class)
                 .withoutMetrics()
                 .build();
 
@@ -61,7 +63,7 @@ public class ReasonerModule implements Managed {
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop() {
         logger.info("Shutting down reasoner");
         this.reasoner.shutdown(false);
     }
