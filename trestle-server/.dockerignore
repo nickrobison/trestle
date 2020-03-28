@@ -1,6 +1,4 @@
 **
 !/target
 !/src/main/resources
-!trestle.owl
-!Dockerfile
 !docker/entrypoint.sh
