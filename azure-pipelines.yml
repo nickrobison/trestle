@@ -117,8 +117,6 @@ stages:
 
       - job: Test_UI
         displayName: Test UI
-        services:
-          graphdb: graphdb
         steps:
           - checkout: self
             submodules: true
@@ -161,6 +159,11 @@ stages:
             inputs:
               action: Run services
               dockerComposeFile: docker-compose.yml
+          - task: CmdLine@2
+            displayName: Run CI Tests
+            inputs:
+              workingDirectory: trestle-server/
+              script: yarn run test:ci
 
 
 

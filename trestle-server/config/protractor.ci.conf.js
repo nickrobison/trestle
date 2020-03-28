@@ -6,12 +6,16 @@ exports.config = {
     baseUrl: "http://trestle:8080/workspace/",
     seleniumAddress: "http://localhost:4444/wd/hub",
     capabilities: {
-        "browserName": "firefox",
-        shardTestFiles: true,
-        maxInstances: 1,
-        "moz:firefoxOptions": {
-            'args': ["--headless"]
-        }
+        "browserName": "chrome",
+            // marionette: true,
+            shardTestFiles: true,
+            maxInstances: 1
+//        "browserName": "firefox",
+//        shardTestFiles: true,
+//        maxInstances: 1,
+//        "moz:firefoxOptions": {
+//            'args': ["--headless"]
+//        }
     },
     useAllAngular2AppRoots: true,
     allScriptsTimeout: 110000,
