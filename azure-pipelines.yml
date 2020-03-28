@@ -26,6 +26,7 @@ stages:
                 maven
               path: $(MAVEN_CACHE_FOLDER)
           - task: Maven@3
+            displayName: Maven test-compile
             inputs:
               mavenPomFile: 'pom.xml'
               mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
@@ -33,6 +34,12 @@ stages:
               jdkVersionOption: '1.11'
               jdkArchitectureOption: 'x64'
               goals: 'test-compile'
+          - task: CopyFiles@2
+            inputs:
+              contents: "trestle-*/target/**"
+              targetFolder: $(Build.ArtifactStagingDirectory)
+          - publish: $(Build.ArtifactStagingDirectory)
+            artifact: java
       - job:
         displayName: Compile Yarn sources
         steps:
@@ -44,7 +51,15 @@ stages:
                 yarn
               path: $(YARN_CACHE_FOLDER)
           - script: yarn --cwd trestle-server/ install
+            displayName: Install Dependencies
           - script: yarn --cwd trestle-server/ run prod
+            displayName: Compile Prod build
+          - task: CopyFiles@2
+            inputs:
+              contents: "trestle-server/src/main/resources/build/*"
+              targetFolder: $(Build.ArtifactStagingDirectory)
+          - publish: $(Build.ArtifactStagingDirectory)
+            artifact: ui
 
 #
 #resources:
