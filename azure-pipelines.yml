@@ -36,11 +36,11 @@ stages:
             displayName: Maven test-compile
             inputs:
               mavenPomFile: 'pom.xml'
-              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER) -Dmaven.javadoc.skip=true -DskipDocker -DskipTests' # Temporarily disable javadoc building because we're hitting an NPE. Also, skip docker until we can migrate to jib
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '1.11'
               jdkArchitectureOption: 'x64'
-              goals: 'test-compile'
+              goals: 'package -pl trestle-server -am'
           - task: CopyFiles@2
             inputs:
               contents: "trestle-*/target/**"
