@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>trestle</artifactId>
         <groupId>com.nickrobison.trestle</groupId>
-        <version>0.9.1-SNAPSHOT</version>
+        <version>0.9.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
@@ -18,17 +16,17 @@
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-reasoner</artifactId>
-            <version>0.9.1-SNAPSHOT</version>
+            <version>0.9.1</version>
         </dependency>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-ontology</artifactId>
-            <version>0.9.1-SNAPSHOT</version>
+            <version>0.9.1</version>
         </dependency>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-datasets</artifactId>
-            <version>0.9.1-SNAPSHOT</version>
+            <version>0.9.1</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
@@ -153,24 +151,19 @@
                             </relocations>
                             <transformers>
                                 <!--This requires one transformer per resource, you can't bundle them up-->
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>reference.conf</resource>
                                 </transformer>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>application.conf</resource>
                                 </transformer>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.nickrobison.trestle.gaulintegrator.IntegrationRunner</mainClass>
                                 </transformer>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer">
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer">
                                 </transformer>
                                 <!--Without this, OWLAPI can't load the ontology-->
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
                             </transformers>
                             <filters>
                                 <filter>
