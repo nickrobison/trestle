@@ -129,7 +129,7 @@
 
 (defmulti build-member-return-type
           "Specialized method to build return type for member"
-          (fn [acc member df typeConverter] (:type acc)))
+          (fn [acc _member _df _typeConverter] (:type acc)))
 (defmethod build-member-return-type ::pred/spatial
   [acc member ^OWLDataFactory df _]
   (let [rtype (pred/get-member-return-type member)]
@@ -224,7 +224,7 @@
             })))
 
 (defn ^OWLLiteral build-literal
-  ([^OWLDataFactory df ^String value returnType ^String defaultLang]
+  ([^OWLDataFactory df ^String value _returnType ^String defaultLang]
    (.getOWLLiteral df value defaultLang))
   ([^OWLDataFactory df ^Object value returnType]
    (.getOWLLiteral df (.toString value) ^OWLDatatype returnType)))
@@ -300,7 +300,7 @@
 
 (defmulti build-assertion-axiom
           "Build OWLDataPropertyAssertionAxiom from member"
-          (fn [^OWLDataFactory df individual member inputObject] (:type member)))
+          (fn [^OWLDataFactory _df _individual member _inputObject] (:type member)))
 (defmethod build-assertion-axiom ::pred/spatial
   [^OWLDataFactory df ^OWLNamedIndividual individual member inputObject]
   (if-let [literal (.getOWLLiteral df (spatial/build-projected-wkt
@@ -336,10 +336,10 @@
 (defmulti member-matches?
           "Predicate for determining if the given classmember matches the string IRI name of a member in the given set
           Specializes on the member type in order to handle special casing of temporals and multi-lang strings"
-          (fn [member languageCode classMember]
+          (fn [member _languageCode _classMember]
             (:type member)))
 (defmethod member-matches? ::pred/temporal
-  [member languageCode classMember]
+  [member _languageCode classMember]
   (let [iri (.getShortForm ^IRI (get member :iri))
         position (get member :position)
         name (get member :name)]
@@ -359,7 +359,7 @@
     ; Match against IRI and language code (ignoring case)
     (log/spyf "Matches? %s" (and (= iri classMember) (.equalsIgnoreCase ^String languageCode (get member :language))))))
 (defmethod member-matches? :default
-  [member languageCode classMember]
+  [member _languageCode classMember]
   (log/tracef "Matching %s against defaults" classMember)
   (let [iri (.getShortForm ^IRI (get member :iri))]
     (= iri classMember)))
@@ -371,7 +371,6 @@
   [members languageCode classMember]
   (->> members
        (filter (fn [member]
-                 (log/trace "Matching")
                  (member-matches? member languageCode classMember)))
        (map (fn [member]
               (get member :name)))
@@ -390,12 +389,12 @@
                                classRegistry
                                owlClassMap]
   IClassParser
-  (isMultiLangEnabled [this] (multiLangEnabled))
-  (getDefaultLanguageCode [this] (if (= defaultLanguageCode "") nil defaultLanguageCode))
-  (^OWLClass getObjectClass [this ^Class clazz]
+  (isMultiLangEnabled [_this] (multiLangEnabled))
+  (getDefaultLanguageCode [_this] (if (= defaultLanguageCode "") nil defaultLanguageCode))
+  (^OWLClass getObjectClass [_this ^Class clazz]
     (get-class-name clazz df reasonerPrefix))
   (^OWLClass getObjectClass [this ^Object inputObject] (.getObjectClass this (.getClass inputObject)))
-  (parseClass ^Object [this ^Class clazz]
+  (parseClass ^Object [_this ^Class clazz]
               ; Parse input class
     (log/debugf "Parsing %s" clazz)
               ; If the class is not public, throw an exception
@@ -529,7 +528,7 @@
     (let [parsedClass (.getRegisteredClass this clazz)
           constructor (:constructor parsedClass)
           parameterNames (m/get-from-array :name (:arguments constructor))
-          sortedTypes (.getSortedTypes arguments ^List parameterNames)
+          _sortedTypes (.getSortedTypes arguments ^List parameterNames)
           sortedValues (.getSortedValues arguments ^List parameterNames)
           missingParams (set/difference (set parameterNames) (.getNames arguments))]
       ; Are we missing parameters?
@@ -566,23 +565,23 @@
         ; Otherwise, just create it
         ((swap! classRegistry assoc clazz parsedClass)
          (swap! owlClassMap assoc owlClass clazz)))))
-  (getRegisteredClass ^Object [this ^Class clazz]
+  (getRegisteredClass ^Object [_this ^Class clazz]
     (if-let [parsedClass (get @classRegistry clazz)]
       parsedClass
       (throw (UnregisteredClassException. clazz))))
-  (getRegisteredOWLClasses [this]
+  (getRegisteredOWLClasses [_this]
     (set (keys @owlClassMap)))
-  (deregisterClass [this clazz]
+  (deregisterClass [_this clazz]
     (log/debugf "Deregistering %s" clazz)
     (swap! classRegistry dissoc clazz)
     (swap! owlClassMap dissoc clazz))
-  (isCacheable [this clazz]
+  (isCacheable [_this clazz]
     (if-let [parsedClass (get @classRegistry clazz)]
       (:serializable parsedClass)
       (throw (UnregisteredClassException. clazz))))
-  (isRegistered [this clazz]
+  (isRegistered [_this clazz]
     (contains? @classRegistry clazz))
-  (lookupClass [this owlClass]
+  (lookupClass [_this owlClass]
     (if-let [clazz (get @owlClassMap owlClass)]
       clazz
       (throw (UnregisteredClassException. owlClass)))))
