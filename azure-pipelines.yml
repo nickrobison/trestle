@@ -187,6 +187,9 @@ stages:
             inputs:
               sourceFolder: $(Pipeline.Workspace)/ui
               targetFolder: $(Build.SourcesDirectory)/trestle-server/src/main/resources/build
+          - task: MavenAuthenticate@0
+            inputs:
+              mavenServiceConnections: 'jCenter maven'
           - task: Maven@3
             displayName: Deploy resources
             inputs:
@@ -195,8 +198,5 @@ stages:
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '1.11'
               jdkArchitectureOption: 'x64'
+              mavenAuthenticateFeed: true
               goals: 'deploy -DskipTests' # Not sure why the skip has to be here
-
-
-
-
