@@ -169,9 +169,10 @@ stages:
     dependsOn: Test
     pool:
       vmImage: "ubuntu-latest"
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
     jobs:
       - job: Deploy
-        displayName: Deploy Artifcates
+        displayName: Deploy Artifacts
         steps:
           - checkout: self
             submodules: true
@@ -190,6 +191,14 @@ stages:
           - task: MavenAuthenticate@0
             inputs:
               mavenServiceConnections: 'jCenter maven'
+          - task: Cache@2
+            displayName: Cache Maven local repo
+            inputs:
+              key: 'maven | "$(Agent.OS)" | **/pom.xml'
+              restoreKeys: |
+                maven | "$(Agent.OS)"
+                maven
+              path: $(MAVEN_CACHE_FOLDER)
           - task: Maven@3
             displayName: Deploy resources
             inputs:
