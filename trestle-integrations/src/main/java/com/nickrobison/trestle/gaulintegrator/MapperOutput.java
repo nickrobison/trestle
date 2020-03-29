@@ -92,10 +92,10 @@ public class MapperOutput implements WritableComparable<MapperOutput> {
         datasetYear.readFields(in);
         polygonData.readFields(in);
         in.readFully(this.dateField);
-        adm0Code.readFields(in);
-        adm0Name.readFields(in);
         adm1Code.readFields(in);
         adm1Name.readFields(in);
+        adm0Code.readFields(in);
+        adm0Name.readFields(in);
         dispArea.readFields(in);
         status.readFields(in);
     }

@@ -1,7 +1,6 @@
 package com.nickrobison.trestle.zicta;
 
 import com.esri.mapreduce.PolygonFeatureInputFormat;
-import com.nickrobison.trestle.gaulintegrator.HadoopTests.GAULIntegratorTests;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
@@ -47,8 +46,8 @@ public class ZICTATest {
 
     @Test
     public void testZICTA() throws URISyntaxException, IOException, ClassNotFoundException, InterruptedException {
-        URL IN_DIR = GAULIntegratorTests.class.getClassLoader().getResource("shapefiles/zipcodes/");
-        URL OUT_DIR = GAULIntegratorTests.class.getClassLoader().getResource("out/zipcodes/");
+        URL IN_DIR = ZICTATest.class.getClassLoader().getResource("shapefiles/zipcodes/");
+        URL OUT_DIR = ZICTATest.class.getClassLoader().getResource("out/zipcodes/");
 
         Path inDir = new Path(IN_DIR.toString());
         Path outDir = new Path("./target/out/zipcodes");

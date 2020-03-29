@@ -9,10 +9,7 @@ import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.time.LocalDate;
 
@@ -25,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 @SuppressWarnings({"argument.type.incompatible", "initialization.fields.uninitialized"})
 @Tag("integration")
 @Tag("oracle")
+@Disabled
 public class ClassValidationTest {
 
     static TrestleReasoner reasoner;
