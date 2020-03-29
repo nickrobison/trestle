@@ -39,7 +39,7 @@ public interface ITrestleCollectionEngine {
      * The temporal parameters allow for additional specificity on the spatio-temporal intersection
      *
      * @param wkt      - {@link String} of WKT to intersect with
-     * @param buffer   - {@link double} buffer to draw around WKT. 0 is no buffer (defaults to {@link si.uom.SI#METER}
+     * @param buffer   - {@link double} buffer to draw around WKT. 0 is no buffer (defaults to {@link si.uom.SI#METRE})
      * @param strength - {@link double} strength parameter to filter weak associations
      * @param validAt  - {@link Temporal} of validAt time
      * @param dbAt     - Optional {@link Temporal} of dbAt time
