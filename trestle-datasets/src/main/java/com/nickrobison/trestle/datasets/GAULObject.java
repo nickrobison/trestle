@@ -41,6 +41,12 @@ public class GAULObject {
      * @param objectName String - Object Name
      * @param startDate  LocalDate - Start of object valid interval
      * @param endDate    LocalDate - End of object valid interval
+     * @param adm1Code   Long - Regional ADM Code
+     * @param adm1Name   String  - Regional name
+     * @param adm0Code   Long - County ADM Code
+     * @param adm0Name   String - County name
+     * @param dispArea   Boolean - whether or not the boundary is disputed
+     * @param status     Boolean - Something to do with the status of the object
      * @param polygon    Polygon - Object boundary
      */
     public GAULObject(String id, long gaulCode, String objectName, LocalDate startDate, LocalDate endDate, Polygon polygon, long adm1Code, String adm1Name, String status, boolean dispArea, long adm0Code, String adm0Name) {

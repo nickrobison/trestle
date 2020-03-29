@@ -36,7 +36,7 @@ stages:
             displayName: Maven test-compile
             inputs:
               mavenPomFile: 'pom.xml'
-              mavenOptions: '-Xmx3072m -DskipTests -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)' # Temporarily disable javadoc building because we're hitting an NPE. Also, skip docker until we can migrate to jib
+              mavenOptions: '-Xmx3072m -DskipTests -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '1.11'
               jdkArchitectureOption: 'x64'
@@ -149,7 +149,7 @@ stages:
             displayName: Build Docker image
             inputs:
               mavenPomFile: 'pom.xml'
-              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER) -Dmaven.javadoc.skip=true'
+              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '1.11'
               jdkArchitectureOption: 'x64'

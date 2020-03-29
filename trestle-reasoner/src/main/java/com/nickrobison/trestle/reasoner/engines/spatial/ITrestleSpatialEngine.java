@@ -28,7 +28,7 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      *
      * @param datasetClassID - {@link String} ID of dataset {@link OWLClass}
      * @param wkt            - {@link String} WKT boundary
-     * @param buffer         - {@link Double} buffer to extend around buffer. 0 is no buffer (defaults to {@link si.uom.SI#METER}
+     * @param buffer         - {@link Double} buffer to extend around buffer. 0 is no buffer (defaults to {@link si.uom.SI#METRE})
      * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
      */
     Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer);
@@ -55,7 +55,7 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      *
      * @param datasetClassID - {@link String} ID of dataset {@link OWLClass}
      * @param wkt            - {@link String} WKT boundary
-     * @param buffer         - {@link Double} buffer to extend around buffer. 0 is no buffer (defaults to {@link METRE}
+     * @param buffer         - {@link Double} buffer to extend around buffer. 0 is no buffer (defaults to {@link si.uom.SI#METRE})
      * @param atTemporal     - {@link Temporal} valid at restriction
      * @param dbTemporal     - {@link Temporal} database at restriction
      * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
@@ -86,7 +86,7 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      *
      * @param clazz   - {@link Class} of dataset {@link OWLClass}
      * @param wkt     - {@link String} WKT boundary
-     * @param buffer  - {@link Double} buffer to extend around buffer. 0 is no buffer (defaults to {@link si.uom.SI#METER}
+     * @param buffer  - {@link Double} buffer to extend around buffer. 0 is no buffer (defaults to {@link si.uom.SI#METRE})
      * @param validAt - {@link Temporal} valid at restriction
      * @param dbAt    - {@link Temporal} database at restriction
      * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
@@ -114,7 +114,7 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * An empty Optional means an error, an Optional of an empty List means no intersected objects
      *
      * @param inputObject - Object to intersect
-     * @param buffer      - Additional buffer (in meters). 0 is no buffer (defaults to {@link si.uom.SI#METER}
+     * @param buffer      - Additional buffer (in meters). 0 is no buffer (defaults to {@link si.uom.SI#METRE})
      * @param <T>         - Type to specialize method
      * @return - {@link Optional} {@link List} of {@link T}
      */
@@ -138,7 +138,7 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      *
      * @param <T>         - Type to specialize method
      * @param inputObject - Object to intersect
-     * @param buffer      - Additional buffer to build around object. 0 is no buffer (defaults to {@link si.uom.SI#METER}
+     * @param buffer      - Additional buffer to build around object. 0 is no buffer (defaults to {@link si.uom.SI#METRE})
      * @param temporalAt  - Temporal of intersecting time point
      * @param dbAt        - Optional {@link Temporal} to specify database time
      * @return - {@link Optional} {@link List} of {@link T}
@@ -151,7 +151,7 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      *
      * @param <T>         - Type to specialize method
      * @param inputObject - Object to intersect
-     * @param buffer      - Additional buffer to build around object. 0 is no buffer (defaults to {@link si.uom.SI#METER}
+     * @param buffer      - Additional buffer to build around object. 0 is no buffer (defaults to {@link si.uom.SI#METRE})
      * @param bufferUnit  - {@link Unit} of {@link Length} buffer units
      * @param temporalAt  - Temporal of intersecting time point
      * @param dbAt        - Optional {@link Temporal} to specify database time
@@ -165,7 +165,7 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      *
      * @param clazz- Input {@link Class} of type {@link T}
      * @param wkt    - WKT {@link String} to intersect objects with
-     * @param buffer - {@link Double} of buffer around WKT string. 0 is no buffer (defaults to {@link si.uom.SI#METER}
+     * @param buffer - {@link Double} of buffer around WKT string. 0 is no buffer (defaults to {@link si.uom.SI#METRE})
      * @param <T>    - {@link T} generic type parameter
      * @return - {@link Optional} {@link List} of intersected objects of type {@link T}
      */

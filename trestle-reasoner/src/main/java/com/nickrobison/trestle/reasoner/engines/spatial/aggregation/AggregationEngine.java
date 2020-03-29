@@ -18,9 +18,9 @@ import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
-import org.locationtech.jts.geom.*;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.locationtech.jts.geom.*;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
@@ -41,6 +41,7 @@ import static com.nickrobison.trestle.reasoner.engines.object.TrestleObjectReade
 /**
  * Created by nickrobison on 3/24/18.
  */
+@SuppressWarnings("TypeParameterExplicitlyExtendsObject")
 public class AggregationEngine {
 
     private static final Logger logger = LoggerFactory.getLogger(AggregationEngine.class);
@@ -171,7 +172,7 @@ public class AggregationEngine {
      * @param dbAt        - {@link Temporal} optional dbAt restriction
      * @param <T>         - {@link T} type parameter for object class
      * @param <B>         - {@link B} type parameter for return type from {@link Computable} function
-     * @return
+     * @return - {@link AdjacencyGraph} for object
      */
     public <T extends @NonNull Object, B extends Number> AdjacencyGraph<T, B> buildSpatialGraph(Class<T> clazz, String objectID, Computable<T, T, B> edgeCompute, Filterable<T> filter, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
         final AdjacencyGraph<T, B> adjacencyGraph = new AdjacencyGraph<>();

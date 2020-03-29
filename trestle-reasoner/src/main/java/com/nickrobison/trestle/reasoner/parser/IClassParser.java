@@ -122,7 +122,7 @@ public interface IClassParser {
      *
      * @param clazz    - {@link Class} to parse
      * @param factName - {@link String} of fact name to determine if it's related other other datasets
-     * @return - {@code true} fact is related to other datasets. {@link false} fact is not related to other datasets.
+     * @return - {@code true} fact is related to other datasets. {@code false} fact is not related to other datasets.
      */
     boolean isFactRelated(Class<?> clazz, String factName);
 
