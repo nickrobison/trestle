@@ -3,6 +3,10 @@ import { NgModule } from '@angular/core';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import {HttpClientModule} from "@angular/common/http";
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import {UserModule} from "./user/user.module";
+import {MaterialModule} from "./material/material.module";
 
 @NgModule({
   declarations: [
@@ -10,7 +14,12 @@ import { AppComponent } from './app.component';
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule
+    HttpClientModule,
+    AppRoutingModule,
+    BrowserModule,
+    BrowserAnimationsModule,
+    UserModule,
+    MaterialModule
   ],
   providers: [],
   bootstrap: [AppComponent]
