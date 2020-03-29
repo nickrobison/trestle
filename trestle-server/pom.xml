@@ -156,7 +156,7 @@
 
     <profiles>
         <profile>
-            <id>frontend</id>
+            <id>release</id>
             <build>
                 <plugins>
                     <plugin>
@@ -191,16 +191,6 @@
                                 </goals>
                                 <configuration>
                                     <arguments>--config config/webpack.prod-temp.js</arguments>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>protractor ci tests</id>
-                                <goals>
-                                    <goal>yarn</goal>
-                                </goals>
-                                <phase>integration-test</phase>
-                                <configuration>
-                                    <arguments>test:ci</arguments>
                                 </configuration>
                             </execution>
                         </executions>

@@ -28,7 +28,7 @@ public class GAULRecordTests {
 
     @BeforeEach
     public void setup() throws SQLException {
-        testStartDate = LocalDate.of(1990, 01, 01);
+        testStartDate = LocalDate.of(1990, 1, 1);
         testExpirationDate = LocalDate.of(1990, 12, 31);
         mapperOutput = new MapperOutput(
                 new LongWritable(1234),
@@ -57,7 +57,7 @@ public class GAULRecordTests {
     public void TestDateValidInterval() {
         LocalDate testDateWithin = LocalDate.of(1990, Month.APRIL, 24);
         LocalDate testDateBefore = LocalDate.of(1989, Month.AUGUST, 12);
-        LocalDate testDateAfter = LocalDate.of(2000, Month.SEPTEMBER, 01);
+        LocalDate testDateAfter = LocalDate.of(2000, Month.SEPTEMBER, 1);
 
 //        Test whether the object is valid or not for a given date
         assertTrue(mapperOutput.isValidNow(testDateWithin), "Date is within valid range, should be true");

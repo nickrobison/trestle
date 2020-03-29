@@ -2,6 +2,7 @@ package com.nickrobison.trestle.tigerintegrator;
 
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import static com.ibm.icu.impl.Assert.fail;
  * Created by detwiler on 4/13/17.
  */
 @Tag("load")
+@Disabled
 public class TigerLoaderTests {
 
     /*@Disabled("This test requires a prebuilt Postgres DB")*/ @Test
