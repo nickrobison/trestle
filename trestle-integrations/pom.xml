@@ -3,7 +3,7 @@
     <parent>
         <artifactId>trestle</artifactId>
         <groupId>com.nickrobison.trestle</groupId>
-        <version>0.9.1</version>
+        <version>0.9.2-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
@@ -16,17 +16,17 @@
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-reasoner</artifactId>
-            <version>0.9.1</version>
+            <version>0.9.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-ontology</artifactId>
-            <version>0.9.1</version>
+            <version>0.9.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-datasets</artifactId>
-            <version>0.9.1</version>
+            <version>0.9.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>

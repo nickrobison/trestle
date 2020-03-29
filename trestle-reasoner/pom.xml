@@ -3,7 +3,7 @@
     <parent>
         <artifactId>trestle</artifactId>
         <groupId>com.nickrobison.trestle</groupId>
-        <version>0.9.1</version>
+        <version>0.9.2-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
@@ -16,32 +16,32 @@
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-exporter</artifactId>
-            <version>0.9.1</version>
+            <version>0.9.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-common</artifactId>
-            <version>0.9.1</version>
+            <version>0.9.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-graphdb</artifactId>
-            <version>0.9.1</version>
+            <version>0.9.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-querybuilder</artifactId>
-            <version>0.9.1</version>
+            <version>0.9.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-iri</artifactId>
-            <version>0.9.1</version>
+            <version>0.9.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.nickrobison.trestle</groupId>
             <artifactId>trestle-metrics</artifactId>
-            <version>0.9.1</version>
+            <version>0.9.2-SNAPSHOT</version>
         </dependency>
         <!--OWL Dependencies-->
         <dependency>
