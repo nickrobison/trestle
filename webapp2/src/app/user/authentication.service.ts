@@ -7,6 +7,7 @@ import { TrestleUser } from "./trestle-user";
 import {HttpClient} from "@angular/common/http";
 import {JwtHelperService} from "@auth0/angular-jwt";
 import {Observable} from "rxjs";
+import {tap} from "rxjs/operators";
 
 const _key: string = "access_token";
 
@@ -80,11 +81,11 @@ export class AuthService {
      */
     public login(username: string, password: string) {
         return this.http.post<string>("/auth/login", {username, password: password})
-          .subscribe(resp => {
+          .pipe(tap(resp => {
             console.debug("has token");
             console.log(resp);
             localStorage.setItem(_key, resp);
-          })
+          }));
     }
 
     /**

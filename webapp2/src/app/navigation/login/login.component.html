@@ -1,0 +1,30 @@
+<div class="login">
+  <mat-card class="login-input z-depth-5">
+    <mat-card-header>
+      <mat-card-title><h4>Login to Trestle</h4></mat-card-title>
+    </mat-card-header>
+    <form id="login-form" [formGroup]="loginForm" (ngSubmit)="login(loginForm.value)">
+      <mat-card-content>
+        <table class="input-full-width" cellspacing="0">
+          <tr>
+            <td>
+              <mat-form-field class="input-full-width">
+                <input matInput placeholder="Username" formControlName="username" name="username">
+              </mat-form-field>
+            </td>
+            <td>
+              <mat-form-field class="input-full-width">
+                <input type="password" matInput placeholder="Password" formControlName="password"
+                       name="password">
+              </mat-form-field>
+            </td>
+          </tr>
+        </table>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-raised-button type="submit" [disabled]="!loginForm.valid">Login</button>
+      </mat-card-actions>
+      <mat-card-footer [@errorMessage]="errorState">{{errorMessage}}</mat-card-footer>
+    </form>
+  </mat-card>
+</div>
