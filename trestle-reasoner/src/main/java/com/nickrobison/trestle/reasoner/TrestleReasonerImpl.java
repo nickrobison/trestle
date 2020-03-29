@@ -4,7 +4,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.nickrobison.metrician.Metrician;
-import com.nickrobison.trestle.common.LambdaUtils;
 import com.nickrobison.trestle.common.TrestlePair;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
