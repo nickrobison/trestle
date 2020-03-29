@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Created by nickrobison on 6/25/18.
  */
 @Tag("integration")
-//@Disabled
+@Disabled // Disabled until we can have more than one spatial test running at the same time.
 public class SpatialProjectionTest extends AbstractReasonerTest {
 
     @Test

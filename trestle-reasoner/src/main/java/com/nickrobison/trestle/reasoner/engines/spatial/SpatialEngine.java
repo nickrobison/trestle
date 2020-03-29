@@ -27,6 +27,8 @@ import org.locationtech.jts.geom.Geometry;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.query.QueryEvaluationException;
+import org.locationtech.jts.io.WKTReader;
+import org.locationtech.jts.io.WKTWriter;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
@@ -226,14 +228,21 @@ public class SpatialEngine implements ITrestleSpatialEngine {
     @Override
     public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, @Nullable Temporal temporalAt, @Nullable Temporal dbAt) {
         final OWLNamedIndividual owlNamedIndividual = this.tp.classParser.getIndividual(inputObject);
-        final Optional<String> wktString = SpatialParser.getSpatialValueAsString(inputObject);
 
-        if (wktString.isPresent()) {
-            return spatialIntersect((Class<T>) inputObject.getClass(), wktString.get(), buffer, bufferUnit, temporalAt, null);
-        }
+        // Reproject the input object into WGS 84, which is what the underlying ontologies use
+        final Geometry projectedGeom = SpatialEngineUtils.reprojectObject(inputObject, this.tp.classParser.getClassProjection(inputObject.getClass()), 4326, this.geometryCache);
+        final WKTWriter writer = new WKTWriter();
+        final String wkt = writer.write(projectedGeom);
 
-        logger.info("{} doesn't have a spatial component", owlNamedIndividual);
-        return Optional.empty();
+//        final Optional<String> wktString = SpatialParser.getSpatialValueAsString(inputObject);
+
+//        if (wktString.isPresent()) {
+//
+//        }
+
+        return spatialIntersect((Class<T>) inputObject.getClass(), wkt, buffer, bufferUnit, temporalAt, null);
+//        logger.info("{} doesn't have a spatial component", owlNamedIndividual);
+//        return Optional.empty();
     }
 
     @Override

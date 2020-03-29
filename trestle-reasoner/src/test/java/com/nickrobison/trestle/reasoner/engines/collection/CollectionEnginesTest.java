@@ -7,6 +7,7 @@ import com.nickrobison.trestle.reasoner.TestClasses;
 import com.nickrobison.trestle.types.relations.CollectionRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Geometry;
@@ -109,6 +110,7 @@ public class CollectionEnginesTest extends AbstractReasonerTest {
     }
 
     @Test
+    @Disabled // TODO: Re-enable with TRESTLE-725
     public void testCollectionRemoval() {
         //        Add all to collections
         this.reasoner.addObjectToCollection(FIRST_COLLECTION, first, CollectionRelationType.SEMANTIC, 1.0);
