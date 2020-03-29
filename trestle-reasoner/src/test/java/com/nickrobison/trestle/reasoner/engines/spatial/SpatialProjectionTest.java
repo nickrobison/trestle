@@ -6,10 +6,9 @@ import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.AbstractReasonerTest;
 import com.nickrobison.trestle.reasoner.TestClasses;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
-import org.locationtech.jts.geom.Geometry;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Geometry;
 import org.opengis.feature.simple.SimpleFeature;
 
 import java.io.IOException;
@@ -25,7 +24,6 @@ import static org.junit.jupiter.api.Assertions.*;
  * Created by nickrobison on 6/25/18.
  */
 @Tag("integration")
-@Disabled // Disabled until we can have more than one spatial test running at the same time.
 public class SpatialProjectionTest extends AbstractReasonerTest {
 
     @Test

@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
  * Created by nickrobison on 7/25/18.
  */
 @Tag("integration")
+@Disabled // Disabled until we can have more than one spatial test running at the same time.
 public class AggregationEngineTests extends AbstractReasonerTest {
 
     @Test
