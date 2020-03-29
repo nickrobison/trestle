@@ -33,14 +33,14 @@ stages:
                 maven
               path: $(MAVEN_CACHE_FOLDER)
           - task: Maven@3
-            displayName: Maven test-compile
+            displayName: Maven Package
             inputs:
               mavenPomFile: 'pom.xml'
-              mavenOptions: '-Xmx3072m -DskipTests -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '1.11'
               jdkArchitectureOption: 'x64'
-              goals: 'package'
+              goals: 'package -DskipTests '
           - task: CopyFiles@2
             inputs:
               contents: "trestle-*/target/**"
@@ -170,8 +170,8 @@ stages:
     pool:
       vmImage: "ubuntu-latest"
     jobs:
-      - job: Test_Java
-        displayName: Test Java
+      - job: Deploy
+        displayName: Deploy Artifcates
         steps:
           - checkout: self
             submodules: true
