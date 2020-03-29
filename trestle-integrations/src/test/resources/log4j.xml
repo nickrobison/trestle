@@ -20,7 +20,7 @@
         <priority value="OFF"/>
     </category>
     <category name="com.nickrobison.trestle">
-        <priority value="INFO"/>
+        <priority value="DEBUG"/>
     </category>
     <category name="com.nickrobison.trestle.ontology">
         <priority value="OFF"/>

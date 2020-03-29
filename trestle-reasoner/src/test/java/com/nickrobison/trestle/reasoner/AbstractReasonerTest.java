@@ -32,6 +32,7 @@ public abstract class AbstractReasonerTest {
                 .withOntology(IRI.create(config.getString("trestle.ontology.location")))
                 .withPrefix(AbstractReasonerTest.OVERRIDE_PREFIX)
                 .withInputClasses(registerClasses().toArray(new Class<?>[registerClasses().size()]))
+                .trackObjectRelations()
                 .withoutMetrics()
                 .initialize()
                 .build();

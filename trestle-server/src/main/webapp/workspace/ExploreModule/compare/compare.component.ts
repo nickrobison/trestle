@@ -91,7 +91,7 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
         this.layerChanges = new Subject();
         this.filterCompareResults = true;
         this.exportValues = [{
-            dataset: "gaul-test",
+            dataset: "GAUL",
             individuals: []
         }];
         this.loadedOverlap = null;
@@ -360,7 +360,7 @@ export class CompareComponent implements AfterViewInit, AfterViewChecked {
                 visible: true
             };
             this.vs
-                .stIntersectIndividual("gaul-test",
+                .stIntersectIndividual("GAUL",
                     this.baseIndividual.individual.getSpatialValue(),
                     undefined,
                     moment(),

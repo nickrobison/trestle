@@ -19,9 +19,10 @@ public class TigerLoaderTests {
     public void TestLoad()  {
         try {
             TigerLoader loader = new TigerLoader();
-            loader.loadObjects();
-            if(!loader.verifyObjects())
-                fail("Loaded Trestle objects not equivalent to retrieved objects.");
+//            loader.loadObjects();
+            loader.computeRelations();
+//            if(!loader.verifyObjects())
+//                fail("Loaded Trestle objects not equivalent to retrieved objects.");
         } catch (SQLException e) {
             fail(e);
         } catch (TrestleClassException e) {

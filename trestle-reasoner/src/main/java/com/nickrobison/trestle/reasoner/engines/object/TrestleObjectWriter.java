@@ -19,6 +19,7 @@ import com.nickrobison.trestle.reasoner.engines.events.TrestleEventEngine;
 import com.nickrobison.trestle.reasoner.engines.events.TrestleEventException;
 import com.nickrobison.trestle.reasoner.engines.merge.MergeScript;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
+import com.nickrobison.trestle.reasoner.engines.relations.RelationTracker;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.reasoner.parser.*;
@@ -81,6 +82,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
     private final ITrestleOntology ontology;
     private final QueryBuilder qb;
     private final TrestleCache trestleCache;
+    private final RelationTracker relationTracker;
     private final String reasonerPrefix;
 
 
@@ -94,6 +96,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                                ITrestleOntology ontology,
                                QueryBuilder queryBuilder,
                                TrestleCache trestleCache,
+                               RelationTracker relationTracker,
                                TrestleExecutorFactory factory) {
         this.eventEngine = eventEngine;
         this.metrician = metrician;
@@ -106,6 +109,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
         this.ontology = ontology;
         this.qb = queryBuilder;
         this.trestleCache = trestleCache;
+        this.relationTracker = relationTracker;
         this.reasonerPrefix = reasonerPrefix;
 
         final Config config = ConfigFactory.load().getConfig("trestle");
@@ -405,12 +409,13 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
             }
         }
 
-//        Invalidate the cache
+//        Invalidate the cache and tracker
         final TrestleIRI individualIRI = IRIBuilder.encodeIRI(V1, this.reasonerPrefix, owlNamedIndividual.toStringID(), null,
                 parseTemporalToOntologyDateTime(factTemporal.getIdTemporal(), ZoneOffset.UTC),
                 parseTemporalToOntologyDateTime(dTemporal.getIdTemporal(), ZoneOffset.UTC));
         logger.debug("Purging {} from the cache", individualIRI);
         trestleCache.deleteTrestleObject(individualIRI);
+        this.relationTracker.removeComputedRelations(owlNamedIndividual);
     }
 
     /**
@@ -547,11 +552,12 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
         }
 
 
-//        Update the cache
+//        Update the cache and tracker
         final TrestleIRI individualIRI = IRIBuilder.encodeIRI(V1, this.reasonerPrefix, individual, null,
                 parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC),
                 parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC));
         trestleCache.deleteTrestleObject(individualIRI);
+        this.relationTracker.removeComputedRelations(owlNamedIndividual);
     }
 
     /**

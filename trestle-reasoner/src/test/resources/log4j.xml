@@ -17,9 +17,6 @@
     <category name="org.apache.http">
         <priority value="OFF"/>
     </category>
-    <category name="com.nickrobison.trestle.ontology">
-        <priority value="TRACE"/>
-    </category>
     <category name="org.eclipse.rdf4j.repository">
         <priority value="OFF"/>
     </category>

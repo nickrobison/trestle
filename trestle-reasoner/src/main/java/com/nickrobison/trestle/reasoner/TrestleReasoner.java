@@ -2,6 +2,7 @@ package com.nickrobison.trestle.reasoner;
 
 import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
 import com.nickrobison.trestle.reasoner.engines.collection.ITrestleCollectionEngine;
@@ -11,6 +12,9 @@ import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
 import com.nickrobison.trestle.reasoner.engines.spatial.ITrestleSpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationEngine;
+import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.Computable;
+import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.Filterable;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.engines.temporal.TemporalEngine;
@@ -183,21 +187,6 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
     <T extends @NonNull Object> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength);
 
     /**
-     * Get a map of related objects and their relative strengths
-     *
-     * @param clazz    - Java class of object to serialize to
-     * @param objectID - Object ID to retrieve related objects
-     * @param cutoff   - Double of relation strength cutoff
-     * @param <T>      - Type to specialize return with
-     * @return - Optional Map of related java objects and their corresponding relational strength
-     * @deprecated This is an old method, we don't use it anymore
-     */
-    //    TODO(nrobison): Get rid of this, no idea why this method throws an error when the one above does not.
-    @SuppressWarnings("return.type.incompatible")
-    @Deprecated
-    <T extends @NonNull Object> Optional<Map<T, Double>> getRelatedObjects(Class<T> clazz, String objectID, double cutoff);
-
-    /**
      * Get a {@link List} of objects that are equivalent to given individual at the given time point
      * If no objects satisfy the equality constraints and an empty {@link List} is returned
      *
@@ -220,6 +209,34 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @return - {@link Optional} {@link List} of {@link T} objects
      */
     <T extends @NonNull Object> Optional<List<T>> getEquivalentObjects(Class<T> clazz, List<IRI> individuals, Temporal queryTemporal);
+
+    /**
+     * Compute the spatial and temporal relationships between the given individual and any other individuals which intersect the individual.
+     * The intersection boundary is currently set to 50 {@link javax.measure.unit.SI#METER}.
+     *
+     * @param <T>        - Java class to return
+     * @param clazz      - Java {@link Class} of type {@link T} to query
+     * @param individual - {@link String} ID of individual
+     * @param validAt - {@link Temporal} optional temporal to specify when to compute the spatial relationships
+     * @throws MissingOntologyEntity - throws if the given individual isn't in the Database
+     * @throws TrestleClassException - throws if the class isn't registered with the Reasoner
+     */
+    <T> void calculateSpatialAndTemporalRelationships(Class<T> clazz, String individual, @Nullable Temporal validAt) throws TrestleClassException, MissingOntologyEntity;
+
+    /**
+     * Build the spatial adjacency graph for a given class.
+     *
+     * @param clazz       - Java {@link Class} of objects to retrieve
+     * @param objectID    - {@link String} ID of object to begin graph computation with
+     * @param edgeCompute - {@link Computable} function to use for computing edge weights
+     * @param filter      - {@link Filterable} function to use for determining whether or not to compute the given node
+     * @param validAt     - {@link Temporal} optional validAt restriction
+     * @param dbAt        - {@link Temporal} optional dbAt restriction
+     * @param <T>         - {@link T} type parameter for object class
+     * @param <B>         - {@link B} type parameter for return type from {@link Computable} function
+     * @return - {@link com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationEngine.AdjacencyGraph} spatial adjacency graph
+     */
+    <T extends @NonNull Object, B extends Number> AggregationEngine.AdjacencyGraph<T, B> buildSpatialGraph(Class<T> clazz, String objectID, Computable<T, T, B> edgeCompute, Filterable<T> filter, @Nullable Temporal validAt, @Nullable Temporal dbAt);
 
     /**
      * Search the ontology for individuals with IRIs that match the given search string
@@ -282,4 +299,13 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @throws IllegalStateException if unable to get properties for the given {@link Class}
      */
     List<String> getDatasetProperties(Class<?> clazz);
+
+    /**
+     * Get all the Individuals of the given dataset
+     * Class must be registered with the reasoner
+     *
+     * @param clazz - {@link Class} Java class to retrieve members of
+     * @return - {@link List} of {@link String} IDs of dataset class memberss
+     */
+    List<String> getDatasetMembers(Class<?> clazz);
 }

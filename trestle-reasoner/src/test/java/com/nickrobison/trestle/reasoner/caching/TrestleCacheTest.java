@@ -54,11 +54,11 @@ public class TrestleCacheTest extends AbstractReasonerTest {
         reasoner.getUnderlyingOntology().runInference();
 
         Instant firstStart = Instant.now();
-        TestClasses.JTSGeometryTest first = reasoner.readTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getAdm0_code().toString(), LocalDate.of(1989, 7, 1), null);
+        TestClasses.JTSGeometryTest first = reasoner.readTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getCode().toString(), LocalDate.of(1989, 7, 1), null);
         Instant firstEnd = Instant.now();
         Instant secondStart = Instant.now();
         logger.info("Reading first object took {} ms", Duration.between(firstStart, firstEnd).toMillis());
-        TestClasses.JTSGeometryTest second = reasoner.readTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getAdm0_code().toString(), LocalDate.of(1990, 3, 1), null);
+        TestClasses.JTSGeometryTest second = reasoner.readTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getCode().toString(), LocalDate.of(1990, 3, 1), null);
         Instant secondEnd = Instant.now();
         logger.info("Reading second object took {} ms", Duration.between(secondStart, secondEnd).toMillis());
         assertEquals(first, second, "Objects should be equal");
@@ -67,14 +67,14 @@ public class TrestleCacheTest extends AbstractReasonerTest {
 
 //        Update one of the facts, which should invalidate the cache
         logger.info("Updating one of the facts");
-        reasoner.addFactToTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getAdm0_code().toString(), "geom", jtsGeom2, LocalDate.of(1989, 10, 1), null, null);
+        reasoner.addFactToTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getCode().toString(), "geom", jtsGeom2, LocalDate.of(1989, 10, 1), null, null);
         reasoner.getUnderlyingOntology().runInference();
         firstStart = Instant.now();
-        first = reasoner.readTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getAdm0_code().toString(), LocalDate.of(1989, 10, 20), null);
+        first = reasoner.readTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getCode().toString(), LocalDate.of(1989, 10, 20), null);
         firstEnd = Instant.now();
         secondStart = Instant.now();
         logger.info("Reading second object took {} ms", Duration.between(firstStart, firstEnd).toMillis());
-        second = reasoner.readTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getAdm0_code().toString(), LocalDate.of(1990, 3, 1), null);
+        second = reasoner.readTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getCode().toString(), LocalDate.of(1990, 3, 1), null);
         secondEnd = Instant.now();
         assertEquals(first, second, "Objects should be equal");
         assertTrue(Duration.between(firstStart, firstEnd).compareTo(Duration.between(secondStart, secondEnd)) > 0, "Cache should have lower latency");

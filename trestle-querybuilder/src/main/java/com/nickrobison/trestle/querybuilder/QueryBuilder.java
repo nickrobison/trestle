@@ -137,6 +137,37 @@ public class QueryBuilder {
     }
 
     /**
+     * Build the SPARQL query to return the collections that are spatially adjacent to the specified colleciton.
+     * Note: This will only work if spatial relations have been generated for the underlying Trestle_Objects.
+     * If that's not the case, you'll need to use the {@link QueryBuilder#buildTemporalSpatialCollectionIntersection(String, double, OffsetDateTime, OffsetDateTime)}
+     *
+     * @param collection - {@link OWLNamedIndividual} of collection to query
+     * @param strength   - {@link double} strength cutoff for collection association.
+     * @return - {@link String} SPARQL query with variables: ?collection
+     */
+    public String buildAdjecentCollectionQuery(OWLNamedIndividual collection, double strength) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText(String.format("SELECT distinct ?collection " +
+                " WHERE {" +
+                "?c trestle:related_by ?r ." +
+                "?r trestle:Relation_Strength ?s ." +
+                "?r trestle:relation_of ?t ." +
+                "?t trestle:spatial_meets ?mt ." +
+                "?mt trestle:has_relation ?rt ." +
+                "?rt trestle:Relation_Strength ?st ." +
+                "?rt trestle:related_to ?collection ." +
+                "FILTER (?m != ?t && ?c != ?collection) ." +
+                "FILTER (?s >= ?strength) ." +
+                "FILTER(?st >= ?strength) ." +
+                "VALUES ?c {%s} .}", String.format("<%s>", getFullIRIString(collection))));
+
+        ps.setLiteral("strength", strength);
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
+    }
+
+    /**
      * @param individual           - Individual
      * @param datasetClass         - OWLClass
      * @param relationshipStrength - Relationship strength
@@ -396,6 +427,27 @@ public class QueryBuilder {
         return stringValue;
     }
 
+    /**
+     * Retrieves the object header for the given {@link OWLNamedIndividual}
+     *
+     * @param datasetClass - {@link OWLClass} dataset class to retrieve
+     * @param individual   - {@link OWLNamedIndividual} individual to retrieve header for
+     * @return - {@link String} SPARQL query string (?m - Individual, ?ef - Exists_from, ?et Exists_to (Optional))
+     */
+    public String buildObjectHeaderQuery(OWLClass datasetClass, OWLNamedIndividual individual) {
+        final ParameterizedSparqlString ps = buildBaseString();
+        ps.setCommandText(String.format("SELECT ?m ?ef ?et WHERE {" +
+                "?m rdf:type ?owlClass ." +
+                "?m trestle:exists_from ?ef ." +
+                "OPTIONAL{?m trestle:exists_to ?et} ." +
+                "VALUES ?m {<%s>} ." +
+                "}", getFullIRIString(individual)));
+        ps.setIri("owlClass", getFullIRIString(datasetClass));
+        final String stringValue = ps.toString();
+        logger.trace(stringValue);
+        return stringValue;
+    }
+
     public String buildSpatialRestrictionFragment(OWLClass datasetClass, String wkt, OffsetDateTime atTemporal, OffsetDateTime dbTemporal) {
         final ParameterizedSparqlString ps = new ParameterizedSparqlString();
         ps.setCommandText("SELECT DISTINCT ?m ?ef ?et " +
@@ -511,12 +563,12 @@ public class QueryBuilder {
     }
 
     /**
-     * Build spatial intersection
+     * Build spatial intersection to return Individuals that intersect with the given WKT value
      *
      * @param datasetClass - {@link OWLClass} to restrict on
      * @param wktValue     - {@link String} representation of WKT value
      * @param dbAt         - {@link OffsetDateTime} of database temporal
-     * @return - {@link String} SPARQL query string
+     * @return - {@link String} SPARQL query string with parameter ?m representing individuals
      */
     public String buildSpatialIntersection(OWLClass datasetClass, String wktValue, OffsetDateTime dbAt) {
         final ParameterizedSparqlString ps = buildBaseString();

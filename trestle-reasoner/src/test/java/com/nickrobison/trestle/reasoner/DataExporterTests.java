@@ -151,35 +151,35 @@ public class DataExporterTests extends AbstractReasonerTest {
         private static final long serialVersionUID = 42L;
 
         @Fact(name = "gaulCode")
-        public long gaulcode;
+        public long gaulCode;
         @Fact(name = "objectName")
-        public String objectname;
+        public String objectName;
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
         @StartTemporal(name = "startDate")
-        public LocalDate startdate;
+        public LocalDate startDate;
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
         @EndTemporal(name = "endDate")
-        public LocalDate enddate;
+        public LocalDate endDate;
         @Spatial(name = "wkt")
-        public String geom;
+        public String wkt;
         @Ignore
         public double edgeWeight;
 
 
         @TrestleCreator
         public SimpleGAULObject(long gaulCode, String objectName, LocalDate startDate, LocalDate endDate, String wkt) {
-            this.gaulcode = gaulCode;
-            this.objectname = objectName;
-            this.startdate = startDate;
-            this.enddate = endDate;
-            this.geom = wkt;
+            this.gaulCode = gaulCode;
+            this.objectName = objectName;
+            this.startDate = startDate;
+            this.endDate = endDate;
+            this.wkt = wkt;
             this.edgeWeight = 1.0;
         }
 
         @IndividualIdentifier
         @Ignore
         public String getObjectID() {
-            return Long.toString(this.gaulcode);
+            return Long.toString(this.gaulCode);
         }
     }
 }

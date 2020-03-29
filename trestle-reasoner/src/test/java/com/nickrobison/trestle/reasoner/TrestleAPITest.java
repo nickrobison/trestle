@@ -93,19 +93,6 @@ public class TrestleAPITest extends AbstractReasonerTest {
         final IRI gaul_jts_test = IRI.create(OVERRIDE_PREFIX, "GAUL_JTS_Test");
         List<String> individuals = reasoner.searchForIndividual("43", gaul_jts_test.toString(), null);
         assertEquals(1, individuals.size(), "Should only have 1 individual in the JTS class");
-//        individuals = reasoner.searchForIndividuals("2");
-//        assertEquals(4, individuals.size(), "Should have 4 individuals, overall");
-
-//        Test attribute generation
-        final TrestleIndividual trestleIndividual = reasoner.getTrestleIndividual(individuals.get(0));
-        assertAll(() -> assertEquals(2, trestleIndividual.getFacts().size(), "Wrong number of attributes"),
-                () -> assertEquals(1, trestleIndividual.getRelations().size(), "Wrong number of relations"));
-
-
-//        Now try to remove it
-//        reasoner.removeIndividual(classObjects.toArray(new Object[classObjects.size()]));
-
-//        reasoner.writeOntology(new File("/Users/nrobison/Desktop/trestle_test.owl").toURI(), false);
 
         reasoner.getMetricsEngine().exportData(new File("./target/api-test-metrics.csv"));
     }

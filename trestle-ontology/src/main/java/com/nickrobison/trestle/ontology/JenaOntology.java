@@ -320,6 +320,16 @@ public abstract class JenaOntology extends TransactingOntology {
     }
 
     @Override
+    public void removeIndividualObjectProperty(OWLNamedIndividual subject, OWLObjectProperty property, @Nullable OWLNamedIndividual object) {
+        logger.error("Object property removal not implemented yet!");
+    }
+
+    @Override
+    public void removeIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property, @Nullable OWLLiteral literal) {
+        logger.error("Data property removal not implemented yet!");
+    }
+
+    @Override
     public boolean containsResource(IRI individualIRI) {
         return containsResource(df.getOWLNamedIndividual(individualIRI));
     }
